@@ -31,5 +31,5 @@ sudo pip3 install sklearn
 ### Run the demo
 
 ```bash
-psql -f scikit_train.sql
+psql -f scikit_train_and_predict.sql
 ```
