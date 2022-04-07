@@ -1,4 +1,9 @@
 --
+-- CREATE EXTENSION
+--
+CREATE EXTENSION IF NOT EXISTS plpython3u;
+
+--
 -- Data table.
 --
 DROP TABLE IF EXISTS scikit_train_data CASCADE;
@@ -40,7 +45,7 @@ AS $$
     rfc = RandomForestClassifier()
     rfc.fit(X, y)
 
-    with open("/tmp/postgresml-rfc.pickle", "wb") as f:
+    with open("/app/models/postgresml-rfc.pickle", "wb") as f:
         pickle.dump(rfc, f)
     return "OK"
 
@@ -53,7 +58,7 @@ RETURNS DOUBLE PRECISION
 AS $$
     import pickle
 
-    with open("/tmp/postgresml-rfc.pickle", "rb") as f:
+    with open("/app/models/postgresml-rfc.pickle", "rb") as f:
         m = pickle.load(f)
 
     r = m.predict([[value,]])

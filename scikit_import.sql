@@ -1,7 +1,10 @@
-CREATE OR REPLACE FUNCTION scikit_learn_import()
+CREATE EXTENSION IF NOT EXISTS plpython3u;
+
+CREATE OR REPLACE FUNCTION pgml_version()
 RETURNS TEXT
 AS $$
-    import sklearn
-    return sklearn.__version__
+    import pgml
+    return pgml.version()
 $$ LANGUAGE plpython3u;
 
+SELECT pgml_version();
