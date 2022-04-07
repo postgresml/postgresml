@@ -81,7 +81,6 @@ chown postgres:postgres /app/models
 Run the test:
 
 ```
-
 bash -f sql/test.sql
 ```
 
