@@ -60,3 +60,22 @@ CREATE FUNCTION
      5 |      5 |          5
 (5 rows)
 ```
+
+### Run the linear model
+
+Install our PgML package globally:
+
+```
+cd pgml
+sudo python3 setup.py install
+cd ../
+```
+
+Run the test:
+
+```
+
+bash -f sql/test.sql
+```
+
+Make sure to run it exactly like this, from the root directory of the repo.
