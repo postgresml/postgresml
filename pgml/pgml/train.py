@@ -8,13 +8,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
 import pickle
+import os
 
 from pgml.sql import all_rows
 from pgml.exceptions import PgMLException
 from pgml.validate import check_type
 
 
-def train(cursor, y_column, name, save=True):
+def train(cursor, y_column, name, save=True, destination="/tmp/pgml_models"):
     """Train the model on data on some rows.
 
     Arguments:
@@ -65,7 +66,8 @@ def train(cursor, y_column, name, save=True):
     msq = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
 
-    path = f"/app/models/{name}"
+    path = os.path.join(destination, name)
+
     if save:
         with open(path, "wb") as f:
             pickle.dump(lr, f)

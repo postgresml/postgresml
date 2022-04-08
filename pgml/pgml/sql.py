@@ -1,5 +1,6 @@
 """Tools to run SQL.
 """
+import os
 
 
 def all_rows(cursor):
@@ -11,3 +12,21 @@ def all_rows(cursor):
 
         for row in rows:
             yield row
+
+
+def models_directory(plpy):
+    """Get the directory where we store our models."""
+    data_directory = plpy.execute(
+        """
+        SELECT setting FROM pg_settings WHERE name = 'data_directory'
+    """,
+        1,
+    )[0]["setting"]
+
+    models_dir = os.path.join(data_directory, "pgml_models")
+
+    # TODO: Ideally this happens during extension installation.
+    if not os.path.exists(models_dir):
+        os.mkdir(models_dir, 0o770)
+
+    return models_dir

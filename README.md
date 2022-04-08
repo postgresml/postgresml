@@ -71,13 +71,6 @@ sudo python3 setup.py install
 cd ../
 ```
 
-Create a directory for PostgresML to store its models (this is currently hardcoded):
-
-```
-mkdir -p /app/models
-chown postgres:postgres /app/models
-```
-
 Run the test:
 
 ```
