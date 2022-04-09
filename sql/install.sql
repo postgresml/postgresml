@@ -2,10 +2,13 @@
 -- Create the PL/Python3 extension.
 CREATE EXTENSION IF NOT EXISTS plpython3u;
 
+DROP SCHEMA pgml CASCADE;
+CREATE SCHEMA IF NOT EXISTS pgml;
+
 ---
 --- Extension version.
 ---
-CREATE OR REPLACE FUNCTION pgml_version()
+CREATE OR REPLACE FUNCTION pgml.version()
 RETURNS TEXT
 AS $$
 	import pgml
@@ -15,7 +18,6 @@ $$ LANGUAGE plpython3u;
 ---
 --- Track table versions.
 ---
-CREATE SCHEMA IF NOT EXISTS pgml;
 CREATE TABLE pgml.model_versions(
 	id BIGSERIAL PRIMARY KEY,
 	name VARCHAR,
@@ -33,7 +35,7 @@ CREATE TABLE pgml.model_versions(
 --- Run some validations on the table/view to make sure
 --- it'll work without our package.
 ---
-CREATE OR REPLACE FUNCTION pgml_validate(table_name TEXT)
+CREATE OR REPLACE FUNCTION pgml.validate(table_name TEXT)
 RETURNS BOOL
 AS $$
 	from pgml.sql import all_rows
@@ -47,7 +49,7 @@ $$ LANGUAGE plpython3u;
 ---
 --- Train the model.
 ---
-CREATE OR REPLACE FUNCTION pgml_train(table_name TEXT, y TEXT)
+CREATE OR REPLACE FUNCTION pgml.train(table_name TEXT, y TEXT)
 RETURNS TEXT
 AS $$
 	from pgml.train import train
@@ -88,8 +90,7 @@ $$ LANGUAGE plpython3u;
 ---
 --- Predict
 ---
-DROP FUNCTION pgml_score(model_name TEXT, VARIADIC features DOUBLE PRECISION[]);
-CREATE OR REPLACE FUNCTION pgml_score(model_name TEXT, VARIADIC features DOUBLE PRECISION[])
+CREATE OR REPLACE FUNCTION pgml.score(model_name TEXT, VARIADIC features DOUBLE PRECISION[])
 RETURNS DOUBLE PRECISION
 AS $$
 	from pgml.sql import models_directory

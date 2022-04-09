@@ -4,13 +4,13 @@
 \i sql/install.sql
 \i data/winequality-red.sql
 
-SELECT pgml_version();
+SELECT pgml.version();
 
 -- Valiate our wine data.
-SELECT pgml_validate('wine_quality_red');
+SELECT pgml.validate('wine_quality_red');
 
 -- Train twice
-SELECT pgml_train('wine_quality_red', 'quality');
+SELECT pgml.train('wine_quality_red', 'quality');
 
 SELECT * FROM pgml.model_versions;
 
@@ -18,7 +18,7 @@ SELECT * FROM pgml.model_versions;
 WITH latest_model AS (
 	SELECT name || '_' || id AS model_name FROM pgml.model_versions ORDER BY id DESC LIMIT 1
 )
-SELECT pgml_score(
+SELECT pgml.score(
 	(SELECT model_name FROM latest_model), -- last model we just trained
 
 	-- features as variadic arguments
