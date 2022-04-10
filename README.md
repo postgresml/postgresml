@@ -7,6 +7,7 @@ Quick demo with Postgres, PL/Python, and Scikit.
 Install Python3, pip, and Pl/Python3:
 
 ```bash
+sudo apt update
 sudo apt install -y postgresql-plpython3-12 python3 python3-pip
 ```
 
@@ -31,6 +32,7 @@ sudo pip3 install sklearn
 ### Run the demo
 
 ```bash
+mkdir /app/models
 psql -f scikit_train_and_predict.sql
 ```
 
@@ -74,7 +76,7 @@ cd ../
 Run the test:
 
 ```
-bash -f sql/test.sql
+psql -f sql/test.sql
 ```
 
 Make sure to run it exactly like this, from the root directory of the repo.
