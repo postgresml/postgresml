@@ -32,7 +32,8 @@ sudo pip3 install sklearn
 ### Run the demo
 
 ```bash
-mkdir /app/models
+sudo mkdir /app/models
+sudo chown postgres:postgres /app/models
 psql -f scikit_train_and_predict.sql
 ```
 
