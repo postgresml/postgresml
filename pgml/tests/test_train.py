@@ -1,3 +1,4 @@
+import unittest
 from pgml.train import train
 
 
@@ -14,18 +15,20 @@ class PlPyIterator:
             return self._values
 
 
-def test_train():
-    it = PlPyIterator(
-        [
-            {
-                "value": 5,
-                "weight": 5,
-            },
-            {
-                "value": 34,
-                "weight": 5,
-            },
-        ]
-    )
+class TestTrain(unittest.TestCase):
+    def test_train(self):
+        it = PlPyIterator(
+            [
+                {
+                    "value": 5,
+                    "weight": 5,
+                },
+                {
+                    "value": 34,
+                    "weight": 5,
+                },
+            ]
+        )
 
-    train(it, y_column="weight", name="test", save=False)
+        train(it, y_column="weight", name="test", save=False)
+        self.assertTrue(True)
