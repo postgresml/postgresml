@@ -20,6 +20,5 @@ WITH latest_model AS (
 )
 SELECT pgml.score(
 	(SELECT model_name FROM latest_model), -- last model we just trained
-
-	-- features as variadic arguments
-	7.4, 0.7, 0, 1.9, 0.076, 11, 34, 0.99, 2, 0.5, 9.4) AS score;
+	7.4, 0.7, 0, 1.9, 0.076, 11, 34, 0.99, 2, 0.5, 9.4 -- features as variadic arguments
+) AS score;
