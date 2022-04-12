@@ -45,27 +45,27 @@ AS $$
     rfc = RandomForestClassifier()
     rfc.fit(X, y)
 
-    with open("/app/models/postgresml-rfc.pickle", "wb") as f:
-        pickle.dump(rfc, f)
-    return "OK"
+    return pickle.dumps(rfc).hex()
 
 $$ LANGUAGE plpython3u;
 
-SELECT scikit_learn_train_example();
+;
 
-CREATE OR REPLACE FUNCTION scikit_learn_predict_example(value INT)
+CREATE OR REPLACE FUNCTION scikit_learn_predict_example(model TEXT, value INT)
 RETURNS DOUBLE PRECISION
 AS $$
     import pickle
 
-    with open("/app/models/postgresml-rfc.pickle", "rb") as f:
-        m = pickle.load(f)
+    m = pickle.loads(bytes.fromhex(model))
 
     r = m.predict([[value,]])
     return r[0]
 $$ LANGUAGE plpython3u;
 
+WITH model as (
+    SELECT scikit_learn_train_example() AS pickle
+)
 SELECT value,
        weight,
-       scikit_learn_predict_example(value::int) AS prediction
+       scikit_learn_predict_example((SELECT model.pickle FROM model), value::int) AS prediction
 FROM scikit_train_view LIMIT 5;
