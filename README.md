@@ -5,7 +5,7 @@ PostgresML aims to be the easiest way to gain value from machine learning. Anyon
 Getting started is as easy as creating a `table` or `view` that holds the training data, and then registering that with PostgresML. 
 
 ```sql
-SELECT pgml.create_regression('Red Wine Quality', training_data_table_or_view_name, label_column_name);
+SELECT pgml.model_regression('Red Wine Quality', training_data_table_or_view_name, label_column_name);
 ```
 
 And predict novel datapoints:
@@ -23,7 +23,7 @@ LIMIT 3;
 (3 rows)
 ```
 
-PostgresML similarly supports classification to predict numeric scores rather than classes for novel data.
+PostgresML similarly supports classification to predict discrete classes rather than numeric scores for novel data.
 
 ```sql
 SELECT pgml.create_classification('Handwritten Digit Classifier', pgml.mnist_training_data, label_column_name);

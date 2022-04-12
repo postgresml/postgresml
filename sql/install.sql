@@ -1,9 +1,86 @@
+SET client_min_messages TO WARNING;
 
 -- Create the PL/Python3 extension.
 CREATE EXTENSION IF NOT EXISTS plpython3u;
 
+---
+--- Create schema for models.
+---
 DROP SCHEMA pgml CASCADE;
 CREATE SCHEMA IF NOT EXISTS pgml;
+
+CREATE OR REPLACE FUNCTION pgml.auto_updated_at(tbl regclass) 
+RETURNS VOID 
+AS $$
+    DECLARE name_parts TEXT[];
+    DECLARE name TEXT; 
+BEGIN
+    name_parts := string_to_array(tbl::TEXT, '.');
+    name := name_parts[array_upper(name_parts, 1)];
+
+    EXECUTE format('DROP TRIGGER IF EXISTS %s_auto_updated_at ON %s', name, tbl);
+    EXECUTE format('CREATE TRIGGER %s_auto_updated_at BEFORE UPDATE ON %s
+                    FOR EACH ROW EXECUTE PROCEDURE pgml.set_updated_at()', name, tbl);
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION pgml.set_updated_at() 
+RETURNS TRIGGER 
+AS $$
+BEGIN
+    IF (
+        NEW IS DISTINCT FROM OLD
+        AND NEW.updated_at IS NOT DISTINCT FROM OLD.updated_at
+    ) THEN
+        NEW.updated_at := CURRENT_TIMESTAMP;
+    END IF;
+    RETURN new;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TABLE pgml.projects(
+	id BIGSERIAL PRIMARY KEY,
+	name TEXT NOT NULL,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+SELECT pgml.auto_updated_at('pgml.projects');
+
+CREATE TABLE pgml.snapshots(
+	id BIGSERIAL PRIMARY KEY,
+	relation TEXT NOT NULL,
+	y TEXT NOT NULL,
+	validation_ratio FLOAT4 NOT NULL,
+	validation_strategy TEXT NOT NULL,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+SELECT pgml.auto_updated_at('pgml.snapshots');
+
+CREATE TABLE pgml.models(
+	id BIGSERIAL PRIMARY KEY,
+	project_id BIGINT,
+	snapshot_id BIGINT,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	pickle BYTEA,
+	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
+	CONSTRAINT snapshot_id_fk FOREIGN KEY(snapshot_id) REFERENCES pgml.snapshots(id)
+);
+SELECT pgml.auto_updated_at('pgml.models');
+
+CREATE TABLE pgml.promotions(
+	project_id BIGINT NOT NULL,
+	model_id BIGINT NOT NULL,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
+	CONSTRAINT model_id_fk FOREIGN KEY(model_id) REFERENCES pgml.models(id)
+);
+CREATE INDEX promotions_project_id_created_at_idx ON pgml.promotions(project_id, created_at);
+SELECT pgml.auto_updated_at('pgml.promotions');
+
 
 ---
 --- Extension version.
@@ -15,20 +92,28 @@ AS $$
 	return pgml.version()
 $$ LANGUAGE plpython3u;
 
+CREATE OR REPLACE FUNCTION pgml.model_regression(model_name TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT)
+RETURNS VOID
+AS $$
+	import pgml
+	pgml.model.regression(model_name, relation_name, y_column_name, algorithm)
+$$ LANGUAGE plpython3u;
+
+
 ---
 --- Track table versions.
 ---
 CREATE TABLE pgml.model_versions(
 	id BIGSERIAL PRIMARY KEY,
-	name VARCHAR,
-	location VARCHAR NULL,
+	name VARCHAR NOT NULL,
 	data_source TEXT,
 	y_column VARCHAR,
 	started_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	ended_at TIMESTAMP WITHOUT TIME ZONE NULL,
 	mean_squared_error DOUBLE PRECISION,
 	r2_score DOUBLE PRECISION,
-	successful BOOL NULL
+	successful BOOL NULL,
+	pickle BYTEA 
 );
 
 ---
@@ -54,14 +139,14 @@ AS $$
 	id_ = start[0]["id"]
 	name = f"{table_name}_{id_}"
 
-	destination = models_directory(plpy)
+	destination = models_directory()
 
 	# Train!
-	location, msq, r2 = train(plpy.cursor(data_source), y_column=y, name=name, destination=destination)
+	pickle, msq, r2 = train(plpy.cursor(data_source), y_column=y, name=name, destination=destination)
 
 	plpy.execute(f"""
 		UPDATE pgml.model_versions
-		SET location = '{location}',
+		SET pickle = '{pickle}',
 			successful = true,
 			mean_squared_error = '{msq}',
 			r2_score = '{r2}',
@@ -85,7 +170,7 @@ AS $$
 	if model_name in SD:
 		model = SD[model_name]
 	else:
-		SD[model_name] = load(model_name, models_directory(plpy))
+		SD[model_name] = load(model_name, models_directory())
 		model = SD[model_name]
 
 	scores = model.predict([features,])

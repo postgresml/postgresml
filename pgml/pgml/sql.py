@@ -1,6 +1,7 @@
 """Tools to run SQL.
 """
 import os
+import plpy
 
 
 def all_rows(cursor):
@@ -14,7 +15,7 @@ def all_rows(cursor):
             yield row
 
 
-def models_directory(plpy):
+def models_directory():
     """Get the directory where we store our models."""
     data_directory = plpy.execute(
         """

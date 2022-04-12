@@ -6,9 +6,6 @@
 
 SELECT pgml.version();
 
--- Valiate our wine data.
-SELECT pgml.validate('wine_quality_red');
-
 -- Train twice
 SELECT pgml.train('wine_quality_red', 'quality');
 
