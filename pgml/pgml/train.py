@@ -12,7 +12,6 @@ import os
 
 from pgml.sql import all_rows
 from pgml.exceptions import PgMLException
-from pgml.validate import check_type
 
 
 def train(cursor, y_column, name, save=True, destination="/tmp/pgml_models"):
@@ -33,8 +32,6 @@ def train(cursor, y_column, name, save=True, destination="/tmp/pgml_models"):
 
     for row in all_rows(cursor):
         row = row.copy()
-
-        check_type(row)
 
         if y_column not in row:
             PgMLException(

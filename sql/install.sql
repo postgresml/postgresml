@@ -32,21 +32,6 @@ CREATE TABLE pgml.model_versions(
 );
 
 ---
---- Run some validations on the table/view to make sure
---- it'll work without our package.
----
-CREATE OR REPLACE FUNCTION pgml.validate(table_name TEXT)
-RETURNS BOOL
-AS $$
-	from pgml.sql import all_rows
-	from pgml.validate import check_type
-
-	for row in all_rows(plpy.cursor(f"SELECT * FROM {table_name}")):
-		check_type(row)
-	return True
-$$ LANGUAGE plpython3u;
-
----
 --- Train the model.
 ---
 CREATE OR REPLACE FUNCTION pgml.train(table_name TEXT, y TEXT)
