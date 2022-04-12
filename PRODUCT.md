@@ -4,7 +4,7 @@ This document describes the value proposition of this product.
 
 ## The problem
 
-Machine learning is a hard to take advance for most startups. They either don't have the time or the knowhow
+Machine learning is a hard to take advantage of for most startups. They either don't have the time or the knowhow
 to deploy ML models into production. This problem exists for multi-billion dollar enteprises, it's 10x true
 for small startups.
 
