@@ -26,7 +26,7 @@ INSERT INTO scikit_train_data (value, weight) SELECT generate_series(1, 500), 5.
 
 
 CREATE OR REPLACE FUNCTION scikit_learn_train_example()
-RETURNS TEXT
+RETURNS BYTEA
 AS $$
     from sklearn.ensemble import RandomForestClassifier
     import pickle
@@ -45,18 +45,18 @@ AS $$
     rfc = RandomForestClassifier()
     rfc.fit(X, y)
 
-    return pickle.dumps(rfc).hex()
+    return pickle.dumps(rfc)
 
 $$ LANGUAGE plpython3u;
 
 ;
 
-CREATE OR REPLACE FUNCTION scikit_learn_predict_example(model TEXT, value INT)
+CREATE OR REPLACE FUNCTION scikit_learn_predict_example(model BYTEA, value INT)
 RETURNS DOUBLE PRECISION
 AS $$
     import pickle
 
-    m = pickle.loads(bytes.fromhex(model))
+    m = pickle.loads(model)
 
     r = m.predict([[value,]])
     return r[0]
