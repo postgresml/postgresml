@@ -47,13 +47,15 @@ CREATE TABLE pgml.projects(
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 SELECT pgml.auto_updated_at('pgml.projects');
+CREATE UNIQUE INDEX projects_name_idx ON pgml.projects(name);
 
 CREATE TABLE pgml.snapshots(
 	id BIGSERIAL PRIMARY KEY,
 	relation TEXT NOT NULL,
 	y TEXT NOT NULL,
-	validation_ratio FLOAT4 NOT NULL,
-	validation_strategy TEXT NOT NULL,
+	test_size FLOAT4 NOT NULL,
+	test_sampling TEXT NOT NULL,
+	status TEXT NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -61,14 +63,19 @@ SELECT pgml.auto_updated_at('pgml.snapshots');
 
 CREATE TABLE pgml.models(
 	id BIGSERIAL PRIMARY KEY,
-	project_id BIGINT,
-	snapshot_id BIGINT,
+	project_id BIGINT NOT NULL,
+	snapshot_id BIGINT NOT NULL,
+	algorithm TEXT NOT NULL,
+	status TEXT NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	mean_squared_error DOUBLE PRECISION,
+	r2_score DOUBLE PRECISION,
 	pickle BYTEA,
 	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
 	CONSTRAINT snapshot_id_fk FOREIGN KEY(snapshot_id) REFERENCES pgml.snapshots(id)
 );
+CREATE INDEX models_project_id_created_at_idx ON pgml.models(project_id, created_at);
 SELECT pgml.auto_updated_at('pgml.models');
 
 CREATE TABLE pgml.promotions(
@@ -92,11 +99,12 @@ AS $$
 	return pgml.version()
 $$ LANGUAGE plpython3u;
 
-CREATE OR REPLACE FUNCTION pgml.model_regression(model_name TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT)
+CREATE OR REPLACE FUNCTION pgml.model_regression(project_name TEXT, relation_name TEXT, y_column_name TEXT)
 RETURNS VOID
 AS $$
 	import pgml
-	pgml.model.regression(model_name, relation_name, y_column_name, algorithm)
+	from pgml.model import Regression
+	Regression(project_name, relation_name, y_column_name)
 $$ LANGUAGE plpython3u;
 
 
