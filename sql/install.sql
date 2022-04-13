@@ -33,7 +33,7 @@ BEGIN
         NEW IS DISTINCT FROM OLD
         AND NEW.updated_at IS NOT DISTINCT FROM OLD.updated_at
     ) THEN
-        NEW.updated_at := CURRENT_TIMESTAMP;
+        NEW.updated_at := clock_timestamp();
     END IF;
     RETURN new;
 END;
@@ -43,21 +43,21 @@ LANGUAGE plpgsql;
 CREATE TABLE pgml.projects(
 	id BIGSERIAL PRIMARY KEY,
 	name TEXT NOT NULL,
-	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp()
 );
 SELECT pgml.auto_updated_at('pgml.projects');
 CREATE UNIQUE INDEX projects_name_idx ON pgml.projects(name);
 
 CREATE TABLE pgml.snapshots(
 	id BIGSERIAL PRIMARY KEY,
-	relation TEXT NOT NULL,
-	y TEXT NOT NULL,
+	relation_name TEXT NOT NULL,
+	y_column_name TEXT NOT NULL,
 	test_size FLOAT4 NOT NULL,
 	test_sampling TEXT NOT NULL,
 	status TEXT NOT NULL,
-	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp()
 );
 SELECT pgml.auto_updated_at('pgml.snapshots');
 
@@ -67,8 +67,8 @@ CREATE TABLE pgml.models(
 	snapshot_id BIGINT NOT NULL,
 	algorithm TEXT NOT NULL,
 	status TEXT NOT NULL,
-	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	mean_squared_error DOUBLE PRECISION,
 	r2_score DOUBLE PRECISION,
 	pickle BYTEA,
@@ -81,7 +81,7 @@ SELECT pgml.auto_updated_at('pgml.models');
 CREATE TABLE pgml.promotions(
 	project_id BIGINT NOT NULL,
 	model_id BIGINT NOT NULL,
-	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
 	CONSTRAINT model_id_fk FOREIGN KEY(model_id) REFERENCES pgml.models(id)
 );
