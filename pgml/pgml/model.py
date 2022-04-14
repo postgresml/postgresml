@@ -10,10 +10,32 @@ from pgml.exceptions import PgMLException
 from pgml.sql import q
 
 class Project(object):
+    """
+    Use projects to refine multiple models of a particular dataset on a specific objective.
+    
+    Attributes:
+        id (int): a unique identifier
+        name (str): a human friendly unique identifier
+        objective (str): the purpose of this project
+        created_at (Timestamp): when this project was created
+        updated_at (Timestamp): when this project was last updated
+    """
+    
     _cache = {}
 
+    def __init__(self):
+        self._deployed_model = None
+
     @classmethod
-    def find(cls, id):
+    def find(cls, id: int):
+        """
+        Get a Project from the database.
+
+        Args:
+            id (int): the project id
+        Returns:
+            Project or None: instantiated from the database if found
+        """
         result = plpy.execute(f"""
             SELECT * 
             FROM pgml.projects 
@@ -29,7 +51,18 @@ class Project(object):
         return project
 
     @classmethod
-    def find_by_name(cls, name):
+    def find_by_name(cls, name: str):
+        """
+        Get a Project from the database by name. 
+        
+        This is the prefered API to retrieve projects, and they are cached by
+        name to avoid needing to go to he database on every usage.
+        
+        Args:
+            name (str): the project name
+        Returns:
+            Project or None: instantiated from the database if found
+        """
         if name in cls._cache:
             return cls._cache[name]
     
@@ -48,7 +81,17 @@ class Project(object):
         return project
 
     @classmethod
-    def create(cls, name, objective):
+    def create(cls, name: str, objective: str):
+        """
+        Create a Project and save it to the database.
+        
+        Args:
+            name (str): a human friendly identifier
+            objective (str): valid values are ["regression", "classification"].
+        Returns:
+            Project: instantiated from the database
+        """
+
         project = Project()
         project.__dict__ = dict(plpy.execute(f"""
             INSERT INTO pgml.projects (name, objective) 
@@ -59,18 +102,48 @@ class Project(object):
         cls._cache[name] = project
         return project
 
-    def __init__(self):
-        self._deployed_model = None
-
     @property
     def deployed_model(self):
+        """
+        Returns:
+            Model: that should currently be used for predictions
+        """
         if self._deployed_model is None:
             self._deployed_model = Model.find_deployed(self.id)
         return self._deployed_model
 
 class Snapshot(object):
+    """
+    Snapshots capture a set of training & test data for repeatability.
+    
+    Attributes:
+        id (int): a unique identifier
+        relation_name (str): the name of the table or view to snapshot
+        y_column_name (str): the label for training data
+        test_size (float or int, optional): If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split. If int, represents the absolute number of test samples. If None, the value is set to the complement of the train size. If train_size is also None, it will be set to 0.25.
+        test_sampling (str, optional): How to sample to create the test data. Defaults to "random". Valid values are ["first", "last", "random"].
+        status (str): The current status of the snapshot, e.g. 'new' or 'created'
+        created_at (Timestamp): when this snapshot was created
+        updated_at (Timestamp): when this snapshot was last updated
+    """
     @classmethod
-    def create(cls, relation_name, y_column_name, test_size, test_sampling):
+    def create(cls, relation_name: str, y_column_name: str, test_size: float or int, test_sampling: str):
+        """
+        Create a Snapshot and save it to the database. 
+        
+        This creates both a metadata record in the snapshots table, as well as creating a new table
+        that holds a snapshot of all the data currently present in the relation so that training
+        runs may be repeated, or further analysis may be conducted against the input.
+
+        Args:
+            relation_name (str): the name of the table or view to snapshot
+            y_column_name (str): the label for training data
+            test_size (float or int, optional): If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split. If int, represents the absolute number of test samples. If None, the value is set to the complement of the train size. If train_size is also None, it will be set to 0.25.
+            test_sampling: (str, optional): How to sample to create the test data. Defaults to "random". Valid values are ["first", "last", "random"].
+        Returns:
+            Snapshot: metadata instantiated from the database
+        """
+
         snapshot = Snapshot()
         snapshot.__dict__ = dict(plpy.execute(f"""
             INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status)
@@ -90,6 +163,10 @@ class Snapshot(object):
         return snapshot
 
     def data(self):
+        """
+        Returns:
+            list, list, list, list: All rows from the snapshot split into X_train, X_test, y_train, y_test sets.
+        """
         data = plpy.execute(f"""
             SELECT * 
             FROM pgml."snapshot_{self.id}"
@@ -141,11 +218,35 @@ class Snapshot(object):
         # TODO normalize and clean data
 
 class Model(object):
+    """Models use an algorithm on a snapshot of data to record the parameters learned.
+
+    Attributes:
+        project (str): the project the model belongs to
+        snapshot (str): the snapshot that provides the training and test data
+        algorithm_name (str): the name of the algorithm used to train this model
+        status (str): The current status of the model, e.g. 'new', 'training' or 'successful'
+        created_at (Timestamp): when this model was created
+        updated_at (Timestamp): when this model was last updated
+        mean_squared_error (float):
+        r2_score (float):
+        pickle (bytes): the serialized version of the model parameters
+        algorithm: the in memory version of the model parameters that can make predictions
+    """
     @classmethod
-    def create(cls, project, snapshot, algorithm_name):
+    def create(cls, project: Project, snapshot: Snapshot, algorithm_name: str):
+        """
+        Create a Model and save it to the database.
+        
+        Args:
+            project (str): 
+            snapshot (str): 
+            algorithm_name (str):
+        Returns:
+            Model: instantiated from the database
+        """
         result = plpy.execute(f"""
             INSERT INTO pgml.models (project_id, snapshot_id, algorithm_name, status) 
-            VALUES ({q(project.id)}, {q(snapshot.id)}, {q(algorithm_name)}, 'training') 
+            VALUES ({q(project.id)}, {q(snapshot.id)}, {q(algorithm_name)}, 'new') 
             RETURNING *
         """)
         model = Model()
@@ -155,7 +256,13 @@ class Model(object):
         return model
 
     @classmethod
-    def find_deployed(cls, project_id):
+    def find_deployed(cls, project_id: int):
+        """
+        Args:
+            project_id (int): The project id
+        Returns:
+            Model: that should currently be used for predictions of the project
+        """
         result = plpy.execute(f"""
             SELECT models.* 
             FROM pgml.models 
@@ -179,6 +286,10 @@ class Model(object):
 
     @property
     def project(self):
+        """
+        Returns:
+            Project: that this model belongs to
+        """
         if self._project is None:
             self._project = Project.find(self.project_id)
         return self._project
@@ -197,7 +308,13 @@ class Model(object):
     
         return self._algorithm
 
-    def fit(self, snapshot):
+    def fit(self, snapshot: Snapshot):
+        """
+            Learns the parameters of this model and records them in the database.
+
+            Args:
+                snapshot (Snapshot): dataset used to train this model
+        """
         X_train, X_test, y_train, y_test = snapshot.data()
 
         # Train the model
@@ -220,12 +337,21 @@ class Model(object):
         """)[0])
 
     def deploy(self):
+        """Promote this model to the active version for the project that will be used for predictions"""
         plpy.execute(f"""
             INSERT INTO pgml.deployments (project_id, model_id) 
             VALUES ({q(self.project_id)}, {q(self.id)})
         """)
 
-    def predict(self, data):
+    def predict(self, data: list):
+        """Use the model for a set of features.
+
+        Args:
+            data (list): list of features to form a single prediction for
+
+        Returns:
+            float or int: scores for regressions or ints for classifications
+        """
         return self.algorithm.predict(data)
 
 
@@ -236,7 +362,7 @@ def train(
     y_column_name: str, 
     test_size: float or int = 0.1,
     test_sampling: str = "random"
-) -> None:
+):
     """Create a regression model from a table or view filled with training data.
 
     Args:
