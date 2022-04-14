@@ -79,7 +79,7 @@ class Project(object):
             1,
         )
         if len(result) == 0:
-            return None
+            raise PgMLException(f"Project '{name}' does not exist.")
 
         project = Project()
         project.__dict__ = dict(result[0])
@@ -206,14 +206,13 @@ class Snapshot(object):
         """
         )
 
-        print(data)
         # Sanity check the data
         if len(data) == 0:
-            PgMLException(
+            raise PgMLException(
                 f"Relation `{self.relation_name}` contains no rows. Did you pass the correct `relation_name`?"
             )
         if self.y_column_name not in data[0]:
-            PgMLException(
+            raise PgMLException(
                 f"Column `{self.y_column_name}` not found. Did you pass the correct `y_column_name`?"
             )
 
@@ -429,6 +428,10 @@ def train(
         algorithms = ["linear", "random_forest"]
     elif objective == "classification":
         algorithms = ["random_forest"]
+    else:
+        raise PgMLException(
+            f"Unknown objective '{objective}', available options are: regression, classification"
+        )
 
     for algorithm_name in algorithms:
         model = Model.create(project, snapshot, algorithm_name)
