@@ -1,16 +1,6 @@
-"""Tools to run SQL.
-"""
-import os
-import plpy
+from plpy import quote_literal
 
-
-def all_rows(cursor):
-    """Fetch all rows from a plpy-like cursor."""
-    while True:
-        rows = cursor.fetch(5)
-        if not rows:
-            return
-
-        for row in rows:
-            yield row
-
+def q(obj):
+    if type(obj) == str:
+        return quote_literal(obj)
+    return obj

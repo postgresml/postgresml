@@ -43,6 +43,7 @@ LANGUAGE plpgsql;
 CREATE TABLE pgml.projects(
 	id BIGSERIAL PRIMARY KEY,
 	name TEXT NOT NULL,
+	objective TEXT NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp()
 );
@@ -65,7 +66,7 @@ CREATE TABLE pgml.models(
 	id BIGSERIAL PRIMARY KEY,
 	project_id BIGINT NOT NULL,
 	snapshot_id BIGINT NOT NULL,
-	algorithm TEXT NOT NULL,
+	algorithm_name TEXT NOT NULL,
 	status TEXT NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
@@ -78,19 +79,19 @@ CREATE TABLE pgml.models(
 CREATE INDEX models_project_id_created_at_idx ON pgml.models(project_id, created_at);
 SELECT pgml.auto_updated_at('pgml.models');
 
-CREATE TABLE pgml.promotions(
+CREATE TABLE pgml.deployments(
 	project_id BIGINT NOT NULL,
 	model_id BIGINT NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
 	CONSTRAINT model_id_fk FOREIGN KEY(model_id) REFERENCES pgml.models(id)
 );
-CREATE INDEX promotions_project_id_created_at_idx ON pgml.promotions(project_id, created_at);
-SELECT pgml.auto_updated_at('pgml.promotions');
+CREATE INDEX deployments_project_id_created_at_idx ON pgml.deployments(project_id, created_at);
+SELECT pgml.auto_updated_at('pgml.deployments');
 
 
 ---
---- Extension version.
+--- Extension version
 ---
 CREATE OR REPLACE FUNCTION pgml.version()
 RETURNS TEXT
@@ -99,88 +100,24 @@ AS $$
 	return pgml.version()
 $$ LANGUAGE plpython3u;
 
-CREATE OR REPLACE FUNCTION pgml.model_regression(project_name TEXT, relation_name TEXT, y_column_name TEXT)
+---
+--- Regression
+---
+CREATE OR REPLACE FUNCTION pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT)
 RETURNS VOID
 AS $$
-	import pgml
-	from pgml.model import Regression
-	Regression(project_name, relation_name, y_column_name)
+	from pgml.model import train
+
+	train(project_name, objective, relation_name, y_column_name)
 $$ LANGUAGE plpython3u;
-
-
----
---- Track table versions.
----
-CREATE TABLE pgml.model_versions(
-	id BIGSERIAL PRIMARY KEY,
-	name VARCHAR NOT NULL,
-	data_source TEXT,
-	y_column VARCHAR,
-	started_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-	ended_at TIMESTAMP WITHOUT TIME ZONE NULL,
-	mean_squared_error DOUBLE PRECISION,
-	r2_score DOUBLE PRECISION,
-	successful BOOL NULL,
-	pickle BYTEA 
-);
-
----
---- Train the model.
----
-CREATE OR REPLACE FUNCTION pgml.train(table_name TEXT, y TEXT)
-RETURNS TEXT
-AS $$
-	from pgml.train import train
-	from pgml.sql import models_directory
-	import os
-
-	data_source = f"SELECT * FROM {table_name}"
-
-	# Start training.
-	start = plpy.execute(f"""
-		INSERT INTO pgml.model_versions
-			(name, data_source, y_column)
-		VALUES
-			('{table_name}', '{data_source}', '{y}')
-		RETURNING *""", 1)
-
-	id_ = start[0]["id"]
-	name = f"{table_name}_{id_}"
-
-	destination = models_directory()
-
-	# Train!
-	pickle, msq, r2 = train(plpy.cursor(data_source), y_column=y, name=name, destination=destination)
-
-	plpy.execute(f"""
-		UPDATE pgml.model_versions
-		SET pickle = '{pickle}',
-			successful = true,
-			mean_squared_error = '{msq}',
-			r2_score = '{r2}',
-			ended_at = clock_timestamp()
-		WHERE id = {id_}""")
-
-	return name
-$$ LANGUAGE plpython3u;
-
 
 ---
 --- Predict
 ---
-CREATE OR REPLACE FUNCTION pgml.score(model_name TEXT, VARIADIC features DOUBLE PRECISION[])
+CREATE OR REPLACE FUNCTION pgml.predict(project_name TEXT, VARIADIC features DOUBLE PRECISION[])
 RETURNS DOUBLE PRECISION
 AS $$
-	from pgml.sql import models_directory
-	from pgml.score import load
-	import pickle
+	from pgml.model import Project
 
-	if model_name in SD:
-		model = SD[model_name]
-	else:
-		SD[model_name] = load(model_name, models_directory())
-		model = SD[model_name]
-
-	scores = model.predict([features,])
-	return scores[0]
+	return Project.find_by_name(project_name).deployed_model.predict([features,])[0]
 $$ LANGUAGE plpython3u;
