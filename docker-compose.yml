@@ -1,0 +1,16 @@
+version: "3"
+services:
+  postgres:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "5433:5432"
+    volumes:
+      - "pg_data:/var/lib/postgresql"
+    command:
+      - sleep
+      - infinity
+
+volumes:
+  pg_data:
