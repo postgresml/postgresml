@@ -41,7 +41,7 @@ class Project(object):
             FROM pgml.projects 
             WHERE id = {q(id)}
         """, 1)
-        if (len(result) == 0):
+        if len(result) == 0:
             return None
 
         project = Project()
@@ -71,7 +71,7 @@ class Project(object):
             FROM pgml.projects 
             WHERE name = {q(name)}
         """, 1)
-        if (len(result)== 0):
+        if len(result)== 0:
             return None
 
         project = Project()
@@ -203,10 +203,10 @@ class Snapshot(object):
             y.append(y_)
 
         # Split into training and test sets
-        if (self.test_sampling == 'random'):
+        if self.test_sampling == 'random':
             return train_test_split(X, y, test_size=self.test_size, random_state=0)
         else:
-            if (self.test_sampling == 'first'):
+            if self.test_sampling == 'first':
                 X.reverse()
                 y.reverse()
                 if isinstance(split, float):
@@ -273,7 +273,7 @@ class Model(object):
             ORDER by deployments.created_at DESC
             LIMIT 1
         """)
-        if (len(result) == 0):
+        if len(result) == 0:
             return None
 
         model = Model()
