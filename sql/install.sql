@@ -103,15 +103,15 @@ $$ LANGUAGE plpython3u;
 ---
 --- Regression
 ---
-DROP FUNCTION pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT);
+DROP FUNCTION IF EXISTS pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT);
 CREATE OR REPLACE FUNCTION pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT)
-RETURNS TEXT
+RETURNS TABLE(project_name TEXT, objective TEXT, status TEXT)
 AS $$
 	from pgml.model import train
 
 	train(project_name, objective, relation_name, y_column_name)
 
-	return "OK"
+	return [(project_name, objective, "deployed")]
 $$ LANGUAGE plpython3u;
 
 ---

@@ -208,11 +208,11 @@ class Snapshot(object):
 
         # Sanity check the data
         if len(data) == 0:
-            PgMLException(
+            raise PgMLException(
                 f"Relation `{self.relation_name}` contains no rows. Did you pass the correct `relation_name`?"
             )
         if self.y_column_name not in data[0]:
-            PgMLException(
+            raise PgMLException(
                 f"Column `{self.y_column_name}` not found. Did you pass the correct `y_column_name`?"
             )
 
@@ -428,6 +428,10 @@ def train(
         algorithms = ["linear", "random_forest"]
     elif objective == "classification":
         algorithms = ["random_forest"]
+    else:
+        raise PgMLException(
+            f"Unknown objective '{objective}', available options are: regression, classification"
+        )
 
     for algorithm_name in algorithms:
         model = Model.create(project, snapshot, algorithm_name)
