@@ -214,7 +214,8 @@ class Snapshot(object):
             split = self.test_size
             if isinstance(split, float):
                 split = int(self.test_size * X.len())
-            return X[0:split], X[split:X.len()-1], y[0:split], y[split:y.len()-1]
+            return X[:split], X[split:], y[:split], y[split:]
+
 
         # TODO normalize and clean data
 
