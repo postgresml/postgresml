@@ -6,7 +6,7 @@ CREATE EXTENSION IF NOT EXISTS plpython3u;
 ---
 --- Create schema for models.
 ---
-DROP SCHEMA pgml CASCADE;
+-- DROP SCHEMA pgml CASCADE;
 CREATE SCHEMA IF NOT EXISTS pgml;
 
 CREATE OR REPLACE FUNCTION pgml.auto_updated_at(tbl regclass) 
@@ -40,7 +40,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE TABLE pgml.projects(
+CREATE TABLE IF NOT EXISTS pgml.projects(
 	id BIGSERIAL PRIMARY KEY,
 	name TEXT NOT NULL,
 	objective TEXT NOT NULL,
@@ -48,9 +48,9 @@ CREATE TABLE pgml.projects(
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp()
 );
 SELECT pgml.auto_updated_at('pgml.projects');
-CREATE UNIQUE INDEX projects_name_idx ON pgml.projects(name);
+CREATE UNIQUE INDEX IF NOT EXISTS projects_name_idx ON pgml.projects(name);
 
-CREATE TABLE pgml.snapshots(
+CREATE TABLE IF NOT EXISTS pgml.snapshots(
 	id BIGSERIAL PRIMARY KEY,
 	relation_name TEXT NOT NULL,
 	y_column_name TEXT NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE pgml.snapshots(
 );
 SELECT pgml.auto_updated_at('pgml.snapshots');
 
-CREATE TABLE pgml.models(
+CREATE TABLE IF NOT EXISTS pgml.models(
 	id BIGSERIAL PRIMARY KEY,
 	project_id BIGINT NOT NULL,
 	snapshot_id BIGINT NOT NULL,
@@ -76,17 +76,17 @@ CREATE TABLE pgml.models(
 	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
 	CONSTRAINT snapshot_id_fk FOREIGN KEY(snapshot_id) REFERENCES pgml.snapshots(id)
 );
-CREATE INDEX models_project_id_created_at_idx ON pgml.models(project_id, created_at);
+CREATE INDEX IF NOT EXISTS models_project_id_created_at_idx ON pgml.models(project_id, created_at);
 SELECT pgml.auto_updated_at('pgml.models');
 
-CREATE TABLE pgml.deployments(
+CREATE TABLE IF NOT EXISTS pgml.deployments(
 	project_id BIGINT NOT NULL,
 	model_id BIGINT NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
 	CONSTRAINT model_id_fk FOREIGN KEY(model_id) REFERENCES pgml.models(id)
 );
-CREATE INDEX deployments_project_id_created_at_idx ON pgml.deployments(project_id, created_at);
+CREATE INDEX IF NOT EXISTS deployments_project_id_created_at_idx ON pgml.deployments(project_id, created_at);
 SELECT pgml.auto_updated_at('pgml.deployments');
 
 
@@ -103,12 +103,15 @@ $$ LANGUAGE plpython3u;
 ---
 --- Regression
 ---
+DROP FUNCTION pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT);
 CREATE OR REPLACE FUNCTION pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT)
-RETURNS VOID
+RETURNS TEXT
 AS $$
 	from pgml.model import train
 
 	train(project_name, objective, relation_name, y_column_name)
+
+	return "OK"
 $$ LANGUAGE plpython3u;
 
 ---
@@ -121,3 +124,26 @@ AS $$
 
 	return Project.find_by_name(project_name).deployed_model.predict([features,])[0]
 $$ LANGUAGE plpython3u;
+
+---
+--- Quick status check on the system.
+---
+DROP VIEW IF EXISTS pgml.overview;
+CREATE VIEW pgml.overview AS
+SELECT
+	   p.name,
+	   d.created_at AS deployed_at,
+       p.objective,
+       m.algorithm_name,
+       m.mean_squared_error,
+       m.r2_score,
+       s.relation_name,
+       s.y_column_name,
+       s.test_sampling,
+       s.test_size
+FROM pgml.projects p
+INNER JOIN pgml.models m ON p.id = m.project_id
+INNER JOIN pgml.deployments d ON d.project_id = p.id
+AND d.model_id = m.id
+INNER JOIN pgml.snapshots s ON s.id = m.snapshot_id
+ORDER BY d.created_at DESC;

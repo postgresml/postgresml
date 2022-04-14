@@ -79,7 +79,7 @@ class Project(object):
             1,
         )
         if len(result) == 0:
-            return None
+            raise PgMLException(f"Project '{name}' does not exist.")
 
         project = Project()
         project.__dict__ = dict(result[0])
@@ -206,7 +206,6 @@ class Snapshot(object):
         """
         )
 
-        print(data)
         # Sanity check the data
         if len(data) == 0:
             PgMLException(
