@@ -41,7 +41,7 @@ class Project(object):
             FROM pgml.projects 
             WHERE id = {q(id)}
         """, 1)
-        if (result.nrows == 0):
+        if (len(result) == 0):
             return None
 
         project = Project()
@@ -71,7 +71,7 @@ class Project(object):
             FROM pgml.projects 
             WHERE name = {q(name)}
         """, 1)
-        if (result.nrows == 0):
+        if (len(result)== 0):
             return None
 
         project = Project()
@@ -159,7 +159,7 @@ class Snapshot(object):
             SET status = 'created' 
             WHERE id = {q(snapshot.id)} 
             RETURNING *
-        """)[0])
+        """, 1)[0])
         return snapshot
 
     def data(self):
@@ -172,8 +172,9 @@ class Snapshot(object):
             FROM pgml."snapshot_{self.id}"
         """)
 
+        print(data)
         # Sanity check the data
-        if data.nrows == 0:
+        if len(data) == 0:
             PgMLException(
                 f"Relation `{self.relation_name}` contains no rows. Did you pass the correct `relation_name`?"
             )
@@ -272,7 +273,7 @@ class Model(object):
             ORDER by deployments.created_at DESC
             LIMIT 1
         """)
-        if (result.nrows == 0):
+        if (len(result) == 0):
             return None
 
         model = Model()
