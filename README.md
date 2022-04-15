@@ -1,6 +1,99 @@
-## PostgresML
+# PostgresML
 
-PostgresML aims to be the easiest way to gain value from machine learning. Anyone with a basic understanding of SQL should be able to build and deploy models to production, while receiving the benefits of a high performance machine learning platform. PostgresML leverages state of the art algorithms with built in best practices, without having to setup additional infrastructure or learn additional programming languages. 
+PostgresML aims to be the easiest way to gain value from machine learning. Anyone with a basic understanding of SQL should be able to build and deploy models to production, while receiving the benefits of a high performance machine learning platform. PostgresML leverages state of the art algorithms with built in best practices, without having to setup additional infrastructure or learn additional programming languages.
+
+## Installation
+
+### Docker
+
+The quickest way to try this out is with Docker. If you're on Mac, install [Docker for Mac](https://docs.docker.com/desktop/mac/install/); if you're on Linux (e.g. Ubuntu/Debian), you can follow [these instructions](https://docs.docker.com/engine/install/ubuntu/). For Ubuntu, also install `docker-compose`.
+
+Starting up a local system is then as simple as:
+
+```bash
+$ docker-compose up -d
+```
+
+PostgresML will run on port 5433, just in case you already have Postgres running. Then to connect, run:
+
+```bash
+$ psql -h 127.0.0.1 -p 5433 -U root
+```
+
+To validate it works, you can execute this query and you should see this result:
+
+```sql
+SELECT pgml.version();
+
+ version
+---------
+ 0.1
+(1 row)
+```
+
+### Mac OS (native)
+
+If you don't like Docker, a native installation is definitely possible. We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with PL/Python, an extension we rely on, built into the installation. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (python.org).
+Postgres.app relies on the community one. The following are compatible versions of Python and PostgreSQL in Postgres.app:
+
+| **PostgreSQL** | **Python** | **Download link** |
+| 14 | 3.9 | [Python 3.9 64-bit](https://www.python.org/ftp/python/3.9.12/python-3.9.12-macos11.pkg)
+| 13 | 3.8 | [Python 3.8 64-bit](https://www.python.org/ftp/python/3.8.10/python-3.8.10-macos11.pkg)
+
+All Python.org installers for Mac OS are [available here](https://www.python.org/downloads/macos/).
+
+#### Python package
+
+To use our Python package inside Postgres, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step,
+use its correspoding pip executable. Since Python was installed as a framework, sudo (root) is not required.
+
+```bash
+$ pip3.9 install pgml
+```
+
+#### PL/Python functions
+
+Finally to interact with the package, install our functions and supporting tables into PostgreSQL:
+
+```bash
+psql -f sql/install.sql
+```
+
+If everything works, you should be able to run this successfully:
+
+```bash
+psql -c 'SELECT pgml.version()'
+```
+
+### Ubuntu/Debian
+
+Each Ubuntu distribution comes with its own version of PostgreSQL, the simplest way is to install it from Aptitude:
+
+```bash
+$ sudo apt-get install -y postgresql-plpython3-12 python3 python3-pip postgresql-12
+```
+
+Restart PostgreSQL:
+
+```bash
+sudo service postgresql restart
+```
+
+Install our Python package and SQL functions:
+
+```bash
+$ sudo pip3 install pgml
+$ psql -f sql/install.sql
+```
+
+If everything works, you should be able to run this successfully:
+
+```bash
+psql -c 'SELECT pgml.version()'
+```
+
+## Working with PostgresML
+
 
 Getting started is as easy as creating a `table` or `view` that holds the training data, and then registering that with PostgresML. 
 
