@@ -7,6 +7,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pgml
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -19,10 +22,8 @@ jobs:
           pip install build
       - name: Build package
         run: python -m build
-        working-directory: ./pgml
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-        working-directory: ./pgml
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
