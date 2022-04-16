@@ -10,7 +10,7 @@ COPY --chown=postgres:postgres . /app
 WORKDIR /app/pgml
 
 # Install pgml extension globally.
-RUN python3 setup.py install
+RUN pip3 install pgml
 
 # Listen on 0.0.0.0 and allow 'root' to connect without a password.
 # Please modify for production deployments accordingly.

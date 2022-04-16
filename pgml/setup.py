@@ -1,17 +1,18 @@
 import setuptools
+from pgml import version
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="pgml",
-    version="0.1",
+    version=version(),
     author="PostgresML",
     author_email="hello@postgresml.com",
     description="Run machine learning inside Postgres.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/levkk/postgresml",
+    url="https://github.com/postgresml/postgresml",
     install_requires=[
         "sklearn",
     ],
