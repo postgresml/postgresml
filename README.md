@@ -195,69 +195,9 @@ Colocating the compute with the data inside the database removes one of the most
 
 
 
-### Installation in WSL or Ubuntu
+### Development
 
-Install Python3, pip, and Pl/Python3:
-
-```bash
-sudo apt update
-sudo apt install -y postgresql-plpython3-12 python3 python3-pip
-```
-
-Restart the Postgres server:
-
-```bash
-sudo service postgresql restart
-```
-
-Create the extension:
-
-```sql
-CREATE EXTENSION plpython3u;
-```
-
-Install Scikit globally (I didn't bother setup Postgres with a virtualenv, but it's possible):
-
-```
-sudo pip3 install sklearn
-```
-
-### Run the example
-
-```bash
-psql -f scikit_train_and_predict.sql
-```
-
-Example output:
-
-```
-psql:scikit_train_and_predict.sql:4: NOTICE:  drop cascades to view scikit_train_view
-DROP TABLE
-CREATE TABLE
-psql:scikit_train_and_predict.sql:14: NOTICE:  view "scikit_train_view" does not exist, skipping
-DROP VIEW
-CREATE VIEW
-INSERT 0 500
-CREATE FUNCTION
- scikit_learn_train_example
-----------------------------
- OK
-(1 row)
-
-CREATE FUNCTION
- value | weight | prediction
--------+--------+------------
-     1 |      5 |          5
-     2 |      5 |          5
-     3 |      5 |          5
-     4 |      5 |          5
-     5 |      5 |          5
-(5 rows)
-```
-
-### Run the linear model
-
-Install our PgML package globally:
+Follow the installation instructions to create a local working Postgres environment, then install your PgML package from the git repository:
 
 ```
 cd pgml
