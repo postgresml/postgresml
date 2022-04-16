@@ -420,23 +420,43 @@ def train(
         test_size (float or int, optional): If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split. If int, represents the absolute number of test samples. If None, the value is set to the complement of the train size. If train_size is also None, it will be set to 0.25.
         test_sampling: (str, optional): How to sample to create the test data. Defaults to "random". Valid values are ["first", "last", "random"].
     """
-    project = Project.create(project_name, objective)
-    snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
-    best_model = None
-    best_error = None
     if objective == "regression":
         algorithms = ["linear", "random_forest"]
     elif objective == "classification":
         algorithms = ["random_forest"]
     else:
         raise PgMLException(
-            f"Unknown objective '{objective}', available options are: regression, classification"
+            f"Unknown objective `{objective}`, available options are: regression, classification."
         )
+
+    try:
+        project = Project.find_by_name(project_name)
+    except PgMLException:
+        project = Project.create(project_name, objective)
+
+    if project.objective != objective:
+        raise PgMLException(
+            f"Project `{project_name}` already exists with a different objective: `{project.objective}`. Create a new project instead."
+        )
+
+    snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
+    deployed = Model.find_deployed(project.id)
+
+    # Let's assume that the deployed model is better for now.
+    best_model = deployed
+    best_error = best_model.mean_squared_error if best_model else None
 
     for algorithm_name in algorithms:
         model = Model.create(project, snapshot, algorithm_name)
         model.fit(snapshot)
+
+        # Find the better model and deploy that.
         if best_error is None or model.mean_squared_error < best_error:
             best_error = model.mean_squared_error
             best_model = model
-    best_model.deploy()
+
+    if deployed and deployed.id == best_model.id:
+        return "rolled back"
+    else:
+        best_model.deploy()
+        return "deployed"
