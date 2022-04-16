@@ -139,7 +139,7 @@ SELECT pgml.predict('Red Wine Quality', 7.4, 0.66, 1.0, 1.8, 0.075, 17.0, 40.0, 
 PostgresML similarly supports classification to predict discrete classes rather than numeric scores for novel data.
 
 ```sql
-SELECT pgml.train('Handwritten Digit Classifier', pgml.mnist_training_data, label_column_name);
+SELECT pgml.train('Handwritten Digit Classifier', 'classification', pgml.mnist_training_data, label_column_name);
 ```
 
 And predict novel datapoints:
