@@ -37,8 +37,9 @@ If you don't like Docker, a native installation is definitely possible. We recom
 Postgres.app relies on the community one. The following are compatible versions of Python and PostgreSQL in Postgres.app:
 
 | **PostgreSQL** | **Python** | **Download link** |
-| 14 | 3.9 | [Python 3.9 64-bit](https://www.python.org/ftp/python/3.9.12/python-3.9.12-macos11.pkg)
-| 13 | 3.8 | [Python 3.8 64-bit](https://www.python.org/ftp/python/3.8.10/python-3.8.10-macos11.pkg)
+|-------------------------------------------------|
+| 14 | 3.9 | [Python 3.9 64-bit](https://www.python.org/ftp/python/3.9.12/python-3.9.12-macos11.pkg) |
+| 13 | 3.8 | [Python 3.8 64-bit](https://www.python.org/ftp/python/3.8.10/python-3.8.10-macos11.pkg) |
 
 All Python.org installers for Mac OS are [available here](https://www.python.org/downloads/macos/).
 
