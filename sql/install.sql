@@ -109,9 +109,9 @@ RETURNS TABLE(project_name TEXT, objective TEXT, status TEXT)
 AS $$
 	from pgml.model import train
 
-	train(project_name, objective, relation_name, y_column_name)
+	status = train(project_name, objective, relation_name, y_column_name)
 
-	return [(project_name, objective, "deployed")]
+	return [(project_name, objective, status)]
 $$ LANGUAGE plpython3u;
 
 ---

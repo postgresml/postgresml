@@ -440,13 +440,23 @@ def train(
         )
 
     snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
-    best_model = None
-    best_error = None
+    deployed = Model.find_deployed(project.id)
+
+    # Let's assume that the deployed model is better for now.
+    best_model = deployed
+    best_error = best_model.mean_squared_error if best_model else None
 
     for algorithm_name in algorithms:
         model = Model.create(project, snapshot, algorithm_name)
         model.fit(snapshot)
+
+        # Find the better model and deploy that.
         if best_error is None or model.mean_squared_error < best_error:
             best_error = model.mean_squared_error
             best_model = model
-    best_model.deploy()
+
+    if deployed and deployed.id == best_model.id:
+        return "rolled back"
+    else:
+        best_model.deploy()
+        return "deployed"
