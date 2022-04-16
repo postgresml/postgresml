@@ -119,6 +119,10 @@ Training a model is as easy as creating a table or a view that holds the trainin
 
 ```sql
 SELECT * FROM pgml.train('Red Wine Quality', 'regression', 'wine_quality_red', 'quality');
+
+    project_name  | objective  |  status
+---------------------+------------+--------
+ Red Wine Quality | regression | deployed
 ```
 
 The function will snapshot the training data, train the model using multiple algorithms, automatically pick the best one, and make it available for predictions.
