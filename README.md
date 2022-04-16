@@ -118,7 +118,7 @@ $ psql -f data/winequality-red.sql -p 5433 -U root -h 127.0.0.1
 Training a model is as easy as creating a table or a view that holds the training data, and then registering that with PostgresML:
 
 ```sql
-SELECT pgml.train('Red Wine Quality', 'regression', 'red_wine_quality', 'quality');
+SELECT * FROM pgml.train('Red Wine Quality', 'regression', 'wine_quality_red', 'quality');
 ```
 
 The function will snapshot the training data, train the model using multiple algorithms, automatically pick the best one, and make it available for predictions.
@@ -132,7 +132,7 @@ SELECT pgml.predict('Red Wine Quality', 7.4, 0.66, 1.0, 1.8, 0.075, 17.0, 40.0, 
 
  quality 
 ---------
-       8
+    4.19
 (1 row)
 ```
 
