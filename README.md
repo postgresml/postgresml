@@ -59,13 +59,13 @@ $ pip3.9 install pgml
 Finally to interact with the package, install our functions and supporting tables into the database:
 
 ```bash
-psql -f sql/install.sql
+$ psql -f sql/install.sql
 ```
 
 If everything works, you should be able to run this successfully:
 
 ```bash
-psql -c 'SELECT pgml.version()'
+$ psql -c 'SELECT pgml.version()'
 ```
 
 ### Ubuntu/Debian
@@ -79,7 +79,7 @@ $ sudo apt-get install -y postgresql-plpython3-12 python3 python3-pip postgresql
 Restart PostgreSQL:
 
 ```bash
-sudo service postgresql restart
+$ sudo service postgresql restart
 ```
 
 Install our Python package and SQL functions:
@@ -92,7 +92,7 @@ $ psql -f sql/install.sql
 If everything works, you should be able to run this successfully:
 
 ```bash
-psql -c 'SELECT pgml.version()'
+$ psql -c 'SELECT pgml.version()'
 ```
 
 ## Working with PostgresML
@@ -110,7 +110,7 @@ We'll be using the [Red Wine Quality](https://www.kaggle.com/datasets/uciml/red-
 You can import it into PostgresML running in Docker with this:
 
 ```bash
-psql -f data/winequality-red.sql -p 5433 -U root -h 127.0.0.1
+$ psql -f data/winequality-red.sql -p 5433 -U root -h 127.0.0.1
 ```
 
 ### Training a model
