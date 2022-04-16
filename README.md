@@ -6,7 +6,7 @@ PostgresML aims to be the easiest way to gain value from machine learning. Anyon
 
 ### Docker
 
-The quickest way to try this out is with Docker. If you're on Mac, install [Docker for Mac](https://docs.docker.com/desktop/mac/install/); if you're on Linux (e.g. Ubuntu/Debian), you can follow [these instructions](https://docs.docker.com/engine/install/ubuntu/). For Ubuntu, also install `docker-compose`.
+The quickest way to try this out is with Docker. If you're on Mac, install [Docker for Mac](https://docs.docker.com/desktop/mac/install/). If you're on Linux (e.g. Ubuntu/Debian), you can follow [these instructions](https://docs.docker.com/engine/install/ubuntu/). For Ubuntu, also install `docker-compose`. Docker and this image also works on Windows/WSL2.
 
 Starting up a local system is then as simple as:
 
@@ -33,20 +33,22 @@ SELECT pgml.version();
 
 ### Mac OS (native)
 
-If you don't like Docker, a native installation is definitely possible. We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with PL/Python, an extension we rely on, built into the installation. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (python.org).
-Postgres.app relies on the community one. The following are compatible versions of Python and PostgreSQL in Postgres.app:
+If you want want to use Docker, a native installation is available. We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with PL/Python, the extension we rely on, built into the installation. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (Python.org);
+Postgres.app and PL/Python depend on the community one. The following versions of Python and Postgres.app are compatible:
 
 | **PostgreSQL version** | **Python version** | **Download link**                                                                       |
 |------------------------|--------------------|-----------------------------------------------------------------------------------------|
 | 14                     | 3.9                | [Python 3.9 64-bit](https://www.python.org/ftp/python/3.9.12/python-3.9.12-macos11.pkg) |
 | 13                     | 3.8                | [Python 3.8 64-bit](https://www.python.org/ftp/python/3.8.10/python-3.8.10-macos11.pkg) |
 
-All Python.org installers for Mac OS are [available here](https://www.python.org/downloads/macos/).
+All Python.org installers for Mac OS are [available here](https://www.python.org/downloads/macos/). You can also get more details about this in the Postgres.app [documentation](https://postgresapp.com/documentation/plpython.html).
 
 #### Python package
 
 To use our Python package inside Postgres, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step,
 use its correspoding pip executable. Since Python was installed as a framework, sudo (root) is not required.
+
+For PostgreSQL 14, use Python & Pip 3.9:
 
 ```bash
 $ pip3.9 install pgml
@@ -54,7 +56,7 @@ $ pip3.9 install pgml
 
 #### PL/Python functions
 
-Finally to interact with the package, install our functions and supporting tables into PostgreSQL:
+Finally to interact with the package, install our functions and supporting tables into the database:
 
 ```bash
 psql -f sql/install.sql
@@ -68,7 +70,7 @@ psql -c 'SELECT pgml.version()'
 
 ### Ubuntu/Debian
 
-Each Ubuntu distribution comes with its own version of PostgreSQL, the simplest way is to install it from Aptitude:
+Each Ubuntu/Debian distribution comes with its own version of PostgreSQL, the simplest way is to install it from Aptitude:
 
 ```bash
 $ sudo apt-get install -y postgresql-plpython3-12 python3 python3-pip postgresql-12
@@ -95,32 +97,49 @@ psql -c 'SELECT pgml.version()'
 
 ## Working with PostgresML
 
+The two most important functions the framework provides are:
 
-Getting started is as easy as creating a `table` or `view` that holds the training data, and then registering that with PostgresML. 
+1. `pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT)`,
+2. `pgml.predict(project_name TEXT, features VARIADIC DOUBLE PRECIISION)`.
 
-```sql
-SELECT pgml.model_regression('Red Wine Quality', training_data_table_or_view_name, label_column_name);
+The first function trains a model, given a human-friendly project name, a `regression` or `classification` objective, a table or view name which contains the training and testing datasets,
+and the name of the `y` column containing the target values. The second function predicts novel datapoints, given the project name for an exiting model trained with `pgml.train`,
+and a list of features used to train that model.
+
+We'll be using the [Red Wine Quality](https://www.kaggle.com/datasets/uciml/red-wine-quality-cortez-et-al-2009) dataset from Kaggle for this example. You can find it in the `data` folder in this repository.
+You can import it into PostgresML running in Docker with this:
+
+```bash
+psql -f data/winequality-red.sql -p 5433 -U root -h 127.0.0.1
 ```
 
-And predict novel datapoints:
+### Training a model
+
+Training a model is as easy as creating a table or a view that holds the training data, and then registering that with PostgresML:
 
 ```sql
-SELECT pgml.predict('Red Wine Quality', red_wines.*)
-FROM pgml.red_wines
-LIMIT 3;
+SELECT pgml.train('Red Wine Quality', 'regression', 'red_wine_quality', 'quality');
+```
+
+The function will snapshot the training data, train the model using multiple algorithms, automatically pick the best one, and make it available for predictions.
+
+### Predictions
+
+Predicting novel datapoints is as simple as:
+
+```sql
+SELECT pgml.predict('Red Wine Quality', 7.4, 0.66, 1.0, 1.8, 0.075, 17.0, 40.0, 0.9978, 3.58, 0.56, 9.4) AS quality;
 
  quality 
 ---------
- 0.896432
- 0.834822
- 0.954502
-(3 rows)
+       8
+(1 row)
 ```
 
 PostgresML similarly supports classification to predict discrete classes rather than numeric scores for novel data.
 
 ```sql
-SELECT pgml.create_classification('Handwritten Digit Classifier', pgml.mnist_training_data, label_column_name);
+SELECT pgml.train('Handwritten Digit Classifier', pgml.mnist_training_data, label_column_name);
 ```
 
 And predict novel datapoints:
