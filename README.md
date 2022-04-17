@@ -1,6 +1,6 @@
 # PostgresML
 
-![PostgresML](./logo.png)
+![PostgresML](./logo-small.png)
 
 PostgresML is a Proof of Concept to create the simplest end-to-end machine learning system. We're building on the shoulders of giants, namely Postgres which is arguably the most robust storage and compute engine that exists, and we're coupling that with Python machine learning libraries (and their c implementations) to prototype different machine learning workflows.
 
