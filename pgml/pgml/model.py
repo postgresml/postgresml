@@ -1,14 +1,23 @@
+from re import M
 import plpy
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.svm import SVR, SVC
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, f1_score, precision_score, recall_score
 
 import pickle
+import json
 
 from pgml.exceptions import PgMLException
 from pgml.sql import q
 
+def flatten(S):
+    if S == []:
+        return S
+    if isinstance(S[0], list):
+        return flatten(S[0]) + flatten(S[1:])
+    return S[:1] + flatten(S[1:])
 
 class Project(object):
     """
@@ -124,6 +133,14 @@ class Project(object):
             self._deployed_model = Model.find_deployed(self.id)
         return self._deployed_model
 
+    def deploy(self, algorithm_name):
+        model = None
+        if algorithm_name == "best_fit":
+            model = Model.find_by_project_and_best_fit(self)
+        else:
+            model = Model.find_by_project_id_and_algorithm_name(self.id, algorithm_name)
+        model.deploy()
+        return model
 
 class Snapshot(object):
     """
@@ -178,7 +195,7 @@ class Snapshot(object):
         plpy.execute(
             f"""
             CREATE TABLE pgml."snapshot_{snapshot.id}" AS 
-            SELECT * FROM "{snapshot.relation_name}";
+            SELECT * FROM {snapshot.relation_name};
         """
         )
         snapshot.__dict__ = dict(
@@ -232,6 +249,7 @@ class Snapshot(object):
             for column in columns:
                 x_.append(row[column])
 
+            x_ = flatten(x_) # TODO be smart about flattening X depending on algorithm
             X.append(x_)
             y.append(y_)
 
@@ -262,8 +280,7 @@ class Model(object):
         status (str): The current status of the model, e.g. 'new', 'training' or 'successful'
         created_at (Timestamp): when this model was created
         updated_at (Timestamp): when this model was last updated
-        mean_squared_error (float):
-        r2_score (float):
+        metrics (dict): key performance indicators for the model
         pickle (bytes): the serialized version of the model parameters
         algorithm: the in memory version of the model parameters that can make predictions
     """
@@ -320,6 +337,63 @@ class Model(object):
         model.__init__()
         return model
 
+    @classmethod
+    def find_by_project_id_and_algorithm_name(cls, project_id: int, algorithm_name: str):
+        """
+        Args:
+            project_id (int): The project id
+            algorithm_name (str): The algorithm
+        Returns:
+            Model: most recently created model that fits the criteria
+        """
+        result = plpy.execute(
+            f"""
+            SELECT models.* 
+            FROM pgml.models 
+            WHERE algorithm_name = {q(algorithm_name)}
+                AND project_id = {q(project_id)}
+            ORDER by models.created_at DESC
+            LIMIT 1
+        """
+        )
+        if len(result) == 0:
+            return None
+
+        model = Model()
+        model.__dict__ = dict(result[0])
+        model.__init__()
+        return model
+
+    @classmethod
+    def find_by_project_and_best_fit(cls, project: Project):
+        """
+        Args:
+            project (Project): The project
+        Returns:
+            Model: the model with the best metrics for the project
+        """
+        if project.objective == "regression":
+            metric = "mean_squared_error"
+        elif project.objective == "classification":
+            metric = "f1"
+        
+        result = plpy.execute(
+            f"""
+            SELECT models.* 
+            FROM pgml.models 
+            WHERE project_id = {q(project.id)}
+            ORDER by models.metrics->>{q(metric)} DESC
+            LIMIT 1
+        """
+        )
+        if len(result) == 0:
+            return None
+
+        model = Model()
+        model.__dict__ = dict(result[0])
+        model.__init__()
+        return model
+
     def __init__(self):
         self._algorithm = None
         self._project = None
@@ -342,8 +416,13 @@ class Model(object):
             else:
                 self._algorithm = {
                     "linear_regression": LinearRegression,
+                    "linear_classification": LogisticRegression,
+                    "svm_regression": SVR,
+                    "svm_classification": SVC,
                     "random_forest_regression": RandomForestRegressor,
                     "random_forest_classification": RandomForestClassifier,
+                    "gradient_boosting_trees_regression": GradientBoostingRegressor,
+                    "gradient_boosting_trees_classification": GradientBoostingClassifier,
                 }[self.algorithm_name + "_" + self.project.objective]()
 
         return self._algorithm
@@ -362,8 +441,14 @@ class Model(object):
 
         # Test
         y_pred = self.algorithm.predict(X_test)
-        msq = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
+        metrics = {}
+        if self.project.objective == "regression":
+            metrics["mean_squared_error"] = mean_squared_error(y_test, y_pred)
+            metrics["r2"] = r2_score(y_test, y_pred)
+        elif self.project.objective == "classification":
+            metrics["f1"] = f1_score(y_test, y_pred, average="weighted")
+            metrics["precision"] = precision_score(y_test, y_pred, average="weighted")
+            metrics["recall"] = recall_score(y_test, y_pred, average="weighted")
 
         # Save the model
         self.__dict__ = dict(
@@ -372,8 +457,7 @@ class Model(object):
             UPDATE pgml.models
             SET pickle = '\\x{pickle.dumps(self.algorithm).hex()}',
                 status = 'successful',
-                mean_squared_error = {q(msq)},
-                r2_score = {q(r2)}
+                metrics = {q(json.dumps(metrics))}
             WHERE id = {q(self.id)}
             RETURNING *
         """
@@ -398,6 +482,7 @@ class Model(object):
         Returns:
             float or int: scores for regressions or ints for classifications
         """
+        # TODO: add metrics for tracking prediction volume/accuracy by model
         return self.algorithm.predict(data)
 
 
@@ -406,6 +491,7 @@ def train(
     objective: str,
     relation_name: str,
     y_column_name: str,
+    algorithm_name: str = "linear",
     test_size: float or int = 0.1,
     test_sampling: str = "random",
 ):
@@ -416,15 +502,14 @@ def train(
         objective (str): Defaults to "regression". Valid values are ["regression", "classification"].
         relation_name (str): the table or view that stores the training data
         y_column_name (str): the column in the training data that acts as the label
-        algorithm (str, optional): the algorithm used to implement the objective. Defaults to "linear". Valid values are ["linear", "random_forest"].
+        algorithm_name (str, optional): the algorithm used to implement the objective. Defaults to "linear". Valid values are ["linear", "svm", "random_forest", "gradient_boosting"].
         test_size (float or int, optional): If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split. If int, represents the absolute number of test samples. If None, the value is set to the complement of the train size. If train_size is also None, it will be set to 0.25.
         test_sampling: (str, optional): How to sample to create the test data. Defaults to "random". Valid values are ["first", "last", "random"].
     """
-    if objective == "regression":
-        algorithms = ["linear", "random_forest"]
-    elif objective == "classification":
-        algorithms = ["random_forest"]
-    else:
+    if algorithm_name is None:
+        algorithm_name = "linear"
+    
+    if objective not in ["regression", "classification"]:
         raise PgMLException(
             f"Unknown objective `{objective}`, available options are: regression, classification."
         )
@@ -440,23 +525,11 @@ def train(
         )
 
     snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
-    deployed = Model.find_deployed(project.id)
+    model = Model.create(project, snapshot, algorithm_name)
+    model.fit(snapshot)
 
-    # Let's assume that the deployed model is better for now.
-    best_model = deployed
-    best_error = best_model.mean_squared_error if best_model else None
-
-    for algorithm_name in algorithms:
-        model = Model.create(project, snapshot, algorithm_name)
-        model.fit(snapshot)
-
-        # Find the better model and deploy that.
-        if best_error is None or model.mean_squared_error < best_error:
-            best_error = model.mean_squared_error
-            best_model = model
-
-    if deployed and deployed.id == best_model.id:
-        return "rolled back"
-    else:
-        best_model.deploy()
+    if project.deployed_model is None:
+        model.deploy()
         return "deployed"
+    else:
+        return "not deployed"
