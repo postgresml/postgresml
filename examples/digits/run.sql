@@ -2,6 +2,9 @@
 -- which is a copy of the test set of the UCI ML hand-written digits datasets
 -- https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
 --
+-- This demonstrates using a table with a single array feature column
+-- for classification.
+--
 -- The final result after a few seconds of training is not terrible. Maybe not perfect
 -- enough for mission critical applications, but it's telling how quickly "off the shelf" 
 -- solutions can solve problems these days.

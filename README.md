@@ -211,4 +211,9 @@ Run the test:
 psql -f sql/test.sql
 ```
 
+One liner:
+```
+cd pgml; sudo python3 setup.py install; cd ../; sudo -u postgres psql -f sql/test.sql
+```
+
 Make sure to run it exactly like this, from the root directory of the repo.
