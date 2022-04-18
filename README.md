@@ -49,41 +49,41 @@ Algorithm | Regression | Classification
 `ridge` |  [Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html) | [RidgeClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeClassifier.html)
 `lasso` |  [Lasso](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lasso.html) | -
 `elastic_net` | [ElasticNet](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html) | -
-`least_angle` | [LARS](https://scikit-learn.org/stable/modules/linear_model.LARS.html) | -
-`lasso_least_angle` | [LassoLars](https://scikit-learn.org/stable/modules/linear_model.LassoLars.html) | -
-`orthoganl_matching_pursuit` | [OrthogonalMatchingPursuit](https://scikit-learn.org/stable/modules/linear_model.OrthogonalMatchingPursuit.html) | -
-`bayesian_ridge` | [BayesianRidge](https://scikit-learn.org/stable/modules/linear_model.BayesianRidge.html) | -
-`automatic_relevance_determination` | [ARDRegression](https://scikit-learn.org/stable/modules/linear_model.ARDRegression.html) | -
-`stochastic_gradient_descent` | [SGDRegressor](https://scikit-learn.org/stable/modules/linear_model.SGDRegressor.html) | [SGDClassifier](https://scikit-learn.org/stable/modules/linear_model.SGDClassifier.html) 
-`perceptron` | - | [Perceptron](https://scikit-learn.org/stable/modules/linear_model.Perceptron.html) 
-`passive_aggressive` | [PassiveAggressiveRegressor](https://scikit-learn.org/stable/modules/linear_model.PassiveAggressiveRegressor.html) | [PassiveAggressiveClassifier](https://scikit-learn.org/stable/modules/linear_model.PassiveAggressiveClassifier.html) 
-`ransac` | [RANSACRegressor](https://scikit-learn.org/stable/modules/linear_model.RANSACRegressor.html) | -
-`theil_sen` | [TheilSenRegressor](https://scikit-learn.org/stable/modules/linear_model.TheilSenRegressor.html) | -
-`huber` | [HuberRegressor](https://scikit-learn.org/stable/modules/linear_model.HuberRegressor.html) | -
-`quantile` | [QuantileRegressor](https://scikit-learn.org/stable/modules/linear_model.QuantileRegressor.html) | -
+`least_angle` | [LARS](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lars.html) | -
+`lasso_least_angle` | [LassoLars](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LassoLars.html) | -
+`orthoganl_matching_pursuit` | [OrthogonalMatchingPursuit](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.OrthogonalMatchingPursuit.html) | -
+`bayesian_ridge` | [BayesianRidge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.BayesianRidge.html) | -
+`automatic_relevance_determination` | [ARDRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ARDRegression.html) | -
+`stochastic_gradient_descent` | [SGDRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDRegressor.html) | [SGDClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDClassifier.html) 
+`perceptron` | - | [Perceptron](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Perceptron.html) 
+`passive_aggressive` | [PassiveAggressiveRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.PassiveAggressiveRegressor.html) | [PassiveAggressiveClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.PassiveAggressiveClassifier.html) 
+`ransac` | [RANSACRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RANSACRegressor.html) | -
+`theil_sen` | [TheilSenRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.TheilSenRegressor.html) | -
+`huber` | [HuberRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.HuberRegressor.html) | -
+`quantile` | [QuantileRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.QuantileRegressor.html) | -
 
 #### Support Vector Machines
 Algorithm | Regression | Classification
 --- | --- | ---
-`svm` | [SVR](https://scikit-learn.org/stable/modules/svm.SVR.html) | [SVC](https://scikit-learn.org/stable/modules/svm.SVC.html)
-`nu_svm` | [NuSVR](https://scikit-learn.org/stable/modules/svm.NuSVR.html) | [NuSVC](https://scikit-learn.org/stable/modules/svm.NuSVC.html)
-`linear_svm` | [LinearSVR](https://scikit-learn.org/stable/modules/svm.LinearSVR.html) | [LinearSVC](https://scikit-learn.org/stable/modules/svm.LinearSVC.html)
+`svm` | [SVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html) | [SVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html)
+`nu_svm` | [NuSVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.NuSVR.html) | [NuSVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.NuSVC.html)
+`linear_svm` | [LinearSVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVR.html) | [LinearSVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html)
 
 #### Ensembles
 Algorithm | Regression | Classification
 --- | --- | ---
-`ada_boost` | [AdaBoostRegressor](https://scikit-learn.org/stable/modules/ensembles.AdaBoostRegressor.html) | [AdaBoostClassifier](https://scikit-learn.org/stable/modules/ensembles.AdaBoostClassifier.html)
-`bagging` | [BaggingRegressor](https://scikit-learn.org/stable/modules/ensembles.BaggingRegressor.html) | [BaggingClassifier](https://scikit-learn.org/stable/modules/ensembles.BaggingClassifier.html)
-`extra_trees` | [ExtraTreesRegressor](https://scikit-learn.org/stable/modules/ensembles.ExtraTreesRegressor.html) | [ExtraTreesClassifier](https://scikit-learn.org/stable/modules/ensembles.ExtraTreesClassifier.html)
-`gradient_boosting_trees` | [GradientBoostingRegressor](https://scikit-learn.org/stable/modules/ensembles.GradientBoostingRegressor.html) | [GradientBoostingClassifier](https://scikit-learn.org/stable/modules/ensembles.GradientBoostingClassifier.html)
-`random_forest` | [RandomForestRegressor](https://scikit-learn.org/stable/modules/ensembles.RandomForestRegressor.html) | [RandomForestClassifier](https://scikit-learn.org/stable/modules/ensembles.RandomForestClassifier.html)
-`hist_gradient_boosting` | [HistGradientBoostingRegressor](https://scikit-learn.org/stable/modules/ensembles.HistGradientBoostingRegressor.html) | [HistGradientBoostingClassifier](https://scikit-learn.org/stable/modules/ensembles.HistGradientBoostingClassifier.html)
+`ada_boost` | [AdaBoostRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostRegressor.html) | [AdaBoostClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html)
+`bagging` | [BaggingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.BaggingRegressor.html) | [BaggingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.BaggingClassifier.html)
+`extra_trees` | [ExtraTreesRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html) | [ExtraTreesClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html)
+`gradient_boosting_trees` | [GradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html) | [GradientBoostingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html)
+`random_forest` | [RandomForestRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html) | [RandomForestClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)
+`hist_gradient_boosting` | [HistGradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html) | [HistGradientBoostingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingClassifier.html)
 
 #### Other
 Algorithm | Regression | Classification
 --- | --- | ---
-`kernel_ridge` | [KernelRidge](https://scikit-learn.org/stable/modules/kernel_ridge.KernelRidge.html) | -
-`gaussian_process` | [GaussianProcessRegressor](https://scikit-learn.org/stable/modules/gaussian_process.GaussianProcessRegressor.html) | [GaussianProcessClassifier](https://scikit-learn.org/stable/modules/gaussian_process.GaussianProcessClassifier.html)
+`kernel_ridge` | [KernelRidge](https://scikit-learn.org/stable/modules/generated/sklearn.kernel_ridge.KernelRidge.html) | -
+`gaussian_process` | [GaussianProcessRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html) | [GaussianProcessClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessClassifier.html)
 
 
 Training a model is then as simple as:
