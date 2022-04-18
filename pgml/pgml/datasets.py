@@ -14,7 +14,7 @@ def load(source: str):
     elif source == "california_housing":
         load_california_housing()
     else:
-        raise PgMLException(f"Invalid dataset name: {source}. Valid values are ['digits'].")
+        raise PgMLException(f"Invalid dataset name: {source}. Valid values are {{'diabetes', 'digits', 'iris', 'california_housing'}}.")
     return "OK"
 
 def load_diabetes():
