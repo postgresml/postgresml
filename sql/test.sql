@@ -8,7 +8,7 @@ SELECT pgml.version();
 
 \timing
 
-SELECT pgml.train('Red Wine Scores', 'regression', 'wine_quality_red', 'quality');
+SELECT * FROM pgml.train('Red Wine Scores', 'regression', 'wine_quality_red', 'quality');
 SELECT pgml.predict('Red Wine Scores', '{7.4, 0.7, 0, 1.9, 0.076, 11, 34, 0.99, 2, 0.5, 9.4}');
 SELECT pgml.predict('Red Wine Scores', '{6.4, 0.7, 0, 1.9, 0.076, 11, 34, 0.99, 2, 0.5, 9.4}');
 SELECT pgml.predict('Red Wine Scores', '{5.4, 0.7, 0, 1.9, 0.076, 11, 34, 0.99, 2, 0.5, 9.4}');
