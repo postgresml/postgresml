@@ -80,6 +80,8 @@ Algorithm | Regression | Classification
 `hist_gradient_boosting` | [HistGradientBoostingRegressor](https://scikit-learn.org/stable/modules/ensembles.HistGradientBoostingRegressor.html) | [HistGradientBoostingClassifier](https://scikit-learn.org/stable/modules/ensembles.HistGradientBoostingClassifier.html)
 
 #### Other
+Algorithm | Regression | Classification
+--- | --- | ---
 `kernel_ridge` | [KernelRidge](https://scikit-learn.org/stable/modules/kernel_ridge.KernelRidge.html) | -
 `gaussian_process` | [GaussianProcessRegressor](https://scikit-learn.org/stable/modules/gaussian_process.GaussianProcessRegressor.html) | [GaussianProcessClassifier](https://scikit-learn.org/stable/modules/gaussian_process.GaussianProcessClassifier.html)
 
