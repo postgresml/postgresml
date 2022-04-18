@@ -11,7 +11,7 @@
 SELECT pgml.load_dataset('digits');
 
 -- view the dataset
-SELECT * from pgml.digits;
+SELECT left(image::text, 40) || ',...}', target FROM pgml.digits LIMIT 10;
 
 -- train a simple model to classify the data
 SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target');
@@ -21,18 +21,32 @@ SELECT target, pgml.predict('Handwritten Digit Image Classifier', image) AS pred
 FROM pgml.digits 
 LIMIT 10;
 
--- -- train some more models with different algorithms
+-- linear models
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'ridge');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'stochastic_gradient_descent');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'perceptron');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'passive_aggressive');
+-- support vector machines
 SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'svm');
-SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'random_forest');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'nu_svm');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'linear_svm');
+-- ensembles
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'ada_boost');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'bagging');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'extra_trees');
 SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gradient_boosting_trees');
--- TODO SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'dense_neural_network');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'hist_gradient_boosting');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'random_forest');
+-- other
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gaussian_process');
+
 -- -- check out all that hard work
-SELECT * FROM pgml.trained_models;
+SELECT * FROM pgml.trained_models ORDER BY created_at DESC LIMIT 5;
 
 -- deploy the random_forest model for prediction use
 SELECT pgml.deploy('Handwritten Digit Image Classifier', 'random_forest');
 -- check out that throughput
-SELECT * FROM pgml.deployed_models;
+SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
 -- do some hyper param tuning
 -- TODO SELECT pgml.hypertune(100, 'Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gradient_boosted_trees');

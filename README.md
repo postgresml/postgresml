@@ -42,23 +42,56 @@ See [installation instructions](#Installation) for installing PostgresML in diff
 
 Given a Postgres table or a view, PostgresML can train a model using some commonly used algorithms. We currently support the following Scikit-Learn regression and classification models:
 
-- `LinearRegression`,
-- `LogisticRegression`,
-- `SVR`,
-- `SVC`,
-- `RandomForestRegressor`,
-- `RandomForestClassifier`,
-- `GradientBoostingRegressor`,
-- `GradientBoostingClassifier`.
+#### Linear Models
+Algorithm | Regression | Classification
+--- | --- | ---
+`linear` | [LinearRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html) | [LogisticRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+`ridge` |  [Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html) | [RidgeClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeClassifier.html)
+`lasso` |  [Lasso](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lasso.html) | -
+`elastic_net` | [ElasticNet](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html) | -
+`least_angle` | [LARS](https://scikit-learn.org/stable/modules/linear_model.LARS.html) | -
+`lasso_least_angle` | [LassoLars](https://scikit-learn.org/stable/modules/linear_model.LassoLars.html) | -
+`orthoganl_matching_pursuit` | [OrthogonalMatchingPursuit](https://scikit-learn.org/stable/modules/linear_model.OrthogonalMatchingPursuit.html) | -
+`bayesian_ridge` | [BayesianRidge](https://scikit-learn.org/stable/modules/linear_model.BayesianRidge.html) | -
+`automatic_relevance_determination` | [ARDRegression](https://scikit-learn.org/stable/modules/linear_model.ARDRegression.html) | -
+`stochastic_gradient_descent` | [SGDRegressor](https://scikit-learn.org/stable/modules/linear_model.SGDRegressor.html) | [SGDClassifier](https://scikit-learn.org/stable/modules/linear_model.SGDClassifier.html) 
+`perceptron` | - | [Perceptron](https://scikit-learn.org/stable/modules/linear_model.Perceptron.html) 
+`passive_aggressive` | [PassiveAggressiveRegressor](https://scikit-learn.org/stable/modules/linear_model.PassiveAggressiveRegressor.html) | [PassiveAggressiveClassifier](https://scikit-learn.org/stable/modules/linear_model.PassiveAggressiveClassifier.html) 
+`ransac` | [RANSACRegressor](https://scikit-learn.org/stable/modules/linear_model.RANSACRegressor.html) | -
+`theil_sen` | [TheilSenRegressor](https://scikit-learn.org/stable/modules/linear_model.TheilSenRegressor.html) | -
+`huber` | [HuberRegressor](https://scikit-learn.org/stable/modules/linear_model.HuberRegressor.html) | -
+`quantile` | [QuantileRegressor](https://scikit-learn.org/stable/modules/linear_model.QuantileRegressor.html) | -
+
+#### Support Vector Machines
+Algorithm | Regression | Classification
+--- | --- | ---
+`svm` | [SVR](https://scikit-learn.org/stable/modules/svm.SVR.html) | [SVC](https://scikit-learn.org/stable/modules/svm.SVC.html)
+`nu_svm` | [NuSVR](https://scikit-learn.org/stable/modules/svm.NuSVR.html) | [NuSVC](https://scikit-learn.org/stable/modules/svm.NuSVC.html)
+`linear_svm` | [LinearSVR](https://scikit-learn.org/stable/modules/svm.LinearSVR.html) | [LinearSVC](https://scikit-learn.org/stable/modules/svm.LinearSVC.html)
+
+#### Ensembles
+Algorithm | Regression | Classification
+--- | --- | ---
+`ada_boost` | [AdaBoostRegressor](https://scikit-learn.org/stable/modules/ensembles.AdaBoostRegressor.html) | [AdaBoostClassifier](https://scikit-learn.org/stable/modules/ensembles.AdaBoostClassifier.html)
+`bagging` | [BaggingRegressor](https://scikit-learn.org/stable/modules/ensembles.BaggingRegressor.html) | [BaggingClassifier](https://scikit-learn.org/stable/modules/ensembles.BaggingClassifier.html)
+`extra_trees` | [ExtraTreesRegressor](https://scikit-learn.org/stable/modules/ensembles.ExtraTreesRegressor.html) | [ExtraTreesClassifier](https://scikit-learn.org/stable/modules/ensembles.ExtraTreesClassifier.html)
+`gradient_boosting_trees` | [GradientBoostingRegressor](https://scikit-learn.org/stable/modules/ensembles.GradientBoostingRegressor.html) | [GradientBoostingClassifier](https://scikit-learn.org/stable/modules/ensembles.GradientBoostingClassifier.html)
+`random_forest` | [RandomForestRegressor](https://scikit-learn.org/stable/modules/ensembles.RandomForestRegressor.html) | [RandomForestClassifier](https://scikit-learn.org/stable/modules/ensembles.RandomForestClassifier.html)
+`hist_gradient_boosting` | [HistGradientBoostingRegressor](https://scikit-learn.org/stable/modules/ensembles.HistGradientBoostingRegressor.html) | [HistGradientBoostingClassifier](https://scikit-learn.org/stable/modules/ensembles.HistGradientBoostingClassifier.html)
+
+#### Other
+`kernel_ridge` | [KernelRidge](https://scikit-learn.org/stable/modules/kernel_ridge.KernelRidge.html) | -
+`gaussian_process` | [GaussianProcessRegressor](https://scikit-learn.org/stable/modules/gaussian_process.GaussianProcessRegressor.html) | [GaussianProcessClassifier](https://scikit-learn.org/stable/modules/gaussian_process.GaussianProcessClassifier.html)
+
 
 Training a model is then as simple as:
 
 ```sql
 SELECT * FROM pgml.train(
-     'Human-friendly project name',
-     'regression', 
-     '<name of the table or view containing the data>',
-     '<name of the column containing the y target values>'
+    'Human-friendly project name',
+    'regression', 
+    '<name of the table or view containing the data>',
+    '<name of the column containing the y target values>'
 );
 ```
 
@@ -313,12 +346,12 @@ cd ../
 Run the tests from the root of the repo:
 
 ```
-psql -f sql/test.sql
+ON_ERROR_STOP=1 psql -f sql/test.sql
 ```
 
 One liner:
 ```
-cd pgml; sudo python3 setup.py install; cd ../; sudo -u postgres psql -f sql/test.sql
+cd pgml; sudo python3 setup.py install; cd ../; ON_ERROR_STOP=1 sudo -u postgres psql -f sql/test.sql
 ```
 
 Make sure to run it exactly like this, from the root directory of the repo.
