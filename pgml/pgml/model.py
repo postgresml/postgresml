@@ -50,10 +50,10 @@ class Project(object):
         """
         result = plpy.execute(
             f"""
-            SELECT * 
-            FROM pgml.projects 
-            WHERE id = {q(id)}
-        """,
+                SELECT * 
+                FROM pgml.projects 
+                WHERE id = {q(id)}
+            """,
             1,
         )
         if len(result) == 0:
@@ -83,10 +83,10 @@ class Project(object):
 
         result = plpy.execute(
             f"""
-            SELECT * 
-            FROM pgml.projects 
-            WHERE name = {q(name)}
-        """,
+                SELECT * 
+                FROM pgml.projects 
+                WHERE name = {q(name)}
+            """,
             1,
         )
         if len(result) == 0:
@@ -114,10 +114,10 @@ class Project(object):
         project.__dict__ = dict(
             plpy.execute(
                 f"""
-            INSERT INTO pgml.projects (name, objective) 
-            VALUES ({q(name)}, {q(objective)}) 
-            RETURNING *
-        """,
+                    INSERT INTO pgml.projects (name, objective) 
+                    VALUES ({q(name)}, {q(objective)}) 
+                    RETURNING *
+                """,
                 1,
             )[0]
         )
@@ -288,7 +288,7 @@ class Model(object):
     """
 
     @classmethod
-    def create(cls, project: Project, snapshot: Snapshot, algorithm_name: str):
+    def create(cls, project: Project, snapshot: Snapshot, algorithm_name: str, hyperparams: dict):
         """
         Create a Model and save it to the database.
 
@@ -301,8 +301,8 @@ class Model(object):
         """
         result = plpy.execute(
             f"""
-            INSERT INTO pgml.models (project_id, snapshot_id, algorithm_name, status) 
-            VALUES ({q(project.id)}, {q(snapshot.id)}, {q(algorithm_name)}, 'new') 
+            INSERT INTO pgml.models (project_id, snapshot_id, algorithm_name, hyperparams, status) 
+            VALUES ({q(project.id)}, {q(snapshot.id)}, {q(algorithm_name)}, {q(json.dumps(hyperparams))}, 'new') 
             RETURNING *
         """
         )
@@ -399,6 +399,8 @@ class Model(object):
     def __init__(self):
         self._algorithm = None
         self._project = None
+        if "hyperparams" in self.__dict__ and type(self.hyperparams) is str:
+            self.hyperparams = json.loads(self.hyperparams)
         if "metrics" in self.__dict__ and type(self.metrics) is str:
             self.metrics = json.loads(self.metrics)
 
@@ -460,7 +462,7 @@ class Model(object):
                     "hist_gradient_boosting_classification": sklearn.ensemble.HistGradientBoostingClassifier,
                     "random_forest_regression": sklearn.ensemble.RandomForestRegressor,
                     "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
-                }[self.algorithm_name + "_" + self.project.objective]()
+                }[self.algorithm_name + "_" + self.project.objective](**self.hyperparams)
 
         return self._algorithm
 
@@ -531,6 +533,7 @@ def train(
     relation_name: str,
     y_column_name: str,
     algorithm_name: str = "linear",
+    hyperparams: dict = {},
     test_size: float or int = 0.1,
     test_sampling: str = "random",
 ):
@@ -564,7 +567,7 @@ def train(
         )
 
     snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
-    model = Model.create(project, snapshot, algorithm_name)
+    model = Model.create(project, snapshot, algorithm_name, hyperparams)
     model.fit(snapshot)
 
     if project.deployed_model is None or (

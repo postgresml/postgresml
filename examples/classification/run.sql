@@ -33,15 +33,20 @@ SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.
 -- ensembles
 SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'ada_boost');
 SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'bagging');
-SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'extra_trees');
-SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gradient_boosting_trees');
-SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'hist_gradient_boosting');
-SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'random_forest');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'extra_trees', '{"n_estimators": 10}');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gradient_boosting_trees', '{"n_estimators": 10}');
+-- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
+-- SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'hist_gradient_boosting', '{"max_iter": 2}');
+SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'random_forest', '{"n_estimators": 10}');
 -- other
-SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gaussian_process');
+-- Gaussian Process is too expensive for normal tests on even a toy dataset
+-- SELECT pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gaussian_process', '{"max_iter_predict": 100, "warm_start": true}');
+
 
 -- -- check out all that hard work
-SELECT * FROM pgml.trained_models ORDER BY created_at DESC LIMIT 5;
+SELECT trained_models.* FROM pgml.trained_models 
+JOIN pgml.models on models.id = trained_models.id
+ORDER BY models.metrics->>'f1' DESC LIMIT 5;
 
 -- deploy the random_forest model for prediction use
 SELECT pgml.deploy('Handwritten Digit Image Classifier', 'random_forest');

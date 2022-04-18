@@ -5,7 +5,7 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  red-wine-quality:
+  test:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
@@ -16,11 +16,11 @@ jobs:
       - checkout
       - run:
           name: "Train and predict"
-          command: "bash docker/entrypoint.sh psql -U root -p 5432 -h 127.0.0.1 -f sql/test.sql"
+          command: "bash docker/entrypoint.sh psql -U root -p 5432 -h 127.0.0.1 -f sql/test.sql -P pager"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   end-to-end-tests:
     jobs:
-      - red-wine-quality
+      - test
