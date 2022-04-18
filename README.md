@@ -2,7 +2,7 @@
 
 ![PostgresML](./logo-small.png)
 
-[![CircleCI](https://circleci.com/gh/postgresml/postgresml/tree/master.svg?style=svg)](https://circleci.com/gh/postgresml/postgresml/tree/master)
+[![CircleCI](https://circleci.com/gh/postgresml/postgresml/tree/master.svg?style=shield)](https://circleci.com/gh/postgresml/postgresml/tree/master)
 
 PostgresML is an end-to-end machine learning system. Using only SQL, it allows to train models and run online predictions, alongside normal queries, directly using the data in your databases.
 
