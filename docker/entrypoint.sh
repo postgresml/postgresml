@@ -9,6 +9,9 @@ sudo -u postgres createuser root --superuser 2> /dev/null
 sudo -u postgres createdb root 2> /dev/null
 
 echo "Installing pgml extension..."
+cd pgml/ > /dev/null
+pip install . > /dev/null
+cd ../ > /dev/null
 psql -q -f sql/install.sql > /dev/null
 
 echo "Ready"
