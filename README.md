@@ -93,7 +93,8 @@ SELECT * FROM pgml.train(
     'Human-friendly project name',
     'regression', 
     '<name of the table or view containing the data>',
-    '<name of the column containing the y target values>'
+    '<name of the column containing the y target values>',
+    '<algorithm name>'
 );
 ```
 
