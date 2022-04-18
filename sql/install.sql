@@ -136,7 +136,7 @@ $$ LANGUAGE plpython3u;
 ---
 --- Predict
 ---
-CREATE OR REPLACE FUNCTION pgml.predict(project_name TEXT, features NUMERIC[])
+CREATE OR REPLACE FUNCTION pgml.predict(project_name TEXT, features DOUBLE PRECISION[])
 RETURNS DOUBLE PRECISION
 AS $$
 	from pgml.model import Project
