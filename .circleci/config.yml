@@ -16,7 +16,7 @@ jobs:
       - checkout
       - run:
           name: "Train and predict"
-          command: "bash docker/entrypoint.sh psql -U root -p 5432 -h 127.0.0.1 -f sql/test.sql"
+          command: "bash docker/entrypoint.sh pip install . && psql -U root -p 5432 -h 127.0.0.1 -f sql/test.sql"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
