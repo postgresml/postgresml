@@ -6,7 +6,7 @@ CREATE EXTENSION IF NOT EXISTS plpython3u;
 ---
 --- Create schema for models.
 ---
-DROP SCHEMA pgml CASCADE;
+DROP SCHEMA IF EXISTS pgml CASCADE;
 CREATE SCHEMA IF NOT EXISTS pgml;
 
 CREATE OR REPLACE FUNCTION pgml.auto_updated_at(tbl regclass) 
