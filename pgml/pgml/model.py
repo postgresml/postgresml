@@ -503,7 +503,8 @@ class Model(object):
         self.__init__()
 
     def deploy(self):
-        """Promote t his model to the active version for the project that will be used for predictions"""
+        """Promote this model to the active version for the project that will be used for predictions"""
+
         plpy.execute(
             f"""
             INSERT INTO pgml.deployments (project_id, model_id) 
