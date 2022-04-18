@@ -112,14 +112,14 @@ $$ LANGUAGE plpython3u;
 ---
 --- Train
 ---
-CREATE OR REPLACE FUNCTION pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT DEFAULT NULL)
-RETURNS TABLE(project_name TEXT, objective TEXT, status TEXT)
+CREATE OR REPLACE FUNCTION pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT DEFAULT 'linear')
+RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT, status TEXT)
 AS $$
 	from pgml.model import train
 
 	status = train(project_name, objective, relation_name, y_column_name, algorithm)
 
-	return [(project_name, objective, status)]
+	return [(project_name, objective, algorithm, status)]
 $$ LANGUAGE plpython3u;
 
 ---
@@ -153,7 +153,6 @@ SELECT
 	   d.created_at AS deployed_at,
        p.objective,
        m.algorithm_name,
-       m.metrics,
        s.relation_name,
        s.y_column_name,
        s.test_sampling,
@@ -175,7 +174,6 @@ SELECT
 	   p.name,
        p.objective,
        m.algorithm_name,
-       m.metrics,
 	   m.created_at,
        s.test_sampling,
        s.test_size,
@@ -200,7 +198,6 @@ SELECT
 	   p.name,
        p.objective,
        m.algorithm_name,
-       m.metrics,
 	   d.created_at as deployed_at 
 FROM pgml.projects p
 INNER JOIN (

@@ -1,8 +1,10 @@
 from re import M
 import plpy
-from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.svm import SVR, SVC
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, GradientBoostingRegressor, GradientBoostingClassifier
+import sklearn.linear_model
+import sklearn.kernel_ridge
+import sklearn.svm
+import sklearn.ensemble 
+import sklearn.gaussian_process
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score, f1_score, precision_score, recall_score
 
@@ -397,6 +399,8 @@ class Model(object):
     def __init__(self):
         self._algorithm = None
         self._project = None
+        if "metrics" in self.__dict__ and type(self.metrics) is str:
+            self.metrics = json.loads(self.metrics)
 
     @property
     def project(self):
@@ -415,14 +419,47 @@ class Model(object):
                 self._algorithm = pickle.loads(self.pickle)
             else:
                 self._algorithm = {
-                    "linear_regression": LinearRegression,
-                    "linear_classification": LogisticRegression,
-                    "svm_regression": SVR,
-                    "svm_classification": SVC,
-                    "random_forest_regression": RandomForestRegressor,
-                    "random_forest_classification": RandomForestClassifier,
-                    "gradient_boosting_trees_regression": GradientBoostingRegressor,
-                    "gradient_boosting_trees_classification": GradientBoostingClassifier,
+                    "linear_regression": sklearn.linear_model.LinearRegression,
+                    "linear_classification": sklearn.linear_model.LogisticRegression,
+                    "ridge_regression": sklearn.linear_model.Ridge,
+                    "ridge_classification": sklearn.linear_model.RidgeClassifier,
+                    "lasso_regression": sklearn.linear_model.Lasso,
+                    "elastic_net_regression": sklearn.linear_model.ElasticNet, 
+                    "least_angle_regression": sklearn.linear_model.Lars, 
+                    "lasso_least_angle_regression": sklearn.linear_model.LassoLars,
+                    "orthoganl_matching_pursuit_regression": sklearn.linear_model.OrthogonalMatchingPursuit,
+                    "bayesian_ridge_regression": sklearn.linear_model.BayesianRidge,
+                    "automatic_relevance_determination_regression": sklearn.linear_model.ARDRegression,
+                    "stochastic_gradient_descent_regression": sklearn.linear_model.SGDRegressor,
+                    "stochastic_gradient_descent_classification": sklearn.linear_model.SGDClassifier,
+                    "perceptron_classification": sklearn.linear_model.Perceptron,
+                    "passive_aggressive_regression": sklearn.linear_model.PassiveAggressiveRegressor,
+                    "passive_aggressive_classification": sklearn.linear_model.PassiveAggressiveClassifier,
+                    "ransac_regression": sklearn.linear_model.RANSACRegressor,
+                    "theil_sen_regression": sklearn.linear_model.TheilSenRegressor,
+                    "huber_regression": sklearn.linear_model.HuberRegressor,
+                    "quantile_regression": sklearn.linear_model.QuantileRegressor,
+                    "kernel_ridge_regression": sklearn.kernel_ridge.KernelRidge,
+                    "gaussian_process_regression": sklearn.gaussian_process.GaussianProcessRegressor,
+                    "gaussian_process_classification": sklearn.gaussian_process.GaussianProcessClassifier,
+                    "svm_regression": sklearn.svm.SVR,
+                    "svm_classification": sklearn.svm.SVC,
+                    "nu_svm_regression": sklearn.svm.NuSVR,
+                    "nu_svm_classification": sklearn.svm.NuSVC,
+                    "linear_svm_regression": sklearn.svm.LinearSVR,
+                    "linear_svm_classification": sklearn.svm.LinearSVC,
+                    "ada_boost_regression": sklearn.ensemble.AdaBoostRegressor,
+                    "ada_boost_classification": sklearn.ensemble.AdaBoostClassifier,
+                    "bagging_regression": sklearn.ensemble.BaggingRegressor,
+                    "bagging_classification": sklearn.ensemble.BaggingClassifier,
+                    "extra_trees_regression": sklearn.ensemble.ExtraTreesRegressor,
+                    "extra_trees_classification": sklearn.ensemble.ExtraTreesClassifier,
+                    "gradient_boosting_trees_regression": sklearn.ensemble.GradientBoostingRegressor,
+                    "gradient_boosting_trees_classification": sklearn.ensemble.GradientBoostingClassifier,
+                    "hist_gradient_boosting_regression": sklearn.ensemble.HistGradientBoostingRegressor,
+                    "hist_gradient_boosting_classification": sklearn.ensemble.HistGradientBoostingClassifier,
+                    "random_forest_regression": sklearn.ensemble.RandomForestRegressor,
+                    "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
                 }[self.algorithm_name + "_" + self.project.objective]()
 
         return self._algorithm
@@ -463,9 +500,10 @@ class Model(object):
         """
             )[0]
         )
+        self.__init__()
 
     def deploy(self):
-        """Promote this model to the active version for the project that will be used for predictions"""
+        """Promote t his model to the active version for the project that will be used for predictions"""
         plpy.execute(
             f"""
             INSERT INTO pgml.deployments (project_id, model_id) 
@@ -528,7 +566,11 @@ def train(
     model = Model.create(project, snapshot, algorithm_name)
     model.fit(snapshot)
 
-    if project.deployed_model is None:
+    if project.deployed_model is None or (
+        project.objective == "regression" and project.deployed_model.metrics["mean_squared_error"] > model.metrics["mean_squared_error"]
+      ) or (
+        project.objective == "classification" and project.deployed_model.metrics["f1"] < model.metrics["f1"]
+      )  :
         model.deploy()
         return "deployed"
     else:
