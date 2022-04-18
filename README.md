@@ -229,7 +229,7 @@ $ sudo pip3 install pgml
 $ psql -f sql/install.sql
 ```
 
-If everything works, you should be able to run this successfully:
+If everything works correctly, you should be able to run this successfully:
 
 ```bash
 $ psql -c 'SELECT pgml.version()'
