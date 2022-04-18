@@ -56,7 +56,7 @@ SELECT * FROM pgml.train(
      'Human-friendly project name',
      'regression', 
      '<name of the table or view containing the data>',
-     '<name of the column containing the y target value>'
+     '<name of the column containing the y target values>'
 );
 ```
 
@@ -70,7 +70,7 @@ Once the model is trained, making predictions is as simple as:
 SELECT pgml.predict('Human-friendly project name', ARRAY[...]) AS prediction_score;
 ```
 
-where `ARRAY[...]` is a list of the features for which we want to run a prediction. This list has to be in the same order as the columns in the data table. This score then can be used in normal queries, for example:
+where `ARRAY[...]` is a list of features for which we want to run a prediction. This list has to be in the same order as the columns in the data table. This score then can be used in normal queries, for example:
 
 ```sql
 SELECT *,
@@ -92,7 +92,7 @@ As data in your database changes, it is possible to retrain the model again to g
 
 ## Roadmap
 
-This project is currently a proof of concept. Some important features which we are currently thinking about or working on are listed below.
+This project is currently a proof of concept. Some important features, which we are currently thinking about or working on, are listed below.
 
 ### Production deployment
 
@@ -108,9 +108,15 @@ A good looking and useful UI goes a long way. A dashboard similar to existing so
 
 A data explorer allows anyone to browse the dataset in production and to find useful tables and features to build effective machine learning models.
 
+
 ### More algorithms
 
 Scikit-Learn is a good start, but we're also thinking about including Tensorflow, Pytorch, and many more useful models.
+
+
+### Scheduled training
+
+In applications where data changes often, it's useful to retrain the models automatically on a schedule, e.g. every day, every week, etc.
 
 
 ### FAQ
