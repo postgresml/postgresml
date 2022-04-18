@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS pgml.models(
 	project_id BIGINT NOT NULL,
 	snapshot_id BIGINT NOT NULL,
 	algorithm_name TEXT NOT NULL,
+	hyperparams JSONB NOT NULL,
 	status TEXT NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
@@ -112,12 +113,12 @@ $$ LANGUAGE plpython3u;
 ---
 --- Train
 ---
-CREATE OR REPLACE FUNCTION pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT DEFAULT 'linear')
+CREATE OR REPLACE FUNCTION pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT DEFAULT 'linear', hyperparams JSONB DEFAULT '{}'::JSONB)
 RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT, status TEXT)
 AS $$
 	from pgml.model import train
-
-	status = train(project_name, objective, relation_name, y_column_name, algorithm)
+	import json
+	status = train(project_name, objective, relation_name, y_column_name, algorithm, json.loads(hyperparams))
 
 	return [(project_name, objective, algorithm, status)]
 $$ LANGUAGE plpython3u;
@@ -171,13 +172,14 @@ ORDER BY d.created_at DESC;
 DROP VIEW IF EXISTS pgml.trained_models;
 CREATE VIEW pgml.trained_models AS
 SELECT
-	   p.name,
-       p.objective,
-       m.algorithm_name,
-	   m.created_at,
-       s.test_sampling,
-       s.test_size,
-	   d.model_id IS NOT NULL AS deployed
+	m.id,	
+	p.name,
+	p.objective,
+	m.algorithm_name,
+	m.created_at,
+	s.test_sampling,
+	s.test_size,
+	d.model_id IS NOT NULL AS deployed
 FROM pgml.projects p
 INNER JOIN pgml.models m ON p.id = m.project_id
 INNER JOIN pgml.snapshots s ON s.id = m.snapshot_id
@@ -195,10 +197,11 @@ ORDER BY m.created_at DESC;
 DROP VIEW IF EXISTS pgml.deployed_models;
 CREATE VIEW pgml.deployed_models AS
 SELECT
-	   p.name,
-       p.objective,
-       m.algorithm_name,
-	   d.created_at as deployed_at 
+	m.id,
+	p.name,
+	p.objective,
+	m.algorithm_name,
+	d.created_at as deployed_at 
 FROM pgml.projects p
 INNER JOIN (
 	SELECT DISTINCT ON(project_id)
