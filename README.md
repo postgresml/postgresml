@@ -20,15 +20,19 @@ Using Docker, boot up PostresML locally:
 $ docker-compose up
 ```
 
-The system is available on port 5433 by default, just in case you happen to run Postgres locally already:
+The system is available on port 5433 by default, just in case you happen to be running Postgres already:
 
 ```bash
 $ psql -U root -h 127.0.0.1 -p 5433
 ```
 
-We've included a couple examples in the `examples/` folder. You can run them directly with `$ psql -U root -h 127.0.0.1 -p 5433 -f <filename>`.
+We've included a couple examples in the `examples/` folder. You can run them directly with: 
 
-See [installation instructions](#Installation) for installing PostgresML in different supported environments and more information.
+```bash
+$ psql -U root -h 127.0.0.1 -p 5433 -f <filename>
+```
+
+See [installation instructions](#Installation) for installing PostgresML in different supported environments, and for more information.
 
 ## Features
 
