@@ -7,6 +7,11 @@ echo "Creating user and database..."
 sudo -u postgres createuser root --superuser 2> /dev/null
 sudo -u postgres createdb root 2> /dev/null
 
+echo "Installing the pgml Python package..."
+cd pgml/
+pip install .
+cd ../
+
 echo "Installing pgml extension..."
 psql -q -f sql/install.sql > /dev/null
 
