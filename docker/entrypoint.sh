@@ -1,4 +1,5 @@
 #!/bin/bash
+
 service postgresql start
 while ! sudo -u postgres psql -c 'SELECT 1' > /dev/null; do
 	sleep 1
