@@ -31,7 +31,8 @@ SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target
 SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'ransac');
 SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'theil_sen', '{"max_iter": 10, "max_subpopulation": 100}');
 SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'huber');
-SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'quantile');
+-- Quantile Regression too expensive for normal tests on even a toy dataset
+-- SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'quantile');
 --- support vector machines
 SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'svm', '{"max_iter": 100}');
 SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'nu_svm', '{"max_iter": 10}');
@@ -41,11 +42,13 @@ SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target
 SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'bagging', '{"n_estimators": 5}');
 SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'extra_trees', '{"n_estimators": 5}');
 SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'gradient_boosting_trees', '{"n_estimators": 5}');
-SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'hist_gradient_boosting', '{"max_iter": 10}');
+-- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
+-- SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'hist_gradient_boosting', '{"max_iter": 10}');
 SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'random_forest', '{"n_estimators": 5}');
 -- other
 SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'kernel_ridge');
-SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'gaussian_process');
+-- Gaussian Process is too expensive for normal tests on even a toy dataset
+-- SELECT pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'gaussian_process');
 
 -- check out all that hard work
 SELECT trained_models.* FROM pgml.trained_models 
