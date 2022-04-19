@@ -174,7 +174,7 @@ Scikit-Learn is a good start, but we're also thinking about including Tensorflow
 In applications where data changes often, it's useful to retrain the models automatically on a schedule, e.g. every day, every week, etc.
 
 
-### FAQ
+## FAQ
 
 *How far can this scale?*
 

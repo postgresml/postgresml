@@ -43,7 +43,7 @@ SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification',
 -- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gaussian_process', '{"max_iter_predict": 100, "warm_start": true}');
 
 
--- -- check out all that hard work
+-- check out all that hard work
 SELECT trained_models.* FROM pgml.trained_models 
 JOIN pgml.models on models.id = trained_models.id
 ORDER BY models.metrics->>'f1' DESC LIMIT 5;
@@ -60,7 +60,7 @@ SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'best_score');
 SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'most_recent');
 SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'rollback');
-SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'best_score'', 'svm');
+SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'best_score', 'svm');
 
 -- check out the improved predictions
 SELECT target, pgml.predict('Handwritten Digit Image Classifier', image) AS prediction
