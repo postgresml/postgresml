@@ -49,7 +49,7 @@ JOIN pgml.models on models.id = trained_models.id
 ORDER BY models.metrics->>'f1' DESC LIMIT 5;
 
 -- deploy the random_forest model for prediction use
-SELECT pgml.deploy('Handwritten Digit Image Classifier', 'most_recent', 'random_forest');
+SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'most_recent', 'random_forest');
 -- check out that throughput
 SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
