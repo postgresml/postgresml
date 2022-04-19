@@ -56,14 +56,18 @@ JOIN pgml.models on models.id = trained_models.id
 ORDER BY models.metrics->>'mean_squared_error' DESC LIMIT 5;
 
 -- deploy the random_forest model for prediction use
-SELECT pgml.deploy('Diabetes Progression', 'random_forest');
+SELECT pgml.deploy('Diabetes Progression', 'most_recent', 'random_forest');
 -- check out that throughput
 SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
 -- do some hyper param tuning
 -- TODO SELECT pgml.hypertune(100, 'Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'gradient_boosted_trees');
+
 -- deploy the "best" model for prediction use
 SELECT pgml.deploy('Diabetes Progression', 'best_fit');
+SELECT pgml.deploy('Diabetes Progression', 'most_recent');
+SELECT pgml.deploy('Diabetes Progression', 'rollback');
+SELECT pgml.deploy('Diabetes Progression', 'best_fit', 'svm');
 
 -- check out the improved predictions
 SELECT target, pgml.predict('Diabetes Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction

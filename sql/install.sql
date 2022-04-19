@@ -119,18 +119,17 @@ AS $$
 	from pgml.model import train
 	import json
 	status = train(project_name, objective, relation_name, y_column_name, algorithm, json.loads(hyperparams))
-
 	return [(project_name, objective, algorithm, status)]
 $$ LANGUAGE plpython3u;
 
 ---
 --- Deploy
 ---
-CREATE OR REPLACE FUNCTION pgml.deploy(project_name TEXT, algorithm_name TEXT)
+CREATE OR REPLACE FUNCTION pgml.deploy(project_name TEXT, qualifier TEXT DEFAULT 'best_fit', algorithm_name TEXT DEFAULT NULL)
 RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT)
 AS $$
 	from pgml.model import Project
-	model = Project.find_by_name(project_name).deploy(algorithm_name)
+	model = Project.find_by_name(project_name).deploy(qualifier, algorithm_name)
 	return [(model.project.name, model.project.objective, model.algorithm_name)]
 $$ LANGUAGE plpython3u;
 
