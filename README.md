@@ -321,7 +321,7 @@ $ psql -f examples/regression/run.sql -p 5433 -U root -h 127.0.0.1 -P pager
 
 ### Loading data
 
-Generally, we'll assume that collecting data is outside the scope of PgML, firmly in the scope of Postgres and your business logic. For this example we load a toy dataset into the pgml.diabetes schema first:
+Generally, we'll assume that collecting data is outside the scope of PgML, firmly in the scope of Postgres and your business logic. For this example we load a toy dataset into the `pgml.diabetes` schema first:
 
 ```sql
 SELECT pgml.load_dataset('diabetes');
@@ -343,7 +343,7 @@ SELECT * from pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 
 (1 row)
  ```
 
-The function will snapshot the training data, train the model a default linear regression algorithm, and make it available for predictions.
+The function will snapshot the training data, train the model with a default linear regression algorithm, and make it available for predictions.
 
 ### Predictions
 
