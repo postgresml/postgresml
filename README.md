@@ -226,7 +226,7 @@ SELECT pgml.version();
 
 ### Mac OS (native)
 
-If you want want to use Docker, a native installation is available. We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with PL/Python, the extension we rely on, built into the installation. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (Python.org);
+If you don't want to use Docker, a native installation is available. We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with PL/Python, the extension we rely on, built into the installation. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (Python.org);
 Postgres.app and PL/Python depend on the community one. The following versions of Python and Postgres.app are compatible:
 
 | **PostgreSQL version** | **Python version** | **Download link**                                                                       |
