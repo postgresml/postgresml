@@ -64,10 +64,10 @@ SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 -- TODO SELECT pgml.hypertune(100, 'Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'gradient_boosted_trees');
 
 -- deploy the "best" model for prediction use
-SELECT pgml.deploy('Diabetes Progression', 'best_fit');
+SELECT pgml.deploy('Diabetes Progression', 'best_score');
 SELECT pgml.deploy('Diabetes Progression', 'most_recent');
 SELECT pgml.deploy('Diabetes Progression', 'rollback');
-SELECT pgml.deploy('Diabetes Progression', 'best_fit', 'svm');
+SELECT pgml.deploy('Diabetes Progression', 'best_score', 'svm');
 
 -- check out the improved predictions
 SELECT target, pgml.predict('Diabetes Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction

@@ -57,10 +57,10 @@ SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 -- TODO SELECT pgml.hypertune(100, 'Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gradient_boosted_trees');
 
 -- deploy the "best" model for prediction use
-SELECT pgml.deploy('Handwritten Digit Image Classifier', 'best_fit');
+SELECT pgml.deploy('Handwritten Digit Image Classifier', 'best_score');
 SELECT pgml.deploy('Handwritten Digit Image Classifier', 'most_recent');
 SELECT pgml.deploy('Handwritten Digit Image Classifier', 'rollback');
-SELECT pgml.deploy('Handwritten Digit Image Classifier', 'best_fit', 'svm');
+SELECT pgml.deploy('Handwritten Digit Image Classifier', 'best_score', 'svm');
 
 -- check out the improved predictions
 SELECT target, pgml.predict('Handwritten Digit Image Classifier', image) AS prediction

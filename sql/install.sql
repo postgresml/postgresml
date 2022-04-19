@@ -125,7 +125,7 @@ $$ LANGUAGE plpython3u;
 ---
 --- Deploy
 ---
-CREATE OR REPLACE FUNCTION pgml.deploy(project_name TEXT, qualifier TEXT DEFAULT 'best_fit', algorithm_name TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION pgml.deploy(project_name TEXT, qualifier TEXT DEFAULT 'best_score', algorithm_name TEXT DEFAULT NULL)
 RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT)
 AS $$
 	from pgml.model import Project

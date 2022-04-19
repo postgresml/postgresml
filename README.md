@@ -134,7 +134,7 @@ As data in your database changes, it is possible to retrain the model again to g
 Models are automatically deployed if their key metric (`mean_squared_error` for regression, `f1` for classification) is improved over the currently deployed version during training. If you want to manage deploys manually, you can always change which model is currently responsible for making predictions with:
 
 ```sql
-SELECT pgml.deploy(project_name TEXT, strategy TEXT DEFAULT 'best_fit', algorithm_name TEXT DEFAULT NULL)
+SELECT pgml.deploy(project_name TEXT, strategy TEXT DEFAULT 'best_score', algorithm_name TEXT DEFAULT NULL)
 ```
 
 The default behavior allows any algorithm to qualify, but deployment candidates can be further restricted to a specific algorithm.

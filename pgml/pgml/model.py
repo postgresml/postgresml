@@ -135,7 +135,7 @@ class Project(object):
             self._deployed_model = Model.find_deployed(self.id)
         return self._deployed_model
 
-    def deploy(self, qualifier = "best_fit", algorithm_name = None):
+    def deploy(self, qualifier = "best_score", algorithm_name = None):
         model = Model.find_by_project_and_qualifier_algorithm_name(self, qualifier, algorithm_name)
         if model and model.id != self.deployed_model.id:
             model.deploy()
@@ -355,7 +355,7 @@ class Model(object):
         if algorithm_name is not None:
             where += f"\nAND algorithm_name = {q(algorithm_name)}"
 
-        if strategy == "best_fit":
+        if strategy == "best_score":
             if project.objective == "regression":
                 sql += f"{where}\nORDER BY models.metrics->>'mean_squared_error' DESC NULLS LAST"
             elif project.objective == "classification":
@@ -384,7 +384,7 @@ class Model(object):
         return model
 
     @classmethod
-    def find_by_project_and_best_fit(cls, project: Project):
+    def find_by_project_and_best_score(cls, project: Project):
         """
         Args:
             project (Project): The project
