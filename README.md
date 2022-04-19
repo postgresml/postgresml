@@ -4,7 +4,7 @@
 
 [![CircleCI](https://circleci.com/gh/postgresml/postgresml/tree/master.svg?style=shield)](https://circleci.com/gh/postgresml/postgresml/tree/master)
 
-PostgresML is an end-to-end machine learning system. Using only SQL, it allows training models and running online predictions, directly using the data in your databases.
+PostgresML is an end-to-end machine learning system. It enables you to train models and make online predictions using only SQL, without your data ever leaving your favorite database.
 
 ## Why
 
