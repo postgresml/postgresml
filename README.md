@@ -307,7 +307,7 @@ and
 pgml.predict(project_name TEXT, features DOUBLE PRECISION[])
 ```
 
-The first function trains a model, given a human-friendly project name, a `regression` or `classification` objective, a table or view name which contains the training and testing datasets, and the name of the `y_column_name` containing the target values. The second function predicts novel datapoints, given the project name for an exiting model trained with `pgml.train`, and a list of features used to train that model.
+The first function trains a model, given a human-friendly project name, a `regression` or `classification` objective, a table or view name which contains the training and testing datasets, and the `y_column_name` containing the target values in that table. The second function predicts novel datapoints, given the project name for an exiting model trained with `pgml.train`, and a list of features used to train that model.
 
 You can also browse complete [code examples in the repository](examples/).
 
