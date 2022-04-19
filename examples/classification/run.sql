@@ -49,14 +49,18 @@ JOIN pgml.models on models.id = trained_models.id
 ORDER BY models.metrics->>'f1' DESC LIMIT 5;
 
 -- deploy the random_forest model for prediction use
-SELECT pgml.deploy('Handwritten Digit Image Classifier', 'random_forest');
+SELECT pgml.deploy('Handwritten Digit Image Classifier', 'most_recent', 'random_forest');
 -- check out that throughput
 SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
 -- do some hyper param tuning
 -- TODO SELECT pgml.hypertune(100, 'Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gradient_boosted_trees');
+
 -- deploy the "best" model for prediction use
 SELECT pgml.deploy('Handwritten Digit Image Classifier', 'best_fit');
+SELECT pgml.deploy('Handwritten Digit Image Classifier', 'most_recent');
+SELECT pgml.deploy('Handwritten Digit Image Classifier', 'rollback');
+SELECT pgml.deploy('Handwritten Digit Image Classifier', 'best_fit', 'svm');
 
 -- check out the improved predictions
 SELECT target, pgml.predict('Handwritten Digit Image Classifier', image) AS prediction

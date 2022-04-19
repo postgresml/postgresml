@@ -135,13 +135,10 @@ class Project(object):
             self._deployed_model = Model.find_deployed(self.id)
         return self._deployed_model
 
-    def deploy(self, algorithm_name):
-        model = None
-        if algorithm_name == "best_fit":
-            model = Model.find_by_project_and_best_fit(self)
-        else:
-            model = Model.find_by_project_id_and_algorithm_name(self.id, algorithm_name)
-        model.deploy()
+    def deploy(self, qualifier = "best_fit", algorithm_name = None):
+        model = Model.find_by_project_and_qualifier_algorithm_name(self, qualifier, algorithm_name)
+        if model and model.id != self.deployed_model.id:
+            model.deploy()
         return model
 
 class Snapshot(object):
@@ -340,24 +337,44 @@ class Model(object):
         return model
 
     @classmethod
-    def find_by_project_id_and_algorithm_name(cls, project_id: int, algorithm_name: str):
+    def find_by_project_and_qualifier_algorithm_name(cls, project: Project, strategy: str, algorithm_name: str):
         """
         Args:
             project_id (int): The project id
+            strategy (str): The strategy
             algorithm_name (str): The algorithm
         Returns:
             Model: most recently created model that fits the criteria
         """
-        result = plpy.execute(
-            f"""
+
+        sql = f"""
             SELECT models.* 
             FROM pgml.models 
-            WHERE algorithm_name = {q(algorithm_name)}
-                AND project_id = {q(project_id)}
-            ORDER by models.created_at DESC
-            LIMIT 1
         """
-        )
+        where = f"\nWHERE models.project_id = {q(project.id)}"
+        if algorithm_name is not None:
+            where += f"\nAND algorithm_name = {q(algorithm_name)}"
+
+        if strategy == "best_fit":
+            if project.objective == "regression":
+                sql += f"{where}\nORDER BY models.metrics->>'mean_squared_error' DESC NULLS LAST"
+            elif project.objective == "classification":
+                sql += f"{where}\nORDER BY models.metrics->>'f1' ASC NULLS LAST"
+        elif strategy == "most_recent":
+            sql += f"{where}\nORDER by models.created_at DESC"
+        elif strategy == "rollback":
+            sql += f"""
+                JOIN pgml.deployments ON deployments.project_id = {q(project.id)} 
+                    AND deployments.model_id = models.id
+                    AND models.id != {q(project.deployed_model.id)}
+                {where}
+                ORDER by deployments.created_at DESC
+            """
+        else:
+            raise PgMLException(f"unknown strategy: {strategy}")
+        sql += "\nLIMIT 1"            
+
+        result = plpy.execute(sql)
         if len(result) == 0:
             return None
 

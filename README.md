@@ -4,13 +4,13 @@
 
 [![CircleCI](https://circleci.com/gh/postgresml/postgresml/tree/master.svg?style=shield)](https://circleci.com/gh/postgresml/postgresml/tree/master)
 
-PostgresML is an end-to-end machine learning system. Using only SQL, it allows to train models and run online predictions, alongside normal queries, directly using the data in your databases.
+PostgresML is an end-to-end machine learning system. Using only SQL, it allows training models and running online predictions, directly using the data in your databases.
 
 ## Why
 
-Deploying machine learning models into existing applications is not straight forward. Unless you're already using Python in your day to day work, you need to learn a new language and toolchain, figure out how to EL(T) your data from your database(s) into a warehouse or object storage, learn how to train models (Scikit-Learn, Pytorch, Tensorflow, etc.), and finally serve preditions to your apps, forcing your organization into microservices and all the complexity that comes with it.
+Deploying machine learning models into existing applications is not straight forward. Unless you're already using Python in your day to day work, you need to learn a new language and toolchain, figure out how to ETL your data from your database(s) into a warehouse or object storage, learn how to train models (Scikit-Learn, Pytorch, Tensorflow, etc.), and finally serve preditions to your apps, forcing your organization into microservices and all the complexity that comes with it.
 
-PostgresML makes ML simple: your data doesn't really go anywhere, you train using simple SQL commands, and you get the predictions to your apps using a mechanism you've been using already: a Postgres connection and a query.
+PostgresML makes ML simple by moving the code to your data, rather than copying the data all over the place. You train models using simple SQL commands, and you get the predictions to your apps using a mechanism you've been using already: a Postgres connection and a query.
 
 Our goal is that anyone with a basic understanding of SQL should be able to build and deploy machine learning models to production, while receiving the benefits of a high performance machine learning platform. Ultimately, PostgresML aims to be the easiest, safest and fastest way to gain value from machine learning.
 
@@ -94,11 +94,12 @@ SELECT * FROM pgml.train(
     'regression', 
     '<name of the table or view containing the data>',
     '<name of the column containing the y target values>',
-    '<algorithm name>'
+    '<algorithm name>',
+    '<algorithm hyperparams>'
 );
 ```
 
-PostgresML will snapshot the data from the table, train multiple models from the above list given the objective (`regression` or `classification`), and automatically choose and deploy the model with the best predictions.
+PostgresML will snapshot the data from the table, train the model with the algorithm, and automatically deploy model improvements as measured by key performance metrics to make predictions in production.
 
 ### Making predictions
 
@@ -108,7 +109,7 @@ Once the model is trained, making predictions is as simple as:
 SELECT pgml.predict('Human-friendly project name', ARRAY[...]) AS prediction_score;
 ```
 
-where `ARRAY[...]` is a list of features for which we want to run a prediction. This list has to be in the same order as the columns in the data table. This score then can be used in normal queries, for example:
+where `ARRAY[...]` is the same list of features for a sample used in training. This score then can be used in normal queries, for example:
 
 ```sql
 SELECT *,
@@ -126,7 +127,24 @@ Take a look [below](#Working-with-PostgresML) for an example with real data.
 
 ### Model and data versioning
 
-As data in your database changes, it is possible to retrain the model again to get better predictions. With PostgresML, it's as simple as running the `pgml.train` command again. If the model scores better, it will be automatically used in predictions; if not, the existing model will be kept and continue to score in your queries. We also snapshot the training data, so models can be retrained deterministically to validate and fix any issues.
+As data in your database changes, it is possible to retrain the model again to get better predictions. With PostgresML, it's as simple as running the `pgml.train` command again. If the model scores better, it will be automatically used in predictions; if not, the existing model will be kept and continue to score in your queries. There is also a deployment API if you need to manually manage which model is active. We also snapshot the training data, so models can be retrained deterministically to validate and fix any issues.
+
+#### Deployments
+
+Models are automatically deployed if their key metric (`mean_squared_error` for regression, `f1` for classification) is improved over the currently deployed version during training. If you want to manage deploys manually, you can always change which model is currently responsible for making predictions with:
+
+```sql
+SELECT pgml.deploy(project_name TEXT, strategy TEXT DEFAULT 'best_fit', algorithm_name TEXT DEFAULT NULL)
+```
+
+The default behavior allows any algorithm to qualify, but deployment candidates can be further restricted to a specific algorithm.
+
+strategy | description
+--- | ---
+most_recent | The most recently trained model for this project
+best_score | The model that achieved the best key metric score
+rollback | The model that was previously deployed for this project
+
 
 ## Roadmap
 
@@ -134,8 +152,7 @@ This project is currently a proof of concept. Some important features, which we 
 
 ### Production deployment
 
-Most companies that use PostgreSQL in production do so using managed services like AWS RDS, Digital Ocean, Azure, etc. Those services do not allow running custom extensions, so we have to run PostgresML
-directly on VMs, e.g. EC2, droplets, etc. The idea here is to replicate production data directly from Postgres and make it available in real-time to PostgresML. We're considering solutions like logical replication for small to mid-size databases, and Debezium for multi-TB deployments.
+Most companies that use PostgreSQL in production do so using managed services like AWS RDS, Digital Ocean, Azure, etc. Those services do not allow running custom extensions, so we have to run PostgresML directly on VMs, e.g. EC2, droplets, etc. The idea here is to replicate production data directly from Postgres and make it available in real-time to PostgresML. We're considering solutions like logical replication for small to mid-size databases, and Debezium for multi-TB deployments.
 
 ### Model management dashboard
 
@@ -275,19 +292,31 @@ $ psql -c 'SELECT pgml.version()'
 
 The two most important functions the framework provides are:
 
-1. `pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT DEFAULT NULL)`,
+1. `pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT DEFAULT NULL, hyperparams JSONB DEFAULT '{}')`,
 2. `pgml.predict(project_name TEXT, VARIADIC features DOUBLE PRECISION[])`.
 
 The first function trains a model, given a human-friendly project name, a `regression` or `classification` objective, a table or view name which contains the training and testing datasets, and the name of the `y` column containing the target values. The second function predicts novel datapoints, given the project name for an exiting model trained with `pgml.train`, and a list of features used to train that model.
 
 You can also browse complete [code examples in the repository](examples/).
 
-### Walkthrough
+### Regression Walkthrough
 
-We'll be using the [Red Wine Quality](https://www.kaggle.com/datasets/uciml/red-wine-quality-cortez-et-al-2009) dataset from Kaggle for this example. You can find it in the `data` folder in this repository. You can import it into PostgresML running in Docker with this:
+We'll walk through the [regression example](examples/regression/run.sql) first. You'll find that classification is extremely similar. You can test the entire script in PostgresML running in Docker with this:
 
 ```bash
-$ psql -f data/winequality-red.sql -p 5433 -U root -h 127.0.0.1
+$ psql -f examples/regression/run.sql -p 5433 -U root -h 127.0.0.1 -P pager
+```
+
+### Loading data
+
+Generally, we'll assume that collecting data is outside the scope of PgML, firmly in the scope of Postgres and your business logic. For this example we load a toy dataset into the pgml.diabetes schema first:
+
+```sql
+SELECT pgml.load_dataset('diabetes');
+ load_dataset
+--------------
+ OK
+(1 row)
 ```
 
 ### Training a model
@@ -295,46 +324,51 @@ $ psql -f data/winequality-red.sql -p 5433 -U root -h 127.0.0.1
 Training a model is as easy as creating a table or a view that holds the training data, and then registering that with PostgresML:
 
 ```sql
-SELECT * FROM pgml.train('Red Wine Quality', 'regression', 'wine_quality_red', 'quality');
+SELECT * from pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target');
+     project_name     | objective  | algorithm_name |  status
+----------------------+------------+----------------+----------
+ Diabetes Progression | regression | linear         | deployed
+(1 row)
+ ```
 
-    project_name  | objective  |  status
----------------------+------------+--------
- Red Wine Quality | regression | deployed
-```
-
-The function will snapshot the training data, train the model using multiple algorithms, automatically pick the best one, and make it available for predictions.
+The function will snapshot the training data, train the model a default linear regression algorithm, and make it available for predictions.
 
 ### Predictions
 
 Predicting novel datapoints is as simple as:
 
 ```sql
-SELECT pgml.predict('Red Wine Quality', 7.4, 0.66, 1.0, 1.8, 0.075, 17.0, 40.0, 0.9978, 3.58, 0.56, 9.4) AS quality;
+SELECT pgml.predict('Diabetes Progression', ARRAY[0.038075905,0.05068012,0.061696205,0.021872355,-0.0442235,-0.03482076,-0.043400846,-0.002592262,0.01990842,-0.017646125]) AS progression;
 
- quality 
----------
-    4.19
+    progression
+-------------------
+ 162.1718930966903
 (1 row)
 ```
 
-PostgresML similarly supports classification to predict discrete classes rather than numeric scores for novel data.
+You can also make predictions from data stored in a table or view:
 
 ```sql
-SELECT pgml.train('Handwritten Digit Classifier', 'classification', pgml.mnist_training_data, label_column_name);
+SELECT pgml.predict('Diabetes Progression', ARRAY[age,sex,bmi,bp,s1,s2,s3,s4,s5,s6]) AS progression
+FROM pgml.diabetes
+LIMIT 10;
+
+    progression
+--------------------
+ 162.17189345230884
+ 122.84270489051747
+ 174.37641312463052
+  181.1275149413752
+   111.739254085156
+  71.12693920265463
+ 134.69178395285311
+  184.5315548739402
+  208.7589398970435
+   161.836547554568
+(10 rows)
 ```
 
-And predict novel datapoints:
-
-```sql
-SELECT pgml.predict('Handwritten Digit Classifier', pgml.mnist_test_data.*)
-FROM pgml.mnist
-LIMIT 1;
-
- digit | likelihood
--------+----
- 5     | 0.956432
-(1 row)
-```
+Take a look at the rest of the [regression example](examples/regression/run.sql) to see how to train different algorithms on this dataset. You may also be interested in the [classification example](examples/classification/run.sql) which happens to be extremely similar, although it optimizes for a different key metric.
 
 ### Contributing
 
