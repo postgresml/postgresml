@@ -293,7 +293,14 @@ $ psql -c 'SELECT pgml.version()'
 The two most important functions the framework provides are:
 
 ```sql
-pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT DEFAULT 'linear', hyperparams JSONB DEFAULT '{}'::JSONB)
+pgml.train(
+    project_name TEXT, 
+    objective TEXT, 
+    relation_name TEXT, 
+    y_column_name TEXT, 
+    algorithm TEXT DEFAULT 'linear', 
+    hyperparams JSONB DEFAULT '{}'::JSONB
+)
 ```
 and 
 ```sql
