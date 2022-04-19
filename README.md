@@ -40,7 +40,7 @@ See [installation instructions](#Installation) for installing PostgresML in diff
 
 ### Training models
 
-Given a Postgres table or a view, PostgresML can train a model using some commonly used algorithms. We currently support the following Scikit-Learn regression and classification models:
+Given a Postgres table or a view, PostgresML can train a model with many commonly used algorithms. We currently support the following Scikit-Learn regression and classification models:
 
 #### Linear Models
 Algorithm | Regression | Classification
