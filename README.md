@@ -292,8 +292,13 @@ $ psql -c 'SELECT pgml.version()'
 
 The two most important functions the framework provides are:
 
-1. `pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT DEFAULT NULL, hyperparams JSONB DEFAULT '{}')`,
-2. `pgml.predict(project_name TEXT, VARIADIC features DOUBLE PRECISION[])`.
+```sql
+pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT DEFAULT 'linear', hyperparams JSONB DEFAULT '{}'::JSONB)
+```
+and 
+```sql
+pgml.predict(project_name TEXT, features DOUBLE PRECISION[])
+```
 
 The first function trains a model, given a human-friendly project name, a `regression` or `classification` objective, a table or view name which contains the training and testing datasets, and the name of the `y` column containing the target values. The second function predicts novel datapoints, given the project name for an exiting model trained with `pgml.train`, and a list of features used to train that model.
 
