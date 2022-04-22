@@ -381,26 +381,3 @@ LIMIT 10;
 ```
 
 Take a look at the rest of the [regression example](examples/regression/run.sql) to see how to train different algorithms on this dataset. You may also be interested in the [classification example](examples/classification/run.sql) which happens to be extremely similar, although it optimizes for a different key metric.
-
-### Contributing
-
-Follow the installation instructions to create a local working Postgres environment, then install your PgML package from the git repository:
-
-```
-cd pgml
-sudo python3 setup.py install
-cd ../
-```
-
-Run the tests from the root of the repo:
-
-```
-ON_ERROR_STOP=1 psql -f sql/test.sql
-```
-
-One liner:
-```
-cd pgml; sudo python3 setup.py install; cd ../; ON_ERROR_STOP=1 sudo -u postgres psql -f sql/test.sql
-```
-
-Make sure to run it exactly like this, from the root directory of the repo.
