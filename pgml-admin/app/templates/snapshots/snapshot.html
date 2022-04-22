@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block main %}
+<h1>{{ snapshot.relation_name }}</h1> 
+<table>
+  <thead>
+    <tr>
+      <th>Attribute</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>ID</td><td>{{snapshot.id}}</td></tr>
+    <tr><td>Snapshot</td><td><a href="{% url 'snapshot' snapshot.id %}">{{snapshot.relation_name}}</a></td></tr>
+    <tr><td>Y</td><td>{{snapshot.y_column_name}}</td></tr>
+    <tr><td>Test Size</td><td>{{snapshot.test_size}}</td></tr>
+    <tr><td>Test Sampling</td><td>{{snapshot.test_sampling}}</td></tr>
+    <tr><td>Status</td><td>{{snapshot.status}}</td></tr>
+    <tr><td>Created</td><td>{{snapshot.created_at}}</td></tr>
+    <tr><td>Updated</td><td>{{snapshot.updated_at}}</td></tr>
+  </tbody>
+</table>
+{% endblock %}

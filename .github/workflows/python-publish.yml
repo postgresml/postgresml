@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: pgml
+        working-directory: pgml-extension
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python

@@ -1,6 +1,6 @@
 # PostgresML
 
-![PostgresML](./logo-small.png)
+![PostgresML](./pgml-admin/app/static/images/logo-small.png)
 
 [![CircleCI](https://circleci.com/gh/postgresml/postgresml/tree/master.svg?style=shield)](https://circleci.com/gh/postgresml/postgresml/tree/master)
 
@@ -22,16 +22,16 @@ Using Docker, boot up PostresML locally:
 $ docker-compose up
 ```
 
-The system is available on port 5433 by default, just in case you happen to be running Postgres already:
+The system runs Postgres with the pgml-extension installed on port 5433 by default, just in case you happen to be running Postgres already:
 
 ```bash
-$ psql -U root -h 127.0.0.1 -p 5433
+$ psql -U postgres -h 127.0.0.1 -p 5433
 ```
 
-We've included a couple examples in the `examples/` folder. You can run them directly with: 
+We've included a couple examples in the `pgml-extension/examples/` folder. You can run them directly with: 
 
 ```bash
-$ psql -U root -h 127.0.0.1 -p 5433 -f <filename>
+$ psql -U postgres -h 127.0.0.1 -p 5433 -f pgml-extension/examples/classification.sql
 ```
 
 See [installation instructions](#Installation) for installing PostgresML in different supported environments, and for more information.
@@ -381,26 +381,3 @@ LIMIT 10;
 ```
 
 Take a look at the rest of the [regression example](examples/regression/run.sql) to see how to train different algorithms on this dataset. You may also be interested in the [classification example](examples/classification/run.sql) which happens to be extremely similar, although it optimizes for a different key metric.
-
-### Contributing
-
-Follow the installation instructions to create a local working Postgres environment, then install your PgML package from the git repository:
-
-```
-cd pgml
-sudo python3 setup.py install
-cd ../
-```
-
-Run the tests from the root of the repo:
-
-```
-ON_ERROR_STOP=1 psql -f sql/test.sql
-```
-
-One liner:
-```
-cd pgml; sudo python3 setup.py install; cd ../; ON_ERROR_STOP=1 sudo -u postgres psql -f sql/test.sql
-```
-
-Make sure to run it exactly like this, from the root directory of the repo.
