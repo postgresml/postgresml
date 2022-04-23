@@ -71,6 +71,8 @@ TEMPLATES = [
     },
 ]
 
+PROJECT_PATH = os.path.realpath(os.path.dirname(__file__))
+
 WSGI_APPLICATION = 'www.wsgi.application'
 
 
@@ -82,7 +84,7 @@ database = urlparse(os.environ["DATABASE_URL"])
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'OPTIONS': {'options': '-c search_path=pgml,public'},
+        'OPTIONS': {'options': '-c search_path=pgml'},
         'NAME': database.path[1:],
         'USER': database.username,
         'PASSWORD': database.password,
@@ -125,7 +127,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

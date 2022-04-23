@@ -1,6 +1,10 @@
--- This example trains models on the sklean california_housing dataset
--- which is a copy of the test set from the StatLib repository
--- https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html
+-- This example trains models on the sklean diabetes dataset
+-- Source URL: https://www4.stat.ncsu.edu/~boos/var.select/diabetes.html
+-- For more information see:
+--   Bradley Efron, Trevor Hastie, Iain Johnstone and Robert Tibshirani (2004)
+--   "Least Angle Regression," Annals of Statistics (with discussion), 407-499
+--   https://web.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf
+
 --
 -- This demonstrates using a table with individual columns as features
 -- for regression.
@@ -9,7 +13,7 @@ SELECT pgml.load_dataset('diabetes');
 -- view the dataset
 SELECT * FROM pgml.diabetes LIMIT 10;
 
--- train a simple model to classify the data
+-- train a simple model on the data
 SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target');
 
 -- check out the predictions

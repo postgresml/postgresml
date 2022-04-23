@@ -59,9 +59,7 @@ Reset your local database:
 Follow the installation instructions to create a local working Postgres environment, then install your PgML package from the git repository:
 
 ```
-cd pgml
-sudo python3 setup.py install
-cd ../
+sudo python3 pgml/setup.py install
 ```
 
 Run the tests from the root of the repo:
@@ -72,7 +70,7 @@ ON_ERROR_STOP=1 psql -f sql/test.sql
 
 One liner:
 ```
-cd pgml; sudo python3 setup.py install; cd ../; ON_ERROR_STOP=1 sudo -u postgres psql -f sql/test.sql
+cd pgml; sudo /usr/bin/python3.8 setup.py install; cd ..; ON_ERROR_STOP=1 psql -f sql/test.sql -p 5432 -h localhost -U postgres -P pager -d pgml_development
 ```
 
 Make sure to run it exactly like this, from the root directory of the repo.

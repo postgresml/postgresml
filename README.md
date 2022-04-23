@@ -1,6 +1,6 @@
 # PostgresML
 
-![PostgresML](./logo-small.png)
+![PostgresML](./control/static/images/logo-small.png)
 
 [![CircleCI](https://circleci.com/gh/postgresml/postgresml/tree/master.svg?style=shield)](https://circleci.com/gh/postgresml/postgresml/tree/master)
 
