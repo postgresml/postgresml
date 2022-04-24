@@ -179,6 +179,9 @@ header li.logo b {
     color: var(--highlite-blue);
     font-weight: 400;
 }
+header li.selected {
+    position: relative;
+}
 header li.selected span.material-symbols-outlined,
 header li.selected a {
     font-weight: 600;
@@ -186,9 +189,10 @@ header li.selected a {
 }
 header li.selected a::after {
     content: "◢◣";
+    color: var(--gray-9); 
     position: absolute;
     letter-spacing: -2.5px;
-    bottom: -15px;
+    bottom: -8px;
     left: calc(50% - 0.5em);
 }
 header img {
