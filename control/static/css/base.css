@@ -68,12 +68,8 @@ q:before, q:after {
 	content: '';
 	content: none;
 }
-table {
-	border-collapse: collapse;
-	border-spacing: 0;
-}
 
-/* Site wide styles */
+/* Site wide elemenet styles */
 a {
     color: var(--highlite-blue);
     text-decoration: none;
@@ -81,14 +77,15 @@ a {
 h1 {
     font-size: 3em;
     font-weight: 100;
-    padding: 10px 0;
+    padding: 1em 0 0.5em;
+    color: var(--gray-4);
 }
 h2 {
     font-size: 1.5em;
     font-weight: 100;
 }
 
-/* Rounded table corners */
+/* Tables, rounded corners, stripes and highlights */
 table {
     border-collapse: separate;
     border-spacing: 0;
@@ -139,7 +136,7 @@ table tbody tr:hover {
 body {
     font-family: Roboto, "Microsoft Sans Serif", "Helvetica Neue", Arial, sans-serif;
     font-weight: normal;
-    color: var(--gray-1);
+    color: var(--gray-3);
     background: var(--gray-9);
     min-width: 700px;
     position: relative;
@@ -155,12 +152,13 @@ header {
     vertical-align: center;
 }
 header a {
-    color: var(--gray-8);
+    color: var(--gray-7);
 }
 header a:hover {
-    color: var(--highlite-blue);
+    color: var(--gray-9);
 }
 header a.logo {
+    color: var(--gray-9);
     font-size: 1.5em;
     font-weight: 300;
     margin-right: 30px;
@@ -169,6 +167,18 @@ header a.logo span.ml {
     color: var(--highlite-blue);
     font-weight: 400;
 }
+header li.selected span.material-symbols-outlined,
+header li.selected a {
+    font-weight: 600;
+    color: var(--gray-9);
+}
+header li.selected a::after {
+    content: "◢◣";
+    position: absolute;
+    letter-spacing: -2.5px;
+    bottom: -15px;
+    left: calc(50% - 0.5em);
+}
 header img {
     vertical-align: middle;
 }
@@ -176,6 +186,7 @@ header li {
     display: inline-block;
     padding: 3px 10px;
     border-style: 1px solid var(--color-3);
+    position: relative;
 }
 header a span.material-symbols-outlined {
     vertical-align: middle;
@@ -186,7 +197,7 @@ header a span.material-symbols-outlined {
 
 /* Main */
 main {
-    padding: 20px 100px;
+    padding: 0 8em;
     margin: auto;
 }
 

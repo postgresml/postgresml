@@ -70,7 +70,7 @@ ON_ERROR_STOP=1 psql -f sql/test.sql
 
 One liner:
 ```
-cd pgml; sudo /usr/bin/python3.8 setup.py install; cd ..; ON_ERROR_STOP=1 psql -f sql/test.sql -p 5432 -h localhost -U postgres -P pager -d pgml_development
+cd pgml; sudo /usr/bin/python3.8 setup.py install; cd ..; psql -c "drop schema pgml cascade; create schema pgml;" -p 5432 -h localhost -U postgres -d pgml_development; ./scripts/manage.py migrate; psql -f sql/test.sql -p 5432 -h localhost -U postgres -P pager -d pgml_development 
 ```
 
 Make sure to run it exactly like this, from the root directory of the repo.

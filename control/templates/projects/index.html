@@ -1,7 +1,5 @@
 {% extends "base.html" %}
 
-{% block title %}Projects{% endblock %}
-
 {% block main %}
 <h1>Projects</h1> 
 <table>
@@ -9,6 +7,7 @@
     <tr>
       <th>Name</th>
       <th>Created</th>
+      <th>Updated</th>
     </tr>
   </thead>
   <tbody>
@@ -16,6 +15,7 @@
     <tr>
       <td><a href="{% url 'project' project.id %}">{{ project.name }}</a></td>
       <td>{{project.created_at}}</td>
+      <td>{{project.updated_at}}</td>
     </tr>
     {% endfor %}
   </tbody>

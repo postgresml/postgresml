@@ -10,7 +10,7 @@
         <link rel="stylesheet" href="{% static 'css/base.css' %}">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=swap" >
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=block" >
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
 
         <script defer type="text/javascript" src="{% static '/js/vendor/lodash-4.17.21.min.js' %}"></script>
@@ -41,10 +41,10 @@
                             Postgres<span class="ml">ML</span>
                         </a>
                     </li>
-                    <li><a href="/projects/"><span class="material-symbols-outlined">apps</span>Projects</a></li> 
-                    <li><a href="/models/"><span class="material-symbols-outlined">model_training</span>Models</a></li>
-                    <li><a href="/deployments/"><span class="material-symbols-outlined">inventory</span>Deployments</a></li>
-                    <li><a href="/snapshots/"><span class="material-symbols-outlined">photo_camera</span>Snapshots</a></li>
+                    <li{% if topic == "Projects" %} class="selected"{% endif %}><a href="/projects/"><span class="material-symbols-outlined">apps</span>Projects</a></li> 
+                    <li{% if topic == "Models" %} class="selected"{% endif %}><a href="/models/"><span class="material-symbols-outlined">model_training</span>Models</a></li>
+                    <li{% if topic == "Deployments" %} class="selected"{% endif %}><a href="/deployments/"><span class="material-symbols-outlined">inventory</span>Deployments</a></li>
+                    <li{% if topic == "Snapshots" %} class="selected"{% endif %}><a href="/snapshots/"><span class="material-symbols-outlined">photo_camera</span>Snapshots</a></li>
                 </ul>
             </nav>
         </header>

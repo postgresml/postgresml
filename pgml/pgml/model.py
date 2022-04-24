@@ -114,8 +114,8 @@ class Project(object):
         project.__dict__ = dict(
             plpy.execute(
                 f"""
-                    INSERT INTO pgml.projects (name, objective) 
-                    VALUES ({q(name)}, {q(objective)}) 
+                    INSERT INTO pgml.projects (name, objective, created_at, updated_at) 
+                    VALUES ({q(name)}, {q(objective)}, clock_timestamp(), clock_timestamp()) 
                     RETURNING *
                 """,
                 1,
@@ -184,8 +184,8 @@ class Snapshot(object):
         snapshot.__dict__ = dict(
             plpy.execute(
                 f"""
-            INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status)
-            VALUES ({q(relation_name)}, {q(y_column_name)}, {q(test_size)}, {q(test_sampling)}, 'new')
+            INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status, created_at, updated_at)
+            VALUES ({q(relation_name)}, {q(y_column_name)}, {q(test_size)}, {q(test_sampling)}, 'new', clock_timestamp(), clock_timestamp())
             RETURNING *
         """,
                 1,
@@ -201,7 +201,7 @@ class Snapshot(object):
             plpy.execute(
                 f"""
             UPDATE pgml.snapshots 
-            SET status = 'created' 
+            SET status = 'created', updated_at = clock_timestamp()
             WHERE id = {q(snapshot.id)} 
             RETURNING *
         """,
@@ -298,8 +298,8 @@ class Model(object):
         """
         result = plpy.execute(
             f"""
-            INSERT INTO pgml.models (project_id, snapshot_id, algorithm_name, hyperparams, status) 
-            VALUES ({q(project.id)}, {q(snapshot.id)}, {q(algorithm_name)}, {q(json.dumps(hyperparams))}, 'new') 
+            INSERT INTO pgml.models (project_id, snapshot_id, algorithm_name, hyperparams, status, created_at, updated_at) 
+            VALUES ({q(project.id)}, {q(snapshot.id)}, {q(algorithm_name)}, {q(json.dumps(hyperparams))}, 'new', clock_timestamp(), clock_timestamp()) 
             RETURNING *
         """
         )
@@ -513,7 +513,8 @@ class Model(object):
             UPDATE pgml.models
             SET pickle = '\\x{pickle.dumps(self.algorithm).hex()}',
                 status = 'successful',
-                metrics = {q(json.dumps(metrics))}
+                metrics = {q(json.dumps(metrics))},
+                updated_at = clock_timestamp()
             WHERE id = {q(self.id)}
             RETURNING *
         """
@@ -526,8 +527,8 @@ class Model(object):
 
         plpy.execute(
             f"""
-            INSERT INTO pgml.deployments (project_id, model_id) 
-            VALUES ({q(self.project_id)}, {q(self.id)})
+            INSERT INTO pgml.deployments (project_id, model_id, created_at) 
+            VALUES ({q(self.project_id)}, {q(self.id)}, clock_timestamp())
         """
         )
 

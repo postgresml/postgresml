@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block main %}
+<h1>{{ title }}</h1> 
+<table>
+  <tbody>
+    <tr><th>ID</th><td><a href="{% url 'model' model.id %}">{{ model.id }}</a></td></tr>
+    <tr><th>Project</th><td><a href="{% url 'project' model.project.id %}">{{ model.project.name }}</a></td></tr>
+    <tr><th>Snapshot</th><td><a href="{% url 'snapshot' model.snapshot.id %}">{{ model.snapshot.relation_name }}</a></tr>
+    <tr><th>Algorithm</th><td>{{model.algorithm_name}}</td></tr>
+    <tr><th>Status</th><td>{{model.status}}</td></tr>
+    <tr><th>Hyperparams</th><td>{{model.hyperparms}}</td></tr>
+    <tr><th>Metrics</th><td>{{model.metrics}}</td></tr>
+    <tr><th>Created</th><td>{{model.created_at}}</td></tr>
+    <tr><th>Updated</th><td>{{model.updated_at}}</td></tr>
+  </tbody>
+</table>
+{% endblock %}
