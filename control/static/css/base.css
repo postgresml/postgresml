@@ -85,7 +85,7 @@ h2 {
     font-weight: 100;
 }
 
-/* Tables, rounded corners, stripes and highlights */
+/* Tables, sticky headers, overflow scroll, rounded corners, stripes and highlights */
 table {
     border-collapse: separate;
     border-spacing: 0;
@@ -216,10 +216,11 @@ main {
     margin: auto;
     overflow: auto;
     width: 100%;
+    max-width: fit-content;
 }
 
 main * {
-    margin: 0 min(100px, 3vw);
+    margin: 0 min(5vw, 10px);
 }
 
 /* Footer */
