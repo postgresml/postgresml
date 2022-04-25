@@ -8,6 +8,10 @@
 -- The final result after a few seconds of training is not terrible. Maybe not perfect
 -- enough for mission critical applications, but it's telling how quickly "off the shelf" 
 -- solutions can solve problems these days.
+
+-- Exit on error (psql)
+\set ON_ERROR_STOP true
+
 SELECT pgml.load_dataset('digits');
 
 -- view the dataset

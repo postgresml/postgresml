@@ -4,6 +4,10 @@
 --
 -- This demonstrates using a table with individual columns as features
 -- for regression.
+
+-- Exit on error (psql)
+\set ON_ERROR_STOP true
+
 SELECT pgml.load_dataset('diabetes');
 
 -- view the dataset
