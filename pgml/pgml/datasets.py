@@ -57,9 +57,7 @@ def load_digits():
     a = plpy.execute(f"""COMMENT ON TABLE pgml.digits IS {q(dataset["DESCR"])}""")
     for X, y in zip(dataset["data"], dataset["target"]):
         X = ",".join("%i" % x for x in list(X))
-        plpy.execute(
-            f"""INSERT INTO pgml.digits (image, target) VALUES ('{{{X}}}', {y})"""
-        )
+        plpy.execute(f"""INSERT INTO pgml.digits (image, target) VALUES ('{{{X}}}', {y})""")
 
 
 def load_iris():
@@ -102,9 +100,7 @@ def load_california_housing():
             target FLOAT4
         )"""
     )
-    a = plpy.execute(
-        f"""COMMENT ON TABLE pgml.california_housing IS {q(dataset["DESCR"])}"""
-    )
+    a = plpy.execute(f"""COMMENT ON TABLE pgml.california_housing IS {q(dataset["DESCR"])}""")
     for X, y in zip(dataset["data"], dataset["target"]):
         plpy.execute(
             f"""
