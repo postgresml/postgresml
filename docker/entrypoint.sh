@@ -8,6 +8,9 @@ echo "Creating user and database..."
 sudo -u postgres createuser root --superuser 2> /dev/null
 sudo -u postgres createdb root 2> /dev/null
 
+# Exit on error, real CI
+set -e
+
 echo "Installing pgml extension..."
 cd pgml/ > /dev/null
 pip install . > /dev/null

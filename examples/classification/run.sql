@@ -8,6 +8,10 @@
 -- The final result after a few seconds of training is not terrible. Maybe not perfect
 -- enough for mission critical applications, but it's telling how quickly "off the shelf" 
 -- solutions can solve problems these days.
+
+-- Exit on error (psql)
+\set ON_ERROR_STOP true
+
 SELECT pgml.load_dataset('digits');
 
 -- view the dataset
@@ -41,6 +45,7 @@ SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification',
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gaussian_process', '{"max_iter_predict": 100, "warm_start": true}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'xgboost');
 
 
 -- check out all that hard work

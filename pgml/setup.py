@@ -15,6 +15,7 @@ setuptools.setup(
     url="https://github.com/postgresml/postgresml",
     install_requires=[
         "sklearn",
+        "xgboost",
     ],
     extras_require={"dev": "pytest"},
     packages=setuptools.find_packages(exclude=("tests",)),

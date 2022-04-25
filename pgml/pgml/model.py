@@ -3,10 +3,17 @@ import plpy
 import sklearn.linear_model
 import sklearn.kernel_ridge
 import sklearn.svm
-import sklearn.ensemble 
+import sklearn.ensemble
 import sklearn.gaussian_process
+import xgboost as xgb
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score, f1_score, precision_score, recall_score
+from sklearn.metrics import (
+    mean_squared_error,
+    r2_score,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 
 import pickle
 import json
@@ -14,12 +21,14 @@ import json
 from pgml.exceptions import PgMLException
 from pgml.sql import q
 
+
 def flatten(S):
     if S == []:
         return S
     if isinstance(S[0], list):
         return flatten(S[0]) + flatten(S[1:])
     return S[:1] + flatten(S[1:])
+
 
 class Project(object):
     """
@@ -135,11 +144,14 @@ class Project(object):
             self._deployed_model = Model.find_deployed(self.id)
         return self._deployed_model
 
-    def deploy(self, qualifier = "best_score", algorithm_name = None):
-        model = Model.find_by_project_and_qualifier_algorithm_name(self, qualifier, algorithm_name)
+    def deploy(self, qualifier="best_score", algorithm_name=None):
+        model = Model.find_by_project_and_qualifier_algorithm_name(
+            self, qualifier, algorithm_name
+        )
         if model and model.id != self.deployed_model.id:
             model.deploy()
         return model
+
 
 class Snapshot(object):
     """
@@ -248,7 +260,7 @@ class Snapshot(object):
             for column in columns:
                 x_.append(row[column])
 
-            x_ = flatten(x_) # TODO be smart about flattening X depending on algorithm
+            x_ = flatten(x_)  # TODO be smart about flattening X depending on algorithm
             X.append(x_)
             y.append(y_)
 
@@ -285,7 +297,13 @@ class Model(object):
     """
 
     @classmethod
-    def create(cls, project: Project, snapshot: Snapshot, algorithm_name: str, hyperparams: dict):
+    def create(
+        cls,
+        project: Project,
+        snapshot: Snapshot,
+        algorithm_name: str,
+        hyperparams: dict,
+    ):
         """
         Create a Model and save it to the database.
 
@@ -337,7 +355,9 @@ class Model(object):
         return model
 
     @classmethod
-    def find_by_project_and_qualifier_algorithm_name(cls, project: Project, strategy: str, algorithm_name: str):
+    def find_by_project_and_qualifier_algorithm_name(
+        cls, project: Project, strategy: str, algorithm_name: str
+    ):
         """
         Args:
             project_id (int): The project id
@@ -372,7 +392,7 @@ class Model(object):
             """
         else:
             raise PgMLException(f"unknown strategy: {strategy}")
-        sql += "\nLIMIT 1"            
+        sql += "\nLIMIT 1"
 
         result = plpy.execute(sql)
         if len(result) == 0:
@@ -395,7 +415,7 @@ class Model(object):
             metric = "mean_squared_error"
         elif project.objective == "classification":
             metric = "f1"
-        
+
         result = plpy.execute(
             f"""
             SELECT models.* 
@@ -443,8 +463,8 @@ class Model(object):
                     "ridge_regression": sklearn.linear_model.Ridge,
                     "ridge_classification": sklearn.linear_model.RidgeClassifier,
                     "lasso_regression": sklearn.linear_model.Lasso,
-                    "elastic_net_regression": sklearn.linear_model.ElasticNet, 
-                    "least_angle_regression": sklearn.linear_model.Lars, 
+                    "elastic_net_regression": sklearn.linear_model.ElasticNet,
+                    "least_angle_regression": sklearn.linear_model.Lars,
                     "lasso_least_angle_regression": sklearn.linear_model.LassoLars,
                     "orthoganl_matching_pursuit_regression": sklearn.linear_model.OrthogonalMatchingPursuit,
                     "bayesian_ridge_regression": sklearn.linear_model.BayesianRidge,
@@ -479,7 +499,11 @@ class Model(object):
                     "hist_gradient_boosting_classification": sklearn.ensemble.HistGradientBoostingClassifier,
                     "random_forest_regression": sklearn.ensemble.RandomForestRegressor,
                     "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
-                }[self.algorithm_name + "_" + self.project.objective](**self.hyperparams)
+                    "xgboost_regression": xgb.XGBRegressor,
+                    "xgboost_classification": xgb.XGBClassifier,
+                }[self.algorithm_name + "_" + self.project.objective](
+                    **self.hyperparams
+                )
 
         return self._algorithm
 
@@ -567,7 +591,7 @@ def train(
     """
     if algorithm_name is None:
         algorithm_name = "linear"
-    
+
     if objective not in ["regression", "classification"]:
         raise PgMLException(
             f"Unknown objective `{objective}`, available options are: regression, classification."
@@ -587,11 +611,18 @@ def train(
     model = Model.create(project, snapshot, algorithm_name, hyperparams)
     model.fit(snapshot)
 
-    if project.deployed_model is None or (
-        project.objective == "regression" and project.deployed_model.metrics["mean_squared_error"] > model.metrics["mean_squared_error"]
-      ) or (
-        project.objective == "classification" and project.deployed_model.metrics["f1"] < model.metrics["f1"]
-      )  :
+    if (
+        project.deployed_model is None
+        or (
+            project.objective == "regression"
+            and project.deployed_model.metrics["mean_squared_error"]
+            > model.metrics["mean_squared_error"]
+        )
+        or (
+            project.objective == "classification"
+            and project.deployed_model.metrics["f1"] < model.metrics["f1"]
+        )
+    ):
         model.deploy()
         return "deployed"
     else:
