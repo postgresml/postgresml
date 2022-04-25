@@ -47,6 +47,7 @@ SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 
 SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'random_forest', '{"n_estimators": 5}');
 -- other
 SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'kernel_ridge');
+SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'xgboost');
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'gaussian_process');
 

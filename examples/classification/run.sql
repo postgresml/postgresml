@@ -41,6 +41,7 @@ SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification',
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gaussian_process', '{"max_iter_predict": 100, "warm_start": true}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'xgboost');
 
 
 -- check out all that hard work
