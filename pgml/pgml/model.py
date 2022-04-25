@@ -145,9 +145,7 @@ class Project(object):
         return self._deployed_model
 
     def deploy(self, qualifier="best_score", algorithm_name=None):
-        model = Model.find_by_project_and_qualifier_algorithm_name(
-            self, qualifier, algorithm_name
-        )
+        model = Model.find_by_project_and_qualifier_algorithm_name(self, qualifier, algorithm_name)
         if model and model.id != self.deployed_model.id:
             model.deploy()
         return model
@@ -240,9 +238,7 @@ class Snapshot(object):
                 f"Relation `{self.relation_name}` contains no rows. Did you pass the correct `relation_name`?"
             )
         if self.y_column_name not in data[0]:
-            raise PgMLException(
-                f"Column `{self.y_column_name}` not found. Did you pass the correct `y_column_name`?"
-            )
+            raise PgMLException(f"Column `{self.y_column_name}` not found. Did you pass the correct `y_column_name`?")
 
         # Always pull the columns in the same order from the row.
         # Python dict iteration is not always in the same order (hash table).
@@ -355,9 +351,7 @@ class Model(object):
         return model
 
     @classmethod
-    def find_by_project_and_qualifier_algorithm_name(
-        cls, project: Project, strategy: str, algorithm_name: str
-    ):
+    def find_by_project_and_qualifier_algorithm_name(cls, project: Project, strategy: str, algorithm_name: str):
         """
         Args:
             project_id (int): The project id
@@ -501,9 +495,7 @@ class Model(object):
                     "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
                     "xgboost_regression": xgb.XGBRegressor,
                     "xgboost_classification": xgb.XGBClassifier,
-                }[self.algorithm_name + "_" + self.project.objective](
-                    **self.hyperparams
-                )
+                }[self.algorithm_name + "_" + self.project.objective](**self.hyperparams)
 
         return self._algorithm
 
@@ -593,9 +585,7 @@ def train(
         algorithm_name = "linear"
 
     if objective not in ["regression", "classification"]:
-        raise PgMLException(
-            f"Unknown objective `{objective}`, available options are: regression, classification."
-        )
+        raise PgMLException(f"Unknown objective `{objective}`, available options are: regression, classification.")
 
     try:
         project = Project.find_by_name(project_name)
@@ -615,13 +605,9 @@ def train(
         project.deployed_model is None
         or (
             project.objective == "regression"
-            and project.deployed_model.metrics["mean_squared_error"]
-            > model.metrics["mean_squared_error"]
+            and project.deployed_model.metrics["mean_squared_error"] > model.metrics["mean_squared_error"]
         )
-        or (
-            project.objective == "classification"
-            and project.deployed_model.metrics["f1"] < model.metrics["f1"]
-        )
+        or (project.objective == "classification" and project.deployed_model.metrics["f1"] < model.metrics["f1"])
     ):
         model.deploy()
         return "deployed"
