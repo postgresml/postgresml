@@ -19,14 +19,9 @@
         <script defer type="module" src="{% static 'js/main.mjs' %}"></script>
 
         <title>
-            {% if title %}
-                {{title}}
-            {% endif %}
+            {% if title %}{{title}}{% endif %}
             {% if title is None or "PostgresML" not in title %}
-                {% if title is not None %}
-                - 
-                {% endif %}
-                PostgresML
+                {% if title is not None %} - {% endif %}PostgresML
             {% endif %}
         </title>
     </head>

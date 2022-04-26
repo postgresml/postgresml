@@ -28,7 +28,7 @@ The system runs Postgres with the pgml-extension installed on port 5433 by defau
 $ psql -U postgres -h 127.0.0.1 -p 5433
 ```
 
-We've included a couple examples in the `pgml-extension/examples/` folder. You can run them directly with: 
+We've included a couple examples in the `pgml-extension/examples/` folder. You can run them directly like: 
 
 ```bash
 $ psql -U postgres -h 127.0.0.1 -p 5433 -f pgml-extension/examples/classification.sql
@@ -40,7 +40,29 @@ See [installation instructions](#Installation) for installing PostgresML in diff
 
 ### Training models
 
-Given a Postgres table or a view, PostgresML can train a model with many commonly used algorithms. We currently support the following Scikit-Learn regression and classification models:
+Given a Postgres table or a view, PostgresML can train a model with many commonly used algorithms. We currently support the following regression and classification models from Scikit-Learn and XGBoost:
+
+#### XGBoost
+Algorithm | Regression | Classification
+--- | --- | ---
+`xgboost` | [XGBRegressor](https://xgboost.readthedocs.io/en/stable/python/python_api.html#module-xgboost.sklearn) | [XGBClassifier](https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBClassifier) | 
+
+#### Scikit Ensembles
+Algorithm | Regression | Classification
+--- | --- | ---
+`ada_boost` | [AdaBoostRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostRegressor.html) | [AdaBoostClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html)
+`bagging` | [BaggingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.BaggingRegressor.html) | [BaggingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.BaggingClassifier.html)
+`extra_trees` | [ExtraTreesRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html) | [ExtraTreesClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html)
+`gradient_boosting_trees` | [GradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html) | [GradientBoostingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html)
+`random_forest` | [RandomForestRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html) | [RandomForestClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)
+`hist_gradient_boosting` | [HistGradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html) | [HistGradientBoostingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingClassifier.html)
+
+#### Support Vector Machines
+Algorithm | Regression | Classification
+--- | --- | ---
+`svm` | [SVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html) | [SVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html)
+`nu_svm` | [NuSVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.NuSVR.html) | [NuSVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.NuSVC.html)
+`linear_svm` | [LinearSVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVR.html) | [LinearSVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html)
 
 #### Linear Models
 Algorithm | Regression | Classification
@@ -61,23 +83,6 @@ Algorithm | Regression | Classification
 `theil_sen` | [TheilSenRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.TheilSenRegressor.html) | -
 `huber` | [HuberRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.HuberRegressor.html) | -
 `quantile` | [QuantileRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.QuantileRegressor.html) | -
-
-#### Support Vector Machines
-Algorithm | Regression | Classification
---- | --- | ---
-`svm` | [SVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html) | [SVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html)
-`nu_svm` | [NuSVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.NuSVR.html) | [NuSVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.NuSVC.html)
-`linear_svm` | [LinearSVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVR.html) | [LinearSVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html)
-
-#### Ensembles
-Algorithm | Regression | Classification
---- | --- | ---
-`ada_boost` | [AdaBoostRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostRegressor.html) | [AdaBoostClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html)
-`bagging` | [BaggingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.BaggingRegressor.html) | [BaggingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.BaggingClassifier.html)
-`extra_trees` | [ExtraTreesRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html) | [ExtraTreesClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html)
-`gradient_boosting_trees` | [GradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html) | [GradientBoostingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html)
-`random_forest` | [RandomForestRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html) | [RandomForestClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)
-`hist_gradient_boosting` | [HistGradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html) | [HistGradientBoostingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingClassifier.html)
 
 #### Other
 Algorithm | Regression | Classification
@@ -197,9 +202,10 @@ Colocating the compute with the data inside the database removes one of the most
 
 ## Installation
 
-### Docker
+### Running with Docker
 
-The quickest way to try this out is with Docker. If you're on Mac, install [Docker for Mac](https://docs.docker.com/desktop/mac/install/). If you're on Linux (e.g. Ubuntu/Debian), you can follow [these instructions](https://docs.docker.com/engine/install/ubuntu/). For Ubuntu, also install `docker-compose`. Docker and this image also works on Windows/WSL2.
+The quickest way to try this out is with Docker, which is available for common operating systems: 
+- [Docker Installation on OS X](https://docs.docker.com/desktop/mac/install/) or [Docker Installation on Linux](https://docs.docker.com/engine/install/ubuntu/). If you're on Linux (e.g. Ubuntu/Debian), you'll also need to install the `docker-compose` package. These Docker images also work on Windows/WSL2.
 
 Starting up a local system is then as simple as:
 
@@ -210,7 +216,7 @@ $ docker-compose up -d
 PostgresML will run on port 5433, just in case you already have Postgres running. Then to connect, run:
 
 ```bash
-$ psql -h 127.0.0.1 -p 5433 -U root
+$ psql postgres://postgres@localhost:5433/pgml_development
 ```
 
 To validate it works, you can execute this query and you should see this result:
@@ -220,14 +226,20 @@ SELECT pgml.version();
 
  version
 ---------
- 0.1
+ 0.5
 (1 row)
 ```
 
-### Mac OS (native)
+Docker Compose will also start the admin app running locally on port 8000 [http://localhost:8000/](http://localhost:8000/).
 
-If you don't want to use Docker, a native installation is available. We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with PL/Python, the extension we rely on, built into the installation. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (Python.org);
-Postgres.app and PL/Python depend on the community one. The following versions of Python and Postgres.app are compatible:
+
+### Native Installation & Production Deployments
+
+A Postgresml deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](./pgml-extension/)) that facilitates the machine learning lifecycle inside the database. Additionally, we provide an admin app ([pgml-admin](./pgml-admin/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use.
+
+#### Mac OS (native)
+
+We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with [PL/Python](https://www.postgresql.org/docs/current/plpython.html), the extension we rely on, built into the installation. Otherwise, you'll need to install PL/Python. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (Python.org); Postgres.app and PL/Python depend on the community one. The following versions of Python and Postgres.app are compatible:
 
 | **PostgreSQL version** | **Python version** | **Download link**                                                                       |
 |------------------------|--------------------|-----------------------------------------------------------------------------------------|
@@ -236,18 +248,17 @@ Postgres.app and PL/Python depend on the community one. The following versions o
 
 All Python.org installers for Mac OS are [available here](https://www.python.org/downloads/macos/). You can also get more details about this in the Postgres.app [documentation](https://postgresapp.com/documentation/plpython.html).
 
-#### Python package
+##### Python package
 
-To use our Python package inside Postgres, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step,
-use its correspoding pip executable. Since Python was installed as a framework, sudo (root) is not required.
+To use our Python package inside Postgres, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step, use the correspoding pip executable. Since Python was installed as a framework, sudo (root) is not required.
 
 For PostgreSQL 14, use Python & Pip 3.9:
 
 ```bash
-$ pip3.9 install pgml
+$ pip3.9 install pgml-extension
 ```
 
-#### PL/Python functions
+##### PL/Python functions
 
 Finally to interact with the package, install our functions and supporting tables into the database:
 
@@ -261,7 +272,7 @@ If everything works, you should be able to run this successfully:
 $ psql -c 'SELECT pgml.version()'
 ```
 
-### Ubuntu/Debian
+#### Ubuntu/Debian
 
 Each Ubuntu/Debian distribution comes with its own version of PostgreSQL, the simplest way is to install it from Aptitude:
 
@@ -278,7 +289,7 @@ $ sudo service postgresql restart
 Install our Python package and SQL functions:
 
 ```bash
-$ sudo pip3 install pgml
+$ sudo pip3 install pgml-extension
 $ psql -f sql/install.sql
 ```
 

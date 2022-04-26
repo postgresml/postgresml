@@ -3,10 +3,6 @@
 # Exit on error, real CI
 set -e
 
-echo "Python Env"
-echo $PYTHONPATH
-echo $PYTHONHOME
-
 echo "Starting Postgres..."
 service postgresql start
 
