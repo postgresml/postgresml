@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block main %}
+<h1>{{ project.name }}</h1> 
+<table>
+  <thead>
+    <tr>
+      <th>Attribute</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>ID</td><td>{{project.id}}</td></tr>
+    <tr><td>Name</td><td>{{project.name}}</td></tr>
+    <tr><td>Created</td><td>{{project.created_at}}</td></tr>
+    <tr><td>Updated</td><td>{{project.updated_at}}</td></tr>
+  </tbody>
+</table>
+{% endblock %}

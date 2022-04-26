@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block main %}
+<h1>Deployments</h1> 
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Project</th>
+      <th>Model</th>
+      <th>Deployed</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for deployment in deployments %}
+    <tr>
+      <td><a href="{% url 'deployment' deployment.id %}">{{ deployment.id }}</a></td>
+      <td><a href="{% url 'project' deployment.project.id %}">{{ deployment.project.name }}</a></td>
+      <td><a href="{% url 'model' deployment.model.id %}">{{ deployment.model.algorithm_name }}</a></td>
+      <td>{{deployment.created_at}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

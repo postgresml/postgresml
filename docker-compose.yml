@@ -2,7 +2,7 @@ version: "3"
 services:
   postgres:
     build:
-      context: ./
+      context: ./pgml-extension/
       dockerfile: Dockerfile
     ports:
       - "5433:5432"
@@ -11,6 +11,14 @@ services:
     command:
       - sleep
       - infinity
+  admin:
+    build:
+      context: ./pgml-admin/
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    command:
+      - ./manage.py runserver
 
 volumes:
   pg_data:
