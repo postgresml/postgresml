@@ -36,7 +36,7 @@ $ psql -U postgres -h 127.0.0.1 -p 5433 -f pgml-extension/examples/classificatio
 
 The admin web UI is available on https://localhost:8000. After you run the classification example, you should see it in there:
 
-![Admin UI]('./pgml-admin/screenshots/projects.png')
+![Admin UI](./pgml-admin/screenshots/projects.png)
 
 
 See [installation instructions](#Installation) for installing PostgresML in different supported environments, and for more information.
