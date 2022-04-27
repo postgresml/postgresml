@@ -99,7 +99,7 @@ CREATE OR REPLACE FUNCTION pgml.version()
 RETURNS TEXT
 AS $$
 	import pgml_extension
-	return pgml.version()
+	return pgml_extension.version()
 $$ LANGUAGE plpython3u;
 
 

@@ -6,6 +6,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 RUN apt-get install -y postgresql-plpython3-12 python3 python3-pip postgresql-12 tzdata sudo
 
+# Cache this, quicker
+RUN pip3 install xgboost sklearn
+
 COPY --chown=postgres:postgres . /app
 WORKDIR /app
 

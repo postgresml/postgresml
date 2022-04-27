@@ -3,10 +3,14 @@
 # Exit on error, real CI
 set -e
 
-echo "Installing requirements.txt..."
-pip install -r requirements.txt > /dev/null
+cp /app/docker/.env.docker .env
+source .env
 
-echo "Ready"
+while ! psql $PGML_DATABASE_URL 2> /dev/null; do
+	sleep 1
+done
+
+python3 manage.py migrate
 
 if [[ ! -z $@ ]]; then
 	echo
