@@ -320,11 +320,11 @@ pgml.predict(project_name TEXT, features DOUBLE PRECISION[])
 
 The first function trains a model, given a human-friendly project name, a `regression` or `classification` objective, a table or view name which contains the training and testing datasets, and the `y_column_name` containing the target values in that table. The second function predicts novel datapoints, given the project name for an exiting model trained with `pgml.train`, and a list of features used to train that model.
 
-You can also browse complete [code examples in the repository](examples/).
+You can also browse complete [code examples in the repository](./pgml-extension/examples/).
 
 ### Regression Walkthrough
 
-We'll walk through the [regression example](examples/regression/run.sql) first. You'll find that classification is extremely similar. You can test the entire script in PostgresML running in Docker with this:
+We'll walk through the [regression example](./pgml-extension/examples/regression.sql) first. You'll find that classification is extremely similar. You can test the entire script in PostgresML running in Docker with this:
 
 ```bash
 $ psql -f examples/regression/run.sql -p 5433 -U root -h 127.0.0.1 -P pager
