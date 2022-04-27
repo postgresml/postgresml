@@ -1,6 +1,8 @@
 ---
 --- Test our functions.
 ---
+\set ON_ERROR_STOP true
+
 \i sql/install.sql
 
 \timing
