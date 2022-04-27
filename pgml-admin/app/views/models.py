@@ -9,7 +9,7 @@ def default_context(context):
 
 def index(request):
     models = Model.objects.all()
-    context = default_context({"title": "Models", "models": models, "darkmode": True})
+    context = default_context({"title": "Models", "models": models})
     return render(request, "models/index.html", context)
 
 
