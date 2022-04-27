@@ -25,14 +25,19 @@ $ docker-compose up
 The system runs Postgres with the pgml-extension installed on port 5433 by default, just in case you happen to be running Postgres already:
 
 ```bash
-$ psql -U postgres -h 127.0.0.1 -p 5433
+$ psql -U postgres -h 127.0.0.1 -p 5433 -d pgml_development
 ```
 
-We've included a couple examples in the `pgml-extension/examples/` folder. You can run them directly like: 
+We've included a couple examples in the `pgml-extension/examples/` folder. You can run them directly like so: 
 
 ```bash
-$ psql -U postgres -h 127.0.0.1 -p 5433 -f pgml-extension/examples/classification.sql
+$ psql -U postgres -h 127.0.0.1 -p 5433 -d pgml_development -f pgml-extension/examples/classification.sql
 ```
+
+The admin web UI is available on http://localhost:8000. After you run the classification example, you should see it in there:
+
+![Admin UI](./pgml-admin/screenshots/projects.png)
+
 
 See [installation instructions](#Installation) for installing PostgresML in different supported environments, and for more information.
 
