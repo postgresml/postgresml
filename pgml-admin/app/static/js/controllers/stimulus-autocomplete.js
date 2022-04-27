@@ -1,3 +1,4 @@
+// from https://github.com/afcapel/stimulus-autocomplete/blob/main/src/autocomplete.js
 import { Controller } from "@hotwired/stimulus"
 
 const optionSelector = "[role='option']:not([aria-disabled])"
