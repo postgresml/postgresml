@@ -235,7 +235,7 @@ Docker Compose will also start the admin app running locally on port 8000 [http:
 
 ### Native Installation & Production Deployments
 
-A Postgresml deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](./pgml-extension/)) that facilitates the machine learning lifecycle inside the database. Additionally, we provide an admin app ([pgml-admin](./pgml-admin/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use.
+A PostgresML deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](./pgml-extension/)) that facilitates the machine learning lifecycle inside the database. Additionally, we provide an admin app ([pgml-admin](./pgml-admin/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use.
 
 #### Mac OS (native)
 
