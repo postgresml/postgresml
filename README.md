@@ -391,4 +391,4 @@ LIMIT 10;
 (10 rows)
 ```
 
-Take a look at the rest of the [regression example](./pgml-extension/examples/regression/run.sql) to see how to train different algorithms on this dataset. You may also be interested in the [classification example](./pgml-extension/examples/classification/run.sql) which happens to be extremely similar, although it optimizes for a different key metric.
+Take a look at the rest of the [regression example](./pgml-extension/examples/regression.sql) to see how to train different algorithms on this dataset. You may also be interested in the [classification example](./pgml-extension/examples/classification.sql) which happens to be extremely similar, although it optimizes for a different key metric.
