@@ -54,6 +54,7 @@ class Snapshot(models.Model):
     def feature_size(self):
         return len(self.columns) - 1
 
+
 class Model(models.Model):
     """A trained machine learning model."""
 

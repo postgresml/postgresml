@@ -238,7 +238,6 @@ class Snapshot(object):
             )
         if self.y_column_name not in sample[0]:
             raise PgMLException(f"Column `{self.y_column_name}` not found. Did you pass the correct `y_column_name`?")
-        
 
         values = []
         for (column, value) in dict(sample[0]).items():
