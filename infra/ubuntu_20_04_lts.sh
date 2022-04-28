@@ -61,15 +61,23 @@ DJANGO_ALLOWED_HOSTS='*'
 PGML_DATABASE_URL='postgres://pgml_production:${PGPASSWORD}@127.0.0.1:5432/pgml_production'
 " > .env
 
+python3 manage.py collectstatic --no-input
+
+WWW_PATH=/var/www/pgml-admin
+
 # Install under www-data
-mkdir -p /var/lib/www/pgml-admin
-chown www-data:www-data /var/lib/www/pgml-admin
-cp -R . /var/lib/www/pgml-admin
-chown -R www-data:www-data /var/lib/www/pgml-admin
+mkdir -p ${WWW_PATH}
+chown www-data:www-data ${WWW_PATH}
+cp -R . ${WWW_PATH}
+chown -R www-data:www-data ${WWW_PATH}
 
 cp /root/postgresml/infra/pgml-admin.service /etc/systemd/system/pgml-admin.service
 chmod 755 /etc/systemd/system/pgml-admin.service
 systemctl daemon-reload
+
+# Install nginx
+cp /root/postgresml/infra/nginx.conf /etc/nginx/sites-available/default
+service nginx reload
 
 # Start gunicorn
 service pgml-admin start
