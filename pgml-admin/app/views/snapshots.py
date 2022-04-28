@@ -22,10 +22,12 @@ def snapshot(request, id):
 
 def get(request, id):
     snapshot = get_object_or_404(models.Snapshot, id=id)
-    samples = snapshot.sample(1000)
+    samples = snapshot.sample(500)
     columns = OrderedDict()
     column_names = list(snapshot.columns.keys())
     column_names.sort()
+    column_names.remove(snapshot.y_column_name)
+    column_names.insert(0, snapshot.y_column_name)
     for column_name in column_names:
         columns[column_name] = {
             "name": column_name,
@@ -37,6 +39,7 @@ def get(request, id):
             "stddev": snapshot.analysis[column_name + "_stddev"],
             "min": snapshot.analysis[column_name + "_min"],
             "max": snapshot.analysis[column_name + "_max"],
+            "dip": snapshot.analysis[column_name + "_dip"],
             "samples": SafeString(json.dumps([sample[column_name] for sample in samples])),
         }
 

@@ -17,6 +17,7 @@ setuptools.setup(
     install_requires=[
         "sklearn",
         "xgboost",
+        "diptest",
     ],
     extras_require={"dev": "pytest"},
     packages=setuptools.find_packages(exclude=("tests",)),

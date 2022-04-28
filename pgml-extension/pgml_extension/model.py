@@ -6,6 +6,7 @@ import sklearn.svm
 import sklearn.ensemble
 import sklearn.gaussian_process
 import xgboost as xgb
+import diptest
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     mean_squared_error,
@@ -227,7 +228,7 @@ class Snapshot(object):
             f"""
             SELECT * 
             FROM pgml."snapshot_{self.id}"
-            LIMIT 1
+            LIMIT 1000
         """
         )
         # Sanity check the data
@@ -237,6 +238,8 @@ class Snapshot(object):
             )
         if self.y_column_name not in sample[0]:
             raise PgMLException(f"Column `{self.y_column_name}` not found. Did you pass the correct `y_column_name`?")
+        
+
         values = []
         for (column, value) in dict(sample[0]).items():
             if isinstance(value, float) or isinstance(value, int):
@@ -244,6 +247,12 @@ class Snapshot(object):
                     f"\n  min({column})::FLOAT4 AS {column}_min, max({column})::FLOAT4 AS {column}_max, avg({column})::FLOAT4 AS {column}_mean, stddev({column})::FLOAT4 AS {column}_stddev, percentile_disc(0.25) within group (order by {column}) AS {column}_p25, percentile_disc(0.5) within group (order by {column}) as {column}_p50, percentile_disc(0.75) within group (order by {column}) as {column}_p75, count({column})::INT AS {column}_count, count(distinct {column})::INT AS {column}_distinct, sum(({column} IS NULL)::int)::INT AS {column}_nulls"
                 )
         self.analysis = dict(plpy.execute(f"SELECT {','.join(values)} FROM {self.relation_name}")[0])
+
+        target = [row[self.y_column_name] for row in sample]
+        for (column, value) in dict(sample[0]).items():
+            if isinstance(value, float) or isinstance(value, int):
+                data = [row[column] for row in sample]
+                self.analysis[f"{column}_dip"] = diptest.dipstat(data)
 
         self.columns = {}
         parts = self.relation_name.split(".")
