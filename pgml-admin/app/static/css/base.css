@@ -83,6 +83,7 @@ h1 {
 h2 {
     font-size: 1.5em;
     font-weight: 100;
+    padding: 0.5em 0 0.25em;
 }
 
 /* Tables, sticky headers, overflow scroll, rounded corners, stripes and highlights */
