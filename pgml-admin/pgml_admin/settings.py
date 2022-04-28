@@ -28,7 +28,7 @@ SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 DEBUG = os.environ["DJANGO_DEBUG"] == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [x.strip() for x in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost, 127.0.0.1").split(",")]
 
 
 # Application definition
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
