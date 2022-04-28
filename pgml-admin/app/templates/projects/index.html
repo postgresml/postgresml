@@ -1,23 +1,25 @@
 {% extends "base.html" %}
 
 {% block main %}
-<h1>Projects</h1> 
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Created</th>
-      <th>Updated</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for project in projects %}
-    <tr>
-      <td><a href="{% url 'project' project.id %}">{{ project.name }}</a></td>
-      <td>{{project.created_at}}</td>
-      <td>{{project.updated_at}}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<section>
+  <h1>Projects</h1> 
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Created</th>
+        <th>Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for project in projects %}
+      <tr>
+        <td><a href="{% url 'project' project.id %}">{{ project.name }}</a></td>
+        <td>{{project.created_at}}</td>
+        <td>{{project.updated_at}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
 {% endblock %}
