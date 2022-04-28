@@ -29,7 +29,7 @@ apt-get update -y && apt-get upgrade -y
 # Install Postgres with PL/Python and git and curl (most likely already present).
 apt-get install -y postgresql-plpython3-12 python3 python3-pip postgresql-12 git curl libpq-dev nginx
 
-sudo -u postgres dropdb pgml_production
+sudo -u postgres dropdb --if-exists pgml_production
 sudo -u postgres createdb pgml_production
 sudo -u postgres psql -c "DROP ROLE pgml_production"
 sudo -u postgres psql -c "CREATE ROLE pgml_production ENCRYPTED PASSWORD '${PGPASSWORD}' SUPERUSER LOGIN"
