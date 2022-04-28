@@ -21,6 +21,9 @@ def deployment(request, id):
 def get(request, id):
     deployment = get_object_or_404(models.Deployment, id=id)
     context = default_context(
-        {"title": deployment.project.name + " - " + deployment.model.algorithm_name, "deployment": deployment}
+        {
+            "title": deployment.project.name + " - " + deployment.model.algorithm_name,
+            "deployment": deployment,
+        }
     )
     return render(request, "deployments/deployment.html", context)

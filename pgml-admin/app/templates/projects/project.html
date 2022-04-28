@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block main %}
-<h1>{{ project.name }}</h1> 
+<h1>{{ object.name }}</h1> 
 <table>
   <thead>
     <tr>
@@ -10,10 +10,82 @@
     </tr>
   </thead>
   <tbody>
-    <tr><td>ID</td><td>{{project.id}}</td></tr>
-    <tr><td>Name</td><td>{{project.name}}</td></tr>
-    <tr><td>Created</td><td>{{project.created_at}}</td></tr>
-    <tr><td>Updated</td><td>{{project.updated_at}}</td></tr>
+    <tr><td>ID</td><td>{{object.id}}</td></tr>
+    <tr><td>Name</td><td>{{object.name}}</td></tr>
+    <tr><td>Created</td><td>{{object.created_at}}</td></tr>
+    <tr><td>Updated</td><td>{{object.updated_at}}</td></tr>
   </tbody>
 </table>
+
+{{ metrics|json_script:"metrics-data" }}
+
+<section>
+  <h2>Metrics</h2>
+  <canvas id="metrics-chart" height="400"></canvas>
+
+  <script defer type="module">
+    function metrics_chart() {
+
+      // Available colors for the graph. Hardcoded quick.
+      const colors = [
+        'rgba(255, 99, 132, 1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(255, 206, 86, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(153, 102, 255, 1)',
+        'rgba(255, 159, 64, 1)',
+      ];
+
+      const metrics = JSON.parse(document.getElementById('metrics-data').innerHTML);
+
+      // f1, precision, recall, etc.
+      const labels = Object.keys(metrics);
+
+      if (labels.length < 1)
+        return;
+
+      const scoreTypes = Object.keys(metrics[labels[0]]);
+      const data = {};
+      for (let i in scoreTypes) {
+        data[scoreTypes[i]] = [];
+      }
+
+      const datasets = [];
+      let colorPicker = 0;
+
+      for (let k in data) {
+        const color = colors[colorPicker];
+
+        datasets.push({
+          label: k,
+          data: labels.map(x => Object.assign(metrics[x][k])),
+          borderColor: color,
+          backgroundColor: color,
+          borderWidth: 1,
+        });
+
+        colorPicker++;
+      }
+
+      new Chart(document.getElementById('metrics-chart').getContext('2d'), {
+          type: 'bar',
+          data: {
+              labels,
+              datasets:datasets,
+          },
+          options: {
+              indexAxis: 'y',
+              responsive: true,
+              scales: {
+                  y: {
+                      beginAtZero: true
+                  }
+              }
+          }
+      });
+    };
+
+    metrics_chart();
+  </script>
+</section>
 {% endblock %}

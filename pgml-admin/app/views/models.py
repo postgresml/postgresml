@@ -1,24 +1,35 @@
 from django.shortcuts import render, get_object_or_404
+from django.views.generic import DetailView, ListView
 
-from ..models import Model
+from app.models import Model
+
+import json
 
 
 def default_context(context):
+    """Specify values for the base template."""
     return {"topic": "Models", **context}
 
 
-def index(request):
-    models = Model.objects.all()
-    context = default_context({"title": "Models", "models": models})
-    return render(request, "models/index.html", context)
+class ModelView(DetailView):
+    """View of a particular trained model."""
+
+    model = Model
+    template_name = "models/model.html"
+
+    def get_context_data(self, **kwargs):
+        context = default_context(super().get_context_data(**kwargs))
+        # context["object"].metrics = json.dumps(context["object"].metrics, indent=2)
+        context["title"] = context["object"].project.name + " - " + context["object"].algorithm_name
+        return context
 
 
-def model(request, id):
-    if request.method == "GET":
-        return get(request, id)
+class ModelListView(ListView):
+    """List of trained models for all project."""
 
+    model = Model
+    template_name = "models/index.html"
 
-def get(request, id):
-    model = get_object_or_404(Model, id=id)
-    context = default_context({"title": model.project.name + " - " + model.algorithm_name, "model": model})
-    return render(request, "models/model.html", context)
+    def get_context_data(self, **kwargs):
+        context = default_context(super().get_context_data(**kwargs))
+        return context

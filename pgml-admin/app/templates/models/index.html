@@ -16,7 +16,7 @@
     </tr>
   </thead>
   <tbody>
-    {% for model in models %}
+    {% for model in object_list %}
     <tr>
       <td><a href="{% url 'model' model.id %}">{{ model.id }}</a></td>
       <td><a href="{% url 'project' model.project.id %}">{{ model.project.name }}</a></td>
