@@ -9,6 +9,10 @@ class Project(models.Model):
 
     class Meta:
         db_table = '"pgml"."projects"'
+        managed = False
+
+    def models(self):
+        return Model.objects.filter(project=self)
 
 
 class Snapshot(models.Model):
@@ -22,9 +26,12 @@ class Snapshot(models.Model):
 
     class Meta:
         db_table = '"pgml"."snapshots"'
+        managed = False
 
 
 class Model(models.Model):
+    """A trained machine learning model."""
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     snapshot = models.ForeignKey(Snapshot, on_delete=models.CASCADE)
     algorithm_name = models.TextField()
@@ -37,6 +44,7 @@ class Model(models.Model):
 
     class Meta:
         db_table = '"pgml"."models"'
+        managed = False
 
 
 class Deployment(models.Model):
@@ -46,3 +54,4 @@ class Deployment(models.Model):
 
     class Meta:
         db_table = '"pgml"."deployments"'
+        managed = False

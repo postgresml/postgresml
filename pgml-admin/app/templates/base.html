@@ -8,6 +8,7 @@
 
         <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
         <link rel="stylesheet" href="{% static 'css/base.css' %}">
+        <link rel="stylesheet" href="{% static 'css/style.css' %}">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=block" >
@@ -17,6 +18,7 @@
         <script defer type="module" src="https://unpkg.com/stimulus@2.0.0/dist/stimulus.umd.js"></script>
         <script defer type="module" src="https://cdn.skypack.dev/pin/@hotwired/turbo@v7.0.0-rc.1-Vumm1JJjKMC0HM7D9Tjd/mode=imports/optimized/@hotwired/turbo.js"></script>
         <script defer type="module" src="{% static 'js/main.mjs' %}"></script>
+        <script defer type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 
         <title>
             {% if title %}{{title}}{% endif %}
