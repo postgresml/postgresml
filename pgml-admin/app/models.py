@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, connection
 
 
 class Project(models.Model):
@@ -21,12 +21,28 @@ class Snapshot(models.Model):
     test_size = models.FloatField()
     test_sampling = models.TextField()
     status = models.TextField()
+    columns = models.JSONField(null=True)
+    analysis = models.JSONField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = '"pgml"."snapshots"'
         managed = False
+
+    def sample(self, limit=1000):
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT * FROM {self.relation_name} LIMIT %s", [limit])
+            columns = [col[0] for col in cursor.description]
+            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+    @property
+    def samples(self):
+        return self.analysis[self.y_column_name + "_count"]
+
+    @property
+    def y_column_type(self):
+        return self.columns[self.y_column_name]
 
 
 class Model(models.Model):

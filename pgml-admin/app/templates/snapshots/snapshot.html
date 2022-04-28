@@ -11,8 +11,7 @@
   </thead>
   <tbody>
     <tr><td>ID</td><td>{{snapshot.id}}</td></tr>
-    <tr><td>Snapshot</td><td><a href="{% url 'snapshot' snapshot.id %}">{{snapshot.relation_name}}</a></td></tr>
-    <tr><td>Y</td><td>{{snapshot.y_column_name}}</td></tr>
+    <tr><td>Relation</td><td>{{snapshot.relation_name}}</td></tr>
     <tr><td>Test Size</td><td>{{snapshot.test_size}}</td></tr>
     <tr><td>Test Sampling</td><td>{{snapshot.test_sampling}}</td></tr>
     <tr><td>Status</td><td>{{snapshot.status}}</td></tr>
@@ -20,4 +19,102 @@
     <tr><td>Updated</td><td>{{snapshot.updated_at}}</td></tr>
   </tbody>
 </table>
+<h2>Target: {{snapshot.y_column_name}}</h2>
+<table>
+  <tbody>
+    <tr>
+      <th>Type</th><td>{{snapshot.y_column_type}}</td>
+    </tr>
+    <tr>
+      <th>Samples</th><td>{{snapshot.samples}}</td>
+    </tr>
+</tbody>
+</table>
+<h2>Features</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Type</th>
+      <th>Distribution</th>
+      <th>Correlation</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for name, feature in features.items %}
+      <tr>
+        <td>{{feature.name}}</td>
+        <td>{{feature.type}}</td>
+        <td><div id="{{feature.name}}_distribution" style="width:400px"></div></td>
+        <td><div id="{{feature.name}}_correlation" style="width:400px"></div></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<script>
+
+{% for name, feature in features.items %}
+  var {{name}}_samples = {{feature.samples}};
+{% endfor %}
+var layout = {};
+function linearRegression(x,y){
+        var lr = {};
+        var n = y.length;
+        var sum_x = 0;
+        var sum_y = 0;
+        var sum_xy = 0;
+        var sum_xx = 0;
+        var sum_yy = 0;
+
+        for (var i = 0; i < y.length; i++) {
+
+            sum_x += x[i];
+            sum_y += y[i];
+            sum_xy += (x[i]*y[i]);
+            sum_xx += (x[i]*x[i]);
+            sum_yy += (y[i]*y[i]);
+        } 
+
+        lr['sl'] = (n * sum_xy - sum_x * sum_y) / (n*sum_xx - sum_x * sum_x);
+        lr['off'] = (sum_y - lr.sl * sum_x)/n;
+        lr['r2'] = Math.pow((n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y)),2);
+
+        return lr;
+}
+
+window.onload = () => {
+{% for name, feature in features.items %}
+  Plotly.newPlot(
+    '{{feature.name}}_distribution', 
+    [{
+      type: "histogram",
+      x: {{name}}_samples
+    }],
+    layout
+  );
+
+  var lr = linearRegression({{name}}_samples, {{snapshot.y_column_name}}_samples);
+  var fit_from = Math.min(...{{name}}_samples);
+  var fit_to = Math.max(...{{name}}_samples);
+
+  Plotly.newPlot(
+    '{{feature.name}}_correlation', 
+    [{
+      type: "scatter",
+      mode: 'markers',
+      x: {{name}}_samples,
+      y: {{snapshot.y_column_name}}_samples
+    }, {
+      x: [fit_from, fit_to],
+      y: [fit_from*lr.sl+lr.off, fit_to*lr.sl+lr.off],
+      mode: 'lines',
+      type: 'scatter',
+      name: "R2=".concat((Math.round(lr.r2 * 10000) / 10000).toString())
+    }
+    ],
+    layout
+  );
+{% endfor %}
+};
+</script>
 {% endblock %}

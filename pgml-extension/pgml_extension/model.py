@@ -204,9 +204,11 @@ class Snapshot(object):
         plpy.execute(
             f"""
             CREATE TABLE pgml."snapshot_{snapshot.id}" AS 
-            SELECT * FROM {snapshot.relation_name};
+            SELECT * FROM {snapshot.relation_name}
+            ORDER BY random();
         """
         )
+        snapshot.analyze()
         snapshot.__dict__ = dict(
             plpy.execute(
                 f"""
@@ -220,6 +222,52 @@ class Snapshot(object):
         )
         return snapshot
 
+    def analyze(self):
+        sample = plpy.execute(
+            f"""
+            SELECT * 
+            FROM pgml."snapshot_{self.id}"
+            LIMIT 1
+        """
+        )
+        # Sanity check the data
+        if len(sample) == 0:
+            raise PgMLException(
+                f"Relation `{self.relation_name}` contains no rows. Did you pass the correct `relation_name`?"
+            )
+        if self.y_column_name not in sample[0]:
+            raise PgMLException(f"Column `{self.y_column_name}` not found. Did you pass the correct `y_column_name`?")
+        values = []
+        for (column, value) in dict(sample[0]).items():
+            if isinstance(value, float) or isinstance(value, int):
+                values.append(
+                    f"\n  min({column})::FLOAT4 AS {column}_min, max({column})::FLOAT4 AS {column}_max, avg({column})::FLOAT4 AS {column}_mean, stddev({column})::FLOAT4 AS {column}_stddev, percentile_disc(0.25) within group (order by {column}) AS {column}_p25, percentile_disc(0.5) within group (order by {column}) as {column}_p50, percentile_disc(0.75) within group (order by {column}) as {column}_p75, count({column})::INT AS {column}_count, count(distinct {column})::INT AS {column}_distinct, sum(({column} IS NULL)::int)::INT AS {column}_nulls"
+                )
+        self.analysis = dict(plpy.execute(f"SELECT {','.join(values)} FROM {self.relation_name}")[0])
+
+        self.columns = {}
+        parts = self.relation_name.split(".")
+        sql = "SELECT column_name, data_type FROM information_schema.columns "
+        if len(parts) > 1:
+            sql += f"WHERE table_name = {q(parts[1])} and table_schema = {q(parts[0])}"
+        else:
+            sql += f"WHERE table_name = {q(parts[0])}"
+        result = plpy.execute(sql)
+        for row in result:
+            self.columns[row["column_name"]] = row["data_type"]
+
+        self.__dict__ = dict(
+            plpy.execute(
+                f"""
+            UPDATE pgml.snapshots 
+            SET columns = {q(json.dumps(self.columns))}::JSON, analysis = {q(json.dumps(self.analysis))}::JSON, updated_at = clock_timestamp()
+            WHERE id = {q(self.id)} 
+            RETURNING *
+        """,
+                1,
+            )[0]
+        )
+
     def data(self):
         """
         Returns:
@@ -231,14 +279,6 @@ class Snapshot(object):
             FROM pgml."snapshot_{self.id}"
         """
         )
-
-        # Sanity check the data
-        if len(data) == 0:
-            raise PgMLException(
-                f"Relation `{self.relation_name}` contains no rows. Did you pass the correct `relation_name`?"
-            )
-        if self.y_column_name not in data[0]:
-            raise PgMLException(f"Column `{self.y_column_name}` not found. Did you pass the correct `y_column_name`?")
 
         # Always pull the columns in the same order from the row.
         # Python dict iteration is not always in the same order (hash table).

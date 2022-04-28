@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS pgml.snapshots(
 	test_size FLOAT4 NOT NULL,
 	test_sampling TEXT NOT NULL,
 	status TEXT NOT NULL,
+	columns JSONB,
+	analysis JSONB,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp()
 );

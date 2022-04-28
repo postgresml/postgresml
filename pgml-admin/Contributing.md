@@ -56,7 +56,7 @@ ON_ERROR_STOP=1 psql -f sql/test.sql postgres://postgres@127.0.0.1:5433/pgml_dev
 
 One liner:
 ```
-cd pgml-extension; psql -c "DROP DATABASE pgml_development" postgres://postgres@127.0.0.1:5433/; psql -c "CREATE DATABASE pgml_development" postgres://postgres@127.0.0.1:5433/; psql -c "create schema pgml" postgres://postgres@127.0.0.1:5433/pgml_development; ON_ERROR_STOP=1 psql -f sql/test.sql -P pager postgres://postgres@127.0.0.1:5433/pgml_development; cd ..
+cd pgml-extension; sudo /bin/pip3 install .; psql -c "DROP DATABASE pgml_development" postgres://postgres@127.0.0.1:5432/; psql -c "CREATE DATABASE pgml_development" postgres://postgres@127.0.0.1:5432/; psql -c "create schema pgml" postgres://postgres@127.0.0.1:5432/pgml_development; ON_ERROR_STOP=1 psql -f sql/test.sql -P pager postgres://postgres@127.0.0.1:5432/pgml_development; cd ..
 ```
 
 Make sure to run it exactly like this, from the root directory of the repo.
