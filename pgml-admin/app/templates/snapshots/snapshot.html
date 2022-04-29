@@ -42,7 +42,7 @@
   {% endfor %}
 </section>
 
-<script>
+<script defer type="module">
 {% for name, feature in features.items %}
   var {{name}}_samples = {{feature.samples}};
 {% endfor %}
@@ -90,7 +90,7 @@ function respondToVisibility(element, callback) {
   observer.observe(element);
 }
 
-window.onload = () => {
+function renderCharts() {
 {% for name, feature in features.items %}
   setTimeout(Plotly.newPlot, 1,
     '{{feature.name}}_distribution', 
@@ -241,5 +241,6 @@ window.onload = () => {
   {% endif %}
 {% endfor %}
 };
+renderCharts();
 </script>
 {% endblock %}
