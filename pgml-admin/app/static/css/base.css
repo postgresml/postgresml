@@ -315,8 +315,8 @@ footer {
     }
     figure {
         display: inline-block;
-        width: 80vmin;
-        height: 80vmin;
+        width: 75vmin;
+        height: 75vmin;
         margin: 0 30px;
     }
     section {
