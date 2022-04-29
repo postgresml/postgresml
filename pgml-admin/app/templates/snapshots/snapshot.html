@@ -1,58 +1,48 @@
 {% extends "base.html" %}
 
 {% block main %}
-<h1>{{ snapshot.relation_name }}</h1> 
-<table>
-  <thead>
-    <tr>
-      <th>Attribute</th>
-      <th>Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>ID</td><td>{{snapshot.id}}</td></tr>
-    <tr><td>Relation</td><td>{{snapshot.relation_name}}</td></tr>
-    <tr><td>Test Size</td><td>{{snapshot.test_size}}</td></tr>
-    <tr><td>Test Sampling</td><td>{{snapshot.test_sampling}}</td></tr>
-    <tr><td>Status</td><td>{{snapshot.status}}</td></tr>
-    <tr><td>Created</td><td>{{snapshot.created_at}}</td></tr>
-    <tr><td>Updated</td><td>{{snapshot.updated_at}}</td></tr>
-  </tbody>
-</table>
-<h2>Target: {{snapshot.y_column_name}}</h2>
-<table>
-  <tbody>
-    <tr>
-      <th>Type</th><td>{{snapshot.y_column_type}}</td>
-    </tr>
-    <tr>
-      <th>Samples</th><td>{{snapshot.samples}}</td>
-    </tr>
-</tbody>
-</table>
-<h2>Features</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Feature</th>
-      <th>Type</th>
-      <th>Distribution</th>
-      <th>Correlation</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for name, feature in features.items %}
-      <tr>
-        <td>{{feature.name}}</td>
-        <td>{{feature.type}}</td>
-        <td><div id="{{feature.name}}_distribution" style="width:400px"></div></td>
-        <td><div id="{{feature.name}}_correlation" style="width:400px"></div></td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
-<script>
+<section>
+  <h1>{{ snapshot.relation_name }}    
+    {% if snapshot.status == "created" %}
+      <span class="material-symbols-outlined success">done</span>
+    {% else %}
+      <span class="material-symbols-outlined">sync</span>
+    {% endif %}
+  </h1>
 
+  <dl>
+    <dt>Table Size</dt>
+    <dd>{{snapshot.table_size}}</dd>
+    <dt>Table Rows</dt>
+    <dd>{{snapshot.samples}}</dd>
+    <dt>Features</dt>
+    <dd>{{snapshot.feature_size}}</dd>
+    <dt>Created</dt>
+    <dd><time datetime="{{snapshot.created_at}}">{{snapshot.created_at}}</time></dd>
+  </dl>
+</section>
+<section>
+  <h2>Labels</h2>
+  {% for name, feature in features.items %}
+    {% if name == snapshot.y_column_name %}
+    <h3><code>{{feature.name}}</code> ({{feature.type}})</h3>
+    <figure id="{{feature.name}}_distribution"></figure>
+    <figure id="{{feature.name}}_outliers"></figure>
+    {% endif %}
+  {% endfor %}
+</section>
+<section>
+  <h2>Features</h2>
+  {% for name, feature in features.items %}
+    {% if name != snapshot.y_column_name %}
+    <h3><code>{{feature.name}}</code> ({{feature.type}})</h3>
+    <figure id="{{feature.name}}_distribution"></figure>
+    <figure id="{{feature.name}}_correlation"></figure>
+    {% endif %}
+  {% endfor %}
+</section>
+
+<script>
 {% for name, feature in features.items %}
   var {{name}}_samples = {{feature.samples}};
 {% endfor %}
@@ -82,38 +72,173 @@ function linearRegression(x,y){
         return lr;
 }
 
+
+// Start observing visbility of element. On change, the
+//   the callback is called with Boolean visibility as
+//   argument:
+function respondToVisibility(element, callback) {
+  var options = {
+    root: document.documentElement,
+  };
+
+  var observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      callback(entry.intersectionRatio > 0);
+    });
+  }, options);
+
+  observer.observe(element);
+}
+
 window.onload = () => {
 {% for name, feature in features.items %}
-  Plotly.newPlot(
+  setTimeout(Plotly.newPlot, 1,
     '{{feature.name}}_distribution', 
     [{
       type: "histogram",
-      x: {{name}}_samples
+      name: "{{feature.name}}",
+      x: {{name}}_samples,
+      marker: {
+        color: "rgba(118, 138, 244, 0.7)",
+        line: {
+          color: "rgba(118, 138, 244, 1)", 
+          width: 1
+        },
+      }, 
     }],
-    layout
+    {
+      title: {
+        font: {family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif"},
+        text: "Distribution: " + (Math.round({{feature.dip}} * 100) / 100).toString() + " dip",
+      },
+      hoverlabel: {
+        bgcolor: "rgba(118, 138, 244, 0.7)",
+        bordercolor: "rgba(255, 255, 255, 1)",
+        font: {
+          color: "rgba(255, 255, 255, 1)",
+          family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif",
+          size: 12
+        },
+      },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      width: 250,
+      height: 250,
+      yaxis: {automargin: true},
+      xaxis: {automargin: true},  
+      margin: {l: 0, r: 0, b: 0, t: 50, pad: 0},
+      scrollZoom: false,
+      dragmode: false,
+    },
+    {displayModeBar: false}
   );
 
+  {% if name == snapshot.y_column_name %}
+  setTimeout(Plotly.newPlot, 1,
+    '{{feature.name}}_outliers', 
+    [{
+      type: "box",
+      jitter: 0.3,
+      pointpos: -1.8,
+      boxpoints: 'all',
+      name: "{{feature.name}}",
+      y: {{name}}_samples,
+      marker: {
+        color: "rgba(118, 138, 244, 0.7)",
+        line: {
+          color: "rgba(118, 138, 244, 1)", 
+          width: 1
+        },
+      }, 
+    }],
+    {
+      title: {
+        font: {family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif"},
+        text: "Outliers: " + (Math.round({{feature.stddev}} * 100) / 100).toString() + " σ",
+      },
+      hoverlabel: {
+        bgcolor: "rgba(118, 138, 244, 0.7)",
+        bordercolor: "rgba(255, 255, 255, 1)",
+        font: {
+          color: "rgba(255, 255, 255, 1)",
+          family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif",
+          size: 12
+        },
+      },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      width: 250,
+      height: 250,
+      yaxis: {automargin: true},
+      xaxis: {automargin: true},  
+      margin: {l: 0, r: 0, b: 0, t: 50, pad: 0},
+      scrollZoom: false,
+      dragmode: false,
+    },
+    {displayModeBar: false}
+  );
+
+  {% else %}
   var lr = linearRegression({{name}}_samples, {{snapshot.y_column_name}}_samples);
   var fit_from = Math.min(...{{name}}_samples);
   var fit_to = Math.max(...{{name}}_samples);
 
-  Plotly.newPlot(
+  setTimeout(Plotly.newPlot, 1, 
     '{{feature.name}}_correlation', 
     [{
       type: "scatter",
-      mode: 'markers',
+      mode: "markers",
+      name: "{{feature.name}}",
       x: {{name}}_samples,
-      y: {{snapshot.y_column_name}}_samples
+      y: {{snapshot.y_column_name}}_samples,
+      marker: {
+        color: "rgba(118, 138, 244, 0.4)",
+        line: {
+          color: "rgba(118, 138, 244, 0.6)", 
+          width: 1
+        },
+      }, 
     }, {
+      type: 'scatter',
+      mode: 'lines',
+      name: (Math.round(lr.r2 * 100) / 100).toString() + " R<sup>2</sup>",
       x: [fit_from, fit_to],
       y: [fit_from*lr.sl+lr.off, fit_to*lr.sl+lr.off],
-      mode: 'lines',
-      type: 'scatter',
-      name: "R2=".concat((Math.round(lr.r2 * 10000) / 10000).toString())
-    }
-    ],
-    layout
+      marker: {
+        color: "rgba(251, 204, 5, 1)",
+        line: {
+          color: "rgba(251, 204, 5, 1)",
+          width: 1
+        },
+      }, 
+    }],
+    {
+      font: {family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif"},
+      title: "Correlation: " + (Math.round(lr.r2 * 100) / 100).toString() + " R<sup>2</sup>",
+      hoverlabel: {
+        bgcolor: "rgba(118, 138, 244, 0.7)",
+        bordercolor: "rgba(255, 255, 255, 1)",
+        font: {
+          color: "rgba(255, 255, 255, 1)",
+          family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif",
+          size: 12
+        },
+      },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      width: 250,
+      height: 250,
+      yaxis: {automargin: true},
+      xaxis: {automargin: true},  
+      margin: {l: 0, r: 0, b: 0, t: 50, pad: 0},
+      showlegend: false,
+      scrollZoom: false,
+      dragmode: false,
+      
+    },
+    {displayModeBar: false}
   );
+  {% endif %}
 {% endfor %}
 };
 </script>

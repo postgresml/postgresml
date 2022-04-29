@@ -18,6 +18,7 @@
     --color-7: #9999ff;
     --color-8: #cbe3ff;
     --color-9: #f3f3ff;
+    --shadow-2: rgba(0,0,0,0.25);
     --highlite-red: #FF4444;
     --highlite-orange: #FF8B1F;
     --highlite-yellow: #FFD600;
@@ -77,13 +78,40 @@ a {
 h1 {
     font-size: 3em;
     font-weight: 100;
-    padding: 1em 0 0.5em;
-    color: var(--gray-4);
+    margin: 0 0 0.5em;
+    color: var(--gray-3);
 }
 h2 {
+    font-size: 2em;
+    font-weight: 300;
+    margin: 0 0 0.5em;
+    padding: 0 0 5px;
+    color: var(--gray-3);
+}
+h3 {
     font-size: 1.5em;
-    font-weight: 100;
-    padding: 0.5em 0 0.25em;
+    font-weight: 500;
+    margin: 2em 0 0.5em;
+    color: var(--gray-3);
+}
+code {
+    font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+}
+figure {
+    display: inline-block;
+    width: 250px;
+    height: 250px;
+    margin: 0 30px;
+}
+section {
+    background-color: var(--gray-9);
+    padding: 30px;
+    margin: 20px;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px var(--shadow-2);
+    overflow: auto;
+    margin-left: min(5vw, 20px);
+    margin-right: min(5vw, 20px);
 }
 
 /* Tables, sticky headers, overflow scroll, rounded corners, stripes and highlights */
@@ -149,7 +177,24 @@ body {
     font-family: Roboto, "Microsoft Sans Serif", "Helvetica Neue", Arial, sans-serif;
     font-weight: normal;
     color: var(--gray-3);
-    background: var(--gray-9);
+    background-color: var(--color-9);
+}
+
+.success {
+    color: var(--highlite-green);
+}
+
+dl {
+    display: flex;
+    flex-flow: column wrap;
+    max-height: 2em;
+}
+dt {
+    font-weight: 300;
+    text-transform: uppercase;
+}
+dd {
+    margin: 0;
 }
 
 
@@ -163,6 +208,8 @@ header {
     top: 0;
     left: 0;
     width: 100%;
+    z-index: 10;
+    box-shadow: 0 1px 2px var(--shadow-2);
 }
 header a {
     color: var(--gray-7);
@@ -217,15 +264,12 @@ header a span.material-symbols-outlined {
 
 /* Main */
 main {
-    padding: 50px 0 0;
+    padding: 45px 0 0;
     margin: auto;
-    overflow: auto;
+    overflow: visible;
     width: 100%;
     max-width: fit-content;
-}
-
-main * {
-    margin: 0 min(5vw, 10px);
+    background-color: var(--color-9);
 }
 
 /* Footer */
@@ -259,5 +303,14 @@ footer {
     }
     main {
         padding: 0px 0 100px;
+    }
+    dl {        
+        max-height: 6em;
+    }
+    dt {
+        margin-top: 1em;
+    }
+    dt, dd {
+        margin-right: 2em;
     }
 }

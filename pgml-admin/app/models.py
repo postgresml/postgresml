@@ -44,6 +44,16 @@ class Snapshot(models.Model):
     def y_column_type(self):
         return self.columns[self.y_column_name]
 
+    @property
+    def table_size(self):
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT pg_size_pretty(pg_total_relation_size(%s))", [self.relation_name])
+            return cursor.fetchone()[0]
+
+    @property
+    def feature_size(self):
+        return len(self.columns) - 1
+
 
 class Model(models.Model):
     """A trained machine learning model."""

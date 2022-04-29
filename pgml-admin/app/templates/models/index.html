@@ -1,33 +1,35 @@
 {% extends "base.html" %}
 
 {% block main %}
-<h1>Models</h1> 
-<table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Project</th>
-      <th>Snapshot</th>
-      <th>Algorithm</th>
-      <th>Status</th>
-      <th>Hyperparams</th>
-      <th>Metrics</th>
-      <th>Created</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for model in object_list %}
-    <tr>
-      <td><a href="{% url 'model' model.id %}">{{ model.id }}</a></td>
-      <td><a href="{% url 'project' model.project.id %}">{{ model.project.name }}</a></td>
-      <td><a href="{% url 'snapshot' model.snapshot.id %}">{{ model.snapshot.relation_name }}</a></td>
-      <td>{{model.algorithm_name}}</td>
-      <td>{{model.status}}</td>
-      <td>{{model.hyperparms}}</td>
-      <td>{{model.metrics}}</td>
-      <td>{{model.created_at}}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<section>
+  <h1>Models</h1> 
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Project</th>
+        <th>Snapshot</th>
+        <th>Algorithm</th>
+        <th>Status</th>
+        <th>Hyperparams</th>
+        <th>Metrics</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for model in object_list %}
+      <tr>
+        <td><a href="{% url 'model' model.id %}">{{ model.id }}</a></td>
+        <td><a href="{% url 'project' model.project.id %}">{{ model.project.name }}</a></td>
+        <td><a href="{% url 'snapshot' model.snapshot.id %}">{{ model.snapshot.relation_name }}</a></td>
+        <td>{{model.algorithm_name}}</td>
+        <td>{{model.status}}</td>
+        <td>{{model.hyperparms}}</td>
+        <td>{{model.metrics}}</td>
+        <td>{{model.created_at}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
 {% endblock %}
