@@ -324,3 +324,15 @@ footer {
         margin: 0 0 20px;
     }
 }
+
+@media only screen and (max-width: 300px) {
+    dl {        
+        max-height: 12em;
+    }
+    dt {
+        margin-top: 1em;
+    }
+    dt, dd {
+        margin-right: 2em;
+    }
+}
