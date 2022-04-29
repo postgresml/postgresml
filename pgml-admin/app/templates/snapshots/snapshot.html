@@ -45,30 +45,29 @@
 <script defer type="module">
 
 function linearRegression(x,y){
-        var lr = {};
-        var n = y.length;
-        var sum_x = 0;
-        var sum_y = 0;
-        var sum_xy = 0;
-        var sum_xx = 0;
-        var sum_yy = 0;
+  var lr = {};
+  var n = y.length;
+  var sum_x = 0;
+  var sum_y = 0;
+  var sum_xy = 0;
+  var sum_xx = 0;
+  var sum_yy = 0;
 
-        for (var i = 0; i < y.length; i++) {
+  for (var i = 0; i < y.length; i++) {
 
-            sum_x += x[i];
-            sum_y += y[i];
-            sum_xy += (x[i]*y[i]);
-            sum_xx += (x[i]*x[i]);
-            sum_yy += (y[i]*y[i]);
-        } 
+      sum_x += x[i];
+      sum_y += y[i];
+      sum_xy += (x[i]*y[i]);
+      sum_xx += (x[i]*x[i]);
+      sum_yy += (y[i]*y[i]);
+  } 
 
-        lr['sl'] = (n * sum_xy - sum_x * sum_y) / (n*sum_xx - sum_x * sum_x);
-        lr['off'] = (sum_y - lr.sl * sum_x)/n;
-        lr['r2'] = Math.pow((n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y)),2);
+  lr['sl'] = (n * sum_xy - sum_x * sum_y) / (n*sum_xx - sum_x * sum_x);
+  lr['off'] = (sum_y - lr.sl * sum_x)/n;
+  lr['r2'] = Math.pow((n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y)),2);
 
-        return lr;
+  return lr;
 }
-
 
 // Start observing visbility of element. On change, the
 //   the callback is called with Boolean visibility as
@@ -122,15 +121,13 @@ function renderCharts() {
       },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
-      width: 250,
-      height: 250,
       yaxis: {automargin: true},
       xaxis: {automargin: true},  
       margin: {l: 0, r: 0, b: 0, t: 50, pad: 0},
       scrollZoom: false,
       dragmode: false,
     },
-    {displayModeBar: false}
+    {displayModeBar: false, responsive: true}
   );
 
   {% if name == snapshot.y_column_name %}
@@ -167,15 +164,13 @@ function renderCharts() {
       },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
-      width: 250,
-      height: 250,
       yaxis: {automargin: true},
       xaxis: {automargin: true},  
       margin: {l: 0, r: 0, b: 0, t: 50, pad: 0},
       scrollZoom: false,
       dragmode: false,
     },
-    {displayModeBar: false}
+    {displayModeBar: false, responsive: true}
   );
 
   {% else %}
@@ -226,8 +221,6 @@ function renderCharts() {
       },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
-      width: 250,
-      height: 250,
       yaxis: {automargin: true},
       xaxis: {automargin: true},  
       margin: {l: 0, r: 0, b: 0, t: 50, pad: 0},
@@ -236,7 +229,7 @@ function renderCharts() {
       dragmode: false,
       
     },
-    {displayModeBar: false}
+    {displayModeBar: false, responsive: true}
   );
   {% endif %}
 {% endfor %}

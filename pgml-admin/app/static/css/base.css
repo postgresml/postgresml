@@ -99,8 +99,8 @@ code {
 }
 figure {
     display: inline-block;
-    width: 250px;
-    height: 250px;
+    width: 30vmin;
+    height: 30vmin;
     margin: 0 30px;
 }
 section {
@@ -312,5 +312,15 @@ footer {
     }
     dt, dd {
         margin-right: 2em;
+    }
+    figure {
+        display: inline-block;
+        width: 80vmin;
+        height: 80vmin;
+        margin: 0 30px;
+    }
+    section {
+        border-radius: 0;
+        margin: 20px 0;
     }
 }
