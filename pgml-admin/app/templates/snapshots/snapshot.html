@@ -43,10 +43,7 @@
 </section>
 
 <script defer type="module">
-{% for name, feature in features.items %}
-  var {{name}}_samples = {{feature.samples}};
-{% endfor %}
-var layout = {};
+
 function linearRegression(x,y){
         var lr = {};
         var n = y.length;
@@ -91,6 +88,9 @@ function respondToVisibility(element, callback) {
 }
 
 function renderCharts() {
+{% for name, feature in features.items %}
+  var {{name}}_samples = {{feature.samples}};
+{% endfor %}
 {% for name, feature in features.items %}
   setTimeout(Plotly.newPlot, 1,
     '{{feature.name}}_distribution', 
@@ -144,9 +144,9 @@ function renderCharts() {
       name: "{{feature.name}}",
       y: {{name}}_samples,
       marker: {
-        color: "rgba(118, 138, 244, 0.7)",
+        color: "rgba(118, 138, 244, 0.3)",
         line: {
-          color: "rgba(118, 138, 244, 1)", 
+          color: "rgba(118, 138, 244, 0.5)", 
           width: 1
         },
       }, 
