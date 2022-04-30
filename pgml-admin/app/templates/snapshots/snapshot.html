@@ -119,7 +119,7 @@ function renderCharts() {
     [{
       type: "bar",
       orientation: "h",
-      x: [{{model.key_metric}}],
+      x: [0],
       marker: {
         color: "rgba(118, 138, 244, 1)",
       },
@@ -144,6 +144,22 @@ function renderCharts() {
       dragmode: false,
     },
     {displayModeBar: false, responsive: true}
+  )
+  Plotly.animate(    
+    "model_{{model.id}}",
+    {
+      data: [{x: [{{model.key_metric}}]}],
+      traces: [0],
+      layout: {}
+    }, {
+      transition: {
+        duration: 500,
+        easing: 'cubic-in-out'
+      },
+      frame: {
+        duration: 500
+      }
+    }
   )
 {% endfor %}
 {% endfor %}
