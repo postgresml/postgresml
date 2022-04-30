@@ -369,6 +369,8 @@ ol.model_list h3 {
     display: inline;
     padding-top: 0.5em;
     height: 2.5em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 ol.model_list li a {
     display: flex;
@@ -393,6 +395,9 @@ ol.model_list li:nth-child(1) a span {
     height: 2.5em;
     padding-top: 1em;
 }
+ol.model_list li:nth-child(1) a span:nth-child(2) {
+    text-align: left;
+}
 ol.model_list li:nth-child(1) a span b {
     position: relative;
     top: 0.4em;
@@ -403,7 +408,8 @@ ol.model_list li a span:nth-child(1) {
     text-overflow: ellipsis;
 }
 ol.model_list li a span:nth-child(2) {
-    width: 6em;
+    width: 3em;
+    text-align: right;
 }
 ol.model_list li a figure {
     width: 50%;
