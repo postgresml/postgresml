@@ -119,7 +119,10 @@ class Project(object):
         Returns:
             Project: instantiated from the database
         """
-
+        if objective is None:
+            raise PgMLException(
+                f"You must specify and objective when creating a new Project."
+            )
         project = Project()
         project.__dict__ = dict(
             plpy.execute(
@@ -150,6 +153,10 @@ class Project(object):
         if model and model.id != self.deployed_model.id:
             model.deploy()
         return model
+
+    @property
+    def last_snapshot(self):
+        return Snapshot.last_for_project_id(self.id)
 
 
 class Snapshot(object):
@@ -323,6 +330,26 @@ class Snapshot(object):
             return X[:split], X[split:], y[:split], y[split:]
 
         # TODO normalize and clean data
+
+    def last_for_project_id(project_id):
+        result = plpy.execute(
+            f"""
+            SELECT snapshots.* 
+            FROM pgml.snapshots 
+            JOIN pgml.models
+              ON models.snapshot_id = snapshots.id
+              AND models.project_id = {q(project_id)}
+            ORDER by snapshots.created_at DESC
+            LIMIT 1
+        """
+        )
+        if len(result) == 0:
+            return None
+
+        snapshot = Snapshot()
+        snapshot.__dict__ = dict(result[0])
+        snapshot.__init__()
+        return snapshot
 
 
 class Model(object):
@@ -611,9 +638,9 @@ class Model(object):
 
 def train(
     project_name: str,
-    objective: str,
-    relation_name: str,
-    y_column_name: str,
+    objective: str = None,
+    relation_name: str = None,
+    y_column_name: str = None,
     algorithm_name: str = "linear",
     hyperparams: dict = {},
     test_size: float or int = 0.1,
@@ -630,23 +657,34 @@ def train(
         test_size (float or int, optional): If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split. If int, represents the absolute number of test samples. If None, the value is set to the complement of the train size. If train_size is also None, it will be set to 0.25.
         test_sampling: (str, optional): How to sample to create the test data. Defaults to "random". Valid values are ["first", "last", "random"].
     """
+
+    try:
+        project = Project.find_by_name(project_name)
+        if objective is not None and objective != project.objective:
+            raise PgMLException(
+                f"Project `{project_name}` already exists with a different objective: `{project.objective}`. Create a new project instead."
+            )
+        objective = project.objective
+    except PgMLException:
+        project = Project.create(project_name, objective)
+
     if algorithm_name is None:
         algorithm_name = "linear"
 
     if objective not in ["regression", "classification"]:
         raise PgMLException(f"Unknown objective `{objective}`, available options are: regression, classification.")
 
-    try:
-        project = Project.find_by_name(project_name)
-    except PgMLException:
-        project = Project.create(project_name, objective)
+    if relation_name is None:
+        snapshot = project.last_snapshot
+        if snapshot is None:
+            raise PgMLException(f"You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.")
+        if y_column_name is not None and y_column_name != snapshot.y_column_name:
+            raise PgMLException(f"You must pass a `relation_name` to use a different `y_column_name` than previous runs.")
 
-    if project.objective != objective:
-        raise PgMLException(
-            f"Project `{project_name}` already exists with a different objective: `{project.objective}`. Create a new project instead."
-        )
+    else:
+        snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
+        
 
-    snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
     model = Model.create(project, snapshot, algorithm_name, hyperparams)
     model.fit(snapshot)
 
