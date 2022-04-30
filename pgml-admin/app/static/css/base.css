@@ -203,7 +203,21 @@ dt {
 dd {
     margin: 0;
 }
+sub, sup {
+    font-size: 60%;
+    line-height: 0;
+    position: relative;
+}
+sup {
+    top: -0.5em;
+}
+sub {
+    bottom: -0.25em;
+}
 
+b {
+    font-weight: bolder;
+}
 
 /* Header */
 header {
@@ -344,13 +358,19 @@ footer {
     }
 }
 
-ol.model_summary {
+
+ol.model_list {
     width: 100%;
 }
-ol.model_summary li {
+ol.model_list li {
     width: 100%;
 }
-ol.model_summary li a {
+ol.model_list h3 {
+    display: inline;
+    padding-top: 0.5em;
+    height: 2.5em;
+}
+ol.model_list li a {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
@@ -361,21 +381,31 @@ ol.model_summary li a {
     margin: 0 -30px;
     padding: 0 30px;
 }
-ol.model_summary li a:hover {
+ol.model_list li a:hover {
     height: 2em;
     background-color: var(--color-9);
 }
-ol.model_summary li a span {
+ol.model_list li a span {
+    padding-top: 0.5em;
+    height: 1.5em;
 }
-ol.model_summary li a span:nth-child(1) {
+ol.model_list li:nth-child(1) a span {
+    height: 2.5em;
+    padding-top: 1em;
+}
+ol.model_list li:nth-child(1) a span b {
+    position: relative;
+    top: 0.4em;
+}
+ol.model_list li a span:nth-child(1) {
     width: 30em;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-ol.model_summary li a span:nth-child(2) {
+ol.model_list li a span:nth-child(2) {
     width: 6em;
 }
-ol.model_summary li a figure {
+ol.model_list li a figure {
     width: 50%;
     height: 2em;
     margin: 0 0 0 1em;

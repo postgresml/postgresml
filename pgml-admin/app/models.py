@@ -21,6 +21,14 @@ class Project(models.Model):
         elif self.objective == "regression":
             return "r2"
 
+    @property
+    def key_metric_display_name(self):
+        if self.objective == "classification":
+            return "F<sub>1</sub>"
+        elif self.objective == "regression":
+            return "R<sup>2</sup>"
+
+
 class Snapshot(models.Model):
     relation_name = models.TextField()
     y_column_name = models.TextField()

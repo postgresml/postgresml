@@ -25,8 +25,14 @@
 <section>
   <h2><span class="material-symbols-outlined">model_training</span>Trained Models</h2>
   {% for name, project in projects.items %} 
-  <h3>{{name}}</h3>
-  <ol class="model_summary">
+  <ol class="model_list">
+    <li>
+      <a href="{% url 'project' project.id %}">
+        <span><h3>{{name}}</h3></span>
+        <span><b>{{project.metric | safe}}</b></span>    
+        <figure id="project_{{project.id}}"></figure>
+      </a>
+    </li>
     {% for model in project.models %}
     <li>
       <a href="{% url 'model' model.id %}">

@@ -49,13 +49,15 @@ def get(request, id):
     projects = OrderedDict()
     for model in models:
         if model.project.name in projects:
-            projects[model.project.name].append(model)
+            projects[model.project.name][1].append(model)
         else:
-            projects[model.project.name] = [model]
-    P = namedtuple('P', 'models min_score max_score')
-    for project in projects:
+            projects[model.project.name] = (model.project, [model])
+    P = namedtuple('P', 'models metric min_score max_score id')
+    for project_name, stuff in projects.items():
+        project = stuff[0]
+        models = stuff[1]
         scores = [model.key_metric for model in models]
-        projects[project] = P(sorted(projects[project], key=lambda model: -model.key_metric), min(scores), max(scores))
+        projects[project_name] = P(sorted(models, key=lambda model: -model.key_metric), project.key_metric_display_name, min(scores), max(scores), project.id)
 
     context = {
         "snapshot": snapshot,
