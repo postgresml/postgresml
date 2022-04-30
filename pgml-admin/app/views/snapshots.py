@@ -31,19 +31,20 @@ def get(request, id):
     column_names.remove(snapshot.y_column_name)
     column_names.insert(0, snapshot.y_column_name)
     for column_name in column_names:
-        columns[column_name] = {
-            "name": column_name,
-            "type": snapshot.columns[column_name],
-            "q1": snapshot.analysis[column_name + "_p25"],
-            "median": snapshot.analysis[column_name + "_p50"],
-            "q3": snapshot.analysis[column_name + "_p75"],
-            "mean": snapshot.analysis[column_name + "_mean"],
-            "stddev": snapshot.analysis[column_name + "_stddev"],
-            "min": snapshot.analysis[column_name + "_min"],
-            "max": snapshot.analysis[column_name + "_max"],
-            "dip": snapshot.analysis[column_name + "_dip"],
-            "samples": SafeString(json.dumps([sample[column_name] for sample in samples])),
-        }
+        if snapshot.columns[column_name] in ["integer", "real"]:
+            columns[column_name] = {
+                "name": column_name,
+                "type": snapshot.columns[column_name],
+                "q1": snapshot.analysis[column_name + "_p25"],
+                "median": snapshot.analysis[column_name + "_p50"],
+                "q3": snapshot.analysis[column_name + "_p75"],
+                "mean": snapshot.analysis[column_name + "_mean"],
+                "stddev": snapshot.analysis[column_name + "_stddev"],
+                "min": snapshot.analysis[column_name + "_min"],
+                "max": snapshot.analysis[column_name + "_max"],
+                "dip": snapshot.analysis[column_name + "_dip"],
+                "samples": SafeString(json.dumps([sample[column_name] for sample in samples])),
+            }
 
     models = snapshot.model_set.all().prefetch_related("project")
     projects = OrderedDict()
