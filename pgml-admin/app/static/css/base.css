@@ -9,21 +9,21 @@
     --gray-7: #C8C8C8;
     --gray-8: #E7E7E7;
     --gray-9: #FFFFFF;
-    --color-1: #000044;
-    --color-2: #111166;
-    --color-3: #222288;
-    --color-4: #3333aa;
-    --color-5: #4444cc;
-    --color-6: #7777ff;
-    --color-7: #9999ff;
-    --color-8: #cbe3ff;
-    --color-9: #f3f3ff;
+    --color-1: rgb(2, 2, 40);
+    --color-2: rgb(10, 20, 80);
+    --color-3: rgb(20, 40, 120);
+    --color-4: rgb(40, 80, 160);
+    --color-5: rgb(80, 160, 220);
+    --color-6: rgb(160, 220, 250);
+    --color-7: rgb(205, 229, 255);
+    --color-8: rgb(225, 241, 255);
+    --color-9: rgb(240, 243, 255);
     --shadow-2: rgba(0,0,0,0.25);
     --highlite-red: #FF4444;
     --highlite-orange: #FF8B1F;
     --highlite-yellow: #FFD600;
     --highlite-green: #93DB1D;
-    --highlite-blue: #0065d8;
+    --highlite-blue: rgb(19, 145, 255);
     --highlite-purple: #CC00FF;
 }
 

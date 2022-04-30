@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block main %}
 <section>
@@ -18,7 +19,7 @@
     <dt>Features</dt>
     <dd>{{snapshot.feature_size}}</dd>
     <dt>Created</dt>
-    <dd><time datetime="{{snapshot.created_at}}">{{snapshot.created_at}}</time></dd>
+    <dd><time datetime="{{snapshot.created_at}}">{{snapshot.created_at | naturaltime}}</time></dd>
   </dl>
 </section>
 
@@ -121,7 +122,7 @@ function renderCharts() {
       orientation: "h",
       x: [0],
       marker: {
-        color: "rgba(118, 138, 244, 1)",
+        color: "rgb(0, 180, 255)",
       },
       hoverinfo: "none",
     }],
@@ -175,9 +176,9 @@ function renderCharts() {
       name: "{{feature.name}}",
       x: {{name}}_samples,
       marker: {
-        color: "rgba(118, 138, 244, 0.7)",
+        color: "rgba(0, 180, 255, 0.7)",
         line: {
-          color: "rgba(118, 138, 244, 1)", 
+          color: "rgba(0, 180, 255, 1)", 
           width: 1
         },
       }, 
@@ -188,7 +189,7 @@ function renderCharts() {
         text: "Distribution: dip = " + (Math.round({{feature.dip}} * 100) / 100).toString(),
       },
       hoverlabel: {
-        bgcolor: "rgba(118, 138, 244, 0.7)",
+        color: "rgba(0, 180, 255, 0.7)",
         bordercolor: "rgba(255, 255, 255, 1)",
         font: {
           color: "rgba(255, 255, 255, 1)",
@@ -218,9 +219,9 @@ function renderCharts() {
       name: "{{feature.name}}",
       y: {{name}}_samples,
       marker: {
-        color: "rgba(118, 138, 244, 0.3)",
+        color: "rgba(0, 180, 255, 0.3)",
         line: {
-          color: "rgba(118, 138, 244, 0.5)", 
+          color: "rgba(0, 180, 255, 0.5)",
           width: 1
         },
       }, 
@@ -231,7 +232,7 @@ function renderCharts() {
         text: "Outliers: σ = " + (Math.round({{feature.stddev}} * 100) / 100).toString(),
       },
       hoverlabel: {
-        bgcolor: "rgba(118, 138, 244, 0.7)",
+        bgcolor: "rgba(0, 180, 255, 0.7)",
         bordercolor: "rgba(255, 255, 255, 1)",
         font: {
           color: "rgba(255, 255, 255, 1)",
@@ -264,9 +265,9 @@ function renderCharts() {
       x: {{name}}_samples,
       y: {{snapshot.y_column_name}}_samples,
       marker: {
-        color: "rgba(118, 138, 244, 0.4)",
+        color: "rgba(0, 180, 255, 0.4)",
         line: {
-          color: "rgba(118, 138, 244, 0.6)", 
+          color: "rgba(0, 180, 255, 0.6)",
           width: 1
         },
       }, 
@@ -277,10 +278,10 @@ function renderCharts() {
       x: [fit_from, fit_to],
       y: [fit_from*lr.sl+lr.off, fit_to*lr.sl+lr.off],
       marker: {
-        color: "rgba(251, 204, 5, 1)",
+        color: "rgba(255, 232, 20, 1)",
         line: {
-          color: "rgba(251, 204, 5, 1)",
-          width: 1
+          color: "rgba(255, 232, 20, 1)",
+          width: 2
         },
       }, 
     }],
@@ -288,7 +289,7 @@ function renderCharts() {
       font: {family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif"},
       title: "Correlation: R<sup>2</sup> = " + (Math.round(lr.r2 * 100) / 100).toString(),
       hoverlabel: {
-        bgcolor: "rgba(118, 138, 244, 0.7)",
+        bgcolor: "rgba(0, 180, 255, 0.7)",
         bordercolor: "rgba(255, 255, 255, 1)",
         font: {
           color: "rgba(255, 255, 255, 1)",
