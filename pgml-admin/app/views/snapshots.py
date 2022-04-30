@@ -57,7 +57,7 @@ def get(request, id):
         project = stuff[0]
         models = stuff[1]
         scores = [model.key_metric for model in models]
-        projects[project_name] = P(sorted(models, key=lambda model: -model.key_metric), project.key_metric_display_name, min(scores), max(scores), project.id)
+        projects[project_name] = P(sorted(models, key=lambda model: -model.key_metric), project.key_metric_display_name, max([0, min(scores)]), max(scores), project.id)
 
     context = {
         "snapshot": snapshot,

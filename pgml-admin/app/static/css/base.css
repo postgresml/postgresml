@@ -411,3 +411,6 @@ ol.model_list li a figure {
     margin: 0 0 0 1em;
 }
 
+h2 span.material-symbols-outlined {
+    margin: 0 5px 0 0;
+}
