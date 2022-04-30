@@ -80,18 +80,25 @@ h1 {
     font-weight: 100;
     margin: 0 0 0.5em;
     color: var(--gray-3);
+    vertical-align: center;
+}
+h1 span:first-of-type {
+    font-size: 1em;
+    position: relative;
+    top: 10px;
+    margin-right: 10px; 
 }
 h2 {
     font-size: 2em;
     font-weight: 300;
     margin: 0 0 0.5em;
-    padding: 0 0 5px;
+    padding: 0 0 0;
     color: var(--gray-3);
 }
 h3 {
     font-size: 1.5em;
     font-weight: 500;
-    margin: 2em 0 0.5em;
+    margin: 1em 0 0.5em;
     color: var(--gray-3);
 }
 code {
@@ -196,7 +203,21 @@ dt {
 dd {
     margin: 0;
 }
+sub, sup {
+    font-size: 60%;
+    line-height: 0;
+    position: relative;
+}
+sup {
+    top: -0.5em;
+}
+sub {
+    bottom: -0.25em;
+}
 
+b {
+    font-weight: bolder;
+}
 
 /* Header */
 header {
@@ -336,3 +357,57 @@ footer {
         margin-right: 2em;
     }
 }
+
+
+ol.model_list {
+    width: 100%;
+}
+ol.model_list li {
+    width: 100%;
+}
+ol.model_list h3 {
+    display: inline;
+    padding-top: 0.5em;
+    height: 2.5em;
+}
+ol.model_list li a {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    color: var(--gray-3);
+    width: 100%;
+    height: 2em;
+    position: relative;
+    margin: 0 -30px;
+    padding: 0 30px;
+}
+ol.model_list li a:hover {
+    height: 2em;
+    background-color: var(--color-9);
+}
+ol.model_list li a span {
+    padding-top: 0.5em;
+    height: 1.5em;
+}
+ol.model_list li:nth-child(1) a span {
+    height: 2.5em;
+    padding-top: 1em;
+}
+ol.model_list li:nth-child(1) a span b {
+    position: relative;
+    top: 0.4em;
+}
+ol.model_list li a span:nth-child(1) {
+    width: 30em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+ol.model_list li a span:nth-child(2) {
+    width: 6em;
+}
+ol.model_list li a figure {
+    width: 50%;
+    height: 2em;
+    margin: 0 0 0 1em;
+}
+

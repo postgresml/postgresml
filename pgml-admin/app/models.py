@@ -14,6 +14,20 @@ class Project(models.Model):
     def models(self):
         return Model.objects.filter(project=self)
 
+    @property
+    def key_metric_name(self):
+        if self.objective == "classification":
+            return "f1"
+        elif self.objective == "regression":
+            return "r2"
+
+    @property
+    def key_metric_display_name(self):
+        if self.objective == "classification":
+            return "F<sub>1</sub>"
+        elif self.objective == "regression":
+            return "R<sup>2</sup>"
+
 
 class Snapshot(models.Model):
     relation_name = models.TextField()
@@ -72,6 +86,10 @@ class Model(models.Model):
         db_table = '"pgml"."models"'
         managed = False
 
+    @property
+    def key_metric(self):
+        return self.metrics[self.project.key_metric_name]
+            
 
 class Deployment(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)

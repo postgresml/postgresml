@@ -26,38 +26,38 @@ FROM pgml.diabetes
 LIMIT 10;
 
 -- linear models
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'ridge');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'lasso');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'elastic_net');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'least_angle');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'lasso_least_angle');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'orthoganl_matching_pursuit');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'bayesian_ridge');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'automatic_relevance_determination');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'stochastic_gradient_descent');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'passive_aggressive');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'ransac');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'theil_sen', '{"max_iter": 10, "max_subpopulation": 100}');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'huber');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ridge');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lasso');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'elastic_net');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'least_angle');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lasso_least_angle');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'orthoganl_matching_pursuit');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'bayesian_ridge');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'automatic_relevance_determination');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'stochastic_gradient_descent');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'passive_aggressive');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ransac');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'theil_sen', hyperparams => '{"max_iter": 10, "max_subpopulation": 100}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'huber');
 -- Quantile Regression too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'quantile');
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'quantile');
 --- support vector machines
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'svm', '{"max_iter": 100}');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'nu_svm', '{"max_iter": 10}');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'linear_svm', '{"max_iter": 100}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'svm', hyperparams => '{"max_iter": 100}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'nu_svm', hyperparams => '{"max_iter": 10}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear_svm', hyperparams => '{"max_iter": 100}');
 -- ensembles
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'ada_boost', '{"n_estimators": 5}');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'bagging', '{"n_estimators": 5}');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'extra_trees', '{"n_estimators": 5}');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'gradient_boosting_trees', '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ada_boost', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'bagging', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 5}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'hist_gradient_boosting', '{"max_iter": 10}');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'random_forest', '{"n_estimators": 5}');
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', '{"max_iter": 10}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'random_forest', hyperparams => '{"n_estimators": 5}');
 -- other
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'kernel_ridge');
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'xgboost');
+--SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'kernel_ridge');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost');
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'gaussian_process');
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'gaussian_process');
 
 -- check out all that hard work
 SELECT trained_models.* FROM pgml.trained_models 
@@ -70,7 +70,7 @@ SELECT * FROM pgml.deploy('Diabetes Progression', 'most_recent', 'random_forest'
 SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
 -- do some hyper param tuning
--- TODO SELECT pgml.hypertune(100, 'Diabetes Progression', 'regression', 'pgml.diabetes', 'target', 'gradient_boosted_trees');
+-- TODO SELECT pgml.hypertune(100, 'Diabetes Progression', algorithm => 'gradient_boosted_trees');
 
 -- deploy the "best" model for prediction use
 SELECT * FROM pgml.deploy('Diabetes Progression', 'best_score');

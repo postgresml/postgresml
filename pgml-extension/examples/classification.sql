@@ -25,27 +25,29 @@ SELECT target, pgml.predict('Handwritten Digit Image Classifier', image) AS pred
 FROM pgml.digits 
 LIMIT 10;
 
+-- After a project has been trained, ommited parameters will be reused from previous training runs
+-- In these examples we'll reuse the training data snapshots from the initial call.
 -- linear models
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'ridge');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'stochastic_gradient_descent');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'perceptron');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'passive_aggressive');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'ridge');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'stochastic_gradient_descent');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'perceptron');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'passive_aggressive');
 -- support vector machines
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'svm');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'nu_svm');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'linear_svm');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'svm');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'nu_svm');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'linear_svm');
 -- ensembles
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'ada_boost');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'bagging');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'extra_trees', '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gradient_boosting_trees', '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'ada_boost');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'bagging');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'hist_gradient_boosting', '{"max_iter": 2}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'random_forest', '{"n_estimators": 10}');
+-- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'hist_gradient_boosting', '{"max_iter": 2}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gaussian_process', '{"max_iter_predict": 100, "warm_start": true}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'xgboost');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost');
 
 
 -- check out all that hard work

@@ -1,4 +1,5 @@
 {% load static %}
+{% load humanize %}
 <!DOCTYPE html >
 <html lang="en">
     <head>
@@ -52,7 +53,7 @@
                     <li{% if topic == "Projects" %} class="selected"{% endif %}><a href="/projects/"><span class="material-symbols-outlined">apps</span>Projects</a></li> 
                     <li{% if topic == "Models" %} class="selected"{% endif %}><a href="/models/"><span class="material-symbols-outlined">model_training</span>Models</a></li>
                     <li{% if topic == "Deployments" %} class="selected"{% endif %}><a href="/deployments/"><span class="material-symbols-outlined">inventory</span>Deployments</a></li>
-                    <li{% if topic == "Snapshots" %} class="selected"{% endif %}><a href="/snapshots/"><span class="material-symbols-outlined">photo_camera</span>Snapshots</a></li>
+                    <li{% if topic == "Snapshots" %} class="selected"{% endif %}><a href="/snapshots/"><span class="material-symbols-outlined">storage</span>Snapshots</a></li>
                 </ul>
             </nav>
         </header>

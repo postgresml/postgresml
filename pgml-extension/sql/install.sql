@@ -118,7 +118,7 @@ $$ LANGUAGE plpython3u;
 ---
 --- Train
 ---
-CREATE OR REPLACE FUNCTION pgml.train(project_name TEXT, objective TEXT, relation_name TEXT, y_column_name TEXT, algorithm TEXT DEFAULT 'linear', hyperparams JSONB DEFAULT '{}'::JSONB)
+CREATE OR REPLACE FUNCTION pgml.train(project_name TEXT, objective TEXT DEFAULT NULL, relation_name TEXT DEFAULT NULL, y_column_name TEXT DEFAULT NULL, algorithm TEXT DEFAULT 'linear', hyperparams JSONB DEFAULT '{}'::JSONB)
 RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT, status TEXT)
 AS $$
 	from pgml_extension.model import train

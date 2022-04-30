@@ -1,16 +1,18 @@
+from tracemalloc import Snapshot
 from typing import OrderedDict
 from django.shortcuts import render, get_object_or_404
 from django.utils.safestring import SafeString
 import json
-from .. import models
+from ..models import Snapshot
 
+from collections import namedtuple
 
 def default_context(context):
     return {"topic": "Snapshots", **context}
 
 
 def index(request):
-    snapshots = models.Snapshot.objects.all()
+    snapshots = Snapshot.objects.all()
     context = default_context({"title": "Snapshots", "snapshots": snapshots})
     return render(request, "snapshots/index.html", context)
 
@@ -21,7 +23,7 @@ def snapshot(request, id):
 
 
 def get(request, id):
-    snapshot = get_object_or_404(models.Snapshot, id=id)
+    snapshot = get_object_or_404(Snapshot, id=id)
     samples = snapshot.sample(500)
     columns = OrderedDict()
     column_names = list(snapshot.columns.keys())
@@ -43,8 +45,23 @@ def get(request, id):
             "samples": SafeString(json.dumps([sample[column_name] for sample in samples])),
         }
 
+    models = snapshot.model_set.all().prefetch_related("project")
+    projects = OrderedDict()
+    for model in models:
+        if model.project.name in projects:
+            projects[model.project.name][1].append(model)
+        else:
+            projects[model.project.name] = (model.project, [model])
+    P = namedtuple('P', 'models metric min_score max_score id')
+    for project_name, stuff in projects.items():
+        project = stuff[0]
+        models = stuff[1]
+        scores = [model.key_metric for model in models]
+        projects[project_name] = P(sorted(models, key=lambda model: -model.key_metric), project.key_metric_display_name, min(scores), max(scores), project.id)
+
     context = {
         "snapshot": snapshot,
         "features": columns,
+        "projects": projects,
     }
     return render(request, "snapshots/snapshot.html", context)

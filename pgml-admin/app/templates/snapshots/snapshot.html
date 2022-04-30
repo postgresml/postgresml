@@ -2,7 +2,7 @@
 
 {% block main %}
 <section>
-  <h1>{{ snapshot.relation_name }}    
+  <h1><span class="material-symbols-outlined">storage</span>{{ snapshot.relation_name }}    
     {% if snapshot.status == "created" %}
       <span class="material-symbols-outlined success">done</span>
     {% else %}
@@ -21,21 +21,47 @@
     <dd><time datetime="{{snapshot.created_at}}">{{snapshot.created_at}}</time></dd>
   </dl>
 </section>
+
+<section>
+  <h2><span class="material-symbols-outlined">model_training</span>Trained Models</h2>
+  {% for name, project in projects.items %} 
+  <ol class="model_list">
+    <li>
+      <a href="{% url 'project' project.id %}">
+        <span><h3>{{name}}</h3></span>
+        <span><b>{{project.metric | safe}}</b></span>    
+        <figure id="project_{{project.id}}"></figure>
+      </a>
+    </li>
+    {% for model in project.models %}
+    <li>
+      <a href="{% url 'model' model.id %}">
+        <span>{{ model.algorithm_name }}</span>
+        <span>{{ model.key_metric | floatformat:"3" }}</span>
+        <figure id="model_{{model.id}}"></figure>
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
+  {% endfor %}
+</section>
+
 <section>
   <h2>Labels</h2>
   {% for name, feature in features.items %}
     {% if name == snapshot.y_column_name %}
-    <h3><code>{{feature.name}}</code> ({{feature.type}})</h3>
+    <h3>{{feature.name}} <code>{{feature.type|upper}}</code></h3>
     <figure id="{{feature.name}}_distribution"></figure>
     <figure id="{{feature.name}}_outliers"></figure>
     {% endif %}
   {% endfor %}
 </section>
+
 <section>
   <h2>Features</h2>
   {% for name, feature in features.items %}
     {% if name != snapshot.y_column_name %}
-    <h3><code>{{feature.name}}</code> ({{feature.type}})</h3>
+    <h3>{{feature.name}} <code>{{feature.type|upper}}</code></h3>
     <figure id="{{feature.name}}_distribution"></figure>
     <figure id="{{feature.name}}_correlation"></figure>
     {% endif %}
@@ -54,7 +80,6 @@ function linearRegression(x,y){
   var sum_yy = 0;
 
   for (var i = 0; i < y.length; i++) {
-
       sum_x += x[i];
       sum_y += y[i];
       sum_xy += (x[i]*y[i]);
@@ -87,6 +112,42 @@ function respondToVisibility(element, callback) {
 }
 
 function renderCharts() {
+{% for name, project in projects.items %} 
+{% for model in project.models %}
+  Plotly.newPlot(
+    "model_{{model.id}}",
+    [{
+      type: "bar",
+      orientation: "h",
+      x: [{{model.key_metric}}],
+      marker: {
+        color: "rgba(118, 138, 244, 1)",
+      },
+      hoverinfo: "none",
+    }],
+    {
+      xaxis: {
+        range: [{{project.min_score}}, {{project.max_score}}],
+        showgrid: false,
+        zeroline: false,
+        visible: false,
+      },
+      yaxis: {
+        showgrid: false,
+        zeroline: false,
+        visible: false,
+      },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      margin: {l: 0, r: 0, b: 0, t: 0, pad: 0},
+      scrollZoom: false,
+      dragmode: false,
+    },
+    {displayModeBar: false, responsive: true}
+  )
+{% endfor %}
+{% endfor %}
+
 {% for name, feature in features.items %}
   var {{name}}_samples = {{feature.samples}};
 {% endfor %}
@@ -108,7 +169,7 @@ function renderCharts() {
     {
       title: {
         font: {family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif"},
-        text: "Distribution: " + (Math.round({{feature.dip}} * 100) / 100).toString() + " dip",
+        text: "Distribution: dip = " + (Math.round({{feature.dip}} * 100) / 100).toString(),
       },
       hoverlabel: {
         bgcolor: "rgba(118, 138, 244, 0.7)",
@@ -151,7 +212,7 @@ function renderCharts() {
     {
       title: {
         font: {family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif"},
-        text: "Outliers: " + (Math.round({{feature.stddev}} * 100) / 100).toString() + " σ",
+        text: "Outliers: σ = " + (Math.round({{feature.stddev}} * 100) / 100).toString(),
       },
       hoverlabel: {
         bgcolor: "rgba(118, 138, 244, 0.7)",
@@ -196,7 +257,7 @@ function renderCharts() {
     }, {
       type: 'scatter',
       mode: 'lines',
-      name: (Math.round(lr.r2 * 100) / 100).toString() + " R<sup>2</sup>",
+      name: "R<sup>2</sup> = " + (Math.round(lr.r2 * 100) / 100).toString(),
       x: [fit_from, fit_to],
       y: [fit_from*lr.sl+lr.off, fit_to*lr.sl+lr.off],
       marker: {
@@ -209,7 +270,7 @@ function renderCharts() {
     }],
     {
       font: {family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif"},
-      title: "Correlation: " + (Math.round(lr.r2 * 100) / 100).toString() + " R<sup>2</sup>",
+      title: "Correlation: R<sup>2</sup> = " + (Math.round(lr.r2 * 100) / 100).toString(),
       hoverlabel: {
         bgcolor: "rgba(118, 138, 244, 0.7)",
         bordercolor: "rgba(255, 255, 255, 1)",
