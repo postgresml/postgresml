@@ -11,6 +11,10 @@ class Project(models.Model):
         db_table = '"pgml"."projects"'
         managed = False
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._current_deployment = None
+
     def models(self):
         return Model.objects.filter(project=self)
 
@@ -30,7 +34,9 @@ class Project(models.Model):
 
     @property
     def current_deployment(self):
-        return self.deployment_set.order_by("-created_at").first()
+        if self._current_deployment is None:
+            self._current_deployment = self.deployment_set.order_by("-created_at").first()
+        return self._current_deployment
 
 
 class Snapshot(models.Model):

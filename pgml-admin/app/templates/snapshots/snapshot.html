@@ -26,7 +26,7 @@
 <section>
   <h2><span class="material-symbols-outlined">model_training</span>Trained Models</h2>
   {% for name, project in projects.items %} 
-  <ol class="model_list">
+  <ol class="object_list model_list">
     <li>
       <a href="{% url 'project' project.id %}">
         <span><h3>{{name}}</h3></span>

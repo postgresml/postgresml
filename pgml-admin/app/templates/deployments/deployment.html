@@ -16,7 +16,7 @@
     <dt>Model</dt>
     <dd><a href="{% url 'model' deployment.model.id %}">{{ deployment.model.algorithm_name }}</a></dd>
     <dt>Reason</dt>
-    <dd>{{ deployment.human_readable_strategy }}</a></dd>
+    <dd>{{ deployment.human_readable_strategy }}</dd>
     <dt>Deployed</dt>
     <dd><time datetime="{{deployment.created_at}}">{{deployment.created_at | naturaltime}}</time></dd>
   </dl>
