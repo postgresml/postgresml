@@ -86,7 +86,7 @@ var delay = 600
   delay += 200
   setTimeout(renderDistribution, delay, "{{name}}", {{name}}_samples, {{feature.dip}})
   {% if name == snapshot.y_column_name %}
-  setTimeout(renderOutliers, 1, "{{name}}", {{name}}_samples, {{feature.stddev}})
+  setTimeout(renderOutliers, delay, "{{name}}", {{name}}_samples, {{feature.stddev}})
   {% else %}
   setTimeout(renderCorrelation, delay, "{{name}}", {{name}}_samples, {{snapshot.y_column_name}}_samples, {{feature.key_metric}})
   {% endif %}
