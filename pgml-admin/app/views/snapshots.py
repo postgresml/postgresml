@@ -3,7 +3,7 @@ from typing import OrderedDict
 from django.shortcuts import render, get_object_or_404
 from django.utils.safestring import SafeString
 import json
-from ..models import Snapshot
+from ..models import Snapshot, Project
 
 from collections import namedtuple
 
@@ -13,7 +13,7 @@ def default_context(context):
 
 
 def index(request):
-    snapshots = Snapshot.objects.all()
+    snapshots = Snapshot.objects.order_by("-created_at").all()
     context = default_context({"title": "Snapshots", "snapshots": snapshots})
     return render(request, "snapshots/index.html", context)
 
