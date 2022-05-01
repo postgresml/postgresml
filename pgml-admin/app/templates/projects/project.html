@@ -2,81 +2,42 @@
 
 {% block main %}
 <section>
-  <h1>{{ object.name }}</h1>
+  <h1><span class="material-symbols-outlined">apps</span>{{ object.name }}</h1>
   <dl>
     <dt>Created</dt>
     <dd>{{object.created_at}}</dd>
   </dl> 
 </section>
-{{ metrics|json_script:"metrics-data" }}
+{% for name, project in projects.items %} 
+  <section>
+    <h2><span class="material-symbols-outlined">model_training</span>Trained Models</h2>
+    <ol class="object_list model_list">
+      <li>
+          <span><b>Algorithm</b></span>
+          <span><b>{{project.metric | safe}}</b></span>    
+          <figure></figure>
+      </li>
+      {% for model in project.models %}
+      <li>
+        <a href="{% url 'model' model.id %}">
+          <span>{{ model.algorithm_name }}</span>
+          <span>{{ model.key_metric | floatformat:"3" }}</span>
+          <figure id="model_{{model.id}}"></figure>
+        </a>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endfor %}
 
-<section>
-  <h2>Metrics</h2>
-  <canvas id="metrics-chart" height="400"></canvas>
-
-  <script defer type="module">
-    function metrics_chart() {
-
-      // Available colors for the graph. Hardcoded quick.
-      const colors = [
-        'rgba(255, 99, 132, 1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(75, 192, 192, 1)',
-        'rgba(153, 102, 255, 1)',
-        'rgba(255, 159, 64, 1)',
-      ];
-
-      const metrics = JSON.parse(document.getElementById('metrics-data').innerHTML);
-
-      // f1, precision, recall, etc.
-      const labels = Object.keys(metrics);
-
-      if (labels.length < 1)
-        return;
-
-      const scoreTypes = Object.keys(metrics[labels[0]]);
-      const data = {};
-      for (let i in scoreTypes) {
-        data[scoreTypes[i]] = [];
-      }
-
-      const datasets = [];
-      let colorPicker = 0;
-
-      for (let k in data) {
-        const color = colors[colorPicker];
-
-        datasets.push({
-          label: k,
-          data: labels.map(x => Object.assign(metrics[x][k])),
-          borderColor: color,
-          backgroundColor: color,
-          borderWidth: 1,
-        });
-
-        colorPicker++;
-      }
-
-      new Chart(document.getElementById('metrics-chart').getContext('2d'), {
-          type: 'bar',
-          data: {
-              labels,
-              datasets:datasets,
-          },
-          options: {
-              indexAxis: 'y',
-              responsive: true,
-              scales: {
-                  y: {
-                      beginAtZero: true
-                  }
-              }
-          }
-      });
-    };
-
-    metrics_chart();
-  </script>
-</section>
+<script defer type="module">
+  function renderCharts() {
+  {% for name, project in projects.items %} 
+  {% for model in project.models %}
+     renderModel({{model.id}}, {{model.key_metric}}, [{{project.min_score}}, {{project.max_score}}])
+  {% endfor %}
+  {% endfor %}
+  };
+  renderCharts();
+</script>
 {% endblock %}

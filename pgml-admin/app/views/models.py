@@ -35,7 +35,7 @@ class ModelListView(ListView):
     template_name = "models/index.html"
 
     def get_context_data(self, **kwargs):
-        models = Model.objects.order_by("-project__created_at").all().prefetch_related("project")
+        models = Model.objects.order_by("created_at").all().prefetch_related("project")
         projects = OrderedDict()
         for model in models:
             if model.project.name in projects:
