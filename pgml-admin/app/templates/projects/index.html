@@ -1,25 +1,18 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block main %}
 <section>
-  <h1>Projects</h1> 
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Created</th>
-        <th>Updated</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for project in projects %}
-      <tr>
-        <td><a href="{% url 'project' project.id %}">{{ project.name }}</a></td>
-        <td>{{project.created_at}}</td>
-        <td>{{project.updated_at}}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <h1><span class="material-symbols-outlined">apps</span>Projects</h1> 
+  <ol class="object_list project_list">
+    {% for project in projects %}
+    <li>
+      <a href="{% url 'project' project.id %}">
+        <span>{{ project.name }}</span>
+        <span><time datetime="{{project.created_at}}">{{project.created_at | naturaltime}}</time></span>
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
 </section>
 {% endblock %}

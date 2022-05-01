@@ -82,7 +82,7 @@ h1 {
     color: var(--gray-3);
     vertical-align: center;
 }
-h1 span:first-of-type {
+h1 span.material-symbols-outlined:first-of-type {
     font-size: 1em;
     position: relative;
     top: 10px;
@@ -94,6 +94,9 @@ h2 {
     margin: 0 0 0.5em;
     padding: 0 0 0;
     color: var(--gray-3);
+}
+h2 span.material-symbols-outlined:first-of-type {
+    margin: 0 5px 0 0;
 }
 h3 {
     font-size: 1.5em;
@@ -375,6 +378,18 @@ ol.object_list h3 {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
+ol.object_list li {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    color: var(--gray-3);
+    width: 100%;
+    height: 2em;
+    position: relative;
+    margin: 0 -30px;
+    padding: 0 30px;
+}
 ol.object_list li a {
     display: flex;
     align-items: center;
@@ -396,40 +411,53 @@ ol.object_list li a::after {
     color: var(--gray-7);
     margin: 0 0 0 1em;
 }
-ol.object_list li a span {
+ol.object_list li span {
     padding-top: 0.5em;
     height: 1.5em;
     margin-left: 1em;
     white-space: nowrap;
-}
-ol.model_list li:nth-child(1) a span {
-    height: 2.5em;
-    padding-top: 1em;
-}
-ol.model_list li:nth-child(1) a span:nth-child(2) {
-    text-align: left;
-}
-ol.model_list li:nth-child(1) a span b {
-    position: relative;
-    top: 0.4em;
-}
-ol.model_list li a span:nth-child(1) {
-    width: 30em;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-ol.model_list li a span:nth-child(2) {
-    width: 3em;
+ol.object_list li span:nth-child(1) {
+    margin: 0;
+}
+
+ol.project_list li span:nth-child(1) {
+    flex-grow: 10;
+}
+ol.project_list li span:nth-child(2) {
+    width: 10em;
     text-align: right;
 }
-ol.model_list li a figure {
+
+
+ol.model_list li:nth-child(1) span {
+    height: 2.5em;
+    padding-top: 1em;
+}
+ol.model_list li:nth-child(1) span:nth-child(2) {
+    text-align: left;
+}
+ol.model_list li:nth-child(1) span b {
+    position: relative;
+    top: 0.4em;
+}
+ol.model_list li:nth-child(1) span:nth-child(2) {
+    text-align: center;
+    margin: 0;
+}
+ol.model_list li span:nth-child(1) {
+    width: 30em;
+}
+ol.model_list li span:nth-child(2) {
+    width: 7em;
+    text-align: right;
+}
+ol.model_list li figure {
     width: 50%;
     height: 2em;
     margin: 0 0 0 1em;
-}
-
-h2 span.material-symbols-outlined {
-    margin: 0 5px 0 0;
 }
 
 ol.snapshot_list li a span:nth-child(1) {
@@ -437,12 +465,11 @@ ol.snapshot_list li a span:nth-child(1) {
 }
 
 ol.snapshot_list li a span:nth-child(2) {
-    width: 10em;
+    width: 5em;
     text-align: right;
 }
 
 ol.deployment_list li a span:nth-child(1) {
-    margin: -11px 0 0 0;
     width: 1em;
 }
 ol.deployment_list li a span:nth-child(2) {
@@ -451,4 +478,5 @@ ol.deployment_list li a span:nth-child(2) {
 }
 ol.deployment_list li a span:nth-child(3) {
     width: 10em;
+    text-align: right;
 }
