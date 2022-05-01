@@ -50,7 +50,7 @@ class ModelListView(ListView):
             projects[project_name] = P(
                 sorted(models, key=lambda model: -model.key_metric),
                 project.key_metric_display_name,
-                max([0, min(scores)]),
+                min(0, max([0, min(scores)])),
                 max(scores),
                 project.id,
             )
