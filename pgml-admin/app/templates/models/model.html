@@ -1,35 +1,51 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block main %}
 <section>
-  <h1>{{ title }}</h1> 
-  <table>
-    <tbody>
-      <tr><th>ID</th><td><a href="{% url 'model' object.id %}">{{ model.id }}</a></td></tr>
-      <tr><th>Project</th><td><a href="{% url 'project' object.project.id %}">{{ model.project.name }}</a></td></tr>
-      <tr><th>Snapshot</th><td><a href="{% url 'snapshot' object.snapshot.id %}">{{ model.snapshot.relation_name }}</a></tr>
-      <tr><th>Algorithm</th><td>{{object.algorithm_name}}</td></tr>
-      <tr><th>Status</th><td>{{object.status}}</td></tr>
-      <tr><th>Hyperparams</th><td>{{object.hyperparms}}</td></tr>
-      <tr><th>Metrics</th><td>
-        <table>
-          <tbody>
-            <tr>
-              {% for key, value in object.metrics.items %}
-                <th>{{ key }}</th>
-              {% endfor %}
-            </tr>
-            <tr>
-              {% for key, value in object.metrics.items %}
-                <td>{{ value }}</td>
-              {% endfor %}
-            </tr>
-          </tbody>
-        </table>
-      </td></tr>
-      <tr><th>Created</th><td>{{object.created_at}}</td></tr>
-      <tr><th>Updated</th><td>{{object.updated_at}}</td></tr>
-    </tbody>
-  </table>
+  <h1><span class="material-symbols-outlined">model_training</span>{{ object.algorithm_name }}
+    {% if live %}
+      <span class="material-symbols-outlined success">star</span>
+    {% else %}
+      <span class="material-symbols-outlined">cancel</span>
+    {% endif %}
+  </h1>
+
+  <dl>
+    <dt>Project</dt>
+    <dd><a href="{% url 'project' object.project_id %}">{{ object.project.name }}</a></dd>
+    <dt>Snapshot</dt>
+    <dd><a href="{% url 'snapshot' object.snapshot_id %}">{{ object.snapshot.relation_name }}</a></dd>
+    <dt>Created</dt>
+    <dd><time datetime="{{object.created_at}}">{{object.created_at | naturaltime}}</time></dd>
+  </dl>
+</section>
+
+<section>
+  <h2>Metrics</h2>
+  {% if object.metrics|length > 0 %}
+  <dl class="model_metrics">
+    {% for key, value in object.metrics.items %}
+    <dt>{{ key }}</dt>
+    <dd>{{ value | floatformat:"5"}}</dd>
+    {% endfor %}
+  </dl>
+  {% else %}
+  <i>no metrics</i>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Hyperparams</h2>
+  {% if object.hyperparams|length > 0 %}
+  <dl class="model_metrics">
+    {% for key, value in object.hyperparams.items %}
+    <dt>{{ key }}</dt>
+    <dd>{{ value }}</dd>
+    {% endfor %}
+  </dl>
+  {% else %}
+  <i>no hyperparams</i>
+  {% endif %}
 </section>
 {% endblock %}
