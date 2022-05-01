@@ -70,245 +70,25 @@
 </section>
 
 <script defer type="module">
-
-function linearRegression(x,y){
-  var lr = {};
-  var n = y.length;
-  var sum_x = 0;
-  var sum_y = 0;
-  var sum_xy = 0;
-  var sum_xx = 0;
-  var sum_yy = 0;
-
-  for (var i = 0; i < y.length; i++) {
-      sum_x += x[i];
-      sum_y += y[i];
-      sum_xy += (x[i]*y[i]);
-      sum_xx += (x[i]*x[i]);
-      sum_yy += (y[i]*y[i]);
-  } 
-
-  lr['sl'] = (n * sum_xy - sum_x * sum_y) / (n*sum_xx - sum_x * sum_x);
-  lr['off'] = (sum_y - lr.sl * sum_x)/n;
-  lr['r2'] = Math.pow((n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y)),2);
-
-  return lr;
-}
-
-// Start observing visbility of element. On change, the
-//   the callback is called with Boolean visibility as
-//   argument:
-function respondToVisibility(element, callback) {
-  var options = {
-    root: document.documentElement,
-  };
-
-  var observer = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      callback(entry.intersectionRatio > 0);
-    });
-  }, options);
-
-  observer.observe(element);
-}
-
 function renderCharts() {
-{% for name, project in projects.items %} 
-{% for model in project.models %}
-  Plotly.newPlot(
-    "model_{{model.id}}",
-    [{
-      type: "bar",
-      orientation: "h",
-      x: [0],
-      marker: {
-        color: "rgb(0, 180, 255)",
-      },
-      hoverinfo: "none",
-    }],
-    {
-      xaxis: {
-        range: [{{project.min_score}}, {{project.max_score}}],
-        showgrid: false,
-        zeroline: false,
-        visible: false,
-      },
-      yaxis: {
-        showgrid: false,
-        zeroline: false,
-        visible: false,
-      },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-      margin: {l: 0, r: 0, b: 0, t: 0, pad: 0},
-      scrollZoom: false,
-      dragmode: false,
-    },
-    {displayModeBar: false, responsive: true}
-  )
-  Plotly.animate(    
-    "model_{{model.id}}",
-    {
-      data: [{x: [{{model.key_metric}}]}],
-      traces: [0],
-      layout: {}
-    }, {
-      transition: {
-        duration: 500,
-        easing: 'cubic-in-out'
-      },
-      frame: {
-        duration: 500
-      }
-    }
-  )
-{% endfor %}
-{% endfor %}
-
 {% for name, feature in features.items %}
   var {{name}}_samples = {{feature.samples}};
 {% endfor %}
+
+{% for name, project in projects.items %} 
+{% for model in project.models %}
+   renderModel({{model.id}}, {{model.key_metric}}, [{{project.min_score}}, {{project.max_score}}])
+{% endfor %}
+{% endfor %}
+
+var delay = 600
 {% for name, feature in features.items %}
-  setTimeout(Plotly.newPlot, 1,
-    '{{feature.name}}_distribution', 
-    [{
-      type: "histogram",
-      name: "{{feature.name}}",
-      x: {{name}}_samples,
-      marker: {
-        color: "rgba(0, 180, 255, 0.7)",
-        line: {
-          color: "rgba(0, 180, 255, 1)", 
-          width: 1
-        },
-      }, 
-    }],
-    {
-      title: {
-        font: {family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif"},
-        text: "Distribution: dip = " + (Math.round({{feature.dip}} * 100) / 100).toString(),
-      },
-      hoverlabel: {
-        color: "rgba(0, 180, 255, 0.7)",
-        bordercolor: "rgba(255, 255, 255, 1)",
-        font: {
-          color: "rgba(255, 255, 255, 1)",
-          family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif",
-          size: 12
-        },
-      },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-      yaxis: {automargin: true},
-      xaxis: {automargin: true},  
-      margin: {l: 0, r: 0, b: 0, t: 50, pad: 0},
-      scrollZoom: false,
-      dragmode: false,
-    },
-    {displayModeBar: false, responsive: true}
-  );
-
+  delay += 200
+  setTimeout(renderDistribution, delay, "{{name}}", {{name}}_samples, {{feature.dip}})
   {% if name == snapshot.y_column_name %}
-  setTimeout(Plotly.newPlot, 1,
-    '{{feature.name}}_outliers', 
-    [{
-      type: "box",
-      jitter: 0.3,
-      pointpos: -1.8,
-      boxpoints: 'all',
-      name: "{{feature.name}}",
-      y: {{name}}_samples,
-      marker: {
-        color: "rgba(0, 180, 255, 0.3)",
-        line: {
-          color: "rgba(0, 180, 255, 0.5)",
-          width: 1
-        },
-      }, 
-    }],
-    {
-      title: {
-        font: {family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif"},
-        text: "Outliers: σ = " + (Math.round({{feature.stddev}} * 100) / 100).toString(),
-      },
-      hoverlabel: {
-        bgcolor: "rgba(0, 180, 255, 0.7)",
-        bordercolor: "rgba(255, 255, 255, 1)",
-        font: {
-          color: "rgba(255, 255, 255, 1)",
-          family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif",
-          size: 12
-        },
-      },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-      yaxis: {automargin: true},
-      xaxis: {automargin: true},  
-      margin: {l: 0, r: 0, b: 0, t: 50, pad: 0},
-      scrollZoom: false,
-      dragmode: false,
-    },
-    {displayModeBar: false, responsive: true}
-  );
-
+  setTimeout(renderOutliers, 1, "{{name}}", {{name}}_samples, {{feature.stddev}})
   {% else %}
-  var lr = linearRegression({{name}}_samples, {{snapshot.y_column_name}}_samples);
-  var fit_from = Math.min(...{{name}}_samples);
-  var fit_to = Math.max(...{{name}}_samples);
-
-  setTimeout(Plotly.newPlot, 1, 
-    '{{feature.name}}_correlation', 
-    [{
-      type: "scatter",
-      mode: "markers",
-      name: "{{feature.name}}",
-      x: {{name}}_samples,
-      y: {{snapshot.y_column_name}}_samples,
-      marker: {
-        color: "rgba(0, 180, 255, 0.4)",
-        line: {
-          color: "rgba(0, 180, 255, 0.6)",
-          width: 1
-        },
-      }, 
-    }, {
-      type: 'scatter',
-      mode: 'lines',
-      name: "R<sup>2</sup> = " + (Math.round(lr.r2 * 100) / 100).toString(),
-      x: [fit_from, fit_to],
-      y: [fit_from*lr.sl+lr.off, fit_to*lr.sl+lr.off],
-      marker: {
-        color: "rgba(255, 232, 20, 1)",
-        line: {
-          color: "rgba(255, 232, 20, 1)",
-          width: 2
-        },
-      }, 
-    }],
-    {
-      font: {family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif"},
-      title: "Correlation: R<sup>2</sup> = " + (Math.round(lr.r2 * 100) / 100).toString(),
-      hoverlabel: {
-        bgcolor: "rgba(0, 180, 255, 0.7)",
-        bordercolor: "rgba(255, 255, 255, 1)",
-        font: {
-          color: "rgba(255, 255, 255, 1)",
-          family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif",
-          size: 12
-        },
-      },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-      yaxis: {automargin: true},
-      xaxis: {automargin: true},  
-      margin: {l: 0, r: 0, b: 0, t: 50, pad: 0},
-      showlegend: false,
-      scrollZoom: false,
-      dragmode: false,
-      
-    },
-    {displayModeBar: false, responsive: true}
-  );
+  setTimeout(renderCorrelation, delay, "{{name}}", {{name}}_samples, {{snapshot.y_column_name}}_samples, {{feature.key_metric}})
   {% endif %}
 {% endfor %}
 };

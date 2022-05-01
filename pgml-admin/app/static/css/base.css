@@ -119,6 +119,7 @@ section {
     overflow: auto;
     margin-left: min(5vw, 20px);
     margin-right: min(5vw, 20px);
+    min-width: 70vw;
 }
 
 /* Tables, sticky headers, overflow scroll, rounded corners, stripes and highlights */
@@ -199,9 +200,11 @@ dl {
 dt {
     font-weight: 300;
     text-transform: uppercase;
+    margin: 0 10px;
+
 }
 dd {
-    margin: 0;
+    margin: 0 10px;
 }
 sub, sup {
     font-size: 60%;

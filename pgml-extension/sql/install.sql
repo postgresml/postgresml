@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS pgml.deployments(
 	id BIGSERIAL PRIMARY KEY,
 	project_id BIGINT NOT NULL,
 	model_id BIGINT NOT NULL,
+	strategy TEXT NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
 	CONSTRAINT model_id_fk FOREIGN KEY(model_id) REFERENCES pgml.models(id)
