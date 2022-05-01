@@ -28,7 +28,7 @@ The system runs Postgres with the pgml-extension installed on port 5433 by defau
 $ psql -U postgres -h 127.0.0.1 -p 5433 -d pgml_development
 ```
 
-We've included a couple examples in the `pgml-extension/examples/` folder. You can run them directly like so: 
+We've included a couple examples in the [pgml-extension/examples/](./pgml-extension/examples) folder. You can run them directly like so: 
 
 ```bash
 $ psql -U postgres -h 127.0.0.1 -p 5433 -d pgml_development -f pgml-extension/examples/classification.sql
