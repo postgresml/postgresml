@@ -2,34 +2,38 @@
 
 {% block main %}
 <section>
-  <h1>Models</h1> 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Project</th>
-        <th>Snapshot</th>
-        <th>Algorithm</th>
-        <th>Status</th>
-        <th>Hyperparams</th>
-        <th>Metrics</th>
-        <th>Created</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for model in object_list %}
-      <tr>
-        <td><a href="{% url 'model' model.id %}">{{ model.id }}</a></td>
-        <td><a href="{% url 'project' model.project.id %}">{{ model.project.name }}</a></td>
-        <td><a href="{% url 'snapshot' model.snapshot.id %}">{{ model.snapshot.relation_name }}</a></td>
-        <td>{{model.algorithm_name}}</td>
-        <td>{{model.status}}</td>
-        <td>{{model.hyperparms}}</td>
-        <td>{{model.metrics}}</td>
-        <td>{{model.created_at}}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<h1><span class="material-symbols-outlined">model_training</span>Models</h2>
 </section>
+{% for name, project in projects.items %} 
+  <section>
+    <h2>{{name}}</h2>
+    <ol class="object_list model_list">
+      <li>
+          <span><b>Algorithm</b></span>
+          <span><b>{{project.metric | safe}}</b></span>    
+          <figure></figure>
+      </li>
+      {% for model in project.models %}
+      <li>
+        <a href="{% url 'model' model.id %}">
+          <span>{{ model.algorithm_name }}</span>
+          <span>{{ model.key_metric | floatformat:"3" }}</span>
+          <figure id="model_{{model.id}}"></figure>
+        </a>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endfor %}
+
+<script defer type="module">
+  function renderCharts() {
+  {% for name, project in projects.items %} 
+  {% for model in project.models %}
+     renderModel({{model.id}}, {{model.key_metric}}, [{{project.min_score}}, {{project.max_score}}])
+  {% endfor %}
+  {% endfor %}
+  };
+  renderCharts();
+</script>
 {% endblock %}
