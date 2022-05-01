@@ -1,3 +1,4 @@
+from typing import OrderedDict
 from django.shortcuts import render, get_object_or_404
 
 from .. import models
@@ -8,8 +9,11 @@ def default_context(context):
 
 
 def index(request):
-    deployments = models.Deployment.objects.all()
-    context = default_context({"title": "Deployments", "deployments": deployments})
+    project_deployments = OrderedDict()
+    for project in models.Project.objects.all():
+        project_deployments[project] = project.deployment_set.order_by("-created_at").all()
+    
+    context = default_context({"title": "Deployments", "project_deployments": project_deployments})
     return render(request, "deployments/index.html", context)
 
 

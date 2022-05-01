@@ -1,27 +1,31 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block main %}
 <section>
-  <h1>Deployments</h1> 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Project</th>
-        <th>Model</th>
-        <th>Deployed</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for deployment in deployments %}
-      <tr>
-        <td><a href="{% url 'deployment' deployment.id %}">{{ deployment.id }}</a></td>
-        <td><a href="{% url 'project' deployment.project.id %}">{{ deployment.project.name }}</a></td>
-        <td><a href="{% url 'model' deployment.model.id %}">{{ deployment.model.algorithm_name }}</a></td>
-        <td>{{deployment.created_at}}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <h1><span class="material-symbols-outlined">inventory</span>Deployments</h1> 
 </section>
+
+{% for project, deployments in project_deployments.items %}
+<section>
+  <h2>{{project.name}}</h2> 
+  <ol class="object_list deployment_list">
+    {% for deployment in deployments %}
+    <li>
+      <a href="{% url 'deployment' deployment.id %}">
+        <span>
+          {% if deployment.id == project.current_deployment.id %}
+          <span class="material-symbols-outlined success">star</span>
+          {% else %}
+          <span class="material-symbols-outlined">cancel</span>
+          {% endif %}
+        </span>
+        <span>{{ deployment.human_readable_strategy }}</span>
+        <span><time datetime="{{deployment.created_at}}">{{deployment.created_at | naturaltime}}</time></span>
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endfor %}
 {% endblock %}

@@ -362,23 +362,24 @@ footer {
 }
 
 
-ol.model_list {
+ol.object_list {
     width: 100%;
 }
-ol.model_list li {
+ol.object_list li {
     width: 100%;
 }
-ol.model_list h3 {
+ol.object_list h3 {
     display: inline;
     padding-top: 0.5em;
     height: 2.5em;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-ol.model_list li a {
+ol.object_list li a {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
+    justify-content: space-between;
     color: var(--gray-3);
     width: 100%;
     height: 2em;
@@ -386,13 +387,19 @@ ol.model_list li a {
     margin: 0 -30px;
     padding: 0 30px;
 }
-ol.model_list li a:hover {
+ol.object_list li a:hover {
     height: 2em;
     background-color: var(--color-9);
 }
-ol.model_list li a span {
+ol.object_list li a::after {
+    content: '❯';
+    color: var(--gray-7);
+    margin: 0 0 0 1em;
+}
+ol.object_list li a span {
     padding-top: 0.5em;
     height: 1.5em;
+    margin-left: 1em;
 }
 ol.model_list li:nth-child(1) a span {
     height: 2.5em;
@@ -422,4 +429,18 @@ ol.model_list li a figure {
 
 h2 span.material-symbols-outlined {
     margin: 0 5px 0 0;
+}
+
+
+
+ol.deployment_list li a span:nth-child(1) {
+    margin: -11px 0 0 0;
+    width: 1em;
+}
+ol.deployment_list li a span:nth-child(2) {
+    width: 10em;
+    flex-grow: 10;
+}
+ol.deployment_list li a span:nth-child(3) {
+    width: 10em;
 }
