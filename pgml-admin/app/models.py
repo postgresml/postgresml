@@ -28,6 +28,9 @@ class Project(models.Model):
         elif self.objective == "regression":
             return "R<sup>2</sup>"
 
+    @property
+    def current_deployment(self):
+        return self.deployment_set.order_by("-created_at").first()
 
 class Snapshot(models.Model):
     relation_name = models.TextField()
@@ -94,8 +97,13 @@ class Model(models.Model):
 class Deployment(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    strategy = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = '"pgml"."deployments"'
         managed = False
+
+    @property
+    def human_readable_strategy(self):
+        return self.strategy.replace("_", " ")

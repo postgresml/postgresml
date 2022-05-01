@@ -151,7 +151,7 @@ class Project(object):
     def deploy(self, qualifier="best_score", algorithm_name=None):
         model = Model.find_by_project_and_qualifier_algorithm_name(self, qualifier, algorithm_name)
         if model and model.id != self.deployed_model.id:
-            model.deploy()
+            model.deploy(qualifier)
         return model
 
     @property
@@ -613,13 +613,13 @@ class Model(object):
         )
         self.__init__()
 
-    def deploy(self):
+    def deploy(self, strategy):
         """Promote this model to the active version for the project that will be used for predictions"""
 
         plpy.execute(
             f"""
-            INSERT INTO pgml.deployments (project_id, model_id, created_at) 
-            VALUES ({q(self.project_id)}, {q(self.id)}, clock_timestamp())
+            INSERT INTO pgml.deployments (project_id, model_id, strategy, created_at) 
+            VALUES ({q(self.project_id)}, {q(self.id)}, {q(strategy)}, clock_timestamp())
         """
         )
 
@@ -696,7 +696,7 @@ def train(
         )
         or (project.objective == "classification" and project.deployed_model.metrics["f1"] < model.metrics["f1"])
     ):
-        model.deploy()
+        model.deploy("new_score")
         return "deployed"
     else:
         return "not deployed"
