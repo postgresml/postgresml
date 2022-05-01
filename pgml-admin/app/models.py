@@ -32,6 +32,7 @@ class Project(models.Model):
     def current_deployment(self):
         return self.deployment_set.order_by("-created_at").first()
 
+
 class Snapshot(models.Model):
     relation_name = models.TextField()
     y_column_name = models.TextField()
@@ -92,7 +93,7 @@ class Model(models.Model):
     @property
     def key_metric(self):
         return self.metrics[self.project.key_metric_name]
-            
+
 
 class Deployment(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)

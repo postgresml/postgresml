@@ -7,6 +7,7 @@ from ..models import Snapshot
 
 from collections import namedtuple
 
+
 def default_context(context):
     return {"topic": "Snapshots", **context}
 
@@ -53,12 +54,18 @@ def get(request, id):
             projects[model.project.name][1].append(model)
         else:
             projects[model.project.name] = (model.project, [model])
-    P = namedtuple('P', 'models metric min_score max_score id')
+    P = namedtuple("P", "models metric min_score max_score id")
     for project_name, stuff in projects.items():
         project = stuff[0]
         models = stuff[1]
         scores = [model.key_metric for model in models]
-        projects[project_name] = P(sorted(models, key=lambda model: -model.key_metric), project.key_metric_display_name, max([0, min(scores)]), max(scores), project.id)
+        projects[project_name] = P(
+            sorted(models, key=lambda model: -model.key_metric),
+            project.key_metric_display_name,
+            max([0, min(scores)]),
+            max(scores),
+            project.id,
+        )
 
     context = {
         "snapshot": snapshot,

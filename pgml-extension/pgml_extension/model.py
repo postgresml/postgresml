@@ -120,9 +120,7 @@ class Project(object):
             Project: instantiated from the database
         """
         if objective is None:
-            raise PgMLException(
-                f"You must specify and objective when creating a new Project."
-            )
+            raise PgMLException(f"You must specify and objective when creating a new Project.")
         project = Project()
         project.__dict__ = dict(
             plpy.execute(
@@ -677,13 +675,16 @@ def train(
     if relation_name is None:
         snapshot = project.last_snapshot
         if snapshot is None:
-            raise PgMLException(f"You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.")
+            raise PgMLException(
+                f"You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model."
+            )
         if y_column_name is not None and y_column_name != snapshot.y_column_name:
-            raise PgMLException(f"You must pass a `relation_name` to use a different `y_column_name` than previous runs.")
+            raise PgMLException(
+                f"You must pass a `relation_name` to use a different `y_column_name` than previous runs."
+            )
 
     else:
         snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
-        
 
     model = Model.create(project, snapshot, algorithm_name, hyperparams)
     model.fit(snapshot)

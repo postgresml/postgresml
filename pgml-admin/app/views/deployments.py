@@ -17,13 +17,14 @@ def deployment(request, id):
     if request.method == "GET":
         return get(request, id)
 
+
 def get(request, id):
     deployment = get_object_or_404(models.Deployment, id=id)
     context = default_context(
         {
             "title": deployment.project.name + " - " + deployment.model.algorithm_name,
             "deployment": deployment,
-            "live": deployment.id == deployment.project.current_deployment.id
+            "live": deployment.id == deployment.project.current_deployment.id,
         }
     )
     return render(request, "deployments/deployment.html", context)
