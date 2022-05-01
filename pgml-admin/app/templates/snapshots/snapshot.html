@@ -70,28 +70,30 @@
 </section>
 
 <script defer type="module">
-function renderCharts() {
-{% for name, feature in features.items %}
-  var {{name}}_samples = {{feature.samples}};
-{% endfor %}
+  import { renderModel, renderDistribution, renderCorrelation, renderOutliers } from '/static/js/main.mjs';
 
-{% for name, project in projects.items %} 
-{% for model in project.models %}
-   renderModel({{model.id}}, {{model.key_metric}}, [{{project.min_score}}, {{project.max_score}}])
-{% endfor %}
-{% endfor %}
+  function renderCharts() {
+  {% for name, feature in features.items %}
+    var {{name}}_samples = {{feature.samples}};
+  {% endfor %}
 
-var delay = 600
-{% for name, feature in features.items %}
-  delay += 200
-  setTimeout(renderDistribution, delay, "{{name}}", {{name}}_samples, {{feature.dip}})
-  {% if name == snapshot.y_column_name %}
-  setTimeout(renderOutliers, delay, "{{name}}", {{name}}_samples, {{feature.stddev}})
-  {% else %}
-  setTimeout(renderCorrelation, delay, "{{name}}", {{name}}_samples, {{snapshot.y_column_name}}_samples, {{feature.key_metric}})
-  {% endif %}
-{% endfor %}
-};
-renderCharts();
+  {% for name, project in projects.items %} 
+  {% for model in project.models %}
+    renderModel({{model.id}}, {{model.key_metric}}, [{{project.min_score}}, {{project.max_score}}])
+  {% endfor %}
+  {% endfor %}
+
+  var delay = 600
+  {% for name, feature in features.items %}
+    delay += 200
+    setTimeout(renderDistribution, delay, "{{name}}", {{name}}_samples, {{feature.dip}})
+    {% if name == snapshot.y_column_name %}
+    setTimeout(renderOutliers, delay, "{{name}}", {{name}}_samples, {{feature.stddev}})
+    {% else %}
+    setTimeout(renderCorrelation, delay, "{{name}}", {{name}}_samples, {{snapshot.y_column_name}}_samples, {{feature.key_metric}})
+    {% endif %}
+  {% endfor %}
+  };
+  renderCharts();
 </script>
 {% endblock %}
