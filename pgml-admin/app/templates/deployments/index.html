@@ -13,13 +13,11 @@
     {% for deployment in deployments %}
     <li>
       <a href="{% url 'deployment' deployment.id %}">
-        <span>
-          {% if deployment.id == project.current_deployment.id %}
-          <span class="material-symbols-outlined success">star</span>
-          {% else %}
-          <span class="material-symbols-outlined">cancel</span>
-          {% endif %}
-        </span>
+        {% if deployment.id == project.current_deployment.id %}
+        <span class="material-symbols-outlined success">star</span>
+        {% else %}
+        <span class="material-symbols-outlined">cancel</span>
+        {% endif %}
         <span>{{ deployment.human_readable_strategy }}</span>
         <span><time datetime="{{deployment.created_at}}">{{deployment.created_at | naturaltime}}</time></span>
       </a>

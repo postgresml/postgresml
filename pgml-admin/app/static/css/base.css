@@ -400,6 +400,7 @@ ol.object_list li a span {
     padding-top: 0.5em;
     height: 1.5em;
     margin-left: 1em;
+    white-space: nowrap;
 }
 ol.model_list li:nth-child(1) a span {
     height: 2.5em;
@@ -431,7 +432,14 @@ h2 span.material-symbols-outlined {
     margin: 0 5px 0 0;
 }
 
+ol.snapshot_list li a span:nth-child(1) {
+    flex-grow: 10;
+}
 
+ol.snapshot_list li a span:nth-child(2) {
+    width: 10em;
+    text-align: right;
+}
 
 ol.deployment_list li a span:nth-child(1) {
     margin: -11px 0 0 0;
