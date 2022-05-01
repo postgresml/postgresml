@@ -7,7 +7,6 @@ from django.views.generic import DetailView, ListView
 from app.models import Project
 
 
-
 def default_context(context):
     return {"topic": "Projects", **context}
 

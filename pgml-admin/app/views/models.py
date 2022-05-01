@@ -9,7 +9,6 @@ from django.views.generic import DetailView, ListView
 from app.models import Model
 
 
-
 def default_context(context):
     """Specify values for the base template."""
     return {"topic": "Models", **context}
