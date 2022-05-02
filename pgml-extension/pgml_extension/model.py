@@ -44,9 +44,6 @@ class Project(object):
         updated_at (Timestamp): when this project was last updated
     """
 
-    _cached_projects = {}
-    _cached_deployment = None
-
     def __init__(self):
         self._deployed_model = None
 
@@ -74,7 +71,6 @@ class Project(object):
         project = Project()
         project.__dict__ = dict(result[0])
         project.__init__()
-        cls._cached_projects[project.name] = project
         return project
 
     @classmethod
@@ -92,16 +88,6 @@ class Project(object):
         """
 
         # bust the cache after a deployment
-        result = plpy.execute("SELECT max(id) AS id FROM pgml.deployments");
-        if len(result) > 0:
-            id = dict(result[0])["id"]
-            if id != cls._cached_deployment:
-                cls._cached_deployment = id
-                cls._cached_projects = {}
-
-        if name in cls._cached_projects:
-            return cls._cached_projects[name]
-
         result = plpy.execute(
             f"""
                 SELECT * 
@@ -116,7 +102,6 @@ class Project(object):
         project = Project()
         project.__dict__ = dict(result[0])
         project.__init__()
-        cls._cached_projects[name] = project
         return project
 
     @classmethod
@@ -144,7 +129,6 @@ class Project(object):
             )[0]
         )
         project.__init__()
-        cls._cached_projects[name] = project
         return project
 
     @property
@@ -657,7 +641,6 @@ class Model(object):
             metrics["precision"] = precision_score(y_test, y_pred, average="weighted")
             metrics["recall"] = recall_score(y_test, y_pred, average="weighted")
 
-        plpy.warning(f"metrics {metrics}")
         # Save the model
         self.__dict__ = dict(
             plpy.execute(

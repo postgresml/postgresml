@@ -125,6 +125,11 @@ AS $$
 	from pgml_extension.model import train
 	import json
 	status = train(project_name, objective, relation_name, [y_column_name], algorithm, json.loads(hyperparams))
+
+	if "projects" in GD:
+		if project_name in GD["projects"]:
+	 		del GD["projects"][project_name]
+
 	return [(project_name, objective, algorithm, status)]
 $$ LANGUAGE plpython3u;
 
@@ -134,6 +139,11 @@ AS $$
 	from pgml_extension.model import train
 	import json
 	status = train(project_name, objective, relation_name, y_column_name, algorithm, json.loads(hyperparams))
+
+	if "projects" in GD:
+		if project_name in GD["projects"]:
+	 		del GD["projects"][project_name]
+
 	return [(project_name, objective, algorithm, status)]
 $$ LANGUAGE plpython3u;
 
@@ -145,6 +155,11 @@ RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT)
 AS $$
 	from pgml_extension.model import Project
 	model = Project.find_by_name(project_name).deploy(qualifier, algorithm_name)
+
+	if "projects" in GD:
+		if project_name in GD["projects"]:
+	 		del GD["projects"][project_name]
+
 	return [(model.project.name, model.project.objective, model.algorithm_name)]
 $$ LANGUAGE plpython3u;
 
@@ -155,14 +170,32 @@ CREATE OR REPLACE FUNCTION pgml.predict(project_name TEXT, features DOUBLE PRECI
 RETURNS DOUBLE PRECISION
 AS $$
 	from pgml_extension.model import Project
-	return Project.find_by_name(project_name).deployed_model.predict([features,])[0]
+
+	if "projects" not in GD:
+		GD["projects"] = {}
+
+	project = GD["projects"].get(project_name)
+	if project is None:
+		project = Project.find_by_name(project_name)
+		GD["projects"][project_name] = project
+
+	return project.deployed_model.predict([features,])[0]
 $$ LANGUAGE plpython3u;
 
 CREATE OR REPLACE FUNCTION pgml.predict_joint(project_name TEXT, features DOUBLE PRECISION[])
 RETURNS DOUBLE PRECISION[]
 AS $$
 	from pgml_extension.model import Project
-	return Project.find_by_name(project_name).deployed_model.predict([features,])[0]
+
+	if "projects" not in GD:
+		GD["projects"] = {}
+
+	project = GD["projects"].get(project_name)
+	if project is None:
+		project = Project.find_by_name(project_name)
+		GD["projects"][project_name] = project
+
+	return project.deployed_model.predict([features,])[0]
 $$ LANGUAGE plpython3u;
 
 ---
