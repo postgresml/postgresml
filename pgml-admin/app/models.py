@@ -100,6 +100,10 @@ class Model(models.Model):
     def key_metric(self):
         return self.metrics[self.project.key_metric_name]
 
+    def live(self):
+        last_deployment = Deployment.objects.filter(project=self.project).last()
+        return last_deployment.model.pk == self.pk
+
 
 class Deployment(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
