@@ -437,21 +437,17 @@ ol.model_list li:nth-child(1) span {
     padding-top: 1em;
 }
 ol.model_list li:nth-child(1) span:nth-child(2) {
-    text-align: left;
+    text-align: center;
 }
 ol.model_list li:nth-child(1) span b {
     position: relative;
     top: 0.4em;
 }
-ol.model_list li:nth-child(1) span:nth-child(2) {
-    text-align: center;
-    margin: 0;
-}
 ol.model_list li span:nth-child(1) {
     width: 30em;
 }
 ol.model_list li span:nth-child(2) {
-    width: 7em;
+    width: 6em;
     text-align: right;
 }
 ol.model_list li figure {
