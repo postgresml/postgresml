@@ -8,7 +8,7 @@ PostgresML is an end-to-end machine learning system. It enables you to train mod
 
 ## Motivation
 
-Deploying machine learning models into existing applications is not straight forward. It involves operating new services, which need to be written in specialized languages with libraries outside of the experience of many software engineers. Those services tend to be architected around specialized datastores and hardware that requires additional management and know how. Machine learning is resource hungry relative to other software domains. This can push complexity, latency and costs beyond acceptable trade off limits for many otherwise valuable use cases.
+Deploying machine learning models into existing applications is not straight forward. It involves operating new services, which need to be written in specialized languages with libraries outside of the experience of many software engineers. Those services tend to be architected around specialized datastores and hardware that requires additional management and know how. Data access needs to be secure across production and development environments without impeding productivity. This complexity pushes risks and costs beyond acceptable trade off limits for many otherwise valuable use cases.
 
 PostgresML makes ML simple by moving the code to your data, rather than copying the data all over the place. You train models using simple SQL commands, and you get the predictions in your apps via a mechanism you're already using: a query over a standard Postgres connection.
 
