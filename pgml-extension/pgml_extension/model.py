@@ -4,6 +4,7 @@ import sklearn.linear_model
 import sklearn.kernel_ridge
 import sklearn.svm
 import sklearn.ensemble
+import sklearn.multioutput
 import sklearn.gaussian_process
 import xgboost as xgb
 import diptest
@@ -43,8 +44,6 @@ class Project(object):
         updated_at (Timestamp): when this project was last updated
     """
 
-    _cache = {}
-
     def __init__(self):
         self._deployed_model = None
 
@@ -72,7 +71,6 @@ class Project(object):
         project = Project()
         project.__dict__ = dict(result[0])
         project.__init__()
-        cls._cache[project.name] = project
         return project
 
     @classmethod
@@ -88,9 +86,8 @@ class Project(object):
         Returns:
             Project or None: instantiated from the database if found
         """
-        if name in cls._cache:
-            return cls._cache[name]
 
+        # bust the cache after a deployment
         result = plpy.execute(
             f"""
                 SELECT * 
@@ -105,7 +102,6 @@ class Project(object):
         project = Project()
         project.__dict__ = dict(result[0])
         project.__init__()
-        cls._cache[name] = project
         return project
 
     @classmethod
@@ -133,7 +129,6 @@ class Project(object):
             )[0]
         )
         project.__init__()
-        cls._cache[name] = project
         return project
 
     @property
@@ -176,7 +171,7 @@ class Snapshot(object):
     def create(
         cls,
         relation_name: str,
-        y_column_name: str,
+        y_column_name: list,
         test_size: float or int,
         test_sampling: str,
     ):
@@ -201,7 +196,7 @@ class Snapshot(object):
             plpy.execute(
                 f"""
             INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status, created_at, updated_at)
-            VALUES ({q(relation_name)}, {q(y_column_name)}, {q(test_size)}, {q(test_sampling)}, 'new', clock_timestamp(), clock_timestamp())
+            VALUES ({q(relation_name)}, ARRAY[{",".join([q(name) for name in y_column_name])}], {q(test_size)}, {q(test_sampling)}, 'new', clock_timestamp(), clock_timestamp())
             RETURNING *
         """,
                 1,
@@ -228,6 +223,45 @@ class Snapshot(object):
         )
         return snapshot
 
+    @classmethod
+    def find(cls, id):
+        result = plpy.execute(
+            f"""
+            SELECT snapshots.* 
+            FROM pgml.snapshots 
+            WHERE snapshots.id = {q(id)}
+            LIMIT 1
+        """
+        )
+        if len(result) == 0:
+            return None
+
+        snapshot = Snapshot()
+        snapshot.__dict__ = dict(result[0])
+        snapshot.__init__()
+        return snapshot
+
+    @classmethod
+    def last_for_project_id(cls, project_id):
+        result = plpy.execute(
+            f"""
+            SELECT snapshots.* 
+            FROM pgml.snapshots 
+            JOIN pgml.models
+              ON models.snapshot_id = snapshots.id
+              AND models.project_id = {q(project_id)}
+            ORDER by snapshots.created_at DESC
+            LIMIT 1
+        """
+        )
+        if len(result) == 0:
+            return None
+
+        snapshot = Snapshot()
+        snapshot.__dict__ = dict(result[0])
+        snapshot.__init__()
+        return snapshot
+
     def analyze(self):
         sample = plpy.execute(
             f"""
@@ -241,10 +275,12 @@ class Snapshot(object):
             raise PgMLException(
                 f"Relation `{self.relation_name}` contains no rows. Did you pass the correct `relation_name`?"
             )
-        if self.y_column_name not in sample[0]:
-            raise PgMLException(f"Column `{self.y_column_name}` not found. Did you pass the correct `y_column_name`?")
+        
+        for column in self.y_column_name:
+            if not column in sample[0]:
+                raise PgMLException(f"Column `{column}` not found. Did you pass the correct `y_column_name`?")
 
-        values = []
+        values = ["count(*) AS samples"]
         for (column, value) in dict(sample[0]).items():
             if isinstance(value, float) or isinstance(value, int):
                 values.append(
@@ -252,7 +288,6 @@ class Snapshot(object):
                 )
         self.analysis = dict(plpy.execute(f"SELECT {','.join(values)} FROM {self.relation_name}")[0])
 
-        target = [row[self.y_column_name] for row in sample]
         for (column, value) in dict(sample[0]).items():
             if isinstance(value, float) or isinstance(value, int):
                 data = [row[column] for row in sample]
@@ -295,19 +330,22 @@ class Snapshot(object):
 
         # Always pull the columns in the same order from the row.
         # Python dict iteration is not always in the same order (hash table).
-        columns = list(data[0].keys())
-        columns.remove(self.y_column_name)
-        columns.sort()
+        features = list(data[0].keys())
+        for column in self.y_column_name:
+            features.remove(column)
+        features.sort()
 
         # Split the label from the features
         X = []
         y = []
         for row in data:
-            y_ = row.pop(self.y_column_name)
-            x_ = []
+            y_ = []
+            for column in self.y_column_name:
+                y_.append(row.pop(column))
 
-            for column in columns:
-                x_.append(row[column])
+            x_ = []
+            for feature in features:
+                x_.append(row[feature])
 
             x_ = flatten(x_)  # TODO be smart about flattening X depending on algorithm
             X.append(x_)
@@ -328,26 +366,6 @@ class Snapshot(object):
             return X[:split], X[split:], y[:split], y[split:]
 
         # TODO normalize and clean data
-
-    def last_for_project_id(project_id):
-        result = plpy.execute(
-            f"""
-            SELECT snapshots.* 
-            FROM pgml.snapshots 
-            JOIN pgml.models
-              ON models.snapshot_id = snapshots.id
-              AND models.project_id = {q(project_id)}
-            ORDER by snapshots.created_at DESC
-            LIMIT 1
-        """
-        )
-        if len(result) == 0:
-            return None
-
-        snapshot = Snapshot()
-        snapshot.__dict__ = dict(result[0])
-        snapshot.__init__()
-        return snapshot
 
 
 class Model(object):
@@ -393,6 +411,7 @@ class Model(object):
         model = Model()
         model.__dict__ = dict(result[0])
         model.__init__()
+        model._snapshot = snapshot
         model._project = project
         return model
 
@@ -503,6 +522,7 @@ class Model(object):
     def __init__(self):
         self._algorithm = None
         self._project = None
+        self._snapshot = None
         if "hyperparams" in self.__dict__ and type(self.hyperparams) is str:
             self.hyperparams = json.loads(self.hyperparams)
         if "metrics" in self.__dict__ and type(self.metrics) is str:
@@ -517,6 +537,16 @@ class Model(object):
         if self._project is None:
             self._project = Project.find(self.project_id)
         return self._project
+
+    @property
+    def snapshot(self):
+        """
+        Returns:
+            Snapshot: that this model trains with
+        """
+        if self._snapshot is None:
+            self._snapshot = Snapshot.find(self.project_id)
+        return self._snapshot
 
     @property
     def algorithm(self):
@@ -569,6 +599,22 @@ class Model(object):
                     "xgboost_regression": xgb.XGBRegressor,
                     "xgboost_classification": xgb.XGBClassifier,
                 }[self.algorithm_name + "_" + self.project.objective](**self.hyperparams)
+                if len(self.snapshot.y_column_name) > 0:
+                    if self.project.objective == "regression" and self.algorithm_name in [
+                        "bayesian_ridge",
+                        "automatic_relevance_determination",
+                        "stochastic_gradient_descent",
+                        "passive_aggressive",
+                        "theil_sen",
+                        "huber",
+                        "quantile",
+                        "svm",
+                        "nu_svm",
+                        "linear_svm",
+                        "ada_boost",
+                        "gradient_boosting_trees",
+                    ]:
+                        self._algorithm = sklearn.multioutput.MultiOutputRegressor(self._algorithm)
 
         return self._algorithm
 
@@ -631,7 +677,11 @@ class Model(object):
             float or int: scores for regressions or ints for classifications
         """
         # TODO: add metrics for tracking prediction volume/accuracy by model
-        return self.algorithm.predict(data)
+        # TODO: smarter treatment for images rather than flattening
+        y = self.algorithm.predict([flatten(data)])
+        if self.project.objective == "regression" and len(self.snapshot.y_column_name) == 1:
+            y = y[0]
+        return y
 
 
 def train(
@@ -678,9 +728,9 @@ def train(
             raise PgMLException(
                 f"You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model."
             )
-        if y_column_name is not None and y_column_name != snapshot.y_column_name:
+        if y_column_name is not None and y_column_name != [None] and y_column_name != snapshot.y_column_name:
             raise PgMLException(
-                f"You must pass a `relation_name` to use a different `y_column_name` than previous runs."
+                f"You must pass a `relation_name` to use a different `y_column_name` than previous runs. {y_column_name} vs {snapshot.y_column_name}"
             )
 
     else:

@@ -157,13 +157,13 @@ export function renderOutliers(feature_name, samples, stddev) {
     );
 }
 
-export function renderCorrelation(feature_name, samples, y, key_metric) {
+export function renderCorrelation(feature_name, other_name, samples, y, key_metric) {
     var lr = linearRegression(samples, y);
     var fit_from = Math.min(...samples);
     var fit_to = Math.max(...samples);
 
     Plotly.newPlot(
-        feature_name + '_correlation',
+        feature_name + '_correlation_' + other_name,
         [{
             type: "scatter",
             mode: "markers",

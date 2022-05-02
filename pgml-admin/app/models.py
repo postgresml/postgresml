@@ -62,7 +62,7 @@ class Snapshot(models.Model):
 
     @property
     def samples(self):
-        return self.analysis[self.y_column_name + "_count"]
+        return self.analysis["samples"]
 
     @property
     def y_column_type(self):
