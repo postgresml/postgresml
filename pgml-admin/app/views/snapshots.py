@@ -74,4 +74,4 @@ def get(request, id):
         "features": columns,
         "projects": projects,
     }
-    return render(request, "snapshots/snapshot.html", context)
+    return render(request, "snapshots/snapshot.html", default_context(context))
