@@ -20,3 +20,5 @@ SELECT pgml.load_dataset('california_housing');
 
 \i examples/regression.sql
 \i examples/classification.sql
+\i examples/image_classification.sql
+\i examples/joint_regression.sql

@@ -50,7 +50,7 @@
 <section>
   <h2><span class="material-symbols-outlined">label_important</span>Labels</h2>
   {% for name, feature in features.items %}
-    {% if name == snapshot.y_column_name %}
+    {% if name in snapshot.y_column_name %}
     <h3>{{feature.name}} <code>{{feature.type|upper}}</code></h3>
     <figure id="{{feature.name}}_distribution"></figure>
     <figure id="{{feature.name}}_outliers"></figure>
@@ -61,10 +61,13 @@
 <section>
   <h2><span class="material-symbols-outlined">bubble_chart</span>Features</h2>
   {% for name, feature in features.items %}
-    {% if name != snapshot.y_column_name %}
+    {% if name in snapshot.y_column_name %}
+    {% else %}
     <h3>{{feature.name}} <code>{{feature.type|upper}}</code></h3>
     <figure id="{{feature.name}}_distribution"></figure>
-    <figure id="{{feature.name}}_correlation"></figure>
+    {% for y_column_name in snapshot.y_column_name %}
+    <figure id="{{feature.name}}_correlation_{{y_column_name}}"></figure>
+    {% endfor %}
     {% endif %}
   {% endfor %}
 </section>
@@ -87,10 +90,14 @@
   {% for name, feature in features.items %}
     delay += 200
     setTimeout(renderDistribution, delay, "{{name}}", {{name}}_samples, {{feature.dip}})
-    {% if name == snapshot.y_column_name %}
-    setTimeout(renderOutliers, delay, "{{name}}", {{name}}_samples, {{feature.stddev}})
+    {% if name in snapshot.y_column_name %}
+    {% for y_column_name in snapshot.y_column_name %}
+      setTimeout(renderOutliers, delay, "{{y_column_name}}", {{name}}_samples, {{feature.stddev}})
+    {% endfor %}
     {% else %}
-    setTimeout(renderCorrelation, delay, "{{name}}", {{name}}_samples, {{snapshot.y_column_name}}_samples, {{feature.key_metric}})
+    {% for y_column_name in snapshot.y_column_name %}
+      setTimeout(renderCorrelation, delay, "{{name}}", "{{y_column_name}}", {{name}}_samples, {{y_column_name}}_samples, {{feature.key_metric}})
+    {% endfor %}
     {% endif %}
   {% endfor %}
   };

@@ -52,7 +52,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS projects_name_idx ON pgml.projects(name);
 CREATE TABLE IF NOT EXISTS pgml.snapshots(
 	id BIGSERIAL PRIMARY KEY,
 	relation_name TEXT NOT NULL,
-	y_column_name TEXT NOT NULL,
+	y_column_name TEXT[] NOT NULL,
 	test_size FLOAT4 NOT NULL,
 	test_sampling TEXT NOT NULL,
 	status TEXT NOT NULL,
@@ -124,6 +124,15 @@ RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT, status TEX
 AS $$
 	from pgml_extension.model import train
 	import json
+	status = train(project_name, objective, relation_name, [y_column_name], algorithm, json.loads(hyperparams))
+	return [(project_name, objective, algorithm, status)]
+$$ LANGUAGE plpython3u;
+
+CREATE OR REPLACE FUNCTION pgml.train_joint(project_name TEXT, objective TEXT DEFAULT NULL, relation_name TEXT DEFAULT NULL, y_column_name TEXT[] DEFAULT NULL, algorithm TEXT DEFAULT 'linear', hyperparams JSONB DEFAULT '{}'::JSONB)
+RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT, status TEXT)
+AS $$
+	from pgml_extension.model import train
+	import json
 	status = train(project_name, objective, relation_name, y_column_name, algorithm, json.loads(hyperparams))
 	return [(project_name, objective, algorithm, status)]
 $$ LANGUAGE plpython3u;
@@ -144,6 +153,13 @@ $$ LANGUAGE plpython3u;
 ---
 CREATE OR REPLACE FUNCTION pgml.predict(project_name TEXT, features DOUBLE PRECISION[])
 RETURNS DOUBLE PRECISION
+AS $$
+	from pgml_extension.model import Project
+	return Project.find_by_name(project_name).deployed_model.predict([features,])[0]
+$$ LANGUAGE plpython3u;
+
+CREATE OR REPLACE FUNCTION pgml.predict_joint(project_name TEXT, features DOUBLE PRECISION[])
+RETURNS DOUBLE PRECISION[]
 AS $$
 	from pgml_extension.model import Project
 	return Project.find_by_name(project_name).deployed_model.predict([features,])[0]

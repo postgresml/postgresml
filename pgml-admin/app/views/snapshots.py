@@ -29,8 +29,10 @@ def get(request, id):
     columns = OrderedDict()
     column_names = list(snapshot.columns.keys())
     column_names.sort()
-    column_names.remove(snapshot.y_column_name)
-    column_names.insert(0, snapshot.y_column_name)
+    for target in snapshot.y_column_name:
+        column_names.remove(target)
+        column_names.insert(0, target)
+
     for column_name in column_names:
         if snapshot.columns[column_name] in ["integer", "real"]:
             columns[column_name] = {

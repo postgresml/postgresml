@@ -59,13 +59,19 @@ def load_diabetes():
 def load_digits():
     dataset = sklearn.datasets.load_digits()
     a = plpy.execute("DROP TABLE IF EXISTS pgml.digits")
-    a = plpy.execute("CREATE TABLE pgml.digits (image SMALLINT[], target INTEGER)")
+    a = plpy.execute("CREATE TABLE pgml.digits (image SMALLINT[][], target INTEGER)")
     a = plpy.execute(f"""COMMENT ON TABLE pgml.digits IS {q(dataset["DESCR"])}""")
     for X, y in zip(dataset["data"], dataset["target"]):
+        height = width = 8
+        image = [[0 for x in range(width)] for y in range(height)] 
+        for i, x in enumerate(list(X)):
+            image[int(i / height)][int(i % width)] = x
+        sql_image = "ARRAY[" + ",".join(["ARRAY[" + ",".join("%i" % x for x in row) + "]" for row in image]) + "]"
+            
         plpy.execute(
             f"""
             INSERT INTO pgml.digits (image, target) 
-            VALUES ('{{{",".join("%i" % x for x in list(X))}}}', {y})
+            VALUES ({sql_image}, {y})
         """
         )
 
@@ -98,10 +104,10 @@ def load_linnerud():
     a = plpy.execute("DROP TABLE IF EXISTS pgml.linnerud")
     a = plpy.execute(
         """
-        CREATE TABLE pgml.linnerud (
-            chins FLOAT4, 
-            situps FLOAT4, 
-            jumps FLOAT4, 
+        CREATE TABLE pgml.linnerud(
+            chins FLOAT4,
+            situps FLOAT4,
+            jumps FLOAT4,
             weight FLOAT4,
             waste FLOAT4,
             pulse FLOAT4
