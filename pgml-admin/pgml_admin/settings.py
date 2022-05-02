@@ -33,6 +33,7 @@ DEBUG = os.environ["DJANGO_DEBUG"] == "True"
 
 ALLOWED_HOSTS = [x.strip() for x in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost, 127.0.0.1").split(",")]
 
+CONN_MAX_AGE = 60
 
 # Application definition
 

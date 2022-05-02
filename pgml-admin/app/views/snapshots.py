@@ -64,7 +64,7 @@ def get(request, id):
         projects[project_name] = P(
             sorted(models, key=lambda model: -model.key_metric),
             project.key_metric_display_name,
-            min(0, max([0, min(scores)])),
+            0,
             max(scores),
             project.id,
         )
