@@ -1,0 +1,20 @@
+name: Deploy to beta
+
+on:
+  push:
+    branches:
+      - master
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install ssh key
+        run: echo mkdir -p ~/.ssh && \
+             $BETA_SSH_KEY > ~/.ssh/id_rsa && \
+             chmod 600 ~/.ssh/id_rsa
+
+      - name: Check connection
+        run: ssh root@$BETA_IP echo "Hello"
+
