@@ -56,6 +56,7 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'random_forest', h
 -- other
 --SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'kernel_ridge');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost_random_forest');
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'gaussian_process');
 

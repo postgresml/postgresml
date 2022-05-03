@@ -47,10 +47,12 @@ See [installation instructions](#Installation) for installing PostgresML in diff
 
 Given a Postgres table or a view, PostgresML can train a model with many commonly used algorithms. We currently support the following regression and classification models from Scikit-Learn and XGBoost:
 
+
 #### XGBoost
 Algorithm | Regression | Classification
 --- | --- | ---
-`xgboost` | [XGBRegressor](https://xgboost.readthedocs.io/en/stable/python/python_api.html#module-xgboost.sklearn) | [XGBClassifier](https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBClassifier) | 
+`xgboost` | [XGBRegressor]https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBRegressor) | [XGBClassifier](https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBClassifier)
+`xgboost_random_forest` | [XGBRFRegressor](https://xgboost.readthedocs.io/en/stable/python/python_api.html#module-xgboost.sklearn) | [XGBRFClassifier](https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBRFClassifier)
 
 #### Scikit Ensembles
 Algorithm | Regression | Classification

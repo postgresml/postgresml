@@ -22,3 +22,4 @@ RUN cp /app/docker/pg_hba.conf /etc/postgresql/12/main/pg_hba.conf
 
 WORKDIR /app
 ENTRYPOINT ["/bin/bash", "/app/docker/entrypoint.sh"]
+

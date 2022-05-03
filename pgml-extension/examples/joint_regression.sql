@@ -49,6 +49,7 @@ SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'random_fo
 -- other
 --SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'kernel_ridge');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'xgboost');
+SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'xgboost_random_forest');
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'gaussian_process');
 

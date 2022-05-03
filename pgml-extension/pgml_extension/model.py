@@ -598,6 +598,8 @@ class Model(object):
                     "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
                     "xgboost_regression": xgb.XGBRegressor,
                     "xgboost_classification": xgb.XGBClassifier,
+                    "xgboost_random_forest_regression": xgb.XGBRFRegressor,
+                    "xgboost_random_forest_classification": xgb.XGBRFClassifier,
                 }[self.algorithm_name + "_" + self.project.objective](**self.hyperparams)
                 if len(self.snapshot.y_column_name) > 0:
                     if self.project.objective == "regression" and self.algorithm_name in [
