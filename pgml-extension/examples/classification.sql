@@ -37,6 +37,7 @@ SELECT * FROM pgml.train('Iris Classifier', algorithm => 'random_forest', hyperp
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Iris Classifier', 'classification', 'pgml.iris', 'target', 'gaussian_process', '{"max_iter_predict": 100, "warm_start": true}');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'xgboost');
+SELECT * FROM pgml.train('Iris Classifier', algorithm => 'xgboost_random_forest');
 
 
 -- check out all that hard work
