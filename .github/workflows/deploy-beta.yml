@@ -18,6 +18,6 @@ jobs:
       - name: Install ssh key
         run: mkdir -p ~/.ssh && echo "${{ secrets.BETA_SSH_KEY }}" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
 
-      - name: Check connection
-        run: ssh -o "StrictHostKeyChecking=no" root@${{ secrets.BETA_IP }} '(echo one; sleep 15; echo two) >&- 2>&- <&- &'
+      - name: Start deploy
+        run: ssh -o "StrictHostKeyChecking=no" root@${{ secrets.BETA_IP }} '(cd /root; bash infrastructure/ubuntu/ubuntu_20_04_lts.sh) >&- 2>&- <&- &'
 
