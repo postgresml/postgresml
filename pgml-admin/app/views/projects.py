@@ -3,8 +3,10 @@ from collections import namedtuple
 
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
+from rest_framework import viewsets
 
 from app.models import Project
+from app.serializers import ProjectSerializer
 
 
 def default_context(context):
@@ -53,3 +55,9 @@ class ProjectView(DetailView):
             **context,
             "projects": projects,
         }
+
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
+

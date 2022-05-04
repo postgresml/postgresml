@@ -35,11 +35,18 @@ class Project(models.Model):
     @property
     def current_deployment(self):
         if self._current_deployment is None:
-            self._current_deployment = self.deployment_set.order_by("-created_at").first()
+            self._current_deployment = self.deployment_set.order_by(
+                "-created_at"
+            ).first()
         return self._current_deployment
 
 
 class Snapshot(models.Model):
+    """A point-in-time snapshot of the training dataset.
+
+    The snapshot is taken before training to help reproduce the experiments.
+    """
+
     relation_name = models.TextField()
     y_column_name = models.TextField()
     test_size = models.FloatField()
@@ -54,7 +61,8 @@ class Snapshot(models.Model):
         db_table = '"pgml"."snapshots"'
         managed = False
 
-    def sample(self, limit=1000):
+    def sample(self, limit=500):
+        """Fetch a sample of the data from the snapshot."""
         with connection.cursor() as cursor:
             cursor.execute(f"SELECT * FROM {self.relation_name} LIMIT %s", [limit])
             columns = [col[0] for col in cursor.description]
@@ -62,20 +70,22 @@ class Snapshot(models.Model):
 
     @property
     def samples(self):
+        """How many rows were used to perform the snapshot data analysis."""
         return self.analysis["samples"]
 
     @property
-    def y_column_type(self):
-        return self.columns[self.y_column_name]
-
-    @property
     def table_size(self):
+        """How big is the snapshot according to Postgres."""
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT pg_size_pretty(pg_total_relation_size(%s))", [self.relation_name])
+            cursor.execute(
+                f"SELECT pg_size_pretty(pg_total_relation_size(%s))",
+                [self.relation_name],
+            )
             return cursor.fetchone()[0]
 
     @property
     def feature_size(self):
+        """How many features does the dataset contain."""
         return len(self.columns) - 1
 
 

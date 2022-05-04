@@ -1,7 +1,9 @@
 from typing import OrderedDict
 from django.shortcuts import render, get_object_or_404
+from rest_framework import viewsets
 
-from .. import models
+from app import models
+from app.serializers import DeploymentSerializer
 
 
 def default_context(context):
@@ -32,3 +34,8 @@ def get(request, id):
         }
     )
     return render(request, "deployments/deployment.html", context)
+
+
+class DeploymentViewSet(viewsets.ModelViewSet):
+    queryset = models.Deployment.objects.all()
+    serializer_class = DeploymentSerializer
