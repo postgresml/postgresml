@@ -43,7 +43,7 @@ See [installation instructions](#Installation) for installing PostgresML in diff
 
 ## Features
 ### Vector Operations
-PostgresML adds basic vector operations that can be called from SQL:
+PostgresML adds native vector operations that can be called from SQL:
 
 ```SQL
 -- Elementwise arithmetic w/ constants
