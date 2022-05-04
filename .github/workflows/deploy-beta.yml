@@ -19,5 +19,5 @@ jobs:
         run: mkdir -p ~/.ssh && echo "${{ secrets.BETA_SSH_KEY }}" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
 
       - name: Start deploy
-        run: ssh -o "StrictHostKeyChecking=no" root@${{ secrets.BETA_IP }} '(cd /root; bash infrastructure/ubuntu/ubuntu_20_04_lts.sh) >&- 2>&- <&- &'
+        run: ssh -o "StrictHostKeyChecking=no" root@${{ secrets.BETA_IP }} '(cd /root; bash infrastructure/ubuntu/ubuntu_20_04_lts.sh > /var/log/deploy.log 2>&1) >&- 2>&- <&- &'
 
