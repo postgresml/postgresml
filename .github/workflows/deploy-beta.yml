@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install ssh key
-        run: echo mkdir -p ~/.ssh && \
+        run: mkdir -p ~/.ssh && \
              echo $BETA_SSH_KEY > ~/.ssh/id_rsa && \
              chmod 600 ~/.ssh/id_rsa
 
