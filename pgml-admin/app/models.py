@@ -35,9 +35,7 @@ class Project(models.Model):
     @property
     def current_deployment(self):
         if self._current_deployment is None:
-            self._current_deployment = self.deployment_set.order_by(
-                "-created_at"
-            ).first()
+            self._current_deployment = self.deployment_set.order_by("-created_at").first()
         return self._current_deployment
 
 
