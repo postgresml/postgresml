@@ -19,5 +19,5 @@ jobs:
         run: mkdir -p ~/.ssh && echo "${{ secrets.BETA_SSH_KEY }}" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
 
       - name: Check connection
-        run: ssh root@${{ secrets.BETA_IP }} echo "Hello"
+        run: ssh -o "StrictHostKeyChecking=no" root@${{ secrets.BETA_IP }} echo "Hello"
 
