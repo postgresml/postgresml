@@ -23,6 +23,7 @@ SELECT pgml.normalize_l1(ARRAY[1.0, 2.0, 3.0]);
 SELECT pgml.normalize_l2(ARRAY[1.0, 2.0, 3.0]);
 
 -- Comparisons
-SELECT pgml.distance(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+SELECT pgml.distance_l1(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+SELECT pgml.distance_l2(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
 SELECT pgml.dot_product(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
 SELECT pgml.cosine_similarity(ARRAY[1.0, 2.0, 3.0], ARRAY[1.0, 2.0, 3.0]);
