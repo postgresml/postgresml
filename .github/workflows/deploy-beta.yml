@@ -4,7 +4,12 @@ on:
   push:
     branches:
       - master
-
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Just a trigger"
+        required: false
+        default: "Hello"
 
 jobs:
   deploy:
