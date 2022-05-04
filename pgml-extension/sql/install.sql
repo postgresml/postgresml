@@ -199,6 +199,244 @@ AS $$
 $$ LANGUAGE plpython3u;
 
 ---
+--- Vector Operations
+---
+CREATE OR REPLACE FUNCTION pgml.add(a REAL[], b REAL) 
+	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN ARRAY_AGG(added.values)
+		FROM (SELECT UNNEST(a) + b AS values) added;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.subtract(minuend REAL[], subtrahend REAL) 
+	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN ARRAY_AGG(subtracted.values)
+		FROM (SELECT UNNEST(minuend) - subtrahend AS values) subtracted;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.multiply(multiplicand REAL[], multiplier REAL) 
+	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN ARRAY_AGG(multiplied.values)
+		FROM (SELECT UNNEST(multiplicand) * multiplier AS values) multiplied;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.divide(dividend REAL[], divisor REAL) 
+	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN ARRAY_AGG(divided.values)
+		FROM (SELECT UNNEST(dividend) / divisor AS values) divided;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.add(a REAL[], b REAL[]) 
+	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN ARRAY_AGG(added.values)
+		FROM (SELECT UNNEST(a) + UNNEST(b) AS values) added;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.subtract(minuend REAL[], subtrahend REAL[]) 
+	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN ARRAY_AGG(subtracted.values)
+		FROM (SELECT UNNEST(minuend) - UNNEST(subtrahend) AS values) subtracted;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.multiply(multiplicand REAL[], multiplier REAL[]) 
+	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN ARRAY_AGG(multiplied.values)
+		FROM (SELECT UNNEST(multiplicand) * UNNEST(multiplier) AS values) multiplied;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.divide(dividend REAL[], divisor REAL[]) 
+	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN ARRAY_AGG(divided.values)
+		FROM (SELECT UNNEST(dividend) / UNNEST(divisor) AS values) divided;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.norm_l0(vector REAL[]) 
+  	RETURNS REAL
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN SUM((vector.values != 0)::INTEGER)
+		FROM (SELECT UNNEST(vector) AS values) AS vector;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.norm_l1(vector REAL[]) 
+  	RETURNS REAL
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN SUM(vector.values)
+		FROM (SELECT UNNEST(vector) AS values) AS vector;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.norm_l2(vector REAL[]) 
+  	RETURNS REAL
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN SQRT(SUM(squared.values))
+		FROM (SELECT UNNEST(vector) * UNNEST(vector) AS values) AS squared;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.normalize_max(vector REAL[]) 
+  	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN pgml.divide(vector, MAX(ABS(unnested.values)))
+		FROM (SELECT UNNEST(vector) AS values) as unnested;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.normalize_l1(vector REAL[]) 
+  	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN pgml.divide(vector, pgml.norm_l1(vector));
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.normalize_l2(vector REAL[]) 
+  	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN pgml.divide(vector, pgml.norm_l2(vector));
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.distance(a REAL[], b REAL[]) 
+  	RETURNS REAL
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN SQRT(SUM(subtracted.values * subtracted.values))
+		FROM (SELECT UNNEST(a) - UNNEST(b) AS values) AS subtracted;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.dot_product(a REAL[], b REAL[]) 
+  	RETURNS REAL
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN SUM(multiplied.values)
+		FROM (SELECT UNNEST(a) * UNNEST(b) AS values) AS multiplied;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.cosine_similarity(a REAL[], b REAL[]) 
+  	RETURNS REAL
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN pgml.dot_product(a, b) / (pgml.norm_l2(a) * pgml.norm_l2(b));
+	END
+$$;
+
+---
 --- Quick status check on the system.
 ---
 DROP VIEW IF EXISTS pgml.overview;
