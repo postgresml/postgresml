@@ -18,6 +18,7 @@ SELECT pgml.load_dataset('breast_cancer');
 
 SELECT pgml.load_dataset('california_housing');
 
+\i examples/vectors.sql
 \i examples/regression.sql
 \i examples/classification.sql
 \i examples/image_classification.sql
