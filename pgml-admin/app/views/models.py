@@ -5,8 +5,10 @@ import logging
 
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
+from rest_framework import viewsets
 
 from app.models import Model
+from app.serializers import ModelSerializer
 
 
 def default_context(context):
@@ -56,3 +58,8 @@ class ModelListView(ListView):
 
         context = default_context({"projects": projects})
         return context
+
+
+class ModelViewSet(viewsets.ModelViewSet):
+    queryset = Model.objects.all().prefetch_related("project", "snapshot")
+    serializer_class = ModelSerializer

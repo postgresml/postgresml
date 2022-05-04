@@ -2,8 +2,11 @@ from tracemalloc import Snapshot
 from typing import OrderedDict
 from django.shortcuts import render, get_object_or_404
 from django.utils.safestring import SafeString
+from rest_framework import viewsets
+
 import json
-from ..models import Snapshot, Project
+from app.models import Snapshot, Project
+from app.serializers import SnapshotSerializer
 
 from collections import namedtuple
 
@@ -27,8 +30,7 @@ def get(request, id):
     snapshot = get_object_or_404(Snapshot, id=id)
     samples = snapshot.sample(500)
     columns = OrderedDict()
-    column_names = list(snapshot.columns.keys())
-    column_names.sort()
+    column_names = sorted(list(snapshot.columns.keys()))
     for target in snapshot.y_column_name:
         column_names.remove(target)
         column_names.insert(0, target)
@@ -75,3 +77,8 @@ def get(request, id):
         "projects": projects,
     }
     return render(request, "snapshots/snapshot.html", default_context(context))
+
+
+class SnapshotViewSet(viewsets.ModelViewSet):
+    queryset = Snapshot.objects.all()
+    serializer_class = SnapshotSerializer

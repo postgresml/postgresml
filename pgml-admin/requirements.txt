@@ -5,3 +5,6 @@ python-dotenv==0.20.0
 sqlparse==0.4.2
 whitenoise==6.0.0
 gunicorn==20.1.0
+djangorestframework==3.13.1
+black==22.3.0
+django-filter==21.1
