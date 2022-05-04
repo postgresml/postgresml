@@ -355,8 +355,8 @@ AS $$
 	END
 $$;
 
-CREATE OR REPLACE FUNCTION pgml.normalize_max(vector REAL[]) 
-  	RETURNS REAL[]
+CREATE OR REPLACE FUNCTION pgml.norm_max(vector REAL[]) 
+  	RETURNS REAL
 	LANGUAGE plpgsql
 	LEAKPROOF
 	IMMUTABLE
@@ -364,7 +364,7 @@ CREATE OR REPLACE FUNCTION pgml.normalize_max(vector REAL[])
 	PARALLEL SAFE
 AS $$
 	BEGIN
-		RETURN pgml.divide(vector, MAX(ABS(unnested.values)))
+		RETURN MAX(ABS(unnested.values))
 		FROM (SELECT UNNEST(vector) AS values) as unnested;
 	END
 $$;
@@ -392,6 +392,20 @@ CREATE OR REPLACE FUNCTION pgml.normalize_l2(vector REAL[])
 AS $$
 	BEGIN
 		RETURN pgml.divide(vector, pgml.norm_l2(vector));
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.normalize_max(vector REAL[]) 
+  	RETURNS REAL[]
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN pgml.divide(vector, MAX(ABS(unnested.values)))
+		FROM (SELECT UNNEST(vector) AS values) as unnested;
 	END
 $$;
 
