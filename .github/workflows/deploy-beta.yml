@@ -4,7 +4,12 @@ on:
   push:
     branches:
       - master
-
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Just a trigger"
+        required: false
+        default: "Hello"
 
 jobs:
   deploy:
@@ -12,7 +17,7 @@ jobs:
     steps:
       - name: Install ssh key
         run: echo mkdir -p ~/.ssh && \
-             $BETA_SSH_KEY > ~/.ssh/id_rsa && \
+             echo $BETA_SSH_KEY > ~/.ssh/id_rsa && \
              chmod 600 ~/.ssh/id_rsa
 
       - name: Check connection
