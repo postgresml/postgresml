@@ -19,5 +19,5 @@ jobs:
         run: mkdir -p ~/.ssh && echo "${{ secrets.BETA_SSH_KEY }}" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
 
       - name: Check connection
-        run: ssh -o "StrictHostKeyChecking=no" root@${{ secrets.BETA_IP }} 'nohup sleep 5 &'
+        run: ssh -o "StrictHostKeyChecking=no" root@${{ secrets.BETA_IP }} 'nohup sleep 10 &'
 
