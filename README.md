@@ -68,10 +68,10 @@ pgml.normalize_max(vector REAL[]) -> REAL[] -- -1:1 values
 pgml.normalize_l1(vector REAL[]) -> REAL[] -- Unit Vector
 pgml.normalize_l2(vector REAL[]) -> REAL[] -- Squared Unit Vector
 
--- Comparisons
-pgml.distance(a REAL[], b REAL[]) -> REAL;
-pgml.dot_product(a REAL[], b REAL[]) -> REAL
-pgml.cosine_similarity(a REAL[], b REAL[]) -> REAL
+-- Distances
+pgml.distance(a REAL[], b REAL[]) -> REAL -- Manhattan
+pgml.dot_product(a REAL[], b REAL[]) -> REAL -- Projection
+pgml.cosine_similarity(a REAL[], b REAL[]) -> REAL -- Direction
 ```
 
 ### Training models
