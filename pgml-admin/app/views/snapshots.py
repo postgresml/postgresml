@@ -27,8 +27,7 @@ def get(request, id):
     snapshot = get_object_or_404(Snapshot, id=id)
     samples = snapshot.sample(500)
     columns = OrderedDict()
-    column_names = list(snapshot.columns.keys())
-    column_names.sort()
+    column_names = sorted(list(snapshot.columns.keys()))
     for target in snapshot.y_column_name:
         column_names.remove(target)
         column_names.insert(0, target)
