@@ -395,7 +395,7 @@ AS $$
 	END
 $$;
 
-CREATE OR REPLACE FUNCTION pgml.distance(a REAL[], b REAL[]) 
+CREATE OR REPLACE FUNCTION pgml.distance_l1(a REAL[], b REAL[]) 
   	RETURNS REAL
 	LANGUAGE plpgsql
 	LEAKPROOF
@@ -404,8 +404,22 @@ CREATE OR REPLACE FUNCTION pgml.distance(a REAL[], b REAL[])
 	PARALLEL SAFE
 AS $$
 	BEGIN
-		RETURN SQRT(SUM(subtracted.values * subtracted.values))
-		FROM (SELECT UNNEST(a) - UNNEST(b) AS values) AS subtracted;
+		RETURN SUM(ABS(differences.values))
+		FROM (SELECT UNNEST(a) - UNNEST(b) AS values) AS differences;
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION pgml.distance_l2(a REAL[], b REAL[]) 
+  	RETURNS REAL
+	LANGUAGE plpgsql
+	LEAKPROOF
+	IMMUTABLE
+	STRICT
+	PARALLEL SAFE
+AS $$
+	BEGIN
+		RETURN SQRT(SUM(differences.values * differences.values))
+		FROM (SELECT UNNEST(a) - UNNEST(b) AS values) AS differences;
 	END
 $$;
 

@@ -69,7 +69,8 @@ pgml.normalize_l1(vector REAL[]) -> REAL[] -- Unit Vector
 pgml.normalize_l2(vector REAL[]) -> REAL[] -- Squared Unit Vector
 
 -- Distances
-pgml.distance(a REAL[], b REAL[]) -> REAL -- Euclidean
+pgml.distance_l1(a REAL[], b REAL[]) -> REAL -- Manhattan
+pgml.distance_l2(a REAL[], b REAL[]) -> REAL -- Euclidean
 pgml.dot_product(a REAL[], b REAL[]) -> REAL -- Projection
 pgml.cosine_similarity(a REAL[], b REAL[]) -> REAL -- Direction
 ```
