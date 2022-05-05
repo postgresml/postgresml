@@ -28,6 +28,12 @@ def load(source: str):
 
 
 def load_diabetes():
+    result = plpy.execute(
+        "SELECT * FROM information_schema.tables WHERE table_schema = 'pgml' and table_name = 'diabetes';"
+    )
+    if len(result) > 0:
+        return
+
     dataset = sklearn.datasets.load_diabetes()
     a = plpy.execute("DROP TABLE IF EXISTS pgml.diabetes")
     a = plpy.execute(
@@ -57,17 +63,23 @@ def load_diabetes():
 
 
 def load_digits():
+    result = plpy.execute(
+        "SELECT * FROM information_schema.tables WHERE table_schema = 'pgml' and table_name = 'digits';"
+    )
+    if len(result) > 0:
+        return
+
     dataset = sklearn.datasets.load_digits()
     a = plpy.execute("DROP TABLE IF EXISTS pgml.digits")
     a = plpy.execute("CREATE TABLE pgml.digits (image SMALLINT[][], target INTEGER)")
     a = plpy.execute(f"""COMMENT ON TABLE pgml.digits IS {q(dataset["DESCR"])}""")
     for X, y in zip(dataset["data"], dataset["target"]):
         height = width = 8
-        image = [[0 for x in range(width)] for y in range(height)] 
+        image = [[0 for x in range(width)] for y in range(height)]
         for i, x in enumerate(list(X)):
             image[int(i / height)][int(i % width)] = x
         sql_image = "ARRAY[" + ",".join(["ARRAY[" + ",".join("%i" % x for x in row) + "]" for row in image]) + "]"
-            
+
         plpy.execute(
             f"""
             INSERT INTO pgml.digits (image, target) 
@@ -77,6 +89,12 @@ def load_digits():
 
 
 def load_iris():
+    result = plpy.execute(
+        "SELECT * FROM information_schema.tables WHERE table_schema = 'pgml' and table_name = 'iris';"
+    )
+    if len(result) > 0:
+        return
+
     dataset = sklearn.datasets.load_iris()
     a = plpy.execute("DROP TABLE IF EXISTS pgml.iris")
     a = plpy.execute(
@@ -100,6 +118,12 @@ def load_iris():
 
 
 def load_linnerud():
+    result = plpy.execute(
+        "SELECT * FROM information_schema.tables WHERE table_schema = 'pgml' and table_name = 'linnerud';"
+    )
+    if len(result) > 0:
+        return
+
     dataset = sklearn.datasets.load_linnerud()
     a = plpy.execute("DROP TABLE IF EXISTS pgml.linnerud")
     a = plpy.execute(
@@ -124,6 +148,12 @@ def load_linnerud():
 
 
 def load_wine():
+    result = plpy.execute(
+        "SELECT * FROM information_schema.tables WHERE table_schema = 'pgml' and table_name = 'wine';"
+    )
+    if len(result) > 0:
+        return
+
     dataset = sklearn.datasets.load_wine()
     a = plpy.execute("DROP TABLE IF EXISTS pgml.wine")
     a = plpy.execute(
@@ -156,6 +186,12 @@ def load_wine():
 
 
 def load_breast_cancer():
+    result = plpy.execute(
+        "SELECT * FROM information_schema.tables WHERE table_schema = 'pgml' and table_name = 'breast_cancer';"
+    )
+    if len(result) > 0:
+        return
+
     dataset = sklearn.datasets.load_breast_cancer()
     a = plpy.execute("DROP TABLE IF EXISTS pgml.breast_cancer")
     a = plpy.execute(
@@ -206,6 +242,12 @@ def load_breast_cancer():
 
 
 def load_california_housing():
+    result = plpy.execute(
+        "SELECT * FROM information_schema.tables WHERE table_schema = 'pgml' and table_name = 'california_housing';"
+    )
+    if len(result) > 0:
+        return
+
     dataset = sklearn.datasets.fetch_california_housing()
     a = plpy.execute("DROP TABLE IF EXISTS pgml.california_housing")
     a = plpy.execute(

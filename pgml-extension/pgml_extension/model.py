@@ -33,6 +33,7 @@ def flatten(S):
         return flatten(S[0]) + flatten(S[1:])
     return S[:1] + flatten(S[1:])
 
+
 class Project(object):
     """
     Use projects to refine multiple models of a particular dataset on a specific objective.
@@ -274,7 +275,7 @@ class Snapshot(object):
         sample = plpy.execute(
             f"""
             SELECT * 
-            FROM pgml."snapshot_{self.id}"
+            FROM "pgml"."snapshot_{self.id}"
             LIMIT 1000
         """
         )
@@ -283,7 +284,7 @@ class Snapshot(object):
             raise PgMLException(
                 f"Relation `{self.relation_name}` contains no rows. Did you pass the correct `relation_name`?"
             )
-        
+
         for column in self.y_column_name:
             if not column in sample[0]:
                 raise PgMLException(f"Column `{column}` not found. Did you pass the correct `y_column_name`?")
@@ -302,39 +303,38 @@ class Snapshot(object):
                 self.analysis[f"{column}_dip"] = diptest.dipstat(data)
 
         self.columns = {}
-        parts = self.relation_name.split(".")
-        sql = "SELECT column_name, data_type FROM information_schema.columns "
-        if len(parts) > 1:
-            sql += f"WHERE table_name = {q(parts[1])} and table_schema = {q(parts[0])}"
-        else:
-            sql += f"WHERE table_name = {q(parts[0])}"
-        result = plpy.execute(sql)
+        result = plpy.execute(
+            f"""
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_name = 'snapshot_{self.id}' and table_schema = {q("pgml")}
+            """
+        )
         for row in result:
             self.columns[row["column_name"]] = row["data_type"]
 
         self.__dict__ = dict(
             plpy.execute(
                 f"""
-            UPDATE pgml.snapshots 
-            SET columns = {q(json.dumps(self.columns))}::JSON, analysis = {q(json.dumps(self.analysis))}::JSON, updated_at = clock_timestamp()
-            WHERE id = {q(self.id)} 
-            RETURNING *
-        """,
+                    UPDATE pgml.snapshots 
+                    SET columns = {q(json.dumps(self.columns))}::JSON, analysis = {q(json.dumps(self.analysis))}::JSON, updated_at = clock_timestamp()
+                    WHERE id = {q(self.id)} 
+                    RETURNING *
+                """,
                 1,
             )[0]
         )
+
+    @property
+    def snapshot_name(self):
+        return f'"pgml"."snapshot_{self.id}"'
 
     def data(self):
         """
         Returns:
             list, list, list, list: All rows from the snapshot split into X_train, X_test, y_train, y_test sets.
         """
-        data = plpy.execute(
-            f"""
-            SELECT * 
-            FROM pgml."snapshot_{self.id}"
-        """
-        )
+        data = plpy.execute(f"SELECT * FROM {self.snapshot_name}")
 
         # Always pull the columns in the same order from the row.
         # Python dict iteration is not always in the same order (hash table).
@@ -637,10 +637,7 @@ class Model(object):
         """
         X_train, X_test, y_train, y_test = snapshot.data()
 
-        search_args = {
-            "scoring": self.project.key_metric_name,
-            **search_args
-        }
+        search_args = {"scoring": self.project.key_metric_name, **search_args}
         if search == "grid":
             self._algorithm = sklearn.model_selection.GridSearchCV(self.algorithm, search_params, **search_args)
         elif search == "random":
@@ -668,17 +665,23 @@ class Model(object):
                 "std_score_time",
                 "mean_test_score",
                 "std_test_score",
-                ]:
+            ]:
                 l = list(result.cv_results_[key])
-                metrics["search_results"][key] = [None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l]
+                metrics["search_results"][key] = [
+                    None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l
+                ]
             for param in search_params:
                 l = list(result.cv_results_[f"param_{param}"])
-                metrics["search_results"][f"param_{param}"] = [None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l]
+                metrics["search_results"][f"param_{param}"] = [
+                    None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l
+                ]
             for split in range(0, metrics["search_results"]["n_splits"]):
                 l = list(result.cv_results_[f"split{split}_test_score"])
-                metrics["search_results"][f"split{split}_test_score"] = [None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l]
+                metrics["search_results"][f"split{split}_test_score"] = [
+                    None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l
+                ]
             plpy.warning(metrics)
-                
+
         # Test
         y_pred = self.algorithm.predict(X_test)
         if self.project.objective == "regression":
@@ -732,6 +735,7 @@ class Model(object):
             return y[0][0]
         return y[0]
 
+
 def train(
     project_name: str,
     objective: str = None,
@@ -766,7 +770,6 @@ def train(
         objective = project.objective
     except PgMLException:
         project = Project.create(project_name, objective)
-
 
     if objective not in ["regression", "classification"]:
         raise PgMLException(f"Unknown objective `{objective}`, available options are: regression, classification.")
