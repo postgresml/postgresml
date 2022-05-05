@@ -62,7 +62,7 @@ class Snapshot(models.Model):
     def sample(self, limit=500):
         """Fetch a sample of the data from the snapshot."""
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT * FROM {self.relation_name} LIMIT %s", [limit])
+            cursor.execute(f"SELECT * FROM {self.schema_name}.{self.table_name} LIMIT %s", [limit])
             columns = [col[0] for col in cursor.description]
             return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
@@ -72,14 +72,38 @@ class Snapshot(models.Model):
         return self.analysis["samples"]
 
     @property
-    def table_size(self):
-        """How big is the snapshot according to Postgres."""
+    def schema_name(self):
+        if '.' in self.relation_name:
+            return self.relation_name.split('.')[0]
+        return 'public'
+
+    @property
+    def table_name(self):
+        if '.' in self.relation_name:
+            return self.relation_name.split('.')[1]
+        return self.relation_name
+
+    @property 
+    def table_type(self):
         with connection.cursor() as cursor:
             cursor.execute(
-                f"SELECT pg_size_pretty(pg_total_relation_size(%s))",
-                [self.relation_name],
+                "SELECT table_type FROM information_schema.tables WHERE table_name = %s and table_schema = %s;",
+                [self.table_name, self.schema_name],
             )
             return cursor.fetchone()[0]
+
+    @property
+    def table_size(self):
+        """How big is the snapshot according to Postgres."""
+        if self.table_type == "TABLE":
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"SELECT pg_size_pretty(pg_total_relation_size(%s))",
+                    [self.relation_name],
+                )
+                return cursor.fetchone()[0]
+        
+        return "View Only"
 
     @property
     def feature_size(self):
