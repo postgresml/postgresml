@@ -119,12 +119,34 @@ $$ LANGUAGE plpython3u;
 ---
 --- Train
 ---
-CREATE OR REPLACE FUNCTION pgml.train(project_name TEXT, objective TEXT DEFAULT NULL, relation_name TEXT DEFAULT NULL, y_column_name TEXT DEFAULT NULL, algorithm TEXT DEFAULT 'linear', hyperparams JSONB DEFAULT '{}'::JSONB)
+CREATE OR REPLACE FUNCTION pgml.train(
+	project_name TEXT, 
+	objective TEXT DEFAULT NULL, 
+	relation_name TEXT DEFAULT NULL, 
+	y_column_name TEXT DEFAULT NULL, 
+	algorithm TEXT DEFAULT 'linear', 
+	hyper_params JSONB DEFAULT '{}'::JSONB, 
+	search TEXT DEFAULT NULL, 
+	search_params JSONB DEFAULT '{}'::JSONB,
+	test_size REAL DEFAULT 0.1,
+	test_sampling TEXT DEFAULT 'random'
+)
 RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT, status TEXT)
 AS $$
 	from pgml_extension.model import train
 	import json
-	status = train(project_name, objective, relation_name, [y_column_name], algorithm, json.loads(hyperparams))
+	status = train(
+		project_name, 
+		objective, 
+		relation_name, 
+		[y_column_name], 
+		algorithm, 
+		json.loads(hyper_params),
+		search,
+		json.loads(search_params),
+		test_size,
+		test_sampling
+	)
 
 	if "projects" in GD:
 		if project_name in GD["projects"]:
@@ -133,12 +155,34 @@ AS $$
 	return [(project_name, objective, algorithm, status)]
 $$ LANGUAGE plpython3u;
 
-CREATE OR REPLACE FUNCTION pgml.train_joint(project_name TEXT, objective TEXT DEFAULT NULL, relation_name TEXT DEFAULT NULL, y_column_name TEXT[] DEFAULT NULL, algorithm TEXT DEFAULT 'linear', hyperparams JSONB DEFAULT '{}'::JSONB)
+CREATE OR REPLACE FUNCTION pgml.train_joint(
+	project_name TEXT, 
+	objective TEXT DEFAULT NULL, 
+	relation_name TEXT DEFAULT NULL, 
+	y_column_name TEXT[] DEFAULT NULL, 
+	algorithm TEXT DEFAULT 'linear', 
+	hyper_params JSONB DEFAULT '{}'::JSONB,
+	search TEXT DEFAULT NULL, 
+	search_params JSONB DEFAULT '{}'::JSONB,
+	test_size REAL DEFAULT 0.1,
+	test_sampling TEXT DEFAULT 'random'
+)
 RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT, status TEXT)
 AS $$
 	from pgml_extension.model import train
 	import json
-	status = train(project_name, objective, relation_name, y_column_name, algorithm, json.loads(hyperparams))
+	status = train(
+		project_name, 
+		objective, 
+		relation_name, 
+		y_column_name, 
+		algorithm, 
+		json.loads(hyper_params),
+		search,
+		json.loads(search_params),
+		test_size,
+		test_sampling
+	)
 
 	if "projects" in GD:
 		if project_name in GD["projects"]:

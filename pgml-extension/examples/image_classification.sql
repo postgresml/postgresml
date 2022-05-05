@@ -39,14 +39,14 @@ SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'lin
 -- ensembles
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'ada_boost');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'bagging');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'extra_trees', hyper_params => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gradient_boosting_trees', hyper_params => '{"n_estimators": 10}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'hist_gradient_boosting', '{"max_iter": 2}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
+-- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'hist_gradient_boosting', hyper_params => '{"max_iter": 2}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'random_forest', hyper_params => '{"n_estimators": 10}');
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gaussian_process', '{"max_iter_predict": 100, "warm_start": true}');
+-- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gaussian_process', hyper_params => '{"max_iter_predict": 100, "warm_start": true}');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost_random_forest');
 
