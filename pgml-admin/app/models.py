@@ -62,7 +62,7 @@ class Snapshot(models.Model):
     def sample(self, limit=500):
         """Fetch a sample of the data from the snapshot."""
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT * FROM {self.schema_name}.{self.table_name} LIMIT %s", [limit])
+            cursor.execute(f"SELECT * FROM pgml.{self.snapshot_name} LIMIT %s", [limit])
             columns = [col[0] for col in cursor.description]
             return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
@@ -87,28 +87,29 @@ class Snapshot(models.Model):
     def table_type(self):
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT table_type FROM information_schema.tables WHERE table_name = %s and table_schema = %s;",
-                [self.table_name, self.schema_name],
+                f"SELECT pg_size_pretty(pg_total_relation_size(%s))",
+                [self.snapshot_name],
             )
             return cursor.fetchone()[0]
 
     @property
     def table_size(self):
         """How big is the snapshot according to Postgres."""
-        if self.table_type == "TABLE":
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    f"SELECT pg_size_pretty(pg_total_relation_size(%s))",
-                    [self.relation_name],
-                )
-                return cursor.fetchone()[0]
-        
-        return "View Only"
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT pg_size_pretty(pg_total_relation_size(%s))",
+                [self.snapshot_name],
+            )
+            return cursor.fetchone()[0]
 
     @property
     def feature_size(self):
         """How many features does the dataset contain."""
         return len(self.columns) - 1
+
+    @property
+    def snapshot_name(self):
+        return f"snapshot_{self.id}"
 
 
 class Model(models.Model):
