@@ -16,7 +16,7 @@ Our goal is that anyone with a basic understanding of SQL should be able to buil
 
 ## Quick start
 
-Using Docker, boot up PostresML locally:
+Using Docker, boot up PostgresML locally:
 
 ```bash
 $ docker-compose up
