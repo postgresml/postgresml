@@ -609,7 +609,7 @@ class Model(object):
                     "xgboost_random_forest_regression": xgb.XGBRFRegressor,
                     "xgboost_random_forest_classification": xgb.XGBRFClassifier,
                 }[self.algorithm_name + "_" + self.project.objective](**self.hyperparams)
-                if len(self.snapshot.y_column_name) > 0:
+                if len(self.snapshot.y_column_name) > 1:
                     if self.project.objective == "regression" and self.algorithm_name in [
                         "bayesian_ridge",
                         "automatic_relevance_determination",
@@ -628,7 +628,7 @@ class Model(object):
 
         return self._algorithm
 
-    def fit(self, snapshot: Snapshot, search, search_params):
+    def fit(self, snapshot: Snapshot, search, search_params, search_args):
         """
         Learns the parameters of this model and records them in the database.
 
@@ -637,12 +637,16 @@ class Model(object):
         """
         X_train, X_test, y_train, y_test = snapshot.data()
 
+        search_args = {
+            "scoring": self.project.key_metric_name,
+            **search_args
+        }
         if search == "grid":
-            self._algorithm = sklearn.model_selection.GridSearchCV(self.algorithm, search_params, scoring = self.project.key_metric_name)
+            self._algorithm = sklearn.model_selection.GridSearchCV(self.algorithm, search_params, **search_args)
         elif search == "random":
-            self._algorithm = sklearn.model_selection.RandomSearchCV(self.algorithm, search_params, scoring = self.project.key_metric_name)
+            self._algorithm = sklearn.model_selection.RandomizedSearchCV(self.algorithm, search_params, **search_args)
         elif search is not None:
-            raise PgMLException(f"Unknown hyper param search `{search}`, available options are: ['grid', 'random'].")
+            raise PgMLException(f"Unknown hyperparam search `{search}`, available options are: ['grid', 'random'].")
 
         X_train, X_test, y_train, y_test = snapshot.data()
 
@@ -723,10 +727,10 @@ class Model(object):
         # TODO: add metrics for tracking prediction volume/accuracy by model
         # TODO: smarter treatment for images rather than flattening
         y = self.algorithm.predict([flatten(data)])
-        if self.project.objective == "regression" and len(self.snapshot.y_column_name) == 1:
-            y = y[0]
-        return y
-
+        if isinstance(y[0], numpy.ndarray) and len(self.snapshot.y_column_name) == 1:
+            # HACK: it's unfortunate that some sklearn models always return a 2D array, and some only return a 2D array for multiple outputs.
+            return y[0][0]
+        return y[0]
 
 def train(
     project_name: str,
@@ -734,9 +738,10 @@ def train(
     relation_name: str = None,
     y_column_name: str = None,
     algorithm_name: str = "linear",
-    hyper_params: dict = {},
+    hyperparams: dict = {},
     search: str = None,
     search_params: dict = {},
+    search_args: dict = {},
     test_size: float or int = 0.1,
     test_sampling: str = "random",
 ):
@@ -784,8 +789,8 @@ def train(
     # Model
     if algorithm_name is None:
         algorithm_name = "linear"
-    model = Model.create(project, snapshot, algorithm_name, hyper_params)
-    model.fit(snapshot, search, search_params)
+    model = Model.create(project, snapshot, algorithm_name, hyperparams)
+    model.fit(snapshot, search, search_params, search_args)
 
     # Deployment
     if (

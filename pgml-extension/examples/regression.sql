@@ -37,22 +37,22 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'automatic_relevan
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'stochastic_gradient_descent');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'passive_aggressive');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ransac');
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'theil_sen', hyper_params => '{"max_iter": 10, "max_subpopulation": 100}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'theil_sen', hyperparams => '{"max_iter": 10, "max_subpopulation": 100}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'huber');
 -- Quantile Regression too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'quantile');
 --- support vector machines
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'svm', hyper_params => '{"max_iter": 100}');
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'nu_svm', hyper_params => '{"max_iter": 10}');
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear_svm', hyper_params => '{"max_iter": 100}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'svm', hyperparams => '{"max_iter": 100}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'nu_svm', hyperparams => '{"max_iter": 10}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear_svm', hyperparams => '{"max_iter": 100}');
 -- ensembles
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ada_boost', hyper_params => '{"n_estimators": 5}');
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'bagging', hyper_params => '{"n_estimators": 5}');
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'extra_trees', hyper_params => '{"n_estimators": 5}');
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'gradient_boosting_trees', hyper_params => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ada_boost', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'bagging', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 5}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', hyper_params => '{"max_iter": 10}');
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'random_forest', hyper_params => '{"n_estimators": 5}');
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'random_forest', hyperparams => '{"n_estimators": 5}');
 -- other
 --SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'kernel_ridge');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost');
@@ -70,8 +70,19 @@ SELECT * FROM pgml.deploy('Diabetes Progression', 'most_recent', 'random_forest'
 -- check out that throughput
 SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
--- do some hyper param tuning
--- TODO SELECT pgml.hypertune(100, 'Diabetes Progression', algorithm => 'gradient_boosted_trees');
+-- do a hyperparam search on your favorite algorithm
+SELECT pgml.train(
+    'Diabetes Progression', 
+    algorithm => 'bayesian_ridge', 
+    search => 'random', 
+    search_params => '{
+        "n_iter": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100], 
+        "tol": [0.1, 0.001, 0.0001, 0.00001, 0.000001]
+    }',
+    search_args => '{
+        "n_iter": 10
+    }'
+);
 
 -- deploy the "best" model for prediction use
 SELECT * FROM pgml.deploy('Diabetes Progression', 'best_score');

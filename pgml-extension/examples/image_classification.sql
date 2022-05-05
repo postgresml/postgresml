@@ -39,14 +39,14 @@ SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'lin
 -- ensembles
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'ada_boost');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'bagging');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'extra_trees', hyper_params => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gradient_boosting_trees', hyper_params => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'hist_gradient_boosting', hyper_params => '{"max_iter": 2}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'random_forest', hyper_params => '{"n_estimators": 10}');
+-- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gaussian_process', hyper_params => '{"max_iter_predict": 100, "warm_start": true}');
+-- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gaussian_process', hyperparams => '{"max_iter_predict": 100, "warm_start": true}');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost_random_forest');
 
@@ -61,7 +61,18 @@ SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'most_recent', '
 -- check out that throughput
 SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
--- do some hyper param tuning
+-- do a hyperparam search on your favorite algorithm
+SELECT pgml.train(
+    'Handwritten Digit Image Classifier', 
+    algorithm => 'svm', 
+    hyperparams => '{"random_state": 0}',
+    search => 'grid', 
+    search_params => '{
+        "kernel": ["linear", "poly", "sigmoid"], 
+        "shrinking": [true, false]
+    }'
+);
+
 -- TODO SELECT pgml.hypertune(100, 'Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gradient_boosted_trees');
 
 -- deploy the "best" model for prediction use
