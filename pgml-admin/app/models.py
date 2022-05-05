@@ -73,17 +73,17 @@ class Snapshot(models.Model):
 
     @property
     def schema_name(self):
-        if '.' in self.relation_name:
-            return self.relation_name.split('.')[0]
-        return 'public'
+        if "." in self.relation_name:
+            return self.relation_name.split(".")[0]
+        return "public"
 
     @property
     def table_name(self):
-        if '.' in self.relation_name:
-            return self.relation_name.split('.')[1]
+        if "." in self.relation_name:
+            return self.relation_name.split(".")[1]
         return self.relation_name
 
-    @property 
+    @property
     def table_type(self):
         with connection.cursor() as cursor:
             cursor.execute(
