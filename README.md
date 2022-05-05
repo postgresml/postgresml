@@ -101,12 +101,14 @@ Training a model is then as simple as:
 
 ```sql
 SELECT * FROM pgml.train(
-    'Human-friendly project name',
-    'regression', 
-    '<name of the table or view containing the data>',
-    '<name of the column containing the y target values>',
-    '<algorithm name>', -- optional 
-    '<algorithm hyperparams>' -- optional
+    project_name => 'Human-friendly project name',
+    objective => 'regression', 
+    relation_name => '<name of the table or view containing the data>',
+    y_column_name => '<name of the column containing the y target values>',
+    algorithm => 'linear', -- optional algorithm name
+    hyper_params => '{}', -- optional params to pass on
+    test_size => 0.1, -- optional, default 10% test sample
+    test_sampling => 'random', -- optional strategy
 );
 ```
 
@@ -134,6 +136,21 @@ ORDER BY likely_to_buy_score
 LIMIT 25;
 ```
 
+### Hyperparam tuning
+Models can be further refined with the scikit CrossValidation search libraries. We currently support [`grid`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) and [`random`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) cross validation searches.
+```sql
+SELECT pgml.train(
+    'Human Friendly Project name', 
+    algorithm => 'gradient_boosting_trees', 
+    hyper_params => '{"random_state": 0}',
+    search => 'grid', 
+    search_params => '{
+        "n_estimators": [10, 20], 
+        "max_leaf_nodes": [2, 4],
+        "criterion": ["friedman_mse", "squared_error"]
+    }'
+);
+```
 Take a look [below](#Working-with-PostgresML) for an example with real data.
 
 ### Model and data versioning
