@@ -6,6 +6,8 @@ import sklearn.svm
 import sklearn.ensemble
 import sklearn.multioutput
 import sklearn.gaussian_process
+import sklearn.model_selection
+import numpy
 import xgboost as xgb
 import diptest
 from sklearn.model_selection import train_test_split
@@ -30,7 +32,6 @@ def flatten(S):
     if isinstance(S[0], list):
         return flatten(S[0]) + flatten(S[1:])
     return S[:1] + flatten(S[1:])
-
 
 class Project(object):
     """
@@ -146,6 +147,13 @@ class Project(object):
         if model and model.id != self.deployed_model.id:
             model.deploy(qualifier)
         return model
+
+    @property
+    def key_metric_name(self):
+        if self.objective == "classification":
+            return "f1"
+        elif self.objective == "regression":
+            return "r2"
 
     @property
     def last_snapshot(self):
@@ -620,7 +628,7 @@ class Model(object):
 
         return self._algorithm
 
-    def fit(self, snapshot: Snapshot):
+    def fit(self, snapshot: Snapshot, search, search_params):
         """
         Learns the parameters of this model and records them in the database.
 
@@ -629,12 +637,46 @@ class Model(object):
         """
         X_train, X_test, y_train, y_test = snapshot.data()
 
-        # Train the model
-        self.algorithm.fit(X_train, y_train)
+        if search == "grid":
+            self._algorithm = sklearn.model_selection.GridSearchCV(self.algorithm, search_params, scoring = self.project.key_metric_name)
+        elif search == "random":
+            self._algorithm = sklearn.model_selection.RandomSearchCV(self.algorithm, search_params, scoring = self.project.key_metric_name)
+        elif search is not None:
+            raise PgMLException(f"Unknown hyper param search `{search}`, available options are: ['grid', 'random'].")
 
+        X_train, X_test, y_train, y_test = snapshot.data()
+
+        # Train the model
+        result = self.algorithm.fit(X_train, y_train)
+        metrics = {}
+        if search:
+            self._algorithm = result.best_estimator_
+            self.hyperparams = result.best_params_
+            metrics["search_results"] = {
+                "best_index": int(result.best_index_),
+                "n_splits": int(result.n_splits_),
+            }
+            for key in [
+                "mean_fit_time",
+                "std_fit_time",
+                "mean_fit_time",
+                "mean_score_time",
+                "std_score_time",
+                "mean_test_score",
+                "std_test_score",
+                ]:
+                l = list(result.cv_results_[key])
+                metrics["search_results"][key] = [None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l]
+            for param in search_params:
+                l = list(result.cv_results_[f"param_{param}"])
+                metrics["search_results"][f"param_{param}"] = [None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l]
+            for split in range(0, metrics["search_results"]["n_splits"]):
+                l = list(result.cv_results_[f"split{split}_test_score"])
+                metrics["search_results"][f"split{split}_test_score"] = [None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l]
+            plpy.warning(metrics)
+                
         # Test
         y_pred = self.algorithm.predict(X_test)
-        metrics = {}
         if self.project.objective == "regression":
             metrics["mean_squared_error"] = mean_squared_error(y_test, y_pred)
             metrics["r2"] = r2_score(y_test, y_pred)
@@ -692,7 +734,9 @@ def train(
     relation_name: str = None,
     y_column_name: str = None,
     algorithm_name: str = "linear",
-    hyperparams: dict = {},
+    hyper_params: dict = {},
+    search: str = None,
+    search_params: dict = {},
     test_size: float or int = 0.1,
     test_sampling: str = "random",
 ):
@@ -707,7 +751,7 @@ def train(
         test_size (float or int, optional): If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split. If int, represents the absolute number of test samples. If None, the value is set to the complement of the train size. If train_size is also None, it will be set to 0.25.
         test_sampling: (str, optional): How to sample to create the test data. Defaults to "random". Valid values are ["first", "last", "random"].
     """
-
+    # Project
     try:
         project = Project.find_by_name(project_name)
         if objective is not None and objective != project.objective:
@@ -718,12 +762,11 @@ def train(
     except PgMLException:
         project = Project.create(project_name, objective)
 
-    if algorithm_name is None:
-        algorithm_name = "linear"
 
     if objective not in ["regression", "classification"]:
         raise PgMLException(f"Unknown objective `{objective}`, available options are: regression, classification.")
 
+    # Snapshot
     if relation_name is None:
         snapshot = project.last_snapshot
         if snapshot is None:
@@ -738,9 +781,13 @@ def train(
     else:
         snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
 
-    model = Model.create(project, snapshot, algorithm_name, hyperparams)
-    model.fit(snapshot)
+    # Model
+    if algorithm_name is None:
+        algorithm_name = "linear"
+    model = Model.create(project, snapshot, algorithm_name, hyper_params)
+    model.fit(snapshot, search, search_params)
 
+    # Deployment
     if (
         project.deployed_model is None
         or (

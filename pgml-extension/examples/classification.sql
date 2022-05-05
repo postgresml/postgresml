@@ -28,14 +28,15 @@ SELECT * FROM pgml.train('Iris Classifier', algorithm => 'linear_svm');
 -- ensembles
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'ada_boost');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'bagging');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Iris Classifier', algorithm => 'extra_trees', hyper_params => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Iris Classifier', algorithm => 'gradient_boosting_trees', hyper_params => '{"n_estimators": 10}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Iris Classifier', 'hist_gradient_boosting', '{"max_iter": 2}');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
+-- SELECT * FROM pgml.train('Iris Classifier', algorithim => 'hist_gradient_boosting', hyper_params => '{"max_iter": 2}');
+SELECT * FROM pgml.train('Iris Classifier', algorithm => 'random_forest', hyper_params => '{"n_estimators": 10}');
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Iris Classifier', 'classification', 'pgml.iris', 'target', 'gaussian_process', '{"max_iter_predict": 100, "warm_start": true}');
+-- SELECT * FROM pgml.train('Iris Classifier', algorithm => 'gaussian_process', hyper_params => '{"max_iter_predict": 100, "warm_start": true}');
+-- XGBoost
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'xgboost');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'xgboost_random_forest');
 
@@ -51,7 +52,17 @@ SELECT * FROM pgml.deploy('Iris Classifier', 'most_recent', 'random_forest');
 SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
 -- do some hyper param tuning
--- TODO SELECT pgml.hypertune(100, 'Iris Classifier', 'classification', 'pgml.iris', 'target', 'gradient_boosted_trees');
+SELECT pgml.train(
+    'Iris Classifier', 
+    algorithm => 'gradient_boosting_trees', 
+    hyper_params => '{"random_state": 0}',
+    search => 'grid', 
+    search_params => '{
+        "n_estimators": [10, 20], 
+        "max_leaf_nodes": [2, 4],
+        "criterion": ["friedman_mse", "squared_error"]
+    }'
+);
 
 -- deploy the "best" model for prediction use
 SELECT * FROM pgml.deploy('Iris Classifier', 'best_score');
