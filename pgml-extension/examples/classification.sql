@@ -4,14 +4,17 @@
 SELECT pgml.load_dataset('iris');
 
 -- view the dataset
-SELECT* FROM pgml.iris LIMIT 10;
+SELECT * FROM pgml.iris LIMIT 10;
+
+-- snapshots are automatically random ordered at creation, so this view is just for fun
+CREATE VIEW iris_view AS SELECT * FROM pgml.iris ORDER BY random() LIMIT 100;
 
 -- train a simple model to classify the data
-SELECT * FROM pgml.train('Iris Classifier', 'classification', 'pgml.iris', 'target');
+SELECT * FROM pgml.train('Iris Classifier', 'classification', 'iris_view', 'target');
 
 -- check out the predictions
 SELECT target, pgml.predict('Iris Classifier', ARRAY[sepal_length, sepal_width, petal_length, petal_width]) AS prediction
-FROM pgml.iris 
+FROM iris_view 
 LIMIT 10;
 
 -- After a project has been trained, ommited parameters will be reused from previous training runs
@@ -72,5 +75,5 @@ SELECT * FROM pgml.deploy('Iris Classifier', 'best_score', 'svm');
 
 -- check out the improved predictions
 SELECT target, pgml.predict('Iris Classifier', ARRAY[sepal_length, sepal_width, petal_length, petal_width]) AS prediction
-FROM pgml.iris 
+FROM iris_view 
 LIMIT 10;
