@@ -106,7 +106,7 @@ SELECT * FROM pgml.train(
     relation_name => '<name of the table or view containing the data>',
     y_column_name => '<name of the column containing the y target values>',
     algorithm => 'linear', -- optional algorithm name
-    hyper_params => '{}', -- optional params to pass on
+    hyperparams => '{}', -- optional params to pass on
     test_size => 0.1, -- optional, default 10% test sample
     test_sampling => 'random', -- optional strategy
 );
@@ -136,13 +136,13 @@ ORDER BY likely_to_buy_score
 LIMIT 25;
 ```
 
-### Hyper parameter tuning
-Models can be further refined with the scikit cross validation hyper parameter search libraries. We currently support the [`grid`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) and [`random`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) implementations.
+### Hyperparameter tuning
+Models can be further refined with the scikit cross validation hyperparameter search libraries. We currently support the [`grid`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) and [`random`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) implementations.
 ```sql
 SELECT pgml.train(
     'Human-friendly project name', 
     algorithm => 'gradient_boosting_trees', 
-    hyper_params => '{"random_state": 0}',
+    hyperparams => '{"random_state": 0}',
     search => 'grid', 
     search_params => '{
         "n_estimators": [10, 20], 
