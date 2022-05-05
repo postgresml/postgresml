@@ -174,7 +174,7 @@ best_score | The model that achieved the best key metric score
 rollback | The model that was previously deployed for this project
 
 ### Vector Operations
-PostgresML adds native vector operations that can be called from SQL:
+PostgresML adds [native vector operations](./pgml-extension/sql/install/vectors.sql) that can be called from SQL:
 
 ```SQL
 -- Elementwise arithmetic w/ constants
