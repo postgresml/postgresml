@@ -1,0 +1,5 @@
+<ol class="object_list snapshot_list" data-controller="target-selection">
+    {% for column in columns %}
+        <li><a href="#" data-action="click->target-selection#selectTarget" data-target="{{ column.name }}" data-target-selection-target="targetOption"><span>{{ column.name }}</span><span>{{ column.data_type }}</span></a></li>
+    {% endfor %}
+</ol>

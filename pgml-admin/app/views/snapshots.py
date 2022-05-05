@@ -2,10 +2,11 @@ from tracemalloc import Snapshot
 from typing import OrderedDict
 from django.shortcuts import render, get_object_or_404
 from django.utils.safestring import SafeString
+from django.db import connection
 from rest_framework import viewsets
 
 import json
-from app.models import Snapshot, Project
+from app.models import Snapshot, Project, InformationSchemaTable
 from app.serializers import SnapshotSerializer
 
 from collections import namedtuple
@@ -79,6 +80,62 @@ def get(request, id):
     return render(request, "snapshots/snapshot.html", default_context(context))
 
 
+def preview(request):
+    """Preview a small sample of the table/snapshot.
+
+    This works on tables and views and it's not snapshot-specific.
+    """
+    table = request.GET.get("table", "")
+    if "." in table:
+        schema, table = tuple(table.split("."))
+    else:
+        schema, table = "public", table
+
+    table = get_object_or_404(InformationSchemaTable, table_name=table, table_schema=schema)
+
+    with connection.cursor() as cursor:
+        # Not a SQL injection because the table name comes from the DB.
+        cursor.execute(f"SELECT * FROM {table.table_name} LIMIT 10")
+
+        colnames = [desc[0] for desc in cursor.description]
+        data = cursor.fetchall()
+
+        return render(request, "snapshots/preview.html", {
+            "columns": colnames,
+            "rows": data,
+            "controller": "new-project", # Hardcoded for now
+        })
+
+
+def targets(request):
+    """Preview a small sample of the table/snapshot.
+
+    This works on tables and views and it's not snapshot-specific.
+    """
+    table = request.GET.get("table", "")
+    if "." in table:
+        schema, table = tuple(table.split("."))
+    else:
+        schema, table = "public", table
+
+    print(f"'{schema}', '{table}'")
+
+    table = get_object_or_404(InformationSchemaTable, table_name=table, table_schema=schema)
+    with connection.cursor() as cursor:
+        cursor.execute(f"SELECT * FROM {table.table_name} LIMIT 1")
+
+        colnames = [desc[0] for desc in cursor.description]
+        data = cursor.fetchone()
+
+        columns = [{"name": name, "data_type": type(data[i]).__name__} for i, name in enumerate(colnames)]
+
+        return render(request, "snapshots/targets.html", {
+            "columns": columns,
+            "controller": "new-project", # BUG: hardcoded
+        })
+    
+
 class SnapshotViewSet(viewsets.ModelViewSet):
     queryset = Snapshot.objects.all()
     serializer_class = SnapshotSerializer
+    # filterset_fields = [""]

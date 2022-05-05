@@ -3,9 +3,10 @@ from collections import namedtuple
 
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
+from django.views.generic.base import TemplateView
 from rest_framework import viewsets
 
-from app.models import Project
+from app.models import Project, InformationSchemaTable
 from app.serializers import ProjectSerializer
 
 
@@ -55,6 +56,16 @@ class ProjectView(DetailView):
             **context,
             "projects": projects,
         }
+
+
+class NewProjectView(TemplateView):
+    template_name = "projects/new.html"
+
+    def get_context_data(self, **kwargs):
+        context = default_context(super().get_context_data(**kwargs))
+        context["tables"] = InformationSchemaTable.objects.filter(table_schema="pgml", table_name__in=["diabetes", 'digits', 'iris', 'linnerud', 'wine', 'breast_cancer', 'california_housing'])
+        context["controller"] = "new-project"
+        return context
 
 
 class ProjectViewSet(viewsets.ModelViewSet):

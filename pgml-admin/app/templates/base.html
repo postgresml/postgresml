@@ -31,9 +31,13 @@
         <script type="module-shim">
             import { Application } from '@hotwired/stimulus'
             import { Autocomplete } from '/static/js/controllers/stimulus-autocomplete.js'
+            import { default as NewProjectController } from '/static/js/controllers/new-project.js';
+            import { default as TargetSelectionController } from '/static/js/controllers/target-selection.js';
 
             const application = Application.start()
             application.register('autocomplete', Autocomplete)
+            application.register('new-project', NewProjectController)
+            application.register('target-selection', TargetSelectionController)
         </script>
       
         <title>{% if title %}{{title}}{% endif %}{% if title is None or "PostgresML" not in title %}{% if title is not None %} - {% endif %}PostgresML{% endif %}</title>
@@ -57,7 +61,7 @@
             </nav>
         </header>
 
-        <main>
+        <main data-controller="{{ controller }}">
             {% block main %}{% endblock %}
         </main>
 

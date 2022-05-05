@@ -46,6 +46,11 @@ class ModelSerializer(serializers.ModelSerializer):
 
 
 class DeploymentSerializer(serializers.ModelSerializer):
+    model = ModelSerializer()
+
+    # Don't use the snapshot serializer here on purpose, because that serializer
+    # also provides the sample data which can be excessive for this specific API endpoint.
+
     class Meta:
         model = Deployment
         fields = "__all__"

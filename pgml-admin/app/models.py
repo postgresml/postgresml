@@ -126,3 +126,35 @@ class Deployment(models.Model):
     @property
     def human_readable_strategy(self):
         return self.strategy.replace("_", " ")
+
+
+class InformationSchemaTable(models.Model):
+
+    table_name = models.TextField(primary_key=True)  # That's not true, but it
+    table_schema = models.TextField()
+
+    @property
+    def table_size(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT pg_size_pretty(pg_total_relation_size(%s)) AS size",
+                [
+                    f"{self.table_schema}.{self.table_name}",
+                ],
+            )
+            return cursor.fetchone()[0]
+
+    @property
+    def fqn(self):
+        return f"{self.table_schema}.{self.table_name}"
+
+    # Read-only
+    def save(self, *args, **kwargs):
+        return
+
+    def delete(self, *args, **kwargs):
+        return
+
+    class Meta:
+        db_table = '"information_schema"."tables"'
+        managed = False

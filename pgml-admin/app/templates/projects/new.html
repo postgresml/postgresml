@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block main %}
+<section>
+  <h1><span class="material-symbols-outlined">apps</span>New Project</h1>
+</section>
+
+<section>
+  <h2>Project name</h2>
+  <input name="project-name" type="text" placeholder="Enter a new project name" />
+</section>
+
+<section>
+  <h2><span class="material-symbols-outlined">playlist_add_check</span>Pick a table</h2>
+  <ol class="object_list snapshot_list">
+    {% for table in tables %}
+    <li>
+      <a href="#" data-action="click->new-project#selectTable" data-table-name="{{ table.fqn }}" data-new-project-target="tableOption">
+        <span>{{ table.fqn }}</span>
+        <span>{{ table.table_size }}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<section>
+  <h2><span class="material-symbols-outlined">table_view</span>Preview data</h2>
+  <div data-new-project-target="preview">
+    <p>Pick a table from the list above to preview data.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="material-symbols-outlined">adjust</span>Pick targets</h2>
+  <div data-new-project-target="targetOption">
+    <p>Pick a table from the list above to select your target(s).</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="material-symbols-outlined">flag_circle</span>Choose an objective</h2>
+  <div style="display: flex; justify-content: center;">
+    <button data-action="click->new-project#selectObjective" data-objective="regression" data-new-project-target="objectiveOption">Regression</button>
+    <button data-action="click->new-project#selectObjective" data-objective="classification" data-new-project-target="objectiveOption">Classification</button>
+  </div>
+</section>
+
+<section style="display: flex; justify-content: center;">
+  <button class="wide">Train</button>
+</section>
+{% endblock %}

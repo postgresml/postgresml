@@ -405,6 +405,9 @@ ol.object_list li a:hover {
     height: 2em;
     background-color: var(--color-9);
 }
+ol.object_list li a.selected {
+    background-color: var(--gray-8);
+}
 ol.object_list li a::after {
     content: '❯';
     color: var(--gray-7);
@@ -474,4 +477,38 @@ ol.deployment_list li a span:nth-child(2) {
 ol.deployment_list li a span:nth-child(3) {
     width: 10em;
     text-align: right;
+}
+
+input {
+    border: 1px solid var(--gray-3);
+    padding: 10px;
+    font-size: 1em;
+}
+
+input:focus {
+    outline:none;
+}
+
+button {
+    background-color: transparent;
+    border: 1px solid var(--gray-3); 
+    border-radius: 2px;
+    padding: 15px 10px;
+    display: block;
+    font-size: 1em;
+    color: var(--gray-2);
+    margin: 0 25px;
+}
+
+button.wide {
+    padding-left: 50px;
+    padding-right: 50px;
+}
+
+button.selected {
+    background-color: var(--gray-8);
+}
+
+button:hover {
+    cursor: pointer;
 }
