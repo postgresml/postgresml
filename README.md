@@ -137,7 +137,7 @@ LIMIT 25;
 ```
 
 ### Hyperparam tuning
-Models can be further refined with the scikit CrossValidation search libraries. We currently support [`grid`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) and [`random`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) cross validation searches.
+Models can be further refined with the scikit cross validation search libraries. We currently support the [`grid`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) and [`random`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) implementations.
 ```sql
 SELECT pgml.train(
     'Human Friendly Project name', 
