@@ -118,8 +118,6 @@ def targets(request):
     else:
         schema, table = "public", table
 
-    print(f"'{schema}', '{table}'")
-
     table = get_object_or_404(InformationSchemaTable, table_name=table, table_schema=schema)
     with connection.cursor() as cursor:
         cursor.execute(f"SELECT * FROM {table.table_name} LIMIT 1")
@@ -138,4 +136,3 @@ def targets(request):
 class SnapshotViewSet(viewsets.ModelViewSet):
     queryset = Snapshot.objects.all()
     serializer_class = SnapshotSerializer
-    # filterset_fields = [""]
