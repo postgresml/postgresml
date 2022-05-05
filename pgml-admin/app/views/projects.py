@@ -63,7 +63,10 @@ class NewProjectView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = default_context(super().get_context_data(**kwargs))
-        context["tables"] = InformationSchemaTable.objects.filter(table_schema="pgml", table_name__in=["diabetes", 'digits', 'iris', 'linnerud', 'wine', 'breast_cancer', 'california_housing'])
+        context["tables"] = InformationSchemaTable.objects.filter(
+            table_schema="pgml",
+            table_name__in=["diabetes", "digits", "iris", "linnerud", "wine", "breast_cancer", "california_housing"],
+        )
         context["controller"] = "new-project"
         return context
 
@@ -71,4 +74,3 @@ class NewProjectView(TemplateView):
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-
