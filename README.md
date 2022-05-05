@@ -136,8 +136,8 @@ ORDER BY likely_to_buy_score
 LIMIT 25;
 ```
 
-### Hyperparam tuning
-Models can be further refined with the scikit cross validation search libraries. We currently support the [`grid`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) and [`random`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) implementations.
+### Hyper parameter tuning
+Models can be further refined with the scikit cross validation hyper parameter search libraries. We currently support the [`grid`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) and [`random`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) implementations.
 ```sql
 SELECT pgml.train(
     'Human Friendly Project name', 
