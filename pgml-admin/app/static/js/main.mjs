@@ -248,7 +248,8 @@ export function renderHyperparam(id, name, title, param, best_index, mean, std) 
             y: [mean[best_index]],
             error_y: {
                 type: 'data',
-                array: std,
+                type: 'constant',
+                value: std[best_index],
                 visible: true,
                 color: "rgba(255, 43, 158, 0.5)"
             },
