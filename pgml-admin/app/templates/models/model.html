@@ -54,36 +54,27 @@
 
 <section>
   <h2>Hyperparam Search - {{ object.search }}</h2>
-  {% for param, graphs in graph_data.items %}
-  <h3>{{ param }}</h3>
-    {% for graph, graph_attrs in graphs.items %}
-      {% if graph == "values" %}
-        <p>{{ graph_attrs }}</p>
-      {% else %}
-        <figure id="graph_{{param}}_{{graph}}"></figure>
-      {% endif %}
+  {% for param, values in search_params.items %}
+    <h3>{{ param }}</h3>
+    <p>{{ values }}</p>
+    {% for graph, graph_attrs in search_graphs.items %}
+      <figure id="graph_{{param}}_{{graph}}"></figure>
     {% endfor %}
-  {% endfor %}
-  
-  {% for key, metric in value.items %}
-  <dl class="model_metrics">
-    <dt>{{ key }}</dt>
-    <dd>{{ metric }}</dd>
-  </dl>
   {% endfor %}
 </section>
 
 <script defer type="module">
   import { renderHyperparam } from '/static/js/main.mjs';
 
-  {% for param, graphs in graph_data.items %}
-  {% for graph, graph_attrs in graphs.items %}
-    {% if graph == "values" %}
-    {% else %}
-        renderHyperparam("graph_{{param}}_{{graph}}", "{{param}} - {{graph_attrs.title}}", {{graph_attrs.x | safe }}, {{graph_attrs.y | safe }}, "{{graph_attrs.title}}");
-    {% endif %}
+  {% for name, series in search_results.items %}
+    var {{name}} = {{series}};
   {% endfor %}
-{% endfor %}
+
+  {% for param, values in search_params.items %}
+    {% for graph, title in search_graphs.items %}
+      renderHyperparam("graph_{{param}}_{{graph}}", "{{param}} - {{title}}", "{{title}}", param_{{param}}, mean_{{graph}}, std_{{graph}});
+    {% endfor %}
+  {% endfor %}
 </script>
 {% endblock %}
   
