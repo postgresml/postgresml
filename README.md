@@ -140,16 +140,16 @@ LIMIT 25;
 Models can be further refined with the scikit cross validation hyperparameter search libraries. We currently support the [`grid`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) and [`random`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) implementations.
 ```sql
 SELECT pgml.train(
-    'Human-friendly project name', 
-    algorithm => 'gradient_boosting_trees', 
-    hyperparams => '{"random_state": 0}',
+    'Diabetes Progression', 
+    algorithm => 'xgboost', 
     search => 'grid', 
     search_params => '{
-        "n_estimators": [10, 20], 
-        "max_leaf_nodes": [2, 4],
-        "criterion": ["friedman_mse", "squared_error"]
-    }'
+        "max_depth": [1, 2, 3, 4, 5, 6], 
+        "n_estimators": [20, 40, 80, 160],
+        "learning_rate": [0.1, 0.2, 0.3, 0.4]
+    }
 );
+
 
 ```
 
