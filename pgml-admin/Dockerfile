@@ -1,6 +1,7 @@
 FROM ubuntu:20.04
 MAINTAINER docker@postgresml.com
 
+RUN apt-get dist-upgrade
 RUN apt-get update
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
