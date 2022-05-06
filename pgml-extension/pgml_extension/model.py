@@ -348,7 +348,6 @@ class Snapshot(object):
         features = list(data[0].keys())
         for column in self.y_column_name:
             features.remove(column)
-        features.sort()
 
         # Split the label from the features
         X = []
