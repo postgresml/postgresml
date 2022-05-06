@@ -39,7 +39,7 @@
         <title>{% if title %}{{title}}{% endif %}{% if title is None or "PostgresML" not in title %}{% if title is not None %} - {% endif %}PostgresML{% endif %}</title>
     </head>
 
-    <body>
+    <body class="{{topic}}">
         <header>
             <nav>
                 <ul>
@@ -49,10 +49,10 @@
                             Postgres<b>ML</b>
                         </a>
                     </li>
-                    <li{% if topic == "Projects" %} class="selected"{% endif %}><a href="/projects/"><span class="material-symbols-outlined">apps</span>Projects</a></li> 
-                    <li{% if topic == "Models" %} class="selected"{% endif %}><a href="/models/"><span class="material-symbols-outlined">model_training</span>Models</a></li>
-                    <li{% if topic == "Deployments" %} class="selected"{% endif %}><a href="/deployments/"><span class="material-symbols-outlined">inventory</span>Deployments</a></li>
-                    <li{% if topic == "Snapshots" %} class="selected"{% endif %}><a href="/snapshots/"><span class="material-symbols-outlined">storage</span>Snapshots</a></li>
+                    <li{% if topic == "projects" %} class="selected"{% endif %}><a href="/projects/"><span class="material-symbols-outlined">apps</span>Projects</a></li> 
+                    <li{% if topic == "models" %} class="selected"{% endif %}><a href="/models/"><span class="material-symbols-outlined">model_training</span>Models</a></li>
+                    <li{% if topic == "deployments" %} class="selected"{% endif %}><a href="/deployments/"><span class="material-symbols-outlined">inventory</span>Deployments</a></li>
+                    <li{% if topic == "snapshots" %} class="selected"{% endif %}><a href="/snapshots/"><span class="material-symbols-outlined">storage</span>Snapshots</a></li>
                 </ul>
             </nav>
         </header>

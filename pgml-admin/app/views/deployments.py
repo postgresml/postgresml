@@ -7,7 +7,7 @@ from app.serializers import DeploymentSerializer
 
 
 def default_context(context):
-    return {"topic": "Deployments", **context}
+    return {"topic": "deployments", **context}
 
 
 def index(request):

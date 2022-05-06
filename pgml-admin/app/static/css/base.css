@@ -475,3 +475,8 @@ ol.deployment_list li a span:nth-child(3) {
     width: 10em;
     text-align: right;
 }
+
+body.models figure {
+    width: 20vmin;
+    height: 20vmin;
+}

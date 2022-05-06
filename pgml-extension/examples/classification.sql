@@ -61,7 +61,7 @@ SELECT pgml.train(
     hyperparams => '{"random_state": 0}',
     search => 'grid', 
     search_params => '{
-        "n_estimators": [10, 20], 
+        "n_estimators": [10, 20],
         "max_leaf_nodes": [2, 4],
         "criterion": ["friedman_mse", "squared_error"]
     }'

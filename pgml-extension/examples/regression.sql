@@ -73,14 +73,12 @@ SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 -- do a hyperparam search on your favorite algorithm
 SELECT pgml.train(
     'Diabetes Progression', 
-    algorithm => 'bayesian_ridge', 
-    search => 'random', 
+    algorithm => 'xgboost', 
+    search => 'grid', 
     search_params => '{
-        "n_iter": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100], 
-        "tol": [0.1, 0.001, 0.0001, 0.00001, 0.000001]
-    }',
-    search_args => '{
-        "n_iter": 10
+        "max_depth": [1, 2], 
+        "n_estimators": [20, 40],
+        "learning_rate": [0.1, 0.2]
     }'
 );
 
