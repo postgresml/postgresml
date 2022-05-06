@@ -150,8 +150,15 @@ SELECT pgml.train(
         "criterion": ["friedman_mse", "squared_error"]
     }'
 );
+
 ```
-Take a look [below](#Working-with-PostgresML) for an example with real data.
+
+The best set of hyperparameters will be saved on your model, and PostgresML will provide an analysis to help understand why those parameters were chosen.
+
+![Hyperparameter Analysis](./pgml-admin/screenshots/hyperparams.png)
+
+
+Take a look [below](#Working-with-PostgresML) for a full training example with real data.
 
 ### Model and data versioning
 
