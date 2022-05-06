@@ -293,7 +293,7 @@ SELECT pgml.version();
 
  version
 ---------
- 0.5
+ 0.8.1
 (1 row)
 ```
 
