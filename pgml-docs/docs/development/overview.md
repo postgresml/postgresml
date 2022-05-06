@@ -1,5 +1,10 @@
 # Contributing
 
+## General
+
+- [Use unix line endings](https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings)
+
+
 ## Setup your development environment
 
 1) Install [pyenv](https://github.com/pyenv/pyenv) for your system to use the correct version of python specified in `.python-version`. Make sure your $PATH now includes `~/.pyenv/bin` && `~/.pyenv/shims`.
@@ -35,6 +40,7 @@
 
     $ ./manage.py runserver
 
+## Maintain your development database 
 How to reset your local database:
 
     $ psql -c "DROP DATABASE pgml_development" postgres://postgres@127.0.0.1:5433/; psql -c "CREATE DATABASE pgml_development" postgres://postgres@127.0.0.1:5433/; psql -c "create schema pgml" postgres://postgres@127.0.0.1:5433/pgml_development
@@ -51,7 +57,7 @@ Run the tests from the root of the repo:
 
 ```
 cd pgml-extension
-ON_ERROR_STOP=1 psql -f sql/test.sql postgres://postgres@127.0.0.1:5433/pgml_development
+ON_ERROR_STOP=1 psql -f sql/test.sql postgres://postgres@127.0.0.1:5432/pgml_development
 ```
 
 One liner:
@@ -60,3 +66,9 @@ cd pgml-extension; sudo /bin/pip3 install .; psql -c "DROP DATABASE pgml_develop
 ```
 
 Make sure to run it exactly like this, from the root directory of the repo.
+
+## Update documentation
+
+* `mkdocs serve` - Start the live-reloading docs server.
+* `mkdocs build` - Build the documentation site.
+* `mkdocs -h` - Print help message and exit.

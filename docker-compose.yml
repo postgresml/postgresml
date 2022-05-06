@@ -17,11 +17,25 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    volumes:
+      - .:/app
     command:
       - python3
       - manage.py
       - runserver
       - 0.0.0.0:8000
+  docs:
+    build:
+      context: ./pgml-docs/
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    command:
+      - mkdocs
+      - serve
+      - -a 0.0.0.0:8001
 
 volumes:
   pg_data:

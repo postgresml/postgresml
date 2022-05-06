@@ -8,6 +8,7 @@ from rest_framework import viewsets
 from app.models import Project
 from app.serializers import ProjectSerializer
 
+import logging
 
 def default_context(context):
     return {"topic": "projects", **context}
