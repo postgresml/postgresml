@@ -402,7 +402,7 @@ You can also browse complete [code examples in the repository](./pgml-extension/
 We'll walk through the [regression example](./pgml-extension/examples/regression.sql) first. You'll find that classification is extremely similar. You can test the entire script in PostgresML running in Docker with this:
 
 ```bash
-$ psql -f examples/regression/run.sql -p 5433 -U root -h 127.0.0.1 -P pager
+$ psql -U postgres -h 127.0.0.1 -p 5433 -d pgml_development -f pgml-extension/examples/regression.sql
 ```
 
 ### Loading data
