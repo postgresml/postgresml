@@ -157,6 +157,13 @@ class Project(object):
             return "r2"
 
     @property
+    def hyperparam_score_name(self):
+        if self.objective == "classification":
+            return "f1_micro"
+        elif self.objective == "regression":
+            return "r2"
+
+    @property
     def last_snapshot(self):
         return Snapshot.last_for_project_id(self.id)
 
@@ -317,7 +324,7 @@ class Snapshot(object):
             plpy.execute(
                 f"""
                     UPDATE pgml.snapshots 
-                    SET columns = {q(json.dumps(self.columns))}::JSON, analysis = {q(json.dumps(self.analysis))}::JSON, updated_at = clock_timestamp()
+                    SET columns = {q(self.columns)}, analysis = {q(self.analysis)}, updated_at = clock_timestamp()
                     WHERE id = {q(self.id)} 
                     RETURNING *
                 """,
@@ -398,6 +405,9 @@ class Model(object):
         snapshot: Snapshot,
         algorithm_name: str,
         hyperparams: dict,
+        search: str,
+        search_params: dict,
+        search_args: dict,
     ):
         """
         Create a Model and save it to the database.
@@ -411,8 +421,8 @@ class Model(object):
         """
         result = plpy.execute(
             f"""
-            INSERT INTO pgml.models (project_id, snapshot_id, algorithm_name, hyperparams, status, created_at, updated_at) 
-            VALUES ({q(project.id)}, {q(snapshot.id)}, {q(algorithm_name)}, {q(json.dumps(hyperparams))}, 'new', clock_timestamp(), clock_timestamp()) 
+            INSERT INTO pgml.models (project_id, snapshot_id, algorithm_name, hyperparams, status, search, search_params, search_args, created_at, updated_at) 
+            VALUES ({q(project.id)}, {q(snapshot.id)}, {q(algorithm_name)}, {q(hyperparams)}, 'new', {q(search)}, {q(search_params)}, {q(search_args)}, clock_timestamp(), clock_timestamp()) 
             RETURNING *
         """
         )
@@ -535,6 +545,10 @@ class Model(object):
             self.hyperparams = json.loads(self.hyperparams)
         if "metrics" in self.__dict__ and type(self.metrics) is str:
             self.metrics = json.loads(self.metrics)
+        if "search_params" in self.__dict__ and type(self.search_params) is str:
+            self.search_params = json.loads(self.search_params)
+        if "search_args" in self.__dict__ and type(self.search_args) is str:
+            self.search_args = json.loads(self.search_args)
 
     @property
     def project(self):
@@ -628,7 +642,7 @@ class Model(object):
 
         return self._algorithm
 
-    def fit(self, snapshot: Snapshot, search, search_params, search_args):
+    def fit(self, snapshot: Snapshot):
         """
         Learns the parameters of this model and records them in the database.
 
@@ -637,50 +651,35 @@ class Model(object):
         """
         X_train, X_test, y_train, y_test = snapshot.data()
 
-        search_args = {"scoring": self.project.key_metric_name, **search_args}
-        if search == "grid":
-            self._algorithm = sklearn.model_selection.GridSearchCV(self.algorithm, search_params, **search_args)
-        elif search == "random":
-            self._algorithm = sklearn.model_selection.RandomizedSearchCV(self.algorithm, search_params, **search_args)
-        elif search is not None:
-            raise PgMLException(f"Unknown hyperparam search `{search}`, available options are: ['grid', 'random'].")
+        search_args = {"scoring": self.project.hyperparam_score_name, "error_score": "raise",  **self.search_args}
+        if self.search == "grid":
+            self._algorithm = sklearn.model_selection.GridSearchCV(self.algorithm, self.search_params, **search_args)
+        elif self.search == "random":
+            self._algorithm = sklearn.model_selection.RandomizedSearchCV(
+                self.algorithm, self.search_params, **search_args
+            )
+        elif self.search is not None:
+            raise PgMLException(
+                f"Unknown hyperparam search `{self.search}`, available options are: ['grid', 'random']."
+            )
 
         X_train, X_test, y_train, y_test = snapshot.data()
 
         # Train the model
         result = self.algorithm.fit(X_train, y_train)
+        
         metrics = {}
-        if search:
+        if self.search:
             self._algorithm = result.best_estimator_
             self.hyperparams = result.best_params_
+            for key, value in result.cv_results_.items():
+                if isinstance(value, numpy.ndarray):
+                    result.cv_results_[key] = value.tolist()
             metrics["search_results"] = {
                 "best_index": int(result.best_index_),
                 "n_splits": int(result.n_splits_),
+                **result.cv_results_
             }
-            for key in [
-                "mean_fit_time",
-                "std_fit_time",
-                "mean_fit_time",
-                "mean_score_time",
-                "std_score_time",
-                "mean_test_score",
-                "std_test_score",
-            ]:
-                l = list(result.cv_results_[key])
-                metrics["search_results"][key] = [
-                    None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l
-                ]
-            for param in search_params:
-                l = list(result.cv_results_[f"param_{param}"])
-                metrics["search_results"][f"param_{param}"] = [
-                    None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l
-                ]
-            for split in range(0, metrics["search_results"]["n_splits"]):
-                l = list(result.cv_results_[f"split{split}_test_score"])
-                metrics["search_results"][f"split{split}_test_score"] = [
-                    None if isinstance(x, numpy.floating) and numpy.isnan(x) else x for x in l
-                ]
-            plpy.warning(metrics)
 
         # Test
         y_pred = self.algorithm.predict(X_test)
@@ -699,7 +698,8 @@ class Model(object):
             UPDATE pgml.models
             SET pickle = '\\x{pickle.dumps(self.algorithm).hex()}',
                 status = 'successful',
-                metrics = {q(json.dumps(metrics))},
+                hyperparams = {q(self.hyperparams)},
+                metrics = {q(metrics)},
                 updated_at = clock_timestamp()
             WHERE id = {q(self.id)}
             RETURNING *
@@ -792,8 +792,8 @@ def train(
     # Model
     if algorithm_name is None:
         algorithm_name = "linear"
-    model = Model.create(project, snapshot, algorithm_name, hyperparams)
-    model.fit(snapshot, search, search_params, search_args)
+    model = Model.create(project, snapshot, algorithm_name, hyperparams, search, search_params, search_args)
+    model.fit(snapshot)
 
     # Deployment
     if (

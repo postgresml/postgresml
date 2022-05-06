@@ -26,8 +26,11 @@
   {% if object.metrics|length > 0 %}
   <dl class="model_metrics">
     {% for key, value in object.metrics.items %}
+    {% if key == "search_results" %}
+    {% else %}
     <dt>{{ key }}</dt>
     <dd>{{ value | floatformat:"5"}}</dd>
+    {% endif %}
     {% endfor %}
   </dl>
   {% else %}
@@ -48,4 +51,39 @@
   <i>no hyperparams</i>
   {% endif %}
 </section>
+
+<section>
+  <h2>Hyperparam Search - {{ object.search }}</h2>
+  {% for param, graphs in graph_data.items %}
+  <h3>{{ param }}</h3>
+    {% for graph, graph_attrs in graphs.items %}
+      {% if graph == "values" %}
+        <p>{{ graph_attrs }}</p>
+      {% else %}
+        <figure id="graph_{{param}}_{{graph}}"></figure>
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+  
+  {% for key, metric in value.items %}
+  <dl class="model_metrics">
+    <dt>{{ key }}</dt>
+    <dd>{{ metric }}</dd>
+  </dl>
+  {% endfor %}
+</section>
+
+<script defer type="module">
+  import { renderHyperparam } from '/static/js/main.mjs';
+
+  {% for param, graphs in graph_data.items %}
+  {% for graph, graph_attrs in graphs.items %}
+    {% if graph == "values" %}
+    {% else %}
+        renderHyperparam("graph_{{param}}_{{graph}}", "{{param}} - {{graph_attrs.title}}", {{graph_attrs.x | safe }}, {{graph_attrs.y | safe }}, "{{graph_attrs.title}}");
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+</script>
 {% endblock %}
+  

@@ -10,7 +10,7 @@ from app.serializers import ProjectSerializer
 
 
 def default_context(context):
-    return {"topic": "Projects", **context}
+    return {"topic": "projects", **context}
 
 
 def index(request):

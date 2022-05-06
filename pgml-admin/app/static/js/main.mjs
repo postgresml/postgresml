@@ -216,3 +216,45 @@ export function renderCorrelation(feature_name, other_name, samples, y, key_metr
         { displayModeBar: false, responsive: true }
     );
 }
+
+export function renderHyperparam(id, name, x, y, title) {
+    Plotly.newPlot(
+        id,
+        [{
+          type: "scatter",
+          mode: "markers",
+          name: name,
+          x: x,
+          y: y,
+          marker: {
+            color: "rgba(0, 180, 255, 0.4)",
+            line: {
+                color: "rgba(0, 180, 255, 0.6)",
+                width: 1
+            },
+          },
+        }],
+        {
+          font: { family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif" },
+          title: title,
+          hoverlabel: {
+            bgcolor: "rgba(0, 180, 255, 0.7)",
+            bordercolor: "rgba(255, 255, 255, 1)",
+            font: {
+              color: "rgba(255, 255, 255, 1)",
+              family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif",
+              size: 12
+            },
+          },
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          yaxis: { automargin: true },
+          xaxis: { automargin: true },
+          margin: { l: 0, r: 0, b: 0, t: 50, pad: 0 },
+          showlegend: false,
+          scrollZoom: false,
+          dragmode: false,
+        },
+        { displayModeBar: false, responsive: true }
+    );
+}

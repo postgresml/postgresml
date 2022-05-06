@@ -12,7 +12,7 @@ from collections import namedtuple
 
 
 def default_context(context):
-    return {"topic": "Snapshots", **context}
+    return {"topic": "snapshots", **context}
 
 
 def index(request):
