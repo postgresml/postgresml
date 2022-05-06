@@ -153,7 +153,7 @@ SELECT pgml.train(
 
 ```
 
-The best set of hyperparameters will be saved on your model, and PostgresML will provide an analysis to help understand why those parameters were chosen.
+The best set of hyperparameters will be saved on your model, and PostgresML will provide a visualization to help understand why those parameters were chosen.
 
 ![Hyperparameter Analysis](./pgml-admin/screenshots/hyperparams.png)
 
