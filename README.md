@@ -367,18 +367,26 @@ $ psql -c 'SELECT pgml.version()'
 The two most important functions the framework provides are:
 
 ```sql
-pgml.train(
-    project_name TEXT, 
-    objective TEXT, 
-    relation_name TEXT, 
-    y_column_name TEXT, 
-    algorithm TEXT DEFAULT 'linear', 
-    hyperparams JSONB DEFAULT '{}'::JSONB
+ pgml.train(
+	project_name TEXT, 							-- Human-friendly project name
+	objective TEXT DEFAULT NULL,                -- 'regression' or 'classification'
+	relation_name TEXT DEFAULT NULL,            -- name of table or view
+	y_column_name TEXT DEFAULT NULL,            -- aka "label" or "unknown" or "target"
+	algorithm TEXT DEFAULT 'linear',            -- statistical learning method
+	hyperparams JSONB DEFAULT '{}'::JSONB,      -- options for the model
+	search TEXT DEFAULT NULL,                   -- hyperparam tuning, 'grid' or 'random'
+	search_params JSONB DEFAULT '{}'::JSONB,    -- hyperparam search space
+	search_args JSONB DEFAULT '{}'::JSONB,      -- hyperparam options
+	test_size REAL DEFAULT 0.1,                 -- fraction of the data for the test set
+	test_sampling TEXT DEFAULT 'random'         -- 'random', 'first' or 'last'  
 )
 ```
 and 
 ```sql
-pgml.predict(project_name TEXT, features DOUBLE PRECISION[])
+pgml.predict(
+	project_name TEXT,          -- Human-friendly project name
+	features DOUBLE PRECISION[] -- Must match the training data column order
+)
 ```
 
 The first function trains a model, given a human-friendly project name, a `regression` or `classification` objective, a table or view name which contains the training and testing datasets, and the `y_column_name` containing the target values in that table. The second function predicts novel datapoints, given the project name for an exiting model trained with `pgml.train`, and a list of features used to train that model.
