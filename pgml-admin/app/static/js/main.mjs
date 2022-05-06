@@ -217,22 +217,28 @@ export function renderCorrelation(feature_name, other_name, samples, y, key_metr
     );
 }
 
-export function renderHyperparam(id, name, x, y, title) {
+export function renderHyperparam(id, name, title, param, mean, std) {
     Plotly.newPlot(
         id,
         [{
-          type: "scatter",
-          mode: "markers",
-          name: name,
-          x: x,
-          y: y,
-          marker: {
-            color: "rgba(0, 180, 255, 0.4)",
-            line: {
-                color: "rgba(0, 180, 255, 0.6)",
-                width: 1
+            type: "scatter",
+            mode: "markers",
+            name: name,
+            x: param,
+            y: mean,
+            error_y: {
+                type: 'data',
+                array: std,
+                visible: true,
+                color: "rgba(0, 180, 255, 0.05)"
             },
-          },
+            marker: {
+                color: "rgba(0, 180, 255, 0.4)",
+                line: {
+                    color: "rgba(0, 180, 255, 0.6)",
+                    width: 1
+                },
+            },
         }],
         {
           font: { family: "Roboto, \"Microsoft Sans Serif\", \"Helvetica Neue\", Arial, sans-serif" },

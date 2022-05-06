@@ -435,7 +435,7 @@ ol.model_list li:nth-child(1) span {
     height: 2.5em;
     padding-top: 1em;
 }
-ol.model_list li:nth-child(1) span:nth-child(2) {
+ol.model_list li:nth-child(1) span:nth-child(3) {
     text-align: center;
 }
 ol.model_list li:nth-child(1) span b {
@@ -443,9 +443,12 @@ ol.model_list li:nth-child(1) span b {
     top: 0.4em;
 }
 ol.model_list li span:nth-child(1) {
-    width: 30em;
+    width: 1.5em;
 }
 ol.model_list li span:nth-child(2) {
+    width: 30em;
+}
+ol.model_list li span:nth-child(3) {
     width: 6em;
     text-align: right;
 }

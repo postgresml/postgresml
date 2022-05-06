@@ -5,6 +5,7 @@ import logging
 
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
+from django.utils.safestring import SafeString
 from rest_framework import viewsets
 
 from app.models import Model
@@ -27,25 +28,17 @@ class ModelView(DetailView):
         object = context["object"]
         context["title"] = object.project.name + " - " + object.algorithm_name
 
-        search_results = object.metrics.get("search_results", None)
-        if search_results:
-            graphs = {
-                "test_score": ["Test Score", "mean_test_score", "std_test_score"],
-                "fit_time": ["Fit Time", "mean_fit_time", "std_fit_time"], 
-                "score_time": ["Score Time", "mean_score_time", "std_score_time"],
+        if object.search:
+            context["search_results"] = {}
+            for key, value in object.metrics["search_results"].items():
+                context["search_results"][key] = SafeString(json.dumps(value))
+            context["search_params"] = object.search_params            
+            context["search_graphs"] = {
+                "test_score": "Test Score",
+                "fit_time": "Fit Time", 
+                "score_time": "Score Time",
             }
-            graph_data = {}
-            for param, values in object.search_params.items():
-                graph_data[param] = {"values": values}
-                for graph, (title, means, stds) in graphs.items():
-                    graph_data[param][graph] = {
-                        "title": title,
-                        "std": search_results[stds],
-                        "y": json.dumps(search_results[means]),
-                        "x": json.dumps(search_results["param_" + param]),
-                    }
-            context["graph_data"] = graph_data
-        context["search_results"] = search_results
+            search_results = context["search_results"]
         return context
 
 

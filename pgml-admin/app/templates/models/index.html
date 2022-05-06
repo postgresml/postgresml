@@ -9,6 +9,7 @@
     <h2>{{name}}</h2>
     <ol class="object_list model_list">
       <li>
+          <span></span>
           <span><b>Algorithm</b></span>
           <span><b>{{project.metric | safe}}</b></span>    
           <figure></figure>
@@ -16,6 +17,15 @@
       {% for model in project.models %}
       <li>
         <a href="{% url 'model' model.id %}">
+          <span class="material-symbols-outlined">
+            {% if model.search == "grid" %}
+              grid_on
+            {% elif model.search == "random" %}
+              shuffle
+            {% else %}
+              check_circle
+            {% endif %}
+          </span>
           <span>{{ model.algorithm_name }}</span>
           <span>{{ model.key_metric | floatformat:"3" }}</span>
           <figure id="model_{{model.id}}"></figure>
