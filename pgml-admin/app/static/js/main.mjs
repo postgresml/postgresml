@@ -217,7 +217,7 @@ export function renderCorrelation(feature_name, other_name, samples, y, key_metr
     );
 }
 
-export function renderHyperparam(id, name, title, param, mean, std) {
+export function renderHyperparam(id, name, title, param, best_index, mean, std) {
     Plotly.newPlot(
         id,
         [{
@@ -236,6 +236,26 @@ export function renderHyperparam(id, name, title, param, mean, std) {
                 color: "rgba(0, 180, 255, 0.4)",
                 line: {
                     color: "rgba(0, 180, 255, 0.6)",
+                    width: 1
+                },
+            },
+        },
+        {
+            type: "scatter",
+            mode: "markers",
+            name: name,
+            x: [param[best_index]],
+            y: [mean[best_index]],
+            error_y: {
+                type: 'data',
+                array: std,
+                visible: true,
+                color: "rgba(255, 43, 158, 0.5)"
+            },
+            marker: {
+                color: "rgba(255, 43, 158, 0.7)",
+                line: {
+                    color: "rgba(255, 43, 158, 1.0)",
                     width: 1
                 },
             },

@@ -66,13 +66,14 @@
 <script defer type="module">
   import { renderHyperparam } from '/static/js/main.mjs';
 
+  var best_index = {{best_index}};
   {% for name, series in search_results.items %}
     var {{name}} = {{series}};
   {% endfor %}
 
   {% for param, values in search_params.items %}
     {% for graph, title in search_graphs.items %}
-      renderHyperparam("graph_{{param}}_{{graph}}", "{{param}} - {{title}}", "{{title}}", param_{{param}}, mean_{{graph}}, std_{{graph}});
+      renderHyperparam("graph_{{param}}_{{graph}}", "{{param}} - {{title}}", "{{title}}", param_{{param}}, best_index, mean_{{graph}}, std_{{graph}});
     {% endfor %}
   {% endfor %}
 </script>

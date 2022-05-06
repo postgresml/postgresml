@@ -32,13 +32,13 @@ class ModelView(DetailView):
             context["search_results"] = {}
             for key, value in object.metrics["search_results"].items():
                 context["search_results"][key] = SafeString(json.dumps(value))
+            context["best_index"] = object.metrics["search_results"]["best_index"]
             context["search_params"] = object.search_params            
             context["search_graphs"] = {
                 "test_score": "Test Score",
                 "fit_time": "Fit Time", 
                 "score_time": "Score Time",
             }
-            search_results = context["search_results"]
         return context
 
 
