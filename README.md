@@ -368,7 +368,7 @@ The two most important functions the framework provides are:
 
 ```sql
  pgml.train(
-	project_name TEXT, 							-- Human-friendly project name
+	project_name TEXT,                          -- Human-friendly project name
 	objective TEXT DEFAULT NULL,                -- 'regression' or 'classification'
 	relation_name TEXT DEFAULT NULL,            -- name of table or view
 	y_column_name TEXT DEFAULT NULL,            -- aka "label" or "unknown" or "target"
@@ -384,8 +384,8 @@ The two most important functions the framework provides are:
 and 
 ```sql
 pgml.predict(
-	project_name TEXT,          -- Human-friendly project name
-	features DOUBLE PRECISION[] -- Must match the training data column order
+	project_name TEXT,            -- Human-friendly project name
+	features DOUBLE PRECISION[]   -- Must match the training data column order
 )
 ```
 
