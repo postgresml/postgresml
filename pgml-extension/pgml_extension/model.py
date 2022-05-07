@@ -745,7 +745,7 @@ def train(
     search: str = None,
     search_params: dict = {},
     search_args: dict = {},
-    test_size: float or int = 0.1,
+    test_size: float or int = 0.25,
     test_sampling: str = "random",
 ):
     """Create a regression model from a table or view filled with training data.

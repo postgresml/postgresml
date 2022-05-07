@@ -107,7 +107,7 @@ SELECT * FROM pgml.train(
     y_column_name => '<name of the column containing the y target values>',
     algorithm => 'linear', -- optional algorithm name
     hyperparams => '{}', -- optional params to pass on
-    test_size => 0.1, -- optional, default 10% test sample
+    test_size => 0.25, -- optional, default 25% test sample
     test_sampling => 'random', -- optional strategy
 );
 ```
@@ -381,7 +381,7 @@ The two most important functions the framework provides are:
 	search TEXT DEFAULT NULL,                   -- hyperparam tuning, 'grid' or 'random'
 	search_params JSONB DEFAULT '{}'::JSONB,    -- hyperparam search space
 	search_args JSONB DEFAULT '{}'::JSONB,      -- hyperparam options
-	test_size REAL DEFAULT 0.1,                 -- fraction of the data for the test set
+	test_size REAL DEFAULT 0.25,                -- fraction of the data for the test set
 	test_sampling TEXT DEFAULT 'random'         -- 'random', 'first' or 'last'  
 )
 ```
