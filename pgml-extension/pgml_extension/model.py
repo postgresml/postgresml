@@ -17,6 +17,9 @@ from sklearn.metrics import (
     f1_score,
     precision_score,
     recall_score,
+    roc_auc_score,
+    accuracy_score,
+    log_loss
 )
 
 import pickle
@@ -682,6 +685,11 @@ class Model(object):
 
         # Test
         y_pred = self.algorithm.predict(X_test)
+        if hasattr(self.algorithm, "predict_proba"):
+            y_prob = self.algorithm.predict_proba(X_test)
+            y_test = flatten(y_test)
+        else:
+            y_prob = None
         if self.project.objective == "regression":
             metrics["mean_squared_error"] = mean_squared_error(y_test, y_pred)
             metrics["r2"] = r2_score(y_test, y_pred)
@@ -689,6 +697,10 @@ class Model(object):
             metrics["f1"] = f1_score(y_test, y_pred, average="weighted")
             metrics["precision"] = precision_score(y_test, y_pred, average="weighted")
             metrics["recall"] = recall_score(y_test, y_pred, average="weighted")
+            metrics["accuracy"] = accuracy_score(y_test, y_pred)
+            if y_prob is not None:
+                metrics["log_loss"] = log_loss(y_test, y_prob)
+                metrics["roc_auc"] = roc_auc_score(y_test, y_prob, average="weighted", multi_class="ovo")
 
         # Save the model
         self.__dict__ = dict(
