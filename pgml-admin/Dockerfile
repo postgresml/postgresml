@@ -1,11 +1,10 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 MAINTAINER docker@postgresml.com
 
-RUN apt-get dist-upgrade
 RUN apt-get update
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-RUN apt-get install -y python3 python3-pip libpq-dev curl postgresql-client-12 tzdata
+RUN apt-get install -y python3 python3-pip libpq-dev curl postgresql-client-14 tzdata
 
 COPY requirements.txt /app/requirements.txt
 WORKDIR /app
