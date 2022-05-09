@@ -40,7 +40,7 @@ CREATE OR REPLACE FUNCTION pgml.train(
 	search_params JSONB DEFAULT '{}'::JSONB,    -- hyperparam search space
 	search_args JSONB DEFAULT '{}'::JSONB,      -- hyperparam options
 	test_size REAL DEFAULT 0.25,                -- fraction of the data for the test set
-	test_sampling TEXT DEFAULT 'random'         -- 'random', 'first' or 'last'  
+	test_sampling TEXT DEFAULT 'random'         -- 'random', 'first' or 'last'
 )
 RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT, status TEXT)
 AS $$
