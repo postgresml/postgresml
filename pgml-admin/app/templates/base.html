@@ -9,6 +9,7 @@
 
         <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
         <link rel="stylesheet" href="{% static 'css/base.css' %}">
+        <link rel="stylesheet" href="{% static 'css/new.css' %}">
         {% if darkmode %}<link rel="stylesheet" href="{% static 'css/darkmode.css' %}">{% endif %}
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,9 +32,11 @@
         <script type="module-shim">
             import { Application } from '@hotwired/stimulus'
             import { Autocomplete } from '/static/js/controllers/stimulus-autocomplete.js'
+            import { default as NewProject } from '/static/js/controllers/new-project.js'
 
             const application = Application.start()
             application.register('autocomplete', Autocomplete)
+            application.register('new-project', NewProject)
         </script>
       
         <title>{% if title %}{{title}}{% endif %}{% if title is None or "PostgresML" not in title %}{% if title is not None %} - {% endif %}PostgresML{% endif %}</title>

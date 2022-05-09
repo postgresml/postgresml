@@ -1,7 +1,41 @@
 {% extends "base.html" %}
 
 {% block main %}
-<section>
-  <h1><span class="material-symbols-outlined">apps</span>Projects</h1> 
-</section>
+<div data-controller="new-project">
+  <section>
+    <h1><span class="material-symbols-outlined">apps</span>Projects</h1> 
+  </section>
+
+  <section>
+    <div class="progress-bar">
+      <div class="progress-bar-loading" data-new-project-target="progressBar">
+        <div class="progress-bar-progress" data-new-project-target="progressBarAmount">0%</div>
+      </div>
+    </div>
+  </section>
+
+  <section data-new-project-target="step">
+    <h2>Project name</h2>
+    <input type="text" name="name" placeholder="New unique project name" size="50" />
+
+    <div class="button-container">
+      <button class="next" data-action="click->new-project#nextStep">Next</button>
+    </div>
+  </section>
+
+  <section data-new-project-target="step" class="hidden">
+    <h2>Data source</h2>
+    <div class="input-container">
+      <input type="text" name="name" placeholder="Table or view name" size="50" data-action="input->new-project#checkDataSource" />
+      <span class="material-symbols-outlined" data-new-project-target="tableStatus"></span>
+    </div>
+
+    <div data-new-project-target="sample" style="margin-top: 25px;"></div>
+
+    <div class="button-container">
+      <button class="next" data-action="click->new-project#nextStep">Next</button>
+      <button class="next" data-action="click->new-project#previousStep">Back</button>
+    </div>
+  </section>
+</div>
 {% endblock %}

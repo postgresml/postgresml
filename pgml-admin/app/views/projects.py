@@ -4,7 +4,13 @@ from collections import namedtuple
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
+from django.db import connection
+
+# DRF
 from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.decorators import action
 
 from app.models import Project
 from app.serializers import ProjectSerializer
@@ -65,3 +71,79 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
 class NewProjectView(TemplateView):
     template_name = "projects/new.html"
+
+
+class TableView(viewsets.ViewSet):
+    """View handling table/view metadata."""
+    permission_classes = []
+
+    def list(self, request):
+        if "table_name" not in request.GET:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        table_name = request.GET["table_name"]
+
+        if "." in table_name:
+            schema_name, table_name = tuple(table_name.split("."))
+        else:
+            schema_name, table_name = "public", table_name
+
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT table_schema, table_name
+                FROM information_schema.tables
+                WHERE table_schema = %s
+                AND table_name = %s
+            """, [schema_name, table_name])
+
+            result = cursor.fetchone()
+
+        if result:
+            return Response(data={
+                "table_name": table_name,
+                "table_schema": schema_name,
+            })
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False)
+    def sample(self, request):
+        if "table_name" not in request.GET:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        table_name = request.GET["table_name"]
+
+        if "." in table_name:
+            schema_name, table_name = tuple(table_name.split("."))
+        else:
+            schema_name, table_name = "public", table_name
+
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT table_schema, table_name
+                FROM information_schema.tables
+                WHERE table_schema = %s
+                AND table_name = %s
+            """, [schema_name, table_name])
+
+            result = cursor.fetchone()
+
+        if not result:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        # No SQL injections
+        schema_name, table_name = result[0], result[1]
+
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                SELECT * FROM
+                {schema_name}.{table_name}
+                LIMIT 10
+            """)
+
+            result = cursor.fetchall()
+
+            return render(request, "projects/sample.html", {
+                "columns": [desc[0] for desc in cursor.description],
+                "rows": result,
+            })
