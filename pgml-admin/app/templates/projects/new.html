@@ -3,10 +3,10 @@
 {% block main %}
 <div data-controller="new-project">
   <section>
-    <h1><span class="material-symbols-outlined">apps</span>Projects</h1> 
+    <h1><span class="material-symbols-outlined">apps</span>New project</h1> 
   </section>
 
-  <section>
+  <section class="hidden">
     <div class="progress-bar">
       <div class="progress-bar-loading" data-new-project-target="progressBar">
         <div class="progress-bar-progress" data-new-project-target="progressBarAmount">0%</div>
@@ -16,10 +16,13 @@
 
   <section data-new-project-target="step" data-step-name="project-name">
     <h2>Project name</h2>
-    <input type="text" name="name" placeholder="New unique project name" size="50" data-action="input->new-project#checkProjectName" />
+    <div class="input-container">
+      <input type="text" name="name" placeholder="New unique project name" size="50" data-action="input->new-project#checkProjectName" />
+      <span class="material-symbols-outlined" data-new-project-target="projectStatus"></span>
+    </div>
 
     <div class="button-container">
-      <button class="next" data-action="click->new-project#nextStep">Next</button>
+      <button class="next" data-action="click->new-project#nextStep" data-new-project-target="projectNameNext" disabled>Next</button>
     </div>
   </section>
 
@@ -33,7 +36,7 @@
     <div data-new-project-target="sample" style="margin-top: 25px;"></div>
 
     <div class="button-container">
-      <button class="next" data-action="click->new-project#nextStep">Next</button>
+      <button class="next" data-action="click->new-project#nextStep" data-new-project-target="dataSourceNext" disabled>Next</button>
       <button class="next" data-action="click->new-project#previousStep">Back</button>
     </div>
   </section>
@@ -41,7 +44,7 @@
   <section data-new-project-target="step" class="hidden" data-step-name="target">
     <h2>Target</h2>
 
-    <ol data-new-project-target="trainingLabel" class="object_list"></ol>
+    <ol data-new-project-target="trainingLabel" class="object_list snapshot_list"></ol>
 
     <div class="button-container">
       <button class="next" data-action="click->new-project#nextStep">Next</button>

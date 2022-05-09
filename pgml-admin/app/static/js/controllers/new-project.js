@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-    static targets = ["step", "progressBar", "progressBarAmount", "sample", "tableStatus", "trainingLabel"];
+    static targets = ["step", "progressBar", "progressBarAmount", "sample", "tableStatus", "dataSourceNext", "projectStatus", "projectNameNext", "trainingLabel"];
 
     initialize() {
         this.index = 0
@@ -34,8 +34,11 @@ export default class extends Controller {
                 this.renderSample()
                 this.renderTarget()
             }
-            else
+            else {
                 this.tableName = null
+                this.sampleTarget.innerHTML = ""
+                this.trainingLabelTarget.innerHTML = ""
+              }
             this.renderTableStatus()
         })
         .catch(err => {
@@ -46,7 +49,18 @@ export default class extends Controller {
 
     checkProjectName(event) {
       let projectName = event.target.value
-      this.projectName = projectName
+
+      fetch(`/api/projects/?name=${projectName}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.length > 0) {
+          this.projectName = null
+        } else {
+          this.projectName = projectName
+        }
+
+        this.renderProjectStatus()
+      })
     }
 
     renderTableStatus() {
@@ -54,12 +68,28 @@ export default class extends Controller {
             this.tableStatusTarget.innerHTML = "done"
             this.tableStatusTarget.classList.add("ok")
             this.tableStatusTarget.classList.remove("error")
+            this.dataSourceNextTarget.disabled = false
         } else {
             this.tableStatusTarget.innerHTML = "close"
             this.tableStatusTarget.classList.add("error")
             this.tableStatusTarget.classList.remove("ok")
+            this.dataSourceNextTarget.disabled = true
         }
         
+    }
+
+    renderProjectStatus() {
+      if (this.projectName) {
+            this.projectStatusTarget.innerHTML = "done"
+            this.projectStatusTarget.classList.add("ok")
+            this.projectStatusTarget.classList.remove("error")
+            this.projectNameNextTarget.disabled = false
+        } else {
+            this.projectStatusTarget.innerHTML = "close"
+            this.projectStatusTarget.classList.add("error")
+            this.projectStatusTarget.classList.remove("ok")
+            this.projectNameNextTarget.disabled = true
+        }
     }
 
     renderSample() {

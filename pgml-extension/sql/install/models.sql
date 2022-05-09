@@ -27,6 +27,23 @@ $$ LANGUAGE plpython3u;
 
 
 ---
+--- Snapshot a table or view
+---
+CREATE OR REPLACE FUNCTION pgml.snapshot(
+	relation_name TEXT DEFAULT NULL,
+	y_column_name TEXT DEFAULT NULL,
+	test_size REAL DEFAULT 0.25,
+	test_sampling TEXT DEFAULT 'random'
+)
+RETURNS TABLE (id TEXT)
+AS $$
+	from pgml_extension.model import snapshot
+	snap = snapshot(relation_name, [y_column_name], test_size, test_sampling)
+	return [snap.id,]
+$$ LANGUAGE plpython3u;
+
+
+---
 --- Train a model
 ---
 CREATE OR REPLACE FUNCTION pgml.train(
