@@ -402,6 +402,56 @@ class Model(object):
     """
 
     @classmethod
+    def algorithm_from_name_and_objective(name: str, objective: str):
+        return {
+            "linear_regression": sklearn.linear_model.LinearRegression,
+            "linear_classification": sklearn.linear_model.LogisticRegression,
+            "ridge_regression": sklearn.linear_model.Ridge,
+            "ridge_classification": sklearn.linear_model.RidgeClassifier,
+            "lasso_regression": sklearn.linear_model.Lasso,
+            "elastic_net_regression": sklearn.linear_model.ElasticNet,
+            "least_angle_regression": sklearn.linear_model.Lars,
+            "lasso_least_angle_regression": sklearn.linear_model.LassoLars,
+            "orthoganl_matching_pursuit_regression": sklearn.linear_model.OrthogonalMatchingPursuit,
+            "bayesian_ridge_regression": sklearn.linear_model.BayesianRidge,
+            "automatic_relevance_determination_regression": sklearn.linear_model.ARDRegression,
+            "stochastic_gradient_descent_regression": sklearn.linear_model.SGDRegressor,
+            "stochastic_gradient_descent_classification": sklearn.linear_model.SGDClassifier,
+            "perceptron_classification": sklearn.linear_model.Perceptron,
+            "passive_aggressive_regression": sklearn.linear_model.PassiveAggressiveRegressor,
+            "passive_aggressive_classification": sklearn.linear_model.PassiveAggressiveClassifier,
+            "ransac_regression": sklearn.linear_model.RANSACRegressor,
+            "theil_sen_regression": sklearn.linear_model.TheilSenRegressor,
+            "huber_regression": sklearn.linear_model.HuberRegressor,
+            "quantile_regression": sklearn.linear_model.QuantileRegressor,
+            "kernel_ridge_regression": sklearn.kernel_ridge.KernelRidge,
+            "gaussian_process_regression": sklearn.gaussian_process.GaussianProcessRegressor,
+            "gaussian_process_classification": sklearn.gaussian_process.GaussianProcessClassifier,
+            "svm_regression": sklearn.svm.SVR,
+            "svm_classification": sklearn.svm.SVC,
+            "nu_svm_regression": sklearn.svm.NuSVR,
+            "nu_svm_classification": sklearn.svm.NuSVC,
+            "linear_svm_regression": sklearn.svm.LinearSVR,
+            "linear_svm_classification": sklearn.svm.LinearSVC,
+            "ada_boost_regression": sklearn.ensemble.AdaBoostRegressor,
+            "ada_boost_classification": sklearn.ensemble.AdaBoostClassifier,
+            "bagging_regression": sklearn.ensemble.BaggingRegressor,
+            "bagging_classification": sklearn.ensemble.BaggingClassifier,
+            "extra_trees_regression": sklearn.ensemble.ExtraTreesRegressor,
+            "extra_trees_classification": sklearn.ensemble.ExtraTreesClassifier,
+            "gradient_boosting_trees_regression": sklearn.ensemble.GradientBoostingRegressor,
+            "gradient_boosting_trees_classification": sklearn.ensemble.GradientBoostingClassifier,
+            "hist_gradient_boosting_regression": sklearn.ensemble.HistGradientBoostingRegressor,
+            "hist_gradient_boosting_classification": sklearn.ensemble.HistGradientBoostingClassifier,
+            "random_forest_regression": sklearn.ensemble.RandomForestRegressor,
+            "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
+            "xgboost_regression": xgb.XGBRegressor,
+            "xgboost_classification": xgb.XGBClassifier,
+            "xgboost_random_forest_regression": xgb.XGBRFRegressor,
+            "xgboost_random_forest_classification": xgb.XGBRFClassifier,
+        }[name + "_" + objective]
+
+    @classmethod
     def create(
         cls,
         project: Project,
@@ -579,53 +629,8 @@ class Model(object):
             if self.pickle is not None:
                 self._algorithm = pickle.loads(self.pickle)
             else:
-                self._algorithm = {
-                    "linear_regression": sklearn.linear_model.LinearRegression,
-                    "linear_classification": sklearn.linear_model.LogisticRegression,
-                    "ridge_regression": sklearn.linear_model.Ridge,
-                    "ridge_classification": sklearn.linear_model.RidgeClassifier,
-                    "lasso_regression": sklearn.linear_model.Lasso,
-                    "elastic_net_regression": sklearn.linear_model.ElasticNet,
-                    "least_angle_regression": sklearn.linear_model.Lars,
-                    "lasso_least_angle_regression": sklearn.linear_model.LassoLars,
-                    "orthoganl_matching_pursuit_regression": sklearn.linear_model.OrthogonalMatchingPursuit,
-                    "bayesian_ridge_regression": sklearn.linear_model.BayesianRidge,
-                    "automatic_relevance_determination_regression": sklearn.linear_model.ARDRegression,
-                    "stochastic_gradient_descent_regression": sklearn.linear_model.SGDRegressor,
-                    "stochastic_gradient_descent_classification": sklearn.linear_model.SGDClassifier,
-                    "perceptron_classification": sklearn.linear_model.Perceptron,
-                    "passive_aggressive_regression": sklearn.linear_model.PassiveAggressiveRegressor,
-                    "passive_aggressive_classification": sklearn.linear_model.PassiveAggressiveClassifier,
-                    "ransac_regression": sklearn.linear_model.RANSACRegressor,
-                    "theil_sen_regression": sklearn.linear_model.TheilSenRegressor,
-                    "huber_regression": sklearn.linear_model.HuberRegressor,
-                    "quantile_regression": sklearn.linear_model.QuantileRegressor,
-                    "kernel_ridge_regression": sklearn.kernel_ridge.KernelRidge,
-                    "gaussian_process_regression": sklearn.gaussian_process.GaussianProcessRegressor,
-                    "gaussian_process_classification": sklearn.gaussian_process.GaussianProcessClassifier,
-                    "svm_regression": sklearn.svm.SVR,
-                    "svm_classification": sklearn.svm.SVC,
-                    "nu_svm_regression": sklearn.svm.NuSVR,
-                    "nu_svm_classification": sklearn.svm.NuSVC,
-                    "linear_svm_regression": sklearn.svm.LinearSVR,
-                    "linear_svm_classification": sklearn.svm.LinearSVC,
-                    "ada_boost_regression": sklearn.ensemble.AdaBoostRegressor,
-                    "ada_boost_classification": sklearn.ensemble.AdaBoostClassifier,
-                    "bagging_regression": sklearn.ensemble.BaggingRegressor,
-                    "bagging_classification": sklearn.ensemble.BaggingClassifier,
-                    "extra_trees_regression": sklearn.ensemble.ExtraTreesRegressor,
-                    "extra_trees_classification": sklearn.ensemble.ExtraTreesClassifier,
-                    "gradient_boosting_trees_regression": sklearn.ensemble.GradientBoostingRegressor,
-                    "gradient_boosting_trees_classification": sklearn.ensemble.GradientBoostingClassifier,
-                    "hist_gradient_boosting_regression": sklearn.ensemble.HistGradientBoostingRegressor,
-                    "hist_gradient_boosting_classification": sklearn.ensemble.HistGradientBoostingClassifier,
-                    "random_forest_regression": sklearn.ensemble.RandomForestRegressor,
-                    "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
-                    "xgboost_regression": xgb.XGBRegressor,
-                    "xgboost_classification": xgb.XGBClassifier,
-                    "xgboost_random_forest_regression": xgb.XGBRFRegressor,
-                    "xgboost_random_forest_classification": xgb.XGBRFClassifier,
-                }[self.algorithm_name + "_" + self.project.objective](**self.hyperparams)
+                algorithm = Model.algorithm_from_name_and_objective(self.algorithm_name, self.project.objective)
+                self._algorithm = algorithm(**self.hyperparams)
                 if len(self.snapshot.y_column_name) > 1:
                     if self.project.objective == "regression" and self.algorithm_name in [
                         "bayesian_ridge",
@@ -804,8 +809,12 @@ def train(
     # Model
     if algorithm_name is None:
         algorithm_name = "linear"
-    if not hyperparams.get("random_state"):
+
+    # Default repeatable random state when possible
+    algorithm = Model.algorithm_from_name_and_objective(algorithm_name, objective)
+    if "random_state" in algorithm.get_params() and "random_state" not in hyperparams:
         hyperparams["random_state"] = 0
+
     model = Model.create(project, snapshot, algorithm_name, hyperparams, search, search_params, search_args)
     model.fit(snapshot)
 

@@ -7,6 +7,7 @@ SELECT pgml.load_dataset('iris');
 SELECT * FROM pgml.iris LIMIT 10;
 
 -- snapshots are automatically random ordered at creation, so this view is just for fun
+DROP VIEW IF EXISTS iris_view;
 CREATE VIEW iris_view AS SELECT * FROM pgml.iris ORDER BY random() LIMIT 100;
 
 -- train a simple model to classify the data
