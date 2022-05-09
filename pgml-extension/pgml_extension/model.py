@@ -803,6 +803,8 @@ def train(
     # Model
     if algorithm_name is None:
         algorithm_name = "linear"
+    if not hyperparams.get("random_state"):
+        hyperparams["random_state"] = 0
     model = Model.create(project, snapshot, algorithm_name, hyperparams, search, search_params, search_args)
     model.fit(snapshot)
 
