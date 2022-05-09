@@ -66,3 +66,7 @@ button:hover {
 .hidden {
     display: none;
 }
+
+.object_list a.selected {
+    background-color: var(--gray-8);
+}

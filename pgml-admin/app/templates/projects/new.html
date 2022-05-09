@@ -14,16 +14,16 @@
     </div>
   </section>
 
-  <section data-new-project-target="step">
+  <section data-new-project-target="step" data-step-name="project-name">
     <h2>Project name</h2>
-    <input type="text" name="name" placeholder="New unique project name" size="50" />
+    <input type="text" name="name" placeholder="New unique project name" size="50" data-action="input->new-project#checkProjectName" />
 
     <div class="button-container">
       <button class="next" data-action="click->new-project#nextStep">Next</button>
     </div>
   </section>
 
-  <section data-new-project-target="step" class="hidden">
+  <section data-new-project-target="step" class="hidden" data-step-name="data-source">
     <h2>Data source</h2>
     <div class="input-container">
       <input type="text" name="name" placeholder="Table or view name" size="50" data-action="input->new-project#checkDataSource" />
@@ -34,6 +34,26 @@
 
     <div class="button-container">
       <button class="next" data-action="click->new-project#nextStep">Next</button>
+      <button class="next" data-action="click->new-project#previousStep">Back</button>
+    </div>
+  </section>
+
+  <section data-new-project-target="step" class="hidden" data-step-name="target">
+    <h2>Target</h2>
+
+    <ol data-new-project-target="trainingLabel" class="object_list"></ol>
+
+    <div class="button-container">
+      <button class="next" data-action="click->new-project#nextStep">Next</button>
+      <button class="next" data-action="click->new-project#previousStep">Back</button>
+    </div>
+  </section>
+
+  <section data-new-project-target="step" class="hidden" data-step-name="algorithm">
+    <h2>Algorithms</h2>
+
+    <div class="button-container">
+      <button class="next" data-action="click->new-project#nextStep">Train!</button>
       <button class="next" data-action="click->new-project#previousStep">Back</button>
     </div>
   </section>

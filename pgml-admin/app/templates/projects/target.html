@@ -1,0 +1,7 @@
+{% for column in columns %}
+<li>
+	<a href="#" data-action="click->new-project#selectTarget" data-column-name="{{ column.name }}">
+		<span>{{ column.name }}</span><span>{{ column.data_type }}</span>
+	</a>
+</li>
+{% endfor %}

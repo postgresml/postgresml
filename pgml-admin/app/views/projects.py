@@ -77,6 +77,25 @@ class TableView(viewsets.ViewSet):
     """View handling table/view metadata."""
     permission_classes = []
 
+    @staticmethod
+    def _get_table(table_name):
+
+        if "." in table_name:
+            schema_name, table_name = tuple(table_name.split("."))
+        else:
+            schema_name, table_name = "public", table_name
+
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT table_schema, table_name
+                FROM information_schema.tables
+                WHERE table_schema = %s
+                AND table_name = %s
+            """, [schema_name, table_name])
+
+            result = cursor.fetchone()
+        return result[0], result[1]
+
     def list(self, request):
         if "table_name" not in request.GET:
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -146,4 +165,30 @@ class TableView(viewsets.ViewSet):
             return render(request, "projects/sample.html", {
                 "columns": [desc[0] for desc in cursor.description],
                 "rows": result,
+            })
+
+    @action(detail=False)
+    def columns(self, request):
+        if "table_name" not in request.GET:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        schema_name, table_name = TableView._get_table(request.GET["table_name"])
+
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                SELECT * FROM
+                {schema_name}.{table_name}
+                LIMIT 1
+            """)
+
+            result = cursor.fetchone()
+            names = [desc[0] for desc in cursor.description]
+
+            return render(request, "projects/target.html", {
+                "columns": [
+                    {
+                        "name": names[i],
+                        "data_type": type(result[i]).__name__
+                    } for i in range(len(result))
+                ]
             })

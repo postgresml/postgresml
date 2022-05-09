@@ -1,11 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-    static targets = ["step", "progressBar", "progressBarAmount", "sample", "tableStatus"];
+    static targets = ["step", "progressBar", "progressBarAmount", "sample", "tableStatus", "trainingLabel"];
 
     initialize() {
         this.index = 0
-        // this.renderProgressBar()
+        this.targetNames = new Set()
     }
 
     renderSteps() {
@@ -32,6 +32,7 @@ export default class extends Controller {
             if (res.ok) {
                 this.tableName = tableName
                 this.renderSample()
+                this.renderTarget()
             }
             else
                 this.tableName = null
@@ -41,6 +42,11 @@ export default class extends Controller {
             this.tableName = null
             this.renderTableStatus()
         })
+    }
+
+    checkProjectName(event) {
+      let projectName = event.target.value
+      this.projectName = projectName
     }
 
     renderTableStatus() {
@@ -60,6 +66,25 @@ export default class extends Controller {
         fetch(`/api/tables/sample/?table_name=${this.tableName}`)
         .then(res => res.text())
         .then(html => this.sampleTarget.innerHTML = html)
+    }
+
+    renderTarget() {
+      fetch(`/api/tables/columns/?table_name=${this.tableName}`)
+      .then(res => res.text())
+      .then(html => this.trainingLabelTarget.innerHTML = html)
+    }
+
+    selectTarget(event) {
+      event.preventDefault()
+      let targetName = event.currentTarget.dataset.columnName
+
+      if (event.currentTarget.classList.contains("selected")) {
+        this.targetNames.delete(targetName)
+        event.currentTarget.classList.remove("selected")
+      } else {
+        this.targetNames.add(targetName)
+        event.currentTarget.classList.add("selected")
+      }
     }
 
     nextStep() {
