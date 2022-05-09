@@ -16,6 +16,7 @@ urlpatterns = [
     path("models/", models.ModelListView.as_view(), name="models"),
     path("models/<int:pk>", models.ModelView.as_view(), name="model"),
     path("projects/", projects.index, name="projects"),
+    path("projects/new", projects.NewProjectView.as_view(), name="projects-new"),
     path("projects/<int:pk>", projects.ProjectView.as_view(), name="project"),
     path("snapshots/", snapshots.index, name="snapshots"),
     path("snapshots/<int:id>", snapshots.snapshot, name="snapshot"),

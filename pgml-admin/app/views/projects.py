@@ -3,6 +3,7 @@ from collections import namedtuple
 
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
+from django.views.generic.base import TemplateView
 from rest_framework import viewsets
 
 from app.models import Project
@@ -60,3 +61,7 @@ class ProjectView(DetailView):
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
+
+
+class NewProjectView(TemplateView):
+    template_name = "projects/new.html"
