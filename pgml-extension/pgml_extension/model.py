@@ -19,7 +19,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
     accuracy_score,
-    log_loss
+    log_loss,
 )
 
 import pickle
@@ -221,13 +221,14 @@ class Snapshot(object):
                 1,
             )[0]
         )
-        plpy.execute(
-            f"""
+        sql = f"""
             CREATE TABLE pgml."snapshot_{snapshot.id}" AS 
             SELECT * FROM {snapshot.relation_name}
-            ORDER BY random();
         """
-        )
+        if snapshot.test_sampling == "random":
+            sql += "ORDER BY random()"
+        plpy.execute(sql)
+
         snapshot.analyze()
         snapshot.__dict__ = dict(
             plpy.execute(
@@ -653,7 +654,7 @@ class Model(object):
         """
         X_train, X_test, y_train, y_test = snapshot.data()
 
-        search_args = {"scoring": self.project.hyperparam_score_name, "error_score": "raise",  **self.search_args}
+        search_args = {"scoring": self.project.hyperparam_score_name, "error_score": "raise", **self.search_args}
         if self.search == "grid":
             self._algorithm = sklearn.model_selection.GridSearchCV(self.algorithm, self.search_params, **search_args)
         elif self.search == "random":
@@ -669,7 +670,7 @@ class Model(object):
 
         # Train the model
         result = self.algorithm.fit(X_train, y_train)
-        
+
         metrics = {}
         if self.search:
             self._algorithm = result.best_estimator_
@@ -680,7 +681,7 @@ class Model(object):
             metrics["search_results"] = {
                 "best_index": int(result.best_index_),
                 "n_splits": int(result.n_splits_),
-                **result.cv_results_
+                **result.cv_results_,
             }
 
         # Test
