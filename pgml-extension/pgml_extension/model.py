@@ -402,7 +402,7 @@ class Model(object):
     """
 
     @classmethod
-    def algorithm_from_name_and_objective(name: str, objective: str):
+    def algorithm_from_name_and_objective(cls, name: str, objective: str):
         return {
             "linear_regression": sklearn.linear_model.LinearRegression,
             "linear_classification": sklearn.linear_model.LogisticRegression,
@@ -812,7 +812,7 @@ def train(
 
     # Default repeatable random state when possible
     algorithm = Model.algorithm_from_name_and_objective(algorithm_name, objective)
-    if "random_state" in algorithm.get_params() and "random_state" not in hyperparams:
+    if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
         hyperparams["random_state"] = 0
 
     model = Model.create(project, snapshot, algorithm_name, hyperparams, search, search_params, search_args)
