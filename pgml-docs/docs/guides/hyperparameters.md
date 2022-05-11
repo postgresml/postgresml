@@ -63,4 +63,4 @@ As you can see from the output, a new set model has been deployed with a better 
 
 The optimal set of hyperparams is chosen for the model, and that combination is highlighted among all search candidates. The impact of each hyperparameter is measured against the key metric, as well as the training and test times. In this particular case, it's interesting that as `max_depth` increases, the "Test Score" on the key metric trends lower, so the smallest value of `max_depth` is chosen to maximize the "Test Score". Luckily, the smallest `max_depth` values also have the fastest "Fit Time", indicating that we pay less for training these higher quality models. It's a little less obvious how the different values `n_estimators` and `learning_rate` impact the test score. We may want to rerun our search and zoom in our out in the search space to get more insight.
 
-![Hyperparameter Analysis](/images/hyperparams.png) 
+![Hyperparameter Analysis](../images/hyperparams.png) 

@@ -38,7 +38,7 @@ pgml.predict (
 
 ## Making Predictions
 
-If you've already done the [training guide](/guides/training/), you can see the results of those efforts:
+If you've already done the [training guide](../guides/training/), you can see the results of those efforts:
 
 === "SQL"
 

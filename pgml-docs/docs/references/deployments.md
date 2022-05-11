@@ -1,8 +1,8 @@
 # Deployments
 
-Deployments are an artifact of calls to `pgml.deploy`. See [deployments](/guides/deployments/) for ways to create new deployments.
+Deployments are an artifact of calls to `pgml.deploy`. See [deployments](../guides/deployments/) for ways to create new deployments.
 
-![Deployment](/images/deployment.png)
+![Deployment](../images/deployment.png)
 
 ## Schema
 
