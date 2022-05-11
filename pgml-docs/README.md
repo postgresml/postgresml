@@ -42,11 +42,11 @@
     Train and deploy models to make online predictions using only SQL, with an open source extension for Postgres. Manage your projects and visualize datasets using the built in dashboard.
 </p>
 
-![PostgresML in practice](docs/images/console.png){align="center"}
+![PostgresML in practice](pgml-docs/docs/images/console.png){align="center"}
 
 The dashboard makes it easy to compare different algorithms or hyperparaters across models and datasets.
 
-[![PostgresML dashboard](docs/images/models.png)](https://demo.postgresml.org/){align="center"}
+[![PostgresML dashboard](pgml-docs/docs/images/models.png)](https://demo.postgresml.org/){align="center"}
 
 <h2 align="center">
     See it in action — <a href="https://demo.postgresml.org/" target="_blank">demo.postgresml.org</a>
@@ -71,6 +71,9 @@ Run standard analysis on your datasets to detect outliers, bimodal distributions
 
 ### Hyperparameter search
 Use either grid or random searches with cross validation on your training set to discover the most important knobs to tweak on your favorite algorithm.
+
+### SQL native vector operations
+Vector operations make working with learned emebeddings a snap, for things like nearest neighbor searches or other similarity comparisons.
 
 ### The performance of Postgres
 Since your data never leaves the database, you retain the speed, reliability and security you expect in your foundational stateful services. Leverage your existing infrastructure and expertise to deliver new capabilities.

@@ -21,19 +21,26 @@ theme:
         - sql
         - bash
     palette:
-        - scheme: default
+        - media: "(prefers-color-scheme: light)"
+          scheme: default
           primary: indigo
-          accent: indigo
+          accent: blue
           toggle:
               icon: material/toggle-switch
               name: Switch to dark mode
-        - scheme: slate
-          primary: indigo
-          accent: indigo
+        - media: "(prefers-color-scheme: dark)"
+          scheme: slate
+          primary: blue
+          accent: blue
           toggle:
               icon: material/toggle-switch-off-outline
               name: Switch to light mode
     features:
+        - navigation.instant
+        - navigation.tracking
+        - navigation.tabs
+        - navigation.sections
+        - navigation.top
         - content.code.annotate
 
 extra_css:
