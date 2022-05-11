@@ -534,9 +534,9 @@ class Model(object):
 
         if strategy == "best_score":
             if project.objective == "regression":
-                sql += f"{where}\nORDER BY models.metrics->>'mean_squared_error' DESC NULLS LAST"
+                sql += f"{where}\nORDER BY models.metrics->>'r2' DESC NULLS LAST"
             elif project.objective == "classification":
-                sql += f"{where}\nORDER BY models.metrics->>'f1' ASC NULLS LAST"
+                sql += f"{where}\nORDER BY models.metrics->>'f1' DESC NULLS LAST"
         elif strategy == "most_recent":
             sql += f"{where}\nORDER by models.created_at DESC"
         elif strategy == "rollback":

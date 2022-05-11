@@ -1,0 +1,117 @@
+site_name: PostgresML
+site_url: https://postgresml.org/
+site_description: Train and deploy models to make online predictions using
+                  only SQL, with an open source Postgres extension.
+site_author: PostrgesML Team
+
+repo_name: postgresml/postgresml
+repo_url: https://github.com/postgresml/postgresml
+edit_uri: ""
+
+theme:
+    name: material
+    favicon: images/favicon.ico
+    logo: images/logo-small.png
+    locale: en
+    font:
+        text: Roboto
+        code: Roboto Mono
+    highlightjs: true
+    hljs_languages:
+        - sql
+        - bash
+    palette:
+        - scheme: default
+          primary: indigo
+          accent: indigo
+          toggle:
+              icon: material/toggle-switch
+              name: Switch to dark mode
+        - scheme: slate
+          primary: indigo
+          accent: indigo
+          toggle:
+              icon: material/toggle-switch-off-outline
+              name: Switch to light mode
+    features:
+        - content.code.annotate
+
+extra_css:
+    - stylesheets/extra.css
+
+extra:
+    social:
+        - icon: fontawesome/brands/github
+          link: https://github.com/postgresml
+        - icon: fontawesome/brands/python
+          link: https://pypi.org/project/pgml-extension/
+
+plugins:
+    - search
+    - include-markdown
+    - minify:
+        minify_html: true
+        minify_js: true
+        minify_css: true
+        htmlmin_opts:
+            remove_comments: true
+
+markdown_extensions:
+    - abbr
+    - admonition
+    - attr_list
+    - def_list
+    - footnotes
+    - meta
+    - md_in_html
+    - toc:
+        permalink: true
+    - pymdownx.arithmatex:
+        generic: true
+    - pymdownx.betterem:
+        smart_enable: all
+    - pymdownx.caret
+    - pymdownx.details
+    - pymdownx.emoji:
+        emoji_generator: !!python/name:materialx.emoji.to_svg
+        emoji_index: !!python/name:materialx.emoji.twemoji
+    - pymdownx.highlight:
+        anchor_linenums: true
+    - pymdownx.inlinehilite
+    - pymdownx.keys
+    - pymdownx.magiclink:
+        repo_url_shorthand: true
+        user: squidfunk
+        repo: mkdocs-material
+    - pymdownx.mark
+    - pymdownx.smartsymbols
+    - pymdownx.superfences:
+    - pymdownx.tabbed:
+        alternate_style: true
+    - pymdownx.tasklist:
+        custom_checkbox: true
+    - pymdownx.tilde
+
+nav:
+    - Home: index.md
+    - Getting Started:
+        - Installation: guides/installation.md
+        - Dashboard: guides/dashboard.md
+        - Training: guides/training.md
+        - Predictions: guides/predictions.md
+        - Deployments: guides/deployments.md
+        - Hyperparameters: guides/hyperparameters.md
+        - Vectors: guides/vectors.md
+    - References:
+        - Models: references/models.md
+        - Snapshots: references/snapshots.md
+        - Projects: references/projects.md
+        - Deployments: references/deployments.md
+        - Algorithms: references/algorithms.md
+    - Developer Guide:
+        - Overview: development/overview.md
+    - About:
+        - Roadmap: about/roadmap.md
+        - Motivation: about/motivation.md
+        - FAQ: about/faq.md
+        - License: about/license.md

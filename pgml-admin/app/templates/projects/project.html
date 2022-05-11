@@ -22,7 +22,9 @@
       <li>
         <a href="{% url 'model' model.id %}">
           <span class="material-symbols-outlined">
-            {% if model.search == "grid" %}
+            {% if model.live %}
+              star
+            {% elif model.search == "grid" %}
               grid_on
             {% elif model.search == "random" %}
               shuffle

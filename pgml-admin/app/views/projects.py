@@ -15,7 +15,6 @@ from rest_framework.decorators import action
 from app.models import Project
 from app.serializers import ProjectSerializer, NewProjectSerializer
 
-
 def default_context(context):
     return {"topic": "projects", **context}
 
