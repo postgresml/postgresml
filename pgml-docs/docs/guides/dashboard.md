@@ -4,7 +4,7 @@ PostgresML comes with an app to provide visibility into models and datasets in y
 
 ## Generate example data
 
-The test suite for PostgresML is composed by running the sql files in the [examples directory](https://github.com/postgresml/postgresml/tree/master/pgml-extension/examples). You can use these examples to populate your local installation with some seed data. The test suite only operates on data in the `pgml` schema, and is otherwise isolated from the rest of the Postgres cluster.
+The test suite for PostgresML is composed by running the sql files in the [examples directory](https://github.com/postgresml/postgresml/tree/master/pgml-extension/examples). You can use these examples to populate your local installation with some seed data. The test suite only operates on the `pgml` schema, and is otherwise isolated from the rest of the Postgres cluster.
 
 ```bash
 $ psql -f pgml-extension/sql/test.sql -P pager postgres://postgres@127.0.0.1:5433/pgml_development
