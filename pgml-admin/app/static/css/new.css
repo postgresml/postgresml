@@ -59,12 +59,15 @@ button, a[role=button] {
     color: initial;
 }
 
-button:hover, a[role="button"]:hover {
+button, a[role="button"] {
     cursor: pointer;
+}
+
+button:hover, a[role="button"]:hover {
     background-color: var(--gray-7);
 }
 
-button[disabled]:hover, a[disabled]:hover {
+button[disabled], button:disabled, a[disabled], a:disabled {
     cursor: not-allowed;
 }
 
@@ -73,5 +76,33 @@ button[disabled]:hover, a[disabled]:hover {
 }
 
 .object_list a.selected {
+    background-color: var(--gray-8);
+}
+
+.algorithm_list, .objective_list {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.objective_list {
+    justify-content: center;
+}
+
+.algorithm_list li, .objective_list li {
+    display: flex;
+}
+
+.algorithm_list a, .objective_list a {
+    border: 1px solid var(--gray-8);
+    padding: 10px 15px;
+    margin: 10px 15px; 
+    color: var(--gray-3);
+}
+
+.algorithm_list a.selected {
+    background-color: var(--gray-8);
+}
+
+.objective_list a.selected {
     background-color: var(--gray-8);
 }

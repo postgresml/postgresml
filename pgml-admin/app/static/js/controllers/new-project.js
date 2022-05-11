@@ -1,11 +1,27 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-    static targets = ["step", "progressBar", "progressBarAmount", "sample", "tableStatus", "dataSourceNext", "projectStatus", "projectNameNext", "trainingLabel"];
+    static targets = [
+      "step",
+      "progressBar",
+      "progressBarAmount",
+      "sample",
+      "tableStatus",
+      "dataSourceNext",
+      "projectStatus",
+      "objective",
+      "objectiveNameNext",
+      "projectNameNext",
+      "trainingLabel",
+      "selectTargetNext",
+      "algorithmListClassification",
+      "algorithmListRegression",
+    ];
 
     initialize() {
         this.index = 0
         this.targetNames = new Set()
+        this.algorithmNames = new Set()
     }
 
     renderSteps() {
@@ -63,6 +79,42 @@ export default class extends Controller {
       })
     }
 
+    selectObjective(event) {
+      event.preventDefault()
+
+      this.objectiveName = event.currentTarget.dataset.objective
+
+      if (this.objectiveName  === "regression") {
+        this.algorithmListClassificationTarget.classList.add("hidden")
+        this.algorithmListRegressionTarget.classList.remove("hidden")
+      } else if (this.objectiveName  == "classification") {
+        this.algorithmListClassificationTarget.classList.remove("hidden")
+        this.algorithmListRegressionTarget.classList.add("hidden")
+      }
+
+      this.objectiveTargets.forEach(objective => {
+        objective.classList.remove("selected")
+      })
+
+      event.currentTarget.classList.add("selected")
+      this.objectiveNameNextTarget.disabled = false
+    }
+
+    selectAlgorithm(event) {
+      event.preventDefault()
+
+      let algorithmName = event.currentTarget.dataset.algorithm
+
+      if (event.currentTarget.classList.contains("selected")) {
+        event.currentTarget.classList.remove("selected")
+        this.algorithmNames.delete(algorithmName)
+      } else {
+        event.currentTarget.classList.add("selected")
+        this.algorithmNames.add(algorithmName)
+      }
+
+    }
+
     renderTableStatus() {
         if (this.tableName) {
             this.tableStatusTarget.innerHTML = "done"
@@ -115,6 +167,44 @@ export default class extends Controller {
         this.targetNames.add(targetName)
         event.currentTarget.classList.add("selected")
       }
+
+      if (this.targetNames.size > 0)
+        this.selectTargetNextTarget.disabled = false
+      else
+        this.selectTargetNextTarget.disabled = true
+    }
+
+    createProject(event) {
+      event.preventDefault()
+
+      const request = {
+        "project_name": this.projectName,
+        "objective": this.objectiveName,
+        "relation_name": this.tableName,
+        "algorithms": Array.from(this.algorithmNames),
+        "targets": Array.from(this.targetNames),
+      }
+
+      fetch(`/api/projects/train/`, {
+        method: 'POST',
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        redirect: 'follow',
+        body: JSON.stringify(request),
+      })
+      .then(res => {
+        if (res.ok) {
+          return res.json()
+        } else {
+          alert('Failed to train project');
+          throw Error('Failed to train project')
+        }
+      })
+      .then(json => {
+        window.location.assign(`/projects/${json.id}`);
+      })
     }
 
     nextStep() {

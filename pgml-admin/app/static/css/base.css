@@ -57,7 +57,7 @@ footer, header, hgroup, menu, nav, section {
 }
 body {
 	line-height: 1;
-    height: 100vh;
+    min-height: 100vh;
 }
 ol, ul {
 	list-style: none;

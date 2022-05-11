@@ -29,7 +29,12 @@
   <section data-new-project-target="step" class="hidden" data-step-name="data-source">
     <h2>Data source</h2>
     <div class="input-container">
-      <input type="text" name="name" placeholder="Table or view name" size="50" data-action="input->new-project#checkDataSource" />
+      <input type="text" name="name" placeholder="Table or view name" size="50" data-action="input->new-project#checkDataSource" list="table-list" />
+      <datalist id="table-list">
+        {% for table in tables %}
+        <option value="{{ table }}">
+          {% endfor %}
+      </datalist>
       <span class="material-symbols-outlined" data-new-project-target="tableStatus"></span>
     </div>
 
@@ -47,16 +52,86 @@
     <ol data-new-project-target="trainingLabel" class="object_list snapshot_list"></ol>
 
     <div class="button-container">
-      <button class="next" data-action="click->new-project#nextStep">Next</button>
+      <button class="next" data-action="click->new-project#nextStep" data-new-project-target="selectTargetNext" disabled>Next</button>
+      <button class="next" data-action="click->new-project#previousStep">Back</button>
+    </div>
+  </section>
+
+  <section data-new-project-target="step" class="hidden" data-step-name="algorithm-type">
+    <h2>Objective</h2>
+    <ol class="objective_list">
+      <li>
+        <a href="#" data-action="click->new-project#selectObjective" data-new-project-target="objective" data-objective="regression">Regression</a>
+      </li>
+      <li>
+        <a href="#" data-action="click->new-project#selectObjective" data-new-project-target="objective" data-objective="classification">Classification</a>
+      </li>
+    </ol>
+
+    <div class="button-container">
+      <button class="next" data-action="click->new-project#nextStep" data-new-project-target="objectiveNameNext" disabled>Next</button>
       <button class="next" data-action="click->new-project#previousStep">Back</button>
     </div>
   </section>
 
   <section data-new-project-target="step" class="hidden" data-step-name="algorithm">
     <h2>Algorithms</h2>
+    <div style="margin-top: 25px" data-new-project-target="algorithmListRegression">
+      <ol class="algorithm_list">
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="linear"><span>LinearRegression</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="ridge"><span>Ridge</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="lasso"><span>Lasso</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="elastic_net"><span>ElasticNet</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="least_angle"><span>Lars</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="lasso_least_angle"><span>LassoLars</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="orthoganl_matching_pursuit"><span>OrthogonalMatchingPursuit</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="bayesian_ridge"><span>BayesianRidge</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="automatic_relevance_determination"><span>ARDRegression</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="stochastic_gradient_descent"><span>SGDRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="passive_aggressive"><span>PassiveAggressiveRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="ransac"><span>RANSACRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="theil_sen"><span>TheilSenRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="huber"><span>HuberRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="quantile"><span>QuantileRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="kernel_ridge"><span>KernelRidge</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="gaussian_process"><span>GaussianProcessRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="svm"><span>SVR</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="nu_svm"><span>NuSVR</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="linear_svm"><span>LinearSVR</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="ada_boost"><span>AdaBoostRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="bagging"><span>BaggingRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="extra_trees"><span>ExtraTreesRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="gradient_boosting_trees"><span>GradientBoostingRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="hist_gradient_boosting"><span>HistGradientBoostingRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="random_forest"><span>RandomForestRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="xgboost"><span>XGBRegressor</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="xgboost_random_forest"><span>XGBRFRegressor</span></a></li>
+      </ol>
+    </div>
 
+    <div style="margin-top: 25px" data-new-project-target="algorithmListClassification">
+      <ol class="algorithm_list">
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="linear"><span>LogisticRegression</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="ridge"><span>RidgeClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="stochastic_gradient_descent"><span>SGDClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="perceptron"><span>Perceptron</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="passive_aggressive"><span>PassiveAggressiveClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="gaussian_process"><span>GaussianProcessClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="svm"><span>SVC</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="nu_svm"><span>NuSVC</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="linear_svm"><span>LinearSVC</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="ada_boost"><span>AdaBoostClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="bagging"><span>BaggingClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="extra_trees"><span>ExtraTreesClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="gradient_boosting_trees"><span>GradientBoostingClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="hist_gradient_boosting"><span>HistGradientBoostingClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="random_forest"><span>RandomForestClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="xgboost"><span>XGBClassifier</span></a></li>
+        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="xgboost_random_forest"><span>XGBRFClassifier</span></a></li>
+      </ol>
+    </div>
     <div class="button-container">
-      <button class="next" data-action="click->new-project#nextStep">Train!</button>
+      <button class="next" data-action="click->new-project#createProject">Create project</button>
       <button class="next" data-action="click->new-project#previousStep">Back</button>
     </div>
   </section>
