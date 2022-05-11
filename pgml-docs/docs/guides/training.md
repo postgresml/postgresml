@@ -36,10 +36,10 @@ Most parameters are optional other than the `project_name` which is a simple hum
 The `train` function requires an `objective` the first time a `project_name` is used. That objective is either `regression` or `classification`, which determines the relevant metrics and analysis performed for models trained toward a common goal. It also requires a `relation_name` and `y_column_name` that will be used to establish the first `Snapshot` of training and test data. By default, 25% of the data (specified by `test_size`) will be randomly sampled to measure the performance of the model after the `algorithm` has been fit to the rest. 
 
 !!! tip
-    Postgres supports named arguments for function calls, which allows you to pass only the options you need.
+    Postgres supports named arguments for function calls, which allows you to pass only the arguments you need.
 
     ```SQL
-        pgml.train("Project Name", algorithm => "xgboost")
+        pgml.train('Project Name', algorithm => 'xgboost')
     ```
 
 Future calls to `train` may restate the same `objective` for a project, or omit it, but can't change it. Projects manage their active model using the metrics relevant to a particular objective, so changing it would mean some models in the project are no longer directly comparable. In that case, it's better to start a new project.
