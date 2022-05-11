@@ -106,3 +106,40 @@ button[disabled], button:disabled, a[disabled], a:disabled {
 .objective_list a.selected {
     background-color: var(--gray-8);
 }
+
+.loader {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  position: relative;
+  animation: rotate 1s linear infinite;
+
+}
+
+.loader::before {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  inset: 0px;
+  border-radius: 50%;
+  border: 5px solid #FFF;
+  animation: prixCli pFix 2s linear infinite;
+  border-top: 6px solid black;
+}
+
+@keyframes rotate {
+  100% { transform: rotate(360deg); }
+}
+
+#loader {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 100vw;
+    background-color: black;
+    opacity: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

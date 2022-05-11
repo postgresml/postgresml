@@ -73,18 +73,18 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[], methods=["POST"])
     def train(self, request):
+        """Train a new project."""
         serializer = NewProjectSerializer(data=request.data)
         if serializer.is_valid():
             with connection.cursor() as cursor:
-                print(serializer.validated_data)
                 cursor.execute(
                     """
                     SELECT * FROM pgml.train_joint(
-                        project_name => CAST(%s AS TEXT),
-                        objective => CAST(%s AS TEXT),
-                        relation_name => CAST(%s AS TEXT),
+                        project_name => %s,
+                        objective => %s,
+                        relation_name => %s,
                         y_column_name => %s,
-                        algorithm => CAST(%s AS TEXT)
+                        algorithm => %s
                     )
                 """,
                     [

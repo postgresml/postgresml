@@ -36,7 +36,7 @@ export default class extends Controller {
     renderProgressBar() {
         let progress = Math.ceil(this.index / this.stepTargets.length * 100)
 
-        this.progressBarTarget.style = `width: ${progress > 0 ? progress : 'auto'}%;`
+        this.progressBarTarget.style = `width: ${progress > 0 ? progress : "auto"}%;`
         this.progressBarAmountTarget.innerHTML = `${progress}%`
     }
 
@@ -185,26 +185,38 @@ export default class extends Controller {
         "targets": Array.from(this.targetNames),
       }
 
+      this.createLoader()
+
       fetch(`/api/projects/train/`, {
-        method: 'POST',
-        cache: 'no-cache',
+        method: "POST",
+        cache: "no-cache",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        redirect: 'follow',
+        redirect: "follow",
         body: JSON.stringify(request),
       })
       .then(res => {
         if (res.ok) {
           return res.json()
         } else {
-          alert('Failed to train project');
-          throw Error('Failed to train project')
+          alert("Failed to train project");
+          throw Error("Failed to train project")
         }
       })
       .then(json => {
         window.location.assign(`/projects/${json.id}`);
       })
+    }
+
+    createLoader() {
+      let element = document.createElement("div")
+      element.innerHTML = `
+        <div id="loader">
+          <div class="loader"></div>
+        </div>
+      `;
+      document.body.appendChild(element)
     }
 
     nextStep() {
