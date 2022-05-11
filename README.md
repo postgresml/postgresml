@@ -1,10 +1,3 @@
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
-
 <p align="center">
   <a href="https://postgresml.org/">
     <img src="https://github.com/postgresml/postgresml.github.io/raw/main/logo-small.png" width="175" alt="PostgresML">
@@ -62,7 +55,7 @@ The dashboard makes it easy to compare different algorithms or hyperparaters acr
 <hr>
 
 ## What's in the box
-See the documentation for a complete **[list of functionality]()**.
+See the documentation for a complete **[list of functionality](https://postgresml.org/)**.
 
 ### All your favorite algorithms
 Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/) with no extra configuration.

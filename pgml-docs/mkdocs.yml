@@ -106,7 +106,7 @@ nav:
         - Models: references/models.md
         - Snapshots: references/snapshots.md
         - Projects: references/projects.md
-        - Deployments: references/snapshots.md
+        - Deployments: references/deployments.md
         - Algorithms: references/algorithms.md
     - Developer Guide:
         - Overview: development/overview.md
