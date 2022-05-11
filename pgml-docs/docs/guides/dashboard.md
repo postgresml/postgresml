@@ -16,20 +16,20 @@ Now there should be something to see in your local dashboard.
 ### Projects
 Projects organize Models that are all striving toward the same objective. They aren't much more than a name to group a collection of models. You can see the currently deployed model for each project indicated by :material-star:.
 
-![Project](/images/project.png)
+![Project](../images/project.png)
 
 ### Models
 Models are the result of training an algorithm on a Snapshot of a dataset. They record `metrics` depending on their projects objective, and are scored accordingly. Some models are the result of a hyperparameter search, and include additional analysis on the range of hyperparameters they are tested against.
 
-![Model](/images/model.png)
+![Model](../images/model.png)
 
 ### Snapshots
 A Snapshot is created during training runs to record the data used for further analysis, or to train additional models against identical data.
 
-![Snapshot](/images/snapshot.png)
+![Snapshot](../images/snapshot.png)
 
 ### Deployments
 Every deployement is recorded to track models over time.
 
-![Deployment](/images/deployment.png)
+![Deployment](../images/deployment.png)
 

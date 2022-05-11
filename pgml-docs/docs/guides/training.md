@@ -47,7 +47,7 @@ Future calls to `train` may restate the same `objective` for a project, or omit 
 !!! note
     If you'd like to train multiple models on the same `Snapshot`, follow up calls to `train` may omit the `relation_name`, `y_column_name`, `test_size` and `test_sampling` arguments to reuse identical data with multiple algorithms or hyperparams. The `Snapshot` is also saved after training runs for any follow up analysis required.
 
-See [Algorithms](/references/algorithms/) for a complete list of supported options and their hyperparams.
+See [Algorithms](../references/algorithms/) for a complete list of supported options and their hyperparams.
 
 ## Getting training data
 A large part of machine learning is acquiring, cleaning and preparing data for algorithms. Naturally, we think Postgres is a great place to store your data. For the purpose of this example, we'll load a toy dataset, a classic handwritten digits image collection from scikit-learn.
@@ -93,7 +93,7 @@ PostgresML loads this into a fixed table `pgml.digits`. You can examine the 2D a
     ```
 
 ## Training the model
-Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](/references/algorithms) reference for a complete list of available choices.
+Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](../references/algorithms) reference for a complete list of available choices.
 
 === "SQL"
 
@@ -110,7 +110,7 @@ Now that we've got data, we're ready to train a model using an algorithm. We'll 
     (1 row)
     ```
 
-The output gives us a pieces of information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](/guides/deployments/) for a guide to managing the active model.
+The output gives us a pieces of information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](../guides/deployments/) for a guide to managing the active model.
 
 ## Inspecting the results
 Now we can inspect some of the artifacts a training run creates. 
@@ -130,4 +130,4 @@ Now we can inspect some of the artifacts a training run creates.
     (1 row)
     ```
 
-See the [Schema](/references/schema/) reference for a complete description of all artifacts.
+See the [Schema](../references/schema/) reference for a complete description of all artifacts.
