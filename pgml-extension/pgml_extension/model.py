@@ -753,6 +753,18 @@ class Model(object):
         return y[0]
 
 
+def snapshot(
+    relation_name: str,
+    y_column_name: str,
+    test_size: float or int = 0.25,
+    test_sampling: str = "random",
+):
+    """Create a snapshot of a relation.
+
+    Same args as train() below."""
+    return Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
+
+
 def train(
     project_name: str,
     objective: str = None,

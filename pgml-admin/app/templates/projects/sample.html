@@ -1,0 +1,24 @@
+<table>
+    <thead>
+        <tr>
+            {% for column in columns %}
+            <th>{{ column }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            {% for column in row %}
+            <td>{{ column }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+
+        <tr>
+            {% for column in rows.0 %}
+                <td>...</td>
+            {% endfor %}
+        </tr>
+    </tbody>
+</table>

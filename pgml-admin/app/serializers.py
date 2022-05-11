@@ -50,3 +50,11 @@ class DeploymentSerializer(serializers.ModelSerializer):
         model = Deployment
         fields = "__all__"
         depth = 1
+
+
+class NewProjectSerializer(serializers.Serializer):
+    project_name = serializers.CharField()
+    objective = serializers.CharField()
+    algorithms = serializers.ListSerializer(child=serializers.CharField())
+    targets = serializers.ListSerializer(child=serializers.CharField())
+    relation_name = serializers.CharField()
