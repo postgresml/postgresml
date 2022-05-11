@@ -42,11 +42,11 @@
     Train and deploy models to make online predictions using only SQL, with an open source extension for Postgres. Manage your projects and visualize datasets using the built in dashboard.
 </p>
 
-![PostgresML in practice](pgml-docs/docs/images/console.png){align="center"}
+![PostgresML in practice](docs/images/console.png){align="center"}
 
 The dashboard makes it easy to compare different algorithms or hyperparaters across models and datasets.
 
-[![PostgresML dashboard](pgml-docs/docs/images/models.png)](https://demo.postgresml.org/){align="center"}
+[![PostgresML dashboard](docs/images/models.png)](https://demo.postgresml.org/){align="center"}
 
 <h2 align="center">
     See it in action — <a href="https://demo.postgresml.org/" target="_blank">demo.postgresml.org</a>
