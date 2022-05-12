@@ -30,6 +30,9 @@ search | description
 grid | Trains every permutation of `search_params`
 random | Randomly samples `search_params` to train models
 
+You may pass any of the arguments listed in the algorithms documentation as hyperparameters. See [Algorithms](../training/#algorithms) for the complete list of algorithms and their associated documentation.
+
+
 ## Hyperparameter Search
 This grid search will train `len(max_depth) * len(n_estimators) * len(learning_rate) = 6 * 4 * 4 = 96` combinations to compare all possible permutations of the `search_params`. It takes a couple of minutes on my computer, but you can delete some values if you want to speed things up. I like to watch all cores operate at 100% utilization in a seperate terminal with htop.
 

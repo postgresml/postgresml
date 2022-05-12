@@ -164,7 +164,7 @@ __All your favorite algorithms__
 
 Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/) with no extra configuration.
 
-[:material-arrow-right: Algorithms](references/algorithms/)
+[:material-arrow-right: Algorithms](guides/training/#algorithms)
   </div>
   <div class="card" markdown>
 :fontawesome-solid-arrow-trend-up:
