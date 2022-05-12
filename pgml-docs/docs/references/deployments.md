@@ -6,7 +6,7 @@ Deployments are an artifact of calls to `pgml.deploy`. See [deployments](../guid
 
 ## Schema
 
-```sql linenums="1"c
+```sql linenums="1"
 pgml.deployments(
 	id BIGSERIAL PRIMARY KEY,
 	project_id BIGINT NOT NULL,
