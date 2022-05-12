@@ -52,8 +52,6 @@ The dashboard makes it easy to compare different algorithms or hyperparaters acr
     See it in action — <a href="https://demo.postgresml.org/" target="_blank">demo.postgresml.org</a>
 </h2>
 
-<hr>
-
 ## What's in the box
 See the documentation for a complete **[list of functionality](https://postgresml.org/)**.
 
