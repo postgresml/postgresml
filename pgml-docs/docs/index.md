@@ -89,6 +89,7 @@ video, img {
 
 <video autoplay loop muted>
   <source src="images/demo.webm" type="video/webm">
+  <source src="images/demo.mp4" type="video/mp4">
   <img src="images/console.png" alt="PostgresML in practice" loading="lazy">
 </video>
 
