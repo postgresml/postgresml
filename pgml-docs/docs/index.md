@@ -35,6 +35,7 @@ hide:
   max-width: 90%;
   margin: 2em 5%;
 }
+
 .grid {
   display: flex;
   gap: 5%;
@@ -42,9 +43,9 @@ hide:
   max-width: 100%;
   flex-wrap: wrap;
 }
-
 .grid .card img {
   margin: 0;
+  max-width: 100%;
   box-shadow: 0 1px 2px var(--shadow-2);
 }
 .grid .card {
@@ -155,18 +156,6 @@ __All your favorite algorithms__
 Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/) with no extra configuration.
   </div>
   <div class="card" markdown>
-:material-clipboard-check:
-__Managed model deployements__
-
-Models can be periodically retrained and automatically promoted to production depending on their key metric. Rollback capability is provided to ensure that you're always able to serve the highest quality predictions, along with historical logs of all deployments for long term study.
-  </div>
-  <div class="card" markdown>
-:material-cloud-outline:
-__Online and offline support__
-
-Predictions are served via a standard Postgres connection to ensure that your core apps can always access both your data and your models in real time. Pure SQL workflows also enable batch predictions to cache results in native Postgres tables for lookup.
-  </div>
-  <div class="card" markdown>
 :fontawesome-solid-arrow-trend-up:
 __Instant visualizations__
 
@@ -179,10 +168,22 @@ __Hyperparameter search__
 Use either grid or random searches with cross validation on your training set to discover the most important knobs to tweak on your favorite algorithm.
   </div>
   <div class="card" markdown>
+:material-cloud-outline:
+__Online and offline support__
+
+Predictions are served via a standard Postgres connection to ensure that your core apps can always access both your data and your models in real time. Pure SQL workflows also enable batch predictions to cache results in native Postgres tables for lookup.
+  </div>
+  <div class="card" markdown>
 :material-arrow-top-right-thin:
 __SQL native vector operations__
 
 Vector operations make working with learned emebeddings a snap, for things like nearest neighbor searches or other similarity comparisons.
+  </div>
+  <div class="card" markdown>
+:material-clipboard-check:
+__Managed model deployements__
+
+Models can be periodically retrained and automatically promoted to production depending on their key metric. Rollback capability is provided to ensure that you're always able to serve the highest quality predictions, along with historical logs of all deployments for long term study.
   </div>
   <div class="card" markdown>
 :fontawesome-solid-link:
