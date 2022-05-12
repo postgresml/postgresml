@@ -1,38 +1,38 @@
 ---
-title: "Postgres<span style='color: dodgerblue'>ML</span>"
+title: "Installation"
 ---
 
 # Installation
 
-## with Docker <small>Recommended</small>
+## Docker <small>Recommended</small>
 === ":material-linux: Linux"
 
     [Install Docker for Linux](https://docs.docker.com/engine/install/ubuntu/). Some package managers (e.g. Ubuntu/Debian) additionally require the `docker-compose` package to be installed seperately.
 
 === ":material-apple: OS X"
 
-    [Install Docker for OS X](https://docs.docker.com/desktop/mac/install/) 
+    [Install Docker for OS X](https://docs.docker.com/desktop/mac/install/).
 
 === ":material-microsoft-windows: Windows"
 
     [Install Docker for Windows](https://docs.docker.com/desktop/windows/install/). Use the Linux instructions if you're installing in Windows Subsystem for Linux.
 
-1) Clone the repo:
+1. Clone the repo:
 ```bash
 $ git clone git@github.com:postgresml/postgresml.git
 ```
 
-2) Start dockerized services. PostgresML will run on port 5433, just in case you already have Postgres running:
+2. Start dockerized services. PostgresML will run on port 5433, just in case you already have Postgres running:
 ```bash
 $ cd postgresml && docker-compose up
 ```
 
-3) Connect to Postgres in the container with PostgresML installed:
+3. Connect to Postgres in the container with PostgresML installed:
 ```bash
 $ psql postgres://postgres@localhost:5433/pgml_development
 ```
 
-4) Validate your installation:
+4. Validate your installation:
 ```sql
 pgml_development=# SELECT pgml.version();
  version
@@ -83,7 +83,7 @@ If everything works, you should be able to run this successfully:
 $ psql -c 'SELECT pgml.version()'
 ```
 
-#### Ubuntu/Debian
+### Ubuntu/Debian
 
 Each Ubuntu/Debian distribution comes with its own version of PostgreSQL, the simplest way is to install it from Aptitude:
 
@@ -91,20 +91,23 @@ Each Ubuntu/Debian distribution comes with its own version of PostgreSQL, the si
 $ sudo apt-get install -y postgresql-plpython3-12 python3 python3-pip postgresql-12
 ```
 
-Restart PostgreSQL:
+##### Python package
+
+The Python package should be installed into the global package space:
 
 ```bash
-$ sudo service postgresql restart
+sudo pip3 install pgml-extension
 ```
 
-Install our Python package and SQL functions:
+##### PL/Python functions
+
+Finally to interact with the package, install our functions and supporting tables into the database:
 
 ```bash
-$ sudo pip3 install pgml-extension
 $ psql -f sql/install.sql
 ```
 
-If everything works correctly, you should be able to run this successfully:
+If everything works, you should be able to run this successfully:
 
 ```bash
 $ psql -c 'SELECT pgml.version()'
