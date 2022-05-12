@@ -31,7 +31,7 @@ hide:
   max-width: 100em; 
 }
 
-video, img {
+.md-content video, .md-content img {
   max-width: 90%;
   margin: 2em 5%;
 }
