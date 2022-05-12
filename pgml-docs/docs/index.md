@@ -163,47 +163,63 @@ ORDER BY prediction DESC;
 __All your favorite algorithms__
 
 Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/) with no extra configuration.
+
+[:material-arrow-right: Algorithms](references/algorithms/)
   </div>
   <div class="card" markdown>
 :fontawesome-solid-arrow-trend-up:
 __Instant visualizations__
 
 Run standard analysis on your datasets to detect outliers, bimodal distributions, feature correlation, and other common data visualizations on your datasets. Everything is cataloged in the dashboard for easy reference.
+
+[:material-arrow-right: Dashboard](guides/dashboard/)
   </div>
   <div class="card" markdown>
 :material-graph-outline:
 __Hyperparameter search__
 
 Use either grid or random searches with cross validation on your training set to discover the most important knobs to tweak on your favorite algorithm.
+
+[:material-arrow-right: Hyperparameters](guides/hyperparameters/)
   </div>
   <div class="card" markdown>
 :material-cloud-outline:
 __Online and offline support__
 
 Predictions are served via a standard Postgres connection to ensure that your core apps can always access both your data and your models in real time. Pure SQL workflows also enable batch predictions to cache results in native Postgres tables for lookup.
+
+[:material-arrow-right: Predictions](guides/predictions/)
   </div>
   <div class="card" markdown>
 :material-arrow-top-right-thin:
 __SQL native vector operations__
 
 Vector operations make working with learned emebeddings a snap, for things like nearest neighbor searches or other similarity comparisons.
+
+[:material-arrow-right: Vectors](guides/vectors/)
   </div>
   <div class="card" markdown>
 :material-clipboard-check:
 __Managed model deployements__
 
 Models can be periodically retrained and automatically promoted to production depending on their key metric. Rollback capability is provided to ensure that you're always able to serve the highest quality predictions, along with historical logs of all deployments for long term study.
+  
+[:material-arrow-right: Deployments](guides/deployments/)
   </div>
   <div class="card" markdown>
 :fontawesome-solid-link:
 __The performance of Postgres__
 
 Since your data never leaves the database, you retain the speed, reliability and security you expect in your foundational stateful services. Leverage your existing infrastructure and expertise to deliver new capabilities.
+
+[:material-arrow-right: Installation](guides/installation/)
   </div>
   <div class="card" markdown>
 :fontawesome-solid-envelope-open-text:
 __Open source__
 
-We're building on the shoulders of giants. These machine learning libraries and Postgres have recieved extensive academic and industry use, and we'll continue their tradition to build with the community. Licensed under MIT.
+We're building on the shoulders of giants. These machine learning libraries and Postgres have recieved extensive academic and industry use, and we'll continue their tradition to build with the community.
+
+[:material-arrow-right: MIT License](about/license/)
   </div>
 </div>

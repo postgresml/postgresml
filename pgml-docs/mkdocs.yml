@@ -54,6 +54,8 @@ extra:
         - icon: fontawesome/brands/python
           link: https://pypi.org/project/pgml-extension/
 
+copyright: Copyright &copy; 2022 PostgresML Team
+
 plugins:
     - search
     - include-markdown
