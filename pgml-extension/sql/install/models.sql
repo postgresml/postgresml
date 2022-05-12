@@ -31,14 +31,14 @@ $$ LANGUAGE plpython3u;
 ---
 CREATE OR REPLACE FUNCTION pgml.snapshot(
 	relation_name TEXT DEFAULT NULL,
-	y_column_name TEXT DEFAULT NULL,
+	y_column_name TEXT[] DEFAULT NULL,
 	test_size REAL DEFAULT 0.25,
 	test_sampling TEXT DEFAULT 'random'
 )
 RETURNS TABLE (id TEXT)
 AS $$
 	from pgml_extension.model import snapshot
-	snap = snapshot(relation_name, [y_column_name], test_size, test_sampling)
+	snap = snapshot(relation_name, y_column_name, test_size, test_sampling)
 	return [snap.id,]
 $$ LANGUAGE plpython3u;
 
@@ -51,6 +51,7 @@ CREATE OR REPLACE FUNCTION pgml.train(
 	objective TEXT DEFAULT NULL,                -- 'regression' or 'classification'
 	relation_name TEXT DEFAULT NULL,            -- name of table or view
 	y_column_name TEXT DEFAULT NULL,            -- aka "label" or "unknown" or "target"
+	snapshot_id BIGINT DEFAULT NULL,            -- id of the snapshot from `pgml.snapshots`
 	algorithm TEXT DEFAULT 'linear',            -- statistical learning method
 	hyperparams JSONB DEFAULT '{}'::JSONB,      -- options for the model
 	search TEXT DEFAULT NULL,                   -- hyperparam tuning, 'grid' or 'random'
@@ -67,7 +68,8 @@ AS $$
 		project_name, 
 		objective, 
 		relation_name, 
-		[y_column_name], 
+		[y_column_name],
+		snapshot_id,
 		algorithm, 
 		json.loads(hyperparams),
 		search,
@@ -83,7 +85,6 @@ AS $$
 
 	return [(project_name, objective, algorithm, status)]
 $$ LANGUAGE plpython3u;
-
 
 --
 -- Train a model w/ multiple outputs

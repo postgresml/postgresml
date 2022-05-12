@@ -1,0 +1,20 @@
+<div class="feature_figures">
+  <h3><span class="material-symbols-outlined">label_important</span>Labels</h3>
+  {% for label in labels %}
+    <h3>{{ label.name }} <code>{{ label.type|upper }}</code></h3>
+    <figure id="{{ label.name }}_distribution"></figure>
+    <figure id="{{ label.name }}_outliers"></figure>
+
+    {{ label.samples|json_script:"test" }}
+
+    <script type="module" defer>
+    	import { renderDistribution, renderOutliers } from "/static/js/main.mjs";
+
+    	const samples = JSON.parse(document.getElementById("{{ label.name }}").textContent);
+    </script>
+  {% endfor %}
+</div>
+
+<div class="feature_list">
+  <h3><span class="material-symbols-outlined">bubble_chart</span>Features</h3>
+</div>

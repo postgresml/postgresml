@@ -16,6 +16,7 @@
 
   <section data-new-project-target="step" data-step-name="project-name">
     <h2>Project name</h2>
+
     <div class="input-container">
       <input type="text" name="name" placeholder="New unique project name" size="50" data-action="input->new-project#checkProjectName" />
       <span class="material-symbols-outlined" data-new-project-target="projectStatus"></span>
@@ -28,6 +29,7 @@
 
   <section data-new-project-target="step" class="hidden" data-step-name="data-source">
     <h2>Data source</h2>
+
     <div class="input-container">
       <input type="text" name="name" placeholder="Table or view name" size="50" data-action="input->new-project#checkDataSource" list="table-list" />
       <datalist id="table-list">
@@ -52,8 +54,22 @@
     <ol data-new-project-target="trainingLabel" class="object_list snapshot_list"></ol>
 
     <div class="button-container">
-      <button class="next" data-action="click->new-project#nextStep" data-new-project-target="selectTargetNext" disabled>Next</button>
+      <button class="next" data-action="click->new-project#createSnapshot" data-new-project-target="analysisNext" disabled>Snapshot data</button>
       <button class="next" data-action="click->new-project#previousStep">Back</button>
+    </div>
+  </section>
+
+  <section data-new-project-target="step" class="hidden" data-step-name="target">
+    <div style="display: flex; justify-content: center; align-items: center;">
+      <p>Creating snapshot, this may take a moment...</p>
+    </div>
+  </section>
+
+  <section data-new-project-target="step" class="hidden" data-step-name="snapshot">
+    <h2>Analysis</h2>
+
+    <div class="button-container">
+      <button class="next" data-action="click->new-project#nextStep">Next</button>
     </div>
   </section>
 

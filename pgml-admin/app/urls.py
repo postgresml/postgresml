@@ -10,6 +10,9 @@ router.register("models", models.ModelViewSet)
 router.register("deployments", deployments.DeploymentViewSet)
 router.register("tables", projects.TableView, basename="tables")
 
+html_router = routers.DefaultRouter()
+html_router.register("snapshots/analysis", snapshots.SnapshotAnalysisView, basename="snapshots/analysis")
+
 urlpatterns = [
     path("", root.index, name="index"),
     path("deployments/", deployments.index, name="deployments"),

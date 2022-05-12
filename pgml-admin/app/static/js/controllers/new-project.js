@@ -13,7 +13,7 @@ export default class extends Controller {
       "objectiveNameNext",
       "projectNameNext",
       "trainingLabel",
-      "selectTargetNext",
+      "analysisNext",
       "algorithmListClassification",
       "algorithmListRegression",
     ];
@@ -169,9 +169,43 @@ export default class extends Controller {
       }
 
       if (this.targetNames.size > 0)
-        this.selectTargetNextTarget.disabled = false
+        this.analysisNextTarget.disabled = false
       else
-        this.selectTargetNextTarget.disabled = true
+        this.analysisNextTarget.disabled = true
+    }
+
+    createSnapshot(event) {
+      event.preventDefault()
+
+      const request = {
+        "relation_name": this.tableName,
+        "y_column_name": Array.from(this.targetNames),
+      }
+
+      this.nextStep()
+
+      fetch(`/api/snapshots/snapshot/`, {
+        method: "POST",
+        cache: "no-cache",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        redirect: "follow",
+        body: JSON.stringify(request),
+      })
+      .then(res => {
+        if (res.ok) {
+          return res.json()
+        } else {
+          alert("Failed to create snapshot")
+          console.log(res.json())
+          throw Error("Failed to create snapshot")
+        }
+      })
+      .then(json => {
+        this.snapshotData = json
+        setTimeout(() => this.nextStep(), 500);
+      })
     }
 
     createProject(event) {

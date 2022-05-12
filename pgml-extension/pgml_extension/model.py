@@ -770,6 +770,7 @@ def train(
     objective: str = None,
     relation_name: str = None,
     y_column_name: str = None,
+    snapshot_id: int = None,
     algorithm_name: str = "linear",
     hyperparams: dict = {},
     search: str = None,
@@ -803,8 +804,19 @@ def train(
     if objective not in ["regression", "classification"]:
         raise PgMLException(f"Unknown objective `{objective}`, available options are: regression, classification.")
 
-    # Snapshot
-    if relation_name is None:
+    # Create or use an existing snapshot.
+    #
+    # If a snapshot_id is given, use that specific snapshot.
+    # If a relation name is given, snapshot it.
+    # If none of the above, use the last snapshot created for the project, if any.
+    #
+    if snapshot_id is not None:
+        snapshot = Snapshot.find(snapshot_id)
+        if snapshot is None:
+            raise PgMLException(
+                f"Snapshot with ID {snapshot_id} does not exist."
+            )
+    elif relation_name is None:
         snapshot = project.last_snapshot
         if snapshot is None:
             raise PgMLException(
@@ -814,7 +826,6 @@ def train(
             raise PgMLException(
                 f"You must pass a `relation_name` to use a different `y_column_name` than previous runs. {y_column_name} vs {snapshot.y_column_name}"
             )
-
     else:
         snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
 
