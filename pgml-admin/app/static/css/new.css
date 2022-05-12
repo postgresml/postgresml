@@ -11,6 +11,8 @@ input {
     background-color: var(--gray-8);
     display: flex;
     align-items: center;
+    width: 100%;
+    margin: 25px 0;
 }
 
 .progress-bar-loading {
@@ -142,4 +144,9 @@ button[disabled], button:disabled, a[disabled], a:disabled {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.feature_figures figure {
+    box-shadow: 0 1px 2px var(--shadow-2);
+    padding: 25px;
 }

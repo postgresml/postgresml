@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { renderModel, renderDistribution, renderCorrelation, renderOutliers } from "/static/js/main.mjs";
 
 export default class extends Controller {
     static targets = [
@@ -13,9 +14,10 @@ export default class extends Controller {
       "objectiveNameNext",
       "projectNameNext",
       "trainingLabel",
-      "selectTargetNext",
+      "analysisNext",
       "algorithmListClassification",
       "algorithmListRegression",
+      "analysisResult",
     ];
 
     initialize() {
@@ -34,10 +36,15 @@ export default class extends Controller {
     }
 
     renderProgressBar() {
-        let progress = Math.ceil(this.index / this.stepTargets.length * 100)
+      // Let's get stuck on 97 just like Windows Update... ;)
+      if (this.progressBarInterval && this.progressBarProgress >= 95)
+        clearInterval(this.progressBarInterval)
 
-        this.progressBarTarget.style = `width: ${progress > 0 ? progress : "auto"}%;`
-        this.progressBarAmountTarget.innerHTML = `${progress}%`
+      this.progressBarProgress += 2
+      const progress = Math.min(100, this.progressBarProgress)
+
+      this.progressBarTarget.style = `width: ${progress > 0 ? progress : "auto"}%;`
+      this.progressBarAmountTarget.innerHTML = `${progress}%`
     }
 
     checkDataSource(event) {
@@ -69,7 +76,7 @@ export default class extends Controller {
       fetch(`/api/projects/?name=${projectName}`)
       .then(res => res.json())
       .then(json => {
-        if (json.length > 0) {
+        if (json.results.length > 0) {
           this.projectName = null
         } else {
           this.projectName = projectName
@@ -156,6 +163,40 @@ export default class extends Controller {
       .then(html => this.trainingLabelTarget.innerHTML = html)
     }
 
+    renderAnalysisResult() {
+      const snapshotData = this.projectData.models[0].snapshot
+
+      console.log("Fetching analysis")
+      fetch(`/html/snapshots/analysis/?snapshot_id=${snapshotData.id}`)
+      .then(res => res.text())
+      .then(html => this.analysisResultTarget.innerHTML = html)
+      .then(() => {
+        // Render charts
+        for (name in snapshotData.columns) {
+          const sample = JSON.parse(document.getElementById(name).textContent)
+          renderDistribution(name, sample, snapshotData.analysis[`${name}_dip`])
+
+          for (target of snapshotData.y_column_name) {
+            if (target === name)
+              continue
+
+            const targetSample = JSON.parse(document.getElementById(target).textContent)
+            renderCorrelation(name, target, sample, targetSample)
+          }
+        }
+
+        for (target of snapshotData.y_column_name) {
+          const targetSample = JSON.parse(document.getElementById(target).textContent)
+          renderOutliers(target, targetSample, snapshotData.analysis[`${target}_stddev`])
+        }
+
+        this.progressBarProgress = 100
+        this.renderProgressBar()
+
+        setTimeout(this.nextStep.bind(this), 1000)
+      })
+    }
+
     selectTarget(event) {
       event.preventDefault()
       let targetName = event.currentTarget.dataset.columnName
@@ -169,23 +210,42 @@ export default class extends Controller {
       }
 
       if (this.targetNames.size > 0)
-        this.selectTargetNextTarget.disabled = false
+        this.analysisNextTarget.disabled = false
       else
-        this.selectTargetNextTarget.disabled = true
+        this.analysisNextTarget.disabled = true
     }
 
-    createProject(event) {
+    createSnapshot(event) {
+      event.preventDefault()
+
+      // Train a linear algorithm by default
+      this.algorithmNames.add("linear")
+
+      this.nextStep()
+
+      // Start the progress bar :)
+      this.progressBarProgress = 2
+      this.progressBarInterval = setInterval(this.renderProgressBar.bind(this), 850)
+
+      this.createProject(event, false, () => {
+        this.renderAnalysisResult()
+        this.algorithmNames.delete("linear")
+      })
+    }
+
+    createProject(event, redirect = true, callback = null) {
       event.preventDefault()
 
       const request = {
         "project_name": this.projectName,
         "objective": this.objectiveName,
-        "relation_name": this.tableName,
         "algorithms": Array.from(this.algorithmNames),
-        "targets": Array.from(this.targetNames),
+        "relation_name": this.tableName,
+        "y_column_name": Array.from(this.targetNames),
       }
 
-      this.createLoader()
+      if (redirect)
+        this.createLoader()
 
       fetch(`/api/projects/train/`, {
         method: "POST",
@@ -205,7 +265,13 @@ export default class extends Controller {
         }
       })
       .then(json => {
-        window.location.assign(`/projects/${json.id}`);
+        this.projectData = json
+
+        if (redirect)
+          window.location.assign(`/projects/${json.id}`);
+
+        if (callback)
+          callback()
       })
     }
 
@@ -222,12 +288,10 @@ export default class extends Controller {
     nextStep() {
         this.index += 1
         this.renderSteps()
-        this.renderProgressBar()
     }
 
     previousStep() {
         this.index -= 1
         this.renderSteps()
-        this.renderProgressBar()
     }
 }

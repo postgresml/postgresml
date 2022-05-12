@@ -75,27 +75,34 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """Train a new project."""
         serializer = NewProjectSerializer(data=request.data)
         if serializer.is_valid():
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT * FROM pgml.train_joint(
-                        project_name => %s,
-                        objective => %s,
-                        relation_name => %s,
-                        y_column_name => %s,
-                        algorithm => %s
-                    )
-                """,
-                    [
-                        serializer.validated_data["project_name"],
-                        serializer.validated_data["objective"],
-                        serializer.validated_data["relation_name"],
-                        serializer.validated_data["targets"],
-                        serializer.validated_data["algorithms"][0],
-                    ],
-                )
+            exists = len(Project.objects.filter(name=serializer.validated_data["project_name"])) > 0
 
-                for algorithm in serializer.validated_data["algorithms"][1:]:
+            with connection.cursor() as cursor:
+                if not exists:
+                    cursor.execute(
+                        """
+                        SELECT * FROM pgml.train_joint(
+                            project_name => %s,
+                            objective => %s,
+                            relation_name => %s,
+                            y_column_name => %s,
+                            algorithm => %s
+                        )
+                    """,
+                        [
+                            serializer.validated_data["project_name"],
+                            serializer.validated_data["objective"],
+                            serializer.validated_data["relation_name"],
+                            serializer.validated_data["y_column_name"],
+                            serializer.validated_data["algorithms"][0],
+                        ],
+                    )
+                if exists:
+                    algorithms = serializer.validated_data["algorithms"]
+                else:
+                    algorithms = serializer.validated_data["algorithms"][1:]
+
+                for algorithm in algorithms:
                     cursor.execute(
                         """
                     SELECT * FROM pgml.train(

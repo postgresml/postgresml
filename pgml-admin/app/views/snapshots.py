@@ -1,12 +1,18 @@
 from tracemalloc import Snapshot
 from typing import OrderedDict
+
+from django.db import connection
 from django.shortcuts import render, get_object_or_404
 from django.utils.safestring import SafeString
+
+from rest_framework.decorators import action
 from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework import status
 
 import json
-from app.models import Snapshot, Project
-from app.serializers import SnapshotSerializer
+from app.models import Snapshot, Project, Model
+from app.serializers import SnapshotSerializer, NewSnapshotSerializer
 
 from collections import namedtuple
 
@@ -79,6 +85,62 @@ def get(request, id):
     return render(request, "snapshots/snapshot.html", default_context(context))
 
 
+class SnapshotAnalysisView(viewsets.ViewSet):
+
+    permission_classes = []
+
+    def list(self, request):
+        if "snapshot_id" not in request.GET:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        snapshot = get_object_or_404(Snapshot, id=request.GET["snapshot_id"])
+        context = {
+            "labels": [
+                {
+                    "name": column,
+                    "type": snapshot.columns[column],
+                    "samples": list(map(lambda x: x[column], snapshot.sample())),
+                }
+                for column in snapshot.y_column_name
+            ],
+            "features": [
+                {
+                    "name": column,
+                    "type": snapshot.columns[column],
+                    "samples": list(map(lambda x: x[column], snapshot.sample())),
+                }
+                for column in snapshot.columns.keys() - snapshot.y_column_name
+            ],
+            "model": Model.objects.filter(snapshot=snapshot, algorithm_name="linear").first(),
+        }
+
+        return render(request, "snapshots/analysis.html", context)
+
+
 class SnapshotViewSet(viewsets.ModelViewSet):
     queryset = Snapshot.objects.all()
     serializer_class = SnapshotSerializer
+
+    @action(detail=False, permission_classes=[], methods=["POST"])
+    def snapshot(self, request):
+        """Create a snapshot using pgml.snapshot"""
+        serializer = NewSnapshotSerializer(data=request.data)
+        if serializer.is_valid():
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT * FROM pgml.snapshot(
+                        relation_name => %s,
+                        y_column_name => %s
+                    )
+                """,
+                    [
+                        serializer.validated_data["relation_name"],
+                        serializer.validated_data["y_column_name"],
+                    ],
+                )
+                result = cursor.fetchone()
+            snapshot = Snapshot.objects.filter(pk=result[0]).first()
+            return Response(status=status.HTTP_201_CREATED, data=SnapshotSerializer(snapshot).data)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)

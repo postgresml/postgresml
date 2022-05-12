@@ -31,14 +31,14 @@ $$ LANGUAGE plpython3u;
 ---
 CREATE OR REPLACE FUNCTION pgml.snapshot(
 	relation_name TEXT DEFAULT NULL,
-	y_column_name TEXT DEFAULT NULL,
+	y_column_name TEXT[] DEFAULT NULL,
 	test_size REAL DEFAULT 0.25,
 	test_sampling TEXT DEFAULT 'random'
 )
 RETURNS TABLE (id TEXT)
 AS $$
 	from pgml_extension.model import snapshot
-	snap = snapshot(relation_name, [y_column_name], test_size, test_sampling)
+	snap = snapshot(relation_name, y_column_name, test_size, test_sampling)
 	return [snap.id,]
 $$ LANGUAGE plpython3u;
 
@@ -67,7 +67,7 @@ AS $$
 		project_name, 
 		objective, 
 		relation_name, 
-		[y_column_name], 
+		[y_column_name],
 		algorithm, 
 		json.loads(hyperparams),
 		search,
@@ -83,7 +83,6 @@ AS $$
 
 	return [(project_name, objective, algorithm, status)]
 $$ LANGUAGE plpython3u;
-
 
 --
 -- Train a model w/ multiple outputs
@@ -109,7 +108,7 @@ AS $$
 		project_name, 
 		objective, 
 		relation_name, 
-		y_column_name, 
+		y_column_name,
 		algorithm, 
 		json.loads(hyperparams),
 		search,
