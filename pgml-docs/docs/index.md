@@ -10,7 +10,7 @@ hide:
 }
 
 .md-typeset h1 {
-  font-size: 4em;
+  font-size: 3em;
   font-weight: 700;
   margin-bottom: -1rem;
   max-width: 80em; 
@@ -88,6 +88,7 @@ video, img {
 
 <video autoplay loop muted>
   <source src="images/demo.webm" type="video/webm">
+  <source src="images/demo.mp4" type="video/mp4">
   <img src="images/console.png" alt="PostgresML in practice" loading="lazy">
 </video>
 
