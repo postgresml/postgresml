@@ -1,6 +1,6 @@
 # Snapshots
 
-Snapshots are an artifact of calls to `pgml.train` that specify the relation_name. See [training](../guides/training/) for ways to create new snapshots.
+Snapshots are an artifact of calls to `pgml.train` that specify the relation_name. See [training](../../guides/training/) for ways to create new snapshots.
 
 ![Snapshots](../images/snapshot.png)
 

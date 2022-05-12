@@ -1,6 +1,6 @@
 # Models
 
-Models are an artifact of calls to `pgml.train`. See [training](../guides/training/) for ways to create new models.
+Models are an artifact of calls to `pgml.train`. See [training](../../guides/training/) for ways to create new models.
 
 ![Models](../images/model.png)
 

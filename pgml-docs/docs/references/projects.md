@@ -1,6 +1,6 @@
 # Projects
 
-Projects are an artifact of calls to `pgml.train`. See [training](../guides/training/) for ways to create new projects.
+Projects are an artifact of calls to `pgml.train`. See [training](../../guides/training/) for ways to create new projects.
 
 ![Projects](../images/project.png)
 
