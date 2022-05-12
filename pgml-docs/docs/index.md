@@ -131,7 +131,7 @@ SELECT pgml.deploy(
 SELECT *, pgml.predict(
   'My project name', 
   ARRAY[...] -- same features used in training
-  ) as prediction
+) AS prediction
 FROM my_new_unlabeled_table
 ORDER BY prediction DESC;
 ```
