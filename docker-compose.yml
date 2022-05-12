@@ -17,8 +17,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
     command:
       - python3
       - manage.py
@@ -30,8 +28,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8001:8001"
-    volumes:
-      - .:/app
     command:
       - mkdocs
       - serve
