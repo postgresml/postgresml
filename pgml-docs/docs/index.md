@@ -106,6 +106,9 @@ SELECT pgml.train(
   algorithm => 'xgboost' 
 );
 ```
+  <p align="center" markdown>
+:material-arrow-right: Learn more about [Training](guides/training/)
+  </p>
   </div>
 
 
@@ -125,6 +128,9 @@ SELECT pgml.deploy(
   algorithm => 'xgboost'
 );
 ```
+  <p align="center" markdown>
+:material-arrow-right: Learn more about [Deployments](guides/deployments/)
+  </p>
   </div>
 
   <div class="card" markdown>
@@ -136,6 +142,9 @@ SELECT *, pgml.predict(
 FROM my_new_unlabeled_table
 ORDER BY prediction DESC;
 ```
+  <p align="center" markdown>
+:material-arrow-right: Learn more about [Predictions](guides/predictions/)
+  </p>
   </div>
 
   <div class="card" markdown>
