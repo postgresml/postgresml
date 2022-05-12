@@ -35,7 +35,6 @@ hide:
   max-width: 90%;
   margin: 2em 5%;
 }
-
 .grid {
   display: flex;
   gap: 5%;
@@ -45,7 +44,8 @@ hide:
 }
 
 .grid .card img {
-    box-shadow: 0 1px 2px var(--shadow-2);
+  margin: 0;
+  box-shadow: 0 1px 2px var(--shadow-2);
 }
 .grid .card {
   width: 47%;
