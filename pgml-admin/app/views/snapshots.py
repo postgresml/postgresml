@@ -100,19 +100,22 @@ class SnapshotAnalysisView(viewsets.ViewSet):
                     "name": column,
                     "type": snapshot.columns[column],
                     "samples": list(map(lambda x: x[column], snapshot.sample())),
-                } for column in snapshot.y_column_name
+                }
+                for column in snapshot.y_column_name
             ],
             "features": [
-                 {
+                {
                     "name": column,
                     "type": snapshot.columns[column],
                     "samples": list(map(lambda x: x[column], snapshot.sample())),
-                } for column in snapshot.columns.keys() - snapshot.y_column_name
+                }
+                for column in snapshot.columns.keys() - snapshot.y_column_name
             ],
             "model": Model.objects.filter(snapshot=snapshot, algorithm_name="linear").first(),
         }
 
         return render(request, "snapshots/analysis.html", context)
+
 
 class SnapshotViewSet(viewsets.ModelViewSet):
     queryset = Snapshot.objects.all()
@@ -124,18 +127,20 @@ class SnapshotViewSet(viewsets.ModelViewSet):
         serializer = NewSnapshotSerializer(data=request.data)
         if serializer.is_valid():
             with connection.cursor() as cursor:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM pgml.snapshot(
                         relation_name => %s,
                         y_column_name => %s
                     )
-                """, [
-                    serializer.validated_data["relation_name"],
-                    serializer.validated_data["y_column_name"],
-                ])
+                """,
+                    [
+                        serializer.validated_data["relation_name"],
+                        serializer.validated_data["y_column_name"],
+                    ],
+                )
                 result = cursor.fetchone()
             snapshot = Snapshot.objects.filter(pk=result[0]).first()
             return Response(status=status.HTTP_201_CREATED, data=SnapshotSerializer(snapshot).data)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)
-

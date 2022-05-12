@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from app.models import Project, Snapshot, Model, Deployment
 
+
 class SnapshotSerializer(serializers.ModelSerializer):
     y_column_name = serializers.ListSerializer(child=serializers.CharField())
 
@@ -42,6 +43,7 @@ class ModelSerializer(serializers.ModelSerializer):
         ]
         depth = 1
 
+
 class ProjectSerializer(serializers.ModelSerializer):
     models = ModelSerializer(many=True)
 
@@ -57,7 +59,6 @@ class ProjectSerializer(serializers.ModelSerializer):
             "updated_at",
             "models",
         ]
-
 
 
 class DeploymentSerializer(serializers.ModelSerializer):
