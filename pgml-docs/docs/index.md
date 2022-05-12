@@ -1,5 +1,5 @@
 ---
-title: "Postgres<span style='color: dodgerblue'>ML</span>"
+title: "End-to-end machine learning solution"
 hide:
   - navigation
   - toc
@@ -11,7 +11,7 @@ hide:
 }
 
 .md-typeset h1 {
-  font-size: 4em;
+  font-size: 3em;
   font-weight: 700;
   margin-bottom: -1rem;
   max-width: 80em; 
