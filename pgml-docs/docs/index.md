@@ -1,5 +1,4 @@
 ---
-title: "End-to-end machine learning solution"
 hide:
   - navigation
   - toc

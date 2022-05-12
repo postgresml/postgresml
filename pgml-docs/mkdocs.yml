@@ -10,6 +10,7 @@ edit_uri: ""
 
 theme:
     name: material
+    custom_dir: overrides
     favicon: images/favicon.ico
     logo: images/logo-small.png
     locale: en
