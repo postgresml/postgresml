@@ -2,8 +2,31 @@ from rest_framework import serializers
 
 from app.models import Project, Snapshot, Model, Deployment
 
+class SnapshotSerializer(serializers.ModelSerializer):
+    y_column_name = serializers.ListSerializer(child=serializers.CharField())
+
+    class Meta:
+        model = Snapshot
+        fields = [
+            "id",
+            "y_column_name",
+            "test_size",
+            "test_sampling",
+            "status",
+            "columns",
+            "analysis",
+            "sample",
+            "samples",
+            "table_size",
+            "feature_size",
+            "created_at",
+            "updated_at",
+        ]
+
 
 class ModelSerializer(serializers.ModelSerializer):
+    snapshot = SnapshotSerializer()
+
     class Meta:
         model = Model
         fields = [
@@ -27,33 +50,14 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "key_metric_name",
+            "key_metric_display_name",
             "objective",
             "created_at",
             "updated_at",
             "models",
         ]
 
-
-class SnapshotSerializer(serializers.ModelSerializer):
-    y_column_name = serializers.ListSerializer(child=serializers.CharField())
-
-    class Meta:
-        model = Snapshot
-        fields = [
-            "id",
-            "y_column_name",
-            "test_size",
-            "test_sampling",
-            "status",
-            "columns",
-            "analysis",
-            "sample",
-            "samples",
-            "table_size",
-            "feature_size",
-            "created_at",
-            "updated_at",
-        ]
 
 
 class DeploymentSerializer(serializers.ModelSerializer):
@@ -65,8 +69,9 @@ class DeploymentSerializer(serializers.ModelSerializer):
 
 class NewProjectSerializer(serializers.Serializer):
     project_name = serializers.CharField()
-    objective = serializers.CharField()
-    snapshot_id = serializers.IntegerField()
+    objective = serializers.CharField(required=False)
+    relation_name = serializers.CharField(required=False)
+    y_column_name = serializers.ListSerializer(child=serializers.CharField(), required=False)
     algorithms = serializers.ListSerializer(child=serializers.CharField())
 
 

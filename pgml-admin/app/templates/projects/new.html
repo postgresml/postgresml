@@ -19,6 +19,23 @@
     </div>
   </section>
 
+  <section data-new-project-target="step" class="hidden" data-step-name="algorithm-type">
+    <h2>Objective</h2>
+    <ol class="objective_list">
+      <li>
+        <a href="#" data-action="click->new-project#selectObjective" data-new-project-target="objective" data-objective="regression">Regression</a>
+      </li>
+      <li>
+        <a href="#" data-action="click->new-project#selectObjective" data-new-project-target="objective" data-objective="classification">Classification</a>
+      </li>
+    </ol>
+
+    <div class="button-container">
+      <button class="next" data-action="click->new-project#nextStep" data-new-project-target="objectiveNameNext" disabled>Next</button>
+      <button class="next" data-action="click->new-project#previousStep">Back</button>
+    </div>
+  </section>
+
   <section data-new-project-target="step" class="hidden" data-step-name="data-source">
     <h2>Data source</h2>
 
@@ -46,14 +63,14 @@
     <ol data-new-project-target="trainingLabel" class="object_list snapshot_list"></ol>
 
     <div class="button-container">
-      <button class="next" data-action="click->new-project#createSnapshot" data-new-project-target="analysisNext" disabled>Snapshot data</button>
+      <button class="next" data-action="click->new-project#createSnapshot" data-new-project-target="analysisNext" disabled>Run analysis</button>
       <button class="next" data-action="click->new-project#previousStep">Back</button>
     </div>
   </section>
 
   <section data-new-project-target="step" class="hidden" data-step-name="target">
     <div style="display: flex; justify-content: center; align-items: center;">
-      <p>Creating snapshot, this may take a moment...</p>
+      <p>Performing data analysis, this may take a moment...</p>
     </div>
 
     <div class="progress-bar">
@@ -73,28 +90,10 @@
     </div>
   </section>
 
-  <section data-new-project-target="step" class="hidden" data-step-name="algorithm-type">
-    <h2>Objective</h2>
-    <ol class="objective_list">
-      <li>
-        <a href="#" data-action="click->new-project#selectObjective" data-new-project-target="objective" data-objective="regression">Regression</a>
-      </li>
-      <li>
-        <a href="#" data-action="click->new-project#selectObjective" data-new-project-target="objective" data-objective="classification">Classification</a>
-      </li>
-    </ol>
-
-    <div class="button-container">
-      <button class="next" data-action="click->new-project#nextStep" data-new-project-target="objectiveNameNext" disabled>Next</button>
-      <button class="next" data-action="click->new-project#previousStep">Back</button>
-    </div>
-  </section>
-
   <section data-new-project-target="step" class="hidden" data-step-name="algorithm">
     <h2>Algorithms</h2>
     <div style="margin-top: 25px" data-new-project-target="algorithmListRegression">
       <ol class="algorithm_list">
-        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="linear"><span>LinearRegression</span></a></li>
         <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="ridge"><span>Ridge</span></a></li>
         <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="lasso"><span>Lasso</span></a></li>
         <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="elastic_net"><span>ElasticNet</span></a></li>
@@ -127,7 +126,6 @@
 
     <div style="margin-top: 25px" data-new-project-target="algorithmListClassification">
       <ol class="algorithm_list">
-        <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="linear"><span>LogisticRegression</span></a></li>
         <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="ridge"><span>RidgeClassifier</span></a></li>
         <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="stochastic_gradient_descent"><span>SGDClassifier</span></a></li>
         <li><a href="#" data-action="click->new-project#selectAlgorithm" data-algorithm="perceptron"><span>Perceptron</span></a></li>

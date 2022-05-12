@@ -51,7 +51,6 @@ CREATE OR REPLACE FUNCTION pgml.train(
 	objective TEXT DEFAULT NULL,                -- 'regression' or 'classification'
 	relation_name TEXT DEFAULT NULL,            -- name of table or view
 	y_column_name TEXT DEFAULT NULL,            -- aka "label" or "unknown" or "target"
-	snapshot_id BIGINT DEFAULT NULL,            -- id of the snapshot from `pgml.snapshots`
 	algorithm TEXT DEFAULT 'linear',            -- statistical learning method
 	hyperparams JSONB DEFAULT '{}'::JSONB,      -- options for the model
 	search TEXT DEFAULT NULL,                   -- hyperparam tuning, 'grid' or 'random'
@@ -69,7 +68,6 @@ AS $$
 		objective, 
 		relation_name, 
 		[y_column_name],
-		snapshot_id,
 		algorithm, 
 		json.loads(hyperparams),
 		search,
@@ -94,7 +92,6 @@ CREATE OR REPLACE FUNCTION pgml.train_joint(
 	objective TEXT DEFAULT NULL,                -- 'regression' or 'classification'
 	relation_name TEXT DEFAULT NULL,            -- name of table or view
 	y_column_name TEXT[] DEFAULT NULL,          -- multiple "labels" or "unknowns" or "targets"
-	snapshot_id BIGINT DEFAULT NULL,            -- id of the snapshot from `pgml.snapshots`
 	algorithm TEXT DEFAULT 'linear',            -- statistical learning method
 	hyperparams JSONB DEFAULT '{}'::JSONB,      -- options for the model
 	search TEXT DEFAULT NULL,                   -- hyperparam tuning, 'grid' or 'random'
@@ -112,7 +109,6 @@ AS $$
 		objective, 
 		relation_name, 
 		y_column_name,
-		snapshot_id,
 		algorithm, 
 		json.loads(hyperparams),
 		search,

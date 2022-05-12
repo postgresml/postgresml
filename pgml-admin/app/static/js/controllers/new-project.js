@@ -164,16 +164,19 @@ export default class extends Controller {
     }
 
     renderAnalysisResult() {
-      fetch(`/html/snapshots/analysis/?snapshot_id=${this.snapshotData.id}`)
+      const snapshotData = this.projectData.models[0].snapshot
+
+      console.log("Fetching analysis")
+      fetch(`/html/snapshots/analysis/?snapshot_id=${snapshotData.id}`)
       .then(res => res.text())
       .then(html => this.analysisResultTarget.innerHTML = html)
       .then(() => {
         // Render charts
-        for (name in this.snapshotData.columns) {
+        for (name in snapshotData.columns) {
           const sample = JSON.parse(document.getElementById(name).textContent)
-          renderDistribution(name, sample, this.snapshotData.analysis[`${name}_dip`])
+          renderDistribution(name, sample, snapshotData.analysis[`${name}_dip`])
 
-          for (target of this.snapshotData.y_column_name) {
+          for (target of snapshotData.y_column_name) {
             if (target === name)
               continue
 
@@ -182,9 +185,9 @@ export default class extends Controller {
           }
         }
 
-        for (target of this.snapshotData.y_column_name) {
+        for (target of snapshotData.y_column_name) {
           const targetSample = JSON.parse(document.getElementById(target).textContent)
-          renderOutliers(target, targetSample, this.snapshotData.analysis[`${target}_stddev`])
+          renderOutliers(target, targetSample, snapshotData.analysis[`${target}_stddev`])
         }
 
         this.progressBarProgress = 100
@@ -215,52 +218,34 @@ export default class extends Controller {
     createSnapshot(event) {
       event.preventDefault()
 
-      const request = {
-        "relation_name": this.tableName,
-        "y_column_name": Array.from(this.targetNames),
-      }
+      // Train a linear algorithm by default
+      this.algorithmNames.add("linear")
 
       this.nextStep()
 
       // Start the progress bar :)
       this.progressBarProgress = 2
-      this.progressBarInterval = setInterval(this.renderProgressBar.bind(this), 750)
-      console.log("interval set to ", this.progressBarInterval)
+      this.progressBarInterval = setInterval(this.renderProgressBar.bind(this), 850)
 
-      fetch(`/api/snapshots/snapshot/`, {
-        method: "POST",
-        cache: "no-cache",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        redirect: "follow",
-        body: JSON.stringify(request),
-      })
-      .then(res => {
-        if (res.ok) {
-          return res.json()
-        } else {
-          alert("Failed to create snapshot")
-          throw Error("Failed to create snapshot")
-        }
-      })
-      .then(json => {
-        this.snapshotData = json
+      this.createProject(event, false, () => {
         this.renderAnalysisResult()
+        this.algorithmNames.delete("linear")
       })
     }
 
-    createProject(event) {
+    createProject(event, redirect = true, callback = null) {
       event.preventDefault()
 
       const request = {
         "project_name": this.projectName,
         "objective": this.objectiveName,
         "algorithms": Array.from(this.algorithmNames),
-        "snapshot_id": this.snapshotData.id,
+        "relation_name": this.tableName,
+        "y_column_name": Array.from(this.targetNames),
       }
 
-      this.createLoader()
+      if (redirect)
+        this.createLoader()
 
       fetch(`/api/projects/train/`, {
         method: "POST",
@@ -280,7 +265,13 @@ export default class extends Controller {
         }
       })
       .then(json => {
-        window.location.assign(`/projects/${json.id}`);
+        this.projectData = json
+
+        if (redirect)
+          window.location.assign(`/projects/${json.id}`);
+
+        if (callback)
+          callback()
       })
     }
 

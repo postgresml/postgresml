@@ -1,3 +1,16 @@
+<div style="margin: 30px 0">
+  <h3><span class="material-symbols-outlined">model_training</span>Linear model</h3>
+  <dl class="model_metrics">
+    {% for key, value in model.metrics.items %}
+    {% if key == "search_results" %}
+    {% else %}
+    <dt>{{ key }}</dt>
+    <dd>{{ value|floatformat:"5"}}</dd>
+    {% endif %}
+    {% endfor %}
+  </dl>
+</div>
+
 <div class="feature_figures">
   <h3><span class="material-symbols-outlined">label_important</span>Labels</h3>
   {% for label in labels %}

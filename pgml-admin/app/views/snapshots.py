@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 import json
-from app.models import Snapshot, Project
+from app.models import Snapshot, Project, Model
 from app.serializers import SnapshotSerializer, NewSnapshotSerializer
 
 from collections import namedtuple
@@ -108,7 +108,8 @@ class SnapshotAnalysisView(viewsets.ViewSet):
                     "type": snapshot.columns[column],
                     "samples": list(map(lambda x: x[column], snapshot.sample())),
                 } for column in snapshot.columns.keys() - snapshot.y_column_name
-            ]
+            ],
+            "model": Model.objects.filter(snapshot=snapshot, algorithm_name="linear").first(),
         }
 
         return render(request, "snapshots/analysis.html", context)
