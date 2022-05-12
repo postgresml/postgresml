@@ -1,6 +1,6 @@
 # Deployments
 
-Models are automatically deployed if their key metric (`mean_squared_error` for regression, `f1` for classification) is improved over the currently deployed version during training. If you want to manage deploys manually, you can always change which model is currently responsible for making predictions.
+Models are automatically deployed if their key metric (__R__<sup>2</sup> for regression, __F__<sub>1</sub> for classification) is improved over the currently deployed version during training. If you want to manage deploys manually, you can always change which model is currently responsible for making predictions.
 
 ## API
 

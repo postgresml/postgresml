@@ -1,5 +1,21 @@
-.md-header {
-    background-color: rgb(20, 30, 80);
+[data-md-color-scheme="postgresml"] {
+    --md-primary-fg-color: rgb(20, 30, 80);
+    --md-primary-fg-color--light: rgb(100, 180, 255);
+    --md-primary-fg-color--dark: rgb(18, 26, 70);
+}
+  
+[data-md-color-scheme="slate"] {
+    --md-hue: 200; 
+}
+
+.md-typeset .md-button {
+    font-size: 1.5em;
+    padding: 0.25em 1em;
+}
+
+.md-nav__source, .md-nav__title, .md-header, .md-tabs {
+    --md-primary-fg-color: rgb(20, 30, 80);
+    --md-primary-fg-color--dark: rgb(18, 26, 70);
 }
 
 .md-search__form {
