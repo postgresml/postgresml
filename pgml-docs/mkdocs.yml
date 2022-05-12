@@ -53,6 +53,7 @@ extra:
           link: https://github.com/postgresml
         - icon: fontawesome/brands/python
           link: https://pypi.org/project/pgml-extension/
+    generator: false
 
 copyright: Copyright &copy; 2022 PostgresML Team
 
