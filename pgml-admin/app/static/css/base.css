@@ -112,7 +112,8 @@ figure {
     display: inline-block;
     width: 30vmin;
     height: 30vmin;
-    margin: 0 30px;
+    margin: 30px;
+    border-radius: 10px;
 }
 section {
     background-color: var(--gray-9);
@@ -344,7 +345,7 @@ footer {
         display: inline-block;
         width: 75vmin;
         height: 75vmin;
-        margin: 0 30px;
+        margin: 30px 0;
     }
     section {
         border-radius: 0;

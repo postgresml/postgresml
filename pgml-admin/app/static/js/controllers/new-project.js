@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { renderModel, renderDistribution, renderCorrelation, renderOutliers } from "/static/js/main.mjs";
 
 export default class extends Controller {
     static targets = [
@@ -16,6 +17,7 @@ export default class extends Controller {
       "analysisNext",
       "algorithmListClassification",
       "algorithmListRegression",
+      "analysisResult",
     ];
 
     initialize() {
@@ -34,10 +36,15 @@ export default class extends Controller {
     }
 
     renderProgressBar() {
-        let progress = Math.ceil(this.index / this.stepTargets.length * 100)
+      // Let's get stuck on 97 just like Windows Update... ;)
+      if (this.progressBarInterval && this.progressBarProgress >= 95)
+        clearInterval(this.progressBarInterval)
 
-        this.progressBarTarget.style = `width: ${progress > 0 ? progress : "auto"}%;`
-        this.progressBarAmountTarget.innerHTML = `${progress}%`
+      this.progressBarProgress += 2
+      const progress = Math.min(100, this.progressBarProgress)
+
+      this.progressBarTarget.style = `width: ${progress > 0 ? progress : "auto"}%;`
+      this.progressBarAmountTarget.innerHTML = `${progress}%`
     }
 
     checkDataSource(event) {
@@ -69,7 +76,7 @@ export default class extends Controller {
       fetch(`/api/projects/?name=${projectName}`)
       .then(res => res.json())
       .then(json => {
-        if (json.length > 0) {
+        if (json.results.length > 0) {
           this.projectName = null
         } else {
           this.projectName = projectName
@@ -156,6 +163,37 @@ export default class extends Controller {
       .then(html => this.trainingLabelTarget.innerHTML = html)
     }
 
+    renderAnalysisResult() {
+      fetch(`/html/snapshots/analysis/?snapshot_id=${this.snapshotData.id}`)
+      .then(res => res.text())
+      .then(html => this.analysisResultTarget.innerHTML = html)
+      .then(() => {
+        // Render charts
+        for (name in this.snapshotData.columns) {
+          const sample = JSON.parse(document.getElementById(name).textContent)
+          renderDistribution(name, sample, this.snapshotData.analysis[`${name}_dip`])
+
+          for (target of this.snapshotData.y_column_name) {
+            if (target === name)
+              continue
+
+            const targetSample = JSON.parse(document.getElementById(target).textContent)
+            renderCorrelation(name, target, sample, targetSample)
+          }
+        }
+
+        for (target of this.snapshotData.y_column_name) {
+          const targetSample = JSON.parse(document.getElementById(target).textContent)
+          renderOutliers(target, targetSample, this.snapshotData.analysis[`${target}_stddev`])
+        }
+
+        this.progressBarProgress = 100
+        this.renderProgressBar()
+
+        setTimeout(this.nextStep.bind(this), 1000)
+      })
+    }
+
     selectTarget(event) {
       event.preventDefault()
       let targetName = event.currentTarget.dataset.columnName
@@ -184,6 +222,11 @@ export default class extends Controller {
 
       this.nextStep()
 
+      // Start the progress bar :)
+      this.progressBarProgress = 2
+      this.progressBarInterval = setInterval(this.renderProgressBar.bind(this), 750)
+      console.log("interval set to ", this.progressBarInterval)
+
       fetch(`/api/snapshots/snapshot/`, {
         method: "POST",
         cache: "no-cache",
@@ -198,13 +241,12 @@ export default class extends Controller {
           return res.json()
         } else {
           alert("Failed to create snapshot")
-          console.log(res.json())
           throw Error("Failed to create snapshot")
         }
       })
       .then(json => {
         this.snapshotData = json
-        setTimeout(() => this.nextStep(), 500);
+        this.renderAnalysisResult()
       })
     }
 
@@ -214,9 +256,8 @@ export default class extends Controller {
       const request = {
         "project_name": this.projectName,
         "objective": this.objectiveName,
-        "relation_name": this.tableName,
         "algorithms": Array.from(this.algorithmNames),
-        "targets": Array.from(this.targetNames),
+        "snapshot_id": this.snapshotData.id,
       }
 
       this.createLoader()
@@ -256,12 +297,10 @@ export default class extends Controller {
     nextStep() {
         this.index += 1
         this.renderSteps()
-        this.renderProgressBar()
     }
 
     previousStep() {
         this.index -= 1
         this.renderSteps()
-        this.renderProgressBar()
     }
 }

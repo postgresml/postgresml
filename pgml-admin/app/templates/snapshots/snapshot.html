@@ -108,7 +108,7 @@
     {% endfor %}
     {% else %}
     {% for y_column_name in snapshot.y_column_name %}
-      setTimeout(renderCorrelation, delay, "{{name}}", "{{y_column_name}}", {{name}}_samples, {{y_column_name}}_samples, {{feature.key_metric}})
+      setTimeout(renderCorrelation, delay, "{{name}}", "{{y_column_name}}", {{name}}_samples, {{y_column_name}}_samples)
     {% endfor %}
     {% endif %}
   {% endfor %}

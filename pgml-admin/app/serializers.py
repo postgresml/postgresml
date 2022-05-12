@@ -25,6 +25,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
+            "id",
             "name",
             "objective",
             "created_at",
@@ -34,6 +35,8 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class SnapshotSerializer(serializers.ModelSerializer):
+    y_column_name = serializers.ListSerializer(child=serializers.CharField())
+
     class Meta:
         model = Snapshot
         fields = [
@@ -63,9 +66,8 @@ class DeploymentSerializer(serializers.ModelSerializer):
 class NewProjectSerializer(serializers.Serializer):
     project_name = serializers.CharField()
     objective = serializers.CharField()
+    snapshot_id = serializers.IntegerField()
     algorithms = serializers.ListSerializer(child=serializers.CharField())
-    targets = serializers.ListSerializer(child=serializers.CharField())
-    relation_name = serializers.CharField()
 
 
 class NewSnapshotSerializer(serializers.Serializer):

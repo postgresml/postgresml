@@ -6,14 +6,6 @@
     <h1><span class="material-symbols-outlined">apps</span>New project</h1> 
   </section>
 
-  <section class="hidden">
-    <div class="progress-bar">
-      <div class="progress-bar-loading" data-new-project-target="progressBar">
-        <div class="progress-bar-progress" data-new-project-target="progressBarAmount">0%</div>
-      </div>
-    </div>
-  </section>
-
   <section data-new-project-target="step" data-step-name="project-name">
     <h2>Project name</h2>
 
@@ -63,10 +55,18 @@
     <div style="display: flex; justify-content: center; align-items: center;">
       <p>Creating snapshot, this may take a moment...</p>
     </div>
+
+    <div class="progress-bar">
+      <div class="progress-bar-loading" data-new-project-target="progressBar">
+        <div class="progress-bar-progress" data-new-project-target="progressBarAmount">0%</div>
+      </div>
+    </div>
   </section>
 
   <section data-new-project-target="step" class="hidden" data-step-name="snapshot">
     <h2>Analysis</h2>
+
+    <div data-new-project-target="analysisResult"></div>
 
     <div class="button-container">
       <button class="next" data-action="click->new-project#nextStep">Next</button>

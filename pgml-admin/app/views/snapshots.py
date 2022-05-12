@@ -101,10 +101,17 @@ class SnapshotAnalysisView(viewsets.ViewSet):
                     "type": snapshot.columns[column],
                     "samples": list(map(lambda x: x[column], snapshot.sample())),
                 } for column in snapshot.y_column_name
+            ],
+            "features": [
+                 {
+                    "name": column,
+                    "type": snapshot.columns[column],
+                    "samples": list(map(lambda x: x[column], snapshot.sample())),
+                } for column in snapshot.columns.keys() - snapshot.y_column_name
             ]
         }
 
-        return render("snapshots/analysis.html", context)
+        return render(request, "snapshots/analysis.html", context)
 
 class SnapshotViewSet(viewsets.ModelViewSet):
     queryset = Snapshot.objects.all()

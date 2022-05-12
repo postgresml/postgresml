@@ -157,7 +157,7 @@ export function renderOutliers(feature_name, samples, stddev) {
     );
 }
 
-export function renderCorrelation(feature_name, other_name, samples, y, key_metric) {
+export function renderCorrelation(feature_name, other_name, samples, y) {
     var lr = linearRegression(samples, y);
     var fit_from = Math.min(...samples);
     var fit_to = Math.max(...samples);
