@@ -1,6 +1,3 @@
----
-title: "Postgres<span style='color: dodgerblue'>ML</span>"
----
 # FAQ
 
 *How far can this scale?*

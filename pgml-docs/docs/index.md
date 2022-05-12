@@ -1,5 +1,4 @@
 ---
-title: "Postgres<span style='color: dodgerblue'>ML</span>"
 hide:
   - navigation
   - toc

@@ -1,7 +1,3 @@
----
-title: "Postgres<span style='color: dodgerblue'>ML</span>"
----
-
 # Installation
 
 ## with Docker <small>Recommended</small>
