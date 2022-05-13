@@ -53,6 +53,15 @@ input {
     color: red;
 }
 
+.input-container label {
+    margin-right: 25px;
+    min-width: 50px;
+}
+
+.input-container:not(:first-child) {
+    margin-top: 15px;
+}
+
 button, a[role=button] {
     font-size: 1em;
     padding: 10px 25px;

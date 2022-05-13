@@ -63,6 +63,34 @@
   {% endfor %}
 </section>
 
+<div data-controller="quick-prediction">
+  <section data-quick-prediction-target="step">
+    <h2>Quick prediction</h2>
+    {% for feature, median in features.items %}
+    <div class="input-container">
+      <label>{{ feature }}</label>
+      <input type="number" name="{{ feature }}" value="{{ median }}" data-quick-prediction-target="feature" />
+    </div>
+    {% endfor %}
+    <div class="button-container">
+      <button data-action="click->quick-prediction#predict" data-model-id="{{ object.id }}">Predict</button>
+    </div>
+  </section>
+
+  <section data-quick-prediction-target="step" class="hidden">
+    <h2>Prediction</h2>
+
+    <dl>
+      <dt>{{ object.snapshot.y_column_name.0 }}</dt>
+      <dd data-quick-prediction-target="prediction"></dd>
+    </dl>
+
+    <div class="button-container">
+      <button data-action="click->quick-prediction#prevStep">Back</button>
+    </div>
+  </section>
+</div>
+
 <script defer type="module">
   import { renderHyperparam } from '/static/js/main.mjs';
 
