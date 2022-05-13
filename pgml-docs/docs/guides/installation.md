@@ -72,7 +72,7 @@ A PostgresML deployment consists of two different runtimes. The foundational run
 
 ### Install the extension
 
-To use our Python package inside PostgreSQL, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step, use the correspoding pip executable. Since Python was installed as a framework, sudo (root) is not required. 
+To use our Python package inside PostgreSQL, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step, use the correspoding pip executable. 
 
 Change the `--database-url` option to point to your PostgreSQL server.
 
