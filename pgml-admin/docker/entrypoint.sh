@@ -6,7 +6,8 @@ set -e
 cp /app/docker/.env.docker .env
 source .env
 
-while ! psql $PGML_DATABASE_URL 2> /dev/null; do
+while ! psql -U postgres -h 172.17.0.1 -p 5433 -d pgml_development 2> /dev/null; do
+	echo "waiting on postgres"
 	sleep 1
 done
 
@@ -19,4 +20,3 @@ if [[ ! -z $@ ]]; then
 	echo
 	$@
 fi
-

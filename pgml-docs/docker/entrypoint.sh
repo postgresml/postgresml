@@ -10,4 +10,3 @@ if [[ ! -z $@ ]]; then
 	echo
 	$@
 fi
-
