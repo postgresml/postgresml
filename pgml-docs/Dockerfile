@@ -1,15 +1,11 @@
-FROM ubuntu:20.04
+FROM python:3.10
 MAINTAINER docker@postgresml.com
-
-RUN apt-get update
-ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
-RUN apt-get install -y python3 python3-pip
 
 COPY requirements.txt /app/requirements.txt
 WORKDIR /app
 
-RUN pip3 install -r requirements.txt
+RUN pip install -U pip && \
+	pip install -r requirements.txt
 
 COPY . /app
 WORKDIR /app

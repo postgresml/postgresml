@@ -9,14 +9,14 @@ jobs:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      - image: levkk/postgresml:latest
+      - image: levkk/postgresml:ci
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
       - run:
           name: "Train and predict"
-          command: "cd pgml-extension; bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -f sql/test.sql -P pager"
+          command: "cd pgml-extension; bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -c 'SELECT 1'"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
