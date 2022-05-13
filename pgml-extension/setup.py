@@ -52,6 +52,7 @@ def install_sql(filename, database_url):
         print(f"WARNING: No --database_url has been set. Skipping database installation.")
 
     command = f"psql -f {filename} {database_url}"
+    print(f"Running {command}")
     exit_status = os.system(command)
     if exit_status != 0:
         message = f"""

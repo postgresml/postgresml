@@ -15,7 +15,7 @@ echo "Creating user and database..."
 (createdb -U postgres -h 127.0.0.1 pgml_development 2> /dev/null) || true
 
 echo "Installing pgml extension..."
-sudo python3 setup.py install --database-url=postgres://postgres@127.0.0.1:5432/pgml_development
+sudo python3 setup.py develop --database-url=postgres://postgres@127.0.0.1:5432/pgml_development
 
 echo "Ready!"
 if [[ ! -z $@ ]]; then
