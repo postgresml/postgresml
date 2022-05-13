@@ -4,6 +4,7 @@ import re
 from pgml_extension.exceptions import PgMLException
 import numpy
 
+
 def q(obj):
     if type(obj) == str:
         return quote_literal(obj)

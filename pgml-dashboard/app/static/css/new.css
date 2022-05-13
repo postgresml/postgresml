@@ -83,7 +83,7 @@ button[disabled], button:disabled, a[disabled], a:disabled {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .object_list a.selected {
@@ -158,4 +158,8 @@ button[disabled], button:disabled, a[disabled], a:disabled {
 .feature_figures figure {
     box-shadow: 0 1px 2px var(--shadow-2);
     padding: 25px;
+}
+
+.feature_figures {
+  margin-top: 50px;
 }

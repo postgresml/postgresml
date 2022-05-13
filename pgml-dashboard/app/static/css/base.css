@@ -102,7 +102,7 @@ h2 span.material-symbols-outlined:first-of-type {
 h3 {
     font-size: 1.5em;
     font-weight: 500;
-    margin: 1em 0 0.5em;
+    margin: 1em 0 1em 0;
     color: var(--gray-3);
 }
 code {
