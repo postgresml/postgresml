@@ -14,3 +14,4 @@ pytz==2022.1
 sqlparse==0.4.2
 tomli==2.0.1
 whitenoise==6.0.0
+sentry-sdk==1.5.12

@@ -15,6 +15,8 @@ import os
 import mimetypes
 
 import dotenv
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 dotenv.load_dotenv()
 
@@ -34,6 +36,14 @@ DEBUG = os.environ["DJANGO_DEBUG"] == "True"
 ALLOWED_HOSTS = [x.strip() for x in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost, 127.0.0.1").split(",")]
 
 CONN_MAX_AGE = 60
+
+SENTRY_DSN = os.environ.get("SENTRY_DSN")
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        SENTRY_DSN,
+        traces_sample_rate=1.0
+    )
 
 # Application definition
 
