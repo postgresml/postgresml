@@ -1,13 +1,13 @@
 # Installation
 
 ## Docker <small>Recommended</small>
-=== ":material-linux: Linux"
-
-    [Install Docker for Linux](https://docs.docker.com/engine/install/ubuntu/). Some package managers (e.g. Ubuntu/Debian) additionally require the `docker-compose` package to be installed seperately.
-
 === ":material-apple: OS X"
 
     [Install Docker for OS X](https://docs.docker.com/desktop/mac/install/).
+
+=== ":material-linux: Linux"
+
+    [Install Docker for Linux](https://docs.docker.com/engine/install/ubuntu/). Some package managers (e.g. Ubuntu/Debian) additionally require the `docker-compose` package to be installed seperately.
 
 === ":material-microsoft-windows: Windows"
 
@@ -46,14 +46,6 @@ A PostgresML deployment consists of two different runtimes. The foundational run
 
 ### Install PostgreSQL with PL/Python
 
-=== ":material-linux: Linux"
-
-    Each Ubuntu/Debian distribution comes with its own version of PostgreSQL, the simplest way is to install it from Aptitude:
-
-    ```bash
-    $ sudo apt-get install -y postgresql-plpython3-12 python3 python3-pip postgresql-12
-    ```
-
 === ":material-apple: OS X"
 
     We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with [PL/Python](https://www.postgresql.org/docs/current/plpython.html), the extension we rely on, built into the installation. Otherwise, you'll need to install PL/Python. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (Python.org); Postgres.app and PL/Python depend on the community one. The following versions of Python and Postgres.app are compatible:
@@ -64,6 +56,14 @@ A PostgresML deployment consists of two different runtimes. The foundational run
     | 13                     | 3.8                | [Python 3.8 64-bit](https://www.python.org/ftp/python/3.8.10/python-3.8.10-macos11.pkg) |
 
     All Python.org installers for Mac OS are [available here](https://www.python.org/downloads/macos/). You can also get more details about this in the Postgres.app [documentation](https://postgresapp.com/documentation/plpython.html).
+
+=== ":material-linux: Linux"
+
+    Each Ubuntu/Debian distribution comes with its own version of PostgreSQL, the simplest way is to install it from Aptitude:
+
+    ```bash
+    $ sudo apt-get install -y postgresql-plpython3-12 python3 python3-pip postgresql-12
+    ```
 
 === ":material-microsoft-windows: Windows"
 
