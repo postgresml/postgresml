@@ -25,6 +25,18 @@ SELECT target, pgml.predict('Diabetes Progression', ARRAY[age, sex, bmi, bp, s1,
 FROM pgml.diabetes 
 LIMIT 10;
 
+-- Check predictions against a specific model id
+SELECT model_id, target, pgml.model_predict(model_id, ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
+FROM pgml.diabetes
+CROSS JOIN LATERAL (
+    SELECT pgml.models.id AS model_id FROM pgml.models
+    INNER JOIN pgml.projects
+    ON pgml.models.project_id = pgml.projects.id
+    WHERE pgml.projects.name = 'Diabetes Progression'
+    LIMIT 1
+) models
+LIMIT 10;
+
 -- linear models
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ridge');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lasso');
