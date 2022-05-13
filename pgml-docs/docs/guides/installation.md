@@ -40,15 +40,15 @@ pgml_development=# SELECT pgml.version();
 Docker Compose will also start the dashboard app running locally [http://localhost:8000/](http://localhost:8000/)
 
 
-## Native Installations
+## Native Installation
 
-A PostgresML deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](./pgml-extension/)) that facilitates the machine learning lifecycle inside the database. Additionally, we provide a dashboard ([pgml-dashboard](./pgml-dashboard/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use. 
+A PostgresML deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](https://github.com/postgresml/postgresml/tree/master/pgml-extension/)) that facilitates the machine learning lifecycle inside the database. Additionally, we provide a dashboard ([pgml-dashboard](https://github.com/postgresml/postgresml/tree/master/pgml-dashboard/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use. 
 
 ### Install PostgreSQL with PL/Python
 
 === ":material-apple: OS X"
 
-    We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with [PL/Python](https://www.postgresql.org/docs/current/plpython.html), the extension we rely on, built into the installation. Otherwise, you'll need to install PL/Python. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (Python.org); Postgres.app and PL/Python depend on the community one. The following versions of Python and Postgres.app are compatible:
+    We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with [PL/Python](https://www.postgresql.org/docs/current/plpython.html). Otherwise, you'll need to install PL/Python manually. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (Python.org); Postgres.app and PL/Python depend on the community one. The following versions of Python and Postgres.app are compatible:
 
     | **PostgreSQL version** | **Python version** | **Download link**                                                                       |
     |------------------------|--------------------|-----------------------------------------------------------------------------------------|
@@ -72,9 +72,9 @@ A PostgresML deployment consists of two different runtimes. The foundational run
 
 ### Install the extension
 
-To use our Python package inside PostgreSQL, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step, use the correspoding pip executable. Since Python was installed as a framework, sudo (root) is not required. 
+To use our Python package inside PostgreSQL, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step, use the correspoding pip executable. 
 
-The `--database-url` option should point to the PostgreSQL installation from the prior step.
+Change the `--database-url` option to point to your PostgreSQL server.
 
 ```bash
 $ sudo pip3 install --install-option="--database-url=postgres://user_name:password@localhost:5432/database_name" pgml-extension
@@ -84,4 +84,28 @@ If everything works, you should be able to run this successfully:
 
 ```bash
 $ psql -c 'SELECT pgml.version()' postgres://user_name:password@localhost:5432/database_name
+```
+
+### Run the dashboard
+
+The PostgresML dashboard is a Django app, that can be run against any PostgreSQL installation. There is an included Dockerfile if you wish to run it as a container, or you may want to setup a python Virtual Env to isolate the dependencies. Basic install can be achieved by:
+
+1. Clone the repo:
+```bash
+$ git clone git@github.com:postgresml/postgresml.git && cd postgresml/pgml-dashboard
+```
+
+2. Set your PGML_DATABASE_URL environment variable:
+```
+$ echo PGML_DATABASE_URL=postgres://user_name:password@localhost:5432/database_name > .env
+```
+
+3. Install dependencies:
+```
+$ pip install -r requirements.txt
+```
+
+4. Run the server:
+```
+$ ./managy.py server
 ```
