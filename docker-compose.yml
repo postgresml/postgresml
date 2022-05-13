@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5433:5432"
-    volumes:
-      - "pg_data:/var/lib/postgresql"
     command:
       - sleep
       - infinity
@@ -32,6 +30,3 @@ services:
       - mkdocs
       - serve
       - -a 0.0.0.0:8001
-
-volumes:
-  pg_data:

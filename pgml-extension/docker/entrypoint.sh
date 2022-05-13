@@ -9,6 +9,7 @@ service postgresql start
 echo "Installing pgml extension..."
 pip3 install .
 
+
 echo "Connecting to Postgres..."
 while ! psql -c 'SELECT 1' -U postgres -h 127.0.0.1 > /dev/null; do
 	sleep 1
@@ -17,6 +18,12 @@ done
 echo "Creating user and database..."
 (createdb -U postgres -h 127.0.0.1 pgml_development 2> /dev/null) || true
 psql -d pgml_development -f sql/install.sql -U postgres -h 127.0.0.1 > /dev/null
+
+echo "Installing example datasets"
+psql -d pgml_development -f examples/classification.sql -U postgres -h 127.0.0.1
+psql -d pgml_development -f examples/regression.sql -U postgres -h 127.0.0.1
+psql -d pgml_development -f examples/image_classification.sql -U postgres -h 127.0.0.1
+psql -d pgml_development -f examples/joint_regression.sql -U postgres -h 127.0.0.1
 
 echo "Ready!"
 if [[ ! -z $@ ]]; then
