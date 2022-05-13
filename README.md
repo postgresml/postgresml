@@ -93,7 +93,7 @@ $ git clone git@github.com:postgresml/postgresml.git
 $ cd postgresml && docker-compose up
 ```
 
-3) Connect to Postgres in the container with PostgresML installed:
+3) Connect to PostgreSQL in the container with PostgresML installed:
 
 ```bash
 $ psql postgres://postgres@localhost:5433/pgml_development
