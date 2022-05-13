@@ -2,7 +2,6 @@ from typing import OrderedDict
 from collections import namedtuple
 import json
 import logging
-import pickle
 import io
 
 from django.shortcuts import render, get_object_or_404
