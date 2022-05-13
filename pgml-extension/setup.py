@@ -93,7 +93,7 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=("tests",)),
     package_data={
         '': ['MIT-LICENSE.txt'],
-        'sql': ['sql/install.sql'], # path.as_posix() for path in Path(".").rglob("*.sql")
+        'sql': [path.as_posix() for path in Path(".").rglob("*.sql")]
     },
     include_package_data=True,
     classifiers=[
