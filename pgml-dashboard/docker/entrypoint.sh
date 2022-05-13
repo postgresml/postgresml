@@ -15,7 +15,7 @@ python3 manage.py migrate
 
 if [[ ! -z $@ ]]; then
 	echo
-	echo "To visit admin: "
+	echo "To visit the dashboard: "
 	echo "  http://127.0.0.1:8000/"
 	echo
 	$@
