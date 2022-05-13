@@ -4,10 +4,10 @@ MAINTAINER docker@postgresml.com
 RUN apt-get update
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-RUN apt-get install -y postgresql-plpython3-14 python3 python3-pip postgresql-14 tzdata sudo
+RUN apt-get install -y postgresql-plpython3-14 python3 python3-pip postgresql-14 tzdata sudo cmake
 
 # Cache this, quicker
-RUN pip3 install xgboost sklearn
+RUN pip3 install xgboost sklearn diptest
 
 COPY --chown=postgres:postgres . /app
 WORKDIR /app
