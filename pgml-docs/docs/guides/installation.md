@@ -1,6 +1,6 @@
 # Installation
 
-## Docker <small>Recommended</small>
+## Quick Start w/ Docker <small>Recommended</small>
 === ":material-apple: OS X"
 
     [Install Docker for OS X](https://docs.docker.com/desktop/mac/install/).
@@ -40,7 +40,7 @@ pgml_development=# SELECT pgml.version();
 Docker Compose will also start the dashboard app running locally [http://localhost:8000/](http://localhost:8000/)
 
 
-## Native Installation & Production Deployments
+## Native Installations
 
 A PostgresML deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](./pgml-extension/)) that facilitates the machine learning lifecycle inside the database. Additionally, we provide a dashboard ([pgml-dashboard](./pgml-dashboard/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use. 
 
