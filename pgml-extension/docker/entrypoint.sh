@@ -20,10 +20,7 @@ echo "Creating user and database..."
 psql -d pgml_development -f sql/install.sql -U postgres -h 127.0.0.1 > /dev/null
 
 echo "Installing example datasets"
-psql -d pgml_development -f examples/classification.sql -U postgres -h 127.0.0.1
-psql -d pgml_development -f examples/regression.sql -U postgres -h 127.0.0.1
-psql -d pgml_development -f examples/image_classification.sql -U postgres -h 127.0.0.1
-psql -d pgml_development -f examples/joint_regression.sql -U postgres -h 127.0.0.1
+psql -d pgml_development -f examples/classification.sql -U postgres -h 127.0.0.1 -f sql/test.sql -P pager
 
 echo "Ready!"
 if [[ ! -z $@ ]]; then

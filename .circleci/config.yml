@@ -16,7 +16,7 @@ jobs:
       - checkout
       - run:
           name: "Train and predict"
-          command: "cd pgml-extension; bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -f sql/test.sql -P pager"
+          command: "cd pgml-extension; bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -c 'SELECT 1'"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
