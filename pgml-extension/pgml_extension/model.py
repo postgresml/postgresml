@@ -590,6 +590,24 @@ class Model(object):
         model.__init__()
         return model
 
+    @classmethod
+    def find_by_id(cls, pk: int):
+        """Find the model by primary key in pgml.models"""
+        result = plpy.execute(
+            f"""
+                SELECT models.*
+                FROM pgml.models
+                WHERE id = {q(pk)}
+            """
+        )
+        if len(result) == 0:
+            return None
+
+        model = Model()
+        model.__dict__ = dict(result[0])
+        model.__init__()
+        return model
+
     def __init__(self):
         self._algorithm = None
         self._project = None

@@ -191,3 +191,18 @@ AS $$
 
 	return project.deployed_model.predict(features)
 $$ LANGUAGE plpython3u;
+
+
+---
+--- Predict using a specific model. Useful for debugging.
+---
+CREATE OR REPLACE FUNCTION pgml.model_predict(
+	model_id BIGINT, -- `id` from `pgml.models`
+	features DOUBLE PRECISION[] -- list of features that the model accepts
+)
+RETURNS DOUBLE PRECISION
+AS $$
+	from pgml_extension.model import Model
+	model = Model.find_by_id(model_id)
+	return model.predict(features)
+$$ LANGUAGE plpython3u;

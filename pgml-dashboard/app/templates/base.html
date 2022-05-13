@@ -33,10 +33,12 @@
             import { Application } from '@hotwired/stimulus'
             import { Autocomplete } from '/static/js/controllers/stimulus-autocomplete.js'
             import { default as NewProject } from '/static/js/controllers/new-project.js'
+            import { default as QuickPrediction } from '/static/js/controllers/quick-prediction.js'
 
             const application = Application.start()
             application.register('autocomplete', Autocomplete)
             application.register('new-project', NewProject)
+            application.register('quick-prediction', QuickPrediction)
         </script>
       
         <title>{% if title %}{{title}}{% endif %}{% if title is None or "PostgresML" not in title %}{% if title is not None %} - {% endif %}PostgresML{% endif %}</title>

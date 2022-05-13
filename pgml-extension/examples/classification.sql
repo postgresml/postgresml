@@ -78,3 +78,4 @@ SELECT * FROM pgml.deploy('Iris Classifier', 'best_score', 'svm');
 SELECT target, pgml.predict('Iris Classifier', ARRAY[sepal_length, sepal_width, petal_length, petal_width]) AS prediction
 FROM iris_view 
 LIMIT 10;
+
