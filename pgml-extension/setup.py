@@ -47,7 +47,6 @@ class DevelopCommand(develop):
             install_sql(os.path.join(os.path.dirname(__file__), "sql/test.sql"), self.database_url)
 
 def install_sql(filename, database_url):
-    database_url 
     if database_url is None:
         print(f"WARNING: No --database_url has been set. Skipping database installation.")
 
