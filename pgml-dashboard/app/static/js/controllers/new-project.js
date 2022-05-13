@@ -18,6 +18,7 @@ export default class extends Controller {
       "algorithmListClassification",
       "algorithmListRegression",
       "analysisResult",
+      "projectError",
     ];
 
     initialize() {
@@ -228,6 +229,7 @@ export default class extends Controller {
       this.progressBarInterval = setInterval(this.renderProgressBar.bind(this), 850)
 
       this.createProject(event, false, () => {
+        this.index += 1 // Skip error page
         this.renderAnalysisResult()
         this.algorithmNames.delete("linear")
       })
@@ -260,8 +262,12 @@ export default class extends Controller {
         if (res.ok) {
           return res.json()
         } else {
-          alert("Failed to train project");
-          throw Error("Failed to train project")
+          const json = res.json().then((json) => {
+            clearInterval(this.progressBarInterval);
+            this.projectErrorTarget.innerHTML = json.error
+            this.nextStep()
+          })
+          throw Error(`Failed to train project: ${json.error}`)
         }
       })
       .then(json => {
@@ -293,5 +299,10 @@ export default class extends Controller {
     previousStep() {
         this.index -= 1
         this.renderSteps()
+    }
+
+    restart() {
+      this.index = 0
+      this.renderSteps()
     }
 }

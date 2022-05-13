@@ -5,6 +5,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
 from django.db import connection
+from django.db.utils import InternalError
 
 # DRF
 from rest_framework import viewsets
@@ -14,6 +15,7 @@ from rest_framework.decorators import action
 
 from app.models import Project
 from app.serializers import ProjectSerializer, NewProjectSerializer
+
 
 def default_context(context):
     return {"topic": "projects", **context}
@@ -79,24 +81,29 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
             with connection.cursor() as cursor:
                 if not exists:
-                    cursor.execute(
-                        """
-                        SELECT * FROM pgml.train_joint(
-                            project_name => %s,
-                            objective => %s,
-                            relation_name => %s,
-                            y_column_name => %s,
-                            algorithm => %s
+                    try:
+                        cursor.execute(
+                            """
+                            SELECT * FROM pgml.train_joint(
+                                project_name => %s,
+                                objective => %s,
+                                relation_name => %s,
+                                y_column_name => %s,
+                                algorithm => %s
+                            )
+                        """,
+                            [
+                                serializer.validated_data["project_name"],
+                                serializer.validated_data["objective"],
+                                serializer.validated_data["relation_name"],
+                                serializer.validated_data["y_column_name"],
+                                serializer.validated_data["algorithms"][0],
+                            ],
                         )
-                    """,
-                        [
-                            serializer.validated_data["project_name"],
-                            serializer.validated_data["objective"],
-                            serializer.validated_data["relation_name"],
-                            serializer.validated_data["y_column_name"],
-                            serializer.validated_data["algorithms"][0],
-                        ],
-                    )
+                    except InternalError as e:
+                        return Response(status=status.HTTP_400_BAD_REQUEST, data={
+                            "error": str(e),
+                        })
                 if exists:
                     algorithms = serializer.validated_data["algorithms"]
                 else:

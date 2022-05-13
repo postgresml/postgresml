@@ -75,8 +75,20 @@
 
     <div class="progress-bar">
       <div class="progress-bar-loading" data-new-project-target="progressBar">
-        <div class="progress-bar-progress" data-new-project-target="progressBarAmount">0%</div>
+        <div class="progress-bar-progress" data-new-project-target="progressBarAmount">2%</div>
       </div>
+    </div>
+  </section>
+
+  <section data-new-project-target="step" class="hidden" data-step-name="error">
+    <h2>Error</h2>
+
+    <pre data-new-project-target="projectError">
+
+    </pre>
+
+    <div class="button-container" class="hidden" data-new-project-target="projectResultBack">
+      <button class="next" data-action="click->new-project#restart">Restart</button>
     </div>
   </section>
 
