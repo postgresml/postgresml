@@ -20,7 +20,7 @@ $ pyenv install 3.10.4
 Create the virtual env:
 
 ```
-$ pyenv virtualenv 3.10.4 pgml-admin
+$ pyenv virtualenv 3.10.4 pgml-dashboard
 ```
 
 Install the dependencies:

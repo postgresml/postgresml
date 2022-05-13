@@ -11,9 +11,9 @@ services:
     command:
       - sleep
       - infinity
-  admin:
+  dashboard:
     build:
-      context: ./pgml-admin/
+      context: ./pgml-dashboard/
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
