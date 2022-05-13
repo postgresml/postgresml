@@ -44,67 +44,44 @@ Docker Compose will also start the dashboard app running locally [http://localho
 
 A PostgresML deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](./pgml-extension/)) that facilitates the machine learning lifecycle inside the database. Additionally, we provide a dashboard ([pgml-dashboard](./pgml-dashboard/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use. 
 
-### Mac OS
+### Install PostgreSQL with PL/Python
 
-We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with [PL/Python](https://www.postgresql.org/docs/current/plpython.html), the extension we rely on, built into the installation. Otherwise, you'll need to install PL/Python. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (Python.org); Postgres.app and PL/Python depend on the community one. The following versions of Python and Postgres.app are compatible:
+=== ":material-linux: Linux"
 
-| **PostgreSQL version** | **Python version** | **Download link**                                                                       |
-|------------------------|--------------------|-----------------------------------------------------------------------------------------|
-| 14                     | 3.9                | [Python 3.9 64-bit](https://www.python.org/ftp/python/3.9.12/python-3.9.12-macos11.pkg) |
-| 13                     | 3.8                | [Python 3.8 64-bit](https://www.python.org/ftp/python/3.8.10/python-3.8.10-macos11.pkg) |
+    Each Ubuntu/Debian distribution comes with its own version of PostgreSQL, the simplest way is to install it from Aptitude:
 
-All Python.org installers for Mac OS are [available here](https://www.python.org/downloads/macos/). You can also get more details about this in the Postgres.app [documentation](https://postgresapp.com/documentation/plpython.html).
+    ```bash
+    $ sudo apt-get install -y postgresql-plpython3-12 python3 python3-pip postgresql-12
+    ```
 
-##### Python package
+=== ":material-apple: OS X"
 
-To use our Python package inside Postgres, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step, use the correspoding pip executable. Since Python was installed as a framework, sudo (root) is not required.
+    We recommend you use [Postgres.app](https://postgresapp.com/) because it comes with [PL/Python](https://www.postgresql.org/docs/current/plpython.html), the extension we rely on, built into the installation. Otherwise, you'll need to install PL/Python. Once you have Postgres.app running, you'll need to install the Python framework. Mac OS has multiple distributions of Python, namely one from Brew and one from the Python community (Python.org); Postgres.app and PL/Python depend on the community one. The following versions of Python and Postgres.app are compatible:
 
-For PostgreSQL 14, use Python & Pip 3.9:
+    | **PostgreSQL version** | **Python version** | **Download link**                                                                       |
+    |------------------------|--------------------|-----------------------------------------------------------------------------------------|
+    | 14                     | 3.9                | [Python 3.9 64-bit](https://www.python.org/ftp/python/3.9.12/python-3.9.12-macos11.pkg) |
+    | 13                     | 3.8                | [Python 3.8 64-bit](https://www.python.org/ftp/python/3.8.10/python-3.8.10-macos11.pkg) |
 
-```bash
-$ pip3.9 install pgml-extension
-```
+    All Python.org installers for Mac OS are [available here](https://www.python.org/downloads/macos/). You can also get more details about this in the Postgres.app [documentation](https://postgresapp.com/documentation/plpython.html).
 
-##### PL/Python functions
+=== ":material-microsoft-windows: Windows"
 
-Finally to interact with the package, install our functions and supporting tables into the database:
+    Enterprise db provides Windows builds of PostgreSQL [available for download](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads).
+    
 
-```bash
-$ psql -f sql/install.sql
-```
+### Install the extension
 
-If everything works, you should be able to run this successfully:
+To use our Python package inside PostgreSQL, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step, use the correspoding pip executable. Since Python was installed as a framework, sudo (root) is not required. 
 
-```bash
-$ psql -c 'SELECT pgml.version()'
-```
-
-### Ubuntu/Debian
-
-Each Ubuntu/Debian distribution comes with its own version of PostgreSQL, the simplest way is to install it from Aptitude:
+The `--database-url` option should point to the PostgreSQL installation from the prior step.
 
 ```bash
-$ sudo apt-get install -y postgresql-plpython3-12 python3 python3-pip postgresql-12
-```
-
-##### Python package
-
-The Python package should be installed into the global package space:
-
-```bash
-sudo pip3 install pgml-extension
-```
-
-##### PL/Python functions
-
-Finally to interact with the package, install our functions and supporting tables into the database:
-
-```bash
-$ psql -f sql/install.sql
+$ sudo pip3 install --install-option="--database-url=postgres://user_name:password@localhost:5432/database_name" pgml-extension
 ```
 
 If everything works, you should be able to run this successfully:
 
 ```bash
-$ psql -c 'SELECT pgml.version()'
+$ psql -c 'SELECT pgml.version()' postgres://user_name:password@localhost:5432/database_name
 ```
