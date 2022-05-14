@@ -56,7 +56,7 @@
   <h2>Hyperparam Search - {{ object.search }}</h2>
   {% for param, values in search_params.items %}
     <h3>{{ param }}</h3>
-    <p>{{ values }}</p>
+    <pre><code>{{ values }}</code></pre>
     {% for graph, graph_attrs in search_graphs.items %}
       <figure id="graph_{{param}}_{{graph}}"></figure>
     {% endfor %}

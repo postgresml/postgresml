@@ -173,11 +173,11 @@ export default class extends Controller {
       .then(html => this.analysisResultTarget.innerHTML = html)
       .then(() => {
         // Render charts
-        for (name in snapshotData.columns) {
+        for (let name in snapshotData.columns) {
           const sample = JSON.parse(document.getElementById(name).textContent)
           renderDistribution(name, sample, snapshotData.analysis[`${name}_dip`])
 
-          for (target of snapshotData.y_column_name) {
+          for (let target of snapshotData.y_column_name) {
             if (target === name)
               continue
 
@@ -186,7 +186,7 @@ export default class extends Controller {
           }
         }
 
-        for (target of snapshotData.y_column_name) {
+        for (let target of snapshotData.y_column_name) {
           const targetSample = JSON.parse(document.getElementById(target).textContent)
           renderOutliers(target, targetSample, snapshotData.analysis[`${target}_stddev`])
         }
