@@ -90,8 +90,6 @@ class ModelViewSet(viewsets.ModelViewSet):
     def predict(self, request, pk=None):
         model = get_object_or_404(Model, pk=pk)
 
-        print("Data: ", request.data)
-
         with connection.cursor() as cursor:
             cursor.execute(
                 """
