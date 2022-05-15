@@ -162,7 +162,7 @@ Now that we've got data, we're ready to train a model using an algorithm. We'll 
     (1 row)
     ```
 
-The output gives us a pieces of information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](../guides/deployments/) for a guide to managing the active model.
+The output gives us information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](../guides/deployments/) for a guide to managing the active model.
 
 ## Inspecting the results
 Now we can inspect some of the artifacts a training run creates. 

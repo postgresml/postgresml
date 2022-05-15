@@ -7,7 +7,7 @@
 
 === ":material-linux: Linux"
 
-    [Install Docker for Linux](https://docs.docker.com/engine/install/ubuntu/). Some package managers (e.g. Ubuntu/Debian) additionally require the `docker-compose` package to be installed seperately.
+    [Install Docker for Linux](https://docs.docker.com/engine/install/ubuntu/). Some package managers (e.g. Ubuntu/Debian) additionally require the `docker-compose` package to be installed separately.
 
 === ":material-microsoft-windows: Windows"
 
@@ -72,7 +72,7 @@ A PostgresML deployment consists of two different runtimes. The foundational run
 
 ### Install the extension
 
-To use our Python package inside PostgreSQL, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step, use the correspoding pip executable. 
+To use our Python package inside PostgreSQL, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step, use the corresponding pip executable. 
 
 Change the `--database-url` option to point to your PostgreSQL server.
 
@@ -88,14 +88,14 @@ $ psql -c 'SELECT pgml.version()' postgres://user_name:password@localhost:5432/d
 
 ### Run the dashboard
 
-The PostgresML dashboard is a Django app, that can be run against any PostgreSQL installation. There is an included Dockerfile if you wish to run it as a container, or you may want to setup a python Virtual Env to isolate the dependencies. Basic install can be achieved by:
+The PostgresML dashboard is a Django app, that can be run against any PostgreSQL installation. There is an included Dockerfile if you wish to run it as a container, or you may want to setup a Python venv to isolate the dependencies. Basic install can be achieved with:
 
 1. Clone the repo:
 ```bash
 $ git clone git@github.com:postgresml/postgresml.git && cd postgresml/pgml-dashboard
 ```
 
-2. Set your PGML_DATABASE_URL environment variable:
+2. Set your `PGML_DATABASE_URL` environment variable:
 ```
 $ echo PGML_DATABASE_URL=postgres://user_name:password@localhost:5432/database_name > .env
 ```
@@ -107,5 +107,5 @@ $ pip install -r requirements.txt
 
 4. Run the server:
 ```
-$ ./managy.py server
+$ python manage.py runserver
 ```

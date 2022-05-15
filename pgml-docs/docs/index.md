@@ -76,10 +76,10 @@ hide:
 }
 </style>
 
-<h1 align="center">End-to-end<br/>machine learning solution</h1>
+<h1 align="center">End-to-end<br/>machine learning solution <br/>for everyone</h1>
 
 <p align="center" class="subtitle">
-    Train and deploy models to make online predictions using only SQL, with an open source extension for Postgres. Manage your projects and visualize datasets using the built in dashboard.
+    Train and deploy models to make online predictions using only SQL, with an open source extension for Postgres. Manage your projects and visualize datasets using the built-in dashboard.
 </p>
 
 <p align="center" markdown>
@@ -200,7 +200,7 @@ Vector operations make working with learned emebeddings a snap, for things like 
   </div>
   <div class="card" markdown>
 :material-clipboard-check:
-__Managed model deployements__
+__Managed model deployments__
 
 Models can be periodically retrained and automatically promoted to production depending on their key metric. Rollback capability is provided to ensure that you're always able to serve the highest quality predictions, along with historical logs of all deployments for long term study.
   

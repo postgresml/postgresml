@@ -29,7 +29,7 @@ A Snapshot is created during training runs to record the data used for further a
 ![Snapshot](../images/snapshot.png)
 
 ### Deployments
-Every deployement is recorded to track models over time.
+Every deployment is recorded to track models over time.
 
 ![Deployment](../images/deployment.png)
 
