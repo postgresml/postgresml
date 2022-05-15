@@ -90,6 +90,8 @@ class ModelViewSet(viewsets.ModelViewSet):
     def predict(self, request, pk=None):
         model = get_object_or_404(Model, pk=pk)
 
+        print("Data: ", request.data)
+
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -103,7 +105,7 @@ class ModelViewSet(viewsets.ModelViewSet):
             result = cursor.fetchone()
 
             data = {
-                "prediction": result[0],
+                "predictions": result[0],
             }
 
             return Response(data)

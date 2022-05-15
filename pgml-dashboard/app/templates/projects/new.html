@@ -10,7 +10,7 @@
     <h2>Project name</h2>
 
     <div class="input-container">
-      <input type="text" name="name" placeholder="New unique project name" size="50" data-action="input->new-project#checkProjectName" />
+      <input type="text" name="name" placeholder="New unique project name" size="50" data-action="input->new-project#checkProjectNameDebounced" />
       <span class="material-symbols-outlined" data-new-project-target="projectStatus"></span>
     </div>
 
@@ -40,7 +40,7 @@
     <h2>Data source</h2>
 
     <div class="input-container">
-      <input type="text" name="name" placeholder="Table or view name" size="50" data-action="input->new-project#checkDataSource" list="table-list" />
+      <input type="text" name="name" placeholder="Table or view name" size="50" data-action="input->new-project#checkDataSourceDebounced" list="table-list" />
       <datalist id="table-list">
         {% for table in tables %}
         <option value="{{ table }}">

@@ -81,8 +81,10 @@
     <h2>Prediction</h2>
 
     <dl>
-      <dt>{{ object.snapshot.y_column_name.0 }}</dt>
+      {% for y_column_name in object.snapshot.y_column_name %}
+      <dt>{{ y_column_name }}</dt>
       <dd data-quick-prediction-target="prediction"></dd>
+      {% endfor %}
     </dl>
 
     <div class="button-container">

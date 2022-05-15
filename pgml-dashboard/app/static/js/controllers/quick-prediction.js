@@ -52,7 +52,9 @@ export default class extends Controller {
     })
     .then(res => res.json())
     .then(json => {
-      this.predictionTarget.innerHTML = json.prediction
+      this.predictionTargets.forEach((element, index) => {
+        element.innerHTML = json.predictions[index]
+      })
       this.nextStep()
     })
   }

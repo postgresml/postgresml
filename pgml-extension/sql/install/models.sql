@@ -200,9 +200,16 @@ CREATE OR REPLACE FUNCTION pgml.model_predict(
 	model_id BIGINT, -- `id` from `pgml.models`
 	features DOUBLE PRECISION[] -- list of features that the model accepts
 )
-RETURNS DOUBLE PRECISION
+RETURNS DOUBLE PRECISION[]
 AS $$
 	from pgml_extension.model import Model
+	from collections.abc import Iterable
+
 	model = Model.find_by_id(model_id)
-	return model.predict(features)
+	pred = model.predict(features)
+
+	if isinstance(pred, Iterable):
+		return list(pred)
+	else:
+		return [pred]
 $$ LANGUAGE plpython3u;

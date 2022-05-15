@@ -25,6 +25,9 @@ export default class extends Controller {
         this.index = 0
         this.targetNames = new Set()
         this.algorithmNames = new Set()
+
+        this.checkDataSourceDebounced = _.debounce(this.checkDataSource, 250)
+        this.checkProjectNameDebounced = _.debounce(this.checkProjectName, 250)
     }
 
     renderSteps() {
