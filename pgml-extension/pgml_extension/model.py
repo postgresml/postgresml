@@ -29,14 +29,6 @@ from pgml_extension.exceptions import PgMLException
 from pgml_extension.sql import q
 
 
-def flatten(S):
-    if S == []:
-        return S
-    if isinstance(S[0], list):
-        return flatten(S[0]) + flatten(S[1:])
-    return S[:1] + flatten(S[1:])
-
-
 class Project(object):
     """
     Use projects to refine multiple models of a particular dataset on a specific objective.
@@ -365,7 +357,7 @@ class Snapshot(object):
             for feature in features:
                 x_.append(row[feature])
 
-            x_ = flatten(x_)  # TODO be smart about flattening X depending on algorithm
+            x_ = numpy.array(x_).flatten()  # TODO be smart about flattening X depending on algorithm
             X.append(x_)
             y.append(y_)
 
@@ -711,7 +703,7 @@ class Model(object):
         y_pred = self.algorithm.predict(X_test)
         if hasattr(self.algorithm, "predict_proba"):
             y_prob = self.algorithm.predict_proba(X_test)
-            y_test = flatten(y_test)
+            y_test = numpy.array(y_test).flatten()
         else:
             y_prob = None
         if self.project.objective == "regression":
@@ -764,7 +756,7 @@ class Model(object):
         """
         # TODO: add metrics for tracking prediction volume/accuracy by model
         # TODO: smarter treatment for images rather than flattening
-        y = self.algorithm.predict([flatten(data)])
+        y = self.algorithm.predict([numpy.array(data).flatten()])
         if isinstance(y[0], numpy.ndarray) and len(self.snapshot.y_column_name) == 1:
             # HACK: it's unfortunate that some sklearn models always return a 2D array, and some only return a 2D array for multiple outputs.
             return y[0][0]
