@@ -135,6 +135,24 @@ CREATE PUBLICATION all_tables
 FOR ALL TABLES;
 ```
 
+### Schema
+
+Logical replication does not copy the schema, so it needs to be copied manually in advance; `pg_dump` is great for this:
+
+```bash
+# Dump the schema from your production DB
+pg_dump \
+	postgres://username:password@production-db.example.com/production_db \
+	--schema-only \
+	--no-owner > schema.sql
+
+# Import the schema in PostgresML
+psql \
+	postgres://username:password@postgresml.example.com/postgresml_db \
+	-f schema.sql
+```
+
+
 ### Subscription
 
 The [subscription](https://www.postgresql.org/docs/12/sql-createsubscription.html) is created in your PostgresML database. To replicate all the tables we marked in the previous step, run:
