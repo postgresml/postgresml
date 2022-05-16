@@ -1,10 +1,10 @@
-# Real data
+# Production data
 
-Our previous guides covered how to use PostgresML with toy datasets. This section will cover different ways to use real production data. Depending on the size of your dataset and its update frequency, some methods below could be better than others.
+Our previous guides covered how to use PostgresML with toy datasets. This section will cover different ways to use real production data. Depending on the size of your dataset and its change frequency, some methods below could be better than others.
 
-## pg_dump
+## pg_dump (< 10GB)
 
-`pg_dump` is a [standard tool](https://www.postgresql.org/docs/12/app-pgdump.html) to export data from a PostgreSQL database. If your dataset is small (e.g. less than 10GB) and changes infrequently, this could be quickest and simplest way to do it.
+`pg_dump` is a [standard tool](https://www.postgresql.org/docs/12/app-pgdump.html) used to export data from a PostgreSQL database. If your dataset is small (e.g. less than 10GB) and changes infrequently, this could be quickest and simplest way to do it.
 
 !!! example
 	```bash
@@ -20,20 +20,28 @@ Our previous guides covered how to use PostgresML with toy datasets. This sectio
 		-f dump.sql
 	```
 
+	If you're using our [Dockerized](/guides/installation/#quick-start-w-docker-recommended) stack, you can import the data there:
+
+	```bash
+	psql \
+		postgres://postgres@localhost:5433/pgml_development \
+		-f dump.sql
+	```
+
 PostgresML tables and functions are located in the `pgml` schema, so you can safely import your data into PostgresML without conflicts.
 
 
-## Foreign Data Wrappers
+## Foreign Data Wrappers (10GB - 100GB)
 
 Foreign Data Wrappers, or [FDWs](https://www.postgresql.org/docs/12/postgres-fdw.html) for short, are another good tool for reading or importing data from another PostgreSQL database into PostgresML.
 
 Setting up FDWs is a bit more involved than `pg_dump` but they provide real-time access to your production data and are good for small to medium size datasets (e.g. 10GB to 100GB) that change frequently.
 
-How to setup FDWs is documented in PostgreSQL docs more; below we'll document a basic example.
+Official PostgreSQL [docs](https://www.postgresql.org/docs/12/postgres-fdw.html) explain FDWs with more detail; we'll document a basic example below.
 
 ### Install the extension
 
-PostgresML comes with `postgres_fdw` installed, but the extension needs to be explicitely installed into the database. Connect to PostgresML and run:
+PostgreSQL comes with `postgres_fdw` already available, but the extension needs to be explicitely installed into the database. Connect to your PostgresML database as a superuser and run:
 
 ```sql
 CREATE EXTENSION postgres_fdw;
@@ -41,7 +49,7 @@ CREATE EXTENSION postgres_fdw;
 
 ### Create foreign server
 
-A foreign server is a FDW reference to another PostgreSQL database running somewhere else. In this case, that foreign server is your existing production database.
+A foreign server is a FDW reference to another PostgreSQL database running somewhere else. In this case, that foreign server is your production database.
 
 ```sql
 CREATE SERVER your_production_db
@@ -55,8 +63,8 @@ CREATE SERVER your_production_db
 
 ### Create user mapping
 
-A user mapping is a relationship between the user you're connecting with to PostgresML and a user that exists on your production database. The FDW will use
-this mapping to reach out to your production database when it wants to read some data.
+A user mapping is a relationship between the user you're connecting with to PostgresML and a user that exists on your production database. FDW will use
+this mapping to talk to your database when it wants to read some data.
 
 ```sql
 CREATE USER MAPPING FOR pgml_user
@@ -67,12 +75,12 @@ CREATE USER MAPPING FOR pgml_user
 	);
 ```
 
-At this point, when you connect to PostgresML using the example `pgml_user` and then query data in your production database using the FDW, it'll use the user `your_production_db_user`
-to connect to your production database and fetch the data.
+At this point, when you connect to PostgresML using the example `pgml_user` and then query data in your production database using FDW, it'll use the user `your_production_db_user`
+to connect to your DB and fetch the data. Make sure that `your_production_db_user` has `SELECT` permissions on the tables you want to query and the `USAGE` permissions on the schema.
 
 ### Import the tables
 
-The final step is map your production database tables into PostgresML using the FDW. This mapping will tell PostgresML which tables are available in your database. The quickest way is to import all of them, like so:
+The final step is import your production database tables into PostgresML by creating a foreign schema mapping. This mapping will tell PostgresML which tables are available in your database. The quickest way is to import all of them, like so:
 
 ```sql
 IMPORT FOREIGN SCHEMA 'public'
@@ -84,9 +92,71 @@ This will import all tables from your production DB `public` schema into the `pu
 
 ### Usage
 
-PostgresML snapshots the data before training on it, so every time you run `pgml.train`, the data will be fetched from the foreign data wrapper and imported into PostgresML. FDWs are reasonably good at fetching only the data specified by the `VIEW`, so if you place sufficient limits on your dataset in the `CREATE VIEW` statement, e.g. train on the last two weeks of data, or something similar, FDWs will do its best to fetch only the last two weeks of data from your database into PostgresML which should be reasonably quick.
+PostgresML snapshots the data before training on it, so every time you run `pgml.train`, the data will be fetched from the foreign data wrapper and imported into PostgresML.
+
+FDWs are reasonably good at fetching only the data specified by the `VIEW`, so if you place sufficient limits on your dataset in the `CREATE VIEW` statement, e.g. train on the last two weeks of data, or something similar, FDWs will do its best to fetch only the last two weeks of data which should be reasonably quick.
 
 
-## Logical replication
+## Logical replication (100GB - 10TB)
 
-Logical replication is a database replication tool that's been available since PostgreSQL 10. Logical replication allows to copy entire tables and schemas from any database into PostgresML and keeping them up-to-date fairly cheaply as the data in production changes. This is suitable for medium to large PostgreSQL deployments (e.g. 100GB - 10TB).
+Logical replication is a [replication mechanism](https://www.postgresql.org/docs/12/logical-replication.html) that's been available since PostgreSQL 10. It allows to copy entire tables and schemas from any database into PostgresML and keeping them up-to-date in real-time fairly cheaply as the data in production changes. This is suitable for medium to large PostgreSQL deployments (e.g. 100GB - 10TB).
+
+Logical replication is designed as a pub/sub system, where your production database is the publisher and PostgresML is the subscriber. As data in your database changes, it is streamed into PostgresML in milliseconds, which is very similar to how Postgres streaming replication works as well.
+
+The setup is slightly more involved than Foreign Data Wrappers, and is documented below. All queries must be ran as a superuser.
+
+### WAL
+
+First, make sure that your production DB has logical replication enabled. For this, it has to be on PostgreSQL 10 or above and also have `wal_level` configuration setting set to `logical`.
+
+=== "SQL"
+
+	```sql
+	SHOW wal_level;
+	```
+
+=== "Output"
+
+	```
+	 wal_level 
+	-----------
+	 logical
+	(1 row)
+	```
+
+If this is not the case, you'll need to change it and restart the server.
+
+### Publication
+
+The [publication](https://www.postgresql.org/docs/12/sql-createpublication.html) is created on your production DB and configures which tables are replicated using logical replication. To replicate all tables in your `public` schema, you can run this:
+
+```sql
+CREATE PUBLICATION all_tables
+FOR ALL TABLES;
+```
+
+### Subscription
+
+The [subscription](https://www.postgresql.org/docs/12/sql-createsubscription.html) is created in your PostgresML database. To replicate all the tables we marked in the previous step, run:
+
+```sql
+CREATE SUBSCRIPTION all_tables
+CONNECTION 'postgres://superuser:password@production-database.example.com/production_db'
+PUBLICATION all_tables;
+```
+
+As soon as you run this, logical replication will begin. It will start by copying all the data from your production database into PostgresML. That will take a while, depending on how big is your database and how fast the hardware and the network connection is. Each table will be copied individually and the process is parallelized.
+
+Once the copy is complete, logical replication will synchronize and will replicate the data from your production database into PostgresML in real-time.
+
+### Schema changes
+
+Logical replication has one notable limitation: it does not replicate schema (table) changes. If you change a table in your production DB in an incompatible way, e.g. by adding a column, the replication will break.
+
+To remediate this, when you're performing the schema change, make the change first in PostgresML and then in your production database.
+
+## Native installation (10TB and beyond)
+
+For databases that very large, e.g. 10TB+, we recommend you install the extension directly into your database.
+
+This option is available for databases of all sizes, but we recognize that most small to medium databases run on managed services, e.g. RDS, which don't allow this mechanism.
