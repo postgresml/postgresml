@@ -120,6 +120,7 @@ nav:
         - Deployments: guides/deployments.md
         - Hyperparameters: guides/hyperparameters.md
         - Vectors: guides/vectors.md
+        - Production data: guides/real_data.md
     - References:
         - Models: references/models.md
         - Snapshots: references/snapshots.md
