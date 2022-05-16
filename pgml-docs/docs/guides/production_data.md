@@ -178,4 +178,4 @@ To remediate this, when you're performing the schema change, make the change fir
 
 For databases that are very large, e.g. 10TB+, we recommend you install the extension directly into your database.
 
-This option is available for databases of all sizes, but we recognize that most small to medium databases run on managed services, e.g. RDS, which don't allow this mechanism.
+This option is available for databases of all sizes, but we recognize that many small to medium databases run on managed services, e.g. RDS, which don't allow this mechanism.
