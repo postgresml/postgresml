@@ -163,7 +163,7 @@ CONNECTION 'postgres://superuser:password@production-database.example.com/produc
 PUBLICATION all_tables;
 ```
 
-As soon as you run this, logical replication will begin. It will start by copying all the data from your production database into PostgresML. That will take a while, depending on how big is your database and how fast the hardware and the network connection is. Each table will be copied individually and the process is parallelized.
+As soon as you run this, logical replication will begin. It will start by copying all the data from your production database into PostgresML. That will take a while, depending on database size, network connection and hardware performance. Each table will be copied individually and the process is parallelized.
 
 Once the copy is complete, logical replication will synchronize and will replicate the data from your production database into PostgresML in real-time.
 
@@ -173,8 +173,9 @@ Logical replication has one notable limitation: it does not replicate schema (ta
 
 To remediate this, when you're performing the schema change, make the change first in PostgresML and then in your production database.
 
+
 ## Native installation (10TB and beyond)
 
-For databases that very large, e.g. 10TB+, we recommend you install the extension directly into your database.
+For databases that are very large, e.g. 10TB+, we recommend you install the extension directly into your database.
 
 This option is available for databases of all sizes, but we recognize that most small to medium databases run on managed services, e.g. RDS, which don't allow this mechanism.
