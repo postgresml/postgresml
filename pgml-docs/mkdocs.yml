@@ -129,6 +129,7 @@ nav:
     - Developer Guide:
         - Overview: development/overview.md
     - About:
+        - Team: about/team.md
         - Roadmap: about/roadmap.md
         - Motivation: about/motivation.md
         - FAQ: about/faq.md
