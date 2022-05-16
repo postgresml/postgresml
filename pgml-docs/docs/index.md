@@ -5,9 +5,6 @@ hide:
 ---
 
 <style>
-:root {
-  --shadow-2: rgba(0,0,0,0.25);
-}
 
 .md-typeset h1 {
   font-size: 3em;
@@ -36,44 +33,7 @@ hide:
   margin: 2em 5%;
 }
 
-.grid {
-  display: flex;
-  gap: 5%;
-  flex-direction: row;
-  max-width: 100%;
-  flex-wrap: wrap;
-}
-.grid .card img {
-  margin: 0;
-  max-width: 100%;
-  box-shadow: 0 1px 2px var(--shadow-2);
-}
-.grid .card {
-  width: 47%;
-  padding: 1em 2em;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px var(--shadow-2);
-  overflow: auto;
-  margin-bottom: 2em;
-  transition: transform .2s;
-}
-.grid .card:hover {
-  transform: scale(1.025);
-  box-shadow: 1px 2px 4px var(--shadow-2);
-}
-.bare .card {
-  padding: 0;
-  border-radius: 0px;
-  box-shadow: initial;
-}
-.bare .card:hover {
-  box-shadow: initial;
-}
-@media only screen and (max-width: 690px) {
-  .grid .card { width: 100%; }
-  .bare .card:nth-child(3) { order: 4; }
-  .bare .card:nth-child(4) { order: 3; }
-}
+
 </style>
 
 <h1 align="center">End-to-end<br/>machine learning solution <br/>for everyone</h1>
