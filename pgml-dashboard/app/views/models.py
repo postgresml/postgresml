@@ -103,7 +103,7 @@ class ModelViewSet(viewsets.ModelViewSet):
             result = cursor.fetchone()
 
             data = {
-                "prediction": result[0],
+                "predictions": result[0],
             }
 
             return Response(data)
