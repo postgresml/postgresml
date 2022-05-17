@@ -5,7 +5,6 @@ services:
       test: psql -c 'SELECT 1' -U postgres -h 127.0.0.1
       interval: 2s
       retries: 3
-      start_period: 30s
       timeout: 2s
     build:
       context: ./pgml-extension/
