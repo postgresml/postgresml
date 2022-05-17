@@ -1,4 +1,4 @@
-# Hyperparameter search
+# Hyperparameter Search
 
 Models can be further refined with the scikit cross validation hyperparameter search libraries. We currently support the [`grid`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) and [`random`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) implementations.
 
