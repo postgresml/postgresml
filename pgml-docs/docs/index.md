@@ -67,7 +67,7 @@ SELECT pgml.train(
 );
 ```
   <p align="center" markdown>
-:material-arrow-right: Learn more about [Training](/guides/training/overview/)
+:material-arrow-right: Learn more about [Training](/user_guides/training/overview/)
   </p>
   </div>
 
@@ -156,7 +156,7 @@ __SQL native vector operations__
 
 Vector operations make working with learned emebeddings a snap, for things like nearest neighbor searches or other similarity comparisons.
 
-[:material-arrow-right: Vectors Operations](/user_guides/vector_operations/overview/)
+[:material-arrow-right: Vector Operations](/user_guides/vector_operations/overview/)
   </div>
   <div class="card" markdown>
 :material-clipboard-check:
