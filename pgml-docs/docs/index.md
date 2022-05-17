@@ -33,7 +33,9 @@ hide:
   margin: 2em 5%;
 }
 
-
+article.md-content__inner.md-typeset a.md-content__button.md-icon {
+  display: none;
+}
 </style>
 
 <h1 align="center">End-to-end<br/>machine learning solution <br/>for everyone</h1>

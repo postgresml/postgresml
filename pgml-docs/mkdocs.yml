@@ -6,7 +6,7 @@ site_author: PostrgesML Team
 
 repo_name: postgresml/postgresml
 repo_url: https://github.com/postgresml/postgresml
-edit_uri: ""
+edit_uri: /postgresml/postgresml/blob/master/pgml-docs/docs/
 
 watch:
 - docs
