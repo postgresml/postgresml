@@ -67,17 +67,17 @@ SELECT pgml.train(
 );
 ```
   <p align="center" markdown>
-:material-arrow-right: Learn more about [Training](guides/training/)
+:material-arrow-right: Learn more about [Training](/user_guides/training/overview/)
   </p>
   </div>
 
 
   <div class="card" markdown>
-![models](images/labels.png)
+![models](/images/dashboard/labels.png)
   </div>
 
   <div class="card" markdown>
-![models](images/models.png)
+![models](/images/dashboard/models.png)
   </div>
 
   <div class="card" markdown>
@@ -89,7 +89,7 @@ SELECT pgml.deploy(
 );
 ```
   <p align="center" markdown>
-:material-arrow-right: Learn more about [Deployments](guides/deployments/)
+:material-arrow-right: Learn more about [Deployments](/user_guides/predictions/deployments/)
   </p>
   </div>
 
@@ -103,17 +103,17 @@ FROM my_new_unlabeled_table
 ORDER BY prediction DESC;
 ```
   <p align="center" markdown>
-:material-arrow-right: Learn more about [Predictions](guides/predictions/)
+:material-arrow-right: Learn more about [Predictions](/user_guides/predictions/overview/)
   </p>
   </div>
 
   <div class="card" markdown>
-![models](images/features.png)
+![models](/images/dashboard/features.png)
   </div>
 </div>
 
 <p align="center" markdown>
-  [Get Started](guides/installation/){ .md-button .md-button--primary }
+  [Get Started](/user_guides/installation/quick_start_with_docker/){ .md-button .md-button--primary }
 </p>
 ## What's in the box
 
@@ -124,7 +124,7 @@ __All your favorite algorithms__
 
 Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/) with no extra configuration.
 
-[:material-arrow-right: Algorithms](guides/training/#algorithms)
+[:material-arrow-right: Algorithms](/user_guides/training/algorithm_selection/)
   </div>
   <div class="card" markdown>
 :fontawesome-solid-arrow-trend-up:
@@ -132,7 +132,7 @@ __Instant visualizations__
 
 Run standard analysis on your datasets to detect outliers, bimodal distributions, feature correlation, and other common data visualizations on your datasets. Everything is cataloged in the dashboard for easy reference.
 
-[:material-arrow-right: Dashboard](guides/dashboard/)
+[:material-arrow-right: Dashboard](/user_guides/dashboard/overview/)
   </div>
   <div class="card" markdown>
 :material-graph-outline:
@@ -140,7 +140,7 @@ __Hyperparameter search__
 
 Use either grid or random searches with cross validation on your training set to discover the most important knobs to tweak on your favorite algorithm.
 
-[:material-arrow-right: Hyperparameters](guides/hyperparameters/)
+[:material-arrow-right: Hyperparameter Search](/user_guides/training/hyperparameter_search/)
   </div>
   <div class="card" markdown>
 :material-cloud-outline:
@@ -148,7 +148,7 @@ __Online and offline support__
 
 Predictions are served via a standard Postgres connection to ensure that your core apps can always access both your data and your models in real time. Pure SQL workflows also enable batch predictions to cache results in native Postgres tables for lookup.
 
-[:material-arrow-right: Predictions](guides/predictions/)
+[:material-arrow-right: Predictions](/user_guides/predictions/overview/)
   </div>
   <div class="card" markdown>
 :material-arrow-top-right-thin:
@@ -156,7 +156,7 @@ __SQL native vector operations__
 
 Vector operations make working with learned emebeddings a snap, for things like nearest neighbor searches or other similarity comparisons.
 
-[:material-arrow-right: Vectors](guides/vectors/)
+[:material-arrow-right: Vector Operations](/user_guides/vector_operations/overview/)
   </div>
   <div class="card" markdown>
 :material-clipboard-check:
@@ -164,15 +164,15 @@ __Managed model deployments__
 
 Models can be periodically retrained and automatically promoted to production depending on their key metric. Rollback capability is provided to ensure that you're always able to serve the highest quality predictions, along with historical logs of all deployments for long term study.
   
-[:material-arrow-right: Deployments](guides/deployments/)
+[:material-arrow-right: Deployments](/user_guides/predictions/deployments/)
   </div>
   <div class="card" markdown>
 :fontawesome-solid-link:
 __The performance of Postgres__
 
-Since your data never leaves the database, you retain the speed, reliability and security you expect in your foundational stateful services. Leverage your existing infrastructure and expertise to deliver new capabilities.
+Since your data never leaves the database, you retain the speed, reliability and security you expect in your foundational stateful services. Leverage your existing infrastructure and the data distribution strategies native to PostgreSQL to deliver new capabilities.
 
-[:material-arrow-right: Installation](guides/installation/)
+[:material-arrow-right: Distributed Training](/user_guides/setup/distributed_training/)
   </div>
   <div class="card" markdown>
 :fontawesome-solid-envelope-open-text:
@@ -180,6 +180,6 @@ __Open source__
 
 We're building on the shoulders of giants. These machine learning libraries and Postgres have recieved extensive academic and industry use, and we'll continue their tradition to build with the community.
 
-[:material-arrow-right: MIT License](about/license/)
+[:material-arrow-right: MIT License](/about/license/)
   </div>
 </div>

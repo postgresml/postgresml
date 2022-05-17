@@ -2,6 +2,7 @@
 
 Models are automatically deployed if their key metric (__R__<sup>2</sup> for regression, __F__<sub>1</sub> for classification) is improved over the currently deployed version during training. If you want to manage deploys manually, you can always change which model is currently responsible for making predictions.
 
+
 ## API
 
 ```sql linenums="1" title="pgml.deploy"
@@ -32,6 +33,7 @@ The default behavior allows any algorithm to qualify, but deployment candidates 
 	(1 row)
 	```
 
+
 ## Strategies
 There are 3 different deployment strategies available
 
@@ -42,9 +44,7 @@ best_score | The model that achieved the best key metric score
 rollback | The model that was previously deployed for this project
 
 
-
 ## Rolling back to a specific algorithm
-
 Rolling back creates a new deploy for the model that was deployed before the current one. Multiple rollbacks in a row will effectively oscilate between the two most recently deployed models, making rollbacks a relatively safe operation. 
 
 === "SQL"

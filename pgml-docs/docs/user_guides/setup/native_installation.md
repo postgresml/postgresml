@@ -1,50 +1,10 @@
-# Installation
-
-## Quick Start w/ Docker <small>Recommended</small>
-=== ":material-apple: OS X"
-
-    [Install Docker for OS X](https://docs.docker.com/desktop/mac/install/).
-
-=== ":material-linux: Linux"
-
-    [Install Docker for Linux](https://docs.docker.com/engine/install/ubuntu/). Some package managers (e.g. Ubuntu/Debian) additionally require the `docker-compose` package to be installed separately.
-
-=== ":material-microsoft-windows: Windows"
-
-    [Install Docker for Windows](https://docs.docker.com/desktop/windows/install/). Use the Linux instructions if you're installing in Windows Subsystem for Linux.
-
-1. Clone the repo:
-```bash
-$ git clone git@github.com:postgresml/postgresml.git
-```
-
-2. Start dockerized services. PostgresML will run on port 5433, just in case you already have Postgres running:
-```bash
-$ cd postgresml && docker-compose up
-```
-
-3. Connect to Postgres in the container with PostgresML installed:
-```bash
-$ psql postgres://postgres@localhost:5433/pgml_development
-```
-
-4. Validate your installation:
-```sql
-pgml_development=# SELECT pgml.version();
- version
----------
- 0.8.1
-(1 row)
-```
-
-Docker Compose will also start the dashboard app running locally [http://localhost:8000/](http://localhost:8000/)
-
-
-## Native Installation
+# Native Installation
 
 A PostgresML deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](https://github.com/postgresml/postgresml/tree/master/pgml-extension/)) that facilitates the machine learning lifecycle inside the database. Additionally, we provide a dashboard ([pgml-dashboard](https://github.com/postgresml/postgresml/tree/master/pgml-dashboard/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use. 
 
-### Install PostgreSQL with PL/Python
+## Install PostgreSQL with PL/Python
+
+PostgresML leverages Python libraries for their machine learning capabilities. You'll need to make sure the PostgreSQL installation has PL/Python built in.
 
 === ":material-apple: OS X"
 
@@ -70,7 +30,7 @@ A PostgresML deployment consists of two different runtimes. The foundational run
     Enterprise db provides Windows builds of PostgreSQL [available for download](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads).
     
 
-### Install the extension
+## Install the extension
 
 To use our Python package inside PostgreSQL, we need to install it into the global Python package space. Depending on which version of Python you installed in the previous step, use the corresponding pip executable. 
 
@@ -86,7 +46,7 @@ If everything works, you should be able to run this successfully:
 $ psql -c 'SELECT pgml.version()' postgres://user_name:password@localhost:5432/database_name
 ```
 
-### Run the dashboard
+## Run the dashboard
 
 The PostgresML dashboard is a Django app, that can be run against any PostgreSQL installation. There is an included Dockerfile if you wish to run it as a container, or you may want to setup a Python venv to isolate the dependencies. Basic install can be achieved with:
 
@@ -96,16 +56,16 @@ $ git clone git@github.com:postgresml/postgresml.git && cd postgresml/pgml-dashb
 ```
 
 2. Set your `PGML_DATABASE_URL` environment variable:
-```
+```bash
 $ echo PGML_DATABASE_URL=postgres://user_name:password@localhost:5432/database_name > .env
 ```
 
 3. Install dependencies:
-```
+```bash
 $ pip install -r requirements.txt
 ```
 
 4. Run the server:
-```
+```bash
 $ python manage.py runserver
 ```

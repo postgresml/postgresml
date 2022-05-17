@@ -18,8 +18,8 @@ dev_addr: 0.0.0.0:8001
 theme:
     name: material
     custom_dir: overrides
-    favicon: images/favicon.ico
-    logo: images/logo-small.png
+    favicon: /images/logos/favicon.ico
+    logo: /images/logos/logo-small.png
     locale: en
     font:
         text: Roboto
@@ -47,7 +47,6 @@ theme:
         - navigation.instant
         - navigation.tracking
         - navigation.tabs
-        - navigation.sections
         - navigation.top
         - content.code.annotate
 
@@ -112,22 +111,29 @@ markdown_extensions:
 
 nav:
     - Home: index.md
-    - Guides:
-        - Installation: guides/installation.md
-        - Dashboard: guides/dashboard.md
-        - Training: guides/training.md
-        - Predictions: guides/predictions.md
-        - Deployments: guides/deployments.md
-        - Hyperparameters: guides/hyperparameters.md
-        - Vectors: guides/vectors.md
-        - Production data: guides/production_data.md
-    - References:
-        - Models: references/models.md
-        - Snapshots: references/snapshots.md
-        - Projects: references/projects.md
-        - Deployments: references/deployments.md
+    - User Guides:
+        - Setup:
+            - Quick Start with Docker: user_guides/setup/quick_start_with_docker.md
+            - Native Installation: user_guides/setup/native_installation.md
+            - Distributed Training: user_guides/setup/distributed_training.md
+            - GPU Support: user_guides/setup/gpu_support.md
+        - Training:
+            - Training Overview: user_guides/training/overview.md
+            - Algorithm Selection: user_guides/training/algorithm_selection.md
+            - Hyperparameter Search: user_guides/training/hyperparameter_search.md
+            - Joint Optimization: user_guides/training/joint_optimization.md
+        - Predictions: 
+            - Prediction Overview: user_guides/predictions/overview.md
+            - Deploying Models: user_guides/predictions/deployments.md
+        - Vector Operations: user_guides/vector_operations/overview.md
+        - Dashboard: user_guides/dashboard/overview.md
+        - Schema:
+            - Models: user_guides/schema/models.md
+            - Snapshots: user_guides/schema/snapshots.md
+            - Projects: user_guides/schema/projects.md
+            - Deployments: user_guides/schema/deployments.md
     - Developer Guide:
-        - Overview: development/overview.md
+        - Developer Overview: developer_guide/overview.md
     - About:
         - Team: about/team.md
         - Roadmap: about/roadmap.md
