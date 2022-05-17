@@ -20,7 +20,6 @@ services:
       test: curl http://localhost:8000
       interval: 15s
       retries: 3
-      start_period: 30s
       timeout: 2s
     restart: on-failure
     depends_on:
