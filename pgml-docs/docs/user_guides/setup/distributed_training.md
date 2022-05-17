@@ -1,6 +1,6 @@
-# Production data
+# Distributed Training
 
-Our previous guides covered how to use PostgresML with toy datasets. This section will cover different ways to use real production data. Depending on the size of your dataset and its change frequency, some methods below could be better than others.
+Depending on the size of your dataset and its change frequency, you may want to offload training (or inference) to secondary PostgreSQL servers to avoid excessive load on your primary. We've outlined several of the built-in mechanisms below to help distribute the load.
 
 ## pg_dump (< 10GB)
 
@@ -20,7 +20,7 @@ Our previous guides covered how to use PostgresML with toy datasets. This sectio
 		-f dump.sql
 	```
 
-	If you're using our [Dockerized](/guides/installation/#quick-start-w-docker-recommended) stack, you can import the data there:
+	If you're using our [Dockerized](/user_guides/installation/#quick-start-w-docker-recommended) stack, you can import the data there:
 
 	```bash
 	psql \
@@ -28,7 +28,7 @@ Our previous guides covered how to use PostgresML with toy datasets. This sectio
 		-f dump.sql
 	```
 
-PostgresML tables and functions are located in the `pgml` schema, so you can safely import your data into PostgresML without conflicts.
+PostgresML tables and functions are located in the `pgml` schema, so you can safely import your data into PostgresML without conflicts. You can also use `pg_dump` to copy the `pgml` schema to other servers which will make the trained models available in a distributed fashion.
 
 
 ## Foreign Data Wrappers (10GB - 100GB)
@@ -92,9 +92,9 @@ This will import all tables from your production DB `public` schema into the `pu
 
 ### Usage
 
-PostgresML snapshots the data before training on it, so every time you run `pgml.train`, the data will be fetched from the foreign data wrapper and imported into PostgresML.
+PostgresML snapshots the data before training on it, so every time you run `pgml.train` with a `relation_name` argument, the data will be fetched from the foreign data wrapper and imported into PostgresML.
 
-FDWs are reasonably good at fetching only the data specified by the `VIEW`, so if you place sufficient limits on your dataset in the `CREATE VIEW` statement, e.g. train on the last two weeks of data, or something similar, FDWs will do its best to fetch only the last two weeks of data which should be reasonably quick.
+FDWs are reasonably good at fetching only the data specified by the `VIEW`, so if you place sufficient limits on your dataset in the `CREATE VIEW` statement, e.g. train on the last two weeks of data, or something similar, FDWs will do its best to fetch only the last two weeks of data in an efficient manner, leaving the rest behind on the primary.
 
 
 ## Logical replication (100GB - 10TB)
@@ -103,7 +103,7 @@ Logical replication is a [replication mechanism](https://www.postgresql.org/docs
 
 Logical replication is designed as a pub/sub system, where your production database is the publisher and PostgresML is the subscriber. As data in your database changes, it is streamed into PostgresML in milliseconds, which is very similar to how Postgres streaming replication works as well.
 
-The setup is slightly more involved than Foreign Data Wrappers, and is documented below. All queries must be ran as a superuser.
+The setup is slightly more involved than Foreign Data Wrappers, and is documented below. All queries must be run as a superuser.
 
 ### WAL
 

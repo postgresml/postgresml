@@ -21,8 +21,9 @@ pgml.predict (
     ) AS prediction_score;
     ```
 
-    where `ARRAY[...]` is the same list of features for a sample used in training. This score can be used in normal queries, for example:
+where `ARRAY[...]` is the same list of features for a sample used in training. This score can be used in normal queries, for example:
 
+!!! example
     ```sql linenums="1"
     SELECT *,
         pgml.predict(
@@ -38,7 +39,7 @@ pgml.predict (
 
 ## Making Predictions
 
-If you've already done the [training guide](../guides/training/), you can see the results of those efforts:
+If you've already been through the [training guide](/user_guides/training/overview/), you can see the results of those efforts:
 
 === "SQL"
 

@@ -18,8 +18,8 @@ dev_addr: 0.0.0.0:8001
 theme:
     name: material
     custom_dir: overrides
-    favicon: images/favicon.ico
-    logo: images/logo-small.png
+    favicon: /images/logos/favicon.ico
+    logo: /images/logos/logo-small.png
     locale: en
     font:
         text: Roboto
@@ -118,11 +118,11 @@ nav:
             - Distributed Training: user_guides/setup/distributed_training.md
             - GPU Support: user_guides/setup/gpu_support.md
         - Training:
-            - Getting Started: user_guides/training/overview.md
+            - Training Overview: user_guides/training/overview.md
             - Algorithm Selection: user_guides/training/algorithm_selection.md
             - Hyperparameter Search: user_guides/training/hyperparameter_search.md
         - Predictions: 
-            - Getting Started: user_guides/predictions/overview.md
+            - Prediction Overview: user_guides/predictions/overview.md
             - Deploying Models: user_guides/predictions/deployments.md
         - Vector Operations: user_guides/vector_operations/overview.md
         - Dashboard: user_guides/dashboard/overview.md
@@ -132,7 +132,7 @@ nav:
             - Projects: user_guides/schema/projects.md
             - Deployments: user_guides/schema/deployments.md
     - Developer Guide:
-        - Overview: developer_guide/overview.md
+        - Developer Overview: developer_guide/overview.md
     - About:
         - Team: about/team.md
         - Roadmap: about/roadmap.md
