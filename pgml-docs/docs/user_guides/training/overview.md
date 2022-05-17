@@ -130,5 +130,5 @@ Now we can inspect some of the artifacts a training run creates.
     (1 row)
     ```
 
-- See the [Examples](https://github.com/postgresml/postgresml/tree/master/pgml-extension/examples) for more kinds of training with different types of features and algorihtms.
+- See the [Examples](https://github.com/postgresml/postgresml/tree/master/pgml-extension/examples) for more kinds of training with different types of features, algorithms and objectives.
 - See the [Models](/user_guides/schema/models/) reference for a complete description of the artifacts.
