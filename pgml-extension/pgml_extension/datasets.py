@@ -227,7 +227,6 @@ def load_breast_cancer():
             "worst concave points" FLOAT4,
             "worst symmetry" FLOAT4,
             "worst fractal dimension" FLOAT4,
-            "perimeter" FLOAT4,
             "malignant" BOOLEAN
         )"""
     )
@@ -236,7 +235,10 @@ def load_breast_cancer():
     for X, y in zip(dataset["data"], dataset["target"]):
         plpy.execute(
             f"""
-            INSERT INTO pgml.breast_cancer ("mean radius", "mean texture", "mean perimeter", "mean area", "mean smoothness", "mean compactness", "mean concavity", "mean concave points", "mean symmetry", "mean fractal dimension", "radius error", "texture error", "perimeter error", "area error", "smoothness error", "compactness error", "concavity error", "concave points error", "symmetry error", "fractal dimension error", "worst radius", "worst texture", "worst perimeter", "worst area", "worst smoothness", "worst compactness", "worst concavity", "worst concave points", "worst symmetry", "worst fractal dimension", "malignant") 
+            INSERT INTO pgml.breast_cancer ("mean radius", "mean texture", "mean perimeter", "mean area", "mean smoothness", "mean compactness", "mean concavity", "mean concave points", "mean symmetry", 
+            "mean fractal dimension", "radius error", "texture error", "perimeter error", "area error", "smoothness error", "compactness error", "concavity error", "concave points error", "symmetry error", 
+            "fractal dimension error", "worst radius", "worst texture", "worst perimeter", "worst area", "worst smoothness", "worst compactness", "worst concavity", "worst concave points", "worst symmetry", 
+            "worst fractal dimension", "malignant") 
             VALUES ({",".join("%f" % x for x in list(X))}, {q(y) == 0})"""
         )
 

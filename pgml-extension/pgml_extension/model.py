@@ -26,7 +26,7 @@ import pickle
 import json
 
 from pgml_extension.exceptions import PgMLException
-from pgml_extension.sql import q
+from pgml_extension.sql import q, c
 
 
 class Project(object):
@@ -295,8 +295,12 @@ class Snapshot(object):
         values = ["count(*) AS samples"]
         for (column, value) in dict(sample[0]).items():
             if isinstance(value, float) or isinstance(value, int):
+                if isinstance(value, bool):
+                    quoted_column = c(column) + "::INT"
+                else:
+                    quoted_column = c(column)
                 values.append(
-                    f"\n  min({column})::FLOAT4 AS {column}_min, max({column})::FLOAT4 AS {column}_max, avg({column})::FLOAT4 AS {column}_mean, stddev({column})::FLOAT4 AS {column}_stddev, percentile_disc(0.25) within group (order by {column}) AS {column}_p25, percentile_disc(0.5) within group (order by {column}) as {column}_p50, percentile_disc(0.75) within group (order by {column}) as {column}_p75, count({column})::INT AS {column}_count, count(distinct {column})::INT AS {column}_distinct, sum(({column} IS NULL)::int)::INT AS {column}_nulls"
+                    f"""\n  min({quoted_column})::FLOAT4 AS "{column}_min", max({quoted_column})::FLOAT4 AS "{column}_max", avg({quoted_column})::FLOAT4 AS "{column}_mean", stddev({quoted_column})::FLOAT4 AS "{column}_stddev", percentile_disc(0.25) within group (order by {quoted_column}) AS "{column}_p25", percentile_disc(0.5) within group (order by {quoted_column}) AS "{column}_p50", percentile_disc(0.75) within group (order by {quoted_column}) AS "{column}_p75", count({quoted_column})::INT AS "{column}_count", count(distinct {quoted_column})::INT AS "{column}_distinct", sum(({quoted_column} IS NULL)::int)::INT AS "{column}_nulls" """
                 )
         self.analysis = dict(plpy.execute(f"SELECT {','.join(values)} FROM {self.relation_name}")[0])
 
