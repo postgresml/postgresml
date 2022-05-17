@@ -47,6 +47,7 @@ Future calls to `train` may restate the same `objective` for a project, or omit 
 !!! note
     If you'd like to train multiple models on the same `Snapshot`, follow up calls to `train` may omit the `relation_name`, `y_column_name`, `test_size` and `test_sampling` arguments to reuse identical data with multiple algorithms or hyperparams. The `Snapshot` is also saved after training runs for any follow up analysis required.
 
+
 ## Algorithms
 
 We currently support the following regression and classification algorithms from [Scikit-Learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/). You may pass any of these to the training function. The `hyperparams` argument will pass parameters on. See the associated documentation for valid hyperparameters of each algorithm.
@@ -99,7 +100,6 @@ Algorithm | Regression | Classification
 --- | --- | ---
 `kernel_ridge` | [KernelRidge](https://scikit-learn.org/stable/modules/generated/sklearn.kernel_ridge.KernelRidge.html) | -
 `gaussian_process` | [GaussianProcessRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html) | [GaussianProcessClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessClassifier.html)
-
 
 ## Getting training data
 A large part of machine learning is acquiring, cleaning and preparing data for algorithms. Naturally, we think Postgres is a great place to store your data. For the purpose of this example, we'll load a toy dataset, a classic handwritten digits image collection from scikit-learn.
