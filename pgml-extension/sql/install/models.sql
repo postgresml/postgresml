@@ -166,7 +166,7 @@ AS $$
 		project = Project.find_by_name(project_name)
 		GD["projects"][project_name] = project
 
-	return project.deployed_model.predict(features)
+	return float(project.deployed_model.predict(features))
 $$ LANGUAGE plpython3u;
 
 
