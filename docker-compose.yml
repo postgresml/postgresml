@@ -1,6 +1,12 @@
 version: "3"
 services:
   postgres:
+    healthcheck:
+      test: psql -c 'SELECT 1' -U postgres -h 127.0.0.1
+      interval: 2s
+      retries: 3
+      start_period: 30s
+      timeout: 2s
     build:
       context: ./pgml-extension/
       dockerfile: Dockerfile
@@ -10,6 +16,15 @@ services:
       - sleep
       - infinity
   dashboard:
+    healthcheck:
+      test: curl http://localhost:8000
+      interval: 15s
+      retries: 3
+      start_period: 30s
+      timeout: 2s
+    restart: on-failure
+    depends_on:
+      - postgres
     build:
       context: ./pgml-dashboard/
       dockerfile: Dockerfile
