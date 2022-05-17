@@ -7,6 +7,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
 from django.utils.safestring import SafeString
 from django.db import connection
+from django.http import HttpResponseNotFound
 
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -30,9 +31,13 @@ class ModelView(DetailView):
     def get_context_data(self, **kwargs):
         context = default_context(super().get_context_data(**kwargs))
         object = context["object"]
+        logging.warning(f"hi: {object}")
+        if object is None:
+            return HttpResponseNotFound("Model not found")
+
         context["title"] = object.project.name + " - " + object.algorithm_name
         context["features"] = {
-            feature: object.snapshot.analysis[f"{feature}_p50"]
+            feature: object.snapshot.analysis.get(f"{feature}_p50")
             for feature in object.snapshot.columns.keys() - object.snapshot.y_column_name
         }
 
