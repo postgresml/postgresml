@@ -716,7 +716,10 @@ class Model(object):
             metrics["accuracy"] = accuracy_score(y_test, y_pred)
             if y_prob is not None:
                 metrics["log_loss"] = log_loss(y_test, y_prob)
-                metrics["roc_auc"] = roc_auc_score(y_test, y_prob, average="weighted", multi_class="ovo")
+                roc_auc_y_prob = y_prob
+                if y_prob.shape[1] == 2: # binary classification requires only the greater label by passed to roc_auc_score
+                    roc_auc_y_prob = y_prob[:, 1]
+                metrics["roc_auc"] = roc_auc_score(y_test, roc_auc_y_prob, average="weighted", multi_class="ovo")
 
         # Save the model
         self.__dict__ = dict(
