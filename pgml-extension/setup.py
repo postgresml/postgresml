@@ -84,9 +84,10 @@ setuptools.setup(
         'install': InstallCommand,
     },
     install_requires=[
+        "diptest",
         "sklearn",
         "xgboost",
-        "diptest",
+        "lightgbm",
     ],
     extras_require={"dev": "pytest"},
     packages=setuptools.find_packages(exclude=("tests",)),

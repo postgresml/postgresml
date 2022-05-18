@@ -18,7 +18,7 @@ SELECT weight, waste, pulse, pgml.predict_joint('Exercise vs Physiology', ARRAY[
 FROM pgml.linnerud 
 LIMIT 10;
 
--- -- linear models
+-- linear models
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'ridge');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'lasso');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'elastic_net');
@@ -34,24 +34,31 @@ SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'theil_sen
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'huber');
 -- Quantile Regression too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'quantile');
---- support vector machines
+
+-- support vector machines
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'svm', hyperparams => '{"max_iter": 100}');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'nu_svm', hyperparams => '{"max_iter": 10}');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'linear_svm', hyperparams => '{"max_iter": 100}');
--- -- ensembles
+
+-- ensembles
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'ada_boost', hyperparams => '{"n_estimators": 5}');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'bagging', hyperparams => '{"n_estimators": 5}');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 5}');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 5}');
--- -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'random_forest', hyperparams => '{"n_estimators": 5}');
+
 -- other
---SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'kernel_ridge');
-SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'xgboost');
-SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'xgboost_random_forest');
+-- Kernel Ridge is too expensive for normal tests on even a toy dataset
+-- SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'kernel_ridge');
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'gaussian_process');
+
+-- gradient boosting
+SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
+-- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
+-- SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
 
 -- check out all that hard work
 SELECT trained_models.* FROM pgml.trained_models 

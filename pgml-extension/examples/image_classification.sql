@@ -25,30 +25,39 @@ SELECT target, pgml.predict('Handwritten Digit Image Classifier', image) AS pred
 FROM pgml.digits 
 LIMIT 10;
 
+--
 -- After a project has been trained, ommited parameters will be reused from previous training runs
 -- In these examples we'll reuse the training data snapshots from the initial call.
+--
+
 -- linear models
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'ridge');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'stochastic_gradient_descent');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'perceptron');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'passive_aggressive');
+
 -- support vector machines
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'svm');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'nu_svm');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'linear_svm');
+
 -- ensembles
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'ada_boost');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'bagging');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
--- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
+
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gaussian_process', hyperparams => '{"max_iter_predict": 100, "warm_start": true}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost_random_forest');
+
+-- gradient boosting
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
+-- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
+-- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 
 
 -- check out all that hard work
