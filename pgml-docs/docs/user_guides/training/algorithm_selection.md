@@ -1,6 +1,6 @@
 # Algorithms
 
-We currently support the following regression and classification algorithms from [Scikit-Learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/). You may pass any of these to the `pgml.train(algorithm => ...)` argument. The `hyperparams` argument will pass parameters on. See the associated documentation for valid hyperparameters of each algorithm.
+We currently support the following regression and classification algorithms from [Scikit-Learn](https://scikit-learn.org/), [XGBoost](https://xgboost.readthedocs.io/), and [LightGBM](https://lightgbm.readthedocs.io/). You may pass any of these to the `pgml.train(algorithm => ...)` argument. The `hyperparams` argument will pass parameters on. See the associated documentation for valid hyperparameters of each algorithm.
 
 !!! tip
     Try experimenting with multiple algorithms to explore their performance characteristics on your dataset. It's often hard to predict exactly which algorithm will be the best, but once you've prepared your training data, it can be efficiently reused by PostgresML. `pgml.train` creates a Snapshot each time it is called with the `relation_name` argument. You can reuse identical data across multiple runs by omitting that, and passing a different `algorithm` argument instead. 
