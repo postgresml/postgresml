@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
-
+import logging
 import json
 from app.models import Snapshot, Project, Model
 from app.serializers import SnapshotSerializer, NewSnapshotSerializer
@@ -42,7 +42,11 @@ def get(request, id):
         column_names.insert(0, target)
 
     for column_name in column_names:
-        if snapshot.columns[column_name] in ["integer", "real"]:
+        if snapshot.columns[column_name] in ["integer", "real", "boolean"]:
+            sample = [sample[column_name] for sample in samples]
+            if snapshot.columns[column_name] == "boolean":
+                sample = [float(x) for x in sample]
+
             columns[column_name] = {
                 "name": column_name,
                 "type": snapshot.columns[column_name],
@@ -54,9 +58,14 @@ def get(request, id):
                 "min": snapshot.analysis[column_name + "_min"],
                 "max": snapshot.analysis[column_name + "_max"],
                 "dip": snapshot.analysis[column_name + "_dip"],
-                "samples": SafeString(json.dumps([sample[column_name] for sample in samples])),
+                "samples": SafeString(json.dumps(sample)),
             }
 
+    fixed_columns = OrderedDict()
+    for column_name, values in columns.items():
+        fixed_columns[column_name.replace(' ', '_')] = values
+    columns = fixed_columns
+    
     models = snapshot.model_set.all().prefetch_related("project")
     projects = OrderedDict()
     for model in models:
