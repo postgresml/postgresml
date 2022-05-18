@@ -43,7 +43,7 @@ This grid search will train `len(max_depth) * len(n_estimators) * len(learning_r
 
 === "SQL"
 
-    ```sql
+    ```sql linenums="1"
     SELECT * FROM pgml.train(
         'Handwritten Digit Image Classifier', 
         algorithm => 'xgboost', 
@@ -58,7 +58,7 @@ This grid search will train `len(max_depth) * len(n_estimators) * len(learning_r
 
 === "Output"
 
-    ```
+    ```sql linenums="1"
                 project_name            | objective | algorithm_name |  status
     ------------------------------------+-----------+----------------+----------
      Handwritten Digit Image Classifier |           | xgboost        | deployed

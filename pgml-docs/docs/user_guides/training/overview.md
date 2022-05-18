@@ -103,7 +103,7 @@ Now that we've got data, we're ready to train a model using an algorithm. We'll 
 
 === "Output"
 
-    ```sql linenumes="1"
+    ```sql linenums="1"
                 project_name            |   objective    | algorithm_name |  status
     ------------------------------------+----------------+----------------+----------
      Handwritten Digit Image Classifier | classification | linear         | deployed
