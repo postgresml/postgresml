@@ -56,7 +56,7 @@ SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'random_fo
 -- gradient boosting
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
 

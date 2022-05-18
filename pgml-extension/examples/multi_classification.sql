@@ -48,7 +48,7 @@ SELECT * FROM pgml.train('Iris Classifier', algorithm => 'random_forest', hyperp
 -- gradient boosting
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Iris Classifier', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Iris Classifier', algorithim => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 
