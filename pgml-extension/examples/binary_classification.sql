@@ -70,17 +70,17 @@ SELECT * FROM pgml.train('Breast Cancer', algorithm => 'bagging');
 SELECT * FROM pgml.train('Breast Cancer', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Breast Cancer', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Breast Cancer', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
--- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Breast Cancer', algorithim => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Breast Cancer', algorithm => 'gaussian_process', hyperparams => '{"max_iter_predict": 100, "warm_start": true}');
 
 -- Gradient Boosting
-SELECT * FROM pgml.train('Breast Cancer', algorithm => 'xgboost');
-SELECT * FROM pgml.train('Breast Cancer', algorithm => 'xgboost_random_forest');
-SELECT * FROM pgml.train('Breast Cancer', algorithm => 'lightgbm');
+SELECT * FROM pgml.train('Breast Cancer', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Breast Cancer', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Breast Cancer', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 10}');
+-- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
+-- SELECT * FROM pgml.train('Breast Cancer', algorithim => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 
 
 -- check out all that hard work
