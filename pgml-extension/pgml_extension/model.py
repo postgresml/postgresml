@@ -10,6 +10,7 @@ import sklearn.model_selection
 import numpy
 import xgboost as xgb
 import diptest
+import lightgbm
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     mean_squared_error,
@@ -445,6 +446,8 @@ class Model(object):
             "xgboost_classification": xgb.XGBClassifier,
             "xgboost_random_forest_regression": xgb.XGBRFRegressor,
             "xgboost_random_forest_classification": xgb.XGBRFClassifier,
+            "lightgbm_regression": lightgbm.LGBMRegressor,
+            "lightgbm_classification": lightgbm.LGBMClassifier,
         }[name + "_" + objective]
 
     @classmethod
@@ -659,6 +662,7 @@ class Model(object):
                         "linear_svm",
                         "ada_boost",
                         "gradient_boosting_trees",
+                        "lightgbm",
                     ]:
                         self._algorithm = sklearn.multioutput.MultiOutputRegressor(self._algorithm)
 

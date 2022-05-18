@@ -37,6 +37,11 @@ CROSS JOIN LATERAL (
 ) models
 LIMIT 10;
 
+--
+-- After a project has been trained, ommited parameters will be reused from previous training runs
+-- In these examples we'll reuse the training data snapshots from the initial call.
+--
+
 -- linear models
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ridge');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lasso');
@@ -53,24 +58,32 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'theil_sen', hyper
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'huber');
 -- Quantile Regression too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'quantile');
---- support vector machines
+
+-- support vector machines
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'svm', hyperparams => '{"max_iter": 100}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'nu_svm', hyperparams => '{"max_iter": 10}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear_svm', hyperparams => '{"max_iter": 100}');
+
 -- ensembles
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ada_boost', hyperparams => '{"n_estimators": 5}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'bagging', hyperparams => '{"n_estimators": 5}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 5}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 5}');
--- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'random_forest', hyperparams => '{"n_estimators": 5}');
+
 -- other
---SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'kernel_ridge');
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost');
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost_random_forest');
+-- Kernel Ridge is too expensive for normal tests on even a toy dataset
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'kernel_ridge');
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'gaussian_process');
+
+-- gradient boosting
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost_random_forest');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lightgbm');
+-- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
+
 
 -- check out all that hard work
 SELECT trained_models.* FROM pgml.trained_models 

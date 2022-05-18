@@ -18,31 +18,39 @@ SELECT target, pgml.predict('Iris Classifier', ARRAY[sepal_length, sepal_width, 
 FROM iris_view 
 LIMIT 10;
 
+--
 -- After a project has been trained, ommited parameters will be reused from previous training runs
 -- In these examples we'll reuse the training data snapshots from the initial call.
+--
+
 -- linear models
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'ridge');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'stochastic_gradient_descent');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'perceptron');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'passive_aggressive');
+
 -- support vector machines
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'svm');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'nu_svm');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'linear_svm');
+
 -- ensembles
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'ada_boost');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'bagging');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
--- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Iris Classifier', algorithim => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
+
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Iris Classifier', algorithm => 'gaussian_process', hyperparams => '{"max_iter_predict": 100, "warm_start": true}');
--- XGBoost
+
+-- gradient boosting
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'xgboost');
 SELECT * FROM pgml.train('Iris Classifier', algorithm => 'xgboost_random_forest');
+SELECT * FROM pgml.train('Iris Classifier', algorithm => 'lightgbm');
+-- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
+-- SELECT * FROM pgml.train('Iris Classifier', algorithim => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 
 
 -- check out all that hard work
