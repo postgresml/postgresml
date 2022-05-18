@@ -18,10 +18,10 @@ SELECT pgml.load_dataset('digits');
 SELECT left(image::text, 40) || ',...}', target FROM pgml.digits LIMIT 10;
 
 -- train a simple model to classify the data
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target');
+SELECT * FROM pgml.train('Handwritten Digits', 'classification', 'pgml.digits', 'target');
 
 -- check out the predictions
-SELECT target, pgml.predict('Handwritten Digit Image Classifier', image) AS prediction
+SELECT target, pgml.predict('Handwritten Digits', image) AS prediction
 FROM pgml.digits 
 LIMIT 10;
 
@@ -31,33 +31,33 @@ LIMIT 10;
 --
 
 -- linear models
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'ridge');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'stochastic_gradient_descent');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'perceptron');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'passive_aggressive');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'ridge');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'stochastic_gradient_descent');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'perceptron');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'passive_aggressive');
 
 -- support vector machines
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'svm');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'nu_svm');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'linear_svm');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'svm');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'nu_svm');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear_svm');
 
 -- ensembles
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'ada_boost');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'bagging');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'ada_boost');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'bagging');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
 
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'gaussian_process', hyperparams => '{"max_iter_predict": 100, "warm_start": true}');
+-- SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'gaussian_process', hyperparams => '{"max_iter_predict": 100, "warm_start": true}');
 
 -- gradient boosting
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Handwritten Digit Image Classifier', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
+-- SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 
 
 -- check out all that hard work
@@ -66,13 +66,13 @@ JOIN pgml.models on models.id = trained_models.id
 ORDER BY models.metrics->>'f1' DESC LIMIT 5;
 
 -- deploy the random_forest model for prediction use
-SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'most_recent', 'random_forest');
+SELECT * FROM pgml.deploy('Handwritten Digits', 'most_recent', 'random_forest');
 -- check out that throughput
 SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
 -- do a hyperparam search on your favorite algorithm
 SELECT pgml.train(
-    'Handwritten Digit Image Classifier', 
+    'Handwritten Digits', 
     algorithm => 'svm', 
     hyperparams => '{"random_state": 0}',
     search => 'grid', 
@@ -82,15 +82,15 @@ SELECT pgml.train(
     }'
 );
 
--- TODO SELECT pgml.hypertune(100, 'Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target', 'gradient_boosted_trees');
+-- TODO SELECT pgml.hypertune(100, 'Handwritten Digits', 'classification', 'pgml.digits', 'target', 'gradient_boosted_trees');
 
 -- deploy the "best" model for prediction use
-SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'best_score');
-SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'most_recent');
-SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'rollback');
-SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'best_score', 'svm');
+SELECT * FROM pgml.deploy('Handwritten Digits', 'best_score');
+SELECT * FROM pgml.deploy('Handwritten Digits', 'most_recent');
+SELECT * FROM pgml.deploy('Handwritten Digits', 'rollback');
+SELECT * FROM pgml.deploy('Handwritten Digits', 'best_score', 'svm');
 
 -- check out the improved predictions
-SELECT target, pgml.predict('Handwritten Digit Image Classifier', image) AS prediction
+SELECT target, pgml.predict('Handwritten Digits', image) AS prediction
 FROM pgml.digits 
 LIMIT 10;

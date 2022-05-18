@@ -11,10 +11,10 @@ DROP VIEW IF EXISTS iris_view;
 CREATE VIEW iris_view AS SELECT * FROM pgml.iris ORDER BY random() LIMIT 100;
 
 -- train a simple model to classify the data
-SELECT * FROM pgml.train('Iris Classifier', 'classification', 'iris_view', 'target');
+SELECT * FROM pgml.train('Iris Flower Types', 'classification', 'iris_view', 'target');
 
 -- check out the predictions
-SELECT target, pgml.predict('Iris Classifier', ARRAY[sepal_length, sepal_width, petal_length, petal_width]) AS prediction
+SELECT target, pgml.predict('Iris Flower Types', ARRAY[sepal_length, sepal_width, petal_length, petal_width]) AS prediction
 FROM iris_view 
 LIMIT 10;
 
@@ -24,33 +24,33 @@ LIMIT 10;
 --
 
 -- linear models
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'ridge');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'stochastic_gradient_descent');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'perceptron');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'passive_aggressive');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'ridge');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'stochastic_gradient_descent');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'perceptron');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'passive_aggressive');
 
 -- support vector machines
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'svm');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'nu_svm');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'linear_svm');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'svm');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'nu_svm');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'linear_svm');
 
 -- ensembles
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'ada_boost');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'bagging');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'ada_boost');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'bagging');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'random_forest', hyperparams => '{"n_estimators": 10}');
 
 -- other
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Iris Classifier', algorithm => 'gaussian_process', hyperparams => '{"max_iter_predict": 100, "warm_start": true}');
+-- SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'gaussian_process', hyperparams => '{"max_iter_predict": 100, "warm_start": true}');
 
 -- gradient boosting
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Iris Classifier', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Iris Classifier', algorithim => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
+-- SELECT * FROM pgml.train('Iris Flower Types', algorithim => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 
 
 -- check out all that hard work
@@ -59,13 +59,13 @@ JOIN pgml.models on models.id = trained_models.id
 ORDER BY models.metrics->>'f1' DESC LIMIT 5;
 
 -- deploy the random_forest model for prediction use
-SELECT * FROM pgml.deploy('Iris Classifier', 'most_recent', 'random_forest');
+SELECT * FROM pgml.deploy('Iris Flower Types', 'most_recent', 'random_forest');
 -- check out that throughput
 SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
 -- do a hyperparam search on your favorite algorithm
 SELECT pgml.train(
-    'Iris Classifier', 
+    'Iris Flower Types', 
     algorithm => 'gradient_boosting_trees', 
     hyperparams => '{"random_state": 0}',
     search => 'grid', 
@@ -77,13 +77,13 @@ SELECT pgml.train(
 );
 
 -- deploy the "best" model for prediction use
-SELECT * FROM pgml.deploy('Iris Classifier', 'best_score');
-SELECT * FROM pgml.deploy('Iris Classifier', 'most_recent');
-SELECT * FROM pgml.deploy('Iris Classifier', 'rollback');
-SELECT * FROM pgml.deploy('Iris Classifier', 'best_score', 'svm');
+SELECT * FROM pgml.deploy('Iris Flower Types', 'best_score');
+SELECT * FROM pgml.deploy('Iris Flower Types', 'most_recent');
+SELECT * FROM pgml.deploy('Iris Flower Types', 'rollback');
+SELECT * FROM pgml.deploy('Iris Flower Types', 'best_score', 'svm');
 
 -- check out the improved predictions
-SELECT target, pgml.predict('Iris Classifier', ARRAY[sepal_length, sepal_width, petal_length, petal_width]) AS prediction
+SELECT target, pgml.predict('Iris Flower Types', ARRAY[sepal_length, sepal_width, petal_length, petal_width]) AS prediction
 FROM iris_view 
 LIMIT 10;
 
