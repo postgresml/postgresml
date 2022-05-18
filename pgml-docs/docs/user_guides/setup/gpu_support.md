@@ -1,12 +1,33 @@
 # GPU Support
 
-PostgresML is capable of leveraging GPUs when the underlying libraries and hardware are properly configured on the database. 
+PostgresML is capable of leveraging GPUs when the underlying libraries and hardware are properly configured on the database server. 
+
+!!! tip
+    Models trained on GPU will also require GPU support to make predictions.
 
 ## XGBoost 
-XGBoost is currently the only integrated library that provides GPU accellaration. GPU setup for this library is covered in the [xgboost documentation](https://xgboost.readthedocs.io/en/stable/gpu/index.html). Additionally, you'll need to pass `pgml.train('GPU project', hyperparams => '{tree_method: "gpu_hist"}')` to take advantage during training.
+GPU setup for XGBoost is covered in the [xgboost documentation](https://xgboost.readthedocs.io/en/stable/gpu/index.html).
 
-!!! warning
-    XGBoost models trained on GPU will also require GPU support to make predictions.
+!!! example 
+    ```sql linenums="1"
+        pgml.train(
+            'GPU project', 
+            algorithm => 'xgboost', 
+            hyperparams => '{"tree_method" : "gpu_hist"}'
+        );
+    ```
+
+## LightGBM
+GPU setup for LightGBM is covered in the [lightgbm documentation](https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html). 
+
+!!! example 
+    ```sql linenums="1"
+        pgml.train(
+            'GPU project', 
+            algorithm => 'lightgbm', 
+            hyperparams => '{"device" : "gpu"}'
+        );
+    ```
 
 ## Scikit-learn
 None of the scikit-learn algorithms natively support GPU devices. There are a few projects to improve scikit performance with additional parralellism, although we currently have not integrated these with PostgresML:
