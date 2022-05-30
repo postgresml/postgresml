@@ -1,9 +1,8 @@
 from django.db import models, connection
 
-
 class Project(models.Model):
     name = models.TextField()
-    objective = models.TextField()
+    task = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -20,17 +19,21 @@ class Project(models.Model):
 
     @property
     def key_metric_name(self):
-        if self.objective == "classification":
+        if self.task in ["classification", "text-classification"]:
             return "f1"
-        elif self.objective == "regression":
+        elif self.task == "regression":
             return "r2"
+        else:
+            raise f"""Unhandled task: "{self.task}" """
 
     @property
     def key_metric_display_name(self):
-        if self.objective == "classification":
+        if self.task in ["classification", "text-classification"]:
             return "F<sub>1</sub>"
-        elif self.objective == "regression":
+        elif self.task == "regression":
             return "R<sup>2</sup>"
+        else:
+            raise f"""Unhandled task: "{self.task}" """
 
     @property
     def current_deployment(self):
@@ -124,7 +127,6 @@ class Model(models.Model):
     search_params = models.JSONField()
     search_args = models.JSONField()
     metrics = models.JSONField(null=True)
-    pickle = models.BinaryField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

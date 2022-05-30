@@ -13,7 +13,7 @@ The arguments to `pgml.train` that begin with `search` are used for hyperparamet
 ```sql linenums="1" title="pgml.train" hl_lines="8-10"
  pgml.train(
 	project_name TEXT,                       -- Human-friendly project name
-	objective TEXT DEFAULT NULL,             -- 'regression' or 'classification'
+	task TEXT DEFAULT NULL,                  -- 'regression' or 'classification'
 	relation_name TEXT DEFAULT NULL,         -- name of table or view
 	y_column_name TEXT DEFAULT NULL,         -- aka "label" or "unknown" or "target"
 	algorithm TEXT DEFAULT 'linear',         -- statistical learning method
@@ -59,7 +59,7 @@ This grid search will train `len(max_depth) * len(n_estimators) * len(learning_r
 === "Output"
 
     ```sql linenums="1"
-                project_name            | objective | algorithm_name |  status
+                project_name            |   task    | algorithm_name |  status
     ------------------------------------+-----------+----------------+----------
      Handwritten Digit Image Classifier |           | xgboost        | deployed
     (1 row)

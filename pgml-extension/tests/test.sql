@@ -22,4 +22,4 @@ SELECT pgml.load_dataset('california_housing');
 \i examples/binary_classification.sql
 \i examples/multi_classification.sql
 \i examples/image_classification.sql
-
+-- \i examples/transformers.sql

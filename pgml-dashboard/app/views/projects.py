@@ -86,7 +86,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                             """
                             SELECT * FROM pgml.train_joint(
                                 project_name => %s,
-                                objective => %s,
+                                task => %s,
                                 relation_name => %s,
                                 y_column_name => %s,
                                 algorithm => %s
@@ -94,7 +94,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                         """,
                             [
                                 serializer.validated_data["project_name"],
-                                serializer.validated_data["objective"],
+                                serializer.validated_data["task"],
                                 serializer.validated_data["relation_name"],
                                 serializer.validated_data["y_column_name"],
                                 serializer.validated_data["algorithms"][0],

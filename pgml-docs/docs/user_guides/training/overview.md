@@ -1,6 +1,6 @@
 # Training
 
-The training function is at the heart of PostgresML. It's a powerful single call that can handle the different objectives of training depending on the arguments passed.
+The training function is at the heart of PostgresML. It's a powerful single call that can handle the different tasks of training depending on the arguments passed.
 
 ## API
 Most parameters are optional other than the `project_name` which is a simple human readable identifier to organize your work. 
@@ -8,7 +8,7 @@ Most parameters are optional other than the `project_name` which is a simple hum
 ```sql linenums="1" title="pgml.train"
  pgml.train(
 	project_name TEXT,                       -- Human-friendly project name
-	objective TEXT DEFAULT NULL,             -- 'regression' or 'classification'
+	task TEXT DEFAULT NULL,             -- 'regression' or 'classification'
 	relation_name TEXT DEFAULT NULL,         -- name of table or view
 	y_column_name TEXT DEFAULT NULL,         -- aka "label" or "unknown" or "target"
 	algorithm TEXT DEFAULT 'linear',         -- statistical learning method
@@ -33,7 +33,7 @@ Most parameters are optional other than the `project_name` which is a simple hum
     );
     ```
 
-The `train` function requires an `objective` the first time a `project_name` is used. That objective is either `regression` or `classification`, which determines the relevant metrics and analysis performed for models trained toward a common goal. It also requires a `relation_name` and `y_column_name` that will be used to establish the first `Snapshot` of training and test data. By default, 25% of the data (specified by `test_size`) will be randomly sampled to measure the performance of the model after the `algorithm` has been fit to the rest. 
+The `train` function requires an `task` the first time a `project_name` is used. That task is either `regression` or `classification`, which determines the relevant metrics and analysis performed for models trained toward a common goal. It also requires a `relation_name` and `y_column_name` that will be used to establish the first `Snapshot` of training and test data. By default, 25% of the data (specified by `test_size`) will be randomly sampled to measure the performance of the model after the `algorithm` has been fit to the rest. 
 
 !!! tip
     Postgres supports named arguments for function calls, which allows you to pass only the arguments you need.
@@ -42,7 +42,7 @@ The `train` function requires an `objective` the first time a `project_name` is 
         pgml.train('Project Name', algorithm => 'xgboost')
     ```
 
-Future calls to `train` may restate the same `objective` for a project, or omit it, but can't change it. Projects manage their active model using the metrics relevant to a particular objective, so changing it would mean some models in the project are no longer directly comparable. In that case, it's better to start a new project.
+Future calls to `train` may restate the same `task` for a project, or omit it, but can't change it. Projects manage their active model using the metrics relevant to a particular task, so changing it would mean some models in the project are no longer directly comparable. In that case, it's better to start a new project.
 
 !!! note
     If you'd like to train multiple models on the same `Snapshot`, follow up calls to `train` may omit the `relation_name`, `y_column_name`, `test_size` and `test_sampling` arguments to reuse identical data with multiple algorithms or hyperparams. The `Snapshot` is also saved after training runs for any follow up analysis required.
@@ -104,7 +104,7 @@ Now that we've got data, we're ready to train a model using an algorithm. We'll 
 === "Output"
 
     ```sql linenums="1"
-                project_name            |   objective    | algorithm_name |  status
+                project_name            |     task       | algorithm_name |  status
     ------------------------------------+----------------+----------------+----------
      Handwritten Digit Image Classifier | classification | linear         | deployed
     (1 row)
@@ -124,11 +124,11 @@ Now we can inspect some of the artifacts a training run creates.
 === "Output"
 
     ```sql linenums="1"
-                    name                |        deployed_at         |   objective    | algorithm_name | relation_name | y_column_name | test_sampling | test_size
+                    name                |        deployed_at         |     task       | algorithm_name | relation_name | y_column_name | test_sampling | test_size
     ------------------------------------+----------------------------+----------------+----------------+---------------+---------------+---------------+-----------
      Handwritten Digit Image Classifier | 2022-05-10 15:06:32.824305 | classification | linear         | pgml.digits   | {target}      | random        |      0.25
     (1 row)
     ```
 
-- See the [Examples](https://github.com/postgresml/postgresml/tree/master/pgml-extension/examples) for more kinds of training with different types of features, algorithms and objectives.
+- See the [Examples](https://github.com/postgresml/postgresml/tree/master/pgml-extension/examples) for more kinds of training with different types of features, algorithms and tasks.
 - See the [Models](/user_guides/schema/models/) reference for a complete description of the artifacts.

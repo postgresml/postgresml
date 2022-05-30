@@ -1,11 +1,21 @@
+from typing import OrderedDict
+
 import plpy
 import sklearn.datasets
+import datasets
 
-from pgml_extension.sql import q
+from pgml_extension.sql import q, c
 from pgml_extension.exceptions import PgMLException
 
+_PYTHON_TO_PG_MAP = {
+    str: "TEXT",
+    int: "INTEGER",
+    float: "REAL",
+    bool: "BOOLEAN",
+    dict: "JSONB",
+}
 
-def load(source: str):
+def load(source: str, subset: None, limit: None, **kwargs):
     if source == "diabetes":
         load_diabetes()
     elif source == "digits":
@@ -21,11 +31,49 @@ def load(source: str):
     elif source == "california_housing":
         load_california_housing()
     else:
-        raise PgMLException(
-            f"Invalid dataset name: {source}. Valid values are {{'diabetes', 'digits', 'iris', 'linnerud', 'wine', 'breast_cancer', 'california_housing'}}."
-        )
+        load_dataset(source, subset, limit, **kwargs)
+
     return "OK"
 
+def load_dataset(name, subset, limit: None, **kwargs):
+    if limit:
+        dataset = datasets.load_dataset(name, subset, split=f"train[:{limit}]", **kwargs)
+    else:
+        dataset = datasets.load_dataset(name, subset, **kwargs)
+
+    if isinstance(dataset, datasets.Dataset):
+        sample = dataset[0]
+    elif isinstance(dataset, datasets.DatasetDict):
+        sample = dataset["train"][0]
+    else:
+        raise PgMLException(f"Unhandled dataset type: {type(dataset)}")
+
+    columns = OrderedDict()
+    for key, value in sample.items():
+        column = c(key)
+        columns[column] = _PYTHON_TO_PG_MAP[type(value)]
+    
+    table_name = f"pgml.{c(name)}"
+    plpy.execute(f"DROP TABLE IF EXISTS {table_name}")
+    plpy.execute(
+        f"""CREATE TABLE {table_name} ({", ".join([f"{name} {type}" for name, type in columns.items()])})"""
+    )
+
+    if isinstance(dataset, datasets.Dataset):
+        load_dataset_rows(dataset, table_name)
+    elif isinstance(dataset, datasets.DatasetDict):
+        for name, rows in dataset.items():
+            if name == "unsupervised":
+                # postgresml doesn't provide unsupervised learning methods 
+                continue
+            load_dataset_rows(rows, table_name)
+
+def load_dataset_rows(rows, table_name):
+    for row in rows:
+        plpy.execute(
+            f"""INSERT INTO {table_name} ({", ".join([c(v) for v in row.keys()])}) 
+            VALUES ({", ".join([q(v) for v in row.values()])})"""
+        )
 
 def load_diabetes():
     result = plpy.execute(
@@ -239,7 +287,7 @@ def load_breast_cancer():
             "mean fractal dimension", "radius error", "texture error", "perimeter error", "area error", "smoothness error", "compactness error", "concavity error", "concave points error", "symmetry error", 
             "fractal dimension error", "worst radius", "worst texture", "worst perimeter", "worst area", "worst smoothness", "worst compactness", "worst concavity", "worst concave points", "worst symmetry", 
             "worst fractal dimension", "malignant") 
-            VALUES ({",".join("%f" % x for x in list(X))}, {q(y) == 0})"""
+            VALUES ({",".join("%f" % x for x in list(X))}, {q(y == 0)})"""
         )
 
 

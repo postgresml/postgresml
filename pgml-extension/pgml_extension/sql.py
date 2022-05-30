@@ -1,7 +1,7 @@
 from plpy import quote_literal
 import json
 import re
-from pgml_extension.exceptions import PgMLException
+from .exceptions import PgMLException
 import numpy
 
 
@@ -12,8 +12,13 @@ def q(obj):
         return quote_literal(json.dumps(obj))
     elif obj is None:
         return "NULL"
+    elif type(obj) in [bool, numpy.bool_]:
+        if obj:
+            return "TRUE"
+        else:
+            return "FALSE"
     elif type(obj) in [int, float, numpy.int64, numpy.float64]:
-        return obj
+        return str(obj)
 
     raise PgMLException(f"Unhandled postgres type: {type(obj)}")
 

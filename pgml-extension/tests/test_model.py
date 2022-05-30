@@ -16,7 +16,7 @@ class TestModel(unittest.TestCase):
                 {
                     "id": 1,
                     "name": "Test",
-                    "objective": "regression",
+                    "task": "regression",
                     "created_at": time.time(),
                     "updated_at": time.time(),
                 }
@@ -61,7 +61,6 @@ class TestModel(unittest.TestCase):
                     "status": "new",
                     "r2_score": None,
                     "mean_squared_error": None,
-                    "pickle": None,
                     "created_at": time.time(),
                     "updated_at": time.time(),
                 }
@@ -84,7 +83,6 @@ class TestModel(unittest.TestCase):
                     "status": "new",
                     "r2_score": None,
                     "mean_squared_error": None,
-                    "pickle": None,
                     "created_at": time.time(),
                     "updated_at": time.time(),
                 }
@@ -101,7 +99,6 @@ class TestModel(unittest.TestCase):
                     "status": "new",
                     "r2_score": None,
                     "mean_squared_error": None,
-                    "pickle": None,
                     "created_at": time.time(),
                     "updated_at": time.time(),
                 }
@@ -124,7 +121,6 @@ class TestModel(unittest.TestCase):
                     "status": "new",
                     "r2_score": None,
                     "mean_squared_error": None,
-                    "pickle": None,
                     "created_at": time.time(),
                     "updated_at": time.time(),
                 }
@@ -141,7 +137,6 @@ class TestModel(unittest.TestCase):
                     "status": "new",
                     "r2_score": None,
                     "mean_squared_error": None,
-                    "pickle": None,
                     "created_at": time.time(),
                     "updated_at": time.time(),
                 }
@@ -164,7 +159,6 @@ class TestModel(unittest.TestCase):
                     "status": "new",
                     "r2_score": None,
                     "mean_squared_error": None,
-                    "pickle": None,
                     "created_at": time.time(),
                     "updated_at": time.time(),
                 }

@@ -10,8 +10,8 @@ export default class extends Controller {
       "tableStatus",
       "dataSourceNext",
       "projectStatus",
-      "objective",
-      "objectiveNameNext",
+      "task",
+      "taskNameNext",
       "projectNameNext",
       "trainingLabel",
       "analysisNext",
@@ -90,25 +90,25 @@ export default class extends Controller {
       })
     }
 
-    selectObjective(event) {
+    selectTask(event) {
       event.preventDefault()
 
-      this.objectiveName = event.currentTarget.dataset.objective
+      this.taskName = event.currentTarget.dataset.task
 
-      if (this.objectiveName  === "regression") {
+      if (this.taskName  === "regression") {
         this.algorithmListClassificationTarget.classList.add("hidden")
         this.algorithmListRegressionTarget.classList.remove("hidden")
-      } else if (this.objectiveName  == "classification") {
+      } else if (this.taskName  == "classification") {
         this.algorithmListClassificationTarget.classList.remove("hidden")
         this.algorithmListRegressionTarget.classList.add("hidden")
       }
 
-      this.objectiveTargets.forEach(objective => {
-        objective.classList.remove("selected")
+      this.taskTargets.forEach(task => {
+        task.classList.remove("selected")
       })
 
       event.currentTarget.classList.add("selected")
-      this.objectiveNameNextTarget.disabled = false
+      this.taskNameNextTarget.disabled = false
     }
 
     selectAlgorithm(event) {
@@ -243,7 +243,7 @@ export default class extends Controller {
 
       const request = {
         "project_name": this.projectName,
-        "objective": this.objectiveName,
+        "task": this.taskName,
         "algorithms": Array.from(this.algorithmNames),
         "relation_name": this.tableName,
         "y_column_name": Array.from(this.targetNames),

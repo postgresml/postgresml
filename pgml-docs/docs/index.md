@@ -62,7 +62,7 @@ article.md-content__inner.md-typeset a.md-content__button.md-icon {
 ```sql linenums="1" title="train.sql"
 SELECT pgml.train(
   'My project name', 
-  objective => 'regression',
+  task => 'regression',
   relation_name => 'my_table_with_data',
   y_column_name => 'my_column_with_labels',
   algorithm => 'xgboost' 

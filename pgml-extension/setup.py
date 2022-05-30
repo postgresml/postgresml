@@ -1,14 +1,14 @@
 import os
 import setuptools
 
-from pgml_extension import version
+from pgml_extension import __version__
 
 with open(os.path.join(os.path.dirname(__file__), "README.md"), "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="pgml-extension",
-    version=version(),
+    version=__version__,
     author="PostgresML Team",
     author_email="maintainers@postgresml.org",
     description="Simple machine learning in PostgreSQL.",
@@ -17,13 +17,22 @@ setuptools.setup(
     url="https://github.com/postgresml/postgresml",
     install_requires=[
         "diptest",
+        "numpy",
+        "pandas",
         "sklearn",
         "xgboost",
         "lightgbm",
-        "diptest",
         "psycopg2",
         "wheel",
         "click",
+        "torch",
+        "transformers",
+        "datasets",
+        # translation/nlp
+        "sentencepiece",
+        "sacremoses",
+        "sacrebleu",
+        "rouge"
     ],
     extras_require={"dev": "pytest"},
     packages=setuptools.find_packages(exclude=("tests",)),

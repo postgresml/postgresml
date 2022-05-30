@@ -69,18 +69,19 @@ Follow the installation instructions to create a local working Postgres environm
 ```
 cd pgml-extension
 sudo python3 setup.py install
+sudo python3 -m pgml_extension --database-url=postgres://postgres@localhost:5433/pgml_development
 ```
 
 Run the tests from the root of the repo:
 
 ```
 cd pgml-extension
-ON_ERROR_STOP=1 psql -f sql/test.sql postgres://postgres@127.0.0.1:5433/pgml_development
+ON_ERROR_STOP=1 psql -f tests/test.sql postgres://postgres@127.0.0.1:5433/pgml_development
 ```
 
 One liner:
 ```
-cd pgml-extension; sudo /bin/pip3 install .; psql -c "DROP DATABASE pgml_development" postgres://postgres@127.0.0.1:5433/; psql -c "CREATE DATABASE pgml_development" postgres://postgres@127.0.0.1:5433/; psql -c "create schema pgml" postgres://postgres@127.0.0.1:5433/pgml_development; ON_ERROR_STOP=1 psql -f sql/test.sql -P pager postgres://postgres@127.0.0.1:5433/pgml_development; cd ..
+cd pgml-extension; sudo /bin/pip3 install .; psql -c "DROP DATABASE pgml_development" postgres://postgres@127.0.0.1:5433/; psql -c "CREATE DATABASE pgml_development" postgres://postgres@127.0.0.1:5433/; psql -c "create schema pgml" postgres://postgres@127.0.0.1:5433/pgml_development; sudo python3 -m pgml_extension --database-url=postgres://postgres@localhost:5433/pgml_development; ON_ERROR_STOP=1 psql -f tests/test.sql -P pager postgres://postgres@127.0.0.1:5433/pgml_development; cd ..
 ```
 
 Make sure to run it exactly like this, from the root directory of the repo.
