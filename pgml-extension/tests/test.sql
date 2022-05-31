@@ -3,8 +3,6 @@
 ---
 \set ON_ERROR_STOP true
 
-\i sql/install.sql
-
 \timing
 
 SELECT pgml.version();
