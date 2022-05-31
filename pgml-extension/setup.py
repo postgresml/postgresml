@@ -88,12 +88,15 @@ setuptools.setup(
         "sklearn",
         "xgboost",
         "lightgbm",
+        "diptest",
+        "psycopg2",
+        "wheel",
+        "click",
     ],
     extras_require={"dev": "pytest"},
     packages=setuptools.find_packages(exclude=("tests",)),
     package_data={
-        '': ['MIT-LICENSE.txt'],
-        'sql': [path.as_posix() for path in Path(".").rglob("*.sql")]
+        'pgml_extension': ["sql/install/*.sql"]
     },
     include_package_data=True,
     classifiers=[

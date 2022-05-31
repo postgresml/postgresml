@@ -16,7 +16,7 @@ echo "Creating user and database..."
 
 echo "Installing pgml extension..."
 sudo pip3 install .
-sudo python3 setup.py develop --database-url=postgres://postgres@127.0.0.1:5432/pgml_development
+sudo python3 -m pgml_extension --database-url=postgres://postgres@127.0.0.1:5432/pgml_development
 
 echo "Ready!"
 if [[ ! -z $@ ]]; then
