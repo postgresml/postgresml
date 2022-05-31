@@ -27,7 +27,7 @@ PostgresML leverages Python libraries for their machine learning capabilities. Y
 
 === ":material-microsoft-windows: Windows"
 
-    Enterprise db provides Windows builds of PostgreSQL [available for download](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads).
+    EnterpriseDB provides Windows builds of PostgreSQL [available for download](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads).
     
 
 ## Install the extension
@@ -37,7 +37,8 @@ To use our Python package inside PostgreSQL, we need to install it into the glob
 Change the `--database-url` option to point to your PostgreSQL server.
 
 ```bash
-$ sudo pip3 install --install-option="--database-url=postgres://user_name:password@localhost:5432/database_name" pgml-extension
+$ sudo pip3 install pgml-extension
+$ python3 -m pgml_extension --database-url=postgres://user_name:password@localhost:5432/database_name
 ```
 
 If everything works, you should be able to run this successfully:
