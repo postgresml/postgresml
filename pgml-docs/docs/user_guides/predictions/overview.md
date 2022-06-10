@@ -79,7 +79,7 @@ If you're ever curious about which deployed models will be used to make predicti
 === "Output"
 
     ```sql linenums="1"
-     id |                name                |   objective    | algorithm_name |        deployed_at
+     id |                name                |      task      | algorithm_name |        deployed_at
     ----+------------------------------------+----------------+----------------+----------------------------
       1 | Handwritten Digit Image Classifier | classification | linear         | 2022-05-10 15:28:53.383893
     ```

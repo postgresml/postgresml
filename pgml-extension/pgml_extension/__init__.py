@@ -1,2 +1,3 @@
-def version():
-    return "0.10.0"
+from . import logging
+
+__version__ = "0.10.0"

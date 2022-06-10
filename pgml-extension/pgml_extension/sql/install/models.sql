@@ -9,7 +9,7 @@ CREATE OR REPLACE FUNCTION pgml.version()
 RETURNS TEXT
 AS $$
 	import pgml_extension
-	return pgml_extension.version()
+	return pgml_extension.__version__
 $$ LANGUAGE plpython3u;
 
 
@@ -17,12 +17,17 @@ $$ LANGUAGE plpython3u;
 --- Load toy datasets for practice
 ---
 CREATE OR REPLACE FUNCTION pgml.load_dataset(
-	source TEXT -- diabetes, digits, iris, linnerud, wine, breast_cancer, california_housing
+	source TEXT,              -- diabetes, digits, iris, linnerud, wine, breast_cancer, california_housing
+	subset TEXT DEFAULT NULL, -- for some hugging face datasets
+	"limit" INT DEFAULT NULL, -- prevent the entire dataset from being imported
+	kwargs JSONB DEFAULT '{}' -- additional named arguments passed on to hugging face 
 )
 RETURNS TEXT
 AS $$
+	import json
 	from pgml_extension.datasets import load
-	return load(source)
+
+	return load(source, subset, limit, **json.loads(kwargs))
 $$ LANGUAGE plpython3u;
 
 
@@ -47,25 +52,25 @@ $$ LANGUAGE plpython3u;
 --- Train a model
 ---
 CREATE OR REPLACE FUNCTION pgml.train(
-	project_name TEXT, 							-- Human-friendly project name
-	objective TEXT DEFAULT NULL,                -- 'regression' or 'classification'
-	relation_name TEXT DEFAULT NULL,            -- name of table or view
-	y_column_name TEXT DEFAULT NULL,            -- aka "label" or "unknown" or "target"
-	algorithm TEXT DEFAULT 'linear',            -- statistical learning method
-	hyperparams JSONB DEFAULT '{}'::JSONB,      -- options for the model
-	search TEXT DEFAULT NULL,                   -- hyperparam tuning, 'grid' or 'random'
-	search_params JSONB DEFAULT '{}'::JSONB,    -- hyperparam search space
-	search_args JSONB DEFAULT '{}'::JSONB,      -- hyperparam options
-	test_size REAL DEFAULT 0.25,                -- fraction of the data for the test set
-	test_sampling TEXT DEFAULT 'random'         -- 'random', 'first' or 'last'
+	project_name TEXT, 						 -- Human-friendly project name
+	task TEXT DEFAULT NULL,                  -- 'regression' or 'classification'
+	relation_name TEXT DEFAULT NULL,         -- name of table or view
+	y_column_name TEXT DEFAULT NULL,         -- aka "label" or "unknown" or "target"
+	algorithm TEXT DEFAULT 'linear',         -- statistical learning method
+	hyperparams JSONB DEFAULT '{}'::JSONB,   -- options for the model
+	search TEXT DEFAULT NULL,                -- hyperparam tuning, 'grid' or 'random'
+	search_params JSONB DEFAULT '{}'::JSONB, -- hyperparam search space
+	search_args JSONB DEFAULT '{}'::JSONB,   -- hyperparam options
+	test_size REAL DEFAULT 0.25,             -- fraction of the data for the test set
+	test_sampling TEXT DEFAULT 'random'      -- 'random', 'first' or 'last'
 )
-RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT, status TEXT)
+RETURNS TABLE(project_name TEXT, task TEXT, algorithm_name TEXT, status TEXT)
 AS $$
 	from pgml_extension.model import train
 	import json
 	status = train(
 		project_name, 
-		objective, 
+		task, 
 		relation_name, 
 		[y_column_name],
 		algorithm, 
@@ -77,36 +82,32 @@ AS $$
 		test_sampling
 	)
 
-	if "projects" in GD:
-		if project_name in GD["projects"]:
-	 		del GD["projects"][project_name]
-
-	return [(project_name, objective, algorithm, status)]
+	return [(project_name, task, algorithm, status)]
 $$ LANGUAGE plpython3u;
 
 --
 -- Train a model w/ multiple outputs
 --
 CREATE OR REPLACE FUNCTION pgml.train_joint(
-	project_name TEXT, 							-- Human-friendly project name
-	objective TEXT DEFAULT NULL,                -- 'regression' or 'classification'
-	relation_name TEXT DEFAULT NULL,            -- name of table or view
-	y_column_name TEXT[] DEFAULT NULL,          -- multiple "labels" or "unknowns" or "targets"
-	algorithm TEXT DEFAULT 'linear',            -- statistical learning method
-	hyperparams JSONB DEFAULT '{}'::JSONB,      -- options for the model
-	search TEXT DEFAULT NULL,                   -- hyperparam tuning, 'grid' or 'random'
-	search_params JSONB DEFAULT '{}'::JSONB,    -- hyperparam search space
-	search_args JSONB DEFAULT '{}'::JSONB,      -- hyperparam options
-	test_size REAL DEFAULT 0.25,                -- fraction of the data for the test set
-	test_sampling TEXT DEFAULT 'random'         -- 'random', 'first' or 'last'  
+	project_name TEXT, 						 -- Human-friendly project name
+	task TEXT DEFAULT NULL,                  -- 'regression' or 'classification'
+	relation_name TEXT DEFAULT NULL,         -- name of table or view
+	y_column_name TEXT[] DEFAULT NULL,       -- multiple "labels" or "unknowns" or "targets"
+	algorithm TEXT DEFAULT 'linear',         -- statistical learning method
+	hyperparams JSONB DEFAULT '{}'::JSONB,   -- options for the model
+	search TEXT DEFAULT NULL,                -- hyperparam tuning, 'grid' or 'random'
+	search_params JSONB DEFAULT '{}'::JSONB, -- hyperparam search space
+	search_args JSONB DEFAULT '{}'::JSONB,   -- hyperparam options
+	test_size REAL DEFAULT 0.25,             -- fraction of the data for the test set
+	test_sampling TEXT DEFAULT 'random'      -- 'random', 'first' or 'last'  
 )
-RETURNS TABLE(project_name TEXT, objective TEXT, algorithm_name TEXT, status TEXT)
+RETURNS TABLE(project_name TEXT, task TEXT, algorithm_name TEXT, status TEXT)
 AS $$
 	from pgml_extension.model import train
 	import json
 	status = train(
 		project_name, 
-		objective, 
+		task, 
 		relation_name, 
 		y_column_name,
 		algorithm, 
@@ -118,11 +119,7 @@ AS $$
 		test_sampling
 	)
 
-	if "projects" in GD:
-		if project_name in GD["projects"]:
-	 		del GD["projects"][project_name]
-
-	return [(project_name, objective, algorithm, status)]
+	return [(project_name, task, algorithm, status)]
 $$ LANGUAGE plpython3u;
 
 
@@ -139,11 +136,7 @@ AS $$
 	from pgml_extension.model import Project
 	model = Project.find_by_name(project_name).deploy(strategy, algorithm_name)
 
-	if "projects" in GD:
-		if project_name in GD["projects"]:
-	 		del GD["projects"][project_name]
-
-	return [(model.project.name, model.project.objective, model.algorithm_name)]
+	return [(model.project.name, model.project.task, model.algorithm_name)]
 $$ LANGUAGE plpython3u;
 
 
@@ -158,15 +151,7 @@ RETURNS DOUBLE PRECISION
 AS $$
 	from pgml_extension.model import Project
 
-	if "projects" not in GD:
-		GD["projects"] = {}
-
-	project = GD["projects"].get(project_name)
-	if project is None:
-		project = Project.find_by_name(project_name)
-		GD["projects"][project_name] = project
-
-	return float(project.deployed_model.predict(features))
+	return float(Project.find_by_name(project_name).deployed_model.predict(features))
 $$ LANGUAGE plpython3u;
 
 
@@ -181,15 +166,7 @@ RETURNS DOUBLE PRECISION[]
 AS $$
 	from pgml_extension.model import Project
 
-	if "projects" not in GD:
-		GD["projects"] = {}
-
-	project = GD["projects"].get(project_name)
-	if project is None:
-		project = Project.find_by_name(project_name)
-		GD["projects"][project_name] = project
-
-	return project.deployed_model.predict(features)
+	return Project.find_by_name(project_name).deployed_model.predict(features)
 $$ LANGUAGE plpython3u;
 
 
@@ -197,7 +174,7 @@ $$ LANGUAGE plpython3u;
 --- Predict using a specific model. Useful for debugging.
 ---
 CREATE OR REPLACE FUNCTION pgml.model_predict(
-	model_id BIGINT, -- `id` from `pgml.models`
+	model_id BIGINT,            -- `id` from `pgml.models`
 	features DOUBLE PRECISION[] -- list of features that the model accepts
 )
 RETURNS DOUBLE PRECISION[]

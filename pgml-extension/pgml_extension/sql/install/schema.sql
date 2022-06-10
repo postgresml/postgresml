@@ -49,7 +49,7 @@ LANGUAGE plpgsql;
 CREATE TABLE IF NOT EXISTS pgml.projects(
 	id BIGSERIAL PRIMARY KEY,
 	name TEXT NOT NULL,
-	objective TEXT NOT NULL,
+	task TEXT NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp()
 );
@@ -91,7 +91,6 @@ CREATE TABLE IF NOT EXISTS pgml.models(
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	metrics JSONB,
-	pickle BYTEA,
 	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
 	CONSTRAINT snapshot_id_fk FOREIGN KEY(snapshot_id) REFERENCES pgml.snapshots(id)
 );
@@ -116,6 +115,20 @@ CREATE INDEX IF NOT EXISTS deployments_project_id_created_at_idx ON pgml.deploym
 CREATE INDEX IF NOT EXISTS deployments_model_id_created_at_idx ON pgml.deployments(model_id);
 SELECT pgml.auto_updated_at('pgml.deployments');
 
+---
+--- Distribute serialized models consistently for HA
+---
+CREATE TABLE IF NOT EXISTS pgml.files(
+	id BIGSERIAL PRIMARY KEY,
+	model_id BIGINT NOT NULL,
+	path TEXT NOT NULL,
+	part INTEGER NOT NULL,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
+	data BYTEA NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS files_model_id_path_part_idx ON pgml.files(model_id, path, part);
+SELECT pgml.auto_updated_at('pgml.files');
 
 ---
 --- Quick status check on the system.
@@ -125,7 +138,7 @@ CREATE VIEW pgml.overview AS
 SELECT
 	   p.name,
 	   d.created_at AS deployed_at,
-       p.objective,
+       p.task,
        m.algorithm_name,
        s.relation_name,
        s.y_column_name,
@@ -147,7 +160,7 @@ CREATE VIEW pgml.trained_models AS
 SELECT
 	m.id,	
 	p.name,
-	p.objective,
+	p.task,
 	m.algorithm_name,
 	m.created_at,
 	s.test_sampling,
@@ -173,7 +186,7 @@ CREATE VIEW pgml.deployed_models AS
 SELECT
 	m.id,
 	p.name,
-	p.objective,
+	p.task,
 	m.algorithm_name,
 	d.created_at as deployed_at 
 FROM pgml.projects p

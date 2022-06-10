@@ -54,7 +54,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "name",
             "key_metric_name",
             "key_metric_display_name",
-            "objective",
+            "task",
             "created_at",
             "updated_at",
             "models",
@@ -70,7 +70,7 @@ class DeploymentSerializer(serializers.ModelSerializer):
 
 class NewProjectSerializer(serializers.Serializer):
     project_name = serializers.CharField()
-    objective = serializers.CharField(required=False)
+    task = serializers.CharField(required=False)
     relation_name = serializers.CharField(required=False)
     y_column_name = serializers.ListSerializer(child=serializers.CharField(), required=False)
     algorithms = serializers.ListSerializer(child=serializers.CharField())

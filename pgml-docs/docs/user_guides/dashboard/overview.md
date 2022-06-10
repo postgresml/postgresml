@@ -14,12 +14,12 @@ $ psql -f pgml-extension/sql/test.sql -P pager postgres://postgres@127.0.0.1:543
 Now there should be something to see in your local dashboard.
 
 ### Projects
-Projects organize Models that are all striving toward the same objective. They aren't much more than a name to group a collection of models. You can see the currently deployed model for each project indicated by :material-star:.
+Projects organize Models that are all striving toward the same task. They aren't much more than a name to group a collection of models. You can see the currently deployed model for each project indicated by :material-star:.
 
 ![Project](/images/dashboard/project.png)
 
 ### Models
-Models are the result of training an algorithm on a Snapshot of a dataset. They record `metrics` depending on their projects objective, and are scored accordingly. Some models are the result of a hyperparameter search, and include additional analysis on the range of hyperparameters they are tested against.
+Models are the result of training an algorithm on a Snapshot of a dataset. They record `metrics` depending on their projects task, and are scored accordingly. Some models are the result of a hyperparameter search, and include additional analysis on the range of hyperparameters they are tested against.
 
 ![Model](/images/dashboard/model.png)
 

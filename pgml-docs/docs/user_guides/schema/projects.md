@@ -10,7 +10,7 @@ Projects are an artifact of calls to `pgml.train`. See [training](/user_guides/t
 pgml.projects(
 	id BIGSERIAL PRIMARY KEY,
 	name TEXT NOT NULL,
-	objective TEXT NOT NULL,
+	task TEXT NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp()
 );

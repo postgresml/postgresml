@@ -13,7 +13,7 @@ def main(database_url):
     conn = psycopg2.connect(database_url)
     cur = conn.cursor()
 
-    for f in ["sql/install/schema.sql", "sql/install/models.sql", "sql/install/vectors.sql"]:
+    for f in ["sql/install/schema.sql", "sql/install/models.sql", "sql/install/vectors.sql", "sql/install/transformers.sql"]:
         data = pkg_resources.resource_string("pgml_extension", f)
         cur.execute(data)
         conn.commit()

@@ -1,4 +1,7 @@
+import logging
 from re import M
+import os
+from typing import OrderedDict
 import plpy
 import sklearn.linear_model
 import sklearn.kernel_ridge
@@ -8,6 +11,9 @@ import sklearn.multioutput
 import sklearn.gaussian_process
 import sklearn.model_selection
 import numpy
+import pandas
+from datasets import Dataset, DatasetDict, DatasetInfo
+import datasets
 import xgboost as xgb
 import diptest
 import lightgbm
@@ -30,14 +36,125 @@ from pgml_extension.exceptions import PgMLException
 from pgml_extension.sql import q, c
 
 
+_POSTGRES_TO_PANDAS_TYPE_MAP = {
+    "boolean": "bool",
+    "character": "int8",
+    "smallint": "int16",
+    "smallserial": "int16",
+    "integer": "int32",
+    "serial": "int32",
+    "bigint": "int64",
+    "bigserial": "int64",
+    "real": "float64",
+    "double precision": "float64",
+    "numeric": "float64",
+    "decimal": "float64",
+    "text": "string",
+    "character varying": "string",
+    "bytea": "binary",
+    "timestamp without time zone": "timestamp",
+    "timestamp with time zone": "timestamp",
+    "date": "date32",
+    "time without time zone": "time64",
+    "time with time zone": "time64",
+    "jsonb": "string"
+}
+_PYTHON_TO_PANDAS_TYPE_MAP = {
+    str: 'string',
+    int: 'int32',
+    float: 'float32',
+    bool: 'boolean',
+}
+_DISCRETE_NUMERIC_TYPES = {
+    "boolean",
+    "character", 
+    "smallint", 
+    "small_serial", 
+    "integer", 
+    "serial", 
+    "bigint", 
+    "bigserial",
+}
+_TEXT_TYPES = {
+    "character varying", 
+    "text", 
+}
+_DEFAULT_KEY_METRIC_MAP = {
+    'regression': 'r2',
+    'classification': 'f1',
+    'text-classification': 'f1',
+    'question-answering': 'f1',
+    'translation': 'blue',
+    'summarization': 'rouge_ngram_f1',
+}
+_DEFAULT_HYPERPARAM_SCORE_MAP = {
+    'regression': 'r2',
+    'classification': 'f1_micro',
+    'text-classification': 'f1_micro',
+    'question-answering': 'f1_micro',
+    'translation': 'blue',
+    'summarization': 'rouge_ngram_f1',
+}
+_ALGORITHM_MAP = {
+    "linear_regression": sklearn.linear_model.LinearRegression,
+    "linear_classification": sklearn.linear_model.LogisticRegression,
+    "ridge_regression": sklearn.linear_model.Ridge,
+    "ridge_classification": sklearn.linear_model.RidgeClassifier,
+    "lasso_regression": sklearn.linear_model.Lasso,
+    "elastic_net_regression": sklearn.linear_model.ElasticNet,
+    "least_angle_regression": sklearn.linear_model.Lars,
+    "lasso_least_angle_regression": sklearn.linear_model.LassoLars,
+    "orthoganl_matching_pursuit_regression": sklearn.linear_model.OrthogonalMatchingPursuit,
+    "bayesian_ridge_regression": sklearn.linear_model.BayesianRidge,
+    "automatic_relevance_determination_regression": sklearn.linear_model.ARDRegression,
+    "stochastic_gradient_descent_regression": sklearn.linear_model.SGDRegressor,
+    "stochastic_gradient_descent_classification": sklearn.linear_model.SGDClassifier,
+    "perceptron_classification": sklearn.linear_model.Perceptron,
+    "passive_aggressive_regression": sklearn.linear_model.PassiveAggressiveRegressor,
+    "passive_aggressive_classification": sklearn.linear_model.PassiveAggressiveClassifier,
+    "ransac_regression": sklearn.linear_model.RANSACRegressor,
+    "theil_sen_regression": sklearn.linear_model.TheilSenRegressor,
+    "huber_regression": sklearn.linear_model.HuberRegressor,
+    "quantile_regression": sklearn.linear_model.QuantileRegressor,
+    "kernel_ridge_regression": sklearn.kernel_ridge.KernelRidge,
+    "gaussian_process_regression": sklearn.gaussian_process.GaussianProcessRegressor,
+    "gaussian_process_classification": sklearn.gaussian_process.GaussianProcessClassifier,
+    "svm_regression": sklearn.svm.SVR,
+    "svm_classification": sklearn.svm.SVC,
+    "nu_svm_regression": sklearn.svm.NuSVR,
+    "nu_svm_classification": sklearn.svm.NuSVC,
+    "linear_svm_regression": sklearn.svm.LinearSVR,
+    "linear_svm_classification": sklearn.svm.LinearSVC,
+    "ada_boost_regression": sklearn.ensemble.AdaBoostRegressor,
+    "ada_boost_classification": sklearn.ensemble.AdaBoostClassifier,
+    "bagging_regression": sklearn.ensemble.BaggingRegressor,
+    "bagging_classification": sklearn.ensemble.BaggingClassifier,
+    "extra_trees_regression": sklearn.ensemble.ExtraTreesRegressor,
+    "extra_trees_classification": sklearn.ensemble.ExtraTreesClassifier,
+    "gradient_boosting_trees_regression": sklearn.ensemble.GradientBoostingRegressor,
+    "gradient_boosting_trees_classification": sklearn.ensemble.GradientBoostingClassifier,
+    "hist_gradient_boosting_regression": sklearn.ensemble.HistGradientBoostingRegressor,
+    "hist_gradient_boosting_classification": sklearn.ensemble.HistGradientBoostingClassifier,
+    "random_forest_regression": sklearn.ensemble.RandomForestRegressor,
+    "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
+    "xgboost_regression": xgb.XGBRegressor,
+    "xgboost_classification": xgb.XGBClassifier,
+    "xgboost_random_forest_regression": xgb.XGBRFRegressor,
+    "xgboost_random_forest_classification": xgb.XGBRFClassifier,
+    "lightgbm_regression": lightgbm.LGBMRegressor,
+    "lightgbm_classification": lightgbm.LGBMClassifier,
+}
+
+_project_cache = {}
+
 class Project(object):
     """
-    Use projects to refine multiple models of a particular dataset on a specific objective.
+    Use projects to refine multiple models of a particular dataset on a specific task.
 
     Attributes:
         id (int): a unique identifier
         name (str): a human friendly unique identifier
-        objective (str): the purpose of this project
+        task (str): the purpose of this project
         created_at (Timestamp): when this project was created
         updated_at (Timestamp): when this project was last updated
     """
@@ -66,7 +183,7 @@ class Project(object):
         if len(result) == 0:
             return None
 
-        project = Project()
+        project = cls()
         project.__dict__ = dict(result[0])
         project.__init__()
         return project
@@ -84,43 +201,45 @@ class Project(object):
         Returns:
             Project or None: instantiated from the database if found
         """
+        project = _project_cache.get(name)
+        if project is None:
+            result = plpy.execute(
+                f"""
+                    SELECT * 
+                    FROM pgml.projects 
+                    WHERE name = {q(name)}
+                """,
+                1,
+            )
+            if len(result) == 0:
+                raise PgMLException(f"Project '{name}' does not exist.")
 
-        # bust the cache after a deployment
-        result = plpy.execute(
-            f"""
-                SELECT * 
-                FROM pgml.projects 
-                WHERE name = {q(name)}
-            """,
-            1,
-        )
-        if len(result) == 0:
-            raise PgMLException(f"Project '{name}' does not exist.")
+            project = cls()
+            project.__dict__ = dict(result[0])
+            project.__init__()
+            _project_cache[name] = project
 
-        project = Project()
-        project.__dict__ = dict(result[0])
-        project.__init__()
         return project
 
     @classmethod
-    def create(cls, name: str, objective: str):
+    def create(cls, name: str, task: str):
         """
         Create a Project and save it to the database.
 
         Args:
             name (str): a human friendly identifier
-            objective (str): valid values are ["regression", "classification"].
+            task (str): valid values are ["regression", "classification"].
         Returns:
             Project: instantiated from the database
         """
-        if objective is None:
-            raise PgMLException(f"You must specify and objective when creating a new Project.")
-        project = Project()
+        if task is None:
+            raise PgMLException(f"You must specify and task when creating a new Project.")
+        project = cls()
         project.__dict__ = dict(
             plpy.execute(
                 f"""
-                    INSERT INTO pgml.projects (name, objective, created_at, updated_at) 
-                    VALUES ({q(name)}, {q(objective)}, clock_timestamp(), clock_timestamp()) 
+                    INSERT INTO pgml.projects (name, task, created_at, updated_at) 
+                    VALUES ({q(name)}, {q(task)}, clock_timestamp(), clock_timestamp()) 
                     RETURNING *
                 """,
                 1,
@@ -136,7 +255,7 @@ class Project(object):
             Model: that should currently be used for predictions
         """
         if self._deployed_model is None:
-            self._deployed_model = Model.find_deployed(self.id)
+            self._deployed_model = Model.find_deployed(self)
         return self._deployed_model
 
     def deploy(self, qualifier="best_score", algorithm_name=None):
@@ -147,22 +266,21 @@ class Project(object):
 
     @property
     def key_metric_name(self):
-        if self.objective == "classification":
-            return "f1"
-        elif self.objective == "regression":
-            return "r2"
+        return _DEFAULT_KEY_METRIC_MAP[self.task_type]
 
     @property
     def hyperparam_score_name(self):
-        if self.objective == "classification":
-            return "f1_micro"
-        elif self.objective == "regression":
-            return "r2"
+        return _DEFAULT_HYPERPARAM_SCORE_MAP[self.task_type]
 
     @property
     def last_snapshot(self):
         return Snapshot.last_for_project_id(self.id)
 
+    @property
+    def task_type(self):
+        if self.task.startswith("translation"):
+            return "translation"
+        return self.task
 
 class Snapshot(object):
     """
@@ -203,7 +321,7 @@ class Snapshot(object):
             Snapshot: metadata instantiated from the database
         """
 
-        snapshot = Snapshot()
+        snapshot = cls()
         snapshot.__dict__ = dict(
             plpy.execute(
                 f"""
@@ -214,6 +332,7 @@ class Snapshot(object):
                 1,
             )[0]
         )
+        snapshot.__init__()
         sql = f"""
             CREATE TABLE pgml."snapshot_{snapshot.id}" AS 
             SELECT * FROM {snapshot.relation_name}
@@ -234,6 +353,7 @@ class Snapshot(object):
                 1,
             )[0]
         )
+        snapshot.__init__()
         return snapshot
 
     @classmethod
@@ -249,7 +369,7 @@ class Snapshot(object):
         if len(result) == 0:
             return None
 
-        snapshot = Snapshot()
+        snapshot = cls()
         snapshot.__dict__ = dict(result[0])
         snapshot.__init__()
         return snapshot
@@ -270,10 +390,13 @@ class Snapshot(object):
         if len(result) == 0:
             return None
 
-        snapshot = Snapshot()
+        snapshot = cls()
         snapshot.__dict__ = dict(result[0])
         snapshot.__init__()
         return snapshot
+
+    def __init__(self):
+        self._features = None
 
     def analyze(self):
         sample = plpy.execute(
@@ -368,20 +491,100 @@ class Snapshot(object):
 
         # Split into training and test sets
         if self.test_sampling == "random":
-            return train_test_split(X, y, test_size=self.test_size, random_state=0)
+            return train_test_split(X, y, test_size=self.test_size, shuffle=False)
         else:
+            split = self.test_size
             if self.test_sampling == "first":
                 X.reverse()
                 y.reverse()
                 if isinstance(split, float):
                     split = 1.0 - split
-            split = self.test_size
             if isinstance(split, float):
-                split = int(self.test_size * X.len())
+                split = int(self.test_size * len(X))
             return X[:split], X[split:], y[:split], y[split:]
 
         # TODO normalize and clean data
 
+    @property
+    def dataset(self):
+        data = plpy.execute(f"SELECT * FROM {self.snapshot_name}")
+
+        # parse jsonb columns
+        for i, pg_type in enumerate(data.coltypes()):
+            col = data.colnames()[i]
+            if pg_type == 3802: # jsonb
+                for row in data:
+                    row[col] = json.loads(row[col])
+        
+        # Datasets are constructed from DataFrames
+        dataframe = pandas.DataFrame.from_records(data)
+        if self.test_sampling == "first":
+            dataframe = dataframe.loc[::-1].reset_index(drop=True)
+
+        # construct the features for the Dataset
+        features = OrderedDict()
+        for name, pg_type in self.features.items():
+            if pg_type == "jsonb":
+                value = data[0][name]
+                if type(value) == dict:
+                    if all(isinstance(v, list) for v in value.values()):
+                        features[name] = datasets.Sequence(
+                            {k: datasets.Value(_PYTHON_TO_PANDAS_TYPE_MAP[type(v[0])]) for k, v in value.items()}
+                        )
+                    elif name == 'translation':
+                        features[name] = datasets.Translation(languages=list(value.keys()))
+                    else:
+                        raise PgMLException(f"Unhandled json dict: {value}")
+                else:
+                    raise PgMLException(f"Unhandled json value: {value}")
+            elif name in self.y_column_name:
+                if pg_type == "boolean":
+                    features[name] = datasets.ClassLabel(num_classes=2)
+                elif pg_type in _DISCRETE_NUMERIC_TYPES:
+                    features[name] = datasets.ClassLabel(num_classes=int(dataframe[name].max() + 1))
+                elif pg_type in _TEXT_TYPES:
+                    # TODO need to differentiate between Seq2Seq vs Classification labels
+                    features[name] = datasets.Value(_POSTGRES_TO_PANDAS_TYPE_MAP[pg_type])
+                else:
+                    raise PgMLException(f"Unhandled label type: {pg_type}")
+            else:
+                features[name] = datasets.Value(_POSTGRES_TO_PANDAS_TYPE_MAP[pg_type])
+        features = datasets.Features(features)
+
+        # Split the data. It was shuffled during snapshot creation if appropriate.
+        test_size = self.test_size
+        if test_size > 1:
+            test_size = int(test_size)
+        train, test = train_test_split(dataframe, test_size=test_size, shuffle=False)
+
+        return DatasetDict({
+            "train": Dataset.from_pandas(train, features=features, preserve_index=False),
+            "test": Dataset.from_pandas(test, features=features, preserve_index=False)
+        })
+
+    @property
+    def features(self):
+        if self._features:
+            return self._features
+
+        result = plpy.execute(f"""
+            SELECT column_name, data_type
+            FROM information_schema.columns
+            WHERE table_schema = 'pgml'
+                AND table_name = 'snapshot_{self.id}'
+            ORDER BY ordinal_position ASC
+        """)
+
+        features = OrderedDict()
+        for row in result:
+            features[row["column_name"]] = row["data_type"]
+
+        self._features = features
+        return self._features    
+
+    @property
+    def feature_names(self):
+        return list(filter(lambda x: x not in self.y_column_name, self.features))
 
 class Model(object):
     """Models use an algorithm on a snapshot of data to record the parameters learned.
@@ -394,61 +597,12 @@ class Model(object):
         created_at (Timestamp): when this model was created
         updated_at (Timestamp): when this model was last updated
         metrics (dict): key performance indicators for the model
-        pickle (bytes): the serialized version of the model parameters
         algorithm: the in memory version of the model parameters that can make predictions
     """
 
     @classmethod
-    def algorithm_from_name_and_objective(cls, name: str, objective: str):
-        return {
-            "linear_regression": sklearn.linear_model.LinearRegression,
-            "linear_classification": sklearn.linear_model.LogisticRegression,
-            "ridge_regression": sklearn.linear_model.Ridge,
-            "ridge_classification": sklearn.linear_model.RidgeClassifier,
-            "lasso_regression": sklearn.linear_model.Lasso,
-            "elastic_net_regression": sklearn.linear_model.ElasticNet,
-            "least_angle_regression": sklearn.linear_model.Lars,
-            "lasso_least_angle_regression": sklearn.linear_model.LassoLars,
-            "orthoganl_matching_pursuit_regression": sklearn.linear_model.OrthogonalMatchingPursuit,
-            "bayesian_ridge_regression": sklearn.linear_model.BayesianRidge,
-            "automatic_relevance_determination_regression": sklearn.linear_model.ARDRegression,
-            "stochastic_gradient_descent_regression": sklearn.linear_model.SGDRegressor,
-            "stochastic_gradient_descent_classification": sklearn.linear_model.SGDClassifier,
-            "perceptron_classification": sklearn.linear_model.Perceptron,
-            "passive_aggressive_regression": sklearn.linear_model.PassiveAggressiveRegressor,
-            "passive_aggressive_classification": sklearn.linear_model.PassiveAggressiveClassifier,
-            "ransac_regression": sklearn.linear_model.RANSACRegressor,
-            "theil_sen_regression": sklearn.linear_model.TheilSenRegressor,
-            "huber_regression": sklearn.linear_model.HuberRegressor,
-            "quantile_regression": sklearn.linear_model.QuantileRegressor,
-            "kernel_ridge_regression": sklearn.kernel_ridge.KernelRidge,
-            "gaussian_process_regression": sklearn.gaussian_process.GaussianProcessRegressor,
-            "gaussian_process_classification": sklearn.gaussian_process.GaussianProcessClassifier,
-            "svm_regression": sklearn.svm.SVR,
-            "svm_classification": sklearn.svm.SVC,
-            "nu_svm_regression": sklearn.svm.NuSVR,
-            "nu_svm_classification": sklearn.svm.NuSVC,
-            "linear_svm_regression": sklearn.svm.LinearSVR,
-            "linear_svm_classification": sklearn.svm.LinearSVC,
-            "ada_boost_regression": sklearn.ensemble.AdaBoostRegressor,
-            "ada_boost_classification": sklearn.ensemble.AdaBoostClassifier,
-            "bagging_regression": sklearn.ensemble.BaggingRegressor,
-            "bagging_classification": sklearn.ensemble.BaggingClassifier,
-            "extra_trees_regression": sklearn.ensemble.ExtraTreesRegressor,
-            "extra_trees_classification": sklearn.ensemble.ExtraTreesClassifier,
-            "gradient_boosting_trees_regression": sklearn.ensemble.GradientBoostingRegressor,
-            "gradient_boosting_trees_classification": sklearn.ensemble.GradientBoostingClassifier,
-            "hist_gradient_boosting_regression": sklearn.ensemble.HistGradientBoostingRegressor,
-            "hist_gradient_boosting_classification": sklearn.ensemble.HistGradientBoostingClassifier,
-            "random_forest_regression": sklearn.ensemble.RandomForestRegressor,
-            "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
-            "xgboost_regression": xgb.XGBRegressor,
-            "xgboost_classification": xgb.XGBClassifier,
-            "xgboost_random_forest_regression": xgb.XGBRFRegressor,
-            "xgboost_random_forest_classification": xgb.XGBRFClassifier,
-            "lightgbm_regression": lightgbm.LGBMRegressor,
-            "lightgbm_classification": lightgbm.LGBMClassifier,
-        }[name + "_" + objective]
+    def algorithm_from_name_and_task(cls, name: str, task: str):
+        return _ALGORITHM_MAP[name + "_" + task]
 
     @classmethod
     def create(
@@ -478,7 +632,7 @@ class Model(object):
             RETURNING *
         """
         )
-        model = Model()
+        model = cls()
         model.__dict__ = dict(result[0])
         model.__init__()
         model._snapshot = snapshot
@@ -486,7 +640,7 @@ class Model(object):
         return model
 
     @classmethod
-    def find_deployed(cls, project_id: int):
+    def find_deployed(cls, project):
         """
         Args:
             project_id (int): The project id
@@ -499,7 +653,7 @@ class Model(object):
             FROM pgml.models 
             JOIN pgml.deployments 
               ON deployments.model_id = models.id
-              AND deployments.project_id = {q(project_id)}
+              AND deployments.project_id = {q(project.id)}
             ORDER by deployments.created_at DESC
             LIMIT 1
         """
@@ -507,7 +661,13 @@ class Model(object):
         if len(result) == 0:
             return None
 
-        model = Model()
+        if project.task in ["regression", "classification"]:
+            model = cls()
+        else:
+            # avoid circular dependency by importing after this module is completely initialized
+            from . import transformers
+            model = transformers.Model()
+
         model.__dict__ = dict(result[0])
         model.__init__()
         return model
@@ -532,10 +692,7 @@ class Model(object):
             where += f"\nAND algorithm_name = {q(algorithm_name)}"
 
         if strategy == "best_score":
-            if project.objective == "regression":
-                sql += f"{where}\nORDER BY models.metrics->>'r2' DESC NULLS LAST"
-            elif project.objective == "classification":
-                sql += f"{where}\nORDER BY models.metrics->>'f1' DESC NULLS LAST"
+            sql += f"{where}\nORDER BY models.metrics->>{q(project.key_metric_name)} DESC NULLS LAST"
         elif strategy == "most_recent":
             sql += f"{where}\nORDER by models.created_at DESC"
         elif strategy == "rollback":
@@ -554,7 +711,7 @@ class Model(object):
         if len(result) == 0:
             return None
 
-        model = Model()
+        model = cls()
         model.__dict__ = dict(result[0])
         model.__init__()
         return model
@@ -567,24 +724,19 @@ class Model(object):
         Returns:
             Model: the model with the best metrics for the project
         """
-        if project.objective == "regression":
-            metric = "mean_squared_error"
-        elif project.objective == "classification":
-            metric = "f1"
-
         result = plpy.execute(
             f"""
             SELECT models.* 
             FROM pgml.models 
             WHERE project_id = {q(project.id)}
-            ORDER by models.metrics->>{q(metric)} DESC
+            ORDER by models.metrics->>{q(project.key_metric_name)} DESC
             LIMIT 1
         """
         )
         if len(result) == 0:
             return None
 
-        model = Model()
+        model = cls()
         model.__dict__ = dict(result[0])
         model.__init__()
         return model
@@ -602,7 +754,7 @@ class Model(object):
         if len(result) == 0:
             return None
 
-        model = Model()
+        model = cls()
         model.__dict__ = dict(result[0])
         model.__init__()
         return model
@@ -641,15 +793,24 @@ class Model(object):
         return self._snapshot
 
     @property
+    def path(self):
+        return os.path.join("/tmp", "postgresml", "models", str(self.id))
+
+    @property
+    def pickle_path(self):
+        return os.path.join(self.path, "algorithm.pickle")
+
+    @property
     def algorithm(self):
         if self._algorithm is None:
-            if self.pickle is not None:
-                self._algorithm = pickle.loads(self.pickle)
+            files = plpy.execute(f"SELECT * FROM pgml.files WHERE model_id = {self.id} AND path = '{self.pickle_path}' LIMIT 1")
+            if len(files) > 0:
+                self._algorithm = pickle.loads(files[0]["data"])
             else:
-                algorithm = Model.algorithm_from_name_and_objective(self.algorithm_name, self.project.objective)
+                algorithm = Model.algorithm_from_name_and_task(self.algorithm_name, self.project.task)
                 self._algorithm = algorithm(**self.hyperparams)
                 if len(self.snapshot.y_column_name) > 1:
-                    if self.project.objective == "regression" and self.algorithm_name in [
+                    if self.project.task == "regression" and self.algorithm_name in [
                         "bayesian_ridge",
                         "automatic_relevance_determination",
                         "stochastic_gradient_descent",
@@ -668,32 +829,9 @@ class Model(object):
 
         return self._algorithm
 
-    def fit(self, snapshot: Snapshot):
-        """
-        Learns the parameters of this model and records them in the database.
-
-        Args:
-            snapshot (Snapshot): dataset used to train this model
-        """
-        X_train, X_test, y_train, y_test = snapshot.data()
-
-        search_args = {"scoring": self.project.hyperparam_score_name, "error_score": "raise", **self.search_args}
-        if self.search == "grid":
-            self._algorithm = sklearn.model_selection.GridSearchCV(self.algorithm, self.search_params, **search_args)
-        elif self.search == "random":
-            self._algorithm = sklearn.model_selection.RandomizedSearchCV(
-                self.algorithm, self.search_params, **search_args
-            )
-        elif self.search is not None:
-            raise PgMLException(
-                f"Unknown hyperparam search `{self.search}`, available options are: ['grid', 'random']."
-            )
-
-        X_train, X_test, y_train, y_test = snapshot.data()
-
-        # Train the model
+    def train(self):
+        X_train, X_test, y_train, y_test = self.snapshot.data()
         result = self.algorithm.fit(X_train, y_train)
-
         metrics = {}
         if self.search:
             self._algorithm = result.best_estimator_
@@ -714,10 +852,10 @@ class Model(object):
             y_test = numpy.array(y_test).flatten()
         else:
             y_prob = None
-        if self.project.objective == "regression":
+        if self.project.task == "regression":
             metrics["mean_squared_error"] = mean_squared_error(y_test, y_pred)
             metrics["r2"] = r2_score(y_test, y_pred)
-        elif self.project.objective == "classification":
+        elif self.project.task == "classification":
             metrics["f1"] = f1_score(y_test, y_pred, average="weighted")
             metrics["precision"] = precision_score(y_test, y_pred, average="weighted")
             metrics["recall"] = recall_score(y_test, y_pred, average="weighted")
@@ -729,15 +867,45 @@ class Model(object):
                     roc_auc_y_prob = y_prob[:, 1]
                 metrics["roc_auc"] = roc_auc_score(y_test, roc_auc_y_prob, average="weighted", multi_class="ovo")
 
-        # Save the model
+        self.metrics = metrics        
+
+        # Save the results
+        plpy.execute(
+            f"""
+            INSERT into pgml.files (model_id, path, part, data) 
+            VALUES ({q(self.id)}, {q(self.pickle_path)}, 0, '\\x{pickle.dumps(self.algorithm).hex()}')
+            """
+        )
+
+    def fit(self, snapshot: Snapshot):
+        """
+        Learns the parameters of this model and records them in the database.
+
+        Args:
+            snapshot (Snapshot): dataset used to train this model
+        """
+
+        search_args = {"scoring": self.project.hyperparam_score_name, "error_score": "raise", **self.search_args}
+        if self.search == "grid":
+            self._algorithm = sklearn.model_selection.GridSearchCV(self.algorithm, self.search_params, **search_args)
+        elif self.search == "random":
+            self._algorithm = sklearn.model_selection.RandomizedSearchCV(
+                self.algorithm, self.search_params, **search_args
+            )
+        elif self.search is not None:
+            raise PgMLException(
+                f"Unknown hyperparam search `{self.search}`, available options are: ['grid', 'random']."
+            )
+
+        self.train()
+
         self.__dict__ = dict(
             plpy.execute(
                 f"""
             UPDATE pgml.models
-            SET pickle = '\\x{pickle.dumps(self.algorithm).hex()}',
-                status = 'successful',
+            SET status = 'successful',
                 hyperparams = {q(self.hyperparams)},
-                metrics = {q(metrics)},
+                metrics = {q(self.metrics)},
                 updated_at = clock_timestamp()
             WHERE id = {q(self.id)}
             RETURNING *
@@ -788,7 +956,7 @@ def snapshot(
 
 def train(
     project_name: str,
-    objective: str = None,
+    task: str = None,
     relation_name: str = None,
     y_column_name: str = None,
     algorithm_name: str = "linear",
@@ -803,26 +971,26 @@ def train(
 
     Args:
         project_name (str): a human friendly identifier
-        objective (str): Defaults to "regression". Valid values are ["regression", "classification"].
+        task (str): Defaults to "regression". Valid values are ["regression", "classification"].
         relation_name (str): the table or view that stores the training data
         y_column_name (str): the column in the training data that acts as the label
-        algorithm_name (str, optional): the algorithm used to implement the objective. Defaults to "linear". Valid values are ["linear", "svm", "random_forest", "gradient_boosting"].
+        algorithm_name (str, optional): the algorithm used to implement the task. Defaults to "linear". Valid values are ["linear", "svm", "random_forest", "gradient_boosting"].
         test_size (float or int, optional): If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split. If int, represents the absolute number of test samples. If None, the value is set to 0.25.
         test_sampling: (str, optional): How to sample to create the test data. Defaults to "random". Valid values are ["first", "last", "random"].
     """
     # Project
     try:
         project = Project.find_by_name(project_name)
-        if objective is not None and objective != project.objective:
+        if task is not None and task != project.task:
             raise PgMLException(
-                f"Project `{project_name}` already exists with a different objective: `{project.objective}`. Create a new project instead."
+                f"Project `{project_name}` already exists with a different task: `{project.task}`. Create a new project instead."
             )
-        objective = project.objective
+        task = project.task
     except PgMLException:
-        project = Project.create(project_name, objective)
+        project = Project.create(project_name, task)
 
-    if objective not in ["regression", "classification"]:
-        raise PgMLException(f"Unknown objective `{objective}`, available options are: regression, classification.")
+    if task not in ["regression", "classification"]:
+        raise PgMLException(f"Unknown task `{task}`, available options are: regression, classification.")
 
     # Create or use an existing snapshot.
     if relation_name is None:
@@ -843,7 +1011,7 @@ def train(
         algorithm_name = "linear"
 
     # Default repeatable random state when possible
-    algorithm = Model.algorithm_from_name_and_objective(algorithm_name, objective)
+    algorithm = Model.algorithm_from_name_and_task(algorithm_name, task)
     if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
         hyperparams["random_state"] = 0
 
@@ -853,11 +1021,7 @@ def train(
     # Deployment
     if (
         project.deployed_model is None
-        or (
-            project.objective == "regression"
-            and project.deployed_model.metrics["mean_squared_error"] > model.metrics["mean_squared_error"]
-        )
-        or (project.objective == "classification" and project.deployed_model.metrics["f1"] < model.metrics["f1"])
+        or project.deployed_model.metrics[project.key_metric_name] < model.metrics[project.key_metric_name]
     ):
         model.deploy("new_score")
         return "deployed"

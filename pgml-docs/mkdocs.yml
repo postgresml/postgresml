@@ -125,6 +125,10 @@ nav:
         - Predictions: 
             - Prediction Overview: user_guides/predictions/overview.md
             - Deploying Models: user_guides/predictions/deployments.md
+        - Transformers:
+            - Setup: user_guides/transformers/setup.md
+            - Pre Trained Models: user_guides/transformers/pre_trained_models.md
+            - Fine Tuning: user_guides/transformers/fine_tuning.md
         - Vector Operations: user_guides/vector_operations/overview.md
         - Dashboard: user_guides/dashboard/overview.md
         - Schema:
