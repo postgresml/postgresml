@@ -1,12 +1,12 @@
 # Fine Tuning
 
-Pre-trained models allow you to get up and running quickly, but you can likely improve performance on your dataset by fine tuning them. Normally, you'll bring your own data to the party, but for these examples we'll use datasets published on Hugging Face. Make sure you've installed the required data dependencies detailed in [setup](/user_guides/transformers/setup.md#sample-training-data).
+Pre-trained models allow you to get up and running quickly, but you can likely improve performance on your dataset by fine tuning them. Normally, you'll bring your own data to the party, but for these examples we'll use datasets published on Hugging Face. Make sure you've installed the required data dependencies detailed in [setup](/user_guides/transformers/setup/#standard-datasets).
 
 ## Translation Example
 The [Helsinki-NLP](https://huggingface.co/Helsinki-NLP) organization provides more than a thousand pre-trained models to translate between different language pairs. These can be further fine tuned on additional datasets with domain specific vocabulary. Researchers have also created large collections of documents that have been manually translated across languages by experts for training data. 
 
 ### Prepare the data
-The [kde4](https://huggingface.co/datasets/kde4) dataset contains many language pairs. Subsets can be loaded into your Postgres instance with a call to load_dataset for further training, or you may wish to create your own fine tuning dataset with vocabulary specific to your domain.
+The [kde4](https://huggingface.co/datasets/kde4) dataset contains many language pairs. Subsets can be loaded into your Postgres instance with a call to `pgml.load_dataset` for further training, or you may wish to create your own fine tuning dataset with vocabulary specific to your domain.
 
 ```sql linenums="1" title="load_data.sql"
 SELECT pgml.load_dataset('kde4', kwargs => '{"lang1": "en", "lang2": "es"}');
@@ -35,7 +35,7 @@ You can view the newly loaded data in your Postgres database:
     (5 rows)
     ```
 
-When you're constructing your own datasets for translation, it's import to mirror the same table structure. You'll need a `JSONB` column named `translation`, that has first has a "from" language name/value pair, and then a "to" language name/value pair. In this English to Spanish example we use from "en" to "es". You'll pass a `y_column_name` of `translation` to tune the model.
+When you're constructing your own datasets for translation, it's important to mirror the same table structure. You'll need a `JSONB` column named `translation`, that has first has a "from" language name/value pair, and then a "to" language name/value pair. In this English to Spanish example we use from "en" to "es". You'll pass a `y_column_name` of `translation` to tune the model.
 
 ### Tune the model
 Tuning is very similar to training with PostgresML, although we specify a `model_name` to download from Hugging Face instead of the base `algorithm`.
@@ -63,15 +63,16 @@ SELECT pgml.tune(
 ### Generate Translations
 
 !!! note
-    Translations use the `pgml.generate` api since they return `TEXT` rather than numeric values. You may also call `generate` with a `TEXT[]` for batch processing.
+    Translations use the `pgml.generate` API since they return `TEXT` rather than numeric values. You may also call `pgml.generate` with a `TEXT[]` for batch processing.
 
 === "SQL"
     ```sql linenums="1"
-    SELECT pgml.generate('Translate English to Spanish', 'I love SQL') AS spanish;
+    SELECT pgml.generate('Translate English to Spanish', 'I love SQL')
+    AS spanish;
     ```
 
 === "Result"
-    ```sql linenumes="1"
+    ```sql linenums="1"
         spanish
     ----------------
     Me encanta SQL
@@ -88,7 +89,7 @@ See the [task documentation](https://huggingface.co/tasks/translation) for more 
 
 DistilBERT is a small, fast, cheap and light Transformer model based on the BERT architecture. It can be fine tuned on specific datasets to learn further nuance between positive and negative examples. For this example, we'll fine tune `distilbert-base-uncased` on the IMBD dataset, which is a list of movie reviews along with a positive or negative label.
 
-Without tuning, Distilbert classifies every single movie review as `positive`, and has a F<sub>1</sub> score of 0.367, which is about what you'd expect for a relatively useless classifier. However, after training for a single epoch (takes about 10 minutes on an Nvidia 1080 TI), the F<sub>1</sub> jumps to 0.928 which is a huge improvement, indicating Dilbert can now fairly accurately predict sentiment from Netflix reviews. Further training for another epoch only results in a very minor improvement to 0.931, and the 3rd epoch is flat, also at 0.931 which indicates Distilbert is unlikely to continue learning more about this particular dataset with additional training. You can view the results of each model, like those trained from scratch, in the dashboard. 
+Without tuning, Distilbert classifies every single movie review as `positive`, and has a F<sub>1</sub> score of 0.367, which is about what you'd expect for a relatively useless classifier. However, after training for a single epoch (takes about 10 minutes on an Nvidia 1080 TI), the F<sub>1</sub> jumps to 0.928 which is a huge improvement, indicating Dilbert can now fairly accurately predict sentiment from IMDB reviews. Further training for another epoch only results in a very minor improvement to 0.931, and the 3rd epoch is flat, also at 0.931 which indicates Distilbert is unlikely to continue learning more about this particular dataset with additional training. You can view the results of each model, like those trained from scratch, in the dashboard. 
 
 Once our model has been fine tuned on the dataset, it'll be saved and deployed with a Project visible in the Dashboard, just like models built from simpler algorithms.
 
@@ -145,11 +146,12 @@ SELECT pgml.tune(
 
 === "SQL"
     ```sql linenums="1"
-    SELECT pgml.predict('IMDB Review Sentiment', 'I love SQL') AS sentiment;
+    SELECT pgml.predict('IMDB Review Sentiment', 'I love SQL')
+    AS sentiment;
     ```
 
 === "Result"
-    ```sql linenumes="1"
+    ```sql linenums="1"
     sentiment
     -----------
     1
@@ -158,15 +160,16 @@ SELECT pgml.tune(
     Time: 16.681 ms
     ```
 
-The default for predict in a classification problem classifies the statement as one of the labels. In this case 0 is negative and 1 is positive. If you'd like to check the individual probabilities associated with each class you can use the `predict_proba` API
+The default for predict in a classification problem classifies the statement as one of the labels. In this case, 0 is negative and 1 is positive. If you'd like to check the individual probabilities associated with each class you can use the `predict_proba` API:
 
 === "SQL"
     ```sql linenums="1"
-    SELECT pgml.predict_proba('IMDB Review Sentiment', 'I love SQL') AS sentiment;
+    SELECT pgml.predict_proba('IMDB Review Sentiment', 'I love SQL')
+    AS sentiment;
     ```
 
 === "Result"
-    ```sql linenumes="1"
+    ```sql linenums="1"
                     sentiment
     -------------------------------------------
     [0.06266672909259796, 0.9373332858085632]
@@ -183,7 +186,7 @@ See the [task documentation](https://huggingface.co/tasks/text-classification) f
 At a high level, summarization uses similar techniques to translation. Both use an input sequence to generate an output sequence. The difference being that summarization extracts the most relevant parts of the input sequence to generate the output.
 
 ### Prepare the data
-[BillSum](https://huggingface.co/datasets/billsum) is a dataset with training examples that summarize US Congressional and California state bills. You can pass kwargs specific to loading datasets, in this case we'll restrict the dataset to California samples.
+[BillSum](https://huggingface.co/datasets/billsum) is a dataset with training examples that summarize US Congressional and California state bills. You can pass `kwargs` specific to loading datasets, in this case we'll restrict the dataset to California samples:
 
 ```sql linenums="1" title="load_dataset.sql"
 SELECT pgml.load_dataset('billsum', kwargs => '{"split": "ca_test"}');
@@ -279,14 +282,14 @@ This dataset has 3 fields, but summarization transformers only take a single inp
 
 ```sql linenums="1" title="omit_title.sql"
 CREATE OR REPLACE VIEW billsum_training_data
-AS SELECT text, summary FROM pgml.billsum;
+AS SELECT "text", summary FROM pgml.billsum;
 ```
 
 Or, it might be interesting to concat the title to the text field to see how relevant it actually is to the bill. If the title of a bill is the first sentence, and doesn't appear in summary, it may indicate that it's a poorly chosen title for the bill:
 
 ```sql linenums="1" title="concat_title.sql"
 CREATE OR REPLACE VIEW billsum_training_data
-AS SELECT title || '\n' || text AS text, summary FROM pgml.billsum;
+AS SELECT title || '\n' || "text" AS "text", summary FROM pgml.billsum;
 ```
 
 

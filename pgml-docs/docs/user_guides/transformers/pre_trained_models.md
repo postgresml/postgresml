@@ -28,11 +28,11 @@ def transform(task, call, inputs):
     return transformers.pipeline(**task)(inputs, **call)
 ```
 
-Most pipelines operate on `TEXT[]` inputs, but some require binary `BYTEA[]` data like audio classifiers. `INPUTS` can be `SELECT`ed from tables in the database, or they may be passed in directly with the query. The output of this call is a `JSONB` structure that is task specific. 
+Most pipelines operate on `TEXT[]` inputs, but some require binary `BYTEA[]` data like audio classifiers; `inputs` can be `SELECT`ed from tables in the database, or they may be passed in directly with the query. The output of this call is a `JSONB` structure that is task specific. 
 
 
 ### Translation
-An English to French translation with the default pre-trained model.
+An English to French translation with the default pre-trained model:
 
 === "SQL"
 
@@ -88,7 +88,7 @@ Sentiment analysis is one use of `text-classification`, but there are [many othe
 See [text classification documentation](https://huggingface.co/tasks/text-classification) for more options and potential use cases beyond sentiment analysis. You'll notice the outputs are not great in this example. RoBERTa is a breakthrough model, that demonstrated just how important each particular hyperparameter is for the task and particular dataset regardless of how large your model is. We'll show how to [fine tune](/user_guides/transformers/fine_tuning/) models on your data in the next step.
 
 ### Summarization
-Sometimes we need all the nuanced detail, but sometimes it's nice to skip to the point...
+Sometimes we need all the nuanced detail, but sometimes it's nice to get to the point:
 
 === "SQL"
 
@@ -144,7 +144,7 @@ See [summarization documentation](https://huggingface.co/tasks/summarization) fo
 
 
 ### Question Answering
-Question answering extracts an answer from a given context.
+Question Answering extracts an answer from a given context:
 
 === "SQL"
 
@@ -184,7 +184,7 @@ Question answering extracts an answer from a given context.
 See [question answering documentation](https://huggingface.co/tasks/question-answering) for more options.
 
 ### Text Generation
-If you need to expand on some thoughts, you can have AI complete your sentences for you.
+If you need to expand on some thoughts, you can have AI complete your sentences for you:
 
 === "SQL"
 
