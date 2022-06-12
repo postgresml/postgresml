@@ -6,19 +6,13 @@ PostgresML is capable of leveraging GPUs when the underlying libraries and hardw
     Models trained on GPU will also require GPU support to make predictions.
 
 ## Tensorflow
-GPU setup for Tensorflow is covered in the [documentation](https://www.tensorflow.org/install/pip)
-
-You may acquire pre-trained GPU enabled models for fine tuning from [Hugging Face](user_guides/transformers/fine_tuning.md). 
+GPU setup for Tensorflow is covered in the [documentation](https://www.tensorflow.org/install/pip). You may acquire pre-trained GPU enabled models for fine tuning from [Hugging Face](/user_guides/transformers/fine_tuning/). 
 
 ## Torch
-GPU setup for Torch is covered in the [documentation](https://pytorch.org/get-started/locally/)
-
-You may acquire pre-trained GPU enabled models for fine tuning from [Hugging Face](user_guides/transformers/fine_tuning.md). 
+GPU setup for Torch is covered in the [documentation](https://pytorch.org/get-started/locally/). You may acquire pre-trained GPU enabled models for fine tuning from [Hugging Face](/user_guides/transformers/fine_tuning/). 
 
 ## Flax
-GPU setup for Flax is covered in the [documentation](https://github.com/google/jax#pip-installation-gpu-cuda)
-
-You may acquire pre-trained GPU enabled models for fine tuning from [Hugging Face](user_guides/transformers/fine_tuning.md). 
+GPU setup for Flax is covered in the [documentation](https://github.com/google/jax#pip-installation-gpu-cuda). You may acquire pre-trained GPU enabled models for fine tuning from [Hugging Face](/user_guides/transformers/fine_tuning/). 
 
 ## XGBoost 
 GPU setup for XGBoost is covered in the [documentation](https://xgboost.readthedocs.io/en/stable/gpu/index.html).

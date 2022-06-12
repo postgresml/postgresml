@@ -24,7 +24,7 @@ Install the machine learning depedencies on the database for the transformers yo
 
 === "![Tensorflow Logo](/images/logos/tensorflow.svg) Tensorflow"
 
-    See the [Tensorflow docs](https://www.tensorflow.org/install/) for more information
+    See the [Tensorflow docs](https://www.tensorflow.org/install/) for more information.
 
     ```bash
     $ sudo pip3 install tensorflow
@@ -32,27 +32,27 @@ Install the machine learning depedencies on the database for the transformers yo
 
 === "![Flax](/images/logos/flax.png) Flax"
 
-    See the [Flax docs](https://flax.readthedocs.io/en/latest/installation.html) for more information
+    See the [Flax docs](https://flax.readthedocs.io/en/latest/installation.html) for more information.
 
     ```bash
     $ sudo pip3 install flax
     ```
 
-Models will be downloaded and cached on the database for repeated usage. View the [Tranmsformers installation docs](https://huggingface.co/docs/transformers/installation) for cache management details and offline deployments.
+Models will be downloaded and cached on the database for repeated usage. View the [Transformers installation docs](https://huggingface.co/docs/transformers/installation) for cache management details and offline deployments.
 
-You may also want to [install GPU support](/user_guides/setup/gpu_support.md) when working with larger models.
+You may also want to [install GPU support](/user_guides/setup/gpu_support/) when working with larger models.
 
 ## Standard Datasets
-Many datasets have been published to stimulate research and benchmark architectures, but also help demonstrate API usage in the tutorials. The Datasets package provides a way to load published datasets into Postgres:
+Many datasets have been published to stimulate research and benchmark architectures, but also to help demonstrate API usage in the tutorials. The Datasets package provides a way to load published datasets into Postgres:
 
 ```bash
-$ sudo pip install datasets
+$ sudo pip3 install datasets
 ```
 
 ## Audio Processing
-Torch Audio is required for many models that process audio data. You can install the additional dependencies:
+Torch Audio is required for many models that process audio data. You can install the additional dependencies with:
 
 ```bash
-$ sudo pip install torchaudio
+$ sudo pip3 install torchaudio
 ```
 

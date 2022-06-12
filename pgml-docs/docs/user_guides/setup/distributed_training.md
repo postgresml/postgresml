@@ -83,9 +83,9 @@ to connect to your DB and fetch the data. Make sure that `your_production_db_use
 The final step is import your production database tables into PostgresML by creating a foreign schema mapping. This mapping will tell PostgresML which tables are available in your database. The quickest way is to import all of them, like so:
 
 ```sql
-IMPORT FOREIGN SCHEMA 'public'
+IMPORT FOREIGN SCHEMA public
 FROM SERVER your_production_db
-INTO 'public';
+INTO public;
 ```
 
 This will import all tables from your production DB `public` schema into the `public` schema in PostgresML. The tables are now available for querying in PostgresML.
