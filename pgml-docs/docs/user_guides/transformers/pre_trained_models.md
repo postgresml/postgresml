@@ -2,11 +2,7 @@
 # Pre-Trained Models
 PostgresML integrates [🤗 Hugging Face Transformers](https://huggingface.co/transformers) to bring state-of-the-art models into the data layer. There are tens of thousands of pre-trained models with pipelines to turn raw inputs into useful results. Many state of the art deep learning architectures have been published and made available for download. You will want to browse all the [models](https://huggingface.co/models) available to find the perfect solution for your [dataset](https://huggingface.co/dataset) and [task](https://huggingface.co/tasks).
 
-We'll examine several common tasks that are immediately available to users of your database upon installation: [translation](#translation), [sentiment analysis](#sentiment-analysis), [summarization](#summarization), [question answering](#question-answering) and [text generation](#text-generation).
-
-!!! tip
-
-    These models are cached per connection to improve repeated calls in a single session. To free that memory, you'll need to close your connection. You may want to establish dedicated credentials and connection pools via [pgcat](https://github.com/levkk/pgcat) or [pgbouncer](https://www.pgbouncer.org/) for larger models that have billions of parameters. You may also pass `{"cache": false}` in the JSON `call` args to prevent this behavior.
+We'll demonstrate some of the tasks that are immediately available to users of your database upon installation: [translation](#translation), [sentiment analysis](#sentiment-analysis), [summarization](#summarization), [question answering](#question-answering) and [text generation](#text-generation).
 
 ## Examples
 All of the tasks and models demonstrated here can be customized by passing additional arguments to the `Pipeline` initializer or call. You'll find additional links to documentation in the examples below.
@@ -32,6 +28,9 @@ def transform(task, call, inputs):
 
 Most pipelines operate on `TEXT[]` inputs, but some require binary `BYTEA[]` data like audio classifiers; `inputs` can be `SELECT`ed from tables in the database, or they may be passed in directly with the query. The output of this call is a `JSONB` structure that is task specific. 
 
+!!! tip
+
+    These models are cached per connection to improve repeated calls in a single session. To free that memory, you'll need to close your connection. You may want to establish dedicated credentials and connection pools via [pgcat](https://github.com/levkk/pgcat) or [pgbouncer](https://www.pgbouncer.org/) for larger models that have billions of parameters. You may also pass `{"cache": false}` in the JSON `call` args to prevent this behavior.
 
 ### Translation
 An English to French translation with the default pre-trained model:
