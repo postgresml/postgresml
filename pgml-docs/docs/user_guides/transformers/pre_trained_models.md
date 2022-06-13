@@ -5,7 +5,7 @@ PostgresML integrates [🤗 Hugging Face Transformers](https://huggingface.co/tr
 We'll demonstrate some of the tasks that are immediately available to users of your database upon installation: [translation](#translation), [sentiment analysis](#sentiment-analysis), [summarization](#summarization), [question answering](#question-answering) and [text generation](#text-generation).
 
 ## Examples
-All of the tasks and models demonstrated here can be customized by passing additional arguments to the `Pipeline` initializer or call. You'll find additional links to documentation in the examples below.
+All of the tasks and models demonstrated here can be customized by passing additional arguments to the `Pipeline` initializer or call. You'll find additional links to documentation in the examples below. 
 
 The Hugging Face [`Pipeline`](https://huggingface.co/docs/transformers/main_classes/pipelines) API is exposed in Postgres via:
 
@@ -26,14 +26,16 @@ def transform(task, call, inputs):
     return transformers.pipeline(**task)(inputs, **call)
 ```
 
-Most pipelines operate on `TEXT[]` inputs, but some require binary `BYTEA[]` data like audio classifiers; `inputs` can be `SELECT`ed from tables in the database, or they may be passed in directly with the query. The output of this call is a `JSONB` structure that is task specific. 
+Most pipelines operate on `TEXT[]` inputs, but some require binary `BYTEA[]` data like audio classifiers. `inputs` can be `SELECT`ed from tables in the database, or they may be passed in directly with the query. The output of this call is a `JSONB` structure that is task specific. See the [Postgres JSON](https://www.postgresql.org/docs/14/functions-json.html) reference for ways to process this output dynamically.
 
 !!! tip
 
-    These models are cached per connection to improve repeated calls in a single session. To free that memory, you'll need to close your connection. You may want to establish dedicated credentials and connection pools via [pgcat](https://github.com/levkk/pgcat) or [pgbouncer](https://www.pgbouncer.org/) for larger models that have billions of parameters. You may also pass `{"cache": false}` in the JSON `call` args to prevent this behavior.
+    Models will be downloaded and stored locally on disk after the first call. They are also cached per connection to improve repeated calls in a single session. To free that memory, you'll need to close your connection. You may want to establish dedicated credentials and connection pools via [pgcat](https://github.com/levkk/pgcat) or [pgbouncer](https://www.pgbouncer.org/) for larger models that have billions of parameters. You may also pass `{"cache": false}` in the JSON `call` args to prevent this behavior.
 
 ### Translation
-An English to French translation with the default pre-trained model:
+There are thousands of different pre-trained translation models between language pairs. They generally take a single input string in the "from" language, and translate it into the "to" language as a result of the call. PostgresML transformations provide a batch interface where you can pass an array of `TEXT` to process in a single call for efficiency. Not all language pairs have a default task name like this example of English to French. In those cases, you'll need to specify [the desired model](https://huggingface.co/models?pipeline_tag=translation) by name. You can see how to specify a model in the [next example](#sentiment-analysis). Because this is a batch call with 2 inputs, we'll get 2 outputs in the JSONB.
+
+For a translation from English to French with the default pre-trained model:
 
 === "SQL"
 
@@ -61,7 +63,7 @@ An English to French translation with the default pre-trained model:
 See [translation documentation](https://huggingface.co/docs/transformers/tasks/translation) for more options.
 
 ### Sentiment Analysis
-Sentiment analysis is one use of `text-classification`, but there are [many others](https://huggingface.co/tasks/text-classification). This example demonstrates specifying the `model` to be used rather than the task. The [`roberta-large-mnli`](https://huggingface.co/roberta-large-mnli) model specifies the task of `sentiment-analysis` in it's default configuration.
+Sentiment analysis is one use of `text-classification`, but there are [many others](https://huggingface.co/tasks/text-classification). This model returns both a label classification `["POSITIVE", "NEUTRAL", "NEGATIVE"]`, as well as the score where 0.0 is perfectly negative, and 1.0 is perfectly positive. This example demonstrates specifying the `model` to be used rather than the task. The [`roberta-large-mnli`](https://huggingface.co/roberta-large-mnli) model specifies the task of `sentiment-analysis` in it's default configuration, so we may omit it from the parameters. Because this is a batch call with 2 inputs, we'll get 2 outputs in the JSONB.
 
 === "SQL"
 
@@ -89,7 +91,7 @@ Sentiment analysis is one use of `text-classification`, but there are [many othe
 See [text classification documentation](https://huggingface.co/tasks/text-classification) for more options and potential use cases beyond sentiment analysis. You'll notice the outputs are not great in this example. RoBERTa is a breakthrough model, that demonstrated just how important each particular hyperparameter is for the task and particular dataset regardless of how large your model is. We'll show how to [fine tune](/user_guides/transformers/fine_tuning/) models on your data in the next step.
 
 ### Summarization
-Sometimes we need all the nuanced detail, but sometimes it's nice to get to the point:
+Sometimes we need all the nuanced detail, but sometimes it's nice to get to the point. Summarization can reduce a very long and complex document to a few sentences. One studied application is reducing legal bills passed by Congress into a plain english summary. Hollywood may also need some intelligence to reduce a full synopsis down to a pithy blurb for movies like Inception.
 
 === "SQL"
 
@@ -145,7 +147,7 @@ See [summarization documentation](https://huggingface.co/tasks/summarization) fo
 
 
 ### Question Answering
-Question Answering extracts an answer from a given context:
+Question Answering extracts an answer from a given context. Recent progress has enabled models to also specify if the answer is present in the context at all. If you were trying to build a general question answering system, you could first turn the question into a keyword search against Wikipedia articles, and then use a model to retrieve the correct answer from the top hit. Another application would provide automated support from a knowledge base, based on the customers question.
 
 === "SQL"
 
@@ -154,7 +156,7 @@ Question Answering extracts an answer from a given context:
         'question-answering',
         inputs => ARRAY[
             '{
-                "question": "Am I dreaming?", 
+                "question": "Am I dreaming?",
                 "context": "I got a good nights sleep last night 
                     and started a simple tutorial over my cup of 
                     morning coffee. The capabilities seem unreal, 
@@ -166,7 +168,6 @@ Question Answering extracts an answer from a given context:
             }'
         ]
     ) AS answer;
-
     ```
 
 === "Result"
