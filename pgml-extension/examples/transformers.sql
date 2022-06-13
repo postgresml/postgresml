@@ -1,3 +1,6 @@
+-- Exit on error (psql)
+\set ON_ERROR_STOP true
+
 SELECT pgml.transform(
     'translation_en_to_fr',
     inputs => ARRAY[

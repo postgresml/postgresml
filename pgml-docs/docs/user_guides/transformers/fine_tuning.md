@@ -6,7 +6,7 @@ Pre-trained models allow you to get up and running quickly, but you can likely i
 The [Helsinki-NLP](https://huggingface.co/Helsinki-NLP) organization provides more than a thousand pre-trained models to translate between different language pairs. These can be further fine tuned on additional datasets with domain specific vocabulary. Researchers have also created large collections of documents that have been manually translated across languages by experts for training data. 
 
 ### Prepare the data
-The [kde4](https://huggingface.co/datasets/kde4) dataset contains many language pairs. Subsets can be loaded into your Postgres instance with a call to `pgml.load_dataset` for further training, or you may wish to create your own fine tuning dataset with vocabulary specific to your domain.
+The [kde4](https://huggingface.co/datasets/kde4) dataset contains many language pairs. Subsets can be loaded into your Postgres instance with a call to `pgml.load_dataset`, or you may wish to create your own fine tuning dataset with vocabulary specific to your domain.
 
 ```sql linenums="1" title="load_data.sql"
 SELECT pgml.load_dataset('kde4', kwargs => '{"lang1": "en", "lang2": "es"}');
