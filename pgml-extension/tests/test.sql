@@ -6,6 +6,7 @@
 \timing
 
 SELECT pgml.version();
+SELECT pgml.torch_cuda_available();
 
 SELECT pgml.load_dataset('diabetes');
 SELECT pgml.load_dataset('digits');

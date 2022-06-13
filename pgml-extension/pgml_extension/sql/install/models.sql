@@ -12,6 +12,16 @@ AS $$
 	return pgml_extension.__version__
 $$ LANGUAGE plpython3u;
 
+---
+--- Extension version
+---
+CREATE OR REPLACE FUNCTION pgml.torch_cuda_available()
+RETURNS BOOLEAN
+AS $$
+	import torch
+	return torch.cuda.is_available()
+$$ LANGUAGE plpython3u;
+
 
 ---
 --- Load toy datasets for practice
