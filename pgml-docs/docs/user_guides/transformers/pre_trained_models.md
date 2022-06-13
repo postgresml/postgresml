@@ -154,8 +154,8 @@ Question Answering extracts an answer from a given context. Recent progress has 
     ```sql linenums="1" 
     SELECT pgml.transform(
         'question-answering',
-        inputs => ARRAY['
-            {
+        inputs => ARRAY[
+            '{
                 "question": "Am I dreaming?",
                 "context": "I got a good nights sleep last night and started a simple tutorial over my cup of morning coffee. The capabilities seem unreal, compared to what I came to expect from the simple SQL standard I studied so long ago. The answer is staring me in the face, and I feel the uncanny call from beyond the screen to check the results."
             }'
