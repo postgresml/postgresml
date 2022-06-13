@@ -185,7 +185,7 @@ If you need to expand on some thoughts, you can have AI complete your sentences 
 
     ```sql linenums="1" 
     SELECT pgml.transform(
-        '{"task": "text-generation"}',
+        'text-generation',
         '{"num_return_sequences": 2}',
         ARRAY['Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone']
     ) AS result;
