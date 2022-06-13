@@ -1,6 +1,10 @@
 # Vector Operations
 
-PostgresML adds [native vector operations](https://github.com/postgresml/postgresml/tree/master/pgml-extension/sql/install/vectors.sql) that can be used in SQL queries. Vector operations are particularly useful for dealing with embeddings that have been generated from other machine learning algorithms and can provide functions like nearest neighbor calculations using the distance functions. Emeddings can be a relatively efficient mechanism to leverage the power deep learning, without the runtime inference costs. These functions are relatively fast and the more expensive distance functions can compute ~100k per second for a memory resident dataset on modern hardware. The PostgreSQL planner will also [automatically parrallelize](https://www.postgresql.org/docs/current/parallel-query.html) evalualtion on larger datasets as configured to take advantage of multiple CPU cores when available.
+PostgresML adds [native vector operations](https://github.com/postgresml/postgresml/tree/master/pgml-extension/sql/install/vectors.sql) that can be used in SQL queries. Vector operations are particularly useful for dealing with embeddings that have been generated from other machine learning algorithms and can provide functions like nearest neighbor calculations using the distance functions.
+
+Emeddings can be a relatively efficient mechanism to leverage the power deep learning, without the runtime inference costs. These functions are relatively fast and the more expensive distance functions can compute ~100k per second for a memory resident dataset on modern hardware.
+
+The PostgreSQL planner will also [automatically parallelize](https://www.postgresql.org/docs/current/parallel-query.html) evalualtion on larger datasets, as configured to take advantage of multiple CPU cores when available.
 
 ## Nearest neighbor example
 
