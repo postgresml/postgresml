@@ -44,7 +44,7 @@
 
 ![PostgresML in practice](pgml-docs/docs/images/console.png)
 
-The dashboard makes it easy to compare different algorithms or hyperparaters across models and datasets.
+The dashboard makes it easy to compare different algorithms or hyperparameters across models and datasets.
 
 [![PostgresML dashboard](pgml-docs/docs/images/dashboard/models.png)](https://demo.postgresml.org/)
 
