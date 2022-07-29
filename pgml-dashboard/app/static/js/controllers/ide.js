@@ -19,7 +19,7 @@ export default class extends Controller {
   run(event) {
     this.runTarget.disabled = true
     this.resultTarget.classList.remove("hidden")
-    this.resultTarget.innerHTML = 'Running...'
+    this.resultTarget.innerHTML = "Running..."
 
     fetch(`/ide/run/`, {
       method: "POST",
