@@ -65,9 +65,9 @@ def get(request, id):
     # TODO reconsider spaces in column_names, fix during snapshot?
     fixed_columns = OrderedDict()
     for column_name, values in columns.items():
-        fixed_columns[column_name.replace(' ', '_')] = values
+        fixed_columns[column_name.replace(" ", "_")] = values
     columns = fixed_columns
-    
+
     models = snapshot.model_set.all().prefetch_related("project")
     projects = OrderedDict()
     for model in models:

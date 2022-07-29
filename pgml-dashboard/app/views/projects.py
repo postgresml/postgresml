@@ -101,9 +101,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
                             ],
                         )
                     except InternalError as e:
-                        return Response(status=status.HTTP_400_BAD_REQUEST, data={
-                            "error": str(e),
-                        })
+                        return Response(
+                            status=status.HTTP_400_BAD_REQUEST,
+                            data={
+                                "error": str(e),
+                            },
+                        )
                 if exists:
                     algorithms = serializer.validated_data["algorithms"]
                 else:
@@ -258,6 +261,7 @@ class TableView(viewsets.ViewSet):
                 {
                     "columns": [desc[0] for desc in cursor.description],
                     "rows": result,
+                    "redacted": True,
                 },
             )
 

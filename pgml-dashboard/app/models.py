@@ -1,5 +1,6 @@
 from django.db import models, connection
 
+
 class Project(models.Model):
     name = models.TextField()
     task = models.TextField()
