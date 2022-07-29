@@ -28,6 +28,11 @@ SPECIAL_QUERIES = {
 class IdeView(TemplateView):
     template_name = "ide/index.html"
 
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data["topic"] = "ide"
+        return data
+
 
 @api_view(["POST"])
 @permission_classes([])
