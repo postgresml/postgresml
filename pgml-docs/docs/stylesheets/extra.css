@@ -12,6 +12,12 @@
     --md-hue: 200; 
 }
 
+.float-right {
+    float: right;
+}
+.md-typeset h1 {
+    color: var(--md-default-fg-color);
+}
 .md-typeset .md-button {
     font-size: 1.5em;
     padding: 0.25em 1em;
