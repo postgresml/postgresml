@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework import routers
 
-from app.views import root, projects, models, snapshots, deployments
+from app.views import root, projects, models, snapshots, deployments, ide
 
 router = routers.DefaultRouter()
 router.register("projects", projects.ProjectViewSet)
@@ -24,4 +24,6 @@ urlpatterns = [
     path("projects/<int:pk>", projects.ProjectView.as_view(), name="project"),
     path("snapshots/", snapshots.index, name="snapshots"),
     path("snapshots/<int:id>", snapshots.snapshot, name="snapshot"),
+    path("ide/", ide.IdeView.as_view(), name="ide"),
+    path("ide/run/", ide.run_sql, name="ide/run-sql"),
 ]

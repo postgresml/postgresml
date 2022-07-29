@@ -15,10 +15,12 @@
         </tr>
         {% endfor %}
 
+        {% if redacted %}
         <tr>
             {% for column in rows.0 %}
                 <td>...</td>
             {% endfor %}
         </tr>
+        {% endif %}
     </tbody>
 </table>

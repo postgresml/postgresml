@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block main %}
+<section>
+   <h1><span class="material-symbols-outlined">terminal</span>IDE</h1> 
+</section>
+
+<div data-controller="ide">
+  <section>
+    <textarea id="codemirror-ide" data-ide-target="code"></textarea>
+    {% csrf_token %}
+
+    <div class="button-container">
+      <button data-action="click->ide#run" data-ide-target="run">Run</button>
+    </div>
+
+  </section>
+
+  <section data-ide-target="result" class="hidden">
+    
+  </section>
+</div>
+
+<script type="module">
+  
+</script>
+{% endblock %}
