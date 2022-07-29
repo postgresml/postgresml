@@ -2,10 +2,10 @@
 hide:
   - navigation
   - toc
+  - comments
 ---
 
 <style>
-
 .md-typeset h1 {
   font-size: 3em;
   font-weight: 700;
