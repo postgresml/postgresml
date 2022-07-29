@@ -35,7 +35,6 @@ export default class extends Controller {
     .then(html => {
       this.resultTarget.innerHTML = html
       this.runTarget.disabled = false
-      
     })
   }
 }
