@@ -111,7 +111,7 @@ markdown_extensions:
 
 nav:
     - Home: index.md
-    - Gym: gym.md
+    # - Gym: gym.md
     - User Guides:
         - Setup:
             - Quick Start with Docker: user_guides/setup/quick_start_with_docker.md

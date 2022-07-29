@@ -45,7 +45,7 @@ article.md-content__inner.md-typeset a.md-content__button.md-icon {
 </p>
 
 <p align="center" markdown>
-  [Demo](gym/){ .md-button .md-button--primary }
+  [Demo](https://demo.postgresml.org/){ .md-button .md-button--primary }
   [:material-github:](https://github.com/postgresml/postgresml/){ .md-button }
 </p>
 
