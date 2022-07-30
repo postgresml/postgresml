@@ -148,10 +148,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 URL_PREFIX = os.environ.get("DJANGO_URL_PREFIX", "")
 
-if URL_PREFIX.startswith("/"):
-    URL_PREFIX = URL_PREFIX[1:]
-if not URL_PREFIX.endswith("/"):
-    URL_PREFIX += "/"
+if URL_PREFIX:
+    if URL_PREFIX.startswith("/"):
+        URL_PREFIX = URL_PREFIX[1:]
+    if not URL_PREFIX.endswith("/"):
+        URL_PREFIX += "/"
 
 if DEBUG:
     STATIC_URL = "/static/"
