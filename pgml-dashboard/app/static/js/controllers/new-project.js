@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { renderModel, renderDistribution, renderCorrelation, renderOutliers } from "/static/js/main.mjs";
+import { renderModel, renderDistribution, renderCorrelation, renderOutliers } from "@postgresml/main"
 
 export default class extends Controller {
     static targets = [
@@ -19,7 +19,7 @@ export default class extends Controller {
       "algorithmListRegression",
       "analysisResult",
       "projectError",
-    ];
+    ]
 
     initialize() {
         this.index = 0
@@ -54,7 +54,7 @@ export default class extends Controller {
     checkDataSource(event) {
         let tableName = event.target.value
 
-        fetch(`/api/tables/?table_name=${tableName}`)
+        myFetch(`/api/tables/?table_name=${tableName}`)
         .then(res => {
             if (res.ok) {
                 this.tableName = tableName
@@ -77,7 +77,7 @@ export default class extends Controller {
     checkProjectName(event) {
       let projectName = event.target.value
 
-      fetch(`/api/projects/?name=${projectName}`)
+      myFetch(`/api/projects/?name=${projectName}`)
       .then(res => res.json())
       .then(json => {
         if (json.results.length > 0) {
@@ -156,13 +156,13 @@ export default class extends Controller {
     }
 
     renderSample() {
-        fetch(`/api/tables/sample/?table_name=${this.tableName}`)
+        myFetch(`/api/tables/sample/?table_name=${this.tableName}`)
         .then(res => res.text())
         .then(html => this.sampleTarget.innerHTML = html)
     }
 
     renderTarget() {
-      fetch(`/api/tables/columns/?table_name=${this.tableName}`)
+      myFetch(`/api/tables/columns/?table_name=${this.tableName}`)
       .then(res => res.text())
       .then(html => this.trainingLabelTarget.innerHTML = html)
     }
@@ -171,7 +171,7 @@ export default class extends Controller {
       const snapshotData = this.projectData.models[0].snapshot
 
       console.log("Fetching analysis")
-      fetch(`/html/snapshots/analysis/?snapshot_id=${snapshotData.id}`)
+      myFetch(`/html/snapshots/analysis/?snapshot_id=${snapshotData.id}`)
       .then(res => res.text())
       .then(html => this.analysisResultTarget.innerHTML = html)
       .then(() => {
@@ -252,7 +252,7 @@ export default class extends Controller {
       if (redirect)
         this.createLoader()
 
-      fetch(`/api/projects/train/`, {
+      myFetch(`/api/projects/train/`, {
         method: "POST",
         cache: "no-cache",
         headers: {
@@ -277,7 +277,7 @@ export default class extends Controller {
         this.projectData = json
 
         if (redirect)
-          window.location.assign(`/projects/${json.id}`);
+          window.location.assign(`/${window.urlPrefix}/projects/${json.id}`);
 
         if (callback)
           callback()
