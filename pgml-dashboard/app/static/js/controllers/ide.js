@@ -21,7 +21,7 @@ export default class extends Controller {
     this.resultTarget.classList.remove("hidden")
     this.resultTarget.innerHTML = "Running..."
 
-    fetch(`/ide/run/`, {
+    myFetch(`/ide/run/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

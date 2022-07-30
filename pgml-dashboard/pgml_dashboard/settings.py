@@ -73,6 +73,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "app.context_processors.url_prefix",
             ],
         },
     },
@@ -145,9 +146,21 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
+URL_PREFIX = os.environ.get("DJANGO_URL_PREFIX", "")
 
-STATIC_URL = "/static/"
+if URL_PREFIX:
+    if URL_PREFIX.startswith("/"):
+        URL_PREFIX = URL_PREFIX[1:]
+    if not URL_PREFIX.endswith("/"):
+        URL_PREFIX += "/"
+
+if DEBUG:
+    STATIC_URL = "/static/"
+else:
+    STATIC_URL = "/" + URL_PREFIX + "/static/"
+
 STATIC_ROOT = "static"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

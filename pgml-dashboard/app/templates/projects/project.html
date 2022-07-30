@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load static %}
 {% block main %}
 <section>
   <h1><span class="material-symbols-outlined">apps</span>{{ object.name }}</h1>
@@ -43,7 +43,7 @@
 {% endfor %}
 
 <script defer type="module">
-  import { renderModel } from '/static/js/main.mjs';
+  import { renderModel } from '{% static 'js/main.mjs' %}';
   function renderCharts() {
   {% for name, project in projects.items %} 
   {% for model in project.models %}

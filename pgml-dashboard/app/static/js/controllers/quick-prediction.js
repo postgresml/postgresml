@@ -43,7 +43,7 @@ export default class extends Controller {
 
     const modelId = event.currentTarget.dataset.modelId
 
-    fetch(`/api/models/${modelId}/predict/`, {
+    myFetch(`/api/models/${modelId}/predict/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

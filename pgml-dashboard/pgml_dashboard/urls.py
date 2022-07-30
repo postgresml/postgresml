@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.conf import settings
 import app.urls
 
 urlpatterns = [
@@ -23,3 +24,8 @@ urlpatterns = [
     path("api/", include(app.urls.router.urls)),
     path("html/", include(app.urls.html_router.urls)),
 ]
+
+if settings.URL_PREFIX:
+    urlpatterns = [
+        path(settings.URL_PREFIX, include(urlpatterns))
+    ]
