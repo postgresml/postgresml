@@ -18,6 +18,15 @@ import dotenv
 
 dotenv.load_dotenv()
 
+SENTRY_DSN = os.environ.get("SENTRY_DSN", None)
+if SENTRY_DSN:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=1.0,
+    )
+
 mimetypes.add_type("application/javascript", ".mjs")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
