@@ -26,6 +26,4 @@ urlpatterns = [
 ]
 
 if settings.URL_PREFIX:
-    urlpatterns = [
-        path(settings.URL_PREFIX, include(urlpatterns))
-    ]
+    urlpatterns = [path(settings.URL_PREFIX, include(urlpatterns))]

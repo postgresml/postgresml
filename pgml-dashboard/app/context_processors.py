@@ -1,5 +1,6 @@
 from django.conf import settings
 
+
 def url_prefix(request):
     url_prefix = settings.URL_PREFIX
     if url_prefix.endswith("/"):
