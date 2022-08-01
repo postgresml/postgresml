@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load humanize %}
-
+{% load static %}
 {% block main %}
 <section>
   <h1><span class="material-symbols-outlined">storage</span>{{ snapshot.relation_name }}    
@@ -85,7 +85,7 @@
 </section>
 
 <script defer type="module">
-  import { renderModel, renderDistribution, renderCorrelation, renderOutliers } from '/static/js/main.js';
+  import { renderModel, renderDistribution, renderCorrelation, renderOutliers } from '{% static 'js/main.js' %}';
 
   function renderCharts() {
   {% for name, feature in features.items %}
