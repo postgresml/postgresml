@@ -18,8 +18,9 @@ We have more example Scikit datasets avaialble, e.g.:
 
 - `iris`
 - `digits`
+- `wine`
 
-To load them into PostgresML, use the same function above with the desired dataset name as parameter.
+To load them into PostgresML, use the same function above with the desired dataset name as parameter. They will become available in the `pgml` schema, as `pgml.iris`, `pgml.digits` and `pgml.wine` respectively.
 
 ## Browse data
 
@@ -31,6 +32,25 @@ SELECT * FROM pgml.diabetes LIMIT 5;
 ```
 
 ![Data](/gym/data.png)
+
+The diabetes dataset is a toy (small, not realistic) dataset published by Scikit Learn. It contains 10 feature columns and one target column:
+
+| **Column** | **Description**                                                      | **Data type** |
+|------------|----------------------------------------------------------------------|---------------|
+| age        | The age of the patient (in years).                                   | float         |
+| sex        | The sex of the patient (normalized).                                 | float         |
+| bmi        | The BMI Body Mass index.                                             | float         |
+| bp         | Average blood pressure of the patient.                               | float         |
+| s1         | Total serum cholesterol.                                             | float         |
+| s2         | Low-density lipoproteins.                                            | float         |
+| s3         | High-density lipoproteins.                                           | float         |
+| s4         | Total cholesterol / HDL.                                             | float         |
+| s5         | Possibly log of serum triglycerides level.                           | float         |
+| s6         | Blood sugar level.                                                   | float         |
+| **target** | Quantitative measure of disease progression one year after baseline. | float         |
+
+
+This dataset is not realistic because all data is perfectly arranged and normalized, which won't be the case with most datasets you'll run into in the real world, but it's perfect for our quick tutorial.
 
 
 Alright, we're ready to do some machine learning!
