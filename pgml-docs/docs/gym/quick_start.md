@@ -19,13 +19,15 @@ We have more example Scikit datasets avaialble, e.g.:
 - `iris`
 - `digits`
 
+To load them into PostgresML, use the same function above with the desired dataset name as parameter.
+
 ## Browse data
 
 The SQL editor you just used can run arbitrary queries on the PostgresML instance. For example,
 if we want to see what dataset we just loaded looks like, we can run:
 
 ```sql
-SELECT * FROM pgml.digits LIMIT 5;
+SELECT * FROM pgml.diabetes LIMIT 5;
 ```
 
 ![Data](/gym/data.png)
