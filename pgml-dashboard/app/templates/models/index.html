@@ -37,7 +37,7 @@
 {% endfor %}
 
 <script defer type="module">
-  import { renderModel } from '{% static 'js/main.mjs' %}';
+  import { renderModel } from '{% static 'js/main.js' %}';
 
   function renderCharts() {
   {% for name, project in projects.items %} 
