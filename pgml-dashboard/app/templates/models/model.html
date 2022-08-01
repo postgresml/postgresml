@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load humanize %}
-
+{% load static %}
 {% block main %}
 <section>
   <h1><span class="material-symbols-outlined">model_training</span>{{ object.algorithm_name }}
@@ -94,7 +94,7 @@
 </div>
 
 <script defer type="module">
-  import { renderHyperparam } from '/static/js/main.js';
+  import { renderHyperparam } from '{% static 'js/main.js' %}';
 
   // Injecting variables into JS from Django templates is best left the pros ;)
   var best_index = {{ best_index|default:0 }};
