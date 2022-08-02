@@ -20,7 +20,7 @@ You should see something like this:
 
 ![IDE](/gym/ide.png)
 
-We have more example [Scikit datasets](https://scikit-learn.org/stable/datasets/toy_dataset.html) avaialble:
+We have more example [Scikit datasets](https://scikit-learn.org/stable/datasets/toy_dataset.html) available:
 
 - `iris` (classification),
 - `digits` (classification),
