@@ -5,6 +5,9 @@ export default class extends Controller {
     "code",
     "result",
     "run",
+    "history",
+    "resultSection",
+    "historySection",
   ]
 
   connect() {
@@ -13,13 +16,53 @@ export default class extends Controller {
       mode:  "sql",
       lineNumbers: true,
     });
+
+    this.history = []
+  }
+
+  runQuery(event) {
+    event.preventDefault()
+
+    const query = event.currentTarget.querySelector("code").innerHTML
+
+    this.myCodeMirror.setValue(query)
+    this.run(event, query)
+  }
+
+  addQueryToHistory(query) {
+    this.history.push(query)
+
+    if (this.history.length > 10) {
+      this.history.shift()
+    }
+
+    let innerHTML = ""
+
+    // Templates? Please. React? Nah.
+    for (let query of this.history.reverse()) {
+      innerHTML += `
+        <li >
+          <a href="#query-results" data-action="click->ide#runQuery">
+            <span><code>${query}</code></span>
+          </a>
+        </li>
+      `
+    }
+
+    this.historyTarget.innerHTML = innerHTML;
+    this.historySectionTarget.classList.remove("hidden")
   }
 
 
-  run(event) {
+  run(event, query) {
     this.runTarget.disabled = true
-    this.resultTarget.classList.remove("hidden")
+    this.resultSectionTarget.classList.remove("hidden")
     this.resultTarget.innerHTML = "Running..."
+
+    if (!query) {
+      query = this.myCodeMirror.getValue();
+      this.addQueryToHistory(query)
+    }
 
     myFetch(`/ide/run/`, {
       method: "POST",
@@ -28,7 +71,7 @@ export default class extends Controller {
       },
       redirect: "follow",
       body: JSON.stringify({
-        "query": this.myCodeMirror.getValue(),
+        "query": query,
       }),
     })
     .then(res => res.text())
