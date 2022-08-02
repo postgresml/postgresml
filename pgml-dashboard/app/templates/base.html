@@ -40,7 +40,11 @@
           window.urlPrefix = '{{ url_prefix }}'
 
           function myFetch(url, options) {
-            return fetch(`/${window.urlPrefix}${url}`, options)
+            if (window.urlPrefix) {
+              url = `/${window.urlPrefix}${url}`
+            }
+
+            return fetch(url, options)
           }
         </script>
         <script type="module-shim">

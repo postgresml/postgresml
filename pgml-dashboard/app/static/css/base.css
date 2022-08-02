@@ -485,3 +485,12 @@ body.models figure {
     width: 20vmin;
     height: 20vmin;
 }
+
+.ide .query_list a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ide .query_list code {
+  font-size: smaller;
+}
