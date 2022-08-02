@@ -1,10 +1,16 @@
 # Quick Start
 
-PostgresML is really easy to get started with. We'll use one of our example dataset to show you how to use it.
+PostgresML is easy to get started with. If you haven't already, sign up for our [Gym](https://gym.postgresml.org/signup/) to get a free hosted PostgresML instance you can use to follow this tutorial. You can also run one yourself by following the instructions in our Github repo.
+
+<p align="center" markdown>
+  [Sign Up for the Gym](https://gym.postgresml.org/signup/){ .md-button .md-button--primary .md-button }
+</p>
+
+Once you have your PostgresML instance running, we'll be ready to get started.
 
 ## Get data
 
-Navigate to the IDE tab and run this query:
+The fisrt part of machine learning is getting your data in a format you can use. That's usually the hardest part, but thankfully we have a few example datasets we can use. To load one of them, navigate to the IDE tab and run this query:
 
 ```sql
 SELECT * FROM pgml.load_dataset('diabetes');
@@ -14,13 +20,13 @@ You should see something like this:
 
 ![IDE](/gym/ide.png)
 
-We have more example Scikit datasets avaialble, e.g.:
+We have more example [Scikit datasets](https://scikit-learn.org/stable/datasets/toy_dataset.html) available:
 
-- `iris`
-- `digits`
-- `wine`
+- `iris` (classification),
+- `digits` (classification),
+- `wine` (regression),
 
-To load them into PostgresML, use the same function above with the desired dataset name as parameter. They will become available in the `pgml` schema, as `pgml.iris`, `pgml.digits` and `pgml.wine` respectively.
+To load them into PostgresML, use the same function above with the desired dataset name as parameter. They will become available in the `pgml` schema as `pgml.iris`, `pgml.digits` and `pgml.wine` respectively.
 
 ## Browse data
 
@@ -33,7 +39,7 @@ SELECT * FROM pgml.diabetes LIMIT 5;
 
 ![Data](/gym/data.png)
 
-The diabetes dataset is a toy (small, not realistic) dataset published by Scikit Learn. It contains 10 feature columns and one target column:
+The `diabetes` dataset is a toy (small, not realistic) dataset published by Scikit Learn. It contains ten feature columns and one label column:
 
 | **Column** | **Description**                                                      | **Data type** |
 |------------|----------------------------------------------------------------------|---------------|
@@ -50,15 +56,14 @@ The diabetes dataset is a toy (small, not realistic) dataset published by Scikit
 | **target** | Quantitative measure of disease progression one year after baseline. | float         |
 
 
-This dataset is not realistic because all data is perfectly arranged and normalized, which won't be the case with most datasets you'll run into in the real world, but it's perfect for our quick tutorial.
+This dataset is not realistic because all data is perfectly arranged and normalized, which won't be the case with most real world datasets you'll run into, but it's perfect for our quick tutorial.
 
 
 Alright, we're ready to do some machine learning!
 
 ## First project
 
-PostgresML organizes itself into projects. A project is just a name for model(s) trained on a particular dataset. Let's create our first project by training an XGBoost
-model on our diabetes dataset.
+PostgresML organizes itself into projects. A project is just a name for model(s) trained on a particular dataset. Let's create our first project by training an XGBoost regression model on our diabetes dataset.
 
 Using the IDE, run:
 
@@ -79,12 +84,14 @@ By executing `pmgl.train()` we did the following:
 
 - created a project called "My First Project",
 - snapshotted the table `pgml.diabetes` thus making the experiment reproducible (in case data changes, as it happens in the real world),
-- trained an XGBoost regression model on the data contained in the `pgml.diabetes` table, using the column `target` as the label,
+- trained an XGBoost regression model on the data contained in the `pgml.diabetes` table using the column `target` as the label,
 - deployed the model into production.
 
 We're ready to predict novel data points!
 
 ## Inference
+
+Inference is the act of predicting labels that we haven't necessarily used in training. That's the whole point of machine learning really: predict something we haven't seen before.
 
 Let's try and predict some new values. Using the IDE, run:
 
@@ -110,7 +117,18 @@ You should see something like this:
 
 ![Prediction](/gym/predict.png)
 
-Congratulations, you just did machine learning in just a few simple steps!
+The `prediction` column represents the possible value of the `target` column given the new features we just passed into the `pgml.predict()` function. You can just as easily predict multiple points and compare them to the actual labels in the dataset:
+
+```sql
+SELECT
+	pgml.predict('My First Project 2', ARRAY[
+		age, sex, bmi, bp, s1, s3, s3, s4, s5, s6
+	]),
+    target
+FROM pgml.diabetes LIMIT 10;
+```
+
+Sometimes the model will be pretty close, but sometimes it will be way off. That's why we'll be training several of them and comparing them next.
 
 ## Browse around
 
@@ -140,10 +158,10 @@ If you navigate to the Models tab, you should see all three algorithms you just 
 
 Huh, apparently XGBoost isn't as good we originally thought! In this case, a simple linear regression did significantly better than all the others. It's hard to know which algorithm will perform best given a dataset; even experienced machine learning engineers get this one wrong.
 
-With PostgresML, you needn't worry; you can train all of them and see which one does best for your data. PostgresML will automatically use the best one for inference.
+With PostgresML, you needn't worry: you can train all of them and see which one does best for your data. PostgresML will automatically use the best one for inference.
 
 ## Conclusion
 
 Congratulations on becoming a Machine Learning engineer. If you thought ML was scary or mysterious, we hope that this small tutorial made it a little bit more approachable.
 
-Keep exploring our other tutorials and try some things on your own. Happy machine learning!
+This is the first of many tutorials we'll publish, so stay tuned. Happy machine learning!
