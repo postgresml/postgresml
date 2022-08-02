@@ -39,7 +39,7 @@ SELECT * FROM pgml.diabetes LIMIT 5;
 
 ![Data](/gym/data.png)
 
-The `diabetes` dataset is a toy (small, not realistic) dataset published by Scikit Learn. It contains ten feature columns and one target column:
+The `diabetes` dataset is a toy (small, not realistic) dataset published by Scikit Learn. It contains ten feature columns and one label column:
 
 | **Column** | **Description**                                                      | **Data type** |
 |------------|----------------------------------------------------------------------|---------------|
