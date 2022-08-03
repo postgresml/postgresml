@@ -176,4 +176,4 @@ STATIC_ROOT = "static"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-JWT_AUTH_ENABLED = True
+JWT_AUTH_ENABLED = os.environ.get("DJANGO_JWT_AUTH_ENABLED", "False") == "True"
