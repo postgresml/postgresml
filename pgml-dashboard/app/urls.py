@@ -26,4 +26,5 @@ urlpatterns = [
     path("snapshots/<int:id>", snapshots.snapshot, name="snapshot"),
     path("ide/", ide.IdeView.as_view(), name="ide"),
     path("ide/run/", ide.run_sql, name="ide/run-sql"),
+    path("set-auth-cookie/", root.set_auth_cookie, name="set-auth-cookie"),
 ]

@@ -1,6 +1,7 @@
 import jwt
 from django.conf import settings
 from django.http import HttpResponse
+from django.shortcuts import reverse
 
 PERMISSION_DENIED = """
 <!DOCTYPE html>
@@ -24,6 +25,9 @@ class JwtAuthentcationMiddleware:
     def __call__(self, request):
         # Don't do this unless the auth is enabled
         if not getattr(settings, "JWT_AUTH_ENABLED"):
+            return self.get_response(request)
+
+        if request.path.startswith(reverse("set-auth-cookie")):
             return self.get_response(request)
 
         try:
