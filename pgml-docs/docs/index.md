@@ -180,7 +180,7 @@ Since your data never leaves the database, you retain the speed, reliability and
 :fontawesome-solid-envelope-open-text:
 __Open source__
 
-We're building on the shoulders of giants. These machine learning libraries and Postgres have recieved extensive academic and industry use, and we'll continue their tradition to build with the community.
+We're building on the shoulders of giants. These machine learning libraries and Postgres have received extensive academic and industry use, and we'll continue their tradition to build with the community.
 
 [:material-arrow-right: MIT License](/about/license/)
   </div>
