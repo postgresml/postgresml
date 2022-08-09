@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "rest_framework",
     "django_filters",
+    "notebooks",
 ]
 
 MIDDLEWARE = [
@@ -98,12 +99,12 @@ WSGI_APPLICATION = "pgml_dashboard.wsgi.application"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 from urllib.parse import urlparse
 
-database = urlparse(os.environ["PGML_DATABASE_URL"])
+database = urlparse(os.environ.get("PGML_DATABASE_URL", "postgres:///pgml_development"))
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "OPTIONS": {"options": "-c search_path=pgml"},
+        "OPTIONS": {"options": "-c search_path=pgml,public"},
         "NAME": database.path[1:],
         "USER": database.username,
         "PASSWORD": database.password,

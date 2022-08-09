@@ -1,0 +1,26 @@
+{% extends "notebooks/base.html" %}
+{% block main %}
+<section class="markdown-body">
+  <h1>{{ notebook.name }}</h1>
+</section>
+<div data-notebook-target="lines">
+{% for line in lines %}
+{% include 'notebooks/line.html' %}
+{% endfor %}
+</div>
+<div class="notebook-line active">
+  <form action="{% url 'notebooks/line/add' notebook.pk %}" method="post" data-action="submit->notebook#addLine">
+    <div class="flex">
+      {% csrf_token %}
+      <div class="notebook-line-code flex-grow">
+        <textarea data-line-id="new" name="contents" data-notebook-target="newLineCode"></textarea>
+      </div>
+      <div class="flex flex-end">
+        <button type="submit" class="button notebook-button"><span class="material-symbols-outlined">
+play_arrow
+</span></button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

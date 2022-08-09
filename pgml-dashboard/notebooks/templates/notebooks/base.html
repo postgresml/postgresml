@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html >
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Needs to be developed.">
+
+        <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+        <link rel="stylesheet" href="{% static 'notebooks/css/notebooks.css' %}">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=block" >
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;300;400;500;700&display=block" >
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+        <script defer src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+        <script defer type="module" src="https://unpkg.com/stimulus@2.0.0/dist/stimulus.umd.js"></script>
+        <script defer type="module" src="https://cdn.skypack.dev/pin/@hotwired/turbo@v7.0.0-rc.1-Vumm1JJjKMC0HM7D9Tjd/mode=imports/optimized/@hotwired/turbo.js"></script>
+        <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+        <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/sql-hint.min.js" integrity="sha512-O7YCIZwiyJYc9d/iPOSgEzhhlonTMGcmM1HmgYFffj5cGwVu2PLSzTaLvD9HSk8rSSf9rIpdhJPk8Yhu6wJBtA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/sql/sql.min.js" integrity="sha512-JOURLWZEM9blfKvYn1pKWvUZJeFwrkn77cQLJOS6M/7MVIRdPacZGNm2ij5xtDV/fpuhorOswIiJF3x/woe5fw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/show-hint.min.js" integrity="sha512-yhmeAerubMLaGAsyS7sE8Oqub6GeTkBDQpkXo2JKHgg7JOCudQvcbDQc5rPxdl7MqcDusTJzSy+ODlyzAwETfQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css" integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/show-hint.min.css" integrity="sha512-OmcLQEy8iGiD7PSm85s06dnR7G7C9C0VqahIPAj/KHk5RpOCmnC6R2ob1oK4/uwYhWa9BF1GC6tzxsC8TIx7Jg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <script defer src="https://unpkg.com/es-module-shims@1.2.0/dist/es-module-shims.js"></script>
+        <script type="importmap-shim">
+            {
+                "imports": {
+                    "@hotwired/stimulus": "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js"
+                }
+            }
+        </script>
+        <script>
+          window.urlPrefix = '{{ url_prefix }}'
+
+          function myFetch(url, options) {
+            if (window.urlPrefix) {
+              url = `/${window.urlPrefix}${url}`
+            }
+
+            return fetch(url, options)
+          }
+        </script>
+        <script type="module-shim">
+            import { Application } from '@hotwired/stimulus'
+            import Notebook from '{% static 'notebooks/js/notebook.js' %}'
+
+            const application = Application.start()
+            application.register('notebook', Notebook)
+        </script>
+      
+        <title>{% if title %}{{title}}{% endif %}{% if title is None or "PostgresML" not in title %}{% if title is not None %} - {% endif %}PostgresML{% endif %}</title>
+    </head>
+
+    <body>
+        <header>
+            <nav>
+                <ul>
+                </ul>
+            </nav>
+        </header>
+        
+        <main class="notebook container" data-controller="notebook">
+            {% block main %}{% endblock %}
+        </main>
+
+        <footer></footer>
+    </body>
+</html>

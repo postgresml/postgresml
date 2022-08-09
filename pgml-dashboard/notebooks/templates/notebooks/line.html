@@ -1,0 +1,52 @@
+<div class="notebook-line {{ line.get_line_type_display|lower }}" id="line-{{ line.pk }}" data-line-id="{{ line.pk }}">
+  <!-- Edit -->
+  <div class="hidden notebook-line-edit">
+    <form action="{% url 'notebooks/line/edit' notebook.pk line.pk %}" method="post" data-action="submit->notebook#editLine" data-line-id="{{ line.pk }}">
+      <div class="flex">
+        {% csrf_token %}
+        <div class="notebook-line-code flex-grow">
+          <textarea name="contents" id="textarea-{{ line.pk }}" data-notebook-target="existingLine" data-line-id="{{ line.pk }}">{{ line.contents }}</textarea>
+        </div>
+        <div class="flex flex-end">
+          <button type="submit" class="button notebook-button"><span class="material-symbols-outlined">
+play_arrow
+</span></button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Display -->
+  <div>
+    <div class="flex">
+      <div class="line-number">{{ line.line_number }}</div>
+      <div class="flex-grow">
+        {% if line.code %}
+        <div class="notebook-contents">
+          <code>
+            <pre>{{ line.contents }}</pre>
+          </code>
+        </div>
+        {% endif %}
+
+        <div class="notebook-rendering">
+          {{ line.html }}
+        </div>
+      </div>
+      <div class="notebook-button button-delete">
+        <form action="{% url 'notebooks/line/remove' notebook.pk line.pk %}" method="post" data-action="submit->notebook#deleteLine" data-line-id="{{ line.pk }}">
+          {% csrf_token %}
+
+          <button type="submit"><span class="material-symbols-outlined">
+delete_forever
+</span></button>
+        </form>
+      </div>
+      <div class="notebook-button button-edit">
+        <button data-action="click->notebook#enableEdit" data-line-id="{{ line.pk }}"><span class="material-symbols-outlined">
+edit
+</span></button>
+      </div>
+    </div>
+  </div>
+</div>
