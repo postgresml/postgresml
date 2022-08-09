@@ -21,6 +21,21 @@ def notebook(request, pk):
     )
 
 
+def notebook_line(request, notebook_pk, line_pk):
+    """Render a single notebook line."""
+    notebook = get_object_or_404(Notebook, pk=notebook_pk)
+    line = get_object_or_404(NotebookLine, pk=line_pk)
+
+    return render(
+        request,
+        "notebooks/line.html",
+        {
+            "line": line,
+            "notebook": line.notebook,
+        },
+    )
+
+
 class NotebookLineForm(forms.Form):
     contents = forms.CharField()
 
@@ -48,7 +63,12 @@ def add_notebook_line(request, pk):
             line_type=line_type,
         )
 
-    return HttpResponseRedirect(reverse_lazy("notebooks/notebook", kwargs={"pk": notebook.pk}))
+        return HttpResponseRedirect(
+            reverse_lazy("notebooks/line/get", kwargs={"notebook_pk": notebook.pk, "line_pk": line.pk})
+        )
+    else:
+        print(line_form.errors)
+        return HttpResponse(line_form.errors, status=400)
 
 
 @transaction.atomic

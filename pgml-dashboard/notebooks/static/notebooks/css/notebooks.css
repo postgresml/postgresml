@@ -67,15 +67,6 @@ q:before, q:after {
   content: '';
   content: none;
 }
-
-.container {
-  margin: 0 2rem;
-}
-
-nav ol, nav ul {
-  list-style: none;
-}
-
 /*
  * Github Markdown CSS
  * License: MIT
@@ -1030,6 +1021,14 @@ nav ol, nav ul {
 /*
  * Our custom styles
  */
+.container {
+  margin: 2rem;
+}
+
+nav ol, nav ul {
+  list-style: none;
+}
+
 .notebook-line.active {
   border: 1px solid green;
   padding: 0;
@@ -1086,4 +1085,3 @@ nav ol, nav ul {
   border: 1px solid var(--gray-7);
   padding: 1rem;
 }
-
