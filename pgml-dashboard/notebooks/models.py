@@ -47,6 +47,7 @@ class NotebookLine(models.Model):
     rendering = models.TextField(null=True, blank=True)
     line_number = models.IntegerField(default=1)
     version = models.IntegerField(default=1)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     def html(self):
         """HTML rendering of the notebook line"""
@@ -56,7 +57,7 @@ class NotebookLine(models.Model):
         if self.line_type == NotebookLine.SQL:
             with connection.cursor() as cursor:
                 try:
-                    cursor.execute(self.contents)
+                    cursor.execute(self.contents.replace(r"%%sql", ""))
 
                     if cursor.description:
                         columns = [col[0] for col in cursor.description]
@@ -90,6 +91,10 @@ class NotebookLine(models.Model):
             self.rendering = self.contents
 
         return mark_safe(self.rendering)
+
+    @property
+    def code(self):
+        return self.line_type == NotebookLine.SQL
 
     def __str__(self):
         return f"{self.notebook} - {self.pk}"

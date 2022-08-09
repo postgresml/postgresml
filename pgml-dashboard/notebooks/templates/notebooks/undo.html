@@ -1,0 +1,13 @@
+<div class="notebook-line {{ line.get_line_type_display|lower }}" id="line-{{ line.pk }}" data-line-id="{{ line.pk }}">
+  <div class="notebook-delete-undo flex">
+    <p class="flex-grow flex center">Line deleted. You have 5 seconds to undo the delete.</p>
+    <form action="{% url 'notebooks/line/remove/undo' notebook.pk line.pk %}" action="post" data-action="submit->notebook#undoDeleteLine" data-line-id="{{ line.pk }}">
+      {% csrf_token %}
+      <button type="submit">
+        <span class="material-symbols-outlined">
+          replay
+        </span>
+      </button>
+    </form>
+  </div>
+</div>

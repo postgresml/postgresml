@@ -1023,6 +1023,7 @@ q:before, q:after {
  */
 .container {
   margin: 2rem;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
 }
 
 nav ol, nav ul {
@@ -1034,6 +1035,15 @@ nav ol, nav ul {
   padding: 0;
 }
 
+.notebook-line-edit {
+  margin-bottom: 2rem;
+  border: 1px solid green;
+}
+
+.hidden {
+  display: none;
+}
+
 .notebook-line {
   margin: 1rem 0;
   padding: 1rem;
@@ -1041,11 +1051,15 @@ nav ol, nav ul {
   min-width: fit-content;
 }
 
-.notebook-line.markdown {
+/*.notebook-line.markdown {
   border: 0;
+}*/
+
+.notebook-button {
+  margin: 0.1rem;
 }
 
-.notebook-line.sql code {
+.notebook-contents code {
   font-family: monospace;
 }
 

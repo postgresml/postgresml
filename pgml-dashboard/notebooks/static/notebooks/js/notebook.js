@@ -4,6 +4,7 @@ export default class extends Controller {
   static targets = [
     'newLineCode',
     'lines',
+    'existingLine',
   ];
 
   connect() {
@@ -13,11 +14,116 @@ export default class extends Controller {
     })
 
     this.newLineCodeMirror.setSize('100%', 100)
+    this.exitingLinesCodeMirror = {}
+    this.deleteTimeouts = {}
+  }
+
+  initCodeMirrorOnTarget(target) {
+    const codeMirror = CodeMirror.fromTextArea(target, {
+      lineWrapping: true,
+      matchBrackets: true,
+    })
+
+    codeMirror.setSize('100%', 100)
+    this.exitingLinesCodeMirror[target.dataset.lineId] = codeMirror
+  }
+
+  enableEdit(event) {
+    const target = event.currentTarget
+    const lineId = target.dataset.lineId
+
+    const line = document.getElementById(`line-${lineId}`)
+
+    // Display the textarea first to get proper dimensions into the DOM
+    line.querySelector('.notebook-line-edit').classList.remove('hidden')
+
+    // Initialize CodeMirror after element is rendered
+    this.initCodeMirrorOnTarget(line.querySelector('.notebook-line-edit textarea'))
+
+    target.remove()
+  }
+
+  editLine(event) {
+    event.preventDefault()
+    const target = event.currentTarget
+    const lineId = target.dataset.lineId
+
+    this.exitingLinesCodeMirror[lineId].save()
+
+    const form = new FormData(target)
+    const url = target.action
+    const body = new URLSearchParams(form)
+    
+
+    fetch(url, {
+      method: 'POST',
+      body,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+    })
+    .then(res => res.text())
+    .then(text => {
+      const child = document.getElementById(`line-${lineId}`)
+
+      // Build new line element
+      const template = document.createElement('template')
+      text = text.trim()
+      template.innerHTML = text
+
+
+      const newChild = template.content.firstChild
+      const newLineId = newChild.dataset.lineId
+
+      // Replace old line with new line
+      child.parentNode.replaceChild(newChild, child)
+
+      // Don't leak memory
+      delete this.exitingLinesCodeMirror[lineId]
+    })
   }
 
   deleteLine(event) {
     event.preventDefault()
     const target = event.currentTarget
+
+    const form = new FormData(target)
+    const url = target.action
+    const body = new URLSearchParams(form)
+    const lineId = target.dataset.lineId
+
+    fetch(url, {
+      method: 'POST',
+      body,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+    })
+    .then(res => res.text())
+    .then(text => {
+      const template = document.createElement('template')
+      text = text.trim()
+      template.innerHTML = text
+
+      const child = document.getElementById(`line-${lineId}`)
+      child.parentNode.replaceChild(template.content.firstChild, child)
+
+      // Remove the undo in 5 seconds
+      this.deleteTimeouts[lineId] = window.setTimeout(() => {
+        document.getElementById(`line-${lineId}`).remove()
+        delete this.deleteTimeouts[lineId]
+      }, 5000)
+    })
+  }
+
+  undoDeleteLine(event) {
+    event.preventDefault()
+
+    const target = event.currentTarget
+    const lineId = target.dataset.lineId
+
+    window.clearTimeout(this.deleteTimeouts[lineId])
+    delete this.deleteTimeouts[lineId]
 
     const form = new FormData(target)
     const url = target.action
@@ -31,9 +137,13 @@ export default class extends Controller {
       },
     })
     .then(res => res.text())
-    .then(_ => {
-      const id = target.dataset.lineId
-      document.getElementById(`line-${id}`).remove()
+    .then(text => {
+      const template = document.createElement('template')
+      text = text.trim()
+      template.innerHTML = text
+
+      const child = document.getElementById(`line-${lineId}`)
+      child.parentNode.replaceChild(template.content.firstChild, child)
     })
   }
 
