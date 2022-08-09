@@ -22,6 +22,26 @@ def notebook(request, pk):
     )
 
 
+class NotebookForm(forms.Form):
+    name = forms.CharField()
+
+
+def create_notebook(request):
+    notebook_form = NotebookForm(request.POST)
+
+    if notebook_form.is_valid():
+        exists = Notebook.objects.filter(name=notebook_form.cleaned_data["name"]).first()
+
+        if exists:
+            return HttpResponse(status=400)
+
+        notebook = Notebook.objects.create(
+            name=notebook_form.cleaned_data["name"],
+        )
+
+        return HttpResponseRedirect(reverse_lazy("notebooks/notebook", kwargs={"pk": notebook.pk}))
+
+
 def notebook_line(request, notebook_pk, line_pk):
     """Render a single notebook line."""
     notebook = get_object_or_404(Notebook, pk=notebook_pk)

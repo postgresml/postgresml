@@ -35,7 +35,35 @@
 
 </div>
 
-<script type="module">
-  
-</script>
+<section>
+  <h2>Notebooks</h2>
+
+  <ol class="object_list">
+    {% for notebook in notebooks %}
+    <li>
+      <a href="{% url 'notebooks/notebook' notebook.pk %}" target="_blank" data-turbo="false">
+        <span>
+          {{ notebook.name }}
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<section>
+  <h2>New notebook</h2>
+
+  <form action="{% url 'notebooks/create' %}" method="post" data-turbo="false" target="_blank">
+    {% csrf_token %}
+
+    <div class="input-container">
+      <input type="text" name="name" placeholder="New unique notebook name" size="50" />
+    </div>
+
+    <div class="button-container">
+      <button class="next" type="submit">Create notebook</button>
+    </div>
+  </form>
+</section>
 {% endblock %}
