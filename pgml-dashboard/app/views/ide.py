@@ -5,6 +5,8 @@ from django.db import connection
 from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import render
 
+from notebooks.models import Notebook
+
 SPECIAL_QUERIES = {
     r"\d+": """
         SELECT n.nspname as "Schema",
@@ -31,6 +33,7 @@ class IdeView(TemplateView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data["topic"] = "ide"
+        data["notebooks"] = Notebook.objects.all()
         return data
 
 
