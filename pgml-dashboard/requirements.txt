@@ -19,3 +19,4 @@ tomli==2.0.1
 urllib3==1.26.11
 whitenoise==6.0.0
 PyJWT==2.4.0
+Markdown==3.3.7
