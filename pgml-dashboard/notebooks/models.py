@@ -71,7 +71,8 @@ class NotebookLine(models.Model):
                             },
                         )
                     else:
-                        result = ""
+                        # Not really an error, but the formatting is helpful
+                        result = render_to_string("notebooks/sql_error.html", {"error": str(cursor.statusmessage)})
                 except Exception as e:
                     result = render_to_string(
                         "notebooks/sql_error.html",
