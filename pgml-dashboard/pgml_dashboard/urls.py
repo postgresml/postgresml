@@ -17,12 +17,14 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
 import app.urls
+import notebooks.urls
 
 urlpatterns = [
     path("", include("app.urls")),
     path("admin/", admin.site.urls),
     path("api/", include(app.urls.router.urls)),
     path("html/", include(app.urls.html_router.urls)),
+    path("notebooks/", include(notebooks.urls.urlpatterns)),
 ]
 
 if settings.URL_PREFIX:
