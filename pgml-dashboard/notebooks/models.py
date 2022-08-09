@@ -51,7 +51,7 @@ class NotebookLine(models.Model):
 
     def html(self):
         """HTML rendering of the notebook line"""
-        if self.rendering:
+        if self.rendering is not None:
             return mark_safe(self.rendering)
 
         if self.line_type == NotebookLine.SQL:
