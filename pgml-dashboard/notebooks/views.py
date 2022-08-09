@@ -38,7 +38,7 @@ def notebook_line(request, notebook_pk, line_pk):
 
 
 class NotebookLineForm(forms.Form):
-    contents = forms.CharField()
+    contents = forms.CharField(required=False)
 
 
 @transaction.atomic
