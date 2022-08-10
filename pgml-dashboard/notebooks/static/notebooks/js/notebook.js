@@ -48,6 +48,10 @@ export default class extends Controller {
     const target = event.currentTarget
     const lineId = target.dataset.lineId
 
+    const button = target.querySelector('button[type=submit]')
+    button.disabled = true
+    button.querySelector('span').innerHTML = 'pending'
+
     this.exitingLinesCodeMirror[lineId].save()
 
     const form = new FormData(target)
@@ -153,6 +157,12 @@ export default class extends Controller {
   addLine(event) {
     event.preventDefault()
     const target = event.currentTarget
+
+    const button = target.querySelector('button[type=submit]')
+    button.querySelector('span').innerHTML = 'pending'
+
+    // Disable button so people don't double push on slow queries
+    button.disabled = true
     
     const form = new FormData(target)
     const url = target.action
@@ -178,6 +188,10 @@ export default class extends Controller {
       this.linesTarget.innerHTML += text
       window.scrollTo(0, document.body.scrollHeight)
       this.newLineCodeMirror.setValue('')
+
+      // Re-enable the submit button
+      button.disabled = false
+      button.querySelector('span').innerHTML = 'play_arrow'
     })
   }
 }
