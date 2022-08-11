@@ -48,5 +48,12 @@ edit
 </span></button>
       </div>
     </div>
+    {% if line.execution_time %}
+    <div class="markdown-body notebook-duration">
+      <div class="flex flex-row-reverse">
+        <code>{{ line.execution_time }}</code>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>

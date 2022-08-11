@@ -2,6 +2,7 @@ from django.db import models, connection
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.db.utils import ProgrammingError
+from django.utils import timezone
 
 import markdown
 
@@ -45,6 +46,7 @@ class NotebookLine(models.Model):
     )
     contents = models.TextField(null=True, blank=True)
     rendering = models.TextField(null=True, blank=True)
+    execution_time = models.DurationField(null=True, blank=True)
     line_number = models.IntegerField(default=1)
     version = models.IntegerField(default=1)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -55,6 +57,8 @@ class NotebookLine(models.Model):
             return mark_safe(self.rendering)
 
         if self.line_type == NotebookLine.SQL:
+            execution_start = timezone.now()
+
             with connection.cursor() as cursor:
                 try:
                     cursor.execute(self.contents.replace(r"%%sql", ""))
@@ -81,11 +85,20 @@ class NotebookLine(models.Model):
                         },
                     )
             self.rendering = result
+            self.execution_time = timezone.now() - execution_start
             self.save()
 
-        if self.line_type == NotebookLine.MARKDOWN:
-            self.rendering = '<article class="markdown-body">' + markdown.markdown(self.contents) + "</article>"
+        elif self.line_type == NotebookLine.MARKDOWN:
+            rendering = markdown.markdown(self.contents)
+
+            # Make sure that multi-line code blocks presenve their multiple lines.
+            # Weird that the package doesn't do that already?
+            rendering = rendering.replace("<code>", "<pre><code>")
+            rendering = rendering.replace("</code>", "</code></pre>")
+
+            self.rendering = '<article class="markdown-body">' + rendering + "</article>"
             self.save()
+
         elif self.line_type == NotebookLine.PLAIN_TEXT:
             self.rendering = self.contents
         elif self.line_type == NotebookLine.EMPTY:
