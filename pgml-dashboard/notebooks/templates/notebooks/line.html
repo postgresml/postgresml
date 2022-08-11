@@ -23,9 +23,7 @@ play_arrow
       <div class="flex-grow">
         {% if line.code %}
         <div class="notebook-contents">
-          <code>
-            <pre>{{ line.contents }}</pre>
-          </code>
+          <pre><code class="language-sql">{{ line.contents }}</code></pre>
         </div>
         {% endif %}
 

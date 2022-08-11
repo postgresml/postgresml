@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
+import hljs from  '@highlight'
 
 export default class extends Controller {
   static targets = [
@@ -16,6 +17,9 @@ export default class extends Controller {
     this.newLineCodeMirror.setSize('100%', 100)
     this.exitingLinesCodeMirror = {}
     this.deleteTimeouts = {}
+
+    // Highlight all existing code segments
+    document.querySelectorAll('.language-sql').forEach(target => hljs.highlightElement(target))
   }
 
   initCodeMirrorOnTarget(target) {
@@ -81,6 +85,12 @@ export default class extends Controller {
 
       // Replace old line with new line
       child.parentNode.replaceChild(newChild, child)
+
+      const codeElement = newChild.querySelector('.language-sql')
+
+      if (codeElement) {
+        hljs.highlightElement(codeElement)
+      }
 
       // Don't leak memory
       delete this.exitingLinesCodeMirror[lineId]
@@ -192,6 +202,11 @@ export default class extends Controller {
       // Re-enable the submit button
       button.disabled = false
       button.querySelector('span').innerHTML = 'play_arrow'
+
+      const highlightTarget = document.querySelector('.language-sql:not(.hljs)')
+
+      if (highlightTarget)
+        hljs.highlightElement(highlightTarget)
     })
   }
 }

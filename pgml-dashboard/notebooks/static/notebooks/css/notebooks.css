@@ -1103,7 +1103,7 @@ nav ol, nav ul {
 
 .notebook-contents {
   margin-bottom: 1rem;
-  background: var(--gray-8);
-  border: 1px solid var(--gray-7);
-  padding: 1rem;
+  /*background: var(--gray-8);*/
+  /*border: 1px solid var(--gray-7);*/
+  /*padding: 1rem;*/
 }
