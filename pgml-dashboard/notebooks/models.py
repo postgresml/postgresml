@@ -18,6 +18,12 @@ class Notebook(models.Model):
     def __str__(self):
         return self.name
 
+    def to_markdown(self):
+        result = []
+        for line in self.notebookline_set.filter(deleted_at__isnull=True).order_by("line_number"):
+            result.append(line.markdown())
+        return "\n\n".join(result)
+
 
 class NotebookLine(models.Model):
     """A single executable line in the notebook,
@@ -52,7 +58,7 @@ class NotebookLine(models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     def html(self):
-        """HTML rendering of the notebook line"""
+        """HTML rendering of the notebook line."""
         if self.rendering is not None:
             return mark_safe(self.rendering)
 
@@ -89,12 +95,7 @@ class NotebookLine(models.Model):
             self.save()
 
         elif self.line_type == NotebookLine.MARKDOWN:
-            rendering = markdown.markdown(self.contents)
-
-            # Make sure that multi-line code blocks presenve their multiple lines.
-            # Weird that the package doesn't do that already?
-            rendering = rendering.replace("<code>", "<pre><code>")
-            rendering = rendering.replace("</code>", "</code></pre>")
+            rendering = markdown.markdown(self.contents, extensions=["fenced_code"])
 
             self.rendering = '<article class="markdown-body">' + rendering + "</article>"
             self.save()
@@ -106,8 +107,18 @@ class NotebookLine(models.Model):
 
         return mark_safe(self.rendering)
 
+    def markdown(self):
+        """Render the line back as markdown."""
+        if self.line_type == NotebookLine.SQL:
+            return render_to_string(
+                "notebooks/sql_markdown.txt", {"text": self.contents.replace(r"%%sql", "").strip()}
+            )
+        else:
+            return self.contents
+
     @property
     def code(self):
+        """Is this line executable code or plain text/markdown?"""
         return self.line_type == NotebookLine.SQL
 
     def __str__(self):
