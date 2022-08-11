@@ -1079,6 +1079,10 @@ nav ol, nav ul {
   align-items: flex-end;
 }
 
+.flex-row-reverse {
+  flex-direction: row-reverse;
+}
+
 .notebook-line .line-number {
   margin-right: 1rem;
   font-family: monospace;
@@ -1091,6 +1095,10 @@ nav ol, nav ul {
 
 .notebook-line .button-delete {
   margin-left: 1rem;
+}
+
+.notebook-duration {
+  margin-top: 1rem;
 }
 
 .notebook-contents {
