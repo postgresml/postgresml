@@ -12,24 +12,42 @@ export default class extends Controller {
     this.newLineCodeMirror = CodeMirror.fromTextArea(this.newLineCodeTarget, {
       lineWrapping: true,
       matchBrackets: true,
+      mode: "gfm", // Github markdown
     })
 
     this.newLineCodeMirror.setSize('100%', 100)
+    this.newLineCodeMirror.on("change", () => this.detectSql(this.newLineCodeMirror))
+
     this.exitingLinesCodeMirror = {}
     this.deleteTimeouts = {}
 
     // Highlight all existing code segments
-    document.querySelectorAll('.language-sql').forEach(target => hljs.highlightElement(target))
+    // document.querySelectorAll('.language-sql').forEach(target => hljs.highlightElement(target))
   }
 
   initCodeMirrorOnTarget(target) {
     const codeMirror = CodeMirror.fromTextArea(target, {
       lineWrapping: true,
       matchBrackets: true,
+      mode: "gfm",
     })
 
     codeMirror.setSize('100%', 100)
+    codeMirror.on("change", () => this.detectSql(codeMirror))
+
+    // Has value already?
+    this.detectSql(codeMirror)
+
     this.exitingLinesCodeMirror[target.dataset.lineId] = codeMirror
+  }
+
+  detectSql(codeMirror) {
+    const value = codeMirror.getValue()
+
+    if (value.startsWith('%%sql'))
+      codeMirror.setOption("mode", "sql")
+    else
+      codeMirror.setOption("mode", "gfm")
   }
 
   enableEdit(event) {
@@ -86,11 +104,11 @@ export default class extends Controller {
       // Replace old line with new line
       child.parentNode.replaceChild(newChild, child)
 
-      const codeElement = newChild.querySelector('.language-sql')
+      // const codeElement = newChild.querySelector('.language-sql')
 
-      if (codeElement) {
-        hljs.highlightElement(codeElement)
-      }
+      // if (codeElement) {
+      //   hljs.highlightElement(codeElement)
+      // }
 
       // Don't leak memory
       delete this.exitingLinesCodeMirror[lineId]
@@ -203,10 +221,10 @@ export default class extends Controller {
       button.disabled = false
       button.querySelector('span').innerHTML = 'play_arrow'
 
-      const highlightTarget = document.querySelector('.language-sql:not(.hljs)')
+      // const highlightTarget = document.querySelector('.language-sql:not(.hljs)')
 
-      if (highlightTarget)
-        hljs.highlightElement(highlightTarget)
+      // if (highlightTarget)
+      //   hljs.highlightElement(highlightTarget)
     })
   }
 }
