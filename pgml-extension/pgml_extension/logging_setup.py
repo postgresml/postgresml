@@ -5,6 +5,7 @@ try:
 except:
     plpy = None
 
+
 class ListenFilter(logging.Filter):
     def filter(self, record):
         """Determine which log records to output.
@@ -15,7 +16,7 @@ class ListenFilter(logging.Filter):
 
 class RequestsHandler(logging.Handler):
     """Intercepts messages to python logging and forwards them on to plpy."""
-    
+
     def emit(self, record):
         """Send the log records to the appropriate destination."""
         if (record.levelno is None or record.levelno <= 10) and False:
@@ -28,6 +29,7 @@ class RequestsHandler(logging.Handler):
             plpy.error(record.getMessage())
         else:
             plpy.critical(record.getMessage())
+
 
 if plpy:
     # Let Postgres implement the log level

@@ -32,17 +32,15 @@ setuptools.setup(
         "sentencepiece",
         "sacremoses",
         "sacrebleu",
-        "rouge"
+        "rouge",
     ],
     extras_require={"dev": "pytest"},
     packages=setuptools.find_packages(exclude=("tests",)),
-    package_data={
-        'pgml_extension': ["sql/install/*.sql"]
-    },
+    package_data={"pgml_extension": ["sql/install/*.sql"]},
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.7", 
+    python_requires=">=3.7",
 )

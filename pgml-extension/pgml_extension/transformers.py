@@ -14,15 +14,15 @@ import os
 import string, re
 import shutil
 from transformers import (
-    AutoTokenizer, 
-    DataCollatorWithPadding, 
+    AutoTokenizer,
+    DataCollatorWithPadding,
     DefaultDataCollator,
     DataCollatorForSeq2Seq,
-    AutoModelForSequenceClassification, 
+    AutoModelForSequenceClassification,
     AutoModelForQuestionAnswering,
     AutoModelForSeq2SeqLM,
-    TrainingArguments, 
-    Trainer
+    TrainingArguments,
+    Trainer,
 )
 from sacrebleu.metrics import BLEU
 from rouge import Rouge
@@ -44,6 +44,7 @@ from .model import Project, Snapshot, Model as BaseModel
 
 _pipeline_cache = {}
 
+
 def transform(task, args, inputs):
     cache = args.pop("cache", True)
 
@@ -51,7 +52,7 @@ def transform(task, args, inputs):
     key = task
     if type(key) == dict:
         key = tuple(sorted(key.items()))
-    
+
     if cache and key in _pipeline_cache:
         pipe = _pipeline_cache.get(key)
     else:
@@ -62,17 +63,17 @@ def transform(task, args, inputs):
                 pipe = transformers.pipeline(**task)
             if cache:
                 _pipeline_cache[key] = pipe
-    
+
     if pipe.task == "question-answering":
         inputs = [json.loads(input) for input in inputs]
-    
+
     with timer("inference"):
         result = pipe(inputs, **args)
-    
+
     return result
 
-class Model(BaseModel):
 
+class Model(BaseModel):
     @property
     def algorithm(self):
         if self._algorithm is None:
@@ -82,10 +83,10 @@ class Model(BaseModel):
                 if not os.path.isdir(dir):
                     os.makedirs(dir)
                 if file["part"] == 0:
-                    with open(file["path"], mode='wb') as handle:
+                    with open(file["path"], mode="wb") as handle:
                         handle.write(file["data"])
                 else:
-                    with open(file["path"], mode='ab') as handle:
+                    with open(file["path"], mode="ab") as handle:
                         handle.write(file["data"])
 
             if os.path.exists(self.path):
@@ -97,7 +98,7 @@ class Model(BaseModel):
                 pipeline = transformers.pipeline(self.task)
                 self._algorithm = {
                     "tokenizer": pipeline.tokenizer,
-                    "model": pipeline.model, 
+                    "model": pipeline.model,
                 }
             elif self.project.task == "summarization":
                 self._algorithm = {
@@ -110,7 +111,7 @@ class Model(BaseModel):
                     "model": AutoModelForSequenceClassification.from_pretrained(source),
                 }
             elif self.project.task_type == "translation":
-                task = self.project.task.split('_')
+                task = self.project.task.split("_")
                 self._algorithm = {
                     "from": task[1],
                     "to": task[3],
@@ -122,7 +123,7 @@ class Model(BaseModel):
                     "tokenizer": AutoTokenizer.from_pretrained(source),
                     "model": AutoModelForQuestionAnswering.from_pretrained(source),
                 }
-            else: 
+            else:
                 raise PgMLException(f"unhandled task type: {self.project.task}")
 
         return self._algorithm
@@ -132,7 +133,9 @@ class Model(BaseModel):
 
         self._algorithm = {"tokenizer": AutoTokenizer.from_pretrained(self.algorithm_name)}
         if self.project.task == "text-classification":
-            self._algorithm["model"] = AutoModelForSequenceClassification.from_pretrained(self.algorithm_name, num_labels=2)
+            self._algorithm["model"] = AutoModelForSequenceClassification.from_pretrained(
+                self.algorithm_name, num_labels=2
+            )
             tokenized_dataset = self.tokenize_text_classification(dataset)
             data_collator = DefaultDataCollator()
         elif self.project.task == "question-answering":
@@ -148,7 +151,7 @@ class Model(BaseModel):
             tokenized_dataset = self.tokenize_summarization(dataset)
             data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model)
         elif self.project.task.startswith("translation"):
-            task = self.project.task.split('_')
+            task = self.project.task.split("_")
             if task[0] != "translation" and task[2] != "to":
                 raise PgMLException(f"unhandled translation task: {self.project.task}")
             self._algorithm["max_length"] = self.hyperparams.pop("max_length", None)
@@ -157,9 +160,9 @@ class Model(BaseModel):
             self._algorithm["model"] = AutoModelForSeq2SeqLM.from_pretrained(self.algorithm_name)
             tokenized_dataset = self.tokenize_translation(dataset)
             data_collator = DataCollatorForSeq2Seq(self.tokenizer, model=self.model, return_tensors="pt")
-        else: 
+        else:
             raise PgMLException(f"unhandled task type: {self.project.task}")
-       
+
         training_args = TrainingArguments(
             output_dir=self.path,
             **self.hyperparams,
@@ -173,11 +176,11 @@ class Model(BaseModel):
             tokenizer=self.tokenizer,
             data_collator=data_collator,
         )
-        
+
         trainer.train()
-        
+
         self.model.eval()
- 
+
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
@@ -201,7 +204,7 @@ class Model(BaseModel):
             path = os.path.join(self.path, filename)
             part = 0
             max_size = 100_000_000
-            with open(path, mode='rb') as file:
+            with open(path, mode="rb") as file:
                 while True:
                     data = file.read(max_size)
                     if not data:
@@ -219,8 +222,9 @@ class Model(BaseModel):
         feature = self.snapshot.feature_names[0]
         label = self.snapshot.y_column_name[0]
 
-        max_input_length = self.algorithm['max_input_length']
-        max_summary_length = self.algorithm['max_summary_length']
+        max_input_length = self.algorithm["max_input_length"]
+        max_summary_length = self.algorithm["max_summary_length"]
+
         def preprocess_function(examples):
             inputs = [doc for doc in examples[feature]]
             model_inputs = self.tokenizer(inputs, max_length=max_input_length, truncation=True)
@@ -230,20 +234,21 @@ class Model(BaseModel):
 
             model_inputs["labels"] = labels["input_ids"]
             return model_inputs
-        
+
         return dataset.map(preprocess_function, batched=True, remove_columns=dataset["train"].column_names)
 
     def tokenize_text_classification(self, dataset):
         # text classification only supports a single feature other than the label
         feature = self.snapshot.feature_names[0]
         tokenizer = self.tokenizer
+
         def preprocess_function(examples):
             return tokenizer(examples[feature], padding=True, truncation=True)
 
         return dataset.map(preprocess_function, batched=True)
 
     def tokenize_translation(self, dataset):
-        max_length = self.algorithm['max_length']
+        max_length = self.algorithm["max_length"]
 
         def preprocess_function(examples):
             inputs = [ex[self.algorithm["from"]] for ex in examples[self.snapshot.y_column_name[0]]]
@@ -259,16 +264,16 @@ class Model(BaseModel):
 
         return dataset.map(preprocess_function, batched=True, remove_columns=dataset["train"].column_names)
 
-
     def tokenize_question_answering(self, dataset):
         tokenizer = self._algorithm["tokenizer"]
+
         def preprocess_function(examples):
             questions = [q.strip() for q in examples["question"]]
             inputs = tokenizer(
                 questions,
                 examples["context"],
-                max_length=self.algorithm['max_length'],
-                stride=self.algorithm['stride'],
+                max_length=self.algorithm["max_length"],
+                stride=self.algorithm["stride"],
                 truncation="only_second",
                 return_offsets_mapping=True,
                 return_overflowing_tokens=True,
@@ -338,14 +343,14 @@ class Model(BaseModel):
 
         with torch.no_grad():
             for i in range(batches):
-                slice = dataset.select(range(i*batch_size, min((i+1)*batch_size, len(dataset))))
+                slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
                 inputs = slice[feature]
                 tokens = self.tokenizer.batch_encode_plus(
-                    inputs, 
-                    padding=True, 
-                    truncation=True, 
-                    return_tensors="pt",        
-                    return_token_type_ids=False, 
+                    inputs,
+                    padding=True,
+                    truncation=True,
+                    return_tensors="pt",
+                    return_token_type_ids=False,
                 ).to(self.model.device)
                 predictions = self.model.generate(**tokens)
                 decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
@@ -379,18 +384,18 @@ class Model(BaseModel):
 
         with torch.no_grad():
             for i in range(batches):
-                slice = dataset.select(range(i*batch_size, min((i+1)*batch_size, len(dataset))))
+                slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
                 tokens = self.tokenizer(slice[feature], padding=True, truncation=True, return_tensors="pt")
                 tokens.to(self.model.device)
                 result = self.model(**tokens).logits.to("cpu")
-                logits = torch.cat((logits, result), 0) 
+                logits = torch.cat((logits, result), 0)
 
         metrics = {}
 
         y_pred = logits.argmax(-1)
         y_prob = torch.nn.functional.softmax(logits, dim=-1)
         y_test = numpy.array(dataset[label]).flatten()
-        
+
         metrics["mean_squared_error"] = mean_squared_error(y_test, y_pred)
         metrics["r2"] = r2_score(y_test, y_pred)
         metrics["f1"] = f1_score(y_test, y_pred, average="weighted")
@@ -399,7 +404,7 @@ class Model(BaseModel):
         metrics["accuracy"] = accuracy_score(y_test, y_pred)
         metrics["log_loss"] = log_loss(y_test, y_prob)
         roc_auc_y_prob = y_prob
-        if y_prob.shape[1] == 2: # binary classification requires only the greater label by passed to roc_auc_score
+        if y_prob.shape[1] == 2:  # binary classification requires only the greater label by passed to roc_auc_score
             roc_auc_y_prob = y_prob[:, 1]
         metrics["roc_auc"] = roc_auc_score(y_test, roc_auc_y_prob, average="weighted", multi_class="ovo")
 
@@ -414,14 +419,14 @@ class Model(BaseModel):
 
         with torch.no_grad():
             for i in range(batches):
-                slice = dataset.select(range(i*batch_size, min((i+1)*batch_size, len(dataset))))
+                slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
                 inputs = [ex[self.algorithm["from"]] for ex in slice[self.snapshot.y_column_name[0]]]
                 tokens = self.tokenizer.batch_encode_plus(
-                    inputs, 
-                    padding=True, 
-                    truncation=True, 
-                    return_tensors="pt",        
-                    return_token_type_ids=False, 
+                    inputs,
+                    padding=True,
+                    truncation=True,
+                    return_tensors="pt",
+                    return_token_type_ids=False,
                 ).to(self.model.device)
                 predictions = self.model.generate(**tokens)
                 decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
@@ -445,13 +450,17 @@ class Model(BaseModel):
 
         with torch.no_grad():
             for i in range(batches):
-                slice = dataset.select(range(i*batch_size, min((i+1)*batch_size, len(dataset))))
-                tokens = self.algorithm["tokenizer"].encode_plus(slice["question"], slice["context"], return_tensors="pt")
+                slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
+                tokens = self.algorithm["tokenizer"].encode_plus(
+                    slice["question"], slice["context"], return_tensors="pt"
+                )
                 tokens.to(self.algorithm["model"].device)
                 outputs = self.algorithm["model"](**tokens)
                 answer_start = torch.argmax(outputs[0])
-                answer_end = torch.argmax(outputs[1]) + 1 
-                answer = self.algorithm["tokenizer"].convert_tokens_to_string(self.algorithm["tokenizer"].convert_ids_to_tokens(tokens['input_ids'][0][answer_start:answer_end]))
+                answer_end = torch.argmax(outputs[1]) + 1
+                answer = self.algorithm["tokenizer"].convert_tokens_to_string(
+                    self.algorithm["tokenizer"].convert_ids_to_tokens(tokens["input_ids"][0][answer_start:answer_end])
+                )
 
         def compute_exact_match(prediction, truth):
             return int(normalize_text(prediction) == normalize_text(truth))
@@ -459,36 +468,37 @@ class Model(BaseModel):
         def compute_f1(prediction, truth):
             pred_tokens = normalize_text(prediction).split()
             truth_tokens = normalize_text(truth).split()
-            
+
             # if either the prediction or the truth is no-answer then f1 = 1 if they agree, 0 otherwise
             if len(pred_tokens) == 0 or len(truth_tokens) == 0:
                 return int(pred_tokens == truth_tokens)
-            
+
             common_tokens = set(pred_tokens) & set(truth_tokens)
-            
+
             # if there are no common tokens then f1 = 0
             if len(common_tokens) == 0:
                 return 0
-            
+
             prec = len(common_tokens) / len(pred_tokens)
             rec = len(common_tokens) / len(truth_tokens)
-            
+
             return 2 * (prec * rec) / (prec + rec)
 
         def get_gold_answers(example):
             """helper function that retrieves all possible true answers from a squad2.0 example"""
-            
+
             gold_answers = [answer["text"] for answer in example.answers if answer["text"]]
 
-            # if gold_answers doesn't exist it's because this is a negative example - 
+            # if gold_answers doesn't exist it's because this is a negative example -
             # the only correct answer is an empty string
             if not gold_answers:
                 gold_answers = [""]
-                
+
             return gold_answers
+
         metrics = {}
         metrics["exact_match"] = 0
-        
+
         return metrics
 
     def predict(self, data: list):
@@ -497,7 +507,7 @@ class Model(BaseModel):
     def predict_proba(self, data: list):
         return torch.nn.functional.softmax(self.predict_logits(data), dim=-1).tolist()
 
-    def generate(self, data:list):
+    def generate(self, data: list):
         if self.project.task_type == "summarization":
             return self.generate_summarization(data)
         elif self.project.task_type == "translation":
@@ -509,7 +519,7 @@ class Model(BaseModel):
             return self.predict_logits_text_classification(data)
         elif self.project.task == "question-answering":
             return self.predict_logits_question_answering(data)
-        raise PgMLException(f"unhandled task: {self.project.task}")        
+        raise PgMLException(f"unhandled task: {self.project.task}")
 
     def predict_logits_text_classification(self, data: list):
         tokens = self.tokenizer(data, padding=True, truncation=True, return_tensors="pt")
@@ -520,14 +530,16 @@ class Model(BaseModel):
         question = [d["question"] for d in data]
         context = [d["context"] for d in data]
 
-        inputs = self.tokenizer.encode_plus(question, context, padding=True, truncation=True, return_tensors='pt')
+        inputs = self.tokenizer.encode_plus(question, context, padding=True, truncation=True, return_tensors="pt")
         with torch.no_grad():
             outputs = self.model(**inputs)
-        
-        answer_start = torch.argmax(outputs[0])  # get the most likely beginning of answer with the argmax of the score
-        answer_end = torch.argmax(outputs[1]) + 1 
 
-        answer = self.tokenizer.convert_tokens_to_string(self.tokenizer.convert_ids_to_tokens(inputs['input_ids'][0][answer_start:answer_end]))
+        answer_start = torch.argmax(outputs[0])  # get the most likely beginning of answer with the argmax of the score
+        answer_end = torch.argmax(outputs[1]) + 1
+
+        answer = self.tokenizer.convert_tokens_to_string(
+            self.tokenizer.convert_ids_to_tokens(inputs["input_ids"][0][answer_start:answer_end])
+        )
 
         return answer
 
@@ -540,13 +552,13 @@ class Model(BaseModel):
         with torch.no_grad():
             for i in range(batches):
                 start = i * batch_size
-                end = min((i+1) * batch_size, len(data))
+                end = min((i + 1) * batch_size, len(data))
                 tokens = self.tokenizer.batch_encode_plus(
-                    data[start:end], 
-                    padding=True, 
-                    truncation=True, 
-                    return_tensors="pt",        
-                    return_token_type_ids=False, 
+                    data[start:end],
+                    padding=True,
+                    truncation=True,
+                    return_tensors="pt",
+                    return_token_type_ids=False,
                 ).to(self.model.device)
                 predictions = self.model.generate(**tokens)
                 decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
@@ -562,13 +574,13 @@ class Model(BaseModel):
         with torch.no_grad():
             for i in range(batches):
                 start = i * batch_size
-                end = min((i+1) * batch_size, len(data))
+                end = min((i + 1) * batch_size, len(data))
                 tokens = self.tokenizer.batch_encode_plus(
-                    data[start:end], 
-                    padding=True, 
-                    truncation=True, 
-                    return_tensors="pt",        
-                    return_token_type_ids=False, 
+                    data[start:end],
+                    padding=True,
+                    truncation=True,
+                    return_tensors="pt",
+                    return_token_type_ids=False,
                 ).to(self.model.device)
                 predictions = self.model.generate(**tokens)
                 decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
@@ -582,6 +594,7 @@ class Model(BaseModel):
     @property
     def model(self):
         return self.algorithm["model"]
+
 
 def tune(
     project_name: str,
@@ -623,9 +636,7 @@ def tune(
 
     # Model
     if model_name is None:
-        raise PgMLException(
-            f"You must pass a `model_name` to fine tune."
-        )
+        raise PgMLException(f"You must pass a `model_name` to fine tune.")
 
     model = Model.create(project, snapshot, model_name, hyperparams, search, search_params, search_args)
     model.fit(snapshot)
@@ -639,4 +650,3 @@ def tune(
         return "deployed"
     else:
         return "not deployed"
-

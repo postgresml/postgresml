@@ -56,43 +56,43 @@ _POSTGRES_TO_PANDAS_TYPE_MAP = {
     "date": "date32",
     "time without time zone": "time64",
     "time with time zone": "time64",
-    "jsonb": "string"
+    "jsonb": "string",
 }
 _PYTHON_TO_PANDAS_TYPE_MAP = {
-    str: 'string',
-    int: 'int32',
-    float: 'float32',
-    bool: 'boolean',
+    str: "string",
+    int: "int32",
+    float: "float32",
+    bool: "boolean",
 }
 _DISCRETE_NUMERIC_TYPES = {
     "boolean",
-    "character", 
-    "smallint", 
-    "small_serial", 
-    "integer", 
-    "serial", 
-    "bigint", 
+    "character",
+    "smallint",
+    "small_serial",
+    "integer",
+    "serial",
+    "bigint",
     "bigserial",
 }
 _TEXT_TYPES = {
-    "character varying", 
-    "text", 
+    "character varying",
+    "text",
 }
 _DEFAULT_KEY_METRIC_MAP = {
-    'regression': 'r2',
-    'classification': 'f1',
-    'text-classification': 'f1',
-    'question-answering': 'f1',
-    'translation': 'blue',
-    'summarization': 'rouge_ngram_f1',
+    "regression": "r2",
+    "classification": "f1",
+    "text-classification": "f1",
+    "question-answering": "f1",
+    "translation": "blue",
+    "summarization": "rouge_ngram_f1",
 }
 _DEFAULT_HYPERPARAM_SCORE_MAP = {
-    'regression': 'r2',
-    'classification': 'f1_micro',
-    'text-classification': 'f1_micro',
-    'question-answering': 'f1_micro',
-    'translation': 'blue',
-    'summarization': 'rouge_ngram_f1',
+    "regression": "r2",
+    "classification": "f1_micro",
+    "text-classification": "f1_micro",
+    "question-answering": "f1_micro",
+    "translation": "blue",
+    "summarization": "rouge_ngram_f1",
 }
 _ALGORITHM_MAP = {
     "linear_regression": sklearn.linear_model.LinearRegression,
@@ -145,6 +145,8 @@ _ALGORITHM_MAP = {
 }
 
 _project_cache = {}
+_last_deploy_id = None
+
 
 class Project(object):
     """
@@ -188,7 +190,7 @@ class Project(object):
         return project
 
     @classmethod
-    def find_by_name(cls, name: str):
+    def find_by_name(cls, name: str, last_deploy_id: int = None):
         """
         Get a Project from the database by name.
 
@@ -200,6 +202,12 @@ class Project(object):
         Returns:
             Project or None: instantiated from the database if found
         """
+        global _project_cache, _last_deploy_id
+
+        if last_deploy_id is not None and _last_deploy_id != last_deploy_id:
+            _project_cache = {}
+            _last_deploy_id = last_deploy_id
+
         project = _project_cache.get(name)
         if project is None:
             result = plpy.execute(
@@ -280,6 +288,7 @@ class Project(object):
         if self.task.startswith("translation"):
             return "translation"
         return self.task
+
 
 class Snapshot(object):
     """
@@ -511,10 +520,10 @@ class Snapshot(object):
         # parse jsonb columns
         for i, pg_type in enumerate(data.coltypes()):
             col = data.colnames()[i]
-            if pg_type == 3802: # jsonb
+            if pg_type == 3802:  # jsonb
                 for row in data:
                     row[col] = json.loads(row[col])
-        
+
         # Datasets are constructed from DataFrames
         dataframe = pandas.DataFrame.from_records(data)
         if self.test_sampling == "first":
@@ -530,7 +539,7 @@ class Snapshot(object):
                         features[name] = datasets.Sequence(
                             {k: datasets.Value(_PYTHON_TO_PANDAS_TYPE_MAP[type(v[0])]) for k, v in value.items()}
                         )
-                    elif name == 'translation':
+                    elif name == "translation":
                         features[name] = datasets.Translation(languages=list(value.keys()))
                     else:
                         raise PgMLException(f"Unhandled json dict: {value}")
@@ -556,34 +565,39 @@ class Snapshot(object):
             test_size = int(test_size)
         train, test = train_test_split(dataframe, test_size=test_size, shuffle=False)
 
-        return DatasetDict({
-            "train": Dataset.from_pandas(train, features=features, preserve_index=False),
-            "test": Dataset.from_pandas(test, features=features, preserve_index=False)
-        })
+        return DatasetDict(
+            {
+                "train": Dataset.from_pandas(train, features=features, preserve_index=False),
+                "test": Dataset.from_pandas(test, features=features, preserve_index=False),
+            }
+        )
 
     @property
     def features(self):
         if self._features:
             return self._features
 
-        result = plpy.execute(f"""
+        result = plpy.execute(
+            f"""
             SELECT column_name, data_type
             FROM information_schema.columns
             WHERE table_schema = 'pgml'
                 AND table_name = 'snapshot_{self.id}'
             ORDER BY ordinal_position ASC
-        """)
+        """
+        )
 
         features = OrderedDict()
         for row in result:
             features[row["column_name"]] = row["data_type"]
 
         self._features = features
-        return self._features    
+        return self._features
 
     @property
     def feature_names(self):
         return list(filter(lambda x: x not in self.y_column_name, self.features))
+
 
 class Model(object):
     """Models use an algorithm on a snapshot of data to record the parameters learned.
@@ -665,6 +679,7 @@ class Model(object):
         else:
             # avoid circular dependency by importing after this module is completely initialized
             from . import transformers
+
             model = transformers.Model()
 
         model.__dict__ = dict(result[0])
@@ -802,7 +817,9 @@ class Model(object):
     @property
     def algorithm(self):
         if self._algorithm is None:
-            files = plpy.execute(f"SELECT * FROM pgml.files WHERE model_id = {self.id} AND path = '{self.pickle_path}' LIMIT 1")
+            files = plpy.execute(
+                f"SELECT * FROM pgml.files WHERE model_id = {self.id} AND path = '{self.pickle_path}' LIMIT 1"
+            )
             if len(files) > 0:
                 self._algorithm = pickle.loads(files[0]["data"])
             else:
@@ -862,11 +879,13 @@ class Model(object):
             if y_prob is not None:
                 metrics["log_loss"] = log_loss(y_test, y_prob)
                 roc_auc_y_prob = y_prob
-                if y_prob.shape[1] == 2: # binary classification requires only the greater label by passed to roc_auc_score
+                if (
+                    y_prob.shape[1] == 2
+                ):  # binary classification requires only the greater label by passed to roc_auc_score
                     roc_auc_y_prob = y_prob[:, 1]
                 metrics["roc_auc"] = roc_auc_score(y_test, roc_auc_y_prob, average="weighted", multi_class="ovo")
 
-        self.metrics = metrics        
+        self.metrics = metrics
 
         # Save the results
         plpy.execute(
@@ -916,10 +935,43 @@ class Model(object):
     def deploy(self, strategy):
         """Promote this model to the active version for the project that will be used for predictions"""
 
-        plpy.execute(
-            f"""
+        deployment_id = dict(
+            plpy.execute(
+                f"""
             INSERT INTO pgml.deployments (project_id, model_id, strategy, created_at) 
             VALUES ({q(self.project_id)}, {q(self.id)}, {q(strategy)}, clock_timestamp())
+            RETURNING id
+        """
+            )[0]
+        )["id"]
+
+        plpy.execute(
+            f"""
+        CREATE OR REPLACE FUNCTION pgml.predict(
+            project_name TEXT,          -- Human-friendly project name
+            features DOUBLE PRECISION[] -- Must match the training data column order
+        )
+        RETURNS DOUBLE PRECISION
+        AS $$
+            from pgml_extension.model import Project
+
+            return float(Project.find_by_name(project_name, {q(deployment_id)}).deployed_model.predict(features))
+        $$ LANGUAGE plpython3u;
+        """
+        )
+
+        plpy.execute(
+            f"""
+        CREATE OR REPLACE FUNCTION pgml.predict_joint(
+            project_name TEXT,          -- Human-friendly project name
+            features DOUBLE PRECISION[] -- Must match the training data column order
+        )
+        RETURNS DOUBLE PRECISION[]
+        AS $$
+            from pgml_extension.model import Project
+
+            return Project.find_by_name(project_name, {q(deployment_id)}).deployed_model.predict(features)
+        $$ LANGUAGE plpython3u;
         """
         )
 
