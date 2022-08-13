@@ -1,7 +1,13 @@
 {% extends "notebooks/base.html" %}
 {% block main %}
 <section class="markdown-body">
-  <h1>{{ notebook.name }}</h1>
+  <div>
+    <h1 data-action="click->notebook#renameNotebook" data-notebook-target="notebookName">{{ notebook.name }}</h1>
+    <form class="hidden" action="{% url 'notebooks/rename' notebook.pk %}" method="post" data-notebook-target="renameNotebookForm">
+      {% csrf_token %}
+      <h1><input type="text" name="name" value="{{ notebook.name }}" required></h1>
+    </form>
+  </div>
 </section>
 <div data-notebook-target="lines">
 {% for line in lines %}
@@ -9,7 +15,7 @@
 {% endfor %}
 </div>
 <div class="notebook-line active">
-  <form action="{% url 'notebooks/line/add' notebook.pk %}" method="post" data-action="submit->notebook#addLine">
+  <form action="{% url 'notebooks/line/add' notebook.pk %}" method="post" data-action="submit->notebook#addLine" data-notebook-target="newLineForm">
     <div class="flex">
       {% csrf_token %}
       <div class="notebook-line-code flex-grow">

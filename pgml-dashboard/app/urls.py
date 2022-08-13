@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework import routers
 
-from app.views import root, projects, models, snapshots, deployments, ide
+from app.views import root, projects, models, snapshots, deployments, ide, notebooks
 
 router = routers.DefaultRouter()
 router.register("projects", projects.ProjectViewSet)
@@ -15,6 +15,7 @@ html_router.register("snapshots/analysis", snapshots.SnapshotAnalysisView, basen
 
 urlpatterns = [
     path("", root.index, name="index"),
+    path("nb/", notebooks.index, name="notebooks"),
     path("deployments/", deployments.index, name="deployments"),
     path("deployments/<int:id>", deployments.deployment, name="deployment"),
     path("models/", models.ModelListView.as_view(), name="models"),

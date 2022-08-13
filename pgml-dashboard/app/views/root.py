@@ -6,8 +6,8 @@ from app import models
 
 
 def index(request):
-    projects = models.Project.objects.all()
-    return render(request, "projects/index.html", {"title": "Projects", "projects": projects})
+    """Root of the dashboard."""
+    return HttpResponseRedirect(reverse("notebooks"))
 
 
 def set_auth_cookie(request):

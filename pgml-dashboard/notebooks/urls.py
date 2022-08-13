@@ -8,11 +8,13 @@ from notebooks.views import (
     edit_notebook_line,
     undo_remove_notebook_line,
     create_notebook,
+    rename_notebook,
 )
 
 urlpatterns = [
     path("notebook/<int:pk>/", notebook, name="notebooks/notebook"),
     path("create/", create_notebook, name="notebooks/create"),
+    path("notebook/<int:pk>/rename/", rename_notebook, name="notebooks/rename"),
     path("notebook/<int:pk>/line/add/", add_notebook_line, name="notebooks/line/add"),
     path("notebook/<int:notebook_pk>/line/<int:line_pk>/", notebook_line, name="notebooks/line/get"),
     path("notebook/<int:notebook_pk>/line/<int:line_pk>/edit/", edit_notebook_line, name="notebooks/line/edit"),
