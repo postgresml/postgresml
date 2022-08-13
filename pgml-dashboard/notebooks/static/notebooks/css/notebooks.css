@@ -57,7 +57,7 @@ footer, header, hgroup, menu, nav, section {
 }
 body {
   line-height: 1;
-    min-height: 100vh;
+  /*min-height: 100vh;*/
 }
 blockquote, q {
   quotes: none;
@@ -1022,7 +1022,7 @@ q:before, q:after {
  * Our custom styles
  */
 .container {
-  margin: 2rem;
+  margin: 1rem 2rem;
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
 }
 
@@ -1106,4 +1106,11 @@ nav ol, nav ul {
   background: var(--gray-8);
   border: 1px solid var(--gray-7);
   padding: 0.7rem 1rem;
+}
+
+/*
+ * Customize editor
+ */
+.CodeMirror {
+  font-size: 1rem;
 }

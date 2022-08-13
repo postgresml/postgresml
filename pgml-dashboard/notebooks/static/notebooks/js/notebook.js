@@ -6,17 +6,30 @@ export default class extends Controller {
     'newLineCode',
     'lines',
     'existingLine',
+    'renameNotebookForm',
+    'notebookName',
+    'newLineForm',
   ];
 
   connect() {
     this.newLineCodeMirror = CodeMirror.fromTextArea(this.newLineCodeTarget, {
       lineWrapping: true,
       matchBrackets: true,
-      mode: "gfm", // Github markdown
+      mode: 'gfm', // Github markdown
+      scrollbarStyle: 'null',
     })
 
-    this.newLineCodeMirror.setSize('100%', 100)
-    this.newLineCodeMirror.on("change", () => this.detectSql(this.newLineCodeMirror))
+    this.newLineCodeMirror.setSize('100%', 250)
+    this.newLineCodeMirror.on('change', () => this.detectSql(this.newLineCodeMirror))
+
+    const keyMap = {
+      'Ctrl-Enter': () => this.newLineFormTarget.requestSubmit(),
+      'Cmd-Enter': () => this.newLineFormTarget.requestSubmit(),
+      'Ctrl-/': () => this.newLineCodeMirror.execCommand('toggleComment'),
+      'Cmd-/': () => this.newLineCodeMirror.execCommand('toggleComment'),
+    };
+
+    this.newLineCodeMirror.addKeyMap(keyMap)
 
     this.exitingLinesCodeMirror = {}
     this.deleteTimeouts = {}
@@ -26,14 +39,26 @@ export default class extends Controller {
   }
 
   initCodeMirrorOnTarget(target) {
+    const lineId = target.dataset.lineId
+
     const codeMirror = CodeMirror.fromTextArea(target, {
       lineWrapping: true,
       matchBrackets: true,
-      mode: "gfm",
+      mode: 'gfm',
+      scrollbarStyle: 'null',
     })
 
-    codeMirror.setSize('100%', 100)
-    codeMirror.on("change", () => this.detectSql(codeMirror))
+    codeMirror.setSize('100%', 250)
+    codeMirror.on('change', () => this.detectSql(codeMirror))
+
+    const keyMap = {
+      'Ctrl-Enter': () => document.getElementById(`edit-line-form-${lineId}`).requestSubmit(),
+      'Cmd-Enter': () => document.getElementById(`edit-line-form-${lineId}`).requestSubmit(),
+      'Ctrl-/': () => codeMirror.execCommand('toggleComment'),
+      'Cmd-/': () => codeMirror.execCommand('toggleComment'),
+    };
+
+    codeMirror.addKeyMap(keyMap)
 
     // Has value already?
     this.detectSql(codeMirror)
@@ -41,13 +66,18 @@ export default class extends Controller {
     this.exitingLinesCodeMirror[target.dataset.lineId] = codeMirror
   }
 
+  renameNotebook(event) {
+    this.renameNotebookFormTarget.classList.remove('hidden')
+    this.notebookNameTarget.classList.add('hidden')
+  }
+
   detectSql(codeMirror) {
     const value = codeMirror.getValue()
 
     if (value.startsWith('%%sql'))
-      codeMirror.setOption("mode", "sql")
+      codeMirror.setOption('mode', 'sql')
     else
-      codeMirror.setOption("mode", "gfm")
+      codeMirror.setOption('mode', 'gfm')
   }
 
   enableEdit(event) {

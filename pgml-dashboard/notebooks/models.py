@@ -10,7 +10,7 @@ import markdown
 class Notebook(models.Model):
     """A notebook: collection of code, markdown, text to describe an experiment."""
 
-    name = models.CharField(max_length=256, unique=True)
+    name = models.CharField(max_length=256)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -95,7 +95,7 @@ class NotebookLine(models.Model):
             self.save()
 
         elif self.line_type == NotebookLine.MARKDOWN:
-            rendering = markdown.markdown(self.contents, extensions=["fenced_code"])
+            rendering = markdown.markdown(self.contents, extensions=["extra"])
 
             self.rendering = '<article class="markdown-body">' + rendering + "</article>"
             self.save()

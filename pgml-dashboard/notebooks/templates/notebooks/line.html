@@ -1,7 +1,7 @@
 <div class="notebook-line {{ line.get_line_type_display|lower }}" id="line-{{ line.pk }}" data-line-id="{{ line.pk }}">
   <!-- Edit -->
   <div class="hidden notebook-line-edit">
-    <form action="{% url 'notebooks/line/edit' notebook.pk line.pk %}" method="post" data-action="submit->notebook#editLine" data-line-id="{{ line.pk }}">
+    <form action="{% url 'notebooks/line/edit' notebook.pk line.pk %}" method="post" data-action="submit->notebook#editLine" data-line-id="{{ line.pk }}" id="edit-line-form-{{ line.pk }}">
       <div class="flex">
         {% csrf_token %}
         <div class="notebook-line-code flex-grow">
