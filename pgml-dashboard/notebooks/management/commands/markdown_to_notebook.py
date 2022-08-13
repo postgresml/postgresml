@@ -28,9 +28,7 @@ def command(path, name):
                     notebook=notebook,
                     line_number=line_number,
                 )
-
                 line_number += 1
-
                 cell.clear()
             # Code ends
             elif line.startswith("```"):
@@ -40,6 +38,7 @@ def command(path, name):
                     line_number=line_number,
                     notebook=notebook,
                 )
+                line_number += 1
                 cell.clear()
             # Markdown text
             else:
