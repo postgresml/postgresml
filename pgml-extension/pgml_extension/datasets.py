@@ -15,6 +15,7 @@ _PYTHON_TO_PG_MAP = {
     dict: "JSONB",
 }
 
+
 def load(source: str, subset: None, limit: None, **kwargs):
     if source == "diabetes":
         load_diabetes()
@@ -35,6 +36,7 @@ def load(source: str, subset: None, limit: None, **kwargs):
 
     return "OK"
 
+
 def load_dataset(name, subset, limit: None, **kwargs):
     if limit:
         dataset = datasets.load_dataset(name, subset, split=f"train[:{limit}]", **kwargs)
@@ -52,21 +54,20 @@ def load_dataset(name, subset, limit: None, **kwargs):
     for key, value in sample.items():
         column = c(key)
         columns[column] = _PYTHON_TO_PG_MAP[type(value)]
-    
+
     table_name = f"pgml.{c(name)}"
     plpy.execute(f"DROP TABLE IF EXISTS {table_name}")
-    plpy.execute(
-        f"""CREATE TABLE {table_name} ({", ".join([f"{name} {type}" for name, type in columns.items()])})"""
-    )
+    plpy.execute(f"""CREATE TABLE {table_name} ({", ".join([f"{name} {type}" for name, type in columns.items()])})""")
 
     if isinstance(dataset, datasets.Dataset):
         load_dataset_rows(dataset, table_name)
     elif isinstance(dataset, datasets.DatasetDict):
         for name, rows in dataset.items():
             if name == "unsupervised":
-                # postgresml doesn't provide unsupervised learning methods 
+                # postgresml doesn't provide unsupervised learning methods
                 continue
             load_dataset_rows(rows, table_name)
+
 
 def load_dataset_rows(rows, table_name):
     for row in rows:
@@ -74,6 +75,7 @@ def load_dataset_rows(rows, table_name):
             f"""INSERT INTO {table_name} ({", ".join([c(v) for v in row.keys()])}) 
             VALUES ({", ".join([q(v) for v in row.values()])})"""
         )
+
 
 def load_diabetes():
     result = plpy.execute(

@@ -22,6 +22,7 @@ def q(obj):
 
     raise PgMLException(f"Unhandled postgres type: {type(obj)}")
 
+
 def c(column_name):
     if column_name[0] == '"' and column_name[-1] == '"':
         return column_name

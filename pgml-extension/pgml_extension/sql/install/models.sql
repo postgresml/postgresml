@@ -161,7 +161,7 @@ RETURNS DOUBLE PRECISION
 AS $$
 	from pgml_extension.model import Project
 
-	return float(Project.find_by_name(project_name).deployed_model.predict(features))
+	return float(Project.find_by_name(project_name, 0).deployed_model.predict(features))
 $$ LANGUAGE plpython3u;
 
 
@@ -176,7 +176,7 @@ RETURNS DOUBLE PRECISION[]
 AS $$
 	from pgml_extension.model import Project
 
-	return Project.find_by_name(project_name).deployed_model.predict(features)
+	return Project.find_by_name(project_name, 0).deployed_model.predict(features)
 $$ LANGUAGE plpython3u;
 
 
