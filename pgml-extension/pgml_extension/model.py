@@ -205,7 +205,8 @@ class Project(object):
         global _project_cache, _last_deploy_id
 
         if last_deploy_id is not None and _last_deploy_id != last_deploy_id:
-            _project_cache = {}
+            for project in _project_cache.values():
+                project.expire_cached_deployed_model()
             _last_deploy_id = last_deploy_id
 
         project = _project_cache.get(name)
@@ -264,6 +265,22 @@ class Project(object):
         if self._deployed_model is None:
             self._deployed_model = Model.find_deployed(self)
         return self._deployed_model
+
+    def expire_cached_deployed_model(self):
+        result = plpy.execute(
+            f"""
+            SELECT deployments.model_id 
+            FROM pgml.deployments 
+            WHERE deployments.project_id = {q(self.id)}
+            ORDER by deployments.created_at DESC
+            LIMIT 1
+        """
+        )
+        if len(result) == 0:
+            return
+
+        if self._deployed_model and self._deployed_model.id != result[0]["model_id"]:
+            self._deployed_model = None
 
     def deploy(self, qualifier="best_score", algorithm_name=None):
         model = Model.find_by_project_and_qualifier_algorithm_name(self, qualifier, algorithm_name)
