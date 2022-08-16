@@ -66,6 +66,18 @@ def notebook_cell(request, notebook_pk, cell_pk):
 
 class NotebookCellForm(forms.Form):
     contents = forms.CharField(required=False)
+    cell_type = forms.ChoiceField(
+        required=True,         
+        choices=(
+            (
+                NotebookCell.MARKDOWN,
+                "Markdown",
+            ),
+            (
+                NotebookCell.SQL,
+                "SQL",
+            ),
+        ))
 
 
 @transaction.atomic
@@ -78,7 +90,7 @@ def add_notebook_cell(request, pk):
     if cell_form.is_valid():
         contents = cell_form.cleaned_data["contents"].strip()
 
-        if contents.startswith(r"%%sql"):
+        if cell_form.cleaned_data["cell_type"] == str(NotebookCell.SQL):
             cell_type = NotebookCell.SQL
         else:
             cell_type = NotebookCell.MARKDOWN
@@ -106,7 +118,7 @@ def edit_notebook_cell(request, notebook_pk, cell_pk):
     if cell_form.is_valid():
         contents = cell_form.cleaned_data["contents"].strip()
 
-        if contents.startswith(r"%%sql"):
+        if cell_form.cleaned_data["cell_type"] == str(NotebookCell.SQL):
             cell_type = NotebookCell.SQL
         else:
             cell_type = NotebookCell.MARKDOWN

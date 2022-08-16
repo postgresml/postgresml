@@ -1097,6 +1097,15 @@ nav ol, nav ul {
   margin-left: 1rem;
 }
 
+.notebook-cell select {
+  font-weight: bold;
+  background: rgb(240, 240, 240);
+  border: 1px solid var(--gray-4);
+  padding: 7px 6px;
+  border-radius: 2px;
+  margin-bottom: 2px;
+}
+
 .notebook-duration {
   margin-top: 1rem;
 }
