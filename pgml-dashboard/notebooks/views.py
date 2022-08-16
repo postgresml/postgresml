@@ -16,7 +16,7 @@ def notebook(request, pk):
         request,
         "notebooks/notebook.html",
         {
-            "lines": notebook.notebookline_set.all().filter(deleted_at__isnull=True).order_by("line_number"),
+            "cells": notebook.notebookcell_set.all().filter(deleted_at__isnull=True).order_by("cell_number"),
             "notebook": notebook,
         },
     )
@@ -49,82 +49,82 @@ def rename_notebook(request, pk):
         return HttpResponse(status=400)
 
 
-def notebook_line(request, notebook_pk, line_pk):
-    """Render a single notebook line."""
+def notebook_cell(request, notebook_pk, cell_pk):
+    """Render a single notebook cell."""
     notebook = get_object_or_404(Notebook, pk=notebook_pk)
-    line = get_object_or_404(NotebookLine, pk=line_pk)
+    cell = get_object_or_404(NotebookCell, pk=cell_pk)
 
     return render(
         request,
-        "notebooks/line.html",
+        "notebooks/cell.html",
         {
-            "line": line,
-            "notebook": line.notebook,
+            "cell": cell,
+            "notebook": cell.notebook,
         },
     )
 
 
-class NotebookLineForm(forms.Form):
+class NotebookCellForm(forms.Form):
     contents = forms.CharField(required=False)
 
 
 @transaction.atomic
-def add_notebook_line(request, pk):
-    """Add a new notebook line."""
+def add_notebook_cell(request, pk):
+    """Add a new notebook cell."""
     notebook = Notebook.objects.select_for_update().get(pk=pk)
-    line_form = NotebookLineForm(request.POST)
-    last_line = NotebookLine.objects.filter(notebook=notebook, deleted_at__isnull=True).order_by("line_number").last()
+    cell_form = NotebookCellForm(request.POST)
+    last_cell = NotebookCell.objects.filter(notebook=notebook, deleted_at__isnull=True).order_by("cell_number").last()
 
-    if line_form.is_valid():
-        contents = line_form.cleaned_data["contents"].strip()
+    if cell_form.is_valid():
+        contents = cell_form.cleaned_data["contents"].strip()
 
         if contents.startswith(r"%%sql"):
-            line_type = NotebookLine.SQL
+            cell_type = NotebookCell.SQL
         else:
-            line_type = NotebookLine.MARKDOWN
+            cell_type = NotebookCell.MARKDOWN
 
-        line = NotebookLine.objects.create(
+        cell = NotebookCell.objects.create(
             notebook=notebook,
             contents=contents,
-            line_number=(last_line.line_number + 1 if last_line else 1),
-            line_type=line_type,
+            cell_number=(last_cell.cell_number + 1 if last_cell else 1),
+            cell_type=cell_type,
         )
 
         return HttpResponseRedirect(
-            reverse_lazy("notebooks/line/get", kwargs={"notebook_pk": notebook.pk, "line_pk": line.pk})
+            reverse_lazy("notebooks/cell/get", kwargs={"notebook_pk": notebook.pk, "cell_pk": cell.pk})
         )
     else:
-        print(line_form.errors)
-        return HttpResponse(line_form.errors, status=400)
+        print(cell_form.errors)
+        return HttpResponse(cell_form.errors, status=400)
 
 
-def edit_notebook_line(request, notebook_pk, line_pk):
+def edit_notebook_cell(request, notebook_pk, cell_pk):
     notebook = get_object_or_404(Notebook, pk=notebook_pk)
-    old_line = get_object_or_404(NotebookLine, pk=line_pk)
-    line_form = NotebookLineForm(request.POST)
+    old_cell = get_object_or_404(NotebookCell, pk=cell_pk)
+    cell_form = NotebookCellForm(request.POST)
 
-    if line_form.is_valid():
-        contents = line_form.cleaned_data["contents"].strip()
+    if cell_form.is_valid():
+        contents = cell_form.cleaned_data["contents"].strip()
 
         if contents.startswith(r"%%sql"):
-            line_type = NotebookLine.SQL
+            cell_type = NotebookCell.SQL
         else:
-            line_type = NotebookLine.MARKDOWN
+            cell_type = NotebookCell.MARKDOWN
 
         with transaction.atomic():
-            new_line = NotebookLine.objects.create(
+            new_cell = NotebookCell.objects.create(
                 notebook=notebook,
                 contents=contents,
-                version=old_line.version + 1,
-                line_number=old_line.line_number,
-                line_type=line_type,
+                version=old_cell.version + 1,
+                cell_number=old_cell.cell_number,
+                cell_type=cell_type,
             )
-            old_line.delete()
+            old_cell.delete()
         return render(
             request,
-            "notebooks/line.html",
+            "notebooks/cell.html",
             {
-                "line": new_line,
+                "cell": new_cell,
                 "notebook": notebook,
             },
         )
@@ -133,31 +133,31 @@ def edit_notebook_line(request, notebook_pk, line_pk):
 
 
 @transaction.atomic
-def remove_notebook_line(request, notebook_pk, line_pk):
-    line = get_object_or_404(NotebookLine, pk=line_pk, notebook__pk=notebook_pk)
-    line.deleted_at = timezone.now()
-    line.save()
+def remove_notebook_cell(request, notebook_pk, cell_pk):
+    cell = get_object_or_404(NotebookCell, pk=cell_pk, notebook__pk=notebook_pk)
+    cell.deleted_at = timezone.now()
+    cell.save()
 
     return render(
         request,
         "notebooks/undo.html",
         {
-            "line": line,
-            "notebook": line.notebook,
+            "cell": cell,
+            "notebook": cell.notebook,
         },
     )
 
 
-def undo_remove_notebook_line(request, notebook_pk, line_pk):
-    line = get_object_or_404(NotebookLine, pk=line_pk, notebook__pk=notebook_pk)
-    line.deleted_at = None
-    line.save()
+def undo_remove_notebook_cell(request, notebook_pk, cell_pk):
+    cell = get_object_or_404(NotebookCell, pk=cell_pk, notebook__pk=notebook_pk)
+    cell.deleted_at = None
+    cell.save()
 
     return render(
         request,
-        "notebooks/line.html",
+        "notebooks/cell.html",
         {
-            "line": line,
-            "notebook": line.notebook,
+            "cell": cell,
+            "notebook": cell.notebook,
         },
     )

@@ -3,35 +3,35 @@ import hljs from  '@highlight'
 
 export default class extends Controller {
   static targets = [
-    'newLineCode',
-    'lines',
-    'existingLine',
+    'newCellCode',
+    'cells',
+    'existingCell',
     'renameNotebookForm',
     'notebookName',
-    'newLineForm',
+    'newCellForm',
   ];
 
   connect() {
-    this.newLineCodeMirror = CodeMirror.fromTextArea(this.newLineCodeTarget, {
+    this.newCellCodeMirror = CodeMirror.fromTextArea(this.newCellCodeTarget, {
       lineWrapping: true,
       matchBrackets: true,
       mode: 'gfm', // Github markdown
       scrollbarStyle: 'null',
     })
 
-    this.newLineCodeMirror.setSize('100%', 250)
-    this.newLineCodeMirror.on('change', () => this.detectSql(this.newLineCodeMirror))
+    this.newCellCodeMirror.setSize('100%', 250)
+    this.newCellCodeMirror.on('change', () => this.detectSql(this.newCellCodeMirror))
 
     const keyMap = {
-      'Ctrl-Enter': () => this.newLineFormTarget.requestSubmit(),
-      'Cmd-Enter': () => this.newLineFormTarget.requestSubmit(),
-      'Ctrl-/': () => this.newLineCodeMirror.execCommand('toggleComment'),
-      'Cmd-/': () => this.newLineCodeMirror.execCommand('toggleComment'),
+      'Ctrl-Enter': () => this.newCellFormTarget.requestSubmit(),
+      'Cmd-Enter': () => this.newCellFormTarget.requestSubmit(),
+      'Ctrl-/': () => this.newCellCodeMirror.execCommand('toggleComment'),
+      'Cmd-/': () => this.newCellCodeMirror.execCommand('toggleComment'),
     };
 
-    this.newLineCodeMirror.addKeyMap(keyMap)
+    this.newCellCodeMirror.addKeyMap(keyMap)
 
-    this.exitingLinesCodeMirror = {}
+    this.exitingCellsCodeMirror = {}
     this.deleteTimeouts = {}
 
     // Highlight all existing code segments
@@ -39,7 +39,7 @@ export default class extends Controller {
   }
 
   initCodeMirrorOnTarget(target) {
-    const lineId = target.dataset.lineId
+    const cellId = target.dataset.cellId
 
     const codeMirror = CodeMirror.fromTextArea(target, {
       lineWrapping: true,
@@ -52,8 +52,8 @@ export default class extends Controller {
     codeMirror.on('change', () => this.detectSql(codeMirror))
 
     const keyMap = {
-      'Ctrl-Enter': () => document.getElementById(`edit-line-form-${lineId}`).requestSubmit(),
-      'Cmd-Enter': () => document.getElementById(`edit-line-form-${lineId}`).requestSubmit(),
+      'Ctrl-Enter': () => document.getElementById(`edit-cell-form-${cellId}`).requestSubmit(),
+      'Cmd-Enter': () => document.getElementById(`edit-cell-form-${cellId}`).requestSubmit(),
       'Ctrl-/': () => codeMirror.execCommand('toggleComment'),
       'Cmd-/': () => codeMirror.execCommand('toggleComment'),
     };
@@ -63,7 +63,7 @@ export default class extends Controller {
     // Has value already?
     this.detectSql(codeMirror)
 
-    this.exitingLinesCodeMirror[target.dataset.lineId] = codeMirror
+    this.exitingCellsCodeMirror[target.dataset.cellId] = codeMirror
   }
 
   renameNotebook(event) {
@@ -82,29 +82,29 @@ export default class extends Controller {
 
   enableEdit(event) {
     const target = event.currentTarget
-    const lineId = target.dataset.lineId
+    const cellId = target.dataset.cellId
 
-    const line = document.getElementById(`line-${lineId}`)
+    const cell = document.getElementById(`cell-${cellId}`)
 
     // Display the textarea first to get proper dimensions into the DOM
-    line.querySelector('.notebook-line-edit').classList.remove('hidden')
+    cell.querySelector('.notebook-cell-edit').classList.remove('hidden')
 
     // Initialize CodeMirror after element is rendered
-    this.initCodeMirrorOnTarget(line.querySelector('.notebook-line-edit textarea'))
+    this.initCodeMirrorOnTarget(cell.querySelector('.notebook-cell-edit textarea'))
 
     target.remove()
   }
 
-  editLine(event) {
+  editCell(event) {
     event.preventDefault()
     const target = event.currentTarget
-    const lineId = target.dataset.lineId
+    const cellId = target.dataset.cellId
 
     const button = target.querySelector('button[type=submit]')
     button.disabled = true
     button.querySelector('span').innerHTML = 'pending'
 
-    this.exitingLinesCodeMirror[lineId].save()
+    this.exitingCellsCodeMirror[cellId].save()
 
     const form = new FormData(target)
     const url = target.action
@@ -120,18 +120,18 @@ export default class extends Controller {
     })
     .then(res => res.text())
     .then(text => {
-      const child = document.getElementById(`line-${lineId}`)
+      const child = document.getElementById(`cell-${cellId}`)
 
-      // Build new line element
+      // Build new cell element
       const template = document.createElement('template')
       text = text.trim()
       template.innerHTML = text
 
 
       const newChild = template.content.firstChild
-      const newLineId = newChild.dataset.lineId
+      const newCellId = newChild.dataset.cellId
 
-      // Replace old line with new line
+      // Replace old cell with new cell
       child.parentNode.replaceChild(newChild, child)
 
       // const codeElement = newChild.querySelector('.language-sql')
@@ -141,18 +141,18 @@ export default class extends Controller {
       // }
 
       // Don't leak memory
-      delete this.exitingLinesCodeMirror[lineId]
+      delete this.exitingCellsCodeMirror[cellId]
     })
   }
 
-  deleteLine(event) {
+  deleteCell(event) {
     event.preventDefault()
     const target = event.currentTarget
 
     const form = new FormData(target)
     const url = target.action
     const body = new URLSearchParams(form)
-    const lineId = target.dataset.lineId
+    const cellId = target.dataset.cellId
 
     fetch(url, {
       method: 'POST',
@@ -167,25 +167,25 @@ export default class extends Controller {
       text = text.trim()
       template.innerHTML = text
 
-      const child = document.getElementById(`line-${lineId}`)
+      const child = document.getElementById(`cell-${cellId}`)
       child.parentNode.replaceChild(template.content.firstChild, child)
 
       // Remove the undo in 5 seconds
-      this.deleteTimeouts[lineId] = window.setTimeout(() => {
-        document.getElementById(`line-${lineId}`).remove()
-        delete this.deleteTimeouts[lineId]
+      this.deleteTimeouts[cellId] = window.setTimeout(() => {
+        document.getElementById(`cell-${cellId}`).remove()
+        delete this.deleteTimeouts[cellId]
       }, 5000)
     })
   }
 
-  undoDeleteLine(event) {
+  undoDeleteCell(event) {
     event.preventDefault()
 
     const target = event.currentTarget
-    const lineId = target.dataset.lineId
+    const cellId = target.dataset.cellId
 
-    window.clearTimeout(this.deleteTimeouts[lineId])
-    delete this.deleteTimeouts[lineId]
+    window.clearTimeout(this.deleteTimeouts[cellId])
+    delete this.deleteTimeouts[cellId]
 
     const form = new FormData(target)
     const url = target.action
@@ -204,15 +204,15 @@ export default class extends Controller {
       text = text.trim()
       template.innerHTML = text
 
-      const child = document.getElementById(`line-${lineId}`)
+      const child = document.getElementById(`cell-${cellId}`)
       child.parentNode.replaceChild(template.content.firstChild, child)
     })
   }
 
-  // Add a new line to the notebook.
+  // Add a new cell to the notebook.
   // Submit via AJAX, add the result to the end of the notebook,
   // and scroll to the bottom of the page.
-  addLine(event) {
+  addCell(event) {
     event.preventDefault()
     const target = event.currentTarget
 
@@ -231,7 +231,7 @@ export default class extends Controller {
         entries.push(`${entry[0]}=${entry[1]}`)
     }
 
-    entries.push(`contents=${encodeURIComponent(this.newLineCodeMirror.getValue())}`)
+    entries.push(`contents=${encodeURIComponent(this.newCellCodeMirror.getValue())}`)
 
     fetch(url, {
       method: 'POST',
@@ -243,9 +243,9 @@ export default class extends Controller {
     })
     .then(res => res.text())
     .then(text => {
-      this.linesTarget.innerHTML += text
+      this.cellsTarget.innerHTML += text
       window.scrollTo(0, document.body.scrollHeight)
-      this.newLineCodeMirror.setValue('')
+      this.newCellCodeMirror.setValue('')
 
       // Re-enable the submit button
       button.disabled = false

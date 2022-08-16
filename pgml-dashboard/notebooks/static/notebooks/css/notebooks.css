@@ -1030,12 +1030,12 @@ nav ol, nav ul {
   list-style: none;
 }
 
-.notebook-line.active {
+.notebook-cell.active {
   border: 1px solid green;
   padding: 0;
 }
 
-.notebook-line-edit {
+.notebook-cell-edit {
   margin-bottom: 2rem;
   border: 1px solid green;
 }
@@ -1044,14 +1044,14 @@ nav ol, nav ul {
   display: none;
 }
 
-.notebook-line {
+.notebook-cell {
   margin: 1rem 0;
   padding: 1rem;
   border: 1px solid var(--gray-8);
   min-width: fit-content;
 }
 
-/*.notebook-line.markdown {
+/*.notebook-cell.markdown {
   border: 0;
 }*/
 
@@ -1083,17 +1083,17 @@ nav ol, nav ul {
   flex-direction: row-reverse;
 }
 
-.notebook-line .line-number {
+.notebook-cell .cell-number {
   margin-right: 1rem;
   font-family: monospace;
 }
 
-.notebook-line .button {
+.notebook-cell .button {
   height: fit-content;
   width: fit-content;
 }
 
-.notebook-line .button-delete {
+.notebook-cell .button-delete {
   margin-left: 1rem;
 }
 

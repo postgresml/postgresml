@@ -1,0 +1,57 @@
+<div class="notebook-cell {{ cell.get_cell_type_display|lower }}" id="cell-{{ cell.pk }}" data-cell-id="{{ cell.pk }}">
+  <!-- Edit -->
+  <div class="hidden notebook-cell-edit">
+    <form action="{% url 'notebooks/cell/edit' notebook.pk cell.pk %}" method="post" data-action="submit->notebook#editCell" data-cell-id="{{ cell.pk }}" id="edit-cell-form-{{ cell.pk }}">
+      <div class="flex">
+        {% csrf_token %}
+        <div class="notebook-cell-code flex-grow">
+          <textarea name="contents" id="textarea-{{ cell.pk }}" data-notebook-target="existingCell" data-cell-id="{{ cell.pk }}">{{ cell.contents }}</textarea>
+        </div>
+        <div class="flex flex-end">
+          <button type="submit" class="button notebook-button"><span class="material-symbols-outlined">
+play_arrow
+</span></button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Display -->
+  <div>
+    <div class="flex">
+      <div class="cell-number">{{ cell.cell_number }}</div>
+      <div class="flex-grow">
+        {% if cell.code %}
+        <div class="notebook-contents">
+          <pre><code class="language-sql">{{ cell.contents }}</code></pre>
+        </div>
+        {% endif %}
+
+        <div class="notebook-rendering">
+          {{ cell.html }}
+        </div>
+      </div>
+      <div class="notebook-button button-delete">
+        <form action="{% url 'notebooks/cell/remove' notebook.pk cell.pk %}" method="post" data-action="submit->notebook#deleteCell" data-cell-id="{{ cell.pk }}">
+          {% csrf_token %}
+
+          <button type="submit"><span class="material-symbols-outlined">
+delete_forever
+</span></button>
+        </form>
+      </div>
+      <div class="notebook-button button-edit">
+        <button data-action="click->notebook#enableEdit" data-cell-id="{{ cell.pk }}"><span class="material-symbols-outlined">
+edit
+</span></button>
+      </div>
+    </div>
+    {% if cell.execution_time %}
+    <div class="markdown-body notebook-duration">
+      <div class="flex flex-row-reverse">
+        <code>{{ cell.execution_time }}</code>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>

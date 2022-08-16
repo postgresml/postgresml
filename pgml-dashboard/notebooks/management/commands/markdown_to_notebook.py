@@ -2,7 +2,7 @@ import djclick as click
 import os
 from django.db import transaction
 
-from notebooks.models import Notebook, NotebookLine
+from notebooks.models import Notebook, NotebookCell
 
 
 @click.command()
@@ -12,43 +12,43 @@ from notebooks.models import Notebook, NotebookLine
 def command(path, name):
     """Convert Markdown tutorials to Notebook tutorials."""
     cell = []
-    line_number = 1
+    cell_number = 1
 
     notebook = Notebook.objects.create(
         name=name,
     )
 
     with open(path) as f:
-        for line in f:
+        for cell in f:
             # Code starts
-            if line.startswith("```sql"):
-                line = NotebookLine.objects.create(
+            if cell.startswith("```sql"):
+                cell = NotebookCell.objects.create(
                     contents="".join(cell),
-                    line_type=NotebookLine.MARKDOWN,
+                    cell_type=NotebookCell.MARKDOWN,
                     notebook=notebook,
-                    line_number=line_number,
+                    cell_number=cell_number,
                 )
-                line_number += 1
+                cell_number += 1
                 cell.clear()
             # Code ends
-            elif line.startswith("```"):
-                line = NotebookLine.objects.create(
+            elif cell.startswith("```"):
+                cell = NotebookCell.objects.create(
                     contents="%%sql\n" + "".join(cell),
-                    line_type=NotebookLine.SQL,
-                    line_number=line_number,
+                    cell_type=NotebookCell.SQL,
+                    cell_number=cell_number,
                     notebook=notebook,
                 )
-                line_number += 1
+                cell_number += 1
                 cell.clear()
             # Markdown text
             else:
-                cell.append(line)
+                cell.append(cell)
 
     # Whatever is left in the buffer
     if cell:
-        line = NotebookLine.objects.create(
+        cell = NotebookCell.objects.create(
             contents="".join(cell),
-            line_number=line_number,
+            cell_number=cell_number,
             notebook=notebook,
-            line_type=NotebookLine.MARKDOWN,
+            cell_type=NotebookCell.MARKDOWN,
         )
