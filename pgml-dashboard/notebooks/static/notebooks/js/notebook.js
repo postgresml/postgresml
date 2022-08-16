@@ -15,7 +15,7 @@ export default class extends Controller {
     this.newCellCodeMirror = CodeMirror.fromTextArea(this.newCellCodeTarget, {
       lineWrapping: true,
       matchBrackets: true,
-      mode: 'gfm', // Github markdown
+      mode: 'sql', // Github markdown
       scrollbarStyle: 'null',
     })
 
@@ -227,7 +227,6 @@ export default class extends Controller {
     const entries = []
 
     for (let entry of form.entries()) {
-      // if (entry[0] === 'csrfmiddlewaretoken')
         entries.push(`${entry[0]}=${entry[1]}`)
     }
 

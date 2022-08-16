@@ -9,8 +9,8 @@
         </div>
       <div class="flex flex-end">
           <select name="cell_type" id="cell_type">
-            <option value="3">SQL</option>
-            <option value="1">Markdown</option>
+            <option value="3" {% if cell.cell_type == 3 %}selected{% endif %}>SQL</option>
+            <option value="1" {% if cell.cell_type == 1 %}selected{% endif %}>Markdown</option>
           </select>
           <button type="submit" class="button notebook-button"><span class="material-symbols-outlined">
 play_arrow
