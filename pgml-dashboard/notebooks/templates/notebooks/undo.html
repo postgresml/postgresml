@@ -1,7 +1,7 @@
-<div class="notebook-line {{ line.get_line_type_display|lower }}" id="line-{{ line.pk }}" data-line-id="{{ line.pk }}">
+<div class="notebook-cell {{ cell.get_cell_type_display|lower }}" id="cell-{{ cell.pk }}" data-cell-id="{{ cell.pk }}">
   <div class="notebook-delete-undo flex">
-    <p class="flex-grow flex flex-center">Line deleted. You have 5 seconds to undo.</p>
-    <form action="{% url 'notebooks/line/remove/undo' notebook.pk line.pk %}" action="post" data-action="submit->notebook#undoDeleteLine" data-line-id="{{ line.pk }}">
+    <p class="flex-grow flex flex-center">Cell deleted. You have 5 seconds to undo.</p>
+    <form action="{% url 'notebooks/cell/remove/undo' notebook.pk cell.pk %}" action="post" data-action="submit->notebook#undoDeleteCell" data-cell-id="{{ cell.pk }}">
       {% csrf_token %}
       <button type="submit">
         <span class="material-symbols-outlined">

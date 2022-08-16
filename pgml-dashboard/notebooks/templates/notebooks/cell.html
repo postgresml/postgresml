@@ -1,14 +1,14 @@
 <div class="notebook-cell {{ cell.get_cell_type_display|lower }}" id="cell-{{ cell.pk }}" data-cell-id="{{ cell.pk }}">
   <!-- Edit -->
   <div class="hidden notebook-cell-edit">
-    <form action="{% url 'notebooks/cell/edit' notebook.pk cell.pk %}" method="post" data-action="submit->notebook#editLine" data-cell-id="{{ cell.pk }}" id="edit-cell-form-{{ cell.pk }}">
+    <form action="{% url 'notebooks/cell/edit' notebook.pk cell.pk %}" method="post" data-action="submit->notebook#editCell" data-cell-id="{{ cell.pk }}" id="edit-cell-form-{{ cell.pk }}">
       <div class="flex">
         {% csrf_token %}
         <div class="notebook-cell-code flex-grow">
-          <textarea name="contents" id="textarea-{{ cell.pk }}" data-notebook-target="existingLine" data-cell-id="{{ cell.pk }}">{{ cell.contents }}</textarea>
+          <textarea name="contents" id="textarea-{{ cell.pk }}" data-notebook-target="existingCell" data-cell-id="{{ cell.pk }}">{{ cell.contents }}</textarea>
         </div>
         <div class="flex flex-end">
-          <button type="submit" class="button notebook-button"><span class="material-symbols-outcelld">
+          <button type="submit" class="button notebook-button"><span class="material-symbols-outlined">
 play_arrow
 </span></button>
         </div>
@@ -32,16 +32,16 @@ play_arrow
         </div>
       </div>
       <div class="notebook-button button-delete">
-        <form action="{% url 'notebooks/cell/remove' notebook.pk cell.pk %}" method="post" data-action="submit->notebook#deleteLine" data-cell-id="{{ cell.pk }}">
+        <form action="{% url 'notebooks/cell/remove' notebook.pk cell.pk %}" method="post" data-action="submit->notebook#deleteCell" data-cell-id="{{ cell.pk }}">
           {% csrf_token %}
 
-          <button type="submit"><span class="material-symbols-outcelld">
+          <button type="submit"><span class="material-symbols-outlined">
 delete_forever
 </span></button>
         </form>
       </div>
       <div class="notebook-button button-edit">
-        <button data-action="click->notebook#enableEdit" data-cell-id="{{ cell.pk }}"><span class="material-symbols-outcelld">
+        <button data-action="click->notebook#enableEdit" data-cell-id="{{ cell.pk }}"><span class="material-symbols-outlined">
 edit
 </span></button>
       </div>
