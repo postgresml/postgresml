@@ -94,6 +94,14 @@ export default class extends Controller {
 
     // Initialize CodeMirror after element is rendered
     this.initCodeMirrorOnTarget(cell.querySelector('.notebook-cell-edit textarea'))
+    let codeMirror = this.exitingCellsCodeMirror[target.dataset.cellId]
+    let select = cell.querySelector('select[name=cell_type]')
+    const value = select.options[select.selectedIndex].value
+
+    if (value == 3)
+      codeMirror.setOption('mode', 'sql')
+    else
+      codeMirror.setOption('mode', 'gfm')
 
     target.remove()
   }
