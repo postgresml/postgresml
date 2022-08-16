@@ -1048,6 +1048,7 @@ nav ol, nav ul {
   margin: 1rem 0;
   padding: 1rem;
   border: 1px solid var(--gray-8);
+  boir
   min-width: fit-content;
 }
 
@@ -1095,6 +1096,15 @@ nav ol, nav ul {
 
 .notebook-cell .button-delete {
   margin-left: 1rem;
+}
+
+.notebook-cell select {
+  font-weight: bold;
+  background: rgb(240, 240, 240);
+  border: 1px solid var(--gray-4);
+  padding: 7px 6px;
+  border-radius: 2px;
+  margin-bottom: 2px;
 }
 
 .notebook-duration {

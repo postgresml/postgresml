@@ -21,7 +21,11 @@
       <div class="notebook-cell-code flex-grow">
         <textarea data-cell-id="new" name="contents" data-notebook-target="newCellCode"></textarea>
       </div>
-      <div class="flex flex-end">
+    <div class="flex flex-end">
+        <select name="cell_type" id="cell_type">
+          <option value="3">SQL</option>
+          <option value="1">Markdown</option>
+        </select>
         <button type="submit" class="button notebook-button"><span class="material-symbols-outlined">
 play_arrow
 </span></button>

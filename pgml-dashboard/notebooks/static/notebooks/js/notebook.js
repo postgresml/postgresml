@@ -227,7 +227,7 @@ export default class extends Controller {
     const entries = []
 
     for (let entry of form.entries()) {
-      if (entry[0] === 'csrfmiddlewaretoken')
+      // if (entry[0] === 'csrfmiddlewaretoken')
         entries.push(`${entry[0]}=${entry[1]}`)
     }
 
