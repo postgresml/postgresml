@@ -15,12 +15,11 @@ export default class extends Controller {
     this.newCellCodeMirror = CodeMirror.fromTextArea(this.newCellCodeTarget, {
       lineWrapping: true,
       matchBrackets: true,
-      mode: 'sql', // Github markdown
+      mode: 'sql',
       scrollbarStyle: 'null',
     })
 
     this.newCellCodeMirror.setSize('100%', 250)
-    this.newCellCodeMirror.on('change', () => this.detectSql(this.newCellCodeMirror))
 
     const keyMap = {
       'Ctrl-Enter': () => this.newCellFormTarget.requestSubmit(),
@@ -44,12 +43,11 @@ export default class extends Controller {
     const codeMirror = CodeMirror.fromTextArea(target, {
       lineWrapping: true,
       matchBrackets: true,
-      mode: 'gfm',
+      mode: 'sql',
       scrollbarStyle: 'null',
     })
 
     codeMirror.setSize('100%', 250)
-    codeMirror.on('change', () => this.detectSql(codeMirror))
 
     const keyMap = {
       'Ctrl-Enter': () => document.getElementById(`edit-cell-form-${cellId}`).requestSubmit(),
@@ -60,9 +58,6 @@ export default class extends Controller {
 
     codeMirror.addKeyMap(keyMap)
 
-    // Has value already?
-    this.detectSql(codeMirror)
-
     this.exitingCellsCodeMirror[target.dataset.cellId] = codeMirror
   }
 
@@ -71,10 +66,18 @@ export default class extends Controller {
     this.notebookNameTarget.classList.add('hidden')
   }
 
-  detectSql(codeMirror) {
-    const value = codeMirror.getValue()
+  selectCellType(event) {
+    const value = event.target.options[event.target.selectedIndex].value
+    const target = event.currentTarget
+    const cellId = target.parentElement.parentElement.parentElement.dataset.cellId
 
-    if (value.startsWith('%%sql'))
+    let codeMirror = null
+    if (cellId)
+      codeMirror = this.exitingCellsCodeMirror[cellId]
+    else
+      codeMirror = this.newCellCodeMirror
+
+    if (value == 3)
       codeMirror.setOption('mode', 'sql')
     else
       codeMirror.setOption('mode', 'gfm')

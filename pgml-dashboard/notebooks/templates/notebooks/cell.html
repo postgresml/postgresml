@@ -8,7 +8,7 @@
           <textarea name="contents" id="textarea-{{ cell.pk }}" data-notebook-target="existingCell" data-cell-id="{{ cell.pk }}">{{ cell.contents }}</textarea>
         </div>
       <div class="flex flex-end">
-          <select name="cell_type" id="cell_type">
+          <select name="cell_type" id="cell_type"  data-notebook-target="cellType" data-action="notebook#selectCellType" >
             <option value="3" {% if cell.cell_type == 3 %}selected{% endif %}>SQL</option>
             <option value="1" {% if cell.cell_type == 1 %}selected{% endif %}>Markdown</option>
           </select>
