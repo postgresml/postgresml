@@ -9,17 +9,17 @@
     </form>
   </div>
 </section>
-<div data-notebook-target="lines">
-{% for line in lines %}
-{% include 'notebooks/line.html' %}
+<div data-notebook-target="cells">
+{% for cell in cells %}
+{% include 'notebooks/cell.html' %}
 {% endfor %}
 </div>
-<div class="notebook-line active">
-  <form action="{% url 'notebooks/line/add' notebook.pk %}" method="post" data-action="submit->notebook#addLine" data-notebook-target="newLineForm">
+<div class="notebook-cell active">
+  <form action="{% url 'notebooks/cell/add' notebook.pk %}" method="post" data-action="submit->notebook#addCell" data-notebook-target="newCellForm">
     <div class="flex">
       {% csrf_token %}
-      <div class="notebook-line-code flex-grow">
-        <textarea data-line-id="new" name="contents" data-notebook-target="newLineCode"></textarea>
+      <div class="notebook-cell-code flex-grow">
+        <textarea data-cell-id="new" name="contents" data-notebook-target="newCellCode"></textarea>
       </div>
       <div class="flex flex-end">
         <button type="submit" class="button notebook-button"><span class="material-symbols-outlined">

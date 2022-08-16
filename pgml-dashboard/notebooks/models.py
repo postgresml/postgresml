@@ -20,13 +20,13 @@ class Notebook(models.Model):
 
     def to_markdown(self):
         result = []
-        for line in self.notebookline_set.filter(deleted_at__isnull=True).order_by("line_number"):
-            result.append(line.markdown())
+        for cell in self.notebookcell_set.filter(deleted_at__isnull=True).order_by("cell_number"):
+            result.append(cell.markdown())
         return "\n\n".join(result)
 
 
-class NotebookLine(models.Model):
-    """A single executable line in the notebook,
+class NotebookCell(models.Model):
+    """A single executable cell in the notebook,
     e.g. text, markdown, code, etc."""
 
     MARKDOWN = 1
@@ -36,7 +36,7 @@ class NotebookLine(models.Model):
     HTML = 5
 
     notebook = models.ForeignKey(Notebook, on_delete=models.CASCADE)
-    line_type = models.IntegerField(
+    cell_type = models.IntegerField(
         choices=(
             (
                 MARKDOWN,
@@ -53,16 +53,16 @@ class NotebookLine(models.Model):
     contents = models.TextField(null=True, blank=True)
     rendering = models.TextField(null=True, blank=True)
     execution_time = models.DurationField(null=True, blank=True)
-    line_number = models.IntegerField(default=1)
+    cell_number = models.IntegerField(default=1)
     version = models.IntegerField(default=1)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     def html(self):
-        """HTML rendering of the notebook line."""
+        """HTML rendering of the notebook cell."""
         if self.rendering is not None:
             return mark_safe(self.rendering)
 
-        if self.line_type == NotebookLine.SQL:
+        if self.cell_type == NotebookCell.SQL:
             execution_start = timezone.now()
 
             with connection.cursor() as cursor:
@@ -94,22 +94,22 @@ class NotebookLine(models.Model):
             self.execution_time = timezone.now() - execution_start
             self.save()
 
-        elif self.line_type == NotebookLine.MARKDOWN:
+        elif self.cell_type == NotebookCell.MARKDOWN:
             rendering = markdown.markdown(self.contents, extensions=["extra"])
 
             self.rendering = '<article class="markdown-body">' + rendering + "</article>"
             self.save()
 
-        elif self.line_type == NotebookLine.PLAIN_TEXT:
+        elif self.cell_type == NotebookCell.PLAIN_TEXT:
             self.rendering = self.contents
-        elif self.line_type == NotebookLine.EMPTY:
+        elif self.cell_type == NotebookCell.EMPTY:
             self.rendering = self.contents
 
         return mark_safe(self.rendering)
 
     def markdown(self):
-        """Render the line back as markdown."""
-        if self.line_type == NotebookLine.SQL:
+        """Render the cell back as markdown."""
+        if self.cell_type == NotebookCell.SQL:
             return render_to_string(
                 "notebooks/sql_markdown.txt", {"text": self.contents.replace(r"%%sql", "").strip()}
             )
@@ -118,8 +118,8 @@ class NotebookLine(models.Model):
 
     @property
     def code(self):
-        """Is this line executable code or plain text/markdown?"""
-        return self.line_type == NotebookLine.SQL
+        """Is this cell executable code or plain text/markdown?"""
+        return self.cell_type == NotebookCell.SQL
 
     def __str__(self):
         return f"{self.notebook} - {self.pk}"

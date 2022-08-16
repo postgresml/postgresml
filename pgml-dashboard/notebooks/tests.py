@@ -2,7 +2,7 @@ from django.test import TestCase
 from notebooks.models import *
 
 
-class TestNodebookLine(TestCase):
+class TestNotebookCell(TestCase):
     def setUp(self):
         self.notebook = Notebook(name="Test")
 
@@ -29,8 +29,8 @@ SELECT * FROM test;
 Hello world!
         """
 
-        line = NotebookLine(notebook=self.notebook, line_type=NotebookLine.MARKDOWN, contents=markdown)
-        html = line.html()
+        cell = NotebookCell(notebook=self.notebook, cell_type=NotebookCell.MARKDOWN, contents=markdown)
+        html = cell.html()
 
         self.assertIn("<p>", html)
         self.assertIn("<code>", html)
@@ -41,8 +41,8 @@ Hello world!
         Hey there friends!
         """
 
-        line = NotebookLine(notebook=self.notebook, line_type=NotebookLine.PLAIN_TEXT, contents=plain_text)
-        html = line.html()
+        cell = NotebookCell(notebook=self.notebook, cell_type=NotebookCell.PLAIN_TEXT, contents=plain_text)
+        html = cell.html()
 
         self.assertIn("Hey there friends!", html)
         self.assertNotIn("<p>", html)
@@ -52,8 +52,8 @@ Hello world!
         SELECT 1 AS one, 2 as two, 3 as three, 'text' AS _text
         """
 
-        line = NotebookLine(notebook=self.notebook, line_type=NotebookLine.SQL, contents=sql)
-        html = line.html()
+        cell = NotebookCell(notebook=self.notebook, cell_type=NotebookCell.SQL, contents=sql)
+        html = cell.html()
 
         self.assertIn("<table>", html)
         self.assertIn("<td>1</td>", html)
