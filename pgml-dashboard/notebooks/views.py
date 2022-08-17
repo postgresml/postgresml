@@ -67,7 +67,7 @@ def notebook_cell(request, notebook_pk, cell_pk):
 class NotebookCellForm(forms.Form):
     contents = forms.CharField(required=False)
     cell_type = forms.ChoiceField(
-        required=True,         
+        required=True,
         choices=(
             (
                 NotebookCell.MARKDOWN,
@@ -77,30 +77,35 @@ class NotebookCellForm(forms.Form):
                 NotebookCell.SQL,
                 "SQL",
             ),
-        ))
+        ),
+    )
 
 
-@transaction.atomic
 def add_notebook_cell(request, pk):
     """Add a new notebook cell."""
-    notebook = Notebook.objects.select_for_update().get(pk=pk)
     cell_form = NotebookCellForm(request.POST)
-    last_cell = NotebookCell.objects.filter(notebook=notebook, deleted_at__isnull=True).order_by("cell_number").last()
-
     if cell_form.is_valid():
-        contents = cell_form.cleaned_data["contents"].strip()
+        with transaction.atomic():
+            notebook = Notebook.objects.select_for_update().get(pk=pk)
+            last_cell = (
+                NotebookCell.objects.filter(notebook=notebook, deleted_at__isnull=True).order_by("cell_number").last()
+            )
 
-        if cell_form.cleaned_data["cell_type"] == str(NotebookCell.SQL):
-            cell_type = NotebookCell.SQL
-        else:
-            cell_type = NotebookCell.MARKDOWN
+            contents = cell_form.cleaned_data["contents"].strip()
 
-        cell = NotebookCell.objects.create(
-            notebook=notebook,
-            contents=contents,
-            cell_number=(last_cell.cell_number + 1 if last_cell else 1),
-            cell_type=cell_type,
-        )
+            if cell_form.cleaned_data["cell_type"] == str(NotebookCell.SQL):
+                cell_type = NotebookCell.SQL
+            else:
+                cell_type = NotebookCell.MARKDOWN
+
+            cell = NotebookCell.objects.create(
+                notebook=notebook,
+                contents=contents,
+                cell_number=(last_cell.cell_number + 1 if last_cell else 1),
+                cell_type=cell_type,
+            )
+
+        cell.render()
 
         return HttpResponseRedirect(
             reverse_lazy("notebooks/cell/get", kwargs={"notebook_pk": notebook.pk, "cell_pk": cell.pk})
@@ -132,6 +137,7 @@ def edit_notebook_cell(request, notebook_pk, cell_pk):
                 cell_type=cell_type,
             )
             old_cell.delete()
+        new_cell.render()
         return render(
             request,
             "notebooks/cell.html",
@@ -164,6 +170,27 @@ def undo_remove_notebook_cell(request, notebook_pk, cell_pk):
     cell = get_object_or_404(NotebookCell, pk=cell_pk, notebook__pk=notebook_pk)
     cell.deleted_at = None
     cell.save()
+
+    return render(
+        request,
+        "notebooks/cell.html",
+        {
+            "cell": cell,
+            "notebook": cell.notebook,
+        },
+    )
+
+
+def reset_notebook(request, pk):
+    notebook = get_object_or_404(Notebook, pk=pk)
+    notebook.reset()
+
+    return HttpResponseRedirect(reverse_lazy("notebooks/notebook", kwargs={"pk": pk}))
+
+
+def play_notebook_cell(request, notebook_pk, cell_pk):
+    cell = get_object_or_404(NotebookCell, pk=cell_pk)
+    cell.render()
 
     return render(
         request,
