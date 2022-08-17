@@ -1,0 +1,45 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/explorer.css' %}">
+<div class="container flex explorer">
+  <!-- Table list -->
+  <div>
+    <input class="explorer-input" type="text" autocomplete="off" name="search" data-action="keyup->explorer#search" placeholder="Table name">
+
+    {% for schema in schemas %}
+      <div data-explorer-target="schemaAnchor" data-name="{{ schema }}" class="explorer-schema">{{ schema }}</div>
+
+      <ul data-explorer-target="schema" data-name="{{ schema }}" aria-label="Tables contained in schema {{ schema }}">
+        {% for table in schema.tables %}
+          <li data-explorer-target="table" data-name="{{ table }}" aria-label="{{ table }}">
+            <form action="{% url 'explorer/query/create' %}" method="post" aria-label="Sample data from table {{ table }}">
+              {% csrf_token %}
+              <input name="query" value="SELECT * FROM {{ table }} LIMIT 10" type="hidden">
+              <a href="#" type="submit" data-action="click->explorer#sample">{{ table }}</a>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endfor %}
+  </div>
+
+  <!-- Right panel -->
+  <div>
+
+    <!-- Query editor -->
+    <div>
+      <textarea cols="50" rows="10">SELECT * FROM pgml.overview;</textarea>
+      <button>Run</button>
+    </div>
+
+    <!-- Results -->
+    <div>
+      <p>Run a query to see some rows.</p>
+    </div>
+
+    <!-- Schema -->
+    <div>
+
+    </div>
+
+  </div>
+</div>

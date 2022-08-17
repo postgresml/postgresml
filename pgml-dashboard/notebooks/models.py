@@ -24,6 +24,9 @@ class Notebook(models.Model):
             result.append(cell.markdown())
         return "\n\n".join(result)
 
+    def reset(self):
+        self.notebookcell_set.filter(cell_type=NotebookCell.SQL).update(rendering=None, execution_time=None)
+
 
 class NotebookCell(models.Model):
     """A single executable cell in the notebook,
@@ -57,10 +60,17 @@ class NotebookCell(models.Model):
     version = models.IntegerField(default=1)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
+    @property
     def html(self):
+        if self.rendering:
+            return mark_safe(self.rendering)
+        else:
+            return self.rendering
+
+    def render(self):
         """HTML rendering of the notebook cell."""
         if self.rendering is not None:
-            return mark_safe(self.rendering)
+            return
 
         if self.cell_type == NotebookCell.SQL:
             execution_start = timezone.now()
@@ -104,8 +114,6 @@ class NotebookCell(models.Model):
             self.rendering = self.contents
         elif self.cell_type == NotebookCell.EMPTY:
             self.rendering = self.contents
-
-        return mark_safe(self.rendering)
 
     def markdown(self):
         """Render the cell back as markdown."""

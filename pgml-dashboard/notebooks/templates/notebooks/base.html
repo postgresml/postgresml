@@ -51,9 +51,11 @@
         <script type="module-shim">
             import { Application } from '@hotwired/stimulus'
             import Notebook from '{% static 'notebooks/js/notebook.js' %}'
+            import NotebookCell from '{% static 'notebooks/js/notebook-cell.js' %}'
 
             const application = Application.start()
             application.register('notebook', Notebook)
+            application.register('notebook-cell', NotebookCell)
         </script>
       
         <title>{% if title %}{{title}}{% endif %}{% if title is None or "PostgresML" not in title %}{% if title is not None %} - {% endif %}PostgresML{% endif %}</title>
