@@ -37,15 +37,20 @@
           </div>
         {% endif %}
       </div>
-      {% if not cell.html %}
+        
+      {% if cell.code %}
       <div class="notebook-button margin-left-1">
         <form action="{% url 'notebooks/cell/play' notebook.pk cell.pk %}" method="post" data-action="notebook-cell#play" data-cell-id="{{ cell.pk }}">
           {% csrf_token %}
-          <button type="submit"><span class="material-symbols-outlined">play_arrow</span></button>
+          <button type="submit">
+            <span class="material-symbols-outlined">
+              play_arrow
+            </span>
+          </button>
         </form>
       </div>
       {% endif %}
-      <div class="notebook-button {% if cell.html %}margin-left-1{% endif %}">
+      <div class="notebook-button">
         <form action="{% url 'notebooks/cell/remove' notebook.pk cell.pk %}" method="post" data-action="submit->notebook#deleteCell" data-cell-id="{{ cell.pk }}">
           {% csrf_token %}
           <button type="submit">

@@ -19,12 +19,15 @@ class Notebook(models.Model):
         return self.name
 
     def to_markdown(self):
+        """Convert the notebook to markdown so it's easily sharable."""
         result = []
         for cell in self.notebookcell_set.filter(deleted_at__isnull=True).order_by("cell_number"):
             result.append(cell.markdown())
         return "\n\n".join(result)
 
     def reset(self):
+        """Reset all executable fields in the notebook so the user
+        can play themm one at a time."""
         self.notebookcell_set.filter(cell_type=NotebookCell.SQL).update(rendering=None, execution_time=None)
 
 
@@ -62,16 +65,14 @@ class NotebookCell(models.Model):
 
     @property
     def html(self):
+        """HTML rendering of the cell."""
         if self.rendering:
             return mark_safe(self.rendering)
         else:
             return self.rendering
 
     def render(self):
-        """HTML rendering of the notebook cell."""
-        if self.rendering is not None:
-            return
-
+        """Execute the cell and save the result."""
         if self.cell_type == NotebookCell.SQL:
             execution_start = timezone.now()
 
@@ -102,18 +103,18 @@ class NotebookCell(models.Model):
                     )
             self.rendering = result
             self.execution_time = timezone.now() - execution_start
-            self.save()
 
         elif self.cell_type == NotebookCell.MARKDOWN:
             rendering = markdown.markdown(self.contents, extensions=["extra"])
 
             self.rendering = '<article class="markdown-body">' + rendering + "</article>"
-            self.save()
 
         elif self.cell_type == NotebookCell.PLAIN_TEXT:
             self.rendering = self.contents
         elif self.cell_type == NotebookCell.EMPTY:
             self.rendering = self.contents
+
+        self.save()
 
     def markdown(self):
         """Render the cell back as markdown."""
