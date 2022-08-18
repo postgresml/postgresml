@@ -41,8 +41,8 @@
   fields:
     notebook: 1
     cell_type: 3
-    contents: "CREATE TABLE products (\n  emoji
-      TEXT PRIMARY KEY,\n  name TEXT,\n  price MONEY,\n  perishable BOOLEAN\n);"
+    contents: "CREATE TABLE products (\n  emoji TEXT PRIMARY KEY,\n  name TEXT,\n
+      \ price MONEY,\n  perishable BOOLEAN\n);"
     rendering: null
     execution_time: null
     cell_number: 2
@@ -528,8 +528,9 @@
     contents: "SELECT * FROM pgml.train(\n  project_name => 'Our Fraud Model', --
       a friendly name we'll use to identify this machine learning project\n  task
       => 'classification', -- we want to classify into true or false\n  relation_name
-      => 'fraud_samples', -- our view of the data\n  y_column_name => 'fraudulent'
-      -- the \"labels\"\n);"
+      => 'fraud_samples', -- our view of the data\n  y_column_name => 'fraudulent',
+      -- the \"labels\"\n  test_sampling => 'last', -- the part of the data to use
+      for testing our model\n  test_size => 0.5 -- use half the data for tests\n);"
     rendering: null
     execution_time: null
     cell_number: 28
@@ -1068,5 +1069,20 @@
       and watch it adjust as new information becomes available.</p></article>
     execution_time: null
     cell_number: 58
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 92
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "-- If you'd like to start this tutorial over, you can clear out the
+      tables we created.\n-- drop table if exists products cascade; \n-- drop table
+      if exists orders cascade; \n-- drop table if exists line_items cascade; \n--
+      drop table if exists chargebacks cascade; \n-- drop table if exists payments
+      cascade;"
+    rendering: null
+    execution_time: null
+    cell_number: 59
     version: 1
     deleted_at: null
