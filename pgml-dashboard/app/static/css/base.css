@@ -575,10 +575,6 @@ nav ol, nav ul {
   margin-left: 0.2rem;
 }
 
-.notebook-delete-undo p {
-  margin: 0 !important;
-}
-
 .notebook-cell .notebook-button button, .markdown-body button {
   padding: 2px 5px;
 }
