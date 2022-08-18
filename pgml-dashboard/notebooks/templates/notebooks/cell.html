@@ -28,7 +28,7 @@
     <div>
       <div class="flex">
         <div class="cell-number">{{ cell.cell_number }}</div>
-        <div class="flex-grow">
+        <div class="flex-grow margin-right-1">
           {% if cell.code %}
           <div class="notebook-contents">
             <pre><code class="language-sql">{{ cell.contents }}</code></pre>
@@ -42,8 +42,8 @@
           {% endif %}
         </div>
           
-        {% if cell.code %}
-        <div class="notebook-button margin-left-1">
+        {% if cell.code and not edit %}
+        <div class="notebook-button">
           <form action="{% url 'notebooks/cell/play' notebook.pk cell.pk %}" method="post" data-action="cell#play">
             {% csrf_token %}
             <button type="submit" title="Execute cell" data-cell-target="play">
