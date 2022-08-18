@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block main %}
 <section style="margin-top: 2rem;">
-  <div class="flex flex-center">
+  <div class="flex flex-center" data-controller="notebook">
     <h1 class="flex-grow" data-action="click->notebook#renameNotebook" data-notebook-target="notebookName">{{ notebook.name }}</h1>
     <form class="hidden flex-grow" action="{% url 'notebooks/rename' notebook.pk %}" method="post" data-notebook-target="renameNotebookForm">
       {% csrf_token %}
