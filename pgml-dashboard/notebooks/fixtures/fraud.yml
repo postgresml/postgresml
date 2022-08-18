@@ -5,127 +5,6 @@
     created_at: 2022-08-15 22:26:18.428227+00:00
     updated_at: 2022-08-15 22:26:18.428241+00:00
 - model: notebooks.notebookcell
-  pk: 12
-  fields:
-    notebook: 1
-    cell_type: 1
-    contents: ''
-    rendering: <article class="markdown-body"></article>
-    execution_time: null
-    cell_number: 4
-    version: 1
-    deleted_at: 2022-08-16 21:32:21.265114+00:00
-- model: notebooks.notebookcell
-  pk: 13
-  fields:
-    notebook: 1
-    cell_type: 1
-    contents: asdf
-    rendering: <article class="markdown-body"><p>asdf</p></article>
-    execution_time: null
-    cell_number: 5
-    version: 1
-    deleted_at: 2022-08-16 21:32:23.210172+00:00
-- model: notebooks.notebookcell
-  pk: 14
-  fields:
-    notebook: 1
-    cell_type: 3
-    contents: asfd
-    rendering: null
-    execution_time: null
-    cell_number: 6
-    version: 1
-    deleted_at: 2022-08-16 21:32:25.059892+00:00
-- model: notebooks.notebookcell
-  pk: 16
-  fields:
-    notebook: 1
-    cell_type: 1
-    contents: asdf
-    rendering: <article class="markdown-body"><p>asdf</p></article>
-    execution_time: null
-    cell_number: 8
-    version: 1
-    deleted_at: 2022-08-16 21:32:27.489903+00:00
-- model: notebooks.notebookcell
-  pk: 18
-  fields:
-    notebook: 1
-    cell_type: 1
-    contents: asdf
-    rendering: <article class="markdown-body"><p>asdf</p></article>
-    execution_time: null
-    cell_number: 9
-    version: 2
-    deleted_at: 2022-08-16 21:32:26.408082+00:00
-- model: notebooks.notebookcell
-  pk: 19
-  fields:
-    notebook: 1
-    cell_type: 1
-    contents: ''
-    rendering: <article class="markdown-body"></article>
-    execution_time: null
-    cell_number: 10
-    version: 1
-    deleted_at: 2022-08-16 21:32:29.396631+00:00
-- model: notebooks.notebookcell
-  pk: 23
-  fields:
-    notebook: 1
-    cell_type: 1
-    contents: test
-    rendering: <article class="markdown-body"><p>test</p></article>
-    execution_time: null
-    cell_number: 12
-    version: 1
-    deleted_at: 2022-08-16 21:32:39.748416+00:00
-- model: notebooks.notebookcell
-  pk: 24
-  fields:
-    notebook: 1
-    cell_type: 1
-    contents: ''
-    rendering: <article class="markdown-body"></article>
-    execution_time: null
-    cell_number: 13
-    version: 1
-    deleted_at: 2022-08-16 21:32:42.950765+00:00
-- model: notebooks.notebookcell
-  pk: 25
-  fields:
-    notebook: 1
-    cell_type: 3
-    contents: ''
-    rendering: null
-    execution_time: null
-    cell_number: 14
-    version: 1
-    deleted_at: 2022-08-16 21:32:43.832970+00:00
-- model: notebooks.notebookcell
-  pk: 26
-  fields:
-    notebook: 1
-    cell_type: 1
-    contents: asdf
-    rendering: <article class="markdown-body"><p>asdf</p></article>
-    execution_time: null
-    cell_number: 7
-    version: 2
-    deleted_at: 2022-08-16 21:32:25.873904+00:00
-- model: notebooks.notebookcell
-  pk: 29
-  fields:
-    notebook: 1
-    cell_type: 3
-    contents: select 1
-    rendering: null
-    execution_time: null
-    cell_number: 11
-    version: 4
-    deleted_at: 2022-08-16 21:32:39.009549+00:00
-- model: notebooks.notebookcell
   pk: 31
   fields:
     notebook: 1
@@ -162,9 +41,7 @@
   fields:
     notebook: 1
     cell_type: 3
-    contents: "drop table if exists products cascade; drop table if exists orders
-      cascade; drop table if exists line_items cascade; drop table if exists chargebacks
-      cascade; drop table if exists payments cascade;\nCREATE TABLE products (\n  emoji
+    contents: "CREATE TABLE products (\n  emoji
       TEXT PRIMARY KEY,\n  name TEXT,\n  price MONEY,\n  perishable BOOLEAN\n);"
     rendering: null
     execution_time: null
