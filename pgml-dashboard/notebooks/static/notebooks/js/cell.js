@@ -62,7 +62,6 @@ export default class extends Controller {
   // on form submit.
   freezeScrollOnNextRender() {
     document.addEventListener('turbo:render', scrollToBottom);
-    this.play()
   }
 
   // Disable cell until execution completes.
