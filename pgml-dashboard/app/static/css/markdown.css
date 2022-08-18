@@ -14,8 +14,6 @@
   font-size: 16px;
   line-height: 1.5;
   word-wrap: break-word;
-
-  font-size: 1rem;
 }
 
 .markdown-body .octicon {
@@ -83,7 +81,7 @@
   font-weight: 600;
   padding-bottom: .3em;
   font-size: 2em;
-  /*border-bottom: 1px solid hsla(210,18%,87%,1);*/
+  border-bottom: 1px solid hsla(210,18%,87%,1);
 }
 
 .markdown-body mark {
@@ -220,8 +218,9 @@
   border-spacing: 0;
   border-collapse: collapse;
   display: block;
-  /*width: max-content;*/
+  width: max-content;
   max-width: 100%;
+  margin: 0;
   overflow: auto;
 }
 
@@ -268,7 +267,7 @@
   font-weight: 600;
   padding-bottom: .3em;
   font-size: 1.5em;
-  /*border-bottom: 1px solid hsla(210,18%,87%,1);*/
+  border-bottom: 1px solid hsla(210,18%,87%,1);
 }
 
 .markdown-body h3 {
@@ -945,132 +944,4 @@
 
 .markdown-body ::-webkit-calendar-picker-indicator {
   filter: invert(50%);
-}
-
-/*
- * End of Markdown CSS
- /*
-
-/*
- * Our custom styles
- */
-.container {
-  margin: 1rem 2rem;
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
-}
-
-nav ol, nav ul {
-  list-style: none;
-}
-
-.notebook-cell.active {
-  border: 1px solid green;
-  padding: 0;
-}
-
-.notebook-cell-edit {
-  margin-bottom: 2rem;
-  border: 1px solid green;
-}
-
-.hidden {
-  display: none;
-}
-
-.notebook-cell {
-  margin: 1rem 0;
-  padding: 1rem;
-  border: 1px solid var(--gray-8);
-  min-width: fit-content;
-  background: #fff;
-}
-
-.language-sql {
-  color: #000;
-}
-
-.notebook-button {
-  margin: 0.1rem;
-}
-
-.notebook-contents code {
-  font-family: monospace;
-}
-
-.margin-right-1 {
-  margin-right: 1rem;
-}
-
-.margin-left-1 {
-  margin-left: 1rem;
-}
-
-.flex {
-  display: flex;
-}
-
-.flex-grow {
-  flex-grow: 1;
-}
-
-.flex-center {
-  align-items: center;
-}
-
-.flex-end {
-  align-items: flex-end;
-}
-
-.flex-row-reverse {
-  flex-direction: row-reverse;
-}
-
-.notebook-cell .cell-number {
-  margin-right: 1rem;
-  font-family: monospace;
-}
-
-.notebook-cell .button {
-  height: fit-content;
-  width: fit-content;
-  padding: 2px 5px;
-}
-
-.notebook-delete-undo p {
-  margin: 0;
-}
-
-.notebook-cell .notebook-button button, .markdown-body button {
-  padding: 2px 5px;
-}
-
-.notebook-cell .button-delete {
-  margin-left: 1rem;
-}
-
-.notebook-cell select {
-  font-weight: bold;
-  background: rgb(240, 240, 240);
-  border: 1px solid var(--gray-4);
-  padding: 7px 6px;
-  border-radius: 2px;
-  margin-bottom: 2px;
-}
-
-.notebook-duration {
-  margin-top: 1rem;
-}
-
-.notebook-contents {
-  margin-bottom: 1rem;
-  /*background: var(--gray-8);*/
-  /*border: 1px solid var(--gray-7);*/
-  padding: 0.7rem 1rem;
-}
-
-/*
- * Customize editor
- */
-.CodeMirror {
-  font-size: 1rem;
 }

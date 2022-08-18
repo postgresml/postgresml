@@ -1,5 +1,5 @@
 <turbo-frame id="cell_{{ cell.cell_number }}">
-  <div data-controller="cell" class="notebook-cell {{ cell.get_cell_type_display|lower }}">
+  <section data-controller="cell" class="notebook-cell {{ cell.get_cell_type_display|lower }}">
 
     {% if edit %}
     <!-- Edit -->
@@ -30,7 +30,7 @@
         <div class="cell-number">{{ cell.cell_number }}</div>
         <div class="flex-grow margin-right-1">
           {% if cell.code %}
-          <div class="notebook-contents markdown-body">
+          <div class="markdown-body notebook-contents">
             <pre><code class="language-sql">{{ cell.contents }}</code></pre>
           </div>
           {% endif %}
@@ -78,5 +78,5 @@
       </div>
       {% endif %}
     </div>
-  </div>
+  </section>
 </turbo-frame>
