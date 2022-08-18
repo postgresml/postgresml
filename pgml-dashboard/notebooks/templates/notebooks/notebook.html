@@ -4,6 +4,7 @@
   <div class="flex flex-center" data-controller="notebook">
     <div>
       <h1 class="flex-grow" data-action="click->notebook#renameNotebook" data-notebook-target="notebookName">
+        <span class="material-symbols-outlined">newspaper</span>
         {{ notebook.name }}
       </h1>
     </div>
@@ -16,7 +17,7 @@
     <div>
       <form action="{% url 'notebooks/reset' notebook.pk %}" method="post">
         {% csrf_token %}
-        <button type="submit" title="Reset all executable cells">
+        <button type="submit" title="Reset all executable cells" style="padding: 0.5rem 1rem;">
           <span class="material-symbols-outlined">replay</span>
         </button>
       </form>

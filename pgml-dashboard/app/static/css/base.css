@@ -497,9 +497,6 @@ body.models figure {
 /*
  * Notebook styles
  */
-body.notebooks h1 {
-  margin: 0;
-}
 
 nav ol, nav ul {
   list-style: none;
