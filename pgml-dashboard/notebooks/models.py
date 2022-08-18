@@ -78,7 +78,7 @@ class NotebookCell(models.Model):
 
             with connection.cursor() as cursor:
                 try:
-                    cursor.execute(self.contents.replace(r"%%sql", ""))
+                    cursor.execute(self.contents)
 
                     if cursor.description:
                         columns = [col[0] for col in cursor.description]
@@ -92,7 +92,7 @@ class NotebookCell(models.Model):
                             },
                         )
                     else:
-                        # Not really an error, but the formatting is helpful
+                        # Not an error, but the formatting is helpful.
                         result = render_to_string("notebooks/sql_error.html", {"error": str(cursor.statusmessage)})
                 except Exception as e:
                     result = render_to_string(
@@ -111,6 +111,7 @@ class NotebookCell(models.Model):
 
         elif self.cell_type == NotebookCell.PLAIN_TEXT:
             self.rendering = self.contents
+
         elif self.cell_type == NotebookCell.EMPTY:
             self.rendering = self.contents
 
