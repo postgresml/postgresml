@@ -6,6 +6,7 @@ export default class extends Controller {
     'form',
     'undo',
     'play',
+    'type',
   ];
 
   connect() {
@@ -44,11 +45,13 @@ export default class extends Controller {
     };
 
     this.codeMirror.addKeyMap(keyMap)
+
+    this.selectCellType()
   }
 
   // Change syntax highlighting.
   selectCellType(event) {
-    const value = event.target.options[event.target.selectedIndex].value
+    const value = this.typeTarget.options[this.typeTarget.selectedIndex].value
 
     if (value == 3) {
       this.codeMirror.setOption('mode', 'sql')

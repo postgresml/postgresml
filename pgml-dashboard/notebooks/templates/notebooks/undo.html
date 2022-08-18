@@ -1,16 +1,18 @@
 <turbo-frame id="cell_{{ cell.cell_number }}">
-  <div class="notebook-cell {{ cell.get_cell_type_display|lower }}" data-controller="cell" data-cell-target="undo">
-    <div class="notebook-delete-undo flex">
-      <p class="flex-grow flex flex-center">Cell removed. You have 10 seconds to undo.</p>
-      <div class="notebook-button">
-        <form action="{% url 'notebooks/cell/remove/undo' notebook.pk cell.pk %}" action="post">
-          {% csrf_token %}
-          <button type="submit" title="Undo cell delete">
-            <span class="material-symbols-outlined">
-              replay
-            </span>
-          </button>
-        </form>
+  <div class="markdown-body">
+    <div class="notebook-cell {{ cell.get_cell_type_display|lower }}" data-controller="cell" data-cell-target="undo">
+      <div class="notebook-delete-undo flex">
+        <p class="flex-grow flex flex-center">Cell removed. You have 10 seconds to undo.</p>
+        <div class="notebook-button">
+          <form action="{% url 'notebooks/cell/remove/undo' notebook.pk cell.pk %}" action="post">
+            {% csrf_token %}
+            <button type="submit" title="Undo cell delete">
+              <span class="material-symbols-outlined">
+                replay
+              </span>
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
