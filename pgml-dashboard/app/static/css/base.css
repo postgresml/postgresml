@@ -123,7 +123,7 @@ section {
     box-shadow: 0 1px 2px var(--shadow-2);
     overflow: auto;
     min-width: 70vw;
-    max-width: 1200px;
+    max-width: 90vw;
 }
 
 /* Tables, sticky headers, overflow scroll, rounded corners, stripes and highlights */
@@ -497,9 +497,6 @@ body.models figure {
 /*
  * Notebook styles
  */
-body.notebooks h1 {
-  margin: 0;
-}
 
 nav ol, nav ul {
   list-style: none;
@@ -512,6 +509,7 @@ nav ol, nav ul {
 
 .notebook-cell-edit {
   border: 1px solid var(--gray-8);
+  margin-bottom: 1rem;
 }
 
 .hidden {
@@ -573,10 +571,8 @@ nav ol, nav ul {
   height: fit-content;
   width: fit-content;
   padding: 2px 5px;
-}
-
-.notebook-delete-undo p {
-  margin: 0;
+  margin-bottom: 0.12rem;
+  margin-left: 0.2rem;
 }
 
 .notebook-cell .notebook-button button, .markdown-body button {
@@ -591,7 +587,7 @@ nav ol, nav ul {
   font-weight: bold;
   background: rgb(240, 240, 240);
   border: 1px solid var(--gray-7);
-  padding: 7px 6px;
+  padding: 0.5rem 6px;
   border-radius: 2px;
   margin-bottom: 2px;
 }
