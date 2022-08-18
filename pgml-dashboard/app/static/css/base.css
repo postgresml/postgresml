@@ -80,7 +80,7 @@ h1 {
     font-size: 3em;
     font-weight: 100;
     margin: 0 0 0.5em;
-    color: var(--gray-3);
+    color: var(--gray-1);
     vertical-align: center;
 }
 h1 span.material-symbols-outlined:first-of-type {
@@ -94,7 +94,7 @@ h2 {
     font-weight: 300;
     margin: 0 0 1em 0;
     padding: 0 0 0;
-    color: var(--gray-3);
+    color: var(--gray-1);
 }
 h2 span.material-symbols-outlined:first-of-type {
     margin: 0 5px 0 0;
@@ -103,7 +103,7 @@ h3 {
     font-size: 1.5em;
     font-weight: 500;
     margin: 1em 0 1em 0;
-    color: var(--gray-3);
+    color: var(--gray-1);
 }
 code {
     font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
@@ -118,13 +118,12 @@ figure {
 section {
     background-color: var(--gray-9);
     padding: 30px;
-    margin: 20px;
+    margin: 20px min(5vw, 20px);
     border-radius: 10px;
     box-shadow: 0 1px 2px var(--shadow-2);
     overflow: auto;
-    margin-left: min(5vw, 20px);
-    margin-right: min(5vw, 20px);
     min-width: 70vw;
+    max-width: 1200px;
 }
 
 /* Tables, sticky headers, overflow scroll, rounded corners, stripes and highlights */
@@ -493,4 +492,125 @@ body.models figure {
 
 .ide .query_list code {
   font-size: smaller;
+}
+
+/*
+ * Notebook styles
+ */
+body.notebooks h1 {
+  margin: 0;
+}
+
+nav ol, nav ul {
+  list-style: none;
+}
+
+.notebook-cell.active {
+  border: 1px solid var(--gray-8);
+  padding: 0;
+}
+
+.notebook-cell-edit {
+  border: 1px solid var(--gray-8);
+}
+
+.hidden {
+  display: none;
+}
+
+.notebook-cell {
+  padding: 1rem;
+  border: 1px solid var(--gray-8);
+  background: #fff;
+}
+
+.language-sql {
+  color: #000;
+}
+
+.notebook-button {
+  margin: 0.1rem;
+}
+
+.notebook-contents code {
+  font-family: monospace;
+}
+
+.margin-right-1 {
+  margin-right: 1rem;
+}
+
+.margin-left-1 {
+  margin-left: 1rem;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.flex-center {
+  align-items: center;
+}
+
+.flex-end {
+  align-items: flex-end;
+}
+
+.flex-row-reverse {
+  flex-direction: row-reverse;
+}
+
+.notebook-cell .cell-number {
+  margin-right: 1rem;
+  font-family: monospace;
+}
+
+.notebook-cell .button {
+  height: fit-content;
+  width: fit-content;
+  padding: 2px 5px;
+}
+
+.notebook-delete-undo p {
+  margin: 0;
+}
+
+.notebook-cell .notebook-button button, .markdown-body button {
+  padding: 2px 5px;
+}
+
+.notebook-cell .button-delete {
+  margin-left: 1rem;
+}
+
+.notebook-cell select {
+  font-weight: bold;
+  background: rgb(240, 240, 240);
+  border: 1px solid var(--gray-7);
+  padding: 7px 6px;
+  border-radius: 2px;
+  margin-bottom: 2px;
+}
+
+.notebook-duration {
+  margin-top: 1rem;
+}
+
+.notebook-rendering {
+    /* margin-top: 1rem; */
+}
+
+.markdown-body.notebook-contents {
+  margin-bottom: 1rem;
+}
+
+/*
+* Customize editor
+*/
+.CodeMirror {
+  font-size: 1rem;
 }
