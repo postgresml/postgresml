@@ -8,7 +8,7 @@
   <ol class="object_list">
     {% for notebook in notebooks %}
     <li>
-      <a href="{% url 'notebooks/notebook' notebook.pk %}" target="_blank" data-turbo="false">
+      <a href="{% url 'notebooks/notebook' notebook.pk %}">
         <span>
           {{ notebook.name }}
         </span>
@@ -23,7 +23,7 @@
 <section>
   <h2>New notebook</h2>
 
-  <form action="{% url 'notebooks/create' %}" method="post" data-turbo="false" target="_blank">
+  <form action="{% url 'notebooks/create' %}" method="post">
     {% csrf_token %}
 
     <div class="input-container">

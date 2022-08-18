@@ -28,6 +28,8 @@ def notebook(request, pk):
             "cells": cells,
             "notebook": notebook,
             "next_cell_number": next_cell_number,
+            "title": f"{notebook.name} - PostgresML",
+            "topic": "notebooks",
         },
     )
 
@@ -72,6 +74,7 @@ def notebook_cell(request, notebook_pk, cell_pk):
         {
             "cell": cell,
             "notebook": cell.notebook,
+            "bust_cache": time.time(),
         },
     )
 
@@ -191,6 +194,7 @@ def remove_notebook_cell(request, notebook_pk, cell_pk):
         {
             "cell": cell,
             "notebook": cell.notebook,
+            "bust_cache": time.time(),
         },
     )
 
@@ -207,6 +211,7 @@ def undo_remove_notebook_cell(request, notebook_pk, cell_pk):
         {
             "cell": cell,
             "notebook": cell.notebook,
+            "bust_cache": time.time(),
         },
     )
 
@@ -230,5 +235,6 @@ def play_notebook_cell(request, notebook_pk, cell_pk):
         {
             "cell": cell,
             "notebook": cell.notebook,
+            "bust_cache": time.time(),
         },
     )
