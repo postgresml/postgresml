@@ -3,6 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.db.utils import ProgrammingError
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 import markdown
 

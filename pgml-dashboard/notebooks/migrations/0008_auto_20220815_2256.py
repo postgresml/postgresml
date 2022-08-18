@@ -6,19 +6,19 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('notebooks', '0007_alter_notebook_name'),
+        ("notebooks", "0007_alter_notebook_name"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='notebookline',
-            old_name='line_number',
-            new_name='cell_number',
+            model_name="notebookline",
+            old_name="line_number",
+            new_name="cell_number",
         ),
         migrations.RenameField(
-            model_name='notebookline',
-            old_name='line_type',
-            new_name='cell_type',
+            model_name="notebookline",
+            old_name="line_type",
+            new_name="cell_type",
         ),
-        migrations.RenameModel('NotebookLine', 'NotebookCell'),
+        migrations.RenameModel("NotebookLine", "NotebookCell"),
     ]
