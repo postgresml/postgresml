@@ -4,6 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django import forms
 from django.db import transaction
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from notebooks.models import *
 import time
@@ -114,7 +115,7 @@ def add_notebook_cell(request, pk):
 
         cell = NotebookCell.objects.create(
             notebook=notebook,
-            contents=cell_form.cleaned_data["contents"].strip(),
+            contents=strip_tags(cell_form.cleaned_data["contents"].strip()),
             cell_number=(last_cell.cell_number + 1 if last_cell else 1),
             cell_type=cell_type,
         )
@@ -156,7 +157,7 @@ def edit_notebook_cell(request, notebook_pk, cell_pk):
         else:
             cell_type = NotebookCell.MARKDOWN
 
-        cell.contents = cell_form.cleaned_data["contents"].strip()
+        cell.contents = strip_tags(cell_form.cleaned_data["contents"].strip())
         cell.cell_type = cell_type
 
         # If cell was changed to Markdown, remove execution time.
