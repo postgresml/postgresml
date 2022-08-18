@@ -2,9 +2,8 @@ import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
   static targets = [
-    "self",
-    "editor",
-    "form",
+    'editor',
+    'form',
     'undo',
   ];
 
@@ -14,13 +13,14 @@ export default class extends Controller {
       this.initCodeMirrorOnTarget(this.editorTarget)
     }
 
+    // Delete the frame in 10 seconds.
     if (this.hasUndoTarget) {
       setTimeout(function() {
         // I think undoTarget is preserved after reload, not sure
         if (this.hasUndoTarget && this.undoTarget.parentNode) {
           this.undoTarget.parentNode.remove()
         }
-      }.bind(this), 5000)
+      }.bind(this), 10000)
     }
   }
 
@@ -56,13 +56,16 @@ export default class extends Controller {
     }
   }
 
+  // Prevent the page from scrolling up
+  // and scroll it manually to the bottom
+  // on form submit.
   freezeScrollOnNextRender() {
-    document.addEventListener("turbo:render", scrollToBottom);
+    document.addEventListener('turbo:render', scrollToBottom);
   }
 }
 
 const scrollToBottom = () => {
   window.Turbo.navigator.currentVisit.scrolled = true;
   window.scrollTo(0, document.body.scrollHeight)
-  document.removeEventListener("turbo:render", scrollToBottom);
+  document.removeEventListener('turbo:render', scrollToBottom);
 };

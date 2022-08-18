@@ -9,7 +9,7 @@
     </form>
     <form action="{% url 'notebooks/reset' notebook.pk %}" method="post">
       {% csrf_token %}
-      <button type="submit">
+      <button type="submit" title="Reset all executable cells">
         <span class="material-symbols-outlined">replay</span>
       </button>
     </form>
@@ -34,11 +34,11 @@
         <textarea data-cell-id="new" name="contents" data-cell-target="editor"></textarea>
       </div>
       <div class="flex flex-end">
-        <select name="cell_type" id="cell_type" data-action="cell#selectCellType">
+        <select name="cell_type" id="cell_type" data-action="cell#selectCellType" title="Select cell type">
           <option value="3" selected>SQL</option>
           <option value="1">Markdown</option>
         </select>
-        <button type="submit" class="button notebook-button">
+        <button type="submit" class="button notebook-button" title="Create cell">
           <span class="material-symbols-outlined">play_arrow</span>
         </button>
       </div>

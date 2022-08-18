@@ -11,11 +11,11 @@
             <textarea name="contents" data-cell-target="editor">{{ cell.contents }}</textarea>
           </div>
           <div class="flex flex-end">
-            <select name="cell_type" data-action="cell#selectCellType" >
+            <select name="cell_type" data-action="cell#selectCellType" title="Select cell type">
               <option value="3" {% if cell.cell_type == 3 %}selected{% endif %}>SQL</option>
               <option value="1" {% if cell.cell_type == 1 %}selected{% endif %}>Markdown</option>
             </select>
-            <button type="submit" class="button notebook-button">
+            <button type="submit" class="button notebook-button" title="Execute cell">
               <span class="material-symbols-outlined">play_arrow</span>
             </button>
           </div>
@@ -46,7 +46,7 @@
         <div class="notebook-button margin-left-1">
           <form action="{% url 'notebooks/cell/play' notebook.pk cell.pk %}" method="post">
             {% csrf_token %}
-            <button type="submit">
+            <button type="submit" title="Execute cell">
               <span class="material-symbols-outlined">
                 play_arrow
               </span>
@@ -57,14 +57,14 @@
         <div class="notebook-button">
           <form action="{% url 'notebooks/cell/remove' notebook.pk cell.pk %}" method="post">
             {% csrf_token %}
-            <button type="submit">
+            <button type="submit" title="Delete cell">
               <span class="material-symbols-outlined">delete_forever</span>
             </button>
           </form>
         </div>
         <div class="notebook-button">
           <form action="{% url 'notebooks/cell/edit' notebook.pk cell.pk %}?bust_cache={{ bust_cache }}" method="get">
-            <button type="submit">
+            <button type="submit" title="Edit cell">
               <span class="material-symbols-outlined">edit</span>
             </button>
           </form>
