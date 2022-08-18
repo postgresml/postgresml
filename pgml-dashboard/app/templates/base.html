@@ -57,15 +57,15 @@
             import { Autocomplete } from '{% static 'js/controllers/stimulus-autocomplete.js' %}'
             import { default as NewProject } from '{% static 'js/controllers/new-project.js' %}'
             import { default as QuickPrediction } from '{% static 'js/controllers/quick-prediction.js' %}'
-            import { default as Ide } from '{% static 'js/controllers/ide.js' %}'
-            import Notebook from '{% static 'notebooks/js/notebook.js' %}'
-            import NotebookCell from '{% static 'notebooks/js/cell.js' %}'
+            import { default as Console } from '{% static 'js/controllers/console.js' %}'
+            import { default as Notebook } from '{% static 'notebooks/js/notebook.js' %}'
+            import { default as NotebookCell } from '{% static 'notebooks/js/cell.js' %}'
 
             const application = Application.start()
             application.register('autocomplete', Autocomplete)
             application.register('new-project', NewProject)
             application.register('quick-prediction', QuickPrediction)
-            application.register('ide', Ide)
+            application.register('console', Console)
             application.register('notebook', Notebook)
             application.register('cell', NotebookCell)
         </script>
@@ -91,7 +91,7 @@
                     <li{% if topic == "models" %} class="selected"{% endif %}><a href="{% url 'models' %}"><span class="material-symbols-outlined">model_training</span>Models</a></li>
                     <li{% if topic == "deployments" %} class="selected"{% endif %}><a href="{% url 'deployments' %}"><span class="material-symbols-outlined">inventory</span>Deployments</a></li>
                     <li{% if topic == "snapshots" %} class="selected"{% endif %}><a href="{% url 'snapshots' %}"><span class="material-symbols-outlined">storage</span>Snapshots</a></li>
-                    <li{% if topic == "ide" %} class="selected"{% endif %}><a href="{% url 'ide' %}"><span class="material-symbols-outlined">terminal</span>IDE</a></li>
+                    <li{% if topic == "console" %} class="selected"{% endif %}><a href="{% url 'console' %}"><span class="material-symbols-outlined">terminal</span>Console</a></li>
                 </ul>
             </nav>
         </header>

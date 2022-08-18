@@ -11,7 +11,7 @@ export default class extends Controller {
   ]
 
   connect() {
-    this.myCodeMirror = CodeMirror.fromTextArea(document.getElementById("codemirror-ide"), {
+    this.myCodeMirror = CodeMirror.fromTextArea(document.getElementById("codemirror-console"), {
       value: "SELECT 1\n",
       mode:  "sql",
       lineNumbers: true,
@@ -42,7 +42,7 @@ export default class extends Controller {
     for (let query of this.history.reverse()) {
       innerHTML += `
         <li >
-          <a href="#query-results" data-action="click->ide#runQuery">
+          <a href="#query-results" data-action="click->console#runQuery">
             <span><code>${query}</code></span>
           </a>
         </li>
@@ -64,7 +64,7 @@ export default class extends Controller {
       this.addQueryToHistory(query)
     }
 
-    myFetch(`/ide/run/`, {
+    myFetch(`/console/run/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

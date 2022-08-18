@@ -27,13 +27,12 @@ SPECIAL_QUERIES = {
 }
 
 
-class IdeView(TemplateView):
-    template_name = "ide/index.html"
+class ConsoleView(TemplateView):
+    template_name = "console/index.html"
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
-        data["topic"] = "ide"
-        data["notebooks"] = Notebook.objects.all()
+        data["topic"] = "console"
         return data
 
 
