@@ -27,7 +27,7 @@
 </div>
 
 <div class="notebook-cell active" data-controller="cell">
-  <form action="{% url 'notebooks/cell/add' notebook.pk %}" method="post" data-cell-target="form" data-action="cell#freezeScrollOnNextRender">
+  <form action="{% url 'notebooks/cell/add' notebook.pk %}" method="post" data-cell-target="form" data-action="cell#freezeScrollOnNextRender cell#play">
     <div class="flex">
       {% csrf_token %}
       <div class="notebook-cell-code flex-grow">
@@ -38,7 +38,7 @@
           <option value="3" selected>SQL</option>
           <option value="1">Markdown</option>
         </select>
-        <button type="submit" class="button notebook-button" title="Create cell">
+        <button type="submit" class="button notebook-button" title="Create cell" data-cell-target="play">
           <span class="material-symbols-outlined">play_arrow</span>
         </button>
       </div>
