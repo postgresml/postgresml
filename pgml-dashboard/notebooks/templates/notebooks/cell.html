@@ -7,7 +7,7 @@
       <form action="{% url 'notebooks/cell/edit' notebook.pk cell.pk %}" method="post" data-cell-target="form" data-action="cell#play">
         <div class="flex">
           {% csrf_token %}
-          <div class="notebook-cell-code flex-grow">
+          <div class="flex-grow">
             <textarea name="contents" data-cell-target="editor">{{ cell.contents }}</textarea>
           </div>
           <div class="flex flex-end">
@@ -71,9 +71,11 @@
         </div>
       </div>
       {% if cell.execution_time %}
-      <div class="markdown-body notebook-duration">
-        <div class="flex flex-row-reverse">
-          <code>{{ cell.execution_time }}</code>
+      <div class="notebook-duration">
+        <div class="markdown-body">
+          <div class="flex flex-row-reverse">
+            <code>{{ cell.execution_time }}</code>
+          </div>
         </div>
       </div>
       {% endif %}
