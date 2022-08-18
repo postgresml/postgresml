@@ -5,6 +5,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="description" content="Needs to be developed.">
+        <meta name="turbo-cache-control" content="no-cache">
 
         <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
         <link rel="stylesheet" href="{% static 'notebooks/css/notebooks.css' %}">
@@ -51,9 +52,11 @@
         <script type="module-shim">
             import { Application } from '@hotwired/stimulus'
             import Notebook from '{% static 'notebooks/js/notebook.js' %}'
+            import NotebookCell from '{% static 'notebooks/js/cell.js' %}'
 
             const application = Application.start()
             application.register('notebook', Notebook)
+            application.register('cell', NotebookCell)
         </script>
       
         <title>{% if title %}{{title}}{% endif %}{% if title is None or "PostgresML" not in title %}{% if title is not None %} - {% endif %}PostgresML{% endif %}</title>

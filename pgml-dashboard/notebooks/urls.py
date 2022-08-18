@@ -9,6 +9,8 @@ from notebooks.views import (
     undo_remove_notebook_cell,
     create_notebook,
     rename_notebook,
+    reset_notebook,
+    play_notebook_cell,
 )
 
 urlpatterns = [
@@ -24,4 +26,6 @@ urlpatterns = [
         undo_remove_notebook_cell,
         name="notebooks/cell/remove/undo",
     ),
+    path("notebook/<int:pk>/reset/", reset_notebook, name="notebooks/reset"),
+    path("notebook/<int:notebook_pk>/cell/<int:cell_pk>/play/", play_notebook_cell, name="notebooks/cell/play"),
 ]
