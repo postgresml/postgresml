@@ -29,7 +29,7 @@ def notebook(request, pk):
             "notebook": notebook,
             "next_cell_number": next_cell_number,
             "title": f"{notebook.name} - PostgresML",
-            "topic": "notebook",
+            "topic": "notebooks",
         },
     )
 
