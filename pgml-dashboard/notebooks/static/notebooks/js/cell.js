@@ -5,6 +5,7 @@ export default class extends Controller {
     'editor',
     'form',
     'undo',
+    'play',
   ];
 
   connect() {
@@ -61,6 +62,26 @@ export default class extends Controller {
   // on form submit.
   freezeScrollOnNextRender() {
     document.addEventListener('turbo:render', scrollToBottom);
+    this.play()
+  }
+
+  // Disable cell until execution completes.
+  // Prevents duplicate submits.
+  play(event) {
+    this.playTarget.querySelector('span').innerHTML = 'pending'
+    this.playTarget.disabled = true
+
+    if (this.codeMirror) {
+      const disableKeyMap = {
+        'Ctrl-Enter': () => null,
+        'Cmd-Enter': () => null,
+        'Ctrl-/': () => null,
+        'Cmd-/': () => null,
+      };
+
+      this.codeMirror.setOption('readOnly', true)
+      this.codeMirror.addKeyMap(disableKeyMap)
+    }
   }
 }
 
