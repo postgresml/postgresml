@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block main %}
-<section>
+<div>
    <h1>
     <span class="material-symbols-outlined">newspaper</span>Notebooks
   </h1> 
@@ -19,10 +19,10 @@
     {% endfor %}
   </ol>
   {% endif %}
-</section>
+</div>
 
 
-<section>
+<div>
   <h2>New notebook</h2>
 
   <form action="{% url 'notebooks/create' %}" method="post">
@@ -36,5 +36,5 @@
       <button class="next" type="submit">Create notebook</button>
     </div>
   </form>
-</section>
+</div>
 {% endblock %}

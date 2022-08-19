@@ -516,9 +516,19 @@ nav ol, nav ul {
   display: none;
 }
 
+main turbo-frame:first-of-type .notebook-cell {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-top: 1px solid var(--gray-8);
+}
+
 .notebook-cell {
+  margin: 0 20px;
+  border-radius: 0;
   padding: 1rem;
   border: 1px solid var(--gray-8);
+  border-top: none;
+  border-bottom: none;
   background: #fff;
 }
 
