@@ -1,0 +1,217 @@
+- model: notebooks.notebook
+  pk: 2
+  fields:
+    name: Welcome to PostgresML
+    created_at: 2022-08-19 21:17:23.807438+00:00
+    updated_at: 2022-08-19 21:17:23.807451+00:00
+- model: notebooks.notebookcell
+  pk: 7
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: "## Welcome!\n\nHi there. Welcome to what we hope is the future of machine
+      learning!\n\nPostgresML is an end-to-end system for training and deploying real
+      time machine learning models. It handles data versioning, model training, ranking,
+      \nand safe production release. This dashboard gives an overview of what's happening
+      in the system and also helps build and deploy experiments. The notebooks,\none
+      of which you're reading right this moment, are our take on what ML notebooks
+      could be when used with a real time data store like PostgreSQL.\n\n\n\n\n###
+      Notebooks\n\nOur Notebooks are similar to Jupyter Notebooks, which you might
+      be familiar with already. On the bottom of the page, you will find a text editor
+      which is used to create new cells. Each cell can contain either Markdown which
+      is just text really, and SQL which can be executed directly on this PostgresML
+      instance.\n\nEach cell has a little menu in the top right corner, allowing you
+      to (re)run it (if it's SQL), edit it, and delete it.\n\n\nLet me give you an
+      example. The next cell (cell #2) will be a SQL cell which will execute a simple
+      query."
+    rendering: "<article class=\"markdown-body\"><h2>Welcome!</h2>\n<p>Hi there. Welcome
+      to what we hope is the future of machine learning!</p>\n<p>PostgresML is an
+      end-to-end system for training and deploying real time machine learning models.
+      It handles data versioning, model training, ranking, \nand safe production release.
+      This dashboard gives an overview of what's happening in the system and also
+      helps build and deploy experiments. The notebooks,\none of which you're reading
+      right this moment, are our take on what ML notebooks could be when used with
+      a real time data store like PostgreSQL.</p>\n<h3>Notebooks</h3>\n<p>Our Notebooks
+      are similar to Jupyter Notebooks, which you might be familiar with already.
+      On the bottom of the page, you will find a text editor which is used to create
+      new cells. Each cell can contain either Markdown which is just text really,
+      and SQL which can be executed directly on this PostgresML instance.</p>\n<p>Each
+      cell has a little menu in the top right corner, allowing you to (re)run it (if
+      it's SQL), edit it, and delete it.</p>\n<p>Let me give you an example. The next
+      cell (cell #2) will be a SQL cell which will execute a simple query.</p></article>"
+    execution_time: null
+    cell_number: 1
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 8
+  fields:
+    notebook: 2
+    cell_type: 3
+    contents: SELECT random();
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>random</strong></td>\n      \n    </tr>\n  </thead>\n  <tbody>\n
+      \   \n    <tr>\n      \n      <td>0.6822832295608556</td>\n      \n    </tr>\n
+      \   \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:00.000654'
+    cell_number: 2
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 9
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: 'I just asked Postgres to give me a random number. Pretty simple query,
+      but it demonstrates the notebook functionality pretty well. You can see that
+      the result of `random()` is currently `0.6822832295608556`. On the bottom right
+      corner, you can see that it took `0:00:00.000654` or 0 hours, 0 minutes, 0 seconds
+      and only 00006ns, which I believe is 0.6ms, for Postgres to run this query for
+      us. This runtime is good to know, because you''ll be able to benchmark some
+      of PostgresML functionality, including the models we provide, right here in
+      these notebooks.
+
+
+      Try rerunning the cell again by clicking the "play" button in the top right
+      corner. You''ll see that the random number will change. Rerunning is a real
+      time operation and Postgres will give you a different random number every time
+      (otherwise it wouldn''t be random).
+
+
+      #### Editing a cell
+
+
+      You can edit a cell at any time, including SQL cells which will then run the
+      new query immediately.
+
+
+      #### Deleting a cell
+
+
+      Deleting a cell is pretty easy: just click on the delete button in the top right
+      corner. You''ll have 10 seconds to undo the delete if you so desire; we wouldn''t
+      want you to lose your work because of an accidental click.
+
+
+      #### Shortcuts
+
+
+      The text editor supports the following helpful shortcuts:
+
+
+
+      | Shortcut |             Description               |
+
+      -----------| --------------------------------------
+
+      | `Cmd-/` or `Ctrl-/` | Comment out SQL code.      |
+
+      | `Cmd-Enter` or `Ctrl-Enter` | Save/create a cell.|
+
+
+      By the way, this was a Markdown table, you can make those here as well.'
+    rendering: '<article class="markdown-body"><p>I just asked Postgres to give me
+      a random number. Pretty simple query, but it demonstrates the notebook functionality
+      pretty well. You can see that the result of <code>random()</code> is currently
+      <code>0.6822832295608556</code>. On the bottom right corner, you can see that
+      it took <code>0:00:00.000654</code> or 0 hours, 0 minutes, 0 seconds and only
+      00006ns, which I believe is 0.6ms, for Postgres to run this query for us. This
+      runtime is good to know, because you''ll be able to benchmark some of PostgresML
+      functionality, including the models we provide, right here in these notebooks.</p>
+
+      <p>Try rerunning the cell again by clicking the "play" button in the top right
+      corner. You''ll see that the random number will change. Rerunning is a real
+      time operation and Postgres will give you a different random number every time
+      (otherwise it wouldn''t be random).</p>
+
+      <h4>Editing a cell</h4>
+
+      <p>You can edit a cell at any time, including SQL cells which will then run
+      the new query immediately.</p>
+
+      <h4>Deleting a cell</h4>
+
+      <p>Deleting a cell is pretty easy: just click on the delete button in the top
+      right corner. You''ll have 10 seconds to undo the delete if you so desire; we
+      wouldn''t want you to lose your work because of an accidental click.</p>
+
+      <h4>Shortcuts</h4>
+
+      <p>The text editor supports the following helpful shortcuts:</p>
+
+      <table>
+
+      <thead>
+
+      <tr>
+
+      <th>Shortcut</th>
+
+      <th>Description</th>
+
+      </tr>
+
+      </thead>
+
+      <tbody>
+
+      <tr>
+
+      <td><code>Cmd-/</code> or <code>Ctrl-/</code></td>
+
+      <td>Comment out SQL code.</td>
+
+      </tr>
+
+      <tr>
+
+      <td><code>Cmd-Enter</code> or <code>Ctrl-Enter</code></td>
+
+      <td>Save/create a cell.</td>
+
+      </tr>
+
+      </tbody>
+
+      </table>
+
+      <p>By the way, this was a Markdown table, you can make those here as well.</p></article>'
+    execution_time: null
+    cell_number: 3
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 10
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: '### Thank you
+
+
+      Thank you for trying out PostgresML! We hope you enjoy your time here and have
+
+      fun learning about machine learning, in the comfort of your favorite database.'
+    rendering: '<article class="markdown-body"><h3>Thank you</h3>
+
+      <p>Thank you for trying out PostgresML! We hope you enjoy your time here and
+      have
+
+      fun learning about machine learning, in the comfort of your favorite database.</p></article>'
+    execution_time: null
+    cell_number: 4
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 11
+  fields:
+    notebook: 2
+    cell_type: 3
+    contents: SELECT 'Have a nice day!' AS greeting;
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>greeting</strong></td>\n      \n    </tr>\n  </thead>\n  <tbody>\n
+      \   \n    <tr>\n      \n      <td>Have a nice day!</td>\n      \n    </tr>\n
+      \   \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:00.000580'
+    cell_number: 5
+    version: 1
+    deleted_at: null
