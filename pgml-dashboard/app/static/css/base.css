@@ -404,7 +404,7 @@ ol.object_list li a {
 }
 ol.object_list li a:hover {
     height: 2em;
-    background-color: var(--color-9);
+    background-color: var(--color-8);
 }
 ol.object_list li a::after {
     content: '❯';
