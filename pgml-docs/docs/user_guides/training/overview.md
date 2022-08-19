@@ -8,7 +8,7 @@ Most parameters are optional other than the `project_name` which is a simple hum
 ```sql linenums="1" title="pgml.train"
  pgml.train(
 	project_name TEXT,                       -- Human-friendly project name
-	task TEXT DEFAULT NULL,             -- 'regression' or 'classification'
+	task TEXT DEFAULT NULL,                  -- 'regression' or 'classification'
 	relation_name TEXT DEFAULT NULL,         -- name of table or view
 	y_column_name TEXT DEFAULT NULL,         -- aka "label" or "unknown" or "target"
 	algorithm TEXT DEFAULT 'linear',         -- statistical learning method
