@@ -21,3 +21,4 @@ whitenoise==6.0.0
 PyJWT==2.4.0
 Markdown==3.3.7
 django-click==2.3.0
+django-request==1.6.1

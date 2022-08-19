@@ -79,3 +79,12 @@ class NewProjectSerializer(serializers.Serializer):
 class NewSnapshotSerializer(serializers.Serializer):
     relation_name = serializers.CharField()
     y_column_name = serializers.ListSerializer(child=serializers.CharField())
+
+
+class RequestSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    path = serializers.CharField()
+    response = serializers.IntegerField()
+    time = serializers.DateTimeField()
+    ip = serializers.IPAddressField()
+    user_agent = serializers.CharField()
