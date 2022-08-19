@@ -1,3 +1,3 @@
 from pgml_extension import logging_setup
 
-__version__ = "0.11.2"
+__version__ = "1.0.0"
