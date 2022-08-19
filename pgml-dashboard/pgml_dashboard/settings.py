@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "notebooks",
+    "request",
 ]
 
 MIDDLEWARE = [
@@ -70,6 +71,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "request.middleware.RequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -181,3 +183,9 @@ STATIC_ROOT = "static"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 JWT_AUTH_ENABLED = os.environ.get("DJANGO_JWT_AUTH_ENABLED", "False") == "True"
+
+# Ignore requests to /api/requests API
+# otherwise we would be generating fake traffic.
+REQUEST_IGNORE_PATHS = [
+    r"api/requests",
+]

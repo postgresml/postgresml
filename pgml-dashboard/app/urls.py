@@ -9,6 +9,7 @@ router.register("snapshots", snapshots.SnapshotViewSet)
 router.register("models", models.ModelViewSet)
 router.register("deployments", deployments.DeploymentViewSet)
 router.register("tables", projects.TableView, basename="tables")
+router.register("requests", root.RequestViewSet)
 
 html_router = routers.DefaultRouter()
 html_router.register("snapshots/analysis", snapshots.SnapshotAnalysisView, basename="snapshots/analysis")
