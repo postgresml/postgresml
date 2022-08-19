@@ -92,7 +92,7 @@
                     <li{% if topic == "deployments" %} class="selected"{% endif %}><a href="{% url 'deployments' %}"><span class="material-symbols-outlined">inventory</span>Deployments</a></li>
                     <li{% if topic == "snapshots" %} class="selected"{% endif %}><a href="{% url 'snapshots' %}"><span class="material-symbols-outlined">storage</span>Snapshots</a></li>
                     <li{% if topic == "console" %} class="selected"{% endif %}><a href="{% url 'console' %}"><span class="material-symbols-outlined">terminal</span>Console</a></li>
-                    <li><a href="https://postgresml.org/user_guides/training/overview/"><span class="material-symbols-outlined">menu_book</span>Docs</a></li>
+                    <li><a href="https://postgresml.org/user_guides/training/overview/" data-turbo="false" target="_blank"><span class="material-symbols-outlined">menu_book</span>Docs</a></li>
                 </ul>
             </nav>
         </header>
