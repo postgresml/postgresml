@@ -1,4 +1,10 @@
 - model: notebooks.notebook
+  pk: 0
+  fields:
+    name: 'Tutorial 0: Welcome to PostgresML Notebooks!'
+    created_at: 2022-08-20 01:47:08.937190+00:00
+    updated_at: 2022-08-20 01:47:08.937190+00:00
+- model: notebooks.notebook
   pk: 1
   fields:
     name: 'Tutorial 1: Real Time Fraud Detection'
@@ -12,6 +18,217 @@
     updated_at: 2022-08-19 23:10:23.120996+00:00
 - model: notebooks.notebookcell
   pk: 1
+  fields:
+    notebook: 0
+    cell_type: 1
+    contents: "## Welcome!\n\nHi there. Welcome to what we hope is the future of machine
+      learning!\n\nPostgresML is an end-to-end system for training and deploying real
+      time machine learning models. It handles data versioning, model training, ranking,
+      \nand safe production release. This dashboard gives an overview of what's happening
+      in the system and also helps build and deploy experiments. The notebooks,\none
+      of which you're reading right this moment, are our take on what ML notebooks
+      could be when used with a real time data store like PostgreSQL.\n\n\n\n\n###
+      Notebooks\n\nOur Notebooks are similar to Jupyter Notebooks, which you might
+      be familiar with already. On the bottom of the page, you will find a text editor
+      which is used to create new cells. Each cell can contain either Markdown which
+      is just text really, and SQL which can be executed directly on this PostgresML
+      instance.\n\nEach cell has a little menu in the top right corner, allowing you
+      to (re)run it (if it's SQL), edit it, and delete it.\n\n\nLet me give you an
+      example. The next cell (cell #2) will be a SQL cell which will execute a simple
+      query."
+    rendering: "<article class=\"markdown-body\"><h2>Welcome!</h2>\n<p>Hi there. Welcome
+      to what we hope is the future of machine learning!</p>\n<p>PostgresML is an
+      end-to-end system for training and deploying real time machine learning models.
+      It handles data versioning, model training, ranking, \nand safe production release.
+      This dashboard gives an overview of what's happening in the system and also
+      helps build and deploy experiments. The notebooks,\none of which you're reading
+      right this moment, are our take on what ML notebooks could be when used with
+      a real time data store like PostgreSQL.</p>\n<h3>Notebooks</h3>\n<p>Our Notebooks
+      are similar to Jupyter Notebooks, which you might be familiar with already.
+      On the bottom of the page, you will find a text editor which is used to create
+      new cells. Each cell can contain either Markdown which is just text really,
+      and SQL which can be executed directly on this PostgresML instance.</p>\n<p>Each
+      cell has a little menu in the top right corner, allowing you to (re)run it (if
+      it's SQL), edit it, and delete it.</p>\n<p>Let me give you an example. The next
+      cell (cell #2) will be a SQL cell which will execute a simple query.</p></article>"
+    execution_time: null
+    cell_number: 1
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 2
+  fields:
+    notebook: 0
+    cell_type: 3
+    contents: SELECT random();
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>random</strong></td>\n      \n    </tr>\n  </thead>\n  <tbody>\n
+      \   \n    <tr>\n      \n      <td>0.6822832295608556</td>\n      \n    </tr>\n
+      \   \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:00.000654'
+    cell_number: 2
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 3
+  fields:
+    notebook: 0
+    cell_type: 1
+    contents: 'I just asked Postgres to give me a random number. Pretty simple query,
+      but it demonstrates the notebook functionality pretty well. You can see that
+      the result of `random()` is currently `0.6822832295608556`. On the bottom right
+      corner, you can see that it took `0:00:00.000654` or 0 hours, 0 minutes, 0 seconds
+      and only 00006ns, which I believe is 0.6ms, for Postgres to run this query for
+      us. This runtime is good to know, because you''ll be able to benchmark some
+      of PostgresML functionality, including the models we provide, right here in
+      these notebooks.
+
+
+      Try rerunning the cell again by clicking the "play" button in the top right
+      corner. You''ll see that the random number will change. Rerunning is a real
+      time operation and Postgres will give you a different random number every time
+      (otherwise it wouldn''t be random).
+
+
+      #### Editing a cell
+
+
+      You can edit a cell at any time, including SQL cells which will then run the
+      new query immediately.
+
+
+      #### Deleting a cell
+
+
+      Deleting a cell is pretty easy: just click on the delete button in the top right
+      corner. You''ll have 10 seconds to undo the delete if you so desire; we wouldn''t
+      want you to lose your work because of an accidental click.
+
+
+      #### Shortcuts
+
+
+      The text editor supports the following helpful shortcuts:
+
+
+
+      | Shortcut |             Description               |
+
+      -----------| --------------------------------------
+
+      | `Cmd-/` or `Ctrl-/` | Comment out SQL code.      |
+
+      | `Cmd-Enter` or `Ctrl-Enter` | Save/create a cell.|
+
+
+      By the way, this was a Markdown table, you can make those here as well.'
+    rendering: '<article class="markdown-body"><p>I just asked Postgres to give me
+      a random number. Pretty simple query, but it demonstrates the notebook functionality
+      pretty well. You can see that the result of <code>random()</code> is currently
+      <code>0.6822832295608556</code>. On the bottom right corner, you can see that
+      it took <code>0:00:00.000654</code> or 0 hours, 0 minutes, 0 seconds and only
+      00006ns, which I believe is 0.6ms, for Postgres to run this query for us. This
+      runtime is good to know, because you''ll be able to benchmark some of PostgresML
+      functionality, including the models we provide, right here in these notebooks.</p>
+
+      <p>Try rerunning the cell again by clicking the "play" button in the top right
+      corner. You''ll see that the random number will change. Rerunning is a real
+      time operation and Postgres will give you a different random number every time
+      (otherwise it wouldn''t be random).</p>
+
+      <h4>Editing a cell</h4>
+
+      <p>You can edit a cell at any time, including SQL cells which will then run
+      the new query immediately.</p>
+
+      <h4>Deleting a cell</h4>
+
+      <p>Deleting a cell is pretty easy: just click on the delete button in the top
+      right corner. You''ll have 10 seconds to undo the delete if you so desire; we
+      wouldn''t want you to lose your work because of an accidental click.</p>
+
+      <h4>Shortcuts</h4>
+
+      <p>The text editor supports the following helpful shortcuts:</p>
+
+      <table>
+
+      <thead>
+
+      <tr>
+
+      <th>Shortcut</th>
+
+      <th>Description</th>
+
+      </tr>
+
+      </thead>
+
+      <tbody>
+
+      <tr>
+
+      <td><code>Cmd-/</code> or <code>Ctrl-/</code></td>
+
+      <td>Comment out SQL code.</td>
+
+      </tr>
+
+      <tr>
+
+      <td><code>Cmd-Enter</code> or <code>Ctrl-Enter</code></td>
+
+      <td>Save/create a cell.</td>
+
+      </tr>
+
+      </tbody>
+
+      </table>
+
+      <p>By the way, this was a Markdown table, you can make those here as well.</p></article>'
+    execution_time: null
+    cell_number: 3
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 4
+  fields:
+    notebook: 0
+    cell_type: 1
+    contents: '### Thank you
+
+
+      Thank you for trying out PostgresML! We hope you enjoy your time here and have
+
+      fun learning about machine learning, in the comfort of your favorite database.'
+    rendering: '<article class="markdown-body"><h3>Thank you</h3>
+
+      <p>Thank you for trying out PostgresML! We hope you enjoy your time here and
+      have
+
+      fun learning about machine learning, in the comfort of your favorite database.</p></article>'
+    execution_time: null
+    cell_number: 4
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 5
+  fields:
+    notebook: 0
+    cell_type: 3
+    contents: SELECT 'Have a nice day!' AS greeting;
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>greeting</strong></td>\n      \n    </tr>\n  </thead>\n  <tbody>\n
+      \   \n    <tr>\n      \n      <td>Have a nice day!</td>\n      \n    </tr>\n
+      \   \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:00.000580'
+    cell_number: 5
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 6
   fields:
     notebook: 1
     cell_type: 1
@@ -120,7 +337,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 2
+  pk: 7
   fields:
     notebook: 1
     cell_type: 3
@@ -132,7 +349,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 3
+  pk: 8
   fields:
     notebook: 1
     cell_type: 3
@@ -146,7 +363,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 4
+  pk: 9
   fields:
     notebook: 1
     cell_type: 1
@@ -164,7 +381,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 5
+  pk: 10
   fields:
     notebook: 1
     cell_type: 3
@@ -177,7 +394,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 6
+  pk: 11
   fields:
     notebook: 1
     cell_type: 1
@@ -189,7 +406,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 7
+  pk: 12
   fields:
     notebook: 1
     cell_type: 3
@@ -203,7 +420,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 8
+  pk: 13
   fields:
     notebook: 1
     cell_type: 1
@@ -225,7 +442,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 9
+  pk: 14
   fields:
     notebook: 1
     cell_type: 3
@@ -237,7 +454,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 10
+  pk: 15
   fields:
     notebook: 1
     cell_type: 1
@@ -250,7 +467,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 11
+  pk: 16
   fields:
     notebook: 1
     cell_type: 3
@@ -266,7 +483,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 12
+  pk: 17
   fields:
     notebook: 1
     cell_type: 1
@@ -282,7 +499,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 13
+  pk: 18
   fields:
     notebook: 1
     cell_type: 3
@@ -295,7 +512,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 14
+  pk: 19
   fields:
     notebook: 1
     cell_type: 1
@@ -308,7 +525,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 15
+  pk: 20
   fields:
     notebook: 1
     cell_type: 3
@@ -324,7 +541,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 16
+  pk: 21
   fields:
     notebook: 1
     cell_type: 1
@@ -339,7 +556,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 17
+  pk: 22
   fields:
     notebook: 1
     cell_type: 3
@@ -351,7 +568,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 18
+  pk: 23
   fields:
     notebook: 1
     cell_type: 1
@@ -363,7 +580,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 19
+  pk: 24
   fields:
     notebook: 1
     cell_type: 3
@@ -376,7 +593,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 20
+  pk: 25
   fields:
     notebook: 1
     cell_type: 1
@@ -401,7 +618,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 21
+  pk: 26
   fields:
     notebook: 1
     cell_type: 3
@@ -418,7 +635,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 22
+  pk: 27
   fields:
     notebook: 1
     cell_type: 1
@@ -429,7 +646,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 23
+  pk: 28
   fields:
     notebook: 1
     cell_type: 3
@@ -440,7 +657,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 24
+  pk: 29
   fields:
     notebook: 1
     cell_type: 1
@@ -461,7 +678,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 25
+  pk: 30
   fields:
     notebook: 1
     cell_type: 3
@@ -478,7 +695,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 26
+  pk: 31
   fields:
     notebook: 1
     cell_type: 3
@@ -489,7 +706,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 27
+  pk: 32
   fields:
     notebook: 1
     cell_type: 1
@@ -520,7 +737,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 28
+  pk: 33
   fields:
     notebook: 1
     cell_type: 3
@@ -536,7 +753,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 29
+  pk: 34
   fields:
     notebook: 1
     cell_type: 1
@@ -583,7 +800,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 30
+  pk: 35
   fields:
     notebook: 1
     cell_type: 3
@@ -597,7 +814,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 31
+  pk: 36
   fields:
     notebook: 1
     cell_type: 1
@@ -609,7 +826,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 32
+  pk: 37
   fields:
     notebook: 1
     cell_type: 3
@@ -625,7 +842,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 33
+  pk: 38
   fields:
     notebook: 1
     cell_type: 1
@@ -637,7 +854,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 34
+  pk: 39
   fields:
     notebook: 1
     cell_type: 3
@@ -650,7 +867,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 35
+  pk: 40
   fields:
     notebook: 1
     cell_type: 1
@@ -661,7 +878,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 36
+  pk: 41
   fields:
     notebook: 1
     cell_type: 3
@@ -677,7 +894,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 37
+  pk: 42
   fields:
     notebook: 1
     cell_type: 1
@@ -690,7 +907,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 38
+  pk: 43
   fields:
     notebook: 1
     cell_type: 3
@@ -703,7 +920,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 39
+  pk: 44
   fields:
     notebook: 1
     cell_type: 1
@@ -715,7 +932,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 40
+  pk: 45
   fields:
     notebook: 1
     cell_type: 3
@@ -731,7 +948,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 41
+  pk: 46
   fields:
     notebook: 1
     cell_type: 1
@@ -744,7 +961,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 42
+  pk: 47
   fields:
     notebook: 1
     cell_type: 3
@@ -757,7 +974,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 43
+  pk: 48
   fields:
     notebook: 1
     cell_type: 1
@@ -774,7 +991,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 44
+  pk: 49
   fields:
     notebook: 1
     cell_type: 3
@@ -788,7 +1005,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 45
+  pk: 50
   fields:
     notebook: 1
     cell_type: 1
@@ -818,7 +1035,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 46
+  pk: 51
   fields:
     notebook: 1
     cell_type: 3
@@ -837,7 +1054,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 47
+  pk: 52
   fields:
     notebook: 1
     cell_type: 1
@@ -850,7 +1067,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 48
+  pk: 53
   fields:
     notebook: 1
     cell_type: 3
@@ -866,7 +1083,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 49
+  pk: 54
   fields:
     notebook: 1
     cell_type: 1
@@ -878,7 +1095,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 50
+  pk: 55
   fields:
     notebook: 1
     cell_type: 3
@@ -889,7 +1106,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 51
+  pk: 56
   fields:
     notebook: 1
     cell_type: 1
@@ -901,7 +1118,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 52
+  pk: 57
   fields:
     notebook: 1
     cell_type: 3
@@ -914,7 +1131,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 53
+  pk: 58
   fields:
     notebook: 1
     cell_type: 1
@@ -973,7 +1190,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 54
+  pk: 59
   fields:
     notebook: 1
     cell_type: 1
@@ -1002,7 +1219,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 55
+  pk: 60
   fields:
     notebook: 1
     cell_type: 3
@@ -1019,7 +1236,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 56
+  pk: 61
   fields:
     notebook: 1
     cell_type: 1
@@ -1038,7 +1255,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 57
+  pk: 62
   fields:
     notebook: 1
     cell_type: 3
@@ -1054,7 +1271,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 58
+  pk: 63
   fields:
     notebook: 1
     cell_type: 1
@@ -1073,7 +1290,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 59
+  pk: 64
   fields:
     notebook: 1
     cell_type: 3
@@ -1088,7 +1305,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 60
+  pk: 65
   fields:
     notebook: 2
     cell_type: 1
@@ -1170,7 +1387,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 61
+  pk: 66
   fields:
     notebook: 2
     cell_type: 3
@@ -1184,7 +1401,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 62
+  pk: 67
   fields:
     notebook: 2
     cell_type: 1
@@ -1198,7 +1415,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 63
+  pk: 68
   fields:
     notebook: 2
     cell_type: 3
@@ -1341,7 +1558,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 64
+  pk: 69
   fields:
     notebook: 2
     cell_type: 1
@@ -1374,7 +1591,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 65
+  pk: 70
   fields:
     notebook: 2
     cell_type: 3
@@ -1392,7 +1609,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 66
+  pk: 71
   fields:
     notebook: 2
     cell_type: 1
@@ -1426,7 +1643,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 67
+  pk: 72
   fields:
     notebook: 2
     cell_type: 3
@@ -1461,7 +1678,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 68
+  pk: 73
   fields:
     notebook: 2
     cell_type: 1
@@ -1498,7 +1715,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 69
+  pk: 74
   fields:
     notebook: 2
     cell_type: 3
@@ -1537,7 +1754,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 70
+  pk: 75
   fields:
     notebook: 2
     cell_type: 1
@@ -1564,7 +1781,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 71
+  pk: 76
   fields:
     notebook: 2
     cell_type: 3
@@ -1577,7 +1794,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 72
+  pk: 77
   fields:
     notebook: 2
     cell_type: 1
@@ -1605,7 +1822,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 73
+  pk: 78
   fields:
     notebook: 2
     cell_type: 3
@@ -1677,7 +1894,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 74
+  pk: 79
   fields:
     notebook: 2
     cell_type: 1
@@ -1696,7 +1913,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 75
+  pk: 80
   fields:
     notebook: 2
     cell_type: 3
@@ -1727,7 +1944,7 @@
     version: 1
     deleted_at: null
 - model: notebooks.notebookcell
-  pk: 76
+  pk: 81
   fields:
     notebook: 2
     cell_type: 1
