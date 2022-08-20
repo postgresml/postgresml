@@ -1,0 +1,1752 @@
+- model: notebooks.notebook
+  pk: 1
+  fields:
+    name: 'Tutorial 1: Real Time Fraud Detection'
+    created_at: 2022-08-15 22:26:18.428227+00:00
+    updated_at: 2022-08-15 22:26:18.428241+00:00
+- model: notebooks.notebook
+  pk: 2
+  fields:
+    name: 'Tutorial 2: Tumor Detection w/ Binary Classification'
+    created_at: 2022-08-19 23:10:23.120983+00:00
+    updated_at: 2022-08-19 23:10:23.120996+00:00
+- model: notebooks.notebookcell
+  pk: 1
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: 'Introduction
+
+      ------------
+
+
+      Most organizations have some risks that may be minimized using machine learning,
+      by predicting the likelihood of negative outcomes before they happen. As long
+      as you''re able to track the information leading up to the unfortunate events,
+      there are many different machine learning algorithms that can tease out the
+      correlations across multiple variables.
+
+
+      One example of risk ecommerce companies face is credit card fraud with stolen
+      credit cards. When the owner of the card sees charges they never authorized
+      on their monthly statement, they''ll report these to the credit card company,
+      and the charges will be reversed. The ecommerce company will lose the merchandise
+      as well as shipping charges and labor costs. If a company receives too many
+      chargebacks, not only will they incur expensive losses, but the credit card
+      processors may remove them from the platorm, so it''s important they have some
+      certainty about the owner of the cards identity and legitimate interests.
+
+
+      In this notebook, we''ll demonstrate how a simplified ecommerce application
+      might track customer orders, and use machine learning to detect chargeback risks
+      in real time during checkout. The most important step in building any Machine
+      Learning model is understanding the data. Knowing it''s structure, application
+      use, and the full meaning for the business will allow us to create meaningful
+      features and labels for our models. In this notebook, we''ve included a fair
+      bit of SQL to implement logic that would normally be written at the application
+      layer to help you build an intuition about the domain.
+
+
+      **Contents**
+
+
+      - Part 1: Ecommerce Application Data Model
+
+      - Part 2: Structuring the Training Data
+
+      - Part 3: Training a Model
+
+      - Part 4: Adding More Features
+
+      - Part 5: Upgrading the Machine Learning Algorithm
+
+
+      Part 1: Ecommerce Application Data Model
+
+      --------------------------------
+
+      We''ll build out a simple ecommerce schema, and populate it with some example
+      data. First, our store needs some products to sell. Products have a name, their
+      price, and other metadata, like whether or not they are perishable goods.'
+    rendering: '<article class="markdown-body"><h2>Introduction</h2>
+
+      <p>Most organizations have some risks that may be minimized using machine learning,
+      by predicting the likelihood of negative outcomes before they happen. As long
+      as you''re able to track the information leading up to the unfortunate events,
+      there are many different machine learning algorithms that can tease out the
+      correlations across multiple variables.</p>
+
+      <p>One example of risk ecommerce companies face is credit card fraud with stolen
+      credit cards. When the owner of the card sees charges they never authorized
+      on their monthly statement, they''ll report these to the credit card company,
+      and the charges will be reversed. The ecommerce company will lose the merchandise
+      as well as shipping charges and labor costs. If a company receives too many
+      chargebacks, not only will they incur expensive losses, but the credit card
+      processors may remove them from the platorm, so it''s important they have some
+      certainty about the owner of the cards identity and legitimate interests.</p>
+
+      <p>In this notebook, we''ll demonstrate how a simplified ecommerce application
+      might track customer orders, and use machine learning to detect chargeback risks
+      in real time during checkout. The most important step in building any Machine
+      Learning model is understanding the data. Knowing it''s structure, application
+      use, and the full meaning for the business will allow us to create meaningful
+      features and labels for our models. In this notebook, we''ve included a fair
+      bit of SQL to implement logic that would normally be written at the application
+      layer to help you build an intuition about the domain.</p>
+
+      <p><strong>Contents</strong></p>
+
+      <ul>
+
+      <li>Part 1: Ecommerce Application Data Model</li>
+
+      <li>Part 2: Structuring the Training Data</li>
+
+      <li>Part 3: Training a Model</li>
+
+      <li>Part 4: Adding More Features</li>
+
+      <li>Part 5: Upgrading the Machine Learning Algorithm</li>
+
+      </ul>
+
+      <h2>Part 1: Ecommerce Application Data Model</h2>
+
+      <p>We''ll build out a simple ecommerce schema, and populate it with some example
+      data. First, our store needs some products to sell. Products have a name, their
+      price, and other metadata, like whether or not they are perishable goods.</p></article>'
+    execution_time: null
+    cell_number: 1
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 2
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "CREATE TABLE products (\n  emoji TEXT PRIMARY KEY,\n  name TEXT,\n
+      \ price MONEY,\n  perishable BOOLEAN\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 2
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 3
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO PRODUCTS (emoji, name, price, perishable) \nVALUES\n  ('\U0001F4B0',
+      '1oz gold bar', '$1999.99', false),\n  ('\U0001F4D5', 'a tale of 2 cities',
+      '$19.99', false),\n  ('\U0001F96C', 'head of lettuce', '$1.99', true)\nRETURNING
+      *;"
+    rendering: null
+    execution_time: null
+    cell_number: 3
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 4
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: "Now that we're in business, our first customer has shown up, named
+      Alice. She is a chef that owns a salad shop, so she is going to create an order
+      for 1,000 \U0001F96C `head of lettuce`.\n\nOur ecommerce site will record `orders`
+      and their `line_items` in our database with the following schema."
+    rendering: "<article class=\"markdown-body\"><p>Now that we're in business, our
+      first customer has shown up, named Alice. She is a chef that owns a salad shop,
+      so she is going to create an order for 1,000 \U0001F96C <code>head of lettuce</code>.</p>\n<p>Our
+      ecommerce site will record <code>orders</code> and their <code>line_items</code>
+      in our database with the following schema.</p></article>"
+    execution_time: null
+    cell_number: 4
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 5
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "CREATE TABLE orders (\n  id BIGSERIAL PRIMARY KEY,\n  customer_name
+      TEXT\n);\n\nCREATE TABLE line_items (\n  id BIGSERIAL PRIMARY KEY,\n  order_id
+      BIGINT,\n  product_emoji TEXT,\n  count INTEGER\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 5
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 6
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: Now that we have created the schema, we can record Alice's order
+    rendering: <article class="markdown-body"><p>Now that we have created the schema,
+      we can record Alice's order</p></article>
+    execution_time: null
+    cell_number: 6
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 7
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO orders (customer_name) VALUES ('Alice');\n\nINSERT INTO
+      line_items (order_id, product_emoji, count) \nVALUES (\n  -- a query to find
+      Alice's most recent order\n  (SELECT max(id) FROM orders WHERE customer_name
+      = 'Alice'),\n  '\U0001F96C',\n  1000\n)\nRETURNING *;"
+    rendering: null
+    execution_time: null
+    cell_number: 7
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 8
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: "\U0001F50E That inline subselect in #7 is a little weird.\n\n```sql\n--
+      a query to find Alice's most recent order\n(SELECT max(id) FROM orders WHERE
+      customer_name = 'Alice')\n```\n\nTypically this ID would be passed in from the
+      application layer, instead of being retrieved during the INSERT statement itself.
+      But anyway... \n\nNext, we'll record her payment in full via credit card in
+      our `payments` table."
+    rendering: "<article class=\"markdown-body\"><p>\U0001F50E That inline subselect
+      in #7 is a little weird.</p>\n<pre><code class=\"language-sql\">-- a query to
+      find Alice's most recent order\n(SELECT max(id) FROM orders WHERE customer_name
+      = 'Alice')\n</code></pre>\n<p>Typically this ID would be passed in from the
+      application layer, instead of being retrieved during the INSERT statement itself.
+      But anyway... </p>\n<p>Next, we'll record her payment in full via credit card
+      in our <code>payments</code> table.</p></article>"
+    execution_time: null
+    cell_number: 8
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 9
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "CREATE TABLE payments (\n  id BIGSERIAL PRIMARY KEY,\n  order_id BIGINT,\n
+      \ amount MONEY\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 9
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 10
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: We'll be doing a little bit of heavy lifting in the next query to calculate
+      her payment total on the fly.
+    rendering: <article class="markdown-body"><p>We'll be doing a little bit of heavy
+      lifting in the next query to calculate her payment total on the fly.</p></article>
+    execution_time: null
+    cell_number: 10
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 11
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO payments (order_id, amount) \n-- a query to compute the
+      full amount of Alice's most recent order\nSELECT order_id, sum(count * price)
+      AS amount\nFROM orders\nJOIN line_items ON line_items.order_id = orders.id\nJOIN
+      products ON products.emoji = line_items.product_emoji\nWHERE orders.id = (SELECT
+      max(id) AS order_id FROM orders WHERE customer_name = 'Alice')\nGROUP BY 1\nRETURNING
+      *;"
+    rendering: null
+    execution_time: null
+    cell_number: 11
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 12
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: "\U0001F389 Time to celebrate! Alice has paid in full for our first
+      order, and business is good.\n\n\nNow, along comes Bob \"the bad guy\" who places
+      an order for a \U0001F4B0 1oz gold bar."
+    rendering: "<article class=\"markdown-body\"><p>\U0001F389 Time to celebrate!
+      Alice has paid in full for our first order, and business is good.</p>\n<p>Now,
+      along comes Bob \"the bad guy\" who places an order for a \U0001F4B0 1oz gold
+      bar.</p></article>"
+    execution_time: null
+    cell_number: 12
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 13
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO orders (customer_name) VALUES ('Bob');\nINSERT INTO line_items
+      (order_id, product_emoji, count) VALUES (\n  (SELECT max(id) FROM orders WHERE
+      customer_name = 'Bob'),\n  '\U0001F4B0',\n  1\n)\nRETURNING *;"
+    rendering: null
+    execution_time: null
+    cell_number: 13
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 14
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: Unfortunately, Bob makes his payment with a stolen credit card, but
+      we don't know that yet.
+    rendering: <article class="markdown-body"><p>Unfortunately, Bob makes his payment
+      with a stolen credit card, but we don't know that yet.</p></article>
+    execution_time: null
+    cell_number: 14
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 15
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO payments (order_id, amount) \n-- a query to compute the
+      full amount of Bob's most recent order\nSELECT order_id, sum(count * price)
+      AS amount\nFROM orders\nJOIN line_items ON line_items.order_id = orders.id\nJOIN
+      products ON products.emoji = line_items.product_emoji\nWHERE orders.id = (SELECT
+      max(id) AS order_id FROM orders WHERE customer_name = 'Bob')\nGROUP BY 1\nRETURNING
+      *;"
+    rendering: null
+    execution_time: null
+    cell_number: 15
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 16
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: At the end of the month, the credit card company lets us know about
+      the chargeback from the real card owner.  We'll need to create another table
+      to keep track of this.
+    rendering: <article class="markdown-body"><p>At the end of the month, the credit
+      card company lets us know about the chargeback from the real card owner.  We'll
+      need to create another table to keep track of this.</p></article>
+    execution_time: null
+    cell_number: 16
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 17
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "CREATE TABLE chargebacks (\n  id BIGSERIAL PRIMARY KEY,\n  payment_id
+      BIGINT\n)"
+    rendering: null
+    execution_time: null
+    cell_number: 17
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 18
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: And now we can record the example of fraud
+    rendering: <article class="markdown-body"><p>And now we can record the example
+      of fraud</p></article>
+    execution_time: null
+    cell_number: 18
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 19
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO chargebacks (payment_id) \nSELECT max(payments.id) AS payment_id\nFROM
+      payments \nJOIN orders ON payments.order_id = orders.id \nWHERE customer_name
+      = 'Bob'\nRETURNING *;"
+    rendering: null
+    execution_time: null
+    cell_number: 19
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 20
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: "\U0001F3C1 Congratulations! \U0001F3C1 \n----------------\nIf you've
+      made it this far, you've won half the machine learning battle. We have created
+      2 training data examples that are perfect for \"supervised\" machine learning.
+      The chargebacks acts as the ground truth to inform the machine learning algorithm
+      of whether or not an order is fraudulent. These records are what we refer to
+      as \"labels\", a.k.a \"targets\" or \"Y-values\" for the data.\n\nPart 2: Structuring
+      the Training Data\n--------------------------\nWe can construct a query that
+      provides a summary view of our orders, including the fraudulent label."
+    rendering: "<article class=\"markdown-body\"><h2>\U0001F3C1 Congratulations! \U0001F3C1</h2>\n<p>If
+      you've made it this far, you've won half the machine learning battle. We have
+      created 2 training data examples that are perfect for \"supervised\" machine
+      learning. The chargebacks acts as the ground truth to inform the machine learning
+      algorithm of whether or not an order is fraudulent. These records are what we
+      refer to as \"labels\", a.k.a \"targets\" or \"Y-values\" for the data.</p>\n<h2>Part
+      2: Structuring the Training Data</h2>\n<p>We can construct a query that provides
+      a summary view of our orders, including the fraudulent label.</p></article>"
+    execution_time: null
+    cell_number: 20
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 21
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "CREATE VIEW orders_summaries AS\nSELECT \n  orders.id AS order_id,
+      \n  orders.customer_name,\n  payments.amount AS total, \n  ARRAY_AGG(products.emoji)
+      AS product_emojis,\n  CASE WHEN chargebacks.id IS NOT NULL \n    THEN true \n
+      \   ELSE false \n  END AS fraudulent\nFROM orders\nLEFT JOIN payments ON payments.order_id
+      = orders.id\nLEFT JOIN chargebacks ON chargebacks.payment_id = payments.id\nLEFT
+      JOIN line_items ON line_items.order_id = orders.id\nLEFT JOIN products ON products.emoji
+      = line_items.product_emoji\nGROUP BY 1, 2, 3, 5\nORDER BY orders.id;"
+    rendering: null
+    execution_time: null
+    cell_number: 21
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 22
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: Now, let's have a look at the summary
+    rendering: <article class="markdown-body"><p>Now, let's have a look at the summary</p></article>
+    execution_time: null
+    cell_number: 22
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 23
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: SELECT * FROM orders_summaries;
+    rendering: null
+    execution_time: null
+    cell_number: 23
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 24
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: It's intuitive that thieves will be more attracted to gold bars, than
+      a head of lettuce because the resell value is better. Perishable goods are more
+      difficult to move on the black market. A good piece of informationfor our model
+      would be the percentage of the order that is perishable. We call this a "feature"
+      of the data model. We can construct a query to return this feature for each
+      order, along with the chargeback label.
+    rendering: <article class="markdown-body"><p>It's intuitive that thieves will
+      be more attracted to gold bars, than a head of lettuce because the resell value
+      is better. Perishable goods are more difficult to move on the black market.
+      A good piece of informationfor our model would be the percentage of the order
+      that is perishable. We call this a "feature" of the data model. We can construct
+      a query to return this feature for each order, along with the chargeback label.</p></article>
+    execution_time: null
+    cell_number: 24
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 25
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "CREATE VIEW fraud_samples AS\nSELECT \n  SUM(CASE WHEN products.perishable
+      THEN (count * price) ELSE '$0.0' END) / SUM(payments.amount) AS perishable_percentage,
+      \n  CASE WHEN chargebacks.id IS NOT NULL \n    THEN true \n    ELSE false \n
+      \ END AS fraudulent\nFROM orders\nLEFT JOIN payments ON payments.order_id =
+      orders.id\nLEFT JOIN chargebacks ON chargebacks.payment_id = payments.id\nLEFT
+      JOIN line_items ON line_items.order_id = orders.id\nLEFT JOIN products ON products.emoji
+      = line_items.product_emoji\nGROUP BY orders.id, chargebacks.id\nORDER BY orders.id;"
+    rendering: null
+    execution_time: null
+    cell_number: 25
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 26
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: SELECT * FROM fraud_samples;
+    rendering: null
+    execution_time: null
+    cell_number: 26
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 27
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: 'Training a model
+
+      ----------------
+
+
+      This is a great training set for a machine learning model. We''ve found a feature
+      `perishable_percentage` that perfectly correlates with the label `fraudulent`.
+      Perishable orders are less likely to result in a chargeback. A good model will
+      be able to generalize from the example data we have to new examples that we
+      may never have seen before, like an order that is only 33% perishable goods.
+      Now that we have a `VIEW` of this data, we can train a "classification" model
+      to classify the features as `fraudulent` or not.'
+    rendering: '<article class="markdown-body"><h2>Training a model</h2>
+
+      <p>This is a great training set for a machine learning model. We''ve found a
+      feature <code>perishable_percentage</code> that perfectly correlates with the
+      label <code>fraudulent</code>. Perishable orders are less likely to result in
+      a chargeback. A good model will be able to generalize from the example data
+      we have to new examples that we may never have seen before, like an order that
+      is only 33% perishable goods. Now that we have a <code>VIEW</code> of this data,
+      we can train a "classification" model to classify the features as <code>fraudulent</code>
+      or not.</p></article>'
+    execution_time: null
+    cell_number: 27
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 28
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "SELECT * FROM pgml.train(\n  project_name => 'Our Fraud Model', --
+      a friendly name we'll use to identify this machine learning project\n  task
+      => 'classification', -- we want to classify into true or false\n  relation_name
+      => 'fraud_samples', -- our view of the data\n  y_column_name => 'fraudulent',
+      -- the \"labels\"\n  test_sampling => 'last', -- the part of the data to use
+      for testing our model\n  test_size => 0.5 -- use half the data for tests\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 28
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 29
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: 'Oops. We''re going to get an error:
+
+
+      ```
+
+      ERROR:  ValueError: This solver needs samples of at least 2 classes in the data,
+      but the data contains only one class: False
+
+      ```
+
+
+      Wait a second, we know there is both a True and a False label, because we have
+      an example of both a fraudulent and legit order. What gives? This is a glimpse
+      into how PostgresML works inside the black box. It splits the sample data into
+      2 sets. One is used for training the model as we expected, and the other is
+      used to test the model''s predictions against the remaining known labels. This
+      way we can see how well the model generalizes. In this case, since there are
+      only 2 data samples, 1 is used for training (the False label) and 1 is used
+      for testing (the True label). Now we can understand there isn''t enough data
+      to actually train and test. We need to generate a couple more examples so we
+      have enough to train and test.'
+    rendering: '<article class="markdown-body"><p>Oops. We''re going to get an error:</p>
+
+      <pre><code>ERROR:  ValueError: This solver needs samples of at least 2 classes
+      in the data, but the data contains only one class: False
+
+      </code></pre>
+
+      <p>Wait a second, we know there is both a True and a False label, because we
+      have an example of both a fraudulent and legit order. What gives? This is a
+      glimpse into how PostgresML works inside the black box. It splits the sample
+      data into 2 sets. One is used for training the model as we expected, and the
+      other is used to test the model''s predictions against the remaining known labels.
+      This way we can see how well the model generalizes. In this case, since there
+      are only 2 data samples, 1 is used for training (the False label) and 1 is used
+      for testing (the True label). Now we can understand there isn''t enough data
+      to actually train and test. We need to generate a couple more examples so we
+      have enough to train and test.</p></article>'
+    execution_time: null
+    cell_number: 29
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 30
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO orders (customer_name) VALUES ('Carol');\nINSERT INTO line_items
+      (\n  order_id, \n  product_emoji, \n  count\n) VALUES (\n  (SELECT max(id) FROM
+      orders WHERE customer_name = 'Carol'),\n  '\U0001F4D5',\n  10\n)\nRETURNING
+      *;"
+    rendering: null
+    execution_time: null
+    cell_number: 30
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 31
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: Carol has bought a book, and now will legitimately pay in full.
+    rendering: <article class="markdown-body"><p>Carol has bought a book, and now
+      will legitimately pay in full.</p></article>
+    execution_time: null
+    cell_number: 31
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 32
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO payments (order_id, amount) \n-- a query to compute the
+      full amount of Bob's most recent order\nSELECT order_id, sum(count * price)
+      AS amount\nFROM orders\nJOIN line_items ON line_items.order_id = orders.id\nJOIN
+      products ON products.emoji = line_items.product_emoji\nWHERE orders.id = (SELECT
+      max(id) AS order_id FROM orders WHERE customer_name = 'Carol')\nGROUP BY 1\nRETURNING
+      *;"
+    rendering: null
+    execution_time: null
+    cell_number: 32
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 33
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: 'And now Dan (another fraudster) shows up to steal more books:'
+    rendering: <article class="markdown-body"><p>And now Dan (another fraudster) shows
+      up to steal more books:</p></article>
+    execution_time: null
+    cell_number: 33
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 34
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO orders (customer_name) VALUES ('Dan');\nINSERT INTO line_items
+      (\n  order_id, \n  product_emoji, \n  count\n) VALUES (\n  (SELECT max(id) FROM
+      orders WHERE customer_name = 'Dan'),\n  '\U0001F4D5',\n  50\n)\nRETURNING *;"
+    rendering: null
+    execution_time: null
+    cell_number: 34
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 35
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: Here comes the fraudulent payment.
+    rendering: <article class="markdown-body"><p>Here comes the fraudulent payment.</p></article>
+    execution_time: null
+    cell_number: 35
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 36
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO payments (order_id, amount) \n-- a query to compute the
+      full amount of Bob's most recent order\nSELECT order_id, sum(count * price)
+      AS amount\nFROM orders\nJOIN line_items ON line_items.order_id = orders.id\nJOIN
+      products ON products.emoji = line_items.product_emoji\nWHERE orders.id = (SELECT
+      max(id) AS order_id FROM orders WHERE customer_name = 'Dan')\nGROUP BY 1\nRETURNING
+      *;"
+    rendering: null
+    execution_time: null
+    cell_number: 36
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 37
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: And when the credit card company let's us know about the issue, we'll
+      record it.
+    rendering: <article class="markdown-body"><p>And when the credit card company
+      let's us know about the issue, we'll record it.</p></article>
+    execution_time: null
+    cell_number: 37
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 38
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "INSERT INTO chargebacks (payment_id) \nSELECT max(payments.id) AS payment_id\nFROM
+      payments \nJOIN orders ON payments.order_id = orders.id \nWHERE customer_name
+      = 'Dan'\nRETURNING *;"
+    rendering: null
+    execution_time: null
+    cell_number: 38
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 39
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: And now we can try to train the model again.
+    rendering: <article class="markdown-body"><p>And now we can try to train the model
+      again.</p></article>
+    execution_time: null
+    cell_number: 39
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 40
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "SELECT * FROM pgml.train(\n  project_name => 'Our Fraud Classification',
+      -- a friendly name we'll use to identify this machine learning project\n  task
+      => 'classification', -- we want to classify into true or false\n  relation_name
+      => 'fraud_samples', -- our view of the data\n  y_column_name => 'fraudulent',
+      -- the \"labels\"\n  test_sampling => 'last',\n  test_size => 0.5 -- use half
+      the data for testing rather than the default test size of 25%\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 40
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 41
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: "\U0001F3C1 Success! \U0001F3C1\n--------------\n\nWe can demonstrate
+      basic usage of the model with another SQL call"
+    rendering: "<article class=\"markdown-body\"><h2>\U0001F3C1 Success! \U0001F3C1</h2>\n<p>We
+      can demonstrate basic usage of the model with another SQL call</p></article>"
+    execution_time: null
+    cell_number: 41
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 42
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "SELECT \n  perishable_percentage, \n  fraudulent, \n  pgml.predict('Our
+      Fraud Classification', ARRAY[perishable_percentage]) AS predict_fraud \nFROM
+      fraud_samples;"
+    rendering: null
+    execution_time: null
+    cell_number: 42
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 43
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: Uh oh, the model was trained on a perfectly small dataset. It learned
+      that unless the order is perishable goods, it's going to predict fraud 100%
+      of the time, but our test data shows that's not 100% true. Let's generate some
+      samples to further explore our model.
+    rendering: <article class="markdown-body"><p>Uh oh, the model was trained on a
+      perfectly small dataset. It learned that unless the order is perishable goods,
+      it's going to predict fraud 100% of the time, but our test data shows that's
+      not 100% true. Let's generate some samples to further explore our model.</p></article>
+    execution_time: null
+    cell_number: 43
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 44
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "WITH exploration_samples AS (\n  SELECT generate_series(0, 1, 0.1)
+      AS perishable_percentage\n)\nSELECT \n  perishable_percentage, \n  pgml.predict('Our
+      Fraud Classification', ARRAY[perishable_percentage]) AS predict_fraud \nFROM
+      exploration_samples;"
+    rendering: null
+    execution_time: null
+    cell_number: 44
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 45
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: 'The default model is a linear regression, so it has learned from the
+      training half of the data that high amounts of perishible goods make for safe
+      orders.
+
+
+      Part 4: Adding more features
+
+      ----------------------------
+
+      We need to add some more features to create a better model. Instead of just
+      using the perishable percentage, we can use dollar values as our features, since
+      we know criminals want to steal large amounts more than small amounts.'
+    rendering: '<article class="markdown-body"><p>The default model is a linear regression,
+      so it has learned from the training half of the data that high amounts of perishible
+      goods make for safe orders.</p>
+
+      <h2>Part 4: Adding more features</h2>
+
+      <p>We need to add some more features to create a better model. Instead of just
+      using the perishable percentage, we can use dollar values as our features, since
+      we know criminals want to steal large amounts more than small amounts.</p></article>'
+    execution_time: null
+    cell_number: 45
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 46
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "DROP VIEW fraud_samples;\nCREATE VIEW fraud_samples AS\nSELECT \n  SUM(CASE
+      WHEN products.perishable THEN (count * price)::NUMERIC ELSE 0.0 END) AS perishable_amount,
+      \n  SUM(CASE WHEN NOT products.perishable THEN (count * price)::NUMERIC ELSE
+      0.0 END) AS non_perishable_amount, \n  CASE WHEN chargebacks.id IS NOT NULL
+      \n    THEN true \n    ELSE false \n  END AS fraudulent\nFROM orders\nLEFT JOIN
+      payments ON payments.order_id = orders.id\nLEFT JOIN chargebacks ON chargebacks.payment_id
+      = payments.id\nLEFT JOIN line_items ON line_items.order_id = orders.id\nLEFT
+      JOIN products ON products.emoji = line_items.product_emoji\nGROUP BY orders.id,
+      chargebacks.id\nORDER BY orders.id;"
+    rendering: null
+    execution_time: null
+    cell_number: 46
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 47
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: And now we retrain a new version of the model, by calling train with
+      the same parameters again.
+    rendering: <article class="markdown-body"><p>And now we retrain a new version
+      of the model, by calling train with the same parameters again.</p></article>
+    execution_time: null
+    cell_number: 47
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 48
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "SELECT * FROM pgml.train(\n  project_name => 'Our Fraud Classification',
+      -- a friendly name we'll use to identify this machine learning project\n  task
+      => 'classification', -- we want to classify into true or false\n  relation_name
+      => 'fraud_samples', -- our view of the data\n  y_column_name => 'fraudulent',
+      -- the \"labels\"\n  test_sampling => 'last',\n  test_size => 0.5 -- use half
+      the data for testing rather than the default test size of 25%\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 48
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 49
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: And then we can deploy this most recent version
+    rendering: <article class="markdown-body"><p>And then we can deploy this most
+      recent version</p></article>
+    execution_time: null
+    cell_number: 49
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 50
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: SELECT * FROM pgml.deploy('Our Fraud Classification', 'most_recent');
+    rendering: null
+    execution_time: null
+    cell_number: 50
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 51
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: 'And view the input/outputs of this model based on our data:'
+    rendering: <article class="markdown-body"><p>And view the input/outputs of this
+      model based on our data:</p></article>
+    execution_time: null
+    cell_number: 51
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 52
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "SELECT \n  perishable_amount, \n  non_perishable_amount, \n  fraudulent,
+      \n  pgml.predict(\n    'Our Fraud Classification', \n    ARRAY[perishable_amount,
+      non_perishable_amount]\n  ) AS predict_fraud \nFROM fraud_samples;"
+    rendering: null
+    execution_time: null
+    cell_number: 52
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 53
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: "This is the basic development cycle for a model. \n  \n1. Add new features\n2.
+      Retrain the new model\n3. Analyze performance\n\nEven with a toy schema like
+      this, it's possible to create many different features over the data. Examples
+      of other statistcal features we could add:\n\n- How many orders the customer
+      has previously made without chargebacks\n- What has their total spend been so
+      far\n- How old is this account\n- What is their average order size\n- How frequently
+      do they typically order\n- Do they typically by perishible or non perishable
+      goods\n\nWe can create additional VIEWs, Sub SELECTs or [Common Table Expressions](https://www.postgresql.org/docs/current/queries-with.html)
+      to standardize these features across models or reports.\n\nSub SELECTs may be
+      preferable to Common Table Expressions for generating complex features, because
+      CTEs create an optimization gate that prevents the query planner from pushing
+      predicates down, which will hurt performance if you intend to reuse this VIEW
+      during inference for a single row.\n\nIf you're querying a particular view frequently
+      that is expensive to produce, you may consider using a `MATERILIZE VIEW`, to
+      cache the results.\n\n\n```sql\n-- A sub select\nLEFT JOIN (\n  SELECT DISTINCT
+      orders.customer_name, COUNT(*) AS previous_orders FROM ORDERS\n) AS customer_stats\n
+      \ ON customer_stats.customer_name = orders.customer_name\n```\n\n```sql\n--
+      A view\nCREATE VIEW customer_stats AS \nSELECT DISTINCT orders.customer_name,
+      COUNT(*) AS previous_orders FROM ORDERS;\n\n...\nLEFT JOIN customer_stats ON
+      customer_stats.customer_name = orders.customer_name\n```\n\n```sql\n-- A Common
+      Table Expression\nWITH customer_stats AS ( \n  SELECT DISTINCT orders.customer_name,
+      COUNT(*) AS previous_orders FROM ORDERS;\n)\n\n...\nLEFT JOIN customer_stats
+      ON customer_stats.customer_name = orders.customer_name\n```"
+    rendering: "<article class=\"markdown-body\"><p>This is the basic development
+      cycle for a model. </p>\n<ol>\n<li>Add new features</li>\n<li>Retrain the new
+      model</li>\n<li>Analyze performance</li>\n</ol>\n<p>Even with a toy schema like
+      this, it's possible to create many different features over the data. Examples
+      of other statistcal features we could add:</p>\n<ul>\n<li>How many orders the
+      customer has previously made without chargebacks</li>\n<li>What has their total
+      spend been so far</li>\n<li>How old is this account</li>\n<li>What is their
+      average order size</li>\n<li>How frequently do they typically order</li>\n<li>Do
+      they typically by perishible or non perishable goods</li>\n</ul>\n<p>We can
+      create additional VIEWs, Sub SELECTs or <a href=\"https://www.postgresql.org/docs/current/queries-with.html\">Common
+      Table Expressions</a> to standardize these features across models or reports.</p>\n<p>Sub
+      SELECTs may be preferable to Common Table Expressions for generating complex
+      features, because CTEs create an optimization gate that prevents the query planner
+      from pushing predicates down, which will hurt performance if you intend to reuse
+      this VIEW during inference for a single row.</p>\n<p>If you're querying a particular
+      view frequently that is expensive to produce, you may consider using a <code>MATERILIZE
+      VIEW</code>, to cache the results.</p>\n<pre><code class=\"language-sql\">--
+      A sub select\nLEFT JOIN (\n  SELECT DISTINCT orders.customer_name, COUNT(*)
+      AS previous_orders FROM ORDERS\n) AS customer_stats\n  ON customer_stats.customer_name
+      = orders.customer_name\n</code></pre>\n<pre><code class=\"language-sql\">--
+      A view\nCREATE VIEW customer_stats AS \nSELECT DISTINCT orders.customer_name,
+      COUNT(*) AS previous_orders FROM ORDERS;\n\n...\nLEFT JOIN customer_stats ON
+      customer_stats.customer_name = orders.customer_name\n</code></pre>\n<pre><code
+      class=\"language-sql\">-- A Common Table Expression\nWITH customer_stats AS
+      ( \n  SELECT DISTINCT orders.customer_name, COUNT(*) AS previous_orders FROM
+      ORDERS;\n)\n\n...\nLEFT JOIN customer_stats ON customer_stats.customer_name
+      = orders.customer_name\n</code></pre></article>"
+    execution_time: null
+    cell_number: 53
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 54
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: 'Part 5: Upgrading the Machine Learning Algorithm
+
+      ------------------------------------------
+
+
+      When you''re out of ideas for features that might help the model distinguish
+      orders that are likely to result in chargebacks, you may want to start testing
+      different algorithms to see how the performance changes. PostgresML makes algorithm
+      selection as easy as passing an additional parameter to `pgml.train`. You may
+      want to test them all just to see, but `xgboost` typically gives excellent performance
+      in terms of both accuracy and latency.'
+    rendering: '<article class="markdown-body"><h2>Part 5: Upgrading the Machine Learning
+      Algorithm</h2>
+
+      <p>When you''re out of ideas for features that might help the model distinguish
+      orders that are likely to result in chargebacks, you may want to start testing
+      different algorithms to see how the performance changes. PostgresML makes algorithm
+      selection as easy as passing an additional parameter to <code>pgml.train</code>.
+      You may want to test them all just to see, but <code>xgboost</code> typically
+      gives excellent performance in terms of both accuracy and latency.</p></article>'
+    execution_time: null
+    cell_number: 54
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 55
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "SELECT * FROM pgml.train(\n  project_name => 'Our Fraud Classification',
+      -- a friendly name we'll use to identify this machine learning project\n  task
+      => 'classification', -- we want to classify into true or false\n  relation_name
+      => 'fraud_samples', -- our view of the data\n  y_column_name => 'fraudulent',
+      -- the \"labels\"\n  algorithm => 'xgboost', -- tree based models like xgboost
+      are often the best performers for tabular data at scale\n  test_size => 0.5
+      -- use half the data for testing rather than the default test size of 25%\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 55
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 56
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: So far we've been training a classifier that gives us a binary 0 or
+      1 output to indicate fraud or not. If we'd like to refine our application response
+      to the models predictions in a more nuanced way, say high/medium/low risk instead
+      of binary, we can use "regression" instead of "classification" to predict a
+      likelihood between 0 and 1, instead of binary.
+    rendering: <article class="markdown-body"><p>So far we've been training a classifier
+      that gives us a binary 0 or 1 output to indicate fraud or not. If we'd like
+      to refine our application response to the models predictions in a more nuanced
+      way, say high/medium/low risk instead of binary, we can use "regression" instead
+      of "classification" to predict a likelihood between 0 and 1, instead of binary.</p></article>
+    execution_time: null
+    cell_number: 56
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 57
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "SELECT * FROM pgml.train(\n  project_name => 'Our Fraud Regression',
+      -- a friendly name we'll use to identify this machine learning project\n  task
+      => 'regression', -- predict the likelihood\n  relation_name => 'fraud_samples',
+      -- our view of the data\n  y_column_name => 'fraudulent', -- the \"labels\"\n
+      \ algorithm => 'xgboost', \n  test_size => 0.5 -- use half the data for testing
+      rather than the default test size of 25%\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 57
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 58
+  fields:
+    notebook: 1
+    cell_type: 1
+    contents: At this point, the primary limitation of our model is the amount of
+      data, the number of examples we have to train it on. Luckily, as time marches
+      on, and data accumulates in the database, we can simply retrain this model with
+      additional calls to `pgml.train` and watch it adjust as new information becomes
+      available.
+    rendering: <article class="markdown-body"><p>At this point, the primary limitation
+      of our model is the amount of data, the number of examples we have to train
+      it on. Luckily, as time marches on, and data accumulates in the database, we
+      can simply retrain this model with additional calls to <code>pgml.train</code>
+      and watch it adjust as new information becomes available.</p></article>
+    execution_time: null
+    cell_number: 58
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 59
+  fields:
+    notebook: 1
+    cell_type: 3
+    contents: "-- If you'd like to start this tutorial over, you can clear out the
+      tables we created.\n-- use ctr-/ to comment/uncomment blocks in this editor\ndrop
+      table if exists products cascade; \ndrop table if exists orders cascade; \ndrop
+      table if exists line_items cascade; \ndrop table if exists chargebacks cascade;
+      \ndrop table if exists payments cascade;"
+    rendering: null
+    execution_time: null
+    cell_number: 59
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 60
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: 'Binary classification means categorizing data into 2 categories. Usually
+      these are categories like:
+
+
+      - `True` or `False`
+
+      - `0` or `1`
+
+      - `hot_dog` or `not_hot_dog`
+
+
+      These categories divide a population into things we care about, and things we
+      can ignore. Binary classification is a common task for machine learning models.
+      It can be applied across a broad set of scenarios, once you understand the way
+      to structure your problem as a set of example data with labeled outcomes.
+
+
+      In this tutorial, we''ll train models using various "supervised learning" algorithms
+      to classify medical samples as benign or malignant. Supervised learning techniques
+      require us to label the sample data for the algorithm to learn how the inputs
+      correlate with the labels. After the algorithm has been trained on the labeled
+      data set we created, we can present it with new unlabeled data to classify based
+      on the most likely outcome.
+
+
+      As we saw in [Tutorial 1: Real Time Fraud Model](/notebooks/notebook/1) understanding
+      the structure of the data and the labels is a complex and critical step for
+      real world machine learning projects. In this example we''ll focus more on the
+      different algorithms, and use an academic benchmark dataset that already includes
+      binary labels from UCI ML Breast Cancer Wisconsin. Features were computed from
+      a digitized image of a fine needle aspirate (FNA) of a breast mass. They describe
+      characteristics of the cell nuclei present in the image. The labels are either
+      True for a malginant sample of False for a benign sample.
+
+
+      You can load this dataset into your Postgres database with the following SQL.'
+    rendering: '<article class="markdown-body"><p>Binary classification means categorizing
+      data into 2 categories. Usually these are categories like:</p>
+
+      <ul>
+
+      <li><code>True</code> or <code>False</code></li>
+
+      <li><code>0</code> or <code>1</code></li>
+
+      <li><code>hot_dog</code> or <code>not_hot_dog</code></li>
+
+      </ul>
+
+      <p>These categories divide a population into things we care about, and things
+      we can ignore. Binary classification is a common task for machine learning models.
+      It can be applied across a broad set of scenarios, once you understand the way
+      to structure your problem as a set of example data with labeled outcomes.</p>
+
+      <p>In this tutorial, we''ll train models using various "supervised learning"
+      algorithms to classify medical samples as benign or malignant. Supervised learning
+      techniques require us to label the sample data for the algorithm to learn how
+      the inputs correlate with the labels. After the algorithm has been trained on
+      the labeled data set we created, we can present it with new unlabeled data to
+      classify based on the most likely outcome.</p>
+
+      <p>As we saw in <a href="/notebooks/notebook/1">Tutorial 1: Real Time Fraud
+      Model</a> understanding the structure of the data and the labels is a complex
+      and critical step for real world machine learning projects. In this example
+      we''ll focus more on the different algorithms, and use an academic benchmark
+      dataset that already includes binary labels from UCI ML Breast Cancer Wisconsin.
+      Features were computed from a digitized image of a fine needle aspirate (FNA)
+      of a breast mass. They describe characteristics of the cell nuclei present in
+      the image. The labels are either True for a malginant sample of False for a
+      benign sample.</p>
+
+      <p>You can load this dataset into your Postgres database with the following
+      SQL.</p></article>'
+    execution_time: null
+    cell_number: 1
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 61
+  fields:
+    notebook: 2
+    cell_type: 3
+    contents: SELECT pgml.load_dataset('breast_cancer');
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>load_dataset</strong></td>\n      \n    </tr>\n  </thead>\n
+      \ <tbody>\n    \n    <tr>\n      \n      <td>OK</td>\n      \n    </tr>\n    \n
+      \ </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:02.498819'
+    cell_number: 2
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 62
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: This function has created a new table in your database named `pgml.breast_cancer`.
+      Let's look at a random sample of the data with some more SQL.
+    rendering: <article class="markdown-body"><p>This function has created a new table
+      in your database named <code>pgml.breast_cancer</code>. Let's look at a random
+      sample of the data with some more SQL.</p></article>
+    execution_time: null
+    cell_number: 3
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 63
+  fields:
+    notebook: 2
+    cell_type: 3
+    contents: "SELECT * \nFROM pgml.breast_cancer \nORDER BY random()\nLIMIT 10;"
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>mean radius</strong></td>\n      \n      <td><strong>mean
+      texture</strong></td>\n      \n      <td><strong>mean perimeter</strong></td>\n
+      \     \n      <td><strong>mean area</strong></td>\n      \n      <td><strong>mean
+      smoothness</strong></td>\n      \n      <td><strong>mean compactness</strong></td>\n
+      \     \n      <td><strong>mean concavity</strong></td>\n      \n      <td><strong>mean
+      concave points</strong></td>\n      \n      <td><strong>mean symmetry</strong></td>\n
+      \     \n      <td><strong>mean fractal dimension</strong></td>\n      \n      <td><strong>radius
+      error</strong></td>\n      \n      <td><strong>texture error</strong></td>\n
+      \     \n      <td><strong>perimeter error</strong></td>\n      \n      <td><strong>area
+      error</strong></td>\n      \n      <td><strong>smoothness error</strong></td>\n
+      \     \n      <td><strong>compactness error</strong></td>\n      \n      <td><strong>concavity
+      error</strong></td>\n      \n      <td><strong>concave points error</strong></td>\n
+      \     \n      <td><strong>symmetry error</strong></td>\n      \n      <td><strong>fractal
+      dimension error</strong></td>\n      \n      <td><strong>worst radius</strong></td>\n
+      \     \n      <td><strong>worst texture</strong></td>\n      \n      <td><strong>worst
+      perimeter</strong></td>\n      \n      <td><strong>worst area</strong></td>\n
+      \     \n      <td><strong>worst smoothness</strong></td>\n      \n      <td><strong>worst
+      compactness</strong></td>\n      \n      <td><strong>worst concavity</strong></td>\n
+      \     \n      <td><strong>worst concave points</strong></td>\n      \n      <td><strong>worst
+      symmetry</strong></td>\n      \n      <td><strong>worst fractal dimension</strong></td>\n
+      \     \n      <td><strong>malignant</strong></td>\n      \n    </tr>\n  </thead>\n
+      \ <tbody>\n    \n    <tr>\n      \n      <td>12.77</td>\n      \n      <td>21.41</td>\n
+      \     \n      <td>82.02</td>\n      \n      <td>507.4</td>\n      \n      <td>0.08749</td>\n
+      \     \n      <td>0.06601</td>\n      \n      <td>0.03112</td>\n      \n      <td>0.02864</td>\n
+      \     \n      <td>0.1694</td>\n      \n      <td>0.06287</td>\n      \n      <td>0.7311</td>\n
+      \     \n      <td>1.748</td>\n      \n      <td>5.118</td>\n      \n      <td>53.65</td>\n
+      \     \n      <td>0.004571</td>\n      \n      <td>0.0179</td>\n      \n      <td>0.02176</td>\n
+      \     \n      <td>0.01757</td>\n      \n      <td>0.03373</td>\n      \n      <td>0.005875</td>\n
+      \     \n      <td>13.75</td>\n      \n      <td>23.5</td>\n      \n      <td>89.04</td>\n
+      \     \n      <td>579.5</td>\n      \n      <td>0.09388</td>\n      \n      <td>0.08978</td>\n
+      \     \n      <td>0.05186</td>\n      \n      <td>0.04773</td>\n      \n      <td>0.2179</td>\n
+      \     \n      <td>0.06871</td>\n      \n      <td>False</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>12.22</td>\n      \n      <td>20.04</td>\n
+      \     \n      <td>79.47</td>\n      \n      <td>453.1</td>\n      \n      <td>0.1096</td>\n
+      \     \n      <td>0.1152</td>\n      \n      <td>0.08175</td>\n      \n      <td>0.02166</td>\n
+      \     \n      <td>0.2124</td>\n      \n      <td>0.06894</td>\n      \n      <td>0.1811</td>\n
+      \     \n      <td>0.7959</td>\n      \n      <td>0.9857</td>\n      \n      <td>12.58</td>\n
+      \     \n      <td>0.006272</td>\n      \n      <td>0.02198</td>\n      \n      <td>0.03966</td>\n
+      \     \n      <td>0.009894</td>\n      \n      <td>0.0132</td>\n      \n      <td>0.003813</td>\n
+      \     \n      <td>13.16</td>\n      \n      <td>24.17</td>\n      \n      <td>85.13</td>\n
+      \     \n      <td>515.3</td>\n      \n      <td>0.1402</td>\n      \n      <td>0.2315</td>\n
+      \     \n      <td>0.3535</td>\n      \n      <td>0.08088</td>\n      \n      <td>0.2709</td>\n
+      \     \n      <td>0.08839</td>\n      \n      <td>False</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>12.4</td>\n      \n      <td>17.68</td>\n
+      \     \n      <td>81.47</td>\n      \n      <td>467.8</td>\n      \n      <td>0.1054</td>\n
+      \     \n      <td>0.1316</td>\n      \n      <td>0.07741</td>\n      \n      <td>0.02799</td>\n
+      \     \n      <td>0.1811</td>\n      \n      <td>0.07102</td>\n      \n      <td>0.1767</td>\n
+      \     \n      <td>1.46</td>\n      \n      <td>2.204</td>\n      \n      <td>15.43</td>\n
+      \     \n      <td>0.01</td>\n      \n      <td>0.03295</td>\n      \n      <td>0.04861</td>\n
+      \     \n      <td>0.01167</td>\n      \n      <td>0.02187</td>\n      \n      <td>0.006005</td>\n
+      \     \n      <td>12.88</td>\n      \n      <td>22.91</td>\n      \n      <td>89.61</td>\n
+      \     \n      <td>515.8</td>\n      \n      <td>0.145</td>\n      \n      <td>0.2629</td>\n
+      \     \n      <td>0.2403</td>\n      \n      <td>0.0737</td>\n      \n      <td>0.2556</td>\n
+      \     \n      <td>0.09359</td>\n      \n      <td>False</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>14.02</td>\n      \n      <td>15.66</td>\n
+      \     \n      <td>89.59</td>\n      \n      <td>606.5</td>\n      \n      <td>0.07966</td>\n
+      \     \n      <td>0.05581</td>\n      \n      <td>0.02087</td>\n      \n      <td>0.02652</td>\n
+      \     \n      <td>0.1589</td>\n      \n      <td>0.05586</td>\n      \n      <td>0.2142</td>\n
+      \     \n      <td>0.6549</td>\n      \n      <td>1.606</td>\n      \n      <td>19.25</td>\n
+      \     \n      <td>0.004837</td>\n      \n      <td>0.009238</td>\n      \n      <td>0.009213</td>\n
+      \     \n      <td>0.01076</td>\n      \n      <td>0.01171</td>\n      \n      <td>0.002104</td>\n
+      \     \n      <td>14.91</td>\n      \n      <td>19.31</td>\n      \n      <td>96.53</td>\n
+      \     \n      <td>688.9</td>\n      \n      <td>0.1034</td>\n      \n      <td>0.1017</td>\n
+      \     \n      <td>0.0626</td>\n      \n      <td>0.08216</td>\n      \n      <td>0.2136</td>\n
+      \     \n      <td>0.0671</td>\n      \n      <td>False</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>19.59</td>\n      \n      <td>18.15</td>\n
+      \     \n      <td>130.7</td>\n      \n      <td>1214.0</td>\n      \n      <td>0.112</td>\n
+      \     \n      <td>0.1666</td>\n      \n      <td>0.2508</td>\n      \n      <td>0.1286</td>\n
+      \     \n      <td>0.2027</td>\n      \n      <td>0.06082</td>\n      \n      <td>0.7364</td>\n
+      \     \n      <td>1.048</td>\n      \n      <td>4.792</td>\n      \n      <td>97.07</td>\n
+      \     \n      <td>0.004057</td>\n      \n      <td>0.02277</td>\n      \n      <td>0.04029</td>\n
+      \     \n      <td>0.01303</td>\n      \n      <td>0.01686</td>\n      \n      <td>0.003318</td>\n
+      \     \n      <td>26.73</td>\n      \n      <td>26.39</td>\n      \n      <td>174.9</td>\n
+      \     \n      <td>2232.0</td>\n      \n      <td>0.1438</td>\n      \n      <td>0.3846</td>\n
+      \     \n      <td>0.681</td>\n      \n      <td>0.2247</td>\n      \n      <td>0.3643</td>\n
+      \     \n      <td>0.09223</td>\n      \n      <td>True</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>8.726</td>\n      \n      <td>15.83</td>\n
+      \     \n      <td>55.84</td>\n      \n      <td>230.9</td>\n      \n      <td>0.115</td>\n
+      \     \n      <td>0.08201</td>\n      \n      <td>0.04132</td>\n      \n      <td>0.01924</td>\n
+      \     \n      <td>0.1649</td>\n      \n      <td>0.07633</td>\n      \n      <td>0.1665</td>\n
+      \     \n      <td>0.5864</td>\n      \n      <td>1.354</td>\n      \n      <td>8.966</td>\n
+      \     \n      <td>0.008261</td>\n      \n      <td>0.02213</td>\n      \n      <td>0.03259</td>\n
+      \     \n      <td>0.0104</td>\n      \n      <td>0.01708</td>\n      \n      <td>0.003806</td>\n
+      \     \n      <td>9.628</td>\n      \n      <td>19.62</td>\n      \n      <td>64.48</td>\n
+      \     \n      <td>284.4</td>\n      \n      <td>0.1724</td>\n      \n      <td>0.2364</td>\n
+      \     \n      <td>0.2456</td>\n      \n      <td>0.105</td>\n      \n      <td>0.2926</td>\n
+      \     \n      <td>0.1017</td>\n      \n      <td>False</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>17.99</td>\n      \n      <td>10.38</td>\n
+      \     \n      <td>122.8</td>\n      \n      <td>1001.0</td>\n      \n      <td>0.1184</td>\n
+      \     \n      <td>0.2776</td>\n      \n      <td>0.3001</td>\n      \n      <td>0.1471</td>\n
+      \     \n      <td>0.2419</td>\n      \n      <td>0.07871</td>\n      \n      <td>1.095</td>\n
+      \     \n      <td>0.9053</td>\n      \n      <td>8.589</td>\n      \n      <td>153.4</td>\n
+      \     \n      <td>0.006399</td>\n      \n      <td>0.04904</td>\n      \n      <td>0.05373</td>\n
+      \     \n      <td>0.01587</td>\n      \n      <td>0.03003</td>\n      \n      <td>0.006193</td>\n
+      \     \n      <td>25.38</td>\n      \n      <td>17.33</td>\n      \n      <td>184.6</td>\n
+      \     \n      <td>2019.0</td>\n      \n      <td>0.1622</td>\n      \n      <td>0.6656</td>\n
+      \     \n      <td>0.7119</td>\n      \n      <td>0.2654</td>\n      \n      <td>0.4601</td>\n
+      \     \n      <td>0.1189</td>\n      \n      <td>True</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>11.74</td>\n      \n      <td>14.69</td>\n
+      \     \n      <td>76.31</td>\n      \n      <td>426.0</td>\n      \n      <td>0.08099</td>\n
+      \     \n      <td>0.09661</td>\n      \n      <td>0.06726</td>\n      \n      <td>0.02639</td>\n
+      \     \n      <td>0.1499</td>\n      \n      <td>0.06758</td>\n      \n      <td>0.1924</td>\n
+      \     \n      <td>0.6417</td>\n      \n      <td>1.345</td>\n      \n      <td>13.04</td>\n
+      \     \n      <td>0.006982</td>\n      \n      <td>0.03916</td>\n      \n      <td>0.04017</td>\n
+      \     \n      <td>0.01528</td>\n      \n      <td>0.0226</td>\n      \n      <td>0.006822</td>\n
+      \     \n      <td>12.45</td>\n      \n      <td>17.6</td>\n      \n      <td>81.25</td>\n
+      \     \n      <td>473.8</td>\n      \n      <td>0.1073</td>\n      \n      <td>0.2793</td>\n
+      \     \n      <td>0.269</td>\n      \n      <td>0.1056</td>\n      \n      <td>0.2604</td>\n
+      \     \n      <td>0.09879</td>\n      \n      <td>False</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>9.667</td>\n      \n      <td>18.49</td>\n
+      \     \n      <td>61.49</td>\n      \n      <td>289.1</td>\n      \n      <td>0.08946</td>\n
+      \     \n      <td>0.06258</td>\n      \n      <td>0.02948</td>\n      \n      <td>0.01514</td>\n
+      \     \n      <td>0.2238</td>\n      \n      <td>0.06413</td>\n      \n      <td>0.3776</td>\n
+      \     \n      <td>1.35</td>\n      \n      <td>2.569</td>\n      \n      <td>22.73</td>\n
+      \     \n      <td>0.007501</td>\n      \n      <td>0.01989</td>\n      \n      <td>0.02714</td>\n
+      \     \n      <td>0.009883</td>\n      \n      <td>0.0196</td>\n      \n      <td>0.003913</td>\n
+      \     \n      <td>11.14</td>\n      \n      <td>25.62</td>\n      \n      <td>70.88</td>\n
+      \     \n      <td>385.2</td>\n      \n      <td>0.1234</td>\n      \n      <td>0.1542</td>\n
+      \     \n      <td>0.1277</td>\n      \n      <td>0.0656</td>\n      \n      <td>0.3174</td>\n
+      \     \n      <td>0.08524</td>\n      \n      <td>False</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>13.08</td>\n      \n      <td>15.71</td>\n
+      \     \n      <td>85.63</td>\n      \n      <td>520.0</td>\n      \n      <td>0.1075</td>\n
+      \     \n      <td>0.127</td>\n      \n      <td>0.04568</td>\n      \n      <td>0.0311</td>\n
+      \     \n      <td>0.1967</td>\n      \n      <td>0.06811</td>\n      \n      <td>0.1852</td>\n
+      \     \n      <td>0.7477</td>\n      \n      <td>1.383</td>\n      \n      <td>14.67</td>\n
+      \     \n      <td>0.004097</td>\n      \n      <td>0.01898</td>\n      \n      <td>0.01698</td>\n
+      \     \n      <td>0.00649</td>\n      \n      <td>0.01678</td>\n      \n      <td>0.002425</td>\n
+      \     \n      <td>14.5</td>\n      \n      <td>20.49</td>\n      \n      <td>96.09</td>\n
+      \     \n      <td>630.5</td>\n      \n      <td>0.1312</td>\n      \n      <td>0.2776</td>\n
+      \     \n      <td>0.189</td>\n      \n      <td>0.07283</td>\n      \n      <td>0.3184</td>\n
+      \     \n      <td>0.08183</td>\n      \n      <td>False</td>\n      \n    </tr>\n
+      \   \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:00.007697'
+    cell_number: 4
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 64
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: 'That''s a lot of numeric feature data describing various attributes
+      of the cells, but if you scroll all the way to the right above, after running
+      the query, you''ll see that each sample set of feature data is labeled `malignant`
+      [`True` or `False`]. It would be extremely difficult for a human to study all
+      these numbers, and see how they correlate with malignant or not, and then be
+      able to make a prediction for new samples, but mathemeticians have been working
+      on algorithms to do exactly this using computers which happen to be exceptionally
+      good at this by now. This is statistical machine learning.
+
+
+      PostgresML makes it easy to use this data to create a model. It only takes a
+      single function call with a few parameters.'
+    rendering: '<article class="markdown-body"><p>That''s a lot of numeric feature
+      data describing various attributes of the cells, but if you scroll all the way
+      to the right above, after running the query, you''ll see that each sample set
+      of feature data is labeled <code>malignant</code> [<code>True</code> or <code>False</code>].
+      It would be extremely difficult for a human to study all these numbers, and
+      see how they correlate with malignant or not, and then be able to make a prediction
+      for new samples, but mathemeticians have been working on algorithms to do exactly
+      this using computers which happen to be exceptionally good at this by now. This
+      is statistical machine learning.</p>
+
+      <p>PostgresML makes it easy to use this data to create a model. It only takes
+      a single function call with a few parameters.</p></article>'
+    execution_time: null
+    cell_number: 5
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 65
+  fields:
+    notebook: 2
+    cell_type: 3
+    contents: "SELECT * FROM pgml.train(\n  project_name => 'Breast Cancer Detection',
+      \n  task => 'classification', \n  relation_name => 'pgml.breast_cancer', \n
+      \ y_column_name => 'malignant'\n);"
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>project_name</strong></td>\n      \n      <td><strong>task</strong></td>\n
+      \     \n      <td><strong>algorithm_name</strong></td>\n      \n      <td><strong>status</strong></td>\n
+      \     \n    </tr>\n  </thead>\n  <tbody>\n    \n    <tr>\n      \n      <td>Breast
+      Cancer Detection</td>\n      \n      <td>classification</td>\n      \n      <td>linear</td>\n
+      \     \n      <td>not deployed</td>\n      \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:02.802388'
+    cell_number: 6
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 66
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: "\U0001F3C1 Congratulations \U0001F3C1\n---------------------\n\nYou've
+      just created a machine learning model, tested it's accuracy, and deployed it
+      to production. PostgresML orchestrated a bunch of the traditional ML drudgery
+      in that couple of seconds to make it as simple as possible for you to get value.
+      We'll organize our work on this task under the project name \"Breast Cancer
+      Detection\", which you can now see it in your [list of projects](/projects/).
+      You can see that the first model uses the default linear algorithm, and that
+      it achieves an [F1 score](https://en.wikipedia.org/wiki/F-score) in the mid
+      90's, which is pretty good. A score of 1.0 is perfect, and 0.5 would be as good
+      as random guessing. The better the F1 score, the better the algorithm can perform
+      on this dataset. \n\nWe can now use this model to make some predictions in real
+      time, using the training data as input to the `pgml.predict` function."
+    rendering: "<article class=\"markdown-body\"><h2>\U0001F3C1 Congratulations \U0001F3C1</h2>\n<p>You've
+      just created a machine learning model, tested it's accuracy, and deployed it
+      to production. PostgresML orchestrated a bunch of the traditional ML drudgery
+      in that couple of seconds to make it as simple as possible for you to get value.
+      We'll organize our work on this task under the project name \"Breast Cancer
+      Detection\", which you can now see it in your <a href=\"/projects/\">list of
+      projects</a>. You can see that the first model uses the default linear algorithm,
+      and that it achieves an <a href=\"https://en.wikipedia.org/wiki/F-score\">F1
+      score</a> in the mid 90's, which is pretty good. A score of 1.0 is perfect,
+      and 0.5 would be as good as random guessing. The better the F1 score, the better
+      the algorithm can perform on this dataset. </p>\n<p>We can now use this model
+      to make some predictions in real time, using the training data as input to the
+      <code>pgml.predict</code> function.</p></article>"
+    execution_time: null
+    cell_number: 7
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 67
+  fields:
+    notebook: 2
+    cell_type: 3
+    contents: "SELECT malignant, pgml.predict(\n    'Breast Cancer Detection', \n
+      \   ARRAY[\n        \"mean radius\", \n        \"mean texture\", \n        \"mean
+      perimeter\", \n        \"mean area\",\n        \"mean smoothness\",\n        \"mean
+      compactness\",\n        \"mean concavity\",\n        \"mean concave points\",\n
+      \       \"mean symmetry\",\n        \"mean fractal dimension\",\n        \"radius
+      error\",\n        \"texture error\",\n        \"perimeter error\",\n        \"area
+      error\",\n        \"smoothness error\",\n        \"compactness error\",\n        \"concavity
+      error\",\n        \"concave points error\",\n        \"symmetry error\",\n        \"fractal
+      dimension error\",\n        \"worst radius\",\n        \"worst texture\",\n
+      \       \"worst perimeter\",\n        \"worst area\",\n        \"worst smoothness\",\n
+      \       \"worst compactness\",\n        \"worst concavity\",\n        \"worst
+      concave points\",\n        \"worst symmetry\",\n        \"worst fractal dimension\"\n
+      \   ]\n) AS prediction\nFROM pgml.breast_cancer\nORDER BY random()\nLIMIT 10;"
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>malignant</strong></td>\n      \n      <td><strong>prediction</strong></td>\n
+      \     \n    </tr>\n  </thead>\n  <tbody>\n    \n    <tr>\n      \n      <td>False</td>\n
+      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>True</td>\n
+      \     \n      <td>1.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
+      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
+      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
+      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
+      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
+      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>True</td>\n
+      \     \n      <td>1.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
+      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>True</td>\n
+      \     \n      <td>1.0</td>\n      \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:02.657161'
+    cell_number: 8
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 68
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: "You can see the model is pretty good at predicting `0` for non malignant
+      samples, and `1` for malignant samples. This isn't a great test though, because
+      we're using the same data we trained with. We could have just looked up the
+      data in the database table if this is all we wanted to do. The point of training
+      a machine learning model, is to generalize these statistics to data we've never
+      seen before. What do you think this model would predict if all the input features
+      happened to be 0 or 1? How does that compare to what it's seen before? \n\nIt's
+      easy to test the model and see by providing new sample data in real time. There
+      are lots of ways we could feed new data to a model in Postgres. We could write
+      new samples to a table just like our training data, or we could pass parameters
+      directly into a query without recording anything in the database at all. Postgres
+      gives us a lot of ways to get data in and out at run time. We'll demonstrate
+      with a `VALUES` example for batch prediction."
+    rendering: '<article class="markdown-body"><p>You can see the model is pretty
+      good at predicting <code>0</code> for non malignant samples, and <code>1</code>
+      for malignant samples. This isn''t a great test though, because we''re using
+      the same data we trained with. We could have just looked up the data in the
+      database table if this is all we wanted to do. The point of training a machine
+      learning model, is to generalize these statistics to data we''ve never seen
+      before. What do you think this model would predict if all the input features
+      happened to be 0 or 1? How does that compare to what it''s seen before? </p>
+
+      <p>It''s easy to test the model and see by providing new sample data in real
+      time. There are lots of ways we could feed new data to a model in Postgres.
+      We could write new samples to a table just like our training data, or we could
+      pass parameters directly into a query without recording anything in the database
+      at all. Postgres gives us a lot of ways to get data in and out at run time.
+      We''ll demonstrate with a <code>VALUES</code> example for batch prediction.</p></article>'
+    execution_time: null
+    cell_number: 9
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 69
+  fields:
+    notebook: 2
+    cell_type: 3
+    contents: "SELECT sample_name, pgml.predict(\n    'Breast Cancer Detection', \n
+      \   ARRAY[\n        \"mean radius\", \n        \"mean texture\", \n        \"mean
+      perimeter\", \n        \"mean area\",\n        \"mean smoothness\",\n        \"mean
+      compactness\",\n        \"mean concavity\",\n        \"mean concave points\",\n
+      \       \"mean symmetry\",\n        \"mean fractal dimension\",\n        \"radius
+      error\",\n        \"texture error\",\n        \"perimeter error\",\n        \"area
+      error\",\n        \"smoothness error\",\n        \"compactness error\",\n        \"concavity
+      error\",\n        \"concave points error\",\n        \"symmetry error\",\n        \"fractal
+      dimension error\",\n        \"worst radius\",\n        \"worst texture\",\n
+      \       \"worst perimeter\",\n        \"worst area\",\n        \"worst smoothness\",\n
+      \       \"worst compactness\",\n        \"worst concavity\",\n        \"worst
+      concave points\",\n        \"worst symmetry\",\n        \"worst fractal dimension\"\n
+      \   ]\n) AS prediction\nFROM (\n  VALUES \n  \t('all_zeroes',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),\n
+      \ \t('all_ones',  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)\n)
+      \n  AS t (\n    \"sample_name\",\n    \"mean radius\", \n    \"mean texture\",
+      \n    \"mean perimeter\", \n    \"mean area\",\n    \"mean smoothness\",\n    \"mean
+      compactness\",\n    \"mean concavity\",\n    \"mean concave points\",\n    \"mean
+      symmetry\",\n    \"mean fractal dimension\",\n    \"radius error\",\n    \"texture
+      error\",\n    \"perimeter error\",\n    \"area error\",\n    \"smoothness error\",\n
+      \   \"compactness error\",\n    \"concavity error\",\n    \"concave points error\",\n
+      \   \"symmetry error\",\n    \"fractal dimension error\",\n    \"worst radius\",\n
+      \   \"worst texture\",\n    \"worst perimeter\",\n    \"worst area\",\n    \"worst
+      smoothness\",\n    \"worst compactness\",\n    \"worst concavity\",\n    \"worst
+      concave points\",\n    \"worst symmetry\",\n    \"worst fractal dimension\"\n
+      \ );"
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>sample_name</strong></td>\n      \n      <td><strong>prediction</strong></td>\n
+      \     \n    </tr>\n  </thead>\n  <tbody>\n    \n    <tr>\n      \n      <td>all_zeroes</td>\n
+      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>all_ones</td>\n
+      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:02.626657'
+    cell_number: 10
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 70
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: 'Even though the inputs are not data we''ve ever seen before, the model
+      is telling us both of these new samples are likely to be benign based on their
+      statistcal correlations to the training samples we had labelled. As we collect
+      new data samples, we could potentially use this model for multiple purposes,
+      like screening the samples before doing further more expensive or invasive analysis.
+
+
+      To demonstrate a more concise call that omits all the feature names (careful
+      to get the order right):'
+    rendering: '<article class="markdown-body"><p>Even though the inputs are not data
+      we''ve ever seen before, the model is telling us both of these new samples are
+      likely to be benign based on their statistcal correlations to the training samples
+      we had labelled. As we collect new data samples, we could potentially use this
+      model for multiple purposes, like screening the samples before doing further
+      more expensive or invasive analysis.</p>
+
+      <p>To demonstrate a more concise call that omits all the feature names (careful
+      to get the order right):</p></article>'
+    execution_time: null
+    cell_number: 11
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 71
+  fields:
+    notebook: 2
+    cell_type: 3
+    contents: "SELECT pgml.predict(\n    'Breast Cancer Detection', \n    ARRAY[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,100000]\n)"
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>predict</strong></td>\n      \n    </tr>\n  </thead>\n  <tbody>\n
+      \   \n    <tr>\n      \n      <td>1.0</td>\n      \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:02.643660'
+    cell_number: 12
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 72
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: 'Ah hah! We put a really big number into the last feature (worst fractal
+      dimension), and got the model to give us a `True` prediction, indicating that
+      large values there correlate with a malignant sample all else being equal using
+      our default linear algorithm. There are lots of ways we can probe the model
+      with test data, but before we spend too much time on this one, it might be informative
+      to try other algorithms.
+
+
+      PostgresML makes it easy to reuse your training data with many of the best algorithms
+      available. Why not try them all?'
+    rendering: '<article class="markdown-body"><p>Ah hah! We put a really big number
+      into the last feature (worst fractal dimension), and got the model to give us
+      a <code>True</code> prediction, indicating that large values there correlate
+      with a malignant sample all else being equal using our default linear algorithm.
+      There are lots of ways we can probe the model with test data, but before we
+      spend too much time on this one, it might be informative to try other algorithms.</p>
+
+      <p>PostgresML makes it easy to reuse your training data with many of the best
+      algorithms available. Why not try them all?</p></article>'
+    execution_time: null
+    cell_number: 13
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 73
+  fields:
+    notebook: 2
+    cell_type: 3
+    contents: '--
+
+      -- After a project has been trained, ommited parameters will be reused from
+      previous training runs
+
+      -- In these examples we''ll reuse the training data snapshots from the initial
+      call.
+
+      --
+
+
+      -- Linear Models
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''ridge'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''stochastic_gradient_descent'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''perceptron'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''passive_aggressive'');
+
+
+      -- Support Vector Machines
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''svm'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''nu_svm'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''linear_svm'');
+
+
+      -- Ensembles
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''ada_boost'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''bagging'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''extra_trees'',
+      hyperparams => ''{"n_estimators": 10}'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''gradient_boosting_trees'',
+      hyperparams => ''{"n_estimators": 10}'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''random_forest'',
+      hyperparams => ''{"n_estimators": 10}'');
+
+
+      -- Gradient Boosting
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''xgboost'',
+      hyperparams => ''{"n_estimators": 10}'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''xgboost_random_forest'',
+      hyperparams => ''{"n_estimators": 10}'');
+
+      SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''lightgbm'',
+      hyperparams => ''{"n_estimators": 1}'');'
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>project_name</strong></td>\n      \n      <td><strong>task</strong></td>\n
+      \     \n      <td><strong>algorithm_name</strong></td>\n      \n      <td><strong>status</strong></td>\n
+      \     \n    </tr>\n  </thead>\n  <tbody>\n    \n    <tr>\n      \n      <td>Breast
+      Cancer Detection</td>\n      \n      <td>None</td>\n      \n      <td>lightgbm</td>\n
+      \     \n      <td>not deployed</td>\n      \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:03.250016'
+    cell_number: 14
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 74
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: "Turns out, computers are pretty fast these days, even with state of
+      the art algorithms running on a free tier computation resources. \U0001F60A
+      \n\nYou can pop over to the [projects](/projects) tab for a visualization of
+      the performance of all these algorithms on this dataset, or you can check out
+      the artifacts directly in the database."
+    rendering: "<article class=\"markdown-body\"><p>Turns out, computers are pretty
+      fast these days, even with state of the art algorithms running on a free tier
+      computation resources. \U0001F60A </p>\n<p>You can pop over to the <a href=\"/projects\">projects</a>
+      tab for a visualization of the performance of all these algorithms on this dataset,
+      or you can check out the artifacts directly in the database.</p></article>"
+    execution_time: null
+    cell_number: 15
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 75
+  fields:
+    notebook: 2
+    cell_type: 3
+    contents: "SELECT \n  projects.name,\n  models.algorithm_name,\n  round((models.metrics->>'f1')::numeric,
+      4) AS f1_score,\n  round((models.metrics->>'precision')::numeric, 4) AS precision,\n
+      \ round((models.metrics->>'recall')::numeric, 4) AS recall\nFROM pgml.models\nJOIN
+      pgml.projects on projects.id = models.project_id\n  AND projects.name = 'Breast
+      Cancer Detection'\nORDER BY models.metrics->>'f1' DESC LIMIT 5;"
+    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
+      \     <td><strong>name</strong></td>\n      \n      <td><strong>algorithm_name</strong></td>\n
+      \     \n      <td><strong>f1_score</strong></td>\n      \n      <td><strong>precision</strong></td>\n
+      \     \n      <td><strong>recall</strong></td>\n      \n    </tr>\n  </thead>\n
+      \ <tbody>\n    \n    <tr>\n      \n      <td>Breast Cancer Detection</td>\n
+      \     \n      <td>xgboost</td>\n      \n      <td>0.9860</td>\n      \n      <td>0.9863</td>\n
+      \     \n      <td>0.9860</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>Breast
+      Cancer Detection</td>\n      \n      <td>random_forest</td>\n      \n      <td>0.9860</td>\n
+      \     \n      <td>0.9863</td>\n      \n      <td>0.9860</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>Breast Cancer Detection</td>\n      \n      <td>xgboost_random_forest</td>\n
+      \     \n      <td>0.9790</td>\n      \n      <td>0.9791</td>\n      \n      <td>0.9790</td>\n
+      \     \n    </tr>\n    \n    <tr>\n      \n      <td>Breast Cancer Detection</td>\n
+      \     \n      <td>gradient_boosting_trees</td>\n      \n      <td>0.9790</td>\n
+      \     \n      <td>0.9791</td>\n      \n      <td>0.9790</td>\n      \n    </tr>\n
+      \   \n    <tr>\n      \n      <td>Breast Cancer Detection</td>\n      \n      <td>ridge</td>\n
+      \     \n      <td>0.9789</td>\n      \n      <td>0.9797</td>\n      \n      <td>0.9790</td>\n
+      \     \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
+    execution_time: '00:00:00.002094'
+    cell_number: 16
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 76
+  fields:
+    notebook: 2
+    cell_type: 1
+    contents: Tree based algorithms like `random_forest`, `xgboost` and `lightgbm`
+      do well on tabular datasets and frequently lead the pack with A+ level performance
+      as measured by the `f1_score`. They are generally sensitive to small changes
+      in the inputs, but also robust to outliers. They are also relatively fast algorithms
+      that can perform predictions in sub millisecond times, meaning most of the cost
+      of inference is in fetching the data they require as inputs. When your inputs
+      are already in the database with the model, that time is as fast as possible!
+    rendering: <article class="markdown-body"><p>Tree based algorithms like <code>random_forest</code>,
+      <code>xgboost</code> and <code>lightgbm</code> do well on tabular datasets and
+      frequently lead the pack with A+ level performance as measured by the <code>f1_score</code>.
+      They are generally sensitive to small changes in the inputs, but also robust
+      to outliers. They are also relatively fast algorithms that can perform predictions
+      in sub millisecond times, meaning most of the cost of inference is in fetching
+      the data they require as inputs. When your inputs are already in the database
+      with the model, that time is as fast as possible!</p></article>
+    execution_time: null
+    cell_number: 17
+    version: 1
+    deleted_at: null
