@@ -153,32 +153,50 @@ $$ LANGUAGE plpython3u;
 ---
 --- Predict
 ---
-CREATE OR REPLACE FUNCTION pgml.predict(
-	project_name TEXT,          -- Human-friendly project name
-	features DOUBLE PRECISION[] -- Must match the training data column order
+CREATE OR REPLACE FUNCTION pgml.predict_versioned(
+	project_name TEXT,           -- Human-friendly project name
+	features DOUBLE PRECISION[], -- Must match the training data column order
+	version INTEGER DEFAULT 0
 )
 RETURNS DOUBLE PRECISION
 AS $$
 	from pgml_extension.model import Project
 
-	return float(Project.find_by_name(project_name, 0).deployed_model.predict(features))
+	return float(Project.find_by_name(project_name, version).deployed_model.predict(features))
 $$ LANGUAGE plpython3u;
 
+CREATE OR REPLACE FUNCTION pgml.predict(
+	project_name TEXT,          -- Human-friendly project name
+	features DOUBLE PRECISION[] -- Must match the training data column order
+) 
+RETURNS DOUBLE PRECISION
+AS $$
+	SELECT pgml.predict_versioned(project_name, features, 0);
+$$ LANGUAGE SQL;
 
 ---
 --- Predict w/ multiple outputs
 ---
-CREATE OR REPLACE FUNCTION pgml.predict_joint(
-	project_name TEXT,          -- Human-friendly project name
-	features DOUBLE PRECISION[] -- Must match the training data column order
+CREATE OR REPLACE FUNCTION pgml.predict_joint_versioned(
+	project_name TEXT,           -- Human-friendly project name
+	features DOUBLE PRECISION[], -- Must match the training data column order
+	version INTEGER DEFAULT 0
 )
 RETURNS DOUBLE PRECISION[]
 AS $$
 	from pgml_extension.model import Project
 
-	return Project.find_by_name(project_name, 0).deployed_model.predict(features)
+	return Project.find_by_name(project_name, version).deployed_model.predict(features)
 $$ LANGUAGE plpython3u;
 
+CREATE OR REPLACE FUNCTION pgml.predict_joint(
+	project_name TEXT,          -- Human-friendly project name
+	features DOUBLE PRECISION[] -- Must match the training data column order
+) 
+RETURNS DOUBLE PRECISION[]
+AS $$
+	SELECT pgml.predict_joint_versioned(project_name, features, 0);
+$$ LANGUAGE SQL;
 
 ---
 --- Predict using a specific model. Useful for debugging.
