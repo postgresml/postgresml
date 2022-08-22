@@ -85,7 +85,7 @@
 
 
       Let me give you an example. The next cell (cell #2) will be a SQL cell which
-      will execute a simple query.'
+      will execute a simple query. Go ahead and click the next "Play" button now.'
     rendering: '<article class="markdown-body"><h2>Welcome!</h2>
 
       <p>You''re set up and running on PostgresML! This is an end-to-end system for
@@ -107,7 +107,7 @@
       it (if it''s SQL), edit it, and delete it.</p>
 
       <p>Let me give you an example. The next cell (cell #2) will be a SQL cell which
-      will execute a simple query.</p></article>'
+      will execute a simple query. Go ahead and click the next "Play" button now.</p></article>'
     execution_time: null
     cell_number: 1
     version: 1
@@ -230,16 +230,16 @@
       fun learning about machine learning, in the comfort of your favorite database.
 
 
-      You may want to check out the [rest of the tutorial''s](/nb/) or dive straight
-      in with a notebook to test [real time fraud detection](/notebooks/notebook/1/).'
+      You may want to check out the [rest of the tutorials](/nb/) or dive straight
+      in with a notebook to test [Tutorial 1: ⏱️ Real Time Fraud Detection](/notebooks/notebook/1/).'
     rendering: '<article class="markdown-body"><h3>Thank you</h3>
 
       <p>Thank you for trying out PostgresML! We hope you enjoy your time here and
       have fun learning about machine learning, in the comfort of your favorite database.</p>
 
-      <p>You may want to check out the <a href="/nb/">rest of the tutorial''s</a>
-      or dive straight in with a notebook to test <a href="/notebooks/notebook/1/">real
-      time fraud detection</a>.</p></article>'
+      <p>You may want to check out the <a href="/nb/">rest of the tutorials</a> or
+      dive straight in with a notebook to test <a href="/notebooks/notebook/1/">Tutorial
+      1: ⏱️ Real Time Fraud Detection</a>.</p></article>'
     execution_time: null
     cell_number: 4
     version: 1
