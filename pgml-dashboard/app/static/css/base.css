@@ -606,8 +606,12 @@ main turbo-frame:first-of-type .notebook-cell {
   margin-top: 1rem;
 }
 
+.notebook-rendering .markdown-body {
+     margin-top: 1rem;
+}
+
 .notebook-rendering {
-    /* margin-top: 1rem; */
+    max-width: 80vw;
 }
 
 .markdown-body.notebook-contents {

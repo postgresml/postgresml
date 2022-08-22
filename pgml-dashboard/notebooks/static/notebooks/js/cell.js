@@ -7,6 +7,7 @@ export default class extends Controller {
     'undo',
     'play',
     'type',
+    'cancelEdit',
   ];
 
   connect() {
@@ -84,6 +85,11 @@ export default class extends Controller {
       this.codeMirror.setOption('readOnly', true)
       this.codeMirror.addKeyMap(disableKeyMap)
     }
+  }
+
+  cancelEdit(event) {
+    event.preventDefault()
+    this.cancelEditTarget.requestSubmit()
   }
 }
 

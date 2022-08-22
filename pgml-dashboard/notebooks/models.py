@@ -77,32 +77,38 @@ class NotebookCell(models.Model):
         if self.cell_type == NotebookCell.SQL:
             execution_start = timezone.now()
 
+            results = []
             with connection.cursor() as cursor:
-                try:
-                    cursor.execute(self.contents)
+                queries = self.contents.split(";\n")  # Eh.
+                for query in queries:
+                    try:
+                        cursor.execute(query)
 
-                    if cursor.description:
-                        columns = [col[0] for col in cursor.description]
-                        rows = cursor.fetchall()
+                        if cursor.description:
+                            columns = [col[0] for col in cursor.description]
+                            rows = cursor.fetchall()
 
+                            result = render_to_string(
+                                "notebooks/sql.html",
+                                {
+                                    "columns": columns,
+                                    "rows": rows,
+                                },
+                            )
+                            results.append(result)
+                        else:
+                            # Not an error, but the formatting is helpful.
+                            result = render_to_string("notebooks/sql_error.html", {"error": str(cursor.statusmessage)})
+                            results.append(result)
+                    except Exception as e:
                         result = render_to_string(
-                            "notebooks/sql.html",
+                            "notebooks/sql_error.html",
                             {
-                                "columns": columns,
-                                "rows": rows,
+                                "error": str(e),
                             },
                         )
-                    else:
-                        # Not an error, but the formatting is helpful.
-                        result = render_to_string("notebooks/sql_error.html", {"error": str(cursor.statusmessage)})
-                except Exception as e:
-                    result = render_to_string(
-                        "notebooks/sql_error.html",
-                        {
-                            "error": str(e),
-                        },
-                    )
-            self.rendering = result
+                        results.append(result)
+            self.rendering = "\n".join(results)
             self.execution_time = timezone.now() - execution_start
 
         elif self.cell_type == NotebookCell.MARKDOWN:

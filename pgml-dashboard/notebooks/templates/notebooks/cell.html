@@ -18,8 +18,14 @@
             <button type="submit" class="button notebook-button" title="Execute cell" data-cell-target="play">
               <span class="material-symbols-outlined">play_arrow</span>
             </button>
+             <button class="button notebook-button" title="Cancel edit" data-action="cell#cancelEdit">
+              <span class="material-symbols-outlined">cancel</span>
+            </button>
           </div>
         </div>
+      </form>
+      <!-- Cancel edit and refetch the cell -->
+      <form class="hidden" action="{% url 'notebooks/cell/get' notebook.pk cell.pk %}?bust_cache={{ bust_cache }}" method="get" data-cell-target="cancelEdit">
       </form>
     </div>
     {% endif %}

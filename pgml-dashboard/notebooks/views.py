@@ -30,6 +30,7 @@ def notebook(request, pk):
             "next_cell_number": next_cell_number,
             "title": f"{notebook.name} - PostgresML",
             "topic": "notebooks",
+            "bust_cache": time.time(),
         },
     )
 
