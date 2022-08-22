@@ -964,31 +964,27 @@ class Model(object):
 
         plpy.execute(
             f"""
-        CREATE OR REPLACE FUNCTION pgml.predict(
-            project_name TEXT,          -- Human-friendly project name
-            features DOUBLE PRECISION[] -- Must match the training data column order
-        )
-        RETURNS DOUBLE PRECISION
-        AS $$
-            from pgml_extension.model import Project
-
-            return float(Project.find_by_name(project_name, {q(deployment_id)}).deployed_model.predict(features))
-        $$ LANGUAGE plpython3u;
+            CREATE OR REPLACE FUNCTION pgml.predict(
+                project_name TEXT,          -- Human-friendly project name
+                features DOUBLE PRECISION[] -- Must match the training data column order
+            ) 
+            RETURNS DOUBLE PRECISION
+            AS $$
+                SELECT pgml.predict_versioned(project_name, features, {q(deployment_id)});
+            $$ LANGUAGE SQL;
         """
         )
 
         plpy.execute(
             f"""
-        CREATE OR REPLACE FUNCTION pgml.predict_joint(
-            project_name TEXT,          -- Human-friendly project name
-            features DOUBLE PRECISION[] -- Must match the training data column order
-        )
-        RETURNS DOUBLE PRECISION[]
-        AS $$
-            from pgml_extension.model import Project
-
-            return Project.find_by_name(project_name, {q(deployment_id)}).deployed_model.predict(features)
-        $$ LANGUAGE plpython3u;
+            CREATE OR REPLACE FUNCTION pgml.predict_joint(
+                project_name TEXT,          -- Human-friendly project name
+                features DOUBLE PRECISION[] -- Must match the training data column order
+            ) 
+            RETURNS DOUBLE PRECISION[]
+            AS $$
+                SELECT pgml.predict_joint_versioned(project_name, features, {q(deployment_id)});
+            $$ LANGUAGE SQL;
         """
         )
 
