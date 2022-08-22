@@ -245,8 +245,9 @@
       the way, this was a Markdown table, you can make those here as well.\n      \n###
       Thank you\nThank you for trying out PostgresML! We hope you enjoy your time
       here and have fun learning about machine learning, in the comfort of your favorite
-      database.\n\nYou may want to check out the rest of [the tutorials](/nb/) or
-      dive straight in with a notebook to test [Tutorial 1: ⏱️ Real Time Fraud Detection](/notebooks/notebook/1)"
+      database.\n\nYou may want to check out the rest of [the tutorials](../../../nb/)
+      or dive straight in with a notebook to test [Tutorial 1: ⏱️ Real Time Fraud
+      Detection](../1/)"
     rendering: '<article class="markdown-body"><p>We just asked Postgres to return
       a random number. Pretty simple query, but it demonstrates the notebook functionality
       pretty well. You can see that the result of <code>random()</code> is a float
@@ -326,9 +327,9 @@
       <p>Thank you for trying out PostgresML! We hope you enjoy your time here and
       have fun learning about machine learning, in the comfort of your favorite database.</p>
 
-      <p>You may want to check out the rest of <a href="/nb/">the tutorials</a> or
-      dive straight in with a notebook to test <a href="/notebooks/notebook/1">Tutorial
-      1: ⏱️ Real Time Fraud Detection</a></p></article>'
+      <p>You may want to check out the rest of <a href="../../../nb/">the tutorials</a>
+      or dive straight in with a notebook to test <a href="../1/">Tutorial 1: ⏱️ Real
+      Time Fraud Detection</a></p></article>'
     execution_time: null
     cell_number: 4
     version: 1
@@ -2022,12 +2023,14 @@
     cell_type: 1
     contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
       coming soon! Give it a try for now anyway.\n\nThese examples take a fair bit
-      of compute, so they may take 10-20 seconds to execute on the free tier without
-      GPU accelleration."
+      of compute. The deep learning models themselves are several gigabytes of weights,
+      so they may run out of memory on the free tier. Without using a GPU to accellerate
+      inference, they will take 10-20 seconds to execute."
     rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
       coming soon! Give it a try for now anyway.</p>\n<p>These examples take a fair
-      bit of compute, so they may take 10-20 seconds to execute on the free tier without
-      GPU accelleration.</p></article>"
+      bit of compute. The deep learning models themselves are several gigabytes of
+      weights, so they may run out of memory on the free tier. Without using a GPU
+      to accellerate inference, they will take 10-20 seconds to execute.</p></article>"
     execution_time: null
     cell_number: 1
     version: 1
