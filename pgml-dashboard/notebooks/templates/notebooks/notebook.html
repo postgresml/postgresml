@@ -1,57 +1,59 @@
 {% extends "base.html" %}
 {% block main %}
-<section>
-  <div class="flex flex-center" data-controller="notebook">
-    <div>
-      <h1 class="flex-grow" data-action="click->notebook#renameNotebook" data-notebook-target="notebookName">
-        <span class="material-symbols-outlined">newspaper</span>
-        {{ notebook.name }}
-      </h1>
-    </div>
-    <div class="flex-grow">
-      <form class="hidden" action="{% url 'notebooks/rename' notebook.pk %}" method="post" data-notebook-target="renameNotebookForm">
-        {% csrf_token %}
-        <h1><input type="text" name="name" value="{{ notebook.name }}" required></h1>
-      </form>
-    </div>
-    <div>
-      <form action="{% url 'notebooks/reset' notebook.pk %}" method="post">
-        {% csrf_token %}
-        <button type="submit" title="Reset all executable cells" style="padding: 0.5rem 1rem;">
-          <span class="material-symbols-outlined">replay</span>
-        </button>
-      </form>
-    </div>
-  </div>
-</section>
-
-{% for cell in cells %}
-{% include 'notebooks/cell.html' %}
-{% endfor %}
-
-<!-- Next new cell, I think this will render the page quicker -->
-<turbo-frame id="cell_{{ next_cell_number }}">
-</turbo-frame>
-
-<section class="notebook-cell" data-controller="cell">
-  <div class="notebook-cell-edit">
-    <form action="{% url 'notebooks/cell/add' notebook.pk %}" method="post" data-cell-target="form" data-action="cell#freezeScrollOnNextRender cell#play">
-      <div class="flex">
-        {% csrf_token %}
-        <div class="flex-grow">
-          <textarea data-cell-id="new" name="contents" data-cell-target="editor"></textarea>
-        </div>
-        <div class="flex flex-end">
-          <select name="cell_type" id="cell_type" data-action="cell#selectCellType" title="Select cell type" data-cell-target="type">
-            <option value="3" selected>SQL</option>
-            <option value="1">Markdown</option>
-          </select>
-          <button type="submit" class="button notebook-button" title="Create cell" data-cell-target="play">
-            <span class="material-symbols-outlined">play_arrow</span>
-          </button>
-        </div>
+<div data-controller="notebook">
+  <section>
+    <div class="flex flex-center">
+      <div>
+        <h1 class="flex-grow" data-action="click->notebook#renameNotebook" data-notebook-target="notebookName">
+          <span class="material-symbols-outlined">newspaper</span>
+          {{ notebook.name }}
+        </h1>
       </div>
-    </form>
-  </div>
-</section>
+      <div class="flex-grow">
+        <form class="hidden" action="{% url 'notebooks/rename' notebook.pk %}" method="post" data-notebook-target="renameNotebookForm">
+          {% csrf_token %}
+          <h1><input type="text" name="name" value="{{ notebook.name }}" required></h1>
+        </form>
+      </div>
+      <div>
+        <form action="{% url 'notebooks/reset' notebook.pk %}" method="post">
+          {% csrf_token %}
+          <button type="submit" title="Reset all executable cells" style="padding: 0.5rem 1rem;">
+            <span class="material-symbols-outlined">replay</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  {% for cell in cells %}
+  {% include 'notebooks/cell.html' %}
+  {% endfor %}
+
+  <!-- Next new cell, I think this will render the page quicker -->
+  <turbo-frame id="cell_{{ next_cell_number }}">
+  </turbo-frame>
+
+  <section class="notebook-cell" data-controller="cell">
+    <div class="notebook-cell-edit">
+      <form action="{% url 'notebooks/cell/add' notebook.pk %}" method="post" data-cell-target="form" data-action="cell#freezeScrollOnNextRender cell#play">
+        <div class="flex">
+          {% csrf_token %}
+          <div class="flex-grow">
+            <textarea data-cell-id="new" name="contents" data-cell-target="editor"></textarea>
+          </div>
+          <div class="flex flex-end">
+            <select name="cell_type" id="cell_type" data-action="cell#selectCellType" title="Select cell type" data-cell-target="type">
+              <option value="3" selected>SQL</option>
+              <option value="1">Markdown</option>
+            </select>
+            <button type="submit" class="button notebook-button" title="Create cell" data-cell-target="play">
+              <span class="material-symbols-outlined">play_arrow</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
 {% endblock %}

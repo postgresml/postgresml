@@ -602,6 +602,10 @@ main turbo-frame:first-of-type .notebook-cell {
   margin-bottom: 2px;
 }
 
+.notebook-cell.selected {
+    border: 2px solid green;
+}
+
 .notebook-duration {
   margin-top: 1rem;
 }
