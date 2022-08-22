@@ -7,4 +7,4 @@ class AppConfig(AppConfig):
     name = "app"
 
     def ready(self):
-        register_serializer('yml', 'django.core.serializers.pyyaml')
+        register_serializer("yml", "django.core.serializers.pyyaml")

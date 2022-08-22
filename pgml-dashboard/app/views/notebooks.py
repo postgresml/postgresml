@@ -7,7 +7,7 @@ def index(request):
         request,
         "notebooks.html",
         {
-            "notebooks": Notebook.objects.order_by('id').all(),
+            "notebooks": Notebook.objects.order_by("id").all(),
             "topic": "notebooks",
         },
     )
