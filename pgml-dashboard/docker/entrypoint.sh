@@ -12,6 +12,7 @@ while ! psql -U postgres -h 172.17.0.1 -p 5433 -d pgml_development 2> /dev/null;
 done
 
 python3 manage.py migrate
+python3 manage.py loaddata notebooks
 
 if [[ ! -z $@ ]]; then
 	echo

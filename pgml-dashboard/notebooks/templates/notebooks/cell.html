@@ -1,5 +1,5 @@
 <turbo-frame id="cell_{{ cell.cell_number }}">
-  <section data-controller="cell" class="notebook-cell {{ cell.get_cell_type_display|lower }}">
+  <section data-controller="cell" class="notebook-cell {{ cell.get_cell_type_display|lower }}{% if selected %} selected{% endif %}" data-action="click->notebook#selectCell keyup->cell#execute" data-notebook-target="cell">
 
     {% if edit %}
     <!-- Edit -->

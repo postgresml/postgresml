@@ -146,6 +146,7 @@ def edit_notebook_cell(request, notebook_pk, cell_pk):
                 "notebook": notebook,
                 "edit": True,
                 "bust_cache": time.time(),  # Turbo won't submit a get form if it already did.
+                "selected": True,
             },
         )
 
@@ -237,5 +238,6 @@ def play_notebook_cell(request, notebook_pk, cell_pk):
             "cell": cell,
             "notebook": cell.notebook,
             "bust_cache": time.time(),
+            "selected": True,
         },
     )
