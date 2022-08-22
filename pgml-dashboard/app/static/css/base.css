@@ -639,10 +639,6 @@ main turbo-frame:first-of-type .notebook-cell {
     max-width: 80vw;
 }
 
-.markdown-body {
-    background-color: inherit !important
-}
-
 .markdown-body.notebook-contents {
   margin-bottom: 1rem;
 }

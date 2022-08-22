@@ -682,15 +682,6 @@
   border: 1px solid #d0d7de;
 }
 
-.markdown-body table tr {
-  background-color: #ffffff;
-  border-top: 1px solid hsla(210,18%,87%,1);
-}
-
-.markdown-body table tr:nth-child(2n) {
-  background-color: #f6f8fa;
-}
-
 .markdown-body table img {
   background-color: transparent;
 }
