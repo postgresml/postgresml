@@ -7,9 +7,9 @@
     --gray-5: #929292;
     --gray-6: #ADADAD;
     --gray-7: #C8C8C8;
-    --gray-8: #E7E7E7;
-    --gray-9: #F9F9F9;
-    --gray-10: #FFFFFF;
+    --gray-8: rgba(242, 244, 246, 1);
+    --gray-9: rgba(251, 252, 253, 1);
+    --gray-10: rgba(255, 255, 255, 1);
     --color-1: rgb(2, 2, 40);
     --color-2: rgb(10, 20, 80);
     --color-3: rgb(20, 40, 120);
@@ -503,18 +503,6 @@ nav ol, nav ul {
   list-style: none;
 }
 
-.notebook-cell article.markdown-body {
-    background-color: inherit;
-}
-
-.notebook-cell .markdown-body pre {
-    background-color: var(--gray-8);
-}
-
-.notebook-cell:hover {
-    background: var(--gray-9);
-    border: 1px solid var(--gray-8);
-}
 
 .notebook-cell.active {
   border: 1px solid var(--gray-8);
@@ -540,10 +528,33 @@ main turbo-frame:first-of-type .notebook-cell {
   margin: 0 20px;
   border-radius: 0;
   padding: 1rem;
-  border: 1px solid var(--gray-8);
-  border-top: 1px solid var(--gray-9);
-  border-bottom: 1px solid var(--gray-9);
+  border-left: 2px solid var(--gray-8);
+  border-right: 1px solid var(--gray-8);
+  border-top: 1px solid var(--gray-10);
+  border-bottom: 1px solid var(--gray-10);
   background: var(--gray-10);
+}
+
+.notebook-cell article.markdown-body {
+    background-color: inherit;
+}
+
+.notebook-cell .markdown-body pre {
+    background-color: var(--gray-8);
+}
+
+.notebook-cell:hover {
+    background: var(--gray-9);
+    border-top: 1px solid var(--gray-8);
+    border-bottom: 1px solid var(--gray-8);
+}
+
+.notebook-cell.selected {
+    border-left: 2px solid var(--highlite-green);
+}
+
+.notebook-cell-edit {
+    background: var(--gray-10);
 }
 
 .language-sql {
@@ -616,10 +627,6 @@ main turbo-frame:first-of-type .notebook-cell {
   margin-bottom: 2px;
 }
 
-.notebook-cell.selected {
-    border: 2px solid green;
-}
-
 .notebook-duration {
   margin-top: 1rem;
 }
@@ -632,6 +639,10 @@ main turbo-frame:first-of-type .notebook-cell {
     max-width: 80vw;
 }
 
+.markdown-body {
+    background-color: inherit !important
+}
+
 .markdown-body.notebook-contents {
   margin-bottom: 1rem;
 }
@@ -641,8 +652,4 @@ main turbo-frame:first-of-type .notebook-cell {
 */
 .CodeMirror {
   font-size: 1rem;
-}
-
-.notebook-cell-edit {
-    background: var(--gray-10);
 }
