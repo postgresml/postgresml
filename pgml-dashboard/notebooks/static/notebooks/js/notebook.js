@@ -25,8 +25,9 @@ export default class extends Controller {
       target.classList.remove('selected')
     })
 
-    if (event.currentTarget.classList.contains('sql'))
+    if (event.currentTarget.classList.contains('sql') || event.currentTarget.querySelector('.notebook-cell-edit')) {
       event.currentTarget.classList.add('selected')
+    }
   }
 
   executeSelectedCell(event) {
