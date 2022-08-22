@@ -19,15 +19,15 @@
 - model: notebooks.notebook
   pk: 3
   fields:
-    name: "Tutorial 4: \U0001F36D Diabetes Progression w/ Regression"
-    created_at: 2022-08-20 02:18:14.608456+00:00
-    updated_at: 2022-08-20 02:18:14.608474+00:00
-- model: notebooks.notebook
-  pk: 4
-  fields:
     name: 'Tutorial 3: ✍️ Handwritten Digit Image Classification'
     created_at: 2022-08-20 16:46:40.856497+00:00
     updated_at: 2022-08-20 16:46:40.856511+00:00
+- model: notebooks.notebook
+  pk: 4
+  fields:
+    name: "Tutorial 4: \U0001F36D Diabetes Progression w/ Regression"
+    created_at: 2022-08-20 02:18:14.608456+00:00
+    updated_at: 2022-08-20 02:18:14.608474+00:00
 - model: notebooks.notebook
   pk: 5
   fields:
@@ -128,61 +128,36 @@
   fields:
     notebook: 0
     cell_type: 1
-    contents: 'We just asked Postgres to return a random number. Pretty simple query,
+    contents: "We just asked Postgres to return a random number. Pretty simple query,
       but it demonstrates the notebook functionality pretty well. You can see that
       the result of `random()` is a float between 0 and 1. On the bottom right corner,
-      you can see that it took less than a ms to run this query. This run time is
-      good to keep an eye on. It will help build an intuition for how fast Postgres
-      really is, and how certain operations scale as the data grows.
-
-
-      Try rerunning the cell again by clicking the "Play" button in the top right
-      corner. You''ll see that the random number will change. Rerunning is a real
-      time operation and Postgres will give you a different random number every time
-      (otherwise it wouldn''t be random).
-
-
-      #### Editing a cell
-
-
-      You can edit a cell at any time, including SQL cells which will then run the
-      new query immediately.
-
-
-      #### Deleting a cell
-
-
-      Deleting a cell is pretty easy: just click on the delete button in the top right
-      corner. You''ll have 10 seconds to undo the delete if you so desire; we wouldn''t
-      want you to lose your work because of an accidental click.
-
-
-      #### Shortcuts
-
-
-      The text editor supports the following helpful shortcuts:
-
-
-
-      | Shortcut |             Description               |
-
-      -----------| --------------------------------------
-
-      | `Cmd-/` or `Ctrl-/` | Comment out SQL code.      |
-
-      | `Cmd-Enter` or `Ctrl-Enter` | Save/create a cell.|
-
-
-      By the way, this was a Markdown table, you can make those here as well.'
+      you can see that it took `0:00:00.000654` or 0 hours, 0 minutes, 0 seconds and
+      only 654ns, or 0.6ms. This run time is good to keep an eye on. It will help
+      build an intuition for how fast Postgres really is, and how certain operations
+      scale as the data grows. You'll be able to see how long \n\nTry rerunning the
+      cell again by clicking the \"play\" button in the top right corner. You'll see
+      that the random number will change. Rerunning is a real time operation and Postgres
+      will give you a different random number every time (otherwise it wouldn't be
+      random).\n\n#### Editing a cell\n\nYou can edit a cell at any time, including
+      SQL cells which will then run the new query immediately.\n\n#### Deleting a
+      cell\n\nDeleting a cell is pretty easy: just click on the delete button in the
+      top right corner. You'll have 10 seconds to undo the delete if you so desire;
+      we wouldn't want you to lose your work because of an accidental click.\n\n####
+      Shortcuts\n\nThe text editor supports the following helpful shortcuts:\n\n\n|
+      Shortcut |             Description               |\n-----------| --------------------------------------\n|
+      `Cmd-/` or `Ctrl-/` | Comment out SQL code.      |\n| `Cmd-Enter` or `Ctrl-Enter`
+      | Save/create a cell.|\n\nBy the way, this was a Markdown table, you can make
+      those here as well."
     rendering: '<article class="markdown-body"><p>We just asked Postgres to return
       a random number. Pretty simple query, but it demonstrates the notebook functionality
       pretty well. You can see that the result of <code>random()</code> is a float
-      between 0 and 1. On the bottom right corner, you can see that it took less than
-      a ms to run this query. This run time is good to keep an eye on. It will help
-      build an intuition for how fast Postgres really is, and how certain operations
-      scale as the data grows.</p>
+      between 0 and 1. On the bottom right corner, you can see that it took <code>0:00:00.000654</code>
+      or 0 hours, 0 minutes, 0 seconds and only 654ns, or 0.6ms. This run time is
+      good to keep an eye on. It will help build an intuition for how fast Postgres
+      really is, and how certain operations scale as the data grows. You''ll be able
+      to see how long </p>
 
-      <p>Try rerunning the cell again by clicking the "Play" button in the top right
+      <p>Try rerunning the cell again by clicking the "play" button in the top right
       corner. You''ll see that the random number will change. Rerunning is a real
       time operation and Postgres will give you a different random number every time
       (otherwise it wouldn''t be random).</p>
@@ -242,7 +217,7 @@
     execution_time: null
     cell_number: 3
     version: 1
-    deleted_at: null
+    deleted_at: 2022-08-22 21:13:49.583297+00:00
 - model: notebooks.notebookcell
   pk: 4
   fields:
@@ -256,14 +231,14 @@
 
 
       You may want to check out the [rest of the tutorials](/nb/) or dive straight
-      in with our next notebook tutorial: [Tutorial 1: ⏱️ Real Time Fraud Detection](/notebooks/notebook/1/).'
+      in with a notebook to test [Tutorial 1: ⏱️ Real Time Fraud Detection](/notebooks/notebook/1/).'
     rendering: '<article class="markdown-body"><h3>Thank you</h3>
 
       <p>Thank you for trying out PostgresML! We hope you enjoy your time here and
       have fun learning about machine learning, in the comfort of your favorite database.</p>
 
       <p>You may want to check out the <a href="/nb/">rest of the tutorials</a> or
-      dive straight in with our next notebook tutorial: <a href="/notebooks/notebook/1/">Tutorial
+      dive straight in with a notebook to test <a href="/notebooks/notebook/1/">Tutorial
       1: ⏱️ Real Time Fraud Detection</a>.</p></article>'
     execution_time: null
     cell_number: 4
@@ -1445,11 +1420,8 @@
     notebook: 2
     cell_type: 3
     contents: SELECT pgml.load_dataset('breast_cancer');
-    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
-      \     <td><strong>load_dataset</strong></td>\n      \n    </tr>\n  </thead>\n
-      \ <tbody>\n    \n    <tr>\n      \n      <td>OK</td>\n      \n    </tr>\n    \n
-      \ </tbody>\n</table>\n</div>\n"
-    execution_time: '00:00:02.498819'
+    rendering: null
+    execution_time: null
     cell_number: 2
     version: 1
     deleted_at: null
@@ -1473,140 +1445,8 @@
     notebook: 2
     cell_type: 3
     contents: "SELECT * \nFROM pgml.breast_cancer \nORDER BY random()\nLIMIT 10;"
-    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
-      \     <td><strong>mean radius</strong></td>\n      \n      <td><strong>mean
-      texture</strong></td>\n      \n      <td><strong>mean perimeter</strong></td>\n
-      \     \n      <td><strong>mean area</strong></td>\n      \n      <td><strong>mean
-      smoothness</strong></td>\n      \n      <td><strong>mean compactness</strong></td>\n
-      \     \n      <td><strong>mean concavity</strong></td>\n      \n      <td><strong>mean
-      concave points</strong></td>\n      \n      <td><strong>mean symmetry</strong></td>\n
-      \     \n      <td><strong>mean fractal dimension</strong></td>\n      \n      <td><strong>radius
-      error</strong></td>\n      \n      <td><strong>texture error</strong></td>\n
-      \     \n      <td><strong>perimeter error</strong></td>\n      \n      <td><strong>area
-      error</strong></td>\n      \n      <td><strong>smoothness error</strong></td>\n
-      \     \n      <td><strong>compactness error</strong></td>\n      \n      <td><strong>concavity
-      error</strong></td>\n      \n      <td><strong>concave points error</strong></td>\n
-      \     \n      <td><strong>symmetry error</strong></td>\n      \n      <td><strong>fractal
-      dimension error</strong></td>\n      \n      <td><strong>worst radius</strong></td>\n
-      \     \n      <td><strong>worst texture</strong></td>\n      \n      <td><strong>worst
-      perimeter</strong></td>\n      \n      <td><strong>worst area</strong></td>\n
-      \     \n      <td><strong>worst smoothness</strong></td>\n      \n      <td><strong>worst
-      compactness</strong></td>\n      \n      <td><strong>worst concavity</strong></td>\n
-      \     \n      <td><strong>worst concave points</strong></td>\n      \n      <td><strong>worst
-      symmetry</strong></td>\n      \n      <td><strong>worst fractal dimension</strong></td>\n
-      \     \n      <td><strong>malignant</strong></td>\n      \n    </tr>\n  </thead>\n
-      \ <tbody>\n    \n    <tr>\n      \n      <td>12.77</td>\n      \n      <td>21.41</td>\n
-      \     \n      <td>82.02</td>\n      \n      <td>507.4</td>\n      \n      <td>0.08749</td>\n
-      \     \n      <td>0.06601</td>\n      \n      <td>0.03112</td>\n      \n      <td>0.02864</td>\n
-      \     \n      <td>0.1694</td>\n      \n      <td>0.06287</td>\n      \n      <td>0.7311</td>\n
-      \     \n      <td>1.748</td>\n      \n      <td>5.118</td>\n      \n      <td>53.65</td>\n
-      \     \n      <td>0.004571</td>\n      \n      <td>0.0179</td>\n      \n      <td>0.02176</td>\n
-      \     \n      <td>0.01757</td>\n      \n      <td>0.03373</td>\n      \n      <td>0.005875</td>\n
-      \     \n      <td>13.75</td>\n      \n      <td>23.5</td>\n      \n      <td>89.04</td>\n
-      \     \n      <td>579.5</td>\n      \n      <td>0.09388</td>\n      \n      <td>0.08978</td>\n
-      \     \n      <td>0.05186</td>\n      \n      <td>0.04773</td>\n      \n      <td>0.2179</td>\n
-      \     \n      <td>0.06871</td>\n      \n      <td>False</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>12.22</td>\n      \n      <td>20.04</td>\n
-      \     \n      <td>79.47</td>\n      \n      <td>453.1</td>\n      \n      <td>0.1096</td>\n
-      \     \n      <td>0.1152</td>\n      \n      <td>0.08175</td>\n      \n      <td>0.02166</td>\n
-      \     \n      <td>0.2124</td>\n      \n      <td>0.06894</td>\n      \n      <td>0.1811</td>\n
-      \     \n      <td>0.7959</td>\n      \n      <td>0.9857</td>\n      \n      <td>12.58</td>\n
-      \     \n      <td>0.006272</td>\n      \n      <td>0.02198</td>\n      \n      <td>0.03966</td>\n
-      \     \n      <td>0.009894</td>\n      \n      <td>0.0132</td>\n      \n      <td>0.003813</td>\n
-      \     \n      <td>13.16</td>\n      \n      <td>24.17</td>\n      \n      <td>85.13</td>\n
-      \     \n      <td>515.3</td>\n      \n      <td>0.1402</td>\n      \n      <td>0.2315</td>\n
-      \     \n      <td>0.3535</td>\n      \n      <td>0.08088</td>\n      \n      <td>0.2709</td>\n
-      \     \n      <td>0.08839</td>\n      \n      <td>False</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>12.4</td>\n      \n      <td>17.68</td>\n
-      \     \n      <td>81.47</td>\n      \n      <td>467.8</td>\n      \n      <td>0.1054</td>\n
-      \     \n      <td>0.1316</td>\n      \n      <td>0.07741</td>\n      \n      <td>0.02799</td>\n
-      \     \n      <td>0.1811</td>\n      \n      <td>0.07102</td>\n      \n      <td>0.1767</td>\n
-      \     \n      <td>1.46</td>\n      \n      <td>2.204</td>\n      \n      <td>15.43</td>\n
-      \     \n      <td>0.01</td>\n      \n      <td>0.03295</td>\n      \n      <td>0.04861</td>\n
-      \     \n      <td>0.01167</td>\n      \n      <td>0.02187</td>\n      \n      <td>0.006005</td>\n
-      \     \n      <td>12.88</td>\n      \n      <td>22.91</td>\n      \n      <td>89.61</td>\n
-      \     \n      <td>515.8</td>\n      \n      <td>0.145</td>\n      \n      <td>0.2629</td>\n
-      \     \n      <td>0.2403</td>\n      \n      <td>0.0737</td>\n      \n      <td>0.2556</td>\n
-      \     \n      <td>0.09359</td>\n      \n      <td>False</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>14.02</td>\n      \n      <td>15.66</td>\n
-      \     \n      <td>89.59</td>\n      \n      <td>606.5</td>\n      \n      <td>0.07966</td>\n
-      \     \n      <td>0.05581</td>\n      \n      <td>0.02087</td>\n      \n      <td>0.02652</td>\n
-      \     \n      <td>0.1589</td>\n      \n      <td>0.05586</td>\n      \n      <td>0.2142</td>\n
-      \     \n      <td>0.6549</td>\n      \n      <td>1.606</td>\n      \n      <td>19.25</td>\n
-      \     \n      <td>0.004837</td>\n      \n      <td>0.009238</td>\n      \n      <td>0.009213</td>\n
-      \     \n      <td>0.01076</td>\n      \n      <td>0.01171</td>\n      \n      <td>0.002104</td>\n
-      \     \n      <td>14.91</td>\n      \n      <td>19.31</td>\n      \n      <td>96.53</td>\n
-      \     \n      <td>688.9</td>\n      \n      <td>0.1034</td>\n      \n      <td>0.1017</td>\n
-      \     \n      <td>0.0626</td>\n      \n      <td>0.08216</td>\n      \n      <td>0.2136</td>\n
-      \     \n      <td>0.0671</td>\n      \n      <td>False</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>19.59</td>\n      \n      <td>18.15</td>\n
-      \     \n      <td>130.7</td>\n      \n      <td>1214.0</td>\n      \n      <td>0.112</td>\n
-      \     \n      <td>0.1666</td>\n      \n      <td>0.2508</td>\n      \n      <td>0.1286</td>\n
-      \     \n      <td>0.2027</td>\n      \n      <td>0.06082</td>\n      \n      <td>0.7364</td>\n
-      \     \n      <td>1.048</td>\n      \n      <td>4.792</td>\n      \n      <td>97.07</td>\n
-      \     \n      <td>0.004057</td>\n      \n      <td>0.02277</td>\n      \n      <td>0.04029</td>\n
-      \     \n      <td>0.01303</td>\n      \n      <td>0.01686</td>\n      \n      <td>0.003318</td>\n
-      \     \n      <td>26.73</td>\n      \n      <td>26.39</td>\n      \n      <td>174.9</td>\n
-      \     \n      <td>2232.0</td>\n      \n      <td>0.1438</td>\n      \n      <td>0.3846</td>\n
-      \     \n      <td>0.681</td>\n      \n      <td>0.2247</td>\n      \n      <td>0.3643</td>\n
-      \     \n      <td>0.09223</td>\n      \n      <td>True</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>8.726</td>\n      \n      <td>15.83</td>\n
-      \     \n      <td>55.84</td>\n      \n      <td>230.9</td>\n      \n      <td>0.115</td>\n
-      \     \n      <td>0.08201</td>\n      \n      <td>0.04132</td>\n      \n      <td>0.01924</td>\n
-      \     \n      <td>0.1649</td>\n      \n      <td>0.07633</td>\n      \n      <td>0.1665</td>\n
-      \     \n      <td>0.5864</td>\n      \n      <td>1.354</td>\n      \n      <td>8.966</td>\n
-      \     \n      <td>0.008261</td>\n      \n      <td>0.02213</td>\n      \n      <td>0.03259</td>\n
-      \     \n      <td>0.0104</td>\n      \n      <td>0.01708</td>\n      \n      <td>0.003806</td>\n
-      \     \n      <td>9.628</td>\n      \n      <td>19.62</td>\n      \n      <td>64.48</td>\n
-      \     \n      <td>284.4</td>\n      \n      <td>0.1724</td>\n      \n      <td>0.2364</td>\n
-      \     \n      <td>0.2456</td>\n      \n      <td>0.105</td>\n      \n      <td>0.2926</td>\n
-      \     \n      <td>0.1017</td>\n      \n      <td>False</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>17.99</td>\n      \n      <td>10.38</td>\n
-      \     \n      <td>122.8</td>\n      \n      <td>1001.0</td>\n      \n      <td>0.1184</td>\n
-      \     \n      <td>0.2776</td>\n      \n      <td>0.3001</td>\n      \n      <td>0.1471</td>\n
-      \     \n      <td>0.2419</td>\n      \n      <td>0.07871</td>\n      \n      <td>1.095</td>\n
-      \     \n      <td>0.9053</td>\n      \n      <td>8.589</td>\n      \n      <td>153.4</td>\n
-      \     \n      <td>0.006399</td>\n      \n      <td>0.04904</td>\n      \n      <td>0.05373</td>\n
-      \     \n      <td>0.01587</td>\n      \n      <td>0.03003</td>\n      \n      <td>0.006193</td>\n
-      \     \n      <td>25.38</td>\n      \n      <td>17.33</td>\n      \n      <td>184.6</td>\n
-      \     \n      <td>2019.0</td>\n      \n      <td>0.1622</td>\n      \n      <td>0.6656</td>\n
-      \     \n      <td>0.7119</td>\n      \n      <td>0.2654</td>\n      \n      <td>0.4601</td>\n
-      \     \n      <td>0.1189</td>\n      \n      <td>True</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>11.74</td>\n      \n      <td>14.69</td>\n
-      \     \n      <td>76.31</td>\n      \n      <td>426.0</td>\n      \n      <td>0.08099</td>\n
-      \     \n      <td>0.09661</td>\n      \n      <td>0.06726</td>\n      \n      <td>0.02639</td>\n
-      \     \n      <td>0.1499</td>\n      \n      <td>0.06758</td>\n      \n      <td>0.1924</td>\n
-      \     \n      <td>0.6417</td>\n      \n      <td>1.345</td>\n      \n      <td>13.04</td>\n
-      \     \n      <td>0.006982</td>\n      \n      <td>0.03916</td>\n      \n      <td>0.04017</td>\n
-      \     \n      <td>0.01528</td>\n      \n      <td>0.0226</td>\n      \n      <td>0.006822</td>\n
-      \     \n      <td>12.45</td>\n      \n      <td>17.6</td>\n      \n      <td>81.25</td>\n
-      \     \n      <td>473.8</td>\n      \n      <td>0.1073</td>\n      \n      <td>0.2793</td>\n
-      \     \n      <td>0.269</td>\n      \n      <td>0.1056</td>\n      \n      <td>0.2604</td>\n
-      \     \n      <td>0.09879</td>\n      \n      <td>False</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>9.667</td>\n      \n      <td>18.49</td>\n
-      \     \n      <td>61.49</td>\n      \n      <td>289.1</td>\n      \n      <td>0.08946</td>\n
-      \     \n      <td>0.06258</td>\n      \n      <td>0.02948</td>\n      \n      <td>0.01514</td>\n
-      \     \n      <td>0.2238</td>\n      \n      <td>0.06413</td>\n      \n      <td>0.3776</td>\n
-      \     \n      <td>1.35</td>\n      \n      <td>2.569</td>\n      \n      <td>22.73</td>\n
-      \     \n      <td>0.007501</td>\n      \n      <td>0.01989</td>\n      \n      <td>0.02714</td>\n
-      \     \n      <td>0.009883</td>\n      \n      <td>0.0196</td>\n      \n      <td>0.003913</td>\n
-      \     \n      <td>11.14</td>\n      \n      <td>25.62</td>\n      \n      <td>70.88</td>\n
-      \     \n      <td>385.2</td>\n      \n      <td>0.1234</td>\n      \n      <td>0.1542</td>\n
-      \     \n      <td>0.1277</td>\n      \n      <td>0.0656</td>\n      \n      <td>0.3174</td>\n
-      \     \n      <td>0.08524</td>\n      \n      <td>False</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>13.08</td>\n      \n      <td>15.71</td>\n
-      \     \n      <td>85.63</td>\n      \n      <td>520.0</td>\n      \n      <td>0.1075</td>\n
-      \     \n      <td>0.127</td>\n      \n      <td>0.04568</td>\n      \n      <td>0.0311</td>\n
-      \     \n      <td>0.1967</td>\n      \n      <td>0.06811</td>\n      \n      <td>0.1852</td>\n
-      \     \n      <td>0.7477</td>\n      \n      <td>1.383</td>\n      \n      <td>14.67</td>\n
-      \     \n      <td>0.004097</td>\n      \n      <td>0.01898</td>\n      \n      <td>0.01698</td>\n
-      \     \n      <td>0.00649</td>\n      \n      <td>0.01678</td>\n      \n      <td>0.002425</td>\n
-      \     \n      <td>14.5</td>\n      \n      <td>20.49</td>\n      \n      <td>96.09</td>\n
-      \     \n      <td>630.5</td>\n      \n      <td>0.1312</td>\n      \n      <td>0.2776</td>\n
-      \     \n      <td>0.189</td>\n      \n      <td>0.07283</td>\n      \n      <td>0.3184</td>\n
-      \     \n      <td>0.08183</td>\n      \n      <td>False</td>\n      \n    </tr>\n
-      \   \n  </tbody>\n</table>\n</div>\n"
-    execution_time: '00:00:00.007697'
+    rendering: null
+    execution_time: null
     cell_number: 4
     version: 1
     deleted_at: null
@@ -1651,13 +1491,8 @@
     contents: "SELECT * FROM pgml.train(\n  project_name => 'Breast Cancer Detection',
       \n  task => 'classification', \n  relation_name => 'pgml.breast_cancer', \n
       \ y_column_name => 'malignant'\n);"
-    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
-      \     <td><strong>project_name</strong></td>\n      \n      <td><strong>task</strong></td>\n
-      \     \n      <td><strong>algorithm_name</strong></td>\n      \n      <td><strong>status</strong></td>\n
-      \     \n    </tr>\n  </thead>\n  <tbody>\n    \n    <tr>\n      \n      <td>Breast
-      Cancer Detection</td>\n      \n      <td>classification</td>\n      \n      <td>linear</td>\n
-      \     \n      <td>not deployed</td>\n      \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
-    execution_time: '00:00:02.802388'
+    rendering: null
+    execution_time: null
     cell_number: 6
     version: 1
     deleted_at: null
@@ -1713,20 +1548,8 @@
       \       \"worst compactness\",\n        \"worst concavity\",\n        \"worst
       concave points\",\n        \"worst symmetry\",\n        \"worst fractal dimension\"\n
       \   ]\n) AS prediction\nFROM pgml.breast_cancer\nORDER BY random()\nLIMIT 10;"
-    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
-      \     <td><strong>malignant</strong></td>\n      \n      <td><strong>prediction</strong></td>\n
-      \     \n    </tr>\n  </thead>\n  <tbody>\n    \n    <tr>\n      \n      <td>False</td>\n
-      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>True</td>\n
-      \     \n      <td>1.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
-      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
-      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
-      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
-      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
-      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>True</td>\n
-      \     \n      <td>1.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>False</td>\n
-      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>True</td>\n
-      \     \n      <td>1.0</td>\n      \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
-    execution_time: '00:00:02.657161'
+    rendering: null
+    execution_time: null
     cell_number: 8
     version: 1
     deleted_at: null
@@ -1797,12 +1620,8 @@
       smoothness\",\n    \"worst compactness\",\n    \"worst concavity\",\n    \"worst
       concave points\",\n    \"worst symmetry\",\n    \"worst fractal dimension\"\n
       \ );"
-    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
-      \     <td><strong>sample_name</strong></td>\n      \n      <td><strong>prediction</strong></td>\n
-      \     \n    </tr>\n  </thead>\n  <tbody>\n    \n    <tr>\n      \n      <td>all_zeroes</td>\n
-      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>all_ones</td>\n
-      \     \n      <td>0.0</td>\n      \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
-    execution_time: '00:00:02.626657'
+    rendering: null
+    execution_time: null
     cell_number: 10
     version: 1
     deleted_at: null
@@ -1839,10 +1658,8 @@
     notebook: 2
     cell_type: 3
     contents: "SELECT pgml.predict(\n    'Breast Cancer Detection', \n    ARRAY[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,100000]\n)"
-    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
-      \     <td><strong>predict</strong></td>\n      \n    </tr>\n  </thead>\n  <tbody>\n
-      \   \n    <tr>\n      \n      <td>1.0</td>\n      \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
-    execution_time: '00:00:02.643660'
+    rendering: null
+    execution_time: null
     cell_number: 12
     version: 1
     deleted_at: null
@@ -1936,13 +1753,8 @@
 
       SELECT * FROM pgml.train(''Breast Cancer Detection'', algorithm => ''lightgbm'',
       hyperparams => ''{"n_estimators": 1}'');'
-    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
-      \     <td><strong>project_name</strong></td>\n      \n      <td><strong>task</strong></td>\n
-      \     \n      <td><strong>algorithm_name</strong></td>\n      \n      <td><strong>status</strong></td>\n
-      \     \n    </tr>\n  </thead>\n  <tbody>\n    \n    <tr>\n      \n      <td>Breast
-      Cancer Detection</td>\n      \n      <td>None</td>\n      \n      <td>lightgbm</td>\n
-      \     \n      <td>not deployed</td>\n      \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
-    execution_time: '00:00:03.250016'
+    rendering: null
+    execution_time: null
     cell_number: 14
     version: 1
     deleted_at: null
@@ -1975,24 +1787,8 @@
       \ round((models.metrics->>'recall')::numeric, 4) AS recall\nFROM pgml.models\nJOIN
       pgml.projects on projects.id = models.project_id\n  AND projects.name = 'Breast
       Cancer Detection'\nORDER BY models.metrics->>'f1' DESC LIMIT 5;"
-    rendering: "<div class=\"markdown-body\">\n<table>\n  <thead>\n    <tr>\n      \n
-      \     <td><strong>name</strong></td>\n      \n      <td><strong>algorithm_name</strong></td>\n
-      \     \n      <td><strong>f1_score</strong></td>\n      \n      <td><strong>precision</strong></td>\n
-      \     \n      <td><strong>recall</strong></td>\n      \n    </tr>\n  </thead>\n
-      \ <tbody>\n    \n    <tr>\n      \n      <td>Breast Cancer Detection</td>\n
-      \     \n      <td>xgboost</td>\n      \n      <td>0.9860</td>\n      \n      <td>0.9863</td>\n
-      \     \n      <td>0.9860</td>\n      \n    </tr>\n    \n    <tr>\n      \n      <td>Breast
-      Cancer Detection</td>\n      \n      <td>random_forest</td>\n      \n      <td>0.9860</td>\n
-      \     \n      <td>0.9863</td>\n      \n      <td>0.9860</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>Breast Cancer Detection</td>\n      \n      <td>xgboost_random_forest</td>\n
-      \     \n      <td>0.9790</td>\n      \n      <td>0.9791</td>\n      \n      <td>0.9790</td>\n
-      \     \n    </tr>\n    \n    <tr>\n      \n      <td>Breast Cancer Detection</td>\n
-      \     \n      <td>gradient_boosting_trees</td>\n      \n      <td>0.9790</td>\n
-      \     \n      <td>0.9791</td>\n      \n      <td>0.9790</td>\n      \n    </tr>\n
-      \   \n    <tr>\n      \n      <td>Breast Cancer Detection</td>\n      \n      <td>ridge</td>\n
-      \     \n      <td>0.9789</td>\n      \n      <td>0.9797</td>\n      \n      <td>0.9790</td>\n
-      \     \n    </tr>\n    \n  </tbody>\n</table>\n</div>\n"
-    execution_time: '00:00:00.002094'
+    rendering: null
+    execution_time: null
     cell_number: 16
     version: 1
     deleted_at: null
@@ -2018,5 +1814,468 @@
       with the model, that time is as fast as possible!</p></article>
     execution_time: null
     cell_number: 17
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 82
+  fields:
+    notebook: 4
+    cell_type: 1
+    contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
+      coming soon! Give it a try for now anyway."
+    rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
+      coming soon! Give it a try for now anyway.</p></article>"
+    execution_time: null
+    cell_number: 1
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 83
+  fields:
+    notebook: 4
+    cell_type: 3
+    contents: "-- This example trains models on the sklean diabetes dataset\n-- Source
+      URL: https://www4.stat.ncsu.edu/~boos/var.select/diabetes.html\n-- For more
+      information see:\n--   Bradley Efron, Trevor Hastie, Iain Johnstone and Robert
+      Tibshirani (2004)\n--   \"Least Angle Regression,\" Annals of Statistics (with
+      discussion), 407-499\n--   https://web.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf\n\n--\n--
+      This demonstrates using a table with individual columns as features\n-- for
+      regression.\n\nSELECT pgml.load_dataset('diabetes');\n\n-- view the dataset\nSELECT
+      * FROM pgml.diabetes LIMIT 10;\n\n-- train a simple model on the data\nSELECT
+      * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target');\n\n--
+      check out the predictions\nSELECT target, pgml.predict('Diabetes Progression',
+      ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction\nFROM pgml.diabetes
+      \nLIMIT 10;\n\n-- Check predictions against a specific model id\nSELECT model_id,
+      target, pgml.model_predict(model_id, ARRAY[age, sex, bmi, bp, s1, s2, s3, s4,
+      s5, s6]) AS prediction\nFROM pgml.diabetes\nCROSS JOIN LATERAL (\n    SELECT
+      pgml.models.id AS model_id FROM pgml.models\n    INNER JOIN pgml.projects\n
+      \   ON pgml.models.project_id = pgml.projects.id\n    WHERE pgml.projects.name
+      = 'Diabetes Progression'\n    LIMIT 1\n) models\nLIMIT 10;\n\n--\n-- After a
+      project has been trained, ommited parameters will be reused from previous training
+      runs\n-- In these examples we'll reuse the training data snapshots from the
+      initial call.\n--\n\n-- linear models\nSELECT * FROM pgml.train('Diabetes Progression',
+      algorithm => 'ridge');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm
+      => 'lasso');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm =>
+      'elastic_net');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm
+      => 'least_angle');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm
+      => 'lasso_least_angle');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm
+      => 'orthoganl_matching_pursuit');\nSELECT * FROM pgml.train('Diabetes Progression',
+      algorithm => 'bayesian_ridge');\nSELECT * FROM pgml.train('Diabetes Progression',
+      algorithm => 'automatic_relevance_determination');\nSELECT * FROM pgml.train('Diabetes
+      Progression', algorithm => 'stochastic_gradient_descent');\nSELECT * FROM pgml.train('Diabetes
+      Progression', algorithm => 'passive_aggressive');\nSELECT * FROM pgml.train('Diabetes
+      Progression', algorithm => 'ransac');\nSELECT * FROM pgml.train('Diabetes Progression',
+      algorithm => 'theil_sen', hyperparams => '{\"max_iter\": 10, \"max_subpopulation\":
+      100}');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm => 'huber');\n--
+      Quantile Regression too expensive for normal tests on even a toy dataset\n--
+      SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'quantile');\n\n--
+      support vector machines\nSELECT * FROM pgml.train('Diabetes Progression', algorithm
+      => 'svm', hyperparams => '{\"max_iter\": 100}');\nSELECT * FROM pgml.train('Diabetes
+      Progression', algorithm => 'nu_svm', hyperparams => '{\"max_iter\": 10}');\nSELECT
+      * FROM pgml.train('Diabetes Progression', algorithm => 'linear_svm', hyperparams
+      => '{\"max_iter\": 100}');\n\n-- ensembles\nSELECT * FROM pgml.train('Diabetes
+      Progression', algorithm => 'ada_boost', hyperparams => '{\"n_estimators\": 5}');\nSELECT
+      * FROM pgml.train('Diabetes Progression', algorithm => 'bagging', hyperparams
+      => '{\"n_estimators\": 5}');\nSELECT * FROM pgml.train('Diabetes Progression',
+      algorithm => 'extra_trees', hyperparams => '{\"n_estimators\": 5}');\nSELECT
+      * FROM pgml.train('Diabetes Progression', algorithm => 'gradient_boosting_trees',
+      hyperparams => '{\"n_estimators\": 5}');\nSELECT * FROM pgml.train('Diabetes
+      Progression', algorithm => 'random_forest', hyperparams => '{\"n_estimators\":
+      5}');\n\n-- other\n-- Kernel Ridge is too expensive for normal tests on even
+      a toy dataset\n-- SELECT * FROM pgml.train('Diabetes Progression', algorithm
+      => 'kernel_ridge');\n-- Gaussian Process is too expensive for normal tests on
+      even a toy dataset\n-- SELECT * FROM pgml.train('Diabetes Progression', algorithm
+      => 'gaussian_process');\n\n-- gradient boosting\nSELECT * FROM pgml.train('Diabetes
+      Progression', algorithm => 'xgboost', hyperparams => '{\"n_estimators\": 10}');\nSELECT
+      * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost_random_forest',
+      hyperparams => '{\"n_estimators\": 10}');\nSELECT * FROM pgml.train('Diabetes
+      Progression', algorithm => 'lightgbm', hyperparams => '{\"n_estimators\": 1}');\n--
+      Histogram Gradient Boosting is too expensive for normal tests on even a toy
+      dataset\n-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boosting',
+      hyperparams => '{\"max_iter\": 10}');\n\n\n-- check out all that hard work\nSELECT
+      trained_models.* FROM pgml.trained_models \nJOIN pgml.models on models.id =
+      trained_models.id\nORDER BY models.metrics->>'mean_squared_error' DESC LIMIT
+      5;\n\n-- deploy the random_forest model for prediction use\nSELECT * FROM pgml.deploy('Diabetes
+      Progression', 'most_recent', 'random_forest');\n-- check out that throughput\nSELECT
+      * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;\n\n-- do a hyperparam
+      search on your favorite algorithm\nSELECT pgml.train(\n    'Diabetes Progression',
+      \n    algorithm => 'xgboost', \n    search => 'grid', \n    search_params =>
+      '{\n        \"max_depth\": [1, 2], \n        \"n_estimators\": [20, 40],\n        \"learning_rate\":
+      [0.1, 0.2]\n    }'\n);\n\n-- deploy the \"best\" model for prediction use\nSELECT
+      * FROM pgml.deploy('Diabetes Progression', 'best_score');\nSELECT * FROM pgml.deploy('Diabetes
+      Progression', 'most_recent');\nSELECT * FROM pgml.deploy('Diabetes Progression',
+      'rollback');\nSELECT * FROM pgml.deploy('Diabetes Progression', 'best_score',
+      'svm');\n\n-- check out the improved predictions\nSELECT target, pgml.predict('Diabetes
+      Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction\nFROM
+      pgml.diabetes \nLIMIT 10;"
+    rendering: null
+    execution_time: null
+    cell_number: 2
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 84
+  fields:
+    notebook: 3
+    cell_type: 1
+    contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
+      coming soon! Give it a try for now anyway."
+    rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
+      coming soon! Give it a try for now anyway.</p></article>"
+    execution_time: null
+    cell_number: 1
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 85
+  fields:
+    notebook: 5
+    cell_type: 1
+    contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
+      coming soon! Give it a try for now anyway.\n\nThese examples take a fair bit
+      of compute, so they may take 10-20 seconds to execute on the free tier without
+      GPU accelleration."
+    rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
+      coming soon! Give it a try for now anyway.</p>\n<p>These examples take a fair
+      bit of compute, so they may take 10-20 seconds to execute on the free tier without
+      GPU accelleration.</p></article>"
+    execution_time: null
+    cell_number: 1
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 86
+  fields:
+    notebook: 6
+    cell_type: 1
+    contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
+      coming soon! Give it a try for now anyway."
+    rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
+      coming soon! Give it a try for now anyway.</p></article>"
+    execution_time: null
+    cell_number: 1
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 87
+  fields:
+    notebook: 7
+    cell_type: 1
+    contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
+      coming soon! Give it a try for now anyway."
+    rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
+      coming soon! Give it a try for now anyway.</p></article>"
+    execution_time: null
+    cell_number: 1
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 88
+  fields:
+    notebook: 7
+    cell_type: 1
+    contents: ''
+    rendering: <article class="markdown-body"></article>
+    execution_time: null
+    cell_number: 2
+    version: 1
+    deleted_at: 2022-08-22 22:09:15.475779+00:00
+- model: notebooks.notebookcell
+  pk: 89
+  fields:
+    notebook: 8
+    cell_type: 1
+    contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
+      coming soon! Give it a try for now anyway."
+    rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
+      coming soon! Give it a try for now anyway.</p></article>"
+    execution_time: null
+    cell_number: 1
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 90
+  fields:
+    notebook: 3
+    cell_type: 3
+    contents: "-- This example trains models on the sklean digits dataset\n-- which
+      is a copy of the test set of the UCI ML hand-written digits datasets\n-- https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits\n--\n--
+      This demonstrates using a table with a single array feature column\n-- for classification.\n--\n--
+      The final result after a few seconds of training is not terrible. Maybe not
+      perfect\n-- enough for mission critical applications, but it's telling how quickly
+      \"off the shelf\" \n-- solutions can solve problems these days.\n\n\nSELECT
+      pgml.load_dataset('digits');\n\n-- view the dataset\nSELECT left(image::text,
+      40) || ',...}', target FROM pgml.digits LIMIT 10;\n\n-- train a simple model
+      to classify the data\nSELECT * FROM pgml.train('Handwritten Digits', 'classification',
+      'pgml.digits', 'target');\n\n-- check out the predictions\nSELECT target, pgml.predict('Handwritten
+      Digits', image) AS prediction\nFROM pgml.digits \nLIMIT 10;\n\n--\n-- After
+      a project has been trained, ommited parameters will be reused from previous
+      training runs\n-- In these examples we'll reuse the training data snapshots
+      from the initial call.\n--\n\n-- linear models\nSELECT * FROM pgml.train('Handwritten
+      Digits', algorithm => 'ridge');\nSELECT * FROM pgml.train('Handwritten Digits',
+      algorithm => 'stochastic_gradient_descent');\nSELECT * FROM pgml.train('Handwritten
+      Digits', algorithm => 'perceptron');\nSELECT * FROM pgml.train('Handwritten
+      Digits', algorithm => 'passive_aggressive');\n\n-- support vector machines\nSELECT
+      * FROM pgml.train('Handwritten Digits', algorithm => 'svm');\nSELECT * FROM
+      pgml.train('Handwritten Digits', algorithm => 'nu_svm');\nSELECT * FROM pgml.train('Handwritten
+      Digits', algorithm => 'linear_svm');\n\n-- ensembles\nSELECT * FROM pgml.train('Handwritten
+      Digits', algorithm => 'ada_boost');\nSELECT * FROM pgml.train('Handwritten Digits',
+      algorithm => 'bagging');\nSELECT * FROM pgml.train('Handwritten Digits', algorithm
+      => 'extra_trees', hyperparams => '{\"n_estimators\": 10}');\nSELECT * FROM pgml.train('Handwritten
+      Digits', algorithm => 'gradient_boosting_trees', hyperparams => '{\"n_estimators\":
+      10}');\nSELECT * FROM pgml.train('Handwritten Digits', algorithm => 'random_forest',
+      hyperparams => '{\"n_estimators\": 10}');\n\n-- other\n-- Gaussian Process is
+      too expensive for normal tests on even a toy dataset\n-- SELECT * FROM pgml.train('Handwritten
+      Digits', algorithm => 'gaussian_process', hyperparams => '{\"max_iter_predict\":
+      100, \"warm_start\": true}');\n\n-- gradient boosting\nSELECT * FROM pgml.train('Handwritten
+      Digits', algorithm => 'xgboost', hyperparams => '{\"n_estimators\": 10}');\nSELECT
+      * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost_random_forest',
+      hyperparams => '{\"n_estimators\": 10}');\nSELECT * FROM pgml.train('Handwritten
+      Digits', algorithm => 'lightgbm', hyperparams => '{\"n_estimators\": 1}');\n--
+      Histogram Gradient Boosting is too expensive for normal tests on even a toy
+      dataset\n-- SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'hist_gradient_boosting',
+      hyperparams => '{\"max_iter\": 2}');\n\n\n-- check out all that hard work\nSELECT
+      trained_models.* FROM pgml.trained_models \nJOIN pgml.models on models.id =
+      trained_models.id\nORDER BY models.metrics->>'f1' DESC LIMIT 5;\n\n-- deploy
+      the random_forest model for prediction use\nSELECT * FROM pgml.deploy('Handwritten
+      Digits', 'most_recent', 'random_forest');\n-- check out that throughput\nSELECT
+      * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;\n\n-- do a hyperparam
+      search on your favorite algorithm\nSELECT pgml.train(\n    'Handwritten Digits',
+      \n    algorithm => 'svm', \n    hyperparams => '{\"random_state\": 0}',\n    search
+      => 'grid', \n    search_params => '{\n        \"kernel\": [\"linear\", \"poly\",
+      \"sigmoid\"], \n        \"shrinking\": [true, false]\n    }'\n);\n\n-- TODO
+      SELECT pgml.hypertune(100, 'Handwritten Digits', 'classification', 'pgml.digits',
+      'target', 'gradient_boosted_trees');\n\n-- deploy the \"best\" model for prediction
+      use\nSELECT * FROM pgml.deploy('Handwritten Digits', 'best_score');\nSELECT
+      * FROM pgml.deploy('Handwritten Digits', 'most_recent');\nSELECT * FROM pgml.deploy('Handwritten
+      Digits', 'rollback');\nSELECT * FROM pgml.deploy('Handwritten Digits', 'best_score',
+      'svm');\n\n-- check out the improved predictions\nSELECT target, pgml.predict('Handwritten
+      Digits', image) AS prediction\nFROM pgml.digits \nLIMIT 10;"
+    rendering: null
+    execution_time: null
+    cell_number: 2
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 91
+  fields:
+    notebook: 5
+    cell_type: 3
+    contents: "SELECT pgml.transform(\n    'translation_en_to_fr',\n    inputs =>
+      ARRAY[\n        'Welcome to the future!',\n        'Where have you been all
+      this time?'\n    ]\n) AS result;"
+    rendering: null
+    execution_time: null
+    cell_number: 2
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 92
+  fields:
+    notebook: 5
+    cell_type: 3
+    contents: "SELECT pgml.transform(\n    '{\"model\": \"roberta-large-mnli\"}'::JSONB,\n
+      \   inputs => ARRAY[\n        'I love how amazingly simple ML has become!',
+      \n        'Some models are painfully slow and expensive ☹️'\n    ]\n) AS result;"
+    rendering: null
+    execution_time: null
+    cell_number: 3
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 93
+  fields:
+    notebook: 5
+    cell_type: 3
+    contents: "SELECT pgml.transform(\n    'question-answering',\n    inputs => ARRAY[\n
+      \       '{\"question\": \"Am I dreaming?\", \"context\": \"I got a good nights
+      sleep last night, and started a simple tutorial over my cup of morning coffee.
+      The capabilities seem unreal, compared to what I came to expect from the simple
+      SQL standard I studied so long ago. The answer is staring me in the face, and
+      I feel the uncanny call from beyond the screen calling me to check the results.\"}'\n
+      \   ]\n) AS result;"
+    rendering: null
+    execution_time: null
+    cell_number: 4
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 94
+  fields:
+    notebook: 5
+    cell_type: 3
+    contents: "SELECT pgml.transform(\n    'summarization',\n    inputs => ARRAY[\n
+      \       'Dominic Cobb is the foremost practitioner of the artistic science of
+      extraction, inserting oneself into a subject''s dreams to obtain hidden information
+      without the subject knowing, a concept taught to him by his professor father-in-law,
+      Dr. Stephen Miles. Dom''s associates are Miles'' former students, who Dom requires
+      as he has given up being the dream architect for reasons he won''t disclose.
+      Dom''s primary associate, Arthur, believes it has something to do with Dom''s
+      deceased wife, Mal, who often figures prominently and violently in those dreams,
+      or Dom''s want to \"go home\" (get back to his own reality, which includes two
+      young children). Dom''s work is generally in corporate espionage. As the subjects
+      don''t want the information to get into the wrong hands, the clients have zero
+      tolerance for failure. Dom is also a wanted man, as many of his past subjects
+      have learned what Dom has done to them. One of those subjects, Mr. Saito, offers
+      Dom a job he can''t refuse: to take the concept one step further into inception,
+      namely planting thoughts into the subject''s dreams without them knowing. Inception
+      can fundamentally alter that person as a being. Saito''s target is Robert Michael
+      Fischer, the heir to an energy business empire, which has the potential to rule
+      the world if continued on the current trajectory. Beyond the complex logistics
+      of the dream architecture of the case and some unknowns concerning Fischer,
+      the biggest obstacles in success for the team become worrying about one aspect
+      of inception which Cobb fails to disclose to the other team members prior to
+      the job, and Cobb''s newest associate Ariadne''s belief that Cobb''s own subconscious,
+      especially as it relates to Mal, may be taking over what happens in the dreams.'\n
+      \   ]\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 5
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 95
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: '-- Elementwise arithmetic w/ constants
+
+      SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], 3);
+
+      SELECT pgml.subtract(ARRAY[1.0, 2.0, 3.0], 3);
+
+      SELECT pgml.multiply(ARRAY[1.0, 2.0, 3.0], 3);
+
+      SELECT pgml.divide(ARRAY[1.0, 2.0, 3.0], 100);
+
+
+      -- Pairwise arithmetic
+
+      SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+
+      SELECT pgml.subtract(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+
+      SELECT pgml.multiply(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+
+      SELECT pgml.divide(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+
+
+      -- Norms
+
+      SELECT pgml.norm_l0(ARRAY[1.0, 2.0, 3.0]);
+
+      SELECT pgml.norm_l1(ARRAY[1.0, 2.0, 3.0]);
+
+      SELECT pgml.norm_l2(ARRAY[1.0, 2.0, 3.0]);
+
+      SELECT pgml.norm_max(ARRAY[1.0, 2.0, 3.0]);
+
+
+      -- Normalization
+
+      SELECT pgml.normalize_l1(ARRAY[1.0, 2.0, 3.0]);
+
+      SELECT pgml.normalize_l2(ARRAY[1.0, 2.0, 3.0]);
+
+      SELECT pgml.normalize_max(ARRAY[1.0, 2.0, 3.0]);
+
+
+      -- Comparisons
+
+      SELECT pgml.distance_l1(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+
+      SELECT pgml.distance_l2(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+
+      SELECT pgml.dot_product(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+
+      SELECT pgml.cosine_similarity(ARRAY[1.0, 2.0, 3.0], ARRAY[1.0, 2.0, 3.0]);'
+    rendering: null
+    execution_time: null
+    cell_number: 2
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 96
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: ''
+    rendering: null
+    execution_time: null
+    cell_number: 3
+    version: 1
+    deleted_at: 2022-08-22 22:14:31.875531+00:00
+- model: notebooks.notebookcell
+  pk: 97
+  fields:
+    notebook: 7
+    cell_type: 3
+    contents: '-- deploy the "best" model for prediction use
+
+      SELECT * FROM pgml.deploy(''Handwritten Digits'', ''best_score'');
+
+      SELECT * FROM pgml.deploy(''Handwritten Digits'', ''most_recent'');
+
+      SELECT * FROM pgml.deploy(''Handwritten Digits'', ''rollback'');
+
+      SELECT * FROM pgml.deploy(''Handwritten Digits'', ''best_score'', ''svm'');'
+    rendering: null
+    execution_time: null
+    cell_number: 2
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 98
+  fields:
+    notebook: 8
+    cell_type: 3
+    contents: select * from pgml.models limit 10;
+    rendering: null
+    execution_time: null
+    cell_number: 2
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 99
+  fields:
+    notebook: 8
+    cell_type: 3
+    contents: select * from pgml.projects limit 10;
+    rendering: null
+    execution_time: null
+    cell_number: 3
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 100
+  fields:
+    notebook: 8
+    cell_type: 3
+    contents: select * from pgml.snapshots limit 10;
+    rendering: null
+    execution_time: null
+    cell_number: 4
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 101
+  fields:
+    notebook: 8
+    cell_type: 3
+    contents: select * from pgml.deployments limit 10;
+    rendering: null
+    execution_time: null
+    cell_number: 5
+    version: 1
+    deleted_at: null
+- model: notebooks.notebookcell
+  pk: 102
+  fields:
+    notebook: 8
+    cell_type: 3
+    contents: select * from pgml.snapshot_1 limit 10;
+    rendering: null
+    execution_time: null
+    cell_number: 6
     version: 1
     deleted_at: null
