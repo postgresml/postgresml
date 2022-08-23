@@ -29,20 +29,31 @@ urlpatterns = [
     path("console/", console.ConsoleView.as_view(), name="console"),
     path("console/run/", console.run_sql, name="console/run-sql"),
     path("set-auth-cookie/", root.set_auth_cookie, name="set-auth-cookie"),
-
     path("notebooks/", notebooks.index, name="notebooks"),
     path("notebooks/<int:pk>/", notebooks.notebook, name="notebooks/notebook"),
     path("notebooks/create/", notebooks.create_notebook, name="notebooks/create"),
     path("notebooks/<int:pk>/rename/", notebooks.rename_notebook, name="notebooks/rename"),
     path("notebooks/<int:pk>/cell/add/", notebooks.add_notebook_cell, name="notebooks/cell/add"),
     path("notebooks/<int:notebook_pk>/cell/<int:cell_pk>/", notebooks.notebook_cell, name="notebooks/cell/get"),
-    path("notebooks/<int:notebook_pk>/cell/<int:cell_pk>/edit/", notebooks.edit_notebook_cell, name="notebooks/cell/edit"),
-    path("notebooks/<int:notebook_pk>/cell/<int:cell_pk>/remove/", notebooks.remove_notebook_cell, name="notebooks/cell/remove"),
+    path(
+        "notebooks/<int:notebook_pk>/cell/<int:cell_pk>/edit/",
+        notebooks.edit_notebook_cell,
+        name="notebooks/cell/edit",
+    ),
+    path(
+        "notebooks/<int:notebook_pk>/cell/<int:cell_pk>/remove/",
+        notebooks.remove_notebook_cell,
+        name="notebooks/cell/remove",
+    ),
     path(
         "notebooks/<int:notebook_pk>/cell/<int:cell_pk>/remove/undo/",
         notebooks.undo_remove_notebook_cell,
         name="notebooks/cell/remove/undo",
     ),
     path("notebooks/<int:pk>/reset/", notebooks.reset_notebook, name="notebooks/reset"),
-    path("notebooks/<int:notebook_pk>/cell/<int:cell_pk>/play/", notebooks.play_notebook_cell, name="notebooks/cell/play"),
+    path(
+        "notebooks/<int:notebook_pk>/cell/<int:cell_pk>/play/",
+        notebooks.play_notebook_cell,
+        name="notebooks/cell/play",
+    ),
 ]

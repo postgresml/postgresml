@@ -9,6 +9,7 @@ from django.utils.html import strip_tags
 from notebooks.models import *
 import time
 
+
 def index(request):
     return render(
         request,
