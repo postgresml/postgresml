@@ -2,7 +2,7 @@ import djclick as click
 import os
 from django.db import transaction
 
-from notebooks.models import Notebook, NotebookCell
+from app.models import Notebook, NotebookCell
 
 
 @click.command()
