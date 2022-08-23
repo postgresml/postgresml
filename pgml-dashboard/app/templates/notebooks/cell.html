@@ -1,31 +1,31 @@
 <turbo-frame id="cell_{{ cell.cell_number }}">
-  <section data-controller="cell" class="notebook-cell {{ cell.get_cell_type_display|lower }}{% if selected %} selected{% endif %}" data-action="click->notebook#selectCell" data-notebook-target="cell">
+  <section data-controller="notebook-cell" class="notebook-cell {{ cell.get_cell_type_display|lower }}{% if selected %} selected{% endif %}" data-action="click->notebook#selectCell" data-notebook-target="cell">
 
     {% if edit %}
     <!-- Edit -->
     <div class="notebook-cell-edit">
-      <form action="{% url 'notebooks/cell/edit' notebook.pk cell.pk %}" method="post" data-cell-target="form" data-action="cell#play">
+      <form action="{% url 'notebooks/cell/edit' notebook.pk cell.pk %}" method="post" data-notebook-cell-target="form" data-action="notebook-cell#play">
         <div class="flex">
           {% csrf_token %}
           <div class="flex-grow">
-            <textarea name="contents" data-cell-target="editor">{{ cell.contents }}</textarea>
+            <textarea name="contents" data-notebook-cell-target="editor">{{ cell.contents }}</textarea>
           </div>
           <div class="flex flex-end">
-            <select name="cell_type" data-action="cell#selectCellType" title="Select cell type" data-cell-target="type">
+            <select name="cell_type" data-action="notebook-cell#selectCellType" title="Select cell type" data-notebook-cell-target="type">
               <option value="3" {% if cell.cell_type == 3 %}selected{% endif %}>SQL</option>
               <option value="1" {% if cell.cell_type == 1 %}selected{% endif %}>Markdown</option>
             </select>
-            <button type="submit" class="button notebook-button" title="Execute cell" data-cell-target="play">
+            <button type="submit" class="button notebook-button" title="Execute cell" data-notebook-cell-target="play">
               <span class="material-symbols-outlined">play_arrow</span>
             </button>
-             <button class="button notebook-button" title="Cancel edit" data-action="cell#cancelEdit">
+             <button class="button notebook-button" title="Cancel edit" data-action="notebook-cell#cancelEdit">
               <span class="material-symbols-outlined">cancel</span>
             </button>
           </div>
         </div>
       </form>
       <!-- Cancel edit and refetch the cell -->
-      <form class="hidden" action="{% url 'notebooks/cell/get' notebook.pk cell.pk %}?bust_cache={{ bust_cache }}" method="get" data-cell-target="cancelEdit">
+      <form class="hidden" action="{% url 'notebooks/cell/get' notebook.pk cell.pk %}?bust_cache={{ bust_cache }}" method="get" data-notebook-cell-target="cancelEdit">
       </form>
     </div>
     {% endif %}
@@ -50,9 +50,9 @@
           
         {% if cell.code and not edit %}
         <div class="notebook-button">
-          <form action="{% url 'notebooks/cell/play' notebook.pk cell.pk %}" method="post" data-action="cell#play">
+          <form action="{% url 'notebooks/cell/play' notebook.pk cell.pk %}" method="post" data-action="notebook-cell#play">
             {% csrf_token %}
-            <button type="submit" title="Execute cell" data-cell-target="play">
+            <button type="submit" title="Execute cell" data-notebook-cell-target="play">
               <span class="material-symbols-outlined">
                 play_arrow
               </span>

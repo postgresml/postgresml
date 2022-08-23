@@ -58,8 +58,8 @@
             import { default as NewProject } from '{% static 'js/controllers/new-project.js' %}'
             import { default as QuickPrediction } from '{% static 'js/controllers/quick-prediction.js' %}'
             import { default as Console } from '{% static 'js/controllers/console.js' %}'
-            import { default as Notebook } from '{% static 'notebooks/js/notebook.js' %}'
-            import { default as NotebookCell } from '{% static 'notebooks/js/cell.js' %}'
+            import { default as Notebook } from '{% static 'js/controllers/notebook.js' %}'
+            import { default as NotebookCell } from '{% static 'js/controllers/notebook-cell.js' %}'
 
             const application = Application.start()
             application.register('autocomplete', Autocomplete)
@@ -67,7 +67,7 @@
             application.register('quick-prediction', QuickPrediction)
             application.register('console', Console)
             application.register('notebook', Notebook)
-            application.register('cell', NotebookCell)
+            application.register('notebook-cell', NotebookCell)
         </script>
       
         <title>{% if title %}{{title}}{% endif %}{% if title is None or "PostgresML" not in title %}{% if title is not None %} - {% endif %}PostgresML{% endif %}</title>

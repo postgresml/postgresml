@@ -1,58 +1,58 @@
-- model: notebooks.notebook
+- model: app.notebook
   pk: 0
   fields:
     name: "Tutorial 0: \U0001F389 Welcome to PostgresML!"
     created_at: 2022-08-20 01:47:08.937190+00:00
     updated_at: 2022-08-20 01:47:08.937190+00:00
-- model: notebooks.notebook
+- model: app.notebook
   pk: 1
   fields:
     name: 'Tutorial 1: ⏱️ Real Time Fraud Detection'
     created_at: 2022-08-15 22:26:18.428227+00:00
     updated_at: 2022-08-15 22:26:18.428241+00:00
-- model: notebooks.notebook
+- model: app.notebook
   pk: 2
   fields:
     name: 'Tutorial 2: ⚕️ Tumor Detection w/ Binary Classification'
     created_at: 2022-08-19 23:10:23.120983+00:00
     updated_at: 2022-08-19 23:10:23.120996+00:00
-- model: notebooks.notebook
+- model: app.notebook
   pk: 3
   fields:
     name: 'Tutorial 3: ✍️ Handwritten Digit Image Classification'
     created_at: 2022-08-20 16:46:40.856497+00:00
     updated_at: 2022-08-20 16:46:40.856511+00:00
-- model: notebooks.notebook
+- model: app.notebook
   pk: 4
   fields:
     name: "Tutorial 4: \U0001F36D Diabetes Progression w/ Regression"
     created_at: 2022-08-20 02:18:14.608456+00:00
     updated_at: 2022-08-20 02:18:14.608474+00:00
-- model: notebooks.notebook
+- model: app.notebook
   pk: 5
   fields:
     name: "Tutorial 5: \U0001F3A4 Language Translation w/ Deep Learning"
     created_at: 2022-08-20 16:47:47.830932+00:00
     updated_at: 2022-08-20 16:47:47.830946+00:00
-- model: notebooks.notebook
+- model: app.notebook
   pk: 6
   fields:
     name: 'Tutorial 6: ↗️ Working w/ Embeddings'
     created_at: 2022-08-20 16:48:16.252016+00:00
     updated_at: 2022-08-20 16:48:16.252029+00:00
-- model: notebooks.notebook
+- model: app.notebook
   pk: 7
   fields:
     name: "Tutorial 7: \U0001F4D2 Managing Model Deployments"
     created_at: 2022-08-20 16:48:40.044312+00:00
     updated_at: 2022-08-20 16:48:40.044325+00:00
-- model: notebooks.notebook
+- model: app.notebook
   pk: 8
   fields:
     name: "Tutorial 8: \U0001F4BB Working the Internal Schema of PostgresML"
     created_at: 2022-08-20 16:49:41.363292+00:00
     updated_at: 2022-08-20 16:49:41.363306+00:00
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 1
   fields:
     notebook: 0
@@ -112,7 +112,7 @@
     cell_number: 1
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 2
   fields:
     notebook: 0
@@ -123,7 +123,7 @@
     cell_number: 2
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 3
   fields:
     notebook: 0
@@ -218,7 +218,7 @@
     cell_number: 3
     version: 1
     deleted_at: 2022-08-22 21:13:49.583297+00:00
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 4
   fields:
     notebook: 0
@@ -245,9 +245,8 @@
       the way, this was a Markdown table, you can make those here as well.\n      \n###
       Thank you\nThank you for trying out PostgresML! We hope you enjoy your time
       here and have fun learning about machine learning, in the comfort of your favorite
-      database.\n\nYou may want to check out the rest of [the tutorials](../../../nb/)
-      or dive straight in with a notebook to test [Tutorial 1: ⏱️ Real Time Fraud
-      Detection](../1/)"
+      database.\n\nYou may want to check out the rest of [the tutorials](../) or dive
+      straight in with a notebook to test [Tutorial 1: ⏱️ Real Time Fraud Detection](../1/)"
     rendering: '<article class="markdown-body"><p>We just asked Postgres to return
       a random number. Pretty simple query, but it demonstrates the notebook functionality
       pretty well. You can see that the result of <code>random()</code> is a float
@@ -327,14 +326,14 @@
       <p>Thank you for trying out PostgresML! We hope you enjoy your time here and
       have fun learning about machine learning, in the comfort of your favorite database.</p>
 
-      <p>You may want to check out the rest of <a href="../../../nb/">the tutorials</a>
-      or dive straight in with a notebook to test <a href="../1/">Tutorial 1: ⏱️ Real
+      <p>You may want to check out the rest of <a href="../">the tutorials</a> or
+      dive straight in with a notebook to test <a href="../1/">Tutorial 1: ⏱️ Real
       Time Fraud Detection</a></p></article>'
     execution_time: null
     cell_number: 4
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 5
   fields:
     notebook: 0
@@ -345,7 +344,7 @@
     cell_number: 5
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 6
   fields:
     notebook: 1
@@ -454,7 +453,7 @@
     cell_number: 1
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 7
   fields:
     notebook: 1
@@ -466,7 +465,7 @@
     cell_number: 2
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 8
   fields:
     notebook: 1
@@ -480,7 +479,7 @@
     cell_number: 3
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 9
   fields:
     notebook: 1
@@ -498,7 +497,7 @@
     cell_number: 4
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 10
   fields:
     notebook: 1
@@ -511,7 +510,7 @@
     cell_number: 5
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 11
   fields:
     notebook: 1
@@ -523,7 +522,7 @@
     cell_number: 6
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 12
   fields:
     notebook: 1
@@ -537,7 +536,7 @@
     cell_number: 7
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 13
   fields:
     notebook: 1
@@ -559,7 +558,7 @@
     cell_number: 8
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 14
   fields:
     notebook: 1
@@ -571,7 +570,7 @@
     cell_number: 9
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 15
   fields:
     notebook: 1
@@ -584,7 +583,7 @@
     cell_number: 10
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 16
   fields:
     notebook: 1
@@ -600,7 +599,7 @@
     cell_number: 11
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 17
   fields:
     notebook: 1
@@ -616,7 +615,7 @@
     cell_number: 12
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 18
   fields:
     notebook: 1
@@ -629,7 +628,7 @@
     cell_number: 13
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 19
   fields:
     notebook: 1
@@ -642,7 +641,7 @@
     cell_number: 14
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 20
   fields:
     notebook: 1
@@ -658,7 +657,7 @@
     cell_number: 15
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 21
   fields:
     notebook: 1
@@ -673,7 +672,7 @@
     cell_number: 16
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 22
   fields:
     notebook: 1
@@ -685,7 +684,7 @@
     cell_number: 17
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 23
   fields:
     notebook: 1
@@ -697,7 +696,7 @@
     cell_number: 18
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 24
   fields:
     notebook: 1
@@ -710,7 +709,7 @@
     cell_number: 19
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 25
   fields:
     notebook: 1
@@ -735,7 +734,7 @@
     cell_number: 20
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 26
   fields:
     notebook: 1
@@ -752,7 +751,7 @@
     cell_number: 21
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 27
   fields:
     notebook: 1
@@ -763,7 +762,7 @@
     cell_number: 22
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 28
   fields:
     notebook: 1
@@ -774,7 +773,7 @@
     cell_number: 23
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 29
   fields:
     notebook: 1
@@ -795,7 +794,7 @@
     cell_number: 24
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 30
   fields:
     notebook: 1
@@ -812,7 +811,7 @@
     cell_number: 25
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 31
   fields:
     notebook: 1
@@ -823,7 +822,7 @@
     cell_number: 26
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 32
   fields:
     notebook: 1
@@ -854,7 +853,7 @@
     cell_number: 27
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 33
   fields:
     notebook: 1
@@ -870,7 +869,7 @@
     cell_number: 28
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 34
   fields:
     notebook: 1
@@ -917,7 +916,7 @@
     cell_number: 29
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 35
   fields:
     notebook: 1
@@ -931,7 +930,7 @@
     cell_number: 30
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 36
   fields:
     notebook: 1
@@ -943,7 +942,7 @@
     cell_number: 31
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 37
   fields:
     notebook: 1
@@ -959,7 +958,7 @@
     cell_number: 32
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 38
   fields:
     notebook: 1
@@ -971,7 +970,7 @@
     cell_number: 33
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 39
   fields:
     notebook: 1
@@ -984,7 +983,7 @@
     cell_number: 34
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 40
   fields:
     notebook: 1
@@ -995,7 +994,7 @@
     cell_number: 35
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 41
   fields:
     notebook: 1
@@ -1011,7 +1010,7 @@
     cell_number: 36
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 42
   fields:
     notebook: 1
@@ -1024,7 +1023,7 @@
     cell_number: 37
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 43
   fields:
     notebook: 1
@@ -1037,7 +1036,7 @@
     cell_number: 38
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 44
   fields:
     notebook: 1
@@ -1049,7 +1048,7 @@
     cell_number: 39
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 45
   fields:
     notebook: 1
@@ -1065,7 +1064,7 @@
     cell_number: 40
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 46
   fields:
     notebook: 1
@@ -1078,7 +1077,7 @@
     cell_number: 41
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 47
   fields:
     notebook: 1
@@ -1091,7 +1090,7 @@
     cell_number: 42
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 48
   fields:
     notebook: 1
@@ -1108,7 +1107,7 @@
     cell_number: 43
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 49
   fields:
     notebook: 1
@@ -1122,7 +1121,7 @@
     cell_number: 44
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 50
   fields:
     notebook: 1
@@ -1152,7 +1151,7 @@
     cell_number: 45
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 51
   fields:
     notebook: 1
@@ -1171,7 +1170,7 @@
     cell_number: 46
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 52
   fields:
     notebook: 1
@@ -1184,7 +1183,7 @@
     cell_number: 47
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 53
   fields:
     notebook: 1
@@ -1200,7 +1199,7 @@
     cell_number: 48
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 54
   fields:
     notebook: 1
@@ -1212,7 +1211,7 @@
     cell_number: 49
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 55
   fields:
     notebook: 1
@@ -1223,7 +1222,7 @@
     cell_number: 50
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 56
   fields:
     notebook: 1
@@ -1235,7 +1234,7 @@
     cell_number: 51
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 57
   fields:
     notebook: 1
@@ -1248,7 +1247,7 @@
     cell_number: 52
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 58
   fields:
     notebook: 1
@@ -1307,7 +1306,7 @@
     cell_number: 53
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 59
   fields:
     notebook: 1
@@ -1336,7 +1335,7 @@
     cell_number: 54
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 60
   fields:
     notebook: 1
@@ -1353,7 +1352,7 @@
     cell_number: 55
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 61
   fields:
     notebook: 1
@@ -1372,7 +1371,7 @@
     cell_number: 56
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 62
   fields:
     notebook: 1
@@ -1388,7 +1387,7 @@
     cell_number: 57
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 63
   fields:
     notebook: 1
@@ -1407,7 +1406,7 @@
     cell_number: 58
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 64
   fields:
     notebook: 1
@@ -1422,7 +1421,7 @@
     cell_number: 59
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 65
   fields:
     notebook: 2
@@ -1452,14 +1451,14 @@
       on the most likely outcome.
 
 
-      As we saw in [Tutorial 1: Real Time Fraud Model](/notebooks/notebook/1) understanding
-      the structure of the data and the labels is a complex and critical step for
-      real world machine learning projects. In this example we''ll focus more on the
-      different algorithms, and use an academic benchmark dataset that already includes
-      binary labels from UCI ML Breast Cancer Wisconsin. Features were computed from
-      a digitized image of a fine needle aspirate (FNA) of a breast mass. They describe
-      characteristics of the cell nuclei present in the image. The labels are either
-      True for a malginant sample of False for a benign sample.
+      As we saw in [Tutorial 1: Real Time Fraud Model](../1/) understanding the structure
+      of the data and the labels is a complex and critical step for real world machine
+      learning projects. In this example we''ll focus more on the different algorithms,
+      and use an academic benchmark dataset that already includes binary labels from
+      UCI ML Breast Cancer Wisconsin. Features were computed from a digitized image
+      of a fine needle aspirate (FNA) of a breast mass. They describe characteristics
+      of the cell nuclei present in the image. The labels are either True for a malginant
+      sample of False for a benign sample.
 
 
       You can load this dataset into your Postgres database with the following SQL.'
@@ -1488,15 +1487,14 @@
       the labeled data set we created, we can present it with new unlabeled data to
       classify based on the most likely outcome.</p>
 
-      <p>As we saw in <a href="/notebooks/notebook/1">Tutorial 1: Real Time Fraud
-      Model</a> understanding the structure of the data and the labels is a complex
-      and critical step for real world machine learning projects. In this example
-      we''ll focus more on the different algorithms, and use an academic benchmark
-      dataset that already includes binary labels from UCI ML Breast Cancer Wisconsin.
-      Features were computed from a digitized image of a fine needle aspirate (FNA)
-      of a breast mass. They describe characteristics of the cell nuclei present in
-      the image. The labels are either True for a malginant sample of False for a
-      benign sample.</p>
+      <p>As we saw in <a href="../1/">Tutorial 1: Real Time Fraud Model</a> understanding
+      the structure of the data and the labels is a complex and critical step for
+      real world machine learning projects. In this example we''ll focus more on the
+      different algorithms, and use an academic benchmark dataset that already includes
+      binary labels from UCI ML Breast Cancer Wisconsin. Features were computed from
+      a digitized image of a fine needle aspirate (FNA) of a breast mass. They describe
+      characteristics of the cell nuclei present in the image. The labels are either
+      True for a malginant sample of False for a benign sample.</p>
 
       <p>You can load this dataset into your Postgres database with the following
       SQL.</p></article>'
@@ -1504,7 +1502,7 @@
     cell_number: 1
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 66
   fields:
     notebook: 2
@@ -1515,7 +1513,7 @@
     cell_number: 2
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 67
   fields:
     notebook: 2
@@ -1529,7 +1527,7 @@
     cell_number: 3
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 68
   fields:
     notebook: 2
@@ -1540,7 +1538,7 @@
     cell_number: 4
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 69
   fields:
     notebook: 2
@@ -1573,7 +1571,7 @@
     cell_number: 5
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 70
   fields:
     notebook: 2
@@ -1586,7 +1584,7 @@
     cell_number: 6
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 71
   fields:
     notebook: 2
@@ -1596,7 +1594,7 @@
       to production. PostgresML orchestrated a bunch of the traditional ML drudgery
       in that couple of seconds to make it as simple as possible for you to get value.
       We'll organize our work on this task under the project name \"Breast Cancer
-      Detection\", which you can now see it in your [list of projects](/projects/).
+      Detection\", which you can now see it in your [list of projects](../../projects/).
       You can see that the first model uses the default linear algorithm, and that
       it achieves an [F1 score](https://en.wikipedia.org/wiki/F-score) in the mid
       90's, which is pretty good. A score of 1.0 is perfect, and 0.5 would be as good
@@ -1608,8 +1606,8 @@
       to production. PostgresML orchestrated a bunch of the traditional ML drudgery
       in that couple of seconds to make it as simple as possible for you to get value.
       We'll organize our work on this task under the project name \"Breast Cancer
-      Detection\", which you can now see it in your <a href=\"/projects/\">list of
-      projects</a>. You can see that the first model uses the default linear algorithm,
+      Detection\", which you can now see it in your <a href=\"../../projects/\">list
+      of projects</a>. You can see that the first model uses the default linear algorithm,
       and that it achieves an <a href=\"https://en.wikipedia.org/wiki/F-score\">F1
       score</a> in the mid 90's, which is pretty good. A score of 1.0 is perfect,
       and 0.5 would be as good as random guessing. The better the F1 score, the better
@@ -1620,7 +1618,7 @@
     cell_number: 7
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 72
   fields:
     notebook: 2
@@ -1643,7 +1641,7 @@
     cell_number: 8
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 73
   fields:
     notebook: 2
@@ -1680,7 +1678,7 @@
     cell_number: 9
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 74
   fields:
     notebook: 2
@@ -1715,7 +1713,7 @@
     cell_number: 10
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 75
   fields:
     notebook: 2
@@ -1742,7 +1740,7 @@
     cell_number: 11
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 76
   fields:
     notebook: 2
@@ -1753,7 +1751,7 @@
     cell_number: 12
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 77
   fields:
     notebook: 2
@@ -1781,7 +1779,7 @@
     cell_number: 13
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 78
   fields:
     notebook: 2
@@ -1848,26 +1846,26 @@
     cell_number: 14
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 79
   fields:
     notebook: 2
     cell_type: 1
     contents: "Turns out, computers are pretty fast these days, even with state of
       the art algorithms running on a free tier computation resources. \U0001F60A
-      \n\nYou can pop over to the [projects](/projects) tab for a visualization of
-      the performance of all these algorithms on this dataset, or you can check out
-      the artifacts directly in the database."
+      \n\nYou can pop over to the [projects](../../projects/) tab for a visualization
+      of the performance of all these algorithms on this dataset, or you can check
+      out the artifacts directly in the database."
     rendering: "<article class=\"markdown-body\"><p>Turns out, computers are pretty
       fast these days, even with state of the art algorithms running on a free tier
-      computation resources. \U0001F60A </p>\n<p>You can pop over to the <a href=\"/projects\">projects</a>
+      computation resources. \U0001F60A </p>\n<p>You can pop over to the <a href=\"../../projects/\">projects</a>
       tab for a visualization of the performance of all these algorithms on this dataset,
       or you can check out the artifacts directly in the database.</p></article>"
     execution_time: null
     cell_number: 15
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 80
   fields:
     notebook: 2
@@ -1882,7 +1880,7 @@
     cell_number: 16
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 81
   fields:
     notebook: 2
@@ -1906,7 +1904,7 @@
     cell_number: 17
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 82
   fields:
     notebook: 4
@@ -1919,7 +1917,7 @@
     cell_number: 1
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 83
   fields:
     notebook: 4
@@ -2003,7 +2001,7 @@
     cell_number: 2
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 84
   fields:
     notebook: 3
@@ -2016,7 +2014,7 @@
     cell_number: 1
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 85
   fields:
     notebook: 5
@@ -2035,7 +2033,7 @@
     cell_number: 1
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 86
   fields:
     notebook: 6
@@ -2048,7 +2046,7 @@
     cell_number: 1
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 87
   fields:
     notebook: 7
@@ -2061,7 +2059,7 @@
     cell_number: 1
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 88
   fields:
     notebook: 7
@@ -2072,7 +2070,7 @@
     cell_number: 2
     version: 1
     deleted_at: 2022-08-22 22:09:15.475779+00:00
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 89
   fields:
     notebook: 8
@@ -2085,7 +2083,7 @@
     cell_number: 1
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 90
   fields:
     notebook: 3
@@ -2148,7 +2146,7 @@
     cell_number: 2
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 91
   fields:
     notebook: 5
@@ -2161,7 +2159,7 @@
     cell_number: 2
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 92
   fields:
     notebook: 5
@@ -2174,7 +2172,7 @@
     cell_number: 3
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 93
   fields:
     notebook: 5
@@ -2191,7 +2189,7 @@
     cell_number: 4
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 94
   fields:
     notebook: 5
@@ -2225,7 +2223,7 @@
     cell_number: 5
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 95
   fields:
     notebook: 6
@@ -2286,7 +2284,7 @@
     cell_number: 2
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 96
   fields:
     notebook: 6
@@ -2297,7 +2295,7 @@
     cell_number: 3
     version: 1
     deleted_at: 2022-08-22 22:14:31.875531+00:00
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 97
   fields:
     notebook: 7
@@ -2316,7 +2314,7 @@
     cell_number: 2
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 98
   fields:
     notebook: 8
@@ -2327,7 +2325,7 @@
     cell_number: 2
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 99
   fields:
     notebook: 8
@@ -2338,7 +2336,7 @@
     cell_number: 3
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 100
   fields:
     notebook: 8
@@ -2349,7 +2347,7 @@
     cell_number: 4
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 101
   fields:
     notebook: 8
@@ -2360,7 +2358,7 @@
     cell_number: 5
     version: 1
     deleted_at: null
-- model: notebooks.notebookcell
+- model: app.notebookcell
   pk: 102
   fields:
     notebook: 8

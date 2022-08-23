@@ -3,6 +3,7 @@ from rest_framework import routers
 
 from app.views import root, projects, models, snapshots, deployments, console, notebooks
 
+
 router = routers.DefaultRouter()
 router.register("projects", projects.ProjectViewSet)
 router.register("snapshots", snapshots.SnapshotViewSet)
@@ -16,7 +17,6 @@ html_router.register("snapshots/analysis", snapshots.SnapshotAnalysisView, basen
 
 urlpatterns = [
     path("", root.index, name="index"),
-    path("nb/", notebooks.index, name="notebooks"),
     path("deployments/", deployments.index, name="deployments"),
     path("deployments/<int:id>", deployments.deployment, name="deployment"),
     path("models/", models.ModelListView.as_view(), name="models"),
@@ -29,4 +29,31 @@ urlpatterns = [
     path("console/", console.ConsoleView.as_view(), name="console"),
     path("console/run/", console.run_sql, name="console/run-sql"),
     path("set-auth-cookie/", root.set_auth_cookie, name="set-auth-cookie"),
+    path("notebooks/", notebooks.index, name="notebooks"),
+    path("notebooks/<int:pk>/", notebooks.notebook, name="notebooks/notebook"),
+    path("notebooks/create/", notebooks.create_notebook, name="notebooks/create"),
+    path("notebooks/<int:pk>/rename/", notebooks.rename_notebook, name="notebooks/rename"),
+    path("notebooks/<int:pk>/cell/add/", notebooks.add_notebook_cell, name="notebooks/cell/add"),
+    path("notebooks/<int:notebook_pk>/cell/<int:cell_pk>/", notebooks.notebook_cell, name="notebooks/cell/get"),
+    path(
+        "notebooks/<int:notebook_pk>/cell/<int:cell_pk>/edit/",
+        notebooks.edit_notebook_cell,
+        name="notebooks/cell/edit",
+    ),
+    path(
+        "notebooks/<int:notebook_pk>/cell/<int:cell_pk>/remove/",
+        notebooks.remove_notebook_cell,
+        name="notebooks/cell/remove",
+    ),
+    path(
+        "notebooks/<int:notebook_pk>/cell/<int:cell_pk>/remove/undo/",
+        notebooks.undo_remove_notebook_cell,
+        name="notebooks/cell/remove/undo",
+    ),
+    path("notebooks/<int:pk>/reset/", notebooks.reset_notebook, name="notebooks/reset"),
+    path(
+        "notebooks/<int:notebook_pk>/cell/<int:cell_pk>/play/",
+        notebooks.play_notebook_cell,
+        name="notebooks/cell/play",
+    ),
 ]
