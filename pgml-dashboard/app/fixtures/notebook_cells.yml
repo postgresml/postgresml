@@ -1930,16 +1930,52 @@
   fields:
     notebook: 5
     cell_type: 1
-    contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
-      coming soon! Give it a try for now anyway.\n\nThese examples take a fair bit
-      of compute. The deep learning models themselves are several gigabytes of weights,
-      so they may run out of memory on the free tier. Without using a GPU to accellerate
-      inference, they will take 10-20 seconds to execute."
-    rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
-      coming soon! Give it a try for now anyway.</p>\n<p>These examples take a fair
-      bit of compute. The deep learning models themselves are several gigabytes of
-      weights, so they may run out of memory on the free tier. Without using a GPU
-      to accellerate inference, they will take 10-20 seconds to execute.</p></article>"
+    contents: "PostgresML integrates [\U0001F917 Hugging Face Transformers](https://huggingface.co/transformers)
+      to bring state-of-the-art models into the data layer. There are tens of thousands
+      of pre-trained models with pipelines to turn raw inputs into useful results.
+      Many state of the art deep learning architectures have been published and made
+      available for download. You will want to browse all the [models](https://huggingface.co/models)
+      available to find the perfect solution for your [dataset](https://huggingface.co/dataset)
+      and [task](https://huggingface.co/tasks).\n\nWe'll demonstrate some of the tasks
+      that are immediately available to users of your database upon installation.\n\n###
+      ⚠️ Warning ⚠️\nThese examples take a fair bit of compute. The deep learning
+      models themselves can be are several gigabytes, so they may run out of memory
+      if you are accessing this notebook on the free tier of our cloud service. If
+      you're not using a GPU to accellerate inference, you make expect them to take
+      10-20 seconds to execute.\n\n### Examples\nAll of the tasks and models demonstrated
+      here can be customized by passing additional arguments to the `Pipeline` initializer
+      or call. You'll find additional links to documentation in the examples below.
+      \n\nThe Hugging Face [`Pipeline`](https://huggingface.co/docs/transformers/main_classes/pipelines)
+      API is exposed in Postgres via:\n\n```\npgml.transform(\n    task TEXT OR JSONB,
+      \     -- task name or full pipeline initializer arguments\n    call JSONB,              --
+      additional call arguments alongside the inputs\n    inputs TEXT[] OR BYTEA[]
+      -- inputs for inference\n)\n```\n\nThis is roughly equivalent to the following
+      Python:\n\n```\nimport transformers\n\ndef transform(task, call, inputs):\n
+      \   return transformers.pipeline(**task)(inputs, **call)\n```"
+    rendering: "<article class=\"markdown-body\"><p>PostgresML integrates <a href=\"https://huggingface.co/transformers\">\U0001F917
+      Hugging Face Transformers</a> to bring state-of-the-art models into the data
+      layer. There are tens of thousands of pre-trained models with pipelines to turn
+      raw inputs into useful results. Many state of the art deep learning architectures
+      have been published and made available for download. You will want to browse
+      all the <a href=\"https://huggingface.co/models\">models</a> available to find
+      the perfect solution for your <a href=\"https://huggingface.co/dataset\">dataset</a>
+      and <a href=\"https://huggingface.co/tasks\">task</a>.</p>\n<p>We'll demonstrate
+      some of the tasks that are immediately available to users of your database upon
+      installation.</p>\n<h3>⚠️ Warning ⚠️</h3>\n<p>These examples take a fair bit
+      of compute. The deep learning models themselves can be are several gigabytes,
+      so they may run out of memory if you are accessing this notebook on the free
+      tier of our cloud service. If you're not using a GPU to accellerate inference,
+      you make expect them to take 10-20 seconds to execute.</p>\n<h3>Examples</h3>\n<p>All
+      of the tasks and models demonstrated here can be customized by passing additional
+      arguments to the <code>Pipeline</code> initializer or call. You'll find additional
+      links to documentation in the examples below. </p>\n<p>The Hugging Face <a href=\"https://huggingface.co/docs/transformers/main_classes/pipelines\"><code>Pipeline</code></a>
+      API is exposed in Postgres via:</p>\n<pre><code>pgml.transform(\n    task TEXT
+      OR JSONB,      -- task name or full pipeline initializer arguments\n    call
+      JSONB,              -- additional call arguments alongside the inputs\n    inputs
+      TEXT[] OR BYTEA[] -- inputs for inference\n)\n</code></pre>\n<p>This is roughly
+      equivalent to the following Python:</p>\n<pre><code>import transformers\n\ndef
+      transform(task, call, inputs):\n    return transformers.pipeline(**task)(inputs,
+      **call)\n</code></pre></article>"
     execution_time: null
     cell_number: 1
     version: 1
@@ -2009,11 +2045,41 @@
   pk: 91
   fields:
     notebook: 5
-    cell_type: 3
-    contents: "SELECT pgml.transform(\n    'translation_en_to_fr',\n    inputs =>
-      ARRAY[\n        'Welcome to the future!',\n        'Where have you been all
-      this time?'\n    ]\n) AS result;"
-    rendering: null
+    cell_type: 1
+    contents: '### Translation
+
+      There are thousands of different pre-trained translation models between language
+      pairs. They generally take a single input string in the "from" language, and
+      translate it into the "to" language as a result of the call. PostgresML transformations
+      provide a batch interface where you can pass an array of `TEXT` to process in
+      a single call for efficiency. Not all language pairs have a default task name
+      like this example of English to French. In those cases, you''ll need to specify
+      [the desired model](https://huggingface.co/models?pipeline_tag=translation)
+      by name. Because this is a batch call with 2 inputs, we''ll get 2 outputs in
+      the JSONB.
+
+
+      See [translation documentation](https://huggingface.co/docs/transformers/tasks/translation)
+      for more options.
+
+
+      For a translation from English to French with the default pre-trained model:'
+    rendering: '<article class="markdown-body"><h3>Translation</h3>
+
+      <p>There are thousands of different pre-trained translation models between language
+      pairs. They generally take a single input string in the "from" language, and
+      translate it into the "to" language as a result of the call. PostgresML transformations
+      provide a batch interface where you can pass an array of <code>TEXT</code> to
+      process in a single call for efficiency. Not all language pairs have a default
+      task name like this example of English to French. In those cases, you''ll need
+      to specify <a href="https://huggingface.co/models?pipeline_tag=translation">the
+      desired model</a> by name. Because this is a batch call with 2 inputs, we''ll
+      get 2 outputs in the JSONB.</p>
+
+      <p>See <a href="https://huggingface.co/docs/transformers/tasks/translation">translation
+      documentation</a> for more options.</p>
+
+      <p>For a translation from English to French with the default pre-trained model:</p></article>'
     execution_time: null
     cell_number: 2
     version: 1
@@ -2023,9 +2089,9 @@
   fields:
     notebook: 5
     cell_type: 3
-    contents: "SELECT pgml.transform(\n    '{\"model\": \"roberta-large-mnli\"}'::JSONB,\n
-      \   inputs => ARRAY[\n        'I love how amazingly simple ML has become!',
-      \n        'Some models are painfully slow and expensive ☹️'\n    ]\n) AS result;"
+    contents: "SELECT pgml.transform(\n        'translation_en_to_fr',\n        inputs
+      => ARRAY[\n            'Welcome to the future!',\n            'Where have you
+      been all this time?'\n        ]\n    ) AS french;"
     rendering: null
     execution_time: null
     cell_number: 3
@@ -2035,15 +2101,46 @@
   pk: 93
   fields:
     notebook: 5
-    cell_type: 3
-    contents: "SELECT pgml.transform(\n    'question-answering',\n    inputs => ARRAY[\n
-      \       '{\"question\": \"Am I dreaming?\", \"context\": \"I got a good nights
-      sleep last night, and started a simple tutorial over my cup of morning coffee.
-      The capabilities seem unreal, compared to what I came to expect from the simple
-      SQL standard I studied so long ago. The answer is staring me in the face, and
-      I feel the uncanny call from beyond the screen calling me to check the results.\"}'\n
-      \   ]\n) AS result;"
-    rendering: null
+    cell_type: 1
+    contents: '### Sentiment Analysis
+
+      Sentiment analysis is one use of `text-classification`, but there are [many
+      others](https://huggingface.co/tasks/text-classification). This model returns
+      both a label classification `["POSITIVE", "NEUTRAL", "NEGATIVE"]`, as well as
+      the score where 0.0 is perfectly negative, and 1.0 is perfectly positive. This
+      example demonstrates specifying the `model` to be used rather than the task.
+      The [`roberta-large-mnli`](https://huggingface.co/roberta-large-mnli) model
+      specifies the task of `sentiment-analysis` in it''s default configuration, so
+      we may omit it from the parameters. Because this is a batch call with 2 inputs,
+      we''ll get 2 outputs in the JSONB.
+
+
+      See [text classification documentation](https://huggingface.co/tasks/text-classification)
+      for more options and potential use cases beyond sentiment analysis. You''ll
+      notice the outputs are not great in this example. RoBERTa is a breakthrough
+      model, that demonstrated just how important each particular hyperparameter is
+      for the task and particular dataset regardless of how large your model is. We''ll
+      show how to [fine tune](/user_guides/transformers/fine_tuning/) models on your
+      data in the next step.'
+    rendering: '<article class="markdown-body"><h3>Sentiment Analysis</h3>
+
+      <p>Sentiment analysis is one use of <code>text-classification</code>, but there
+      are <a href="https://huggingface.co/tasks/text-classification">many others</a>.
+      This model returns both a label classification <code>["POSITIVE", "NEUTRAL",
+      "NEGATIVE"]</code>, as well as the score where 0.0 is perfectly negative, and
+      1.0 is perfectly positive. This example demonstrates specifying the <code>model</code>
+      to be used rather than the task. The <a href="https://huggingface.co/roberta-large-mnli"><code>roberta-large-mnli</code></a>
+      model specifies the task of <code>sentiment-analysis</code> in it''s default
+      configuration, so we may omit it from the parameters. Because this is a batch
+      call with 2 inputs, we''ll get 2 outputs in the JSONB.</p>
+
+      <p>See <a href="https://huggingface.co/tasks/text-classification">text classification
+      documentation</a> for more options and potential use cases beyond sentiment
+      analysis. You''ll notice the outputs are not great in this example. RoBERTa
+      is a breakthrough model, that demonstrated just how important each particular
+      hyperparameter is for the task and particular dataset regardless of how large
+      your model is. We''ll show how to <a href="/user_guides/transformers/fine_tuning/">fine
+      tune</a> models on your data in the next step.</p></article>'
     execution_time: null
     cell_number: 4
     version: 1
@@ -2053,30 +2150,10 @@
   fields:
     notebook: 5
     cell_type: 3
-    contents: "SELECT pgml.transform(\n    'summarization',\n    inputs => ARRAY[\n
-      \       'Dominic Cobb is the foremost practitioner of the artistic science of
-      extraction, inserting oneself into a subject''s dreams to obtain hidden information
-      without the subject knowing, a concept taught to him by his professor father-in-law,
-      Dr. Stephen Miles. Dom''s associates are Miles'' former students, who Dom requires
-      as he has given up being the dream architect for reasons he won''t disclose.
-      Dom''s primary associate, Arthur, believes it has something to do with Dom''s
-      deceased wife, Mal, who often figures prominently and violently in those dreams,
-      or Dom''s want to \"go home\" (get back to his own reality, which includes two
-      young children). Dom''s work is generally in corporate espionage. As the subjects
-      don''t want the information to get into the wrong hands, the clients have zero
-      tolerance for failure. Dom is also a wanted man, as many of his past subjects
-      have learned what Dom has done to them. One of those subjects, Mr. Saito, offers
-      Dom a job he can''t refuse: to take the concept one step further into inception,
-      namely planting thoughts into the subject''s dreams without them knowing. Inception
-      can fundamentally alter that person as a being. Saito''s target is Robert Michael
-      Fischer, the heir to an energy business empire, which has the potential to rule
-      the world if continued on the current trajectory. Beyond the complex logistics
-      of the dream architecture of the case and some unknowns concerning Fischer,
-      the biggest obstacles in success for the team become worrying about one aspect
-      of inception which Cobb fails to disclose to the other team members prior to
-      the job, and Cobb''s newest associate Ariadne''s belief that Cobb''s own subconscious,
-      especially as it relates to Mal, may be taking over what happens in the dreams.'\n
-      \   ]\n);"
+    contents: "SELECT pgml.transform(\n        '{\"model\": \"roberta-large-mnli\"}'::JSONB,\n
+      \       inputs => ARRAY[\n            'I love how amazingly simple ML has become!',
+      \n            'I hate doing mundane and thankless tasks. ☹️'\n        ]\n    )
+      AS positivity;"
     rendering: null
     execution_time: null
     cell_number: 5
@@ -2791,5 +2868,182 @@
     rendering: null
     execution_time: null
     cell_number: 13
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 131
+  fields:
+    notebook: 5
+    cell_type: 1
+    contents: '### Summarization
+
+      Sometimes we need all the nuanced detail, but sometimes it''s nice to get to
+      the point. Summarization can reduce a very long and complex document to a few
+      sentences. One studied application is reducing legal bills passed by Congress
+      into a plain english summary. Hollywood may also need some intelligence to reduce
+      a full synopsis down to a pithy blurb for movies like Inception.
+
+
+      See [summarization documentation](https://huggingface.co/tasks/summarization)
+      for more options.'
+    rendering: '<article class="markdown-body"><h3>Summarization</h3>
+
+      <p>Sometimes we need all the nuanced detail, but sometimes it''s nice to get
+      to the point. Summarization can reduce a very long and complex document to a
+      few sentences. One studied application is reducing legal bills passed by Congress
+      into a plain english summary. Hollywood may also need some intelligence to reduce
+      a full synopsis down to a pithy blurb for movies like Inception.</p>
+
+      <p>See <a href="https://huggingface.co/tasks/summarization">summarization documentation</a>
+      for more options.</p></article>'
+    execution_time: null
+    cell_number: 6
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 132
+  fields:
+    notebook: 5
+    cell_type: 3
+    contents: "SELECT pgml.transform(\n        'summarization',\n        inputs =>
+      ARRAY['\n            Dominic Cobb is the foremost practitioner of the artistic
+      science \n            of extraction, inserting oneself into a subject''s dreams
+      to \n            obtain hidden information without the subject knowing, a concept
+      \n            taught to him by his professor father-in-law, Dr. Stephen Miles.
+      \n            Dom''s associates are Miles'' former students, who Dom requires
+      \n            as he has given up being the dream architect for reasons he \n
+      \           won''t disclose. Dom''s primary associate, Arthur, believes it \n
+      \           has something to do with Dom''s deceased wife, Mal, who often \n
+      \           figures prominently and violently in those dreams, or Dom''s want
+      \n            to \"go home\" (get back to his own reality, which includes two
+      \n            young children). Dom''s work is generally in corporate espionage.
+      \n            As the subjects don''t want the information to get into the wrong
+      \n            hands, the clients have zero tolerance for failure. Dom is also
+      a \n            wanted man, as many of his past subjects have learned what Dom
+      \n            has done to them. One of those subjects, Mr. Saito, offers Dom
+      a \n            job he can''t refuse: to take the concept one step further into
+      \n            inception, namely planting thoughts into the subject''s dreams
+      \n            without them knowing. Inception can fundamentally alter that \n
+      \           person as a being. Saito''s target is Robert Michael Fischer, the
+      \n            heir to an energy business empire, which has the potential to
+      \n            rule the world if continued on the current trajectory. Beyond
+      the \n            complex logistics of the dream architecture of the case and
+      some \n            unknowns concerning Fischer, the biggest obstacles in success
+      for \n            the team become worrying about one aspect of inception which
+      Cobb \n            fails to disclose to the other team members prior to the
+      job, and \n            Cobb''s newest associate Ariadne''s belief that Cobb''s
+      own \n            subconscious, especially as it relates to Mal, may be taking
+      over \n            what happens in the dreams.\n        ']\n    ) AS result;"
+    rendering: null
+    execution_time: null
+    cell_number: 7
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 133
+  fields:
+    notebook: 5
+    cell_type: 1
+    contents: '### Question Answering
+
+      Question Answering extracts an answer from a given context. Recent progress
+      has enabled models to also specify if the answer is present in the context at
+      all. If you were trying to build a general question answering system, you could
+      first turn the question into a keyword search against Wikipedia articles, and
+      then use a model to retrieve the correct answer from the top hit. Another application
+      would provide automated support from a knowledge base, based on the customers
+      question.
+
+
+      See [question answering documentation](https://huggingface.co/tasks/question-answering)
+      for more options.'
+    rendering: '<article class="markdown-body"><h3>Question Answering</h3>
+
+      <p>Question Answering extracts an answer from a given context. Recent progress
+      has enabled models to also specify if the answer is present in the context at
+      all. If you were trying to build a general question answering system, you could
+      first turn the question into a keyword search against Wikipedia articles, and
+      then use a model to retrieve the correct answer from the top hit. Another application
+      would provide automated support from a knowledge base, based on the customers
+      question.</p>
+
+      <p>See <a href="https://huggingface.co/tasks/question-answering">question answering
+      documentation</a> for more options.</p></article>'
+    execution_time: null
+    cell_number: 8
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 134
+  fields:
+    notebook: 5
+    cell_type: 3
+    contents: "SELECT pgml.transform(\n        'question-answering',\n        inputs
+      => ARRAY[\n            '{\n                \"question\": \"Am I dreaming?\",\n
+      \               \"context\": \"I got a good nights sleep last night and started
+      a simple tutorial over my cup of morning coffee. The capabilities seem unreal,
+      compared to what I came to expect from the simple SQL standard I studied so
+      long ago. The answer is staring me in the face, and I feel the uncanny call
+      from beyond the screen to check the results.\"\n            }'\n        ]\n
+      \   ) AS answer;"
+    rendering: null
+    execution_time: null
+    cell_number: 9
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 135
+  fields:
+    notebook: 5
+    cell_type: 1
+    contents: '### Text Generation
+
+      If you need to expand on some thoughts, you can have AI complete your sentences
+      for you:'
+    rendering: '<article class="markdown-body"><h3>Text Generation</h3>
+
+      <p>If you need to expand on some thoughts, you can have AI complete your sentences
+      for you:</p></article>'
+    execution_time: null
+    cell_number: 10
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 136
+  fields:
+    notebook: 5
+    cell_type: 3
+    contents: "SELECT pgml.transform(\n        'text-generation',\n        '{\"num_return_sequences\":
+      2}',\n        ARRAY['Three Rings for the Elven-kings under the sky, Seven for
+      the Dwarf-lords in their halls of stone']\n    ) AS result;"
+    rendering: null
+    execution_time: null
+    cell_number: 11
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 137
+  fields:
+    notebook: 5
+    cell_type: 1
+    contents: '### More
+
+      There are many different [tasks](https://huggingface.co/tasks) and tens of thousands
+      of state-of-the-art [models](https://huggingface.co/models) available for you
+      to explore. The possibilities are expanding every day. There can be amazing
+      performance improvements in domain specific versions of these general tasks
+      by fine tuning published models on your dataset. See the next section for [fine
+      tuning](/user_guides/transformers/fine_tuning/) demonstrations.'
+    rendering: '<article class="markdown-body"><h3>More</h3>
+
+      <p>There are many different <a href="https://huggingface.co/tasks">tasks</a>
+      and tens of thousands of state-of-the-art <a href="https://huggingface.co/models">models</a>
+      available for you to explore. The possibilities are expanding every day. There
+      can be amazing performance improvements in domain specific versions of these
+      general tasks by fine tuning published models on your dataset. See the next
+      section for <a href="/user_guides/transformers/fine_tuning/">fine tuning</a>
+      demonstrations.</p></article>'
+    execution_time: null
+    cell_number: 12
     version: 1
     deleted_at: null
