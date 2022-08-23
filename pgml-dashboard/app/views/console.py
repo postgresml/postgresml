@@ -5,7 +5,7 @@ from django.db import connection
 from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import render
 
-from notebooks.models import Notebook
+from app.models import Notebook
 
 SPECIAL_QUERIES = {
     r"\d+": """

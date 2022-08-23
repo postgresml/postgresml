@@ -6,7 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from notebooks.models import *
+from app.models import Notebook, NotebookCell
 import time
 
 
