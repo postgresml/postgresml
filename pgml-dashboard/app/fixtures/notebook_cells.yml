@@ -1855,10 +1855,28 @@
   fields:
     notebook: 4
     cell_type: 1
-    contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
-      coming soon! Give it a try for now anyway."
-    rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
-      coming soon! Give it a try for now anyway.</p></article>"
+    contents: 'So far we''ve focussed on Classification tasks which divide the world
+      into discrete groups. Sometimes we need to take a more nuanced view when issues
+      are not black and white. Sometimes there are no hard boundaries between options,
+      or sometimes one sort of classification error might be much more painful than
+      another. There are many algorithms that can produce a raw score rather than
+      a discrete class for us. These are "Regression" tasks instead of "Classification".
+
+
+      For this example, we''ll look at several medical indicators that correlate with
+      the progression of diabetes one year later. Let''s load up the data and take
+      a look'
+    rendering: '<article class="markdown-body"><p>So far we''ve focussed on Classification
+      tasks which divide the world into discrete groups. Sometimes we need to take
+      a more nuanced view when issues are not black and white. Sometimes there are
+      no hard boundaries between options, or sometimes one sort of classification
+      error might be much more painful than another. There are many algorithms that
+      can produce a raw score rather than a discrete class for us. These are "Regression"
+      tasks instead of "Classification".</p>
+
+      <p>For this example, we''ll look at several medical indicators that correlate
+      with the progression of diabetes one year later. Let''s load up the data and
+      take a look</p></article>'
     execution_time: null
     cell_number: 1
     version: 1
@@ -1868,80 +1886,7 @@
   fields:
     notebook: 4
     cell_type: 3
-    contents: "-- This example trains models on the sklean diabetes dataset\n-- Source
-      URL: https://www4.stat.ncsu.edu/~boos/var.select/diabetes.html\n-- For more
-      information see:\n--   Bradley Efron, Trevor Hastie, Iain Johnstone and Robert
-      Tibshirani (2004)\n--   \"Least Angle Regression,\" Annals of Statistics (with
-      discussion), 407-499\n--   https://web.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf\n\n--\n--
-      This demonstrates using a table with individual columns as features\n-- for
-      regression.\n\nSELECT pgml.load_dataset('diabetes');\n\n-- view the dataset\nSELECT
-      * FROM pgml.diabetes LIMIT 10;\n\n-- train a simple model on the data\nSELECT
-      * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target');\n\n--
-      check out the predictions\nSELECT target, pgml.predict('Diabetes Progression',
-      ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction\nFROM pgml.diabetes
-      \nLIMIT 10;\n\n-- Check predictions against a specific model id\nSELECT model_id,
-      target, pgml.model_predict(model_id, ARRAY[age, sex, bmi, bp, s1, s2, s3, s4,
-      s5, s6]) AS prediction\nFROM pgml.diabetes\nCROSS JOIN LATERAL (\n    SELECT
-      pgml.models.id AS model_id FROM pgml.models\n    INNER JOIN pgml.projects\n
-      \   ON pgml.models.project_id = pgml.projects.id\n    WHERE pgml.projects.name
-      = 'Diabetes Progression'\n    LIMIT 1\n) models\nLIMIT 10;\n\n--\n-- After a
-      project has been trained, ommited parameters will be reused from previous training
-      runs\n-- In these examples we'll reuse the training data snapshots from the
-      initial call.\n--\n\n-- linear models\nSELECT * FROM pgml.train('Diabetes Progression',
-      algorithm => 'ridge');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm
-      => 'lasso');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm =>
-      'elastic_net');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm
-      => 'least_angle');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm
-      => 'lasso_least_angle');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm
-      => 'orthoganl_matching_pursuit');\nSELECT * FROM pgml.train('Diabetes Progression',
-      algorithm => 'bayesian_ridge');\nSELECT * FROM pgml.train('Diabetes Progression',
-      algorithm => 'automatic_relevance_determination');\nSELECT * FROM pgml.train('Diabetes
-      Progression', algorithm => 'stochastic_gradient_descent');\nSELECT * FROM pgml.train('Diabetes
-      Progression', algorithm => 'passive_aggressive');\nSELECT * FROM pgml.train('Diabetes
-      Progression', algorithm => 'ransac');\nSELECT * FROM pgml.train('Diabetes Progression',
-      algorithm => 'theil_sen', hyperparams => '{\"max_iter\": 10, \"max_subpopulation\":
-      100}');\nSELECT * FROM pgml.train('Diabetes Progression', algorithm => 'huber');\n--
-      Quantile Regression too expensive for normal tests on even a toy dataset\n--
-      SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'quantile');\n\n--
-      support vector machines\nSELECT * FROM pgml.train('Diabetes Progression', algorithm
-      => 'svm', hyperparams => '{\"max_iter\": 100}');\nSELECT * FROM pgml.train('Diabetes
-      Progression', algorithm => 'nu_svm', hyperparams => '{\"max_iter\": 10}');\nSELECT
-      * FROM pgml.train('Diabetes Progression', algorithm => 'linear_svm', hyperparams
-      => '{\"max_iter\": 100}');\n\n-- ensembles\nSELECT * FROM pgml.train('Diabetes
-      Progression', algorithm => 'ada_boost', hyperparams => '{\"n_estimators\": 5}');\nSELECT
-      * FROM pgml.train('Diabetes Progression', algorithm => 'bagging', hyperparams
-      => '{\"n_estimators\": 5}');\nSELECT * FROM pgml.train('Diabetes Progression',
-      algorithm => 'extra_trees', hyperparams => '{\"n_estimators\": 5}');\nSELECT
-      * FROM pgml.train('Diabetes Progression', algorithm => 'gradient_boosting_trees',
-      hyperparams => '{\"n_estimators\": 5}');\nSELECT * FROM pgml.train('Diabetes
-      Progression', algorithm => 'random_forest', hyperparams => '{\"n_estimators\":
-      5}');\n\n-- other\n-- Kernel Ridge is too expensive for normal tests on even
-      a toy dataset\n-- SELECT * FROM pgml.train('Diabetes Progression', algorithm
-      => 'kernel_ridge');\n-- Gaussian Process is too expensive for normal tests on
-      even a toy dataset\n-- SELECT * FROM pgml.train('Diabetes Progression', algorithm
-      => 'gaussian_process');\n\n-- gradient boosting\nSELECT * FROM pgml.train('Diabetes
-      Progression', algorithm => 'xgboost', hyperparams => '{\"n_estimators\": 10}');\nSELECT
-      * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost_random_forest',
-      hyperparams => '{\"n_estimators\": 10}');\nSELECT * FROM pgml.train('Diabetes
-      Progression', algorithm => 'lightgbm', hyperparams => '{\"n_estimators\": 1}');\n--
-      Histogram Gradient Boosting is too expensive for normal tests on even a toy
-      dataset\n-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boosting',
-      hyperparams => '{\"max_iter\": 10}');\n\n\n-- check out all that hard work\nSELECT
-      trained_models.* FROM pgml.trained_models \nJOIN pgml.models on models.id =
-      trained_models.id\nORDER BY models.metrics->>'mean_squared_error' DESC LIMIT
-      5;\n\n-- deploy the random_forest model for prediction use\nSELECT * FROM pgml.deploy('Diabetes
-      Progression', 'most_recent', 'random_forest');\n-- check out that throughput\nSELECT
-      * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;\n\n-- do a hyperparam
-      search on your favorite algorithm\nSELECT pgml.train(\n    'Diabetes Progression',
-      \n    algorithm => 'xgboost', \n    search => 'grid', \n    search_params =>
-      '{\n        \"max_depth\": [1, 2], \n        \"n_estimators\": [20, 40],\n        \"learning_rate\":
-      [0.1, 0.2]\n    }'\n);\n\n-- deploy the \"best\" model for prediction use\nSELECT
-      * FROM pgml.deploy('Diabetes Progression', 'best_score');\nSELECT * FROM pgml.deploy('Diabetes
-      Progression', 'most_recent');\nSELECT * FROM pgml.deploy('Diabetes Progression',
-      'rollback');\nSELECT * FROM pgml.deploy('Diabetes Progression', 'best_score',
-      'svm');\n\n-- check out the improved predictions\nSELECT target, pgml.predict('Diabetes
-      Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction\nFROM
-      pgml.diabetes \nLIMIT 10;"
+    contents: SELECT pgml.load_dataset('diabetes');
     rendering: null
     execution_time: null
     cell_number: 2
@@ -2620,5 +2565,231 @@
       list to see a visualization.</p></article>
     execution_time: null
     cell_number: 19
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 120
+  fields:
+    notebook: 4
+    cell_type: 3
+    contents: "SELECT * \nFROM pgml.diabetes \nLIMIT 10;"
+    rendering: null
+    execution_time: null
+    cell_number: 3
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 121
+  fields:
+    notebook: 4
+    cell_type: 1
+    contents: In this case, the `target` is a number that represents the severity
+      of the disease progression one year later, with larger values indicating worse
+      outcomes. Building a Regression model uses the same PostgresML API as Classification,
+      just with a different task. You're going to start breezing through these tutorials
+      faster and faster.
+    rendering: <article class="markdown-body"><p>In this case, the <code>target</code>
+      is a number that represents the severity of the disease progression one year
+      later, with larger values indicating worse outcomes. Building a Regression model
+      uses the same PostgresML API as Classification, just with a different task.
+      You're going to start breezing through these tutorials faster and faster.</p></article>
+    execution_time: null
+    cell_number: 4
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 122
+  fields:
+    notebook: 4
+    cell_type: 3
+    contents: "SELECT * FROM pgml.train(\n  project_name => 'Diabetes Progression',
+      \n  task => 'regression', \n  relation_name => 'pgml.diabetes', \n  y_column_name
+      => 'target'\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 5
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 123
+  fields:
+    notebook: 4
+    cell_type: 1
+    contents: With our baseline model automatically deployed, we can sample some of
+      the predictions
+    rendering: <article class="markdown-body"><p>With our baseline model automatically
+      deployed, we can sample some of the predictions</p></article>
+    execution_time: null
+    cell_number: 6
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 124
+  fields:
+    notebook: 4
+    cell_type: 3
+    contents: "SELECT target, pgml.predict('Diabetes Progression', ARRAY[age, sex,
+      bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction\nFROM pgml.diabetes \nLIMIT
+      10;"
+    rendering: null
+    execution_time: null
+    cell_number: 7
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 125
+  fields:
+    notebook: 4
+    cell_type: 1
+    contents: To get an objective measure of just how far off every single prediction
+      is from the target, we can look at the key metrics recorded during training.
+    rendering: <article class="markdown-body"><p>To get an objective measure of just
+      how far off every single prediction is from the target, we can look at the key
+      metrics recorded during training.</p></article>
+    execution_time: null
+    cell_number: 8
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 126
+  fields:
+    notebook: 4
+    cell_type: 3
+    contents: "SELECT \n  projects.name,\n  models.algorithm_name,\n  round((models.metrics->>'r2')::numeric,
+      4) AS r2_score\nFROM pgml.models\nJOIN pgml.projects on projects.id = models.project_id\n
+      \ AND projects.name = 'Diabetes Progression'\nORDER BY models.created_at DESC
+      LIMIT 5;"
+    rendering: null
+    execution_time: null
+    cell_number: 9
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 127
+  fields:
+    notebook: 4
+    cell_type: 1
+    contents: I like to look at the R2 score, since it is fixed between 0 and 1 it
+      can help us compare the performance of different algorithms on our data. Let's
+      throw our bag of tricks at the problem and see what sticks.
+    rendering: <article class="markdown-body"><p>I like to look at the R2 score, since
+      it is fixed between 0 and 1 it can help us compare the performance of different
+      algorithms on our data. Let's throw our bag of tricks at the problem and see
+      what sticks.</p></article>
+    execution_time: null
+    cell_number: 10
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 128
+  fields:
+    notebook: 4
+    cell_type: 3
+    contents: '-- linear models
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''ridge'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''lasso'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''elastic_net'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''least_angle'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''lasso_least_angle'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''orthoganl_matching_pursuit'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''bayesian_ridge'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''automatic_relevance_determination'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''stochastic_gradient_descent'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''passive_aggressive'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''ransac'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''theil_sen'',
+      hyperparams => ''{"max_iter": 10, "max_subpopulation": 100}'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''huber'');
+
+
+      -- support vector machines
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''svm'', hyperparams
+      => ''{"max_iter": 100}'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''nu_svm'',
+      hyperparams => ''{"max_iter": 10}'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''linear_svm'',
+      hyperparams => ''{"max_iter": 100}'');
+
+
+      -- ensembles
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''ada_boost'',
+      hyperparams => ''{"n_estimators": 5}'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''bagging'',
+      hyperparams => ''{"n_estimators": 5}'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''extra_trees'',
+      hyperparams => ''{"n_estimators": 5}'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''gradient_boosting_trees'',
+      hyperparams => ''{"n_estimators": 5}'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''random_forest'',
+      hyperparams => ''{"n_estimators": 5}'');
+
+
+      -- gradient boosting
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''xgboost'',
+      hyperparams => ''{"n_estimators": 10}'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''xgboost_random_forest'',
+      hyperparams => ''{"n_estimators": 10}'');
+
+      SELECT * FROM pgml.train(''Diabetes Progression'', algorithm => ''lightgbm'',
+      hyperparams => ''{"n_estimators": 1}'');'
+    rendering: null
+    execution_time: null
+    cell_number: 11
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 129
+  fields:
+    notebook: 4
+    cell_type: 1
+    contents: It's that easy, and that fast, to test all the algorithm's in our toolkit
+      to see what fares the best, and the best one has automatically been deployed.
+      Once we've honed in on a few good candidate algorithms, we can check the docs
+      for their hyperparams, and then do another brute force search across all combinations
+      to find the best set.
+    rendering: <article class="markdown-body"><p>It's that easy, and that fast, to
+      test all the algorithm's in our toolkit to see what fares the best, and the
+      best one has automatically been deployed. Once we've honed in on a few good
+      candidate algorithms, we can check the docs for their hyperparams, and then
+      do another brute force search across all combinations to find the best set.</p></article>
+    execution_time: null
+    cell_number: 12
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 130
+  fields:
+    notebook: 4
+    cell_type: 3
+    contents: "SELECT * FROM pgml.train(\n    'Diabetes Progression', \n    algorithm
+      => 'xgboost', \n    search => 'grid', \n    search_params => '{\n        \"max_depth\":
+      [1, 2], \n        \"n_estimators\": [20, 40],\n        \"learning_rate\": [0.1,
+      0.2]\n    }'\n);"
+    rendering: null
+    execution_time: null
+    cell_number: 13
     version: 1
     deleted_at: null
