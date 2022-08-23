@@ -1291,8 +1291,8 @@
       => 'classification', -- we want to classify into true or false\n  relation_name
       => 'fraud_samples', -- our view of the data\n  y_column_name => 'fraudulent',
       -- the \"labels\"\n  algorithm => 'xgboost', -- tree based models like xgboost
-      are often the best performers for tabular data at scale\n  test_size => 0.5
-      -- use half the data for testing rather than the default test size of 25%\n);"
+      are often the best performers for tabular data at scale\n  test_size => 0.5,
+      -- use half the data for testing rather than the default test size of 25%\n  test_sampling => 'last'\n);"
     rendering: null
     execution_time: null
     cell_number: 55
@@ -1326,8 +1326,8 @@
       -- a friendly name we'll use to identify this machine learning project\n  task
       => 'regression', -- predict the likelihood\n  relation_name => 'fraud_samples',
       -- our view of the data\n  y_column_name => 'fraudulent', -- the \"labels\"\n
-      \ algorithm => 'xgboost', \n  test_size => 0.5 -- use half the data for testing
-      rather than the default test size of 25%\n);"
+      \ algorithm => 'linear', \n  test_size => 0.5, -- use half the data for testing
+      rather than the default test size of 25%\n  test_sampling => 'last'\n);"
     rendering: null
     execution_time: null
     cell_number: 57
