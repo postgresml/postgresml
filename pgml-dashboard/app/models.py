@@ -7,6 +7,7 @@ from django.utils.html import strip_tags
 
 import markdown
 
+
 class Project(models.Model):
     name = models.TextField()
     task = models.TextField()

@@ -7,31 +7,34 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0001_initial'),
+        ("app", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Notebook',
+            name="Notebook",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=256)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=256)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
         ),
         migrations.CreateModel(
-            name='NotebookCell',
+            name="NotebookCell",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('cell_type', models.IntegerField(choices=[(1, 'Markdown'), (2, 'Plain text'), (3, 'SQL'), (4, 'Empty')])),
-                ('contents', models.TextField(blank=True, null=True)),
-                ('rendering', models.TextField(blank=True, null=True)),
-                ('execution_time', models.DurationField(blank=True, null=True)),
-                ('cell_number', models.IntegerField(default=1)),
-                ('version', models.IntegerField(default=1)),
-                ('deleted_at', models.DateTimeField(blank=True, null=True)),
-                ('notebook', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='app.notebook')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "cell_type",
+                    models.IntegerField(choices=[(1, "Markdown"), (2, "Plain text"), (3, "SQL"), (4, "Empty")]),
+                ),
+                ("contents", models.TextField(blank=True, null=True)),
+                ("rendering", models.TextField(blank=True, null=True)),
+                ("execution_time", models.DurationField(blank=True, null=True)),
+                ("cell_number", models.IntegerField(default=1)),
+                ("version", models.IntegerField(default=1)),
+                ("deleted_at", models.DateTimeField(blank=True, null=True)),
+                ("notebook", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="app.notebook")),
             ],
         ),
     ]
