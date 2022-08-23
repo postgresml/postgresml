@@ -2024,10 +2024,34 @@
   fields:
     notebook: 7
     cell_type: 1
-    contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
-      coming soon! Give it a try for now anyway."
-    rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
-      coming soon! Give it a try for now anyway.</p></article>"
+    contents: "Models are automatically deployed if their key metric (R2 for regression,
+      F1 for classification) is improved over the currently deployed version during
+      training. If you want to manage deploys manually, you can always change which
+      model is currently responsible for making predictions.\n\n```\npgml.deploy(\n
+      \   project_name TEXT,                  -- Human-friendly project name\n    strategy
+      TEXT DEFAULT 'best_score', -- 'rollback', 'best_score', or 'most_recent'\n    algorithm_name
+      TEXT DEFAULT NULL    -- filter candidates to a particular algorithm, NULL =
+      all qualify\n)\n```\n\nThe default behavior allows any algorithm to qualify,
+      but deployment candidates can be further restricted to a specific algorithm
+      by passing the `algorithm_name`.\n\n## Strategies\nThere are 3 different deployment
+      strategies available\n\nstrategy | description\n--- | ---\nmost_recent | The
+      most recently trained model for this project\nbest_score | The model that achieved
+      the best key metric score\nrollback | The model that was previously deployed
+      for this project"
+    rendering: "<article class=\"markdown-body\"><p>Models are automatically deployed
+      if their key metric (R2 for regression, F1 for classification) is improved over
+      the currently deployed version during training. If you want to manage deploys
+      manually, you can always change which model is currently responsible for making
+      predictions.</p>\n<pre><code>pgml.deploy(\n    project_name TEXT,                  --
+      Human-friendly project name\n    strategy TEXT DEFAULT 'best_score', -- 'rollback',
+      'best_score', or 'most_recent'\n    algorithm_name TEXT DEFAULT NULL    -- filter
+      candidates to a particular algorithm, NULL = all qualify\n)\n</code></pre>\n<p>The
+      default behavior allows any algorithm to qualify, but deployment candidates
+      can be further restricted to a specific algorithm by passing the <code>algorithm_name</code>.</p>\n<h2>Strategies</h2>\n<p>There
+      are 3 different deployment strategies available</p>\n<table>\n<thead>\n<tr>\n<th>strategy</th>\n<th>description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>most_recent</td>\n<td>The
+      most recently trained model for this project</td>\n</tr>\n<tr>\n<td>best_score</td>\n<td>The
+      model that achieved the best key metric score</td>\n</tr>\n<tr>\n<td>rollback</td>\n<td>The
+      model that was previously deployed for this project</td>\n</tr>\n</tbody>\n</table></article>"
     execution_time: null
     cell_number: 1
     version: 1
@@ -2214,13 +2238,7 @@
     cell_type: 3
     contents: '-- deploy the "best" model for prediction use
 
-      SELECT * FROM pgml.deploy(''Handwritten Digits'', ''best_score'');
-
-      SELECT * FROM pgml.deploy(''Handwritten Digits'', ''most_recent'');
-
-      SELECT * FROM pgml.deploy(''Handwritten Digits'', ''rollback'');
-
-      SELECT * FROM pgml.deploy(''Handwritten Digits'', ''best_score'', ''svm'');'
+      SELECT * FROM pgml.deploy(''Handwritten Digits'', ''best_score'');'
     rendering: null
     execution_time: null
     cell_number: 2
@@ -3320,5 +3338,35 @@
     rendering: null
     execution_time: null
     cell_number: 28
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 164
+  fields:
+    notebook: 7
+    cell_type: 1
+    contents: '## Rolling back to a specific algorithm
+
+      Rolling back creates a new deploy for the model that was deployed before the
+      current one. Multiple rollbacks in a row will effectively oscilate between the
+      two most recently deployed models, making rollbacks a relatively safe operation.'
+    rendering: '<article class="markdown-body"><h2>Rolling back to a specific algorithm</h2>
+
+      <p>Rolling back creates a new deploy for the model that was deployed before
+      the current one. Multiple rollbacks in a row will effectively oscilate between
+      the two most recently deployed models, making rollbacks a relatively safe operation.</p></article>'
+    execution_time: null
+    cell_number: 3
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 165
+  fields:
+    notebook: 7
+    cell_type: 3
+    contents: SELECT * FROM pgml.deploy('Handwritten Digits', 'rollback', 'svm');
+    rendering: null
+    execution_time: null
+    cell_number: 4
     version: 1
     deleted_at: null
