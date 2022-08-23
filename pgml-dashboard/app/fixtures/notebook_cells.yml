@@ -1985,10 +1985,36 @@
   fields:
     notebook: 6
     cell_type: 1
-    contents: "\U0001F6A7Work in Progress\U0001F6A7\n=====================\n\nDocumentation
-      coming soon! Give it a try for now anyway."
-    rendering: "<article class=\"markdown-body\"><h1>\U0001F6A7Work in Progress\U0001F6A7</h1>\n<p>Documentation
-      coming soon! Give it a try for now anyway.</p></article>"
+    contents: 'PostgresML adds [native vector operations](https://github.com/postgresml/postgresml/tree/master/pgml-extension/sql/install/vectors.sql)
+      that can be used in SQL queries. Vector operations are particularly useful for
+      dealing with embeddings that have been generated from other machine learning
+      algorithms and can provide functions like nearest neighbor calculations using
+      the distance functions.
+
+
+      Emeddings can be a relatively efficient mechanism to leverage the power deep
+      learning, without the runtime inference costs. These functions are relatively
+      fast and the more expensive distance functions can compute ~100k per second
+      for a memory resident dataset on modern hardware.
+
+
+      The PostgreSQL planner will also [automatically parallelize](https://www.postgresql.org/docs/current/parallel-query.html)
+      evalualtion on larger datasets, as configured to take advantage of multiple
+      CPU cores when available.'
+    rendering: '<article class="markdown-body"><p>PostgresML adds <a href="https://github.com/postgresml/postgresml/tree/master/pgml-extension/sql/install/vectors.sql">native
+      vector operations</a> that can be used in SQL queries. Vector operations are
+      particularly useful for dealing with embeddings that have been generated from
+      other machine learning algorithms and can provide functions like nearest neighbor
+      calculations using the distance functions.</p>
+
+      <p>Emeddings can be a relatively efficient mechanism to leverage the power deep
+      learning, without the runtime inference costs. These functions are relatively
+      fast and the more expensive distance functions can compute ~100k per second
+      for a memory resident dataset on modern hardware.</p>
+
+      <p>The PostgreSQL planner will also <a href="https://www.postgresql.org/docs/current/parallel-query.html">automatically
+      parallelize</a> evalualtion on larger datasets, as configured to take advantage
+      of multiple CPU cores when available.</p></article>'
     execution_time: null
     cell_number: 1
     version: 1
@@ -2163,59 +2189,9 @@
   pk: 95
   fields:
     notebook: 6
-    cell_type: 3
-    contents: '-- Elementwise arithmetic w/ constants
-
-      SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], 3);
-
-      SELECT pgml.subtract(ARRAY[1.0, 2.0, 3.0], 3);
-
-      SELECT pgml.multiply(ARRAY[1.0, 2.0, 3.0], 3);
-
-      SELECT pgml.divide(ARRAY[1.0, 2.0, 3.0], 100);
-
-
-      -- Pairwise arithmetic
-
-      SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
-
-      SELECT pgml.subtract(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
-
-      SELECT pgml.multiply(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
-
-      SELECT pgml.divide(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
-
-
-      -- Norms
-
-      SELECT pgml.norm_l0(ARRAY[1.0, 2.0, 3.0]);
-
-      SELECT pgml.norm_l1(ARRAY[1.0, 2.0, 3.0]);
-
-      SELECT pgml.norm_l2(ARRAY[1.0, 2.0, 3.0]);
-
-      SELECT pgml.norm_max(ARRAY[1.0, 2.0, 3.0]);
-
-
-      -- Normalization
-
-      SELECT pgml.normalize_l1(ARRAY[1.0, 2.0, 3.0]);
-
-      SELECT pgml.normalize_l2(ARRAY[1.0, 2.0, 3.0]);
-
-      SELECT pgml.normalize_max(ARRAY[1.0, 2.0, 3.0]);
-
-
-      -- Comparisons
-
-      SELECT pgml.distance_l1(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
-
-      SELECT pgml.distance_l2(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
-
-      SELECT pgml.dot_product(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
-
-      SELECT pgml.cosine_similarity(ARRAY[1.0, 2.0, 3.0], ARRAY[1.0, 2.0, 3.0]);'
-    rendering: null
+    cell_type: 1
+    contents: '### Elementwise arithmetic w/ constants'
+    rendering: <article class="markdown-body"><h3>Elementwise arithmetic w/ constants</h3></article>
     execution_time: null
     cell_number: 2
     version: 1
@@ -3045,5 +3021,304 @@
       demonstrations.</p></article>'
     execution_time: null
     cell_number: 12
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 138
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], 3);
+    rendering: null
+    execution_time: null
+    cell_number: 3
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 139
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.subtract(ARRAY[1.0, 2.0, 3.0], 3);
+    rendering: null
+    execution_time: null
+    cell_number: 4
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 140
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.multiply(ARRAY[1.0, 2.0, 3.0], 3);
+    rendering: null
+    execution_time: null
+    cell_number: 5
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 141
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.divide(ARRAY[1.0, 2.0, 3.0], 100);
+    rendering: null
+    execution_time: null
+    cell_number: 6
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 142
+  fields:
+    notebook: 6
+    cell_type: 1
+    contents: '### Pairwise arithmetic'
+    rendering: <article class="markdown-body"><h3>Pairwise arithmetic</h3></article>
+    execution_time: null
+    cell_number: 7
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 143
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 8
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 144
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.subtract(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 9
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 145
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.multiply(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 10
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 146
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.divide(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 11
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 147
+  fields:
+    notebook: 6
+    cell_type: 1
+    contents: '### Norms'
+    rendering: <article class="markdown-body"><h3>Norms</h3></article>
+    execution_time: null
+    cell_number: 12
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 148
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.norm_l0(ARRAY[1.0, 2.0, 3.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 13
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 149
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.norm_l1(ARRAY[1.0, 2.0, 3.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 14
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 150
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.norm_l2(ARRAY[1.0, 2.0, 3.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 15
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 151
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.norm_max(ARRAY[1.0, 2.0, 3.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 16
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 152
+  fields:
+    notebook: 6
+    cell_type: 1
+    contents: '### Normalization'
+    rendering: <article class="markdown-body"><h3>Normalization</h3></article>
+    execution_time: null
+    cell_number: 17
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 153
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.normalize_l1(ARRAY[1.0, 2.0, 3.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 18
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 154
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.normalize_l2(ARRAY[1.0, 2.0, 3.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 19
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 155
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.normalize_max(ARRAY[1.0, 2.0, 3.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 20
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 156
+  fields:
+    notebook: 6
+    cell_type: 1
+    contents: '### Comparisons'
+    rendering: <article class="markdown-body"><h3>Comparisons</h3></article>
+    execution_time: null
+    cell_number: 21
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 157
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.distance_l1(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 22
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 158
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.distance_l2(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 23
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 159
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.dot_product(ARRAY[1.0, 2.0, 3.0], ARRAY[4.0, 5.0, 6.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 24
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 160
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: SELECT pgml.cosine_similarity(ARRAY[1.0, 2.0, 3.0], ARRAY[1.0, 2.0,
+      3.0]);
+    rendering: null
+    execution_time: null
+    cell_number: 25
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 161
+  fields:
+    notebook: 6
+    cell_type: 1
+    contents: '### Generating Random Embeddings
+
+
+      We can populate a table of embeddings with 10,000 rows that have a 128 dimension
+      embedding to demonstrate some vector functionality like nearest neighbor search.'
+    rendering: '<article class="markdown-body"><h3>Generating Random Embeddings</h3>
+
+      <p>We can populate a table of embeddings with 10,000 rows that have a 128 dimension
+      embedding to demonstrate some vector functionality like nearest neighbor search.</p></article>'
+    execution_time: null
+    cell_number: 26
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 162
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: "CREATE TABLE embeddings AS\nSELECT id, ARRAY_AGG(rand) AS vector\nFROM
+      (\n  SELECT row_number() over () % 10000 + 1 AS id, random()::REAL AS rand\n
+      \ FROM generate_series(1, 1280000) AS t\n) series\nGROUP BY id\nORDER BY id;"
+    rendering: null
+    execution_time: null
+    cell_number: 27
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 163
+  fields:
+    notebook: 6
+    cell_type: 3
+    contents: "-- Nearest neighbors to e1 using cosine similarity\nSELECT \n    e1.id,
+      \n    e2.id,\n    pgml.cosine_similarity(e1.vector, e2.vector) AS distance\nFROM
+      embeddings e1\nJOIN embeddings e2 ON 1=1\nWHERE e1.id = 1\nORDER BY distance
+      DESC\nLIMIT 10;"
+    rendering: null
+    execution_time: null
+    cell_number: 28
     version: 1
     deleted_at: null
