@@ -1103,8 +1103,8 @@
     notebook: 1
     cell_type: 3
     contents: "DROP VIEW fraud_samples;\nCREATE VIEW fraud_samples AS\nSELECT \n  SUM(CASE
-      WHEN products.perishable THEN (count * price)::NUMERIC ELSE 0.0 END) AS perishable_amount,
-      \n  SUM(CASE WHEN NOT products.perishable THEN (count * price)::NUMERIC ELSE
+      WHEN products.perishable THEN (count * price)::NUMERIC::FLOAT ELSE 0.0 END) AS perishable_amount,
+      \n  SUM(CASE WHEN NOT products.perishable THEN (count * price)::NUMERIC::FLOAT ELSE
       0.0 END) AS non_perishable_amount, \n  CASE WHEN chargebacks.id IS NOT NULL
       \n    THEN true \n    ELSE false \n  END AS fraudulent\nFROM orders\nLEFT JOIN
       payments ON payments.order_id = orders.id\nLEFT JOIN chargebacks ON chargebacks.payment_id
