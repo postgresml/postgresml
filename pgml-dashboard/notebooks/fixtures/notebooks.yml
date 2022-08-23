@@ -245,9 +245,8 @@
       the way, this was a Markdown table, you can make those here as well.\n      \n###
       Thank you\nThank you for trying out PostgresML! We hope you enjoy your time
       here and have fun learning about machine learning, in the comfort of your favorite
-      database.\n\nYou may want to check out the rest of [the tutorials](../../../nb/)
-      or dive straight in with a notebook to test [Tutorial 1: ⏱️ Real Time Fraud
-      Detection](../1/)"
+      database.\n\nYou may want to check out the rest of [the tutorials](../) or dive
+      straight in with a notebook to test [Tutorial 1: ⏱️ Real Time Fraud Detection](../1/)"
     rendering: '<article class="markdown-body"><p>We just asked Postgres to return
       a random number. Pretty simple query, but it demonstrates the notebook functionality
       pretty well. You can see that the result of <code>random()</code> is a float
@@ -327,8 +326,8 @@
       <p>Thank you for trying out PostgresML! We hope you enjoy your time here and
       have fun learning about machine learning, in the comfort of your favorite database.</p>
 
-      <p>You may want to check out the rest of <a href="../../../nb/">the tutorials</a>
-      or dive straight in with a notebook to test <a href="../1/">Tutorial 1: ⏱️ Real
+      <p>You may want to check out the rest of <a href="../">the tutorials</a> or
+      dive straight in with a notebook to test <a href="../1/">Tutorial 1: ⏱️ Real
       Time Fraud Detection</a></p></article>'
     execution_time: null
     cell_number: 4
@@ -1452,14 +1451,14 @@
       on the most likely outcome.
 
 
-      As we saw in [Tutorial 1: Real Time Fraud Model](/notebooks/notebook/1) understanding
-      the structure of the data and the labels is a complex and critical step for
-      real world machine learning projects. In this example we''ll focus more on the
-      different algorithms, and use an academic benchmark dataset that already includes
-      binary labels from UCI ML Breast Cancer Wisconsin. Features were computed from
-      a digitized image of a fine needle aspirate (FNA) of a breast mass. They describe
-      characteristics of the cell nuclei present in the image. The labels are either
-      True for a malginant sample of False for a benign sample.
+      As we saw in [Tutorial 1: Real Time Fraud Model](../1/) understanding the structure
+      of the data and the labels is a complex and critical step for real world machine
+      learning projects. In this example we''ll focus more on the different algorithms,
+      and use an academic benchmark dataset that already includes binary labels from
+      UCI ML Breast Cancer Wisconsin. Features were computed from a digitized image
+      of a fine needle aspirate (FNA) of a breast mass. They describe characteristics
+      of the cell nuclei present in the image. The labels are either True for a malginant
+      sample of False for a benign sample.
 
 
       You can load this dataset into your Postgres database with the following SQL.'
@@ -1488,15 +1487,14 @@
       the labeled data set we created, we can present it with new unlabeled data to
       classify based on the most likely outcome.</p>
 
-      <p>As we saw in <a href="/notebooks/notebook/1">Tutorial 1: Real Time Fraud
-      Model</a> understanding the structure of the data and the labels is a complex
-      and critical step for real world machine learning projects. In this example
-      we''ll focus more on the different algorithms, and use an academic benchmark
-      dataset that already includes binary labels from UCI ML Breast Cancer Wisconsin.
-      Features were computed from a digitized image of a fine needle aspirate (FNA)
-      of a breast mass. They describe characteristics of the cell nuclei present in
-      the image. The labels are either True for a malginant sample of False for a
-      benign sample.</p>
+      <p>As we saw in <a href="../1/">Tutorial 1: Real Time Fraud Model</a> understanding
+      the structure of the data and the labels is a complex and critical step for
+      real world machine learning projects. In this example we''ll focus more on the
+      different algorithms, and use an academic benchmark dataset that already includes
+      binary labels from UCI ML Breast Cancer Wisconsin. Features were computed from
+      a digitized image of a fine needle aspirate (FNA) of a breast mass. They describe
+      characteristics of the cell nuclei present in the image. The labels are either
+      True for a malginant sample of False for a benign sample.</p>
 
       <p>You can load this dataset into your Postgres database with the following
       SQL.</p></article>'
@@ -1596,7 +1594,7 @@
       to production. PostgresML orchestrated a bunch of the traditional ML drudgery
       in that couple of seconds to make it as simple as possible for you to get value.
       We'll organize our work on this task under the project name \"Breast Cancer
-      Detection\", which you can now see it in your [list of projects](/projects/).
+      Detection\", which you can now see it in your [list of projects](../../projects/).
       You can see that the first model uses the default linear algorithm, and that
       it achieves an [F1 score](https://en.wikipedia.org/wiki/F-score) in the mid
       90's, which is pretty good. A score of 1.0 is perfect, and 0.5 would be as good
@@ -1608,8 +1606,8 @@
       to production. PostgresML orchestrated a bunch of the traditional ML drudgery
       in that couple of seconds to make it as simple as possible for you to get value.
       We'll organize our work on this task under the project name \"Breast Cancer
-      Detection\", which you can now see it in your <a href=\"/projects/\">list of
-      projects</a>. You can see that the first model uses the default linear algorithm,
+      Detection\", which you can now see it in your <a href=\"../../projects/\">list
+      of projects</a>. You can see that the first model uses the default linear algorithm,
       and that it achieves an <a href=\"https://en.wikipedia.org/wiki/F-score\">F1
       score</a> in the mid 90's, which is pretty good. A score of 1.0 is perfect,
       and 0.5 would be as good as random guessing. The better the F1 score, the better
@@ -1855,12 +1853,12 @@
     cell_type: 1
     contents: "Turns out, computers are pretty fast these days, even with state of
       the art algorithms running on a free tier computation resources. \U0001F60A
-      \n\nYou can pop over to the [projects](/projects) tab for a visualization of
-      the performance of all these algorithms on this dataset, or you can check out
-      the artifacts directly in the database."
+      \n\nYou can pop over to the [projects](../../projects/) tab for a visualization
+      of the performance of all these algorithms on this dataset, or you can check
+      out the artifacts directly in the database."
     rendering: "<article class=\"markdown-body\"><p>Turns out, computers are pretty
       fast these days, even with state of the art algorithms running on a free tier
-      computation resources. \U0001F60A </p>\n<p>You can pop over to the <a href=\"/projects\">projects</a>
+      computation resources. \U0001F60A </p>\n<p>You can pop over to the <a href=\"../../projects/\">projects</a>
       tab for a visualization of the performance of all these algorithms on this dataset,
       or you can check out the artifacts directly in the database.</p></article>"
     execution_time: null

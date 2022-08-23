@@ -34,20 +34,20 @@
   <turbo-frame id="cell_{{ next_cell_number }}">
   </turbo-frame>
 
-  <section class="notebook-cell" data-controller="cell">
+  <section class="notebook-cell" data-controller="notebook-cell">
     <div class="notebook-cell-edit">
-      <form action="{% url 'notebooks/cell/add' notebook.pk %}" method="post" data-cell-target="form" data-action="cell#freezeScrollOnNextRender cell#play">
+      <form action="{% url 'notebooks/cell/add' notebook.pk %}" method="post" data-notebook-cell-target="form" data-action="notebook-cell#freezeScrollOnNextRender notebook-cell#play">
         <div class="flex">
           {% csrf_token %}
           <div class="flex-grow">
-            <textarea data-cell-id="new" name="contents" data-cell-target="editor"></textarea>
+            <textarea data-cell-id="new" name="contents" data-notebook-cell-target="editor"></textarea>
           </div>
           <div class="flex flex-end">
-            <select name="cell_type" id="cell_type" data-action="cell#selectCellType" title="Select cell type" data-cell-target="type">
+            <select name="cell_type" id="cell_type" data-action="notebook-cell#selectCellType" title="Select cell type" data-notebook-cell-target="type">
               <option value="3" selected>SQL</option>
               <option value="1">Markdown</option>
             </select>
-            <button type="submit" class="button notebook-button" title="Create cell" data-cell-target="play">
+            <button type="submit" class="button notebook-button" title="Create cell" data-notebook-cell-target="play">
               <span class="material-symbols-outlined">play_arrow</span>
             </button>
           </div>
