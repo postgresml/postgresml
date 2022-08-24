@@ -45,7 +45,7 @@ article.md-content__inner.md-typeset a.md-content__button.md-icon {
 </p>
 
 <p align="center" markdown>
-  [Try PostgresML](https://gym.postgresml.org/signup/){ .md-button .md-button--primary }
+  [Try PostgresML Free!](https://gym.postgresml.org/signup/){ .md-button .md-button--primary }
   [Docs](/user_guides/setup/quick_start_with_docker/){ .md-button }
 </p>
 
@@ -124,7 +124,7 @@ ORDER BY prediction DESC;
 :material-lightbulb-group:
 __All your favorite algorithms__
 
-Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/) with no extra configuration.
+Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/), [XGBoost](https://xgboost.readthedocs.io/), [LightGBM](https://lightgbm.readthedocs.io/) and pre-trained deep learning models via [Hugging Face](https://huggingface.co/models).
 
 [:material-arrow-right: Algorithms](/user_guides/training/algorithm_selection/)
   </div>
