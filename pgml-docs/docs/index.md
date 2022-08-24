@@ -45,8 +45,8 @@ article.md-content__inner.md-typeset a.md-content__button.md-icon {
 </p>
 
 <p align="center" markdown>
-  [Demo](https://demo.postgresml.org/){ .md-button .md-button--primary }
-  [:material-github:](https://github.com/postgresml/postgresml/){ .md-button }
+  [Try PostgresML](https://gym.postgresml.org/signup/){ .md-button .md-button--primary }
+  [Docs](/user_guides/setup/quick_start_with_docker/){ .md-button }
 </p>
 
 <video autoplay loop muted>
