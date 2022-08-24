@@ -115,7 +115,7 @@ ORDER BY prediction DESC;
 </div>
 
 <p align="center" markdown>
-  [Get Started](/user_guides/setup/quick_start_with_docker/){ .md-button .md-button--primary }
+  [Get Started](https://gym.postgresml.org/signup/){ .md-button .md-button--primary }
 </p>
 ## What's in the box
 
