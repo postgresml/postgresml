@@ -1103,14 +1103,14 @@
     notebook: 1
     cell_type: 3
     contents: "DROP VIEW fraud_samples;\nCREATE VIEW fraud_samples AS\nSELECT \n  SUM(CASE
-      WHEN products.perishable THEN (count * price)::NUMERIC::FLOAT ELSE 0.0 END) AS perishable_amount,
-      \n  SUM(CASE WHEN NOT products.perishable THEN (count * price)::NUMERIC::FLOAT ELSE
-      0.0 END) AS non_perishable_amount, \n  CASE WHEN chargebacks.id IS NOT NULL
-      \n    THEN true \n    ELSE false \n  END AS fraudulent\nFROM orders\nLEFT JOIN
-      payments ON payments.order_id = orders.id\nLEFT JOIN chargebacks ON chargebacks.payment_id
-      = payments.id\nLEFT JOIN line_items ON line_items.order_id = orders.id\nLEFT
-      JOIN products ON products.emoji = line_items.product_emoji\nGROUP BY orders.id,
-      chargebacks.id\nORDER BY orders.id;"
+      WHEN products.perishable THEN (count * price)::NUMERIC::FLOAT ELSE 0.0 END)
+      AS perishable_amount, \n  SUM(CASE WHEN NOT products.perishable THEN (count
+      * price)::NUMERIC::FLOAT ELSE 0.0 END) AS non_perishable_amount, \n  CASE WHEN
+      chargebacks.id IS NOT NULL \n    THEN true \n    ELSE false \n  END AS fraudulent\nFROM
+      orders\nLEFT JOIN payments ON payments.order_id = orders.id\nLEFT JOIN chargebacks
+      ON chargebacks.payment_id = payments.id\nLEFT JOIN line_items ON line_items.order_id
+      = orders.id\nLEFT JOIN products ON products.emoji = line_items.product_emoji\nGROUP
+      BY orders.id, chargebacks.id\nORDER BY orders.id;"
     rendering: null
     execution_time: null
     cell_number: 46
@@ -1292,7 +1292,8 @@
       => 'fraud_samples', -- our view of the data\n  y_column_name => 'fraudulent',
       -- the \"labels\"\n  algorithm => 'xgboost', -- tree based models like xgboost
       are often the best performers for tabular data at scale\n  test_size => 0.5,
-      -- use half the data for testing rather than the default test size of 25%\n  test_sampling => 'last'\n);"
+      -- use half the data for testing rather than the default test size of 25%\n
+      \ test_sampling => 'last'\n);"
     rendering: null
     execution_time: null
     cell_number: 55
@@ -1358,10 +1359,10 @@
     notebook: 1
     cell_type: 3
     contents: "-- If you'd like to start this tutorial over, you can clear out the
-      tables we created.\n-- use ctr-/ to comment/uncomment blocks in this editor\n--
-      drop table if exists products cascade; \n-- drop table if exists orders cascade;
-      \n-- drop table if exists line_items cascade; \n-- drop table if exists chargebacks
-      cascade; \n-- drop table if exists payments cascade;"
+      tables we created.\n-- use ctr-/ to comment/uncomment blocks in this editor\ndrop
+      table if exists products cascade; \ndrop table if exists orders cascade; \ndrop
+      table if exists line_items cascade; \ndrop table if exists chargebacks cascade;
+      \ndrop table if exists payments cascade;"
     rendering: null
     execution_time: null
     cell_number: 59
@@ -3444,5 +3445,45 @@
     rendering: null
     execution_time: null
     cell_number: 10
+    version: 1
+    deleted_at: null
+- model: app.notebookcell
+  pk: 170
+  fields:
+    notebook: 9
+    cell_type: 1
+    contents: "## Native Installation\n\nA PostgresML deployment consists of two different
+      runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](https://github.com/postgresml/postgresml/tree/master/pgml-extension/))
+      that facilitates the machine learning lifecycle inside the database. Additionally,
+      we provide a dashboard ([pgml-dashboard](https://github.com/postgresml/postgresml/tree/master/pgml-dashboard/))
+      that can connect to your Postgres server and provide additional management functionality.
+      It will also provide visibility into the models you build and data they use.\n\nCheck
+      out our documentation for [installation instructions](https://postgresml.org/user_guides/setup/native_installation/)
+      in your datacenter.\n\nWe'd also love to hear your feedback. \n\n- Email us
+      at team@postgresml.org\n- Start a [discussion on github](https://github.com/postgresml/postgresml/discussions)"
+    rendering: '<article class="markdown-body"><h2>Native Installation</h2>
+
+      <p>A PostgresML deployment consists of two different runtimes. The foundational
+      runtime is a Python extension for Postgres (<a href="https://github.com/postgresml/postgresml/tree/master/pgml-extension/">pgml-extension</a>)
+      that facilitates the machine learning lifecycle inside the database. Additionally,
+      we provide a dashboard (<a href="https://github.com/postgresml/postgresml/tree/master/pgml-dashboard/">pgml-dashboard</a>)
+      that can connect to your Postgres server and provide additional management functionality.
+      It will also provide visibility into the models you build and data they use.</p>
+
+      <p>Check out our documentation for <a href="https://postgresml.org/user_guides/setup/native_installation/">installation
+      instructions</a> in your datacenter.</p>
+
+      <p>We''d also love to hear your feedback. </p>
+
+      <ul>
+
+      <li>Email us at team@postgresml.org</li>
+
+      <li>Start a <a href="https://github.com/postgresml/postgresml/discussions">discussion
+      on github</a></li>
+
+      </ul></article>'
+    execution_time: null
+    cell_number: 1
     version: 1
     deleted_at: null
