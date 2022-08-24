@@ -3,14 +3,20 @@
 PostgresML is easy to get started with. If you haven't already, sign up for our [Gym](https://gym.postgresml.org/signup/) to get a free hosted PostgresML instance you can use to follow this tutorial. You can also run one yourself by following the instructions in our Github repo.
 
 <p align="center" markdown>
-  [Sign Up for the Gym](https://gym.postgresml.org/signup/){ .md-button .md-button--primary .md-button }
+  [Try PostgresML](https://gym.postgresml.org/signup/){ .md-button .md-button--primary .md-button }
 </p>
+
+<video autoplay loop muted>
+  <source src="images/demo.webm" type="video/webm">
+  <source src="images/demo.mp4" type="video/mp4">
+  <img src="images/console.png" alt="PostgresML in practice" loading="lazy">
+</video>
 
 Once you have your PostgresML instance running, we'll be ready to get started.
 
 ## Get data
 
-The fisrt part of machine learning is getting your data in a format you can use. That's usually the hardest part, but thankfully we have a few example datasets we can use. To load one of them, navigate to the IDE tab and run this query:
+The first part of machine learning is getting your data in a format you can use. That's usually the hardest part, but thankfully we have a few example datasets we can use. To load one of them, navigate to the IDE tab and run this query:
 
 ```sql
 SELECT * FROM pgml.load_dataset('diabetes');
