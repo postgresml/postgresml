@@ -1,3 +1,10 @@
+<style>
+.md-content video, .md-content img {
+  max-width: 90%;
+  margin: 2em 5%;
+}
+</style>
+
 # Quick Start
 
 PostgresML is easy to get started with. If you haven't already, sign up for our [Gym](https://gym.postgresml.org/signup/) to get a free hosted PostgresML instance you can use to follow this tutorial. You can also run one yourself by following the instructions in our Github repo.
@@ -7,9 +14,9 @@ PostgresML is easy to get started with. If you haven't already, sign up for our 
 </p>
 
 <video autoplay loop muted>
-  <source src="../images/demo.webm" type="video/webm">
-  <source src="../images/demo.mp4" type="video/mp4">
-  <img src="../images/console.png" alt="PostgresML in practice" loading="lazy">
+  <source src="/images/demo.webm" type="video/webm">
+  <source src="/images/demo.mp4" type="video/mp4">
+  <img src="/images/console.png" alt="PostgresML in practice" loading="lazy">
 </video>
 
 Once you have your PostgresML instance running, we'll be ready to get started.
