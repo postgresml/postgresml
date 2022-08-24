@@ -313,14 +313,14 @@
       and the charges will be reversed. The ecommerce company will lose the merchandise
       as well as shipping charges and labor costs. If a company receives too many
       chargebacks, not only will they incur expensive losses, but the credit card
-      processors may remove them from the platorm, so it''s important they have some
+      processors may remove them from the platform, so it''s important they have some
       certainty about the owner of the cards identity and legitimate interests.
 
 
       In this notebook, we''ll demonstrate how a simplified ecommerce application
       might track customer orders, and use machine learning to detect chargeback risks
       in real time during checkout. The most important step in building any Machine
-      Learning model is understanding the data. Knowing it''s structure, application
+      Learning model is understanding the data. Knowing its structure, application
       use, and the full meaning for the business will allow us to create meaningful
       features and labels for our models. In this notebook, we''ve included a fair
       bit of SQL to implement logic that would normally be written at the application
@@ -362,13 +362,13 @@
       and the charges will be reversed. The ecommerce company will lose the merchandise
       as well as shipping charges and labor costs. If a company receives too many
       chargebacks, not only will they incur expensive losses, but the credit card
-      processors may remove them from the platorm, so it''s important they have some
+      processors may remove them from the platform, so it''s important they have some
       certainty about the owner of the cards identity and legitimate interests.</p>
 
       <p>In this notebook, we''ll demonstrate how a simplified ecommerce application
       might track customer orders, and use machine learning to detect chargeback risks
       in real time during checkout. The most important step in building any Machine
-      Learning model is understanding the data. Knowing it''s structure, application
+      Learning model is understanding the data. Knowing its structure, application
       use, and the full meaning for the business will allow us to create meaningful
       features and labels for our models. In this notebook, we''ve included a fair
       bit of SQL to implement logic that would normally be written at the application
@@ -487,13 +487,13 @@
   fields:
     notebook: 1
     cell_type: 1
-    contents: "\U0001F50E That inline subselect in #7 is a little weird.\n\n```sql\n--
+    contents: "\U0001F50E That inline subquery in #7 is a little weird.\n\n```sql\n--
       a query to find Alice's most recent order\n(SELECT max(id) FROM orders WHERE
       customer_name = 'Alice')\n```\n\nTypically this ID would be passed in from the
       application layer, instead of being retrieved during the INSERT statement itself.
       But anyway... \n\nNext, we'll record her payment in full via credit card in
       our `payments` table."
-    rendering: "<article class=\"markdown-body\"><p>\U0001F50E That inline subselect
+    rendering: "<article class=\"markdown-body\"><p>\U0001F50E That inline subquery
       in #7 is a little weird.</p>\n<pre><code class=\"language-sql\">-- a query to
       find Alice's most recent order\n(SELECT max(id) FROM orders WHERE customer_name
       = 'Alice')\n</code></pre>\n<p>Typically this ID would be passed in from the
@@ -535,7 +535,7 @@
     notebook: 1
     cell_type: 3
     contents: "INSERT INTO payments (order_id, amount) \n-- a query to compute the
-      full amount of Alice's most recent order\nSELECT order_id, sum(count * price)
+      full amount of Alice's most recent order\nSELECT order_id, SUM(count * price)
       AS amount\nFROM orders\nJOIN line_items ON line_items.order_id = orders.id\nJOIN
       products ON products.emoji = line_items.product_emoji\nWHERE orders.id = (SELECT
       max(id) AS order_id FROM orders WHERE customer_name = 'Alice')\nGROUP BY 1\nRETURNING
@@ -593,7 +593,7 @@
     notebook: 1
     cell_type: 3
     contents: "INSERT INTO payments (order_id, amount) \n-- a query to compute the
-      full amount of Bob's most recent order\nSELECT order_id, sum(count * price)
+      full amount of Bob's most recent order\nSELECT order_id, SUM(count * price)
       AS amount\nFROM orders\nJOIN line_items ON line_items.order_id = orders.id\nJOIN
       products ON products.emoji = line_items.product_emoji\nWHERE orders.id = (SELECT
       max(id) AS order_id FROM orders WHERE customer_name = 'Bob')\nGROUP BY 1\nRETURNING
@@ -663,7 +663,7 @@
     contents: "\U0001F3C1 Congratulations! \U0001F3C1 \n----------------\nIf you've
       made it this far, you've won half the machine learning battle. We have created
       2 training data examples that are perfect for \"supervised\" machine learning.
-      The chargebacks acts as the ground truth to inform the machine learning algorithm
+      The chargebacks act as the ground truth to inform the machine learning algorithm
       of whether or not an order is fraudulent. These records are what we refer to
       as \"labels\", a.k.a \"targets\" or \"Y-values\" for the data.\n\nPart 2: Structuring
       the Training Data\n--------------------------\nWe can construct a query that
@@ -671,7 +671,7 @@
     rendering: "<article class=\"markdown-body\"><h2>\U0001F3C1 Congratulations! \U0001F3C1</h2>\n<p>If
       you've made it this far, you've won half the machine learning battle. We have
       created 2 training data examples that are perfect for \"supervised\" machine
-      learning. The chargebacks acts as the ground truth to inform the machine learning
+      learning. The chargebacks act as the ground truth to inform the machine learning
       algorithm of whether or not an order is fraudulent. These records are what we
       refer to as \"labels\", a.k.a \"targets\" or \"Y-values\" for the data.</p>\n<h2>Part
       2: Structuring the Training Data</h2>\n<p>We can construct a query that provides
@@ -724,16 +724,16 @@
   fields:
     notebook: 1
     cell_type: 1
-    contents: It's intuitive that thieves will be more attracted to gold bars, than
+    contents: It's intuitive that thieves will be more attracted to gold bars than
       a head of lettuce because the resell value is better. Perishable goods are more
-      difficult to move on the black market. A good piece of informationfor our model
+      difficult to move on the black market. A good piece of information for our model
       would be the percentage of the order that is perishable. We call this a "feature"
       of the data model. We can construct a query to return this feature for each
       order, along with the chargeback label.
     rendering: <article class="markdown-body"><p>It's intuitive that thieves will
       be more attracted to gold bars, than a head of lettuce because the resell value
       is better. Perishable goods are more difficult to move on the black market.
-      A good piece of informationfor our model would be the percentage of the order
+      A good piece of information for our model would be the percentage of the order
       that is perishable. We call this a "feature" of the data model. We can construct
       a query to return this feature for each order, along with the chargeback label.</p></article>
     execution_time: null
@@ -894,7 +894,7 @@
     notebook: 1
     cell_type: 3
     contents: "INSERT INTO payments (order_id, amount) \n-- a query to compute the
-      full amount of Bob's most recent order\nSELECT order_id, sum(count * price)
+      full amount of Bob's most recent order\nSELECT order_id, SUM(count * price)
       AS amount\nFROM orders\nJOIN line_items ON line_items.order_id = orders.id\nJOIN
       products ON products.emoji = line_items.product_emoji\nWHERE orders.id = (SELECT
       max(id) AS order_id FROM orders WHERE customer_name = 'Carol')\nGROUP BY 1\nRETURNING
@@ -946,7 +946,7 @@
     notebook: 1
     cell_type: 3
     contents: "INSERT INTO payments (order_id, amount) \n-- a query to compute the
-      full amount of Bob's most recent order\nSELECT order_id, sum(count * price)
+      full amount of Bob's most recent order\nSELECT order_id, SUM(count * price)
       AS amount\nFROM orders\nJOIN line_items ON line_items.order_id = orders.id\nJOIN
       products ON products.emoji = line_items.product_emoji\nWHERE orders.id = (SELECT
       max(id) AS order_id FROM orders WHERE customer_name = 'Dan')\nGROUP BY 1\nRETURNING
@@ -1073,7 +1073,7 @@
     notebook: 1
     cell_type: 1
     contents: 'The default model is a linear regression, so it has learned from the
-      training half of the data that high amounts of perishible goods make for safe
+      training half of the data that high amounts of perishable goods make for safe
       orders.
 
 
@@ -1085,7 +1085,7 @@
       using the perishable percentage, we can use dollar values as our features, since
       we know criminals want to steal large amounts more than small amounts.'
     rendering: '<article class="markdown-body"><p>The default model is a linear regression,
-      so it has learned from the training half of the data that high amounts of perishible
+      so it has learned from the training half of the data that high amounts of perishable
       goods make for safe orders.</p>
 
       <h2>Part 4: Adding more features</h2>
@@ -1198,21 +1198,21 @@
   fields:
     notebook: 1
     cell_type: 1
-    contents: "This is the basic development cycle for a model. \n  \n1. Add new features\n2.
-      Retrain the new model\n3. Analyze performance\n\nEven with a toy schema like
+    contents: "This is the basic development cycle for a model. \n  \n1. Add new features.\n2.
+      Retrain the new model.\n3. Analyze performance.\n\nEven with a toy schema like
       this, it's possible to create many different features over the data. Examples
-      of other statistcal features we could add:\n\n- How many orders the customer
-      has previously made without chargebacks\n- What has their total spend been so
-      far\n- How old is this account\n- What is their average order size\n- How frequently
-      do they typically order\n- Do they typically by perishible or non perishable
-      goods\n\nWe can create additional VIEWs, Sub SELECTs or [Common Table Expressions](https://www.postgresql.org/docs/current/queries-with.html)
-      to standardize these features across models or reports.\n\nSub SELECTs may be
+      of other statistical features we could add:\n\n- how many orders the customer
+      has previously made without chargebacks,\n- what has their total spend been so
+      far,\n- how old is this account,\n- what is their average order size,\n- how frequently
+      do they typically order,\n- do they typically buy perishable or non perishable
+      goods.\n\nWe can create additional VIEWs, subqueries or [Common Table Expressions](https://www.postgresql.org/docs/current/queries-with.html)
+      to standardize these features across models or reports.\n\nSubqueries may be
       preferable to Common Table Expressions for generating complex features, because
       CTEs create an optimization gate that prevents the query planner from pushing
       predicates down, which will hurt performance if you intend to reuse this VIEW
       during inference for a single row.\n\nIf you're querying a particular view frequently
-      that is expensive to produce, you may consider using a `MATERILIZE VIEW`, to
-      cache the results.\n\n\n```sql\n-- A sub select\nLEFT JOIN (\n  SELECT DISTINCT
+      that is expensive to produce, you may consider using a `CREATE MATERIALIZED VIEW`, to
+      cache the results.\n\n\n```sql\n-- A subquery\nLEFT JOIN (\n  SELECT DISTINCT
       orders.customer_name, COUNT(*) AS previous_orders FROM ORDERS\n) AS customer_stats\n
       \ ON customer_stats.customer_name = orders.customer_name\n```\n\n```sql\n--
       A view\nCREATE VIEW customer_stats AS \nSELECT DISTINCT orders.customer_name,
@@ -1222,23 +1222,23 @@
       COUNT(*) AS previous_orders FROM ORDERS;\n)\n\n...\nLEFT JOIN customer_stats
       ON customer_stats.customer_name = orders.customer_name\n```"
     rendering: "<article class=\"markdown-body\"><p>This is the basic development
-      cycle for a model. </p>\n<ol>\n<li>Add new features</li>\n<li>Retrain the new
-      model</li>\n<li>Analyze performance</li>\n</ol>\n<p>Even with a toy schema like
+      cycle for a model. </p>\n<ol>\n<li>Add new features.</li>\n<li>Retrain the new
+      model.</li>\n<li>Analyze performance.</li>\n</ol>\n<p>Even with a toy schema like
       this, it's possible to create many different features over the data. Examples
-      of other statistcal features we could add:</p>\n<ul>\n<li>How many orders the
-      customer has previously made without chargebacks</li>\n<li>What has their total
-      spend been so far</li>\n<li>How old is this account</li>\n<li>What is their
-      average order size</li>\n<li>How frequently do they typically order</li>\n<li>Do
-      they typically by perishible or non perishable goods</li>\n</ul>\n<p>We can
-      create additional VIEWs, Sub SELECTs or <a href=\"https://www.postgresql.org/docs/current/queries-with.html\">Common
-      Table Expressions</a> to standardize these features across models or reports.</p>\n<p>Sub
-      SELECTs may be preferable to Common Table Expressions for generating complex
+      of other statistical features we could add:</p>\n<ul>\n<li>how many orders the
+      customer has previously made without chargebacks,</li>\n<li>what has their total
+      spend been so far,</li>\n<li>how old is this account,</li>\n<li>what is their
+      average order size,</li>\n<li>how frequently do they typically order,</li>\n<li>do
+      they typically buy perishable or non perishable goods.</li>\n</ul>\n<p>We can
+      create additional VIEWs, subqueries or <a href=\"https://www.postgresql.org/docs/current/queries-with.html\">Common
+      Table Expressions</a> to standardize these features across models or reports.</p>\n<p>Subqueries 
+      may be preferable to Common Table Expressions for generating complex
       features, because CTEs create an optimization gate that prevents the query planner
       from pushing predicates down, which will hurt performance if you intend to reuse
       this VIEW during inference for a single row.</p>\n<p>If you're querying a particular
-      view frequently that is expensive to produce, you may consider using a <code>MATERILIZE
-      VIEW</code>, to cache the results.</p>\n<pre><code class=\"language-sql\">--
-      A sub select\nLEFT JOIN (\n  SELECT DISTINCT orders.customer_name, COUNT(*)
+      view frequently that is expensive to produce, you may consider using a <code>CREATE
+      MATERIALIZED VIEW</code>, to cache the results.</p>\n<pre><code class=\"language-sql\">--
+      A subquery\nLEFT JOIN (\n  SELECT DISTINCT orders.customer_name, COUNT(*)
       AS previous_orders FROM ORDERS\n) AS customer_stats\n  ON customer_stats.customer_name
       = orders.customer_name\n</code></pre>\n<pre><code class=\"language-sql\">--
       A view\nCREATE VIEW customer_stats AS \nSELECT DISTINCT orders.customer_name,
@@ -1359,10 +1359,10 @@
     notebook: 1
     cell_type: 3
     contents: "-- If you'd like to start this tutorial over, you can clear out the
-      tables we created.\n-- use ctr-/ to comment/uncomment blocks in this editor\ndrop
-      table if exists products cascade; \ndrop table if exists orders cascade; \ndrop
-      table if exists line_items cascade; \ndrop table if exists chargebacks cascade;
-      \ndrop table if exists payments cascade;"
+      tables we created.\n-- use Ctrl-/ to comment/uncomment blocks in this editor.\nDROP
+      TABLE IF EXISTS products CASCADE; \nDROP TABLE IF EXISTS orders CASCADE; \nDROP
+      TABLE IF EXISTS line_items CASCADE; \nDROP TABLE IF EXISTS chargebacks CASCADE;
+      \nDROP TABLE IF EXISTS payments CASCADE;"
     rendering: null
     execution_time: null
     cell_number: 59
@@ -1667,7 +1667,7 @@
     cell_type: 1
     contents: 'Even though the inputs are not data we''ve ever seen before, the model
       is telling us both of these new samples are likely to be benign based on their
-      statistcal correlations to the training samples we had labelled. As we collect
+      statistical correlations to the training samples we had labelled. As we collect
       new data samples, we could potentially use this model for multiple purposes,
       like screening the samples before doing further more expensive or invasive analysis.
 
@@ -1676,7 +1676,7 @@
       to get the order right):'
     rendering: '<article class="markdown-body"><p>Even though the inputs are not data
       we''ve ever seen before, the model is telling us both of these new samples are
-      likely to be benign based on their statistcal correlations to the training samples
+      likely to be benign based on their statistical correlations to the training samples
       we had labelled. As we collect new data samples, we could potentially use this
       model for multiple purposes, like screening the samples before doing further
       more expensive or invasive analysis.</p>
