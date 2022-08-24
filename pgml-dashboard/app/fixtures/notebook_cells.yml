@@ -1906,7 +1906,7 @@
       Neural Nets and other forms of deep learning, leverage the 2D and 3D adjacency
       of the pixels to get breakthrough state of the art results on difficult image
       classification tasks over thousands of categories, and also for image labeling.
-      Postgres has native support for multi dimensional `ARRAY` datatypes, that PostgresML
+      Postgres has native support for multidimensional `ARRAY` data types, that PostgresML
       can treat accordingly.\n\nLet's load the dataset to start:"
     rendering: '<article class="markdown-body"><p>Image classification is a great
       application of machine learning. In this tutorial we''ll examine a classic version
@@ -1918,8 +1918,8 @@
       <p>Convolutional Neural Nets and other forms of deep learning, leverage the
       2D and 3D adjacency of the pixels to get breakthrough state of the art results
       on difficult image classification tasks over thousands of categories, and also
-      for image labeling. Postgres has native support for multi dimensional <code>ARRAY</code>
-      datatypes, that PostgresML can treat accordingly.</p>
+      for image labeling. Postgres has native support for multidimensional <code>ARRAY</code>
+      data types, that PostgresML can treat accordingly.</p>
 
       <p>Let''s load the dataset to start:</p></article>'
     execution_time: null
@@ -1940,9 +1940,9 @@
       and [task](https://huggingface.co/tasks).\n\nWe'll demonstrate some of the tasks
       that are immediately available to users of your database upon installation.\n\n###
       ⚠️ Warning ⚠️\nThese examples take a fair bit of compute. The deep learning
-      models themselves can be are several gigabytes, so they may run out of memory
+      models themselves can be several gigabytes, so they may run out of memory
       if you are accessing this notebook on the free tier of our cloud service. If
-      you're not using a GPU to accellerate inference, you make expect them to take
+      you're not using a GPU to accelerate inference, you can expect them to take
       10-20 seconds to execute.\n\n### Examples\nAll of the tasks and models demonstrated
       here can be customized by passing additional arguments to the `Pipeline` initializer
       or call. You'll find additional links to documentation in the examples below.
@@ -1963,10 +1963,10 @@
       and <a href=\"https://huggingface.co/tasks\">task</a>.</p>\n<p>We'll demonstrate
       some of the tasks that are immediately available to users of your database upon
       installation.</p>\n<h3>⚠️ Warning ⚠️</h3>\n<p>These examples take a fair bit
-      of compute. The deep learning models themselves can be are several gigabytes,
+      of compute. The deep learning models themselves can be several gigabytes,
       so they may run out of memory if you are accessing this notebook on the free
-      tier of our cloud service. If you're not using a GPU to accellerate inference,
-      you make expect them to take 10-20 seconds to execute.</p>\n<h3>Examples</h3>\n<p>All
+      tier of our cloud service. If you're not using a GPU to accelerate inference,
+      you can expect them to take 10-20 seconds to execute.</p>\n<h3>Examples</h3>\n<p>All
       of the tasks and models demonstrated here can be customized by passing additional
       arguments to the <code>Pipeline</code> initializer or call. You'll find additional
       links to documentation in the examples below. </p>\n<p>The Hugging Face <a href=\"https://huggingface.co/docs/transformers/main_classes/pipelines\"><code>Pipeline</code></a>
@@ -1993,14 +1993,14 @@
       the distance functions.
 
 
-      Emeddings can be a relatively efficient mechanism to leverage the power deep
+      Emeddings can be a relatively efficient mechanism to leverage the power of deep
       learning, without the runtime inference costs. These functions are relatively
       fast and the more expensive distance functions can compute ~100k per second
       for a memory resident dataset on modern hardware.
 
 
       The PostgreSQL planner will also [automatically parallelize](https://www.postgresql.org/docs/current/parallel-query.html)
-      evalualtion on larger datasets, as configured to take advantage of multiple
+      evaluation on larger datasets, as configured to take advantage of multiple
       CPU cores when available.'
     rendering: '<article class="markdown-body"><p>PostgresML adds <a href="https://github.com/postgresml/postgresml/tree/master/pgml-extension/sql/install/vectors.sql">native
       vector operations</a> that can be used in SQL queries. Vector operations are
@@ -2008,13 +2008,13 @@
       other machine learning algorithms and can provide functions like nearest neighbor
       calculations using the distance functions.</p>
 
-      <p>Emeddings can be a relatively efficient mechanism to leverage the power deep
+      <p>Emeddings can be a relatively efficient mechanism to leverage the power of deep
       learning, without the runtime inference costs. These functions are relatively
       fast and the more expensive distance functions can compute ~100k per second
       for a memory resident dataset on modern hardware.</p>
 
       <p>The PostgreSQL planner will also <a href="https://www.postgresql.org/docs/current/parallel-query.html">automatically
-      parallelize</a> evalualtion on larger datasets, as configured to take advantage
+      parallelize</a> evaluation on larger datasets, as configured to take advantage
       of multiple CPU cores when available.</p></article>'
     execution_time: null
     cell_number: 1
@@ -2173,7 +2173,7 @@
       See [text classification documentation](https://huggingface.co/tasks/text-classification)
       for more options and potential use cases beyond sentiment analysis. You''ll
       notice the outputs are not great in this example. RoBERTa is a breakthrough
-      model, that demonstrated just how important each particular hyperparameter is
+      model that demonstrated just how important each particular hyperparameter is
       for the task and particular dataset regardless of how large your model is. We''ll
       show how to [fine tune](/user_guides/transformers/fine_tuning/) models on your
       data in the next step.'
@@ -2192,7 +2192,7 @@
       <p>See <a href="https://huggingface.co/tasks/text-classification">text classification
       documentation</a> for more options and potential use cases beyond sentiment
       analysis. You''ll notice the outputs are not great in this example. RoBERTa
-      is a breakthrough model, that demonstrated just how important each particular
+      is a breakthrough model that demonstrated just how important each particular
       hyperparameter is for the task and particular dataset regardless of how large
       your model is. We''ll show how to <a href="/user_guides/transformers/fine_tuning/">fine
       tune</a> models on your data in the next step.</p></article>'
@@ -2270,7 +2270,7 @@
   fields:
     notebook: 8
     cell_type: 3
-    contents: select * from pgml.models limit 10;
+    contents: SELECT * FROM pgml.models LIMIT 10;
     rendering: null
     execution_time: null
     cell_number: 3
@@ -2297,7 +2297,7 @@
   fields:
     notebook: 8
     cell_type: 3
-    contents: select * from pgml.projects limit 10;
+    contents: SELECT * FROM pgml.projects LIMIT 10;
     rendering: null
     execution_time: null
     cell_number: 5
@@ -2311,13 +2311,13 @@
     contents: '## Snapshots
 
 
-      Snapshots are an artifcat of calls to `pgml.train` that include a specific `relation_name`
+      Snapshots are an artifact of calls to `pgml.train` that include a specific `relation_name`
       parameter. A full copy of all data in the relation at training time will be
       saved in a new table named `pgml.snapshot_{id}`. You can retrieve the original
       training data set by inspecting tables like `pgml.snapshot_1`.'
     rendering: '<article class="markdown-body"><h2>Snapshots</h2>
 
-      <p>Snapshots are an artifcat of calls to <code>pgml.train</code> that include
+      <p>Snapshots are an artifact of calls to <code>pgml.train</code> that include
       a specific <code>relation_name</code> parameter. A full copy of all data in
       the relation at training time will be saved in a new table named <code>pgml.snapshot_{id}</code>.
       You can retrieve the original training data set by inspecting tables like <code>pgml.snapshot_1</code>.</p></article>'
@@ -2656,9 +2656,9 @@
     notebook: 3
     cell_type: 1
     contents: It's a bit tough to parse the results of the search in pure SQL, so
-      you can hope over to the [Projects](../../projects/) list to see a visualization.
+      you can hop over to the [Projects](../../projects/) list to see a visualization.
     rendering: <article class="markdown-body"><p>It's a bit tough to parse the results
-      of the search in pure SQL, so you can hope over to the <a href="../../projects/">Projects</a>
+      of the search in pure SQL, so you can hop over to the <a href="../../projects/">Projects</a>
       list to see a visualization.</p></article>
     execution_time: null
     cell_number: 19
@@ -3373,13 +3373,13 @@
     cell_type: 1
     contents: '## Rolling back to a specific algorithm
 
-      Rolling back creates a new deploy for the model that was deployed before the
-      current one. Multiple rollbacks in a row will effectively oscilate between the
+      Rolling back creates a new deployment for the model that was deployed before the
+      current one. Multiple rollbacks in a row will effectively oscillate between the
       two most recently deployed models, making rollbacks a relatively safe operation.'
     rendering: '<article class="markdown-body"><h2>Rolling back to a specific algorithm</h2>
 
-      <p>Rolling back creates a new deploy for the model that was deployed before
-      the current one. Multiple rollbacks in a row will effectively oscilate between
+      <p>Rolling back creates a new deployment for the model that was deployed before
+      the current one. Multiple rollbacks in a row will effectively oscillate between
       the two most recently deployed models, making rollbacks a relatively safe operation.</p></article>'
     execution_time: null
     cell_number: 3
@@ -3401,7 +3401,7 @@
   fields:
     notebook: 8
     cell_type: 3
-    contents: select * from pgml.snapshots limit 10;
+    contents: SELECT * FROM pgml.snapshots LIMIT 10;
     rendering: null
     execution_time: null
     cell_number: 7
@@ -3412,7 +3412,7 @@
   fields:
     notebook: 8
     cell_type: 3
-    contents: select * from pgml.snapshot_1 limit 10;
+    contents: SELECT * FROM pgml.snapshot_1 LIMIT 10;
     rendering: null
     execution_time: null
     cell_number: 8
@@ -3441,7 +3441,7 @@
   fields:
     notebook: 8
     cell_type: 3
-    contents: select * from pgml.deployments limit 10;
+    contents: SELECT * FROM pgml.deployments LIMIT 10;
     rendering: null
     execution_time: null
     cell_number: 10
