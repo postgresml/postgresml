@@ -1404,7 +1404,7 @@
       and use an academic benchmark dataset that already includes binary labels from
       UCI ML Breast Cancer Wisconsin. Features were computed from a digitized image
       of a fine needle aspirate (FNA) of a breast mass. They describe characteristics
-      of the cell nuclei present in the image. The labels are either True for a malginant
+      of the cell nuclei present in the image. The labels are either True for a malignant
       sample of False for a benign sample.
 
 
@@ -1441,7 +1441,7 @@
       binary labels from UCI ML Breast Cancer Wisconsin. Features were computed from
       a digitized image of a fine needle aspirate (FNA) of a breast mass. They describe
       characteristics of the cell nuclei present in the image. The labels are either
-      True for a malginant sample of False for a benign sample.</p>
+      True for a malignant sample of False for a benign sample.</p>
 
       <p>You can load this dataset into your Postgres database with the following
       SQL.</p></article>'
@@ -1495,7 +1495,7 @@
       the query, you''ll see that each sample set of feature data is labeled `malignant`
       [`True` or `False`]. It would be extremely difficult for a human to study all
       these numbers, and see how they correlate with malignant or not, and then be
-      able to make a prediction for new samples, but mathemeticians have been working
+      able to make a prediction for new samples, but mathematicians have been working
       on algorithms to do exactly this using computers which happen to be exceptionally
       good at this by now. This is statistical machine learning.
 
@@ -1508,7 +1508,7 @@
       of feature data is labeled <code>malignant</code> [<code>True</code> or <code>False</code>].
       It would be extremely difficult for a human to study all these numbers, and
       see how they correlate with malignant or not, and then be able to make a prediction
-      for new samples, but mathemeticians have been working on algorithms to do exactly
+      for new samples, but mathematicians have been working on algorithms to do exactly
       this using computers which happen to be exceptionally good at this by now. This
       is statistical machine learning.</p>
 
@@ -1597,7 +1597,7 @@
       samples, and `1` for malignant samples. This isn't a great test though, because
       we're using the same data we trained with. We could have just looked up the
       data in the database table if this is all we wanted to do. The point of training
-      a machine learning model, is to generalize these statistics to data we've never
+      a machine learning model is to generalize these statistics to data we've never
       seen before. What do you think this model would predict if all the input features
       happened to be 0 or 1? How does that compare to what it's seen before? \n\nIt's
       easy to test the model and see by providing new sample data in real time. There
@@ -1611,7 +1611,7 @@
       for malignant samples. This isn''t a great test though, because we''re using
       the same data we trained with. We could have just looked up the data in the
       database table if this is all we wanted to do. The point of training a machine
-      learning model, is to generalize these statistics to data we''ve never seen
+      learning model is to generalize these statistics to data we''ve never seen
       before. What do you think this model would predict if all the input features
       happened to be 0 or 1? How does that compare to what it''s seen before? </p>
 
@@ -1667,7 +1667,7 @@
     cell_type: 1
     contents: 'Even though the inputs are not data we''ve ever seen before, the model
       is telling us both of these new samples are likely to be benign based on their
-      statistical correlations to the training samples we had labelled. As we collect
+      statistical correlations to the training samples we had labeled. As we collect
       new data samples, we could potentially use this model for multiple purposes,
       like screening the samples before doing further more expensive or invasive analysis.
 
@@ -1677,7 +1677,7 @@
     rendering: '<article class="markdown-body"><p>Even though the inputs are not data
       we''ve ever seen before, the model is telling us both of these new samples are
       likely to be benign based on their statistical correlations to the training samples
-      we had labelled. As we collect new data samples, we could potentially use this
+      we had labeled. As we collect new data samples, we could potentially use this
       model for multiple purposes, like screening the samples before doing further
       more expensive or invasive analysis.</p>
 
@@ -1733,7 +1733,7 @@
     cell_type: 3
     contents: '--
 
-      -- After a project has been trained, ommited parameters will be reused from
+      -- After a project has been trained, omitted parameters will be reused from
       previous training runs
 
       -- In these examples we''ll reuse the training data snapshots from the initial
@@ -2482,7 +2482,7 @@
     cell_type: 3
     contents: '--
 
-      -- After a project has been trained, ommited parameters will be reused from
+      -- After a project has been trained, omitted parameters will be reused from
       previous training runs
 
       -- In these examples we''ll reuse the training data snapshots from the initial
