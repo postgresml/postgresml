@@ -58,7 +58,7 @@ Instead of starting from the academic perspective that data is dead, PostgresML 
 - Denormalized datasets may grow to billions of rows, and terabytes of data
 - The data often spans multiple iterations of the schema, and software bugs can introduce outlier data
 
-We think it’s worth attempting to move the machine learning process and modern data architectures beyond the status quo. To that end, we’re building the PostgresML Gym to provide a test bed for real world ML experimentation in a Postgres database. Your personal gym will include the PostgresML dashboard and several tutorial notebooks to get you started. You can even load those familiar academic data sets with calls to [pgml.load_data()](https://postgresml.org/gym/quick_start/#get-data). 
+We think it’s worth attempting to move the machine learning process and modern data architectures beyond the status quo. To that end, we’re building the PostgresML Gym to provide a test bed for real world ML experimentation in a Postgres database. Your personal gym will include the PostgresML dashboard and several tutorial notebooks to get you started.
 
 <center>
   <video autoplay loop muted width="90%" style="box-shadow: 0 0 8px #000;">
