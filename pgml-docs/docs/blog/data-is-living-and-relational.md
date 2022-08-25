@@ -15,7 +15,7 @@ img.center {
 }
 </style>
 
-Data is living and relational
+Data is Living and Relational
 ================================
 
 <div class="author">
