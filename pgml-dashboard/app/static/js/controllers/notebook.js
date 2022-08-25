@@ -34,7 +34,6 @@ export default class extends Controller {
     if (event.shiftKey) {
       if (event.key === 'Enter' && event.keyCode === 13) {
         const selectedCellPlay = document.querySelector('.selected form[data-action="notebook-cell#play"]')
-        console.log("requesting submit", selectedCellPlay)
 
         if (selectedCellPlay) {
           selectedCellPlay.requestSubmit()
