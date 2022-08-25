@@ -21,7 +21,7 @@ Data is Living and Relational
 <div class="author">
   <img width="54px" height="54px" src="/images/team/montana.jpg" />
   <p>Montana Low</p>
-  <p class="date">September 25, 2022</p>
+  <p class="date">August 25, 2022</p>
 </div>
 
 
