@@ -46,7 +46,7 @@ As Data Science transitions from academia into industry, those norms influence o
 
 This eventually leads to expensive maintenance and then to terminal complexity where new improvements to the system become exponentially more difficult. Ultimately, previously working models start getting replaced by simpler solutions, so the business can continue to iterate. This is not a new phenomenon, see the fate of the Netflix Prize.
 
-Anouncing the PostgresML Gym 🎉
+Announcing the PostgresML Gym 🎉
 -------------------------------
 
 Instead of starting from the academic perspective that data is dead, PostgresML embraces the living and dynamic nature of data inside modern organizations. It's relational and growing in multiple dimensions.
