@@ -33,7 +33,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-        key: dashboard-{{ checksum "requirements.txt" }}
+          key: dashboard-{{ checksum "requirements.txt" }}
       - run:
           name: Install dependencies
           command: pip install -r requirements.txt
@@ -41,8 +41,8 @@ jobs:
           name: Run tests
           command: python manage.py test
       - save_cache:
-        key: dashboard-{{ checksum "requirements.txt" }}
-        paths:
+          key: dashboard-{{ checksum "requirements.txt" }}
+          paths:
           - ~/.pip
 
 # Invoke jobs via workflows
