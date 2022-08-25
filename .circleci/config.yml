@@ -30,20 +30,20 @@ jobs:
       - image: cimg/postgres:14-ram
         environment:
           POSTGRES_PASSWORD: circleci
-      steps:
-        - checkout
-        - restore_cache:
-          key: dashboard-{{ checksum "requirements.txt" }}
-        - run:
-            name: Install dependencies
-            command: pip install -r requirements.txt
-        - run:
-            name: Run tests
-            command: python manage.py test
-        - save_cache:
-          key: dashboard-{{ checksum "requirements.txt" }}
-          paths:
-            - ~/.pip
+    steps:
+      - checkout
+      - restore_cache:
+        key: dashboard-{{ checksum "requirements.txt" }}
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements.txt
+      - run:
+          name: Run tests
+          command: python manage.py test
+      - save_cache:
+        key: dashboard-{{ checksum "requirements.txt" }}
+        paths:
+          - ~/.pip
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
