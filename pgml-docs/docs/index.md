@@ -49,11 +49,13 @@ article.md-content__inner.md-typeset a.md-content__button.md-icon {
   [Docs](/user_guides/setup/quick_start_with_docker/){ .md-button }
 </p>
 
-<video autoplay loop muted style="box-shadow: 0 0 8px #000;">
-  <source src="images/demo.webm" type="video/webm">
-  <source src="images/demo.mp4" type="video/mp4">
-  <img src="images/console.png" alt="PostgresML in practice" loading="lazy">
-</video>
+<center>
+  <video autoplay loop muted width="90%" style="box-shadow: 0 0 8px #000;">
+    <source src="/images/demos/gym_demo.webm" type="video/webm">
+    <source src="/images/demos/gym_demo.mp4" type="video/mp4">
+    <img src="/images/demos/gym_demo.png" alt="PostgresML in practice" loading="lazy">
+  </video>
+</center>
 
 ## Pure SQL Solution
 
@@ -125,7 +127,7 @@ ORDER BY prediction DESC;
 __All your favorite algorithms__
 
 Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/), [XGBoost](https://xgboost.readthedocs.io/), [LightGBM](https://lightgbm.readthedocs.io/) and pre-trained deep learning models via [Hugging Face](https://huggingface.co/models).
-
+I think
 [:material-arrow-right: Algorithms](/user_guides/training/algorithm_selection/)
   </div>
   <div class="card" markdown>

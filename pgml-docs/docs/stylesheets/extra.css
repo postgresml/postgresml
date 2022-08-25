@@ -70,3 +70,13 @@
     .bare .card:nth-child(3) { order: 4; }
     .bare .card:nth-child(4) { order: 3; }
 }
+
+.author img {
+    border-radius: 50%;
+    float: left;
+    margin-right: 16px;
+}
+
+.author p {
+    margin: 0;
+}

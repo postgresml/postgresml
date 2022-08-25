@@ -1,6 +1,3 @@
-{#-
-This file was automatically generated - do not edit
--#}
 {% set class = "md-nav md-nav--primary" %}
 {% if "navigation.tabs" in features %}
 {% set class = class ~ " md-nav--lifted" %}
@@ -20,6 +17,7 @@ This file was automatically generated - do not edit
         {% include "partials/source.html" %}
         </div>
     {% endif %}
+
     <ul class="md-nav__list" data-md-scrollfix>
         {% for nav_item in nav %}
         {% set path = "__nav_" ~ loop.index %}
