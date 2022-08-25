@@ -1,10 +1,10 @@
 from django.test import TestCase
-from notebooks.models import *
+from app.models import Notebook, NotebookCell
 
 
 class TestNotebookCell(TestCase):
     def setUp(self):
-        self.notebook = Notebook(name="Test")
+        self.notebook, created = Notebook.objects.get_or_create(name="Test")
 
     def test_markdown(self):
         markdown = """
@@ -30,7 +30,8 @@ Hello world!
         """
 
         cell = NotebookCell(notebook=self.notebook, cell_type=NotebookCell.MARKDOWN, contents=markdown)
-        html = cell.html()
+        cell.render()
+        html = cell.html
 
         self.assertIn("<p>", html)
         self.assertIn("<code>", html)
@@ -42,7 +43,8 @@ Hello world!
         """
 
         cell = NotebookCell(notebook=self.notebook, cell_type=NotebookCell.PLAIN_TEXT, contents=plain_text)
-        html = cell.html()
+        cell.render()
+        html = cell.html
 
         self.assertIn("Hey there friends!", html)
         self.assertNotIn("<p>", html)
@@ -53,8 +55,9 @@ Hello world!
         """
 
         cell = NotebookCell(notebook=self.notebook, cell_type=NotebookCell.SQL, contents=sql)
-        html = cell.html()
+        cell.render()
+        html = cell.html
 
         self.assertIn("<table>", html)
         self.assertIn("<td>1</td>", html)
-        self.assertIn("<td>one</td>", html)
+        self.assertIn("<td><strong>one</strong></td>", html)

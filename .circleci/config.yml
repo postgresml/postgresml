@@ -17,6 +17,33 @@ jobs:
       - run:
           name: "Train and predict"
           command: "cd pgml-extension; bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -c 'SELECT 1'"
+  dashboard:
+    working_directory: pgml-dashboard
+    docker:
+      - image: cimg/python:3.10
+        environment:
+          DJANGO_SECRET_KEY: insecure-development-key-for-django
+          DJANGO_DEBUG: "True"
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+          PGML_DATABASE_URL: postgres://circleci@circleci@127.0.0.1:5432/postgres
+          DJANGO_CSRF_TRUSTED_ORIGINS: http://127.0.0.1,http://localhost
+      - image: cimg/postgres:14
+        environment:
+          POSTGRES_PASSWORD: circleci
+    steps:
+      - checkout
+      - restore_cache:
+          key: dashboard-{{ checksum "requirements.txt" }}
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements.txt
+      - run:
+          name: Run tests
+          command: python manage.py test
+      - save_cache:
+          key: dashboard-{{ checksum "requirements.txt" }}
+          paths:
+          - ~/.pip
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -24,3 +51,4 @@ workflows:
   end-to-end-tests:
     jobs:
       - extension
+      # - dashboard
