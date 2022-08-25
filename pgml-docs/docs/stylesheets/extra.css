@@ -80,3 +80,7 @@
 .author p {
     margin: 0;
 }
+
+.md-button--primary {
+  margin-bottom: 1rem;
+}
