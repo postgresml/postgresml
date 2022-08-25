@@ -11,10 +11,6 @@ from app.models import Notebook, NotebookCell
 import time
 
 
-class HttpResponseSeeOther(HttpResponseRedirect):
-    status_code = 303
-
-
 def index(request):
     return render(
         request,
