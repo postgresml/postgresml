@@ -127,7 +127,7 @@ ORDER BY prediction DESC;
 __All your favorite algorithms__
 
 Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/), [XGBoost](https://xgboost.readthedocs.io/), [LightGBM](https://lightgbm.readthedocs.io/) and pre-trained deep learning models via [Hugging Face](https://huggingface.co/models).
-I think
+
 [:material-arrow-right: Algorithms](/user_guides/training/algorithm_selection/)
   </div>
   <div class="card" markdown>
