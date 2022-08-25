@@ -51,4 +51,4 @@ workflows:
   end-to-end-tests:
     jobs:
       - extension
-      - dashboard
+      # - dashboard
