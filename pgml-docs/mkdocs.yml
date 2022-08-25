@@ -139,6 +139,8 @@ nav:
             - Deployments: user_guides/schema/deployments.md
     - Developer Guide:
         - Developer Overview: developer_guide/overview.md
+    - Blog:
+        - Data is Living and Relational: blog/data-is-living-and-relational.md
     - About:
         - Team: about/team.md
         - Roadmap: about/roadmap.md
