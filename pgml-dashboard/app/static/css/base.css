@@ -552,6 +552,10 @@ main turbo-frame:first-of-type .notebook-cell {
     border-left: 2px solid var(--highlite-green);
 }
 
+.notebook-cell.notebook-delete-undo {
+    border-left: 2px solid var(--highlite-red);
+}
+
 .notebook-cell-edit {
     background: var(--gray-10);
 }

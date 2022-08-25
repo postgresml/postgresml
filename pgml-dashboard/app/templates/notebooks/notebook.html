@@ -30,10 +30,6 @@
   {% include 'notebooks/cell.html' %}
   {% endfor %}
 
-  <!-- Next new cell, I think this will render the page quicker -->
-  <turbo-frame id="cell_{{ next_cell_number }}">
-  </turbo-frame>
-
   <section class="notebook-cell" data-controller="notebook-cell">
     <div class="notebook-cell-edit">
       <form action="{% url 'notebooks/cell/add' notebook.pk %}" method="post" data-notebook-cell-target="form" data-action="notebook-cell#freezeScrollOnNextRender notebook-cell#play">
