@@ -55,7 +55,7 @@ Instead of starting from the academic perspective that data is dead, PostgresML 
 
 ![relational data](/images/illustrations/uml.png)
 
-Relationa data:
+Relational data:
 
 - is normalized for real time performance and correctness considerations
 - has new rows added and updated constantly, which form incomplete features for a prediction
@@ -65,7 +65,7 @@ Meanwhile, denormalized datasets:
 - may grow to billions of rows, where single updates multiply into mass rewrites
 - often span multiple iterations of the schema, with software bugs leaving behind outliers
 
-We think it’s worth attempting to move the machine learning process and modern data architectures beyond the status quo. To that end, we’re building the PostgresML Gym, a free offering, to provide a test bed for real world ML experimentation in a Postgres database. Your personal Gym will include the PostgresML dashboard, several tutorial notebooks to get you started, and access to your own personal PostgreSQL database, supercharged with our machine learning extension.
+We think it’s worth attempting to move the machine learning process and modern data architectures beyond the status quo. To that end, we’re building the PostgresML Gym, a free offering, to provide a test bed for real world ML experimentation, in a Postgres database. Your personal Gym will include the PostgresML dashboard, several tutorial notebooks to get you started, and access to your own personal PostgreSQL database, supercharged with our machine learning extension.
 
 <center>
   <video autoplay loop muted width="90%" style="box-shadow: 0 0 8px #000;">
