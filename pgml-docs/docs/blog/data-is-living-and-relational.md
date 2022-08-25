@@ -39,10 +39,10 @@ A common problem with data science and machine learning tutorials is the publish
 
 They are:
 
-- usually denormalized into a single tabular form, e.g. a CSV file,
-- often relatively tiny to medium amounts of data, not big data,
-- always static, with new rows never added,
-- and sometimes pre-treated to clean or simplify the data.
+- usually denormalized into a single tabular form, e.g. a CSV file
+- often relatively tiny to medium amounts of data, not big data
+- always static, with new rows never added
+- sometimes pre-treated to clean or simplify the data
 
 As Data Science transitions from academia into industry, these norms influence organizations and applications. Professional Data Scientists need teams of Data Engineers to move data from production databases into data warehouses and denormalized schemas which are more familiar, and ideally easier to work with. Large offline batch jobs are a typical integration point between Data Scientists and their Engineering counterparts, who primarily deal with online systems. As the systems grow more complex, additional specialized Machine Learning Engineers are required to optimize performance and scalability bottlenecks between databases, warehouses, models and applications.
 
@@ -57,13 +57,13 @@ Instead of starting from the academic perspective that data is dead, PostgresML 
 
 Relationa data:
 
-- is normalized for real time performance and correctness considerations,
-- and has new rows added and updated constantly, which form the incomplete features for a prediction.
+- is normalized for real time performance and correctness considerations
+- has new rows added and updated constantly, which form the incomplete features for a prediction
 
 Meanwhile, denormalized data sets:
 
-- may grow to billions of rows, and terabytes of data,
-- and often span multiple iterations of the schema, with software bugs introducing outliers.
+- may grow to billions of rows, where single updates multiple into mass rewrites
+- often span multiple iterations of the schema, where software bugs leave behind outliers
 
 We think it’s worth attempting to move the machine learning process and modern data architectures beyond the status quo. To that end, we’re building the PostgresML Gym, a free offering, to provide a test bed for real world ML experimentation in a Postgres database. Your personal Gym will include the PostgresML dashboard, several tutorial notebooks to get you started, and access to your own personal PostgreSQL database, supercharged with our machine learning extension.
 
