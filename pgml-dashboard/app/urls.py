@@ -45,11 +45,6 @@ urlpatterns = [
         notebooks.remove_notebook_cell,
         name="notebooks/cell/remove",
     ),
-    path(
-        "notebooks/<int:notebook_pk>/cell/<int:cell_pk>/remove/undo/",
-        notebooks.undo_remove_notebook_cell,
-        name="notebooks/cell/remove/undo",
-    ),
     path("notebooks/<int:pk>/reset/", notebooks.reset_notebook, name="notebooks/reset"),
     path(
         "notebooks/<int:notebook_pk>/cell/<int:cell_pk>/play/",

@@ -235,21 +235,6 @@ def remove_notebook_cell(request, notebook_pk, cell_pk):
         )
 
 
-def undo_remove_notebook_cell(request, notebook_pk, cell_pk):
-    """Undo cell delete."""
-    cell = get_object_or_404(NotebookCell, pk=cell_pk, notebook__pk=notebook_pk)
-
-    return render(
-        request,
-        "notebooks/cell.html",
-        {
-            "cell": cell,
-            "notebook": cell.notebook,
-            "bust_cache": time.time(),
-        },
-    )
-
-
 def reset_notebook(request, pk):
     """Remove renderings from all cells that can be executed, e.g. SQL."""
     notebook = get_object_or_404(Notebook, pk=pk)
