@@ -1,14 +1,25 @@
-<turbo-frame id="cell_{{ cell.cell_number }}">
+<turbo-frame id="cell_{{ cell.pk }}">
   <section class="notebook-cell notebook-delete-undo" data-controller="notebook-cell" data-notebook-cell-target="undo">
     <div class="flex">
       <div class="cell-number">{{ cell.cell_number }}</div>
-      <p class="flex-grow flex flex-center markdown-body">Cell removed. You have 10 seconds to undo.</p>
+      <p class="flex-grow flex flex-center markdown-body">Are you sure you want to delete this cell? You can undo this or delete this cell forever.</p>
       <div class="notebook-button">
-        <form action="{% url 'notebooks/cell/remove/undo' notebook.pk cell.pk %}" action="post">
+        <form action="{% url 'notebooks/cell/remove/undo' notebook.pk cell.pk %}" method="post">
           {% csrf_token %}
           <button type="submit" title="Undo cell delete">
             <span class="material-symbols-outlined">
               replay
+            </span>
+          </button>
+        </form>
+      </div>
+      <div class="notebook-button">
+        <form action="{% url 'notebooks/cell/remove' notebook.pk cell.pk %}" method="post" data-turbo-method="delete">
+          {% csrf_token %}
+          <input type="hidden" name="confirm" value="true" />
+          <button type="submit" title="Delete forever">
+            <span class="material-symbols-outlined">
+              delete_forever
             </span>
           </button>
         </form>

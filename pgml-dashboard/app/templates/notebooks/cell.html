@@ -1,4 +1,6 @@
-<turbo-frame id="cell_{{ cell.cell_number }}">
+<turbo-frame id="cell_{{ cell.pk }}">
+  {% if cell.deleted_at %}
+  {% else %}
   <section data-controller="notebook-cell" class="notebook-cell {{ cell.get_cell_type_display|lower }}{% if selected %} selected{% endif %}" data-action="click->notebook#selectCell" data-notebook-target="cell">
 
     {% if edit %}
@@ -87,4 +89,5 @@
       {% endif %}
     </div>
   </section>
+  {% endif %}
 </turbo-frame>

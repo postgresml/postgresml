@@ -4,10 +4,15 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django import forms
 from django.db import transaction
 from django.utils import timezone
+from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 from app.models import Notebook, NotebookCell
 import time
+
+
+class HttpResponseSeeOther(HttpResponseRedirect):
+    status_code = 303
 
 
 def index(request):
@@ -24,13 +29,7 @@ def index(request):
 def notebook(request, pk):
     """Render a notebook."""
     notebook = get_object_or_404(Notebook, pk=pk)
-    cells = list(notebook.notebookcell_set.all().filter(deleted_at__isnull=True).order_by("cell_number"))
-
-    # Pre-render the Turbo frame for a new cell.
-    if cells:
-        next_cell_number = cells[-1].cell_number + 1
-    else:
-        next_cell_number = 1
+    cells = notebook.notebookcell_set.all().order_by("cell_number").filter(deleted_at__isnull=True)
 
     return render(
         request,
@@ -38,7 +37,6 @@ def notebook(request, pk):
         {
             "cells": cells,
             "notebook": notebook,
-            "next_cell_number": next_cell_number,
             "title": f"{notebook.name} - PostgresML",
             "topic": "notebooks",
             "bust_cache": time.time(),
@@ -198,25 +196,48 @@ def edit_notebook_cell(request, notebook_pk, cell_pk):
 def remove_notebook_cell(request, notebook_pk, cell_pk):
     """Delete a notebook cell."""
     cell = get_object_or_404(NotebookCell, pk=cell_pk, notebook__pk=notebook_pk)
-    cell.deleted_at = timezone.now()
-    cell.save()
 
-    return render(
-        request,
-        "notebooks/undo.html",
-        {
-            "cell": cell,
-            "notebook": cell.notebook,
-            "bust_cache": time.time(),
-        },
-    )
+    # Actually delete the cell.
+    if request.POST.get("confirm"):
+        cell.deleted_at = timezone.now()
+        cell.save()
+
+        # Re-order cells after a delete.
+        notebook = get_object_or_404(Notebook, pk=notebook_pk)
+        cells = notebook.notebookcell_set.order_by("cell_number").filter(deleted_at__isnull=True)
+        cell_number = 1
+        for c in cells:
+            c.cell_number = cell_number
+            c.save()
+
+            cell_number += 1
+
+        return render(
+            request,
+            "notebooks/cell.html",
+            {
+                "cell": cell,
+                "notebook": cell.notebook,
+                "bust_cache": time.time(),
+            },
+        )
+
+    # Leave it alone.
+    else:
+        return render(
+            request,
+            "notebooks/undo.html",
+            {
+                "cell": cell,
+                "notebook": cell.notebook,
+                "bust_cache": time.time(),
+            },
+        )
 
 
 def undo_remove_notebook_cell(request, notebook_pk, cell_pk):
     """Undo cell delete."""
     cell = get_object_or_404(NotebookCell, pk=cell_pk, notebook__pk=notebook_pk)
-    cell.deleted_at = None
-    cell.save()
 
     return render(
         request,

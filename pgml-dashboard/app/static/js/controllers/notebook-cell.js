@@ -15,16 +15,6 @@ export default class extends Controller {
     if (this.hasEditorTarget && this.hasFormTarget) {
       this.initCodeMirrorOnTarget(this.editorTarget)
     }
-
-    // Delete the frame in 10 seconds.
-    if (this.hasUndoTarget) {
-      setTimeout(function() {
-        // I think undoTarget is preserved after reload, not sure
-        if (this.hasUndoTarget && this.undoTarget.parentNode) {
-          this.undoTarget.parentNode.remove()
-        }
-      }.bind(this), 10000)
-    }
   }
 
   // Enable CodeMirror on target.
@@ -64,7 +54,7 @@ export default class extends Controller {
   // Prevent the page from scrolling up
   // and scroll it manually to the bottom
   // on form submit.
-  freezeScrollOnNextRender() {
+  freezeScrollOnNextRender(event) {
     document.addEventListener('turbo:render', scrollToBottom);
   }
 
@@ -90,6 +80,12 @@ export default class extends Controller {
   cancelEdit(event) {
     event.preventDefault()
     this.cancelEditTarget.requestSubmit()
+  }
+
+  deleteForever(event) {
+    if (this.hasUndoTarget) {
+      this.undoTarget.parentNode.remove()
+    }
   }
 }
 
