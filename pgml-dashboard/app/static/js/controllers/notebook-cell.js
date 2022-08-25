@@ -81,12 +81,6 @@ export default class extends Controller {
     event.preventDefault()
     this.cancelEditTarget.requestSubmit()
   }
-
-  deleteForever(event) {
-    if (this.hasUndoTarget) {
-      this.undoTarget.parentNode.remove()
-    }
-  }
 }
 
 const scrollToBottom = () => {
