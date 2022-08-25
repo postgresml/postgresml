@@ -27,7 +27,7 @@ jobs:
           DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
           PGML_DATABASE_URL: postgres://circleci@circleci@127.0.0.1:5432/postgres
           DJANGO_CSRF_TRUSTED_ORIGINS: http://127.0.0.1,http://localhost
-      - image: cimg/postgres:14.4.0
+      - image: cimg/postgres:14
         environment:
           POSTGRES_PASSWORD: circleci
     steps:
@@ -51,4 +51,4 @@ workflows:
   end-to-end-tests:
     jobs:
       - extension
-      - dashboard
+      # - dashboard
