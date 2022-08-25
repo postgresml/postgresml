@@ -62,8 +62,8 @@ We think it’s worth attempting to move the machine learning process and modern
 
 <center>
   <video autoplay loop muted width="90%" style="box-shadow: 0 0 8px #000;">
-    <source src="/images/demos/gym_demo.webm" type="video/webm">
-    <source src="/images/demos/gym_demo.mp4" type="video/mp4">
+    <source src="https://static.postgresml.org/postgresml-org-static/gym_demo.webm" type="video/webm">
+    <source src="https://static.postgresml.org/postgresml-org-static/gym_demo.mp4" type="video/mp4">
     <img src="/images/demos/gym_demo.png" alt="PostgresML in practice" loading="lazy">
   </video>
 </center>
