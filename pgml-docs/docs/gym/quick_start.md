@@ -14,8 +14,8 @@ PostgresML is easy to get started with. If you haven't already, sign up for our 
 </p>
 
 <video autoplay loop muted>
-  <source src="/images/demo.webm" type="video/webm">
-  <source src="/images/demo.mp4" type="video/mp4">
+   <source src="https://static.postgresml.org/postgresml-org-static/gym_demo.webm" type="video/webm">
+	 <source src="https://static.postgresml.org/postgresml-org-static/gym_demo.mp4" type="video/mp4">
   <img src="/images/console.png" alt="PostgresML in practice" loading="lazy">
 </video>
 
