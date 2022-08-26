@@ -71,14 +71,13 @@
     .bare .card:nth-child(4) { order: 3; }
 }
 
-.author img {
+p.author {
+    font-size: 0.7rem;
+}
+p.author img {
     border-radius: 50%;
     float: left;
     margin-right: 16px;
-}
-
-.author p {
-    margin: 0;
 }
 
 .md-button--primary {

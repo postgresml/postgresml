@@ -18,11 +18,11 @@ img.center {
 Data is Living and Relational
 ================================
 
-<div class="author">
+<p class="author">
   <img width="54px" height="54px" src="/images/team/montana.jpg" />
-  <p>Montana Low</p>
-  <p class="date">August 25, 2022</p>
-</div>
+  Montana Low<br/>
+  August 25, 2022
+</p>
 
 
 A common problem with data science and machine learning tutorials is the published and studied datasets are often nothing like what you’ll find in industry.
