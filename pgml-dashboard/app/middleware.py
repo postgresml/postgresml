@@ -2,6 +2,7 @@ import jwt
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import reverse
+from django.db import connection
 
 PERMISSION_DENIED = """
 <!DOCTYPE html>
@@ -45,7 +46,25 @@ class JwtAuthentcationMiddleware:
                 token = auth_header.split(" ")[-1]
 
             token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            request.dashboard_uuid = token["dashboard"]
         except Exception:
             return HttpResponse(PERMISSION_DENIED, status=403)
 
+        return self.get_response(request)
+
+
+class MultiTenantMiddleware:
+    """Handle dashboard fronting multiple PostgresML instances."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if hasattr(request, "dashboard_uuid") and settings.MULTI_TENANT_CONFIG:
+            with connection.cursor() as cursor:
+                uuid = request.dashboard_uuid
+                shard = settings.MULTI_TENANT_CONFIG.get(uuid)
+                if shard:
+                    # https://github.com/levkk/pgcat
+                    cursor.execute(f"SET SHARD TO '{shard}'")
         return self.get_response(request)

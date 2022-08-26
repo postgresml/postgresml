@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 import os
 import mimetypes
+import json
 
 import dotenv
 
@@ -73,6 +74,7 @@ MIDDLEWARE = [
     "request.middleware.RequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "app.middleware.MultiTenantMiddleware",
 ]
 
 ROOT_URLCONF = "pgml_dashboard.urls"
@@ -188,3 +190,11 @@ JWT_AUTH_ENABLED = os.environ.get("DJANGO_JWT_AUTH_ENABLED", "False") == "True"
 REQUEST_IGNORE_PATHS = [
     r"api/requests",
 ]
+
+# Connect to multiple PostgresML instances
+# if configured.
+MULTI_TENANT_CONFIG = {}
+MULTI_TENANT_CONFIG_PATH = os.environ.get("MULTI_TENANT_CONFIG_PATH")
+if MULTI_TENANT_CONFIG_PATH:
+    with open(MULTI_TENANT_CONFIG_PATH) as f:
+        MULTI_TENANT_CONFIG = json.load(f)
