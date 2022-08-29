@@ -36,6 +36,9 @@
         src="https://img.shields.io/pypi/v/pgml-extension.svg" 
         alt="Python Package Index"
     /></a>
+    <a href="https://discord.gg/DmyJP3qJ7U" target="_blank">
+        Join our Discord!
+    </a>
 </p>
 
 <p align="center">
