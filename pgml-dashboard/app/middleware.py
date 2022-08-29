@@ -45,13 +45,11 @@ class JwtAuthentcationMiddleware:
                 # Extract the token assuming "Bearer <token>"
                 token = auth_header.split(" ")[-1]
 
-            print(token)
             token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
             request.dashboard_uuid = token["dashboard"]
             if "shard" in token:
-                request.shard = int(token["shard"])
-        except Exception as e:
-            print(e)
+                request.shard = token["shard"]
+        except Exception:
             return HttpResponse(PERMISSION_DENIED, status=403)
 
         return self.get_response(request)
@@ -70,5 +68,5 @@ class MultiTenantMiddleware:
             with connection.cursor() as cursor:
                 shard = request.shard
                 # https://github.com/levkk/pgcat
-                cursor.execute(f"SET SHARD TO {shard}")
+                cursor.execute(f"SET SHARD TO '{shard}'")
         return self.get_response(request)
