@@ -36,10 +36,9 @@
         src="https://img.shields.io/pypi/v/pgml-extension.svg" 
         alt="Python Package Index"
     /></a>
-    <a href="https://discord.gg/DmyJP3qJ7U" target="_blank">
-        <img src="https://img.shields.io/discord/1013868243036930099" alt="Join our Discord!" />
-    </a>
 </p>
+
+<iframe src="https://discord.com/widget?id=1013868243036930099&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
 
 <p align="center">
     Train and deploy models to make online predictions using only SQL, with an open source extension for Postgres. Manage your projects and visualize datasets using the built in dashboard.
