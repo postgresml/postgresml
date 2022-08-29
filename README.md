@@ -37,7 +37,7 @@
         alt="Python Package Index"
     /></a>
     <a href="https://discord.gg/DmyJP3qJ7U" target="_blank">
-        Join our Discord!
+        <img src="https://img.shields.io/discord/1013868243036930099" alt="Join our Discord!" />
     </a>
 </p>
 
