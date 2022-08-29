@@ -66,6 +66,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "app.middleware.JwtAuthentcationMiddleware",
+    "app.middleware.MultiTenantMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -74,7 +75,6 @@ MIDDLEWARE = [
     "request.middleware.RequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "app.middleware.MultiTenantMiddleware",
 ]
 
 ROOT_URLCONF = "pgml_dashboard.urls"
@@ -117,7 +117,8 @@ DATABASES = {
         "HOST": database.hostname,
         "PORT": database.port,
         "SCHEMA": "pgml",
-    }
+        "CONN_MAX_AGE": 60,
+    },
 }
 
 # Password validation
@@ -190,11 +191,3 @@ JWT_AUTH_ENABLED = os.environ.get("DJANGO_JWT_AUTH_ENABLED", "False") == "True"
 REQUEST_IGNORE_PATHS = [
     r"api/requests",
 ]
-
-# Connect to multiple PostgresML instances
-# if configured.
-MULTI_TENANT_CONFIG = {}
-MULTI_TENANT_CONFIG_PATH = os.environ.get("MULTI_TENANT_CONFIG_PATH")
-if MULTI_TENANT_CONFIG_PATH:
-    with open(MULTI_TENANT_CONFIG_PATH) as f:
-        MULTI_TENANT_CONFIG = json.load(f)

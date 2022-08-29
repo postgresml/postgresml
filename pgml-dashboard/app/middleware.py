@@ -45,26 +45,30 @@ class JwtAuthentcationMiddleware:
                 # Extract the token assuming "Bearer <token>"
                 token = auth_header.split(" ")[-1]
 
+            print(token)
             token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
             request.dashboard_uuid = token["dashboard"]
-        except Exception:
+            if "shard" in token:
+                request.shard = int(token["shard"])
+        except Exception as e:
+            print(e)
             return HttpResponse(PERMISSION_DENIED, status=403)
 
         return self.get_response(request)
 
 
 class MultiTenantMiddleware:
-    """Handle dashboard fronting multiple PostgresML instances."""
+    """Handle dashboard using multiple PostgresML instances.
+
+    PostgresML instances must be proxied by PgCat."""
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        if hasattr(request, "dashboard_uuid") and settings.MULTI_TENANT_CONFIG:
+        if hasattr(request, "shard"):
             with connection.cursor() as cursor:
-                uuid = request.dashboard_uuid
-                shard = settings.MULTI_TENANT_CONFIG.get(uuid)
-                if shard:
-                    # https://github.com/levkk/pgcat
-                    cursor.execute(f"SET SHARD TO '{shard}'")
+                shard = request.shard
+                # https://github.com/levkk/pgcat
+                cursor.execute(f"SET SHARD TO {shard}")
         return self.get_response(request)
