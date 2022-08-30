@@ -15,9 +15,9 @@ If you haven't already, install:
 
 1. `cargo install pgx`
 2. `cargo pgx run`
-3. `CREATE SCHEMA pgml`
-4. `\i diabetes.sql`
-5. `SELECT pgml_train('pgml.diabetes', ARRAY['age', 'sex', ...], 'target');`
-6. `SELECT * FROM pgml_predict(ARRAY[1, 5.0, ...]);`
+3. `DROP EXTENSION IF EXISTS pgml_rust;`
+4. `CREATE EXTENSION pgml_rust;`
+5. `SELECT pgml_train('pgml.diabetes', ARRAY['age', 'sex'], 'target');`
+6. `SELECT * FROM pgml_predict(ARRAY[1, 5.0]);`
 
 Lots of todos, but still a decent PoC.
