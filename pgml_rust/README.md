@@ -4,21 +4,19 @@ Here we have some POC code to use Rust for PostgresML.
 
 ## Dependencies
 
-1. `git submodule init`
-2. `git submodule update`
-3. `cd src/rust-xgboost/xgboost-sys`
-4. `git submodule init`
-5. `git submodule update`
-6. `cd xgboost`
-7. `git submodule init`
-8. `git submodule update`
+We're pulling rust-xgboost directly from Git because it's using the latest version of clang,
+and we can't link more than one version of clang into the same executable/library. PGX is using a newer one,
+hence the conflict.
 
-Phew, that was a lot of submodules. You just downloaded:
+1. `git clone https://github.com/davechallis/rust-xgboost`
+2. `cd rust-xgboost`
+3. `git submodule init && git submodule update`
+4. `cd xgboost-sys/xgboost && git submodule init && git submodule update`
+5. Modify `rust-xgboost/Cargo.toml` and change `xgboost-sys = "..."` to use the local version of `xgboost-sys`:
 
-- `xgboost` Rust bindings
-- `xgboost-sys` Bindgen 1:1 Rust:C++ XGBoost types,
-- `xgboost` C++ source code
-- `xgboost` dependencies
+```
+xgboost-sys = { path = "./xgboost-sys" }
+```
 
 ## Local development
 

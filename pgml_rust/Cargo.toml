@@ -17,7 +17,7 @@ pg_test = []
 
 [dependencies]
 pgx = "=0.4.5"
-xgboost = { path = "src/rust-xgboost" }
+xgboost = { path = "rust-xgboost" }
 rustlearn = "0.5"
 
 [dev-dependencies]

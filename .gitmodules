@@ -1,0 +1,3 @@
+[submodule "pgml_rust/rust-xgboost"]
+	path = pgml_rust/rust-xgboost
+	url = https://github.com/davechallis/rust-xgboost
