@@ -1,0 +1,50 @@
+name: continuous build
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        task: ["unittest_gtest", "cmake_test", "sanitizer_test", "s390x_test"]
+        os: [macos-10.15, ubuntu-18.04]
+        exclude:
+          # excludes sanitizer_test and s390x_test on macOS
+          - os: macos-10.15
+            task: "sanitizer_test"
+          - os: macos-10.15
+            task: "s390x_test"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          activate-environment: test
+          environment-file: scripts/conda_env.yml
+      - name: Display Conda env
+        shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+      - name: Install Dependencies
+        run: |
+          if [[ $(uname) != "Darwin" ]]; then
+            sudo apt update
+            sudo apt install doxygen libcurl4-openssl-dev gcc-5 g++-5
+          else
+            brew install libomp doxygen gcc@11
+          fi
+      - name: Lint
+        shell: bash -l {0}
+        run: |
+          TASK=lint ./scripts/test_script.sh
+      - name: googletest
+        shell: bash -l {0}
+        run: |
+          if [[ "${{ matrix.task }}" == "s390x_test" ]]; then
+            docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+          fi
+          TASK=${{ matrix.task }} ./scripts/test_script.sh
