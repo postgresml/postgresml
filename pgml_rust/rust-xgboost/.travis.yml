@@ -1,0 +1,22 @@
+language: rust
+
+os:
+    - linux
+    - osx
+
+rust:
+    - stable
+    - nightly
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
+cache: cargo
+
+script:
+  - cd xgboost-sys && cargo test --verbose --all
+  - cd .. && cargo test --verbose --all
+  - cd examples/basic && cargo run
+  - cd ../custom_objective && cargo run
+  - cd ../generalised_linear_model && cargo run

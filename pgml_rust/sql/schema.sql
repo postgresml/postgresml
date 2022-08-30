@@ -1,0 +1,16 @@
+CREATE SCHEMA IF NOT EXISTS pgml_rust;
+
+CREATE TABLE IF NOT EXISTS pgml_rust.projects (
+	id BIGSERIAL PRIMARY KEY,
+	name VARCHAR UNIQUE,
+	task VARCHAR,
+	created_at TIMESTAMP WITHOUT TIME ZONE,
+	updated_at TIMESTAMP WITHOUT TIME ZONE
+);
+
+CREATE TABLE IF NOT EXISTS pgml_rust.files (
+	id BIGSERIAL PRIMARY KEY,
+	project_id BIGINT REFERENCES pgml_rust.projects(id),
+	file_number BIGINT,
+	data BYTEA
+);

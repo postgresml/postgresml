@@ -1,0 +1,43 @@
+on: push
+
+jobs:
+  push-to-legacy-repositories:
+    name: Push to legacy repositories
+    runs-on: ubuntu-latest
+    steps:
+    - name: Push `main` to github.com/nvlabs/cub
+      uses: wei/git-sync@v2
+      if: github.repository == 'nvidia/cub'
+      with:
+        source_repo: "nvidia/cub"
+        source_branch: "main"
+        destination_repo: "nvlabs/cub"
+        destination_branch: "main"
+        ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Push all tags to github.com/nvlabs/cub
+      uses: wei/git-sync@v2
+      if: github.repository == 'nvidia/cub'
+      with:
+        source_repo: "nvidia/cub"
+        source_branch: "refs/tags/*"
+        destination_repo: "nvlabs/cub"
+        destination_branch: "refs/tags/*"
+        ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Push `main` to github.com/thrust/cub
+      uses: wei/git-sync@v2
+      if: github.repository == 'nvidia/cub'
+      with:
+        source_repo: "nvidia/cub"
+        source_branch: "main"
+        destination_repo: "thrust/cub"
+        destination_branch: "main"
+        ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Push all tags to github.com/thrust/cub
+      uses: wei/git-sync@v2
+      if: github.repository == 'nvidia/cub'
+      with:
+        source_repo: "nvidia/cub"
+        source_branch: "refs/tags/*"
+        destination_repo: "thrust/cub"
+        destination_branch: "refs/tags/*"
+        ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}

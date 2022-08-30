@@ -4,6 +4,8 @@ use std::path::Path;
 
 pg_module_magic!();
 
+extension_sql_file!("../sql/schema.sql", name = "bootstrap_raw", bootstrap);
+extension_sql_file!("../sql/diabetes.sql", name = "diabetes", requires = ["bootstrap_raw"]);
 
 /// Main training function to train an XGBoost model on a dataset.
 /// Parameters:
@@ -16,7 +18,7 @@ pg_module_magic!();
 /// ```
 /// SELECT * FROM pgml_train('pgml.diabetes', ARRAY['age', 'sex'], 'target');
 #[pg_extern]
-fn pgml_train(table: String, features: Vec<String>, label: String) {
+fn pgml_rust_train(table: String, features: Vec<String>, label: String) {
     let features = features.iter().map(|column| format!("CAST({} AS REAL)", column)).collect::<Vec<String>>();
 
     let query = format!(
@@ -25,7 +27,7 @@ fn pgml_train(table: String, features: Vec<String>, label: String) {
 
     let (mut x, mut y, mut num_rows) = (vec![], vec![], 0);
 
-    info!("Executing {}", query);
+    info!("Fetching data: {}", query);
 
     Spi::connect(|client| {
         client.select(&query, None, None)
@@ -33,7 +35,7 @@ fn pgml_train(table: String, features: Vec<String>, label: String) {
             for i in 1..features.len() + 1 {
                 x.push(row[i].value::<f32>().unwrap_or(0 as f32));
             }
-            y.push(row[features.len()].value::<f32>().unwrap_or(0 as f32));
+            y.push(row[features.len() + 1].value::<f32>().unwrap_or(0 as f32));
             num_rows += 1;
         });
 
@@ -84,7 +86,7 @@ fn pgml_train(table: String, features: Vec<String>, label: String) {
 /// ```
 /// SELECT * FROM pgml_predict(ARRAY[1, 2, 3]);
 #[pg_extern]
-fn pgml_predict(features: Vec<f32>) -> f32 {
+fn pgml_rust_predict(features: Vec<f32>) -> f32 {
     let bst = Booster::load(&Path::new("/tmp/xgboost_model.bin")).unwrap();
     let dmat = DMatrix::from_dense(&features, 1).unwrap();
 
