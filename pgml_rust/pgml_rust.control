@@ -1,0 +1,5 @@
+comment = 'pgml_rust:  Created by pgx'
+default_version = '@CARGO_VERSION@'
+module_pathname = '$libdir/pgml_rust'
+relocatable = false
+superuser = false

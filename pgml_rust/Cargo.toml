@@ -1,0 +1,34 @@
+[package]
+name = "pgml_rust"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["pg13"]
+pg10 = ["pgx/pg10", "pgx-tests/pg10" ]
+pg11 = ["pgx/pg11", "pgx-tests/pg11" ]
+pg12 = ["pgx/pg12", "pgx-tests/pg12" ]
+pg13 = ["pgx/pg13", "pgx-tests/pg13" ]
+pg14 = ["pgx/pg14", "pgx-tests/pg14" ]
+pg_test = []
+
+[dependencies]
+pgx = "=0.4.5"
+xgboost = { path = "src/rust-xgboost" }
+rustlearn = "0.5"
+
+[dev-dependencies]
+pgx-tests = "=0.4.5"
+
+[profile.dev]
+panic = "unwind"
+lto = "thin"
+
+[profile.release]
+panic = "unwind"
+opt-level = 3
+lto = "fat"
+codegen-units = 1
