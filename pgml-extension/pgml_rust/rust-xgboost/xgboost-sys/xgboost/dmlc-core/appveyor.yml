@@ -1,0 +1,129 @@
+environment:
+    matrix:
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+          target: msvc
+          ver: 2019
+          generator: "Visual Studio 16 2019"
+          configuration: Debug
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+          target: msvc
+          ver: 2019
+          generator: "Visual Studio 16 2019"
+          configuration: Release
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+          target: mingw32
+          generator: "MinGW Makefiles"
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+          target: cygwin
+          generator: "Unix Makefiles"
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+          target: mingw
+          generator: "MinGW Makefiles"
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+          target: msys2
+          generator: "Unix Makefiles"
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+          target: msvc
+          ver: 2015
+          generator: "Visual Studio 14 2015 Win64"
+          configuration: Debug
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+          target: msvc
+          ver: 2015
+          generator: "Visual Studio 14 2015 Win64"
+          configuration: Release
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+          target: msvc
+          ver: 2017
+          generator: "Visual Studio 15 2017 Win64"
+          configuration: Debug
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+          target: msvc
+          ver: 2017
+          generator: "Visual Studio 15 2017 Win64"
+          configuration: Release
+
+matrix:
+    fast_finish: true
+
+platform:
+    - x64
+
+install:
+    - git submodule update --init --recursive
+    # Set PATH
+    - if /i "%target%" == "msys2" set PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
+    - if /i "%target%" == "mingw32" set PATH=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin;%PATH:C:\Program Files\Git\usr\bin;=%
+    - if /i "%target%" == "mingw" set PATH=C:\MinGW-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin;%PATH:C:\Program Files\Git\usr\bin;=%
+    - if /i "%target%" == "cygwin" set PATH=C:\cygwin64\bin;C:\cygwin64\usr\bin;%PATH%
+    # Install packages and show information
+    - if /i "%target%" == "msys2" (
+        gcc -v
+      )
+    - if /i "%target%" == "mingw" (
+        gcc -v
+      )
+    - if /i "%target%" == "cygwin" (
+        gcc -v
+      )
+
+build_script:
+    - cd %APPVEYOR_BUILD_FOLDER%
+    - if /i "%target%" == "msvc" (
+        mkdir build_msvc%ver% &&
+        cd build_msvc%ver% &&
+        if /i "%generator%" == "Visual Studio 12 2013 Win64" (
+          cmake .. -G"%generator%" -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CONFIGURATION_TYPES="Release;Debug;" &&
+          msbuild dmlc.sln
+        ) else if /i "%generator%" == "Visual Studio 16 2019" (
+          cmake .. -G"%generator%" -A x64 -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CONFIGURATION_TYPES="Release;Debug;" -DGOOGLE_TEST=ON &&
+          msbuild dmlc.sln
+        ) else (
+          cmake .. -G"%generator%" -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CONFIGURATION_TYPES="Release;Debug;" -DGOOGLE_TEST=ON &&
+          msbuild dmlc.sln
+        )
+      )
+    - if /i "%target%" == "msys2" (
+        mkdir build_msys2 &&
+        cd build_msys2 &&
+        cmake .. -G"%generator%" -DCMAKE_VERBOSE_MAKEFILE=ON -DGOOGLE_TEST=ON &&
+        cmake --build . -- -j2
+      )
+    - if /i "%target%" == "mingw32" (
+        mkdir build_mingw32 &&
+        cd build_mingw32 &&
+        cmake .. -G"%generator%" -DCMAKE_VERBOSE_MAKEFILE=ON -DGOOGLE_TEST=ON &&
+        cmake --build . -- -j2
+      )
+    - if /i "%target%" == "mingw" (
+        mkdir build_mingw &&
+        cd build_mingw &&
+        cmake .. -G"%generator%" -DCMAKE_VERBOSE_MAKEFILE=ON -DGOOGLE_TEST=ON &&
+        cmake --build . -- -j2
+      )
+    - if /i "%target%" == "cygwin" (
+        mkdir build_cygwin &&
+        cd build_cygwin &&
+        cmake .. -G"%generator%" -DCMAKE_VERBOSE_MAKEFILE=ON -DGOOGLE_TEST=ON -DOpenMP_gomp_LIBRARY:FILEPATH=-lgomp &&
+        cmake --build . -- -j2
+      )
+
+test_script:
+    - cd %APPVEYOR_BUILD_FOLDER%
+    - if /i "%target%" == "msvc" (
+        if /i not "%generator%" == "Visual Studio 12 2013 Win64" (
+          .\build_msvc%ver%\test\unittest\%configuration%\dmlc_unit_tests.exe
+        )
+      )
+    - if /i "%target%" == "msys2" (
+        .\build_msys2\test\unittest\dmlc_unit_tests.exe
+      )
+    - if /i "%target%" == "mingw32" (
+        .\build_mingw32\test\unittest\dmlc_unit_tests.exe
+      )
+    - if /i "%target%" == "mingw" (
+        .\build_mingw\test\unittest\dmlc_unit_tests.exe
+      )
+    - if /i "%target%" == "cygwin" (
+        .\build_cygwin\test\unittest\dmlc_unit_tests.exe
+      )

@@ -1,0 +1,7 @@
+CREATE SCHEMA IF NOT EXISTS pgml_rust;
+
+CREATE TABLE IF NOT EXISTS pgml_rust.models (
+	id BIGSERIAL PRIMARY KEY,
+	algorithm VARCHAR,
+	data BYTEA
+);
