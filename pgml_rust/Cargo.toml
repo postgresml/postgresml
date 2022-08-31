@@ -19,6 +19,10 @@ pg_test = []
 pgx = "=0.4.5"
 xgboost = { path = "rust-xgboost" }
 rustlearn = "0.5"
+serde = "*"
+heapless = "*"
+once_cell = "*"
+rand = "*"
 
 [dev-dependencies]
 pgx-tests = "=0.4.5"
