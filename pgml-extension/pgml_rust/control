@@ -1,0 +1,14 @@
+Package: postgresql-pgml-14
+Version: VERSION
+Section: base
+Priority: optional
+Architecture: ARCH
+Depends: postgresql-14
+Maintainer: PostgresML <team@postgresml.org>
+Description: PostgresML - machine learning with PostgreSQL
+ PostgresML is a PostgreSQL extension that allows to do machine
+ learning directly in the database. It allows to both train
+ algorithms on tables or views, and to predict novel datapoints
+ using only SQL.
+ The extension is written in Rust using tcdi/pgx with some additional
+ functionality written in Python & PLPython.
