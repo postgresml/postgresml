@@ -26,8 +26,8 @@ RUN pip3 install .
 
 # Listen on 0.0.0.0 and allow 'root' to connect without a password.
 # Please modify for production deployments accordingly.
-RUN cp /app/docker/postgresql.conf /etc/postgresql/13/main/postgresql.conf
-RUN cp /app/docker/pg_hba.conf /etc/postgresql/13/main/pg_hba.conf
+RUN cp /app/docker/postgresql.conf /etc/postgresql/14/main/postgresql.conf
+RUN cp /app/docker/pg_hba.conf /etc/postgresql/14/main/pg_hba.conf
 
 WORKDIR /app
 ENTRYPOINT ["/bin/bash", "/app/docker/entrypoint.sh"]
