@@ -1,10 +1,18 @@
+# FROM rust:1-bullseye AS rust_builder
+# COPY pgml_rust /pgml_rust
+# WORKDIR /pgml_rust
+# RUN apt-get update && apt-get install -y postgresql-13 libpq-dev cmake libclang-dev
+# RUN cargo install cargo-pgx
+# RUN cargo pgx init
+# RUN cargo pgx package
+
 FROM debian:bullseye-slim
 MAINTAINER docker@postgresml.com
 
 RUN apt-get update
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-RUN apt-get install -y postgresql-plpython3-13 python3 python3-pip postgresql-13 tzdata sudo cmake libpq-dev
+RUN apt-get install -y postgresql-plpython3-13 python3 python3-pip postgresql-13 tzdata sudo cmake libpq-dev libclang-dev
 
 # Cache this, quicker
 RUN pip3 install xgboost sklearn diptest torch lightgbm transformers datasets sentencepiece sacremoses sacrebleu rouge
