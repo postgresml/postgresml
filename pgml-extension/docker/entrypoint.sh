@@ -14,6 +14,8 @@ done
 echo "Creating user and database..."
 (createdb -U postgres -h 127.0.0.1 pgml_development 2> /dev/null) || true
 
+psql -U postgres -h 127.0.0.1 pgml_development -c 'CREATE EXTENSION pgml_rust'
+
 echo "Installing pgml extension..."
 sudo pip3 install .
 sudo python3 -m pgml_extension --database-url=postgres://postgres@127.0.0.1:5432/pgml_development

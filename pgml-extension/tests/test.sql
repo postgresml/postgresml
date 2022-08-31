@@ -17,6 +17,9 @@ SELECT pgml.load_dataset('breast_cancer');
 
 SELECT pgml.load_dataset('california_housing');
 
+SELECT * FROM pgml_rust_train('pgml.diabetes', ARRAY['age', 'sex'], 'target');
+SELECT * FROM pgml_rust_predict(1, ARRAY[1, 2]);
+
 \i examples/joint_regression.sql
 \i examples/vectors.sql
 \i examples/regression.sql
