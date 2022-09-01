@@ -17,7 +17,7 @@ Redis is not really a database. It's a key-value store that keeps your data in m
 For this and many of its other properties, it is the key-value store of choice for high throughput systems like ML feature stores, job queues, Twitter and Twitch[^1]. None of those systems however expect your data to be safe. In fact, if it's gone, your product should be able to go on like nothing really happened. For those deployments, machine learning and other features it powers, are treated as just a nice to have.
 
 
-## ScyllaDB
+## ScyllaDB (and friends)
 
 Scylla is the new kid on the block, at least as far as databases go. It's been around for 6 years, but it's making headlines with large deployments like Discord[^2] and Expedia[^3]. It takes the idea that key-value stores can be fast, and if you have a power outage, your data remains safe and replicated across availability zones of your favorite cloud. To top it all off, it uses Cassandra's SQL syntax and client/server protocol, so you might think that it can actually power your business-critical systems.
 
