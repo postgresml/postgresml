@@ -62,7 +62,7 @@ SELECT pgml.train(
 SELECT
 	pgml.predict(
 		'Orders Likely To Be Returned',
-		ARRAY[orders.*]) AS refund_likelyhood,
+		ARRAY[orders.*]) AS refund_likelihood,
 		orders.*
 FROM orders
 ORDER BY refund_likelyhood DESC
