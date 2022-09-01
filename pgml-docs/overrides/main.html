@@ -4,6 +4,38 @@
 <a class="navbar-brand" href="{{ nav.homepage.url|url }}">Postgres<span style="color: dodgerblue">ML</span></a>
 {%- endblock %}
 
+{% block site_meta %}
+{{ super() }}
+  <meta name="og:site_name" content="PostgresML">
+{% if page.meta and page.meta.title %}
+  <meta name="og:title" content="{{ page.meta.title }}">
+{% elif page.title %}
+  <meta name="og:title" content="{{ page.title | striptags }}">
+{% endif %}
+{% if page.meta and page.meta.type %}
+  <meta name="og:type" content="{{ page.meta.type }}">
+{% endif %}
+{% if page.meta and page.meta.description %}
+  <meta name="og:description" content="{{ page.meta.description }}">
+{% elif config.site_description %}
+  <meta name="og:description" content="{{ config.site_description }}">
+{% endif %}
+{% if page.meta and page.meta.author %}
+  <meta name="og:author" content="{{ page.meta.author }}">
+{% endif %}
+{% if page.meta and page.meta.image %}
+<meta name="og:image" content="{{ page.meta.image }}">
+{% endif %}
+{% if page.meta and page.meta.image_alt %}
+<meta name="og:image:alt" content="{{ page.meta.image_alt }}">
+{% endif %}
+{% if page.meta and page.meta.type %}
+  <meta name="og:type" content="{{ page.meta.type }}">
+{% else %}
+  <meta name="og:type" content="article">
+{% endif %}
+{% endblock %}
+
 {%- block content %}
 {{ super() }}
 
