@@ -25,6 +25,8 @@ At its heart though Scylla is still a key-value store. We can put things in, but
 
 Ultimately though, with no join support or foreign keys, Scylla tables, much like Redis keys, are isolated from each other. So finding out how many of your customers in San Francisco have ordered your best selling shoes will require an expensive data warehouse instead of a `GROUP BY city ORDER BY COUNT(*)`.
 
+You might think DynamoDB, MongoDB, and all other SQL look-alikes[^6] are better, but they are all forgetting one important fact.
+
 
 ## Denormalized Data is DOA
 
@@ -81,3 +83,4 @@ Discord Chooses ScyllaDB as Its Core Storage Layer
 [^3]: [Expedia Group: Our Migration Journey to ScyllaDB](https://www.scylladb.com/2021/02/18/expedia-group-our-migration-journey-to-scylla/)
 [^4]: [PostgreSQL WAL](https://www.postgresql.org/docs/14/wal.html)
 [^5]: [Web scale](https://www.youtube.com/watch?v=b2F-DItXtZs)
+[^6]: [SQL to MongoDB Mapping Chart](https://www.mongodb.com/docs/manual/reference/sql-comparison/)
