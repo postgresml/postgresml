@@ -1,5 +1,12 @@
 # Which Database, That is the Question
 
+<p class="author">
+  <img width="54px" height="54px" src="/images/team/lev.jpg" alt="Author" />
+  Lev Kokotov<br/>
+  September 1, 2022
+</p>
+
+
 Choosing a database for your product sounds like a hard problem. These days, we the engineers have an abundance of choice, which makes this decision harder than it should be.
 
 
@@ -7,23 +14,23 @@ Choosing a database for your product sounds like a hard problem. These days, we 
 
 Redis is not really a database. It's a key-value store that keeps your data in memory. If Redis accidently restarts, due to power failure for example, you'll lose some or all of your keys, depending on configuration. Don't get me wrong, I love Redis; it's fast, it has cool data structures like sets and HyperLogLog, and it can even horizontally scale most of its features in cluster mode.
 
-For this and many of its other properties, it is the key-value store of choice for high throughput systems like ML feature stores, job queues, Twitter and Twitch[^1]. None of those systems however expect your data to be safe. In fact, if it's gone, your product should be able to go on like nothing really happened. For most of those deployments, machine learning and other features it powers, are treated as just a nice to have.
+For this and many of its other properties, it is the key-value store of choice for high throughput systems like ML feature stores, job queues, Twitter and Twitch[^1]. None of those systems however expect your data to be safe. In fact, if it's gone, your product should be able to go on like nothing really happened. For those deployments, machine learning and other features it powers, are treated as just a nice to have.
 
 
 ## ScyllaDB
 
-Scylla is the new kid on the block, at least as far as databases go. It's been around for 6 years, but it's making headlines with large deployments like Discord[^2] and Expedia[^3]. It takes the idea that key-value stores can be fast, and if you have a power outage, your data remains safe and replicated across availability zones of your favorite cloud. To top it all off, it uses Cassandra's SQL syntax and client/server protocol, so you might think that it can actually power your business critical systems.
+Scylla is the new kid on the block, at least as far as databases go. It's been around for 6 years, but it's making headlines with large deployments like Discord[^2] and Expedia[^3]. It takes the idea that key-value stores can be fast, and if you have a power outage, your data remains safe and replicated across availability zones of your favorite cloud. To top it all off, it uses Cassandra's SQL syntax and client/server protocol, so you might think that it can actually power your business-critical systems.
 
-At its heart though Scylla is still a key-value store. We can put things in, but getting them back out in a way that makes sense will still prove to be a challenge. It does have secondary indexes, so you want to fetch your users by email instead of by primary key for example, you still might be able to, it'll just be slower.
+At its heart though Scylla is still a key-value store. We can put things in, but getting them back out in a way that makes sense will still prove to be a challenge. It does have secondary indexes, so if you want to find your users by email instead of by primary key one day, you still might be able to, it'll just be slower.
 
-Ultimately though, with no join support or foreign keys, Scylla tables, much like Redis keys, are isolated from each other. So finding out how many users that live in San Francisco have ordered your best selling shoes will require an expensive data warehouse instead of a `GROUP BY city ORDER BY COUNT(*)`.
+Ultimately though, with no join support or foreign keys, Scylla tables, much like Redis keys, are isolated from each other. So finding out how many of your customers in San Francisco have ordered your best selling shoes will require an expensive data warehouse instead of a `GROUP BY city ORDER BY COUNT(*)`.
 
 
 ## Denormalized Data is Useless
 
-Relationships are the foundation of everything, ranging all the way from personal well-being to having a successful business. Most problems we'll run into our day to day lives  involve understanding how entities work together. Which users logged in today? That's a relationship between users, logins and time. How many users bought our top selling product? How much did that product cost to deliver? Those are relationships between prices, products, days, users, and orders.
+Relationships are the foundation of everything, ranging all the way from personal well-being to having a successful business. Most problems we'll run into our day to day involve understanding how entities work together. Which users logged in today? That's a relationship between users, logins and time. How many users bought our top selling product? How much did that product cost to deliver? Those are relationships between prices, products, date ranges, users, and orders.
 
-If we denormalize this data, by either flattening it into a key-value store or just storing is independent tables in different databases, we lose its meaning, and if we lose its meaning, we stop understanding our business, and fail.
+If we denormalize this data, by either flattening it into a key-value store or just storing it in independent tables in different databases, we lose the ability to query it in interesting ways, and if we lose that, we stop understanding our business.
 
 
 ## PostgreSQL
