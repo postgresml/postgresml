@@ -26,7 +26,7 @@ At its heart though Scylla is still a key-value store. We can put things in, but
 Ultimately though, with no join support or foreign keys, Scylla tables, much like Redis keys, are isolated from each other. So finding out how many of your customers in San Francisco have ordered your best selling shoes will require an expensive data warehouse instead of a `GROUP BY city ORDER BY COUNT(*)`.
 
 
-## Denormalized Data is Useless
+## Denormalized Data is DOA
 
 Relationships are the foundation of everything, ranging all the way from personal well-being to having a successful business. Most problems we'll run into our day to day involve understanding how entities work together. Which users logged in today? That's a relationship between users, logins and time. How many users bought our top selling product? How much did that product cost to deliver? Those are relationships between prices, products, date ranges, users, and orders.
 
