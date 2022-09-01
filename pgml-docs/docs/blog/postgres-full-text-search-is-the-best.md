@@ -17,7 +17,7 @@ Normalized data is a powerful tool leveraged by 10x engineering organizations. I
 This is good enough for most of the use cases out there, without introducing any additional concerns to your application. But, if you've ever tried to deliver relevant search results at scale, you'll realize that you need a lot more than these fundamentals. ElasticSearch has all kinds of best in class features, like a modified version of BM25 that is state of the art (developed in the 1970's), which is one of the many features you need beyond the Term Frequency (TF) based ranking that Postgres uses... but, _the ElasticSearch approach is a dead end_ for 2 reasons:
 
 1. Trying to improve search relevance with statistics like TF-IDF and BM25 is like trying to make a flying car. What you want is a helicopter instead.
-2. Computing inverse document frequency for BM25 brutalizes your search indexing performance, which leads to a [host of follow on issues via distributed computation](https://en.wikipedia.org/wiki/Fallacies_of_distributed_computing), for the originally dubious reason.
+2. Computing Inverse Document Frequency (IDF) for BM25 brutalizes your search indexing performance, which leads to a [host of follow on issues via distributed computation](https://en.wikipedia.org/wiki/Fallacies_of_distributed_computing), for the originally dubious reason.
 
 <figure markdown>
   <center markdown>
