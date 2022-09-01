@@ -3,7 +3,7 @@
 <p class="author">
   <img width="54px" height="54px" src="/images/team/montana.jpg" />
   Montana Low<br/>
-  August 25, 2022
+  August 31, 2022
 </p>
 
 Normalized data is a powerful tool leveraged by 10x engineering organizations. If you haven't read [Postgres Full Text Search is Good Enough!](http://rachbelaid.com/postgres-full-text-search-is-good-enough/) you should, unless you're willing to take that statement at face value, without the code samples to prove it. We'll go beyond that claim in this post, but to reiterate the main points, Postgres supports:
