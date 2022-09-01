@@ -1,4 +1,4 @@
-<h1>Postgres Full Text Search is <del>Good Enough</del> Awesome!</h1>
+<h1>Postgres Full Text Search is Awesome!</h1>
 
 <p class="author">
   <img width="54px" height="54px" src="/images/team/montana.jpg" />
