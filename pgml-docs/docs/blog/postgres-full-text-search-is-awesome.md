@@ -26,7 +26,7 @@ This is good enough for most of the use cases out there, without introducing any
   <figcaption>What we were promised</figcaption>
 </figure>
 
-Academics have spent decades inventing many algorithms that use orders of magnitude more compute eking out marginally better results that often aren't worth it in practice. Not to generally disparage academia, their work has consistently improved our world, but we need to pay attention to tradeoffs.
+Academics have spent decades inventing many algorithms that use orders of magnitude more compute eking out marginally better results that often aren't worth it in practice. Not to generally disparage academia, their work has consistently improved our world, but we need to pay attention to tradeoffs. SQL is another acronym similiarly pioneered in the 1970's. One difference between SQL and BM25 is that everyone has heard of the former before reading this blog post, for good reason.
 
 If you actually want to meaningfully improve search results, you generally need to add new data sources. Relevance is much more often revealed by the way other things **_relate_** to the document, rather than the content of the document itself. Google proved the point 23 years ago. Pagerank doesn't rely on the page content itself as much as it uses metadata from _links to the pages_. We live in a connected world and it's the interplay among things that reveal their relevance, whether that is links for websites, sales for products, shares for social posts... It's the greater context around the document that matters.
 
@@ -46,7 +46,7 @@ With a single SQL query, you can do multiple passes of re-ranking, pruning and p
 
 These queries can execute in milliseconds on large production-sized corpora with Postgres's multiple indexing strategies. You can do all of this without adding any new infrastructure to your stack.
 
-The following full blown example is for demonstration purposes only. You may want to try the PostgresML Gym to work up to the full understanding.
+The following full blown example is for demonstration purposes only of a 3rd generation search engine. You can test it for real in the PostgresML Gym to build up a complete understanding.
 
 <center markdown>
   [Try the PostgresML Gym](https://gym.postgresml.org/){ .md-button .md-button--primary }
@@ -54,10 +54,12 @@ The following full blown example is for demonstration purposes only. You may wan
 
 ```sql title="search.sql" linenums="1"
 WITH query AS (
-  -- construct a query context with data that would typically be
+  -- construct a query context with arguments that would typically be
   -- passed in from the application layer
   SELECT 
+    -- a keyword query for "my" OR "search" OR "terms"
     tsquery('my | search | terms') AS keywords,
+    -- a user_id for personalization later on
     123456 AS user_id
 ), 
 first_pass AS (
@@ -81,6 +83,7 @@ second_pass AS (
   -- grab more data from outside the documents
   JOIN document_embeddings ON document_embeddings.document_id = documents.id
   JOIN user_embeddings ON user_embeddings.user_id = query.user_id
+  -- of course we be re-ranking
   ORDER BY similarity_score DESC
   -- further prune results to top performers for more expensive ranking
   LIMIT 1000
