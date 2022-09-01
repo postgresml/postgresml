@@ -1,3 +1,11 @@
+---
+author: Montana Low
+description: If you want to improve your search results, don't rely on expensive O(n*m) word frequency statistics. Get new sources of data instead. It's the relational nature of relevance that underpins why a relational database forms the ideal search engine.
+image: https://postgresml.org/blog/images/delorean.jpg
+image_alt: We were promised flying cars
+---
+
+
 <h1>Postgres Full Text Search is Awesome!</h1>
 
 <p class="author">
