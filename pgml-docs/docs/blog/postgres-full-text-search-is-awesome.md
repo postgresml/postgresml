@@ -10,7 +10,7 @@ Normalized data is a powerful tool leveraged by 10x engineering organizations. I
 
 - Stemming
 - Ranking / Boost
-- Support Multiple languages
+- Multiple languages
 - Fuzzy search for misspelling
 - Accent support
 
