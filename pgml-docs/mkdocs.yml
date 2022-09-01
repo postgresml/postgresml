@@ -142,7 +142,7 @@ nav:
         - Developer Overview: developer_guide/overview.md
     - Blog:
         - Data is Living and Relational: blog/data-is-living-and-relational.md
-        - Postgres Full Text Search is the Best: blog/postgres-full-text-search-is-awesome.md
+        - Postgres Full Text Search is Awesome: blog/postgres-full-text-search-is-awesome.md
     - About:
         - Team: about/team.md
         - Roadmap: about/roadmap.md

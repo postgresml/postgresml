@@ -1,4 +1,4 @@
-<h1>Postgres Full Text Search is <del>Good Enough</del> the Best!</h1>
+<h1>Postgres Full Text Search is <del>Good Enough</del> Awesome!</h1>
 
 <p class="author">
   <img width="54px" height="54px" src="/images/team/montana.jpg" />
@@ -17,7 +17,7 @@ Normalized data is a powerful tool leveraged by 10x engineering organizations. I
 This is good enough for most of the use cases out there, without introducing any additional concerns to your application. But, if you've ever tried to deliver relevant search results at scale, you'll realize that you need a lot more than these fundamentals. ElasticSearch has all kinds of best in class features, like a modified version of BM25 that is state of the art (developed in the 1970's), which is one of the many features you need beyond the Term Frequency (TF) based ranking that Postgres uses... but, _the ElasticSearch approach is a dead end_ for 2 reasons:
 
 1. Trying to improve search relevance with statistics like TF-IDF and BM25 is like trying to make a flying car. What you want is a helicopter instead.
-2. Computing inverse document frequency for BM25 brutalizes your search indexing performance, which leads to a [host of follow on issues via distributed computation](https://en.wikipedia.org/wiki/Fallacies_of_distributed_computing), for the originally dubious reason.
+2. Computing Inverse Document Frequency (IDF) for BM25 brutalizes your search indexing performance, which leads to a [host of follow on issues via distributed computation](https://en.wikipedia.org/wiki/Fallacies_of_distributed_computing), for the originally dubious reason.
 
 <figure markdown>
   <center markdown>
@@ -32,7 +32,7 @@ If you actually want to meaningfully improve search results, you generally need 
 
 > _If you want to improve your search results, don't rely on expensive O(n*m) word frequency statistics. Get new sources of data instead. It's the relational nature of relevance that underpins why a relational database forms the ideal search engine._
 
-Postgres made the right call to avoid the costs required to compute Inverse Document Frequency in their search indexing, given its meager benefit. Instead, it offers the most feature-complete relational data platform. [Elasticsearch will tell you](https://www.elastic.co/guide/en/elasticsearch/reference/current/joining-queries.html) you can't join data in a **_naively distributed system_** at read time, because it is prohibitively expensive. Instead you'll have to join the data eagerly at indexing time, which is even more prohibitively expensive. That's good for their business since you're the one paying for it, and it will scale until you're bankrupt. 
+Postgres made the right call to avoid the costs required to compute Inverse Document Frequency in their search indexing, given its meager benefit. Instead, it offers the most feature-complete relational data platform. [Elasticsearch will tell you](https://www.elastic.co/guide/en/elasticsearch/reference/current/joining-queries.html), that you can't join data in a **_naively distributed system_** at read time, because it is prohibitively expensive. Instead you'll have to join the data eagerly at indexing time, which is even more prohibitively expensive. That's good for their business since you're the one paying for it, and it will scale until you're bankrupt. 
 
 What you really should do, is leave the data normalized inside Postgres, which will allow you to join additional, related data at query time. It will take multiple orders of magnitude less compute to index and search a normalized corpus, meaning you'll have a lot longer (potentially forever) before you need to distribute your workload, and then maybe you can do that intelligently instead of naively. Instead of spending your time building and maintaining pipelines to shuffle updates between systems, you can work on new sources of data to really improve relevance.
 
