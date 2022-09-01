@@ -2,4 +2,5 @@ mkdocs
 mkdocs-material
 mkdocs-minify-plugin
 mkdocs-include-markdown-plugin
+mkdocs-glightbox
 pymdown-extensions
