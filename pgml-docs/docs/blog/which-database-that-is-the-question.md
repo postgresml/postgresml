@@ -7,7 +7,7 @@
 </p>
 
 
-Choosing a database for your product sounds like a hard problem. These days, we the engineers have an abundance of choice, which makes this decision harder than it should be.
+Choosing a database for your product sounds like a hard problem. These days, we engineers have an abundance of choice, which makes this decision harder than it should be. Let's look at a few options.
 
 
 ## Redis
@@ -28,14 +28,14 @@ Ultimately though, with no join support or foreign keys, Scylla tables, much lik
 
 ## Denormalized Data is DOA
 
-Relationships are the foundation of everything, ranging all the way from personal well-being to having a successful business. Most problems we'll run into our day to day involve understanding how entities work together. Which users logged in today? That's a relationship between users, logins and time. How many users bought our top selling product? How much did that product cost to deliver? Those are relationships between prices, products, date ranges, users, and orders.
+Relationships are the foundation of everything, ranging from personal well-being to having a successful business. Most problems we'll run into involve understanding how entities work together. Which users logged in today? That's a relationship between users, logins and time. How many users bought our top selling product? How much did that product cost to deliver? Those are relationships between prices, products, date ranges, users, and orders.
 
 If we denormalize this data, by either flattening it into a key-value store or just storing it in independent tables in different databases, we lose the ability to query it in interesting ways, and if we lose that, we stop understanding our business.
 
 
 ## PostgreSQL
 
-![Postgres is the way](./postgres-is-the-way.jpg)
+![Postgres is the way](/blog/images/postgres-is-the-way.jpg)
 
 Okay, that was a bit of a spoiler.
 
