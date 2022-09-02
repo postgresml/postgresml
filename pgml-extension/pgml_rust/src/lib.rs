@@ -585,14 +585,14 @@ fn pgml_distance_l1_d(vector: Vec<f64>, other: Vec<f64>) -> f64 {
 fn pgml_distance_l2_s(vector: Vec<f32>, other: Vec<f32>) -> f32 {
     vector.as_slice().iter()
         .zip(other.as_slice().iter())
-        .map(|(a, b)| (a * b) ).sum::<f32>().sqrt()
+        .map(|(a, b)| (a - b).powf(2.0) ).sum::<f32>().sqrt()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name="pgml_distance_l2")]
 fn pgml_distance_l2_d(vector: Vec<f64>, other: Vec<f64>) -> f64 {
     vector.as_slice().iter()
         .zip(other.as_slice().iter())
-        .map(|(a, b)| (a * b) ).sum::<f64>().sqrt()
+        .map(|(a, b)| (a - b).powf(2.0) ).sum::<f64>().sqrt()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name="pgml_dot_product")]
