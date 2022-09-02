@@ -94,7 +94,7 @@ mod pgml_rust {
             ),
         };
 
-        let (mut x, mut y, mut num_rows) = (vec![], vec![], 0);
+        let (mut x, mut y, mut num_rows, mut num_features) = (vec![], vec![], 0, 0);
 
         let hyperparams = hyperparams.0;
 
@@ -131,7 +131,7 @@ mod pgml_rust {
                 .into_iter()
                 .map(|column| format!("CAST({} AS REAL)", column))
                 .collect::<Vec<String>>();
-
+            
             let query = format!(
                 "SELECT {}, CAST({} AS REAL) FROM {} ORDER BY RANDOM()",
                 features.clone().join(", "),
@@ -151,11 +151,22 @@ mod pgml_rust {
                 num_rows += 1;
             });
 
+            num_features = features.len();
+
             Ok(Some(()))
         });
 
-        let mut dtrain = DMatrix::from_dense(&x, num_rows).unwrap();
-        dtrain.set_labels(&y).unwrap();
+        // todo parameterize test split instead of 0.5
+        let test_rows = (num_rows as f32 * 0.5).round() as usize;
+        let train_rows = num_rows - test_rows;
+        let mut dtrain = DMatrix::from_dense(&x[..train_rows * num_features], train_rows).unwrap();
+        let mut dtest = DMatrix::from_dense(&x[train_rows * num_features..], test_rows).unwrap();
+        dtrain.set_labels(&y[..train_rows]).unwrap();
+        dtest.set_labels(&y[train_rows..]).unwrap();
+        
+        
+        // specify datasets to evaluate against during training
+        let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
 
         // configure objectives, metrics, etc.
         let learning_params = parameters::learning::LearningTaskParametersBuilder::default()
@@ -186,8 +197,6 @@ mod pgml_rust {
             .build()
             .unwrap();
 
-        // specify datasets to evaluate against during training
-        // let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
 
         // overall configuration for training/evaluation
         let params = parameters::TrainingParametersBuilder::default()
@@ -197,7 +206,7 @@ mod pgml_rust {
                 None => 2,
             }) // number of training iterations
             .booster_params(booster_params) // model parameters
-            // .evaluation_sets(Some(evaluation_sets)) // optional datasets to evaluate against in each iteration
+            .evaluation_sets(Some(evaluation_sets)) // optional datasets to evaluate against in each iteration
             .build()
             .unwrap();
 
