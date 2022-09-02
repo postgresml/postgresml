@@ -339,7 +339,7 @@ mod pgml {
     
         #[pg_test]
         fn test_multiply_vector_s() {
-            assert_eq!(multiply_vector_d([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()), [1.0, 4.0, 9.0].to_vec())
+            assert_eq!(multiply_vector_s([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()), [1.0, 4.0, 9.0].to_vec())
         }
     
         #[pg_test]
@@ -457,8 +457,8 @@ mod pgml {
     
         #[pg_test]
         fn test_dot_product_d() {
-            assert_eq!(dot_product_s([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()), 14.0);
-            assert_eq!(dot_product_s([1.0, 2.0, 3.0].to_vec(), [2.0, 3.0, 4.0].to_vec()), 20.0);
+            assert_eq!(dot_product_d([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()), 14.0);
+            assert_eq!(dot_product_d([1.0, 2.0, 3.0].to_vec(), [2.0, 3.0, 4.0].to_vec()), 20.0);
         }
     
         #[pg_test]
