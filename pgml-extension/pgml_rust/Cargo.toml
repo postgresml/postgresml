@@ -21,6 +21,9 @@ xgboost = { path = "rust-xgboost" }
 rustlearn = "0.5"
 once_cell = "1"
 rand = "0.8"
+blas = { version = "0.22.0" }
+blas-src = { version = "0.8", features = ["openblas"] }
+openblas-src = { version = "0.10", features = ["cblas", "system"] }
 
 [dev-dependencies]
 pgx-tests = "=0.4.5"
