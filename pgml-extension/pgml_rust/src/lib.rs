@@ -510,12 +510,18 @@ mod pgml_rust {
 
     #[pg_extern(immutable, parallel_safe, strict, name="norm_max")]
     fn pgml_norm_max_s(vector: Vec<f32>) -> f32 {
-        vector.as_slice().iter().map(|a| a.abs()).max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()
+        unsafe {
+            let index = blas::isamax(vector.len().try_into().unwrap(), vector.as_slice(), 1);
+            vector[index - 1]
+        }
     }
 
     #[pg_extern(immutable, parallel_safe, strict, name="norm_max")]
     fn pgml_norm_max_d(vector: Vec<f64>) -> f64 {
-        vector.as_slice().iter().map(|a| a.abs()).max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()
+        unsafe {
+            let index = blas::idamax(vector.len().try_into().unwrap(), vector.as_slice(), 1);
+            vector[index - 1]
+        }
     }
 
     #[pg_extern(immutable, parallel_safe, strict, name="normalize_l1")]
