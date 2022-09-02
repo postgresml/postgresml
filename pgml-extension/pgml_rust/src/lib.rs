@@ -609,7 +609,7 @@ fn pgml_dot_product_d(vector: Vec<f64>, other: Vec<f64>) -> f64 {
     }
 }
 
-#[pg_extern(immutable, parallel_safe, strict, name="pgml_dot_product")]
+#[pg_extern(immutable, parallel_safe, strict, name="pgml_cosine_similarity")]
 fn pgml_cosine_similarity_s(vector: Vec<f32>, other: Vec<f32>) -> f32 {
     unsafe {
         let dot = blas::sdot(vector.len().try_into().unwrap(), vector.as_slice(), 1, other.as_slice(), 1);
@@ -619,7 +619,7 @@ fn pgml_cosine_similarity_s(vector: Vec<f32>, other: Vec<f32>) -> f32 {
     }
 }
 
-#[pg_extern(immutable, parallel_safe, strict, name="pgml_dot_product")]
+#[pg_extern(immutable, parallel_safe, strict, name="pgml_cosine_similarity")]
 fn pgml_cosine_similarity_d(vector: Vec<f64>, other: Vec<f64>) -> f64 {
     unsafe {
         let dot = blas::ddot(vector.len().try_into().unwrap(), vector.as_slice(), 1, other.as_slice(), 1);
