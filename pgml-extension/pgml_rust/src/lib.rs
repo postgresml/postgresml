@@ -1,8 +1,12 @@
 extern crate blas;
 extern crate openblas_src;
+extern crate rmp_serde;
+extern crate serde;
 
+use ndarray::{Array};
 use once_cell::sync::Lazy; // 1.3.1
 use pgx::*;
+use rmp_serde::{Serializer};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -34,9 +38,10 @@ static MODELS: Lazy<Mutex<HashMap<i64, Vec<u8>>>> = Lazy::new(|| Mutex::new(Hash
 mod pgml_rust {
     use super::*;
 
-    #[derive(PostgresEnum, Copy, Clone)]
+    #[derive(PostgresEnum, Copy, Clone, PartialEq)]
     #[allow(non_camel_case_types)]
     enum Algorithm {
+        linear,
         xgboost,
     }
 
@@ -77,7 +82,7 @@ mod pgml_rust {
         task: ProjectTask,
         relation_name: String,
         label: String,
-        _algorithm: Algorithm,
+        algorithm: Algorithm,
         hyperparams: Json,
     ) -> i64 {
         let parts = relation_name
@@ -98,13 +103,13 @@ mod pgml_rust {
 
         let hyperparams = hyperparams.0;
 
-        let (projet_id, project_task) = Spi::get_two_with_args::<i64, String>("INSERT INTO pgml_rust.projects (name, task) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET name = $1 RETURNING id, task",
+        let (project_id, project_task) = Spi::get_two_with_args::<i64, String>("INSERT INTO pgml_rust.projects (name, task) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET name = $1 RETURNING id, task",
             vec![
                 (PgBuiltInOids::TEXTOID.oid(), project_name.clone().into_datum()),
                 (PgBuiltInOids::TEXTOID.oid(), task.to_string().into_datum()),
             ]);
 
-        let (projet_id, project_task) = (projet_id.unwrap(), project_task.unwrap());
+        let (project_id, project_task) = (project_id.unwrap(), project_task.unwrap());
 
         if project_task != task.to_string() {
             error!(
@@ -131,7 +136,7 @@ mod pgml_rust {
                 .into_iter()
                 .map(|column| format!("CAST({} AS REAL)", column))
                 .collect::<Vec<String>>();
-            
+
             let query = format!(
                 "SELECT {}, CAST({} AS REAL) FROM {} ORDER BY RANDOM()",
                 features.clone().join(", "),
@@ -141,6 +146,7 @@ mod pgml_rust {
 
             info!("Fetching data: {}", query);
 
+            // Optimize: SIMD
             client.select(&query, None, None).for_each(|row| {
                 // Postgres arrays start at one and for some reason
                 // so do these tuple indexes.
@@ -159,88 +165,169 @@ mod pgml_rust {
         // todo parameterize test split instead of 0.5
         let test_rows = (num_rows as f32 * 0.5).round() as usize;
         let train_rows = num_rows - test_rows;
-        let mut dtrain = DMatrix::from_dense(&x[..train_rows * num_features], train_rows).unwrap();
-        let mut dtest = DMatrix::from_dense(&x[train_rows * num_features..], test_rows).unwrap();
-        dtrain.set_labels(&y[..train_rows]).unwrap();
-        dtest.set_labels(&y[train_rows..]).unwrap();
-        
-        
-        // specify datasets to evaluate against during training
-        let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
 
-        // configure objectives, metrics, etc.
-        let learning_params = parameters::learning::LearningTaskParametersBuilder::default()
-            .objective(match task {
-                ProjectTask::regression => xgboost::parameters::learning::Objective::RegLinear,
-                ProjectTask::classification => {
-                    xgboost::parameters::learning::Objective::RegLogistic
-                }
-            })
-            .build()
+        if algorithm == Algorithm::xgboost {
+            let mut dtrain =
+                DMatrix::from_dense(&x[..train_rows * num_features], train_rows).unwrap();
+            let mut dtest =
+                DMatrix::from_dense(&x[train_rows * num_features..], test_rows).unwrap();
+            dtrain.set_labels(&y[..train_rows]).unwrap();
+            dtest.set_labels(&y[train_rows..]).unwrap();
+
+            // specify datasets to evaluate against during training
+            let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
+
+            // configure objectives, metrics, etc.
+            let learning_params = parameters::learning::LearningTaskParametersBuilder::default()
+                .objective(match task {
+                    ProjectTask::regression => xgboost::parameters::learning::Objective::RegLinear,
+                    ProjectTask::classification => {
+                        xgboost::parameters::learning::Objective::RegLogistic
+                    }
+                })
+                .build()
+                .unwrap();
+
+            // configure the tree-based learning model's parameters
+            let tree_params = parameters::tree::TreeBoosterParametersBuilder::default()
+                .max_depth(match hyperparams.get("max_depth") {
+                    Some(value) => value.as_u64().unwrap_or(2) as u32,
+                    None => 2,
+                })
+                .eta(0.3)
+                .build()
+                .unwrap();
+
+            // overall configuration for Booster
+            let booster_params = parameters::BoosterParametersBuilder::default()
+                .booster_type(parameters::BoosterType::Tree(tree_params))
+                .learning_params(learning_params)
+                .verbose(true)
+                .build()
+                .unwrap();
+
+            // overall configuration for training/evaluation
+            let params = parameters::TrainingParametersBuilder::default()
+                .dtrain(&dtrain) // dataset to train with
+                .boost_rounds(match hyperparams.get("n_estimators") {
+                    Some(value) => value.as_u64().unwrap_or(2) as u32,
+                    None => 2,
+                }) // number of training iterations
+                .booster_params(booster_params) // model parameters
+                .evaluation_sets(Some(evaluation_sets)) // optional datasets to evaluate against in each iteration
+                .build()
+                .unwrap();
+
+            // train model, and print evaluation data
+            let bst = match Booster::train(&params) {
+                Ok(bst) => bst,
+                Err(err) => error!("{}", err),
+            };
+
+            let r: u64 = rand::random();
+            let path = format!("/tmp/pgml_rust_{}.bin", r);
+
+            bst.save(Path::new(&path)).unwrap();
+
+            let bytes = fs::read(&path).unwrap();
+
+            let model_id = Spi::get_one_with_args::<i64>(
+                "INSERT INTO pgml_rust.models (id, project_id, algorithm, data) VALUES (DEFAULT, $1, 'xgboost', $2) RETURNING id",
+                vec![
+                    (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
+                    (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum())
+                ]
+            ).unwrap();
+
+            Spi::get_one_with_args::<i64>(
+                "INSERT INTO pgml_rust.deployments (project_id, model_id, strategy) VALUES ($1, $2, 'last_trained') RETURNING id",
+                vec![
+                    (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
+                    (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
+                ]
+            );
+            model_id
+        } else {
+            let x_train = Array::from_shape_vec(
+                (train_rows, num_features),
+                x[..train_rows * num_features].to_vec(),
+            )
             .unwrap();
-
-        // configure the tree-based learning model's parameters
-        let tree_params = parameters::tree::TreeBoosterParametersBuilder::default()
-            .max_depth(match hyperparams.get("max_depth") {
-                Some(value) => value.as_u64().unwrap_or(2) as u32,
-                None => 2,
-            })
-            .eta(0.3)
-            .build()
+            let x_test = Array::from_shape_vec(
+                (test_rows, num_features),
+                x[train_rows * num_features..].to_vec(),
+            )
             .unwrap();
+            let y_train = Array::from_shape_vec(train_rows, y[..train_rows].to_vec()).unwrap();
+            let y_test = Array::from_shape_vec(test_rows, y[train_rows..].to_vec()).unwrap();
+            if task == ProjectTask::regression {
+                let estimator = smartcore::linear::linear_regression::LinearRegression::fit(
+                    &x_train,
+                    &y_train,
+                    Default::default(),
+                )
+                .unwrap();
+                save(estimator, x_test, y_test, algorithm, project_id)
+            } else if task == ProjectTask::classification {
+                let estimator = smartcore::linear::logistic_regression::LogisticRegression::fit(
+                    &x_train,
+                    &y_train,
+                    Default::default(),
+                )
+                .unwrap();
+                save(estimator, x_test, y_test, algorithm, project_id)
+            } else {
+                0
+            }
+        }
+    }
 
-        // overall configuration for Booster
-        let booster_params = parameters::BoosterParametersBuilder::default()
-            .booster_type(parameters::BoosterType::Tree(tree_params))
-            .learning_params(learning_params)
-            .verbose(true)
-            .build()
+    fn save<
+        E: serde::Serialize + smartcore::api::Predictor<X, Y> + std::fmt::Debug,
+        N: smartcore::math::num::RealNumber,
+        X,
+        Y: std::fmt::Debug + smartcore::linalg::BaseVector<N>,
+    >(
+        estimator: E,
+        x_test: X,
+        y_test: Y,
+        algorithm: Algorithm,
+        project_id: i64,
+    ) -> i64 {
+        let y_hat = estimator.predict(&x_test).unwrap();
+
+        let mut buffer = Vec::new();
+        estimator
+            .serialize(&mut Serializer::new(&mut buffer))
             .unwrap();
+        info!("bin {:?}", buffer);
+        info!("estimator: {:?}", estimator);
+        info!("y_hat: {:?}", y_hat);
+        info!("y_test: {:?}", y_test);
+        info!("r2: {:?}", smartcore::metrics::r2(&y_test, &y_hat));
+        info!("mean squared error: {:?}", smartcore::metrics::mean_squared_error(&y_test, &y_hat));
 
-
-        // overall configuration for training/evaluation
-        let params = parameters::TrainingParametersBuilder::default()
-            .dtrain(&dtrain) // dataset to train with
-            .boost_rounds(match hyperparams.get("n_estimators") {
-                Some(value) => value.as_u64().unwrap_or(2) as u32,
-                None => 2,
-            }) // number of training iterations
-            .booster_params(booster_params) // model parameters
-            .evaluation_sets(Some(evaluation_sets)) // optional datasets to evaluate against in each iteration
-            .build()
-            .unwrap();
-
-        // train model, and print evaluation data
-        let bst = match Booster::train(&params) {
-            Ok(bst) => bst,
-            Err(err) => error!("{}", err),
-        };
-
-        let r: u64 = rand::random();
-        let path = format!("/tmp/pgml_rust_{}.bin", r);
-
-        bst.save(Path::new(&path)).unwrap();
-
-        let bytes = fs::read(&path).unwrap();
+        let mut buffer = Vec::new();
+        estimator.serialize(&mut Serializer::new(&mut buffer)).unwrap();
 
         let model_id = Spi::get_one_with_args::<i64>(
-            "INSERT INTO pgml_rust.models (id, project_id, algorithm, data) VALUES (DEFAULT, $1, 'xgboost', $2) RETURNING id",
+            "INSERT INTO pgml_rust.models (id, project_id, algorithm, data) VALUES (DEFAULT, $1, $2, $3) RETURNING id",
             vec![
-                (PgBuiltInOids::INT8OID.oid(), projet_id.into_datum()),
-                (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum())
+                (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
+                (PgBuiltInOids::INT8OID.oid(), algorithm.into_datum()),
+                (PgBuiltInOids::BYTEAOID.oid(), buffer.into_datum())
             ]
         ).unwrap();
 
         Spi::get_one_with_args::<i64>(
             "INSERT INTO pgml_rust.deployments (project_id, model_id, strategy) VALUES ($1, $2, 'last_trained') RETURNING id",
             vec![
-                (PgBuiltInOids::INT8OID.oid(), projet_id.into_datum()),
+                (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
             ]
         );
-
         model_id
-    }
+}
 
     #[pg_extern]
     fn predict(project_name: String, features: Vec<f32>) -> f32 {
@@ -388,8 +475,7 @@ mod pgml_rust {
 
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
-mod tests {
-}
+mod tests {}
 
 #[cfg(test)]
 pub mod pg_test {
