@@ -1,3 +1,9 @@
+use std::env;
+
 fn main() {
-    println!("cargo:rustc-link-lib=static=openblas");
+    let target = env::var("TARGET").unwrap();
+
+    if target.contains("apple") {
+        println!("cargo:rustc-link-lib=static=openblas");
+    }
 }
