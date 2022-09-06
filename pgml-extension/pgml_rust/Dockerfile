@@ -8,10 +8,6 @@ ARG PGVERSION=14
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
-# Pass these in with --build-arg
-# ARG AWS_ACCESS_KEY_ID
-# ARG AWS_SECRET_ACCESS_KEY
-
 # Apt-fast
 RUN apt-get update && apt-get install software-properties-common -y
 
@@ -51,5 +47,5 @@ VOLUME /output
 USER root
 
 # Run
-ENTRYPOINT ["bash", "docker/build_ubuntu_deb.sh", "/output"]
+ENTRYPOINT ["bash", "docker/build_ubuntu_deb.sh", "0.0.4", "/output"]
 

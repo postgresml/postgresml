@@ -4,7 +4,7 @@
 #
 
 VERSION=${1:-0.0.4}
-$OUTPUT_DIR=${2}
+OUTPUT_DIR=${2:-"."}
 
 if [[ $(uname) == *"aarch64"* ]]; then
     ARCH="arm64"
