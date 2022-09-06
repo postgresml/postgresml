@@ -1,6 +1,10 @@
 #!/bin/bash
+#
+# Build a .deb for the Postgres and Ubuntu version.
+#
 
 VERSION=${1:-0.0.4}
+$OUTPUT_DIR=${2}
 
 if [[ $(uname) == *"aarch64"* ]]; then
     ARCH="arm64"
@@ -42,7 +46,4 @@ cat ${TARGET}/DEBIAN/control
 PACKAGE=postgresql-pgml-${PGVERSION}_${VERSION}-ubuntu${UBUNTU_VERSION}-${ARCH}.deb
 
 # Build the debian package
-dpkg-deb --build ${TARGET} ${PACKAGE}
-
-# Upload to S3
-aws s3 cp ${PACKAGE} s3://hyperparam-assets-public/packages/${PACKAGE}
+dpkg-deb --build ${TARGET} $OUTPUT_DIR/${PACKAGE}
