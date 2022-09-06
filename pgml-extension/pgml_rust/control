@@ -1,9 +1,9 @@
-Package: postgresql-pgml-14
+Package: postgresql-pgml-PGVERSION
 Version: VERSION
 Section: base
 Priority: optional
 Architecture: ARCH
-Depends: postgresql-14
+Depends: postgresql-PGVERSION, libopenblas-dev, postgresql-server-dev-PGVERSION
 Maintainer: PostgresML <team@postgresml.org>
 Description: PostgresML - machine learning with PostgreSQL
  PostgresML is a PostgreSQL extension that allows to do machine
