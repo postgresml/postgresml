@@ -1,4 +1,17 @@
+---
+author: Lev Kokotov
+description: Machine learning in Python is slow and error-prone, while Rust makes it fast and reliable.
+---
+
+
 # Oxidizing Machine Learning
+
+<p class="author">
+  <img width="54px" height="54px" src="/images/team/lev.jpg" alt="Author" />
+  Lev Kokotov<br/>
+  September 7, 2022
+</p>
+
 
 Machine learning in Python can be hard to deploy at scale. We all love Python, but it's no secret
 that its overhead is large:
