@@ -287,18 +287,19 @@ impl Snapshot {
             let stats = stats.join(",");
             let sql = format!(r#"SELECT {stats} FROM "pgml_rust"."snapshot_{}""#, self.id);
             let result = client.select(&sql, Some(1), None).first();
-            let mut json = Vec::new();
+            let mut analysis = HashMap::new();
             for (i, field) in fields.iter().enumerate() {
-                json.push(format!(r#""{}": {}"#, field, result.get_datum::<f32>((i+1).try_into().unwrap()).unwrap()));
+                analysis.insert(field, result.get_datum::<f32>((i+1).try_into().unwrap()).unwrap());
             }
-            let json = "{".to_string() + &json.join(",") + "}";
-            let analysis = pgx::datum::JsonB(serde_json::from_str(&json).unwrap());
+            let analysis = pgx::datum::JsonB(json!(&analysis));
             let columns = pgx::datum::JsonB(json!(&columns));
             client.select("UPDATE pgml_rust.snapshots SET analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
                 (PgBuiltInOids::JSONBOID.oid(), analysis.into_datum()),
                 (PgBuiltInOids::JSONBOID.oid(), columns.into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ]));
+
+            // TODO set the analysis and columns in memory
 
             Ok(Some(1))
         });
