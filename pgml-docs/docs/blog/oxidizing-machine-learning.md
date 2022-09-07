@@ -21,7 +21,7 @@ that its overhead is large:
 * Move and join data into a Pandas dataframe
 * Load data into the algorithm
 
-Each step incurs at least one copy of the data in memory. 4x storage and compute costs for working the data sounds inefficient, but if you add the cost of memory allocation in Python, the price tag goes up even further.
+Each step incurs at least one copy of the data in memory. 4x storage and compute costs for working the data sounds inefficient, but if you add the cost of Python's memory allocation, the price tag goes up even further.
 
 Even if you could find the money to pay for the compute needed, fitting the dataset we want into the RAM we have becomes difficult.
 
@@ -31,14 +31,14 @@ The status quo needed a shake up, and along came Rust.
 
 Doing machine learning in anything but Python sounds wild, but if one looks under the hood, ML algorithms are mostly written in C++: `libtorch` (Torch), XGBoost, large parts of Tensorflow, `libsvm` (Support Vector Machines), and the list goes on. A linear regression can be (and is) written in about 10 lines of for-loops.
 
-It then should come to no surprise that Rust machine learning community is alive and doing well:
+It then should come to no surprise that the Rust ML community is alive, and doing well:
 
 * SmartCore[^1] is rivaling Scikit for the commodity algorithms
 * XGBoost bindings[^2] work great for gradient boosted trees
 * Torch bindings[^3] are first class for building any kind of neural network
 * Tensorflow bindings[^4] are also in the mix, although parts of it are still Python (e.g. Keras)
 
-If you start missing NumPy, don't worry, the Rust version[^5] has got you covered, and the list of tools keeps growing.
+If you start missing NumPy, don't worry, the Rust version[^5] has got you covered, and the list of available tools keeps growing.
 
 When you only need 4 bytes to represent a floating point instead of Python's 26 bytes[^6], suddenly you can do more.
 
