@@ -21,11 +21,11 @@ that its overhead is large:
 * Move and join data into a Pandas dataframe
 * Load data into the algorithm
 
-Each step incurs at least one copy of the data in memory. 4x storage and compute costs for working the data sounds inefficient, but if you add the cost of Python's memory allocation, the price tag goes up even further.
+Each step incurs at least one copy of the data in memory; 4x storage and compute cost for training a model sounds inefficient, but when you add Python's memory allocation, the price tag increases exponentially.
 
 Even if you could find the money to pay for the compute needed, fitting the dataset we want into the RAM we have becomes difficult.
 
-The status quo needed a shake up, and along came Rust.
+The status quo needs a shake up, and along came Rust.
 
 ## The State of ML in Rust
 
@@ -33,7 +33,7 @@ Doing machine learning in anything but Python sounds wild, but if one looks unde
 
 It then should come to no surprise that the Rust ML community is alive, and doing well:
 
-* SmartCore[^1] is rivaling Scikit for the commodity algorithms
+* SmartCore[^1] is rivaling Scikit for commodity algorithms
 * XGBoost bindings[^2] work great for gradient boosted trees
 * Torch bindings[^3] are first class for building any kind of neural network
 * Tensorflow bindings[^4] are also in the mix, although parts of them are still Python (e.g. Keras)
@@ -46,7 +46,7 @@ When you only need 4 bytes to represent a floating point instead of Python's 26 
 
 Let's do a quick example to illustrate our point.
 
-XGBoost is a popular decision tree algorithm which uses gradient boosting, a fancy optimization technique, to train algorithms on data that could confuse simpler linear models. It comes with a Python interface, which calls into its C++ primitives, but now it has a Rust interface as well.
+XGBoost is a popular decision tree algorithm which uses gradient boosting, a fancy optimization technique, to train algorithms on data that could confuse simpler linear models. It comes with a Python interface, which calls into its C++ primitives, but now, it has a Rust interface as well.
 
 _Cargo.toml_
 ```toml
