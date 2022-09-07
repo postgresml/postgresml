@@ -188,7 +188,7 @@ impl Snapshot {
                     (PgBuiltInOids::TEXTOID.oid(), test_sampling.to_string().into_datum()),
                 ])
             ).first();
-            let s = Snapshot {
+            let mut s = Snapshot {
                 id: result.get_datum(1).unwrap(),
                 relation_name: result.get_datum(2).unwrap(),
                 y_column_name: result.get_datum(3).unwrap(),
@@ -218,7 +218,7 @@ impl Snapshot {
         snapshot.unwrap()
     }
 
-    fn analyze(&self) {
+    fn analyze(&mut self) {
         Spi::connect(|client| {
             let parts = self.relation_name
                 .split(".")
@@ -249,6 +249,10 @@ impl Snapshot {
                 }
             }
 
+            // We have to pull this analysis data into Rust as opposed to using Postgres
+            // json_build_object(...), because Postgres functions have a limit of 100 arguments.
+            // Any table that has more than 10 columns will exceed the Postgres limit since we
+            // calculate 10 statistics per column.
             let mut stats = vec![r#"count(*)::FLOAT4 AS "samples""#.to_string()];
             let mut fields = vec!["samples".to_string()];
             for (column, data_type) in &columns {
@@ -291,15 +295,15 @@ impl Snapshot {
             for (i, field) in fields.iter().enumerate() {
                 analysis.insert(field, result.get_datum::<f32>((i+1).try_into().unwrap()).unwrap());
             }
-            let analysis = pgx::datum::JsonB(json!(&analysis));
-            let columns = pgx::datum::JsonB(json!(&columns));
+            let analysis = json!(analysis);
+            let columns = json!(columns);
             client.select("UPDATE pgml_rust.snapshots SET analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
-                (PgBuiltInOids::JSONBOID.oid(), analysis.into_datum()),
-                (PgBuiltInOids::JSONBOID.oid(), columns.into_datum()),
+                (PgBuiltInOids::JSONBOID.oid(), pgx::datum::JsonB(analysis.clone()).into_datum()),
+                (PgBuiltInOids::JSONBOID.oid(), pgx::datum::JsonB(columns.clone()).into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ]));
-
-            // TODO set the analysis and columns in memory
+            self.analysis = Some(analysis);
+            self.columns = Some(columns);
 
             Ok(Some(1))
         });
