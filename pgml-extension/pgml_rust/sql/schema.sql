@@ -1,5 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS pgml_rust;
-
 --- 
 --- Track of updates to data
 ---
@@ -57,6 +55,23 @@ CREATE TABLE IF NOT EXISTS pgml_rust.models (
 	algorithm VARCHAR,
 	data BYTEA
 );
+
+---
+--- Snapshots freeze data for training
+---
+CREATE TABLE IF NOT EXISTS pgml_rust.snapshots(
+	id BIGSERIAL PRIMARY KEY,
+	relation_name TEXT NOT NULL,
+	y_column_name TEXT[] NOT NULL,
+	test_size FLOAT4 NOT NULL,
+	test_sampling TEXT NOT NULL,
+	columns JSONB,
+	analysis JSONB,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp()
+);
+SELECT pgml_rust.auto_updated_at('pgml_rust.snapshots');
+
 
 ---
 --- Deployments determine which model is live
