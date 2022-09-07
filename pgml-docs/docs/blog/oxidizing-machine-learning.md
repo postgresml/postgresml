@@ -99,7 +99,7 @@ fn main() {
     let model = Booster::train(&params).unwrap();
 
     // Save and load later in any language that has XGBoost bindings.
-    model.save("/tmp/xbgoost_model.bin").unwrap();
+    model.save("/tmp/xgboost_model.bin").unwrap();
 }
 ```
 
