@@ -59,7 +59,7 @@ _src/main.rs_
 use xgboost::{parameters, Booster, DMatrix};
 
 fn main() {
-    // Data is read directly into the C++ data structure.
+    // Data is read directly into the C++ data structure
     let train = DMatrix::load("train.txt").unwrap();
     let test = DMatrix::load("test.txt").unwrap();
 
@@ -95,11 +95,11 @@ fn main() {
         .build()
         .unwrap();
 
-    // Train!
+    // Train the model
     let model = Booster::train(&params).unwrap();
 
-    // Save and load later in any language that has XGBoost bindings.
-    model.save("/tmp/xbgoost_model.bin").unwrap();
+    // Save and load later in any language that has XGBoost bindings
+    model.save("/tmp/xgboost_model.bin").unwrap();
 }
 ```
 
