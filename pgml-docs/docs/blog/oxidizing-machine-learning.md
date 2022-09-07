@@ -36,7 +36,7 @@ It then should come to no surprise that the Rust ML community is alive, and doin
 * SmartCore[^1] is rivaling Scikit for the commodity algorithms
 * XGBoost bindings[^2] work great for gradient boosted trees
 * Torch bindings[^3] are first class for building any kind of neural network
-* Tensorflow bindings[^4] are also in the mix, although parts of it are still Python (e.g. Keras)
+* Tensorflow bindings[^4] are also in the mix, although parts of them are still Python (e.g. Keras)
 
 If you start missing NumPy, don't worry, the Rust version[^5] has got you covered, and the list of available tools keeps growing.
 
