@@ -111,7 +111,7 @@ markdown_extensions:
     - pymdownx.tilde
 
 nav:
-    - Home: index.md
+    - PostgresML: index.md
     # - Gym: gym.md
     - User Guides:
         - Setup:
