@@ -144,6 +144,7 @@ nav:
         - Data is Living and Relational: blog/data-is-living-and-relational.md
         - Postgres Full Text Search is Awesome: blog/postgres-full-text-search-is-awesome.md
         - Which Database, That is the Question: blog/which-database-that-is-the-question.md
+        - Oxidizing Machine Learning: blog/oxidizing-machine-learning.md
     - About:
         - Team: about/team.md
         - Roadmap: about/roadmap.md
