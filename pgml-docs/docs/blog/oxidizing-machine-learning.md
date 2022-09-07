@@ -46,7 +46,7 @@ When you only need 4 bytes to represent a floating point instead of Python's 26 
 
 Let's do a quick example to illustrate our point.
 
-XGBoost is a popular decision tree algorithm which uses gradient boosting, a fancy optimization technique, to train algorithms on data that could confuse simpler linear models. It comes with a Python interface, which calls into its C++ primitives, but it now it has a Rust interface as well.
+XGBoost is a popular decision tree algorithm which uses gradient boosting, a fancy optimization technique, to train algorithms on data that could confuse simpler linear models. It comes with a Python interface, which calls into its C++ primitives, but now it has a Rust interface as well.
 
 _Cargo.toml_
 ```toml
