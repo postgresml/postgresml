@@ -3,6 +3,7 @@ hide:
   - navigation
   - toc
   - comments
+title: End-to-end Machine Learning for Everyone
 ---
 
 <style>
