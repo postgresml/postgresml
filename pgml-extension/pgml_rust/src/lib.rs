@@ -74,7 +74,7 @@ impl ProjectTask {
 /// ```
 /// SELECT * FROM pgml_rust.train('pgml_rust.diabetes', ARRAY['age', 'sex'], 'target');
 #[pg_extern]
-fn train(
+fn train_old(
     project_name: String,
     task: ProjectTask,
     relation_name: String,

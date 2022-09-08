@@ -2,8 +2,14 @@ use pgx::*;
 use std::str::FromStr;
 use std::string::ToString;
 use serde_json;
-use serde_json::json;
+use serde_json::{json, Value};
 use std::collections::HashMap;
+use once_cell::sync::Lazy;
+use serde::Deserialize;
+use std::sync::Mutex;
+use std::sync::Arc;
+
+static PROJECTS: Lazy<Mutex<HashMap<String, Arc<Project>>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(PostgresEnum, Copy, Clone, PartialEq, Debug)]
 #[allow(non_camel_case_types)]
@@ -12,7 +18,28 @@ enum Algorithm {
     xgboost,
 }
 
-#[derive(PostgresEnum, Copy, Clone, PartialEq, Debug)]
+impl std::str::FromStr for Algorithm {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<Algorithm, Self::Err> {
+        match input {
+            "linear"  => Ok(Algorithm::linear),
+            "xgboost" => Ok(Algorithm::xgboost),
+            _      => Err(()),
+        }
+    }
+}
+
+impl std::string::ToString for Algorithm {
+    fn to_string(&self) -> String {
+        match *self {
+            Algorithm::linear  => "linear".to_string(),
+            Algorithm::xgboost => "xgboost".to_string(),
+        }
+    }
+}
+
+#[derive(PostgresEnum, Copy, Clone, PartialEq, Debug, Deserialize)]
 #[allow(non_camel_case_types)]
 enum Task {
     regression,
@@ -34,20 +61,18 @@ impl std::str::FromStr for Task {
 impl std::string::ToString for Task {
     fn to_string(&self) -> String {
         match *self {
-            Task::regression => "regression".to_string(),
+            Task::regression     => "regression".to_string(),
             Task::classification => "classification".to_string(),
         }
     }
 }
 
-#[derive(PostgresEnum, Copy, Clone, PartialEq, Debug)]
+#[derive(PostgresEnum, Copy, Clone, PartialEq, Debug, Deserialize)]
 #[allow(non_camel_case_types)]
 enum Sampling {
     random,
-    first,
     last,
 }
-
 
 impl std::str::FromStr for Sampling {
     type Err = ();
@@ -55,7 +80,6 @@ impl std::str::FromStr for Sampling {
     fn from_str(input: &str) -> Result<Sampling, Self::Err> {
         match input {
             "random" => Ok(Sampling::random),
-            "first"  => Ok(Sampling::first),
             "last"   => Ok(Sampling::last),
             _        => Err(()),
         }
@@ -66,8 +90,38 @@ impl std::string::ToString for Sampling {
     fn to_string(&self) -> String {
         match *self {
             Sampling::random => "random".to_string(),
-            Sampling::first  => "first".to_string(),
             Sampling::last   => "last".to_string(),
+        }
+    }
+}
+
+#[derive(PostgresEnum, Copy, Clone, PartialEq, Debug, Deserialize)]
+#[allow(non_camel_case_types)]
+enum Search {
+    grid,
+    random,
+    none,
+}
+
+impl std::str::FromStr for Search {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<Search, Self::Err> {
+        match input {
+            "grid"   => Ok(Search::grid),
+            "random" => Ok(Search::random),
+            "none"   => Ok(Search::none),
+            _        => Err(()),
+        }
+    }
+}
+
+impl std::string::ToString for Search {
+    fn to_string(&self) -> String {
+        match *self {
+            Search::grid   => "grid".to_string(),
+            Search::random => "random".to_string(),
+            Search::none   => "none".to_string(),
         }
     }
 }
@@ -77,13 +131,13 @@ pub struct Project {
     id: i64,
     name: String,
     task: Task,
-    created_at: datum::Timestamp,
-    updated_at: datum::Timestamp,
+    created_at: Timestamp,
+    updated_at: Timestamp,
 }
 
 impl Project {
 
-    fn find(id: i64) -> Project {
+    fn find(id: i64) -> Option<Project> {
         let mut project: Option<Project> = None;
 
         Spi::connect(|client| {
@@ -93,21 +147,34 @@ impl Project {
                     (PgBuiltInOids::INT8OID.oid(), id.into_datum()),
                 ])
             ).first();
-            project = Some(Project {
-                id: result.get_datum(1).unwrap(),
-                name: result.get_datum(2).unwrap(),
-                task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
-                created_at: result.get_datum(4).unwrap(),
-                updated_at: result.get_datum(5).unwrap(),
-            });
+            if result.len() > 0 {
+                project = Some(Project {
+                    id: result.get_datum(1).unwrap(),
+                    name: result.get_datum(2).unwrap(),
+                    task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
+                    created_at: result.get_datum(4).unwrap(),
+                    updated_at: result.get_datum(5).unwrap(),
+                });
+            }
             Ok(Some(1))
         });
     
-        project.unwrap()
+        project
     }
 
-    fn find_by_name(name: &str) -> Project {
-        let mut project: Option<Project> = None;
+    fn find_by_name(name: &str) -> Option<Arc<Project>> {
+        { 
+            let projects = PROJECTS.lock().unwrap();
+            let project = projects.get(name);
+            if project.is_some() {
+                info!("cache hit: {}", name);
+                return Some(project.unwrap().clone());
+            } else {
+                info!("cache miss: {}", name);
+            }
+        }
+
+        let mut project = None;
 
         Spi::connect(|client| {
             let result = client.select("SELECT id, name, task, created_at, updated_at FROM pgml_rust.projects WHERE name = $1 LIMIT 1;",
@@ -116,21 +183,28 @@ impl Project {
                     (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),
                 ])
             ).first();
-            project = Some(Project {
-                id: result.get_datum(1).unwrap(),
-                name: result.get_datum(2).unwrap(),
-                task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
-                created_at: result.get_datum(4).unwrap(),
-                updated_at: result.get_datum(5).unwrap(),
-            });
+            if result.len() > 0 {
+                info!("db hit: {}", name);
+                let mut projects = PROJECTS.lock().unwrap();
+                projects.insert(name.to_string(), Arc::new( Project {
+                    id: result.get_datum(1).unwrap(),
+                    name: result.get_datum(2).unwrap(),
+                    task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
+                    created_at: result.get_datum(4).unwrap(),
+                    updated_at: result.get_datum(5).unwrap(),
+                }));
+                project = Some(projects.get(name).unwrap().clone());
+            } else {
+                info!("db miss: {}", name);
+            }
             Ok(Some(1))
         });
     
-        project.unwrap()
+        project
     }
 
-    fn create(name: &str, task: Task) -> Project {
-        let mut project: Option<Project> = None;
+    fn create(name: &str, task: Task) -> Arc<Project> {
+        let mut project: Option<Arc<Project>> = None;
 
         Spi::connect(|client| {
             let result = client.select("INSERT INTO pgml_rust.projects (name, task) VALUES ($1, $2) RETURNING id, name, task, created_at, updated_at;",
@@ -140,20 +214,55 @@ impl Project {
                     (PgBuiltInOids::TEXTOID.oid(), task.to_string().into_datum()),
                 ])
             ).first();
-            project = Some(Project {
-                id: result.get_datum(1).unwrap(),
-                name: result.get_datum(2).unwrap(),
-                task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
-                created_at: result.get_datum(4).unwrap(),
-                updated_at: result.get_datum(5).unwrap(),
-            });
+            if result.len() > 0 {
+                let mut projects = PROJECTS.lock().unwrap();
+                projects.insert(name.to_string(), Arc::new( Project {
+                    id: result.get_datum(1).unwrap(),
+                    name: result.get_datum(2).unwrap(),
+                    task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
+                    created_at: result.get_datum(4).unwrap(),
+                    updated_at: result.get_datum(5).unwrap(),
+                }));
+                project = Some(projects.get(name).unwrap().clone());
+            }
             Ok(Some(1))
         });
-    
+        info!("create project: {:?}", project.as_ref().unwrap());
         project.unwrap()
+    }
+
+    fn last_snapshot(&self) -> Option<Snapshot> {
+        Snapshot::find_last_by_project_id(self.id)
     }
 }
 
+pub struct Data {
+    x: Vec<f32>,
+    y: Vec<f32>,
+    num_features: usize,
+    num_labels: usize,
+    num_rows: usize,
+    num_train_rows: usize,
+    num_test_rows: usize,
+}
+
+impl Data {
+    fn train_x(&self) -> &[f32] {
+        &self.x[..self.num_train_rows * self.num_features]
+    }
+
+    fn test_x(&self) -> &[f32] {
+        &self.x[self.num_train_rows * self.num_features..]
+    }
+
+    fn train_y(&self) -> &[f32] {
+        &self.y[..self.num_train_rows * self.num_labels]
+    }
+
+    fn test_y(&self) -> &[f32] {
+        &self.y[self.num_train_rows * self.num_labels..]
+    }
+}
 
 #[derive(Debug)]
 pub struct Snapshot {
@@ -162,30 +271,62 @@ pub struct Snapshot {
     y_column_name: Vec<String>,
     test_size: f32,
     test_sampling: Sampling,
-    columns: Option<serde_json::Value>,
-    analysis: Option<serde_json::Value>,
-    created_at: datum::Timestamp,
-    updated_at: datum::Timestamp,
-}
-
-pub struct Columns {
-}
-
-pub struct Analysis {
+    status: String,
+    columns: Option<JsonB>,
+    analysis: Option<JsonB>,
+    created_at: Timestamp,
+    updated_at: Timestamp,
 }
 
 impl Snapshot {
+    fn find_last_by_project_id(project_id: i64) -> Option<Snapshot> {
+        let mut snapshot = None;
+        Spi::connect(|client| {
+            let result = client.select(
+                    "SELECT snapshots.id, snapshots.relation_name, snapshots.y_column_name, snapshots.test_size, snapshots.test_sampling, snapshots.status, snapshots.columns, snapshots.analysis, snapshots.created_at, snapshots.updated_at 
+                    FROM pgml_rust.snapshots 
+                    JOIN pgml_rust.models
+                      ON models.snapshot_id = snapshots.id
+                      AND models.project_id = $1 
+                    ORDER BY snapshots.id DESC 
+                    LIMIT 1;
+                    ",
+                Some(1),
+                Some(vec![
+                    (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
+                ])
+            ).first();
+            if result.len() > 0 {
+                snapshot = Some(Snapshot {
+                    id: result.get_datum(1).unwrap(),
+                    relation_name: result.get_datum(2).unwrap(),
+                    y_column_name: result.get_datum(3).unwrap(),
+                    test_size: result.get_datum(4).unwrap(),
+                    test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
+                    status: result.get_datum(6).unwrap(),
+                    columns: result.get_datum(7),
+                    analysis: result.get_datum(8),
+                    created_at: result.get_datum(9).unwrap(),
+                    updated_at: result.get_datum(10).unwrap(),
+                });
+            }
+            Ok(Some(1))
+        });
+        snapshot
+    }
+
     fn create(relation_name: &str, y_column_name: &str, test_size: f32, test_sampling: Sampling) -> Snapshot{
         let mut snapshot: Option<Snapshot> = None;
 
         Spi::connect(|client| {
-            let result = client.select("INSERT INTO pgml_rust.snapshots (relation_name, y_column_name, test_size, test_sampling) VALUES ($1, $2, $3, $4) RETURNING id, relation_name, y_column_name, test_size, test_sampling, columns, analysis, created_at, updated_at;",
+            let result = client.select("INSERT INTO pgml_rust.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4, $5) RETURNING id, relation_name, y_column_name, test_size, test_sampling, status, columns, analysis, created_at, updated_at;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), relation_name.into_datum()),
                     (PgBuiltInOids::TEXTARRAYOID.oid(), vec![y_column_name].into_datum()),
                     (PgBuiltInOids::FLOAT4OID.oid(), test_size.into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), test_sampling.to_string().into_datum()),
+                    (PgBuiltInOids::TEXTOID.oid(), "new".to_string().into_datum()),
                 ])
             ).first();
             let mut s = Snapshot {
@@ -194,22 +335,18 @@ impl Snapshot {
                 y_column_name: result.get_datum(3).unwrap(),
                 test_size: result.get_datum(4).unwrap(),
                 test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
-                columns: match result.get_datum::<datum::Json>(6) {
-                    Some(value) => Some(serde_json::from_value(value.0).unwrap()),
-                    None => None
-                },
-                analysis: match result.get_datum::<datum::Json>(7) {
-                    Some(value) => Some(serde_json::from_value(value.0).unwrap()),
-                    None => None
-                },
-                created_at: result.get_datum(8).unwrap(),
-                updated_at: result.get_datum(9).unwrap(),
+                status: result.get_datum(6).unwrap(),
+                columns: None,
+                analysis: None,
+                created_at: result.get_datum(9).unwrap(),
+                updated_at: result.get_datum(10).unwrap(),
             };
             let mut sql = format!(r#"CREATE TABLE "pgml_rust"."snapshot_{}" AS SELECT * FROM {}"#, s.id, s.relation_name);
             if s.test_sampling == Sampling::random {
                 sql += " ORDER BY random()";
             }
             client.select(&sql, None, None);
+            client.select(r#"UPDATE "pgml_rust"."snapshots" SET status = 'snapped' WHERE id = $1"#, None, Some(vec![(PgBuiltInOids::INT8OID.oid(), s.id.into_datum())]));
             s.analyze();
             snapshot = Some(s);
             Ok(Some(1))
@@ -293,28 +430,198 @@ impl Snapshot {
             let result = client.select(&sql, Some(1), None).first();
             let mut analysis = HashMap::new();
             for (i, field) in fields.iter().enumerate() {
-                analysis.insert(field, result.get_datum::<f32>((i+1).try_into().unwrap()).unwrap());
+                analysis.insert(field.to_owned(), result.get_datum::<f32>((i+1).try_into().unwrap()).unwrap());
             }
-            let analysis = json!(analysis);
-            let columns = json!(columns);
-            client.select("UPDATE pgml_rust.snapshots SET analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
-                (PgBuiltInOids::JSONBOID.oid(), pgx::datum::JsonB(analysis.clone()).into_datum()),
-                (PgBuiltInOids::JSONBOID.oid(), pgx::datum::JsonB(columns.clone()).into_datum()),
+            let analysis_datum = JsonB(json!(analysis.clone()));
+            let column_datum = JsonB(json!(columns.clone()));
+            self.analysis = Some(JsonB(json!(analysis)));
+            self.columns = Some(JsonB(json!(columns)));
+            client.select("UPDATE pgml_rust.snapshots SET status = 'complete', analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
+                (PgBuiltInOids::JSONBOID.oid(), analysis_datum.into_datum()),
+                (PgBuiltInOids::JSONBOID.oid(), column_datum.into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ]));
-            self.analysis = Some(analysis);
-            self.columns = Some(columns);
 
             Ok(Some(1))
         });
     }
+
+    fn data(&self) -> Data {
+        let mut data = None;
+        Spi::connect(|client| {
+            
+            let json: &serde_json::Value = &self.columns.as_ref().unwrap().0;
+            let feature_columns = json.as_object().unwrap().keys()
+                .filter_map(|column| 
+                    match self.y_column_name.contains(column) {
+                        true => None,
+                        false => Some(format!("{}::FLOAT4", column))
+                    }
+                )
+                .collect::<Vec<String>>();
+            let label_columns = self.y_column_name.iter().map(|column| format!("{}::FLOAT4", column) ).collect::<Vec<String>>();
+            
+            let sql = format!(
+                "SELECT {}, {} FROM {}",
+                feature_columns.join(", "),
+                label_columns.join(", "),
+                self.snapshot_name()
+            );
+
+            info!("Fetching data: {}", sql);
+            let result = client.select(&sql, None, None);
+            let mut x = Vec::with_capacity(result.len() * feature_columns.len());
+            let mut y = Vec::with_capacity(result.len() * label_columns.len());
+            result.for_each(|row| {
+                // Postgres Arrays arrays are 1 indexed and so are SPI tuples...
+                for i in 1..feature_columns.len() + 1 {
+                    x.push(row[i].value::<f32>().unwrap());
+                }
+                for j in feature_columns.len() + 1..feature_columns.len() + label_columns.len() + 1 {
+                    y.push(row[j].value::<f32>().unwrap());
+                }
+            });
+            let num_rows = x.len() / feature_columns.len();
+            let num_test_rows = if self.test_size > 1.0 {
+                self.test_size as usize
+            } else {
+                (num_rows as f32 * self.test_size).round() as usize
+            };
+            let num_train_rows = num_rows - num_test_rows;
+            if num_train_rows <= 0 {
+                error!("test_size = {} is too large. There are only {} samples.", num_test_rows, num_rows);
+            }
+
+            data = Some(Data {
+                x: x,
+                y: y,
+                num_features: feature_columns.len(),
+                num_labels: label_columns.len(),
+                num_rows: num_rows,
+                num_test_rows: num_test_rows,
+                num_train_rows: num_train_rows,
+            });
+
+            Ok(Some(()))
+        });
+
+        data.unwrap()
+    }
+
+    fn snapshot_name(&self) -> String {
+        format!("pgml_rust.snapshot_{}", self.id)
+    }
 }
 
+#[derive(Debug)]
+struct Model {
+    id: i64,
+    project_id: i64,
+    snapshot_id: i64,
+    algorithm_name: Algorithm,
+    hyperparams: JsonB,
+    status: String,
+    metrics: Option<JsonB>,
+    search: Option<Search>,
+    search_params: JsonB,
+    search_args: JsonB,
+    created_at: Timestamp,
+    updated_at: Timestamp,
+}
+
+impl Model {
+    fn create(
+        project: &Project,
+        snapshot: &Snapshot,
+        algorithm_name: Algorithm,
+        hyperparams: JsonB,
+        search: Option<Search>,
+        search_params: JsonB,
+        search_args: JsonB,
+    ) -> Model {
+        let mut model: Option<Model> = None;
+
+        Spi::connect(|client| {
+            let result = client.select("
+            INSERT INTO pgml_rust.models (project_id, snapshot_id, algorithm_name, hyperparams, status, search, search_params, search_args) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+            RETURNING id, project_id, snapshot_id, algorithm_name, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
+                Some(1),
+                Some(vec![
+                    (PgBuiltInOids::INT8OID.oid(), project.id.into_datum()),
+                    (PgBuiltInOids::INT8OID.oid(), snapshot.id.into_datum()),
+                    (PgBuiltInOids::TEXTOID.oid(), algorithm_name.to_string().into_datum()),
+                    (PgBuiltInOids::JSONBOID.oid(), hyperparams.into_datum()),
+                    (PgBuiltInOids::TEXTOID.oid(), "new".to_string().into_datum()),
+                    (PgBuiltInOids::TEXTOID.oid(), search.into_datum()),
+                    (PgBuiltInOids::JSONBOID.oid(), search_params.into_datum()),
+                    (PgBuiltInOids::JSONBOID.oid(), search_args.into_datum()),
+                ])
+            ).first();
+            let mut m = Model {
+                id: result.get_datum(1).unwrap(),
+                project_id: result.get_datum(2).unwrap(),
+                snapshot_id: result.get_datum(3).unwrap(),
+                algorithm_name: Algorithm::from_str(result.get_datum(4).unwrap()).unwrap(),
+                hyperparams: result.get_datum(5).unwrap(),
+                status: result.get_datum(6).unwrap(),
+                metrics: result.get_datum(7),
+                search: None, // TODO
+                search_params: result.get_datum(9).unwrap(),
+                search_args: result.get_datum(10).unwrap(),
+                created_at: result.get_datum(11).unwrap(),
+                updated_at: result.get_datum(12).unwrap(),
+            };
+            m.fit();
+            model = Some(m);
+            Ok(Some(1))
+        });
+    
+        model.unwrap()
+    } 
+
+    fn fit(&self) {
+
+    }
+}
+
+
 #[pg_extern]
-fn create_project(name: &str, task: Task) -> i64 {
-    let project = Project::create(name, task);
+fn train(
+    project_name: &str, 
+    task: Option<default!(Task, "NULL")>,
+    relation_name: Option<default!(&str, "NULL")>,
+    y_column_name: Option<default!(&str, "NULL")>,
+    algorithm_name: default!(Algorithm, "'linear'"),
+    hyperparams: default!(JsonB, "'{}'"),
+    search: Option<default!(Search, "NULL")>,
+    search_params: default!(JsonB, "'{}'"),
+    search_args: default!(JsonB, "'{}'"),
+    test_size: default!(f32, 0.25),
+    test_sampling: default!(Sampling, "'last'"),
+) {
+    let project = match Project::find_by_name(project_name) {
+        Some(project) => project,
+        None => Project::create(project_name, task.unwrap())
+    };
+    if task.is_some() && task.unwrap() != project.task {
+        error!("Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.", project.name, project.task);
+    }
+    let snapshot = match relation_name {
+        None => project.last_snapshot().expect("You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model."),
+        Some(relation_name) => Snapshot::create(relation_name, y_column_name.expect("You must pass a `y_column_name` when you pass a `relation_name`"), test_size, test_sampling)
+    };
+
+    // # Default repeatable random state when possible
+    // let algorithm = Model.algorithm_from_name_and_task(algorithm_name, task);
+    // if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
+    //     hyperparams["random_state"] = 0
+
+    let model = Model::create(&project, &snapshot, algorithm_name, hyperparams, search, search_params, search_args);
+
     info!("{:?}", project);
-    project.id
+    info!("{:?}", snapshot);
+    info!("{:?}", model);
 }
 
 // #[pg_extern]
