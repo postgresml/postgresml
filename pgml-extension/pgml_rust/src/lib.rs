@@ -13,8 +13,8 @@ use std::path::Path;
 use std::sync::Mutex;
 use xgboost::{parameters, Booster, DMatrix};
 
-pub mod vectors;
 pub mod model;
+pub mod vectors;
 
 pg_module_magic!();
 
@@ -164,10 +164,8 @@ fn train_old(
     let train_rows = num_rows - test_rows;
 
     if algorithm == OldAlgorithm::xgboost {
-        let mut dtrain =
-            DMatrix::from_dense(&x[..train_rows * num_features], train_rows).unwrap();
-        let mut dtest =
-            DMatrix::from_dense(&x[train_rows * num_features..], test_rows).unwrap();
+        let mut dtrain = DMatrix::from_dense(&x[..train_rows * num_features], train_rows).unwrap();
+        let mut dtest = DMatrix::from_dense(&x[train_rows * num_features..], test_rows).unwrap();
         dtrain.set_labels(&y[..train_rows]).unwrap();
         dtest.set_labels(&y[train_rows..]).unwrap();
 
@@ -183,7 +181,7 @@ fn train_old(
                 }
             })
             .build()
-            .unwrap(); 
+            .unwrap();
 
         // configure the tree-based learning model's parameters
         let tree_params = parameters::tree::TreeBoosterParametersBuilder::default()
