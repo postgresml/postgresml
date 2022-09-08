@@ -652,3 +652,36 @@ main turbo-frame:first-of-type .notebook-cell {
 .CodeMirror {
   font-size: 1rem;
 }
+
+/*
+ * Uploader
+ */
+body.uploader section p, body.uploader section li {
+  margin: 0.5rem 0;
+}
+
+body.uploader section ol, body.uploader section ul {
+  margin: 1rem 0;
+}
+
+body.uploader section .markdown-body{
+  margin: 1rem 0;
+}
+
+body.uploader ul { 
+   list-style-type: disc; 
+   list-style-position: inside; 
+}
+
+body.uploader ol { 
+   list-style-type: decimal; 
+   list-style-position: inside; 
+}
+
+body.uploader section li {
+  margin-left: 1rem;
+}
+
+body.uploader strong {
+  font-weight: bold;
+}

@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework import routers
 
-from app.views import root, projects, models, snapshots, deployments, console, notebooks
+from app.views import root, projects, models, snapshots, deployments, console, notebooks, uploader
 
 
 router = routers.DefaultRouter()
@@ -26,6 +26,8 @@ urlpatterns = [
     path("projects/<int:pk>", projects.ProjectView.as_view(), name="project"),
     path("snapshots/", snapshots.index, name="snapshots"),
     path("snapshots/<int:id>", snapshots.snapshot, name="snapshot"),
+    path("uploader/", uploader.index, name="uploader"),
+    path("uploader/uploaded/<int:pk>/", uploader.uploaded, name="uploader/uploaded"),
     path("console/", console.ConsoleView.as_view(), name="console"),
     path("console/run/", console.run_sql, name="console/run-sql"),
     path("set-auth-cookie/", root.set_auth_cookie, name="set-auth-cookie"),

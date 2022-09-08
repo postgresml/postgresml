@@ -1,4 +1,4 @@
-from django.db import models, connection
+from django.db import models, connection, transaction
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.db.utils import ProgrammingError
@@ -6,6 +6,8 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 
 import markdown
+import codecs
+import csv
 
 
 class Project(models.Model):
@@ -298,3 +300,35 @@ class NotebookCell(models.Model):
 
     def __str__(self):
         return f"{self.notebook} - {self.pk}"
+
+
+class UploadedData(models.Model):
+    """Data uploaded by the user through the dashboard."""
+
+    file_type = models.IntegerField(
+        choices=(
+            (
+                1,
+                "CSV",
+            ),
+            (2, "JSON"),
+        ),
+        default=1,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def create_table(self, file):
+        if file.content_type == "text/csv":
+            reader = csv.reader(codecs.iterdecode(file, "utf-8"))
+            headers = next(reader)
+            columns = ", ".join(map(lambda x: f"{x.replace(' ', '_').lower()} FLOAT4", headers))
+
+            with transaction.atomic():
+                sql = f"CREATE TABLE data_{self.pk} (" + columns + ")"
+
+                with connection.cursor() as cursor:
+                    cursor.execute(sql)
+
+                    file.seek(0)
+                    cursor.copy_expert(f"COPY data_{self.pk} FROM STDIN CSV HEADER", file)
