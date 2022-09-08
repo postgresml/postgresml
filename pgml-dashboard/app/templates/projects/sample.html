@@ -1,28 +1,26 @@
-<turbo-frame id="sample">
-  <table>
-      <thead>
-          <tr>
-              {% for column in columns %}
-              <th>{{ column }}</th>
-              {% endfor %}
-          </tr>
-      </thead>
-      <tbody>
-          {% for row in rows %}
-          <tr>
-              {% for column in row %}
-              <td>{{ column }}</td>
-              {% endfor %}
-          </tr>
-          {% endfor %}
+<table>
+    <thead>
+        <tr>
+            {% for column in columns %}
+            <th>{{ column }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            {% for column in row %}
+            <td>{{ column }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
 
-          {% if redacted %}
-          <tr>
-              {% for column in rows.0 %}
-                  <td>...</td>
-              {% endfor %}
-          </tr>
-          {% endif %}
-      </tbody>
-  </table>
-</turbo-frame>
+        {% if redacted %}
+        <tr>
+            {% for column in rows.0 %}
+                <td>...</td>
+            {% endfor %}
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
