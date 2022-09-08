@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block main %}
+
+<section>
+  {% if error %}
+  <h1><span class="material-symbols-outlined" style="color: var(--highlite-red)">cloud_upload</span>Error</h1>
+  {% else %}
+  <h1><span class="material-symbols-outlined">cloud_upload</span>Upload Data</h1>
+  {% endif %}
+  
+  {% if error %}
+    <p style="margin-bottom: 1rem;">Hmm, something went wrong. Please make sure:</p>
+  {% else %}
+    <p style="margin-bottom: 1rem;">You can upload your datasets using the CSV format. Before uploading, please make sure:</p>
+  {% endif %}
+  
+  <ol>
+    <li>The data is numeric (i.e. only floats or integers and no text)</li>
+    <li>The CSV includes headers on the first line</li>
+    <li>The headers are alphanumeric, contain no spaces and don't start with a number</li>
+    <li>The CSV is comma (<code>,</code>) delimited</li>
+  </ol>
+
+  {% if error %}
+  <h4>Error: </h4>
+  <div class="markdown-body">
+    <pre><code>{{ error }}</code></pre>
+  </div>
+  {% endif %}
+
+  <p>If you are exporting data from a PostgreSQL database, you can use <code>psql</code> to generate a valid CSV file:</p>
+  <div class="markdown-body">
+    <pre><code class="language-sql">\copy your_table_name TO 'output.csv' CSV HEADER</code></pre>
+  </div>
+
+</section>
+
+<section>
+  <form action="{% url 'uploader' %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="flex">
+      <input id="file" type="file" name="file" accept="text/csv,application/json" required="true" />
+    </div>
+
+    <div class="button-container">
+      <button type="submit">Upload</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
