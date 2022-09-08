@@ -8,6 +8,7 @@ use once_cell::sync::Lazy;
 use serde::Deserialize;
 use std::sync::Mutex;
 use std::sync::Arc;
+use ndarray::Array;
 
 static PROJECTS: Lazy<Mutex<HashMap<String, Arc<Project>>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
@@ -491,7 +492,7 @@ impl Snapshot {
             if num_train_rows <= 0 {
                 error!("test_size = {} is too large. There are only {} samples.", num_test_rows, num_rows);
             }
-
+            info!("got features {:?} labels {:?} rows {:?}", feature_columns.len(), label_columns.len(), num_rows);
             data = Some(Data {
                 x: x,
                 y: y,
@@ -514,11 +515,11 @@ impl Snapshot {
 }
 
 #[derive(Debug)]
-struct Model {
+struct Model<'a> {
     id: i64,
     project_id: i64,
     snapshot_id: i64,
-    algorithm_name: Algorithm,
+    algorithm: Algorithm,
     hyperparams: JsonB,
     status: String,
     metrics: Option<JsonB>,
@@ -527,30 +528,32 @@ struct Model {
     search_args: JsonB,
     created_at: Timestamp,
     updated_at: Timestamp,
+    project: Option<&'a Project>,
+    snapshot: Option<&'a Snapshot>,
 }
 
-impl Model {
-    fn create(
-        project: &Project,
-        snapshot: &Snapshot,
-        algorithm_name: Algorithm,
+impl Model<'_> {
+    fn create<'a>(
+        project: &'a Project,
+        snapshot: &'a Snapshot,
+        algorithm: Algorithm,
         hyperparams: JsonB,
         search: Option<Search>,
         search_params: JsonB,
         search_args: JsonB,
-    ) -> Model {
+    ) -> Model<'a> {
         let mut model: Option<Model> = None;
 
         Spi::connect(|client| {
             let result = client.select("
-            INSERT INTO pgml_rust.models (project_id, snapshot_id, algorithm_name, hyperparams, status, search, search_params, search_args) 
+            INSERT INTO pgml_rust.models (project_id, snapshot_id, algorithm, hyperparams, status, search, search_params, search_args) 
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-            RETURNING id, project_id, snapshot_id, algorithm_name, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
+            RETURNING id, project_id, snapshot_id, algorithm, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::INT8OID.oid(), project.id.into_datum()),
                     (PgBuiltInOids::INT8OID.oid(), snapshot.id.into_datum()),
-                    (PgBuiltInOids::TEXTOID.oid(), algorithm_name.to_string().into_datum()),
+                    (PgBuiltInOids::TEXTOID.oid(), algorithm.to_string().into_datum()),
                     (PgBuiltInOids::JSONBOID.oid(), hyperparams.into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), "new".to_string().into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), search.into_datum()),
@@ -562,26 +565,63 @@ impl Model {
                 id: result.get_datum(1).unwrap(),
                 project_id: result.get_datum(2).unwrap(),
                 snapshot_id: result.get_datum(3).unwrap(),
-                algorithm_name: Algorithm::from_str(result.get_datum(4).unwrap()).unwrap(),
+                algorithm: Algorithm::from_str(result.get_datum(4).unwrap()).unwrap(),
                 hyperparams: result.get_datum(5).unwrap(),
                 status: result.get_datum(6).unwrap(),
                 metrics: result.get_datum(7),
-                search: None, // TODO
+                search: search, // TODO
                 search_params: result.get_datum(9).unwrap(),
                 search_args: result.get_datum(10).unwrap(),
                 created_at: result.get_datum(11).unwrap(),
                 updated_at: result.get_datum(12).unwrap(),
+                project: Some(project),
+                snapshot: Some(snapshot),
             };
-            m.fit();
             model = Some(m);
             Ok(Some(1))
         });
-    
-        model.unwrap()
+        let model = model.unwrap();
+        model.fit();
+        model
     } 
 
     fn fit(&self) {
+        info!("fitting model: {:?}", self.algorithm);
+        if self.algorithm == Algorithm::linear {
+            let data = self.snapshot.unwrap().data();
 
+            let x_train = Array::from_shape_vec(
+                (data.num_train_rows, data.num_features),
+                data.train_x().to_vec(),
+            )
+            .unwrap();
+            let x_test = Array::from_shape_vec(
+                (data.num_test_rows, data.num_features),
+                data.test_x().to_vec(),
+            )
+            .unwrap();
+            let y_train = Array::from_shape_vec(data.num_train_rows, data.train_y().to_vec()).unwrap();
+            let y_test = Array::from_shape_vec(data.num_test_rows, data.test_y().to_vec()).unwrap();
+            if self.project.unwrap().task == Task::regression {
+                let estimator = smartcore::linear::linear_regression::LinearRegression::fit(
+                    &x_train,
+                    &y_train,
+                    Default::default(),
+                )
+                .unwrap();
+                // save(estimator, x_test, y_test, algorithm, project_id)
+            } else if self.project.unwrap().task == Task::classification {
+                let estimator = smartcore::linear::logistic_regression::LogisticRegression::fit(
+                    &x_train,
+                    &y_train,
+                    Default::default(),
+                )
+                .unwrap();
+                // save(estimator, x_test, y_test, algorithm, project_id)
+            } else {
+                error!("unhandled task {:?}", self.project.unwrap().task)
+            }
+        }
     }
 }
 
@@ -592,7 +632,7 @@ fn train(
     task: Option<default!(Task, "NULL")>,
     relation_name: Option<default!(&str, "NULL")>,
     y_column_name: Option<default!(&str, "NULL")>,
-    algorithm_name: default!(Algorithm, "'linear'"),
+    algorithm: default!(Algorithm, "'linear'"),
     hyperparams: default!(JsonB, "'{}'"),
     search: Option<default!(Search, "NULL")>,
     search_params: default!(JsonB, "'{}'"),
@@ -613,11 +653,11 @@ fn train(
     };
 
     // # Default repeatable random state when possible
-    // let algorithm = Model.algorithm_from_name_and_task(algorithm_name, task);
+    // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);
     // if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
     //     hyperparams["random_state"] = 0
 
-    let model = Model::create(&project, &snapshot, algorithm_name, hyperparams, search, search_params, search_args);
+    let model = Model::create(&project, &snapshot, algorithm, hyperparams, search, search_params, search_args);
 
     info!("{:?}", project);
     info!("{:?}", snapshot);
