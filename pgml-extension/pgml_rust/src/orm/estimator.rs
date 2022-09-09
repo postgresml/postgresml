@@ -82,7 +82,16 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
             }
         },
         Task::classification => {
-            todo!()
+            Algorithm::linear => {
+                let estimator: smartcore::linear::logistic_regression::LogisticRegression<
+                    f32,
+                    Array2<f32>,
+                > = rmp_serde::from_read(&*data).unwrap();
+                estimator
+            }
+            Algorithm::xgboost => {
+                todo!()
+            }        
         }
     };
 
