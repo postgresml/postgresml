@@ -13,7 +13,8 @@ use std::path::Path;
 use std::sync::Mutex;
 use xgboost::{parameters, Booster, DMatrix};
 
-pub mod model;
+pub mod orm;
+pub mod train;
 pub mod vectors;
 
 pg_module_magic!();
