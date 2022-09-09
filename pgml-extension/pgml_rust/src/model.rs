@@ -1,7 +1,8 @@
 use ndarray::{Array, Array1, Array2};
 use once_cell::sync::Lazy;
 use pgx::*;
-use serde::Deserialize;
+use rmp_serde::Serializer;
+use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -581,15 +582,26 @@ impl Snapshot {
 //     }
 // }
 
+#[typetag::serialize(tag = "type")]
 trait Estimator {
-    fn test(&self, data: &Data) -> HashMap<String, f32>;
+    fn test(&self, task: Task, data: &Data) -> HashMap<String, f32>;
+    // fn to_bytes(&self) {
+    //     rmp_serde::to_vec(&self).unwrap()
+    // }
+    // fn from_bytes(buf: &Vec) -> Estimator {
+    //     rmp_serde::from_ref_ref(buf).unwrap()
+    // }
     // fn predict();
     // fn predict_batch();
     // fn serialize();
 }
 
-impl Estimator for dyn smartcore::api::Predictor<Array2<f32>, Array1<f32>> {
-    fn test(&self, data: &Data) -> HashMap<std::string::String, f32> {
+#[typetag::serialize]
+impl<T> Estimator for T
+where
+    T: smartcore::api::Predictor<Array2<f32>, Array1<f32>> + Serialize,
+{
+    fn test(&self, task: Task, data: &Data) -> HashMap<String, f32> {
         let x_test = Array2::from_shape_vec(
             (data.num_test_rows, data.num_features),
             data.x_test().to_vec(),
@@ -598,20 +610,24 @@ impl Estimator for dyn smartcore::api::Predictor<Array2<f32>, Array1<f32>> {
         let y_hat = self.predict(&x_test).unwrap();
         let mut results = HashMap::new();
         if data.num_labels == 1 {
-            let y_test = Array1::from_shape_vec(data.num_test_rows, data.y_test().to_vec()).unwrap();
-            results.insert("r2".to_string(), smartcore::metrics::r2(&y_test, &y_hat));
-            results.insert(
-                "mse".to_string(),
-                smartcore::metrics::mean_squared_error(&y_test, &y_hat),
-            );
+            let y_test =
+                Array1::from_shape_vec(data.num_test_rows, data.y_test().to_vec()).unwrap();
+            match task {
+                Task::regression => {
+                    results.insert("r2".to_string(), smartcore::metrics::r2(&y_test, &y_hat));
+                    results.insert(
+                        "mse".to_string(),
+                        smartcore::metrics::mean_squared_error(&y_test, &y_hat),
+                    );
+                },
+                Task::classification => todo!()
+            }
         }
         results
     }
 }
 
-
-
-struct Model<'a> {
+struct Model {
     id: i64,
     project_id: i64,
     snapshot_id: i64,
@@ -624,27 +640,25 @@ struct Model<'a> {
     search_args: JsonB,
     created_at: Timestamp,
     updated_at: Timestamp,
-    project: Option<&'a Project>,
-    snapshot: Option<&'a Snapshot>,
-    estimator: Option<Box<dyn smartcore::api::Predictor<Array2<f32>, Array1<f32>>>>,
+    estimator: Option<Box<dyn Estimator>>,
 }
 
-impl fmt::Debug for Model<'_> {
+impl fmt::Debug for Model {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Model")
     }
 }
 
-impl Model<'_> {
-    fn create<'a>(
-        project: &'a Project,
-        snapshot: &'a Snapshot,
+impl Model {
+    fn create(
+        project: &Project,
+        snapshot: &Snapshot,
         algorithm: Algorithm,
         hyperparams: JsonB,
         search: Option<Search>,
         search_params: JsonB,
         search_args: JsonB,
-    ) -> Model<'a> {
+    ) -> Model {
         let mut model: Option<Model> = None;
 
         Spi::connect(|client| {
@@ -677,21 +691,19 @@ impl Model<'_> {
                 search_args: result.get_datum(10).unwrap(),
                 created_at: result.get_datum(11).unwrap(),
                 updated_at: result.get_datum(12).unwrap(),
-                project: Some(project),
-                snapshot: Some(snapshot),
                 estimator: None,
             };
             model = Some(m);
             Ok(Some(1))
         });
         let mut model = model.unwrap();
-        model.fit();
+        let data = snapshot.data();
+        model.fit(&project, &data);
+        model.test(&project, &data);
         model
     }
 
-    fn fit(&mut self) {
-        info!("fitting model: {:?}", self.algorithm);
-        let data = self.snapshot.unwrap().data();
+    fn fit(&mut self, project: &Project, data: &Data) {
         match self.algorithm {
             Algorithm::linear => {
                 let x_train = Array2::from_shape_vec(
@@ -701,7 +713,7 @@ impl Model<'_> {
                 .unwrap();
                 let y_train =
                     Array1::from_shape_vec(data.num_train_rows, data.y_train().to_vec()).unwrap();
-                match self.project.unwrap().task {
+                match project.task {
                     Task::regression => {
                         self.estimator = Some(Box::new(
                             smartcore::linear::linear_regression::LinearRegression::fit(
@@ -711,8 +723,6 @@ impl Model<'_> {
                             )
                             .unwrap(),
                         ))
-
-
                     }
                     Task::classification => {
                         self.estimator = Some(Box::new(
@@ -725,19 +735,41 @@ impl Model<'_> {
                         ))
                     }
                 }
-
-                let estimator = self.estimator.as_ref().unwrap();
-                self.metrics = Some(JsonB(json!(estimator.test(&data))));
-            },
+            }
             Algorithm::xgboost => {
                 todo!()
             }
         }
-        info!("fitting complete: {:?}", self.metrics);
+
+        let bytes = rmp_serde::to_vec(&*self.estimator.as_ref().unwrap()).unwrap();
+        Spi::get_one_with_args::<i64>(
+            "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+            vec![
+                (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
+                (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
+            ]
+        ).unwrap();
+    }
+
+    fn test(&mut self, project: &Project, data: &Data) {
+        let estimator = self.estimator.as_ref().unwrap();
+        let metrics = estimator.test(project.task, &data);
+        self.metrics = Some(JsonB(json!(metrics.clone())));
+        Spi::get_one_with_args::<i64>(
+            "UPDATE pgml_rust.models SET metrics = $1 WHERE id = $2 RETURNING id",
+            vec![
+                (
+                    PgBuiltInOids::JSONBOID.oid(),
+                    JsonB(json!(metrics)).into_datum(),
+                ),
+                (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
+            ],
+        )
+        .unwrap();
     }
 
     // fn save<
-    //     E: serde::Serialize + smartcore::api::Predictor<X, Y> + std::fmt::Debug,
+    //     E: Serialize + smartcore::api::Predictor<X, Y> + std::fmt::Debug,
     //     N: smartcore::math::num::RealNumber,
     //     X,
     //     Y: std::fmt::Debug + smartcore::linalg::BaseVector<N>,
