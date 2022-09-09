@@ -192,7 +192,8 @@ impl Model {
             }
         };
 
-        let bytes = rmp_serde::to_vec(&*self.estimator.as_ref().unwrap()).unwrap();
+        let bytes: Vec<u8> = rmp_serde::to_vec(&*self.estimator.as_ref().unwrap()).unwrap();
+
         Spi::get_one_with_args::<i64>(
           "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
           vec![
@@ -216,43 +217,5 @@ impl Model {
             ],
         )
         .unwrap();
-    }
-
-    pub fn predict(&mut self, features: Vec<f32>) -> f32 {
-        self.estimator().estimator_predict(features)
-    }
-
-    pub fn estimator(&self) -> Box<dyn Estimator> {
-        todo!()
-        // match self.estimator {
-        //     Some(estimator) => estimator,
-        //     None => {
-        //         let task = self.project_task();
-        //         let estimator_data = self.estimator_data();
-        //         self.estimator = match task {
-        //             Task::classification => todo!(),
-        //             Task::regression => match self.algorithm {
-        //                 Algorithm::linear => {
-        //                     Some(Box::new(rmp_serde::from_read::<&Vec<u8>, smartcore::linear::linear_regression::LinearRegression<f32, Array2<f32>>>(&estimator_data).unwrap()))
-        //                 }
-        //                 Algorithm::xgboost => todo!(),
-        //             },
-        //         };
-
-        //         self.estimator.unwrap()
-        //     }
-        // }
-    }
-
-    fn estimator_data(&self) -> Vec<u8> {
-        Spi::get_one_with_args::<&[u8]>("SELECT data FROM pgml_rust.files WHERE model_id = $1",
-            vec![(PgBuiltInOids::INT8OID.oid(), self.id.into_datum())],
-        ).expect("Model `{}` has no saved estimator").to_vec()
-    }
-
-    fn project_task(&self) -> Task {
-        Spi::get_one_with_args::<Task>("SELECT task FROM pgml_rust.projects WHERE id = $1",
-            vec![(PgBuiltInOids::INT8OID.oid(), self.project_id.into_datum())],
-        ).expect("Model `{}` has no associated project")
     }
 }

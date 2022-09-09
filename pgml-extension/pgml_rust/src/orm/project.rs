@@ -6,7 +6,6 @@ use std::sync::Mutex;
 use once_cell::sync::Lazy;
 use pgx::*;
 
-use crate::orm::Model;
 use crate::orm::Snapshot;
 use crate::orm::Task;
 
@@ -20,7 +19,6 @@ pub struct Project {
     pub task: Task,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
-    deployed_model: Option<Model>,
 }
 
 impl Project {
@@ -41,7 +39,6 @@ impl Project {
                     task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
                     created_at: result.get_datum(4).unwrap(),
                     updated_at: result.get_datum(5).unwrap(),
-                    deployed_model: None,
                 });
             }
             Ok(Some(1))
@@ -82,7 +79,6 @@ impl Project {
                         task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
                         created_at: result.get_datum(4).unwrap(),
                         updated_at: result.get_datum(5).unwrap(),
-                        deployed_model: None,
                     }),
                 );
                 project = Some(projects.get(name).unwrap().clone());
@@ -116,7 +112,6 @@ impl Project {
                         task: result.get_datum(3).unwrap(),
                         created_at: result.get_datum(4).unwrap(),
                         updated_at: result.get_datum(5).unwrap(),
-                        deployed_model: None,
                     }),
                 );
                 project = Some(projects.get(name).unwrap().clone());

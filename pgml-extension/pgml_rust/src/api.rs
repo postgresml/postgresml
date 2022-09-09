@@ -8,7 +8,6 @@ use crate::orm::Search;
 use crate::orm::Snapshot;
 use crate::orm::Strategy;
 use crate::orm::Task;
-use crate::orm::Estimator;
 
 #[pg_extern]
 fn train(
@@ -68,10 +67,11 @@ fn train(
 
 #[pg_extern]
 fn predict(project_name: &str, features: Vec<f32>) -> f32 {
-    let project = Project::find_by_name(project_name).expect(format!("Project `{}` does not exist.", project_name).as_str());
-    let model = Model::find_deployed(project.id).expect(format!("Project `{}` does not have a deployed model.", project_name).as_str());
+    let estimator = crate::orm::estimator::find_deployed_estimator_by_project_name(project_name);
+    // let project = Project::find_by_name(project_name).expect(format!("Project `{}` does not exist.", project_name).as_str());
+    // let model = Model::find_deployed(project.id).expect(format!("Project `{}` does not have a deployed model.", project_name).as_str());
     // let estimator: Box<dyn Estimator> = Estimator::find_deployed(model.id); // TODO skip the model and go straight to estimator from project
-    model.estimator().estimator_predict(features)
+    estimator.estimator_predict(features)
 }
 
 // #[pg_extern]
