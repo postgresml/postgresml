@@ -14,6 +14,7 @@ import codecs
 
 class UploadForm(forms.Form):
     file = forms.FileField()
+    has_header = forms.BooleanField(required=False)
 
 
 def index(request):
@@ -31,7 +32,7 @@ def index(request):
                     file_type=1 if file.content_type == "text/csv" else 2,
                 )
 
-                upload.create_table(file)
+                upload.create_table(file, form.cleaned_data.get("has_header", False))
             except Exception as e:
                 return render(
                     request,

@@ -48,16 +48,20 @@ def run_sql(request):
         try:
             cursor.execute("SET statement_timeout = '30s'")
             cursor.execute(query)
-            results = cursor.fetchall()
 
-            return render(
-                request,
-                "projects/sample.html",
-                {
-                    "columns": [desc[0] for desc in cursor.description],
-                    "rows": results,
-                },
-            )
+            if cursor.description:
+                results = cursor.fetchall()
+
+                return render(
+                    request,
+                    "projects/sample.html",
+                    {
+                        "columns": [desc[0] for desc in cursor.description],
+                        "rows": results,
+                    },
+                )
+            else:
+                raise Exception(str(cursor.statusmessage))
         except Exception as e:
             return HttpResponse(
                 f"""
