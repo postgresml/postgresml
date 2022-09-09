@@ -6,10 +6,11 @@ use std::sync::Mutex;
 use once_cell::sync::Lazy;
 use pgx::*;
 
+use crate::orm::Model;
 use crate::orm::Snapshot;
 use crate::orm::Task;
 
-static PROJECTS: Lazy<Mutex<HashMap<String, Arc<Project>>>> =
+static PROJECTS_BY_NAME: Lazy<Mutex<HashMap<String, Arc<Project>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug)]
@@ -19,6 +20,7 @@ pub struct Project {
     pub task: Task,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
+    deployed_model: Option<Model>,
 }
 
 impl Project {
@@ -39,6 +41,7 @@ impl Project {
                     task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
                     created_at: result.get_datum(4).unwrap(),
                     updated_at: result.get_datum(5).unwrap(),
+                    deployed_model: None,
                 });
             }
             Ok(Some(1))
@@ -49,7 +52,7 @@ impl Project {
 
     pub fn find_by_name(name: &str) -> Option<Arc<Project>> {
         {
-            let projects = PROJECTS.lock().unwrap();
+            let projects = PROJECTS_BY_NAME.lock().unwrap();
             let project = projects.get(name);
             if project.is_some() {
                 info!("cache hit: {}", name);
@@ -70,7 +73,7 @@ impl Project {
             ).first();
             if result.len() > 0 {
                 info!("db hit: {}", name);
-                let mut projects = PROJECTS.lock().unwrap();
+                let mut projects = PROJECTS_BY_NAME.lock().unwrap();
                 projects.insert(
                     name.to_string(),
                     Arc::new(Project {
@@ -79,6 +82,7 @@ impl Project {
                         task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
                         created_at: result.get_datum(4).unwrap(),
                         updated_at: result.get_datum(5).unwrap(),
+                        deployed_model: None,
                     }),
                 );
                 project = Some(projects.get(name).unwrap().clone());
@@ -103,7 +107,7 @@ impl Project {
                 ])
             ).first();
             if result.len() > 0 {
-                let mut projects = PROJECTS.lock().unwrap();
+                let mut projects = PROJECTS_BY_NAME.lock().unwrap();
                 projects.insert(
                     name.to_string(),
                     Arc::new(Project {
@@ -112,6 +116,7 @@ impl Project {
                         task: result.get_datum(3).unwrap(),
                         created_at: result.get_datum(4).unwrap(),
                         updated_at: result.get_datum(5).unwrap(),
+                        deployed_model: None,
                     }),
                 );
                 project = Some(projects.get(name).unwrap().clone());

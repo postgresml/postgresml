@@ -13,8 +13,8 @@ use std::path::Path;
 use std::sync::Mutex;
 use xgboost::{parameters, Booster, DMatrix};
 
+pub mod api;
 pub mod orm;
-pub mod train;
 pub mod vectors;
 
 pg_module_magic!();
@@ -331,7 +331,7 @@ fn save<
 }
 
 #[pg_extern]
-fn predict(project_name: String, features: Vec<f32>) -> f32 {
+fn old_predict(project_name: String, features: Vec<f32>) -> f32 {
     let model_id = Spi::get_one_with_args(
         "SELECT model_id
         FROM pgml_rust.deployments
