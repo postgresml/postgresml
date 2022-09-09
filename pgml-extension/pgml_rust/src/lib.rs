@@ -18,7 +18,7 @@ pub mod vectors;
 
 pg_module_magic!();
 
-extension_sql_file!("../sql/schema.sql", name = "bootstrap_raw", bootstrap);
+extension_sql_file!("../sql/schema.sql", name = "bootstrap_raw");
 extension_sql_file!(
     "../sql/diabetes.sql",
     name = "diabetes",

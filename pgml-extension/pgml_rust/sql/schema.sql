@@ -43,7 +43,7 @@ LANGUAGE plpgsql;
 CREATE TABLE IF NOT EXISTS pgml_rust.projects(
 	id BIGSERIAL PRIMARY KEY,
 	name TEXT NOT NULL,
-	task TEXT NOT NULL,
+	task pgml_rust.task NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp()
 );
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS pgml_rust.snapshots(
 	relation_name TEXT NOT NULL,
 	y_column_name TEXT[] NOT NULL,
 	test_size FLOAT4 NOT NULL,
-	test_sampling TEXT NOT NULL,
+	test_sampling pgml_rust.sampling NOT NULL,
 	status TEXT NOT NULL,
 	columns JSONB,
 	analysis JSONB,
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS pgml_rust.models(
 	hyperparams JSONB NOT NULL,
 	status TEXT NOT NULL,
 	metrics JSONB,
-	search TEXT,
+	search pgml_rust.search,
 	search_params JSONB NOT NULL,
 	search_args JSONB NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS pgml_rust.deployments(
 	id BIGSERIAL PRIMARY KEY,
 	project_id BIGINT NOT NULL,
 	model_id BIGINT NOT NULL,
-	strategy TEXT NOT NULL,
+	strategy pgml_rust.strategy NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml_rust.projects(id),
 	CONSTRAINT model_id_fk FOREIGN KEY(model_id) REFERENCES pgml_rust.models(id)

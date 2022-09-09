@@ -17,6 +17,37 @@ static PROJECTS: Lazy<Mutex<HashMap<String, Arc<Project>>>> =
 
 #[derive(PostgresEnum, Copy, Clone, PartialEq, Debug)]
 #[allow(non_camel_case_types)]
+enum Strategy {
+    best_score,
+    most_recent,
+    rollback,
+}
+
+impl std::str::FromStr for Strategy {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<Strategy, Self::Err> {
+        match input {
+            "best_score" => Ok(Strategy::best_score),
+            "most_recent" => Ok(Strategy::most_recent),
+            "rollback" => Ok(Strategy::rollback),
+            _ => Err(()),
+        }
+    }
+}
+
+impl std::string::ToString for Strategy {
+    fn to_string(&self) -> String {
+        match *self {
+            Strategy::best_score => "best_score".to_string(),
+            Strategy::most_recent => "most_recent".to_string(),
+            Strategy::rollback => "rollback".to_string(),
+        }
+    }
+}
+
+#[derive(PostgresEnum, Copy, Clone, PartialEq, Debug)]
+#[allow(non_camel_case_types)]
 enum Algorithm {
     linear,
     xgboost,
@@ -213,7 +244,7 @@ impl Project {
         let mut project: Option<Arc<Project>> = None;
 
         Spi::connect(|client| {
-            let result = client.select("INSERT INTO pgml_rust.projects (name, task) VALUES ($1, $2) RETURNING id, name, task, created_at, updated_at;",
+            let result = client.select(r#"INSERT INTO pgml_rust.projects (name, task) VALUES ($1, $2::pgml_rust.task) RETURNING id, name, task, created_at, updated_at;"#,
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),
@@ -227,7 +258,7 @@ impl Project {
                     Arc::new(Project {
                         id: result.get_datum(1).unwrap(),
                         name: result.get_datum(2).unwrap(),
-                        task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
+                        task: result.get_datum(3).unwrap(),
                         created_at: result.get_datum(4).unwrap(),
                         updated_at: result.get_datum(5).unwrap(),
                     }),
@@ -311,7 +342,7 @@ impl Snapshot {
                     relation_name: result.get_datum(2).unwrap(),
                     y_column_name: result.get_datum(3).unwrap(),
                     test_size: result.get_datum(4).unwrap(),
-                    test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
+                    test_sampling: result.get_datum(5).unwrap(),
                     status: result.get_datum(6).unwrap(),
                     columns: result.get_datum(7),
                     analysis: result.get_datum(8),
@@ -333,7 +364,7 @@ impl Snapshot {
         let mut snapshot: Option<Snapshot> = None;
 
         Spi::connect(|client| {
-            let result = client.select("INSERT INTO pgml_rust.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4, $5) RETURNING id, relation_name, y_column_name, test_size, test_sampling, status, columns, analysis, created_at, updated_at;",
+            let result = client.select("INSERT INTO pgml_rust.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4::pgml_rust.sampling, $5) RETURNING id, relation_name, y_column_name, test_size, test_sampling, status, columns, analysis, created_at, updated_at;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), relation_name.into_datum()),
@@ -348,7 +379,7 @@ impl Snapshot {
                 relation_name: result.get_datum(2).unwrap(),
                 y_column_name: result.get_datum(3).unwrap(),
                 test_size: result.get_datum(4).unwrap(),
-                test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
+                test_sampling: result.get_datum(5).unwrap(),
                 status: result.get_datum(6).unwrap(),
                 columns: None,
                 analysis: None,
@@ -566,31 +597,9 @@ impl Snapshot {
     }
 }
 
-// struct Estimator {
-//     estimator: Box<dyn Estimation>,
-// }
-
-// impl Estimator {
-//     fn test(&self, data: &Data) -> HashMap<String, f32> {
-//         self.estimator.test(data)
-//     }
-// }
-
-// impl fmt::Debug for Estimator {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "Estimator")
-//     }
-// }
-
 #[typetag::serialize(tag = "type")]
 trait Estimator {
     fn test(&self, task: Task, data: &Data) -> HashMap<String, f32>;
-    // fn to_bytes(&self) {
-    //     rmp_serde::to_vec(&self).unwrap()
-    // }
-    // fn from_bytes(buf: &Vec) -> Estimator {
-    //     rmp_serde::from_ref_ref(buf).unwrap()
-    // }
     // fn predict();
     // fn predict_batch();
     // fn serialize();
@@ -664,7 +673,7 @@ impl Model {
         Spi::connect(|client| {
             let result = client.select("
             INSERT INTO pgml_rust.models (project_id, snapshot_id, algorithm, hyperparams, status, search, search_params, search_args) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+            VALUES ($1, $2, $3, $4, $5, $6::pgml_rust.search, $7, $8) 
             RETURNING id, project_id, snapshot_id, algorithm, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
                 Some(1),
                 Some(vec![
@@ -768,50 +777,7 @@ impl Model {
         .unwrap();
     }
 
-    // fn save<
-    //     E: Serialize + smartcore::api::Predictor<X, Y> + std::fmt::Debug,
-    //     N: smartcore::math::num::RealNumber,
-    //     X,
-    //     Y: std::fmt::Debug + smartcore::linalg::BaseVector<N>,
-    // >(
-    //     estimator: E,
-    //     x_test: X,
-    //     y_test: Y,
-    //     algorithm: OldAlgorithm,
-    //     project_id: i64,
-    // ) -> i64 {
-    //     let y_hat = estimator.predict(&x_test).unwrap();
 
-    //     info!("r2: {:?}", smartcore::metrics::r2(&y_test, &y_hat));
-    //     info!(
-    //         "mean squared error: {:?}",
-    //         smartcore::metrics::mean_squared_error(&y_test, &y_hat)
-    //     );
-
-    //     let mut buffer = Vec::new();
-    //     estimator
-    //         .serialize(&mut Serializer::new(&mut buffer))
-    //         .unwrap();
-    //     info!("bin {:?}", buffer);
-
-    //     let model_id = Spi::get_one_with_args::<i64>(
-    //         "INSERT INTO pgml_rust.models (id, project_id, algorithm, data) VALUES (DEFAULT, $1, $2, $3) RETURNING id",
-    //         vec![
-    //             (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
-    //             (PgBuiltInOids::INT8OID.oid(), algorithm.into_datum()),
-    //             (PgBuiltInOids::BYTEAOID.oid(), buffer.into_datum())
-    //         ]
-    //     ).unwrap();
-
-    //     Spi::get_one_with_args::<i64>(
-    //         "INSERT INTO pgml_rust.deployments (project_id, model_id, strategy) VALUES ($1, $2, 'last_trained') RETURNING id",
-    //         vec![
-    //             (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
-    //             (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
-    //         ]
-    //     );
-    //     model_id
-    // }
 }
 
 #[pg_extern]
@@ -858,6 +824,16 @@ fn train(
     info!("{:?}", project);
     info!("{:?}", snapshot);
     info!("{:?}", model);
+
+    // TODO move deployment into a struct and only deploy if new model is better than old model
+    Spi::get_one_with_args::<i64>(
+        "INSERT INTO pgml_rust.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml_rust.strategy) RETURNING id",
+        vec![
+            (PgBuiltInOids::INT8OID.oid(), project.id.into_datum()),
+            (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+            (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
+        ]
+    );
 }
 
 // #[pg_extern]
