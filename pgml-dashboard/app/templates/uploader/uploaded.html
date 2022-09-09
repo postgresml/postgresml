@@ -15,7 +15,7 @@
 
 <section>
   <h2><span class="material-symbols-outlined">table_rows</span>Next Steps</h2>
-  <p>Your data has been saved in <strong>pgml.{{ table_name }}</strong> table. You can see the data in the <a href="{% url 'console' %}">Console</a>:</p>
+  <p>Your data has been saved in <strong>pgml.{{ table_name }}</strong> table. You can explore the data in the <a href="{% url 'console' %}">Console</a>:</p>
   <div class="markdown-body">
     <pre><code class="language-sql">SELECT * FROM pgml.{{ table_name }}
 LIMIT 10</code></pre>
