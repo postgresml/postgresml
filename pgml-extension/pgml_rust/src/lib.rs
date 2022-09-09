@@ -165,9 +165,7 @@ fn train_old(
     let learning_params = parameters::learning::LearningTaskParametersBuilder::default()
         .objective(match task {
             ProjectTask::regression => xgboost::parameters::learning::Objective::RegLinear,
-            ProjectTask::classification => {
-                xgboost::parameters::learning::Objective::RegLogistic
-            }
+            ProjectTask::classification => xgboost::parameters::learning::Objective::RegLogistic,
         })
         .build()
         .unwrap();
@@ -232,7 +230,6 @@ fn train_old(
     );
     model_id
 }
-
 
 #[pg_extern]
 fn old_predict(project_name: String, features: Vec<f32>) -> f32 {

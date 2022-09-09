@@ -1,12 +1,12 @@
 use std::collections::HashMap;
+use std::fmt::Debug;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::str::FromStr;
-use std::fmt::Debug;
 
-use pgx::*;
 use ndarray::{Array1, Array2};
 use once_cell::sync::Lazy;
+use pgx::*;
 use serde::Serialize;
 
 use crate::orm::Algorithm;
@@ -25,7 +25,8 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
         }
     }
 
-    let (task, algorithm, data) = Spi::get_three_with_args::<String, String, Vec<u8>>("
+    let (task, algorithm, data) = Spi::get_three_with_args::<String, String, Vec<u8>>(
+        "
         SELECT projects.task::TEXT, models.algorithm::TEXT, files.data
         FROM pgml_rust.files
         JOIN pgml_rust.models
@@ -39,20 +40,45 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
         LIMIT 1;",
         vec![(PgBuiltInOids::TEXTOID.oid(), name.into_datum())],
     );
-    let task = Task::from_str(&task.expect(format!("Project {} does not have a trained and deployed model.", name).as_str())).unwrap();
-    let algorithm = Algorithm::from_str(&algorithm.expect(format!("Project {} does not have a trained and deployed model.", name).as_str())).unwrap();
-    let data = data.expect(format!("Project {} does not have a trained and deployed model.", name).as_str());
+    let task = Task::from_str(
+        &task.expect(
+            format!(
+                "Project {} does not have a trained and deployed model.",
+                name
+            )
+            .as_str(),
+        ),
+    )
+    .unwrap();
+    let algorithm = Algorithm::from_str(
+        &algorithm.expect(
+            format!(
+                "Project {} does not have a trained and deployed model.",
+                name
+            )
+            .as_str(),
+        ),
+    )
+    .unwrap();
+    let data = data.expect(
+        format!(
+            "Project {} does not have a trained and deployed model.",
+            name
+        )
+        .as_str(),
+    );
 
     let e = match task {
-        Task::regression => {
-            match algorithm {
-                Algorithm::linear => {
-                    let estimator: smartcore::linear::linear_regression::LinearRegression<f32, Array2<f32>> = rmp_serde::from_read(&*data).unwrap();
-                    estimator
-                },
-                Algorithm::xgboost => {
-                    todo!()
-                }
+        Task::regression => match algorithm {
+            Algorithm::linear => {
+                let estimator: smartcore::linear::linear_regression::LinearRegression<
+                    f32,
+                    Array2<f32>,
+                > = rmp_serde::from_read(&*data).unwrap();
+                estimator
+            }
+            Algorithm::xgboost => {
+                todo!()
             }
         },
         Task::classification => {
@@ -65,14 +91,11 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
     estimators.get(name).unwrap().clone()
 }
 
-
-
-
 #[typetag::serialize(tag = "type")]
 pub trait Estimator: Send + Sync + Debug {
     fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32>;
     fn estimator_predict(&self, features: Vec<f32>) -> f32;
-    // fn predict_batch();
+    // fn predict_batch() { todo!() };
 }
 
 #[typetag::serialize]
@@ -95,11 +118,36 @@ where
                 Task::regression => {
                     results.insert("r2".to_string(), smartcore::metrics::r2(&y_test, &y_hat));
                     results.insert(
-                        "mse".to_string(),
+                        "mean_absolute_error".to_string(),
+                        smartcore::metrics::mean_absolute_error(&y_test, &y_hat),
+                    );
+                    results.insert(
+                        "mean_squared_error".to_string(),
                         smartcore::metrics::mean_squared_error(&y_test, &y_hat),
                     );
                 }
-                Task::classification => todo!(),
+                Task::classification => {
+                    results.insert(
+                        "f1".to_string(),
+                        smartcore::metrics::f1::F1 { beta: 1.0 }.get_score(&y_test, &y_hat),
+                    );
+                    results.insert(
+                        "precision".to_string(),
+                        smartcore::metrics::precision(&y_test, &y_hat),
+                    );
+                    results.insert(
+                        "accuracy".to_string(),
+                        smartcore::metrics::accuracy(&y_test, &y_hat),
+                    );
+                    results.insert(
+                        "roc_auc_score".to_string(),
+                        smartcore::metrics::roc_auc_score(&y_test, &y_hat),
+                    );
+                    results.insert(
+                        "recall".to_string(),
+                        smartcore::metrics::recall(&y_test, &y_hat),
+                    );
+                }
             }
         }
         results
@@ -110,4 +158,3 @@ where
         self.predict(&features).unwrap()[0]
     }
 }
-

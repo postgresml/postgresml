@@ -4,8 +4,8 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use ndarray::{Array1, Array2};
-use pgx::*;
 use once_cell::sync::Lazy;
+use pgx::*;
 use serde_json::json;
 
 use crate::orm::Algorithm;
@@ -19,6 +19,7 @@ use crate::orm::Task;
 static DEPLOYED_MODELS_BY_PROJECT_ID: Lazy<Mutex<HashMap<i64, Arc<Model>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
+#[derive(Debug)]
 pub struct Model {
     pub id: i64,
     pub project_id: i64,
@@ -33,12 +34,6 @@ pub struct Model {
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
     estimator: Option<Box<dyn Estimator>>,
-}
-
-impl std::fmt::Debug for Model {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Model")
-    }
 }
 
 impl Model {
@@ -165,35 +160,30 @@ impl Model {
                     Array1::from_shape_vec(dataset.num_train_rows, dataset.y_train().to_vec())
                         .unwrap();
                 match project.task {
-                    Task::regression => {
-                        Some(Box::new(
-                            smartcore::linear::linear_regression::LinearRegression::fit(
-                                &x_train,
-                                &y_train,
-                                Default::default(),
-                            )
-                            .unwrap()
-                        ))
-                    }
-                    Task::classification => {
-                        Some(Box::new(
-                            smartcore::linear::logistic_regression::LogisticRegression::fit(
-                                &x_train,
-                                &y_train,
-                                Default::default(),
-                            )
-                            .unwrap()
-                        ))
-                    }
+                    Task::regression => Some(Box::new(
+                        smartcore::linear::linear_regression::LinearRegression::fit(
+                            &x_train,
+                            &y_train,
+                            Default::default(),
+                        )
+                        .unwrap(),
+                    )),
+                    Task::classification => Some(Box::new(
+                        smartcore::linear::logistic_regression::LogisticRegression::fit(
+                            &x_train,
+                            &y_train,
+                            Default::default(),
+                        )
+                        .unwrap(),
+                    )),
                 }
-            },
+            }
             Algorithm::xgboost => {
                 todo!()
             }
         };
 
         let bytes: Vec<u8> = rmp_serde::to_vec(&*self.estimator.as_ref().unwrap()).unwrap();
-
         Spi::get_one_with_args::<i64>(
           "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
           vec![
@@ -204,7 +194,11 @@ impl Model {
     }
 
     fn test(&mut self, project: &Project, dataset: &Dataset) {
-        let metrics = self.estimator.as_ref().unwrap().test(project.task, &dataset);
+        let metrics = self
+            .estimator
+            .as_ref()
+            .unwrap()
+            .test(project.task, &dataset);
         self.metrics = Some(JsonB(json!(metrics.clone())));
         Spi::get_one_with_args::<i64>(
             "UPDATE pgml_rust.models SET metrics = $1 WHERE id = $2 RETURNING id",
