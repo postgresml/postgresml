@@ -318,17 +318,20 @@ class UploadedData(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def create_table(self, file):
+    def create_table(self, file, has_header=False):
         if file.content_type == "text/csv":
             reader = csv.reader(codecs.iterdecode(file, "utf-8"))
             headers = next(reader)
-            columns = ", ".join(map(lambda x: f"{x.replace(' ', '_').lower()} FLOAT4", headers))
+
+            if has_header:
+                columns = ", ".join(map(lambda x: f"{x.replace(' ', '_').lower()} TEXT", headers))
+            else:
+                columns = ", ".join(map(lambda x: f"column_{x} TEXT", range(len(headers))))
 
             with transaction.atomic():
                 sql = f"CREATE TABLE data_{self.pk} (" + columns + ")"
 
                 with connection.cursor() as cursor:
                     cursor.execute(sql)
-
                     file.seek(0)
-                    cursor.copy_expert(f"COPY data_{self.pk} FROM STDIN CSV HEADER", file)
+                    cursor.copy_expert(f"COPY data_{self.pk} FROM STDIN CSV {'HEADER' if has_header else ''}", file)

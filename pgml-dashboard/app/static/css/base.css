@@ -685,3 +685,39 @@ body.uploader section li {
 body.uploader strong {
   font-weight: bold;
 }
+
+body.uploader label {
+  user-select: none;
+  cursor: pointer;
+}
+
+/*
+ * Checkbox
+ */
+input[type=checkbox] {
+  /* Reset style */
+  appearance: none;
+
+  background: transparent;
+  border: 1px solid var(--gray-5);
+  
+  height: 1.6em;
+  width: 1.6em;
+  
+  border-radius: 3px;
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  cursor: pointer;
+}
+
+input[type=checkbox]:checked:after {
+  content: '\2714';
+  font-size: 1em;
+  position: absolute;
+  color: var(--highlite-green);
+  filter:  brightness(0.75);
+}
