@@ -1,5 +1,6 @@
-comment = 'pgml_rust:  Created by pgx'
+comment = 'pgml_rust:  Created by the PostgresML team'
 default_version = '@CARGO_VERSION@'
 module_pathname = '$libdir/pgml_rust'
 relocatable = false
 superuser = false
+schema = 'pgml_rust'
