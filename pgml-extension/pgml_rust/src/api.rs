@@ -68,10 +68,7 @@ fn train(
 #[pg_extern]
 fn predict(project_name: &str, features: Vec<f32>) -> f32 {
     let estimator = crate::orm::estimator::find_deployed_estimator_by_project_name(project_name);
-    // let project = Project::find_by_name(project_name).expect(format!("Project `{}` does not exist.", project_name).as_str());
-    // let model = Model::find_deployed(project.id).expect(format!("Project `{}` does not have a deployed model.", project_name).as_str());
-    // let estimator: Box<dyn Estimator> = Estimator::find_deployed(model.id); // TODO skip the model and go straight to estimator from project
-    estimator.estimator_predict(features)
+    estimator.predict_me(features)
 }
 
 // #[pg_extern]
@@ -101,7 +98,6 @@ mod tests {
     fn test_project_lifecycle() {
         assert_eq!(Project::create("test", Task::regression).id, 1);
         assert_eq!(Project::find(1).id, 1);
-        assert_eq!(Project::find_by_name("test").name, "test");
     }
 
     #[pg_test]

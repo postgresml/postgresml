@@ -1,16 +1,9 @@
-use std::collections::HashMap;
 use std::str::FromStr;
-use std::sync::Arc;
-use std::sync::Mutex;
 
-use once_cell::sync::Lazy;
 use pgx::*;
 
 use crate::orm::Snapshot;
 use crate::orm::Task;
-
-static PROJECTS_BY_NAME: Lazy<Mutex<HashMap<String, Arc<Project>>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug)]
 pub struct Project {
@@ -47,18 +40,7 @@ impl Project {
         project
     }
 
-    pub fn find_by_name(name: &str) -> Option<Arc<Project>> {
-        {
-            let projects = PROJECTS_BY_NAME.lock().unwrap();
-            let project = projects.get(name);
-            if project.is_some() {
-                info!("cache hit: {}", name);
-                return Some(project.unwrap().clone());
-            } else {
-                info!("cache miss: {}", name);
-            }
-        }
-
+    pub fn find_by_name(name: &str) -> Option<Project> {
         let mut project = None;
 
         Spi::connect(|client| {
@@ -69,21 +51,13 @@ impl Project {
                 ])
             ).first();
             if result.len() > 0 {
-                info!("db hit: {}", name);
-                let mut projects = PROJECTS_BY_NAME.lock().unwrap();
-                projects.insert(
-                    name.to_string(),
-                    Arc::new(Project {
-                        id: result.get_datum(1).unwrap(),
-                        name: result.get_datum(2).unwrap(),
-                        task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
-                        created_at: result.get_datum(4).unwrap(),
-                        updated_at: result.get_datum(5).unwrap(),
-                    }),
-                );
-                project = Some(projects.get(name).unwrap().clone());
-            } else {
-                info!("db miss: {}", name);
+                project = Some(Project {
+                    id: result.get_datum(1).unwrap(),
+                    name: result.get_datum(2).unwrap(),
+                    task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
+                    created_at: result.get_datum(4).unwrap(),
+                    updated_at: result.get_datum(5).unwrap(),
+                });
             }
             Ok(Some(1))
         });
@@ -91,8 +65,8 @@ impl Project {
         project
     }
 
-    pub fn create(name: &str, task: Task) -> Arc<Project> {
-        let mut project: Option<Arc<Project>> = None;
+    pub fn create(name: &str, task: Task) -> Project {
+        let mut project: Option<Project> = None;
 
         Spi::connect(|client| {
             let result = client.select(r#"INSERT INTO pgml_rust.projects (name, task) VALUES ($1, $2::pgml_rust.task) RETURNING id, name, task, created_at, updated_at;"#,
@@ -103,22 +77,16 @@ impl Project {
                 ])
             ).first();
             if result.len() > 0 {
-                let mut projects = PROJECTS_BY_NAME.lock().unwrap();
-                projects.insert(
-                    name.to_string(),
-                    Arc::new(Project {
-                        id: result.get_datum(1).unwrap(),
-                        name: result.get_datum(2).unwrap(),
-                        task: result.get_datum(3).unwrap(),
-                        created_at: result.get_datum(4).unwrap(),
-                        updated_at: result.get_datum(5).unwrap(),
-                    }),
-                );
-                project = Some(projects.get(name).unwrap().clone());
+                project = Some(Project {
+                    id: result.get_datum(1).unwrap(),
+                    name: result.get_datum(2).unwrap(),
+                    task: result.get_datum(3).unwrap(),
+                    created_at: result.get_datum(4).unwrap(),
+                    updated_at: result.get_datum(5).unwrap(),
+                });
             }
             Ok(Some(1))
         });
-        info!("create project: {:?}", project.as_ref().unwrap());
         project.unwrap()
     }
 

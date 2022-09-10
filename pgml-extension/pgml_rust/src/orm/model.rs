@@ -1,13 +1,11 @@
-use std::collections::HashMap;
 use std::str::FromStr;
-use std::sync::Arc;
-use std::sync::Mutex;
 
 use ndarray::{Array1, Array2};
-use once_cell::sync::Lazy;
 use pgx::*;
 use serde_json::json;
+use xgboost::{parameters, Booster, DMatrix};
 
+use crate::orm::estimator::BoosterBox;
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Estimator;
@@ -15,9 +13,6 @@ use crate::orm::Project;
 use crate::orm::Search;
 use crate::orm::Snapshot;
 use crate::orm::Task;
-
-static DEPLOYED_MODELS_BY_PROJECT_ID: Lazy<Mutex<HashMap<i64, Arc<Model>>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug)]
 pub struct Model {
@@ -37,62 +32,6 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn find_deployed(project_id: i64) -> Option<Arc<Model>> {
-        {
-            let models = DEPLOYED_MODELS_BY_PROJECT_ID.lock().unwrap();
-            let model = models.get(&project_id);
-            if model.is_some() {
-                info!("cache hit model: {}", project_id);
-                return Some(model.unwrap().clone());
-            } else {
-                info!("cache miss model: {}", project_id);
-            }
-        }
-
-        let mut model: Option<Arc<Model>> = None;
-        Spi::connect(|client| {
-            let result = client.select("
-          SELECT id, project_id, snapshot_id, algorithm, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at
-          FROM pgml_rust.models 
-          JOIN pgml_rust.deployments 
-            ON deployments.model_id = models.id
-            AND deployments.project_id = $1
-          ORDER by deployments.created_at DESC
-          LIMIT 1;",
-              Some(1),
-              Some(vec![
-                  (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
-              ])
-          ).first();
-            if result.len() > 0 {
-                info!("db hit model: {}", project_id);
-                let mut models = DEPLOYED_MODELS_BY_PROJECT_ID.lock().unwrap();
-                models.insert(
-                    project_id,
-                    Arc::new(Model {
-                        id: result.get_datum(1).unwrap(),
-                        project_id: result.get_datum(2).unwrap(),
-                        snapshot_id: result.get_datum(3).unwrap(),
-                        algorithm: Algorithm::from_str(result.get_datum(4).unwrap()).unwrap(),
-                        hyperparams: result.get_datum(5).unwrap(),
-                        status: result.get_datum(6).unwrap(),
-                        metrics: result.get_datum(7),
-                        search: result.get_datum(8),
-                        search_params: result.get_datum(9).unwrap(),
-                        search_args: result.get_datum(10).unwrap(),
-                        created_at: result.get_datum(11).unwrap(),
-                        updated_at: result.get_datum(12).unwrap(),
-                        estimator: None,
-                    }),
-                );
-                model = Some(models.get(&project_id).unwrap().clone());
-            }
-            Ok(Some(1))
-        });
-
-        model
-    }
-
     pub fn create(
         project: &Project,
         snapshot: &Snapshot,
@@ -149,6 +88,9 @@ impl Model {
     }
 
     fn fit(&mut self, project: &Project, dataset: &Dataset) {
+        let hyperparams: &serde_json::Value = &self.hyperparams.0;
+        let hyperparams = hyperparams.as_object().unwrap();
+
         self.estimator = match self.algorithm {
             Algorithm::linear => {
                 let x_train = Array2::from_shape_vec(
@@ -159,7 +101,7 @@ impl Model {
                 let y_train =
                     Array1::from_shape_vec(dataset.num_train_rows, dataset.y_train().to_vec())
                         .unwrap();
-                match project.task {
+                let estimator: Option<Box<dyn Estimator>> = match project.task {
                     Task::regression => Some(Box::new(
                         smartcore::linear::linear_regression::LinearRegression::fit(
                             &x_train,
@@ -176,21 +118,92 @@ impl Model {
                         )
                         .unwrap(),
                     )),
-                }
+                };
+                let bytes: Vec<u8> = rmp_serde::to_vec(&*estimator.as_ref().unwrap()).unwrap();
+                Spi::get_one_with_args::<i64>(
+                  "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+                  vec![
+                      (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
+                      (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
+                  ]
+              ).unwrap();
+                estimator
             }
             Algorithm::xgboost => {
-                todo!()
+                let mut dtrain =
+                    DMatrix::from_dense(&dataset.x_train(), dataset.num_train_rows).unwrap();
+                let mut dtest =
+                    DMatrix::from_dense(&dataset.x_test(), dataset.num_test_rows).unwrap();
+                dtrain.set_labels(&dataset.y_train()).unwrap();
+                dtest.set_labels(&dataset.y_test()).unwrap();
+
+                // specify datasets to evaluate against during training
+                let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
+
+                // configure objectives, metrics, etc.
+                let learning_params =
+                    parameters::learning::LearningTaskParametersBuilder::default()
+                        .objective(match project.task {
+                            Task::regression => xgboost::parameters::learning::Objective::RegLinear,
+                            Task::classification => {
+                                xgboost::parameters::learning::Objective::RegLogistic
+                            }
+                        })
+                        .build()
+                        .unwrap();
+
+                // configure the tree-based learning model's parameters
+                let tree_params = parameters::tree::TreeBoosterParametersBuilder::default()
+                    .max_depth(match hyperparams.get("max_depth") {
+                        Some(value) => value.as_u64().unwrap_or(2) as u32,
+                        None => 2,
+                    })
+                    .eta(0.3)
+                    .build()
+                    .unwrap();
+
+                // overall configuration for Booster
+                let booster_params = parameters::BoosterParametersBuilder::default()
+                    .booster_type(parameters::BoosterType::Tree(tree_params))
+                    .learning_params(learning_params)
+                    .verbose(true)
+                    .build()
+                    .unwrap();
+
+                // overall configuration for training/evaluation
+                let params = parameters::TrainingParametersBuilder::default()
+                    .dtrain(&dtrain) // dataset to train with
+                    .boost_rounds(match hyperparams.get("n_estimators") {
+                        Some(value) => value.as_u64().unwrap_or(2) as u32,
+                        None => 2,
+                    }) // number of training iterations
+                    .booster_params(booster_params) // model parameters
+                    .evaluation_sets(Some(evaluation_sets)) // optional datasets to evaluate against in each iteration
+                    .build()
+                    .unwrap();
+
+                // train model, and print evaluation data
+                let bst = match Booster::train(&params) {
+                    Ok(bst) => bst,
+                    Err(err) => error!("{}", err),
+                };
+
+                let r: u64 = rand::random();
+                let path = format!("/tmp/pgml_rust_{}.bin", r);
+
+                bst.save(std::path::Path::new(&path)).unwrap();
+
+                let bytes = std::fs::read(&path).unwrap();
+                Spi::get_one_with_args::<i64>(
+                  "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+                  vec![
+                      (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
+                      (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
+                  ]
+            ).unwrap();
+                Some(Box::new(BoosterBox::new(bst)))
             }
         };
-
-        let bytes: Vec<u8> = rmp_serde::to_vec(&*self.estimator.as_ref().unwrap()).unwrap();
-        Spi::get_one_with_args::<i64>(
-          "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
-          vec![
-              (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
-              (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
-          ]
-      ).unwrap();
     }
 
     fn test(&mut self, project: &Project, dataset: &Dataset) {
