@@ -50,10 +50,6 @@ fn train(
         search_args,
     );
 
-    info!("{:?}", project);
-    info!("{:?}", snapshot);
-    info!("{:?}", model);
-
     // TODO move deployment into a struct and only deploy if new model is better than old model
     Spi::get_one_with_args::<i64>(
         "INSERT INTO pgml_rust.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml_rust.strategy) RETURNING id",

@@ -169,7 +169,6 @@ fn calc_metrics(y_test: &Array1<f32>, y_hat: &Array1<f32>, task: Task) -> HashMa
 pub trait Estimator: Send + Sync + Debug {
     fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32>;
     fn predict(&self, features: Vec<f32>) -> f32;
-    // fn predict_batch() { todo!() };
 }
 
 #[typetag::serialize]
