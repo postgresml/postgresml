@@ -9,6 +9,7 @@ use std::path::Path;
 use std::sync::Mutex;
 use xgboost::{parameters, Booster, DMatrix};
 
+pub mod torch;
 pub mod vectors;
 
 pg_module_magic!();
@@ -131,7 +132,7 @@ mod pgml_rust {
                 .into_iter()
                 .map(|column| format!("CAST({} AS REAL)", column))
                 .collect::<Vec<String>>();
-            
+
             let query = format!(
                 "SELECT {}, CAST({} AS REAL) FROM {} ORDER BY RANDOM()",
                 features.clone().join(", "),
@@ -159,12 +160,20 @@ mod pgml_rust {
         // todo parameterize test split instead of 0.5
         let test_rows = (num_rows as f32 * 0.5).round() as usize;
         let train_rows = num_rows - test_rows;
+
+        torch::train(
+            x[..train_rows * num_features].to_vec(),
+            y[..train_rows].to_vec(),
+            x[train_rows * num_features..].to_vec(),
+            y[train_rows..].to_vec(),
+            num_features as i64,
+        );
+
         let mut dtrain = DMatrix::from_dense(&x[..train_rows * num_features], train_rows).unwrap();
         let mut dtest = DMatrix::from_dense(&x[train_rows * num_features..], test_rows).unwrap();
         dtrain.set_labels(&y[..train_rows]).unwrap();
         dtest.set_labels(&y[train_rows..]).unwrap();
-        
-        
+
         // specify datasets to evaluate against during training
         let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
 
@@ -196,7 +205,6 @@ mod pgml_rust {
             .verbose(true)
             .build()
             .unwrap();
-
 
         // overall configuration for training/evaluation
         let params = parameters::TrainingParametersBuilder::default()
@@ -388,8 +396,7 @@ mod pgml_rust {
 
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
-mod tests {
-}
+mod tests {}
 
 #[cfg(test)]
 pub mod pg_test {
