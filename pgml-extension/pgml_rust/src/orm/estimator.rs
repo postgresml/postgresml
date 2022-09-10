@@ -168,7 +168,7 @@ fn calc_metrics(y_test: &Array1<f32>, y_hat: &Array1<f32>, task: Task) -> HashMa
 #[typetag::serialize(tag = "type")]
 pub trait Estimator: Send + Sync + Debug {
     fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32>;
-    fn predict_me(&self, features: Vec<f32>) -> f32;
+    fn predict(&self, features: Vec<f32>) -> f32;
     // fn predict_batch() { todo!() };
 }
 
@@ -178,7 +178,7 @@ impl Estimator for smartcore::linear::linear_regression::LinearRegression<f32, A
         test_smartcore(self, task, data)
     }
 
-    fn predict_me(&self, features: Vec<f32>) -> f32 {
+    fn predict(&self, features: Vec<f32>) -> f32 {
         predict_smartcore(self, features)
     }
 }
@@ -189,7 +189,7 @@ impl Estimator for smartcore::linear::logistic_regression::LogisticRegression<f3
         test_smartcore(self, task, data)
     }
 
-    fn predict_me(&self, features: Vec<f32>) -> f32 {
+    fn predict(&self, features: Vec<f32>) -> f32 {
         predict_smartcore(self, features)
     }
 }
@@ -246,14 +246,14 @@ impl Estimator for BoosterBox {
         features.set_labels(dataset.y_test()).unwrap();
         let y_test =
             Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
-        let y_hat = self.predict(&features).unwrap();
+        let y_hat = self.contents.predict(&features).unwrap();
         let y_hat = Array1::from_shape_vec(dataset.num_test_rows, y_hat).unwrap();
 
         calc_metrics(&y_test, &y_hat, task)
     }
 
-    fn predict_me(&self, features: Vec<f32>) -> f32 {
+    fn predict(&self, features: Vec<f32>) -> f32 {
         let features = DMatrix::from_dense(&features, 1).unwrap();
-        self.predict(&features).unwrap()[0]
+        self.contents.predict(&features).unwrap()[0]
     }
 }

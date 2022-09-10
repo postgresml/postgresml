@@ -68,7 +68,7 @@ fn train(
 #[pg_extern]
 fn predict(project_name: &str, features: Vec<f32>) -> f32 {
     let estimator = crate::orm::estimator::find_deployed_estimator_by_project_name(project_name);
-    estimator.predict_me(features)
+    estimator.predict(features)
 }
 
 // #[pg_extern]
