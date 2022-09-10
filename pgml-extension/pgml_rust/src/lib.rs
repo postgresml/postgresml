@@ -6,9 +6,8 @@ use once_cell::sync::Lazy; // 1.3.1
 use pgx::*;
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
 use std::sync::Mutex;
-use xgboost::{parameters, Booster, DMatrix};
+use xgboost::{Booster, DMatrix};
 
 pub mod api;
 pub mod orm;

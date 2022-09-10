@@ -7,9 +7,7 @@ use std::sync::Mutex;
 use ndarray::{Array1, Array2};
 use once_cell::sync::Lazy;
 use pgx::*;
-use serde::ser::SerializeSeq;
-use serde::{Deserializer, Serialize};
-use xgboost::{parameters, Booster, DMatrix};
+use xgboost::{Booster, DMatrix};
 
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
@@ -229,28 +227,15 @@ impl std::fmt::Debug for BoosterBox {
         &self,
         formatter: &mut std::fmt::Formatter<'_>,
     ) -> std::result::Result<(), std::fmt::Error> {
-        formatter.debug_struct("BoosterBox").finish();
-        Ok(())
+        formatter.debug_struct("BoosterBox").finish()
     }
 }
 impl serde::Serialize for BoosterBox {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        todo!("this is never hit for now, since we'd need also need a deserializer.");
-        let r: u64 = rand::random();
-        let path = format!("/tmp/pgml_rust_{}.bin", r);
-
-        self.contents.save(std::path::Path::new(&path)).unwrap();
-
-        let bytes = std::fs::read(&path).unwrap();
-
-        let mut seq = serializer.serialize_seq(Some(bytes.len()))?;
-        for e in bytes {
-            seq.serialize_element(&e)?;
-        }
-        seq.end()
+        todo!("this is never hit for now, since we'd need also need a deserializer.")
     }
 }
 
@@ -258,7 +243,7 @@ impl serde::Serialize for BoosterBox {
 impl Estimator for BoosterBox {
     fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
         let mut features = DMatrix::from_dense(dataset.x_test(), dataset.num_test_rows).unwrap();
-        features.set_labels(dataset.y_test());
+        features.set_labels(dataset.y_test()).unwrap();
         let y_test =
             Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
         let y_hat = self.predict(&features).unwrap();
