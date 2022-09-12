@@ -223,19 +223,32 @@ impl Snapshot {
         let mut data = None;
         Spi::connect(|client| {
             let json: &serde_json::Value = &self.columns.as_ref().unwrap().0;
+            let json = json.as_object().unwrap();
             let feature_columns = json
-                .as_object()
-                .unwrap()
-                .keys()
-                .filter_map(|column| match self.y_column_name.contains(column) {
-                    true => None,
-                    false => Some(format!("{}::FLOAT4", column)),
+                .iter()
+                .filter_map(|(column, kind)| {
+                    let cast = match kind.as_str().unwrap() {
+                        "boolean" => "::INT",
+                        _ => "",
+                    };
+                    match self.y_column_name.contains(column) {
+                        true => None,
+                        false => Some(format!(r#""{}"{}::FLOAT4"#, column, cast)),
+                    }
                 })
                 .collect::<Vec<String>>();
-            let label_columns = self
-                .y_column_name
+            let label_columns = json
                 .iter()
-                .map(|column| format!("{}::FLOAT4", column))
+                .filter_map(|(column, kind)| {
+                    let cast = match kind.as_str().unwrap() {
+                        "boolean" => "::INT",
+                        _ => "",
+                    };
+                    match self.y_column_name.contains(column) {
+                        false => None,
+                        true => Some(format!(r#""{}"{}::FLOAT4"#, column, cast)),
+                    }
+                })
                 .collect::<Vec<String>>();
 
             let sql = format!(

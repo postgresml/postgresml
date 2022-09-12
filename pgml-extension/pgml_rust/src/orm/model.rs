@@ -146,8 +146,8 @@ impl Model {
                         .objective(match project.task {
                             Task::regression => xgboost::parameters::learning::Objective::RegLinear,
                             Task::classification => {
-                                xgboost::parameters::learning::Objective::RegLogistic
-                            }
+                                xgboost::parameters::learning::Objective::MultiSoftmax(dataset.distinct_labels())
+                            },
                         })
                         .build()
                         .unwrap();

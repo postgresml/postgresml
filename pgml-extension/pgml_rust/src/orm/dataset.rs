@@ -1,4 +1,5 @@
 use pgx::*;
+use std::collections::HashSet;
 
 pub struct Dataset {
     pub x: Vec<f32>,
@@ -25,6 +26,12 @@ impl Dataset {
 
     pub fn y_test(&self) -> &[f32] {
         &self.y[self.num_train_rows * self.num_labels..]
+    }
+
+    pub fn distinct_labels(&self) -> u32 {
+        let mut v = HashSet::new();
+        self.y.iter().for_each(|i| if !i.is_nan() { v.insert(i.to_string()); });
+        v.len().try_into().unwrap()
     }
 }
 
