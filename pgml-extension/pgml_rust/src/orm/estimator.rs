@@ -247,7 +247,6 @@ impl Estimator for BoosterBox {
             Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
         let y_hat = self.contents.predict(&features).unwrap();
         let y_hat = Array1::from_shape_vec(dataset.num_test_rows, y_hat).unwrap();
-
         calc_metrics(&y_test, &y_hat, task)
     }
 
