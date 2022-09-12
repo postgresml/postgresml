@@ -30,7 +30,10 @@ impl Dataset {
 
     pub fn distinct_labels(&self) -> u32 {
         let mut v = HashSet::new();
-        self.y.iter().for_each(|i| if !i.is_nan() { v.insert(i.to_string()); });
+        // Treat the f32 values as u32 for std::cmp::Eq. We don't 
+        // care about the nuance of nan equality here, they should
+        // already be filtered out upstream.
+        self.y.iter().for_each(|i| if !i.is_nan() { v.insert(i.to_bits()); });
         v.len().try_into().unwrap()
     }
 }
