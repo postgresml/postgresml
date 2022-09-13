@@ -125,14 +125,19 @@ impl Snapshot {
                 ),
             };
             let mut columns = HashMap::<String, String>::new();
-            client.select("SELECT column_name::TEXT, data_type::TEXT FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2",
+            client.select("SELECT column_name::TEXT, udt_name::TEXT FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2",
                 None,
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), schema_name.into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), table_name.into_datum()),
                 ]))
             .for_each(|row| {
-                columns.insert(row[1].value::<String>().unwrap(), row[2].value::<String>().unwrap());
+                let column_name = row[1].value::<String>().unwrap();
+                let mut udt_type = row[2].value::<String>().unwrap();
+                if udt_type.starts_with('_') {
+                    udt_type = udt_type[1..].to_string() + "[]";
+                }
+                columns.insert(column_name, udt_type);
             });
 
             for column in &self.y_column_name {
@@ -222,57 +227,243 @@ impl Snapshot {
     pub fn dataset(&self) -> Dataset {
         let mut data = None;
         Spi::connect(|client| {
-            let json: &serde_json::Value = &self.columns.as_ref().unwrap().0;
-            let json = json.as_object().unwrap();
-            let feature_columns = json
+            let columns: &serde_json::Value = &self.columns.as_ref().unwrap().0;
+            let columns = columns.as_object().unwrap();
+            let feature_columns = columns
                 .iter()
-                .filter_map(|(column, kind)| {
-                    let cast = match kind.as_str().unwrap() {
-                        "boolean" => "::INT",
-                        _ => "",
-                    };
-                    match self.y_column_name.contains(column) {
-                        true => None,
-                        false => Some(format!(r#""{}"{}::FLOAT4"#, column, cast)),
-                    }
+                .filter_map(|(column, kind)| match self.y_column_name.contains(column) {
+                    true => None,
+                    false => Some((
+                        format!(r#""{}""#, column),
+                        kind.as_str().unwrap().to_string(),
+                    )),
                 })
-                .collect::<Vec<String>>();
-            let label_columns = json
+                .collect::<Vec<(String, String)>>();
+            let label_columns = columns
                 .iter()
-                .filter_map(|(column, kind)| {
-                    let cast = match kind.as_str().unwrap() {
-                        "boolean" => "::INT",
-                        _ => "",
-                    };
-                    match self.y_column_name.contains(column) {
-                        false => None,
-                        true => Some(format!(r#""{}"{}::FLOAT4"#, column, cast)),
-                    }
+                .filter_map(|(column, kind)| match self.y_column_name.contains(column) {
+                    true => Some((
+                        format!(r#""{}""#, column),
+                        kind.as_str().unwrap().to_string(),
+                    )),
+                    false => None,
                 })
-                .collect::<Vec<String>>();
+                .collect::<Vec<(String, String)>>();
 
             let sql = format!(
                 "SELECT {}, {} FROM {}",
-                feature_columns.join(", "),
-                label_columns.join(", "),
+                feature_columns
+                    .iter()
+                    .map(|(name, _kind)| name.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", "),
+                label_columns
+                    .iter()
+                    .map(|(name, _kind)| name.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", "),
                 self.snapshot_name()
             );
 
-            info!("Fetching data: {}", sql);
-            let result = client.select(&sql, None, None);
-            let mut x = Vec::with_capacity(result.len() * feature_columns.len());
-            let mut y = Vec::with_capacity(result.len() * label_columns.len());
-            result.for_each(|row| {
-                // Postgres Arrays arrays are 1 indexed and so are SPI tuples...
-                for i in 1..feature_columns.len() + 1 {
-                    x.push(row[i].value::<f32>().unwrap());
+            // Postgres Arrays arrays are 1 indexed and so are SPI tuples...
+            let features = 1..1 + feature_columns.len();
+            let labels = features.end..features.end + label_columns.len();
+
+            info!(
+                "Fetching data: {}\nfeatures: {:?}, labels: {:?}",
+                sql, features, labels
+            );
+            let result = client.select(&sql, None, None).first();
+            let row = result.get_heap_tuple().expect("no results returned");
+            let num_rows = result.len();
+            let mut num_features = 0;
+            for i in features.clone() {
+                let kind = &feature_columns[i - 1].1;
+                match kind.as_str() {
+                    "int2" => num_features += 1,
+                    "int2[]" => num_features += row[i as usize].value::<Vec<i16>>().unwrap().len(),
+                    "int4" => num_features += 1,
+                    "int4[]" => num_features += row[i].value::<Vec<i32>>().unwrap().len(),
+                    "int8" => num_features += 1,
+                    "int8[]" => num_features += row[i].value::<Vec<i64>>().unwrap().len(),
+                    "float4" => num_features += 1,
+                    "float4[]" => num_features += row[i].value::<Vec<f32>>().unwrap().len(),
+                    "float8" => num_features += 1,
+                    "float8[]" => num_features += row[i].value::<Vec<f64>>().unwrap().len(),
+                    _ => error!("unhandled type: `{}`", kind),
                 }
-                for j in feature_columns.len() + 1..feature_columns.len() + label_columns.len() + 1
-                {
-                    y.push(row[j].value::<f32>().unwrap());
+            }
+            let mut num_labels = 0;
+            for i in labels.clone() {
+                let kind = &label_columns[i - features.end].1;
+                match kind.as_str() {
+                    "int2" => num_labels += 1,
+                    "int2[]" => num_labels += row[i].value::<Vec<i16>>().unwrap().len(),
+                    "int4" => num_labels += 1,
+                    "int4[]" => num_labels += row[i].value::<Vec<i32>>().unwrap().len(),
+                    "int8" => num_labels += 1,
+                    "int8[]" => num_labels += row[i].value::<Vec<i64>>().unwrap().len(),
+                    "float4" => num_labels += 1,
+                    "float4[]" => num_labels += row[i].value::<Vec<f32>>().unwrap().len(),
+                    "float8" => num_labels += 1,
+                    "float8[]" => num_labels += row[i].value::<Vec<f64>>().unwrap().len(),
+                    _ => error!("unhandled type: `{}`", kind),
+                }
+            }
+
+            let mut x: Vec<f32> = Vec::with_capacity(result.len() * num_features);
+            let mut y: Vec<f32> = Vec::with_capacity(result.len() * num_labels);
+
+            for i in features.clone() {
+                let kind = &feature_columns[i - 1].1;
+                match kind.as_str() {
+                    "int2" => x.push(row[i].value::<i16>().unwrap() as f32),
+                    "int2[]" => {
+                        for j in row[i].value::<Vec<i16>>().unwrap() {
+                            x.push(j as f32)
+                        }
+                    }
+                    "int4" => x.push(row[i].value::<i32>().unwrap() as f32),
+                    "int4[]" => {
+                        for j in row[i].value::<Vec<i32>>().unwrap() {
+                            x.push(j as f32)
+                        }
+                    }
+                    "int8" => x.push(row[i].value::<i64>().unwrap() as f32),
+                    "int8[]" => {
+                        for j in row[i].value::<Vec<i64>>().unwrap() {
+                            x.push(j as f32)
+                        }
+                    }
+                    "float4" => x.push(row[i].value::<f32>().unwrap() as f32),
+                    "float4[]" => {
+                        for j in row[i].value::<Vec<f32>>().unwrap() {
+                            x.push(j as f32)
+                        }
+                    }
+                    "float8" => x.push(row[i].value::<f64>().unwrap() as f32),
+                    "float8[]" => {
+                        for j in row[i].value::<Vec<f64>>().unwrap() {
+                            x.push(j as f32)
+                        }
+                    }
+                    _ => error!("unhandled type: `{}`", kind),
+                }
+            }
+            for i in labels.clone() {
+                let kind = &label_columns[i - features.end].1;
+                match kind.as_str() {
+                    "int2" => y.push(row[i].value::<i16>().unwrap() as f32),
+                    "int2[]" => {
+                        for j in row[i].value::<Vec<i16>>().unwrap() {
+                            y.push(j as f32)
+                        }
+                    }
+                    "int4" => y.push(row[i].value::<i32>().unwrap() as f32),
+                    "int4[]" => {
+                        for j in row[i].value::<Vec<i32>>().unwrap() {
+                            y.push(j as f32)
+                        }
+                    }
+                    "int8" => y.push(row[i].value::<i64>().unwrap() as f32),
+                    "int8[]" => {
+                        for j in row[i].value::<Vec<i64>>().unwrap() {
+                            y.push(j as f32)
+                        }
+                    }
+                    "float4" => y.push(row[i].value::<f32>().unwrap() as f32),
+                    "float4[]" => {
+                        for j in row[i].value::<Vec<f32>>().unwrap() {
+                            y.push(j as f32)
+                        }
+                    }
+                    "float8" => y.push(row[i].value::<f64>().unwrap() as f32),
+                    "float8[]" => {
+                        for j in row[i].value::<Vec<f64>>().unwrap() {
+                            y.push(j as f32)
+                        }
+                    }
+                    _ => error!("unhandled type: `{}`", kind),
+                }
+            }
+
+            // result: SpiTupleTable
+            // row: SpiHeapTupleData
+            // row[i]: SpiHeapTupleDataEntry
+            result.for_each(|row| {
+                for i in features.clone() {
+                    let kind = &feature_columns[i - 1].1;
+                    match kind.as_str() {
+                        "int2" => x.push(row[i].value::<i16>().unwrap() as f32),
+                        "int2[]" => {
+                            for j in row[i].value::<Vec<i16>>().unwrap() {
+                                x.push(j as f32)
+                            }
+                        }
+                        "int4" => x.push(row[i].value::<i32>().unwrap() as f32),
+                        "int4[]" => {
+                            for j in row[i].value::<Vec<i32>>().unwrap() {
+                                x.push(j as f32)
+                            }
+                        }
+                        "int8" => x.push(row[i].value::<i64>().unwrap() as f32),
+                        "int8[]" => {
+                            for j in row[i].value::<Vec<i64>>().unwrap() {
+                                x.push(j as f32)
+                            }
+                        }
+                        "float4" => x.push(row[i].value::<f32>().unwrap() as f32),
+                        "float4[]" => {
+                            for j in row[i].value::<Vec<f32>>().unwrap() {
+                                x.push(j as f32)
+                            }
+                        }
+                        "float8" => x.push(row[i].value::<f64>().unwrap() as f32),
+                        "float8[]" => {
+                            for j in row[i].value::<Vec<f64>>().unwrap() {
+                                x.push(j as f32)
+                            }
+                        }
+                        _ => error!("unhandled type: `{}`", kind),
+                    }
+                }
+                for i in labels.clone() {
+                    let kind = &label_columns[i - features.end].1;
+                    match kind.as_str() {
+                        "int2" => y.push(row[i].value::<i16>().unwrap() as f32),
+                        "int2[]" => {
+                            for j in row[i].value::<Vec<i16>>().unwrap() {
+                                y.push(j as f32)
+                            }
+                        }
+                        "int4" => y.push(row[i].value::<i32>().unwrap() as f32),
+                        "int4[]" => {
+                            for j in row[i].value::<Vec<i32>>().unwrap() {
+                                y.push(j as f32)
+                            }
+                        }
+                        "int8" => y.push(row[i].value::<i64>().unwrap() as f32),
+                        "int8[]" => {
+                            for j in row[i].value::<Vec<i64>>().unwrap() {
+                                y.push(j as f32)
+                            }
+                        }
+                        "float4" => y.push(row[i].value::<f32>().unwrap() as f32),
+                        "float4[]" => {
+                            for j in row[i].value::<Vec<f32>>().unwrap() {
+                                y.push(j as f32)
+                            }
+                        }
+                        "float8" => y.push(row[i].value::<f64>().unwrap() as f32),
+                        "float8[]" => {
+                            for j in row[i].value::<Vec<f64>>().unwrap() {
+                                y.push(j as f32)
+                            }
+                        }
+                        _ => error!("unhandled type: `{}`", kind),
+                    }
                 }
             });
-            let num_rows = x.len() / feature_columns.len();
             let num_test_rows = if self.test_size > 1.0 {
                 self.test_size as usize
             } else {
@@ -286,16 +477,14 @@ impl Snapshot {
                 );
             }
             info!(
-                "got features {:?} labels {:?} rows {:?}",
-                feature_columns.len(),
-                label_columns.len(),
-                num_rows
+                "got features: {:?}, labels: {:?}, rows: {:?}",
+                num_features, num_labels, num_rows,
             );
             data = Some(Dataset {
                 x,
                 y,
-                num_features: feature_columns.len(),
-                num_labels: label_columns.len(),
+                num_features,
+                num_labels,
                 num_rows,
                 num_test_rows,
                 num_train_rows,
