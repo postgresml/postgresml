@@ -28,7 +28,7 @@ fn model_predict(model_id: i64, features: Vec<f32>) -> f32 {
 
     match guard.get(&model_id) {
         Some(data) => {
-            let bst = Booster::load_buffer(&data).unwrap();
+            let bst = Booster::load_buffer(data).unwrap();
             let dmat = DMatrix::from_dense(&features, 1).unwrap();
 
             bst.predict(&dmat).unwrap()[0]
@@ -66,7 +66,7 @@ fn model_predict_batch(model_id: i64, features: Vec<f32>, num_rows: i32) -> Vec<
 
     match guard.get(&model_id) {
         Some(data) => {
-            let bst = Booster::load_buffer(&data).unwrap();
+            let bst = Booster::load_buffer(data).unwrap();
             let dmat = DMatrix::from_dense(&features, num_rows as usize).unwrap();
 
             bst.predict(&dmat).unwrap()

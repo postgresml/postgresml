@@ -60,7 +60,7 @@ impl Model {
                   (PgBuiltInOids::JSONBOID.oid(), search_args.into_datum()),
               ])
           ).first();
-            if result.len() > 0 {
+            if !result.is_empty() {
                 model = Some(Model {
                     id: result.get_datum(1).unwrap(),
                     project_id: result.get_datum(2).unwrap(),
@@ -69,7 +69,7 @@ impl Model {
                     hyperparams: result.get_datum(5).unwrap(),
                     status: result.get_datum(6).unwrap(),
                     metrics: result.get_datum(7),
-                    search: search, // TODO
+                    search, // TODO
                     search_params: result.get_datum(9).unwrap(),
                     search_args: result.get_datum(10).unwrap(),
                     created_at: result.get_datum(11).unwrap(),
@@ -82,8 +82,8 @@ impl Model {
         });
         let mut model = model.unwrap();
         let dataset = snapshot.dataset();
-        model.fit(&project, &dataset);
-        model.test(&project, &dataset);
+        model.fit(project, &dataset);
+        model.test(project, &dataset);
         model
     }
 
@@ -119,7 +119,7 @@ impl Model {
                         .unwrap(),
                     )),
                 };
-                let bytes: Vec<u8> = rmp_serde::to_vec(&*estimator.as_ref().unwrap()).unwrap();
+                let bytes: Vec<u8> = rmp_serde::to_vec(estimator.as_ref().unwrap()).unwrap();
                 Spi::get_one_with_args::<i64>(
                   "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
                   vec![
@@ -131,11 +131,11 @@ impl Model {
             }
             Algorithm::xgboost => {
                 let mut dtrain =
-                    DMatrix::from_dense(&dataset.x_train(), dataset.num_train_rows).unwrap();
+                    DMatrix::from_dense(dataset.x_train(), dataset.num_train_rows).unwrap();
                 let mut dtest =
-                    DMatrix::from_dense(&dataset.x_test(), dataset.num_test_rows).unwrap();
-                dtrain.set_labels(&dataset.y_train()).unwrap();
-                dtest.set_labels(&dataset.y_test()).unwrap();
+                    DMatrix::from_dense(dataset.x_test(), dataset.num_test_rows).unwrap();
+                dtrain.set_labels(dataset.y_train()).unwrap();
+                dtest.set_labels(dataset.y_test()).unwrap();
 
                 // specify datasets to evaluate against during training
                 let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
@@ -146,8 +146,10 @@ impl Model {
                         .objective(match project.task {
                             Task::regression => xgboost::parameters::learning::Objective::RegLinear,
                             Task::classification => {
-                                xgboost::parameters::learning::Objective::MultiSoftmax(dataset.distinct_labels())
-                            },
+                                xgboost::parameters::learning::Objective::MultiSoftmax(
+                                    dataset.distinct_labels(),
+                                )
+                            }
                         })
                         .build()
                         .unwrap();
@@ -207,12 +209,8 @@ impl Model {
     }
 
     fn test(&mut self, project: &Project, dataset: &Dataset) {
-        let metrics = self
-            .estimator
-            .as_ref()
-            .unwrap()
-            .test(project.task, &dataset);
-        self.metrics = Some(JsonB(json!(metrics.clone())));
+        let metrics = self.estimator.as_ref().unwrap().test(project.task, dataset);
+        self.metrics = Some(JsonB(json!(metrics)));
         Spi::get_one_with_args::<i64>(
             "UPDATE pgml_rust.models SET metrics = $1 WHERE id = $2 RETURNING id",
             vec![

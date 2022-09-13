@@ -1,7 +1,7 @@
 use pgx::*;
 use serde::Deserialize;
 
-#[derive(PostgresEnum, Copy, Clone, PartialEq, Debug, Deserialize)]
+#[derive(PostgresEnum, Copy, Clone, Eq, PartialEq, Debug, Deserialize)]
 #[allow(non_camel_case_types)]
 pub enum Sampling {
     random,

@@ -38,7 +38,7 @@ impl Snapshot {
                     (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
                 ])
             ).first();
-            if result.len() > 0 {
+            if !result.is_empty() {
                 snapshot = Some(Snapshot {
                     id: result.get_datum(1).unwrap(),
                     relation_name: result.get_datum(2).unwrap(),
@@ -113,7 +113,7 @@ impl Snapshot {
         Spi::connect(|client| {
             let parts = self
                 .relation_name
-                .split(".")
+                .split('.')
                 .map(|name| name.to_string())
                 .collect::<Vec<String>>();
             let (schema_name, table_name) = match parts.len() {
@@ -206,7 +206,7 @@ impl Snapshot {
                 );
             }
             let analysis_datum = JsonB(json!(analysis.clone()));
-            let column_datum = JsonB(json!(columns.clone()));
+            let column_datum = JsonB(json!(columns));
             self.analysis = Some(JsonB(json!(analysis)));
             self.columns = Some(JsonB(json!(columns)));
             client.select("UPDATE pgml_rust.snapshots SET status = 'complete', analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
@@ -279,7 +279,7 @@ impl Snapshot {
                 (num_rows as f32 * self.test_size).round() as usize
             };
             let num_train_rows = num_rows - num_test_rows;
-            if num_train_rows <= 0 {
+            if num_train_rows == 0 {
                 error!(
                     "test_size = {} is too large. There are only {} samples.",
                     num_test_rows, num_rows
@@ -292,13 +292,13 @@ impl Snapshot {
                 num_rows
             );
             data = Some(Dataset {
-                x: x,
-                y: y,
+                x,
+                y,
                 num_features: feature_columns.len(),
                 num_labels: label_columns.len(),
-                num_rows: num_rows,
-                num_test_rows: num_test_rows,
-                num_train_rows: num_train_rows,
+                num_rows,
+                num_test_rows,
+                num_train_rows,
             });
 
             Ok(Some(()))

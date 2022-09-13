@@ -13,6 +13,7 @@ use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Task;
 
+#[allow(clippy::type_complexity)]
 static DEPLOYED_ESTIMATORS_BY_PROJECT_NAME: Lazy<Mutex<HashMap<String, Arc<Box<dyn Estimator>>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
@@ -20,8 +21,8 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
     {
         let estimators = DEPLOYED_ESTIMATORS_BY_PROJECT_NAME.lock().unwrap();
         let estimator = estimators.get(name);
-        if estimator.is_some() {
-            return estimator.unwrap().clone();
+        if let Some(estimator) = estimator {
+            return estimator.clone();
         }
     }
 
@@ -40,33 +41,26 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
         LIMIT 1;",
         vec![(PgBuiltInOids::TEXTOID.oid(), name.into_datum())],
     );
-    let task = Task::from_str(
-        &task.expect(
-            format!(
-                "Project {} does not have a trained and deployed model.",
-                name
-            )
-            .as_str(),
-        ),
-    )
-    .unwrap();
-    let algorithm = Algorithm::from_str(
-        &algorithm.expect(
-            format!(
-                "Project {} does not have a trained and deployed model.",
-                name
-            )
-            .as_str(),
-        ),
-    )
-    .unwrap();
-    let data = data.expect(
-        format!(
+    let task = Task::from_str(&task.unwrap_or_else(|| {
+        panic!(
             "Project {} does not have a trained and deployed model.",
             name
         )
-        .as_str(),
-    );
+    }))
+    .unwrap();
+    let algorithm = Algorithm::from_str(&algorithm.unwrap_or_else(|| {
+        panic!(
+            "Project {} does not have a trained and deployed model.",
+            name
+        )
+    }))
+    .unwrap();
+    let data = data.unwrap_or_else(|| {
+        panic!(
+            "Project {} does not have a trained and deployed model.",
+            name
+        )
+    });
 
     let e: Box<dyn Estimator> = match task {
         Task::regression => match algorithm {
@@ -125,7 +119,12 @@ fn predict_smartcore(
     smartcore::api::Predictor::predict(predictor, &features).unwrap()[0]
 }
 
-fn calc_metrics(y_test: &Array1<f32>, y_hat: &Array1<f32>, distinct_labels: u32, task: Task) -> HashMap<String, f32> {
+fn calc_metrics(
+    y_test: &Array1<f32>,
+    y_hat: &Array1<f32>,
+    distinct_labels: u32,
+    task: Task,
+) -> HashMap<String, f32> {
     let mut results = HashMap::new();
     match task {
         Task::regression => {
