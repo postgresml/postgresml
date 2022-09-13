@@ -20,7 +20,7 @@ pgx = "0.4.5"
 once_cell = "1"
 rand = "0.8"
 xgboost = { path = "rust-xgboost" }
-smartcore = { version = "0.2.0", features = ["serde", "ndarray-bindings"] }
+smartcore = { git="https://github.com/postgresml/smartcore.git", branch="montana/multiclass", features = ["serde", "ndarray-bindings"] }
 ndarray = { version = "0.15.6", features = ["serde", "blas"] }
 blas = { version = "0.22.0" }
 blas-src = { version = "0.8", features = ["openblas"] }
