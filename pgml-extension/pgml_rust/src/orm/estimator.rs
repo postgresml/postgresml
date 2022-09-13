@@ -114,7 +114,7 @@ fn test_smartcore(
     .unwrap();
     let y_test = Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
     let y_hat = smartcore::api::Predictor::predict(predictor, &x_test).unwrap();
-    calc_metrics(&y_test, &y_hat, task)
+    calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
 }
 
 fn predict_smartcore(
@@ -125,7 +125,7 @@ fn predict_smartcore(
     smartcore::api::Predictor::predict(predictor, &features).unwrap()[0]
 }
 
-fn calc_metrics(y_test: &Array1<f32>, y_hat: &Array1<f32>, task: Task) -> HashMap<String, f32> {
+fn calc_metrics(y_test: &Array1<f32>, y_hat: &Array1<f32>, distinct_labels: u32, task: Task) -> HashMap<String, f32> {
     let mut results = HashMap::new();
     match task {
         Task::regression => {
@@ -149,17 +149,19 @@ fn calc_metrics(y_test: &Array1<f32>, y_hat: &Array1<f32>, task: Task) -> HashMa
                 smartcore::metrics::precision(y_test, y_hat),
             );
             results.insert(
-                "accuracy".to_string(),
-                smartcore::metrics::accuracy(y_test, y_hat),
-            );
-            results.insert(
-                "roc_auc_score".to_string(),
-                smartcore::metrics::roc_auc_score(y_test, y_hat),
-            );
-            results.insert(
                 "recall".to_string(),
                 smartcore::metrics::recall(y_test, y_hat),
             );
+            results.insert(
+                "accuracy".to_string(),
+                smartcore::metrics::accuracy(y_test, y_hat),
+            );
+            if distinct_labels == 2 {
+                results.insert(
+                    "roc_auc_score".to_string(),
+                    smartcore::metrics::roc_auc_score(y_test, y_hat),
+                );
+            }
         }
     }
     results
@@ -247,7 +249,7 @@ impl Estimator for BoosterBox {
             Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
         let y_hat = self.contents.predict(&features).unwrap();
         let y_hat = Array1::from_shape_vec(dataset.num_test_rows, y_hat).unwrap();
-        calc_metrics(&y_test, &y_hat, task)
+        calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
     }
 
     fn predict(&self, features: Vec<f32>) -> f32 {
