@@ -25,7 +25,7 @@ impl Project {
                     (PgBuiltInOids::INT8OID.oid(), id.into_datum()),
                 ])
             ).first();
-            if result.len() > 0 {
+            if !result.is_empty() {
                 project = Some(Project {
                     id: result.get_datum(1).unwrap(),
                     name: result.get_datum(2).unwrap(),
@@ -50,7 +50,7 @@ impl Project {
                     (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),
                 ])
             ).first();
-            if result.len() > 0 {
+            if !result.is_empty() {
                 project = Some(Project {
                     id: result.get_datum(1).unwrap(),
                     name: result.get_datum(2).unwrap(),
@@ -76,7 +76,7 @@ impl Project {
                     (PgBuiltInOids::TEXTOID.oid(), task.to_string().into_datum()),
                 ])
             ).first();
-            if result.len() > 0 {
+            if !result.is_empty() {
                 project = Some(Project {
                     id: result.get_datum(1).unwrap(),
                     name: result.get_datum(2).unwrap(),

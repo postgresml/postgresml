@@ -30,10 +30,14 @@ impl Dataset {
 
     pub fn distinct_labels(&self) -> u32 {
         let mut v = HashSet::new();
-        // Treat the f32 values as u32 for std::cmp::Eq. We don't 
+        // Treat the f32 values as u32 for std::cmp::Eq. We don't
         // care about the nuance of nan equality here, they should
         // already be filtered out upstream.
-        self.y.iter().for_each(|i| if !i.is_nan() { v.insert(i.to_bits()); });
+        self.y.iter().for_each(|i| {
+            if !i.is_nan() {
+                v.insert(i.to_bits());
+            }
+        });
         v.len().try_into().unwrap()
     }
 }
@@ -86,7 +90,7 @@ pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
         None => diabetes.num_samples,
     };
     for i in 0..limit {
-        let age = diabetes.data[(i * diabetes.num_features) + 0];
+        let age = diabetes.data[(i * diabetes.num_features)];
         let sex = diabetes.data[(i * diabetes.num_features) + 1];
         let bmi = diabetes.data[(i * diabetes.num_features) + 2];
         let bp = diabetes.data[(i * diabetes.num_features) + 3];
@@ -153,6 +157,7 @@ pub fn load_digits(limit: Option<usize>) -> (String, i64) {
         let target = digits.target[i];
         // shape the image in a 2d array
         let mut image = vec![vec![0.; 8]; 8];
+        #[allow(clippy::needless_range_loop)] // x & y are in fact used
         for x in 0..8 {
             for y in 0..8 {
                 image[x][y] = digits.data[(i * 64) + (x * 8) + y];
@@ -213,7 +218,7 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
         None => iris.num_samples,
     };
     for i in 0..limit {
-        let sepal_length = iris.data[(i * iris.num_features) + 0];
+        let sepal_length = iris.data[(i * iris.num_features)];
         let sepal_width = iris.data[(i * iris.num_features) + 1];
         let petal_length = iris.data[(i * iris.num_features) + 2];
         let petal_width = iris.data[(i * iris.num_features) + 3];
@@ -354,7 +359,7 @@ pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
             vec![
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 0].into_datum(),
+                    breast_cancer.data[(i * breast_cancer.num_features)].into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
