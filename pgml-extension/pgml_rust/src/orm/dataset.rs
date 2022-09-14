@@ -1,6 +1,7 @@
 use pgx::*;
 use std::collections::HashSet;
 
+#[derive(Debug)]
 pub struct Dataset {
     pub x: Vec<f32>,
     pub y: Vec<f32>,
