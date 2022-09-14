@@ -215,11 +215,11 @@ impl Model {
                     })
                     .max_bin(match hyperparams.get("max_bin") {
                         Some(value) => value.as_u64().unwrap_or(256) as u32,
-                        None => 0,
+                        None => 256,
                     })
                     .num_parallel_tree(match hyperparams.get("num_parallel_tree") {
                         Some(value) => value.as_u64().unwrap_or(1) as u32,
-                        None => 0,
+                        None => 1,
                     })
                     .grow_policy(match hyperparams.get("grow_policy") {
                         Some(value) => match value.as_str().unwrap_or("depthwise") {
