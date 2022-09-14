@@ -39,7 +39,7 @@ article.md-content__inner.md-typeset a.md-content__button.md-icon {
 }
 </style>
 
-<h1 align="center">End-to-end<br/>machine learning solution <br/>for everyone</h1>
+<h1 align="center">End-to-end<br/>machine learning platform <br/>for everyone</h1>
 
 <p align="center" class="subtitle">
     Train and deploy models to make online predictions using only SQL, with an open source extension for Postgres. Manage your projects and visualize datasets using the built-in dashboard.

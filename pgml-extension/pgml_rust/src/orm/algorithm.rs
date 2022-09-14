@@ -6,6 +6,7 @@ use serde::Deserialize;
 pub enum Algorithm {
     linear,
     xgboost,
+    svm,
 }
 
 impl std::str::FromStr for Algorithm {
@@ -15,6 +16,7 @@ impl std::str::FromStr for Algorithm {
         match input {
             "linear" => Ok(Algorithm::linear),
             "xgboost" => Ok(Algorithm::xgboost),
+            "svm" => Ok(Algorithm::svm),
             _ => Err(()),
         }
     }
@@ -25,6 +27,7 @@ impl std::string::ToString for Algorithm {
         match *self {
             Algorithm::linear => "linear".to_string(),
             Algorithm::xgboost => "xgboost".to_string(),
+            Algorithm::svm => "svm".to_string(),
         }
     }
 }
