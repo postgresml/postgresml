@@ -295,8 +295,8 @@ impl Snapshot {
                     None => (),
                 }
             }
-            let analysis_datum = JsonB(json!(analysis.clone()));
-            let column_datum = JsonB(json!(columns.clone()));
+            let analysis_datum = JsonB(json!(analysis));
+            let column_datum = JsonB(json!(columns));
             self.analysis = Some(JsonB(json!(analysis)));
             self.columns = Some(JsonB(json!(columns)));
             client.select("UPDATE pgml_rust.snapshots SET status = 'complete', analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
@@ -312,8 +312,8 @@ impl Snapshot {
     pub fn dataset(&self) -> Dataset {
         let mut data = None;
         Spi::connect(|client| {
-            let json = serde_json::to_string(&self.columns.as_ref().unwrap().0).unwrap();
-            let mut columns: Vec<Column> = serde_json::from_str(&json).unwrap(); // &self.columns.as_ref().unwrap().0;
+            let json = self.columns.as_ref().unwrap().0.clone();
+            let mut columns: Vec<Column> = serde_json::from_value(json).unwrap();
             columns.sort();
             let sql = format!(
                 "SELECT {} FROM {}",
