@@ -92,6 +92,220 @@ impl Model {
         let hyperparams = hyperparams.as_object().unwrap();
 
         self.estimator = match self.algorithm {
+            Algorithm::svm => {
+                let x_train = Array2::from_shape_vec(
+                    (dataset.num_train_rows, dataset.num_features),
+                    dataset.x_train().to_vec(),
+                )
+                .unwrap();
+                let y_train =
+                    Array1::from_shape_vec(dataset.num_train_rows, dataset.y_train().to_vec())
+                        .unwrap();
+
+                let eps = match hyperparams.get("eps") {
+                    Some(eps) => eps.as_f64().unwrap_or(0.1) as f32,
+                    None => 0.1,
+                };
+
+                let c = match hyperparams.get("C") {
+                    Some(c) => c.as_f64().unwrap_or(1.0) as f32,
+                    None => 1.0,
+                };
+
+                let tol = match hyperparams.get("tol") {
+                    Some(tol) => tol.as_f64().unwrap_or(1e-3) as f32,
+                    None => 1e-3,
+                };
+
+                let epoch = match hyperparams.get("epoch") {
+                    Some(epoch) => epoch.as_u64().unwrap_or(2) as usize,
+                    None => 2,
+                };
+
+                let degree = match hyperparams.get("degree") {
+                    Some(degree) => degree.as_f64().unwrap_or(3.0) as f32,
+                    None => 3.0,
+                };
+
+                let gamma = match hyperparams.get("gamma") {
+                    Some(gamma) => match gamma.as_f64() {
+                        Some(gamma) => gamma as f32,
+                        None => {
+                            match gamma.as_str().unwrap_or("scale") {
+                                "scale" => 1.0 / dataset.num_features as f32 * x_train.var(0.0), // variance of population
+                                "auto" => 1.0 / dataset.num_features as f32,
+                                _ => 1.0 / dataset.num_features as f32 * x_train.var(0.0),
+                            }
+                        }
+                    },
+
+                    None => 1.0 / dataset.num_features as f32 * x_train.var(0.0),
+                };
+
+                let coef0 = match hyperparams.get("coef0") {
+                    Some(coef0) => coef0.as_f64().unwrap_or(0.0) as f32,
+                    None => 0.0 as f32,
+                };
+
+                let estimator: Option<Box<dyn Estimator>> = match project.task {
+                    Task::regression => match hyperparams.get("kernel") {
+                        Some(kernel) => match kernel.as_str().unwrap_or("linear") {
+                            "poly" => Some(Box::new(
+                                smartcore::svm::svr::SVR::fit(
+                                    &x_train,
+                                    &y_train,
+                                    smartcore::svm::svr::SVRParameters::default()
+                                        .with_eps(eps)
+                                        .with_c(c)
+                                        .with_tol(tol)
+                                        .with_kernel(smartcore::svm::Kernels::polynomial(
+                                            degree, gamma, coef0,
+                                        )),
+                                )
+                                .unwrap(),
+                            )),
+
+                            "sigmoid" => Some(Box::new(
+                                smartcore::svm::svr::SVR::fit(
+                                    &x_train,
+                                    &y_train,
+                                    smartcore::svm::svr::SVRParameters::default()
+                                        .with_eps(eps)
+                                        .with_c(c)
+                                        .with_tol(tol)
+                                        .with_kernel(smartcore::svm::Kernels::sigmoid(
+                                            gamma, coef0,
+                                        )),
+                                )
+                                .unwrap(),
+                            )),
+
+                            "rbf" => Some(Box::new(
+                                smartcore::svm::svr::SVR::fit(
+                                    &x_train,
+                                    &y_train,
+                                    smartcore::svm::svr::SVRParameters::default()
+                                        .with_eps(eps)
+                                        .with_c(c)
+                                        .with_tol(tol)
+                                        .with_kernel(smartcore::svm::Kernels::rbf(gamma)),
+                                )
+                                .unwrap(),
+                            )),
+
+                            _ => Some(Box::new(
+                                smartcore::svm::svr::SVR::fit(
+                                    &x_train,
+                                    &y_train,
+                                    smartcore::svm::svr::SVRParameters::default()
+                                        .with_eps(eps)
+                                        .with_c(c)
+                                        .with_tol(tol)
+                                        .with_kernel(smartcore::svm::Kernels::linear()),
+                                )
+                                .unwrap(),
+                            )),
+                        },
+
+                        None => Some(Box::new(
+                            smartcore::svm::svr::SVR::fit(
+                                &x_train,
+                                &y_train,
+                                smartcore::svm::svr::SVRParameters::default()
+                                    .with_eps(eps)
+                                    .with_c(c)
+                                    .with_tol(tol)
+                                    .with_kernel(smartcore::svm::Kernels::linear()),
+                            )
+                            .unwrap(),
+                        )),
+                    },
+
+                    Task::classification => match hyperparams.get("kernel") {
+                        Some(kernel) => match kernel.as_str().unwrap_or("linear") {
+                            "poly" => Some(Box::new(
+                                smartcore::svm::svc::SVC::fit(
+                                    &x_train,
+                                    &y_train,
+                                    smartcore::svm::svc::SVCParameters::default()
+                                        .with_epoch(epoch)
+                                        .with_c(c)
+                                        .with_tol(tol)
+                                        .with_kernel(smartcore::svm::Kernels::polynomial(
+                                            degree, gamma, coef0,
+                                        )),
+                                )
+                                .unwrap(),
+                            )),
+
+                            "sigmoid" => Some(Box::new(
+                                smartcore::svm::svc::SVC::fit(
+                                    &x_train,
+                                    &y_train,
+                                    smartcore::svm::svc::SVCParameters::default()
+                                        .with_epoch(epoch)
+                                        .with_c(c)
+                                        .with_tol(tol)
+                                        .with_kernel(smartcore::svm::Kernels::sigmoid(
+                                            gamma, coef0,
+                                        )),
+                                )
+                                .unwrap(),
+                            )),
+
+                            "rbf" => Some(Box::new(
+                                smartcore::svm::svc::SVC::fit(
+                                    &x_train,
+                                    &y_train,
+                                    smartcore::svm::svc::SVCParameters::default()
+                                        .with_epoch(epoch)
+                                        .with_c(c)
+                                        .with_tol(tol)
+                                        .with_kernel(smartcore::svm::Kernels::rbf(gamma)),
+                                )
+                                .unwrap(),
+                            )),
+
+                            _ => Some(Box::new(
+                                smartcore::svm::svc::SVC::fit(
+                                    &x_train,
+                                    &y_train,
+                                    smartcore::svm::svc::SVCParameters::default()
+                                        .with_epoch(epoch)
+                                        .with_tol(tol)
+                                        .with_kernel(smartcore::svm::Kernels::linear()),
+                                )
+                                .unwrap(),
+                            )),
+                        },
+
+                        None => Some(Box::new(
+                            smartcore::svm::svc::SVC::fit(
+                                &x_train,
+                                &y_train,
+                                smartcore::svm::svc::SVCParameters::default()
+                                    .with_epoch(epoch)
+                                    .with_c(c)
+                                    .with_tol(tol)
+                                    .with_kernel(smartcore::svm::Kernels::linear()),
+                            )
+                            .unwrap(),
+                        )),
+                    },
+                };
+
+                let bytes: Vec<u8> = rmp_serde::to_vec(estimator.as_ref().unwrap()).unwrap();
+                Spi::get_one_with_args::<i64>(
+                      "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+                      vec![
+                          (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
+                          (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
+                      ]
+                  ).unwrap();
+
+                estimator
+            }
+
             Algorithm::linear => {
                 let x_train = Array2::from_shape_vec(
                     (dataset.num_train_rows, dataset.num_features),
@@ -102,22 +316,38 @@ impl Model {
                     Array1::from_shape_vec(dataset.num_train_rows, dataset.y_train().to_vec())
                         .unwrap();
                 let estimator: Option<Box<dyn Estimator>> = match project.task {
-                    Task::regression => Some(Box::new(
-                        smartcore::linear::linear_regression::LinearRegression::fit(
-                            &x_train,
-                            &y_train,
-                            Default::default(),
-                        )
-                        .unwrap(),
-                    )),
-                    Task::classification => Some(Box::new(
-                        smartcore::linear::logistic_regression::LogisticRegression::fit(
-                            &x_train,
-                            &y_train,
-                            Default::default(),
-                        )
-                        .unwrap(),
-                    )),
+                    Task::regression => {
+                        let params = smartcore::linear::linear_regression::LinearRegressionParameters::default()
+                            .with_solver(match hyperparams.get("solver"){
+                                Some(value) => match value.as_str().unwrap_or("qr") {
+                                    "qr" => smartcore::linear::linear_regression::LinearRegressionSolverName::QR,
+                                    "svd" => smartcore::linear::linear_regression::LinearRegressionSolverName::SVD,
+                                    _ => smartcore::linear::linear_regression::LinearRegressionSolverName::QR,
+                                }
+                                None => smartcore::linear::linear_regression::LinearRegressionSolverName::QR,
+                            });
+
+                        Some(Box::new(
+                            smartcore::linear::linear_regression::LinearRegression::fit(
+                                &x_train, &y_train, params,
+                            )
+                            .unwrap(),
+                        ))
+                    }
+                    Task::classification => {
+                        let params = smartcore::linear::logistic_regression::LogisticRegressionParameters::default()
+                            .with_alpha(match hyperparams.get("alpha") {
+                                Some(value) => value.as_f64().unwrap_or(0.0) as f32,
+                                None => 0.0,
+                            });
+
+                        Some(Box::new(
+                            smartcore::linear::logistic_regression::LogisticRegression::fit(
+                                &x_train, &y_train, params,
+                            )
+                            .unwrap(),
+                        ))
+                    }
                 };
                 let bytes: Vec<u8> = rmp_serde::to_vec(estimator.as_ref().unwrap()).unwrap();
                 Spi::get_one_with_args::<i64>(
@@ -127,8 +357,10 @@ impl Model {
                       (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
                   ]
               ).unwrap();
+
                 estimator
             }
+
             Algorithm::xgboost => {
                 let mut dtrain =
                     DMatrix::from_dense(dataset.x_train(), dataset.num_train_rows).unwrap();

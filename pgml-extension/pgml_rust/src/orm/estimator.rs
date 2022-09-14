@@ -26,9 +26,9 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
         }
     }
 
-    let (task, algorithm, data) = Spi::get_three_with_args::<String, String, Vec<u8>>(
+    let (task, algorithm, model_id) = Spi::get_three_with_args::<String, String, i64>(
         "
-        SELECT projects.task::TEXT, models.algorithm::TEXT, files.data
+        SELECT projects.task::TEXT, models.algorithm::TEXT, models.id AS model_id
         FROM pgml_rust.files
         JOIN pgml_rust.models
             ON models.id = files.model_id
@@ -55,6 +55,17 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
         )
     }))
     .unwrap();
+
+    let (data, hyperparams) = Spi::get_two_with_args::<Vec<u8>, JsonB>(
+        "SELECT data, hyperparams FROM pgml_rust.models
+        INNER JOIN pgml_rust.files
+        ON models.id = files.model_id WHERE models.id = $1
+        LIMIT 1",
+        vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
+    );
+
+    let hyperparams = hyperparams.unwrap();
+
     let data = data.unwrap_or_else(|| {
         panic!(
             "Project {} does not have a trained and deployed model.",
@@ -75,6 +86,54 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
                 let bst = Booster::load_buffer(&*data).unwrap();
                 Box::new(BoosterBox::new(bst))
             }
+            Algorithm::svm => match &hyperparams.0.as_object().unwrap().get("kernel") {
+                Some(kernel) => match kernel.as_str().unwrap_or("linear") {
+                    "poly" => {
+                        let estimator: smartcore::svm::svr::SVR<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::PolynomialKernel<f32>,
+                        > = rmp_serde::from_read(&*data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    "sigmoid" => {
+                        let estimator: smartcore::svm::svr::SVR<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::SigmoidKernel<f32>,
+                        > = rmp_serde::from_read(&*data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    "rbf" => {
+                        let estimator: smartcore::svm::svr::SVR<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::RBFKernel<f32>,
+                        > = rmp_serde::from_read(&*data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    _ => {
+                        let estimator: smartcore::svm::svr::SVR<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::LinearKernel,
+                        > = rmp_serde::from_read(&*data).unwrap();
+                        Box::new(estimator)
+                    }
+                },
+
+                None => {
+                    let estimator: smartcore::svm::svr::SVR<
+                        f32,
+                        Array2<f32>,
+                        smartcore::svm::LinearKernel,
+                    > = rmp_serde::from_read(&*data).unwrap();
+                    Box::new(estimator)
+                }
+            },
         },
         Task::classification => match algorithm {
             Algorithm::linear => {
@@ -88,6 +147,54 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
                 let bst = Booster::load_buffer(&*data).unwrap();
                 Box::new(BoosterBox::new(bst))
             }
+            Algorithm::svm => match &hyperparams.0.as_object().unwrap().get("kernel") {
+                Some(kernel) => match kernel.as_str().unwrap_or("linear") {
+                    "poly" => {
+                        let estimator: smartcore::svm::svc::SVC<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::PolynomialKernel<f32>,
+                        > = rmp_serde::from_read(&*data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    "sigmoid" => {
+                        let estimator: smartcore::svm::svc::SVC<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::SigmoidKernel<f32>,
+                        > = rmp_serde::from_read(&*data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    "rbf" => {
+                        let estimator: smartcore::svm::svc::SVC<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::RBFKernel<f32>,
+                        > = rmp_serde::from_read(&*data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    _ => {
+                        let estimator: smartcore::svm::svc::SVC<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::LinearKernel,
+                        > = rmp_serde::from_read(&*data).unwrap();
+                        Box::new(estimator)
+                    }
+                },
+
+                None => {
+                    let estimator: smartcore::svm::svc::SVC<
+                        f32,
+                        Array2<f32>,
+                        smartcore::svm::LinearKernel,
+                    > = rmp_serde::from_read(&*data).unwrap();
+                    Box::new(estimator)
+                }
+            },
         },
     };
 
@@ -185,6 +292,100 @@ impl Estimator for smartcore::linear::linear_regression::LinearRegression<f32, A
 
 #[typetag::serialize]
 impl Estimator for smartcore::linear::logistic_regression::LogisticRegression<f32, Array2<f32>> {
+    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
+        test_smartcore(self, task, data)
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        predict_smartcore(self, features)
+    }
+}
+
+// All the SVM kernels :popcorn:
+
+#[typetag::serialize]
+impl Estimator for smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::LinearKernel> {
+    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
+        test_smartcore(self, task, data)
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        predict_smartcore(self, features)
+    }
+}
+
+#[typetag::serialize]
+impl Estimator for smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::LinearKernel> {
+    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
+        test_smartcore(self, task, data)
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        predict_smartcore(self, features)
+    }
+}
+
+#[typetag::serialize]
+impl Estimator for smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::SigmoidKernel<f32>> {
+    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
+        test_smartcore(self, task, data)
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        predict_smartcore(self, features)
+    }
+}
+
+#[typetag::serialize]
+impl Estimator for smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::SigmoidKernel<f32>> {
+    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
+        test_smartcore(self, task, data)
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        predict_smartcore(self, features)
+    }
+}
+
+#[typetag::serialize]
+impl Estimator
+    for smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::PolynomialKernel<f32>>
+{
+    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
+        test_smartcore(self, task, data)
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        predict_smartcore(self, features)
+    }
+}
+
+#[typetag::serialize]
+impl Estimator
+    for smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::PolynomialKernel<f32>>
+{
+    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
+        test_smartcore(self, task, data)
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        predict_smartcore(self, features)
+    }
+}
+
+#[typetag::serialize]
+impl Estimator for smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::RBFKernel<f32>> {
+    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
+        test_smartcore(self, task, data)
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        predict_smartcore(self, features)
+    }
+}
+
+#[typetag::serialize]
+impl Estimator for smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::RBFKernel<f32>> {
     fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
         test_smartcore(self, task, data)
     }
