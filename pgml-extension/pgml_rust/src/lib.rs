@@ -15,7 +15,7 @@ pub mod vectors;
 
 pg_module_magic!();
 
-extension_sql_file!("../sql/schema.sql", name = "bootstrap_raw");
+extension_sql_file!("../sql/schema.sql", name = "schema");
 
 // The mutex is there just to guarantee to Rust that
 // there is no concurrent access.
