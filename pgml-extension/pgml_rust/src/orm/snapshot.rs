@@ -1,10 +1,48 @@
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use pgx::*;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::orm::Dataset;
 use crate::orm::Sampling;
+
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
+pub struct Column {
+    name: String,
+    pg_type: String,
+    nullable: bool,
+    label: bool,
+    position: usize,
+    size: usize,
+}
+
+impl Column {
+    fn quoted_name(&self) -> String {
+        format!(r#""{}""#, self.name)
+    }
+
+    fn stats_safe_name(&self) -> String {
+        match self.pg_type.as_str() {
+            "bool" => self.quoted_name() + "::INT4",
+            "bool[]" => self.quoted_name() + "::INT4[]",
+            _ => self.quoted_name(),
+        }
+    }
+}
+
+impl PartialOrd for Column {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Column {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.position.cmp(&other.position)
+    }
+}
 
 #[derive(Debug)]
 pub struct Snapshot {
@@ -109,6 +147,7 @@ impl Snapshot {
         snapshot.unwrap()
     }
 
+    #[allow(clippy::format_push_string)]
     fn analyze(&mut self) {
         Spi::connect(|client| {
             let parts = self
@@ -124,19 +163,36 @@ impl Snapshot {
                     self.relation_name
                 ),
             };
-            let mut columns = HashMap::<String, String>::new();
-            client.select("SELECT column_name::TEXT, data_type::TEXT FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2",
+            let mut columns: Vec<Column> = Vec::new();
+            client.select("SELECT column_name::TEXT, udt_name::TEXT, is_nullable::BOOLEAN, ordinal_position::INTEGER FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position ASC",
                 None,
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), schema_name.into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), table_name.into_datum()),
                 ]))
             .for_each(|row| {
-                columns.insert(row[1].value::<String>().unwrap(), row[2].value::<String>().unwrap());
+                let name = row[1].value::<String>().unwrap();
+                let mut pg_type = row[2].value::<String>().unwrap();
+                if pg_type.starts_with('_') {
+                    pg_type = pg_type[1..].to_string() + "[]";
+                }
+                let nullable = row[3].value::<bool>().unwrap();
+                let position = row[4].value::<i32>().unwrap() as usize;
+                let label = self.y_column_name.contains(&name);
+                columns.push(
+                    Column {
+                        name,
+                        pg_type,
+                        nullable,
+                        label,
+                        position,
+                        size: 1,
+                    }
+                );
             });
 
             for column in &self.y_column_name {
-                if !columns.contains_key(column) {
+                if !columns.iter().any(|c| c.label && &c.name == column) {
                     error!(
                         "Column `{}` not found. Did you pass the correct `y_column_name`?",
                         column
@@ -150,51 +206,78 @@ impl Snapshot {
             // calculate 10 statistics per column.
             let mut stats = vec![r#"count(*)::FLOAT4 AS "samples""#.to_string()];
             let mut fields = vec!["samples".to_string()];
-            for (column, data_type) in &columns {
-                match data_type.as_str() {
-                    "real" | "double precision" | "smallint" | "integer" | "bigint" | "boolean" => {
-                        let column = column.to_string();
-                        let quoted_column = match data_type.as_str() {
-                            "boolean" => format!(r#""{}"::INT"#, column),
-                            _ => format!(r#""{}""#, column),
-                        };
-                        stats.push(format!(r#"min({quoted_column})::FLOAT4 AS "{column}_min""#));
-                        stats.push(format!(r#"max({quoted_column})::FLOAT4 AS "{column}_max""#));
+            let mut laterals = String::new();
+            for column in &columns {
+                match column.pg_type.as_str() {
+                    "bool" | "int2" | "int4" | "int8" | "float4" | "float8" => {
+                        let name = &column.name;
+                        let stats_safe_name = column.stats_safe_name();
+                        stats.push(format!(r#"min({stats_safe_name})::FLOAT4 AS "{name}_min""#));
+                        stats.push(format!(r#"max({stats_safe_name})::FLOAT4 AS "{name}_max""#));
                         stats.push(format!(
-                            r#"avg({quoted_column})::FLOAT4 AS "{column}_mean""#
+                            r#"avg({stats_safe_name})::FLOAT4 AS "{name}_mean""#
                         ));
                         stats.push(format!(
-                            r#"stddev({quoted_column})::FLOAT4 AS "{column}_stddev""#
+                            r#"stddev({stats_safe_name})::FLOAT4 AS "{name}_stddev""#
                         ));
-                        stats.push(format!(r#"percentile_disc(0.25) within group (order by {quoted_column})::FLOAT4 AS "{column}_p25""#));
-                        stats.push(format!(r#"percentile_disc(0.5) within group (order by {quoted_column})::FLOAT4 AS "{column}_p50""#));
-                        stats.push(format!(r#"percentile_disc(0.75) within group (order by {quoted_column})::FLOAT4 AS "{column}_p75""#));
+                        stats.push(format!(r#"percentile_disc(0.25) within group (order by {stats_safe_name})::FLOAT4 AS "{name}_p25""#));
+                        stats.push(format!(r#"percentile_disc(0.5) within group (order by {stats_safe_name})::FLOAT4 AS "{name}_p50""#));
+                        stats.push(format!(r#"percentile_disc(0.75) within group (order by {stats_safe_name})::FLOAT4 AS "{name}_p75""#));
                         stats.push(format!(
-                            r#"count({quoted_column})::FLOAT4 AS "{column}_count""#
-                        ));
-                        stats.push(format!(
-                            r#"count(distinct {quoted_column})::FLOAT4 AS "{column}_distinct""#
+                            r#"count({stats_safe_name})::FLOAT4 AS "{name}_count""#
                         ));
                         stats.push(format!(
-                            r#"sum(({quoted_column} IS NULL)::INT)::FLOAT4 AS "{column}_nulls""#
+                            r#"count(distinct {stats_safe_name})::FLOAT4 AS "{name}_distinct""#
                         ));
-                        fields.push(format!("{column}_min"));
-                        fields.push(format!("{column}_max"));
-                        fields.push(format!("{column}_mean"));
-                        fields.push(format!("{column}_stddev"));
-                        fields.push(format!("{column}_p25"));
-                        fields.push(format!("{column}_p50"));
-                        fields.push(format!("{column}_p75"));
-                        fields.push(format!("{column}_count"));
-                        fields.push(format!("{column}_distinct"));
-                        fields.push(format!("{column}_nulls"));
+                        stats.push(format!(
+                            r#"sum(({stats_safe_name} IS NULL)::INT)::FLOAT4 AS "{name}_nulls""#
+                        ));
+                        fields.push(format!("{name}_min"));
+                        fields.push(format!("{name}_max"));
+                        fields.push(format!("{name}_mean"));
+                        fields.push(format!("{name}_stddev"));
+                        fields.push(format!("{name}_p25"));
+                        fields.push(format!("{name}_p50"));
+                        fields.push(format!("{name}_p75"));
+                        fields.push(format!("{name}_count"));
+                        fields.push(format!("{name}_distinct"));
+                        fields.push(format!("{name}_nulls"));
                     }
-                    &_ => {}
+                    "bool[]" | "int2[]" | "int4[]" | "int8[]" | "float4[]" | "float8[]" => {
+                        let name = &column.name;
+                        let stats_safe_name = column.stats_safe_name();
+                        let quoted_name = column.quoted_name();
+                        let unnested_column = format!(r#""unnested_{}""#, name);
+                        let lateral_table = format!(r#""{}_lateral""#, name);
+                        stats.push(format!(
+                            r#"max(array_ndims({quoted_name}))::FLOAT4 AS "{name}_dims""#
+                        ));
+                        stats.push(format!(
+                            r#"max(cardinality({quoted_name}))::FLOAT4 AS "{name}_cardinality""#
+                        ));
+                        stats.push(format!(
+                            r#"min({lateral_table}.{unnested_column})::FLOAT4 AS "{name}_min""#
+                        ));
+                        stats.push(format!(
+                            r#"max({lateral_table}.{unnested_column})::FLOAT4 AS "{name}_max""#
+                        ));
+                        fields.push(format!("{name}_dims"));
+                        fields.push(format!("{name}_cardinality"));
+                        fields.push(format!("{name}_min"));
+                        fields.push(format!("{name}_max"));
+                        laterals += &format!(", LATERAL (SELECT unnest({stats_safe_name}) AS {unnested_column}) {lateral_table}");
+                    }
+                    &_ => {
+                        error!("unhandled type: `{}` for `{}`", column.pg_type, column.name);
+                    }
                 }
             }
 
-            let stats = stats.join(",");
-            let sql = format!(r#"SELECT {stats} FROM "pgml_rust"."snapshot_{}""#, self.id);
+            let stats = stats.join(", ");
+            let sql = format!(
+                r#"SELECT {stats} FROM "pgml_rust"."snapshot_{}" {laterals}"#,
+                self.id
+            );
             let result = client.select(&sql, Some(1), None).first();
             let mut analysis = HashMap::new();
             for (i, field) in fields.iter().enumerate() {
@@ -205,7 +288,14 @@ impl Snapshot {
                         .unwrap(),
                 );
             }
-            let analysis_datum = JsonB(json!(analysis.clone()));
+            for column in &mut columns {
+                let cardinality = format!("{}_cardinality", column.name);
+                match analysis.get(&cardinality) {
+                    Some(cardinality) => column.size = *cardinality as usize,
+                    None => (),
+                }
+            }
+            let analysis_datum = JsonB(json!(analysis));
             let column_datum = JsonB(json!(columns));
             self.analysis = Some(JsonB(json!(analysis)));
             self.columns = Some(JsonB(json!(columns)));
@@ -222,57 +312,90 @@ impl Snapshot {
     pub fn dataset(&self) -> Dataset {
         let mut data = None;
         Spi::connect(|client| {
-            let json: &serde_json::Value = &self.columns.as_ref().unwrap().0;
-            let json = json.as_object().unwrap();
-            let feature_columns = json
-                .iter()
-                .filter_map(|(column, kind)| {
-                    let cast = match kind.as_str().unwrap() {
-                        "boolean" => "::INT",
-                        _ => "",
-                    };
-                    match self.y_column_name.contains(column) {
-                        true => None,
-                        false => Some(format!(r#""{}"{}::FLOAT4"#, column, cast)),
-                    }
-                })
-                .collect::<Vec<String>>();
-            let label_columns = json
-                .iter()
-                .filter_map(|(column, kind)| {
-                    let cast = match kind.as_str().unwrap() {
-                        "boolean" => "::INT",
-                        _ => "",
-                    };
-                    match self.y_column_name.contains(column) {
-                        false => None,
-                        true => Some(format!(r#""{}"{}::FLOAT4"#, column, cast)),
-                    }
-                })
-                .collect::<Vec<String>>();
-
+            let json = self.columns.as_ref().unwrap().0.clone();
+            let mut columns: Vec<Column> = serde_json::from_value(json).unwrap();
+            columns.sort();
             let sql = format!(
-                "SELECT {}, {} FROM {}",
-                feature_columns.join(", "),
-                label_columns.join(", "),
+                "SELECT {} FROM {}",
+                columns
+                    .iter()
+                    .map(|c| c.quoted_name())
+                    .collect::<Vec<String>>()
+                    .join(", "),
                 self.snapshot_name()
             );
 
-            info!("Fetching data: {}", sql);
-            let result = client.select(&sql, None, None);
-            let mut x = Vec::with_capacity(result.len() * feature_columns.len());
-            let mut y = Vec::with_capacity(result.len() * label_columns.len());
-            result.for_each(|row| {
-                // Postgres Arrays arrays are 1 indexed and so are SPI tuples...
-                for i in 1..feature_columns.len() + 1 {
-                    x.push(row[i].value::<f32>().unwrap());
+            let mut num_labels: usize = 0;
+            let mut num_features: usize = 0;
+            for column in &columns {
+                if column.label {
+                    num_labels += column.size;
+                } else {
+                    num_features += column.size;
                 }
-                for j in feature_columns.len() + 1..feature_columns.len() + label_columns.len() + 1
-                {
-                    y.push(row[j].value::<f32>().unwrap());
+            }
+
+            // Postgres Arrays arrays are 1 indexed and so are SPI tuples...
+            info!("Fetching data: {:?}", columns);
+            let result = client.select(&sql, None, None);
+            let num_rows = result.len();
+
+            let mut x: Vec<f32> = Vec::with_capacity(num_rows * num_features);
+            let mut y: Vec<f32> = Vec::with_capacity(num_rows * num_labels);
+
+            // result: SpiTupleTable
+            // row: SpiHeapTupleData
+            // row[i]: SpiHeapTupleDataEntry
+            result.for_each(|row| {
+                for column in &columns {
+                    let vector = if column.label { &mut y } else { &mut x };
+                    match column.pg_type.as_str() {
+                        "bool" => {
+                            vector.push(row[column.position].value::<bool>().unwrap() as u8 as f32)
+                        }
+                        "bool[]" => {
+                            for j in row[column.position].value::<Vec<bool>>().unwrap() {
+                                vector.push(j as u8 as f32)
+                            }
+                        }
+                        "int2" => vector.push(row[column.position].value::<i16>().unwrap() as f32),
+                        "int2[]" => {
+                            for j in row[column.position].value::<Vec<i16>>().unwrap() {
+                                vector.push(j as f32)
+                            }
+                        }
+                        "int4" => vector.push(row[column.position].value::<i32>().unwrap() as f32),
+                        "int4[]" => {
+                            for j in row[column.position].value::<Vec<i32>>().unwrap() {
+                                vector.push(j as f32)
+                            }
+                        }
+                        "int8" => vector.push(row[column.position].value::<i64>().unwrap() as f32),
+                        "int8[]" => {
+                            for j in row[column.position].value::<Vec<i64>>().unwrap() {
+                                vector.push(j as f32)
+                            }
+                        }
+                        "float4" => {
+                            vector.push(row[column.position].value::<f32>().unwrap() as f32)
+                        }
+                        "float4[]" => {
+                            for j in row[column.position].value::<Vec<f32>>().unwrap() {
+                                vector.push(j as f32)
+                            }
+                        }
+                        "float8" => {
+                            vector.push(row[column.position].value::<f64>().unwrap() as f32)
+                        }
+                        "float8[]" => {
+                            for j in row[column.position].value::<Vec<f64>>().unwrap() {
+                                vector.push(j as f32)
+                            }
+                        }
+                        _ => error!("unhandled type: `{}` for `{}`", column.pg_type, column.name),
+                    }
                 }
             });
-            let num_rows = x.len() / feature_columns.len();
             let num_test_rows = if self.test_size > 1.0 {
                 self.test_size as usize
             } else {
@@ -286,21 +409,19 @@ impl Snapshot {
                 );
             }
             info!(
-                "got features {:?} labels {:?} rows {:?}",
-                feature_columns.len(),
-                label_columns.len(),
-                num_rows
+                "got rows: {:?} features: {} labels: {}",
+                num_rows, num_features, num_labels,
             );
+
             data = Some(Dataset {
                 x,
                 y,
-                num_features: feature_columns.len(),
-                num_labels: label_columns.len(),
+                num_features,
+                num_labels,
                 num_rows,
                 num_test_rows,
                 num_train_rows,
             });
-
             Ok(Some(()))
         });
 
