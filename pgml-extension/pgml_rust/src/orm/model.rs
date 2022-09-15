@@ -14,6 +14,64 @@ use crate::orm::Search;
 use crate::orm::Snapshot;
 use crate::orm::Task;
 
+/// Get a floating point hyperparameter.
+macro_rules! hyperparam_f32 {
+    ($name:tt, $hyperparams:tt, $default:tt) => {
+        let $name = match $hyperparams.get("$name") {
+            Some($name) => $name.as_f64().unwrap_or($default) as f32,
+            None => $default,
+        };
+    };
+}
+
+/// Get a usize (u64) hyperparameter.
+macro_rules! hyperparam_usize {
+    ($name:tt, $hyperparams:tt, $default:tt) => {
+        let $name = match $hyperparams.get("$name") {
+            Some($name) => $name.as_u64().unwrap_or($default) as usize,
+            None => $default,
+        };
+    };
+}
+
+/// Get a boolean hyperparameter.
+macro_rules! hyperparam_bool {
+    ($name:tt, $hyperparams:tt, $default:tt) => {
+        let $name = match $hyperparams.get("$name") {
+            Some($name) => $name.as_bool().unwrap_or($default),
+            None => $default,
+        };
+    };
+}
+
+/// Split the dataset into test and train parts.
+macro_rules! train_test_split {
+    ($dataset:tt, $x_train:tt, $y_train:tt) => {
+        let $x_train = Array2::from_shape_vec(
+            ($dataset.num_train_rows, $dataset.num_features),
+            $dataset.x_train().to_vec(),
+        )
+        .unwrap();
+
+        let $y_train =
+            Array1::from_shape_vec($dataset.num_train_rows, $dataset.y_train().to_vec()).unwrap();
+    };
+}
+
+/// Save the trained estimator in the DB.
+macro_rules! save_estimator {
+    ($estimator:tt, $self:tt) => {
+        let bytes: Vec<u8> = rmp_serde::to_vec($estimator.as_ref().unwrap()).unwrap();
+        Spi::get_one_with_args::<i64>(
+          "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+          vec![
+              (PgBuiltInOids::INT8OID.oid(), $self.id.into_datum()),
+              (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
+          ]
+        ).unwrap();
+    }
+}
+
 #[derive(Debug)]
 pub struct Model {
     pub id: i64,
@@ -87,45 +145,20 @@ impl Model {
         model
     }
 
+    #[allow(non_snake_case)]
     fn fit(&mut self, project: &Project, dataset: &Dataset) {
         let hyperparams: &serde_json::Value = &self.hyperparams.0;
         let hyperparams = hyperparams.as_object().unwrap();
 
         self.estimator = match self.algorithm {
             Algorithm::svm => {
-                let x_train = Array2::from_shape_vec(
-                    (dataset.num_train_rows, dataset.num_features),
-                    dataset.x_train().to_vec(),
-                )
-                .unwrap();
-                let y_train =
-                    Array1::from_shape_vec(dataset.num_train_rows, dataset.y_train().to_vec())
-                        .unwrap();
-
-                let eps = match hyperparams.get("eps") {
-                    Some(eps) => eps.as_f64().unwrap_or(0.1) as f32,
-                    None => 0.1,
-                };
-
-                let c = match hyperparams.get("C") {
-                    Some(c) => c.as_f64().unwrap_or(1.0) as f32,
-                    None => 1.0,
-                };
-
-                let tol = match hyperparams.get("tol") {
-                    Some(tol) => tol.as_f64().unwrap_or(1e-3) as f32,
-                    None => 1e-3,
-                };
-
-                let epoch = match hyperparams.get("epoch") {
-                    Some(epoch) => epoch.as_u64().unwrap_or(2) as usize,
-                    None => 2,
-                };
-
-                let degree = match hyperparams.get("degree") {
-                    Some(degree) => degree.as_f64().unwrap_or(3.0) as f32,
-                    None => 3.0,
-                };
+                train_test_split!(dataset, x_train, y_train);
+                hyperparam_f32!(eps, hyperparams, 0.1);
+                hyperparam_f32!(C, hyperparams, 1.0);
+                hyperparam_f32!(tol, hyperparams, 1e-3);
+                hyperparam_usize!(epoch, hyperparams, 2);
+                hyperparam_f32!(degree, hyperparams, 3.0);
+                hyperparam_f32!(coef0, hyperparams, 0.0);
 
                 let gamma = match hyperparams.get("gamma") {
                     Some(gamma) => match gamma.as_f64() {
@@ -142,11 +175,6 @@ impl Model {
                     None => 1.0 / dataset.num_features as f32 * x_train.var(0.0),
                 };
 
-                let coef0 = match hyperparams.get("coef0") {
-                    Some(coef0) => coef0.as_f64().unwrap_or(0.0) as f32,
-                    None => 0.0 as f32,
-                };
-
                 let estimator: Option<Box<dyn Estimator>> = match project.task {
                     Task::regression => match hyperparams.get("kernel") {
                         Some(kernel) => match kernel.as_str().unwrap_or("linear") {
@@ -156,7 +184,7 @@ impl Model {
                                     &y_train,
                                     smartcore::svm::svr::SVRParameters::default()
                                         .with_eps(eps)
-                                        .with_c(c)
+                                        .with_c(C)
                                         .with_tol(tol)
                                         .with_kernel(smartcore::svm::Kernels::polynomial(
                                             degree, gamma, coef0,
@@ -171,7 +199,7 @@ impl Model {
                                     &y_train,
                                     smartcore::svm::svr::SVRParameters::default()
                                         .with_eps(eps)
-                                        .with_c(c)
+                                        .with_c(C)
                                         .with_tol(tol)
                                         .with_kernel(smartcore::svm::Kernels::sigmoid(
                                             gamma, coef0,
@@ -186,7 +214,7 @@ impl Model {
                                     &y_train,
                                     smartcore::svm::svr::SVRParameters::default()
                                         .with_eps(eps)
-                                        .with_c(c)
+                                        .with_c(C)
                                         .with_tol(tol)
                                         .with_kernel(smartcore::svm::Kernels::rbf(gamma)),
                                 )
@@ -199,7 +227,7 @@ impl Model {
                                     &y_train,
                                     smartcore::svm::svr::SVRParameters::default()
                                         .with_eps(eps)
-                                        .with_c(c)
+                                        .with_c(C)
                                         .with_tol(tol)
                                         .with_kernel(smartcore::svm::Kernels::linear()),
                                 )
@@ -213,7 +241,7 @@ impl Model {
                                 &y_train,
                                 smartcore::svm::svr::SVRParameters::default()
                                     .with_eps(eps)
-                                    .with_c(c)
+                                    .with_c(C)
                                     .with_tol(tol)
                                     .with_kernel(smartcore::svm::Kernels::linear()),
                             )
@@ -229,7 +257,7 @@ impl Model {
                                     &y_train,
                                     smartcore::svm::svc::SVCParameters::default()
                                         .with_epoch(epoch)
-                                        .with_c(c)
+                                        .with_c(C)
                                         .with_tol(tol)
                                         .with_kernel(smartcore::svm::Kernels::polynomial(
                                             degree, gamma, coef0,
@@ -244,7 +272,7 @@ impl Model {
                                     &y_train,
                                     smartcore::svm::svc::SVCParameters::default()
                                         .with_epoch(epoch)
-                                        .with_c(c)
+                                        .with_c(C)
                                         .with_tol(tol)
                                         .with_kernel(smartcore::svm::Kernels::sigmoid(
                                             gamma, coef0,
@@ -259,7 +287,7 @@ impl Model {
                                     &y_train,
                                     smartcore::svm::svc::SVCParameters::default()
                                         .with_epoch(epoch)
-                                        .with_c(c)
+                                        .with_c(C)
                                         .with_tol(tol)
                                         .with_kernel(smartcore::svm::Kernels::rbf(gamma)),
                                 )
@@ -285,7 +313,7 @@ impl Model {
                                 &y_train,
                                 smartcore::svm::svc::SVCParameters::default()
                                     .with_epoch(epoch)
-                                    .with_c(c)
+                                    .with_c(C)
                                     .with_tol(tol)
                                     .with_kernel(smartcore::svm::Kernels::linear()),
                             )
@@ -294,27 +322,14 @@ impl Model {
                     },
                 };
 
-                let bytes: Vec<u8> = rmp_serde::to_vec(estimator.as_ref().unwrap()).unwrap();
-                Spi::get_one_with_args::<i64>(
-                      "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
-                      vec![
-                          (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
-                          (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
-                      ]
-                  ).unwrap();
+                save_estimator!(estimator, self);
 
                 estimator
             }
 
             Algorithm::linear => {
-                let x_train = Array2::from_shape_vec(
-                    (dataset.num_train_rows, dataset.num_features),
-                    dataset.x_train().to_vec(),
-                )
-                .unwrap();
-                let y_train =
-                    Array1::from_shape_vec(dataset.num_train_rows, dataset.y_train().to_vec())
-                        .unwrap();
+                train_test_split!(dataset, x_train, y_train);
+
                 let estimator: Option<Box<dyn Estimator>> = match project.task {
                     Task::regression => {
                         let params = smartcore::linear::linear_regression::LinearRegressionParameters::default()
@@ -335,11 +350,10 @@ impl Model {
                         ))
                     }
                     Task::classification => {
+                        hyperparam_f32!(alpha, hyperparams, 0.0);
+
                         let params = smartcore::linear::logistic_regression::LogisticRegressionParameters::default()
-                            .with_alpha(match hyperparams.get("alpha") {
-                                Some(value) => value.as_f64().unwrap_or(0.0) as f32,
-                                None => 0.0,
-                            });
+                            .with_alpha(alpha);
 
                         Some(Box::new(
                             smartcore::linear::logistic_regression::LogisticRegression::fit(
@@ -349,14 +363,8 @@ impl Model {
                         ))
                     }
                 };
-                let bytes: Vec<u8> = rmp_serde::to_vec(estimator.as_ref().unwrap()).unwrap();
-                Spi::get_one_with_args::<i64>(
-                  "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
-                  vec![
-                      (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
-                      (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
-                  ]
-              ).unwrap();
+
+                save_estimator!(estimator, self);
 
                 estimator
             }
@@ -560,35 +568,12 @@ impl Model {
             }
 
             Algorithm::lasso => {
-                let x_train = Array2::from_shape_vec(
-                    (dataset.num_train_rows, dataset.num_features),
-                    dataset.x_train().to_vec(),
-                )
-                .unwrap();
+                train_test_split!(dataset, x_train, y_train);
 
-                let y_train =
-                    Array1::from_shape_vec(dataset.num_train_rows, dataset.y_train().to_vec())
-                        .unwrap();
-
-                let alpha = match hyperparams.get("alpha") {
-                    Some(alpha) => alpha.as_f64().unwrap_or(1.0) as f32,
-                    _ => 1.0,
-                };
-
-                let normalize = match hyperparams.get("normalize") {
-                    Some(normalize) => normalize.as_bool().unwrap_or(false),
-                    _ => false,
-                };
-
-                let tol = match hyperparams.get("tol") {
-                    Some(tol) => tol.as_f64().unwrap_or(1e-4) as f32,
-                    _ => 1e-4,
-                };
-
-                let max_iter = match hyperparams.get("max_iter") {
-                    Some(max_iter) => max_iter.as_u64().unwrap_or(1000) as usize,
-                    _ => 1000,
-                };
+                hyperparam_f32!(alpha, hyperparams, 1.0);
+                hyperparam_bool!(normalize, hyperparams, false);
+                hyperparam_f32!(tol, hyperparams, 1e-4);
+                hyperparam_usize!(max_iter, hyperparams, 1000);
 
                 let estimator: Option<Box<dyn Estimator>> = match project.task {
                     Task::regression => Some(Box::new(
@@ -607,14 +592,39 @@ impl Model {
                     Task::classification => panic!("Lasso only supports regression"),
                 };
 
-                let bytes: Vec<u8> = rmp_serde::to_vec(estimator.as_ref().unwrap()).unwrap();
-                Spi::get_one_with_args::<i64>(
-                  "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
-                  vec![
-                      (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
-                      (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
-                  ]
-                ).unwrap();
+                save_estimator!(estimator, self);
+
+                estimator
+            }
+
+            Algorithm::elastic_net => {
+                train_test_split!(dataset, x_train, y_train);
+
+                hyperparam_f32!(alpha, hyperparams, 1.0);
+                hyperparam_f32!(l1_ratio, hyperparams, 0.5);
+                hyperparam_bool!(normalize, hyperparams, false);
+                hyperparam_f32!(tol, hyperparams, 1e-4);
+                hyperparam_usize!(max_iter, hyperparams, 1000);
+
+                let estimator: Option<Box<dyn Estimator>> = match project.task {
+                    Task::regression => Some(Box::new(
+                        smartcore::linear::elastic_net::ElasticNet::fit(
+                            &x_train,
+                            &y_train,
+                            smartcore::linear::elastic_net::ElasticNetParameters::default()
+                                .with_alpha(alpha)
+                                .with_l1_ratio(l1_ratio)
+                                .with_normalize(normalize)
+                                .with_tol(tol)
+                                .with_max_iter(max_iter),
+                        )
+                        .unwrap(),
+                    )),
+
+                    Task::classification => panic!("Elastic Net does not support classification"),
+                };
+
+                save_estimator!(estimator, self);
 
                 estimator
             }

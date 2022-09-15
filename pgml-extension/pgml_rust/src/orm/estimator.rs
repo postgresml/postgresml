@@ -87,6 +87,11 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
                     rmp_serde::from_read(&*data).unwrap();
                 Box::new(estimator)
             }
+            Algorithm::elastic_net => {
+                let estimator: smartcore::linear::elastic_net::ElasticNet<f32, Array2<f32>> =
+                    rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
             Algorithm::xgboost => {
                 let bst = Booster::load_buffer(&*data).unwrap();
                 Box::new(BoosterBox::new(bst))
@@ -149,6 +154,7 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
                 Box::new(estimator)
             }
             Algorithm::lasso => panic!("Lasso does not support classification"),
+            Algorithm::elastic_net => panic!("Elastic Net does not support classification"),
             Algorithm::xgboost => {
                 let bst = Booster::load_buffer(&*data).unwrap();
                 Box::new(BoosterBox::new(bst))
@@ -285,132 +291,35 @@ pub trait Estimator: Send + Sync + Debug {
     fn predict(&self, features: Vec<f32>) -> f32;
 }
 
-#[typetag::serialize]
-impl Estimator for smartcore::linear::linear_regression::LinearRegression<f32, Array2<f32>> {
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
+/// Implement the Estimator trait (it's always the same)
+/// for all supported algorithms.
+macro_rules! smartcore_estimator_impl {
+    ($estimator:ty) => {
+        #[typetag::serialize]
+        impl Estimator for $estimator {
+            fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
+                test_smartcore(self, task, data)
+            }
 
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
+            fn predict(&self, features: Vec<f32>) -> f32 {
+                predict_smartcore(self, features)
+            }
+        }
+    };
 }
 
-#[typetag::serialize]
-impl Estimator for smartcore::linear::logistic_regression::LogisticRegression<f32, Array2<f32>> {
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
-}
-
-// All the SVM kernels :popcorn:
-
-#[typetag::serialize]
-impl Estimator for smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::LinearKernel> {
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
-}
-
-#[typetag::serialize]
-impl Estimator for smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::LinearKernel> {
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
-}
-
-#[typetag::serialize]
-impl Estimator for smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::SigmoidKernel<f32>> {
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
-}
-
-#[typetag::serialize]
-impl Estimator for smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::SigmoidKernel<f32>> {
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
-}
-
-#[typetag::serialize]
-impl Estimator
-    for smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::PolynomialKernel<f32>>
-{
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
-}
-
-#[typetag::serialize]
-impl Estimator
-    for smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::PolynomialKernel<f32>>
-{
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
-}
-
-#[typetag::serialize]
-impl Estimator for smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::RBFKernel<f32>> {
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
-}
-
-#[typetag::serialize]
-impl Estimator for smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::RBFKernel<f32>> {
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
-}
-
-#[typetag::serialize]
-impl Estimator for smartcore::linear::lasso::Lasso<f32, Array2<f32>> {
-    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-        test_smartcore(self, task, data)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        predict_smartcore(self, features)
-    }
-}
+smartcore_estimator_impl!(smartcore::linear::linear_regression::LinearRegression<f32, Array2<f32>>);
+smartcore_estimator_impl!(smartcore::linear::logistic_regression::LogisticRegression<f32, Array2<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::LinearKernel>);
+smartcore_estimator_impl!(smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::LinearKernel>);
+smartcore_estimator_impl!(smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::SigmoidKernel<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::SigmoidKernel<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::PolynomialKernel<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::PolynomialKernel<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::RBFKernel<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::RBFKernel<f32>>);
+smartcore_estimator_impl!(smartcore::linear::lasso::Lasso<f32, Array2<f32>>);
+smartcore_estimator_impl!(smartcore::linear::elastic_net::ElasticNet<f32, Array2<f32>>);
 
 pub struct BoosterBox {
     contents: Box<xgboost::Booster>,
