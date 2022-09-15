@@ -555,8 +555,68 @@ impl Model {
                       (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
                       (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
                   ]
-            ).unwrap();
+                ).unwrap();
                 Some(Box::new(BoosterBox::new(bst)))
+            }
+
+            Algorithm::lasso => {
+                let x_train = Array2::from_shape_vec(
+                    (dataset.num_train_rows, dataset.num_features),
+                    dataset.x_train().to_vec(),
+                )
+                .unwrap();
+
+                let y_train =
+                    Array1::from_shape_vec(dataset.num_train_rows, dataset.y_train().to_vec())
+                        .unwrap();
+
+                let alpha = match hyperparams.get("alpha") {
+                    Some(alpha) => alpha.as_f64().unwrap_or(1.0) as f32,
+                    _ => 1.0,
+                };
+
+                let normalize = match hyperparams.get("normalize") {
+                    Some(normalize) => normalize.as_bool().unwrap_or(false),
+                    _ => false,
+                };
+
+                let tol = match hyperparams.get("tol") {
+                    Some(tol) => tol.as_f64().unwrap_or(1e-4) as f32,
+                    _ => 1e-4,
+                };
+
+                let max_iter = match hyperparams.get("max_iter") {
+                    Some(max_iter) => max_iter.as_u64().unwrap_or(1000) as usize,
+                    _ => 1000,
+                };
+
+                let estimator: Option<Box<dyn Estimator>> = match project.task {
+                    Task::regression => Some(Box::new(
+                        smartcore::linear::lasso::Lasso::fit(
+                            &x_train,
+                            &y_train,
+                            smartcore::linear::lasso::LassoParameters::default()
+                                .with_alpha(alpha)
+                                .with_normalize(normalize)
+                                .with_tol(tol)
+                                .with_max_iter(max_iter),
+                        )
+                        .unwrap(),
+                    )),
+
+                    Task::classification => panic!("Lasso only supports regression"),
+                };
+
+                let bytes: Vec<u8> = rmp_serde::to_vec(estimator.as_ref().unwrap()).unwrap();
+                Spi::get_one_with_args::<i64>(
+                  "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+                  vec![
+                      (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
+                      (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
+                  ]
+                ).unwrap();
+
+                estimator
             }
         };
     }
