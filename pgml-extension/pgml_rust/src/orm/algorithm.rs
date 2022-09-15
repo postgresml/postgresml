@@ -8,6 +8,12 @@ pub enum Algorithm {
     xgboost,
     svm,
     lasso,
+    elastic_net,
+    // ridge,
+    // kmeans,
+    // dbscan,
+    // knn,
+    // random_forest,
 }
 
 impl std::str::FromStr for Algorithm {
@@ -19,6 +25,7 @@ impl std::str::FromStr for Algorithm {
             "xgboost" => Ok(Algorithm::xgboost),
             "svm" => Ok(Algorithm::svm),
             "lasso" => Ok(Algorithm::lasso),
+            "elastic_net" => Ok(Algorithm::elastic_net),
             _ => Err(()),
         }
     }
@@ -31,6 +38,7 @@ impl std::string::ToString for Algorithm {
             Algorithm::xgboost => "xgboost".to_string(),
             Algorithm::svm => "svm".to_string(),
             Algorithm::lasso => "lasso".to_string(),
+            Algorithm::elastic_net => "elastic_net".to_string(),
         }
     }
 }

@@ -87,6 +87,11 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
                     rmp_serde::from_read(&*data).unwrap();
                 Box::new(estimator)
             }
+            Algorithm::elastic_net => {
+                let estimator: smartcore::linear::elastic_net::ElasticNet<f32, Array2<f32>> =
+                    rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
             Algorithm::xgboost => {
                 let bst = Booster::load_buffer(&*data).unwrap();
                 Box::new(BoosterBox::new(bst))
@@ -149,6 +154,7 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
                 Box::new(estimator)
             }
             Algorithm::lasso => panic!("Lasso does not support classification"),
+            Algorithm::elastic_net => panic!("Elastic Net does not support classification"),
             Algorithm::xgboost => {
                 let bst = Booster::load_buffer(&*data).unwrap();
                 Box::new(BoosterBox::new(bst))
@@ -403,6 +409,17 @@ impl Estimator for smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::RB
 
 #[typetag::serialize]
 impl Estimator for smartcore::linear::lasso::Lasso<f32, Array2<f32>> {
+    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
+        test_smartcore(self, task, data)
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        predict_smartcore(self, features)
+    }
+}
+
+#[typetag::serialize]
+impl Estimator for smartcore::linear::elastic_net::ElasticNet<f32, Array2<f32>> {
     fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
         test_smartcore(self, task, data)
     }

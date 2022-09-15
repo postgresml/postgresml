@@ -14,6 +14,59 @@ use crate::orm::Search;
 use crate::orm::Snapshot;
 use crate::orm::Task;
 
+macro_rules! hyperparam_f32 {
+    ($name:tt, $hyperparams:tt, $default:tt) => {
+        let $name = match $hyperparams.get("$name") {
+            Some($name) => $name.as_f64().unwrap_or($default) as f32,
+            None => $default,
+        };
+    };
+}
+
+macro_rules! hyperparam_usize {
+    ($name:tt, $hyperparams:tt, $default:tt) => {
+        let $name = match $hyperparams.get("$name") {
+            Some($name) => $name.as_u64().unwrap_or($default) as usize,
+            None => $default,
+        };
+    };
+}
+
+macro_rules! hyperparam_bool {
+    ($name:tt, $hyperparams:tt, $default:tt) => {
+        let $name = match $hyperparams.get("$name") {
+            Some($name) => $name.as_bool().unwrap_or($default),
+            None => $default,
+        };
+    };
+}
+
+macro_rules! train_test_split {
+    ($dataset:tt, $x_train:tt, $y_train:tt) => {
+        let $x_train = Array2::from_shape_vec(
+            ($dataset.num_train_rows, $dataset.num_features),
+            $dataset.x_train().to_vec(),
+        )
+        .unwrap();
+
+        let $y_train =
+            Array1::from_shape_vec($dataset.num_train_rows, $dataset.y_train().to_vec()).unwrap();
+    };
+}
+
+macro_rules! save_estimator {
+    ($estimator:tt, $self:tt) => {
+        let bytes: Vec<u8> = rmp_serde::to_vec($estimator.as_ref().unwrap()).unwrap();
+        Spi::get_one_with_args::<i64>(
+          "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+          vec![
+              (PgBuiltInOids::INT8OID.oid(), $self.id.into_datum()),
+              (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
+          ]
+        ).unwrap();
+    }
+}
+
 #[derive(Debug)]
 pub struct Model {
     pub id: i64,
@@ -615,6 +668,38 @@ impl Model {
                       (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
                   ]
                 ).unwrap();
+
+                estimator
+            }
+
+            Algorithm::elastic_net => {
+                train_test_split!(dataset, x_train, y_train);
+
+                hyperparam_f32!(alpha, hyperparams, 1.0);
+                hyperparam_f32!(l1_ratio, hyperparams, 0.5);
+                hyperparam_bool!(normalize, hyperparams, false);
+                hyperparam_f32!(tol, hyperparams, 1e-4);
+                hyperparam_usize!(max_iter, hyperparams, 1000);
+
+                let estimator: Option<Box<dyn Estimator>> = match project.task {
+                    Task::regression => Some(Box::new(
+                        smartcore::linear::elastic_net::ElasticNet::fit(
+                            &x_train,
+                            &y_train,
+                            smartcore::linear::elastic_net::ElasticNetParameters::default()
+                                .with_alpha(alpha)
+                                .with_l1_ratio(l1_ratio)
+                                .with_normalize(normalize)
+                                .with_tol(tol)
+                                .with_max_iter(max_iter),
+                        )
+                        .unwrap(),
+                    )),
+
+                    Task::classification => panic!("Elastic Net does not support classification"),
+                };
+
+                save_estimator!(estimator, self);
 
                 estimator
             }
