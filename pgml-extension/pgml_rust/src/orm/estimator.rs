@@ -92,6 +92,32 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
                     rmp_serde::from_read(&*data).unwrap();
                 Box::new(estimator)
             }
+            Algorithm::ridge => {
+                let estimator: smartcore::linear::ridge_regression::RidgeRegression<
+                    f32,
+                    Array2<f32>,
+                > = rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
+            Algorithm::kmeans => todo!(),
+
+            Algorithm::dbscan => todo!(),
+
+            Algorithm::knn => {
+                let estimator: smartcore::neighbors::knn_regressor::KNNRegressor<
+                    f32,
+                    smartcore::math::distance::euclidian::Euclidian,
+                > = rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
+
+            Algorithm::random_forest => {
+                let estimator: smartcore::ensemble::random_forest_regressor::RandomForestRegressor<
+                    f32,
+                > = rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
+
             Algorithm::xgboost => {
                 let bst = Booster::load_buffer(&*data).unwrap();
                 Box::new(BoosterBox::new(bst))
@@ -155,6 +181,26 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
             }
             Algorithm::lasso => panic!("Lasso does not support classification"),
             Algorithm::elastic_net => panic!("Elastic Net does not support classification"),
+            Algorithm::ridge => panic!("Ridge does not support classification"),
+
+            Algorithm::kmeans => todo!(),
+
+            Algorithm::dbscan => todo!(),
+
+            Algorithm::knn => {
+                let estimator: smartcore::neighbors::knn_classifier::KNNClassifier<
+                    f32,
+                    smartcore::math::distance::euclidian::Euclidian,
+                > = rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
+
+            Algorithm::random_forest => {
+                let estimator: smartcore::ensemble::random_forest_classifier::RandomForestClassifier<f32> =
+                    rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
+
             Algorithm::xgboost => {
                 let bst = Booster::load_buffer(&*data).unwrap();
                 Box::new(BoosterBox::new(bst))
@@ -320,6 +366,13 @@ smartcore_estimator_impl!(smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::
 smartcore_estimator_impl!(smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::RBFKernel<f32>>);
 smartcore_estimator_impl!(smartcore::linear::lasso::Lasso<f32, Array2<f32>>);
 smartcore_estimator_impl!(smartcore::linear::elastic_net::ElasticNet<f32, Array2<f32>>);
+smartcore_estimator_impl!(smartcore::linear::ridge_regression::RidgeRegression<f32, Array2<f32>>);
+smartcore_estimator_impl!(smartcore::neighbors::knn_regressor::KNNRegressor<f32, smartcore::math::distance::euclidian::Euclidian>);
+smartcore_estimator_impl!(smartcore::neighbors::knn_classifier::KNNClassifier<f32, smartcore::math::distance::euclidian::Euclidian>);
+smartcore_estimator_impl!(smartcore::ensemble::random_forest_regressor::RandomForestRegressor<f32>);
+smartcore_estimator_impl!(
+    smartcore::ensemble::random_forest_classifier::RandomForestClassifier<f32>
+);
 
 pub struct BoosterBox {
     contents: Box<xgboost::Booster>,
