@@ -10,6 +10,7 @@ use std::sync::Mutex;
 use xgboost::{Booster, DMatrix};
 
 pub mod api;
+pub mod friends;
 pub mod orm;
 pub mod vectors;
 

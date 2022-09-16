@@ -14,6 +14,8 @@ use crate::orm::Search;
 use crate::orm::Snapshot;
 use crate::orm::Task;
 
+use crate::friends::sklearn::sklearn_train;
+
 /// Get a floating point hyperparameter.
 macro_rules! hyperparam_f32 {
     ($name:tt, $hyperparams:tt, $default:tt) => {
@@ -351,6 +353,8 @@ impl Model {
                     }
                     Task::classification => {
                         hyperparam_f32!(alpha, hyperparams, 0.0);
+
+                        sklearn_train(Task::classification, Algorithm::linear, &dataset);
 
                         let params = smartcore::linear::logistic_regression::LogisticRegressionParameters::default()
                             .with_alpha(alpha);
