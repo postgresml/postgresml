@@ -92,14 +92,32 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
                     rmp_serde::from_read(&*data).unwrap();
                 Box::new(estimator)
             }
-            Algorithm::ridge => todo!(),
+            Algorithm::ridge => {
+                let estimator: smartcore::linear::ridge_regression::RidgeRegression<
+                    f32,
+                    Array2<f32>,
+                > = rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
             Algorithm::kmeans => todo!(),
 
             Algorithm::dbscan => todo!(),
 
-            Algorithm::knn => todo!(),
+            Algorithm::knn => {
+                let estimator: smartcore::neighbors::knn_regressor::KNNRegressor<
+                    f32,
+                    smartcore::math::distance::euclidian::Euclidian,
+                > = rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
 
-            Algorithm::random_forest => todo!(),
+            Algorithm::random_forest => {
+                let estimator: smartcore::ensemble::random_forest_regressor::RandomForestRegressor<
+                    f32,
+                > = rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
+
             Algorithm::xgboost => {
                 let bst = Booster::load_buffer(&*data).unwrap();
                 Box::new(BoosterBox::new(bst))
@@ -169,9 +187,19 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
 
             Algorithm::dbscan => todo!(),
 
-            Algorithm::knn => todo!(),
+            Algorithm::knn => {
+                let estimator: smartcore::neighbors::knn_classifier::KNNClassifier<
+                    f32,
+                    smartcore::math::distance::euclidian::Euclidian,
+                > = rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
 
-            Algorithm::random_forest => todo!(),
+            Algorithm::random_forest => {
+                let estimator: smartcore::ensemble::random_forest_classifier::RandomForestClassifier<f32> =
+                    rmp_serde::from_read(&*data).unwrap();
+                Box::new(estimator)
+            }
 
             Algorithm::xgboost => {
                 let bst = Booster::load_buffer(&*data).unwrap();

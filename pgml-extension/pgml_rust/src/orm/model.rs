@@ -670,41 +670,10 @@ impl Model {
 
             Algorithm::kmeans => {
                 todo!();
-                // train_test_split!(dataset, x_train, y_train);
-
-                // let estimator: Option<Box<dyn Estimator>> = match project.task = {
-                //     Task::regression => (
-
-                //     ),
-
-                //     Task::classification => (
-
-                //     ),
-                // }
-
-                // save_estimator!(estimator, self);
-
-                // estimator
             }
 
             Algorithm::dbscan => {
                 todo!();
-
-                // train_test_split!(dataset, x_train, y_train);
-
-                // let estimator = Option<Box<dyn Estimator>> = match project.task {
-                //     Task::regression => (
-
-                //     ),
-
-                //     Task::classification => (
-
-                //     ),
-                // }
-
-                // save_estimator!(estimator, self);
-
-                // estimator
             }
 
             Algorithm::knn => {
@@ -715,8 +684,8 @@ impl Model {
                     .as_str()
                     .unwrap_or("linear_search")
                 {
-                    "cover_tree" => smartcore::neighbors::KNNAlgorithmName::CoverTree,
-                    _ => smartcore::neighbors::KNNAlgorithmName::LinearSearch,
+                    "cover_tree" => smartcore::algorithm::neighbour::KNNAlgorithmName::CoverTree,
+                    _ => smartcore::algorithm::neighbour::KNNAlgorithmName::LinearSearch,
                 };
                 let weight = match hyperparams
                     .get("weight")
