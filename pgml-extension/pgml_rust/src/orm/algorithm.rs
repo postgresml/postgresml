@@ -9,11 +9,11 @@ pub enum Algorithm {
     svm,
     lasso,
     elastic_net,
-    // ridge,
-    // kmeans,
-    // dbscan,
-    // knn,
-    // random_forest,
+    ridge,
+    kmeans,
+    dbscan,
+    knn,
+    random_forest,
 }
 
 impl std::str::FromStr for Algorithm {
@@ -26,6 +26,11 @@ impl std::str::FromStr for Algorithm {
             "svm" => Ok(Algorithm::svm),
             "lasso" => Ok(Algorithm::lasso),
             "elastic_net" => Ok(Algorithm::elastic_net),
+            "ridge" => Ok(Algorithm::ridge),
+            "kmeans" => Ok(Algorithm::kmeans),
+            "dbscan" => Ok(Algorithm::dbscan),
+            "knn" => Ok(Algorithm::knn),
+            "random_forest" => Ok(Algorithm::random_forest),
             _ => Err(()),
         }
     }
@@ -39,6 +44,11 @@ impl std::string::ToString for Algorithm {
             Algorithm::svm => "svm".to_string(),
             Algorithm::lasso => "lasso".to_string(),
             Algorithm::elastic_net => "elastic_net".to_string(),
+            Algorithm::ridge => "ridge".to_string(),
+            Algorithm::kmeans => "kmeans".to_string(),
+            Algorithm::dbscan => "dbscan".to_string(),
+            Algorithm::knn => "knn".to_string(),
+            Algorithm::random_forest => "random_forest".to_string(),
         }
     }
 }

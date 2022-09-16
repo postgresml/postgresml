@@ -628,6 +628,238 @@ impl Model {
 
                 estimator
             }
+
+            Algorithm::ridge => {
+                train_test_split!(dataset, x_train, y_train);
+                hyperparam_f32!(alpha, hyperparams, 1.0);
+                hyperparam_bool!(normalize, hyperparams, false);
+
+                let solver = match hyperparams.get("solver") {
+                    Some(solver) => match solver.as_str().unwrap_or("cholesky") {
+                        "svd" => {
+                            smartcore::linear::ridge_regression::RidgeRegressionSolverName::SVD
+                        }
+                        _ => {
+                            smartcore::linear::ridge_regression::RidgeRegressionSolverName::Cholesky
+                        }
+                    },
+                    None => smartcore::linear::ridge_regression::RidgeRegressionSolverName::SVD,
+                };
+
+                let estimator: Option<Box<dyn Estimator>> = match project.task {
+                    Task::regression => Some(
+                        Box::new(
+                            smartcore::linear::ridge_regression::RidgeRegression::fit(
+                                &x_train,
+                                &y_train,
+                                smartcore::linear::ridge_regression::RidgeRegressionParameters::default()
+                                .with_alpha(alpha)
+                                .with_normalize(normalize)
+                                .with_solver(solver)
+                            ).unwrap()
+                        )
+                    ),
+
+                    Task::classification => panic!("Ridge does not support classification"),
+                };
+
+                save_estimator!(estimator, self);
+
+                estimator
+            }
+
+            Algorithm::kmeans => {
+                todo!();
+                // train_test_split!(dataset, x_train, y_train);
+
+                // let estimator: Option<Box<dyn Estimator>> = match project.task = {
+                //     Task::regression => (
+
+                //     ),
+
+                //     Task::classification => (
+
+                //     ),
+                // }
+
+                // save_estimator!(estimator, self);
+
+                // estimator
+            }
+
+            Algorithm::dbscan => {
+                todo!();
+
+                // train_test_split!(dataset, x_train, y_train);
+
+                // let estimator = Option<Box<dyn Estimator>> = match project.task {
+                //     Task::regression => (
+
+                //     ),
+
+                //     Task::classification => (
+
+                //     ),
+                // }
+
+                // save_estimator!(estimator, self);
+
+                // estimator
+            }
+
+            Algorithm::knn => {
+                train_test_split!(dataset, x_train, y_train);
+                let algorithm = match hyperparams
+                    .get("algorithm")
+                    .unwrap_or(&serde_json::Value::from("linear_search"))
+                    .as_str()
+                    .unwrap_or("linear_search")
+                {
+                    "cover_tree" => smartcore::neighbors::KNNAlgorithmName::CoverTree,
+                    _ => smartcore::neighbors::KNNAlgorithmName::LinearSearch,
+                };
+                let weight = match hyperparams
+                    .get("weight")
+                    .unwrap_or(&serde_json::Value::from("uniform"))
+                    .as_str()
+                    .unwrap_or("uniform")
+                {
+                    "distance" => smartcore::neighbors::KNNWeightFunction::Distance,
+                    _ => smartcore::neighbors::KNNWeightFunction::Uniform,
+                };
+                hyperparam_usize!(k, hyperparams, 3);
+
+                let estimator: Option<Box<dyn Estimator>> = match project.task {
+                    Task::regression => Some(Box::new(
+                        smartcore::neighbors::knn_regressor::KNNRegressor::fit(
+                            &x_train,
+                            &y_train,
+                            smartcore::neighbors::knn_regressor::KNNRegressorParameters::default()
+                                .with_algorithm(algorithm)
+                                .with_weight(weight)
+                                .with_k(k),
+                        )
+                        .unwrap(),
+                    )),
+
+                    Task::classification => Some(Box::new(
+                        smartcore::neighbors::knn_classifier::KNNClassifier::fit(
+                            &x_train,
+                            &y_train,
+                            smartcore::neighbors::knn_classifier::KNNClassifierParameters::default(
+                            )
+                            .with_algorithm(algorithm)
+                            .with_weight(weight)
+                            .with_k(k),
+                        )
+                        .unwrap(),
+                    )),
+                };
+
+                save_estimator!(estimator, self);
+
+                estimator
+            }
+
+            Algorithm::random_forest => {
+                train_test_split!(dataset, x_train, y_train);
+
+                let max_depth = match hyperparams.get("max_depth") {
+                    Some(max_depth) => match max_depth.as_u64() {
+                        Some(max_depth) => Some(max_depth as u16),
+                        None => None,
+                    },
+                    None => None,
+                };
+
+                let m = match hyperparams.get("m") {
+                    Some(m) => match m.as_u64() {
+                        Some(m) => Some(m as usize),
+                        None => None,
+                    },
+                    None => None,
+                };
+
+                let split_criterion = match hyperparams
+                    .get("split_criterion")
+                    .unwrap_or(&serde_json::Value::from("gini"))
+                    .as_str()
+                    .unwrap_or("gini") {
+                    "entropy" => smartcore::tree::decision_tree_classifier::SplitCriterion::Entropy,
+                    "classification_error" => smartcore::tree::decision_tree_classifier::SplitCriterion::ClassificationError,
+                    _ => smartcore::tree::decision_tree_classifier::SplitCriterion::Gini,
+                };
+
+                hyperparam_usize!(min_samples_leaf, hyperparams, 1);
+                hyperparam_usize!(min_samples_split, hyperparams, 2);
+                hyperparam_usize!(n_trees, hyperparams, 10);
+                hyperparam_usize!(seed, hyperparams, 0);
+                hyperparam_bool!(keep_samples, hyperparams, false);
+
+                let estimator: Option<Box<dyn Estimator>> = match project.task {
+                    Task::regression => {
+                        let mut params = smartcore::ensemble::random_forest_regressor::RandomForestRegressorParameters::default()
+                                    .with_min_samples_leaf(min_samples_leaf)
+                                    .with_min_samples_split(min_samples_split)
+                                    .with_seed(seed as u64)
+                                    .with_n_trees(n_trees as usize)
+                                    .with_keep_samples(keep_samples);
+                        match max_depth {
+                            Some(max_depth) => params = params.with_max_depth(max_depth),
+                            None => (),
+                        };
+
+                        match m {
+                            Some(m) => params = params.with_m(m),
+                            None => (),
+                        };
+
+                        Some(
+                            Box::new(
+                                smartcore::ensemble::random_forest_regressor::RandomForestRegressor::fit(
+                                    &x_train,
+                                    &y_train,
+                                    params,
+                                ).unwrap()
+                            )
+                        )
+                    }
+
+                    Task::classification => {
+                        let mut params = smartcore::ensemble::random_forest_classifier::RandomForestClassifierParameters::default()
+                                    .with_min_samples_leaf(min_samples_leaf)
+                                    .with_min_samples_split(min_samples_leaf)
+                                    .with_seed(seed as u64)
+                                    .with_n_trees(n_trees as u16)
+                                    .with_keep_samples(keep_samples)
+                                    .with_criterion(split_criterion);
+
+                        match max_depth {
+                            Some(max_depth) => params = params.with_max_depth(max_depth),
+                            None => (),
+                        };
+
+                        match m {
+                            Some(m) => params = params.with_m(m),
+                            None => (),
+                        };
+
+                        Some(
+                            Box::new(
+                                smartcore::ensemble::random_forest_classifier::RandomForestClassifier::fit(
+                                    &x_train,
+                                    &y_train,
+                                    params,
+                                ).unwrap()
+                            )
+                        )
+                    }
+                };
+
+                save_estimator!(estimator, self);
+
+                estimator
+            }
         };
     }
 
