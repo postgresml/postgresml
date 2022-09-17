@@ -16,7 +16,7 @@ use crate::orm::Strategy;
 use crate::orm::Task;
 
 
-static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 1024>> = PgLwLock::new();
+static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 32_768>> = PgLwLock::new();
 static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[pg_guard]
