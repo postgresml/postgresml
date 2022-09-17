@@ -15,7 +15,7 @@ use crate::orm::Snapshot;
 use crate::orm::Strategy;
 use crate::orm::Task;
 
-static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 32_768>> =
+static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 1024>> =
     PgLwLock::new();
 static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
@@ -121,10 +121,12 @@ fn train(
                 (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
             ],
         );
-        PROJECT_ID_TO_DEPLOYED_MODEL_ID
-            .exclusive()
-            .insert(project.id, model.id)
-            .unwrap();
+        let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
+        if projects.len() == 1024 {
+            warning!("Active projects has exceeded capacity map, clearing caches.");
+            projects.clear();
+        }
+        projects.insert(project.id, model.id).unwrap();
     }
 
     vec![(
@@ -221,10 +223,13 @@ fn deploy(
             (PgBuiltInOids::TEXTOID.oid(), strategy.to_string().into_datum()),
         ]
     );
-    PROJECT_ID_TO_DEPLOYED_MODEL_ID
-        .exclusive()
-        .insert(project_id, model_id)
-        .unwrap();
+
+    let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
+    if projects.len() == 1024 {
+        warning!("Active projects has exceeded capacity map, clearing caches.");
+        projects.clear();
+    }
+    projects.insert(project_id, model_id).unwrap();
 
     vec![(
         project_name.to_string(),
@@ -262,10 +267,12 @@ fn predict(project_name: &str, features: Vec<f32>) -> f32 {
                 )
             });
             projects.insert(project_name.to_string(), project_id);
-            PROJECT_ID_TO_DEPLOYED_MODEL_ID
-                .exclusive()
-                .insert(project_id, model_id)
-                .unwrap();
+            let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
+            if projects.len() == 1024 {
+                warning!("Active projects has exceeded capacity map, clearing caches.");
+                projects.clear();
+            }
+            projects.insert(project_id, model_id).unwrap();
             project_id
         }
     };
