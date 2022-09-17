@@ -1,7 +1,10 @@
 use std::fmt::Write;
 use std::str::FromStr;
+use std::sync::Mutex;
+use std::collections::HashMap;
 
 use pgx::*;
+use once_cell::sync::Lazy;
 
 use crate::orm::Algorithm;
 use crate::orm::Model;
@@ -11,6 +14,15 @@ use crate::orm::Search;
 use crate::orm::Snapshot;
 use crate::orm::Strategy;
 use crate::orm::Task;
+
+
+static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 1024>> = PgLwLock::new();
+static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+
+#[pg_guard]
+pub extern "C" fn _PG_init() {
+    pg_shmem_init!(PROJECT_ID_TO_DEPLOYED_MODEL_ID);
+}
 
 #[allow(clippy::too_many_arguments)]
 #[pg_extern]
@@ -106,8 +118,9 @@ fn train(
                 (PgBuiltInOids::INT8OID.oid(), project.id.into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
                 (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
-            ]
+            ],
         );
+        PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive().insert(project.id, model.id).unwrap();
     }
 
     vec![(
@@ -173,10 +186,8 @@ fn deploy(
                 JOIN pgml_rust.deployments ON deployments.project_id = projects.id
                     AND deployments.model_id = models.id
                     AND models.id != (
-                        SELECT models.id
-                        FROM pgml_rust.models
-                        JOIN pgml_rust.deployments 
-                            ON deployments.model_id = models.id
+                        SELECT deployments.model_id
+                        FROM pgml_rust.deployments 
                         JOIN pgml_rust.projects
                             ON projects.id = deployments.project_id
                         WHERE projects.name = $1
@@ -206,6 +217,7 @@ fn deploy(
             (PgBuiltInOids::TEXTOID.oid(), strategy.to_string().into_datum()),
         ]
     );
+    PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive().insert(project_id, model_id).unwrap();
 
     vec![(
         project_name.to_string(),
@@ -217,7 +229,31 @@ fn deploy(
 
 #[pg_extern]
 fn predict(project_name: &str, features: Vec<f32>) -> f32 {
-    let estimator = crate::orm::estimator::find_deployed_estimator_by_project_name(project_name);
+    let mut projects = PROJECT_NAME_TO_PROJECT_ID.lock().unwrap();
+    let project_id = match projects.get(project_name) {
+        Some(project_id) => *project_id,
+        None => {
+            let (project_id, model_id) = Spi::get_two_with_args::<i64, i64>(
+                "SELECT deployments.project_id, deployments.model_id 
+                FROM pgml_rust.deployments
+                JOIN pgml_rust.projects ON projects.id = deployments.project_id
+                WHERE projects.name = $1 
+                ORDER BY deployments.created_at DESC
+                LIMIT 1",
+                vec![
+                    (PgBuiltInOids::TEXTOID.oid(), project_name.into_datum()),
+                ]
+            );
+            let project_id = project_id.unwrap_or_else(|| panic!("No deployed model exists for the project named: `{}`", project_name));
+            let model_id = model_id.unwrap_or_else(|| panic!("No deployed model exists for the project named: `{}`", project_name));
+            projects.insert(project_name.to_string(), project_id);
+            PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive().insert(project_id, model_id).unwrap();
+            project_id
+        }
+    };
+
+    let model_id = PROJECT_ID_TO_DEPLOYED_MODEL_ID.share().get(&project_id).unwrap().clone();
+    let estimator = crate::orm::estimator::find_deployed_estimator_by_model_id(model_id);
     estimator.predict(features)
 }
 

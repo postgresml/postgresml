@@ -18,6 +18,7 @@ pg_test = []
 [dependencies]
 pgx = { git="https://github.com/postgresml/pgx.git", branch="master" }
 smartcore = { git="https://github.com/smartcorelib/smartcore.git", branch="development", features = ["serde", "ndarray-bindings"] }
+pyo3 = "0.17.1"
 once_cell = "1"
 rand = "0.8"
 xgboost = { path = "rust-xgboost" }
@@ -29,6 +30,7 @@ serde = { version = "1.0.2" }
 serde_json = { version = "1.0.85" }
 rmp-serde = { version = "1.1.0" }
 typetag = "0.2"
+heapless = "0.7.13"
 
 [dev-dependencies]
 pgx-tests = "=0.4.5"
