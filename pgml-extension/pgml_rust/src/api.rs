@@ -1,10 +1,10 @@
+use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 use std::sync::Mutex;
-use std::collections::HashMap;
 
-use pgx::*;
 use once_cell::sync::Lazy;
+use pgx::*;
 
 use crate::orm::Algorithm;
 use crate::orm::Model;
@@ -15,9 +15,10 @@ use crate::orm::Snapshot;
 use crate::orm::Strategy;
 use crate::orm::Task;
 
-
-static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 32_768>> = PgLwLock::new();
-static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 32_768>> =
+    PgLwLock::new();
+static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[pg_guard]
 pub extern "C" fn _PG_init() {
@@ -120,7 +121,10 @@ fn train(
                 (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
             ],
         );
-        PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive().insert(project.id, model.id).unwrap();
+        PROJECT_ID_TO_DEPLOYED_MODEL_ID
+            .exclusive()
+            .insert(project.id, model.id)
+            .unwrap();
     }
 
     vec![(
@@ -217,7 +221,10 @@ fn deploy(
             (PgBuiltInOids::TEXTOID.oid(), strategy.to_string().into_datum()),
         ]
     );
-    PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive().insert(project_id, model_id).unwrap();
+    PROJECT_ID_TO_DEPLOYED_MODEL_ID
+        .exclusive()
+        .insert(project_id, model_id)
+        .unwrap();
 
     vec![(
         project_name.to_string(),
@@ -240,19 +247,33 @@ fn predict(project_name: &str, features: Vec<f32>) -> f32 {
                 WHERE projects.name = $1 
                 ORDER BY deployments.created_at DESC
                 LIMIT 1",
-                vec![
-                    (PgBuiltInOids::TEXTOID.oid(), project_name.into_datum()),
-                ]
+                vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
             );
-            let project_id = project_id.unwrap_or_else(|| panic!("No deployed model exists for the project named: `{}`", project_name));
-            let model_id = model_id.unwrap_or_else(|| panic!("No deployed model exists for the project named: `{}`", project_name));
+            let project_id = project_id.unwrap_or_else(|| {
+                panic!(
+                    "No deployed model exists for the project named: `{}`",
+                    project_name
+                )
+            });
+            let model_id = model_id.unwrap_or_else(|| {
+                panic!(
+                    "No deployed model exists for the project named: `{}`",
+                    project_name
+                )
+            });
             projects.insert(project_name.to_string(), project_id);
-            PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive().insert(project_id, model_id).unwrap();
+            PROJECT_ID_TO_DEPLOYED_MODEL_ID
+                .exclusive()
+                .insert(project_id, model_id)
+                .unwrap();
             project_id
         }
     };
 
-    let model_id = PROJECT_ID_TO_DEPLOYED_MODEL_ID.share().get(&project_id).unwrap().clone();
+    let model_id = *PROJECT_ID_TO_DEPLOYED_MODEL_ID
+        .share()
+        .get(&project_id)
+        .unwrap();
     let estimator = crate::orm::estimator::find_deployed_estimator_by_model_id(model_id);
     estimator.predict(features)
 }
@@ -294,7 +315,7 @@ mod tests {
     #[pg_test]
     fn test_project_lifecycle() {
         assert_eq!(Project::create("test", Task::regression).id, 1);
-        assert_eq!(Project::find(1).id, 1);
+        assert_eq!(Project::find(1).unwrap().id, 1);
     }
 
     #[pg_test]
