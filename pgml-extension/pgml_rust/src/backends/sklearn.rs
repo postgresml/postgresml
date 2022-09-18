@@ -89,6 +89,32 @@ pub fn sklearn_test(estimator: &SklearnBox, x_test: &[f32], num_features: usize)
     y_hat
 }
 
+pub fn sklearn_predict(estimator: &SklearnBox, x: &[f32]) -> Vec<f32> {
+    let module = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/backends/wrappers.py"
+    ));
+
+    let y_hat: Vec<f32> = Python::with_gil(|py| -> Vec<f32> {
+        let module = PyModule::from_code(py, module, "", "").unwrap();
+        let predictor = module.getattr("predictor").unwrap();
+        let predict = predictor
+            .call1(PyTuple::new(
+                py,
+                &[estimator.contents.as_ref(), &x.len().into_py(py)],
+            ))
+            .unwrap();
+
+        predict
+            .call1(PyTuple::new(py, &[x]))
+            .unwrap()
+            .extract()
+            .unwrap()
+    });
+
+    y_hat
+}
+
 pub fn sklearn_save(estimator: &SklearnBox) -> Vec<u8> {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),

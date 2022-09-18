@@ -15,7 +15,7 @@ use crate::orm::Search;
 use crate::orm::Snapshot;
 use crate::orm::Task;
 
-use crate::backends::sklearn::sklearn_train;
+use crate::backends::sklearn::{sklearn_save, sklearn_train};
 
 /// Get a floating point hyperparameter.
 macro_rules! hyperparam_f32 {
@@ -357,15 +357,23 @@ impl Model {
                     Task::classification => {
                         hyperparam_f32!(alpha, hyperparams, 0.0);
 
-                        Some(Box::new(sklearn_train(
-                            Task::classification,
-                            Algorithm::linear,
-                            &dataset,
-                        )))
+                        let estimator =
+                            sklearn_train(Task::classification, Algorithm::linear, &dataset);
+
+                        let bytes = rmp_serde::to_vec(&sklearn_save(&estimator)).unwrap();
+                        Spi::get_one_with_args::<i64>(
+                          "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+                          vec![
+                              (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
+                              (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
+                          ]
+                        ).unwrap();
+
+                        Some(Box::new(estimator))
                     }
                 };
 
-                save_estimator!(estimator, self);
+                // save_estimator!(estimator, self);
 
                 estimator
             }

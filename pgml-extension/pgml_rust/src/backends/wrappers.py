@@ -85,4 +85,4 @@ def save(estimator):
     return pickle.dumps(estimator)
 
 def load(data):
-    return pickle.loads(data)
+    return pickle.loads(bytes(data))

@@ -11,7 +11,7 @@ use pyo3::prelude::*;
 use serde::ser::SerializeSeq;
 use xgboost::{Booster, DMatrix};
 
-use crate::backends::sklearn::{sklearn_load, sklearn_save, sklearn_test};
+use crate::backends::sklearn::{sklearn_load, sklearn_predict, sklearn_save, sklearn_test};
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Task;
@@ -176,7 +176,8 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
         },
         Task::classification => match algorithm {
             Algorithm::linear => {
-                let estimator: SklearnBox = rmp_serde::from_read(&*data).unwrap();
+                let bytes: Vec<u8> = rmp_serde::from_read(&*data).unwrap();
+                let estimator = sklearn_load(&bytes);
                 Box::new(estimator)
             }
             Algorithm::lasso => panic!("Lasso does not support classification"),
@@ -533,7 +534,8 @@ impl Estimator for SklearnBox {
     }
 
     fn predict(&self, features: Vec<f32>) -> f32 {
-        0.0
+        let score = sklearn_predict(self, &features);
+        score[0]
         // let features = DMatrix::from_dense(&features, 1).unwrap();
         // self.contents.predict(&features).unwrap()[0]
     }
