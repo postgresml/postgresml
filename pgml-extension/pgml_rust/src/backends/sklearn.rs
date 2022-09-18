@@ -2,10 +2,10 @@ use pgx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use crate::orm::algorithm::Algorithm;
+use std::collections::HashMap;
+
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::SklearnBox;
-use crate::orm::task::Task;
 
 #[pg_extern]
 pub fn sklearn_version() -> String {
@@ -19,7 +19,11 @@ pub fn sklearn_version() -> String {
     version
 }
 
-pub fn sklearn_train(task: Task, algorithm: Algorithm, dataset: &Dataset) -> SklearnBox {
+pub fn sklearn_train(
+    algorithm_name: &str,
+    dataset: &Dataset,
+    hyperparams: HashMap<String, f32>,
+) -> SklearnBox {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/src/backends/wrappers.py"
@@ -29,35 +33,26 @@ pub fn sklearn_train(task: Task, algorithm: Algorithm, dataset: &Dataset) -> Skl
         let module = PyModule::from_code(py, module, "", "").unwrap();
         let estimator: Py<PyAny> = module.getattr("estimator").unwrap().into();
 
-        match algorithm {
-            Algorithm::linear => match task {
-                Task::classification => {
-                    let train: Py<PyAny> = estimator
-                        .call1(
-                            py,
-                            PyTuple::new(
-                                py,
-                                &[
-                                    String::from("linear_classification").into_py(py),
-                                    dataset.num_features.into_py(py),
-                                ],
-                            ),
-                        )
-                        .unwrap();
+        let train: Py<PyAny> = estimator
+            .call1(
+                py,
+                PyTuple::new(
+                    py,
+                    &[
+                        String::from(algorithm_name).into_py(py),
+                        dataset.num_features.into_py(py),
+                        hyperparams.into_py(py),
+                    ],
+                ),
+            )
+            .unwrap();
 
-                    train
-                        .call1(
-                            py,
-                            PyTuple::new(py, &[dataset.x_train(), dataset.y_train()]),
-                        )
-                        .unwrap()
-                }
-
-                _ => unreachable!(),
-            },
-
-            _ => unreachable!(),
-        }
+        train
+            .call1(
+                py,
+                PyTuple::new(py, &[dataset.x_train(), dataset.y_train()]),
+            )
+            .unwrap()
     });
 
     SklearnBox::new(estimator)

@@ -52,9 +52,12 @@ _ALGORITHM_MAP = {
     "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
    }
 
-def estimator(algorithm_name, num_features):
+def estimator(algorithm_name, num_features, hyperparams):
+    if hyperparams is None:
+        hyperparams = {}
+
     def train(X_train, y_train):
-        instance = _ALGORITHM_MAP[algorithm_name]()
+        instance = _ALGORITHM_MAP[algorithm_name](**hyperparams)
 
         X_train = np.asarray(X_train).reshape((-1, num_features))
 

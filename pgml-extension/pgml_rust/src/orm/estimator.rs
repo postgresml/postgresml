@@ -8,10 +8,9 @@ use ndarray::{Array1, Array2};
 use once_cell::sync::Lazy;
 use pgx::*;
 use pyo3::prelude::*;
-use serde::ser::SerializeSeq;
 use xgboost::{Booster, DMatrix};
 
-use crate::backends::sklearn::{sklearn_load, sklearn_predict, sklearn_save, sklearn_test};
+use crate::backends::sklearn::{sklearn_load, sklearn_predict, sklearn_test};
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Task;
@@ -438,14 +437,17 @@ impl Estimator for BoosterBox {
     }
 }
 
+/// A wrapper around a Scikit estimator.
+/// The estimator is a Python object and can only be used
+/// inside Python::with_gil.
 pub struct SklearnBox {
     pub contents: Box<Py<PyAny>>,
 }
 
 impl Drop for SklearnBox {
     fn drop(&mut self) {
-        // Take the GIL so it de-allocates the PyAny reference
-        // we just dropped.
+        // I don't think this works because drop for self must
+        // be executed before the drop of fields?
         Python::with_gil(|_py| {});
     }
 }
@@ -474,6 +476,7 @@ impl std::ops::DerefMut for SklearnBox {
 
 unsafe impl Send for SklearnBox {}
 unsafe impl Sync for SklearnBox {}
+
 impl std::fmt::Debug for SklearnBox {
     fn fmt(
         &self,
@@ -482,6 +485,7 @@ impl std::fmt::Debug for SklearnBox {
         formatter.debug_struct("SklearnBox").finish()
     }
 }
+
 impl serde::Serialize for SklearnBox {
     fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
     where

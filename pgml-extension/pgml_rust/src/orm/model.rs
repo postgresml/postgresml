@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 
 use ndarray::{Array1, Array2};
@@ -5,7 +6,7 @@ use pgx::*;
 use serde_json::json;
 use xgboost::{parameters, Booster, DMatrix};
 
-use crate::backends::Backend;
+use crate::backends::backend::Backend;
 use crate::orm::estimator::BoosterBox;
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
@@ -63,14 +64,43 @@ macro_rules! train_test_split {
 
 /// Save the trained estimator in the DB.
 macro_rules! save_estimator {
-    ($estimator:tt, $self:tt) => {
+    ($estimator:tt, $id:expr) => {
         let bytes: Vec<u8> = rmp_serde::to_vec($estimator.as_ref().unwrap()).unwrap();
         Spi::get_one_with_args::<i64>(
           "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
           vec![
-              (PgBuiltInOids::INT8OID.oid(), $self.id.into_datum()),
+              (PgBuiltInOids::INT8OID.oid(), $id.into_datum()),
               (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
           ]
+        ).unwrap();
+
+        Spi::get_one_with_args::<i64>(
+            "UPDATE pgml_rust.models SET backend = $1 WHERE id = $2 RETURNING id",
+            vec![
+                (PgBuiltInOids::TEXTOID.oid(), Backend::smartcore.to_string().into_datum()),
+                (PgBuiltInOids::INT8OID.oid(), $id.into_datum()),
+            ]
+        ).unwrap();
+    }
+}
+
+macro_rules! save_sklearn {
+    ($estimator:tt, $id:expr) => {
+        let bytes = rmp_serde::to_vec(&sklearn_save(&$estimator)).unwrap();
+        Spi::get_one_with_args::<i64>(
+          "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+          vec![
+              (PgBuiltInOids::INT8OID.oid(), $id.into_datum()),
+              (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
+          ]
+        ).unwrap();
+
+        Spi::get_one_with_args::<i64>(
+            "UPDATE pgml_rust.models SET backend = $1 WHERE id = $2 RETURNING id",
+            vec![
+                (PgBuiltInOids::TEXTOID.oid(), Backend::sklearn.to_string().into_datum()),
+                (PgBuiltInOids::INT8OID.oid(), $id.into_datum()),
+            ]
         ).unwrap();
     }
 }
@@ -327,7 +357,7 @@ impl Model {
                     },
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
@@ -337,6 +367,8 @@ impl Model {
 
                 let estimator: Option<Box<dyn Estimator>> = match project.task {
                     Task::regression => {
+                        self.backend = Some(Backend::smartcore);
+
                         let params = smartcore::linear::linear_regression::LinearRegressionParameters::default()
                             .with_solver(match hyperparams.get("solver"){
                                 Some(value) => match value.as_str().unwrap_or("qr") {
@@ -354,26 +386,31 @@ impl Model {
                             .unwrap(),
                         ))
                     }
+
                     Task::classification => {
-                        hyperparam_f32!(alpha, hyperparams, 0.0);
+                        self.backend = Some(Backend::sklearn);
 
-                        let estimator =
-                            sklearn_train(Task::classification, Algorithm::linear, &dataset);
+                        hyperparam_f32!(tol, hyperparams, 1e-4);
+                        hyperparam_f32!(C, hyperparams, 1.0);
 
-                        let bytes = rmp_serde::to_vec(&sklearn_save(&estimator)).unwrap();
-                        Spi::get_one_with_args::<i64>(
-                          "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
-                          vec![
-                              (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
-                              (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
-                          ]
-                        ).unwrap();
+                        let estimator = sklearn_train(
+                            "linear_classification",
+                            &dataset,
+                            HashMap::from([("tol".to_string(), tol), ("C".to_string(), C)]),
+                        );
+
+                        save_sklearn!(estimator, self.id);
 
                         Some(Box::new(estimator))
                     }
                 };
 
-                // save_estimator!(estimator, self);
+                match self.backend {
+                    Some(Backend::smartcore) => {
+                        save_estimator!(estimator, self.id);
+                    }
+                    _ => (),
+                };
 
                 estimator
             }
@@ -601,7 +638,7 @@ impl Model {
                     Task::classification => panic!("Lasso only supports regression"),
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
@@ -633,7 +670,7 @@ impl Model {
                     Task::classification => panic!("Elastic Net does not support classification"),
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
@@ -672,7 +709,7 @@ impl Model {
                     Task::classification => panic!("Ridge does not support classification"),
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
@@ -734,7 +771,7 @@ impl Model {
                     )),
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
@@ -834,7 +871,7 @@ impl Model {
                     }
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
