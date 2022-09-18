@@ -483,38 +483,11 @@ impl std::fmt::Debug for SklearnBox {
     }
 }
 impl serde::Serialize for SklearnBox {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        let estimator = sklearn_save(self);
-        serializer.serialize_bytes(&estimator)
-    }
-}
-
-struct SklearnBoxDeserializer;
-
-impl<'de> serde::de::Visitor<'de> for SklearnBoxDeserializer {
-    type Value = SklearnBox;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("SklearnBox key value sequence.")
-    }
-
-    fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Self::Value, E> {
-        info!("Visiting bytes");
-        let data: Vec<u8> = bytes.into();
-
-        Ok(sklearn_load(&data))
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for SklearnBox {
-    fn deserialize<D>(deserializer: D) -> Result<SklearnBox, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_bytes(SklearnBoxDeserializer)
+        unreachable!()
     }
 }
 
@@ -536,7 +509,5 @@ impl Estimator for SklearnBox {
     fn predict(&self, features: Vec<f32>) -> f32 {
         let score = sklearn_predict(self, &features);
         score[0]
-        // let features = DMatrix::from_dense(&features, 1).unwrap();
-        // self.contents.predict(&features).unwrap()[0]
     }
 }
