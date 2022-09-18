@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS pgml_rust.models(
 	project_id BIGINT NOT NULL,
 	snapshot_id BIGINT NOT NULL,
 	algorithm TEXT NOT NULL,
+	backend pgml_rust.backend,
 	hyperparams JSONB NOT NULL,
 	status TEXT NOT NULL,
 	metrics JSONB,

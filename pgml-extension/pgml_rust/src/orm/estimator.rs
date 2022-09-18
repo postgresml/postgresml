@@ -7,8 +7,11 @@ use std::sync::Mutex;
 use ndarray::{Array1, Array2};
 use once_cell::sync::Lazy;
 use pgx::*;
+use pyo3::prelude::*;
+use serde::ser::SerializeSeq;
 use xgboost::{Booster, DMatrix};
 
+use crate::backends::sklearn::{sklearn_load, sklearn_save, sklearn_test};
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Task;
@@ -173,10 +176,7 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
         },
         Task::classification => match algorithm {
             Algorithm::linear => {
-                let estimator: smartcore::linear::logistic_regression::LogisticRegression<
-                    f32,
-                    Array2<f32>,
-                > = rmp_serde::from_read(&*data).unwrap();
+                let estimator: SklearnBox = rmp_serde::from_read(&*data).unwrap();
                 Box::new(estimator)
             }
             Algorithm::lasso => panic!("Lasso does not support classification"),
@@ -434,5 +434,107 @@ impl Estimator for BoosterBox {
     fn predict(&self, features: Vec<f32>) -> f32 {
         let features = DMatrix::from_dense(&features, 1).unwrap();
         self.contents.predict(&features).unwrap()[0]
+    }
+}
+
+pub struct SklearnBox {
+    pub contents: Box<Py<PyAny>>,
+}
+
+impl Drop for SklearnBox {
+    fn drop(&mut self) {
+        // Take the GIL so it de-allocates the PyAny reference
+        // we just dropped.
+        Python::with_gil(|_py| {});
+    }
+}
+
+impl SklearnBox {
+    pub fn new(contents: Py<PyAny>) -> SklearnBox {
+        SklearnBox {
+            contents: Box::new(contents),
+        }
+    }
+}
+
+impl std::ops::Deref for SklearnBox {
+    type Target = Py<PyAny>;
+
+    fn deref(&self) -> &Self::Target {
+        self.contents.as_ref()
+    }
+}
+
+impl std::ops::DerefMut for SklearnBox {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.contents.as_mut()
+    }
+}
+
+unsafe impl Send for SklearnBox {}
+unsafe impl Sync for SklearnBox {}
+impl std::fmt::Debug for SklearnBox {
+    fn fmt(
+        &self,
+        formatter: &mut std::fmt::Formatter<'_>,
+    ) -> std::result::Result<(), std::fmt::Error> {
+        formatter.debug_struct("SklearnBox").finish()
+    }
+}
+impl serde::Serialize for SklearnBox {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let estimator = sklearn_save(self);
+        serializer.serialize_bytes(&estimator)
+    }
+}
+
+struct SklearnBoxDeserializer;
+
+impl<'de> serde::de::Visitor<'de> for SklearnBoxDeserializer {
+    type Value = SklearnBox;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("SklearnBox key value sequence.")
+    }
+
+    fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Self::Value, E> {
+        info!("Visiting bytes");
+        let data: Vec<u8> = bytes.into();
+
+        Ok(sklearn_load(&data))
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for SklearnBox {
+    fn deserialize<D>(deserializer: D) -> Result<SklearnBox, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_bytes(SklearnBoxDeserializer)
+    }
+}
+
+#[typetag::serialize]
+impl Estimator for SklearnBox {
+    fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
+        let x_test = dataset.x_test();
+        let y_test = dataset.y_test();
+        let y_hat = sklearn_test(&self, x_test, dataset.num_features);
+
+        calc_metrics(
+            &Array1::from_shape_vec(dataset.num_test_rows, y_test.to_vec()).unwrap(),
+            &Array1::from_shape_vec(dataset.num_test_rows, y_hat).unwrap(),
+            dataset.distinct_labels(),
+            task,
+        )
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        0.0
+        // let features = DMatrix::from_dense(&features, 1).unwrap();
+        // self.contents.predict(&features).unwrap()[0]
     }
 }

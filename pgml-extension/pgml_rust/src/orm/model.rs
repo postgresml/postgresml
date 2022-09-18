@@ -5,6 +5,7 @@ use pgx::*;
 use serde_json::json;
 use xgboost::{parameters, Booster, DMatrix};
 
+use crate::backends::Backend;
 use crate::orm::estimator::BoosterBox;
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
@@ -14,7 +15,7 @@ use crate::orm::Search;
 use crate::orm::Snapshot;
 use crate::orm::Task;
 
-use crate::friends::sklearn::sklearn_train;
+use crate::backends::sklearn::sklearn_train;
 
 /// Get a floating point hyperparameter.
 macro_rules! hyperparam_f32 {
@@ -81,6 +82,7 @@ pub struct Model {
     pub snapshot_id: i64,
     pub algorithm: Algorithm,
     pub hyperparams: JsonB,
+    pub backend: Option<Backend>,
     pub status: String,
     pub metrics: Option<JsonB>,
     pub search: Option<Search>,
@@ -126,6 +128,7 @@ impl Model {
                     project_id: result.get_datum(2).unwrap(),
                     snapshot_id: result.get_datum(3).unwrap(),
                     algorithm: Algorithm::from_str(result.get_datum(4).unwrap()).unwrap(),
+                    backend: None,
                     hyperparams: result.get_datum(5).unwrap(),
                     status: result.get_datum(6).unwrap(),
                     metrics: result.get_datum(7),
@@ -354,17 +357,11 @@ impl Model {
                     Task::classification => {
                         hyperparam_f32!(alpha, hyperparams, 0.0);
 
-                        sklearn_train(Task::classification, Algorithm::linear, &dataset);
-
-                        let params = smartcore::linear::logistic_regression::LogisticRegressionParameters::default()
-                            .with_alpha(alpha);
-
-                        Some(Box::new(
-                            smartcore::linear::logistic_regression::LogisticRegression::fit(
-                                &x_train, &y_train, params,
-                            )
-                            .unwrap(),
-                        ))
+                        Some(Box::new(sklearn_train(
+                            Task::classification,
+                            Algorithm::linear,
+                            &dataset,
+                        )))
                     }
                 };
 
