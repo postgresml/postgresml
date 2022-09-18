@@ -3,7 +3,7 @@ Version: VERSION
 Section: base
 Priority: optional
 Architecture: ARCH
-Depends: postgresql-PGVERSION, libopenblas-dev, postgresql-server-dev-PGVERSION python3-numpy python3-sklearn
+Depends: postgresql-PGVERSION, libopenblas-dev, postgresql-server-dev-PGVERSION python3-numpy python3-sklearn python3
 Maintainer: PostgresML <team@postgresml.org>
 Description: PostgresML - machine learning with PostgreSQL
  PostgresML is a PostgreSQL extension that allows to do machine
