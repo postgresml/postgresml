@@ -1,0 +1,3 @@
+[submodule "pgml-extension/pgml_rust/rust-xgboost"]
+	path = pgml-extension/pgml_rust/rust-xgboost
+	url = https://github.com/postgresml/rust-xgboost

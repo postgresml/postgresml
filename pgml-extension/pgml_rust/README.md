@@ -14,6 +14,7 @@ If you haven't already, install:
 
 ## Local development
 
+0. `git submodule update --init --recursive`
 1. `cargo install cargo-pgx`
 2. `cargo pgx init`
 3. `cargo pgx run`
