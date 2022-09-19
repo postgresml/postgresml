@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 
 use ndarray::{Array1, Array2};
@@ -5,6 +6,7 @@ use pgx::*;
 use serde_json::json;
 use xgboost::{parameters, Booster, DMatrix};
 
+use crate::backends::backend::Backend;
 use crate::orm::estimator::BoosterBox;
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
@@ -13,6 +15,8 @@ use crate::orm::Project;
 use crate::orm::Search;
 use crate::orm::Snapshot;
 use crate::orm::Task;
+
+use crate::backends::sklearn::{sklearn_save, sklearn_train};
 
 /// Get a floating point hyperparameter.
 macro_rules! hyperparam_f32 {
@@ -60,14 +64,43 @@ macro_rules! train_test_split {
 
 /// Save the trained estimator in the DB.
 macro_rules! save_estimator {
-    ($estimator:tt, $self:tt) => {
+    ($estimator:tt, $id:expr) => {
         let bytes: Vec<u8> = rmp_serde::to_vec($estimator.as_ref().unwrap()).unwrap();
         Spi::get_one_with_args::<i64>(
           "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
           vec![
-              (PgBuiltInOids::INT8OID.oid(), $self.id.into_datum()),
+              (PgBuiltInOids::INT8OID.oid(), $id.into_datum()),
               (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
           ]
+        ).unwrap();
+
+        Spi::get_one_with_args::<i64>(
+            "UPDATE pgml_rust.models SET backend = $1 WHERE id = $2 RETURNING id",
+            vec![
+                (PgBuiltInOids::TEXTOID.oid(), Backend::smartcore.to_string().into_datum()),
+                (PgBuiltInOids::INT8OID.oid(), $id.into_datum()),
+            ]
+        ).unwrap();
+    }
+}
+
+macro_rules! save_sklearn {
+    ($estimator:tt, $id:expr) => {
+        let bytes = rmp_serde::to_vec(&sklearn_save(&$estimator)).unwrap();
+        Spi::get_one_with_args::<i64>(
+          "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+          vec![
+              (PgBuiltInOids::INT8OID.oid(), $id.into_datum()),
+              (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
+          ]
+        ).unwrap();
+
+        Spi::get_one_with_args::<i64>(
+            "UPDATE pgml_rust.models SET backend = $1 WHERE id = $2 RETURNING id",
+            vec![
+                (PgBuiltInOids::TEXTOID.oid(), Backend::sklearn.to_string().into_datum()),
+                (PgBuiltInOids::INT8OID.oid(), $id.into_datum()),
+            ]
         ).unwrap();
     }
 }
@@ -79,6 +112,7 @@ pub struct Model {
     pub snapshot_id: i64,
     pub algorithm: Algorithm,
     pub hyperparams: JsonB,
+    pub backend: Option<Backend>,
     pub status: String,
     pub metrics: Option<JsonB>,
     pub search: Option<Search>,
@@ -124,6 +158,7 @@ impl Model {
                     project_id: result.get_datum(2).unwrap(),
                     snapshot_id: result.get_datum(3).unwrap(),
                     algorithm: Algorithm::from_str(result.get_datum(4).unwrap()).unwrap(),
+                    backend: None,
                     hyperparams: result.get_datum(5).unwrap(),
                     status: result.get_datum(6).unwrap(),
                     metrics: result.get_datum(7),
@@ -322,7 +357,7 @@ impl Model {
                     },
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
@@ -332,6 +367,8 @@ impl Model {
 
                 let estimator: Option<Box<dyn Estimator>> = match project.task {
                     Task::regression => {
+                        self.backend = Some(Backend::smartcore);
+
                         let params = smartcore::linear::linear_regression::LinearRegressionParameters::default()
                             .with_solver(match hyperparams.get("solver"){
                                 Some(value) => match value.as_str().unwrap_or("qr") {
@@ -342,29 +379,35 @@ impl Model {
                                 None => smartcore::linear::linear_regression::LinearRegressionSolverName::QR,
                             });
 
-                        Some(Box::new(
+                        let estimator: Option<Box<dyn Estimator>> = Some(Box::new(
                             smartcore::linear::linear_regression::LinearRegression::fit(
                                 &x_train, &y_train, params,
                             )
                             .unwrap(),
-                        ))
+                        ));
+
+                        save_estimator!(estimator, self.id);
+
+                        estimator
                     }
+
                     Task::classification => {
-                        hyperparam_f32!(alpha, hyperparams, 0.0);
+                        self.backend = Some(Backend::sklearn);
 
-                        let params = smartcore::linear::logistic_regression::LogisticRegressionParameters::default()
-                            .with_alpha(alpha);
+                        hyperparam_f32!(tol, hyperparams, 1e-4);
+                        hyperparam_f32!(C, hyperparams, 1.0);
 
-                        Some(Box::new(
-                            smartcore::linear::logistic_regression::LogisticRegression::fit(
-                                &x_train, &y_train, params,
-                            )
-                            .unwrap(),
-                        ))
+                        let estimator = sklearn_train(
+                            "linear_classification",
+                            &dataset,
+                            HashMap::from([("tol".to_string(), tol), ("C".to_string(), C)]),
+                        );
+
+                        save_sklearn!(estimator, self.id);
+
+                        Some(Box::new(estimator))
                     }
                 };
-
-                save_estimator!(estimator, self);
 
                 estimator
             }
@@ -592,7 +635,7 @@ impl Model {
                     Task::classification => panic!("Lasso only supports regression"),
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
@@ -624,7 +667,7 @@ impl Model {
                     Task::classification => panic!("Elastic Net does not support classification"),
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
@@ -663,7 +706,7 @@ impl Model {
                     Task::classification => panic!("Ridge does not support classification"),
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
@@ -725,7 +768,7 @@ impl Model {
                     )),
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }
@@ -825,7 +868,7 @@ impl Model {
                     }
                 };
 
-                save_estimator!(estimator, self);
+                save_estimator!(estimator, self.id);
 
                 estimator
             }

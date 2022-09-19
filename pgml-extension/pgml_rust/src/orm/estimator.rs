@@ -7,8 +7,10 @@ use std::sync::Mutex;
 use ndarray::{Array1, Array2};
 use once_cell::sync::Lazy;
 use pgx::*;
+use pyo3::prelude::*;
 use xgboost::{Booster, DMatrix};
 
+use crate::backends::sklearn::{sklearn_load, sklearn_predict, sklearn_test};
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Task;
@@ -168,10 +170,9 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         },
         Task::classification => match algorithm {
             Algorithm::linear => {
-                let estimator: smartcore::linear::logistic_regression::LogisticRegression<
-                    f32,
-                    Array2<f32>,
-                > = rmp_serde::from_read(&*data).unwrap();
+                // TODO: check backend and support both backends here.
+                let bytes: Vec<u8> = rmp_serde::from_read(&*data).unwrap();
+                let estimator = sklearn_load(&bytes);
                 Box::new(estimator)
             }
             Algorithm::lasso => panic!("Lasso does not support classification"),
@@ -429,5 +430,84 @@ impl Estimator for BoosterBox {
     fn predict(&self, features: Vec<f32>) -> f32 {
         let features = DMatrix::from_dense(&features, 1).unwrap();
         self.contents.predict(&features).unwrap()[0]
+    }
+}
+
+/// A wrapper around a Scikit estimator.
+/// The estimator is a Python object and can only be used
+/// inside Python::with_gil.
+pub struct SklearnBox {
+    pub contents: Box<Py<PyAny>>,
+}
+
+impl Drop for SklearnBox {
+    fn drop(&mut self) {
+        // I don't think this works because drop for self must
+        // be executed before the drop of fields?
+        Python::with_gil(|_py| {});
+    }
+}
+
+impl SklearnBox {
+    pub fn new(contents: Py<PyAny>) -> SklearnBox {
+        SklearnBox {
+            contents: Box::new(contents),
+        }
+    }
+}
+
+impl std::ops::Deref for SklearnBox {
+    type Target = Py<PyAny>;
+
+    fn deref(&self) -> &Self::Target {
+        self.contents.as_ref()
+    }
+}
+
+impl std::ops::DerefMut for SklearnBox {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.contents.as_mut()
+    }
+}
+
+unsafe impl Send for SklearnBox {}
+unsafe impl Sync for SklearnBox {}
+
+impl std::fmt::Debug for SklearnBox {
+    fn fmt(
+        &self,
+        formatter: &mut std::fmt::Formatter<'_>,
+    ) -> std::result::Result<(), std::fmt::Error> {
+        formatter.debug_struct("SklearnBox").finish()
+    }
+}
+
+impl serde::Serialize for SklearnBox {
+    fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        unreachable!()
+    }
+}
+
+#[typetag::serialize]
+impl Estimator for SklearnBox {
+    fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
+        let x_test = dataset.x_test();
+        let y_test = dataset.y_test();
+        let y_hat = sklearn_test(&self, x_test, dataset.num_features);
+
+        calc_metrics(
+            &Array1::from_shape_vec(dataset.num_test_rows, y_test.to_vec()).unwrap(),
+            &Array1::from_shape_vec(dataset.num_test_rows, y_hat).unwrap(),
+            dataset.distinct_labels(),
+            task,
+        )
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        let score = sklearn_predict(self, &features);
+        score[0]
     }
 }

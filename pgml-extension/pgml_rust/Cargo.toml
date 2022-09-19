@@ -29,6 +29,7 @@ serde = { version = "1.0.2" }
 serde_json = { version = "1.0.85" }
 rmp-serde = { version = "1.1.0" }
 typetag = "0.2"
+pyo3 = { version = "0.17", features = ["auto-initialize"] }
 heapless = "0.7.13"
 
 [dev-dependencies]
