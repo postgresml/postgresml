@@ -5,7 +5,7 @@ image: https://postgresml.org/blog/images/abstraction.webp
 image_alt: Moving from one abstraction layer to another.
 ---
 
-PostgresML is moving to Rust for our 2.0 release
+PostgresML is Moving to Rust for our 2.0 Release
 ================================================
 
 <p class="author">
@@ -14,12 +14,13 @@ PostgresML is moving to Rust for our 2.0 release
   September 19, 2022
 </p>
 
-PostgresML is a fairly young project. We recently released 1.0 and now we're considering what we want to accomplish for 2.0. In addition to simplifying the workflow for building models, we'd like to address runtime speed, memory consumption and the overall reliability we've seen for machine learning deployments running at scale.
 
-Python is generally touted as fast enough for machine learning, and is the de facto industry standard with tons of popular libraries implementing all the latest and greatest algorithms. Many of these algorithms (torch, tensorflow, xgboost, numpy) have been optimized in C, but not all of them. For example, most of the [linear algorithms](https://github.com/scikit-learn/scikit-learn/tree/main/sklearn/linear_model) in scikit learn are implemented in pure Python, although they rely on numpy, which is a convenient optimization. It also uses cython in a few performance critical places. This ecosystem has allowed PostgresML to offer a ton of functionality with minimal duplication of effort.
+PostgresML is a fairly young project. We recently released v1.0 and now we're considering what we want to accomplish for v2.0. In addition to simplifying the workflow for building models, we'd like to address runtime speed, memory consumption and the overall reliability we've seen is needed for machine learning deployments running at scale.
+
+Python is generally touted as fast enough for machine learning, and is the de facto industry standard with tons of popular libraries, implementing all the latest and greatest algorithms. Many of these algorithms (Torch, Tensorflow, XGboost, NumPy) have been optimized in C, but not all of them. For example, most of the [linear algorithms](https://github.com/scikit-learn/scikit-learn/tree/main/sklearn/linear_model) in scikit-learn are written in pure Python, although they do use NumPy, which is a convenient optimization. It also uses Cython in a few performance critical places. This ecosystem has allowed PostgresML to offer a ton of functionality with minimal duplication of effort.
 
 
-## Ambition starts with a simple benchmark
+## Ambition Starts With a Simple Benchmark
 <figure>
 	<img alt="Ferris the crab" src="/blog/images/rust_programming_crab_sea.webp" />
 	<figcaption>Rust mascot image by opensource.com</figcaption>
@@ -34,7 +35,7 @@ FROM generate_series(1, 1280000) i
 GROUP BY i % 10000;
 ```
 
-Spoiler alert, idiomatic Rust is about 10x faster than native SQL, the embedded PL/pgSQL scripting language, and Python in this benchmark. Rust comes close to the hand optimized assembly version of the Basic Linear Algebra Subroutines implementation for the dot product. Numpy is supposed to provide optimizations in cases like this, but it's actually the worst performer. Data movement from Postgres to PL/Python is pretty good. It's even faster than the pure SQL equivalent, but adding the extra conversion from Python list to Numpy array takes almost as much time as everything else. Machine Learning systems that move relatively large quantities of data around can become dominated by these extraneous operations, rather than the ML algorithms that actually generate value.
+Spoiler alert: idiomatic Rust is about 10x faster than native SQL, embedded PL/pgSQL, and pure Python. Rust comes close to the hand-optimized assembly version of the Basic Linear Algebra Subroutines (BLAS) implementation. NumPy is supposed to provide optimizations in cases like this, but it's actually the worst performer. Data movement from Postgres to PL/Python is pretty good; it's even faster than the pure SQL equivalent, but adding the extra conversion from Python list to Numpy array takes almost as much time as everything else. Machine Learning systems that move relatively large quantities of data around can become dominated by these extraneous operations, rather than the ML algorithms that actually generate value.
 
 <center>
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vShmCVrYwmscys5TIo7c_C-1M3gE_GwENc4tTiU7A6_l3YamjJx7v5bZcafLIDcEIbFu-C2Buao4rQ6/pubchart?oid=815608582&amp;format=interactive"></iframe>
@@ -101,7 +102,7 @@ Spoiler alert, idiomatic Rust is about 10x faster than native SQL, the embedded 
 	ORDER BY 1
 	LIMIT 1; 
 	```
-=== "Numpy"
+=== "NumPy"
 	```sql linenums="1" title="define_numpy.sql"
 	CREATE OR REPLACE FUNCTION dot_product_numpy(a FLOAT4[], b FLOAT4[])
 		RETURNS FLOAT4
@@ -179,7 +180,9 @@ ML isn't just about basic math and a little bit of business logic. It's about al
 	<figcaption>Layers of abstraction must remain a good value.</figcaption>
 </figure>
 
-The results are somewhat staggering. We didn't spend any time intentionally optimizing Rust over Python. Most of the time spent was just trying to get things to compile. 😅 It's hard to believe the difference is this big, but those fringe operations outside of the core machine learning algorithms really do dominate, requiring up to 35x more time in Python during inference. The difference between classification and regression speeds here are related to the dataset size. The scikit learn handwritten image classification dataset effectively has 64 features (pixels) vs the diabetes regression dataset having only 10 features. **The more data we're dealing with, the bigger the improvement we see in Rust**. We're even giving Python some leeway by warming up the runtime on the connection before the test, which typically takes a second or two to interpret all of PostgresML's dependencies. Since Rust is a compiled language, there is no longer a need to warmup the connection. 
+The results are somewhat staggering. We didn't spend any time intentionally optimizing Rust over Python. Most of the time spent was just trying to get things to compile. 😅 It's hard to believe the difference is this big, but those fringe operations outside of the core machine learning algorithms really do dominate, requiring up to 35x more time in Python during inference. The difference between classification and regression speeds here are related to the dataset size. The scikit learn handwritten image classification dataset effectively has 64 features (pixels) vs the diabetes regression dataset having only 10 features. 
+
+**The more data we're dealing with, the bigger the improvement we see in Rust**. We're even giving Python some leeway by warming up the runtime on the connection before the test, which typically takes a second or two to interpret all of PostgresML's dependencies. Since Rust is a compiled language, there is no longer a need to warmup the connection. 
 
 <center>
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vShmCVrYwmscys5TIo7c_C-1M3gE_GwENc4tTiU7A6_l3YamjJx7v5bZcafLIDcEIbFu-C2Buao4rQ6/pubchart?oid=345126465&amp;format=interactive"></iframe>
@@ -187,7 +190,7 @@ The results are somewhat staggering. We didn't spend any time intentionally opti
 
 > _This language comparison uses in-process data access. Python based machine learning microservices that communicate with other services over HTTP with JSON or gRPC interfaces will look even worse in comparison, especially if they are stateless and rely on yet another database to provide their data over yet another wire._
 
-## Preserving backward compatibility
+## Preserving Backward Compatibility
 ```sql linenums="1" title="train.sql"
 SELECT pgml.train(
   project_name => 'Handwritten Digit Classifier', 
@@ -203,10 +206,10 @@ SELECT pgml.predict('Handwritten Digit Classifier', image)
 FROM pgml.digits;
 ```
 
-The API is identical between versions 1.0 and 2.0. We take breaking changes seriously and we're not going to break existing deployments just because we're rewriting the whole project. The only reason we're bumping the major version is because we feel like this is a dramatic change, but we intend to preserve a full compatibility layer with models trained on 1.0 in Python. This means that to get the full performance benefits, you'll need to retrain models after upgrading.
+The API is identical between v1.0 and v2.0. We take breaking changes seriously and we're not going to break existing deployments just because we're rewriting the whole project. The only reason we're bumping the major version is because we feel like this is a dramatic change, but we intend to preserve a full compatibility layer with models trained on v1.0 in Python. However, this does mean that to get the full performance benefits, you'll need to retrain models after upgrading.
 
-## Ensuring high quality Rust implementations
-Besides backwards compatibility, we're building a Python compatibility layer to guarantee we can preserve the full Python model training APIs, when Rust APIs are not at parity in terms of functionality, quality or performance. We started this journey thinking that the older algorithms in scikit learn that are implemented in vanilla Python would be the best candidates for replacement in Rust, but that is only partly true. There are high quality efforts in [linfa](https://github.com/rust-ml/linfa) and [smartcore](https://github.com/smartcorelib/smartcore) that also show 10-30x speedup over scikit, but they still lack some of the deeper functionality like joint regression, some of the more obscure algorithms and hyperparams, and some of the error handling that has been hardened into scikit with mass adoption.
+## Ensuring High Quality Rust Implementations
+Besides backwards compatibility, we're building a Python compatibility layer to guarantee we can preserve the full Python model training APIs, when Rust APIs are not at parity in terms of functionality, quality or performance. We started this journey thinking that the older vanilla Python algorithms in Scikit would be the best candidates for replacement in Rust, but that is only partly true. There are high quality efforts in [linfa](https://github.com/rust-ml/linfa) and [smartcore](https://github.com/smartcorelib/smartcore) that also show 10-30x speedup over Scikit, but they still lack some of the deeper functionality like joint regression, some of the more obscure algorithms and hyperparameters, and some of the error handling that has been hardened into Scikit with mass adoption.
 
 <center>
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/
@@ -225,11 +228,11 @@ The Rust implementations also produce high quality predictions against test sets
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vShmCVrYwmscys5TIo7c_C-1M3gE_GwENc4tTiU7A6_l3YamjJx7v5bZcafLIDcEIbFu-C2Buao4rQ6/pubchart?oid=631927399&amp;format=interactive"></iframe>
 </center>
 
-Interestingly, the training times for some of the simplest algorithms are much worse in the Rust implementation. Until we can guarantee each algorithm implementation is an upgrade in every way, we'll continue to use the Python compatibility layer on a case by case basis to avoid any unpleasant surprises.
+Interestingly, the training times for some of the simplest algorithms are worse in the Rust implementation. Until we can guarantee each Rust algorithm is an upgrade in every way, we'll continue to use the Python compatibility layer on a case by case basis to avoid any unpleasant surprises.
 
-We believe that [machine learning in Rust](https://www.arewelearningyet.com/) is mature enough to add significant value now, where we'll be using the same underlying C libraries, and that it's worth contributing to the Rust implementations further to help bring them up to full feature parity. With this goal in mind, we intend to drop our Python compatibility layer completely in 3.0, and only support 2.0 models trained with Rust long term. Part of our 2.0 release process will include a benchmark suite for the full API we support via all Python libraries, so that we can track our progress toward pure Rust implementations across the board.
+We believe that [machine learning in Rust](https://www.arewelearningyet.com/) is mature enough to add significant value now. We'll be using the same underlying C/C++ libraries, and it's worth contributing to the Rust ML ecosystem to bring it up to full feature parity. Our v2.0 release will include a benchmark suite for the full API we support via all Python libraries, so that we can track our progress toward pure Rust implementations over time.
 
-Many thanks and ❤️ to all those who are supporting this endeavor. We’d love to hear feedback from the broader ML and Engineering community about applications and other real world scenarios to help prioritize our work. We'd also appreciate your support in the form of [stars on our github](https://github.com/postgresml/postgresml).
+Many thanks and ❤️ to all those who are supporting this endeavor. We’d love to hear feedback from the broader ML and Engineering community about applications and other real world scenarios to help prioritize our work. You can show your support by [starring us on our GitHub](https://github.com/postgresml/postgresml).
 
 <center>
   <video controls autoplay loop muted width="90%" style="box-shadow: 0 0 8px #000;">
