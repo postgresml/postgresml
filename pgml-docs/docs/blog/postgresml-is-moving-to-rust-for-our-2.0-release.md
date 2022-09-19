@@ -1,7 +1,7 @@
 ---
 author: Montana Low
 description: In PostgresML 2.0, we'd like to address runtime speed, memory consumption and the overall reliability we've seen for machine learning deployments running at scale, in addition to simplifying the workflow for building and deploying models.
-image: https://postgresml.org/blog/images/abstraction.webp
+image: https://postgresml.org/blog/images/rust_programming_crab_sea.webp
 image_alt: Moving from one abstraction layer to another.
 ---
 
