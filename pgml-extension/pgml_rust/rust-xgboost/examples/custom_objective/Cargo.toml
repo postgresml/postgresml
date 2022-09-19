@@ -1,9 +1,0 @@
-[package]
-name = "xgboost-custom-objective-example"
-version = "0.1.0"
-authors = ["Dave Challis <dave@suicas.net>"]
-publish = false
-
-[dependencies]
-xgboost = { path = "../../" }
-ndarray = "0.11"

@@ -1,4 +1,0 @@
-[submodule "xgboost-sys/xgboost"]
-	path = xgboost-sys/xgboost
-	url = https://github.com/davechallis/xgboost
-	branch = master
