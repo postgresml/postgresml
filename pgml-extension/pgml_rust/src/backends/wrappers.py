@@ -50,10 +50,12 @@ _ALGORITHM_MAP = {
     "hist_gradient_boosting_classification": sklearn.ensemble.HistGradientBoostingClassifier,
     "random_forest_regression": sklearn.ensemble.RandomForestRegressor,
     "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
-   }
+}
+
 
 def estimator(algorithm_name, num_features, hyperparams):
     return estimator_joint(algorithm_name, num_features, 1, hyperparams)
+
 
 def estimator_joint(algorithm_name, num_features, num_targets, hyperparams):
     if hyperparams is None:
@@ -69,7 +71,9 @@ def estimator_joint(algorithm_name, num_features, num_targets, hyperparams):
 
         instance.fit(X_train, y_train)
         return instance
+
     return train
+
 
 def test(estimator, X_test):
     y_hat = estimator.predict(X_test)
@@ -77,8 +81,10 @@ def test(estimator, X_test):
     # Single value models only just for now.
     return list(np.asarray(y_hat).flatten())
 
+
 def predictor(estimator, num_features):
     return predictor_joint(estimator, num_features, 1)
+
 
 def predictor_joint(estimator, num_features, num_targets):
     def predict(X):
@@ -90,10 +96,13 @@ def predictor_joint(estimator, num_features, num_targets):
             return list(np.asarray(y_hat).flatten())
         else:
             return list(y_hat)
+
     return predict
+
 
 def save(estimator):
     return pickle.dumps(estimator)
+
 
 def load(data):
     return pickle.loads(bytes(data))

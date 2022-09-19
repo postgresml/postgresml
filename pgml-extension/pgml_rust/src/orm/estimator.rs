@@ -175,6 +175,7 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
         },
         Task::classification => match algorithm {
             Algorithm::linear => {
+                // TODO: check backend and support both backends here.
                 let bytes: Vec<u8> = rmp_serde::from_read(&*data).unwrap();
                 let estimator = sklearn_load(&bytes);
                 Box::new(estimator)

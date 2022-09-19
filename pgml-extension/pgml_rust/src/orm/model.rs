@@ -379,12 +379,16 @@ impl Model {
                                 None => smartcore::linear::linear_regression::LinearRegressionSolverName::QR,
                             });
 
-                        Some(Box::new(
+                        let estimator: Option<Box<dyn Estimator>> = Some(Box::new(
                             smartcore::linear::linear_regression::LinearRegression::fit(
                                 &x_train, &y_train, params,
                             )
                             .unwrap(),
-                        ))
+                        ));
+
+                        save_estimator!(estimator, self.id);
+
+                        estimator
                     }
 
                     Task::classification => {
@@ -403,13 +407,6 @@ impl Model {
 
                         Some(Box::new(estimator))
                     }
-                };
-
-                match self.backend {
-                    Some(Backend::smartcore) => {
-                        save_estimator!(estimator, self.id);
-                    }
-                    _ => (),
                 };
 
                 estimator
