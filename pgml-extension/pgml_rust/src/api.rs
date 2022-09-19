@@ -6,6 +6,7 @@ use std::sync::Mutex;
 use once_cell::sync::Lazy;
 use pgx::*;
 
+use crate::engines::engine::Engine;
 use crate::orm::Algorithm;
 use crate::orm::Model;
 use crate::orm::Project;
@@ -39,6 +40,7 @@ fn train(
     search_args: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
+    engine: default!(Engine, "'sklearn'"),
 ) -> impl std::iter::Iterator<
     Item = (
         name!(project, String),
@@ -72,6 +74,7 @@ fn train(
         search,
         search_params,
         search_args,
+        engine,
     );
 
     let new_metrics: &serde_json::Value = &model.metrics.unwrap().0;

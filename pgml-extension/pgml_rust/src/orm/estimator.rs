@@ -10,7 +10,7 @@ use pgx::*;
 use pyo3::prelude::*;
 use xgboost::{Booster, DMatrix};
 
-use crate::backends::sklearn::{sklearn_load, sklearn_predict, sklearn_test};
+use crate::engines::sklearn::{sklearn_load, sklearn_predict, sklearn_test};
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Task;

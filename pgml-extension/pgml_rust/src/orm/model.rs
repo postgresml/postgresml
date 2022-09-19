@@ -6,7 +6,7 @@ use pgx::*;
 use serde_json::json;
 use xgboost::{parameters, Booster, DMatrix};
 
-use crate::backends::backend::Backend;
+use crate::engines::engine::Engine;
 use crate::orm::estimator::BoosterBox;
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
@@ -16,7 +16,7 @@ use crate::orm::Search;
 use crate::orm::Snapshot;
 use crate::orm::Task;
 
-use crate::backends::sklearn::{sklearn_save, sklearn_train};
+use crate::engines::sklearn::{sklearn_save, sklearn_train};
 
 /// Get a floating point hyperparameter.
 macro_rules! hyperparam_f32 {
@@ -73,14 +73,6 @@ macro_rules! save_estimator {
               (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
           ]
         ).unwrap();
-
-        Spi::get_one_with_args::<i64>(
-            "UPDATE pgml_rust.models SET backend = $1 WHERE id = $2 RETURNING id",
-            vec![
-                (PgBuiltInOids::TEXTOID.oid(), Backend::smartcore.to_string().into_datum()),
-                (PgBuiltInOids::INT8OID.oid(), $id.into_datum()),
-            ]
-        ).unwrap();
     }
 }
 
@@ -94,14 +86,6 @@ macro_rules! save_sklearn {
               (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
           ]
         ).unwrap();
-
-        Spi::get_one_with_args::<i64>(
-            "UPDATE pgml_rust.models SET backend = $1 WHERE id = $2 RETURNING id",
-            vec![
-                (PgBuiltInOids::TEXTOID.oid(), Backend::sklearn.to_string().into_datum()),
-                (PgBuiltInOids::INT8OID.oid(), $id.into_datum()),
-            ]
-        ).unwrap();
     }
 }
 
@@ -112,7 +96,7 @@ pub struct Model {
     pub snapshot_id: i64,
     pub algorithm: Algorithm,
     pub hyperparams: JsonB,
-    pub backend: Option<Backend>,
+    pub engine: Engine,
     pub status: String,
     pub metrics: Option<JsonB>,
     pub search: Option<Search>,
@@ -132,13 +116,14 @@ impl Model {
         search: Option<Search>,
         search_params: JsonB,
         search_args: JsonB,
+        engine: Engine,
     ) -> Model {
         let mut model: Option<Model> = None;
 
         Spi::connect(|client| {
             let result = client.select("
-          INSERT INTO pgml_rust.models (project_id, snapshot_id, algorithm, hyperparams, status, search, search_params, search_args) 
-          VALUES ($1, $2, $3, $4, $5, $6::pgml_rust.search, $7, $8) 
+          INSERT INTO pgml_rust.models (project_id, snapshot_id, algorithm, hyperparams, status, search, search_params, search_args, engine) 
+          VALUES ($1, $2, $3, $4, $5, $6::pgml_rust.search, $7, $8, $9) 
           RETURNING id, project_id, snapshot_id, algorithm, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
               Some(1),
               Some(vec![
@@ -150,6 +135,7 @@ impl Model {
                   (PgBuiltInOids::TEXTOID.oid(), search.into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_params.into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_args.into_datum()),
+                  (PgBuiltInOids::TEXTOID.oid(), engine.to_string().into_datum()),
               ])
           ).first();
             if !result.is_empty() {
@@ -158,7 +144,6 @@ impl Model {
                     project_id: result.get_datum(2).unwrap(),
                     snapshot_id: result.get_datum(3).unwrap(),
                     algorithm: Algorithm::from_str(result.get_datum(4).unwrap()).unwrap(),
-                    backend: None,
                     hyperparams: result.get_datum(5).unwrap(),
                     status: result.get_datum(6).unwrap(),
                     metrics: result.get_datum(7),
@@ -167,6 +152,7 @@ impl Model {
                     search_args: result.get_datum(10).unwrap(),
                     created_at: result.get_datum(11).unwrap(),
                     updated_at: result.get_datum(12).unwrap(),
+                    engine,
                     estimator: None,
                 });
             }
@@ -367,8 +353,6 @@ impl Model {
 
                 let estimator: Option<Box<dyn Estimator>> = match project.task {
                     Task::regression => {
-                        self.backend = Some(Backend::smartcore);
-
                         let params = smartcore::linear::linear_regression::LinearRegressionParameters::default()
                             .with_solver(match hyperparams.get("solver"){
                                 Some(value) => match value.as_str().unwrap_or("qr") {
@@ -392,15 +376,14 @@ impl Model {
                     }
 
                     Task::classification => {
-                        self.backend = Some(Backend::sklearn);
-
                         hyperparam_f32!(tol, hyperparams, 1e-4);
                         hyperparam_f32!(C, hyperparams, 1.0);
 
                         let estimator = sklearn_train(
-                            "linear_classification",
+                            project.task,
+                            self.algorithm,
                             &dataset,
-                            HashMap::from([("tol".to_string(), tol), ("C".to_string(), C)]),
+                            &self.hyperparams,
                         );
 
                         save_sklearn!(estimator, self.id);
