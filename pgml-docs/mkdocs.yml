@@ -145,6 +145,7 @@ nav:
         - Postgres Full Text Search is Awesome: blog/postgres-full-text-search-is-awesome.md
         - Which Database, That is the Question: blog/which-database-that-is-the-question.md
         - Oxidizing Machine Learning: blog/oxidizing-machine-learning.md
+        - PostgresML is Moving to Rust for our 2.0 Release: blog/postgresml-is-moving-to-rust-for-our-2.0-release.md
     - About:
         - Team: about/team.md
         - Roadmap: about/roadmap.md
