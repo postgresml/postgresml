@@ -16,44 +16,38 @@ use crate::orm::Dataset;
 use crate::orm::Task;
 
 #[allow(clippy::type_complexity)]
-static DEPLOYED_ESTIMATORS_BY_PROJECT_NAME: Lazy<Mutex<HashMap<String, Arc<Box<dyn Estimator>>>>> =
+static DEPLOYED_ESTIMATORS_BY_MODEL_ID: Lazy<Mutex<HashMap<i64, Arc<Box<dyn Estimator>>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
-pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estimator>> {
+pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimator>> {
     {
-        let estimators = DEPLOYED_ESTIMATORS_BY_PROJECT_NAME.lock().unwrap();
-        let estimator = estimators.get(name);
-        if let Some(estimator) = estimator {
+        let estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock().unwrap();
+        if let Some(estimator) = estimators.get(&model_id) {
             return estimator.clone();
         }
     }
 
-    let (task, algorithm, model_id) = Spi::get_three_with_args::<String, String, i64>(
+    let (task, algorithm) = Spi::get_two_with_args::<String, String>(
         "
-        SELECT projects.task::TEXT, models.algorithm::TEXT, models.id AS model_id
-        FROM pgml_rust.files
-        JOIN pgml_rust.models
-            ON models.id = files.model_id
-        JOIN pgml_rust.deployments 
-            ON deployments.model_id = models.id
+        SELECT projects.task::TEXT, models.algorithm::TEXT
+        FROM pgml_rust.models
         JOIN pgml_rust.projects
-            ON projects.id = deployments.project_id
-        WHERE projects.name = $1
-        ORDER by deployments.created_at DESC
-        LIMIT 1;",
-        vec![(PgBuiltInOids::TEXTOID.oid(), name.into_datum())],
+            ON projects.id = models.project_id
+        WHERE models.id = $1
+        LIMIT 1",
+        vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
     );
     let task = Task::from_str(&task.unwrap_or_else(|| {
         panic!(
-            "Project {} does not have a trained and deployed model.",
-            name
+            "Project has gone missing for model: {}. Your model store has been corrupted.",
+            model_id
         )
     }))
     .unwrap();
     let algorithm = Algorithm::from_str(&algorithm.unwrap_or_else(|| {
         panic!(
-            "Project {} does not have a trained and deployed model.",
-            name
+            "Project has gone missing for model: {}. Your model store has been corrupted.",
+            model_id
         )
     }))
     .unwrap();
@@ -61,7 +55,8 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
     let (data, hyperparams) = Spi::get_two_with_args::<Vec<u8>, JsonB>(
         "SELECT data, hyperparams FROM pgml_rust.models
         INNER JOIN pgml_rust.files
-        ON models.id = files.model_id WHERE models.id = $1
+            ON models.id = files.model_id 
+        WHERE models.id = $1
         LIMIT 1",
         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
     );
@@ -70,8 +65,8 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
 
     let data = data.unwrap_or_else(|| {
         panic!(
-            "Project {} does not have a trained and deployed model.",
-            name
+            "Project has gone missing for model: {}. Your model store has been corrupted.",
+            model_id
         )
     });
 
@@ -257,9 +252,9 @@ pub fn find_deployed_estimator_by_project_name(name: &str) -> Arc<Box<dyn Estima
         },
     };
 
-    let mut estimators = DEPLOYED_ESTIMATORS_BY_PROJECT_NAME.lock().unwrap();
-    estimators.insert(name.to_string(), Arc::new(e));
-    estimators.get(name).unwrap().clone()
+    let mut estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock().unwrap();
+    estimators.insert(model_id, Arc::new(e));
+    estimators.get(&model_id).unwrap().clone()
 }
 
 fn test_smartcore(
