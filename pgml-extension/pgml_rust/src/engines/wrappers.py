@@ -7,6 +7,7 @@ import sklearn.gaussian_process
 import sklearn.model_selection
 import numpy as np
 import pickle
+import json
 
 _ALGORITHM_MAP = {
     "linear_regression": sklearn.linear_model.LinearRegression,
@@ -60,6 +61,8 @@ def estimator(algorithm_name, num_features, hyperparams):
 def estimator_joint(algorithm_name, num_features, num_targets, hyperparams):
     if hyperparams is None:
         hyperparams = {}
+    else:
+        hyperparams = json.loads(hyperparams)
 
     def train(X_train, y_train):
         instance = _ALGORITHM_MAP[algorithm_name](**hyperparams)

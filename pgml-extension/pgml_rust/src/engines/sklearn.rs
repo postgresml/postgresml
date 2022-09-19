@@ -4,8 +4,10 @@ use pyo3::types::PyTuple;
 
 use std::collections::HashMap;
 
+use crate::orm::algorithm::Algorithm;
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::SklearnBox;
+use crate::orm::task::Task;
 
 #[pg_extern]
 pub fn sklearn_version() -> String {
@@ -20,14 +22,29 @@ pub fn sklearn_version() -> String {
 }
 
 pub fn sklearn_train(
-    algorithm_name: &str,
+    task: Task,
+    algorithm: Algorithm,
     dataset: &Dataset,
-    hyperparams: HashMap<String, f32>,
+    hyperparams: &JsonB,
 ) -> SklearnBox {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/backends/wrappers.py"
+        "/src/engines/wrappers.py"
     ));
+
+    let algorithm_name = match task {
+        Task::regression => match algorithm {
+            Algorithm::linear => "linear_regression",
+            _ => todo!(),
+        },
+
+        Task::classification => match algorithm {
+            Algorithm::linear => "linear_classification",
+            _ => todo!(),
+        },
+    };
+
+    let hyperparams = serde_json::to_string(hyperparams).unwrap();
 
     let estimator = Python::with_gil(|py| -> Py<PyAny> {
         let module = PyModule::from_code(py, module, "", "").unwrap();
@@ -61,7 +78,7 @@ pub fn sklearn_train(
 pub fn sklearn_test(estimator: &SklearnBox, x_test: &[f32], num_features: usize) -> Vec<f32> {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/backends/wrappers.py"
+        "/src/engines/wrappers.py"
     ));
 
     let y_hat: Vec<f32> = Python::with_gil(|py| -> Vec<f32> {
@@ -87,7 +104,7 @@ pub fn sklearn_test(estimator: &SklearnBox, x_test: &[f32], num_features: usize)
 pub fn sklearn_predict(estimator: &SklearnBox, x: &[f32]) -> Vec<f32> {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/backends/wrappers.py"
+        "/src/engines/wrappers.py"
     ));
 
     let y_hat: Vec<f32> = Python::with_gil(|py| -> Vec<f32> {
@@ -113,7 +130,7 @@ pub fn sklearn_predict(estimator: &SklearnBox, x: &[f32]) -> Vec<f32> {
 pub fn sklearn_save(estimator: &SklearnBox) -> Vec<u8> {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/backends/wrappers.py"
+        "/src/engines/wrappers.py"
     ));
 
     Python::with_gil(|py| -> Vec<u8> {
@@ -129,7 +146,7 @@ pub fn sklearn_save(estimator: &SklearnBox) -> Vec<u8> {
 pub fn sklearn_load(data: &Vec<u8>) -> SklearnBox {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/backends/wrappers.py"
+        "/src/engines/wrappers.py"
     ));
 
     Python::with_gil(|py| -> SklearnBox {
