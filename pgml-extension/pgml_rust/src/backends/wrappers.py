@@ -53,6 +53,9 @@ _ALGORITHM_MAP = {
    }
 
 def estimator(algorithm_name, num_features, hyperparams):
+    return estimator_joint(algorithm_name, num_features, 1, hyperparams)
+
+def estimator_joint(algorithm_name, num_features, num_targets, hyperparams):
     if hyperparams is None:
         hyperparams = {}
 
@@ -62,7 +65,7 @@ def estimator(algorithm_name, num_features, hyperparams):
         X_train = np.asarray(X_train).reshape((-1, num_features))
 
         # Only support single value models for just now.
-        y_train = np.asarray(y_train).reshape((-1, 1))
+        y_train = np.asarray(y_train).reshape((-1, num_targets))
 
         instance.fit(X_train, y_train)
         return instance
@@ -74,14 +77,19 @@ def test(estimator, X_test):
     # Single value models only just for now.
     return list(np.asarray(y_hat).flatten())
 
-
 def predictor(estimator, num_features):
+    return predictor_joint(estimator, num_features, 1)
+
+def predictor_joint(estimator, num_features, num_targets):
     def predict(X):
         X = np.asarray(X).reshape((-1, num_features))
         y_hat = estimator.predict(X)
 
         # Only support single value models for just now.
-        return list(np.asarray(y_hat).flatten())
+        if num_targets == 1:
+            return list(np.asarray(y_hat).flatten())
+        else:
+            return list(y_hat)
     return predict
 
 def save(estimator):
