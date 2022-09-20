@@ -8,9 +8,10 @@ use ndarray::{Array1, Array2};
 use once_cell::sync::Lazy;
 use pgx::*;
 use pyo3::prelude::*;
-use xgboost::{Booster, DMatrix};
+use xgboost::Booster;
 
 use crate::engines::sklearn::{sklearn_load, sklearn_predict, sklearn_test};
+use crate::engines::xgboost::{xgboost_load, xgboost_predict, xgboost_test};
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Task;
@@ -115,10 +116,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
                 Box::new(estimator)
             }
 
-            Algorithm::xgboost => {
-                let bst = Booster::load_buffer(&*data).unwrap();
-                Box::new(BoosterBox::new(bst))
-            }
+            Algorithm::xgboost => Box::new(xgboost_load(&data)),
+
             Algorithm::svm => match &hyperparams.0.as_object().unwrap().get("kernel") {
                 Some(kernel) => match kernel.as_str().unwrap_or("linear") {
                     "poly" => {
@@ -418,18 +417,16 @@ impl serde::Serialize for BoosterBox {
 #[typetag::serialize]
 impl Estimator for BoosterBox {
     fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
-        let mut features = DMatrix::from_dense(dataset.x_test(), dataset.num_test_rows).unwrap();
-        features.set_labels(dataset.y_test()).unwrap();
+        let y_hat =
+            Array1::from_shape_vec(dataset.num_test_rows, xgboost_test(self, dataset)).unwrap();
         let y_test =
             Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
-        let y_hat = self.contents.predict(&features).unwrap();
-        let y_hat = Array1::from_shape_vec(dataset.num_test_rows, y_hat).unwrap();
+
         calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
     }
 
     fn predict(&self, features: Vec<f32>) -> f32 {
-        let features = DMatrix::from_dense(&features, 1).unwrap();
-        self.contents.predict(&features).unwrap()[0]
+        xgboost_predict(self, &features)
     }
 }
 
@@ -494,9 +491,8 @@ impl serde::Serialize for SklearnBox {
 #[typetag::serialize]
 impl Estimator for SklearnBox {
     fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
-        let x_test = dataset.x_test();
         let y_test = dataset.y_test();
-        let y_hat = sklearn_test(&self, x_test, dataset.num_features);
+        let y_hat = sklearn_test(&self, dataset);
 
         calc_metrics(
             &Array1::from_shape_vec(dataset.num_test_rows, y_test.to_vec()).unwrap(),

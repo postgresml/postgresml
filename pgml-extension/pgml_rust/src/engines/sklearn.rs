@@ -2,8 +2,6 @@ use pgx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use std::collections::HashMap;
-
 use crate::orm::algorithm::Algorithm;
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::SklearnBox;
@@ -25,7 +23,7 @@ pub fn sklearn_train(
     task: Task,
     algorithm: Algorithm,
     dataset: &Dataset,
-    hyperparams: &JsonB,
+    hyperparams: &serde_json::Map<std::string::String, serde_json::Value>,
 ) -> SklearnBox {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -75,11 +73,14 @@ pub fn sklearn_train(
     SklearnBox::new(estimator)
 }
 
-pub fn sklearn_test(estimator: &SklearnBox, x_test: &[f32], num_features: usize) -> Vec<f32> {
+pub fn sklearn_test(estimator: &SklearnBox, dataset: &Dataset) -> Vec<f32> {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/src/engines/wrappers.py"
     ));
+
+    let x_test = dataset.x_test();
+    let num_features = dataset.num_features;
 
     let y_hat: Vec<f32> = Python::with_gil(|py| -> Vec<f32> {
         let module = PyModule::from_code(py, module, "", "").unwrap();
