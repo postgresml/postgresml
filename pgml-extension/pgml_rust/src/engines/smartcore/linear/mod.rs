@@ -12,6 +12,8 @@ use crate::orm::dataset::Dataset;
 use crate::orm::estimator::Estimator;
 use crate::orm::task::Task;
 
+use crate::engines::FromJSON;
+
 use ndarray::{Array1, Array2};
 
 use rmp_serde;
@@ -237,19 +239,9 @@ pub fn smartcore_train(
 
         Algorithm::linear => match task {
             Task::regression => {
-                let params = smartcore::linear::linear_regression::LinearRegressionParameters::default()
-                        .with_solver(match hyperparams.get("solver"){
-                            Some(value) => match value.as_str().unwrap_or("qr") {
-                                "qr" => smartcore::linear::linear_regression::LinearRegressionSolverName::QR,
-                                "svd" => smartcore::linear::linear_regression::LinearRegressionSolverName::SVD,
-                                _ => smartcore::linear::linear_regression::LinearRegressionSolverName::QR,
-                            }
-                            None => smartcore::linear::linear_regression::LinearRegressionSolverName::QR,
-                        });
-
                 Box::new(
                     smartcore::linear::linear_regression::LinearRegression::fit(
-                        &x_train, &y_train, params,
+                        &x_train, &y_train, smartcore::linear::linear_regression::LinearRegressionParameters::from_json(hyperparams).unwrap(),
                     )
                     .unwrap(),
                 )
