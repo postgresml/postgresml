@@ -31,6 +31,36 @@ pub fn sklearn_version() -> String {
     version
 }
 
+fn sklearn_algorithm_name(task: Task, algorithm: Algorithm) -> &'static str {
+    match task {
+        Task::regression => match algorithm {
+            Algorithm::linear => "linear_regression",
+            Algorithm::lasso => "lasso_regression",
+            Algorithm::svm => "svm_regression",
+            Algorithm::elastic_net => "elastic_net_regression",
+            Algorithm::ridge => "ridge_regression",
+            Algorithm::random_forest => "random_forest_regression",
+            Algorithm::xgboost => {
+                panic!("Sklearn doesn't support XGBoost, use 'xgboost' engine instead")
+            }
+            _ => todo!(),
+        },
+
+        Task::classification => match algorithm {
+            Algorithm::linear => "linear_classification",
+            Algorithm::lasso => panic!("Sklearn Lasso does not support classification"),
+            Algorithm::svm => "svm_classification",
+            Algorithm::elastic_net => panic!("Sklearn Elastic Net does not support classification"),
+            Algorithm::ridge => panic!("Sklearn Ridge does not support classification"),
+            Algorithm::random_forest => "random_forest_classification",
+            Algorithm::xgboost => {
+                panic!("Sklearn doesn't support XGBoost, use 'xgboost' engine instead")
+            }
+            _ => todo!(),
+        },
+    }
+}
+
 pub fn sklearn_train(
     task: Task,
     algorithm: Algorithm,
@@ -42,18 +72,7 @@ pub fn sklearn_train(
         "/src/engines/wrappers.py"
     ));
 
-    let algorithm_name = match task {
-        Task::regression => match algorithm {
-            Algorithm::linear => "linear_regression",
-            _ => todo!(),
-        },
-
-        Task::classification => match algorithm {
-            Algorithm::linear => "linear_classification",
-            _ => todo!(),
-        },
-    };
-
+    let algorithm_name = sklearn_algorithm_name(task, algorithm);
     let hyperparams = serde_json::to_string(hyperparams).unwrap();
 
     let estimator = Python::with_gil(|py| -> Py<PyAny> {
@@ -189,17 +208,7 @@ pub fn sklearn_search(
         "/src/engines/wrappers.py"
     ));
 
-    let algorithm_name = match task {
-        Task::regression => match algorithm {
-            Algorithm::linear => "linear_regression",
-            _ => todo!(),
-        },
-
-        Task::classification => match algorithm {
-            Algorithm::linear => "linear_classification",
-            _ => todo!(),
-        },
-    };
+    let algorithm_name = sklearn_algorithm_name(task, algorithm);
 
     Python::with_gil(|py| -> (SklearnBox, Hyperparams) {
         let module = PyModule::from_code(py, module, "", "").unwrap();
