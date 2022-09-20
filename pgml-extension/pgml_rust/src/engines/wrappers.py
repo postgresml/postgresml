@@ -101,6 +101,44 @@ def estimator_joint(algorithm_name, num_features, num_targets, hyperparams):
     return train
 
 
+def estimator_search_joint(algorithm_name, num_features, num_targets, hyperparams, search_params, search, search_args):
+    if search_args is None:
+        search_args = {}
+    else:
+        search_args = json.loads(search_args)
+
+    if search is None:
+        search = "grid"
+
+    search_params = json.loads(search_params)
+    hyperparams = json.loads(hyperparams)
+
+    estimator = _ALGORITHM_MAP[algorithm_name](**hyperparams)
+
+    if search == "random":
+        algorithm = sklearn.model_selection.RandomizedSearchCV(
+            _ALGORITHM_MAP[algorithm_name](**hyperparams),
+        )
+    elif search == "grid":
+        algorithm = sklearn.model_selection.GridSearchCV(
+            _ALGORITHM_MAP[algorithm_name](**hyperparams)
+        )
+    else:
+        raise Exception(f"search can be 'grid' or 'random', got: '{search}'")
+
+    def train(X, y):
+        X_train = np.asarray(X_train).reshape((-1, num_features))
+        y_train = np.asarray(y_train).reshape((-1, num_targets))
+
+        algorithm.fit(X_train, y_train)
+
+        return (algorithm.best_params_, algorithm.best_estimator_)
+
+
+def estimator_search(algorithm_name, num_features, hyperparams, search_params, search, search_args):
+    return estimator_search_joint(algorithm_name, num_features, 1, hyperparams, search_params, search, search_args)
+
+
 def test(estimator, X_test):
     """Validate the estimator using the test dataset.
 
