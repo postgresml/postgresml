@@ -330,7 +330,8 @@ mod tests {
 
     #[pg_test]
     fn test_snapshot_lifecycle() {
-        let snapshot = Snapshot::create("test", "column", 0.5, Sampling::last);
+        load_dataset("iris");
+        let snapshot = Snapshot::create("pgml_rust.iris", "target", 0.5, Sampling::last);
         assert_eq!(snapshot.id, 1);
     }
 }

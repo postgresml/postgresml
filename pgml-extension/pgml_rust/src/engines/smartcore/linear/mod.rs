@@ -1,3 +1,5 @@
+pub mod linear_regression;
+
 /// SmartCore implementation.
 ///
 /// SmartCore is a replacement for Scikit-Learn written in pure Rust.
