@@ -40,7 +40,7 @@ fn train(
     search_args: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
-    engine: default!(Engine, "'sklearn'"),
+    engine: Option<default!(Engine, "NULL")>,
 ) -> impl std::iter::Iterator<
     Item = (
         name!(project, String),

@@ -8,9 +8,12 @@ use ndarray::{Array1, Array2};
 use once_cell::sync::Lazy;
 use pgx::*;
 use pyo3::prelude::*;
-use xgboost::{Booster, DMatrix};
 
 use crate::engines::sklearn::{sklearn_load, sklearn_predict, sklearn_test};
+use crate::engines::smartcore::{smartcore_load, smartcore_predict, smartcore_test};
+use crate::engines::xgboost::{xgboost_load, xgboost_predict, xgboost_test};
+
+use crate::engines::engine::Engine;
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Task;
@@ -19,7 +22,9 @@ use crate::orm::Task;
 static DEPLOYED_ESTIMATORS_BY_MODEL_ID: Lazy<Mutex<HashMap<i64, Arc<Box<dyn Estimator>>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
+/// Fetch and load the most up-to-date estimator for the given model.
 pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimator>> {
+    // Get the estimator from process memory, if we already loaded it.
     {
         let estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock().unwrap();
         if let Some(estimator) = estimators.get(&model_id) {
@@ -37,6 +42,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         LIMIT 1",
         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
     );
+
     let task = Task::from_str(&task.unwrap_or_else(|| {
         panic!(
             "Project has gone missing for model: {}. Your model store has been corrupted.",
@@ -44,6 +50,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         )
     }))
     .unwrap();
+
     let algorithm = Algorithm::from_str(&algorithm.unwrap_or_else(|| {
         panic!(
             "Project has gone missing for model: {}. Your model store has been corrupted.",
@@ -52,8 +59,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
     }))
     .unwrap();
 
-    let (data, hyperparams) = Spi::get_two_with_args::<Vec<u8>, JsonB>(
-        "SELECT data, hyperparams FROM pgml_rust.models
+    let (data, hyperparams, engine) = Spi::get_three_with_args::<Vec<u8>, JsonB, String>(
+        "SELECT data, hyperparams, engine::TEXT FROM pgml_rust.models
         INNER JOIN pgml_rust.files
             ON models.id = files.model_id 
         WHERE models.id = $1
@@ -61,7 +68,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
     );
 
-    let hyperparams = hyperparams.unwrap();
+    let hyperparams: &serde_json::Value = &hyperparams.unwrap().0;
+    let hyperparams = hyperparams.as_object().unwrap();
 
     let data = data.unwrap_or_else(|| {
         panic!(
@@ -70,216 +78,22 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         )
     });
 
-    let e: Box<dyn Estimator> = match task {
-        Task::regression => match algorithm {
-            Algorithm::linear => {
-                let estimator: smartcore::linear::linear_regression::LinearRegression<
-                    f32,
-                    Array2<f32>,
-                > = rmp_serde::from_read(&*data).unwrap();
-                Box::new(estimator)
-            }
-            Algorithm::lasso => {
-                let estimator: smartcore::linear::lasso::Lasso<f32, Array2<f32>> =
-                    rmp_serde::from_read(&*data).unwrap();
-                Box::new(estimator)
-            }
-            Algorithm::elastic_net => {
-                let estimator: smartcore::linear::elastic_net::ElasticNet<f32, Array2<f32>> =
-                    rmp_serde::from_read(&*data).unwrap();
-                Box::new(estimator)
-            }
-            Algorithm::ridge => {
-                let estimator: smartcore::linear::ridge_regression::RidgeRegression<
-                    f32,
-                    Array2<f32>,
-                > = rmp_serde::from_read(&*data).unwrap();
-                Box::new(estimator)
-            }
-            Algorithm::kmeans => todo!(),
+    let engine = Engine::from_str(&engine.unwrap()).unwrap();
 
-            Algorithm::dbscan => todo!(),
-
-            Algorithm::knn => {
-                let estimator: smartcore::neighbors::knn_regressor::KNNRegressor<
-                    f32,
-                    smartcore::math::distance::euclidian::Euclidian,
-                > = rmp_serde::from_read(&*data).unwrap();
-                Box::new(estimator)
-            }
-
-            Algorithm::random_forest => {
-                let estimator: smartcore::ensemble::random_forest_regressor::RandomForestRegressor<
-                    f32,
-                > = rmp_serde::from_read(&*data).unwrap();
-                Box::new(estimator)
-            }
-
-            Algorithm::xgboost => {
-                let bst = Booster::load_buffer(&*data).unwrap();
-                Box::new(BoosterBox::new(bst))
-            }
-            Algorithm::svm => match &hyperparams.0.as_object().unwrap().get("kernel") {
-                Some(kernel) => match kernel.as_str().unwrap_or("linear") {
-                    "poly" => {
-                        let estimator: smartcore::svm::svr::SVR<
-                            f32,
-                            Array2<f32>,
-                            smartcore::svm::PolynomialKernel<f32>,
-                        > = rmp_serde::from_read(&*data).unwrap();
-                        Box::new(estimator)
-                    }
-
-                    "sigmoid" => {
-                        let estimator: smartcore::svm::svr::SVR<
-                            f32,
-                            Array2<f32>,
-                            smartcore::svm::SigmoidKernel<f32>,
-                        > = rmp_serde::from_read(&*data).unwrap();
-                        Box::new(estimator)
-                    }
-
-                    "rbf" => {
-                        let estimator: smartcore::svm::svr::SVR<
-                            f32,
-                            Array2<f32>,
-                            smartcore::svm::RBFKernel<f32>,
-                        > = rmp_serde::from_read(&*data).unwrap();
-                        Box::new(estimator)
-                    }
-
-                    _ => {
-                        let estimator: smartcore::svm::svr::SVR<
-                            f32,
-                            Array2<f32>,
-                            smartcore::svm::LinearKernel,
-                        > = rmp_serde::from_read(&*data).unwrap();
-                        Box::new(estimator)
-                    }
-                },
-
-                None => {
-                    let estimator: smartcore::svm::svr::SVR<
-                        f32,
-                        Array2<f32>,
-                        smartcore::svm::LinearKernel,
-                    > = rmp_serde::from_read(&*data).unwrap();
-                    Box::new(estimator)
-                }
-            },
-        },
-        Task::classification => match algorithm {
-            Algorithm::linear => {
-                // TODO: check backend and support both backends here.
-                let bytes: Vec<u8> = rmp_serde::from_read(&*data).unwrap();
-                let estimator = sklearn_load(&bytes);
-                Box::new(estimator)
-            }
-            Algorithm::lasso => panic!("Lasso does not support classification"),
-            Algorithm::elastic_net => panic!("Elastic Net does not support classification"),
-            Algorithm::ridge => panic!("Ridge does not support classification"),
-
-            Algorithm::kmeans => todo!(),
-
-            Algorithm::dbscan => todo!(),
-
-            Algorithm::knn => {
-                let estimator: smartcore::neighbors::knn_classifier::KNNClassifier<
-                    f32,
-                    smartcore::math::distance::euclidian::Euclidian,
-                > = rmp_serde::from_read(&*data).unwrap();
-                Box::new(estimator)
-            }
-
-            Algorithm::random_forest => {
-                let estimator: smartcore::ensemble::random_forest_classifier::RandomForestClassifier<f32> =
-                    rmp_serde::from_read(&*data).unwrap();
-                Box::new(estimator)
-            }
-
-            Algorithm::xgboost => {
-                let bst = Booster::load_buffer(&*data).unwrap();
-                Box::new(BoosterBox::new(bst))
-            }
-            Algorithm::svm => match &hyperparams.0.as_object().unwrap().get("kernel") {
-                Some(kernel) => match kernel.as_str().unwrap_or("linear") {
-                    "poly" => {
-                        let estimator: smartcore::svm::svc::SVC<
-                            f32,
-                            Array2<f32>,
-                            smartcore::svm::PolynomialKernel<f32>,
-                        > = rmp_serde::from_read(&*data).unwrap();
-                        Box::new(estimator)
-                    }
-
-                    "sigmoid" => {
-                        let estimator: smartcore::svm::svc::SVC<
-                            f32,
-                            Array2<f32>,
-                            smartcore::svm::SigmoidKernel<f32>,
-                        > = rmp_serde::from_read(&*data).unwrap();
-                        Box::new(estimator)
-                    }
-
-                    "rbf" => {
-                        let estimator: smartcore::svm::svc::SVC<
-                            f32,
-                            Array2<f32>,
-                            smartcore::svm::RBFKernel<f32>,
-                        > = rmp_serde::from_read(&*data).unwrap();
-                        Box::new(estimator)
-                    }
-
-                    _ => {
-                        let estimator: smartcore::svm::svc::SVC<
-                            f32,
-                            Array2<f32>,
-                            smartcore::svm::LinearKernel,
-                        > = rmp_serde::from_read(&*data).unwrap();
-                        Box::new(estimator)
-                    }
-                },
-
-                None => {
-                    let estimator: smartcore::svm::svc::SVC<
-                        f32,
-                        Array2<f32>,
-                        smartcore::svm::LinearKernel,
-                    > = rmp_serde::from_read(&*data).unwrap();
-                    Box::new(estimator)
-                }
-            },
-        },
+    let estimator: Box<dyn Estimator> = match engine {
+        Engine::xgboost => Box::new(xgboost_load(&data)),
+        Engine::smartcore => smartcore_load(&data, task, algorithm, &hyperparams),
+        Engine::sklearn => Box::new(sklearn_load(&data)),
+        _ => todo!(),
     };
 
+    // Cache the estimator in process memory.
     let mut estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock().unwrap();
-    estimators.insert(model_id, Arc::new(e));
+    estimators.insert(model_id, Arc::new(estimator));
     estimators.get(&model_id).unwrap().clone()
 }
 
-fn test_smartcore(
-    predictor: &dyn smartcore::api::Predictor<Array2<f32>, Array1<f32>>,
-    task: Task,
-    dataset: &Dataset,
-) -> HashMap<String, f32> {
-    let x_test = Array2::from_shape_vec(
-        (dataset.num_test_rows, dataset.num_features),
-        dataset.x_test().to_vec(),
-    )
-    .unwrap();
-    let y_test = Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
-    let y_hat = smartcore::api::Predictor::predict(predictor, &x_test).unwrap();
-    calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
-}
-
-fn predict_smartcore(
-    predictor: &dyn smartcore::api::Predictor<Array2<f32>, Array1<f32>>,
-    features: Vec<f32>,
-) -> f32 {
-    let features = Array2::from_shape_vec((1, features.len()), features).unwrap();
-    smartcore::api::Predictor::predict(predictor, &features).unwrap()[0]
-}
-
+/// Caculate model metrics used to evaluate its performance.
 fn calc_metrics(
     y_test: &Array1<f32>,
     y_hat: &Array1<f32>,
@@ -324,12 +138,18 @@ fn calc_metrics(
             }
         }
     }
+
     results
 }
 
+/// The estimator trait that has to be implemented by all
+/// algorithms we use in PostgresML.
 #[typetag::serialize(tag = "type")]
 pub trait Estimator: Send + Sync + Debug {
+    /// Validate the algorithm agains the test dataset.
     fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32>;
+
+    /// Predict a novel datapoint.
     fn predict(&self, features: Vec<f32>) -> f32;
 }
 
@@ -339,12 +159,17 @@ macro_rules! smartcore_estimator_impl {
     ($estimator:ty) => {
         #[typetag::serialize]
         impl Estimator for $estimator {
-            fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32> {
-                test_smartcore(self, task, data)
+            fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
+                let y_hat = smartcore_test(self, dataset);
+                let y_test =
+                    Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec())
+                        .unwrap();
+
+                calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
             }
 
             fn predict(&self, features: Vec<f32>) -> f32 {
-                predict_smartcore(self, features)
+                smartcore_predict(self, features)
             }
         }
     };
@@ -370,6 +195,7 @@ smartcore_estimator_impl!(
     smartcore::ensemble::random_forest_classifier::RandomForestClassifier<f32>
 );
 
+/// XGBoost implementation of the Estimator trait.
 pub struct BoosterBox {
     contents: Box<xgboost::Booster>,
 }
@@ -398,6 +224,7 @@ impl std::ops::DerefMut for BoosterBox {
 
 unsafe impl Send for BoosterBox {}
 unsafe impl Sync for BoosterBox {}
+
 impl std::fmt::Debug for BoosterBox {
     fn fmt(
         &self,
@@ -406,30 +233,29 @@ impl std::fmt::Debug for BoosterBox {
         formatter.debug_struct("BoosterBox").finish()
     }
 }
+
 impl serde::Serialize for BoosterBox {
     fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        todo!("this is never hit for now, since we'd need also need a deserializer.")
+        panic!("This is not used because we don't use Serde to serialize or deserialize XGBoost, it comes with its own.")
     }
 }
 
 #[typetag::serialize]
 impl Estimator for BoosterBox {
     fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
-        let mut features = DMatrix::from_dense(dataset.x_test(), dataset.num_test_rows).unwrap();
-        features.set_labels(dataset.y_test()).unwrap();
+        let y_hat =
+            Array1::from_shape_vec(dataset.num_test_rows, xgboost_test(self, dataset)).unwrap();
         let y_test =
             Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
-        let y_hat = self.contents.predict(&features).unwrap();
-        let y_hat = Array1::from_shape_vec(dataset.num_test_rows, y_hat).unwrap();
+
         calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
     }
 
     fn predict(&self, features: Vec<f32>) -> f32 {
-        let features = DMatrix::from_dense(&features, 1).unwrap();
-        self.contents.predict(&features).unwrap()[0]
+        xgboost_predict(self, &features)
     }
 }
 
@@ -487,16 +313,15 @@ impl serde::Serialize for SklearnBox {
     where
         S: serde::Serializer,
     {
-        unreachable!()
+        panic!("We don't use Serde for Scikit-Learn models. Scikit is using pickle in Python instead for backwards compatibility.")
     }
 }
 
 #[typetag::serialize]
 impl Estimator for SklearnBox {
     fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
-        let x_test = dataset.x_test();
         let y_test = dataset.y_test();
-        let y_hat = sklearn_test(&self, x_test, dataset.num_features);
+        let y_hat = sklearn_test(&self, dataset);
 
         calc_metrics(
             &Array1::from_shape_vec(dataset.num_test_rows, y_test.to_vec()).unwrap(),
