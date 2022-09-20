@@ -10,9 +10,11 @@
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
+use crate::engines::Hyperparams;
 use crate::orm::algorithm::Algorithm;
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::SklearnBox;
+use crate::orm::search::Search;
 use crate::orm::task::Task;
 
 use pgx::*;
@@ -169,5 +171,62 @@ pub fn sklearn_load(data: &Vec<u8>) -> SklearnBox {
             .extract()
             .unwrap();
         SklearnBox::new(estimator)
+    })
+}
+
+/// Hyperparameter search using Scikit's
+/// RandomizedSearchCV or GridSearchCV.
+pub fn sklearn_search(
+    task: Task,
+    algorithm: Algorithm,
+    search: Search,
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+    search_params: &Hyperparams,
+) -> (SklearnBox, Hyperparams) {
+    let module = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/engines/wrappers.py"
+    ));
+
+    let algorithm_name = match task {
+        Task::regression => match algorithm {
+            Algorithm::linear => "linear_regression",
+            _ => todo!(),
+        },
+
+        Task::classification => match algorithm {
+            Algorithm::linear => "linear_classification",
+            _ => todo!(),
+        },
+    };
+
+    Python::with_gil(|py| -> (SklearnBox, Hyperparams) {
+        let module = PyModule::from_code(py, module, "", "").unwrap();
+        let estimator_search = module.getattr("estimator_search").unwrap();
+        let train = estimator_search
+            .call1(PyTuple::new(
+                py,
+                &[
+                    algorithm_name.into_py(py),
+                    dataset.num_features.into_py(py),
+                    serde_json::to_string(hyperparams).unwrap().into_py(py),
+                    serde_json::to_string(search_params).unwrap().into_py(py),
+                    search.to_string().into_py(py),
+                    None::<String>.into_py(py),
+                ],
+            ))
+            .unwrap();
+
+        let (estimator, hyperparams): (Py<PyAny>, String) = train
+            .call1(PyTuple::new(py, &[dataset.x_train(), dataset.y_train()]))
+            .unwrap()
+            .extract()
+            .unwrap();
+
+        let estimator = SklearnBox::new(estimator);
+        let hyperparams: Hyperparams = serde_json::from_str::<Hyperparams>(&hyperparams).unwrap();
+
+        (estimator, hyperparams)
     })
 }
