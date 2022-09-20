@@ -170,7 +170,7 @@ impl Model {
             _ => todo!(),
         };
 
-        // Save the estimator
+        // Save the estimator.
         Spi::get_one_with_args::<i64>(
           "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
           vec![
@@ -179,6 +179,7 @@ impl Model {
           ]
         ).unwrap();
 
+        // Save the hyperparams after search
         Spi::get_one_with_args::<i64>(
             "UPDATE pgml_rust.models SET hyperparams = $1::jsonb WHERE id = $2 RETURNING id",
             vec![
