@@ -63,11 +63,6 @@ impl Model {
             },
         };
 
-        let search_dat = match search {
-            Some(search) => Some(search.to_string()),
-            None => None,
-        };
-
         // Create the model record.
         Spi::connect(|client| {
             let result = client.select("
@@ -81,7 +76,10 @@ impl Model {
                   (PgBuiltInOids::TEXTOID.oid(), algorithm.to_string().into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), hyperparams.into_datum()),
                   (PgBuiltInOids::TEXTOID.oid(), "new".to_string().into_datum()),
-                  (PgBuiltInOids::TEXTOID.oid(), search_dat.into_datum()),
+                  (PgBuiltInOids::TEXTOID.oid(), match search {
+                    Some(search) => Some(search.to_string()),
+                    None => None,
+                  }.into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_params.into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_args.into_datum()),
                   (PgBuiltInOids::TEXTOID.oid(), engine.to_string().into_datum()),
@@ -128,9 +126,7 @@ impl Model {
         // it's serialized form to save into the `models` table.
         let (estimator, bytes): (Box<dyn Estimator>, Vec<u8>) = match self.engine {
             Engine::sklearn => {
-                // Hyperparameter search?
                 let estimator = match self.search {
-                    // Yes.
                     Some(search) => {
                         let (estimator, chosen_hyperparams) = sklearn_search(
                             project.task,
@@ -141,10 +137,11 @@ impl Model {
                             &self.search_params.0.as_object().unwrap(),
                         );
 
+                        info!("Chosen hyperparams: {:?}", chosen_hyperparams);
+
                         estimator
                     }
 
-                    // No.
                     None => sklearn_train(project.task, self.algorithm, dataset, &hyperparams),
                 };
 
