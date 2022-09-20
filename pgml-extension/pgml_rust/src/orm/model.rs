@@ -120,7 +120,7 @@ impl Model {
     fn fit(&mut self, project: &Project, dataset: &Dataset) {
         // Get the hyperparameters.
         let hyperparams: &serde_json::Value = &self.hyperparams.0;
-        let hyperparams = &hyperparams.as_object().unwrap();
+        let mut hyperparams = hyperparams.as_object().unwrap().clone();
 
         // Train the estimator. We are getting the estimator struct and
         // it's serialized form to save into the `models` table.
@@ -137,7 +137,7 @@ impl Model {
                             &self.search_params.0.as_object().unwrap(),
                         );
 
-                        info!("Chosen hyperparams: {:?}", chosen_hyperparams);
+                        hyperparams.extend(chosen_hyperparams);
 
                         estimator
                     }
@@ -178,6 +178,18 @@ impl Model {
               (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
           ]
         ).unwrap();
+
+        Spi::get_one_with_args::<i64>(
+            "UPDATE pgml_rust.models SET hyperparams = $1::jsonb WHERE id = $2 RETURNING id",
+            vec![
+                (
+                    PgBuiltInOids::TEXTOID.oid(),
+                    serde_json::to_string(&hyperparams).unwrap().into_datum(),
+                ),
+                (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
+            ],
+        )
+        .unwrap();
 
         self.estimator = Some(estimator);
     }
