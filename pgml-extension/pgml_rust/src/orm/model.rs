@@ -11,7 +11,7 @@ use crate::orm::Project;
 use crate::orm::Search;
 use crate::orm::Snapshot;
 
-use crate::engines::sklearn::{sklearn_save, sklearn_train};
+use crate::engines::sklearn::{sklearn_save, sklearn_search, sklearn_train};
 use crate::engines::smartcore::{smartcore_save, smartcore_train};
 use crate::engines::xgboost::{xgboost_save, xgboost_train};
 
@@ -63,11 +63,16 @@ impl Model {
             },
         };
 
+        let search_dat = match search {
+            Some(search) => Some(search.to_string()),
+            None => None,
+        };
+
         // Create the model record.
         Spi::connect(|client| {
             let result = client.select("
           INSERT INTO pgml_rust.models (project_id, snapshot_id, algorithm, hyperparams, status, search, search_params, search_args, engine) 
-          VALUES ($1, $2, $3, $4, $5, $6::pgml_rust.search, $7, $8, $9) 
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
           RETURNING id, project_id, snapshot_id, algorithm, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
               Some(1),
               Some(vec![
@@ -76,7 +81,7 @@ impl Model {
                   (PgBuiltInOids::TEXTOID.oid(), algorithm.to_string().into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), hyperparams.into_datum()),
                   (PgBuiltInOids::TEXTOID.oid(), "new".to_string().into_datum()),
-                  (PgBuiltInOids::TEXTOID.oid(), search.into_datum()),
+                  (PgBuiltInOids::TEXTOID.oid(), search_dat.into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_params.into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_args.into_datum()),
                   (PgBuiltInOids::TEXTOID.oid(), engine.to_string().into_datum()),
@@ -117,13 +122,31 @@ impl Model {
     fn fit(&mut self, project: &Project, dataset: &Dataset) {
         // Get the hyperparameters.
         let hyperparams: &serde_json::Value = &self.hyperparams.0;
-        let hyperparams = hyperparams.as_object().unwrap();
+        let hyperparams = &hyperparams.as_object().unwrap();
 
         // Train the estimator. We are getting the estimator struct and
         // it's serialized form to save into the `models` table.
         let (estimator, bytes): (Box<dyn Estimator>, Vec<u8>) = match self.engine {
             Engine::sklearn => {
-                let estimator = sklearn_train(project.task, self.algorithm, dataset, &hyperparams);
+                // Hyperparameter search?
+                let estimator = match self.search {
+                    // Yes.
+                    Some(search) => {
+                        let (estimator, chosen_hyperparams) = sklearn_search(
+                            project.task,
+                            self.algorithm,
+                            search,
+                            dataset,
+                            &hyperparams,
+                            &self.search_params.0.as_object().unwrap(),
+                        );
+
+                        estimator
+                    }
+
+                    // No.
+                    None => sklearn_train(project.task, self.algorithm, dataset, &hyperparams),
+                };
 
                 let bytes = sklearn_save(&estimator);
 

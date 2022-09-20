@@ -118,21 +118,24 @@ def estimator_search_joint(algorithm_name, num_features, num_targets, hyperparam
     if search == "random":
         algorithm = sklearn.model_selection.RandomizedSearchCV(
             _ALGORITHM_MAP[algorithm_name](**hyperparams),
+            search_params,
         )
     elif search == "grid":
         algorithm = sklearn.model_selection.GridSearchCV(
-            _ALGORITHM_MAP[algorithm_name](**hyperparams)
+            _ALGORITHM_MAP[algorithm_name](**hyperparams),
+            search_params
         )
     else:
         raise Exception(f"search can be 'grid' or 'random', got: '{search}'")
 
-    def train(X, y):
+    def train(X_train, y_train):
         X_train = np.asarray(X_train).reshape((-1, num_features))
         y_train = np.asarray(y_train).reshape((-1, num_targets))
 
         algorithm.fit(X_train, y_train)
 
-        return (algorithm.best_params_, algorithm.best_estimator_)
+        return (algorithm.best_estimator_, json.dumps(algorithm.best_params_))
+    return train
 
 
 def estimator_search(algorithm_name, num_features, hyperparams, search_params, search, search_args):

@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS pgml_rust.models(
 	hyperparams JSONB NOT NULL,
 	status TEXT NOT NULL,
 	metrics JSONB,
-	search pgml_rust.search,
+	search TEXT NULL,
 	search_params JSONB NOT NULL,
 	search_args JSONB NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
