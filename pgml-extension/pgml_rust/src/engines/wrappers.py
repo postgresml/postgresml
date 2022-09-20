@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+#
+# Wrapper around Scikit-Learn loaded by PyO3
+# in our Rust crate::engines::sklearn module.
+#
 import sklearn.linear_model
 import sklearn.kernel_ridge
 import sklearn.svm
@@ -55,10 +60,28 @@ _ALGORITHM_MAP = {
 
 
 def estimator(algorithm_name, num_features, hyperparams):
+    """Returns the correct estimator based on algorithm names
+    we defined internally.
+
+    Parameters:
+        - algorithm_name: The human-readable name of the algorithm (see dict above).
+        - num_features: The number of features in X.
+        - hyperparams: JSON of hyperparameters.
+    """
     return estimator_joint(algorithm_name, num_features, 1, hyperparams)
 
 
 def estimator_joint(algorithm_name, num_features, num_targets, hyperparams):
+    """Returns the correct estimator based on algorithm names we defined
+    internally (see dict above).
+
+    
+    Parameters:
+        - algorithm_name: The human-readable name of the algorithm (see dict above).
+        - num_features: The number of features in X.
+        - num_targets: Used for joint models (models that have more than one y target).
+        - hyperparams: JSON of hyperparameters.
+    """
     if hyperparams is None:
         hyperparams = {}
     else:
@@ -79,6 +102,12 @@ def estimator_joint(algorithm_name, num_features, num_targets, hyperparams):
 
 
 def test(estimator, X_test):
+    """Validate the estimator using the test dataset.
+
+    Parameters:
+        - estimator: Scikit-Learn estimator, instantiated.
+        - X_test: test dataset.
+    """
     y_hat = estimator.predict(X_test)
 
     # Single value models only just for now.
@@ -86,10 +115,25 @@ def test(estimator, X_test):
 
 
 def predictor(estimator, num_features):
+    """Return the instantiated estimator
+    given the number of features in X.
+
+    Parameters:
+        - estimator: Scikit-Learn estimator, instantiated.
+        - num_features: The number of features in X.
+    """
     return predictor_joint(estimator, num_features, 1)
 
 
 def predictor_joint(estimator, num_features, num_targets):
+    """Return the instantiated estimator
+    given the number of features in X.
+
+    Parameters:
+        - estimator: Scikit-Learn estimator, instantiated.
+        - num_features: The number of features in X.
+        - num_targets: Used in joint models (more than 1 y target).
+    """
     def predict(X):
         X = np.asarray(X).reshape((-1, num_features))
         y_hat = estimator.predict(X)
@@ -104,8 +148,24 @@ def predictor_joint(estimator, num_features, num_targets):
 
 
 def save(estimator):
+    """Save the estimtator as bytes (pickle).
+    
+    Parameters:
+        - estimator: Scikit-Learn estimator, instantiated.
+
+    Return:
+        bytes
+    """
     return pickle.dumps(estimator)
 
 
 def load(data):
+    """Load the estimator from bytes (pickle).
+
+    Parameters:
+        - data: bytes
+
+    Return:
+        Scikit-Learn estimator
+    """
     return pickle.loads(bytes(data))

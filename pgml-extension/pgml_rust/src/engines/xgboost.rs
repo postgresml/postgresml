@@ -1,10 +1,24 @@
+/// XGBoost implementation.
+///
+/// XGBoost is a family of gradient-boosted decision tree algorithms,
+/// that are very effective on real-world datasets.
+///
+/// It uses its own dense matrix.
+use xgboost::{parameters, Booster, DMatrix};
+
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::BoosterBox;
 use crate::orm::task::Task;
-use xgboost::{parameters, Booster, DMatrix};
 
 use pgx::*;
+use serde_json;
 
+#[pg_extern]
+fn xgboost_version() -> String {
+    String::from("1.62")
+}
+
+/// Train an XGBoost estimator.
 pub fn xgboost_train(
     task: Task,
     dataset: &Dataset,
@@ -189,6 +203,7 @@ pub fn xgboost_train(
     BoosterBox::new(bst)
 }
 
+/// Serialize an XGBoost estimator into bytes.
 pub fn xgboost_save(estimator: &BoosterBox) -> Vec<u8> {
     let r: u64 = rand::random();
     let path = format!("/tmp/pgml_rust_{}.bin", r);
@@ -202,11 +217,13 @@ pub fn xgboost_save(estimator: &BoosterBox) -> Vec<u8> {
     bytes
 }
 
+/// Load an XGBoost estimator from bytes.
 pub fn xgboost_load(data: &Vec<u8>) -> BoosterBox {
     let bst = Booster::load_buffer(&*data).unwrap();
     BoosterBox::new(bst)
 }
 
+/// Validate a trained estimator against the test dataset.
 pub fn xgboost_test(estimator: &BoosterBox, dataset: &Dataset) -> Vec<f32> {
     let mut x_test = DMatrix::from_dense(dataset.x_test(), dataset.num_test_rows).unwrap();
     x_test.set_labels(dataset.y_test()).unwrap();
@@ -214,6 +231,7 @@ pub fn xgboost_test(estimator: &BoosterBox, dataset: &Dataset) -> Vec<f32> {
     estimator.predict(&x_test).unwrap()
 }
 
+/// Predict a novel datapoint using the XGBoost estimator.
 pub fn xgboost_predict(estimator: &BoosterBox, x: &[f32]) -> f32 {
     let x = DMatrix::from_dense(x, 1).unwrap();
     estimator.predict(&x).unwrap()[0]

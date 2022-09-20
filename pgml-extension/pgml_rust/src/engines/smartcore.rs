@@ -1,8 +1,20 @@
+/// SmartCore implementation.
+///
+/// SmartCore is a replacement for Scikit-Learn written in pure Rust.
+/// It is not yet complete, but has a good list of algorithms we can
+/// use already.
+///
+/// It uses ndarray for as its dense matrix.
 use crate::orm::algorithm::Algorithm;
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::Estimator;
 use crate::orm::task::Task;
+
 use ndarray::{Array1, Array2};
+
+use rmp_serde;
+use serde_json;
+use smartcore;
 
 macro_rules! hyperparam_f32 {
     ($name:tt, $hyperparams:tt, $default:tt) => {
@@ -33,6 +45,7 @@ macro_rules! hyperparam_bool {
     };
 }
 
+/// Train a SmartCore estimator.
 #[allow(non_snake_case)]
 pub fn smartcore_train(
     task: Task,
@@ -474,7 +487,222 @@ pub fn smartcore_train(
     }
 }
 
+/// Save a SmartCore estimator.
 pub fn smartcore_save(estimator: &Box<dyn Estimator>) -> Vec<u8> {
     let bytes: Vec<u8> = rmp_serde::to_vec(&*estimator).unwrap();
     bytes
 }
+
+/// Load an SmartCore estimator from bytes.
+pub fn smartcore_load(
+    data: &[u8],
+    task: Task,
+    algorithm: Algorithm,
+    hyperparams: &serde_json::Map<std::string::String, serde_json::Value>,
+) -> Box<dyn Estimator> {
+    match task {
+        Task::regression => match algorithm {
+            Algorithm::linear => {
+                let estimator: smartcore::linear::linear_regression::LinearRegression<
+                    f32,
+                    Array2<f32>,
+                > = rmp_serde::from_read(data).unwrap();
+                Box::new(estimator)
+            }
+            Algorithm::lasso => {
+                let estimator: smartcore::linear::lasso::Lasso<f32, Array2<f32>> =
+                    rmp_serde::from_read(data).unwrap();
+                Box::new(estimator)
+            }
+            Algorithm::elastic_net => {
+                let estimator: smartcore::linear::elastic_net::ElasticNet<f32, Array2<f32>> =
+                    rmp_serde::from_read(data).unwrap();
+                Box::new(estimator)
+            }
+            Algorithm::ridge => {
+                let estimator: smartcore::linear::ridge_regression::RidgeRegression<
+                    f32,
+                    Array2<f32>,
+                > = rmp_serde::from_read(data).unwrap();
+                Box::new(estimator)
+            }
+
+            Algorithm::kmeans => todo!(),
+            Algorithm::dbscan => todo!(),
+
+            Algorithm::knn => {
+                let estimator: smartcore::neighbors::knn_regressor::KNNRegressor<
+                    f32,
+                    smartcore::math::distance::euclidian::Euclidian,
+                > = rmp_serde::from_read(data).unwrap();
+                Box::new(estimator)
+            }
+
+            Algorithm::random_forest => {
+                let estimator: smartcore::ensemble::random_forest_regressor::RandomForestRegressor<
+                    f32,
+                > = rmp_serde::from_read(data).unwrap();
+                Box::new(estimator)
+            }
+
+            Algorithm::xgboost => panic!("SmartCore does not support XGBoost"),
+
+            Algorithm::svm => match hyperparams.get("kernel") {
+                Some(kernel) => match kernel.as_str().unwrap_or("linear") {
+                    "poly" => {
+                        let estimator: smartcore::svm::svr::SVR<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::PolynomialKernel<f32>,
+                        > = rmp_serde::from_read(data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    "sigmoid" => {
+                        let estimator: smartcore::svm::svr::SVR<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::SigmoidKernel<f32>,
+                        > = rmp_serde::from_read(data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    "rbf" => {
+                        let estimator: smartcore::svm::svr::SVR<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::RBFKernel<f32>,
+                        > = rmp_serde::from_read(data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    _ => {
+                        let estimator: smartcore::svm::svr::SVR<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::LinearKernel,
+                        > = rmp_serde::from_read(data).unwrap();
+                        Box::new(estimator)
+                    }
+                },
+
+                None => {
+                    let estimator: smartcore::svm::svr::SVR<
+                        f32,
+                        Array2<f32>,
+                        smartcore::svm::LinearKernel,
+                    > = rmp_serde::from_read(data).unwrap();
+                    Box::new(estimator)
+                }
+            },
+        },
+
+        Task::classification => match algorithm {
+            Algorithm::linear => {
+                todo!();
+            }
+
+            Algorithm::lasso => panic!("SmartCore Lasso does not support classification"),
+            Algorithm::elastic_net => {
+                panic!("SmartCore Elastic Net does not support classification")
+            }
+            Algorithm::ridge => panic!("SmartCore Ridge does not support classification"),
+            Algorithm::kmeans => todo!(),
+            Algorithm::dbscan => todo!(),
+
+            Algorithm::knn => {
+                let estimator: smartcore::neighbors::knn_classifier::KNNClassifier<
+                    f32,
+                    smartcore::math::distance::euclidian::Euclidian,
+                > = rmp_serde::from_read(data).unwrap();
+                Box::new(estimator)
+            }
+
+            Algorithm::random_forest => {
+                let estimator: smartcore::ensemble::random_forest_classifier::RandomForestClassifier<f32> =
+                    rmp_serde::from_read(data).unwrap();
+                Box::new(estimator)
+            }
+
+            Algorithm::xgboost => panic!("SmartCore does not support XGBoost"),
+
+            Algorithm::svm => match &hyperparams.get("kernel") {
+                Some(kernel) => match kernel.as_str().unwrap_or("linear") {
+                    "poly" => {
+                        let estimator: smartcore::svm::svc::SVC<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::PolynomialKernel<f32>,
+                        > = rmp_serde::from_read(data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    "sigmoid" => {
+                        let estimator: smartcore::svm::svc::SVC<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::SigmoidKernel<f32>,
+                        > = rmp_serde::from_read(data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    "rbf" => {
+                        let estimator: smartcore::svm::svc::SVC<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::RBFKernel<f32>,
+                        > = rmp_serde::from_read(data).unwrap();
+                        Box::new(estimator)
+                    }
+
+                    _ => {
+                        let estimator: smartcore::svm::svc::SVC<
+                            f32,
+                            Array2<f32>,
+                            smartcore::svm::LinearKernel,
+                        > = rmp_serde::from_read(data).unwrap();
+                        Box::new(estimator)
+                    }
+                },
+
+                None => {
+                    let estimator: smartcore::svm::svc::SVC<
+                        f32,
+                        Array2<f32>,
+                        smartcore::svm::LinearKernel,
+                    > = rmp_serde::from_read(data).unwrap();
+                    Box::new(estimator)
+                }
+            },
+        },
+    }
+}
+
+/// Validate a trained estimator against the test dataset.
+pub fn smartcore_test(
+    estimator: &dyn smartcore::api::Predictor<Array2<f32>, Array1<f32>>,
+    dataset: &Dataset,
+) -> Array1<f32> {
+    let x_test = Array2::from_shape_vec(
+        (dataset.num_test_rows, dataset.num_features),
+        dataset.x_test().to_vec(),
+    )
+    .unwrap();
+
+    smartcore::api::Predictor::predict(estimator, &x_test).unwrap()
+}
+
+/// Predict a novel datapoint using the SmartCore estimator.
+pub fn smartcore_predict(
+    predictor: &dyn smartcore::api::Predictor<Array2<f32>, Array1<f32>>,
+    features: Vec<f32>,
+) -> f32 {
+    let features = Array2::from_shape_vec((1, features.len()), features).unwrap();
+    smartcore::api::Predictor::predict(predictor, &features).unwrap()[0]
+}
+
+// /// Predict a novel datapoint using the SmartCore estimator.
+// pub fn smartcore_predict(estimator: &Box<dyn Estimator>, x: &[f32]) -> f32 {
+//     let x = DMatrix::from_dense(x, 1).unwrap();
+//     estimator.predict(&x).unwrap()[0]
+// }

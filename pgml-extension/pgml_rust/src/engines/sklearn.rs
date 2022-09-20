@@ -1,4 +1,12 @@
-use pgx::*;
+/// Scikit-Learn implementation.
+///
+/// Scikit needs no introduction. It implements dozens of industry-standard
+/// algorithms used in data science and machine learning.
+///
+/// It uses numpy as its dense matrix.
+///
+/// Our implementation below calls into Python wrappers
+/// defined in `src/engines/wrappers.py`.
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
@@ -6,6 +14,8 @@ use crate::orm::algorithm::Algorithm;
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::SklearnBox;
 use crate::orm::task::Task;
+
+use pgx::*;
 
 #[pg_extern]
 pub fn sklearn_version() -> String {
