@@ -40,9 +40,8 @@ fn sklearn_algorithm_name(task: Task, algorithm: Algorithm) -> &'static str {
             Algorithm::elastic_net => "elastic_net_regression",
             Algorithm::ridge => "ridge_regression",
             Algorithm::random_forest => "random_forest_regression",
-            Algorithm::xgboost => {
-                panic!("Sklearn doesn't support XGBoost, use 'xgboost' engine instead")
-            }
+            Algorithm::xgboost => "xgboost_regression",
+            Algorithm::xgboost_random_forest => "xgboost_random_forest_regression",
             Algorithm::orthogonal_matching_pursuit => "orthogonal_matching_persuit_regression",
             Algorithm::bayesian_ridge => "bayesian_ridge_regression",
             Algorithm::automatic_relevance_determination => {
@@ -70,14 +69,11 @@ fn sklearn_algorithm_name(task: Task, algorithm: Algorithm) -> &'static str {
 
         Task::classification => match algorithm {
             Algorithm::linear => "linear_classification",
-            Algorithm::lasso => panic!("Sklearn Lasso does not support classification"),
             Algorithm::svm => "svm_classification",
-            Algorithm::elastic_net => panic!("Sklearn Elastic Net does not support classification"),
             Algorithm::ridge => "ridge_classification",
             Algorithm::random_forest => "random_forest_classification",
-            Algorithm::xgboost => {
-                panic!("Sklearn doesn't support XGBoost, use 'xgboost' engine instead")
-            }
+            Algorithm::xgboost => "xgboost_classification",
+            Algorithm::xgboost_random_forest => "xgboost_random_forest_classification",
             Algorithm::stochastic_gradient_descent => "stochastic_gradient_descent_classification",
             Algorithm::perceptron => "perceptron_classification",
             Algorithm::passive_aggressive => "passive_aggressive_classification",
@@ -89,14 +85,6 @@ fn sklearn_algorithm_name(task: Task, algorithm: Algorithm) -> &'static str {
             Algorithm::gradient_boosting_trees => "gradient_boosting_trees_classification",
             Algorithm::hist_gradient_boosting => "hist_gradient_boosting_classification",
             Algorithm::linear_svm => "linear_svm_classification",
-            Algorithm::least_angle => panic!("least_angle does not support classification"),
-            Algorithm::orthogonal_matching_pursuit => {
-                panic!("orthogonal_matching_pursuit does not support classification")
-            }
-            Algorithm::bayesian_ridge => panic!("bayesian_ridge does not support classification"),
-            Algorithm::lasso_least_angle => {
-                panic!("lasso_least_angle does not support classification")
-            }
             _ => panic!("{:?} does not support classification", algorithm),
         },
     }

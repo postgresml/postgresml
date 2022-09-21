@@ -11,6 +11,7 @@
 
 -- Exit on error (psql)
 \set ON_ERROR_STOP true
+\timing
 
 SELECT pgml_rust.load_dataset('diabetes');
 
@@ -79,7 +80,7 @@ SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'random_fores
 
 -- gradient boosting
 SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
--- SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
 -- SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
@@ -98,7 +99,7 @@ SELECT * FROM pgml_rust.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 -- do a hyperparam search on your favorite algorithm
 SELECT pgml_rust.train(
     'Diabetes Progression', 
-    algorithm => 'xgboost', 
+    algorithm => 'xgboost_random_forest', 
     search => 'grid', 
     search_params => '{
         "max_depth": [1, 2], 

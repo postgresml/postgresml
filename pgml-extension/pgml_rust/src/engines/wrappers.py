@@ -10,6 +10,7 @@ import sklearn.ensemble
 import sklearn.multioutput
 import sklearn.gaussian_process
 import sklearn.model_selection
+import xgboost as xgb
 import numpy as np
 import pickle
 import json
@@ -56,6 +57,10 @@ _ALGORITHM_MAP = {
     "hist_gradient_boosting_classification": sklearn.ensemble.HistGradientBoostingClassifier,
     "random_forest_regression": sklearn.ensemble.RandomForestRegressor,
     "random_forest_classification": sklearn.ensemble.RandomForestClassifier,
+    "xgboost_regression": xgb.XGBRegressor,
+    "xgboost_classification": xgb.XGBClassifier,
+    "xgboost_random_forest_regression": xgb.XGBRFRegressor,
+    "xgboost_random_forest_classification": xgb.XGBRFClassifier,
 }
 
 
@@ -120,9 +125,6 @@ def estimator_search_joint(algorithm_name, num_features, num_targets, hyperparam
         search_args = {}
     else:
         search_args = json.loads(search_args)
-
-    if search is None:
-        search = "grid"
 
     search_params = json.loads(search_params)
     hyperparams = json.loads(hyperparams)
