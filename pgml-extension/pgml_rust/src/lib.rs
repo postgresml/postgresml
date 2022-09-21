@@ -3,10 +3,10 @@ extern crate openblas_src;
 extern crate serde;
 
 use once_cell::sync::Lazy; // 1.3.1
+use parking_lot::Mutex;
 use pgx::*;
 use std::collections::HashMap;
 use std::fs;
-use std::sync::Mutex;
 use xgboost::{Booster, DMatrix};
 
 pub mod api;
@@ -25,7 +25,7 @@ static MODELS: Lazy<Mutex<HashMap<i64, Vec<u8>>>> = Lazy::new(|| Mutex::new(Hash
 
 #[pg_extern]
 fn model_predict(model_id: i64, features: Vec<f32>) -> f32 {
-    let mut guard = MODELS.lock().unwrap();
+    let mut guard = MODELS.lock();
 
     match guard.get(&model_id) {
         Some(data) => {
@@ -59,7 +59,7 @@ fn model_predict(model_id: i64, features: Vec<f32>) -> f32 {
 
 #[pg_extern]
 fn model_predict_batch(model_id: i64, features: Vec<f32>, num_rows: i32) -> Vec<f32> {
-    let mut guard = MODELS.lock().unwrap();
+    let mut guard = MODELS.lock();
 
     if num_rows < 0 {
         error!("Number of rows has to be greater than 0");

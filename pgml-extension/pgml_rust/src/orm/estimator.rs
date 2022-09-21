@@ -1,8 +1,8 @@
+use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::str::FromStr;
 use std::sync::Arc;
-use std::sync::Mutex;
 
 use ndarray::{Array1, Array2};
 use once_cell::sync::Lazy;
@@ -26,7 +26,7 @@ static DEPLOYED_ESTIMATORS_BY_MODEL_ID: Lazy<Mutex<HashMap<i64, Arc<Box<dyn Esti
 pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimator>> {
     // Get the estimator from process memory, if we already loaded it.
     {
-        let estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock().unwrap();
+        let estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock();
         if let Some(estimator) = estimators.get(&model_id) {
             return estimator.clone();
         }
@@ -88,7 +88,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
     };
 
     // Cache the estimator in process memory.
-    let mut estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock().unwrap();
+    let mut estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock();
     estimators.insert(model_id, Arc::new(estimator));
     estimators.get(&model_id).unwrap().clone()
 }

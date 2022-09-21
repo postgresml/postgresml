@@ -1,7 +1,7 @@
+use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
-use std::sync::Mutex;
 
 use once_cell::sync::Lazy;
 use pgx::*;
@@ -244,7 +244,7 @@ fn deploy(
 
 #[pg_extern]
 fn predict(project_name: &str, features: Vec<f32>) -> f32 {
-    let mut projects = PROJECT_NAME_TO_PROJECT_ID.lock().unwrap();
+    let mut projects = PROJECT_NAME_TO_PROJECT_ID.lock();
     let project_id = match projects.get(project_name) {
         Some(project_id) => *project_id,
         None => {
