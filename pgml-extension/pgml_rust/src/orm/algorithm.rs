@@ -6,6 +6,7 @@ use serde::Deserialize;
 pub enum Algorithm {
     linear,
     xgboost,
+    xgboost_random_forest,
     svm,
     lasso,
     elastic_net,
@@ -44,6 +45,7 @@ impl std::str::FromStr for Algorithm {
         match input {
             "linear" => Ok(Algorithm::linear),
             "xgboost" => Ok(Algorithm::xgboost),
+            "xgboost_random_forest" => Ok(Algorithm::xgboost_random_forest),
             "svm" => Ok(Algorithm::svm),
             "lasso" => Ok(Algorithm::lasso),
             "elastic_net" => Ok(Algorithm::elastic_net),
@@ -83,6 +85,7 @@ impl std::string::ToString for Algorithm {
         match *self {
             Algorithm::linear => "linear".to_string(),
             Algorithm::xgboost => "xgboost".to_string(),
+            Algorithm::xgboost_random_forest => "xgboost_random_forest".to_string(),
             Algorithm::svm => "svm".to_string(),
             Algorithm::lasso => "lasso".to_string(),
             Algorithm::elastic_net => "elastic_net".to_string(),
