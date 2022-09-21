@@ -3,10 +3,10 @@ extern crate openblas_src;
 extern crate serde;
 
 use once_cell::sync::Lazy; // 1.3.1
+use parking_lot::Mutex;
 use pgx::*;
 use std::collections::HashMap;
 use std::fs;
-use parking_lot::Mutex;
 use xgboost::{Booster, DMatrix};
 
 pub mod api;

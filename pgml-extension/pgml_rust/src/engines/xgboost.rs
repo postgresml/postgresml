@@ -186,8 +186,8 @@ pub fn xgboost_train(
     let params = parameters::TrainingParametersBuilder::default()
         .dtrain(&dtrain) // dataset to train with
         .boost_rounds(match hyperparams.get("n_estimators") {
-            Some(value) => value.as_u64().unwrap_or(2) as u32,
-            None => 2,
+            Some(value) => value.as_u64().unwrap_or(10) as u32,
+            None => 10,
         }) // number of training iterations
         .booster_params(booster_params) // model parameters
         .evaluation_sets(Some(evaluation_sets)) // optional datasets to evaluate against in each iteration

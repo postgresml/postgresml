@@ -1,8 +1,8 @@
+use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::str::FromStr;
 use std::sync::Arc;
-use parking_lot::Mutex;
 
 use ndarray::{Array1, Array2};
 use once_cell::sync::Lazy;
