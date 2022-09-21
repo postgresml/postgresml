@@ -51,15 +51,7 @@ impl Model {
             Some(engine) => engine,
             None => match algorithm {
                 Algorithm::xgboost => Engine::xgboost,
-                Algorithm::linear => Engine::sklearn,
-                Algorithm::svm => Engine::sklearn,
-                Algorithm::lasso => Engine::sklearn,
-                Algorithm::elastic_net => Engine::sklearn,
-                Algorithm::ridge => Engine::sklearn,
-                Algorithm::kmeans => Engine::sklearn,
-                Algorithm::dbscan => Engine::sklearn,
-                Algorithm::knn => Engine::sklearn,
-                Algorithm::random_forest => Engine::sklearn,
+                _ => Engine::sklearn,
             },
         };
 
