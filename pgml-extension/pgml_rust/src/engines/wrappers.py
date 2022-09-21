@@ -23,7 +23,7 @@ _ALGORITHM_MAP = {
     "elastic_net_regression": sklearn.linear_model.ElasticNet,
     "least_angle_regression": sklearn.linear_model.Lars,
     "lasso_least_angle_regression": sklearn.linear_model.LassoLars,
-    "orthoganl_matching_pursuit_regression": sklearn.linear_model.OrthogonalMatchingPursuit,
+    "orthogonal_matching_persuit_regression": sklearn.linear_model.OrthogonalMatchingPursuit,
     "bayesian_ridge_regression": sklearn.linear_model.BayesianRidge,
     "automatic_relevance_determination_regression": sklearn.linear_model.ARDRegression,
     "stochastic_gradient_descent_regression": sklearn.linear_model.SGDRegressor,

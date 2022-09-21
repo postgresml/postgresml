@@ -484,6 +484,8 @@ pub fn smartcore_train(
                 }
             }
         }
+
+        _ => todo!(),
     }
 }
 
@@ -595,6 +597,8 @@ pub fn smartcore_load(
                     Box::new(estimator)
                 }
             },
+
+            _ => todo!(),
         },
 
         Task::classification => match algorithm {
@@ -674,6 +678,8 @@ pub fn smartcore_load(
                     Box::new(estimator)
                 }
             },
+
+            _ => todo!(),
         },
     }
 }
