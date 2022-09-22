@@ -342,6 +342,7 @@ impl Snapshot {
 
             let mut x: Vec<f32> = Vec::with_capacity(num_rows * num_features);
             let mut y: Vec<f32> = Vec::with_capacity(num_rows * num_labels);
+            let mut y_max: Vec<f32> = Vec::with_capacity(self.y_column_name.len());
 
             // result: SpiTupleTable
             // row: SpiHeapTupleData
@@ -396,11 +397,13 @@ impl Snapshot {
                     }
                 }
             });
+
             let num_test_rows = if self.test_size > 1.0 {
                 self.test_size as usize
             } else {
                 (num_rows as f32 * self.test_size).round() as usize
             };
+
             let num_train_rows = num_rows - num_test_rows;
             if num_train_rows == 0 {
                 error!(
@@ -413,9 +416,20 @@ impl Snapshot {
                 num_rows, num_features, num_labels,
             );
 
+            // Get y_max used for classification.
+            // Required for algorithms that need [0, num_class) and expect
+            // the classes to be numbered 0 to n.
+            let analysis = &self.analysis.as_ref().unwrap().0;
+            for target in &self.y_column_name {
+                let column_name = format!("{}_max", target);
+                let value = analysis.get(&column_name).unwrap().as_f64().unwrap() as f32;
+                y_max.push(value);
+            }
+
             data = Some(Dataset {
                 x,
                 y,
+                y_max: y_max,
                 num_features,
                 num_labels,
                 num_rows,
