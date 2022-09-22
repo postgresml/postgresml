@@ -77,8 +77,6 @@ pub fn lightgbm_test(estimator: &LightgbmBox, dataset: &Dataset) -> Vec<f32> {
     let x_test = dataset.x_test();
     let num_features = dataset.num_features;
 
-    assert_eq!(dataset.num_test_rows, x_test.len() / dataset.num_features);
-
     let probabilities = estimator.predict(&x_test, num_features as i32).unwrap();
     let num_class = estimator.num_class().unwrap();
 
