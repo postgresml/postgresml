@@ -36,6 +36,7 @@ pub enum Algorithm {
     gradient_boosting_trees,
     hist_gradient_boosting,
     linear_svm,
+    lightgbm,
 }
 
 impl std::str::FromStr for Algorithm {
@@ -75,6 +76,7 @@ impl std::str::FromStr for Algorithm {
             "gradient_boosting_trees" => Ok(Algorithm::gradient_boosting_trees),
             "hist_gradient_boosting" => Ok(Algorithm::hist_gradient_boosting),
             "linear_svm" => Ok(Algorithm::linear_svm),
+            "lightgbm" => Ok(Algorithm::lightgbm),
             _ => Err(()),
         }
     }
@@ -117,6 +119,7 @@ impl std::string::ToString for Algorithm {
             Algorithm::gradient_boosting_trees => "gradient_boosting_trees".to_string(),
             Algorithm::hist_gradient_boosting => "hist_gradient_boosting".to_string(),
             Algorithm::linear_svm => "linear_svm".to_string(),
+            Algorithm::lightgbm => "lightgbm".to_string(),
         }
     }
 }

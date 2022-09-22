@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS pgml_rust.models(
 	id BIGSERIAL PRIMARY KEY,
 	project_id BIGINT NOT NULL,
 	snapshot_id BIGINT NOT NULL,
+	num_features INT NOT NULL,
 	algorithm TEXT NOT NULL,
 	engine TEXT DEFAULT 'sklearn',
 	hyperparams JSONB NOT NULL,

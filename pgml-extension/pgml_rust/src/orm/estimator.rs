@@ -9,6 +9,7 @@ use once_cell::sync::Lazy;
 use pgx::*;
 use pyo3::prelude::*;
 
+use crate::engines::lightgbm::{lightgbm_load, lightgbm_predict, lightgbm_test};
 use crate::engines::sklearn::{sklearn_load, sklearn_predict, sklearn_test};
 use crate::engines::smartcore::{smartcore_load, smartcore_predict, smartcore_test};
 use crate::engines::xgboost::{xgboost_load, xgboost_predict, xgboost_test};
@@ -32,9 +33,9 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         }
     }
 
-    let (task, algorithm) = Spi::get_two_with_args::<String, String>(
+    let (task, algorithm, num_features) = Spi::get_three_with_args::<String, String, i32>(
         "
-        SELECT projects.task::TEXT, models.algorithm::TEXT
+        SELECT projects.task::TEXT, models.algorithm::TEXT, models.num_features
         FROM pgml_rust.models
         JOIN pgml_rust.projects
             ON projects.id = models.project_id
@@ -58,6 +59,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         )
     }))
     .unwrap();
+
+    let num_features = num_features.unwrap();
 
     let (data, hyperparams, engine) = Spi::get_three_with_args::<Vec<u8>, JsonB, String>(
         "SELECT data, hyperparams, engine::TEXT FROM pgml_rust.models
@@ -83,7 +86,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
     let estimator: Box<dyn Estimator> = match engine {
         Engine::xgboost => Box::new(xgboost_load(&data)),
         Engine::smartcore => smartcore_load(&data, task, algorithm, &hyperparams),
-        Engine::sklearn => Box::new(sklearn_load(&data)),
+        Engine::sklearn => Box::new(sklearn_load(&data, num_features)),
+        Engine::lightgbm => Box::new(lightgbm_load(&data)),
         _ => todo!(),
     };
 
@@ -334,5 +338,69 @@ impl Estimator for SklearnBox {
     fn predict(&self, features: Vec<f32>) -> f32 {
         let score = sklearn_predict(self, &features);
         score[0]
+    }
+}
+
+/// LightGBM implementation of the Estimator trait.
+pub struct LightgbmBox {
+    contents: Box<lightgbm::Booster>,
+}
+
+impl LightgbmBox {
+    pub fn new(contents: lightgbm::Booster) -> Self {
+        LightgbmBox {
+            contents: Box::new(contents),
+        }
+    }
+}
+
+impl std::ops::Deref for LightgbmBox {
+    type Target = lightgbm::Booster;
+
+    fn deref(&self) -> &Self::Target {
+        self.contents.as_ref()
+    }
+}
+
+impl std::ops::DerefMut for LightgbmBox {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.contents.as_mut()
+    }
+}
+
+unsafe impl Send for LightgbmBox {}
+unsafe impl Sync for LightgbmBox {}
+
+impl std::fmt::Debug for LightgbmBox {
+    fn fmt(
+        &self,
+        formatter: &mut std::fmt::Formatter<'_>,
+    ) -> std::result::Result<(), std::fmt::Error> {
+        formatter.debug_struct("LightgbmBox").finish()
+    }
+}
+
+impl serde::Serialize for LightgbmBox {
+    fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        panic!("This is not used because we don't use Serde to serialize or deserialize XGBoost, it comes with its own.")
+    }
+}
+
+#[typetag::serialize]
+impl Estimator for LightgbmBox {
+    fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
+        let y_hat =
+            Array1::from_shape_vec(dataset.num_test_rows, lightgbm_test(self, dataset)).unwrap();
+        let y_test =
+            Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
+
+        calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
+    }
+
+    fn predict(&self, features: Vec<f32>) -> f32 {
+        lightgbm_predict(self, &features)
     }
 }

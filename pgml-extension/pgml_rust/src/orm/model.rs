@@ -11,6 +11,7 @@ use crate::orm::Project;
 use crate::orm::Search;
 use crate::orm::Snapshot;
 
+use crate::engines::lightgbm::{lightgbm_save, lightgbm_train};
 use crate::engines::sklearn::{sklearn_save, sklearn_search, sklearn_train};
 use crate::engines::smartcore::{smartcore_save, smartcore_train};
 use crate::engines::xgboost::{xgboost_save, xgboost_train};
@@ -51,15 +52,18 @@ impl Model {
             Some(engine) => engine,
             None => match algorithm {
                 Algorithm::xgboost => Engine::xgboost,
+                Algorithm::lightgbm => Engine::lightgbm,
                 _ => Engine::sklearn,
             },
         };
 
+        let dataset = snapshot.dataset();
+
         // Create the model record.
         Spi::connect(|client| {
             let result = client.select("
-          INSERT INTO pgml_rust.models (project_id, snapshot_id, algorithm, hyperparams, status, search, search_params, search_args, engine) 
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+          INSERT INTO pgml_rust.models (project_id, snapshot_id, algorithm, hyperparams, status, search, search_params, search_args, engine, num_features) 
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
           RETURNING id, project_id, snapshot_id, algorithm, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
               Some(1),
               Some(vec![
@@ -75,6 +79,7 @@ impl Model {
                   (PgBuiltInOids::JSONBOID.oid(), search_params.into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_args.into_datum()),
                   (PgBuiltInOids::TEXTOID.oid(), engine.to_string().into_datum()),
+                  (PgBuiltInOids::INT4OID.oid(), dataset.num_features.into_datum()),
               ])
           ).first();
             if !result.is_empty() {
@@ -100,7 +105,6 @@ impl Model {
         });
 
         let mut model = model.unwrap();
-        let dataset = snapshot.dataset();
 
         model.fit(project, &dataset);
         model.test(project, &dataset);
@@ -157,6 +161,13 @@ impl Model {
                 let bytes = smartcore_save(&estimator);
 
                 (estimator, bytes)
+            }
+
+            Engine::lightgbm => {
+                let estimator = lightgbm_train(project.task, dataset, &hyperparams);
+                let bytes = lightgbm_save(&estimator);
+
+                (Box::new(estimator), bytes)
             }
 
             _ => todo!(),

@@ -6,7 +6,7 @@ use serde::Deserialize;
 pub enum Engine {
     xgboost,
     torch,
-    lightdbm,
+    lightgbm,
     sklearn,
     smartcore,
     linfa,
@@ -19,7 +19,7 @@ impl std::str::FromStr for Engine {
         match input {
             "xgboost" => Ok(Engine::xgboost),
             "torch" => Ok(Engine::torch),
-            "lightdbm" => Ok(Engine::lightdbm),
+            "lightgbm" => Ok(Engine::lightgbm),
             "sklearn" => Ok(Engine::sklearn),
             "smartcore" => Ok(Engine::smartcore),
             "linfa" => Ok(Engine::linfa),
@@ -33,7 +33,7 @@ impl std::string::ToString for Engine {
         match *self {
             Engine::xgboost => "xgboost".to_string(),
             Engine::torch => "torch".to_string(),
-            Engine::lightdbm => "lightdbm".to_string(),
+            Engine::lightgbm => "lightgbm".to_string(),
             Engine::sklearn => "sklearn".to_string(),
             Engine::smartcore => "smartcore".to_string(),
             Engine::linfa => "linfa".to_string(),
