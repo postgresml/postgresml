@@ -5,10 +5,6 @@ use std::collections::HashSet;
 pub struct Dataset {
     pub x: Vec<f32>,
     pub y: Vec<f32>,
-
-    /// Largest value for the targets (used for classification)
-    pub y_max: Vec<f32>,
-
     pub num_features: usize,
     pub num_labels: usize,
     pub num_rows: usize,

@@ -27,7 +27,7 @@ pub fn lightgbm_train(task: Task, dataset: &Dataset, hyperparams: &Hyperparams) 
                 );
                 hyperparams.insert(
                     "num_class".to_string(),
-                    serde_json::Value::from((dataset.y_max[0] as i32) + 1),
+                    serde_json::Value::from(dataset.distinct_labels()),
                 ); // [0, num_class)
             } else {
                 hyperparams.insert("objective".to_string(), serde_json::Value::from("binary"));

@@ -37,7 +37,7 @@ pub fn xgboost_train(
         .objective(match task {
             Task::regression => xgboost::parameters::learning::Objective::RegLinear,
             Task::classification => {
-                xgboost::parameters::learning::Objective::MultiSoftmax(dataset.y_max[0] as u32 + 1)
+                xgboost::parameters::learning::Objective::MultiSoftmax(dataset.distinct_labels())
                 // [0, num_class)
             }
         })
