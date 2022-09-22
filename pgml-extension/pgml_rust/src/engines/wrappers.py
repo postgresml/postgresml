@@ -11,6 +11,7 @@ import sklearn.multioutput
 import sklearn.gaussian_process
 import sklearn.model_selection
 import xgboost as xgb
+import lightgbm
 import numpy as np
 import pickle
 import json
@@ -61,6 +62,8 @@ _ALGORITHM_MAP = {
     "xgboost_classification": xgb.XGBClassifier,
     "xgboost_random_forest_regression": xgb.XGBRFRegressor,
     "xgboost_random_forest_classification": xgb.XGBRFClassifier,
+    "lightgbm_regression": lightgbm.LGBMRegressor,
+    "lightgbm_classification": lightgbm.LGBMClassifier,
 }
 
 

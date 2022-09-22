@@ -1,3 +1,8 @@
+---
+--- Validate we have the necessary Python dependencies.
+---
+SELECT pgml_rust.validate_python_dependencies();
+
 --- 
 --- Track of updates to data
 ---
