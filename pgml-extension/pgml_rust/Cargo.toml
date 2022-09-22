@@ -18,7 +18,7 @@ pg_test = []
 [dependencies]
 pgx = { git="https://github.com/postgresml/pgx.git", branch="master" }
 xgboost = { git="https://github.com/postgresml/rust-xgboost.git" }
-smartcore = { git="https://github.com/smartcorelib/smartcore.git", branch="development", features = ["serde", "ndarray-bindings"] }
+smartcore = { git="https://github.com/smartcorelib/smartcore.git", branch="main", features = ["serde", "ndarray-bindings"] }
 once_cell = "1"
 rand = "0.8"
 ndarray = { version = "0.15.6", features = ["serde", "blas"] }
@@ -31,6 +31,7 @@ rmp-serde = { version = "1.1.0" }
 typetag = "0.2"
 pyo3 = { version = "0.17", features = ["auto-initialize"] }
 heapless = "0.7.13"
+lightgbm = { git="https://github.com/postgresml/lightgbm-rs" }
 parking_lot = "0.12"
 
 [dev-dependencies]

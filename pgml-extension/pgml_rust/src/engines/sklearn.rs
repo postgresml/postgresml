@@ -163,25 +163,12 @@ pub fn sklearn_test(estimator: &SklearnBox, dataset: &Dataset) -> Vec<f32> {
 }
 
 pub fn sklearn_predict(estimator: &SklearnBox, x: &[f32]) -> Vec<f32> {
-    let module = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/src/engines/wrappers.py"
-    ));
-
     let y_hat: Vec<f32> = Python::with_gil(|py| -> Vec<f32> {
-        let module = PyModule::from_code(py, module, "", "").unwrap();
-        let predictor = module.getattr("predictor").unwrap();
-        let predict = predictor
-            .call1(PyTuple::new(
-                py,
-                &[estimator.contents.as_ref(), &x.len().into_py(py)],
-            ))
-            .unwrap();
-
-        predict
-            .call1(PyTuple::new(py, &[x]))
+        estimator
+            .contents
+            .call1(py, PyTuple::new(py, &[x]))
             .unwrap()
-            .extract()
+            .extract(py)
             .unwrap()
     });
 
@@ -204,7 +191,7 @@ pub fn sklearn_save(estimator: &SklearnBox) -> Vec<u8> {
     })
 }
 
-pub fn sklearn_load(data: &Vec<u8>) -> SklearnBox {
+pub fn sklearn_load(data: &Vec<u8>, num_features: i32) -> SklearnBox {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/src/engines/wrappers.py"
@@ -218,6 +205,13 @@ pub fn sklearn_load(data: &Vec<u8>) -> SklearnBox {
             .unwrap()
             .extract()
             .unwrap();
+        let predict = module.getattr("predictor").unwrap();
+        let estimator = predict
+            .call1(PyTuple::new(py, &[estimator, num_features.into_py(py)]))
+            .unwrap()
+            .extract()
+            .unwrap();
+
         SklearnBox::new(estimator)
     })
 }
