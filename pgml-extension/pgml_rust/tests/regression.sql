@@ -81,7 +81,7 @@ SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'random_fores
 -- gradient boosting
 SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
--- SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
+SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 100}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
 
