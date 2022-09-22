@@ -20,6 +20,23 @@ use crate::orm::task::Task;
 use pgx::*;
 
 #[pg_extern]
+pub fn validate_python_dependencies() {
+    Python::with_gil(|py| {
+        for module in ["xgboost", "lightgbm", "numpy", "sklearn"] {
+            match py.import(module) {
+                Ok(_) => (),
+                Err(_) => {
+                    panic!(
+                        "The {} package is missing. Install it with `sudo pip3 install {}`",
+                        module, module
+                    );
+                }
+            }
+        }
+    });
+}
+
+#[pg_extern]
 pub fn sklearn_version() -> String {
     let mut version = String::new();
 
@@ -64,6 +81,7 @@ fn sklearn_algorithm_name(task: Task, algorithm: Algorithm) -> &'static str {
             Algorithm::least_angle => "least_angle_regression",
             Algorithm::lasso_least_angle => "lasso_least_angle_regression",
             Algorithm::linear_svm => "linear_svm_regression",
+            Algorithm::lightgbm => "lightgbm_regression",
             _ => panic!("{:?} does not support regression", algorithm),
         },
 
@@ -85,6 +103,7 @@ fn sklearn_algorithm_name(task: Task, algorithm: Algorithm) -> &'static str {
             Algorithm::gradient_boosting_trees => "gradient_boosting_trees_classification",
             Algorithm::hist_gradient_boosting => "hist_gradient_boosting_classification",
             Algorithm::linear_svm => "linear_svm_classification",
+            Algorithm::lightgbm => "lightgbm_classification",
             _ => panic!("{:?} does not support classification", algorithm),
         },
     }
