@@ -9,15 +9,28 @@ use serde_json::json;
 pub fn lightgbm_train(task: Task, dataset: &Dataset, hyperparams: &Hyperparams) -> LightgbmBox {
     let x_train = dataset.x_train();
     let y_train = dataset.y_train();
-    let objective = match task {
-        Task::regression => "regression",
+    let mut hyperparams = hyperparams.clone();
+    match task {
+        Task::regression => {
+            hyperparams.insert(
+                "objective".to_string(),
+                serde_json::Value::from("regression"),
+            );
+        }
         Task::classification => {
             let distinct_labels = dataset.distinct_labels();
 
             if distinct_labels > 2 {
-                "multiclass"
+                hyperparams.insert(
+                    "objective".to_string(),
+                    serde_json::Value::from("multiclass"),
+                );
+                hyperparams.insert(
+                    "num_class".to_string(),
+                    serde_json::Value::from(dataset.distinct_labels()),
+                ); // [0, num_class)
             } else {
-                "binary"
+                hyperparams.insert("objective".to_string(), serde_json::Value::from("binary"));
             }
         }
     };
@@ -25,13 +38,7 @@ pub fn lightgbm_train(task: Task, dataset: &Dataset, hyperparams: &Hyperparams) 
     let dataset =
         lightgbm::Dataset::from_vec(x_train, y_train, dataset.num_features as i32).unwrap();
 
-    let bst = lightgbm::Booster::train(
-        dataset,
-        &json! {{
-            "objective": objective,
-        }},
-    )
-    .unwrap();
+    let bst = lightgbm::Booster::train(dataset, &json! {hyperparams}).unwrap();
 
     LightgbmBox::new(bst)
 }
@@ -67,10 +74,12 @@ pub fn lightgbm_test(estimator: &LightgbmBox, dataset: &Dataset) -> Vec<f32> {
     let x_test = dataset.x_test();
     let num_features = dataset.num_features;
 
-    estimator.predict(&x_test, num_features as i32).unwrap()
+    let y_hat = estimator.predict(&x_test, num_features as i32).unwrap();
+    let y_hat: Vec<f32> = y_hat.into_iter().map(|y| y as f32).collect();
+    y_hat
 }
 
 /// Predict a novel datapoint using the LightGBM estimator.
 pub fn lightgbm_predict(estimator: &LightgbmBox, x: &[f32]) -> f32 {
-    estimator.predict(&x, x.len() as i32).unwrap()[0]
+    estimator.predict(&x, x.len() as i32).unwrap()[0] as f32
 }

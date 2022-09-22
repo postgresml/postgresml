@@ -38,6 +38,7 @@ pub fn xgboost_train(
             Task::regression => xgboost::parameters::learning::Objective::RegLinear,
             Task::classification => {
                 xgboost::parameters::learning::Objective::MultiSoftmax(dataset.distinct_labels())
+                // [0, num_class)
             }
         })
         .build()

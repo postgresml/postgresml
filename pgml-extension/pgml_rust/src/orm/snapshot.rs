@@ -396,11 +396,13 @@ impl Snapshot {
                     }
                 }
             });
+
             let num_test_rows = if self.test_size > 1.0 {
                 self.test_size as usize
             } else {
                 (num_rows as f32 * self.test_size).round() as usize
             };
+
             let num_train_rows = num_rows - num_test_rows;
             if num_train_rows == 0 {
                 error!(

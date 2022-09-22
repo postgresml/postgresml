@@ -18,7 +18,7 @@ pg_test = []
 [dependencies]
 pgx = { git="https://github.com/postgresml/pgx.git", branch="master" }
 xgboost = { git="https://github.com/postgresml/rust-xgboost.git" }
-smartcore = { git="https://github.com/smartcorelib/smartcore.git", branch="main", features = ["serde", "ndarray-bindings"] }
+smartcore = { git="https://github.com/smartcorelib/smartcore.git", branch="development", features = ["serde", "ndarray-bindings"] }
 once_cell = "1"
 rand = "0.8"
 ndarray = { version = "0.15.6", features = ["serde", "blas"] }
