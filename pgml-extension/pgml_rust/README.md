@@ -18,6 +18,14 @@ If you haven't already, install:
 - `build-essential`
 - Latest Rust compiler (https://rust-lang.org)
 
+## Python
+
+For using the Scikit-Learn backend, you need to install Python 3.9 or above. If your system comes with Python 3.8 or lower, you'll need to install `libpython3.9-dev` or `libpython3.10-dev`.
+
+1. `sudo add-apt-repository ppa:deadsnakes/ppa`
+2. `sudo apt update && sudo apt install libpython3.9-dev libpython3.10-dev`
+
+
 ## Local development
 
 1. `cargo install cargo-pgx`
