@@ -23,13 +23,13 @@ once_cell = "1"
 rand = "0.8"
 ndarray = { version = "0.15.6", features = ["serde", "blas"] }
 blas = { version = "0.22.0" }
-blas-src = { version = "0.8", features = ["openblas"] }
+# blas-src = { version = "0.8", features = ["openblas"] }
 openblas-src = { version = "0.10", features = ["cblas", "system"] }
 serde = { version = "1.0.2" }
 serde_json = { version = "1.0.85" }
 rmp-serde = { version = "1.1.0" }
 typetag = "0.2"
-pyo3 = { version = "0.17", features = ["auto-initialize"] }
+pyo3 = { version = "0.17", features = ["auto-initialize", "abi3-py39", "abi3-py310"] }
 heapless = "0.7.13"
 lightgbm = { git="https://github.com/postgresml/lightgbm-rs" }
 parking_lot = "0.12"
