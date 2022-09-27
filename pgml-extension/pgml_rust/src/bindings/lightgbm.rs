@@ -1,9 +1,9 @@
 use lightgbm;
 
-use crate::orm::Hyperparams;
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::LightgbmBox;
 use crate::orm::task::Task;
+use crate::orm::Hyperparams;
 use serde_json::json;
 
 pub fn lightgbm_train(task: Task, dataset: &Dataset, hyperparams: &Hyperparams) -> LightgbmBox {

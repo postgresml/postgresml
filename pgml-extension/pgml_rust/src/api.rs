@@ -7,11 +7,10 @@ use once_cell::sync::Lazy;
 use pgx::*;
 use pyo3::prelude::*;
 
-
-use crate::orm::Runtime;
 use crate::orm::Algorithm;
 use crate::orm::Model;
 use crate::orm::Project;
+use crate::orm::Runtime;
 use crate::orm::Sampling;
 use crate::orm::Search;
 use crate::orm::Snapshot;
@@ -33,7 +32,7 @@ pub fn validate_python_dependencies() {
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys").unwrap();
         let version: String = sys.getattr("version").unwrap().extract().unwrap();
-        info!("python version: {version}");
+        info!("Python version: {version}");
         for module in ["xgboost", "lightgbm", "numpy", "sklearn"] {
             match py.import(module) {
                 Ok(_) => (),
@@ -45,6 +44,13 @@ pub fn validate_python_dependencies() {
             }
         }
     });
+
+    let sklearn_version = sklearn_version();
+
+    info!(
+        "Scikit-learn {}, XGBoost 1.62, LightGBM 3.3.2",
+        sklearn_version
+    );
 }
 
 #[pg_extern]
@@ -62,7 +68,7 @@ pub fn sklearn_version() -> String {
 #[pg_extern]
 fn python_version() -> String {
     let mut version = String::new();
-    
+
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys").unwrap();
         version = sys.getattr("version").unwrap().extract().unwrap();
