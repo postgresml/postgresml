@@ -9,7 +9,9 @@ pub mod search;
 pub mod snapshot;
 pub mod strategy;
 pub mod task;
+pub mod runtime;
 
+pub use runtime::Runtime;
 pub use algorithm::Algorithm;
 pub use dataset::Dataset;
 pub use estimator::Estimator;

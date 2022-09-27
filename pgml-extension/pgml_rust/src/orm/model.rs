@@ -144,11 +144,16 @@ impl Model {
                 let bytes = sklearn_save(&estimator);
 
                 (Box::new(estimator), bytes)
+<<<<<<< HEAD
             }
+=======
+            },
+>>>>>>> 1bb34a0 (create distinct concepts of algorithms and runtimes from engines)
             Runtime::rust => {
                 match self.algorithm {
                     Algorithm::xgboost => {
                         let estimator = xgboost_train(project.task, dataset, &hyperparams);
+<<<<<<< HEAD
 
                         let bytes = xgboost_save(&estimator);
 
@@ -162,10 +167,26 @@ impl Model {
                         (Box::new(estimator), bytes)
                     }
 
+=======
+        
+                        let bytes = xgboost_save(&estimator);
+        
+                        (Box::new(estimator), bytes)
+                    },
+        
+                    Algorithm::lightgbm => {
+                        let estimator = lightgbm_train(project.task, dataset, &hyperparams);
+                        let bytes = lightgbm_save(&estimator);
+        
+                        (Box::new(estimator), bytes)
+                    },
+
+>>>>>>> 1bb34a0 (create distinct concepts of algorithms and runtimes from engines)
                     _ => todo!(),
                     // Algorithm::smartcore => {
                     //     let estimator =
                     //         smartcore_train(project.task, self.algorithm, dataset, &hyperparams);
+<<<<<<< HEAD
 
                     //     let bytes = smartcore_save(&estimator);
 
@@ -173,6 +194,15 @@ impl Model {
                     // },
                 }
             }
+=======
+        
+                    //     let bytes = smartcore_save(&estimator);
+        
+                    //     (estimator, bytes)
+                    // },
+                }
+            },
+>>>>>>> 1bb34a0 (create distinct concepts of algorithms and runtimes from engines)
         };
 
         // Save the estimator.
