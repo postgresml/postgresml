@@ -5,6 +5,8 @@ use std::str::FromStr;
 
 use once_cell::sync::Lazy;
 use pgx::*;
+use pyo3::prelude::*;
+
 
 use crate::engines::engine::Engine;
 use crate::orm::Algorithm;
@@ -24,6 +26,49 @@ static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> =
 #[pg_guard]
 pub extern "C" fn _PG_init() {
     pg_shmem_init!(PROJECT_ID_TO_DEPLOYED_MODEL_ID);
+}
+
+#[pg_extern]
+pub fn validate_python_dependencies() {
+    Python::with_gil(|py| {
+        let sys = PyModule::import(py, "sys").unwrap();
+        let version: String = sys.getattr("version").unwrap().extract().unwrap();
+        info!("python version: {version}");
+        for module in ["xgboost", "lightgbm", "numpy", "sklearn"] {
+            match py.import(module) {
+                Ok(_) => (),
+                Err(e) => {
+                    panic!(
+                        "The {module} package is missing. Install it with `sudo pip3 install {module}`\n{e}"
+                    );
+                }
+            }
+        }
+    });
+}
+
+#[pg_extern]
+pub fn sklearn_version() -> String {
+    let mut version = String::new();
+
+    Python::with_gil(|py| {
+        let sklearn = py.import("sklearn").unwrap();
+        version = sklearn.getattr("__version__").unwrap().extract().unwrap();
+    });
+
+    version
+}
+
+#[pg_extern]
+fn python_version() -> String {
+    let mut version = String::new();
+    
+    Python::with_gil(|py| {
+        let sys = PyModule::import(py, "sys").unwrap();
+        version = sys.getattr("version").unwrap().extract().unwrap();
+    });
+
+    version
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -83,10 +128,10 @@ fn train(
     let deployed_metrics = Spi::get_one_with_args::<JsonB>(
         "
         SELECT models.metrics
-        FROM pgml_rust.models
-        JOIN pgml_rust.deployments 
+        FROM pgml.models
+        JOIN pgml.deployments 
             ON deployments.model_id = models.id
-        JOIN pgml_rust.projects
+        JOIN pgml.projects
             ON projects.id = deployments.project_id
         WHERE projects.name = $1
         ORDER by deployments.created_at DESC
@@ -117,14 +162,16 @@ fn train(
 
     if deploy {
         Spi::get_one_with_args::<i64>(
-            "INSERT INTO pgml_rust.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml_rust.strategy) RETURNING id",
+            "INSERT INTO pgml.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml.strategy) RETURNING id",
             vec![
                 (PgBuiltInOids::INT8OID.oid(), project.id.into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
                 (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
             ],
         );
+        info!("hi");
         let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
+        info!("got it");
         if projects.len() == 1024 {
             warning!("Active projects has exceeded capacity map, clearing caches.");
             projects.clear();
@@ -154,14 +201,14 @@ fn deploy(
     ),
 > {
     let (project_id, task) = Spi::get_two_with_args::<i64, String>(
-        "SELECT id, task::TEXT from pgml_rust.projects WHERE name = $1",
+        "SELECT id, task::TEXT from pgml.projects WHERE name = $1",
         vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
     );
     let project_id =
         project_id.unwrap_or_else(|| panic!("Project named `{}` does not exist.", project_name));
     let task = Task::from_str(&task.unwrap()).unwrap();
 
-    let mut sql = "SELECT models.id, models.algorithm::TEXT FROM pgml_rust.models JOIN pgml_rust.projects ON projects.id = models.project_id".to_string();
+    let mut sql = "SELECT models.id, models.algorithm::TEXT FROM pgml.models JOIN pgml.projects ON projects.id = models.project_id".to_string();
     let mut predicate = "\nWHERE projects.name = $1".to_string();
     if let Some(algorithm) = algorithm {
         let _ = write!(
@@ -192,12 +239,12 @@ fn deploy(
             let _ = write!(
                 sql,
                 "
-                JOIN pgml_rust.deployments ON deployments.project_id = projects.id
+                JOIN pgml.deployments ON deployments.project_id = projects.id
                     AND deployments.model_id = models.id
                     AND models.id != (
                         SELECT deployments.model_id
-                        FROM pgml_rust.deployments 
-                        JOIN pgml_rust.projects
+                        FROM pgml.deployments 
+                        JOIN pgml.projects
                             ON projects.id = deployments.project_id
                         WHERE projects.name = $1
                         ORDER by deployments.created_at DESC
@@ -219,7 +266,7 @@ fn deploy(
     let algorithm_name = algorithm_name.expect("No qualified models exist for this deployment.");
 
     Spi::get_one_with_args::<i64>(
-        "INSERT INTO pgml_rust.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml_rust.strategy) RETURNING id",
+        "INSERT INTO pgml.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml.strategy) RETURNING id",
         vec![
             (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
             (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
@@ -250,8 +297,8 @@ fn predict(project_name: &str, features: Vec<f32>) -> f32 {
         None => {
             let (project_id, model_id) = Spi::get_two_with_args::<i64, i64>(
                 "SELECT deployments.project_id, deployments.model_id 
-                FROM pgml_rust.deployments
-                JOIN pgml_rust.projects ON projects.id = deployments.project_id
+                FROM pgml.deployments
+                JOIN pgml.projects ON projects.id = deployments.project_id
                 WHERE projects.name = $1 
                 ORDER BY deployments.created_at DESC
                 LIMIT 1",

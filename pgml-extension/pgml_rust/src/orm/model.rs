@@ -62,7 +62,7 @@ impl Model {
         // Create the model record.
         Spi::connect(|client| {
             let result = client.select("
-          INSERT INTO pgml_rust.models (project_id, snapshot_id, algorithm, hyperparams, status, search, search_params, search_args, engine, num_features) 
+          INSERT INTO pgml.models (project_id, snapshot_id, algorithm, hyperparams, status, search, search_params, search_args, engine, num_features) 
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
           RETURNING id, project_id, snapshot_id, algorithm, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
               Some(1),
@@ -175,7 +175,7 @@ impl Model {
 
         // Save the estimator.
         Spi::get_one_with_args::<i64>(
-          "INSERT INTO pgml_rust.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+          "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
           vec![
               (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
               (PgBuiltInOids::BYTEAOID.oid(), bytes.into_datum()),
@@ -184,7 +184,7 @@ impl Model {
 
         // Save the hyperparams after search
         Spi::get_one_with_args::<i64>(
-            "UPDATE pgml_rust.models SET hyperparams = $1::jsonb WHERE id = $2 RETURNING id",
+            "UPDATE pgml.models SET hyperparams = $1::jsonb WHERE id = $2 RETURNING id",
             vec![
                 (
                     PgBuiltInOids::TEXTOID.oid(),
@@ -202,7 +202,7 @@ impl Model {
         let metrics = self.estimator.as_ref().unwrap().test(project.task, dataset);
         self.metrics = Some(JsonB(json!(metrics)));
         Spi::get_one_with_args::<i64>(
-            "UPDATE pgml_rust.models SET metrics = $1 WHERE id = $2 RETURNING id",
+            "UPDATE pgml.models SET metrics = $1 WHERE id = $2 RETURNING id",
             vec![
                 (
                     PgBuiltInOids::JSONBOID.oid(),

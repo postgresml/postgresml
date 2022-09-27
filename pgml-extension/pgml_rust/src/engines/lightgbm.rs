@@ -46,7 +46,7 @@ pub fn lightgbm_train(task: Task, dataset: &Dataset, hyperparams: &Hyperparams) 
 /// Serialize an LightGBm estimator into bytes.
 pub fn lightgbm_save(estimator: &LightgbmBox) -> Vec<u8> {
     let r: u64 = rand::random();
-    let path = format!("/tmp/pgml_rust_{}.bin", r);
+    let path = format!("/tmp/pgml_{}.bin", r);
 
     estimator.save_file(&path).unwrap();
 
@@ -61,7 +61,7 @@ pub fn lightgbm_save(estimator: &LightgbmBox) -> Vec<u8> {
 pub fn lightgbm_load(data: &Vec<u8>) -> LightgbmBox {
     // Oh boy
     let r: u64 = rand::random();
-    let path = format!("/tmp/pgml_rust_{}.bin", r);
+    let path = format!("/tmp/pgml_{}.bin", r);
 
     std::fs::write(&path, &data).unwrap();
 
