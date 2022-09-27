@@ -8,7 +8,9 @@ pub mod search;
 pub mod snapshot;
 pub mod strategy;
 pub mod task;
+pub mod runtime;
 
+pub use runtime::Runtime;
 pub use algorithm::Algorithm;
 pub use dataset::Dataset;
 pub use estimator::Estimator;
@@ -19,3 +21,5 @@ pub use search::Search;
 pub use snapshot::Snapshot;
 pub use strategy::Strategy;
 pub use task::Task;
+
+pub type Hyperparams = serde_json::Map<std::string::String, serde_json::Value>;

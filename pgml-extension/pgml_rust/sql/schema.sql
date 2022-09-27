@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS pgml.models(
 	snapshot_id BIGINT NOT NULL,
 	num_features INT NOT NULL,
 	algorithm TEXT NOT NULL,
-	engine TEXT DEFAULT 'sklearn',
+	runtime pgml.runtime DEFAULT 'python'::pgml.runtime,
 	hyperparams JSONB NOT NULL,
 	status TEXT NOT NULL,
 	metrics JSONB,

@@ -9,12 +9,12 @@ use once_cell::sync::Lazy;
 use pgx::*;
 use pyo3::prelude::*;
 
-use crate::engines::lightgbm::{lightgbm_load, lightgbm_predict, lightgbm_test};
-use crate::engines::sklearn::{sklearn_load, sklearn_predict, sklearn_test};
-use crate::engines::smartcore::{smartcore_load, smartcore_predict, smartcore_test};
-use crate::engines::xgboost::{xgboost_load, xgboost_predict, xgboost_test};
+use crate::bindings::lightgbm::{lightgbm_load, lightgbm_predict, lightgbm_test};
+use crate::bindings::sklearn::{sklearn_load, sklearn_predict, sklearn_test};
+use crate::bindings::smartcore::{smartcore_predict, smartcore_test};
+use crate::bindings::xgboost::{xgboost_load, xgboost_predict, xgboost_test};
 
-use crate::engines::engine::Engine;
+use crate::orm::Runtime;
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Task;
@@ -44,7 +44,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
     );
 
-    let task = Task::from_str(&task.unwrap_or_else(|| {
+    let _task = Task::from_str(&task.unwrap_or_else(|| {
         panic!(
             "Project has gone missing for model: {}. Your model store has been corrupted.",
             model_id
@@ -52,7 +52,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
     }))
     .unwrap();
 
-    let algorithm = Algorithm::from_str(&algorithm.unwrap_or_else(|| {
+    let _algorithm = Algorithm::from_str(&algorithm.unwrap_or_else(|| {
         panic!(
             "Project has gone missing for model: {}. Your model store has been corrupted.",
             model_id
@@ -62,8 +62,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
 
     let num_features = num_features.unwrap();
 
-    let (data, hyperparams, engine) = Spi::get_three_with_args::<Vec<u8>, JsonB, String>(
-        "SELECT data, hyperparams, engine::TEXT FROM pgml.models
+    let (data, runtime, algorithm) = Spi::get_three_with_args::<Vec<u8>, String, String>(
+        "SELECT data, runtime::TEXT, algorithm::TEXT FROM pgml.models
         INNER JOIN pgml.files
             ON models.id = files.model_id 
         WHERE models.id = $1
@@ -71,9 +71,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
     );
 
-    let hyperparams: &serde_json::Value = &hyperparams.unwrap().0;
-    let hyperparams = hyperparams.as_object().unwrap();
-
+    let runtime = Runtime::from_str(&runtime.unwrap()).unwrap();
+    let algorithm = Algorithm::from_str(&algorithm.unwrap()).unwrap();
     let data = data.unwrap_or_else(|| {
         panic!(
             "Project has gone missing for model: {}. Your model store has been corrupted.",
@@ -81,14 +80,16 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         )
     });
 
-    let engine = Engine::from_str(&engine.unwrap()).unwrap();
 
-    let estimator: Box<dyn Estimator> = match engine {
-        Engine::xgboost => Box::new(xgboost_load(&data)),
-        Engine::smartcore => smartcore_load(&data, task, algorithm, &hyperparams),
-        Engine::sklearn => Box::new(sklearn_load(&data, num_features)),
-        Engine::lightgbm => Box::new(lightgbm_load(&data)),
-        _ => todo!(),
+    let estimator: Box<dyn Estimator> = match runtime {
+        Runtime::rust => {
+            match algorithm {
+                Algorithm::xgboost => Box::new(xgboost_load(&data)),
+                Algorithm::lightgbm => Box::new(lightgbm_load(&data)),
+                _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
+            }
+        },
+        Runtime::python => Box::new(sklearn_load(&data, num_features)),
     };
 
     // Cache the estimator in process memory.

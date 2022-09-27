@@ -1,6 +1,6 @@
 use lightgbm;
 
-use crate::engines::Hyperparams;
+use crate::orm::Hyperparams;
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::LightgbmBox;
 use crate::orm::task::Task;

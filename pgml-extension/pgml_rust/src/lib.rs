@@ -10,7 +10,7 @@ use std::fs;
 use xgboost::{Booster, DMatrix};
 
 pub mod api;
-pub mod engines;
+pub mod bindings;
 pub mod orm;
 pub mod vectors;
 
