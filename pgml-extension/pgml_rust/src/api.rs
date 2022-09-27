@@ -8,7 +8,7 @@ use pgx::*;
 use pyo3::prelude::*;
 
 
-use crate::engines::engine::Engine;
+use crate::orm::Runtime;
 use crate::orm::Algorithm;
 use crate::orm::Model;
 use crate::orm::Project;
@@ -85,7 +85,7 @@ fn train(
     search_args: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
-    engine: Option<default!(Engine, "NULL")>,
+    runtime: Option<default!(Runtime, "NULL")>,
 ) -> impl std::iter::Iterator<
     Item = (
         name!(project, String),
@@ -119,7 +119,7 @@ fn train(
         search,
         search_params,
         search_args,
-        engine,
+        runtime,
     );
 
     let new_metrics: &serde_json::Value = &model.metrics.unwrap().0;
@@ -169,9 +169,7 @@ fn train(
                 (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
             ],
         );
-        info!("hi");
         let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
-        info!("got it");
         if projects.len() == 1024 {
             warning!("Active projects has exceeded capacity map, clearing caches.");
             projects.clear();

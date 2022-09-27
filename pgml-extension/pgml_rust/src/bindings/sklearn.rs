@@ -6,11 +6,11 @@
 /// It uses numpy as its dense matrix.
 ///
 /// Our implementation below calls into Python wrappers
-/// defined in `src/engines/wrappers.py`.
+/// defined in `src/bindings/wrappers.py`.
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use crate::engines::Hyperparams;
+use crate::orm::Hyperparams;
 use crate::orm::algorithm::Algorithm;
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::SklearnBox;
@@ -87,7 +87,7 @@ pub fn sklearn_train(
 ) -> SklearnBox {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/engines/wrappers.py"
+        "/src/bindings/wrappers.py"
     ));
 
     let algorithm_name = sklearn_algorithm_name(task, algorithm);
@@ -125,7 +125,7 @@ pub fn sklearn_train(
 pub fn sklearn_test(estimator: &SklearnBox, dataset: &Dataset) -> Vec<f32> {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/engines/wrappers.py"
+        "/src/bindings/wrappers.py"
     ));
 
     let x_test = dataset.x_test();
@@ -167,7 +167,7 @@ pub fn sklearn_predict(estimator: &SklearnBox, x: &[f32]) -> Vec<f32> {
 pub fn sklearn_save(estimator: &SklearnBox) -> Vec<u8> {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/engines/wrappers.py"
+        "/src/bindings/wrappers.py"
     ));
 
     Python::with_gil(|py| -> Vec<u8> {
@@ -183,7 +183,7 @@ pub fn sklearn_save(estimator: &SklearnBox) -> Vec<u8> {
 pub fn sklearn_load(data: &Vec<u8>, num_features: i32) -> SklearnBox {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/engines/wrappers.py"
+        "/src/bindings/wrappers.py"
     ));
 
     Python::with_gil(|py| -> SklearnBox {
@@ -217,7 +217,7 @@ pub fn sklearn_search(
 ) -> (SklearnBox, Hyperparams) {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/engines/wrappers.py"
+        "/src/bindings/wrappers.py"
     ));
 
     let algorithm_name = sklearn_algorithm_name(task, algorithm);

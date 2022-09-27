@@ -480,7 +480,7 @@ pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
                 ),
                 (
                     PgBuiltInOids::BOOLOID.oid(),
-                    (breast_cancer.target[i] == 1.).into_datum(),
+                    (breast_cancer.target[i] == 0.).into_datum(),
                 ),
             ],
         );
