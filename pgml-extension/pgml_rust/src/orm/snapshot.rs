@@ -64,8 +64,8 @@ impl Snapshot {
         Spi::connect(|client| {
             let result = client.select(
                     "SELECT snapshots.id, snapshots.relation_name, snapshots.y_column_name, snapshots.test_size, snapshots.test_sampling, snapshots.status, snapshots.columns, snapshots.analysis, snapshots.created_at, snapshots.updated_at 
-                    FROM pgml_rust.snapshots 
-                    JOIN pgml_rust.models
+                    FROM pgml.snapshots 
+                    JOIN pgml.models
                       ON models.snapshot_id = snapshots.id
                       AND models.project_id = $1 
                     ORDER BY snapshots.id DESC 
@@ -104,7 +104,7 @@ impl Snapshot {
         let mut snapshot: Option<Snapshot> = None;
 
         Spi::connect(|client| {
-            let result = client.select("INSERT INTO pgml_rust.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4::pgml_rust.sampling, $5) RETURNING id, relation_name, y_column_name, test_size, test_sampling, status, columns, analysis, created_at, updated_at;",
+            let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4::pgml.sampling, $5) RETURNING id, relation_name, y_column_name, test_size, test_sampling, status, columns, analysis, created_at, updated_at;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), relation_name.into_datum()),
@@ -127,7 +127,7 @@ impl Snapshot {
                 updated_at: result.get_datum(10).unwrap(),
             };
             let mut sql = format!(
-                r#"CREATE TABLE "pgml_rust"."snapshot_{}" AS SELECT * FROM {}"#,
+                r#"CREATE TABLE "pgml"."snapshot_{}" AS SELECT * FROM {}"#,
                 s.id, s.relation_name
             );
             if s.test_sampling == Sampling::random {
@@ -135,7 +135,7 @@ impl Snapshot {
             }
             client.select(&sql, None, None);
             client.select(
-                r#"UPDATE "pgml_rust"."snapshots" SET status = 'snapped' WHERE id = $1"#,
+                r#"UPDATE "pgml"."snapshots" SET status = 'snapped' WHERE id = $1"#,
                 None,
                 Some(vec![(PgBuiltInOids::INT8OID.oid(), s.id.into_datum())]),
             );
@@ -275,7 +275,7 @@ impl Snapshot {
 
             let stats = stats.join(", ");
             let sql = format!(
-                r#"SELECT {stats} FROM "pgml_rust"."snapshot_{}" {laterals}"#,
+                r#"SELECT {stats} FROM "pgml"."snapshot_{}" {laterals}"#,
                 self.id
             );
             let result = client.select(&sql, Some(1), None).first();
@@ -299,7 +299,7 @@ impl Snapshot {
             let column_datum = JsonB(json!(columns));
             self.analysis = Some(JsonB(json!(analysis)));
             self.columns = Some(JsonB(json!(columns)));
-            client.select("UPDATE pgml_rust.snapshots SET status = 'complete', analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
+            client.select("UPDATE pgml.snapshots SET status = 'complete', analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
                 (PgBuiltInOids::JSONBOID.oid(), analysis_datum.into_datum()),
                 (PgBuiltInOids::JSONBOID.oid(), column_datum.into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
@@ -431,6 +431,6 @@ impl Snapshot {
     }
 
     fn snapshot_name(&self) -> String {
-        format!("pgml_rust.snapshot_{}", self.id)
+        format!("pgml.snapshot_{}", self.id)
     }
 }

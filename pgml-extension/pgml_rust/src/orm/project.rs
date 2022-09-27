@@ -19,7 +19,7 @@ impl Project {
         let mut project: Option<Project> = None;
 
         Spi::connect(|client| {
-            let result = client.select("SELECT id, name, task::TEXT, created_at, updated_at FROM pgml_rust.projects WHERE id = $1 LIMIT 1;",
+            let result = client.select("SELECT id, name, task::TEXT, created_at, updated_at FROM pgml.projects WHERE id = $1 LIMIT 1;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::INT8OID.oid(), id.into_datum()),
@@ -44,7 +44,7 @@ impl Project {
         let mut project = None;
 
         Spi::connect(|client| {
-            let result = client.select("SELECT id, name, task::TEXT, created_at, updated_at FROM pgml_rust.projects WHERE name = $1 LIMIT 1;",
+            let result = client.select("SELECT id, name, task::TEXT, created_at, updated_at FROM pgml.projects WHERE name = $1 LIMIT 1;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),
@@ -69,7 +69,7 @@ impl Project {
         let mut project: Option<Project> = None;
 
         Spi::connect(|client| {
-            let result = client.select(r#"INSERT INTO pgml_rust.projects (name, task) VALUES ($1, $2::pgml_rust.task) RETURNING id, name, task, created_at, updated_at;"#,
+            let result = client.select(r#"INSERT INTO pgml.projects (name, task) VALUES ($1, $2::pgml.task) RETURNING id, name, task, created_at, updated_at;"#,
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),

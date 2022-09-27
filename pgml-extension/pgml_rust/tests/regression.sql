@@ -13,27 +13,27 @@
 \set ON_ERROR_STOP true
 \timing
 
-SELECT pgml_rust.load_dataset('diabetes');
+SELECT pgml.load_dataset('diabetes');
 
 -- view the dataset
-SELECT * FROM pgml_rust.diabetes LIMIT 10;
+SELECT * FROM pgml.diabetes LIMIT 10;
 
 -- train a simple model on the data
-SELECT * FROM pgml_rust.train('Diabetes Progression', 'regression', 'pgml_rust.diabetes', 'target');
+SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target');
 
 -- check out the predictions
-SELECT target, pgml_rust.predict('Diabetes Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
-FROM pgml_rust.diabetes 
+SELECT target, pgml.predict('Diabetes Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
+FROM pgml.diabetes 
 LIMIT 10;
 
 -- Check predictions against a specific model id
--- SELECT model_id, target, pgml_rust.model_predict(model_id, ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
--- FROM pgml_rust.diabetes
+-- SELECT model_id, target, pgml.model_predict(model_id, ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
+-- FROM pgml.diabetes
 -- CROSS JOIN LATERAL (
---     SELECT pgml_rust.models.id AS model_id FROM pgml_rust.models
---     INNER JOIN pgml_rust.projects
---     ON pgml_rust.models.project_id = pgml_rust.projects.id
---     WHERE pgml_rust.projects.name = 'Diabetes Progression'
+--     SELECT pgml.models.id AS model_id FROM pgml.models
+--     INNER JOIN pgml.projects
+--     ON pgml.models.project_id = pgml.projects.id
+--     WHERE pgml.projects.name = 'Diabetes Progression'
 --     LIMIT 1
 -- ) models
 -- LIMIT 10;
@@ -44,60 +44,60 @@ LIMIT 10;
 --
 
 -- linear models
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'ridge');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'lasso');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'elastic_net');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'least_angle');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'lasso_least_angle');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'orthogonal_matching_pursuit');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'bayesian_ridge');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'automatic_relevance_determination');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'stochastic_gradient_descent');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'passive_aggressive');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'ransac');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'theil_sen', hyperparams => '{"max_iter": 10, "max_subpopulation": 100}');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'huber');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ridge');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lasso');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'elastic_net');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'least_angle');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lasso_least_angle');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'orthogonal_matching_pursuit');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'bayesian_ridge');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'automatic_relevance_determination');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'stochastic_gradient_descent');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'passive_aggressive');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ransac');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'theil_sen', hyperparams => '{"max_iter": 10, "max_subpopulation": 100}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'huber');
 -- Quantile Regression too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'quantile');
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'quantile');
 
 -- support vector machines
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'svm', hyperparams => '{"max_iter": 100}');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'nu_svm', hyperparams => '{"max_iter": 10}');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'linear_svm', hyperparams => '{"max_iter": 100}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'svm', hyperparams => '{"max_iter": 100}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'nu_svm', hyperparams => '{"max_iter": 10}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear_svm', hyperparams => '{"max_iter": 100}');
 
 -- ensembles
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'ada_boost', hyperparams => '{"n_estimators": 5}');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'bagging', hyperparams => '{"n_estimators": 5}');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 5}');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 5}');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'random_forest', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ada_boost', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'bagging', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 5}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'random_forest', hyperparams => '{"n_estimators": 5}');
 
 -- other
 -- Kernel Ridge is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'kernel_ridge');
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'kernel_ridge');
 -- Gaussian Process is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'gaussian_process');
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'gaussian_process');
 
 -- gradient boosting
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 100}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 100}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml_rust.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
 
 
 -- check out all that hard work
-SELECT trained_models.* FROM pgml_rust.trained_models 
-JOIN pgml_rust.models on models.id = trained_models.id
+SELECT trained_models.* FROM pgml.trained_models 
+JOIN pgml.models on models.id = trained_models.id
 ORDER BY models.metrics->>'mean_squared_error' DESC LIMIT 5;
 
 -- deploy the random_forest model for prediction use
-SELECT * FROM pgml_rust.deploy('Diabetes Progression', 'most_recent', 'random_forest');
+SELECT * FROM pgml.deploy('Diabetes Progression', 'most_recent', 'random_forest');
 -- check out that throughput
-SELECT * FROM pgml_rust.deployed_models ORDER BY deployed_at DESC LIMIT 5;
+SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 
 -- do a hyperparam search on your favorite algorithm
-SELECT pgml_rust.train(
+SELECT pgml.train(
     'Diabetes Progression', 
     algorithm => 'xgboost_random_forest', 
     search => 'grid', 
@@ -109,12 +109,12 @@ SELECT pgml_rust.train(
 );
 
 -- deploy the "best" model for prediction use
-SELECT * FROM pgml_rust.deploy('Diabetes Progression', 'best_score');
-SELECT * FROM pgml_rust.deploy('Diabetes Progression', 'most_recent');
-SELECT * FROM pgml_rust.deploy('Diabetes Progression', 'rollback');
-SELECT * FROM pgml_rust.deploy('Diabetes Progression', 'best_score', 'svm');
+SELECT * FROM pgml.deploy('Diabetes Progression', 'best_score');
+SELECT * FROM pgml.deploy('Diabetes Progression', 'most_recent');
+SELECT * FROM pgml.deploy('Diabetes Progression', 'rollback');
+SELECT * FROM pgml.deploy('Diabetes Progression', 'best_score', 'svm');
 
 -- check out the improved predictions
-SELECT target, pgml_rust.predict('Diabetes Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
-FROM pgml_rust.diabetes 
+SELECT target, pgml.predict('Diabetes Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
+FROM pgml.diabetes 
 LIMIT 10;

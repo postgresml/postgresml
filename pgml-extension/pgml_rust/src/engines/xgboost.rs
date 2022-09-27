@@ -207,7 +207,7 @@ pub fn xgboost_train(
 /// Serialize an XGBoost estimator into bytes.
 pub fn xgboost_save(estimator: &BoosterBox) -> Vec<u8> {
     let r: u64 = rand::random();
-    let path = format!("/tmp/pgml_rust_{}.bin", r);
+    let path = format!("/tmp/pgml_{}.bin", r);
 
     estimator.save(std::path::Path::new(&path)).unwrap();
 

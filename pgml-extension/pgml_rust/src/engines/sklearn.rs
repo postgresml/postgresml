@@ -17,36 +17,6 @@ use crate::orm::estimator::SklearnBox;
 use crate::orm::search::Search;
 use crate::orm::task::Task;
 
-use pgx::*;
-
-#[pg_extern]
-pub fn validate_python_dependencies() {
-    Python::with_gil(|py| {
-        for module in ["xgboost", "lightgbm", "numpy", "sklearn"] {
-            match py.import(module) {
-                Ok(_) => (),
-                Err(_) => {
-                    panic!(
-                        "The {} package is missing. Install it with `sudo pip3 install {}`",
-                        module, module
-                    );
-                }
-            }
-        }
-    });
-}
-
-#[pg_extern]
-pub fn sklearn_version() -> String {
-    let mut version = String::new();
-
-    Python::with_gil(|py| {
-        let sklearn = py.import("sklearn").unwrap();
-        version = sklearn.getattr("__version__").unwrap().extract().unwrap();
-    });
-
-    version
-}
 
 fn sklearn_algorithm_name(task: Task, algorithm: Algorithm) -> &'static str {
     match task {

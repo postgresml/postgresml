@@ -36,8 +36,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
     let (task, algorithm, num_features) = Spi::get_three_with_args::<String, String, i32>(
         "
         SELECT projects.task::TEXT, models.algorithm::TEXT, models.num_features
-        FROM pgml_rust.models
-        JOIN pgml_rust.projects
+        FROM pgml.models
+        JOIN pgml.projects
             ON projects.id = models.project_id
         WHERE models.id = $1
         LIMIT 1",
@@ -63,8 +63,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
     let num_features = num_features.unwrap();
 
     let (data, hyperparams, engine) = Spi::get_three_with_args::<Vec<u8>, JsonB, String>(
-        "SELECT data, hyperparams, engine::TEXT FROM pgml_rust.models
-        INNER JOIN pgml_rust.files
+        "SELECT data, hyperparams, engine::TEXT FROM pgml.models
+        INNER JOIN pgml.files
             ON models.id = files.model_id 
         WHERE models.id = $1
         LIMIT 1",

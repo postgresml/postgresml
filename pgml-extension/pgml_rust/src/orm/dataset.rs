@@ -51,9 +51,9 @@ fn run_with_args(query: &str, args: Vec<(PgOid, Option<pg_sys::Datum>)>) {
 
 pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
     let diabetes = smartcore::dataset::diabetes::load_dataset();
-    Spi::run("DROP TABLE IF EXISTS pgml_rust.diabetes");
+    Spi::run("DROP TABLE IF EXISTS pgml.diabetes");
     Spi::run(
-        "CREATE TABLE pgml_rust.diabetes (
+        "CREATE TABLE pgml.diabetes (
         age FLOAT4, 
         sex FLOAT4, 
         bmi FLOAT4, 
@@ -69,7 +69,7 @@ pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
     );
     // TODO replace run_with_args with upstream when PR is accepted
     run_with_args(
-        "COMMENT ON TABLE pgml_rust.diabetes IS '{description}'",
+        "COMMENT ON TABLE pgml.diabetes IS '{description}'",
         vec![(
             PgBuiltInOids::TEXTOID.oid(),
             diabetes.description.into_datum(),
@@ -104,7 +104,7 @@ pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
         let target = diabetes.target[i];
         run_with_args(
             "
-        INSERT INTO pgml_rust.diabetes (age, sex, bmi, bp, s1, s2, s3, s4, s5, s6, target) 
+        INSERT INTO pgml.diabetes (age, sex, bmi, bp, s1, s2, s3, s4, s5, s6, target) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         ",
             vec![
@@ -123,16 +123,16 @@ pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
         );
     }
 
-    ("pgml_rust.diabetes".to_string(), limit.try_into().unwrap())
+    ("pgml.diabetes".to_string(), limit.try_into().unwrap())
 }
 
 pub fn load_digits(limit: Option<usize>) -> (String, i64) {
     let digits = smartcore::dataset::digits::load_dataset();
-    Spi::run("DROP TABLE IF EXISTS pgml_rust.digits");
-    Spi::run("CREATE TABLE pgml_rust.digits (image SMALLINT[][], target INTEGER)");
+    Spi::run("DROP TABLE IF EXISTS pgml.digits");
+    Spi::run("CREATE TABLE pgml.digits (image SMALLINT[][], target INTEGER)");
     // TODO replace run_with_args with upstream when PR is accepted
     run_with_args(
-        "COMMENT ON TABLE pgml_rust.digits IS '{description}'",
+        "COMMENT ON TABLE pgml.digits IS '{description}'",
         vec![(
             PgBuiltInOids::TEXTOID.oid(),
             digits.description.into_datum(),
@@ -181,16 +181,16 @@ pub fn load_digits(limit: Option<usize>) -> (String, i64) {
         values.push(format!("(ARRAY[{value}], {target})"));
     }
     let values = values.join(", ");
-    let sql = format!("INSERT INTO pgml_rust.digits (image, target) VALUES {values}");
+    let sql = format!("INSERT INTO pgml.digits (image, target) VALUES {values}");
     Spi::run(&sql);
-    ("pgml_rust.digits".to_string(), limit.try_into().unwrap())
+    ("pgml.digits".to_string(), limit.try_into().unwrap())
 }
 
 pub fn load_iris(limit: Option<usize>) -> (String, i64) {
     let iris = smartcore::dataset::iris::load_dataset();
-    Spi::run("DROP TABLE IF EXISTS pgml_rust.iris");
+    Spi::run("DROP TABLE IF EXISTS pgml.iris");
     Spi::run(
-        "CREATE TABLE pgml_rust.iris (
+        "CREATE TABLE pgml.iris (
         sepal_length FLOAT4, 
         sepal_width FLOAT4, 
         petal_length FLOAT4, 
@@ -200,7 +200,7 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
     );
     // TODO replace run_with_args with upstream when PR is accepted
     run_with_args(
-        "COMMENT ON TABLE pgml_rust.iris IS '{description}'",
+        "COMMENT ON TABLE pgml.iris IS '{description}'",
         vec![(PgBuiltInOids::TEXTOID.oid(), iris.description.into_datum())],
     );
 
@@ -226,7 +226,7 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
         let target = iris.target[i];
         run_with_args(
             "
-        INSERT INTO pgml_rust.iris (sepal_length, sepal_width, petal_length, petal_width, target)
+        INSERT INTO pgml.iris (sepal_length, sepal_width, petal_length, petal_width, target)
         VALUES ($1, $2, $3, $4, $5)
         ",
             vec![
@@ -239,14 +239,14 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
         );
     }
 
-    ("pgml_rust.iris".to_string(), limit.try_into().unwrap())
+    ("pgml.iris".to_string(), limit.try_into().unwrap())
 }
 
 // TODO add upstream into smartcore
 // pub fn load_linnerud(limit: Option<usize>) -> (String, i64) {
 //     let linnerud = smartcore::dataset::linnerud::load_dataset();
-//     Spi::run("DROP TABLE IF EXISTS pgml_rust.linnerud");
-//     Spi::run("CREATE TABLE pgml_rust.linnerud(
+//     Spi::run("DROP TABLE IF EXISTS pgml.linnerud");
+//     Spi::run("CREATE TABLE pgml.linnerud(
 //         chins FLOAT4,
 //         situps FLOAT4,
 //         jumps FLOAT4,
@@ -256,7 +256,7 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
 //     )");
 //     // TODO replace run_with_args with upstream when PR is accepted
 //     run_with_args(
-//         "COMMENT ON TABLE pgml_rust.linnerud IS '{description}'",
+//         "COMMENT ON TABLE pgml.linnerud IS '{description}'",
 //         vec![(PgBuiltInOids::TEXTOID.oid(), linnerud.description.into_datum())],
 //     );
 
@@ -273,7 +273,7 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
 //         let waste = linnerud.target[(i * linnerud.num_labels) + 1];
 //         let pulse = linnerud.target[(i * linnerud.num_labels) + 2];
 //         run_with_args("
-//         INSERT INTO pgml_rust.iris (chins, situps, jumps, weight, waste, pulse)
+//         INSERT INTO pgml.iris (chins, situps, jumps, weight, waste, pulse)
 //         VALUES ($1, $2, $3, $4, $5)
 //         ", vec![
 //             (PgBuiltInOids::FLOAT4OID.oid(), chins.into_datum()),
@@ -285,14 +285,14 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
 //         ]);
 //     }
 
-//     ("pgml_rust.linnerud".to_string(), limit.try_into().unwrap())
+//     ("pgml.linnerud".to_string(), limit.try_into().unwrap())
 // }
 
 pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
     let breast_cancer = smartcore::dataset::breast_cancer::load_dataset();
-    Spi::run("DROP TABLE IF EXISTS pgml_rust.breast_cancer");
+    Spi::run("DROP TABLE IF EXISTS pgml.breast_cancer");
     Spi::run(
-        r#"CREATE TABLE pgml_rust.breast_cancer (
+        r#"CREATE TABLE pgml.breast_cancer (
         "mean radius" FLOAT4, 
         "mean texture" FLOAT4, 
         "mean perimeter" FLOAT4, 
@@ -328,7 +328,7 @@ pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
     );
     // TODO replace run_with_args with upstream when PR is accepted
     run_with_args(
-        "COMMENT ON TABLE pgml_rust.breast_cancer IS '{description}'",
+        "COMMENT ON TABLE pgml.breast_cancer IS '{description}'",
         vec![(
             PgBuiltInOids::TEXTOID.oid(),
             breast_cancer.description.into_datum(),
@@ -352,7 +352,7 @@ pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
     for i in 0..limit {
         run_with_args(
             r#"
-        INSERT INTO pgml_rust.breast_cancer ("mean radius", "mean texture", "mean perimeter", "mean area", "mean smoothness", "mean compactness", "mean concavity", "mean concave points", "mean symmetry", 
+        INSERT INTO pgml.breast_cancer ("mean radius", "mean texture", "mean perimeter", "mean area", "mean smoothness", "mean compactness", "mean concavity", "mean concave points", "mean symmetry", 
             "mean fractal dimension", "radius error", "texture error", "perimeter error", "area error", "smoothness error", "compactness error", "concavity error", "concave points error", "symmetry error", 
             "fractal dimension error", "worst radius", "worst texture", "worst perimeter", "worst area", "worst smoothness", "worst compactness", "worst concavity", "worst concave points", "worst symmetry", 
             "worst fractal dimension", "malignant") 
@@ -486,8 +486,5 @@ pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
         );
     }
 
-    (
-        "pgml_rust.breast_cancer".to_string(),
-        limit.try_into().unwrap(),
-    )
+    ("pgml.breast_cancer".to_string(), limit.try_into().unwrap())
 }

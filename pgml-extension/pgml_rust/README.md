@@ -20,22 +20,28 @@ If you haven't already, install:
 
 ## Python
 
-For using the Scikit-Learn backend, you need to install Python 3.9 or above. If your system comes with Python 3.8 or lower, you'll need to install `libpython3.9-dev` or `libpython3.10-dev`.
+For using the Scikit-Learn engine, you need to install Python 3.9 or above. If your system comes with Python 3.8 or lower, you'll need to install `libpython3.9-dev` or `libpython3.10-dev`.
 
 1. `sudo add-apt-repository ppa:deadsnakes/ppa`
 2. `sudo apt update && sudo apt install libpython3.9-dev libpython3.10-dev`
 
+
+## Update postgresql.conf
+
+You'll need to enable shared memory access for pgml. For local development, this is in `~/.pgx/data-14/postgresql.conf`.
+
+`shared_preload_libraries = 'pgml'       # (change requires restart)`
 
 ## Local development
 
 1. `cargo install cargo-pgx`
 2. `cargo pgx init`
 3. `cargo pgx run`
-4. `DROP EXTENSION IF EXISTS pgml_rust;`
-5. `CREATE EXTENSION pgml_rust;`
-6. `SELECT * FROM pgml_rust.load_dataset('diabetes');`
-7. `SELECT pgml_rust.train('Project name', 'regression', pgml_rust.diabetes', 'target', 'xgboost');`
-8. `SELECT * FROM pgml_rust.predict('Project name', ARRAY[1, 5.0, 2.0]);`
+4. `DROP EXTENSION IF EXISTS pgml;`
+5. `CREATE EXTENSION pgml;`
+6. `SELECT * FROM pgml.load_dataset('diabetes');`
+7. `SELECT pgml.train('Project name', 'regression', 'pgml.diabetes', 'target', 'xgboost');`
+8. `SELECT * FROM pgml.predict('Project name', ARRAY[1, 5.0, 2.0]);`
 
 ## Packaging
 
