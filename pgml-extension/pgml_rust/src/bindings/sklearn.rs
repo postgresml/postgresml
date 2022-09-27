@@ -10,13 +10,12 @@
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use crate::orm::Hyperparams;
 use crate::orm::algorithm::Algorithm;
 use crate::orm::dataset::Dataset;
 use crate::orm::estimator::SklearnBox;
 use crate::orm::search::Search;
 use crate::orm::task::Task;
-
+use crate::orm::Hyperparams;
 
 fn sklearn_algorithm_name(task: Task, algorithm: Algorithm) -> &'static str {
     match task {

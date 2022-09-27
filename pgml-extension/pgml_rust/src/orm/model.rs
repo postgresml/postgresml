@@ -3,11 +3,11 @@ use std::str::FromStr;
 use pgx::*;
 use serde_json::json;
 
-use crate::orm::Runtime;
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
 use crate::orm::Estimator;
 use crate::orm::Project;
+use crate::orm::Runtime;
 use crate::orm::Search;
 use crate::orm::Snapshot;
 
@@ -144,35 +144,35 @@ impl Model {
                 let bytes = sklearn_save(&estimator);
 
                 (Box::new(estimator), bytes)
-            },
+            }
             Runtime::rust => {
                 match self.algorithm {
                     Algorithm::xgboost => {
                         let estimator = xgboost_train(project.task, dataset, &hyperparams);
-        
+
                         let bytes = xgboost_save(&estimator);
-        
+
                         (Box::new(estimator), bytes)
-                    },
-        
+                    }
+
                     Algorithm::lightgbm => {
                         let estimator = lightgbm_train(project.task, dataset, &hyperparams);
                         let bytes = lightgbm_save(&estimator);
-        
+
                         (Box::new(estimator), bytes)
-                    },
+                    }
 
                     _ => todo!(),
                     // Algorithm::smartcore => {
                     //     let estimator =
                     //         smartcore_train(project.task, self.algorithm, dataset, &hyperparams);
-        
+
                     //     let bytes = smartcore_save(&estimator);
-        
+
                     //     (estimator, bytes)
                     // },
                 }
-            },
+            }
         };
 
         // Save the estimator.
