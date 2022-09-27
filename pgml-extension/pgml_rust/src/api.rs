@@ -169,9 +169,7 @@ fn train(
                 (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
             ],
         );
-        info!("hi");
         let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
-        info!("got it");
         if projects.len() == 1024 {
             warning!("Active projects has exceeded capacity map, clearing caches.");
             projects.clear();
