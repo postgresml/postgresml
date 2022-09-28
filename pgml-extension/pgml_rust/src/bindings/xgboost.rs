@@ -1,3 +1,6 @@
+use ndarray::Array1;
+use pyo3::prelude::*;
+use pyo3::types::PyTuple;
 /// XGBoost implementation.
 ///
 /// XGBoost is a family of gradient-boosted decision tree algorithms,
@@ -7,8 +10,12 @@
 use xgboost::{parameters, Booster, DMatrix};
 
 use crate::orm::dataset::Dataset;
+use crate::orm::estimator::calc_metrics;
 use crate::orm::estimator::BoosterBox;
+use crate::orm::search::Search;
 use crate::orm::task::Task;
+use crate::orm::Hyperparams;
+// use crate::orm::estimator::Estimator;
 
 use pgx::*;
 use serde_json;
@@ -236,4 +243,72 @@ pub fn xgboost_test(estimator: &BoosterBox, dataset: &Dataset) -> Vec<f32> {
 pub fn xgboost_predict(estimator: &BoosterBox, x: &[f32]) -> f32 {
     let x = DMatrix::from_dense(x, 1).unwrap();
     estimator.predict(&x).unwrap()[0]
+}
+
+pub fn xgboost_search(
+    task: Task,
+    search: Search, // TODO: support random, only grid supported at the moment
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+    search_params: &Hyperparams,
+) -> (BoosterBox, Hyperparams) {
+    let module = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/bindings/wrappers.py"
+    ));
+
+    // Get the cartesian product of hyperparams.
+    // Couldn't figure out an obvious to do this in Rust :/
+    let params = Python::with_gil(|py| -> String {
+        let module = PyModule::from_code(py, module, "", "").unwrap();
+        let search = module.getattr("generate_params").unwrap();
+        let params: String = search
+            .call1(PyTuple::new(
+                py,
+                &[serde_json::to_string(search_params).unwrap()],
+            ))
+            .unwrap()
+            .extract()
+            .unwrap();
+        params
+    });
+
+    let combinations: Vec<Hyperparams> = serde_json::from_str(&params).unwrap();
+
+    let mut best_metric = 0.0;
+    let mut best_params = Hyperparams::new();
+    let mut best_bst: Option<BoosterBox> = None;
+
+    for params in &combinations {
+        // Merge hyperparams with candidate hyperparameters.
+        let mut params = params.clone();
+        params.extend(hyperparams.clone());
+
+        // Train
+        let bst = xgboost_train(task, dataset, &params);
+
+        // Test
+        let y_hat =
+            Array1::from_shape_vec(dataset.num_test_rows, xgboost_test(&bst, dataset)).unwrap();
+        let y_test =
+            Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
+
+        let metrics = calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task);
+
+        // Compare
+        let metric = match task {
+            Task::regression => metrics.get("r2").unwrap(),
+
+            Task::classification => metrics.get("f1").unwrap(),
+        };
+
+        if metric > &best_metric {
+            best_metric = *metric;
+            best_params = params.clone();
+            best_bst = Some(bst);
+        }
+    }
+
+    // Return the best
+    (best_bst.unwrap(), best_params)
 }

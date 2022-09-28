@@ -15,6 +15,7 @@ import lightgbm
 import numpy as np
 import pickle
 import json
+import itertools
 
 _ALGORITHM_MAP = {
     "linear_regression": sklearn.linear_model.LinearRegression,
@@ -239,3 +240,19 @@ def load(data):
         Scikit-Learn estimator
     """
     return pickle.loads(bytes(data))
+
+
+def generate_params(search_grid):
+    search_grid = json.loads(search_grid)
+    result = []
+
+    # Always sort the keys of a dictionary, for reproducibility
+    items = sorted(search_grid.items())
+    if not items:
+        return {}
+    else:
+        keys, values = zip(*items)
+        for v in itertools.product(*values):
+            params = dict(zip(keys, v))
+            result.append(params)
+    return json.dumps(result)

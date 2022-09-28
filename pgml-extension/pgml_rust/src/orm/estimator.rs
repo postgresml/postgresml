@@ -98,7 +98,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
 }
 
 /// Caculate model metrics used to evaluate its performance.
-fn calc_metrics(
+pub fn calc_metrics(
     y_test: &Array1<f32>,
     y_hat: &Array1<f32>,
     distinct_labels: u32,
