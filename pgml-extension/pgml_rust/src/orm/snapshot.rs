@@ -7,6 +7,7 @@ use serde_json::json;
 
 use crate::orm::Dataset;
 use crate::orm::Sampling;
+use crate::orm::Status;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Column {
@@ -51,7 +52,7 @@ pub struct Snapshot {
     pub y_column_name: Vec<String>,
     pub test_size: f32,
     pub test_sampling: Sampling,
-    pub status: String,
+    pub status: Status,
     pub columns: Option<JsonB>,
     pub analysis: Option<JsonB>,
     pub created_at: Timestamp,
@@ -102,16 +103,16 @@ impl Snapshot {
         test_sampling: Sampling,
     ) -> Snapshot {
         let mut snapshot: Option<Snapshot> = None;
-
+        let status = Status::in_progress;
         Spi::connect(|client| {
-            let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4::pgml.sampling, $5) RETURNING id, relation_name, y_column_name, test_size, test_sampling, status, columns, analysis, created_at, updated_at;",
+            let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4::pgml.sampling, $5::pgml.status) RETURNING id, relation_name, y_column_name, test_size, test_sampling, status, columns, analysis, created_at, updated_at;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), relation_name.into_datum()),
                     (PgBuiltInOids::TEXTARRAYOID.oid(), vec![y_column_name].into_datum()),
                     (PgBuiltInOids::FLOAT4OID.oid(), test_size.into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), test_sampling.to_string().into_datum()),
-                    (PgBuiltInOids::TEXTOID.oid(), "new".to_string().into_datum()),
+                    (PgBuiltInOids::TEXTOID.oid(), status.to_string().into_datum()),
                 ])
             ).first();
             let mut s = Snapshot {
@@ -120,9 +121,9 @@ impl Snapshot {
                 y_column_name: result.get_datum(3).unwrap(),
                 test_size: result.get_datum(4).unwrap(),
                 test_sampling: result.get_datum(5).unwrap(),
-                status: result.get_datum(6).unwrap(),
-                columns: None,
-                analysis: None,
+                status,         // 6
+                columns: None,  // 7
+                analysis: None, // 8
                 created_at: result.get_datum(9).unwrap(),
                 updated_at: result.get_datum(10).unwrap(),
             };
@@ -134,11 +135,6 @@ impl Snapshot {
                 sql += " ORDER BY random()";
             }
             client.select(&sql, None, None);
-            client.select(
-                r#"UPDATE "pgml"."snapshots" SET status = 'snapped' WHERE id = $1"#,
-                None,
-                Some(vec![(PgBuiltInOids::INT8OID.oid(), s.id.into_datum())]),
-            );
             s.analyze();
             snapshot = Some(s);
             Ok(Some(1))
@@ -299,7 +295,8 @@ impl Snapshot {
             let column_datum = JsonB(json!(columns));
             self.analysis = Some(JsonB(json!(analysis)));
             self.columns = Some(JsonB(json!(columns)));
-            client.select("UPDATE pgml.snapshots SET status = 'complete', analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
+            client.select("UPDATE pgml.snapshots SET status = $1::pgml.status, analysis = $2, columns = $3 WHERE id = $4", Some(1), Some(vec![
+                (PgBuiltInOids::TEXTOID.oid(), Status::successful.to_string().into_datum()),
                 (PgBuiltInOids::JSONBOID.oid(), analysis_datum.into_datum()),
                 (PgBuiltInOids::JSONBOID.oid(), column_datum.into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),

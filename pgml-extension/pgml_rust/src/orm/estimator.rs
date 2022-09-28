@@ -80,10 +80,6 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         )
     });
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 1bb34a0 (create distinct concepts of algorithms and runtimes from engines)
     let estimator: Box<dyn Estimator> = match runtime {
         Runtime::rust => {
             match algorithm {
@@ -91,11 +87,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
                 Algorithm::lightgbm => Box::new(lightgbm_load(&data)),
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
             }
-<<<<<<< HEAD
         }
-=======
-        },
->>>>>>> 1bb34a0 (create distinct concepts of algorithms and runtimes from engines)
         Runtime::python => Box::new(sklearn_load(&data, num_features)),
     };
 
