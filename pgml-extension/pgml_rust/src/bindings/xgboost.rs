@@ -7,9 +7,14 @@
 use xgboost::{parameters, Booster, DMatrix};
 
 use crate::orm::dataset::Dataset;
+use crate::orm::estimator::calc_metrics;
 use crate::orm::estimator::BoosterBox;
+use crate::orm::search::Search;
 use crate::orm::task::Task;
+use crate::orm::Hyperparams;
+use itertools::Itertools;
 
+use ndarray::Array1;
 use pgx::*;
 use serde_json;
 
@@ -236,4 +241,69 @@ pub fn xgboost_test(estimator: &BoosterBox, dataset: &Dataset) -> Vec<f32> {
 pub fn xgboost_predict(estimator: &BoosterBox, x: &[f32]) -> f32 {
     let x = DMatrix::from_dense(x, 1).unwrap();
     estimator.predict(&x).unwrap()[0]
+}
+
+pub fn xgboost_search(
+    task: Task,
+    search: Search, // TODO: support random, only grid supported at the moment
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+    search_params: &Hyperparams,
+) -> (BoosterBox, Hyperparams) {
+    let mut param_names = Vec::new();
+    let mut search_field = Vec::new();
+
+    // Iterate in order.
+    for key in search_params.keys().into_iter() {
+        param_names.push(key.to_string());
+
+        let values: Vec<serde_json::Value> =
+            search_params.get(key).unwrap().as_array().unwrap().to_vec();
+
+        search_field.push(values);
+    }
+
+    // Grid search
+    let search_field = search_field.into_iter().multi_cartesian_product();
+    let mut best_metric = 0.0;
+    let mut best_params = Hyperparams::new();
+    let mut best_bst: Option<BoosterBox> = None;
+
+    for combo in search_field {
+        let mut candidates = Hyperparams::new();
+
+        for (idx, value) in combo.iter().enumerate() {
+            // Get the parameter name
+            let k = param_names[idx].clone();
+            candidates.insert(k, value.clone());
+        }
+
+        candidates.extend(hyperparams.clone());
+
+        let bst = xgboost_train(task, dataset, &candidates);
+
+        // Test
+        let y_hat =
+            Array1::from_shape_vec(dataset.num_test_rows, xgboost_test(&bst, dataset)).unwrap();
+        let y_test =
+            Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
+
+        let metrics = calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task);
+
+        // Compare
+        let metric = match task {
+            Task::regression => metrics.get("r2").unwrap(),
+
+            Task::classification => metrics.get("f1").unwrap(),
+        };
+
+        if metric > &best_metric {
+            best_metric = *metric;
+            best_params = candidates.clone();
+            best_bst = Some(bst);
+        }
+    }
+
+    // Return the best
+    (best_bst.unwrap(), best_params)
 }

@@ -12,7 +12,7 @@ use crate::orm::Status;
 
 use crate::bindings::lightgbm::{lightgbm_save, lightgbm_train};
 use crate::bindings::sklearn::{sklearn_save, sklearn_search, sklearn_train};
-use crate::bindings::xgboost::{xgboost_save, xgboost_train};
+use crate::bindings::xgboost::{xgboost_save, xgboost_search, xgboost_train};
 
 #[derive(Debug)]
 pub struct Model {
@@ -160,7 +160,23 @@ impl Model {
             Runtime::rust => {
                 match self.algorithm {
                     Algorithm::xgboost => {
-                        let estimator = xgboost_train(project.task, dataset, &hyperparams);
+                        let estimator = match self.search {
+                            Some(search) => {
+                                let (estimator, chosen_hyperparams) = xgboost_search(
+                                    project.task,
+                                    search,
+                                    dataset,
+                                    &hyperparams,
+                                    self.search_params.0.as_object().unwrap(),
+                                );
+
+                                hyperparams.extend(chosen_hyperparams);
+
+                                estimator
+                            }
+
+                            None => xgboost_train(project.task, dataset, &hyperparams),
+                        };
 
                         let bytes = xgboost_save(&estimator);
 
