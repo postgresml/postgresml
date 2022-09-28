@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use pgx::*;
 use serde_json::json;
 
@@ -10,6 +8,7 @@ use crate::orm::Project;
 use crate::orm::Runtime;
 use crate::orm::Search;
 use crate::orm::Snapshot;
+use crate::orm::Status;
 
 use crate::bindings::lightgbm::{lightgbm_save, lightgbm_train};
 use crate::bindings::sklearn::{sklearn_save, sklearn_search, sklearn_train};
@@ -23,7 +22,7 @@ pub struct Model {
     pub algorithm: Algorithm,
     pub hyperparams: JsonB,
     pub runtime: Runtime,
-    pub status: String,
+    pub status: Status,
     pub metrics: Option<JsonB>,
     pub search: Option<Search>,
     pub search_params: JsonB,
@@ -57,12 +56,12 @@ impl Model {
         };
 
         let dataset = snapshot.dataset();
-
+        let status = Status::in_progress;
         // Create the model record.
         Spi::connect(|client| {
             let result = client.select("
           INSERT INTO pgml.models (project_id, snapshot_id, algorithm, runtime, hyperparams, status, search, search_params, search_args, num_features) 
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+          VALUES ($1, $2, cast($3 AS pgml.algorithm), cast($4 AS pgml.runtime), $5, cast($6 as pgml.status), $7, $8, $9, $10) 
           RETURNING id, project_id, snapshot_id, algorithm, runtime, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
               Some(1),
               Some(vec![
@@ -71,8 +70,7 @@ impl Model {
                   (PgBuiltInOids::TEXTOID.oid(), algorithm.to_string().into_datum()),
                   (PgBuiltInOids::TEXTOID.oid(), runtime.to_string().into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), hyperparams.into_datum()),
-                  // TODO make status an enum
-                  (PgBuiltInOids::TEXTOID.oid(), "new".to_string().into_datum()),
+                  (PgBuiltInOids::TEXTOID.oid(), status.to_string().into_datum()),
                   (PgBuiltInOids::TEXTOID.oid(), match search {
                     Some(search) => Some(search.to_string()),
                     None => None,
@@ -87,16 +85,16 @@ impl Model {
                     id: result.get_datum(1).unwrap(),
                     project_id: result.get_datum(2).unwrap(),
                     snapshot_id: result.get_datum(3).unwrap(),
-                    algorithm: Algorithm::from_str(result.get_datum(4).unwrap()).unwrap(),
-                    hyperparams: result.get_datum(5).unwrap(),
-                    status: result.get_datum(6).unwrap(),
-                    metrics: result.get_datum(7),
-                    search, // TODO
-                    search_params: result.get_datum(9).unwrap(),
-                    search_args: result.get_datum(10).unwrap(),
-                    created_at: result.get_datum(11).unwrap(),
-                    updated_at: result.get_datum(12).unwrap(),
-                    runtime,
+                    algorithm, // 4
+                    runtime,   // 5
+                    hyperparams: result.get_datum(6).unwrap(),
+                    status, // 6,
+                    metrics: result.get_datum(8),
+                    search, // 9
+                    search_params: result.get_datum(10).unwrap(),
+                    search_args: result.get_datum(11).unwrap(),
+                    created_at: result.get_datum(12).unwrap(),
+                    updated_at: result.get_datum(13).unwrap(),
                     estimator: None,
                 });
             }
@@ -108,6 +106,22 @@ impl Model {
 
         model.fit(project, &dataset);
         model.test(project, &dataset);
+
+        Spi::connect(|client| {
+            client.select(
+                "UPDATE pgml.models SET status = $1::pgml.status WHERE id = $2",
+                Some(1),
+                Some(vec![
+                    (
+                        PgBuiltInOids::TEXTOID.oid(),
+                        Status::successful.to_string().into_datum(),
+                    ),
+                    (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+                ]),
+            );
+
+            Ok(Some(1))
+        });
 
         model
     }
