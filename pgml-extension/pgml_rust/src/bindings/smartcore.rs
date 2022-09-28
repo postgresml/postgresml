@@ -396,18 +396,12 @@ pub fn smartcore_train(
 
         Algorithm::random_forest => {
             let max_depth = match hyperparams.get("max_depth") {
-                Some(max_depth) => match max_depth.as_u64() {
-                    Some(max_depth) => Some(max_depth as u16),
-                    None => None,
-                },
+                Some(max_depth) => max_depth.as_u64().map(|max_depth| max_depth as u16),
                 None => None,
             };
 
             let m = match hyperparams.get("m") {
-                Some(m) => match m.as_u64() {
-                    Some(m) => Some(m as usize),
-                    None => None,
-                },
+                Some(m) => m.as_u64().map(|m| m as usize),
                 None => None,
             };
 
@@ -490,8 +484,8 @@ pub fn smartcore_train(
 }
 
 /// Save a SmartCore estimator.
-pub fn smartcore_save(estimator: &Box<dyn Estimator>) -> Vec<u8> {
-    let bytes: Vec<u8> = rmp_serde::to_vec(&*estimator).unwrap();
+pub fn smartcore_save(estimator: &dyn Estimator) -> Vec<u8> {
+    let bytes: Vec<u8> = rmp_serde::to_vec(estimator).unwrap();
     bytes
 }
 

@@ -77,7 +77,7 @@ pub fn lightgbm_test(estimator: &LightgbmBox, dataset: &Dataset) -> Vec<f32> {
     let x_test = dataset.x_test();
     let num_features = dataset.num_features;
 
-    let probabilities = estimator.predict(&x_test, num_features as i32).unwrap();
+    let probabilities = estimator.predict(x_test, num_features as i32).unwrap();
     let num_class = estimator.num_class().unwrap();
 
     // Given the proabilities of each class, find the most likely
@@ -88,13 +88,11 @@ pub fn lightgbm_test(estimator: &LightgbmBox, dataset: &Dataset) -> Vec<f32> {
         .map(|chunk| {
             let mut max = 0.0;
             let mut answer = 0;
-            let mut it = 0;
-            for class_prob in chunk {
-                if *class_prob > max {
-                    max = *class_prob;
+            for (it, &class_prob) in chunk.iter().enumerate() {
+                if class_prob > max {
+                    max = class_prob;
                     answer = it;
                 }
-                it += 1;
             }
 
             answer as f32
@@ -106,18 +104,15 @@ pub fn lightgbm_test(estimator: &LightgbmBox, dataset: &Dataset) -> Vec<f32> {
 
 /// Predict a novel datapoint using the LightGBM estimator.
 pub fn lightgbm_predict(estimator: &LightgbmBox, x: &[f32]) -> f32 {
-    let probabilities = estimator.predict(&x, x.len() as i32).unwrap();
+    let probabilities = estimator.predict(x, x.len() as i32).unwrap();
 
     let mut max = 0.0;
-    let mut it = 0;
     let mut answer = 0;
-
-    for class_prob in &probabilities {
-        if *class_prob > max {
-            max = *class_prob;
+    for (it, &class_prob) in probabilities.iter().enumerate() {
+        if class_prob > max {
+            max = class_prob;
             answer = it;
         }
-        it += 1;
     }
 
     answer as f32

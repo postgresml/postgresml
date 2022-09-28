@@ -33,6 +33,7 @@ pub struct Model {
 }
 
 impl Model {
+    #[allow(clippy::too_many_arguments)]
     pub fn create(
         project: &Project,
         snapshot: &Snapshot,
@@ -71,10 +72,7 @@ impl Model {
                   (PgBuiltInOids::TEXTOID.oid(), runtime.to_string().into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), hyperparams.into_datum()),
                   (PgBuiltInOids::TEXTOID.oid(), status.to_string().into_datum()),
-                  (PgBuiltInOids::TEXTOID.oid(), match search {
-                    Some(search) => Some(search.to_string()),
-                    None => None,
-                  }.into_datum()),
+                  (PgBuiltInOids::TEXTOID.oid(), search.map(|search| search.to_string()).into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_params.into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_args.into_datum()),
                   (PgBuiltInOids::INT4OID.oid(), dataset.num_features.into_datum()),
@@ -144,7 +142,7 @@ impl Model {
                             search,
                             dataset,
                             &hyperparams,
-                            &self.search_params.0.as_object().unwrap(),
+                            self.search_params.0.as_object().unwrap(),
                         );
 
                         hyperparams.extend(chosen_hyperparams);

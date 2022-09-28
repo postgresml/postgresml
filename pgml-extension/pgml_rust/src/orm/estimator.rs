@@ -325,7 +325,7 @@ impl serde::Serialize for SklearnBox {
 impl Estimator for SklearnBox {
     fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
         let y_test = dataset.y_test();
-        let y_hat = sklearn_test(&self, dataset);
+        let y_hat = sklearn_test(self, dataset);
 
         calc_metrics(
             &Array1::from_shape_vec(dataset.num_test_rows, y_test.to_vec()).unwrap(),
