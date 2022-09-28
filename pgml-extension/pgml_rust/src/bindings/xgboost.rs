@@ -1,6 +1,3 @@
-use ndarray::Array1;
-use pyo3::prelude::*;
-use pyo3::types::PyTuple;
 /// XGBoost implementation.
 ///
 /// XGBoost is a family of gradient-boosted decision tree algorithms,
@@ -15,8 +12,9 @@ use crate::orm::estimator::BoosterBox;
 use crate::orm::search::Search;
 use crate::orm::task::Task;
 use crate::orm::Hyperparams;
-// use crate::orm::estimator::Estimator;
+use itertools::Itertools;
 
+use ndarray::Array1;
 use pgx::*;
 use serde_json;
 
@@ -252,40 +250,37 @@ pub fn xgboost_search(
     hyperparams: &Hyperparams,
     search_params: &Hyperparams,
 ) -> (BoosterBox, Hyperparams) {
-    let module = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/src/bindings/wrappers.py"
-    ));
+    let mut param_names = Vec::new();
+    let mut search_field = Vec::new();
 
-    // Get the cartesian product of hyperparams.
-    // Couldn't figure out an obvious to do this in Rust :/
-    let params = Python::with_gil(|py| -> String {
-        let module = PyModule::from_code(py, module, "", "").unwrap();
-        let search = module.getattr("generate_params").unwrap();
-        let params: String = search
-            .call1(PyTuple::new(
-                py,
-                &[serde_json::to_string(search_params).unwrap()],
-            ))
-            .unwrap()
-            .extract()
-            .unwrap();
-        params
-    });
+    // Iterate in order.
+    for key in search_params.keys().into_iter() {
+        param_names.push(key.to_string());
 
-    let combinations: Vec<Hyperparams> = serde_json::from_str(&params).unwrap();
+        let values: Vec<serde_json::Value> =
+            search_params.get(key).unwrap().as_array().unwrap().to_vec();
 
+        search_field.push(values);
+    }
+
+    // Grid search
+    let search_field = search_field.into_iter().multi_cartesian_product();
     let mut best_metric = 0.0;
     let mut best_params = Hyperparams::new();
     let mut best_bst: Option<BoosterBox> = None;
 
-    for params in &combinations {
-        // Merge hyperparams with candidate hyperparameters.
-        let mut params = params.clone();
-        params.extend(hyperparams.clone());
+    for combo in search_field {
+        let mut candidates = Hyperparams::new();
 
-        // Train
-        let bst = xgboost_train(task, dataset, &params);
+        for (idx, value) in combo.iter().enumerate() {
+            // Get the parameter name
+            let k = param_names[idx].clone();
+            candidates.insert(k, value.clone());
+        }
+
+        candidates.extend(hyperparams.clone());
+
+        let bst = xgboost_train(task, dataset, &candidates);
 
         // Test
         let y_hat =
@@ -304,7 +299,7 @@ pub fn xgboost_search(
 
         if metric > &best_metric {
             best_metric = *metric;
-            best_params = params.clone();
+            best_params = candidates.clone();
             best_bst = Some(bst);
         }
     }
