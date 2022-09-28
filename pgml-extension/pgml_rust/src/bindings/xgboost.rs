@@ -219,8 +219,8 @@ pub fn xgboost_save(estimator: &BoosterBox) -> Vec<u8> {
 }
 
 /// Load an XGBoost estimator from bytes.
-pub fn xgboost_load(data: &Vec<u8>) -> BoosterBox {
-    let bst = Booster::load_buffer(&*data).unwrap();
+pub fn xgboost_load(data: &[u8]) -> BoosterBox {
+    let bst = Booster::load_buffer(data).unwrap();
     BoosterBox::new(bst)
 }
 
