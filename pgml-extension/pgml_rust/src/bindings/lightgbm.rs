@@ -40,7 +40,7 @@ pub fn lightgbm_train(task: Task, dataset: &Dataset, hyperparams: &Hyperparams) 
 
     let bst = lightgbm::Booster::train(dataset, &json! {hyperparams}).unwrap();
 
-    LightgbmBox::new(bst)
+    LightgbmBox::new(bst, task)
 }
 
 /// Serialize an LightGBm estimator into bytes.
@@ -58,7 +58,7 @@ pub fn lightgbm_save(estimator: &LightgbmBox) -> Vec<u8> {
 }
 
 /// Load an LightGBM estimator from bytes.
-pub fn lightgbm_load(data: &Vec<u8>) -> LightgbmBox {
+pub fn lightgbm_load(data: &Vec<u8>, task: Task) -> LightgbmBox {
     // Oh boy
     let r: u64 = rand::random();
     let path = format!("/tmp/pgml_{}.bin", r);
@@ -69,7 +69,7 @@ pub fn lightgbm_load(data: &Vec<u8>) -> LightgbmBox {
 
     std::fs::remove_file(&path).unwrap();
 
-    LightgbmBox::new(bst)
+    LightgbmBox::new(bst, task)
 }
 
 /// Validate a trained estimator against the test dataset.
@@ -77,18 +77,46 @@ pub fn lightgbm_test(estimator: &LightgbmBox, dataset: &Dataset) -> Vec<f32> {
     let x_test = dataset.x_test();
     let num_features = dataset.num_features;
 
-    let probabilities = estimator.predict(x_test, num_features as i32).unwrap();
+    let results = estimator.predict(x_test, num_features as i32).unwrap();
     let num_class = estimator.num_class().unwrap();
 
-    // Given the proabilities of each class, find the most likely
-    // and return that as the result.
-    let y_hat: Vec<f32> = probabilities
-        .as_slice()
-        .chunks(num_class as usize)
-        .map(|chunk| {
+    match estimator.task() {
+        // Classification returns probabilities for all classes.
+        Task::classification => {
+            let y_hat: Vec<f32> = results
+                .as_slice()
+                .chunks(num_class as usize)
+                .map(|chunk| {
+                    let mut max = 0.0;
+                    let mut answer = 0;
+                    for (it, &class_prob) in chunk.iter().enumerate() {
+                        if class_prob > max {
+                            max = class_prob;
+                            answer = it;
+                        }
+                    }
+
+                    answer as f32
+                })
+                .collect();
+
+            y_hat
+        }
+
+        // Regression returns the predicted value on the curve.
+        Task::regression => results.into_iter().map(|y_hat| y_hat as f32).collect(),
+    }
+}
+
+/// Predict a novel datapoint using the LightGBM estimator.
+pub fn lightgbm_predict(estimator: &LightgbmBox, x: &[f32]) -> f32 {
+    let results = estimator.predict(x, x.len() as i32).unwrap();
+
+    match estimator.task() {
+        Task::classification => {
             let mut max = 0.0;
             let mut answer = 0;
-            for (it, &class_prob) in chunk.iter().enumerate() {
+            for (it, &class_prob) in results.iter().enumerate() {
                 if class_prob > max {
                     max = class_prob;
                     answer = it;
@@ -96,24 +124,8 @@ pub fn lightgbm_test(estimator: &LightgbmBox, dataset: &Dataset) -> Vec<f32> {
             }
 
             answer as f32
-        })
-        .collect();
-
-    y_hat
-}
-
-/// Predict a novel datapoint using the LightGBM estimator.
-pub fn lightgbm_predict(estimator: &LightgbmBox, x: &[f32]) -> f32 {
-    let probabilities = estimator.predict(x, x.len() as i32).unwrap();
-
-    let mut max = 0.0;
-    let mut answer = 0;
-    for (it, &class_prob) in probabilities.iter().enumerate() {
-        if class_prob > max {
-            max = class_prob;
-            answer = it;
         }
-    }
 
-    answer as f32
+        Task::regression => results[0] as f32,
+    }
 }

@@ -44,7 +44,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
     );
 
-    let _task = Task::from_str(&task.unwrap_or_else(|| {
+    let task = Task::from_str(&task.unwrap_or_else(|| {
         panic!(
             "Project has gone missing for model: {}. Your model store has been corrupted.",
             model_id
@@ -84,7 +84,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         Runtime::rust => {
             match algorithm {
                 Algorithm::xgboost => Box::new(xgboost_load(&data)),
-                Algorithm::lightgbm => Box::new(lightgbm_load(&data)),
+                Algorithm::lightgbm => Box::new(lightgbm_load(&data, task)),
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
             }
         }
@@ -344,13 +344,19 @@ impl Estimator for SklearnBox {
 /// LightGBM implementation of the Estimator trait.
 pub struct LightgbmBox {
     contents: Box<lightgbm::Booster>,
+    task: Task,
 }
 
 impl LightgbmBox {
-    pub fn new(contents: lightgbm::Booster) -> Self {
+    pub fn new(contents: lightgbm::Booster, task: Task) -> Self {
         LightgbmBox {
             contents: Box::new(contents),
+            task,
         }
+    }
+
+    pub fn task(&self) -> Task {
+        self.task
     }
 }
 
