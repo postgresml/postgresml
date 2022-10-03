@@ -4,7 +4,7 @@ description: A story about including Scikit-learn into our Rust extension and pr
 ---
 
 
-# Preserving Backwards Compatibility in PostgresML v2.0
+# Preserving Backwards Compatibility in PostgresML 2.0
 
 <p class="author">
   <img width="54px" height="54px" src="/images/team/lev.jpg" alt="Author" />
@@ -37,7 +37,7 @@ Making a massive Python library work under a completely different environment is
 
 ### Hello Python, I am Rust
 
-First thing we needed to do was to make sure Scikit can even run under PyO3. So we wrote a small wrapper around all the algorithms we implemented in v1.0 and called it from inside our Rust source code. The wrapper itself is just 200 lines of code and most of it was a mapping between algorithm names and Scikit's Python classes.
+First thing we needed to do was to make sure Scikit can even run under PyO3. So we wrote a small wrapper around all the algorithms we implemented in 1.0 and called it from inside our Rust source code. The wrapper itself is just 200 lines of code and most of it was a mapping between algorithm names and Scikit's Python classes.
 
 Using the wrapper was surprisingly easy:
 
@@ -65,7 +65,7 @@ Our Python code was compiled and ready to go. We trained a model with data comin
 
 ### Did it Work?
 
-Since we have dozens of ML algorithms in v1.0, we had a pretty decent test suite to make sure all of them worked. My local dev is an Ubuntu 22.04 gaming rig (I still dual-boot though), so I had no issues running the test suite, training all Scikit algorithms on the toy datasets, and getting predictions back in a reasonable amount of time. Drunk on my success, I called the job done, merged the PR, and moved on.
+Since we have dozens of ML algorithms in 1.0, we had a pretty decent test suite to make sure all of them worked. My local dev is an Ubuntu 22.04 gaming rig (I still dual-boot though), so I had no issues running the test suite, training all Scikit algorithms on the toy datasets, and getting predictions back in a reasonable amount of time. Drunk on my success, I called the job done, merged the PR, and moved on.
 
 Then Montana decided to tried my work on his computer but instead of getting a trained model, he got this:
 
