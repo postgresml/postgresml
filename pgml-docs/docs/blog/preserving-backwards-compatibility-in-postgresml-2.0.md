@@ -1,6 +1,6 @@
 ---
 author: Lev Kokotov
-description: Keeping backwards compatibility is one of the most important tenants of any system.
+description: A story about including Scikit-learn into our Rust extension and preserving backwards compatibility in the process
 ---
 
 
