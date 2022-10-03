@@ -17,7 +17,7 @@ Some of you may remember the day Python 3 was released. The changes seemed sublt
 
 Most projects won't have that luxury, especially if you're just starting out. For us at PostgresML, backwards compatibility is as important as progress.
 
-PostgresML 2.0 is coming out soon and we're rewritten everything in Rust for a [35x performance improvement](/blog/postgresml-is-moving-to-rust-for-our-2.0-release/). The previous version was written in Python, the de facto machine learning environment with the most libraries. Now that we were using Linfa and SmartCore, we could of theoretically went ahead without Python, but we weren't quite ready to let go of all the functionality provided by the Python ecosystem, and I'm sure many of our users weren't either. So what could we do to preserve features, backwards compatibility, and our users' trust?
+PostgresML 2.0 is coming out soon and we're rewritten everything in Rust for a [35x performance improvement](/blog/postgresml-is-moving-to-rust-for-our-2.0-release/). The previous version was written in Python, the de facto machine learning environment with the most libraries. Now that we were using Linfa and SmartCore, we could have theoretically went ahead without Python, but we weren't quite ready to let go of all the functionality provided by the Python ecosystem, and I'm sure many of our users weren't either. So what could we do to preserve features, backwards compatibility, and our users' trust?
 
 PyO3 to the rescue.
 
