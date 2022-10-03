@@ -146,7 +146,7 @@ nav:
         - Which Database, That is the Question: blog/which-database-that-is-the-question.md
         - Oxidizing Machine Learning: blog/oxidizing-machine-learning.md
         - PostgresML is Moving to Rust for our 2.0 Release: blog/postgresml-is-moving-to-rust-for-our-2.0-release.md
-        - Backwards Compatible or Bust: blog/backwards-compatible-or-bust.md
+        - Preserving Backwards Compatibility in PostgresML 2.0: blog/backwards-compatible-or-bust.md
     - About:
         - Team: about/team.md
         - Roadmap: about/roadmap.md
