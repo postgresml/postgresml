@@ -83,7 +83,7 @@ LOG:  server process (PID 11352) was terminated by signal 11:
 Segmentation fault
 ```
 
-Segmentation fault, in Rust? That's supposed to be impossible. A segmentation fault is when an executable reads parts of the memory it doesn't have access to; it's effectively a bad memory read, something that doesn't happen in Rust under normal conditions. But we knew our project was far from normal. More confusingly, the error was coming from inside Scikit. It would of made sense if it was XGBoost or LightGBM, which we wrapped with some Rust `unsafe` blocks, but the error was coming from a universally used Python library.
+A segmentation fault, in Rust? That's supposed to be impossible. A segmentation fault is when an executable reads parts of the memory it doesn't have access to; it's effectively a bad memory read, something that doesn't happen in Rust under normal conditions. But we knew our project was far from normal. More confusingly, the error was coming from inside Scikit. It would have made sense if it was XGBoost or LightGBM, which we wrapped with some Rust `unsafe` blocks, but the error was coming from a universally used Python library.
 
 ### Debugging Ten Layers Down
 
