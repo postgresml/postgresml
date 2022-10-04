@@ -61,7 +61,7 @@ impl Model {
             let result = client.select("
           INSERT INTO pgml.models (project_id, snapshot_id, algorithm, runtime, hyperparams, status, search, search_params, search_args, num_features) 
           VALUES ($1, $2, cast($3 AS pgml.algorithm), cast($4 AS pgml.runtime), $5, cast($6 as pgml.status), $7, $8, $9, $10) 
-          RETURNING id, project_id, snapshot_id, algorithm::text, runtime, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
+          RETURNING id, project_id, snapshot_id, algorithm, runtime, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
               Some(1),
               Some(vec![
                   (PgBuiltInOids::INT8OID.oid(), project.id.into_datum()),
