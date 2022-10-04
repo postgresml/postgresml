@@ -116,7 +116,9 @@ nav:
     - User Guides:
         - Setup:
             - Quick Start with Docker: user_guides/setup/quick_start_with_docker.md
-            - Native Installation: user_guides/setup/native_installation.md
+            - Installation: 
+                # - v2.0: user_guides/setup/v2/installation.md
+                - v1.0: user_guides/setup/installation.md
             - Distributed Training: user_guides/setup/distributed_training.md
             - GPU Support: user_guides/setup/gpu_support.md
         - Training:

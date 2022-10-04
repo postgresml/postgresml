@@ -1,5 +1,5 @@
 Package: postgresql-pgml-PGVERSION
-Version: VERSION
+Version: PACKAGE_VERSION
 Section: base
 Priority: optional
 Architecture: ARCH

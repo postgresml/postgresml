@@ -3,8 +3,8 @@
 # Build a .deb for the Postgres and Ubuntu version.
 #
 
-VERSION=${1:-0.0.4}
-OUTPUT_DIR=${2:-"."}
+PACKAGE_VERSION=${PACKAGE_VERSION:-0.0.0}
+OUTPUT_DIR=${OUTPUT_DIR:-"."}
 
 if [[ $(uname -a) == *"aarch64"* ]]; then
     ARCH="arm64"
@@ -29,21 +29,23 @@ else
     exit 1
 fi
 
-TARGET="target/release/pgml_rust-pg${PGVERSION}"
+TARGET="target/release/pgml-pg${PGVERSION}"
 UBUNTU_VERSION=$(lsb_release -a | grep Release | awk '{ print $2 }')
+
+ls -R ${TARGET}
 
 mkdir -p ${TARGET}/DEBIAN
 cp control ${TARGET}/DEBIAN/control
 
 # Save version and arch.
 sed -i "s/PGVERSION/${PGVERSION}/g" ${TARGET}/DEBIAN/control
-sed -i "s/VERSION/${VERSION}/g" ${TARGET}/DEBIAN/control
+sed -i "s/PACKAGE_VERSION/${PACKAGE_VERSION}/g" ${TARGET}/DEBIAN/control
 sed -i "s/ARCH/${ARCH}/g" ${TARGET}/DEBIAN/control
 
 # Show me what we got.
 cat ${TARGET}/DEBIAN/control
 
-PACKAGE=postgresql-pgml-${PGVERSION}_${VERSION}-ubuntu${UBUNTU_VERSION}-${ARCH}.deb
+PACKAGE=postgresql-pgml-${PGVERSION}_${PACKAGE_VERSION}-ubuntu${UBUNTU_VERSION}-${ARCH}.deb
 
 # Build the debian package
 dpkg-deb --build ${TARGET} $OUTPUT_DIR/${PACKAGE}
