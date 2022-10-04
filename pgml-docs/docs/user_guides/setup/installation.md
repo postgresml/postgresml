@@ -1,4 +1,4 @@
-# Native Installation
+# Installation
 
 A PostgresML deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](https://github.com/postgresml/postgresml/tree/master/pgml-extension/)) that facilitates the machine learning lifecycle inside the database. Additionally, we provide a dashboard ([pgml-dashboard](https://github.com/postgresml/postgresml/tree/master/pgml-dashboard/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use. 
 

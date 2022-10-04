@@ -1,11 +1,12 @@
 #
 # Extension builder.
 #
-ARG VERSION=22.04
-FROM ubuntu:${VERSION}
+ARG UBUNTU_VERSION=22.04
+FROM ubuntu:${UBUNTU_VERSION}
 
 ARG PGVERSION=14
 ARG DEBIAN_FRONTEND=noninteractive
+ARG PACKAGE_VERSION=2.0.0
 ENV TZ=Etc/UTC
 
 # Apt-fast
@@ -46,6 +47,9 @@ RUN cargo pgx package
 VOLUME /output
 USER root
 
+ENV PACKAGE_VERSION=$PACKAGE_VERSION
+ENV OUTPUT_DIR=/output
+
 # Run
-ENTRYPOINT ["bash", "docker/build_ubuntu_deb.sh", "0.0.4", "/output"]
+ENTRYPOINT ["bash", "docker/build_ubuntu_deb.sh", "/output"]
 
