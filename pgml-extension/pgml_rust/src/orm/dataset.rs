@@ -29,7 +29,7 @@ impl Dataset {
         &self.y[self.num_train_rows * self.num_labels..]
     }
 
-    pub fn distinct_labels(&self) -> u32 {
+    pub fn distinct_labels(&self) -> usize {
         let mut v = HashSet::new();
         // Treat the f32 values as u32 for std::cmp::Eq. We don't
         // care about the nuance of nan equality here, they should
@@ -39,7 +39,7 @@ impl Dataset {
                 v.insert(i.to_bits());
             }
         });
-        v.len().try_into().unwrap()
+        v.len()
     }
 }
 

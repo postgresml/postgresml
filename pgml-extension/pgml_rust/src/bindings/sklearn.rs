@@ -10,86 +10,289 @@
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use crate::orm::algorithm::Algorithm;
-use crate::orm::dataset::Dataset;
-use crate::orm::estimator::SklearnBox;
-use crate::orm::search::Search;
-use crate::orm::task::Task;
-use crate::orm::Hyperparams;
+use crate::bindings::Bindings;
 
-fn sklearn_algorithm_name(task: Task, algorithm: Algorithm) -> &'static str {
-    match task {
-        Task::regression => match algorithm {
-            Algorithm::linear => "linear_regression",
-            Algorithm::lasso => "lasso_regression",
-            Algorithm::svm => "svm_regression",
-            Algorithm::elastic_net => "elastic_net_regression",
-            Algorithm::ridge => "ridge_regression",
-            Algorithm::random_forest => "random_forest_regression",
-            Algorithm::xgboost => "xgboost_regression",
-            Algorithm::xgboost_random_forest => "xgboost_random_forest_regression",
-            Algorithm::orthogonal_matching_pursuit => "orthogonal_matching_persuit_regression",
-            Algorithm::bayesian_ridge => "bayesian_ridge_regression",
-            Algorithm::automatic_relevance_determination => {
-                "automatic_relevance_determination_regression"
-            }
-            Algorithm::stochastic_gradient_descent => "stochastic_gradient_descent_regression",
-            Algorithm::passive_aggressive => "passive_aggressive_regression",
-            Algorithm::ransac => "ransac_regression",
-            Algorithm::theil_sen => "theil_sen_regression",
-            Algorithm::huber => "huber_regression",
-            Algorithm::quantile => "quantile_regression",
-            Algorithm::kernel_ridge => "kernel_ridge_regression",
-            Algorithm::gaussian_process => "gaussian_process_regression",
-            Algorithm::nu_svm => "nu_svm_regression",
-            Algorithm::ada_boost => "ada_boost_regression",
-            Algorithm::bagging => "bagging_regression",
-            Algorithm::extra_trees => "extra_trees_regression",
-            Algorithm::gradient_boosting_trees => "gradient_boosting_trees_regression",
-            Algorithm::hist_gradient_boosting => "hist_gradient_boosting_regression",
-            Algorithm::least_angle => "least_angle_regression",
-            Algorithm::lasso_least_angle => "lasso_least_angle_regression",
-            Algorithm::linear_svm => "linear_svm_regression",
-            Algorithm::lightgbm => "lightgbm_regression",
-            _ => panic!("{:?} does not support regression", algorithm),
-        },
+use crate::orm::*;
 
-        Task::classification => match algorithm {
-            Algorithm::linear => "linear_classification",
-            Algorithm::svm => "svm_classification",
-            Algorithm::ridge => "ridge_classification",
-            Algorithm::random_forest => "random_forest_classification",
-            Algorithm::xgboost => "xgboost_classification",
-            Algorithm::xgboost_random_forest => "xgboost_random_forest_classification",
-            Algorithm::stochastic_gradient_descent => "stochastic_gradient_descent_classification",
-            Algorithm::perceptron => "perceptron_classification",
-            Algorithm::passive_aggressive => "passive_aggressive_classification",
-            Algorithm::gaussian_process => "gaussian_process",
-            Algorithm::nu_svm => "nu_svm_classification",
-            Algorithm::ada_boost => "ada_boost_classification",
-            Algorithm::bagging => "bagging_classification",
-            Algorithm::extra_trees => "extra_trees_classification",
-            Algorithm::gradient_boosting_trees => "gradient_boosting_trees_classification",
-            Algorithm::hist_gradient_boosting => "hist_gradient_boosting_classification",
-            Algorithm::linear_svm => "linear_svm_classification",
-            Algorithm::lightgbm => "lightgbm_classification",
-            _ => panic!("{:?} does not support classification", algorithm),
-        },
-    }
+pub fn linear_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "linear_regression")
 }
 
-pub fn sklearn_train(
-    task: Task,
-    algorithm: Algorithm,
+pub fn lasso_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "lasso_regression")
+}
+
+pub fn svm_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "svm_regression")
+}
+
+pub fn elastic_net_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "elastic_net_regression")
+}
+
+pub fn ridge_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "ridge_regression")
+}
+
+pub fn random_forest_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "random_forest_regression")
+}
+
+pub fn xgboost_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "xgboost_regression")
+}
+
+pub fn xgboost_random_forest_regression(
     dataset: &Dataset,
-    hyperparams: &serde_json::Map<std::string::String, serde_json::Value>,
-) -> SklearnBox {
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "xgboost_random_forest_regression")
+}
+
+pub fn orthogonal_matching_persuit_regression(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(
+        dataset,
+        hyperparams,
+        "orthogonal_matching_persuit_regression",
+    )
+}
+
+pub fn bayesian_ridge_regression(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "bayesian_ridge_regression")
+}
+
+pub fn automatic_relevance_determination_regression(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(
+        dataset,
+        hyperparams,
+        "automatic_relevance_determination_regression",
+    )
+}
+
+pub fn stochastic_gradient_descent_regression(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(
+        dataset,
+        hyperparams,
+        "stochastic_gradient_descent_regression",
+    )
+}
+
+pub fn passive_aggressive_regression(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "passive_aggressive_regression")
+}
+
+pub fn ransac_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "ransac_regression")
+}
+
+pub fn theil_sen_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "theil_sen_regression")
+}
+
+pub fn huber_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "huber_regression")
+}
+
+pub fn quantile_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "quantile_regression")
+}
+
+pub fn kernel_ridge_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "kernel_ridge_regression")
+}
+
+pub fn gaussian_process_regression(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "gaussian_process_regression")
+}
+
+pub fn nu_svm_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "nu_svm_regression")
+}
+
+pub fn ada_boost_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "ada_boost_regression")
+}
+
+pub fn bagging_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "bagging_regression")
+}
+
+pub fn extra_trees_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "extra_trees_regression")
+}
+
+pub fn gradient_boosting_trees_regression(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "gradient_boosting_trees_regression")
+}
+
+pub fn hist_gradient_boosting_regression(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "hist_gradient_boosting_regression")
+}
+
+pub fn least_angle_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "least_angle_regression")
+}
+
+pub fn lasso_least_angle_regression(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "lasso_least_angle_regression")
+}
+
+pub fn linear_svm_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "linear_svm_regression")
+}
+
+pub fn lightgbm_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "lightgbm_regression")
+}
+
+pub fn linear_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "linear_classification")
+}
+
+pub fn svm_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "svm_classification")
+}
+
+pub fn ridge_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "ridge_classification")
+}
+
+pub fn random_forest_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "random_forest_classification")
+}
+
+pub fn xgboost_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "xgboost_classification")
+}
+
+pub fn xgboost_random_forest_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "xgboost_random_forest_classification")
+}
+
+pub fn stochastic_gradient_descent_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(
+        dataset,
+        hyperparams,
+        "stochastic_gradient_descent_classification",
+    )
+}
+
+pub fn perceptron_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "perceptron_classification")
+}
+
+pub fn passive_aggressive_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "passive_aggressive_classification")
+}
+
+pub fn gaussian_process(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "gaussian_process")
+}
+
+pub fn nu_svm_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "nu_svm_classification")
+}
+
+pub fn ada_boost_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "ada_boost_classification")
+}
+
+pub fn bagging_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "bagging_classification")
+}
+
+pub fn extra_trees_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "extra_trees_classification")
+}
+
+pub fn gradient_boosting_trees_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(
+        dataset,
+        hyperparams,
+        "gradient_boosting_trees_classification",
+    )
+}
+
+pub fn hist_gradient_boosting_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(
+        dataset,
+        hyperparams,
+        "hist_gradient_boosting_classification",
+    )
+}
+
+pub fn linear_svm_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "linear_svm_classification")
+}
+
+pub fn lightgbm_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "lightgbm_classification")
+}
+
+fn fit(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+    algorithm_task: &'static str,
+) -> Box<dyn Bindings> {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/src/bindings/wrappers.py"
     ));
 
-    let algorithm_name = sklearn_algorithm_name(task, algorithm);
     let hyperparams = serde_json::to_string(hyperparams).unwrap();
 
     let estimator = Python::with_gil(|py| -> Py<PyAny> {
@@ -102,7 +305,7 @@ pub fn sklearn_train(
                 PyTuple::new(
                     py,
                     &[
-                        String::from(algorithm_name).into_py(py),
+                        String::from(algorithm_task).into_py(py),
                         dataset.num_features.into_py(py),
                         hyperparams.into_py(py),
                     ],
@@ -118,135 +321,93 @@ pub fn sklearn_train(
             .unwrap()
     });
 
-    SklearnBox::new(estimator)
+    Box::new(Estimator { estimator })
 }
 
-pub fn sklearn_test(estimator: &SklearnBox, dataset: &Dataset) -> Vec<f32> {
-    let module = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/src/bindings/wrappers.py"
-    ));
-
-    let x_test = dataset.x_test();
-    let num_features = dataset.num_features;
-
-    let y_hat: Vec<f32> = Python::with_gil(|py| -> Vec<f32> {
-        let module = PyModule::from_code(py, module, "", "").unwrap();
-        let predictor = module.getattr("predictor").unwrap();
-        let predict = predictor
-            .call1(PyTuple::new(
-                py,
-                &[estimator.contents.as_ref(), &num_features.into_py(py)],
-            ))
-            .unwrap();
-
-        predict
-            .call1(PyTuple::new(py, &[x_test]))
-            .unwrap()
-            .extract()
-            .unwrap()
-    });
-
-    y_hat
+pub struct Estimator {
+    estimator: Py<PyAny>,
 }
 
-pub fn sklearn_predict(estimator: &SklearnBox, x: &[f32]) -> Vec<f32> {
-    let y_hat: Vec<f32> = Python::with_gil(|py| -> Vec<f32> {
-        estimator
-            .contents
-            .call1(py, PyTuple::new(py, &[x]))
-            .unwrap()
-            .extract(py)
-            .unwrap()
-    });
+unsafe impl Send for Estimator {}
+unsafe impl Sync for Estimator {}
 
-    y_hat
+impl std::fmt::Debug for Estimator {
+    fn fmt(
+        &self,
+        formatter: &mut std::fmt::Formatter<'_>,
+    ) -> std::result::Result<(), std::fmt::Error> {
+        formatter.debug_struct("Estimator").finish()
+    }
 }
 
-pub fn sklearn_save(estimator: &SklearnBox) -> Vec<u8> {
-    let module = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/src/bindings/wrappers.py"
-    ));
+impl Bindings for Estimator {
+    /// Predict a novel datapoint.
+    fn predict(&self, features: &[f32]) -> f32 {
+        self.predict_batch(features)[0]
+    }
 
-    Python::with_gil(|py| -> Vec<u8> {
-        let module = PyModule::from_code(py, module, "", "").unwrap();
-        let save = module.getattr("save").unwrap();
-        save.call1(PyTuple::new(py, &[estimator.contents.as_ref()]))
-            .unwrap()
-            .extract()
-            .unwrap()
-    })
-}
+    /// Predict a novel datapoint.
+    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
+        // TODO cache this?
+        let module = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/bindings/wrappers.py"
+        ));
+        let y_hat: Vec<f32> = Python::with_gil(|py| -> Vec<f32> {
+            let module = PyModule::from_code(py, module, "", "").unwrap();
+            let predict = module.getattr("predictor").unwrap();
+            let function: Py<PyAny> = predict
+                .call1(PyTuple::new(py, &[&self.estimator]))
+                .unwrap()
+                .extract()
+                .unwrap();
 
-pub fn sklearn_load(data: &Vec<u8>, num_features: i32) -> SklearnBox {
-    let module = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/src/bindings/wrappers.py"
-    ));
+            function
+                .call1(py, PyTuple::new(py, &[features]))
+                .unwrap()
+                .extract(py)
+                .unwrap()
+        });
+        y_hat
+    }
 
-    Python::with_gil(|py| -> SklearnBox {
-        let module = PyModule::from_code(py, module, "", "").unwrap();
-        let load = module.getattr("load").unwrap();
-        let estimator = load
-            .call1(PyTuple::new(py, &[data]))
-            .unwrap()
-            .extract()
-            .unwrap();
-        let predict = module.getattr("predictor").unwrap();
-        let estimator = predict
-            .call1(PyTuple::new(py, &[estimator, num_features.into_py(py)]))
-            .unwrap()
-            .extract()
-            .unwrap();
+    /// Serialize self to bytes
+    fn to_bytes(&self) -> Vec<u8> {
+        let module = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/bindings/wrappers.py"
+        ));
 
-        SklearnBox::new(estimator)
-    })
-}
+        Python::with_gil(|py| -> Vec<u8> {
+            let module = PyModule::from_code(py, module, "", "").unwrap();
+            let save = module.getattr("save").unwrap();
+            save.call1(PyTuple::new(py, &[&self.estimator]))
+                .unwrap()
+                .extract()
+                .unwrap()
+        })
+    }
 
-/// Hyperparameter search using Scikit's
-/// RandomizedSearchCV or GridSearchCV.
-pub fn sklearn_search(
-    task: Task,
-    algorithm: Algorithm,
-    search: Search,
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-    search_params: &Hyperparams,
-) -> (SklearnBox, Hyperparams) {
-    let module = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/src/bindings/wrappers.py"
-    ));
+    /// Deserialize self from bytes, with additional context
+    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    where
+        Self: Sized,
+    {
+        let module = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/bindings/wrappers.py"
+        ));
 
-    let algorithm_name = sklearn_algorithm_name(task, algorithm);
+        Python::with_gil(|py| -> Box<dyn Bindings> {
+            let module = PyModule::from_code(py, module, "", "").unwrap();
+            let load = module.getattr("load").unwrap();
+            let estimator: Py<PyAny> = load
+                .call1(PyTuple::new(py, &[bytes]))
+                .unwrap()
+                .extract()
+                .unwrap();
 
-    Python::with_gil(|py| -> (SklearnBox, Hyperparams) {
-        let module = PyModule::from_code(py, module, "", "").unwrap();
-        let estimator_search = module.getattr("estimator_search").unwrap();
-        let train = estimator_search
-            .call1(PyTuple::new(
-                py,
-                &[
-                    algorithm_name.into_py(py),
-                    dataset.num_features.into_py(py),
-                    serde_json::to_string(hyperparams).unwrap().into_py(py),
-                    serde_json::to_string(search_params).unwrap().into_py(py),
-                    search.to_string().into_py(py),
-                    None::<String>.into_py(py),
-                ],
-            ))
-            .unwrap();
-
-        let (estimator, hyperparams): (Py<PyAny>, String) = train
-            .call1(PyTuple::new(py, &[dataset.x_train(), dataset.y_train()]))
-            .unwrap()
-            .extract()
-            .unwrap();
-
-        let estimator = SklearnBox::new(estimator);
-        let hyperparams: Hyperparams = serde_json::from_str::<Hyperparams>(&hyperparams).unwrap();
-
-        (estimator, hyperparams)
-    })
+            Box::new(Estimator { estimator })
+        })
+    }
 }

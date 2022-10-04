@@ -1,12 +1,36 @@
 use lightgbm;
 
+use crate::bindings::Bindings;
 use crate::orm::dataset::Dataset;
-use crate::orm::estimator::LightgbmBox;
 use crate::orm::task::Task;
 use crate::orm::Hyperparams;
 use serde_json::json;
 
-pub fn lightgbm_train(task: Task, dataset: &Dataset, hyperparams: &Hyperparams) -> LightgbmBox {
+pub struct Estimator {
+    estimator: lightgbm::Booster,
+}
+
+unsafe impl Send for Estimator {}
+unsafe impl Sync for Estimator {}
+
+impl std::fmt::Debug for Estimator {
+    fn fmt(
+        &self,
+        formatter: &mut std::fmt::Formatter<'_>,
+    ) -> std::result::Result<(), std::fmt::Error> {
+        formatter.debug_struct("Estimator").finish()
+    }
+}
+
+pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, Task::regression)
+}
+
+pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, Task::classification)
+}
+
+fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bindings> {
     let x_train = dataset.x_train();
     let y_train = dataset.y_train();
     let mut hyperparams = hyperparams.clone();
@@ -38,94 +62,71 @@ pub fn lightgbm_train(task: Task, dataset: &Dataset, hyperparams: &Hyperparams) 
     let dataset =
         lightgbm::Dataset::from_vec(x_train, y_train, dataset.num_features as i32).unwrap();
 
-    let bst = lightgbm::Booster::train(dataset, &json! {hyperparams}).unwrap();
+    let estimator = lightgbm::Booster::train(dataset, &json! {hyperparams}).unwrap();
 
-    LightgbmBox::new(bst, task)
+    Box::new(Estimator { estimator })
 }
 
-/// Serialize an LightGBm estimator into bytes.
-pub fn lightgbm_save(estimator: &LightgbmBox) -> Vec<u8> {
-    let r: u64 = rand::random();
-    let path = format!("/tmp/pgml_{}.bin", r);
-
-    estimator.save_file(&path).unwrap();
-
-    let bytes = std::fs::read(&path).unwrap();
-
-    std::fs::remove_file(&path).unwrap();
-
-    bytes
-}
-
-/// Load an LightGBM estimator from bytes.
-pub fn lightgbm_load(data: &Vec<u8>, task: Task) -> LightgbmBox {
-    // Oh boy
-    let r: u64 = rand::random();
-    let path = format!("/tmp/pgml_{}.bin", r);
-
-    std::fs::write(&path, &data).unwrap();
-
-    let bst = lightgbm::Booster::from_file(&path).unwrap();
-
-    std::fs::remove_file(&path).unwrap();
-
-    LightgbmBox::new(bst, task)
-}
-
-/// Validate a trained estimator against the test dataset.
-pub fn lightgbm_test(estimator: &LightgbmBox, dataset: &Dataset) -> Vec<f32> {
-    let x_test = dataset.x_test();
-    let num_features = dataset.num_features;
-
-    let results = estimator.predict(x_test, num_features as i32).unwrap();
-    let num_class = estimator.num_class().unwrap();
-
-    match estimator.task() {
-        // Classification returns probabilities for all classes.
-        Task::classification => {
-            let y_hat: Vec<f32> = results
-                .as_slice()
-                .chunks(num_class as usize)
-                .map(|chunk| {
-                    let mut max = 0.0;
-                    let mut answer = 0;
-                    for (it, &class_prob) in chunk.iter().enumerate() {
-                        if class_prob > max {
-                            max = class_prob;
-                            answer = it;
-                        }
-                    }
-
-                    answer as f32
-                })
-                .collect();
-
-            y_hat
-        }
-
-        // Regression returns the predicted value on the curve.
-        Task::regression => results.into_iter().map(|y_hat| y_hat as f32).collect(),
+impl Bindings for Estimator {
+    /// Predict a novel datapoint.
+    fn predict(&self, features: &[f32]) -> f32 {
+        self.predict_batch(features)[0]
     }
-}
 
-/// Predict a novel datapoint using the LightGBM estimator.
-pub fn lightgbm_predict(estimator: &LightgbmBox, x: &[f32]) -> f32 {
-    let results = estimator.predict(x, x.len() as i32).unwrap();
+    /// Predict a novel datapoint.
+    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
+        let results = self
+            .estimator
+            .predict(features, features.len() as i32)
+            .unwrap();
+        results.into_iter().map(|i| i as f32).collect()
+        // TODO handle multiclass
+        //     match estimator.task() {
+        //         Task::classification => {
+        //             let mut max = 0.0;
+        //             let mut answer = 0;
+        //             for (it, &class_prob) in results.iter().enumerate() {
+        //                 if class_prob > max {
+        //                     max = class_prob;
+        //                     answer = it;
+        //                 }
+        //             }
 
-    match estimator.task() {
-        Task::classification => {
-            let mut max = 0.0;
-            let mut answer = 0;
-            for (it, &class_prob) in results.iter().enumerate() {
-                if class_prob > max {
-                    max = class_prob;
-                    answer = it;
-                }
-            }
+        //             answer as f32
+        //         }
 
-            answer as f32
-        }
+        //         Task::regression => results[0] as f32,
+        //     }
+    }
 
-        Task::regression => results[0] as f32,
+    /// Serialize self to bytes
+    fn to_bytes(&self) -> Vec<u8> {
+        let r: u64 = rand::random();
+        let path = format!("/tmp/pgml_{}.bin", r);
+
+        self.estimator.save_file(&path).unwrap();
+
+        let bytes = std::fs::read(&path).unwrap();
+
+        std::fs::remove_file(&path).unwrap();
+
+        bytes
+    }
+
+    /// Deserialize self from bytes, with additional context
+    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    where
+        Self: Sized,
+    {
+        let r: u64 = rand::random();
+        let path = format!("/tmp/pgml_{}.bin", r);
+
+        std::fs::write(&path, &bytes).unwrap();
+
+        let estimator = lightgbm::Booster::from_file(&path).unwrap();
+
+        std::fs::remove_file(&path).unwrap();
+
+        Box::new(Estimator { estimator })
     }
 }

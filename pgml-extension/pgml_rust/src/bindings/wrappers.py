@@ -109,103 +109,26 @@ def estimator_joint(algorithm_name, num_features, num_targets, hyperparams):
     return train
 
 
-def estimator_search_joint(algorithm_name, num_features, num_targets, hyperparams, search_params, search, search_args):
-    """Hyperparameter search.
-
-    Parameters:
-        - algorithm_name: The human-readable name of the algorithm (see dict above).
-        - num_features: The number of features in X.
-        - num_targets: For joint training (more than one y target).
-        - hyperparams: JSON of hyperparameters.
-        - search_params: Hyperparameters to search (see Scikit docs for examples).
-        - search: Type of search to do, grid or random.
-        - search_args: See Scikit docs for examples.
-
-    Return:
-        A tuple of Estimator and chosen hyperparameters.
-    """
-    if search_args is None:
-        search_args = {}
-    else:
-        search_args = json.loads(search_args)
-
-    search_params = json.loads(search_params)
-    hyperparams = json.loads(hyperparams)
-
-    if search == "random":
-        algorithm = sklearn.model_selection.RandomizedSearchCV(
-            _ALGORITHM_MAP[algorithm_name](**hyperparams),
-            search_params,
-        )
-    elif search == "grid":
-        algorithm = sklearn.model_selection.GridSearchCV(
-            _ALGORITHM_MAP[algorithm_name](**hyperparams),
-            search_params,
-        )
-    else:
-        raise Exception(f"search can be 'grid' or 'random', got: '{search}'")
-
-    def train(X_train, y_train):
-        X_train = np.asarray(X_train).reshape((-1, num_features))
-        y_train = np.asarray(y_train).reshape((-1, num_targets))
-
-        algorithm.fit(X_train, y_train)
-
-        return (algorithm.best_estimator_, json.dumps(algorithm.best_params_))
-
-    return train
-
-
-def estimator_search(algorithm_name, num_features, hyperparams, search_params, search, search_args):
-    """Hyperparameter search.
-
-    Parameters:
-        - algorithm_name: The human-readable name of the algorithm (see dict above).
-        - num_features: The number of features in X.
-        - hyperparams: JSON of hyperparameters.
-        - search_params: Hyperparameters to search (see Scikit docs for examples).
-        - search: Type of search to do, grid or random.
-        - search_args: See Scikit docs for examples.
-    """
-    return estimator_search_joint(algorithm_name, num_features, 1, hyperparams, search_params, search, search_args)
-
-
-def test(estimator, X_test):
-    """Validate the estimator using the test dataset.
-
-    Parameters:
-        - estimator: Scikit-Learn estimator, instantiated.
-        - X_test: test dataset.
-    """
-    y_hat = estimator.predict(X_test)
-
-    # Single value models only just for now.
-    return list(np.asarray(y_hat).flatten())
-
-
-def predictor(estimator, num_features):
+def predictor(estimator):
     """Return the instantiated estimator
     given the number of features in X.
 
     Parameters:
         - estimator: Scikit-Learn estimator, instantiated.
-        - num_features: The number of features in X.
     """
-    return predictor_joint(estimator, num_features, 1)
+    return predictor_joint(estimator, 1)
 
 
-def predictor_joint(estimator, num_features, num_targets):
+def predictor_joint(estimator, num_targets):
     """Return the instantiated estimator
     given the number of features in X.
 
     Parameters:
         - estimator: Scikit-Learn estimator, instantiated.
-        - num_features: The number of features in X.
         - num_targets: Used in joint models (more than 1 y target).
     """
-
     def predict(X):
-        X = np.asarray(X).reshape((-1, num_features))
+        X = np.asarray(X).reshape((-1, estimator.n_features_in_))
         y_hat = estimator.predict(X)
 
         # Only support single value models for just now.

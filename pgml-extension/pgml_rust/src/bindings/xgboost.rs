@@ -1,34 +1,155 @@
+use xgboost::parameters::tree::*;
+use xgboost::parameters::*;
 /// XGBoost implementation.
 ///
 /// XGBoost is a family of gradient-boosted decision tree algorithms,
 /// that are very effective on real-world datasets.
 ///
 /// It uses its own dense matrix.
-use xgboost::{parameters, Booster, DMatrix};
+use xgboost::{Booster, DMatrix};
 
 use crate::orm::dataset::Dataset;
-use crate::orm::estimator::calc_metrics;
-use crate::orm::estimator::BoosterBox;
-use crate::orm::search::Search;
-use crate::orm::task::Task;
 use crate::orm::Hyperparams;
-use itertools::Itertools;
 
-use ndarray::Array1;
+use crate::bindings::Bindings;
+
 use pgx::*;
-use serde_json;
 
 #[pg_extern]
 fn xgboost_version() -> String {
     String::from("1.62")
 }
 
-/// Train an XGBoost estimator.
-pub fn xgboost_train(
-    task: Task,
+fn get_dart_params(hyperparams: &Hyperparams) -> dart::DartBoosterParameters {
+    let mut params = dart::DartBoosterParametersBuilder::default();
+    for (key, value) in hyperparams {
+        match key.as_str() {
+            "rate_drop" => params.rate_drop(value.as_f64().unwrap() as f32),
+            "one_drop" => params.one_drop(value.as_bool().unwrap()),
+            "skip_drop" => params.skip_drop(value.as_f64().unwrap() as f32),
+            "sample_type" => match value.as_str().unwrap() {
+                "uniform" => params.sample_type(dart::SampleType::Uniform),
+                "weighted" => params.sample_type(dart::SampleType::Weighted),
+                _ => panic!("Unknown {:?}: {:?}", key, value),
+            },
+            "normalize_type" => match value.as_str().unwrap() {
+                "tree" => params.normalize_type(dart::NormalizeType::Tree),
+                "forest" => params.normalize_type(dart::NormalizeType::Forest),
+                _ => panic!("Unknown {:?}: {:?}", key, value),
+            },
+            "booster" | "n_estimators" | "boost_rounds" => &mut params, // Valid but not relevant to this section
+            _ => panic!("Unknown {:?}: {:?}", key, value),
+        };
+    }
+    params.build().unwrap()
+}
+
+fn get_linear_params(hyperparams: &Hyperparams) -> linear::LinearBoosterParameters {
+    let mut params = linear::LinearBoosterParametersBuilder::default();
+    for (key, value) in hyperparams {
+        match key.as_str() {
+            "alpha" => params.alpha(value.as_f64().unwrap() as f32),
+            "lambda" => params.lambda(value.as_f64().unwrap() as f32),
+            "updater" => match value.as_str().unwrap() {
+                "shotgun" => params.updater(linear::LinearUpdate::Shotgun),
+                "coord_descent" => params.updater(linear::LinearUpdate::CoordDescent),
+                _ => panic!("Unknown {:?}: {:?}", key, value),
+            },
+            "booster" | "n_estimators" | "boost_rounds" => &mut params, // Valid but not relevant to this section
+            _ => panic!("Unknown {:?}: {:?}", key, value),
+        };
+    }
+    params.build().unwrap()
+}
+
+fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
+    let mut params = tree::TreeBoosterParametersBuilder::default();
+    for (key, value) in hyperparams {
+        match key.as_str() {
+            "eta" => params.eta(value.as_f64().unwrap() as f32),
+            "gamma" => params.gamma(value.as_f64().unwrap() as f32),
+            "max_depth" => params.max_depth(value.as_u64().unwrap() as u32),
+            "min_child_weight" => params.min_child_weight(value.as_f64().unwrap() as f32),
+            "max_delta_step" => params.max_delta_step(value.as_f64().unwrap() as f32),
+            "subsample" => params.subsample(value.as_f64().unwrap() as f32),
+            "colsample_bytree" => params.colsample_bytree(value.as_f64().unwrap() as f32),
+            "colsample_bylevel" => params.colsample_bylevel(value.as_f64().unwrap() as f32),
+            "lambda" => params.lambda(value.as_f64().unwrap() as f32),
+            "alpha" => params.alpha(value.as_f64().unwrap() as f32),
+            "tree_method" => match value.as_str().unwrap() {
+                "auto" => params.tree_method(TreeMethod::Auto),
+                "exact" => params.tree_method(TreeMethod::Exact),
+                "approx" => params.tree_method(TreeMethod::Approx),
+                "hist" => params.tree_method(TreeMethod::Hist),
+                "gpu_exact" => params.tree_method(TreeMethod::GpuExact),
+                "gpu_hist" => params.tree_method(TreeMethod::GpuHist),
+                _ => panic!("Unknown hyperparameter {:?}: {:?}", key, value),
+            },
+            "sketch_eps" => params.sketch_eps(value.as_f64().unwrap() as f32),
+            "scale_pos_weight" => params.scale_pos_weight(value.as_f64().unwrap() as f32),
+            "updater" => match value.as_array() {
+                Some(array) => {
+                    let mut v = Vec::new();
+                    for value in array {
+                        match value.as_str().unwrap() {
+                            "grow_col_maker" => v.push(TreeUpdater::GrowColMaker),
+                            "dist_col" => v.push(TreeUpdater::DistCol),
+                            "grow_hist_maker" => v.push(TreeUpdater::GrowHistMaker),
+                            "grow_local_hist_maker" => v.push(TreeUpdater::GrowLocalHistMaker),
+                            "grow_sk_maker" => v.push(TreeUpdater::GrowSkMaker),
+                            "sync" => v.push(TreeUpdater::Sync),
+                            "refresh" => v.push(TreeUpdater::Refresh),
+                            "prune" => v.push(TreeUpdater::Prune),
+                            _ => panic!("Unknown hyperparameter {:?}: {:?}", key, value),
+                        }
+                    }
+                    params.updater(v)
+                }
+                _ => panic!("updater should be a JSON array. Got: {:?}", value),
+            },
+            "refresh_leaf" => params.refresh_leaf(value.as_bool().unwrap()),
+            "process_type" => match value.as_str().unwrap() {
+                "default" => params.process_type(ProcessType::Default),
+                "update" => params.process_type(ProcessType::Update),
+                _ => panic!("Unknown hyperparameter {:?}: {:?}", key, value),
+            },
+            "grow_policy" => match value.as_str().unwrap() {
+                "depthwise" => params.grow_policy(GrowPolicy::Depthwise),
+                "loss_guide" => params.grow_policy(GrowPolicy::LossGuide),
+                _ => panic!("Unknown hyperparameter {:?}: {:?}", key, value),
+            },
+            "predictor" => match value.as_str().unwrap() {
+                "cpu" => params.predictor(Predictor::Cpu),
+                "gpu" => params.predictor(Predictor::Gpu),
+                _ => panic!("Unknown hyperparameter {:?}: {:?}", key, value),
+            },
+            "max_leaves" => params.max_leaves(value.as_u64().unwrap() as u32),
+            "max_bin" => params.max_bin(value.as_u64().unwrap() as u32),
+            "booster" | "n_estimators" | "boost_rounds" => &mut params, // Valid but not relevant to this section
+            _ => panic!("Unknown hyperparameter {:?}: {:?}", key, value),
+        };
+    }
+    params.build().unwrap()
+}
+
+pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, learning::Objective::RegLinear)
+}
+
+pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(
+        dataset,
+        hyperparams,
+        learning::Objective::MultiSoftmax(dataset.distinct_labels().try_into().unwrap()),
+    )
+}
+
+fn fit(
     dataset: &Dataset,
-    hyperparams: &serde_json::Map<std::string::String, serde_json::Value>,
-) -> BoosterBox {
+    hyperparams: &Hyperparams,
+    objective: learning::Objective,
+) -> Box<dyn Bindings> {
+    // split the train/test data into DMatrix
     let mut dtrain = DMatrix::from_dense(dataset.x_train(), dataset.num_train_rows).unwrap();
     let mut dtest = DMatrix::from_dense(dataset.x_test(), dataset.num_test_rows).unwrap();
     dtrain.set_labels(dataset.y_train()).unwrap();
@@ -37,273 +158,108 @@ pub fn xgboost_train(
     // specify datasets to evaluate against during training
     let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
 
-    // configure objectives, metrics, etc.
-    let learning_params = parameters::learning::LearningTaskParametersBuilder::default()
-        .objective(match task {
-            Task::regression => xgboost::parameters::learning::Objective::RegLinear,
-            Task::classification => {
-                xgboost::parameters::learning::Objective::MultiSoftmax(dataset.distinct_labels())
-                // [0, num_class)
-            }
-        })
-        .build()
-        .unwrap();
-
-    // configure the tree-based learning model's parameters
-    let tree_params = parameters::tree::TreeBoosterParametersBuilder::default()
-        .max_depth(match hyperparams.get("max_depth") {
-            Some(value) => value.as_u64().unwrap_or(2) as u32,
-            None => 2,
-        })
-        .eta(match hyperparams.get("eta") {
-            Some(value) => value.as_f64().unwrap_or(0.3) as f32,
-            None => match hyperparams.get("learning_rate") {
-                Some(value) => value.as_f64().unwrap_or(0.3) as f32,
-                None => 0.3,
-            },
-        })
-        .gamma(match hyperparams.get("gamma") {
-            Some(value) => value.as_f64().unwrap_or(0.0) as f32,
-            None => match hyperparams.get("min_split_loss") {
-                Some(value) => value.as_f64().unwrap_or(0.0) as f32,
-                None => 0.0,
-            },
-        })
-        .min_child_weight(match hyperparams.get("min_child_weight") {
-            Some(value) => value.as_f64().unwrap_or(1.0) as f32,
-            None => 1.0,
-        })
-        .max_delta_step(match hyperparams.get("max_delta_step") {
-            Some(value) => value.as_f64().unwrap_or(0.0) as f32,
-            None => 0.0,
-        })
-        .subsample(match hyperparams.get("subsample") {
-            Some(value) => value.as_f64().unwrap_or(1.0) as f32,
-            None => 1.0,
-        })
-        .lambda(match hyperparams.get("lambda") {
-            Some(value) => value.as_f64().unwrap_or(1.0) as f32,
-            None => 1.0,
-        })
-        .alpha(match hyperparams.get("alpha") {
-            Some(value) => value.as_f64().unwrap_or(0.0) as f32,
-            None => 0.0,
-        })
-        .tree_method(match hyperparams.get("tree_method") {
-            Some(value) => match value.as_str().unwrap_or("auto") {
-                "auto" => parameters::tree::TreeMethod::Auto,
-                "exact" => parameters::tree::TreeMethod::Exact,
-                "approx" => parameters::tree::TreeMethod::Approx,
-                "hist" => parameters::tree::TreeMethod::Hist,
-                _ => parameters::tree::TreeMethod::Auto,
-            },
-
-            None => parameters::tree::TreeMethod::Auto,
-        })
-        .sketch_eps(match hyperparams.get("sketch_eps") {
-            Some(value) => value.as_f64().unwrap_or(0.03) as f32,
-            None => 0.03,
-        })
-        .max_leaves(match hyperparams.get("max_leaves") {
-            Some(value) => value.as_u64().unwrap_or(0) as u32,
-            None => 0,
-        })
-        .max_bin(match hyperparams.get("max_bin") {
-            Some(value) => value.as_u64().unwrap_or(256) as u32,
-            None => 256,
-        })
-        .num_parallel_tree(match hyperparams.get("num_parallel_tree") {
-            Some(value) => value.as_u64().unwrap_or(1) as u32,
-            None => 1,
-        })
-        .grow_policy(match hyperparams.get("grow_policy") {
-            Some(value) => match value.as_str().unwrap_or("depthwise") {
-                "depthwise" => parameters::tree::GrowPolicy::Depthwise,
-                "lossguide" => parameters::tree::GrowPolicy::LossGuide,
-                _ => parameters::tree::GrowPolicy::Depthwise,
-            },
-
-            None => parameters::tree::GrowPolicy::Depthwise,
-        })
-        .build()
-        .unwrap();
-
-    let linear_params = parameters::linear::LinearBoosterParametersBuilder::default()
-        .alpha(match hyperparams.get("alpha") {
-            Some(value) => value.as_f64().unwrap_or(0.0) as f32,
-            None => 0.0,
-        })
-        .lambda(match hyperparams.get("lambda") {
-            Some(value) => value.as_f64().unwrap_or(0.0) as f32,
-            None => 0.0,
-        })
-        .build()
-        .unwrap();
-
-    let dart_params = parameters::dart::DartBoosterParametersBuilder::default()
-        .rate_drop(match hyperparams.get("rate_drop") {
-            Some(value) => value.as_f64().unwrap_or(0.0) as f32,
-            None => 0.0,
-        })
-        .one_drop(match hyperparams.get("one_drop") {
-            Some(value) => value.as_u64().unwrap_or(0) != 0,
-            None => false,
-        })
-        .skip_drop(match hyperparams.get("skip_drop") {
-            Some(value) => value.as_f64().unwrap_or(0.0) as f32,
-            None => 0.0,
-        })
-        .sample_type(match hyperparams.get("sample_type") {
-            Some(value) => match value.as_str().unwrap_or("uniform") {
-                "uniform" => parameters::dart::SampleType::Uniform,
-                "weighted" => parameters::dart::SampleType::Weighted,
-                _ => parameters::dart::SampleType::Uniform,
-            },
-            None => parameters::dart::SampleType::Uniform,
-        })
-        .normalize_type(match hyperparams.get("normalize_type") {
-            Some(value) => match value.as_str().unwrap_or("tree") {
-                "tree" => parameters::dart::NormalizeType::Tree,
-                "forest" => parameters::dart::NormalizeType::Forest,
-                _ => parameters::dart::NormalizeType::Tree,
-            },
-            None => parameters::dart::NormalizeType::Tree,
-        })
+    let learning_params = learning::LearningTaskParametersBuilder::default()
+        .objective(objective)
         .build()
         .unwrap();
 
     // overall configuration for Booster
-    let booster_params = parameters::BoosterParametersBuilder::default()
-        .booster_type(match hyperparams.get("booster") {
-            Some(value) => match value.as_str().unwrap_or("gbtree") {
-                "gbtree" => parameters::BoosterType::Tree(tree_params),
-                "linear" => parameters::BoosterType::Linear(linear_params),
-                "dart" => parameters::BoosterType::Dart(dart_params),
-                _ => parameters::BoosterType::Tree(tree_params),
-            },
-            None => parameters::BoosterType::Tree(tree_params),
-        })
+    let booster_params = BoosterParametersBuilder::default()
         .learning_params(learning_params)
+        .booster_type(match hyperparams.get("booster") {
+            Some(value) => match value.as_str().unwrap() {
+                "gbtree" => BoosterType::Tree(get_tree_params(hyperparams)),
+                "linear" => BoosterType::Linear(get_linear_params(hyperparams)),
+                "dart" => BoosterType::Dart(get_dart_params(hyperparams)),
+                _ => panic!("Unknown booster: {:?}", value),
+            },
+            _ => BoosterType::Tree(get_tree_params(hyperparams)),
+        })
         .verbose(true)
         .build()
         .unwrap();
 
-    // overall configuration for training/evaluation
-    let params = parameters::TrainingParametersBuilder::default()
-        .dtrain(&dtrain) // dataset to train with
-        .boost_rounds(match hyperparams.get("n_estimators") {
-            Some(value) => value.as_u64().unwrap_or(10) as u32,
-            None => 10,
-        }) // number of training iterations
-        .booster_params(booster_params) // model parameters
-        .evaluation_sets(Some(evaluation_sets)) // optional datasets to evaluate against in each iteration
+    let mut builder = TrainingParametersBuilder::default();
+    // number of training iterations is aliased
+    match hyperparams.get("n_estimators") {
+        Some(value) => builder.boost_rounds(value.as_u64().unwrap() as u32),
+        None => match hyperparams.get("boost_rounds") {
+            Some(value) => builder.boost_rounds(value.as_u64().unwrap() as u32),
+            None => &mut builder,
+        },
+    };
+
+    let params = builder
+        // dataset to train with
+        .dtrain(&dtrain)
+        // optional datasets to evaluate against in each iteration
+        .evaluation_sets(Some(evaluation_sets))
+        // model parameters
+        .booster_params(booster_params)
         .build()
         .unwrap();
 
     // train model, and print evaluation data
-    let bst = match Booster::train(&params) {
-        Ok(bst) => bst,
-        Err(err) => error!("{}", err),
-    };
+    let booster = Booster::train(&params).unwrap();
 
-    BoosterBox::new(bst)
+    Box::new(Estimator {
+        estimator: booster,
+        num_features: dataset.num_features,
+    })
 }
 
-/// Serialize an XGBoost estimator into bytes.
-pub fn xgboost_save(estimator: &BoosterBox) -> Vec<u8> {
-    let r: u64 = rand::random();
-    let path = format!("/tmp/pgml_{}.bin", r);
-
-    estimator.save(std::path::Path::new(&path)).unwrap();
-
-    let bytes = std::fs::read(&path).unwrap();
-
-    std::fs::remove_file(&path).unwrap();
-
-    bytes
+pub struct Estimator {
+    estimator: xgboost::Booster,
+    num_features: usize,
 }
 
-/// Load an XGBoost estimator from bytes.
-pub fn xgboost_load(data: &[u8]) -> BoosterBox {
-    let bst = Booster::load_buffer(data).unwrap();
-    BoosterBox::new(bst)
+unsafe impl Send for Estimator {}
+unsafe impl Sync for Estimator {}
+
+impl std::fmt::Debug for Estimator {
+    fn fmt(
+        &self,
+        formatter: &mut std::fmt::Formatter<'_>,
+    ) -> std::result::Result<(), std::fmt::Error> {
+        formatter.debug_struct("Estimator").finish()
+    }
 }
 
-/// Validate a trained estimator against the test dataset.
-pub fn xgboost_test(estimator: &BoosterBox, dataset: &Dataset) -> Vec<f32> {
-    let mut x_test = DMatrix::from_dense(dataset.x_test(), dataset.num_test_rows).unwrap();
-    x_test.set_labels(dataset.y_test()).unwrap();
-
-    estimator.predict(&x_test).unwrap()
-}
-
-/// Predict a novel datapoint using the XGBoost estimator.
-pub fn xgboost_predict(estimator: &BoosterBox, x: &[f32]) -> f32 {
-    let x = DMatrix::from_dense(x, 1).unwrap();
-    estimator.predict(&x).unwrap()[0]
-}
-
-pub fn xgboost_search(
-    task: Task,
-    search: Search, // TODO: support random, only grid supported at the moment
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-    search_params: &Hyperparams,
-) -> (BoosterBox, Hyperparams) {
-    let mut param_names = Vec::new();
-    let mut search_field = Vec::new();
-
-    // Iterate in order.
-    for key in search_params.keys().into_iter() {
-        param_names.push(key.to_string());
-
-        let values: Vec<serde_json::Value> =
-            search_params.get(key).unwrap().as_array().unwrap().to_vec();
-
-        search_field.push(values);
+impl Bindings for Estimator {
+    /// Predict a novel datapoint.
+    fn predict(&self, features: &[f32]) -> f32 {
+        self.predict_batch(features)[0]
     }
 
-    // Grid search
-    let search_field = search_field.into_iter().multi_cartesian_product();
-    let mut best_metric = 0.0;
-    let mut best_params = Hyperparams::new();
-    let mut best_bst: Option<BoosterBox> = None;
-
-    for combo in search_field {
-        let mut candidates = Hyperparams::new();
-
-        for (idx, value) in combo.iter().enumerate() {
-            // Get the parameter name
-            let k = param_names[idx].clone();
-            candidates.insert(k, value.clone());
-        }
-
-        candidates.extend(hyperparams.clone());
-
-        let bst = xgboost_train(task, dataset, &candidates);
-
-        // Test
-        let y_hat =
-            Array1::from_shape_vec(dataset.num_test_rows, xgboost_test(&bst, dataset)).unwrap();
-        let y_test =
-            Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
-
-        let metrics = calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task);
-
-        // Compare
-        let metric = match task {
-            Task::regression => metrics.get("r2").unwrap(),
-
-            Task::classification => metrics.get("f1").unwrap(),
-        };
-
-        if metric > &best_metric {
-            best_metric = *metric;
-            best_params = candidates.clone();
-            best_bst = Some(bst);
-        }
+    /// Predict a novel datapoint.
+    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
+        let x = DMatrix::from_dense(features, features.len() / self.num_features).unwrap();
+        self.estimator.predict(&x).unwrap()
     }
 
-    // Return the best
-    (best_bst.unwrap(), best_params)
+    /// Serialize self to bytes
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::from((self.num_features as u64).to_be_bytes());
+
+        let r: u64 = rand::random();
+        let path = format!("/tmp/pgml_{}.bin", r);
+        self.estimator.save(std::path::Path::new(&path)).unwrap();
+        bytes.append(&mut std::fs::read(&path).unwrap());
+        std::fs::remove_file(&path).unwrap();
+
+        bytes
+    }
+
+    /// Deserialize self from bytes, with additional context
+    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    where
+        Self: Sized,
+    {
+        let num_features = u64::from_be_bytes(bytes[..8].try_into().unwrap()) as usize;
+        let estimator = Booster::load_buffer(&bytes[8..]).unwrap();
+        Box::new(Estimator {
+            estimator,
+            num_features,
+        })
+    }
 }

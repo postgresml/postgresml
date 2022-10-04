@@ -336,7 +336,7 @@ fn predict(project_name: &str, features: Vec<f32>) -> f32 {
         .get(&project_id)
         .unwrap();
     let estimator = crate::orm::estimator::find_deployed_estimator_by_model_id(model_id);
-    estimator.predict(features)
+    estimator.predict(&features)
 }
 
 #[pg_extern]

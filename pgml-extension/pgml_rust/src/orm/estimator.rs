@@ -7,12 +7,9 @@ use std::sync::Arc;
 use ndarray::{Array1, Array2};
 use once_cell::sync::Lazy;
 use pgx::*;
-use pyo3::prelude::*;
 
-use crate::bindings::lightgbm::{lightgbm_load, lightgbm_predict, lightgbm_test};
-use crate::bindings::sklearn::{sklearn_load, sklearn_predict, sklearn_test};
 use crate::bindings::smartcore::{smartcore_predict, smartcore_test};
-use crate::bindings::xgboost::{xgboost_load, xgboost_predict, xgboost_test};
+use crate::bindings::Bindings;
 
 use crate::orm::Algorithm;
 use crate::orm::Dataset;
@@ -20,11 +17,11 @@ use crate::orm::Runtime;
 use crate::orm::Task;
 
 #[allow(clippy::type_complexity)]
-static DEPLOYED_ESTIMATORS_BY_MODEL_ID: Lazy<Mutex<HashMap<i64, Arc<Box<dyn Estimator>>>>> =
+static DEPLOYED_ESTIMATORS_BY_MODEL_ID: Lazy<Mutex<HashMap<i64, Arc<Box<dyn Bindings>>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// Fetch and load the most up-to-date estimator for the given model.
-pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimator>> {
+pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Bindings>> {
     // Get the estimator from process memory, if we already loaded it.
     {
         let estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock();
@@ -32,35 +29,6 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
             return estimator.clone();
         }
     }
-
-    let (task, algorithm, num_features) = Spi::get_three_with_args::<String, String, i32>(
-        "
-        SELECT projects.task::TEXT, models.algorithm::TEXT, models.num_features
-        FROM pgml.models
-        JOIN pgml.projects
-            ON projects.id = models.project_id
-        WHERE models.id = $1
-        LIMIT 1",
-        vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
-    );
-
-    let task = Task::from_str(&task.unwrap_or_else(|| {
-        panic!(
-            "Project has gone missing for model: {}. Your model store has been corrupted.",
-            model_id
-        )
-    }))
-    .unwrap();
-
-    let _algorithm = Algorithm::from_str(&algorithm.unwrap_or_else(|| {
-        panic!(
-            "Project has gone missing for model: {}. Your model store has been corrupted.",
-            model_id
-        )
-    }))
-    .unwrap();
-
-    let num_features = num_features.unwrap();
 
     let (data, runtime, algorithm) = Spi::get_three_with_args::<Vec<u8>, String, String>(
         "SELECT data, runtime::TEXT, algorithm::TEXT FROM pgml.models
@@ -71,29 +39,31 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
     );
 
-    let runtime = Runtime::from_str(&runtime.unwrap()).unwrap();
-    let algorithm = Algorithm::from_str(&algorithm.unwrap()).unwrap();
     let data = data.unwrap_or_else(|| {
         panic!(
             "Project has gone missing for model: {}. Your model store has been corrupted.",
             model_id
         )
     });
+    let runtime = Runtime::from_str(&runtime.unwrap()).unwrap();
+    let algorithm = Algorithm::from_str(&algorithm.unwrap()).unwrap();
 
-    let estimator: Box<dyn Estimator> = match runtime {
+    info!("load {:?} {:?}", runtime, algorithm);
+    let bindings: Box<dyn Bindings> = match runtime {
         Runtime::rust => {
             match algorithm {
-                Algorithm::xgboost => Box::new(xgboost_load(&data)),
-                Algorithm::lightgbm => Box::new(lightgbm_load(&data, task)),
+                Algorithm::xgboost => crate::bindings::xgboost::Estimator::from_bytes(&data),
+                // Algorithm::lightgbm => Box::new(lightgbm_load(&data, task)),
+                Algorithm::linear => crate::bindings::linfa::LinearRegression::from_bytes(&data),
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
             }
         }
-        Runtime::python => Box::new(sklearn_load(&data, num_features)),
+        Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data),
     };
 
     // Cache the estimator in process memory.
     let mut estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock();
-    estimators.insert(model_id, Arc::new(estimator));
+    estimators.insert(model_id, Arc::new(bindings));
     estimators.get(&model_id).unwrap().clone()
 }
 
@@ -101,7 +71,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Estimat
 pub fn calc_metrics(
     y_test: &Array1<f32>,
     y_hat: &Array1<f32>,
-    distinct_labels: u32,
+    distinct_labels: usize,
     task: Task,
 ) -> HashMap<String, f32> {
     let mut results = HashMap::new();
@@ -198,215 +168,3 @@ smartcore_estimator_impl!(smartcore::ensemble::random_forest_regressor::RandomFo
 smartcore_estimator_impl!(
     smartcore::ensemble::random_forest_classifier::RandomForestClassifier<f32>
 );
-
-/// XGBoost implementation of the Estimator trait.
-pub struct BoosterBox {
-    contents: Box<xgboost::Booster>,
-}
-
-impl BoosterBox {
-    pub fn new(contents: xgboost::Booster) -> Self {
-        BoosterBox {
-            contents: Box::new(contents),
-        }
-    }
-}
-
-impl std::ops::Deref for BoosterBox {
-    type Target = xgboost::Booster;
-
-    fn deref(&self) -> &Self::Target {
-        self.contents.as_ref()
-    }
-}
-
-impl std::ops::DerefMut for BoosterBox {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.contents.as_mut()
-    }
-}
-
-unsafe impl Send for BoosterBox {}
-unsafe impl Sync for BoosterBox {}
-
-impl std::fmt::Debug for BoosterBox {
-    fn fmt(
-        &self,
-        formatter: &mut std::fmt::Formatter<'_>,
-    ) -> std::result::Result<(), std::fmt::Error> {
-        formatter.debug_struct("BoosterBox").finish()
-    }
-}
-
-impl serde::Serialize for BoosterBox {
-    fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        panic!("This is not used because we don't use Serde to serialize or deserialize XGBoost, it comes with its own.")
-    }
-}
-
-#[typetag::serialize]
-impl Estimator for BoosterBox {
-    fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
-        let y_hat =
-            Array1::from_shape_vec(dataset.num_test_rows, xgboost_test(self, dataset)).unwrap();
-        let y_test =
-            Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
-
-        calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        xgboost_predict(self, &features)
-    }
-}
-
-/// A wrapper around a Scikit estimator.
-/// The estimator is a Python object and can only be used
-/// inside Python::with_gil.
-pub struct SklearnBox {
-    pub contents: Box<Py<PyAny>>,
-}
-
-impl Drop for SklearnBox {
-    fn drop(&mut self) {
-        // I don't think this works because drop for self must
-        // be executed before the drop of fields?
-        Python::with_gil(|_py| {});
-    }
-}
-
-impl SklearnBox {
-    pub fn new(contents: Py<PyAny>) -> SklearnBox {
-        SklearnBox {
-            contents: Box::new(contents),
-        }
-    }
-}
-
-impl std::ops::Deref for SklearnBox {
-    type Target = Py<PyAny>;
-
-    fn deref(&self) -> &Self::Target {
-        self.contents.as_ref()
-    }
-}
-
-impl std::ops::DerefMut for SklearnBox {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.contents.as_mut()
-    }
-}
-
-unsafe impl Send for SklearnBox {}
-unsafe impl Sync for SklearnBox {}
-
-impl std::fmt::Debug for SklearnBox {
-    fn fmt(
-        &self,
-        formatter: &mut std::fmt::Formatter<'_>,
-    ) -> std::result::Result<(), std::fmt::Error> {
-        formatter.debug_struct("SklearnBox").finish()
-    }
-}
-
-impl serde::Serialize for SklearnBox {
-    fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        panic!("We don't use Serde for Scikit-Learn models. Scikit is using pickle in Python instead for backwards compatibility.")
-    }
-}
-
-#[typetag::serialize]
-impl Estimator for SklearnBox {
-    fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
-        let y_test = dataset.y_test();
-        let y_hat = sklearn_test(self, dataset);
-
-        calc_metrics(
-            &Array1::from_shape_vec(dataset.num_test_rows, y_test.to_vec()).unwrap(),
-            &Array1::from_shape_vec(dataset.num_test_rows, y_hat).unwrap(),
-            dataset.distinct_labels(),
-            task,
-        )
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        let score = sklearn_predict(self, &features);
-        score[0]
-    }
-}
-
-/// LightGBM implementation of the Estimator trait.
-pub struct LightgbmBox {
-    contents: Box<lightgbm::Booster>,
-    task: Task,
-}
-
-impl LightgbmBox {
-    pub fn new(contents: lightgbm::Booster, task: Task) -> Self {
-        LightgbmBox {
-            contents: Box::new(contents),
-            task,
-        }
-    }
-
-    pub fn task(&self) -> Task {
-        self.task
-    }
-}
-
-impl std::ops::Deref for LightgbmBox {
-    type Target = lightgbm::Booster;
-
-    fn deref(&self) -> &Self::Target {
-        self.contents.as_ref()
-    }
-}
-
-impl std::ops::DerefMut for LightgbmBox {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.contents.as_mut()
-    }
-}
-
-unsafe impl Send for LightgbmBox {}
-unsafe impl Sync for LightgbmBox {}
-
-impl std::fmt::Debug for LightgbmBox {
-    fn fmt(
-        &self,
-        formatter: &mut std::fmt::Formatter<'_>,
-    ) -> std::result::Result<(), std::fmt::Error> {
-        formatter.debug_struct("LightgbmBox").finish()
-    }
-}
-
-impl serde::Serialize for LightgbmBox {
-    fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        panic!("This is not used because we don't use Serde to serialize or deserialize XGBoost, it comes with its own.")
-    }
-}
-
-#[typetag::serialize]
-impl Estimator for LightgbmBox {
-    fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
-        let y_hat =
-            Array1::from_shape_vec(dataset.num_test_rows, lightgbm_test(self, dataset)).unwrap();
-        let y_test =
-            Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
-
-        calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
-    }
-
-    fn predict(&self, features: Vec<f32>) -> f32 {
-        lightgbm_predict(self, &features)
-    }
-}
