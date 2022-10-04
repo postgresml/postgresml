@@ -8,6 +8,7 @@ use serde_json::json;
 pub struct Estimator {
     estimator: lightgbm::Booster,
     num_features: usize,
+    num_classes: usize,
 }
 
 unsafe impl Send for Estimator {}
@@ -52,7 +53,7 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
                 hyperparams.insert(
                     "num_class".to_string(),
                     serde_json::Value::from(distinct_labels),
-                ); // [0, num_class)
+                );
             } else {
                 hyperparams.insert("objective".to_string(), serde_json::Value::from("binary"));
             }
@@ -66,6 +67,11 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
     Box::new(Estimator {
         estimator,
         num_features: dataset.num_features,
+        num_classes: if task == Task::regression {
+            1
+        } else {
+            dataset.distinct_labels()
+        },
     })
 }
 
@@ -81,32 +87,36 @@ impl Bindings for Estimator {
             .estimator
             .predict(features, self.num_features.try_into().unwrap())
             .unwrap();
-        let mut results: Vec<f32> = results.into_iter().map(|i| i as f32).collect();
-        
-        let num_class = self.estimator.num_class().unwrap() as usize;
-        if num_class > 2 {
-            let mut argmax_results = Vec::with_capacity(results.len() / num_class);             
-            let mut max_i: usize = 0;
-            let mut max_probability = 0.0;
-            for (i, &probability) in results.iter().enumerate() {
-                if i % num_class == 0 && i > 0 {
-                    argmax_results.push((max_i % num_class) as f32);
-                    max_probability = 0.0;
+        let results: Vec<f32> = results.into_iter().map(|i| i as f32).collect();
+
+        // LightGBM returns probabilities for classification. Convert to discrete classes.
+        match self.num_classes {
+            2 => results.iter().map(|i| i.round()).collect(),
+            num_classes if num_classes > 2 => {
+                let mut argmax_results = Vec::with_capacity(results.len() / num_classes);
+                let mut max_i: usize = 0;
+                let mut max_probability = 0.0;
+                for (i, &probability) in results.iter().enumerate() {
+                    if i % num_classes == 0 && i > 0 {
+                        argmax_results.push((max_i % num_classes) as f32);
+                        max_probability = 0.0;
+                    }
+                    if probability > max_probability {
+                        max_probability = probability;
+                        max_i = i;
+                    }
                 }
-                if probability > max_probability {
-                    max_probability = probability;
-                    max_i = i;
-                }
+                argmax_results.push((max_i % num_classes) as f32);
+                argmax_results
             }
-            argmax_results.push((max_i % num_class) as f32);
-            results = argmax_results;
+            _ => results,
         }
-        results
     }
 
     /// Serialize self to bytes
     fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::from((self.num_features as u64).to_be_bytes());
+        bytes.append(&mut (self.num_classes as u64).to_be_bytes().to_vec());
 
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
@@ -123,13 +133,15 @@ impl Bindings for Estimator {
         Self: Sized,
     {
         let num_features = u64::from_be_bytes(bytes[..8].try_into().unwrap()) as usize;
+        let num_classes = u64::from_be_bytes(bytes[8..16].try_into().unwrap()) as usize;
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
-        std::fs::write(&path, &bytes[8..]).unwrap();
+        std::fs::write(&path, &bytes[16..]).unwrap();
         let estimator = lightgbm::Booster::from_file(&path).unwrap();
         Box::new(Estimator {
             estimator,
             num_features,
+            num_classes,
         })
     }
 }
