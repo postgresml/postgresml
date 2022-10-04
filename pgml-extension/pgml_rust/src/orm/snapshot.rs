@@ -9,6 +9,8 @@ use crate::orm::Dataset;
 use crate::orm::Sampling;
 use crate::orm::Status;
 
+use std::str::FromStr;
+
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Column {
     name: String,
@@ -63,8 +65,19 @@ impl Snapshot {
     pub fn find_last_by_project_id(project_id: i64) -> Option<Snapshot> {
         let mut snapshot = None;
         Spi::connect(|client| {
-            let result = client.select(
-                    "SELECT snapshots.id, snapshots.relation_name, snapshots.y_column_name, snapshots.test_size, snapshots.test_sampling, snapshots.status, snapshots.columns, snapshots.analysis, snapshots.created_at, snapshots.updated_at 
+            let result = client
+                .select(
+                    "SELECT
+                        snapshots.id,
+                        snapshots.relation_name,
+                        snapshots.y_column_name,
+                        snapshots.test_size,
+                        snapshots.test_sampling,
+                        snapshots.status,
+                        snapshots.columns,
+                        snapshots.analysis,
+                        snapshots.created_at,
+                        snapshots.updated_at 
                     FROM pgml.snapshots 
                     JOIN pgml.models
                       ON models.snapshot_id = snapshots.id
@@ -72,11 +85,13 @@ impl Snapshot {
                     ORDER BY snapshots.id DESC 
                     LIMIT 1;
                     ",
-                Some(1),
-                Some(vec![
-                    (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
-                ])
-            ).first();
+                    Some(1),
+                    Some(vec![(
+                        PgBuiltInOids::INT8OID.oid(),
+                        project_id.into_datum(),
+                    )]),
+                )
+                .first();
             if !result.is_empty() {
                 snapshot = Some(Snapshot {
                     id: result.get_datum(1).unwrap(),
@@ -84,7 +99,7 @@ impl Snapshot {
                     y_column_name: result.get_datum(3).unwrap(),
                     test_size: result.get_datum(4).unwrap(),
                     test_sampling: result.get_datum(5).unwrap(),
-                    status: result.get_datum(6).unwrap(),
+                    status: Status::from_str(result.get_datum(6).unwrap()).unwrap(),
                     columns: result.get_datum(7),
                     analysis: result.get_datum(8),
                     created_at: result.get_datum(9).unwrap(),

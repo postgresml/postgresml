@@ -295,7 +295,7 @@ fn fit(
 
     let hyperparams = serde_json::to_string(hyperparams).unwrap();
 
-    let estimator = Python::with_gil(|py| -> Py<PyAny> {
+    let (estimator, wrapper) = Python::with_gil(|py| -> (Py<PyAny>, Py<PyAny>) {
         let module = PyModule::from_code(py, module, "", "").unwrap();
         let estimator: Py<PyAny> = module.getattr("estimator").unwrap().into();
 
@@ -313,19 +313,30 @@ fn fit(
             )
             .unwrap();
 
-        train
+        let estimator: Py<PyAny> = train
             .call1(
                 py,
                 PyTuple::new(py, &[dataset.x_train(), dataset.y_train()]),
             )
+            .unwrap();
+
+        let predictor = module.getattr("predictor").unwrap();
+
+        let wrapper: Py<PyAny> = predictor
+            .call1(PyTuple::new(py, &[&estimator]))
             .unwrap()
+            .extract()
+            .unwrap();
+
+        (estimator, wrapper)
     });
 
-    Box::new(Estimator { estimator })
+    Box::new(Estimator { estimator, wrapper })
 }
 
 pub struct Estimator {
     estimator: Py<PyAny>,
+    wrapper: Py<PyAny>,
 }
 
 unsafe impl Send for Estimator {}
@@ -348,26 +359,14 @@ impl Bindings for Estimator {
 
     /// Predict a novel datapoint.
     fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
-        // TODO cache this?
-        let module = include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/src/bindings/wrappers.py"
-        ));
         let y_hat: Vec<f32> = Python::with_gil(|py| -> Vec<f32> {
-            let module = PyModule::from_code(py, module, "", "").unwrap();
-            let predict = module.getattr("predictor").unwrap();
-            let function: Py<PyAny> = predict
-                .call1(PyTuple::new(py, &[&self.estimator]))
-                .unwrap()
-                .extract()
-                .unwrap();
-
-            function
+            self.wrapper
                 .call1(py, PyTuple::new(py, &[features]))
                 .unwrap()
                 .extract(py)
                 .unwrap()
         });
+
         y_hat
     }
 
@@ -407,7 +406,15 @@ impl Bindings for Estimator {
                 .extract()
                 .unwrap();
 
-            Box::new(Estimator { estimator })
+            let predict = module.getattr("predictor").unwrap();
+
+            let wrapper: Py<PyAny> = predict
+                .call1(PyTuple::new(py, &[&estimator]))
+                .unwrap()
+                .extract()
+                .unwrap();
+
+            Box::new(Estimator { estimator, wrapper })
         })
     }
 }
