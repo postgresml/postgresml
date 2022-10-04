@@ -1,8 +1,8 @@
-use lightgbm;
 use crate::bindings::Bindings;
 use crate::orm::dataset::Dataset;
 use crate::orm::task::Task;
 use crate::orm::Hyperparams;
+use lightgbm;
 use serde_json::json;
 
 pub struct Estimator {
@@ -59,14 +59,13 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
         }
     };
 
-    let data =
-        lightgbm::Dataset::from_vec(x_train, y_train, dataset.num_features as i32).unwrap();
+    let data = lightgbm::Dataset::from_vec(x_train, y_train, dataset.num_features as i32).unwrap();
 
     let estimator = lightgbm::Booster::train(data, &json! {hyperparams}).unwrap();
 
-    Box::new(Estimator { 
-        estimator, 
-        num_features: dataset.num_features, 
+    Box::new(Estimator {
+        estimator,
+        num_features: dataset.num_features,
     })
 }
 
@@ -82,24 +81,27 @@ impl Bindings for Estimator {
             .estimator
             .predict(features, self.num_features.try_into().unwrap())
             .unwrap();
-        results.into_iter().map(|i| i as f32).collect()
-        // TODO handle multiclass
-        //     match estimator.task() {
-        //         Task::classification => {
-        //             let mut max = 0.0;
-        //             let mut answer = 0;
-        //             for (it, &class_prob) in results.iter().enumerate() {
-        //                 if class_prob > max {
-        //                     max = class_prob;
-        //                     answer = it;
-        //                 }
-        //             }
-
-        //             answer as f32
-        //         }
-
-        //         Task::regression => results[0] as f32,
-        //     }
+        let mut results: Vec<f32> = results.into_iter().map(|i| i as f32).collect();
+        
+        let num_class = self.estimator.num_class().unwrap() as usize;
+        if num_class > 2 {
+            let mut argmax_results = Vec::with_capacity(results.len() / num_class);             
+            let mut max_i: usize = 0;
+            let mut max_probability = 0.0;
+            for (i, &probability) in results.iter().enumerate() {
+                if i % num_class == 0 && i > 0 {
+                    argmax_results.push((max_i % num_class) as f32);
+                    max_probability = 0.0;
+                }
+                if probability > max_probability {
+                    max_probability = probability;
+                    max_i = i;
+                }
+            }
+            argmax_results.push((max_i % num_class) as f32);
+            results = argmax_results;
+        }
+        results
     }
 
     /// Serialize self to bytes
