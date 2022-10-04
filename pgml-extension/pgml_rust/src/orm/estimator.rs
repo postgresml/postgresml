@@ -53,7 +53,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
         Runtime::rust => {
             match algorithm {
                 Algorithm::xgboost => crate::bindings::xgboost::Estimator::from_bytes(&data),
-                // Algorithm::lightgbm => Box::new(lightgbm_load(&data, task)),
+                Algorithm::lightgbm => crate::bindings::lightgbm::Estimator::from_bytes(&data),
                 Algorithm::linear => crate::bindings::linfa::LinearRegression::from_bytes(&data),
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
             }
