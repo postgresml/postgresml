@@ -1,5 +1,4 @@
 use lightgbm;
-
 use crate::bindings::Bindings;
 use crate::orm::dataset::Dataset;
 use crate::orm::task::Task;
@@ -8,6 +7,7 @@ use serde_json::json;
 
 pub struct Estimator {
     estimator: lightgbm::Booster,
+    num_features: usize,
 }
 
 unsafe impl Send for Estimator {}
@@ -59,12 +59,15 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
         }
     };
 
-    let dataset =
+    let data =
         lightgbm::Dataset::from_vec(x_train, y_train, dataset.num_features as i32).unwrap();
 
-    let estimator = lightgbm::Booster::train(dataset, &json! {hyperparams}).unwrap();
+    let estimator = lightgbm::Booster::train(data, &json! {hyperparams}).unwrap();
 
-    Box::new(Estimator { estimator })
+    Box::new(Estimator { 
+        estimator, 
+        num_features: dataset.num_features, 
+    })
 }
 
 impl Bindings for Estimator {
@@ -77,7 +80,7 @@ impl Bindings for Estimator {
     fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
         let results = self
             .estimator
-            .predict(features, features.len() as i32)
+            .predict(features, self.num_features.try_into().unwrap())
             .unwrap();
         results.into_iter().map(|i| i as f32).collect()
         // TODO handle multiclass
@@ -101,13 +104,12 @@ impl Bindings for Estimator {
 
     /// Serialize self to bytes
     fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::from((self.num_features as u64).to_be_bytes());
+
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
-
         self.estimator.save_file(&path).unwrap();
-
-        let bytes = std::fs::read(&path).unwrap();
-
+        bytes.append(&mut std::fs::read(&path).unwrap());
         std::fs::remove_file(&path).unwrap();
 
         bytes
@@ -118,15 +120,14 @@ impl Bindings for Estimator {
     where
         Self: Sized,
     {
+        let num_features = u64::from_be_bytes(bytes[..8].try_into().unwrap()) as usize;
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
-
-        std::fs::write(&path, &bytes).unwrap();
-
+        std::fs::write(&path, &bytes[8..]).unwrap();
         let estimator = lightgbm::Booster::from_file(&path).unwrap();
-
-        std::fs::remove_file(&path).unwrap();
-
-        Box::new(Estimator { estimator })
+        Box::new(Estimator {
+            estimator,
+            num_features,
+        })
     }
 }
