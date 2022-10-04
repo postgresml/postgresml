@@ -1,6 +1,6 @@
 pub mod algorithm;
 pub mod dataset;
-pub mod estimator;
+pub mod file;
 pub mod model;
 pub mod project;
 pub mod runtime;
@@ -13,7 +13,6 @@ pub mod task;
 
 pub use algorithm::Algorithm;
 pub use dataset::Dataset;
-pub use estimator::Estimator;
 pub use model::Model;
 pub use project::Project;
 pub use runtime::Runtime;

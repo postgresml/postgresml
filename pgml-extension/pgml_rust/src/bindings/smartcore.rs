@@ -5,9 +5,11 @@
 /// use already.
 ///
 /// It uses ndarray for as its dense matrix.
+use std::collections::HashMap;
+use std::fmt::Debug;
+
 use crate::orm::algorithm::Algorithm;
 use crate::orm::dataset::Dataset;
-use crate::orm::estimator::Estimator;
 use crate::orm::task::Task;
 
 use ndarray::{Array1, Array2};
@@ -15,6 +17,107 @@ use ndarray::{Array1, Array2};
 use rmp_serde;
 use serde_json;
 use smartcore;
+/// Caculate model metrics used to evaluate its performance.
+pub fn calc_metrics(
+    y_test: &Array1<f32>,
+    y_hat: &Array1<f32>,
+    distinct_labels: usize,
+    task: Task,
+) -> HashMap<String, f32> {
+    let mut results = HashMap::new();
+    match task {
+        Task::regression => {
+            results.insert("r2".to_string(), smartcore::metrics::r2(y_test, y_hat));
+            results.insert(
+                "mean_absolute_error".to_string(),
+                smartcore::metrics::mean_absolute_error(y_test, y_hat),
+            );
+            results.insert(
+                "mean_squared_error".to_string(),
+                smartcore::metrics::mean_squared_error(y_test, y_hat),
+            );
+        }
+        Task::classification => {
+            results.insert(
+                "f1".to_string(),
+                smartcore::metrics::f1::F1 { beta: 1.0 }.get_score(y_test, y_hat),
+            );
+            results.insert(
+                "precision".to_string(),
+                smartcore::metrics::precision(y_test, y_hat),
+            );
+            results.insert(
+                "recall".to_string(),
+                smartcore::metrics::recall(y_test, y_hat),
+            );
+            results.insert(
+                "accuracy".to_string(),
+                smartcore::metrics::accuracy(y_test, y_hat),
+            );
+            if distinct_labels == 2 {
+                results.insert(
+                    "roc_auc_score".to_string(),
+                    smartcore::metrics::roc_auc_score(y_test, y_hat),
+                );
+            }
+        }
+    }
+
+    results
+}
+
+/// The estimator trait that has to be implemented by all
+/// algorithms we use in PostgresML.
+#[typetag::serialize(tag = "type")]
+pub trait Estimator: Send + Sync + Debug {
+    /// Validate the algorithm agains the test dataset.
+    fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32>;
+
+    /// Predict a novel datapoint.
+    fn predict(&self, features: Vec<f32>) -> f32;
+}
+
+/// Implement the Estimator trait (it's always the same)
+/// for all supported algorithms.
+macro_rules! smartcore_estimator_impl {
+    ($estimator:ty) => {
+        #[typetag::serialize]
+        impl Estimator for $estimator {
+            fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
+                let y_hat = smartcore_test(self, dataset);
+                let y_test =
+                    Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec())
+                        .unwrap();
+
+                calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
+            }
+
+            fn predict(&self, features: Vec<f32>) -> f32 {
+                smartcore_predict(self, features)
+            }
+        }
+    };
+}
+
+smartcore_estimator_impl!(smartcore::linear::linear_regression::LinearRegression<f32, Array2<f32>>);
+smartcore_estimator_impl!(smartcore::linear::logistic_regression::LogisticRegression<f32, Array2<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::LinearKernel>);
+smartcore_estimator_impl!(smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::LinearKernel>);
+smartcore_estimator_impl!(smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::SigmoidKernel<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::SigmoidKernel<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::PolynomialKernel<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::PolynomialKernel<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svc::SVC<f32, Array2<f32>, smartcore::svm::RBFKernel<f32>>);
+smartcore_estimator_impl!(smartcore::svm::svr::SVR<f32, Array2<f32>, smartcore::svm::RBFKernel<f32>>);
+smartcore_estimator_impl!(smartcore::linear::lasso::Lasso<f32, Array2<f32>>);
+smartcore_estimator_impl!(smartcore::linear::elastic_net::ElasticNet<f32, Array2<f32>>);
+smartcore_estimator_impl!(smartcore::linear::ridge_regression::RidgeRegression<f32, Array2<f32>>);
+smartcore_estimator_impl!(smartcore::neighbors::knn_regressor::KNNRegressor<f32, smartcore::math::distance::euclidian::Euclidian>);
+smartcore_estimator_impl!(smartcore::neighbors::knn_classifier::KNNClassifier<f32, smartcore::math::distance::euclidian::Euclidian>);
+smartcore_estimator_impl!(smartcore::ensemble::random_forest_regressor::RandomForestRegressor<f32>);
+smartcore_estimator_impl!(
+    smartcore::ensemble::random_forest_classifier::RandomForestClassifier<f32>
+);
 
 macro_rules! hyperparam_f32 {
     ($name:tt, $hyperparams:tt, $default:tt) => {
