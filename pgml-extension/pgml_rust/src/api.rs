@@ -104,7 +104,6 @@ fn train(
         Some(project) => project,
         None => Project::create(project_name, task.unwrap()),
     };
-
     if task.is_some() && task.unwrap() != project.task {
         error!("Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.", project.name, project.task);
     }
@@ -113,6 +112,7 @@ fn train(
         None => project.last_snapshot().expect("You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model."),
         Some(relation_name) => Snapshot::create(relation_name, y_column_name.expect("You must pass a `y_column_name` when you pass a `relation_name`"), test_size, test_sampling)
     };
+    info!("pgml.snapshot: {}", snapshot);
 
     // # Default repeatable random state when possible
     // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);

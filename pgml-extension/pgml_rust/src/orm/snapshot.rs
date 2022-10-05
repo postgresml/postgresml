@@ -1,5 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::fmt::{Display, Error, Formatter};
+use std::str::FromStr;
 
 use pgx::*;
 use serde::{Deserialize, Serialize};
@@ -8,8 +10,6 @@ use serde_json::json;
 use crate::orm::Dataset;
 use crate::orm::Sampling;
 use crate::orm::Status;
-
-use std::str::FromStr;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Column {
@@ -61,6 +61,12 @@ pub struct Snapshot {
     pub updated_at: Timestamp,
 }
 
+impl Display for Snapshot {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(f, "Snapshot {{ id: {}, relation_name: {}, y_column_name: {:?}, test_size: {}, test_sampling: {:?}, status: {:?} }}", self.id, self.relation_name, self.y_column_name, self.test_size, self.test_sampling, self.status)
+    }
+}
+
 impl Snapshot {
     pub fn find_last_by_project_id(project_id: i64) -> Option<Snapshot> {
         let mut snapshot = None;
@@ -72,8 +78,8 @@ impl Snapshot {
                         snapshots.relation_name,
                         snapshots.y_column_name,
                         snapshots.test_size,
-                        snapshots.test_sampling,
-                        snapshots.status,
+                        snapshots.test_sampling::TEXT,
+                        snapshots.status::TEXT,
                         snapshots.columns,
                         snapshots.analysis,
                         snapshots.created_at,
@@ -98,7 +104,7 @@ impl Snapshot {
                     relation_name: result.get_datum(2).unwrap(),
                     y_column_name: result.get_datum(3).unwrap(),
                     test_size: result.get_datum(4).unwrap(),
-                    test_sampling: result.get_datum(5).unwrap(),
+                    test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
                     status: Status::from_str(result.get_datum(6).unwrap()).unwrap(),
                     columns: result.get_datum(7),
                     analysis: result.get_datum(8),
@@ -120,7 +126,7 @@ impl Snapshot {
         let mut snapshot: Option<Snapshot> = None;
         let status = Status::in_progress;
         Spi::connect(|client| {
-            let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4::pgml.sampling, $5::pgml.status) RETURNING id, relation_name, y_column_name, test_size, test_sampling, status, columns, analysis, created_at, updated_at;",
+            let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4::pgml.sampling, $5::pgml.status) RETURNING id, relation_name, y_column_name, test_size, test_sampling::TEXT, status::TEXT, columns, analysis, created_at, updated_at;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), relation_name.into_datum()),
@@ -135,7 +141,7 @@ impl Snapshot {
                 relation_name: result.get_datum(2).unwrap(),
                 y_column_name: result.get_datum(3).unwrap(),
                 test_size: result.get_datum(4).unwrap(),
-                test_sampling: result.get_datum(5).unwrap(),
+                test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
                 status,         // 6
                 columns: None,  // 7
                 analysis: None, // 8
@@ -348,7 +354,6 @@ impl Snapshot {
             }
 
             // Postgres Arrays arrays are 1 indexed and so are SPI tuples...
-            info!("Fetching data: {:?}", columns);
             let result = client.select(&sql, None, None);
             let num_rows = result.len();
 
@@ -422,10 +427,6 @@ impl Snapshot {
                     num_test_rows, num_rows
                 );
             }
-            info!(
-                "got rows: {:?} features: {} labels: {}",
-                num_rows, num_features, num_labels,
-            );
 
             data = Some(Dataset {
                 x,
@@ -439,7 +440,9 @@ impl Snapshot {
             Ok(Some(()))
         });
 
-        data.unwrap()
+        let data = data.unwrap();
+        info!("pgml.dataset {}", data);
+        data
     }
 
     fn snapshot_name(&self) -> String {

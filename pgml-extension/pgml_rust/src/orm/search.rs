@@ -6,7 +6,6 @@ use serde::Deserialize;
 pub enum Search {
     grid,
     random,
-    none,
 }
 
 impl std::str::FromStr for Search {
@@ -16,7 +15,6 @@ impl std::str::FromStr for Search {
         match input {
             "grid" => Ok(Search::grid),
             "random" => Ok(Search::random),
-            "none" => Ok(Search::none),
             _ => Err(()),
         }
     }
@@ -27,7 +25,6 @@ impl std::string::ToString for Search {
         match *self {
             Search::grid => "grid".to_string(),
             Search::random => "random".to_string(),
-            Search::none => "none".to_string(),
         }
     }
 }
