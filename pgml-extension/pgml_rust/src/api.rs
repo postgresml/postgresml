@@ -92,6 +92,7 @@ fn train(
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
     runtime: Option<default!(Runtime, "NULL")>,
+    automatic_deploy: Option<default!(bool, true)>,
 ) -> impl std::iter::Iterator<
     Item = (
         name!(project, String),
@@ -147,25 +148,33 @@ fn train(
     );
 
     let mut deploy = true;
-    if let Some(deployed_metrics) = deployed_metrics {
-        let deployed_metrics = deployed_metrics.0.as_object().unwrap();
-        match project.task {
-            Task::classification => {
-                if deployed_metrics.get("f1").unwrap().as_f64()
-                    > new_metrics.get("f1").unwrap().as_f64()
-                {
-                    deploy = false;
-                }
-            }
-            Task::regression => {
-                if deployed_metrics.get("r2").unwrap().as_f64()
-                    > new_metrics.get("r2").unwrap().as_f64()
-                {
-                    deploy = false;
+
+    match automatic_deploy {
+        // Deploy only if metrics are better than previous model.
+        Some(true) | None => {
+            if let Some(deployed_metrics) = deployed_metrics {
+                let deployed_metrics = deployed_metrics.0.as_object().unwrap();
+                match project.task {
+                    Task::classification => {
+                        if deployed_metrics.get("f1").unwrap().as_f64()
+                            > new_metrics.get("f1").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
+                    Task::regression => {
+                        if deployed_metrics.get("r2").unwrap().as_f64()
+                            > new_metrics.get("r2").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
                 }
             }
         }
-    }
+
+        Some(false) => deploy = false,
+    };
 
     if deploy {
         Spi::get_one_with_args::<i64>(
@@ -373,18 +382,96 @@ fn load_dataset(
 #[pg_schema]
 mod tests {
     use super::*;
-    use crate::orm::dataset::load_diabetes;
+    use crate::orm::algorithm::Algorithm;
+    use crate::orm::dataset::{load_diabetes, load_digits};
+    use crate::orm::runtime::Runtime;
+    use crate::orm::sampling::Sampling;
+    use crate::orm::Hyperparams;
 
     #[pg_test]
     fn test_project_lifecycle() {
-        assert_eq!(Project::create("test", Task::regression).id, 1);
-        assert_eq!(Project::find(1).unwrap().id, 1);
+        assert!(Project::create("test", Task::regression).id > 0);
+        assert!(Project::find(1).unwrap().id > 0);
     }
 
     #[pg_test]
     fn test_snapshot_lifecycle() {
         load_diabetes(Some(25));
         let snapshot = Snapshot::create("pgml.diabetes", "target", 0.5, Sampling::last);
-        assert_eq!(snapshot.id, 1);
+        assert!(snapshot.id > 0);
+    }
+
+    #[pg_test]
+    fn test_train_regression() {
+        load_diabetes(None);
+
+        // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
+        // to test deployments.
+        let setting =
+            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'");
+
+        info!("Data directory: {}", setting.unwrap());
+
+        for runtime in [Runtime::python, Runtime::rust] {
+            let result: Vec<(String, String, String, bool)> = train(
+                "Test project",
+                Some(Task::regression),
+                Some("pgml.diabetes"),
+                Some("target"),
+                Algorithm::linear,
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                None,
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                0.25,
+                Sampling::last,
+                Some(runtime),
+                Some(false),
+            )
+            .collect();
+
+            assert_eq!(result.len(), 1);
+            assert_eq!(result[0].0, String::from("Test project"));
+            assert_eq!(result[0].1, String::from("regression"));
+            assert_eq!(result[0].2, String::from("linear"));
+            assert_eq!(result[0].3, false);
+        }
+    }
+
+    #[pg_test]
+    fn test_train_classification() {
+        load_digits(None);
+
+        // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
+        // to test deployments.
+        let setting =
+            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'");
+
+        info!("Data directory: {}", setting.unwrap());
+
+        for runtime in [Runtime::python, Runtime::rust] {
+            let result: Vec<(String, String, String, bool)> = train(
+                "Test project 2",
+                Some(Task::classification),
+                Some("pgml.digits"),
+                Some("target"),
+                Algorithm::xgboost,
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                None,
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                0.25,
+                Sampling::last,
+                Some(runtime),
+                Some(false),
+            )
+            .collect();
+
+            assert_eq!(result.len(), 1);
+            assert_eq!(result[0].0, String::from("Test project 2"));
+            assert_eq!(result[0].1, String::from("classification"));
+            assert_eq!(result[0].2, String::from("xgboost"));
+            assert_eq!(result[0].3, false);
+        }
     }
 }
