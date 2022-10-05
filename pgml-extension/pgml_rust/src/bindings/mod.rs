@@ -1,8 +1,12 @@
-pub mod lightgbm;
 pub mod linfa;
 pub mod sklearn;
 pub mod smartcore;
+
+#[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
 pub mod xgboost;
+
+#[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
+pub mod lightgbm;
 
 use crate::orm::*;
 

@@ -58,8 +58,12 @@ impl Model {
         let runtime = match runtime {
             Some(runtime) => runtime,
             None => match algorithm {
+                #[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
                 Algorithm::xgboost => Runtime::rust,
+
+                #[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
                 Algorithm::lightgbm => Runtime::rust,
+
                 Algorithm::linear => match project.task {
                     Task::classification => Runtime::python,
                     Task::regression => Runtime::rust,
@@ -141,15 +145,23 @@ impl Model {
             Runtime::rust => {
                 match project.task {
                     Task::regression => match self.algorithm {
+                        #[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
                         Algorithm::xgboost => xgboost::fit_regression,
+
+                        #[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
                         Algorithm::lightgbm => lightgbm::fit_regression,
+
                         Algorithm::linear => linfa::LinearRegression::fit,
                         _ => todo!(),
                     },
                     Task::classification => {
                         match self.algorithm {
+                            #[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
                             Algorithm::xgboost => xgboost::fit_classification,
+
+                            #[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
                             Algorithm::lightgbm => lightgbm::fit_classification,
+
                             // Algorithm::linear => linfa::LogisticRegression::fit,
                             _ => todo!(),
                         }

@@ -47,8 +47,12 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
     let bindings: Box<dyn Bindings> = match runtime {
         Runtime::rust => {
             match algorithm {
+                #[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
                 Algorithm::xgboost => crate::bindings::xgboost::Estimator::from_bytes(&data),
+
+                #[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
                 Algorithm::lightgbm => crate::bindings::lightgbm::Estimator::from_bytes(&data),
+
                 Algorithm::linear => crate::bindings::linfa::LinearRegression::from_bytes(&data),
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
             }

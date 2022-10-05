@@ -7,6 +7,8 @@ use parking_lot::Mutex;
 use pgx::*;
 use std::collections::HashMap;
 use std::fs;
+
+#[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
 use xgboost::{Booster, DMatrix};
 
 pub mod api;
@@ -24,6 +26,7 @@ extension_sql_file!("../sql/schema.sql", name = "schema");
 static MODELS: Lazy<Mutex<HashMap<i64, Vec<u8>>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[pg_extern]
+#[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
 fn model_predict(model_id: i64, features: Vec<f32>) -> f32 {
     let mut guard = MODELS.lock();
 
@@ -58,6 +61,7 @@ fn model_predict(model_id: i64, features: Vec<f32>) -> f32 {
 }
 
 #[pg_extern]
+#[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
 fn model_predict_batch(model_id: i64, features: Vec<f32>, num_rows: i32) -> Vec<f32> {
     let mut guard = MODELS.lock();
 
@@ -126,6 +130,7 @@ fn delete_model(model_id: i64) {
 }
 
 #[pg_extern]
+#[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
 fn dump_model(model_id: i64) -> String {
     let bytes = Spi::get_one_with_args::<Vec<u8>>(
         "SELECT data FROM pgml.models WHERE id = $1",
