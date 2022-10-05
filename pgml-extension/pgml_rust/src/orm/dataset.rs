@@ -1,5 +1,7 @@
-use pgx::*;
 use std::collections::HashSet;
+use std::fmt::{Display, Error, Formatter};
+
+use pgx::*;
 
 #[derive(Debug)]
 pub struct Dataset {
@@ -10,6 +12,16 @@ pub struct Dataset {
     pub num_rows: usize,
     pub num_train_rows: usize,
     pub num_test_rows: usize,
+}
+
+impl Display for Dataset {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(
+            f,
+            "Dataset {{ num_rows: {}, num_features: {}, num_labels: {} }}",
+            self.num_rows, self.num_features, self.num_labels
+        )
+    }
 }
 
 impl Dataset {

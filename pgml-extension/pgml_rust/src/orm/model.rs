@@ -1,8 +1,12 @@
 use std::collections::HashMap;
+use std::fmt::{Display, Error, Formatter};
+use std::time::Instant;
 
 use ::linfa::prelude::{BinaryClassification, Pr, SingleTargetRegression, ToConfusionMatrix};
+use itertools::{izip, Itertools};
 use ndarray::ArrayView1;
 use pgx::*;
+use rand::prelude::SliceRandom;
 use serde_json::json;
 
 use crate::bindings::*;
@@ -24,6 +28,16 @@ pub struct Model {
     pub search_args: JsonB,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
+}
+
+impl Display for Model {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(
+            f,
+            "Model {{ id: {}, algorithm: {:?}, runtime: {:?} }}",
+            self.id, self.algorithm, self.runtime
+        )
+    }
 }
 
 impl Model {
@@ -98,6 +112,7 @@ impl Model {
         });
 
         let mut model = model.unwrap();
+        info!("pgml.model: {}", model);
 
         model.fit(project, &dataset);
 
@@ -120,79 +135,7 @@ impl Model {
         model
     }
 
-    fn hyperparams(&self) -> &Hyperparams {
-        let hyperparams: &serde_json::Value = &self.hyperparams.0;
-        hyperparams.as_object().unwrap()
-    }
-
-    // TODO hyperparam search inside fit
-    //use itertools::Itertools;
-
-    // pub fn xgboost_search(
-    //     task: Task,
-    //     search: Search, // TODO: support random, only grid supported at the moment
-    //     dataset: &Dataset,
-    //     hyperparams: &Hyperparams,
-    //     search_params: &Hyperparams,
-    // ) -> (BoosterBox, Hyperparams) {
-    //     let mut param_names = Vec::new();
-    //     let mut search_field = Vec::new();
-
-    //     // Iterate in order.
-    //     for key in search_params.keys().into_iter() {
-    //         param_names.push(key.to_string());
-
-    //         let values: Vec<serde_json::Value> =
-    //             search_params.get(key).unwrap().as_array().unwrap().to_vec();
-
-    //         search_field.push(values);
-    //     }
-
-    //     // Grid search
-    //     let search_field = search_field.into_iter().multi_cartesian_product();
-    //     let mut best_metric = 0.0;
-    //     let mut best_params = Hyperparams::new();
-    //     let mut best_bst: Option<BoosterBox> = None;
-
-    //     for combo in search_field {
-    //         let mut candidates = Hyperparams::new();
-
-    //         for (idx, value) in combo.iter().enumerate() {
-    //             // Get the parameter name
-    //             let k = param_names[idx].clone();
-    //             candidates.insert(k, value.clone());
-    //         }
-
-    //         candidates.extend(hyperparams.clone());
-
-    //         let bst = xgboost_train(task, dataset, &candidates);
-
-    //         // Test
-    //         let y_hat =
-    //             Array1::from_shape_vec(dataset.num_test_rows, xgboost_test(&bst, dataset)).unwrap();
-    //         let y_test =
-    //             Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec()).unwrap();
-
-    //         let metrics = calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task);
-
-    //         // Compare
-    //         let metric = match task {
-    //             Task::regression => metrics.get("r2").unwrap(),
-
-    //             Task::classification => metrics.get("f1").unwrap(),
-    //         };
-
-    //         if metric > &best_metric {
-    //             best_metric = *metric;
-    //             best_params = candidates.clone();
-    //             best_bst = Some(bst);
-    //         }
-    //     }
-
-    //     // Return the best
-    //     (best_bst.unwrap(), best_params)
-    // }
-
+    #[allow(clippy::format_push_string)]
     fn fit(&mut self, project: &Project, dataset: &Dataset) {
         let fit = match self.runtime {
             Runtime::rust => {
@@ -285,60 +228,175 @@ impl Model {
                 },
             },
         };
-        let estimator = fit(dataset, self.hyperparams());
 
-        // info!("{:?}", 1 == 1.0);
-        // Caculate model metrics used to evaluate its performance.
-        let y_hat = estimator.predict_batch(dataset.x_test());
-        let y_test = dataset.y_test();
-
-        let mut metrics = HashMap::new();
-        match project.task {
-            Task::regression => {
-                let y_test = ArrayView1::from(&y_test);
-                let y_hat = ArrayView1::from(&y_hat);
-
-                metrics.insert("r2".to_string(), y_hat.r2(&y_test).unwrap());
-                metrics.insert(
-                    "mean_absolute_error".to_string(),
-                    y_hat.mean_absolute_error(&y_test).unwrap(),
-                );
-                metrics.insert(
-                    "mean_squared_error".to_string(),
-                    y_hat.mean_squared_error(&y_test).unwrap(),
-                );
-            }
-            Task::classification => {
-                if dataset.distinct_labels() == 2 {
-                    let y_hat = ArrayView1::from(&y_hat).mapv(Pr::new);
-                    let y_test: Vec<bool> = y_test.iter().map(|&i| i == 1.).collect();
-                    metrics.insert(
-                        "roc_auc".to_string(),
-                        y_hat.roc(&y_test).unwrap().area_under_curve(),
-                    );
-                    metrics.insert("log_loss".to_string(), y_hat.log_loss(&y_test).unwrap());
-                }
-
-                let y_hat: Vec<usize> = y_hat.into_iter().map(|i| i.round() as usize).collect();
-                let y_test: Vec<usize> = y_test.iter().map(|i| i.round() as usize).collect();
-                let y_hat = ArrayView1::from(&y_hat);
-                let y_test = ArrayView1::from(&y_test);
-                let confusion_matrix = y_hat.confusion_matrix(y_test).unwrap();
-                metrics.insert("f1".to_string(), confusion_matrix.f1_score());
-                metrics.insert("precision".to_string(), confusion_matrix.precision());
-                metrics.insert("recall".to_string(), confusion_matrix.recall());
-                metrics.insert("accuracy".to_string(), confusion_matrix.accuracy());
-                metrics.insert("mcc".to_string(), confusion_matrix.mcc());
+        let mut n_iter: usize = 10;
+        for (key, value) in self.search_args.0.as_object().unwrap() {
+            match key.as_str() {
+                "n_iter" => n_iter = value.as_i64().unwrap().try_into().unwrap(),
+                _ => error!("Unknown search_args => {:?}: {:?}", key, value),
             }
         }
-        // let metrics = test(estimator, dataset, project.task);
-        self.metrics = Some(JsonB(json!(metrics)));
+
+        // Gather all hyperparams
+        let mut all_hyperparam_names = Vec::new();
+        let mut all_hyperparam_values = Vec::new();
+        for (key, value) in self.hyperparams.0.as_object().unwrap() {
+            all_hyperparam_names.push(key.to_string());
+            all_hyperparam_values.push(vec![value.clone()]);
+        }
+        for (key, values) in self.search_params.0.as_object().unwrap() {
+            if all_hyperparam_names.contains(key) {
+                error!("`{key}` cannot be present in both hyperparams and search_params. Please choose one or the other.");
+            }
+            all_hyperparam_names.push(key.to_string());
+            all_hyperparam_values.push(values.as_array().unwrap().to_vec());
+        }
+
+        // The search space is all possible combinations
+        let all_hyperparam_values: Vec<Vec<serde_json::Value>> = all_hyperparam_values
+            .into_iter()
+            .multi_cartesian_product()
+            .collect();
+        let mut all_hyperparam_values = match self.search {
+            Some(Search::random) => {
+                // TODO support things like ranges to be random sampled
+                let mut rng = &mut rand::thread_rng();
+                all_hyperparam_values
+                    .choose_multiple(&mut rng, n_iter)
+                    .cloned()
+                    .collect()
+            }
+            _ => all_hyperparam_values,
+        };
+
+        // Empty set for a run of only the default values
+        if all_hyperparam_values.is_empty() {
+            all_hyperparam_values.push(Vec::new());
+        }
+
+        let mut all_estimators = Vec::with_capacity(all_hyperparam_values.len());
+        let mut all_metrics = Vec::with_capacity(all_hyperparam_values.len());
+        let mut all_hyperparams = Vec::with_capacity(all_hyperparam_values.len());
+        info!(
+            "pgml.hyperparam searches: {}, cross validation folds: {}",
+            all_hyperparam_values.len(),
+            1
+        );
+        for hyperparam_values in &all_hyperparam_values {
+            let now = Instant::now();
+            // Construct this set of hyperparams from the values
+            let mut hyperparams = Hyperparams::new();
+            for (idx, value) in hyperparam_values.iter().enumerate() {
+                let name = all_hyperparam_names[idx].clone();
+                hyperparams.insert(name, value.clone());
+            }
+
+            // Fit the estimator on the data with these hyperparams
+            let estimator = fit(dataset, &hyperparams);
+
+            // Test the estimator on the data
+            let y_hat = estimator.predict_batch(dataset.x_test());
+            let y_test = dataset.y_test();
+
+            // Caculate metrics to evaluate this estimator and its hyperparams
+            let mut metrics = HashMap::new();
+            match project.task {
+                Task::regression => {
+                    let y_test = ArrayView1::from(&y_test);
+                    let y_hat = ArrayView1::from(&y_hat);
+
+                    metrics.insert("r2".to_string(), y_hat.r2(&y_test).unwrap());
+                    metrics.insert(
+                        "mean_absolute_error".to_string(),
+                        y_hat.mean_absolute_error(&y_test).unwrap(),
+                    );
+                    metrics.insert(
+                        "mean_squared_error".to_string(),
+                        y_hat.mean_squared_error(&y_test).unwrap(),
+                    );
+                }
+                Task::classification => {
+                    if dataset.distinct_labels() == 2 {
+                        let y_hat = ArrayView1::from(&y_hat).mapv(Pr::new);
+                        let y_test: Vec<bool> = y_test.iter().map(|&i| i == 1.).collect();
+                        metrics.insert(
+                            "roc_auc".to_string(),
+                            y_hat.roc(&y_test).unwrap().area_under_curve(),
+                        );
+                        metrics.insert("log_loss".to_string(), y_hat.log_loss(&y_test).unwrap());
+                    }
+
+                    let y_hat: Vec<usize> = y_hat.into_iter().map(|i| i.round() as usize).collect();
+                    let y_test: Vec<usize> = y_test.iter().map(|i| i.round() as usize).collect();
+                    let y_hat = ArrayView1::from(&y_hat);
+                    let y_test = ArrayView1::from(&y_test);
+                    let confusion_matrix = y_hat.confusion_matrix(y_test).unwrap();
+                    metrics.insert("f1".to_string(), confusion_matrix.f1_score());
+                    metrics.insert("precision".to_string(), confusion_matrix.precision());
+                    metrics.insert("recall".to_string(), confusion_matrix.recall());
+                    metrics.insert("accuracy".to_string(), confusion_matrix.accuracy());
+                    metrics.insert("mcc".to_string(), confusion_matrix.mcc());
+                }
+            }
+            let mut buffer = "pgml.hyperparams: {".to_string();
+            buffer.push_str(
+                &hyperparams
+                    .iter()
+                    .sorted_by_key(|x| x.0)
+                    .map(|(key, value)| format!("{:?}: {}", key, value))
+                    .join(", "),
+            );
+            buffer.push_str("}\n  pgml.metrics: {");
+            buffer.push_str(
+                &metrics
+                    .iter()
+                    .sorted_by_key(|x| x.0)
+                    .map(|(key, value)| format!("{:?}: {:?}", key, value))
+                    .join(", "),
+            );
+            buffer.push_str(&format!("}}\n  pgml.fitting time: {:?}", now.elapsed()));
+            info!("{}", buffer);
+
+            all_metrics.push(metrics);
+            all_estimators.push(estimator);
+            all_hyperparams.push(hyperparams);
+        }
+
+        // Find the best estimator, hyperparams and metrics
+        // TODO expose this as a parameter on the project
+        let target_metric = match project.task {
+            Task::regression => "r2",
+            Task::classification => "f1",
+        };
+        let mut best_metric = 0.0;
+        let mut best_metrics = None;
+        let mut best_hyperparams = None;
+        let mut best_estimator = None;
+        for (metrics, hyperparams, estimator) in izip!(all_metrics, all_hyperparams, all_estimators)
+        {
+            let metric = *metrics.get(target_metric).unwrap();
+            if metric > best_metric {
+                best_metric = metric;
+                best_metrics = Some(metrics);
+                best_hyperparams = Some(hyperparams);
+                best_estimator = Some(estimator);
+            }
+        }
+
+        let best_metrics = best_metrics.unwrap();
+        let best_hyperparams = best_hyperparams.unwrap();
+        self.metrics = Some(JsonB(json!(best_metrics)));
+        self.hyperparams = JsonB(json!(best_hyperparams));
         Spi::get_one_with_args::<i64>(
-            "UPDATE pgml.models SET metrics = $1 WHERE id = $2 RETURNING id",
+            "UPDATE pgml.models SET hyperparams = $1, metrics = $2 WHERE id = $3 RETURNING id",
             vec![
                 (
                     PgBuiltInOids::JSONBOID.oid(),
-                    JsonB(json!(metrics)).into_datum(),
+                    JsonB(json!(&best_hyperparams)).into_datum(),
+                ),
+                (
+                    PgBuiltInOids::JSONBOID.oid(),
+                    JsonB(json!(&best_metrics)).into_datum(),
                 ),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ],
@@ -346,7 +404,7 @@ impl Model {
         .unwrap();
 
         // Save the estimator.
-        let bytes = estimator.to_bytes();
+        let bytes = best_estimator.unwrap().to_bytes();
         Spi::get_one_with_args::<i64>(
             "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
             vec![

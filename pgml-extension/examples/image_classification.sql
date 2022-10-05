@@ -82,8 +82,6 @@ SELECT pgml.train(
     }'
 );
 
--- TODO SELECT pgml.hypertune(100, 'Handwritten Digits', 'classification', 'pgml.digits', 'target', 'gradient_boosted_trees');
-
 -- deploy the "best" model for prediction use
 SELECT * FROM pgml.deploy('Handwritten Digits', 'best_score');
 SELECT * FROM pgml.deploy('Handwritten Digits', 'most_recent');

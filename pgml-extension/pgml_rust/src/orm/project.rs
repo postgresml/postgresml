@@ -1,3 +1,4 @@
+use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
 
 use pgx::*;
@@ -12,6 +13,16 @@ pub struct Project {
     pub task: Task,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
+}
+
+impl Display for Project {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(
+            f,
+            "Project {{ id: {}, name: {}, task: {:?} }}",
+            self.id, self.name, self.task
+        )
+    }
 }
 
 impl Project {
@@ -69,7 +80,7 @@ impl Project {
         let mut project: Option<Project> = None;
 
         Spi::connect(|client| {
-            let result = client.select(r#"INSERT INTO pgml.projects (name, task) VALUES ($1, $2::pgml.task) RETURNING id, name, task, created_at, updated_at;"#,
+            let result = client.select(r#"INSERT INTO pgml.projects (name, task) VALUES ($1, $2::pgml.task) RETURNING id, name, task::TEXT, created_at, updated_at;"#,
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),
@@ -80,7 +91,7 @@ impl Project {
                 project = Some(Project {
                     id: result.get_datum(1).unwrap(),
                     name: result.get_datum(2).unwrap(),
-                    task: result.get_datum(3).unwrap(),
+                    task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
                     created_at: result.get_datum(4).unwrap(),
                     updated_at: result.get_datum(5).unwrap(),
                 });
