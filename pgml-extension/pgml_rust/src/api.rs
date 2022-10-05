@@ -98,6 +98,7 @@ fn train(
         name!(project, String),
         name!(task, String),
         name!(algorithm, String),
+        name!(model_id, i64),
         name!(deployed, bool),
     ),
 > {
@@ -197,6 +198,7 @@ fn train(
         project.name,
         project.task.to_string(),
         model.algorithm.to_string(),
+        model.id,
         deploy,
     )]
     .into_iter()
@@ -413,7 +415,7 @@ mod tests {
         info!("Data directory: {}", setting.unwrap());
 
         for runtime in [Runtime::python, Runtime::rust] {
-            let result: Vec<(String, String, String, bool)> = train(
+            let result: Vec<(String, String, String, i64, bool)> = train(
                 "Test project",
                 Some(Task::regression),
                 Some("pgml.diabetes"),
@@ -434,7 +436,7 @@ mod tests {
             assert_eq!(result[0].0, String::from("Test project"));
             assert_eq!(result[0].1, String::from("regression"));
             assert_eq!(result[0].2, String::from("linear"));
-            assert_eq!(result[0].3, false);
+            assert_eq!(result[0].4, false);
         }
     }
 
@@ -450,7 +452,7 @@ mod tests {
         info!("Data directory: {}", setting.unwrap());
 
         for runtime in [Runtime::python, Runtime::rust] {
-            let result: Vec<(String, String, String, bool)> = train(
+            let result: Vec<(String, String, String, i64, bool)> = train(
                 "Test project 2",
                 Some(Task::classification),
                 Some("pgml.digits"),
@@ -471,7 +473,7 @@ mod tests {
             assert_eq!(result[0].0, String::from("Test project 2"));
             assert_eq!(result[0].1, String::from("classification"));
             assert_eq!(result[0].2, String::from("xgboost"));
-            assert_eq!(result[0].3, false);
+            assert_eq!(result[0].4, false);
         }
     }
 }
