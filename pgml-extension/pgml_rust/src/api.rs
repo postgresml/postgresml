@@ -373,6 +373,7 @@ fn load_dataset(
 #[pg_schema]
 mod tests {
     use super::*;
+    use crate::orm::dataset::load_diabetes;
 
     #[pg_test]
     fn test_project_lifecycle() {
@@ -382,7 +383,8 @@ mod tests {
 
     #[pg_test]
     fn test_snapshot_lifecycle() {
-        let snapshot = Snapshot::create("test", "column", 0.5, Sampling::last);
+        load_diabetes(Some(25));
+        let snapshot = Snapshot::create("pgml.diabetes", "target", 0.5, Sampling::last);
         assert_eq!(snapshot.id, 1);
     }
 }
