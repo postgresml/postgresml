@@ -37,6 +37,7 @@ itertools = "*"
 linfa = { version = "0.6" }
 linfa-linear = { version = "0.6" }
 linfa-logistic = { version = "0.6" }
+anyhow = { version = "1.0" }
 
 [dev-dependencies]
 pgx-tests = "=0.4.5"

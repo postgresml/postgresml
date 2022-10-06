@@ -2,28 +2,11 @@ use std::convert::From;
 
 use linfa::prelude::Predict;
 use linfa::traits::Fit;
-use linfa::DatasetBase;
-use ndarray::{ArrayBase, ArrayView1, ArrayView2, Dim, ViewRepr};
+use ndarray::{ArrayView1, ArrayView2};
 use serde::{Deserialize, Serialize};
 
 use super::Bindings;
 use crate::orm::*;
-
-impl<'a> From<&'a Dataset>
-    for DatasetBase<
-        ArrayBase<ViewRepr<&'a f32>, Dim<[usize; 2]>>,
-        ArrayBase<ViewRepr<&'a f32>, Dim<[usize; 1]>>,
-    >
-{
-    fn from(dataset: &'a Dataset) -> Self {
-        let records =
-            ArrayView2::from_shape((dataset.num_rows, dataset.num_features), &dataset.x).unwrap();
-
-        let targets = ArrayView1::from_shape(dataset.num_rows, &dataset.y).unwrap();
-
-        linfa::DatasetBase::from((records, targets))
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LinearRegression {
@@ -36,8 +19,17 @@ impl LinearRegression {
     where
         Self: Sized,
     {
+        let records = ArrayView2::from_shape(
+            (dataset.num_train_rows, dataset.num_features),
+            &dataset.x_train,
+        )
+        .unwrap();
+
+        let targets = ArrayView1::from_shape(dataset.num_train_rows, &dataset.y_train).unwrap();
+
+        let linfa_dataset = linfa::DatasetBase::from((records, targets));
         let estimator = linfa_linear::LinearRegression::default();
-        let estimator = estimator.fit(&dataset.into()).unwrap();
+        let estimator = estimator.fit(&linfa_dataset).unwrap();
 
         Box::new(LinearRegression {
             estimator,

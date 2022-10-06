@@ -86,10 +86,9 @@ macro_rules! smartcore_estimator_impl {
             fn test(&self, task: Task, dataset: &Dataset) -> HashMap<String, f32> {
                 let y_hat = smartcore_test(self, dataset);
                 let y_test =
-                    Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test().to_vec())
-                        .unwrap();
+                    Array1::from_shape_vec(dataset.num_test_rows, dataset.y_test.to_vec()).unwrap();
 
-                calc_metrics(&y_test, &y_hat, dataset.distinct_labels(), task)
+                calc_metrics(&y_test, &y_hat, dataset.num_distinct_labels, task)
             }
 
             fn predict(&self, features: Vec<f32>) -> f32 {
@@ -158,12 +157,11 @@ pub fn smartcore_train(
 ) -> Box<dyn Estimator> {
     let x_train = Array2::from_shape_vec(
         (dataset.num_train_rows, dataset.num_features),
-        dataset.x_train().to_vec(),
+        dataset.x_train.to_vec(),
     )
     .unwrap();
 
-    let y_train =
-        Array1::from_shape_vec(dataset.num_train_rows, dataset.y_train().to_vec()).unwrap();
+    let y_train = Array1::from_shape_vec(dataset.num_train_rows, dataset.y_train.to_vec()).unwrap();
 
     match algorithm {
         // Support Vector Machine
@@ -788,7 +786,7 @@ pub fn smartcore_test(
 ) -> Array1<f32> {
     let x_test = Array2::from_shape_vec(
         (dataset.num_test_rows, dataset.num_features),
-        dataset.x_test().to_vec(),
+        dataset.x_test.to_vec(),
     )
     .unwrap();
 

@@ -357,15 +357,41 @@ impl Snapshot {
             let result = client.select(&sql, None, None);
             let num_rows = result.len();
 
-            let mut x: Vec<f32> = Vec::with_capacity(num_rows * num_features);
-            let mut y: Vec<f32> = Vec::with_capacity(num_rows * num_labels);
+            let num_test_rows = if self.test_size > 1.0 {
+                self.test_size as usize
+            } else {
+                (num_rows as f32 * self.test_size).round() as usize
+            };
+
+            let num_train_rows = num_rows - num_test_rows;
+            if num_train_rows == 0 {
+                error!(
+                    "test_size = {} is too large. There are only {} samples.",
+                    num_test_rows, num_rows
+                );
+            }
+
+            let mut x_train: Vec<f32> = Vec::with_capacity(num_train_rows * num_features);
+            let mut y_train: Vec<f32> = Vec::with_capacity(num_train_rows * num_labels);
+            let mut x_test: Vec<f32> = Vec::with_capacity(num_test_rows * num_features);
+            let mut y_test: Vec<f32> = Vec::with_capacity(num_test_rows * num_labels);
 
             // result: SpiTupleTable
             // row: SpiHeapTupleData
             // row[i]: SpiHeapTupleDataEntry
-            result.for_each(|row| {
+            result.enumerate().for_each(|(i, row)| {
                 for column in &columns {
-                    let vector = if column.label { &mut y } else { &mut x };
+                    let vector = if column.label {
+                        if i < num_train_rows {
+                            &mut y_train
+                        } else {
+                            &mut y_test
+                        }
+                    } else if i < num_train_rows {
+                        &mut x_train
+                    } else {
+                        &mut x_test
+                    };
                     match column.pg_type.as_str() {
                         "bool" => {
                             vector.push(row[column.position].value::<bool>().unwrap() as u8 as f32)
@@ -414,28 +440,29 @@ impl Snapshot {
                 }
             });
 
-            let num_test_rows = if self.test_size > 1.0 {
-                self.test_size as usize
-            } else {
-                (num_rows as f32 * self.test_size).round() as usize
-            };
-
-            let num_train_rows = num_rows - num_test_rows;
-            if num_train_rows == 0 {
-                error!(
-                    "test_size = {} is too large. There are only {} samples.",
-                    num_test_rows, num_rows
-                );
-            }
+            let stat = format!("{}_distinct", self.y_column_name[0]);
+            info!("stats {} {:?}", stat, self.analysis);
+            let num_distinct_labels = self
+                .analysis
+                .as_ref()
+                .unwrap()
+                .0
+                .get(stat)
+                .unwrap()
+                .as_f64()
+                .unwrap() as usize;
 
             data = Some(Dataset {
-                x,
-                y,
+                x_train,
+                y_train,
+                x_test,
+                y_test,
                 num_features,
                 num_labels,
                 num_rows,
                 num_test_rows,
                 num_train_rows,
+                num_distinct_labels,
             });
             Ok(Some(()))
         });

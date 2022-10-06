@@ -140,7 +140,7 @@ pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<d
     fit(
         dataset,
         hyperparams,
-        learning::Objective::MultiSoftmax(dataset.distinct_labels().try_into().unwrap()),
+        learning::Objective::MultiSoftmax(dataset.num_distinct_labels.try_into().unwrap()),
     )
 }
 
@@ -150,10 +150,10 @@ fn fit(
     objective: learning::Objective,
 ) -> Box<dyn Bindings> {
     // split the train/test data into DMatrix
-    let mut dtrain = DMatrix::from_dense(dataset.x_train(), dataset.num_train_rows).unwrap();
-    let mut dtest = DMatrix::from_dense(dataset.x_test(), dataset.num_test_rows).unwrap();
-    dtrain.set_labels(dataset.y_train()).unwrap();
-    dtest.set_labels(dataset.y_test()).unwrap();
+    let mut dtrain = DMatrix::from_dense(&dataset.x_train, dataset.num_train_rows).unwrap();
+    let mut dtest = DMatrix::from_dense(&dataset.x_test, dataset.num_test_rows).unwrap();
+    dtrain.set_labels(&dataset.y_train).unwrap();
+    dtest.set_labels(&dataset.y_test).unwrap();
 
     // specify datasets to evaluate against during training
     let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];

@@ -32,8 +32,6 @@ pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<d
 }
 
 fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bindings> {
-    let x_train = dataset.x_train();
-    let y_train = dataset.y_train();
     let mut hyperparams = hyperparams.clone();
     match task {
         Task::regression => {
@@ -43,16 +41,14 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
             );
         }
         Task::classification => {
-            let distinct_labels = dataset.distinct_labels();
-
-            if distinct_labels > 2 {
+            if dataset.num_distinct_labels > 2 {
                 hyperparams.insert(
                     "objective".to_string(),
                     serde_json::Value::from("multiclass"),
                 );
                 hyperparams.insert(
                     "num_class".to_string(),
-                    serde_json::Value::from(distinct_labels),
+                    serde_json::Value::from(dataset.num_distinct_labels),
                 );
             } else {
                 hyperparams.insert("objective".to_string(), serde_json::Value::from("binary"));
@@ -60,7 +56,12 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
         }
     };
 
-    let data = lightgbm::Dataset::from_vec(x_train, y_train, dataset.num_features as i32).unwrap();
+    let data = lightgbm::Dataset::from_vec(
+        &dataset.x_train,
+        &dataset.y_train,
+        dataset.num_features as i32,
+    )
+    .unwrap();
 
     let estimator = lightgbm::Booster::train(data, &json! {hyperparams}).unwrap();
 
@@ -70,7 +71,7 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
         num_classes: if task == Task::regression {
             1
         } else {
-            dataset.distinct_labels()
+            dataset.num_distinct_labels
         },
     })
 }

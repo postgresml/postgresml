@@ -1,57 +1,104 @@
-use std::collections::HashSet;
-use std::fmt::{Display, Error, Formatter};
-
 use pgx::*;
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
 pub struct Dataset {
-    pub x: Vec<f32>,
-    pub y: Vec<f32>,
+    pub x_train: Vec<f32>,
+    pub y_train: Vec<f32>,
+    pub x_test: Vec<f32>,
+    pub y_test: Vec<f32>,
     pub num_features: usize,
     pub num_labels: usize,
     pub num_rows: usize,
     pub num_train_rows: usize,
     pub num_test_rows: usize,
+    pub num_distinct_labels: usize,
 }
 
 impl Display for Dataset {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
-            "Dataset {{ num_rows: {}, num_features: {}, num_labels: {} }}",
-            self.num_rows, self.num_features, self.num_labels
+            "Dataset {{ num_features: {}, num_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            self.num_features, self.num_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
         )
     }
 }
 
 impl Dataset {
-    pub fn x_train(&self) -> &[f32] {
-        &self.x[..self.num_train_rows * self.num_features]
-    }
+    pub fn fold(&self, k: usize, folds: usize) -> Dataset {
+        // TODO return an error here instead of copy
+        if folds == 1 {
+            return Dataset {
+                x_train: self.x_train.clone(),
+                y_train: self.y_train.clone(),
+                x_test: self.x_test.clone(),
+                y_test: self.y_test.clone(),
+                num_features: self.num_features,
+                num_labels: self.num_labels,
+                num_rows: self.num_rows,
+                num_train_rows: self.num_train_rows,
+                num_test_rows: self.num_test_rows,
+                num_distinct_labels: self.num_distinct_labels,
+            };
+        }
+        let fold_test_size = self.num_train_rows / folds;
+        let test_start = k * fold_test_size;
+        let test_end = test_start + fold_test_size;
+        let num_train_rows = self.num_train_rows - fold_test_size;
 
-    pub fn x_test(&self) -> &[f32] {
-        &self.x[self.num_train_rows * self.num_features..]
-    }
+        let x_test_start = test_start * self.num_features;
+        let x_test_end = test_end * self.num_features;
+        let y_test_start = test_start * self.num_labels;
+        let y_test_end = test_end * self.num_labels;
 
-    pub fn y_train(&self) -> &[f32] {
-        &self.y[..self.num_train_rows * self.num_labels]
-    }
+        let mut x_train = Vec::with_capacity(num_train_rows * self.num_features);
+        x_train.extend_from_slice(&self.x_train[..x_test_start]);
+        x_train.extend_from_slice(&self.x_train[x_test_end..]);
+        let mut y_train = Vec::with_capacity(num_train_rows * self.num_labels);
+        y_train.extend_from_slice(&self.y_train[..y_test_start]);
+        y_train.extend_from_slice(&self.y_train[y_test_end..]);
 
-    pub fn y_test(&self) -> &[f32] {
-        &self.y[self.num_train_rows * self.num_labels..]
-    }
+        let x_test = self.x_train[x_test_start..x_test_end].to_vec();
+        let y_test = self.y_train[y_test_start..y_test_end].to_vec();
 
-    pub fn distinct_labels(&self) -> usize {
-        let mut v = HashSet::new();
-        // Treat the f32 values as u32 for std::cmp::Eq. We don't
-        // care about the nuance of nan equality here, they should
-        // already be filtered out upstream.
-        self.y.iter().for_each(|i| {
-            if !i.is_nan() {
-                v.insert(i.to_bits());
-            }
-        });
-        v.len()
+        info!(
+            "x_train: {} {}",
+            self.num_train_rows * self.num_features,
+            x_train.len()
+        );
+        info!(
+            "x_test: {} {} {} {}",
+            self.num_test_rows * self.num_features,
+            x_test.len(),
+            x_test_start,
+            x_test_end
+        );
+        info!(
+            "y_train: {} {}",
+            self.num_train_rows * self.num_labels,
+            y_train.len()
+        );
+        info!(
+            "y_test: {} {} {} {}",
+            self.num_test_rows * self.num_labels,
+            y_test.len(),
+            y_test_start,
+            y_test_end
+        );
+
+        Dataset {
+            x_train,
+            y_train,
+            x_test,
+            y_test,
+            num_features: self.num_features,
+            num_labels: self.num_labels,
+            num_rows: self.num_train_rows,
+            num_train_rows,
+            num_test_rows: fold_test_size,
+            num_distinct_labels: self.num_distinct_labels,
+        }
     }
 }
 
