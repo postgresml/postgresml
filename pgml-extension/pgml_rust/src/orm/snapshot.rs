@@ -440,8 +440,12 @@ impl Snapshot {
                 }
             });
 
+            log!(
+                "Snapshot analysis: {}",
+                serde_json::to_string(&self.analysis).unwrap()
+            );
+
             let stat = format!("{}_distinct", self.y_column_name[0]);
-            info!("stats {} {:?}", stat, self.analysis);
             let num_distinct_labels = self
                 .analysis
                 .as_ref()
@@ -464,15 +468,18 @@ impl Snapshot {
                 num_train_rows,
                 num_distinct_labels,
             });
+
             Ok(Some(()))
         });
 
         let data = data.unwrap();
-        info!("pgml.dataset {}", data);
+
+        info!("{}", data);
+
         data
     }
 
-    fn snapshot_name(&self) -> String {
-        format!("pgml.snapshot_{}", self.id)
+    pub fn snapshot_name(&self) -> String {
+        format!("\"pgml\".\"snapshot_{}\"", self.id)
     }
 }

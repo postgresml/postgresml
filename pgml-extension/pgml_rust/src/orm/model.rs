@@ -2,8 +2,8 @@ use std::fmt::{Display, Error, Formatter};
 use std::time::Instant;
 
 use ::linfa::prelude::{BinaryClassification, Pr, SingleTargetRegression, ToConfusionMatrix};
-use itertools::{izip, Itertools};
 use indexmap::IndexMap;
+use itertools::{izip, Itertools};
 use ndarray::ArrayView1;
 use pgx::*;
 use rand::prelude::SliceRandom;
@@ -112,7 +112,8 @@ impl Model {
         });
 
         let mut model = model.unwrap();
-        info!("pgml.model: {}", model);
+
+        info!("Training {}", model);
 
         model.fit(project, &dataset);
 
@@ -282,7 +283,12 @@ impl Model {
             .collect()
     }
 
-    fn test(&self, project: &Project, dataset: &Dataset, estimator: &Box<dyn Bindings>) -> IndexMap<String, f32> {
+    fn test(
+        &self,
+        project: &Project,
+        dataset: &Dataset,
+        estimator: &Box<dyn Bindings>,
+    ) -> IndexMap<String, f32> {
         // Test the estimator on the data
         let y_hat = estimator.predict_batch(&dataset.x_test);
         let y_test = &dataset.y_test;
@@ -312,14 +318,11 @@ impl Model {
                         "roc_auc".to_string(),
                         y_hat.roc(&y_test).unwrap().area_under_curve(),
                     );
-                    metrics
-                        .insert("log_loss".to_string(), y_hat.log_loss(&y_test).unwrap());
+                    metrics.insert("log_loss".to_string(), y_hat.log_loss(&y_test).unwrap());
                 }
 
-                let y_hat: Vec<usize> =
-                    y_hat.into_iter().map(|i| i.round() as usize).collect();
-                let y_test: Vec<usize> =
-                    y_test.iter().map(|i| i.round() as usize).collect();
+                let y_hat: Vec<usize> = y_hat.into_iter().map(|i| i.round() as usize).collect();
+                let y_test: Vec<usize> = y_test.iter().map(|i| i.round() as usize).collect();
                 let y_hat = ArrayView1::from(&y_hat);
                 let y_test = ArrayView1::from(&y_test);
                 let confusion_matrix = y_hat.confusion_matrix(y_test).unwrap();
@@ -352,21 +355,25 @@ impl Model {
         let mut all_metrics = Vec::with_capacity(all_hyperparams.len());
 
         info!(
-            "pgml.hyperparam searches: {}, cross validation folds: {}",
+            "Hyperparameter searches: {}, cross validation folds: {}",
             all_hyperparams.len(),
             cv
         );
 
         // Train and score all the st
         if cv < 2 {
-            // It would be nice if this could be combined with the 
+            // It would be nice if this could be combined with the
             // cv inline version invariant to the dataset/fold, but
             // extracting this to a function would involve passing
-            // most of the loc as params, which doesn't actually 
+            // most of the loc as params, which doesn't actually
             // simplify things much.
             for hyperparams in &all_hyperparams {
                 // When there are 0 or 1 folds, we use the dataset directly
-                info!("pgml.hyperparams: {:?}", hyperparams);
+                info!(
+                    "Hyperparams: {}",
+                    serde_json::to_string_pretty(&hyperparams).unwrap()
+                );
+
                 let now = Instant::now();
                 let estimator = fit(dataset, hyperparams);
                 let fit_time = now.elapsed();
@@ -377,18 +384,26 @@ impl Model {
 
                 metrics.insert("fit_time".to_string(), fit_time.as_secs_f32());
                 metrics.insert("score_time".to_string(), score_time.as_secs_f32());
-                info!("pgml.metrics: {:?}", metrics);
+
+                info!(
+                    "Metrics: {}",
+                    serde_json::to_string_pretty(&metrics).unwrap()
+                );
 
                 all_metrics.push(metrics);
                 all_estimators.push(estimator);
             }
         } else {
             for k in 0..cv {
-                info!("pgml.cross validation fold: {}", k);
                 // With 2 or more folds, generated for cross validation
-                let fold = dataset.fold(k, cv);                
+                let fold = dataset.fold(k, cv);
                 for hyperparams in &all_hyperparams {
-                    info!("pgml.hyperparams: {:?}", hyperparams);
+                    info!(
+                        "k = {}, Hyperparameters: {}",
+                        k,
+                        serde_json::to_string_pretty(&hyperparams).unwrap()
+                    );
+
                     let now = Instant::now();
                     let estimator = fit(&fold, hyperparams);
                     let fit_time = now.elapsed();
@@ -399,8 +414,13 @@ impl Model {
 
                     metrics.insert("fit_time".to_string(), fit_time.as_secs_f32());
                     metrics.insert("score_time".to_string(), score_time.as_secs_f32());
-                    info!("pgml.metrics: {:?}", metrics);
-    
+
+                    info!(
+                        "k = {}, Metrics: {}",
+                        k,
+                        serde_json::to_string_pretty(&metrics).unwrap()
+                    );
+
                     all_metrics.push(metrics);
                     all_estimators.push(estimator);
                 }
@@ -408,7 +428,11 @@ impl Model {
         }
 
         let (bytes, best_metrics, best_hyperparams) = if all_metrics.len() == 1 {
-            ((*all_estimators.first().unwrap()).to_bytes(), json!(all_metrics.first().unwrap()), json!(all_hyperparams.first().unwrap()))
+            (
+                (*all_estimators.first().unwrap()).to_bytes(),
+                json!(all_metrics.first().unwrap()),
+                json!(all_hyperparams.first().unwrap()),
+            )
         } else {
             let mut search_results = IndexMap::new();
             search_results.insert("params".to_string(), json!(all_hyperparams));
@@ -425,13 +449,12 @@ impl Model {
             let mut best_hyperparams = None;
             let mut best_estimator = None;
             let mut i = 0;
-             
+
             let mut fit_times: Vec<Vec<f32>> = vec![vec![0.; cv]; all_hyperparams.len()];
             let mut score_times: Vec<Vec<f32>> = vec![vec![0.; cv]; all_hyperparams.len()];
             let mut test_scores: Vec<Vec<f32>> = vec![vec![0.; cv]; all_hyperparams.len()];
-            let mut fold_scores: Vec<Vec<f32>> = vec![vec![0.; all_hyperparams.len()]; cv]; 
-            for (metrics, estimator) in izip!(all_metrics, all_estimators)
-            {
+            let mut fold_scores: Vec<Vec<f32>> = vec![vec![0.; all_hyperparams.len()]; cv];
+            for (metrics, estimator) in izip!(all_metrics, all_estimators) {
                 let fold_i = i / all_hyperparams.len();
                 let hyperparams_i = i % all_hyperparams.len();
                 let hyperparams = &all_hyperparams[hyperparams_i];
@@ -452,17 +475,56 @@ impl Model {
             }
 
             search_results.insert("best_index".to_string(), json!(best_index));
-            search_results.insert("mean_fit_time".to_string(), json!(fit_times.iter().map(|v| ArrayView1::from(v).mean().unwrap() ).collect::<Vec<f32>>()));
-            search_results.insert("std_fit_time".to_string(), json!(fit_times.iter().map(|v| ArrayView1::from(v).std(0.)).collect::<Vec<f32>>()));
-            search_results.insert("mean_score_time".to_string(), json!(score_times.iter().map(|v| ArrayView1::from(v).mean().unwrap() ).collect::<Vec<f32>>()));
-            search_results.insert("std_score_time".to_string(), json!(score_times.iter().map(|v| ArrayView1::from(v).std(0.)).collect::<Vec<f32>>()));
-            search_results.insert("mean_test_score".to_string(), json!(test_scores.iter().map(|v| ArrayView1::from(v).mean().unwrap() ).collect::<Vec<f32>>()));
-            search_results.insert("std_test_score".to_string(), json!(test_scores.iter().map(|v| ArrayView1::from(v).std(0.)).collect::<Vec<f32>>()));
+            search_results.insert(
+                "mean_fit_time".to_string(),
+                json!(fit_times
+                    .iter()
+                    .map(|v| ArrayView1::from(v).mean().unwrap())
+                    .collect::<Vec<f32>>()),
+            );
+            search_results.insert(
+                "std_fit_time".to_string(),
+                json!(fit_times
+                    .iter()
+                    .map(|v| ArrayView1::from(v).std(0.))
+                    .collect::<Vec<f32>>()),
+            );
+            search_results.insert(
+                "mean_score_time".to_string(),
+                json!(score_times
+                    .iter()
+                    .map(|v| ArrayView1::from(v).mean().unwrap())
+                    .collect::<Vec<f32>>()),
+            );
+            search_results.insert(
+                "std_score_time".to_string(),
+                json!(score_times
+                    .iter()
+                    .map(|v| ArrayView1::from(v).std(0.))
+                    .collect::<Vec<f32>>()),
+            );
+            search_results.insert(
+                "mean_test_score".to_string(),
+                json!(test_scores
+                    .iter()
+                    .map(|v| ArrayView1::from(v).mean().unwrap())
+                    .collect::<Vec<f32>>()),
+            );
+            search_results.insert(
+                "std_test_score".to_string(),
+                json!(test_scores
+                    .iter()
+                    .map(|v| ArrayView1::from(v).std(0.))
+                    .collect::<Vec<f32>>()),
+            );
             for k in 0..cv {
                 search_results.insert(format!("split{k}_test_score"), json!(fold_scores[k]));
             }
             for param in best_hyperparams.unwrap().keys() {
-                let params: Vec<serde_json::Value> = all_hyperparams.iter().map(|hyperparams| json!(hyperparams.get(param).unwrap())).collect();
+                let params: Vec<serde_json::Value> = all_hyperparams
+                    .iter()
+                    .map(|hyperparams| json!(hyperparams.get(param).unwrap()))
+                    .collect();
                 search_results.insert(format!("param_{param}"), json!(params));
             }
             let mut metrics = IndexMap::new();
@@ -470,7 +532,11 @@ impl Model {
                 metrics.insert(key, json!(value));
             }
             metrics.insert("search_results".to_string(), json!(search_results));
-            (best_estimator.unwrap().to_bytes(), json!(metrics), json!(best_hyperparams.unwrap()))
+            (
+                best_estimator.unwrap().to_bytes(),
+                json!(metrics),
+                json!(best_hyperparams.unwrap()),
+            )
         };
 
         self.hyperparams = JsonB(best_hyperparams.clone());
