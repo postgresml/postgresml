@@ -253,7 +253,7 @@ fn deploy(
     );
 
     let project_id =
-        project_id.unwrap_or_else(|| panic!("Project named `{}` does not exist.", project_name));
+        project_id.unwrap_or_else(|| error!("Project named `{}` does not exist.", project_name));
 
     let task = Task::from_str(&task.unwrap()).unwrap();
 
@@ -357,13 +357,13 @@ fn predict(project_name: &str, features: Vec<f32>) -> f32 {
                 vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
             );
             let project_id = project_id.unwrap_or_else(|| {
-                panic!(
+                error!(
                     "No deployed model exists for the project named: `{}`",
                     project_name
                 )
             });
             let model_id = model_id.unwrap_or_else(|| {
-                panic!(
+                error!(
                     "No deployed model exists for the project named: `{}`",
                     project_name
                 )
@@ -371,7 +371,7 @@ fn predict(project_name: &str, features: Vec<f32>) -> f32 {
             projects.insert(project_name.to_string(), project_id);
             let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
             if projects.len() == 1024 {
-                warning!("Active projects has exceeded capacity map, clearing caches.");
+                warning!("Active projects have exceeded capacity map, clearing caches.");
                 projects.clear();
             }
             projects.insert(project_id, model_id).unwrap();

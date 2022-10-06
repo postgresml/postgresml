@@ -10,6 +10,7 @@ use crate::bindings::Bindings;
 
 use crate::orm::Algorithm;
 use crate::orm::Runtime;
+use crate::orm::Task;
 
 #[allow(clippy::type_complexity)]
 static DEPLOYED_ESTIMATORS_BY_MODEL_ID: Lazy<Mutex<HashMap<i64, Arc<Box<dyn Bindings>>>>> =
@@ -25,6 +26,62 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
         }
     }
 
+    let mut data: Option<Vec<u8>> = None;
+    let mut runtime: Option<String> = None;
+    let mut algorithm: Option<String> = None;
+    let mut task: Option<String> = None;
+
+    Spi::connect(|client| {
+        let result = client
+            .select(
+                "SELECT
+                    data,
+                    runtime::TEXT,
+                    algorithm::TEXT,
+                    task::TEXT
+                FROM pgml.models
+                    INNER JOIN pgml.files
+                        ON models.id = files.model_id 
+                    INNER JOIN pgml.projects
+                        ON models.project_id = projects.id
+                    WHERE models.id = $1
+                    LIMIT 1
+                ",
+                Some(1),
+                Some(vec![(
+                    PgBuiltInOids::INT8OID.oid(),
+                    model_id.clone().into_datum(),
+                )]),
+            )
+            .first();
+
+        if result.is_empty() {
+            error!(
+                "Model pgml.models.id = {} does not exist, the model store has been corrupted.",
+                model_id
+            );
+        } else {
+            data = Some(
+                result
+                    .get_datum(1)
+                    .expect("Project has gone missing. Your model store has been corrupted."),
+            );
+            runtime = Some(
+                result
+                    .get_datum(2)
+                    .expect("Runtime for model is corrupted."),
+            );
+            algorithm = Some(
+                result
+                    .get_datum(3)
+                    .expect("Algorithm for model is corrupted."),
+            );
+            task = Some(result.get_datum(4).expect("Task for project is corrupted."));
+        }
+
+        Ok(Some(1))
+    });
+
     let (data, runtime, algorithm) = Spi::get_three_with_args::<Vec<u8>, String, String>(
         "SELECT data, runtime::TEXT, algorithm::TEXT FROM pgml.models
         INNER JOIN pgml.files
@@ -34,22 +91,30 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
     );
 
-    let data = data.unwrap_or_else(|| {
-        panic!(
-            "Project has gone missing for model: {}. Your model store has been corrupted.",
-            model_id
-        )
-    });
+    let data = data.unwrap();
     let runtime = Runtime::from_str(&runtime.unwrap()).unwrap();
     let algorithm = Algorithm::from_str(&algorithm.unwrap()).unwrap();
+    let task = Task::from_str(&task.unwrap()).unwrap();
 
-    info!("load {:?} {:?}", runtime, algorithm);
+    debug1!(
+        "runtime = {:?}, algorithm = {:?}, task = {:?}",
+        runtime,
+        algorithm,
+        task
+    );
+
     let bindings: Box<dyn Bindings> = match runtime {
         Runtime::rust => {
             match algorithm {
                 Algorithm::xgboost => crate::bindings::xgboost::Estimator::from_bytes(&data),
                 Algorithm::lightgbm => crate::bindings::lightgbm::Estimator::from_bytes(&data),
-                Algorithm::linear => crate::bindings::linfa::LinearRegression::from_bytes(&data),
+                Algorithm::linear => match task {
+                    Task::regression => crate::bindings::linfa::LinearRegression::from_bytes(&data),
+                    Task::classification => {
+                        crate::bindings::linfa::LogisticRegression::from_bytes(&data)
+                    }
+                },
+                Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data),
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
             }
         }
