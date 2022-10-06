@@ -314,10 +314,7 @@ fn fit(
             .unwrap();
 
         let estimator: Py<PyAny> = train
-            .call1(
-                py,
-                PyTuple::new(py, &[dataset.x_train(), dataset.y_train()]),
-            )
+            .call1(py, PyTuple::new(py, &[&dataset.x_train, &dataset.y_train]))
             .unwrap();
 
         let predictor = module.getattr("predictor").unwrap();
