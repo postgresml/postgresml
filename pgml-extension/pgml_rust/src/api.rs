@@ -103,17 +103,50 @@ fn train(
 > {
     let project = match Project::find_by_name(project_name) {
         Some(project) => project,
-        None => Project::create(project_name, task.unwrap()),
+        None => Project::create(project_name, match task {
+            Some(task) => task,
+            None => error!("Project `{}` does not exist. To create a new project, provide the task (regression or classification).", project_name),
+        }),
     };
+
     if task.is_some() && task.unwrap() != project.task {
         error!("Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.", project.name, project.task);
     }
 
     let snapshot = match relation_name {
-        None => project.last_snapshot().expect("You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model."),
-        Some(relation_name) => Snapshot::create(relation_name, y_column_name.expect("You must pass a `y_column_name` when you pass a `relation_name`"), test_size, test_sampling)
+        None => {
+            let snapshot = project
+                .last_snapshot()
+                .expect("You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.");
+
+            info!("Using existing snashot from {}", snapshot.snapshot_name(),);
+
+            snapshot
+        }
+
+        Some(relation_name) => {
+            info!(
+                "Snapshotting table \"{}\", this may take a little while...",
+                relation_name
+            );
+
+            let snapshot = Snapshot::create(
+                relation_name,
+                y_column_name
+                    .expect("You must pass a `y_column_name` when you pass a `relation_name`"),
+                test_size,
+                test_sampling,
+            );
+
+            info!(
+                "Snapshot of table \"{}\" created and saved in {}",
+                relation_name,
+                snapshot.snapshot_name(),
+            );
+
+            snapshot
+        }
     };
-    info!("pgml.snapshot: {}", snapshot);
 
     // # Default repeatable random state when possible
     // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);
@@ -218,8 +251,10 @@ fn deploy(
         "SELECT id, task::TEXT from pgml.projects WHERE name = $1",
         vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
     );
+
     let project_id =
         project_id.unwrap_or_else(|| panic!("Project named `{}` does not exist.", project_name));
+
     let task = Task::from_str(&task.unwrap()).unwrap();
 
     let mut sql = "SELECT models.id, models.algorithm::TEXT FROM pgml.models JOIN pgml.projects ON projects.id = models.project_id".to_string();
@@ -239,6 +274,7 @@ fn deploy(
                     "{predicate}\nORDER BY models.metrics->>'r2' DESC NULLS LAST"
                 );
             }
+
             Task::classification => {
                 let _ = write!(
                     sql,
@@ -246,9 +282,11 @@ fn deploy(
                 );
             }
         },
+
         Strategy::most_recent => {
             let _ = write!(sql, "{predicate}\nORDER by models.created_at DESC");
         }
+
         Strategy::rollback => {
             let _ = write!(
                 sql,
