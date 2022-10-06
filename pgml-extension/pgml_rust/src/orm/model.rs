@@ -137,24 +137,20 @@ impl Model {
 
     fn get_fit_function(&self, project: &Project) -> crate::bindings::Fit {
         match self.runtime {
-            Runtime::rust => {
-                match project.task {
-                    Task::regression => match self.algorithm {
-                        Algorithm::xgboost => xgboost::fit_regression,
-                        Algorithm::lightgbm => lightgbm::fit_regression,
-                        Algorithm::linear => linfa::LinearRegression::fit,
-                        _ => todo!(),
-                    },
-                    Task::classification => {
-                        match self.algorithm {
-                            Algorithm::xgboost => xgboost::fit_classification,
-                            Algorithm::lightgbm => lightgbm::fit_classification,
-                            // Algorithm::linear => linfa::LogisticRegression::fit,
-                            _ => todo!(),
-                        }
-                    }
-                }
-            }
+            Runtime::rust => match project.task {
+                Task::regression => match self.algorithm {
+                    Algorithm::xgboost => xgboost::fit_regression,
+                    Algorithm::lightgbm => lightgbm::fit_regression,
+                    Algorithm::linear => linfa::LinearRegression::fit,
+                    _ => todo!(),
+                },
+                Task::classification => match self.algorithm {
+                    Algorithm::xgboost => xgboost::fit_classification,
+                    Algorithm::lightgbm => lightgbm::fit_classification,
+                    Algorithm::linear => linfa::LogisticRegression::fit,
+                    _ => todo!(),
+                },
+            },
             Runtime::python => match project.task {
                 Task::regression => match self.algorithm {
                     Algorithm::linear => sklearn::linear_regression,
