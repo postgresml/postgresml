@@ -92,8 +92,8 @@ CREATE TABLE IF NOT EXISTS pgml.models(
 	search_args JSONB NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
-	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
-	CONSTRAINT snapshot_id_fk FOREIGN KEY(snapshot_id) REFERENCES pgml.snapshots(id)
+	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id) ON DELETE CASCADE,
+	CONSTRAINT snapshot_id_fk FOREIGN KEY(snapshot_id) REFERENCES pgml.snapshots(id) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS models_project_id_idx ON pgml.models(project_id);
 CREATE INDEX IF NOT EXISTS models_snapshot_id_idx ON pgml.models(snapshot_id);
@@ -109,8 +109,8 @@ CREATE TABLE IF NOT EXISTS pgml.deployments(
 	model_id BIGINT NOT NULL,
 	strategy pgml.strategy NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
-	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id),
-	CONSTRAINT model_id_fk FOREIGN KEY(model_id) REFERENCES pgml.models(id)
+	CONSTRAINT project_id_fk FOREIGN KEY(project_id) REFERENCES pgml.projects(id) ON DELETE CASCADE,
+	CONSTRAINT model_id_fk FOREIGN KEY(model_id) REFERENCES pgml.models(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS deployments_project_id_created_at_idx ON pgml.deployments(project_id);
 CREATE INDEX IF NOT EXISTS deployments_model_id_created_at_idx ON pgml.deployments(model_id);
@@ -126,7 +126,8 @@ CREATE TABLE IF NOT EXISTS pgml.files(
 	part INTEGER NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
-	data BYTEA NOT NULL
+	data BYTEA NOT NULL,
+	CONSTRAINT model_id_fk FOREIGN KEY(model_id) REFERENCES pgml.models(id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX IF NOT EXISTS files_model_id_path_part_idx ON pgml.files(model_id, path, part);
 SELECT pgml.auto_updated_at('pgml.files');
@@ -141,6 +142,7 @@ SELECT
 	   d.created_at AS deployed_at,
        p.task,
        m.algorithm,
+       m.runtime,
        s.relation_name,
        s.y_column_name,
        s.test_sampling,
@@ -163,6 +165,7 @@ SELECT
 	p.name,
 	p.task,
 	m.algorithm,
+	m.runtime,
 	m.created_at,
 	s.test_sampling,
 	s.test_size,
@@ -189,6 +192,7 @@ SELECT
 	p.name,
 	p.task,
 	m.algorithm,
+	m.runtime,
 	d.created_at as deployed_at 
 FROM pgml.projects p
 INNER JOIN (
