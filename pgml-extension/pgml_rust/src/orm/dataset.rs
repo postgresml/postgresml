@@ -27,20 +27,8 @@ impl Display for Dataset {
 
 impl Dataset {
     pub fn fold(&self, k: usize, folds: usize) -> Dataset {
-        // TODO return an error here instead of copy
-        if folds == 1 {
-            return Dataset {
-                x_train: self.x_train.clone(),
-                y_train: self.y_train.clone(),
-                x_test: self.x_test.clone(),
-                y_test: self.y_test.clone(),
-                num_features: self.num_features,
-                num_labels: self.num_labels,
-                num_rows: self.num_rows,
-                num_train_rows: self.num_train_rows,
-                num_test_rows: self.num_test_rows,
-                num_distinct_labels: self.num_distinct_labels,
-            };
+        if folds < 2 {
+            error!("It doesn't make sense to have k folds < 2. Use the dataset train/test split directly instead.");
         }
         let fold_test_size = self.num_train_rows / folds;
         let test_start = k * fold_test_size;
@@ -61,31 +49,6 @@ impl Dataset {
 
         let x_test = self.x_train[x_test_start..x_test_end].to_vec();
         let y_test = self.y_train[y_test_start..y_test_end].to_vec();
-
-        info!(
-            "x_train: {} {}",
-            self.num_train_rows * self.num_features,
-            x_train.len()
-        );
-        info!(
-            "x_test: {} {} {} {}",
-            self.num_test_rows * self.num_features,
-            x_test.len(),
-            x_test_start,
-            x_test_end
-        );
-        info!(
-            "y_train: {} {}",
-            self.num_train_rows * self.num_labels,
-            y_train.len()
-        );
-        info!(
-            "y_test: {} {} {} {}",
-            self.num_test_rows * self.num_labels,
-            y_test.len(),
-            y_test_start,
-            y_test_end
-        );
 
         Dataset {
             x_train,

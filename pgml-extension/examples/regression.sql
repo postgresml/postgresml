@@ -103,8 +103,7 @@ SELECT pgml.train(
     search => 'grid', 
     search_params => '{
         "max_depth": [1, 2], 
-        "n_estimators": [20, 40],
-        "learning_rate": [0.1, 0.2]
+        "n_estimators": [20, 40]
     }'
 );
 
