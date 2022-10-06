@@ -18,13 +18,14 @@ SELECT pgml.load_dataset('digits');
 SELECT left(image::text, 40) || ',...}', target FROM pgml.digits LIMIT 10;
 
 -- train a simple model to classify the data
-SELECT * FROM pgml.train('Handwritten Digits', 'classification', 'pgml.digits', 'target');
+SELECT * FROM pgml.train('Handwritten Digits', 'classification', 'pgml.digits', 'target', runtime => 'rust');
 
 -- check out the predictions
 SELECT target, pgml.predict('Handwritten Digits', image) AS prediction
 FROM pgml.digits 
 LIMIT 10;
 
+SELECT * FROM pgml.train('Handwritten Digits', 'classification', 'pgml.digits', 'target', runtime => 'python');
 --
 -- After a project has been trained, ommited parameters will be reused from previous training runs
 -- In these examples we'll reuse the training data snapshots from the initial call.

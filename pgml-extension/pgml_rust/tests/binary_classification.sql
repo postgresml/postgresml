@@ -7,7 +7,7 @@ SELECT pgml.load_dataset('breast_cancer');
 SELECT * FROM pgml.breast_cancer LIMIT 10;
 
 -- train a simple model to classify the data
-SELECT * FROM pgml.train('Breast Cancer Detection', 'classification', 'pgml.breast_cancer', 'malignant');
+SELECT * FROM pgml.train('Breast Cancer Detection', 'classification', 'pgml.breast_cancer', 'malignant', runtime => 'rust');
 
 -- check out the predictions
 SELECT malignant, pgml.predict(
@@ -47,6 +47,8 @@ SELECT malignant, pgml.predict(
 ) AS prediction
 FROM pgml.breast_cancer 
 LIMIT 10;
+
+SELECT * FROM pgml.train('Breast Cancer Detection', 'classification', 'pgml.breast_cancer', 'malignant', runtime => 'python');
 
 --
 -- After a project has been trained, ommited parameters will be reused from previous training runs
@@ -103,6 +105,17 @@ SELECT pgml.train(
         "n_estimators": [10, 20],
         "max_leaf_nodes": [2, 4],
         "criterion": ["friedman_mse", "squared_error"]
+    }'
+);
+
+SELECT pgml.train(
+    'Breast Cancer Detection', 
+    algorithm => 'xgboost', 
+    search => 'grid',
+    runtime => 'rust',
+    search_params => '{
+        "max_depth": [1, 2], 
+        "n_estimators": [20, 40]
     }'
 );
 

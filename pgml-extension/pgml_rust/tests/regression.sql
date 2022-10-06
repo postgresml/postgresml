@@ -19,12 +19,14 @@ SELECT pgml.load_dataset('diabetes');
 SELECT * FROM pgml.diabetes LIMIT 10;
 
 -- train a simple model on the data
-SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target');
+SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', runtime => 'rust');
 
 -- check out the predictions
 SELECT target, pgml.predict('Diabetes Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
 FROM pgml.diabetes 
 LIMIT 10;
+
+SELECT * FROM pgml.train('Diabetes Progression', 'regression', 'pgml.diabetes', 'target', runtime => 'python');
 
 -- Check predictions against a specific model id
 -- SELECT model_id, target, pgml.model_predict(model_id, ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
@@ -100,11 +102,21 @@ SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 SELECT pgml.train(
     'Diabetes Progression', 
     algorithm => 'xgboost_random_forest', 
-    search => 'grid', 
+    search => 'grid',
     search_params => '{
-        "max_depth": [1, 2], 
-        "n_estimators": [20, 40],
-        "learning_rate": [0.1, 0.2]
+        "max_depth": [1, 2],
+        "n_estimators": [20, 40]
+    }'
+);
+
+SELECT pgml.train(
+    'Diabetes Progression',
+    algorithm => 'xgboost',
+    runtime => 'rust',
+    search => 'grid',
+    search_params => '{
+        "max_depth": [1, 2],
+        "n_estimators": [20, 40]
     }'
 );
 
