@@ -69,49 +69,103 @@ impl Bindings for LinearRegression {
     }
 }
 
-// #[derive(Debug)]
-// pub struct LogisticRegression {
-//     estimator: linfa_logistic::FittedLogisticRegression<f32, f32>,
-//     num_features: usize,
-// }
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LogisticRegression {
+    estimator_binary: Option<linfa_logistic::FittedLogisticRegression<f32, i32>>,
+    estimator_multi: Option<linfa_logistic::MultiFittedLogisticRegression<f32, i32>>,
+    num_features: usize,
+    num_distinct_labels: usize,
+}
 
-// impl Bindings for LogisticRegression {
-//     fn fit(dataset: &Dataset) -> Box<dyn Bindings> where Self: Sized {
-//         let estimator = linfa_logistic::LogisticRegression::default();
-//         let estimator = estimator.fit(&dataset.into()).unwrap();
+impl LogisticRegression {
+    pub fn fit(dataset: &Dataset, _hyperparams: &Hyperparams) -> Box<dyn Bindings>
+    where
+        Self: Sized,
+    {
+        let records = ArrayView2::from_shape(
+            (dataset.num_train_rows, dataset.num_features),
+            &dataset.x_train,
+        )
+        .unwrap();
 
-//         Box::new(LogisticRegression { estimator, num_features: dataset.num_features })
-//     }
+        // Copy to convert to i32 because LogisticRegression doesn't contineous targets.
+        let y_train: Vec<i32> = dataset.y_train.iter().map(|x| *x as i32).collect();
+        let targets = ArrayView1::from_shape(dataset.num_train_rows, &y_train).unwrap();
 
-//     /// Predict a novel datapoint.
-//     fn predict(&self, features: &[f32]) -> f32 {
-//         self.predict_batch(features)[0]
-//     }
+        let linfa_dataset = linfa::DatasetBase::from((records, targets));
 
-//     /// Predict a novel datapoint.
-//     fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
-//         let records = ArrayView2::from_shape(
-//             (features.len() / self.num_features, self.num_features),
-//             features,
-//         )
-//         .unwrap();
-//         self.estimator.predict(records).targets.into_raw_vec()
-//     }
+        if dataset.num_distinct_labels > 2 {
+            let estimator = linfa_logistic::MultiLogisticRegression::default();
+            let estimator = estimator.fit(&linfa_dataset).unwrap();
 
-//     /// Deserialize self from bytes, with additional context
-//     fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings> where Self: Sized {
-//         let estimator: LogisticRegression = rmp_serde::from_read(bytes).unwrap();
-//         Box::new(estimator)
-//     }
+            Box::new(LogisticRegression {
+                estimator_binary: None,
+                estimator_multi: Some(estimator),
+                num_features: dataset.num_features,
+                num_distinct_labels: dataset.num_distinct_labels,
+            })
+        } else {
+            let estimator = linfa_logistic::LogisticRegression::default();
+            let estimator = estimator.fit(&linfa_dataset).unwrap();
 
-//     /// Serialize self to bytes
-//     fn to_bytes(&self) -> Vec<u8> {
-//         // Logistic Regression doesn't support Serde (or any kind of ) serialization
-//         todo!()
-//     }
+            Box::new(LogisticRegression {
+                estimator_binary: Some(estimator),
+                estimator_multi: None,
+                num_features: dataset.num_features,
+                num_distinct_labels: dataset.num_distinct_labels,
+            })
+        }
+    }
+}
 
-//     /// The hyperparams used during the fit call
-//     fn hyperparams(&self) -> Hyperparams {
-//         todo!()
-//     }
-// }
+impl Bindings for LogisticRegression {
+    /// Predict a novel datapoint.
+    fn predict(&self, features: &[f32]) -> f32 {
+        self.predict_batch(features)[0]
+    }
+
+    /// Predict a novel datapoint.
+    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
+        let records = ArrayView2::from_shape(
+            (features.len() / self.num_features, self.num_features),
+            features,
+        )
+        .unwrap();
+
+        if self.num_distinct_labels > 2 {
+            self.estimator_multi
+                .as_ref()
+                .unwrap()
+                .predict(records)
+                .targets
+                .into_raw_vec()
+                .into_iter()
+                .map(|x| x as f32)
+                .collect()
+        } else {
+            self.estimator_binary
+                .as_ref()
+                .unwrap()
+                .predict(records)
+                .targets
+                .into_raw_vec()
+                .into_iter()
+                .map(|x| x as f32)
+                .collect()
+        }
+    }
+
+    /// Deserialize self from bytes, with additional context
+    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    where
+        Self: Sized,
+    {
+        let estimator: LogisticRegression = rmp_serde::from_read(bytes).unwrap();
+        Box::new(estimator)
+    }
+
+    /// Serialize self to bytes
+    fn to_bytes(&self) -> Vec<u8> {
+        rmp_serde::to_vec(self).unwrap()
+    }
+}

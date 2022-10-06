@@ -1,4 +1,5 @@
 extern crate blas;
+extern crate linfa_linear;
 extern crate openblas_src;
 extern crate serde;
 

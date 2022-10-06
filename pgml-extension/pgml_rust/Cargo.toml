@@ -34,9 +34,9 @@ heapless = "0.7.13"
 lightgbm = { git="https://github.com/postgresml/lightgbm-rs" }
 parking_lot = "0.12"
 itertools = "*"
-linfa = { version = "0.6" }
-linfa-linear = { version = "0.6" }
-linfa-logistic = { version = "0.6" }
+linfa = { path = "deps/linfa" }
+linfa-linear = { path = "deps/linfa/algorithms/linfa-linear" }
+linfa-logistic = { path = "deps/linfa/algorithms/linfa-logistic" }
 anyhow = { version = "1.0" }
 
 [dev-dependencies]
