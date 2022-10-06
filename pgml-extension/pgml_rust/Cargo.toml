@@ -37,6 +37,7 @@ itertools = "*"
 linfa = { path = "deps/linfa" }
 linfa-linear = { path = "deps/linfa/algorithms/linfa-linear" }
 linfa-logistic = { path = "deps/linfa/algorithms/linfa-logistic" }
+linfa-svm = { path = "deps/linfa/algorithms/linfa-svm", features = ["serde"] }
 anyhow = { version = "1.0" }
 
 [dev-dependencies]
