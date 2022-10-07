@@ -22,19 +22,20 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 		apt-get update && apt-get install -y postgresql-pgml-14
 		```
 
+	Both ARM64 and Intel/AMD architectures are supported.
+
 
 === ":material-linux: :material-microsoft: From Source (Linux & WSL)"
 
+	These instructions assume a Debian flavor Linux and PostgreSQL 14. Adjust the PostgreSQL
+	version accordingly if yours is different. Other flavors of Linux should work, but have not been tested.
+	PostgreSQL 10 through 14 are supported.
+
 	1. Install the latest Rust compiler from [rust-lang.org](https://www.rust-lang.org/learn/get-started).
 
-	2. Clone our git repository:
+	2. Install a [modern version](https://apt.kitware.com/) of CMake.
 
-		```bash
-		git clone https://github.com/postgresml/postgresml && \
-		cd postgresml/pgml-extension/
-		```
-	3. Install a [modern version](https://apt.kitware.com/) of CMake.
-	4. Install PostgreSQL development headers and other dependencies:
+	3. Install PostgreSQL development headers and other dependencies:
 
 		```bash
 		apt-get update && \
@@ -46,7 +47,18 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 			pkg-config \
 			libssl-dev
 		```
-	5. Install [`pgx`](https://github.com/tcdi/pgx) and build the extension:
+
+	4. Clone our git repository:
+
+		```bash
+		git clone https://github.com/postgresml/postgresml && \
+		cd postgresml && \
+		git submodule update --init --recursive && \
+		cd pgml-extension
+		```
+	
+	5. Install [`pgx`](https://github.com/tcdi/pgx) and build the extension (this will take a few minutes):
+
 		```bash
 		cargo install cargo-pgx && \
 		cargo pgx init --pg14 /usr/bin/pg_config && \
@@ -55,6 +67,9 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 		```
 
 === ":material-apple: From Source (Mac)"
+
+	_N.B._: Apple M1s have an issue with `openmp` which XGBoost and LightGBM depend on,
+	so presently the extension doesn't work on M1s and M2s. We're tracking the [issue](https://github.com/postgresml/postgresml/issues/364).
 	
 	1. Install the latest Rust compiler from [rust-lang.org](https://www.rust-lang.org/learn/get-started).
 
@@ -62,14 +77,22 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 
 		```bash
 		git clone https://github.com/postgresml/postgresml && \
-		cd postgresml/pgml-extension/
+		cd postgresml && \
+		git submodule update --init --recursive && \
+		cd pgml-extension
 		```
 	3. Install PostgreSQL and other dependencies:
 
 		```bash
 		brew install llvm postgresql cmake openssl pkg-config
 		```
-	4. Install [`pgx`](https://github.com/tcdi/pgx) and build the extension:
+
+		Make sure to follow instructions from each package for post-installation steps.
+		For example, `openssl` requires some environment variables set in `~/.zsh` for
+		the compiler to find the library.
+
+	4. Install [`pgx`](https://github.com/tcdi/pgx) and build the extension (this will take a few minutes):
+
 		```bash
 		cargo install cargo-pgx && \
 		cargo pgx init --pg14 /usr/bin/pg_config && \
