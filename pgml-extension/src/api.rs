@@ -6,6 +6,7 @@ use std::str::FromStr;
 use once_cell::sync::Lazy;
 use pgx::*;
 use pyo3::prelude::*;
+use serde_json::json;
 
 use crate::orm::Algorithm;
 use crate::orm::Model;
@@ -426,6 +427,31 @@ fn model_predict(model_id: i64, features: Vec<f32>) -> f32 {
 fn model_predict_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
     let estimator = crate::orm::file::find_deployed_estimator_by_model_id(model_id);
     estimator.predict_batch(&features)
+}
+
+#[pg_extern(name = "transform")]
+pub fn transform_json(
+    task: JsonB,
+    args: default!(JsonB, "'{}'"),
+    inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
+) -> JsonB {
+    JsonB(crate::bindings::transformers::transform(
+        &task.0, &args.0, &inputs,
+    ))
+}
+
+#[pg_extern(name = "transform")]
+pub fn transform_string(
+    task: String,
+    args: default!(JsonB, "'{}'"),
+    inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
+) -> JsonB {
+    let mut task_map = HashMap::new();
+    task_map.insert("task", task);
+    let task_json = json!(task_map);
+    JsonB(crate::bindings::transformers::transform(
+        &task_json, &args.0, &inputs,
+    ))
 }
 
 #[cfg(any(test, feature = "pg_test"))]

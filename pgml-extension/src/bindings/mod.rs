@@ -2,6 +2,7 @@ pub mod lightgbm;
 pub mod linfa;
 pub mod sklearn;
 pub mod smartcore;
+pub mod transformers;
 pub mod xgboost;
 
 use crate::orm::*;
