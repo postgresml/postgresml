@@ -399,7 +399,7 @@ impl Model {
                 let fold = dataset.fold(k, cv);
                 for hyperparams in &all_hyperparams {
                     info!(
-                        "k = {}, Hyperparameters: {}",
+                        "k = {}, hyperparameters: {}",
                         k,
                         serde_json::to_string_pretty(&hyperparams).unwrap()
                     );
@@ -416,7 +416,7 @@ impl Model {
                     metrics.insert("score_time".to_string(), score_time.as_secs_f32());
 
                     info!(
-                        "k = {}, Metrics: {}",
+                        "k = {}, metrics: {}",
                         k,
                         serde_json::to_string_pretty(&metrics).unwrap()
                     );

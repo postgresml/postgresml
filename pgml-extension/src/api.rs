@@ -77,6 +77,11 @@ fn python_version() -> String {
     version
 }
 
+#[pg_extern]
+fn version() -> String {
+    crate::VERSION.to_string()
+}
+
 #[allow(clippy::too_many_arguments)]
 #[pg_extern]
 fn train(
@@ -416,6 +421,18 @@ fn load_dataset(
     vec![(name, rows)].into_iter()
 }
 
+#[pg_extern]
+fn model_predict(model_id: i64, features: Vec<f32>) -> f32 {
+    let estimator = crate::orm::file::find_deployed_estimator_by_model_id(model_id);
+    estimator.predict(&features)
+}
+
+#[pg_extern]
+fn model_predict_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
+    let estimator = crate::orm::file::find_deployed_estimator_by_model_id(model_id);
+    estimator.predict_batch(&features)
+}
+
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
@@ -464,7 +481,7 @@ mod tests {
                 0.25,
                 Sampling::last,
                 Some(runtime),
-                Some(false),
+                Some(true),
             )
             .collect();
 
@@ -472,7 +489,7 @@ mod tests {
             assert_eq!(result[0].0, String::from("Test project"));
             assert_eq!(result[0].1, String::from("regression"));
             assert_eq!(result[0].2, String::from("linear"));
-            assert_eq!(result[0].3, false);
+            assert_eq!(result[0].3, true);
         }
     }
 
@@ -501,7 +518,7 @@ mod tests {
                 0.25,
                 Sampling::last,
                 Some(runtime),
-                Some(false),
+                Some(true),
             )
             .collect();
 
@@ -509,7 +526,7 @@ mod tests {
             assert_eq!(result[0].0, String::from("Test project 2"));
             assert_eq!(result[0].1, String::from("classification"));
             assert_eq!(result[0].2, String::from("xgboost"));
-            assert_eq!(result[0].3, false);
+            assert_eq!(result[0].3, true);
         }
     }
 }

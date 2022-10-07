@@ -15,12 +15,6 @@ services:
       - sleep
       - infinity
   dashboard:
-    healthcheck:
-      test: curl http://localhost:8000
-      interval: 15s
-      retries: 3
-      timeout: 2s
-    restart: on-failure
     depends_on:
       - postgres
     build:
