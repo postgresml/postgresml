@@ -53,7 +53,7 @@ pub fn sklearn_train() {
 	// Copy the code into the Rust library at build time.
 	let module = include_str!(concat!(
 	    env!("CARGO_MANIFEST_DIR"),
-	    "/src/bindings/wrappers.py"
+	    "/src/bindings/sklearn.py"
 	));
 
 	let estimator = Python::with_gil(|py| -> Py<PyAny> {

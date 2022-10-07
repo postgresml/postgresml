@@ -1,25 +1,55 @@
-FROM ubuntu:jammy
-MAINTAINER team@postgresml.com
+#
+# Extension builder.
+#
+ARG UBUNTU_VERSION=22.04
+FROM ubuntu:${UBUNTU_VERSION}
 
-RUN apt-get update
+ARG PGVERSION=14
 ARG DEBIAN_FRONTEND=noninteractive
+ARG PACKAGE_VERSION=2.0.0
 ENV TZ=Etc/UTC
-RUN apt-get update && apt-get install -y curl lsb-release  python3 python3-pip  tzdata sudo cmake libpq-dev libclang-dev wget postgresql-plpython3-14 postgresql-14
 
-RUN echo "deb [trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" >> /etc/apt/sources.list
-RUN cat /etc/apt/sources.list
-RUN apt-get update && apt-get install -y postgresql-pgml-14
+# Apt-fast
+RUN apt-get update && apt-get install software-properties-common -y
 
-# Cache this, quicker
-RUN pip3 install xgboost sklearn diptest torch lightgbm transformers datasets sentencepiece sacremoses sacrebleu rouge
+RUN add-apt-repository ppa:apt-fast/stable --yes
+RUN apt-get update && apt-get -y install apt-fast
+
+RUN  apt-fast install apt-fast curl unzip gpg -y
+
+# PostgresSQL
+RUN curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg > /dev/null
+RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+
+# CMake
+RUN curl -L https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
+RUN echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/kitware.list >/dev/null
+
+RUN apt-get update && apt-fast install postgresql-${PGVERSION} libopenblas-dev cmake postgresql-server-dev-${PGVERSION} pkg-config libssl-dev build-essential libclang-dev libpython3-dev python3-dev -y
+
+USER postgres
+
+# Install Rust
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+ENV PATH="/var/lib/postgresql/.cargo/bin:${PATH}"
+
+# Install tcdi/pgx
+RUN cargo install cargo-pgx
+RUN cargo pgx init --pg${PGVERSION} /usr/bin/pg_config
 
 COPY --chown=postgres:postgres . /app
 WORKDIR /app
 
-# Listen on 0.0.0.0 and allow 'root' to connect without a password.
-# Please modify for production deployments accordingly.
-RUN cp /app/docker/postgresql.conf /etc/postgresql/14/main/postgresql.conf
-RUN cp /app/docker/pg_hba.conf /etc/postgresql/14/main/pg_hba.conf
+# Build and upload package to S3
+RUN cargo pgx package
 
-WORKDIR /app
-ENTRYPOINT ["/bin/bash", "/app/docker/entrypoint.sh"]
+# Deb file goes here, mount it on your local system
+VOLUME /output
+USER root
+
+ENV PACKAGE_VERSION=$PACKAGE_VERSION
+ENV OUTPUT_DIR=/output
+
+# Run
+ENTRYPOINT ["bash", "docker/build_ubuntu_deb.sh", "/output"]
+
