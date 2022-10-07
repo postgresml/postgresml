@@ -840,10 +840,10 @@ class Model(object):
             if len(files) > 0:
                 self._algorithm = pickle.loads(files[0]["data"])
             else:
-                algorithm = Model.algorithm_from_name_and_task(self.algorithm, self.project.task)
+                algorithm = Model.algorithm_from_name_and_task(self.__dict__["algorithm"], self.project.task)
                 self._algorithm = algorithm(**self.hyperparams)
                 if len(self.snapshot.y_column_name) > 1:
-                    if self.project.task == "regression" and self.algorithm in [
+                    if self.project.task == "regression" and self.__dict__["algorithm"] in [
                         "bayesian_ridge",
                         "automatic_relevance_determination",
                         "stochastic_gradient_descent",
@@ -1023,7 +1023,7 @@ def train(
     task: str = None,
     relation_name: str = None,
     y_column_name: str = None,
-    algorithm: str = "linear",
+    algorithm_name: str = "linear",
     hyperparams: dict = {},
     search: str = None,
     search_params: dict = {},
@@ -1071,15 +1071,15 @@ def train(
         snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
 
     # Model
-    if algorithm is None:
-        algorithm = "linear"
+    if algorithm_name is None:
+        algorithm_name = "linear"
 
     # Default repeatable random state when possible
-    algorithm = Model.algorithm_from_name_and_task(algorithm, task)
+    algorithm = Model.algorithm_from_name_and_task(algorithm_name, task)
     if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
         hyperparams["random_state"] = 0
 
-    model = Model.create(project, snapshot, algorithm, hyperparams, search, search_params, search_args)
+    model = Model.create(project, snapshot, algorithm_name, hyperparams, search, search_params, search_args)
     model.fit(snapshot)
 
     # Deployment

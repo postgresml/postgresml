@@ -40,7 +40,6 @@ AS $$
 	return load(source, subset, limit, **json.loads(kwargs))
 $$ LANGUAGE plpython3u;
 
-
 ---
 --- Snapshot a table or view
 ---

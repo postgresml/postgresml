@@ -1,3 +1,4 @@
+import plpy
 from plpy import quote_literal
 import json
 import re
