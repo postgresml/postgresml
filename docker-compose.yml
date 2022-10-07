@@ -8,7 +8,7 @@ services:
       timeout: 2s
     build:
       context: ./pgml-extension/
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.local
     ports:
       - "5433:5432"
     command:
