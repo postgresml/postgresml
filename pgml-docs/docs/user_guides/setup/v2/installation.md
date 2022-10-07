@@ -13,7 +13,7 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 	1. Add our repository into your sources:
 
 		```bash
-		echo "[trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" >> /etc/apt/sources.list
+		echo "deb [trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" >> /etc/apt/sources.list
 		```
 
 	2. Install the extension:
