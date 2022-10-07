@@ -34,40 +34,6 @@ def snapshot(request, id):
 
 def get(request, id):
     snapshot = get_object_or_404(Snapshot, id=id)
-    samples = snapshot.sample(500)
-    columns = OrderedDict()
-    column_names = sorted(list(snapshot.columns.keys()))
-    for target in snapshot.y_column_name:
-        column_names.remove(target)
-        column_names.insert(0, target)
-
-    for column_name in column_names:
-        if snapshot.columns[column_name] in ["integer", "real", "boolean"]:
-            sample = [sample[column_name] for sample in samples]
-            # TODO reconsider boolean support, cast during snapshot?
-            if snapshot.columns[column_name] == "boolean":
-                sample = [float(x) for x in sample]
-
-            columns[column_name] = {
-                "name": column_name,
-                "type": snapshot.columns[column_name],
-                "q1": snapshot.analysis[column_name + "_p25"],
-                "median": snapshot.analysis[column_name + "_p50"],
-                "q3": snapshot.analysis[column_name + "_p75"],
-                "mean": snapshot.analysis[column_name + "_mean"],
-                "stddev": snapshot.analysis[column_name + "_stddev"],
-                "min": snapshot.analysis[column_name + "_min"],
-                "max": snapshot.analysis[column_name + "_max"],
-                "dip": snapshot.analysis[column_name + "_dip"],
-                "samples": SafeString(json.dumps(sample)),
-            }
-
-    # TODO reconsider spaces in column_names, fix during snapshot?
-    fixed_columns = OrderedDict()
-    for column_name, values in columns.items():
-        fixed_columns[column_name.replace(" ", "_")] = values
-    columns = fixed_columns
-
     models = snapshot.model_set.all().prefetch_related("project")
     projects = OrderedDict()
     for model in models:
@@ -88,6 +54,66 @@ def get(request, id):
             project.id,
         )
 
+    try:
+        samples = snapshot.sample(500)
+    except:
+        samples = []
+
+    columns = OrderedDict()
+    try:
+        # v1.0 format
+        column_names = sorted(list(snapshot.columns.keys()))
+        for target in snapshot.y_column_name:
+            column_names.remove(target)
+            column_names.insert(0, target)
+        for column_name in column_names:
+            if snapshot.columns[column_name] in ["integer", "real", "boolean"]:
+                sample = [sample[column_name] for sample in samples]
+                # TODO reconsider boolean support, cast during snapshot?
+                if snapshot.columns[column_name] == "boolean":
+                    sample = [float(x) for x in sample]
+
+                columns[column_name] = {
+                    "name": column_name,
+                    "type": snapshot.columns[column_name],
+                    "q1": snapshot.analysis[column_name + "_p25"],
+                    "median": snapshot.analysis[column_name + "_p50"],
+                    "q3": snapshot.analysis[column_name + "_p75"],
+                    "mean": snapshot.analysis[column_name + "_mean"],
+                    "stddev": snapshot.analysis[column_name + "_stddev"],
+                    "min": snapshot.analysis[column_name + "_min"],
+                    "max": snapshot.analysis[column_name + "_max"],
+                    "dip": snapshot.analysis[column_name + "_dip"],
+                    "samples": SafeString(json.dumps(sample)),
+                }
+    except:
+        # v2.0 format
+        for column in snapshot.columns:
+            column_name = column["name"]
+            if "[]" not in column_name:
+                sample = [sample[column_name] for sample in samples]
+                if "bool" == column["pg_type"]:
+                    sample = [float(x) for x in sample]
+
+                columns[column_name] = {
+                    "name": column_name,
+                    "type": column["pg_type"],
+                    "q1": snapshot.analysis[column_name + "_p25"],
+                    "median": snapshot.analysis[column_name + "_p50"],
+                    "q3": snapshot.analysis[column_name + "_p75"],
+                    "mean": snapshot.analysis[column_name + "_mean"],
+                    "stddev": snapshot.analysis[column_name + "_stddev"],
+                    "min": snapshot.analysis[column_name + "_min"],
+                    "max": snapshot.analysis[column_name + "_max"],
+                    "samples": SafeString(json.dumps(sample)),
+                }
+
+
+    # TODO reconsider spaces in column_names, fix during snapshot?
+    fixed_columns = OrderedDict()
+    for column_name, values in columns.items():
+        fixed_columns[column_name.replace(" ", "_")] = values
+    columns = fixed_columns
     context = {
         "snapshot": snapshot,
         "features": columns,
