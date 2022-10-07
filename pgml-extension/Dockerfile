@@ -6,14 +6,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 RUN apt-get update && apt-get install -y curl lsb-release  python3 python3-pip  tzdata sudo cmake libpq-dev libclang-dev wget postgresql-plpython3-14 postgresql-14
 
-RUN if uname -a | grep "x86"; then \
-	curl https://static.postgresml.org/packages/postgresql-pgml-14_0.0.1-ubuntu1.0-amd64.deb -o pgml_rust.deb; \
-	fi
-RUN if uname -a | grep "aarch64"; then \
-	curl https://static.postgresml.org/packages/postgresql-pgml-14_0.0.1-ubuntu1.0-arm64.deb -o pgml_rust.deb; \
-	fi
-
-RUN dpkg -i pgml_rust.deb && rm pgml_rust.deb
+RUN echo "deb [trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" >> /etc/apt/sources.list
+RUN cat /etc/apt/sources.list
+RUN apt-get update && apt-get install -y postgresql-pgml-14
 
 # Cache this, quicker
 RUN pip3 install xgboost sklearn diptest torch lightgbm transformers datasets sentencepiece sacremoses sacrebleu rouge
