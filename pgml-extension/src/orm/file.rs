@@ -50,7 +50,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
                 Some(1),
                 Some(vec![(
                     PgBuiltInOids::INT8OID.oid(),
-                    model_id.clone().into_datum(),
+                    model_id.into_datum(),
                 )]),
             )
             .first();
