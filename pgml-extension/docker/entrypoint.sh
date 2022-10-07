@@ -15,12 +15,8 @@ echo "Creating user and database..."
 (createdb -U postgres -h 127.0.0.1 pgml_development 2> /dev/null) || true
 
 echo "Installing pgml extension..."
-psql -U postgres -h 127.0.0.1 pgml_development -c 'CREATE EXTENSION pgml_rust'
-psql -U postgres -h 127.0.0.1 pgml_development -c "SELECT pgml_rust_train('pgml_rust.diabetes', ARRAY['age', 'sex'], 'target')"
-psql -U postgres -h 127.0.0.1 pgml_development -c 'SELECT pgml_rust_predict(1, ARRAY[1, 2])'
+psql -U postgres -h 127.0.0.1 pgml_development -c 'CREATE EXTENSION pgml'
 
-sudo pip3 install .
-sudo python3 -m pgml_extension --database-url=postgres://postgres@127.0.0.1:5432/pgml_development
 psql -U postgres -h 127.0.0.1 pgml_development -f tests/test.sql -P pager
 
 echo "Ready!"

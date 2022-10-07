@@ -16,9 +16,6 @@ RUN pip3 install xgboost sklearn diptest torch lightgbm transformers datasets se
 COPY --chown=postgres:postgres . /app
 WORKDIR /app
 
-# Install pgml extension globally.
-RUN pip3 install .
-
 # Listen on 0.0.0.0 and allow 'root' to connect without a password.
 # Please modify for production deployments accordingly.
 RUN cp /app/docker/postgresql.conf /etc/postgresql/14/main/postgresql.conf

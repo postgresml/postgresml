@@ -6,7 +6,7 @@
 \timing
 
 SELECT pgml.version();
-SELECT pgml.torch_cuda_available();
+-- SELECT pgml.torch_cuda_available();
 
 SELECT pgml.load_dataset('diabetes');
 SELECT pgml.load_dataset('digits');
@@ -17,7 +17,7 @@ SELECT pgml.load_dataset('breast_cancer');
 
 SELECT pgml.load_dataset('california_housing');
 
-\i examples/joint_regression.sql
+-- \i examples/joint_regression.sql
 \i examples/vectors.sql
 \i examples/regression.sql
 \i examples/binary_classification.sql
