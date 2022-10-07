@@ -31,7 +31,7 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 
 		```bash
 		git clone https://github.com/postgresml/postgresml && \
-		cd postgresml/pgml-extension/pgml_rust
+		cd postgresml/pgml-extension/
 		```
 	3. Install a [modern version](https://apt.kitware.com/) of CMake.
 	4. Install PostgreSQL development headers and other dependencies:
@@ -62,7 +62,7 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 
 		```bash
 		git clone https://github.com/postgresml/postgresml && \
-		cd postgresml/pgml-extension/pgml_rust
+		cd postgresml/pgml-extension/
 		```
 	3. Install PostgreSQL and other dependencies:
 
