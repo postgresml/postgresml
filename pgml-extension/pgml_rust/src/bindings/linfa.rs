@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::Bindings;
 use crate::orm::*;
+use pgx::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LinearRegression {
@@ -15,7 +16,7 @@ pub struct LinearRegression {
 }
 
 impl LinearRegression {
-    pub fn fit(dataset: &Dataset, _hyperparams: &Hyperparams) -> Box<dyn Bindings>
+    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings>
     where
         Self: Sized,
     {
@@ -28,7 +29,18 @@ impl LinearRegression {
         let targets = ArrayView1::from_shape(dataset.num_train_rows, &dataset.y_train).unwrap();
 
         let linfa_dataset = linfa::DatasetBase::from((records, targets));
-        let estimator = linfa_linear::LinearRegression::default();
+        let mut estimator = linfa_linear::LinearRegression::default();
+
+        for (key, value) in hyperparams {
+            match key.as_str() {
+                "fit_intercept" => {
+                    estimator = estimator
+                        .with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
+                }
+                _ => error!("Unknown {}: {:?}", key.as_str(), value),
+            };
+        }
+
         let estimator = estimator.fit(&linfa_dataset).unwrap();
 
         Box::new(LinearRegression {
@@ -78,7 +90,7 @@ pub struct LogisticRegression {
 }
 
 impl LogisticRegression {
-    pub fn fit(dataset: &Dataset, _hyperparams: &Hyperparams) -> Box<dyn Bindings>
+    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings>
     where
         Self: Sized,
     {
@@ -95,7 +107,32 @@ impl LogisticRegression {
         let linfa_dataset = linfa::DatasetBase::from((records, targets));
 
         if dataset.num_distinct_labels > 2 {
-            let estimator = linfa_logistic::MultiLogisticRegression::default();
+            let mut estimator = linfa_logistic::MultiLogisticRegression::default();
+
+            for (key, value) in hyperparams {
+                match key.as_str() {
+                    "fit_intercept" => {
+                        estimator = estimator
+                            .with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
+                    }
+                    "alpha" => {
+                        estimator =
+                            estimator.alpha(value.as_f64().expect("alpha must be a float") as f32)
+                    }
+                    "max_iterations" => {
+                        estimator = estimator.max_iterations(
+                            value.as_i64().expect("max_iterations must be an integer") as u64,
+                        )
+                    }
+                    "gradient_tolerance" => {
+                        estimator = estimator.gradient_tolerance(
+                            value.as_f64().expect("gradient_tolerance must be a float") as f32,
+                        )
+                    }
+                    _ => error!("Unknown {}: {:?}", key.as_str(), value),
+                };
+            }
+
             let estimator = estimator.fit(&linfa_dataset).unwrap();
 
             Box::new(LogisticRegression {
@@ -105,7 +142,32 @@ impl LogisticRegression {
                 num_distinct_labels: dataset.num_distinct_labels,
             })
         } else {
-            let estimator = linfa_logistic::LogisticRegression::default();
+            let mut estimator = linfa_logistic::LogisticRegression::default();
+
+            for (key, value) in hyperparams {
+                match key.as_str() {
+                    "fit_intercept" => {
+                        estimator = estimator
+                            .with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
+                    }
+                    "alpha" => {
+                        estimator =
+                            estimator.alpha(value.as_f64().expect("alpha must be a float") as f32)
+                    }
+                    "max_iterations" => {
+                        estimator = estimator.max_iterations(
+                            value.as_i64().expect("max_iterations must be an integer") as u64,
+                        )
+                    }
+                    "gradient_tolerance" => {
+                        estimator = estimator.gradient_tolerance(
+                            value.as_f64().expect("gradient_tolerance must be a float") as f32,
+                        )
+                    }
+                    _ => error!("Unknown {}: {:?}", key.as_str(), value),
+                };
+            }
+
             let estimator = estimator.fit(&linfa_dataset).unwrap();
 
             Box::new(LogisticRegression {
@@ -188,6 +250,7 @@ impl Svm {
 
         let linfa_dataset = linfa::DatasetBase::from((records, targets));
         let estimator = linfa_svm::Svm::params();
+
         let estimator = estimator.fit(&linfa_dataset).unwrap();
 
         Box::new(Svm {
