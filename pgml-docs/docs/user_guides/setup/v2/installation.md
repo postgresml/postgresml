@@ -1,10 +1,22 @@
 # Installation
 
-The PostgresML deployment consists of two parts: the Posgres extension and the dashboard app. The extension provides all the machine learning functionality and can be used independently. The dashboard app provides notebooks for writing experiments and system overview to easier management.
+The PostgresML deployment consists of two parts: the Posgres extension and the dashboard app. The extension provides all the machine learning functionality and can be used independently. The dashboard app provides a system overview for easier management and notebooks for writing experiments.
 
 ## Extension
 
 The extension can be installed from our Ubuntu `apt` repository or, if you're using a different distribution, from source.
+
+### Dependencies
+
+PostgresML 2.0 requires Python 3.7 or higher. We use Python to provide backwards compatibility with Scikit and other machine learning libraries from that ecosystem.
+
+If your system Python is older, consider installing a newer version from [`ppa:deadsnakes/ppa`](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa) or Homebrew.
+
+Install the following Python machine learning libraries:
+
+```
+sudo pip3 install xgboost lightgbm scikit-learn
+```
 
 ### Install the extension
 
@@ -13,16 +25,16 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 	1. Add our repository into your sources:
 
 		```bash
-		echo "deb [trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" >> /etc/apt/sources.list
+		echo "deb [trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" | sudo tee -a /etc/apt/sources.list
 		```
 
 	2. Install the extension:
 
 		```
-		apt-get update && apt-get install -y postgresql-pgml-14
+		sudo apt-get update && sudo apt-get install -y postgresql-pgml-14
 		```
 
-	Both ARM64 and Intel/AMD architectures are supported.
+	Both ARM and Intel/AMD architectures are supported.
 
 
 === ":material-linux: :material-microsoft: From Source (Linux & WSL)"
@@ -69,7 +81,7 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 === ":material-apple: From Source (Mac)"
 
 	_N.B._: Apple M1s have an issue with `openmp` which XGBoost and LightGBM depend on,
-	so presently the extension doesn't work on M1s and M2s. We're tracking the [issue](https://github.com/postgresml/postgresml/issues/364).
+	so presently the extension doesn't work on M1s and M2s. We're tracking this [issue](https://github.com/postgresml/postgresml/issues/364).
 	
 	1. Install the latest Rust compiler from [rust-lang.org](https://www.rust-lang.org/learn/get-started).
 
