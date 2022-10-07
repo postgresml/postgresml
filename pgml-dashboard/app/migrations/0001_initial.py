@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("algorithm_name", models.TextField()),
+                ("algorithm", models.TextField()),
                 ("hyperparams", models.JSONField()),
                 ("status", models.TextField()),
                 ("metrics", models.JSONField(null=True)),

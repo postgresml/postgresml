@@ -74,7 +74,7 @@ CREATE OR REPLACE FUNCTION pgml.train(
 	test_size REAL DEFAULT 0.25,             -- fraction of the data for the test set
 	test_sampling TEXT DEFAULT 'random'      -- 'random', 'first' or 'last'
 )
-RETURNS TABLE(project_name TEXT, task TEXT, algorithm_name TEXT, status TEXT)
+RETURNS TABLE(project_name TEXT, task TEXT, algorithm TEXT, status TEXT)
 AS $$
 	from pgml_extension.model import train
 	import json
@@ -111,7 +111,7 @@ CREATE OR REPLACE FUNCTION pgml.train_joint(
 	test_size REAL DEFAULT 0.25,             -- fraction of the data for the test set
 	test_sampling TEXT DEFAULT 'random'      -- 'random', 'first' or 'last'  
 )
-RETURNS TABLE(project_name TEXT, task TEXT, algorithm_name TEXT, status TEXT)
+RETURNS TABLE(project_name TEXT, task TEXT, algorithm TEXT, status TEXT)
 AS $$
 	from pgml_extension.model import train
 	import json
@@ -139,14 +139,14 @@ $$ LANGUAGE plpython3u;
 CREATE OR REPLACE FUNCTION pgml.deploy(
 	project_name TEXT,                  -- Human-friendly project name
 	strategy TEXT DEFAULT 'best_score', -- 'rollback', 'best_score', or 'most_recent'
-	algorithm_name TEXT DEFAULT NULL    -- filter candidates to a particular algorithm, NULL = all qualify
+	algorithm TEXT DEFAULT NULL    -- filter candidates to a particular algorithm, NULL = all qualify
 )
-RETURNS TABLE(project_name TEXT, strategy TEXT, algorithm_name TEXT)
+RETURNS TABLE(project_name TEXT, strategy TEXT, algorithm TEXT)
 AS $$
 	from pgml_extension.model import Project
-	model = Project.find_by_name(project_name).deploy(strategy, algorithm_name)
+	model = Project.find_by_name(project_name).deploy(strategy, algorithm)
 
-	return [(model.project.name, model.project.task, model.algorithm_name)]
+	return [(model.project.name, model.project.task, model.algorithm)]
 $$ LANGUAGE plpython3u;
 
 

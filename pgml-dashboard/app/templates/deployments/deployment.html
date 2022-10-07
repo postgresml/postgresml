@@ -14,7 +14,7 @@
     <dt>Project</dt>
     <dd><a href="{% url 'project' deployment.project.id %}">{{ deployment.project.name }}</a></dd>
     <dt>Model</dt>
-    <dd><a href="{% url 'model' deployment.model.id %}">{{ deployment.model.algorithm_name }}</a></dd>
+    <dd><a href="{% url 'model' deployment.model.id %}">{{ deployment.model.algorithm }}</a></dd>
     <dt>Reason</dt>
     <dd>{{ deployment.human_readable_strategy }}</dd>
     <dt>Deployed</dt>

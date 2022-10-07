@@ -96,15 +96,17 @@ SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 -- do a hyperparam search on your favorite algorithm
 SELECT pgml.train(
     'Breast Cancer Detection', 
-    algorithm => 'gradient_boosting_trees', 
-    hyperparams => '{"random_state": 0}',
+    algorithm => 'xgboost', 
     search => 'grid', 
     search_params => '{
-        "n_estimators": [10, 20],
-        "max_leaf_nodes": [2, 4],
-        "criterion": ["friedman_mse", "squared_error"]
+        "n_estimators": [40, 60, 80, 100, 120, 140],
+        "max_depth": [1, 2, 3],
+        "eta": [0.1, 0.2, 0.3, 0.4, 0.5]
     }'
 );
+
+        "max_leaves": [2, 4, 6, 8, 10],
+        "alpha": [0.0, 0.1, 0.2, 0.3]
 
 -- deploy the "best" model for prediction use
 SELECT * FROM pgml.deploy('Breast Cancer Detection', 'best_score');

@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS pgml.models(
 	id BIGSERIAL PRIMARY KEY,
 	project_id BIGINT NOT NULL,
 	snapshot_id BIGINT NOT NULL,
-	algorithm_name TEXT NOT NULL,
+	algorithm TEXT NOT NULL,
 	hyperparams JSONB NOT NULL,
 	status TEXT NOT NULL,
 	search TEXT,
@@ -139,7 +139,7 @@ SELECT
 	   p.name,
 	   d.created_at AS deployed_at,
        p.task,
-       m.algorithm_name,
+       m.algorithm,
        s.relation_name,
        s.y_column_name,
        s.test_sampling,
@@ -161,7 +161,7 @@ SELECT
 	m.id,	
 	p.name,
 	p.task,
-	m.algorithm_name,
+	m.algorithm,
 	m.created_at,
 	s.test_sampling,
 	s.test_size,
@@ -187,7 +187,7 @@ SELECT
 	m.id,
 	p.name,
 	p.task,
-	m.algorithm_name,
+	m.algorithm,
 	d.created_at as deployed_at 
 FROM pgml.projects p
 INNER JOIN (

@@ -122,7 +122,7 @@ class SnapshotAnalysisView(viewsets.ViewSet):
                 }
                 for column in snapshot.columns.keys() - snapshot.y_column_name
             ],
-            "model": Model.objects.filter(snapshot=snapshot, algorithm_name="linear").first(),
+            "model": Model.objects.filter(snapshot=snapshot, algorithm="linear").first(),
         }
 
         return render(request, "snapshots/analysis.html", context)

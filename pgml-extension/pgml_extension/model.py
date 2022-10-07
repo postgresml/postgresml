@@ -282,8 +282,8 @@ class Project(object):
         if self._deployed_model and self._deployed_model.id != result[0]["model_id"]:
             self._deployed_model = None
 
-    def deploy(self, qualifier="best_score", algorithm_name=None):
-        model = Model.find_by_project_and_qualifier_algorithm_name(self, qualifier, algorithm_name)
+    def deploy(self, qualifier="best_score", algorithm=None):
+        model = Model.find_by_project_and_qualifier_algorithm(self, qualifier, algorithm)
         if model and model.id != self.deployed_model.id:
             model.deploy(qualifier)
         return model
@@ -622,7 +622,7 @@ class Model(object):
     Attributes:
         project (str): the project the model belongs to
         snapshot (str): the snapshot that provides the training and test data
-        algorithm_name (str): the name of the algorithm used to train this model
+        algorithm (str): the name of the algorithm used to train this model
         status (str): The current status of the model, e.g. 'new', 'training' or 'successful'
         created_at (Timestamp): when this model was created
         updated_at (Timestamp): when this model was last updated
@@ -639,7 +639,7 @@ class Model(object):
         cls,
         project: Project,
         snapshot: Snapshot,
-        algorithm_name: str,
+        algorithm: str,
         hyperparams: dict,
         search: str,
         search_params: dict,
@@ -651,14 +651,14 @@ class Model(object):
         Args:
             project (str):
             snapshot (str):
-            algorithm_name (str):
+            algorithm (str):
         Returns:
             Model: instantiated from the database
         """
         result = plpy.execute(
             f"""
-            INSERT INTO pgml.models (project_id, snapshot_id, algorithm_name, hyperparams, status, search, search_params, search_args, created_at, updated_at) 
-            VALUES ({q(project.id)}, {q(snapshot.id)}, {q(algorithm_name)}, {q(hyperparams)}, 'new', {q(search)}, {q(search_params)}, {q(search_args)}, clock_timestamp(), clock_timestamp()) 
+            INSERT INTO pgml.models (project_id, snapshot_id, algorithm, hyperparams, status, search, search_params, search_args, created_at, updated_at) 
+            VALUES ({q(project.id)}, {q(snapshot.id)}, {q(algorithm)}, {q(hyperparams)}, 'new', {q(search)}, {q(search_params)}, {q(search_args)}, clock_timestamp(), clock_timestamp()) 
             RETURNING *
         """
         )
@@ -704,12 +704,12 @@ class Model(object):
         return model
 
     @classmethod
-    def find_by_project_and_qualifier_algorithm_name(cls, project: Project, strategy: str, algorithm_name: str):
+    def find_by_project_and_qualifier_algorithm(cls, project: Project, strategy: str, algorithm: str):
         """
         Args:
             project_id (int): The project id
             strategy (str): The strategy
-            algorithm_name (str): The algorithm
+            algorithm (str): The algorithm
         Returns:
             Model: most recently created model that fits the criteria
         """
@@ -719,8 +719,8 @@ class Model(object):
             FROM pgml.models 
         """
         where = f"\nWHERE models.project_id = {q(project.id)}"
-        if algorithm_name is not None:
-            where += f"\nAND algorithm_name = {q(algorithm_name)}"
+        if algorithm is not None:
+            where += f"\nAND algorithm = {q(algorithm)}"
 
         if strategy == "best_score":
             sql += f"{where}\nORDER BY models.metrics->>{q(project.key_metric_name)} DESC NULLS LAST"
@@ -840,10 +840,10 @@ class Model(object):
             if len(files) > 0:
                 self._algorithm = pickle.loads(files[0]["data"])
             else:
-                algorithm = Model.algorithm_from_name_and_task(self.algorithm_name, self.project.task)
+                algorithm = Model.algorithm_from_name_and_task(self.algorithm, self.project.task)
                 self._algorithm = algorithm(**self.hyperparams)
                 if len(self.snapshot.y_column_name) > 1:
-                    if self.project.task == "regression" and self.algorithm_name in [
+                    if self.project.task == "regression" and self.algorithm in [
                         "bayesian_ridge",
                         "automatic_relevance_determination",
                         "stochastic_gradient_descent",
@@ -1023,7 +1023,7 @@ def train(
     task: str = None,
     relation_name: str = None,
     y_column_name: str = None,
-    algorithm_name: str = "linear",
+    algorithm: str = "linear",
     hyperparams: dict = {},
     search: str = None,
     search_params: dict = {},
@@ -1038,7 +1038,7 @@ def train(
         task (str): Defaults to "regression". Valid values are ["regression", "classification"].
         relation_name (str): the table or view that stores the training data
         y_column_name (str): the column in the training data that acts as the label
-        algorithm_name (str, optional): the algorithm used to implement the task. Defaults to "linear". Valid values are ["linear", "svm", "random_forest", "gradient_boosting"].
+        algorithm (str, optional): the algorithm used to implement the task. Defaults to "linear". Valid values are ["linear", "svm", "random_forest", "gradient_boosting"].
         test_size (float or int, optional): If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split. If int, represents the absolute number of test samples. If None, the value is set to 0.25.
         test_sampling: (str, optional): How to sample to create the test data. Defaults to "random". Valid values are ["first", "last", "random"].
     """
@@ -1071,15 +1071,15 @@ def train(
         snapshot = Snapshot.create(relation_name, y_column_name, test_size, test_sampling)
 
     # Model
-    if algorithm_name is None:
-        algorithm_name = "linear"
+    if algorithm is None:
+        algorithm = "linear"
 
     # Default repeatable random state when possible
-    algorithm = Model.algorithm_from_name_and_task(algorithm_name, task)
+    algorithm = Model.algorithm_from_name_and_task(algorithm, task)
     if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
         hyperparams["random_state"] = 0
 
-    model = Model.create(project, snapshot, algorithm_name, hyperparams, search, search_params, search_args)
+    model = Model.create(project, snapshot, algorithm, hyperparams, search, search_params, search_args)
     model.fit(snapshot)
 
     # Deployment

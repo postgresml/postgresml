@@ -104,9 +104,9 @@ Now that we've got data, we're ready to train a model using an algorithm. We'll 
 === "Output"
 
     ```sql linenums="1"
-                project_name            |     task       | algorithm_name |  status
-    ------------------------------------+----------------+----------------+----------
-     Handwritten Digit Image Classifier | classification | linear         | deployed
+                project_name            |     task       | algorithm |  status
+    ------------------------------------+----------------+-----------+----------
+     Handwritten Digit Image Classifier | classification | linear    | deployed
     (1 row)
     ```
 
@@ -124,9 +124,9 @@ Now we can inspect some of the artifacts a training run creates.
 === "Output"
 
     ```sql linenums="1"
-                    name                |        deployed_at         |     task       | algorithm_name | relation_name | y_column_name | test_sampling | test_size
-    ------------------------------------+----------------------------+----------------+----------------+---------------+---------------+---------------+-----------
-     Handwritten Digit Image Classifier | 2022-05-10 15:06:32.824305 | classification | linear         | pgml.digits   | {target}      | random        |      0.25
+                    name                |        deployed_at         |     task       | algorithm | relation_name | y_column_name | test_sampling | test_size
+    ------------------------------------+----------------------------+----------------+-----------+---------------+---------------+---------------+-----------
+     Handwritten Digit Image Classifier | 2022-05-10 15:06:32.824305 | classification | linear    | pgml.digits   | {target}      | random        |      0.25
     (1 row)
     ```
 

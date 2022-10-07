@@ -67,25 +67,25 @@ _ALGORITHM_MAP = {
 }
 
 
-def estimator(algorithm_name, num_features, hyperparams):
+def estimator(algorithm, num_features, hyperparams):
     """Returns the correct estimator based on algorithm names
     we defined internally.
 
     Parameters:
-        - algorithm_name: The human-readable name of the algorithm (see dict above).
+        - algorithm: The human-readable name of the algorithm (see dict above).
         - num_features: The number of features in X.
         - hyperparams: JSON of hyperparameters.
     """
-    return estimator_joint(algorithm_name, num_features, 1, hyperparams)
+    return estimator_joint(algorithm, num_features, 1, hyperparams)
 
 
-def estimator_joint(algorithm_name, num_features, num_targets, hyperparams):
+def estimator_joint(algorithm, num_features, num_targets, hyperparams):
     """Returns the correct estimator based on algorithm names we defined
     internally (see dict above).
 
 
     Parameters:
-        - algorithm_name: The human-readable name of the algorithm (see dict above).
+        - algorithm: The human-readable name of the algorithm (see dict above).
         - num_features: The number of features in X.
         - num_targets: Used for joint models (models that have more than one y target).
         - hyperparams: JSON of hyperparameters.
@@ -96,7 +96,7 @@ def estimator_joint(algorithm_name, num_features, num_targets, hyperparams):
         hyperparams = json.loads(hyperparams)
 
     def train(X_train, y_train):
-        instance = _ALGORITHM_MAP[algorithm_name](**hyperparams)
+        instance = _ALGORITHM_MAP[algorithm](**hyperparams)
 
         X_train = np.asarray(X_train).reshape((-1, num_features))
 

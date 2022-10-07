@@ -130,7 +130,8 @@ class Model(models.Model):
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     snapshot = models.ForeignKey(Snapshot, on_delete=models.CASCADE)
-    algorithm_name = models.TextField()
+    algorithm = models.TextField()
+    runtime = models.TextField()
     hyperparams = models.JSONField()
     status = models.TextField()
     search = models.TextField()

@@ -59,9 +59,9 @@ This grid search will train `len(max_depth) * len(n_estimators) * len(learning_r
 === "Output"
 
     ```sql linenums="1"
-                project_name            |   task    | algorithm_name |  status
-    ------------------------------------+-----------+----------------+----------
-     Handwritten Digit Image Classifier |           | xgboost        | deployed
+                project_name            |   task    | algorithm |  status
+    ------------------------------------+-----------+-----------+----------
+     Handwritten Digit Image Classifier |           | xgboost   | deployed
     (1 row)
     ```
 
