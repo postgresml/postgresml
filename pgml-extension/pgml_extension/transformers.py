@@ -92,7 +92,7 @@ class Model(BaseModel):
             if os.path.exists(self.path):
                 source = self.path
             else:
-                source = self.algorithm_name
+                source = self.__dict__["algorithm"]
 
             if source is None or source == "":
                 pipeline = transformers.pipeline(self.task)
@@ -131,23 +131,23 @@ class Model(BaseModel):
     def train(self):
         dataset = self.snapshot.dataset
 
-        self._algorithm = {"tokenizer": AutoTokenizer.from_pretrained(self.algorithm_name)}
+        self._algorithm = {"tokenizer": AutoTokenizer.from_pretrained(self.algorithm)}
         if self.project.task == "text-classification":
             self._algorithm["model"] = AutoModelForSequenceClassification.from_pretrained(
-                self.algorithm_name, num_labels=2
+                self.__dict__["algorithm"], num_labels=2
             )
             tokenized_dataset = self.tokenize_text_classification(dataset)
             data_collator = DefaultDataCollator()
         elif self.project.task == "question-answering":
             self._algorithm["max_length"] = self.hyperparams.pop("max_length", 384)
             self._algorithm["stride"] = self.hyperparams.pop("stride", 128)
-            self._algorithm["model"] = AutoModelForQuestionAnswering.from_pretrained(self.algorithm_name)
+            self._algorithm["model"] = AutoModelForQuestionAnswering.from_pretrained(self.__dict__["algorithm"])
             tokenized_dataset = self.tokenize_question_answering(dataset)
             data_collator = DefaultDataCollator()
         elif self.project.task == "summarization":
             self._algorithm["max_summary_length"] = self.hyperparams.pop("max_summary_length", 1024)
             self._algorithm["max_input_length"] = self.hyperparams.pop("max_input_length", 128)
-            self._algorithm["model"] = AutoModelForSeq2SeqLM.from_pretrained(self.algorithm_name)
+            self._algorithm["model"] = AutoModelForSeq2SeqLM.from_pretrained(self.__dict__["algorithm"])
             tokenized_dataset = self.tokenize_summarization(dataset)
             data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model)
         elif self.project.task.startswith("translation"):
@@ -157,7 +157,7 @@ class Model(BaseModel):
             self._algorithm["max_length"] = self.hyperparams.pop("max_length", None)
             self._algorithm["from"] = task[1]
             self._algorithm["to"] = task[3]
-            self._algorithm["model"] = AutoModelForSeq2SeqLM.from_pretrained(self.algorithm_name)
+            self._algorithm["model"] = AutoModelForSeq2SeqLM.from_pretrained(self.__dict__["algorithm"])
             tokenized_dataset = self.tokenize_translation(dataset)
             data_collator = DataCollatorForSeq2Seq(self.tokenizer, model=self.model, return_tensors="pt")
         else:

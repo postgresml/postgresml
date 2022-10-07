@@ -443,13 +443,12 @@ impl Model {
                 Task::regression => "r2",
                 Task::classification => "f1",
             };
+            let mut i = 0;
             let mut best_index = 0;
             let mut best_metric = f32::NEG_INFINITY;
             let mut best_metrics = None;
             let mut best_hyperparams = None;
             let mut best_estimator = None;
-            let mut i = 0;
-
             let mut fit_times: Vec<Vec<f32>> = vec![vec![0.; cv]; all_hyperparams.len()];
             let mut score_times: Vec<Vec<f32>> = vec![vec![0.; cv]; all_hyperparams.len()];
             let mut test_scores: Vec<Vec<f32>> = vec![vec![0.; cv]; all_hyperparams.len()];
@@ -465,7 +464,7 @@ impl Model {
                 fold_scores[fold_i][hyperparams_i] = metric;
 
                 if metric > best_metric {
-                    best_index = i;
+                    best_index = hyperparams_i;
                     best_metric = metric;
                     best_metrics = Some(metrics);
                     best_hyperparams = Some(hyperparams);

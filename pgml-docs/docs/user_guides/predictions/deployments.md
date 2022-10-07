@@ -9,11 +9,11 @@ Models are automatically deployed if their key metric (__R__<sup>2</sup> for reg
 pgml.deploy(
 	project_name TEXT,                  -- Human-friendly project name
 	strategy TEXT DEFAULT 'best_score', -- 'rollback', 'best_score', or 'most_recent'
-	algorithm_name TEXT DEFAULT NULL    -- filter candidates to a particular algorithm, NULL = all qualify
+	algorithm TEXT DEFAULT NULL    -- filter candidates to a particular algorithm, NULL = all qualify
 )
 ```
 
-The default behavior allows any algorithm to qualify, but deployment candidates can be further restricted to a specific algorithm by passing the `algorithm_name`.
+The default behavior allows any algorithm to qualify, but deployment candidates can be further restricted to a specific algorithm by passing the `algorithm`.
 
 !!! note 
     Deployed models are cached at the session level to improve prediction times. Active sessions will not see deploys until they reconnect. 
@@ -27,7 +27,7 @@ The default behavior allows any algorithm to qualify, but deployment candidates 
 === "Output"
 
 	```sql linenums="1"
-                project_name            |    strategy    | algorithm_name
+                project_name            |    strategy    | algorithm
 	------------------------------------+----------------+----------------
 	 Handwritten Digit Image Classifier | classification | linear
 	(1 row)
@@ -56,7 +56,7 @@ Rolling back creates a new deploy for the model that was deployed before the cur
 === "Output"
 
 	```sql linenums="1"
-                project_name            |    strategy    | algorithm_name
+                project_name            |    strategy    | algorithm
 	------------------------------------+----------------+----------------
 	 Handwritten Digit Image Classifier | classification | linear
 	(1 row)

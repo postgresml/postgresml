@@ -31,15 +31,21 @@ class ModelView(DetailView):
     def get_context_data(self, **kwargs):
         context = default_context(super().get_context_data(**kwargs))
         object = context["object"]
-        logging.warning(f"hi: {object}")
         if object is None:
             return HttpResponseNotFound("Model not found")
 
-        context["title"] = object.project.name + " - " + object.algorithm_name
-        context["features"] = {
-            feature: object.snapshot.analysis.get(f"{feature}_p50")
-            for feature in object.snapshot.columns.keys() - object.snapshot.y_column_name
-        }
+        
+        context["title"] = object.project.name + " - " + object.algorithm
+        if object.runtime == "rust":
+            context["features"] = {
+                feature: object.snapshot.analysis.get(f"{feature}_p50")
+                for feature in map(lambda column: column["name"], filter(lambda column: not column["label"], object.snapshot.columns))
+            }
+        else:
+            context["features"] = {
+                feature: object.snapshot.analysis.get(f"{feature}_p50")
+                for feature in object.snapshot.columns.keys() - object.snapshot.y_column_name
+            }
 
         if object.search:
             context["search_results"] = {}

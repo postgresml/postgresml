@@ -11,7 +11,7 @@ pgml.models(
 	id BIGSERIAL PRIMARY KEY,
 	project_id BIGINT NOT NULL,
 	snapshot_id BIGINT NOT NULL,
-	algorithm_name TEXT NOT NULL,
+	algorithm TEXT NOT NULL,
 	hyperparams JSONB NOT NULL,
 	status TEXT NOT NULL,
 	search TEXT,

@@ -310,12 +310,12 @@ fn deploy(
         _ => error!("invalid stategy"),
     }
     sql += "\nLIMIT 1";
-    let (model_id, algorithm_name) = Spi::get_two_with_args::<i64, String>(
+    let (model_id, algorithm) = Spi::get_two_with_args::<i64, String>(
         &sql,
         vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
     );
     let model_id = model_id.expect("No qualified models exist for this deployment.");
-    let algorithm_name = algorithm_name.expect("No qualified models exist for this deployment.");
+    let algorithm = algorithm.expect("No qualified models exist for this deployment.");
 
     Spi::get_one_with_args::<i64>(
         "INSERT INTO pgml.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml.strategy) RETURNING id",
@@ -336,7 +336,7 @@ fn deploy(
     vec![(
         project_name.to_string(),
         strategy.to_string(),
-        algorithm_name,
+        algorithm,
     )]
     .into_iter()
 }

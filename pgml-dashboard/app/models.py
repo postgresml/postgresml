@@ -108,12 +108,15 @@ class Snapshot(models.Model):
     @property
     def table_size(self):
         """How big is the snapshot according to Postgres."""
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"SELECT pg_size_pretty(pg_total_relation_size(%s))",
-                [self.snapshot_name],
-            )
-            return cursor.fetchone()[0]
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"SELECT pg_size_pretty(pg_total_relation_size(%s))",
+                    [self.snapshot_name],
+                )
+                return cursor.fetchone()[0]
+        except:
+            return 0
 
     @property
     def feature_size(self):
@@ -130,7 +133,8 @@ class Model(models.Model):
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     snapshot = models.ForeignKey(Snapshot, on_delete=models.CASCADE)
-    algorithm_name = models.TextField()
+    algorithm = models.TextField()
+    runtime = models.TextField()
     hyperparams = models.JSONField()
     status = models.TextField()
     search = models.TextField()

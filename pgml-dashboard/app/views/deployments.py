@@ -28,7 +28,7 @@ def get(request, id):
     deployment = get_object_or_404(models.Deployment, id=id)
     context = default_context(
         {
-            "title": deployment.project.name + " - " + deployment.model.algorithm_name,
+            "title": deployment.project.name + " - " + deployment.model.algorithm,
             "deployment": deployment,
             "live": deployment.id == deployment.project.current_deployment.id,
         }

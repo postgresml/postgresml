@@ -31,7 +31,7 @@ class ModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Model
         fields = [
-            "algorithm_name",
+            "algorithm",
             "hyperparams",
             "status",
             "metrics",
