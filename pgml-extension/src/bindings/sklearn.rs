@@ -6,7 +6,7 @@
 /// It uses numpy as its dense matrix.
 ///
 /// Our implementation below calls into Python wrappers
-/// defined in `src/bindings/wrappers.py`.
+/// defined in `src/bindings/sklearn.py`.
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
@@ -290,7 +290,7 @@ fn fit(
 ) -> Box<dyn Bindings> {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/bindings/wrappers.py"
+        "/src/bindings/sklearn.py"
     ));
 
     let hyperparams = serde_json::to_string(hyperparams).unwrap();
@@ -371,7 +371,7 @@ impl Bindings for Estimator {
     fn to_bytes(&self) -> Vec<u8> {
         let module = include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/bindings/wrappers.py"
+            "/src/bindings/sklearn.py"
         ));
 
         Python::with_gil(|py| -> Vec<u8> {
@@ -391,7 +391,7 @@ impl Bindings for Estimator {
     {
         let module = include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/bindings/wrappers.py"
+            "/src/bindings/sklearn.py"
         ));
 
         Python::with_gil(|py| -> Box<dyn Bindings> {
