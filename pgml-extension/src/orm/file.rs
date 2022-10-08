@@ -116,10 +116,10 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
             }
         }
 
-        #[cfg(feature = "sklearn")]
+        #[cfg(feature = "python")]
         Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data),
 
-        #[cfg(not(feature = "sklearn"))]
+        #[cfg(not(feature = "python"))]
         Runtime::python => {
             error!("Python runtime not supported, recompile with `--features sklearn`")
         }

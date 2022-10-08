@@ -1,12 +1,12 @@
 pub mod lightgbm;
 pub mod linfa;
 
-#[cfg(feature = "sklearn")]
+#[cfg(feature = "python")]
 pub mod sklearn;
 
 pub mod smartcore;
 
-#[cfg(feature = "sklearn")]
+#[cfg(feature = "python")]
 pub mod transformers;
 
 pub mod xgboost;

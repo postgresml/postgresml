@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use once_cell::sync::Lazy;
 use pgx::*;
-#[cfg(feature = "sklearn")]
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde_json::json;
 
@@ -29,7 +29,7 @@ pub extern "C" fn _PG_init() {
     pg_shmem_init!(PROJECT_ID_TO_DEPLOYED_MODEL_ID);
 }
 
-#[cfg(feature = "sklearn")]
+#[cfg(feature = "python")]
 #[pg_extern]
 pub fn validate_python_dependencies() {
     Python::with_gil(|py| {
@@ -56,11 +56,11 @@ pub fn validate_python_dependencies() {
     );
 }
 
-#[cfg(not(feature = "sklearn"))]
+#[cfg(not(feature = "python"))]
 #[pg_extern]
 pub fn validate_python_dependencies() {}
 
-#[cfg(feature = "sklearn")]
+#[cfg(feature = "python")]
 #[pg_extern]
 pub fn sklearn_version() -> String {
     let mut version = String::new();
@@ -73,13 +73,13 @@ pub fn sklearn_version() -> String {
     version
 }
 
-#[cfg(not(feature = "sklearn"))]
+#[cfg(not(feature = "python"))]
 #[pg_extern]
 pub fn sklearn_version() -> String {
     String::from("Scikit-learn is not installed, recompile with `--features sklearn`")
 }
 
-#[cfg(feature = "sklearn")]
+#[cfg(feature = "python")]
 #[pg_extern]
 fn python_version() -> String {
     let mut version = String::new();
@@ -92,7 +92,7 @@ fn python_version() -> String {
     version
 }
 
-#[cfg(not(feature = "sklearn"))]
+#[cfg(not(feature = "python"))]
 #[pg_extern]
 pub fn python_version() -> String {
     String::from("Python is not installed, recompile with `--features sklearn`")
@@ -449,7 +449,7 @@ fn model_predict_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
     estimator.predict_batch(&features)
 }
 
-#[cfg(feature = "sklearn")]
+#[cfg(feature = "python")]
 #[pg_extern(name = "transform")]
 pub fn transform_json(
     task: JsonB,
@@ -461,7 +461,7 @@ pub fn transform_json(
     ))
 }
 
-#[cfg(feature = "sklearn")]
+#[cfg(feature = "python")]
 #[pg_extern(name = "transform")]
 pub fn transform_string(
     task: String,
