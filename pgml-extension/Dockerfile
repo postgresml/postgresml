@@ -34,7 +34,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH="/var/lib/postgresql/.cargo/bin:${PATH}"
 
 # Install tcdi/pgx
-RUN cargo install cargo-pgx
+RUN cargo install cargo-pgx --version 0.4.5
 RUN cargo pgx init --pg${PGVERSION} /usr/bin/pg_config
 
 COPY --chown=postgres:postgres . /app
