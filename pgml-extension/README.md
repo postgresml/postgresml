@@ -24,7 +24,7 @@ If you haven't already, install:
 
 ## Python
 
-If your system comes with Python 3.8 or lower, you'll need to install `libpython3.7-dev` or higher. You can get it from [`ppa:deadsnakes/ppa`](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa):
+If your system comes with Python 3.6 or lower, you'll need to install `libpython3.7-dev` or higher. You can get it from [`ppa:deadsnakes/ppa`](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa):
 
 1. `sudo add-apt-repository ppa:deadsnakes/ppa`
 2. `sudo apt update && sudo apt install libpython3.7-dev`
