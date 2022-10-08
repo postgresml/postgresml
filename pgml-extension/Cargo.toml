@@ -41,6 +41,7 @@ linfa-logistic = { path = "deps/linfa/algorithms/linfa-logistic" }
 linfa-svm = { path = "deps/linfa/algorithms/linfa-svm", features = ["serde"] }
 anyhow = { version = "1.0" }
 indexmap = { version = "1.0", features = ["serde"] }
+signal-hook = "*"
 
 [dev-dependencies]
 pgx-tests = "=0.4.5"

@@ -340,6 +340,21 @@ impl Model {
     fn fit(&mut self, project: &Project, dataset: &Dataset) {
         let fit = self.get_fit_function(project);
 
+        // Sometimes our algorithms take a long time. The only way to stop code
+        // that we don't have control over is using a signal handler. Signal handlers
+        // however are not allowed to allocate any memory. Therefore, we cannot register
+        // a SIGINT query cancellation signal and return the connection to a healthy state
+        // safely. The only way to cancel a training job then is to send a SIGTERM with
+        // `SELECT pg_terminate_backend(pid)` which will process the interrupt, clean up,
+        // and close the connection without affecting the postmaster.
+        let signal_id = unsafe {
+            signal_hook::low_level::register(signal_hook::consts::SIGTERM, || {
+                // There can be no memory allocations here.
+                check_for_interrupts!();
+            })
+        }
+        .unwrap();
+
         let mut n_iter: usize = 10;
         let mut cv: usize = if self.search.is_some() { 5 } else { 1 };
         for (key, value) in self.search_args.0.as_object().unwrap() {
@@ -375,7 +390,9 @@ impl Model {
                 );
 
                 let now = Instant::now();
+
                 let estimator = fit(dataset, hyperparams);
+
                 let fit_time = now.elapsed();
 
                 let now = Instant::now();
@@ -426,6 +443,9 @@ impl Model {
                 }
             }
         }
+
+        // Phew, we're done.
+        signal_hook::low_level::unregister(signal_id);
 
         let (bytes, best_metrics, best_hyperparams) = if all_metrics.len() == 1 {
             (
