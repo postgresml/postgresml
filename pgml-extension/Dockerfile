@@ -26,7 +26,7 @@ RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg ma
 RUN curl -L https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
 RUN echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/kitware.list >/dev/null
 
-RUN apt-get update && apt-fast install postgresql-${PGVERSION} libopenblas-dev cmake postgresql-server-dev-${PGVERSION} pkg-config libssl-dev build-essential libclang-dev libpython3-dev python3-dev -y
+RUN apt-get update && apt-fast install postgresql-${PGVERSION} libopenblas-dev cmake postgresql-server-dev-${PGVERSION} pkg-config libssl-dev build-essential libclang-dev clang libpython3-dev python3-dev -y
 
 USER postgres
 
