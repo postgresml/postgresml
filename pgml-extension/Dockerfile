@@ -7,6 +7,7 @@ FROM ubuntu:${UBUNTU_VERSION}
 ARG PGVERSION=14
 ARG DEBIAN_FRONTEND=noninteractive
 ARG PACKAGE_VERSION=2.0.0
+ARG PACKAGE_PYTHON=true
 ENV TZ=Etc/UTC
 
 # Apt-fast
@@ -39,6 +40,12 @@ RUN cargo pgx init --pg${PGVERSION} /usr/bin/pg_config
 
 COPY --chown=postgres:postgres . /app
 WORKDIR /app
+
+# cargo pgx package command ignores --no-default-features sadly, so we
+# have to have a separate Cargo.toml without Python. No big deal.
+# Make sure to diff it and update it if you change the main Cargo.toml.
+ENV PACKAGE_PYTHON=${PACKAGE_PYTHON}
+RUN bash -c 'if [[ "${PACKAGE_PYTHON}" == "false" ]]; then cp docker/Cargo.toml.no-python Cargo.toml; fi'
 
 # Build and upload package to S3
 RUN cargo pgx package
