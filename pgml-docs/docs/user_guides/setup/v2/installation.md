@@ -8,15 +8,24 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 
 ### Dependencies
 
-PostgresML 2.0 requires Python 3.7 or higher. We use Python to provide backwards compatibility with Scikit and other machine learning libraries from that ecosystem.
+#### Python 3.7+
 
-If your system Python is older, consider installing a newer version from [`ppa:deadsnakes/ppa`](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa) or Homebrew.
+PostgresML 2.0 distributed through `apt` requires Python 3.7 or higher. We use Python to provide backwards compatibility with Scikit and other machine learning libraries from that ecosystem.
 
-Install the following Python machine learning libraries:
+You will also need to install the following Python packages:
 
 ```
 sudo pip3 install xgboost lightgbm scikit-learn
 ```
+
+#### Python 3.6 and below
+
+If your system Python is older, consider installing a newer version from [`ppa:deadsnakes/ppa`](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa) or Homebrew. If you don't want to or can't have Python 3.7 or higher on your system, refer to **:material-linux: :material-microsoft: From Source (Linux & WSL)** below for building without Python support.
+
+
+#### PostgreSQL
+
+PostgresML is a Postgres extension and requires PostgreSQL to be installed. We support PostgreSQL 10 through 14. You can use the PostgreSQL version that comes with your system or get it from the [PostgreSQL PPA](https://wiki.postgresql.org/wiki/Apt).
 
 ### Install the extension
 
@@ -31,7 +40,8 @@ sudo pip3 install xgboost lightgbm scikit-learn
 	2. Install the extension:
 
 		```
-		sudo apt-get update && sudo apt-get install -y postgresql-pgml-14
+		export POSTGRES_VERSION=14
+		sudo apt-get update && sudo apt-get install -y postgresql-pgml-${POSTGRES_VERSION}
 		```
 
 	Both ARM and Intel/AMD architectures are supported.
@@ -50,14 +60,19 @@ sudo pip3 install xgboost lightgbm scikit-learn
 	3. Install PostgreSQL development headers and other dependencies:
 
 		```bash
-		apt-get update && \
-		apt-get install -y \
-			postgresql-server-14-dev \
+		export POSTGRES_VERSION=14
+		sudo apt-get update && \
+		sudo apt-get install -y \
+			postgresql-server-${POSTGRES_VERSION}-dev \
 			libpython3-dev \
 			libclang-dev \
 			cmake \
 			pkg-config \
-			libssl-dev
+			libssl-dev \
+			clang \
+			build-essential \
+			libopenblas-dev \
+			python3-dev
 		```
 
 	4. Clone our git repository:
@@ -71,9 +86,23 @@ sudo pip3 install xgboost lightgbm scikit-learn
 	
 	5. Install [`pgx`](https://github.com/tcdi/pgx) and build the extension (this will take a few minutes):
 
+		**With Python support:**
+
 		```bash
+		export POSTGRES_VERSION=14
 		cargo install cargo-pgx && \
-		cargo pgx init --pg14 /usr/bin/pg_config && \
+		cargo pgx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
+		cargo pgx package && \
+		cargo pgx install
+		```
+
+		**Without Python support:**
+
+		```bash
+		export POSTGRES_VERSION=14
+		cp docker/Cargo.toml.no-python Cargo.toml && \
+		cargo install cargo-pgx && \
+		cargo pgx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
 		cargo pgx package && \
 		cargo pgx install
 		```
@@ -113,9 +142,19 @@ sudo pip3 install xgboost lightgbm scikit-learn
 		```
 
 
-### Install into the database
+### Enable the extension
 
-Now that the extension is installed on your system, you need to add it into the PostgreSQL database where you'd like to use it:
+#### Update postgresql.conf
+
+PostgresML needs to be preloaded at server startup, so you need to add it into `shared_preload_libraries`:
+
+```
+shared_preload_libraries = 'pgml,pg_stat_statements'
+```
+
+#### Install into database
+
+Now that the extension is installed on your system, add it into the database where you'd like to use it:
 
 === "SQL"
 
@@ -128,12 +167,29 @@ Now that the extension is installed on your system, you need to add it into the 
 === "Output"
 
 	```
-	pgml=# CREATE EXTENSION pgml;
+	postgres=# CREATE EXTENSION pgml;
 	INFO:  Python version: 3.10.4 (main, Jun 29 2022, 12:14:53) [GCC 11.2.0]
 	INFO:  Scikit-learn 1.1.1, XGBoost 1.62, LightGBM 3.3.2
 	CREATE EXTENSION
 	```
 
+
+That's it, PostgresML is ready. You can validate the installation by running:
+
+=== "SQL"
+	```sql
+	SELECT pgml.version();
+	```
+
+=== "Output"
+
+	```
+	postgres=# select pgml.version();
+	      version      
+	-------------------
+	 2.0.0
+	(1 row)
+	```
 
 ## Dashboard
 
