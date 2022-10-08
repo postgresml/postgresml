@@ -157,7 +157,7 @@ impl Model {
 
             #[cfg(not(feature = "python"))]
             Runtime::python => {
-                error!("Python runtime not supported, recompile with `--features scikit`")
+                error!("Python runtime not supported, recompile with `--features python`")
             }
 
             #[cfg(feature = "python")]

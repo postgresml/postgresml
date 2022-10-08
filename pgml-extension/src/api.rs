@@ -76,7 +76,7 @@ pub fn sklearn_version() -> String {
 #[cfg(not(feature = "python"))]
 #[pg_extern]
 pub fn sklearn_version() -> String {
-    String::from("Scikit-learn is not installed, recompile with `--features sklearn`")
+    String::from("Scikit-learn is not installed, recompile with `--features python`")
 }
 
 #[cfg(feature = "python")]
@@ -95,7 +95,7 @@ fn python_version() -> String {
 #[cfg(not(feature = "python"))]
 #[pg_extern]
 pub fn python_version() -> String {
-    String::from("Python is not installed, recompile with `--features sklearn`")
+    String::from("Python is not installed, recompile with `--features python`")
 }
 
 #[pg_extern]

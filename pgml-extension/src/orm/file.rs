@@ -121,7 +121,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
 
         #[cfg(not(feature = "python"))]
         Runtime::python => {
-            error!("Python runtime not supported, recompile with `--features sklearn`")
+            error!("Python runtime not supported, recompile with `--features python`")
         }
     };
 
