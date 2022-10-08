@@ -15,9 +15,6 @@ pgml.deploy(
 
 The default behavior allows any algorithm to qualify, but deployment candidates can be further restricted to a specific algorithm by passing the `algorithm`.
 
-!!! note 
-    Deployed models are cached at the session level to improve prediction times. Active sessions will not see deploys until they reconnect. 
-
 === "SQL"
 
 	```sql linenums="1"
@@ -45,7 +42,7 @@ rollback | The model that was previously deployed for this project
 
 
 ## Rolling back to a specific algorithm
-Rolling back creates a new deploy for the model that was deployed before the current one. Multiple rollbacks in a row will effectively oscilate between the two most recently deployed models, making rollbacks a relatively safe operation. 
+Rolling back creates a new deployment for the model that was deployed before the current one. Multiple rollbacks in a row will effectively oscillate between the two most recently deployed models, making rollbacks a relatively safe operation. 
 
 === "SQL"
 
@@ -60,4 +57,23 @@ Rolling back creates a new deploy for the model that was deployed before the cur
 	------------------------------------+----------------+----------------
 	 Handwritten Digit Image Classifier | classification | linear
 	(1 row)
+	```
+
+## Manual Deploys
+
+You can also manually deploy any previously trained model by inserting a new record into `pgml.deployments`. You will need to query the `pgml.projects` and `pgml.models` tables to find the desired IDs.
+
+!!! note 
+    Deployed models are cached at the session level to improve prediction times. Manual deploys created this way will not invalidate the cache, and active sessions will not see manual deploys until they reconnect. 
+
+=== "SQL"
+
+	```sql linenums="1"
+	INSERT INTO pgml.deploys (project_id, model_id, strategy,) VALUES (1, 1, 'rollback');
+	```
+
+=== "Output"
+
+	```sql linenums="1"
+    INSERT 0 1
 	```
