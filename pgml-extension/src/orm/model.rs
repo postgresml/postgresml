@@ -154,6 +154,13 @@ impl Model {
                     _ => todo!(),
                 },
             },
+
+            #[cfg(not(feature = "sklearn"))]
+            Runtime::python => {
+                error!("Python runtime not supported, recompile with `--features scikit`")
+            }
+
+            #[cfg(feature = "sklearn")]
             Runtime::python => match project.task {
                 Task::regression => match self.algorithm {
                     Algorithm::linear => sklearn::linear_regression,

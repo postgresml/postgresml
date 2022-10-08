@@ -7,13 +7,14 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [features]
-default = ["pg13"]
+default = ["pg13", "sklearn"]
 pg10 = ["pgx/pg10", "pgx-tests/pg10" ]
 pg11 = ["pgx/pg11", "pgx-tests/pg11" ]
 pg12 = ["pgx/pg12", "pgx-tests/pg12" ]
 pg13 = ["pgx/pg13", "pgx-tests/pg13" ]
 pg14 = ["pgx/pg14", "pgx-tests/pg14" ]
 pg_test = []
+sklearn = ["pyo3"]
 
 [dependencies]
 pgx = "=0.4.5"
@@ -30,7 +31,7 @@ serde = { version = "1.0.2" }
 serde_json = { version = "1.0.85", features = ["preserve_order"] }
 rmp-serde = { version = "1.1.0" }
 typetag = "0.2"
-pyo3 = { version = "0.17", features = ["auto-initialize"] }
+pyo3 = { version = "0.17", features = ["auto-initialize"], optional = true }
 heapless = "0.7.13"
 lightgbm = { git="https://github.com/postgresml/lightgbm-rs" }
 parking_lot = "0.12"
