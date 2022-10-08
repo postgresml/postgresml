@@ -239,7 +239,7 @@ pub struct Svm {
 }
 
 impl Svm {
-    pub fn fit(dataset: &Dataset, _hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
         let records = ArrayView2::from_shape(
             (dataset.num_train_rows, dataset.num_features),
             &dataset.x_train,
@@ -249,7 +249,35 @@ impl Svm {
         let targets = ArrayView1::from_shape(dataset.num_train_rows, &dataset.y_train).unwrap();
 
         let linfa_dataset = linfa::DatasetBase::from((records, targets));
-        let estimator = linfa_svm::Svm::params();
+        let mut estimator = linfa_svm::Svm::params();
+
+        let mut hyperparams = hyperparams.clone();
+
+        // Default to Guassian kernel, all the others are deathly slow.
+        if !hyperparams.contains_key(&String::from("kernel")) {
+            hyperparams.insert("kernel".to_string(), serde_json::Value::from("rbf"));
+        }
+
+        for (key, value) in hyperparams {
+            match key.as_str() {
+                "eps" => {
+                    estimator = estimator.eps(value.as_f64().expect("eps must be a float") as f32)
+                }
+                "shrinking" => {
+                    estimator =
+                        estimator.shrinking(value.as_bool().expect("shrinking must be a bool"))
+                }
+                "kernel" => {
+                    match value.as_str().expect("kernel must be a string") {
+                        "poli" => estimator = estimator.polynomial_kernel(3.0, 1.0), // degree = 3, c = 1.0 as per Scikit
+                        "linear" => estimator = estimator.linear_kernel(),
+                        "rbf" => estimator = estimator.gaussian_kernel(1e-7), // Default eps
+                        value => error!("Unknown kernel: {}", value),
+                    }
+                }
+                _ => error!("Unknown {}: {:?}", key, value),
+            }
+        }
 
         let estimator = estimator.fit(&linfa_dataset).unwrap();
 
