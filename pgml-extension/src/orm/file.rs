@@ -48,10 +48,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
                     LIMIT 1
                 ",
                 Some(1),
-                Some(vec![(
-                    PgBuiltInOids::INT8OID.oid(),
-                    model_id.into_datum(),
-                )]),
+                Some(vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())]),
             )
             .first();
 
@@ -118,7 +115,14 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
             }
         }
+
+        #[cfg(feature = "python")]
         Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data),
+
+        #[cfg(not(feature = "python"))]
+        Runtime::python => {
+            error!("Python runtime not supported, recompile with `--features python`")
+        }
     };
 
     // Cache the estimator in process memory.
