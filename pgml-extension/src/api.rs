@@ -431,6 +431,8 @@ fn load_dataset(
         "diabetes" => crate::orm::dataset::load_diabetes(limit),
         "digits" => crate::orm::dataset::load_digits(limit),
         "iris" => crate::orm::dataset::load_iris(limit),
+        "linnerud" => crate::orm::dataset::load_linnerud(limit),
+        "wine" => crate::orm::dataset::load_wine(limit),
         _ => error!("Unknown source: `{source}`"),
     };
 

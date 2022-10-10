@@ -1,5 +1,8 @@
-use pgx::*;
 use std::fmt::{Display, Formatter};
+
+use flate2::read::GzDecoder;
+use pgx::*;
+use serde::Deserialize;
 
 #[derive(Debug)]
 pub struct Dataset {
@@ -71,247 +74,42 @@ fn run_with_args(query: &str, args: Vec<(PgOid, Option<pg_sys::Datum>)>) {
     })
 }
 
-pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
-    let diabetes = smartcore::dataset::diabetes::load_dataset();
-    Spi::run("DROP TABLE IF EXISTS pgml.diabetes");
-    Spi::run(
-        "CREATE TABLE pgml.diabetes (
-        age FLOAT4, 
-        sex FLOAT4, 
-        bmi FLOAT4, 
-        bp FLOAT4, 
-        s1 FLOAT4, 
-        s2 FLOAT4, 
-        s3 FLOAT4, 
-        s4 FLOAT4, 
-        s5 FLOAT4, 
-        s6 FLOAT4, 
-        target INTEGER
-    )",
-    );
-    // TODO replace run_with_args with upstream when PR is accepted
-    run_with_args(
-        "COMMENT ON TABLE pgml.diabetes IS '{description}'",
-        vec![(
-            PgBuiltInOids::TEXTOID.oid(),
-            diabetes.description.into_datum(),
-        )],
-    );
-
-    info!(
-        "num_features: {}, num_samples: {}, feature_names: {:?}",
-        diabetes.num_features, diabetes.num_samples, diabetes.feature_names
-    );
-    let limit = match limit {
-        Some(limit) => {
-            if limit > diabetes.num_samples {
-                diabetes.num_samples
-            } else {
-                limit
-            }
-        }
-        None => diabetes.num_samples,
-    };
-    for i in 0..limit {
-        let age = diabetes.data[(i * diabetes.num_features)];
-        let sex = diabetes.data[(i * diabetes.num_features) + 1];
-        let bmi = diabetes.data[(i * diabetes.num_features) + 2];
-        let bp = diabetes.data[(i * diabetes.num_features) + 3];
-        let s1 = diabetes.data[(i * diabetes.num_features) + 4];
-        let s2 = diabetes.data[(i * diabetes.num_features) + 5];
-        let s3 = diabetes.data[(i * diabetes.num_features) + 6];
-        let s4 = diabetes.data[(i * diabetes.num_features) + 7];
-        let s5 = diabetes.data[(i * diabetes.num_features) + 8];
-        let s6 = diabetes.data[(i * diabetes.num_features) + 9];
-        let target = diabetes.target[i];
-        run_with_args(
-            "
-        INSERT INTO pgml.diabetes (age, sex, bmi, bp, s1, s2, s3, s4, s5, s6, target) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        ",
-            vec![
-                (PgBuiltInOids::FLOAT4OID.oid(), age.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), sex.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), bmi.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), bp.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), s1.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), s2.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), s3.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), s4.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), s5.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), s6.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), target.into_datum()),
-            ],
-        );
-    }
-
-    ("pgml.diabetes".to_string(), limit.try_into().unwrap())
+#[derive(Deserialize)]
+struct BreastCancerRow {
+    mean_radius: f32,
+    mean_texture: f32,
+    mean_perimeter: f32,
+    mean_area: f32,
+    mean_smoothness: f32,
+    mean_compactness: f32,
+    mean_concavity: f32,
+    mean_concave_points: f32,
+    mean_symmetry: f32,
+    mean_fractal_dimension: f32,
+    radius_error: f32,
+    texture_error: f32,
+    perimeter_error: f32,
+    area_error: f32,
+    smoothness_error: f32,
+    compactness_error: f32,
+    concavity_error: f32,
+    concave_points_error: f32,
+    symmetry_error: f32,
+    fractal_dimension_error: f32,
+    worst_radius: f32,
+    worst_texture: f32,
+    worst_perimeter: f32,
+    worst_area: f32,
+    worst_smoothness: f32,
+    worst_compactness: f32,
+    worst_concavity: f32,
+    worst_concave_points: f32,
+    worst_symmetry: f32,
+    worst_fractal_dimension: f32,
+    target: i32,
 }
-
-pub fn load_digits(limit: Option<usize>) -> (String, i64) {
-    let digits = smartcore::dataset::digits::load_dataset();
-    Spi::run("DROP TABLE IF EXISTS pgml.digits");
-    Spi::run("CREATE TABLE pgml.digits (image SMALLINT[][], target INTEGER)");
-    // TODO replace run_with_args with upstream when PR is accepted
-    run_with_args(
-        "COMMENT ON TABLE pgml.digits IS '{description}'",
-        vec![(
-            PgBuiltInOids::TEXTOID.oid(),
-            digits.description.into_datum(),
-        )],
-    );
-
-    info!(
-        "num_features: {}, num_samples: {}, feature_names: {:?}",
-        digits.num_features, digits.num_samples, digits.feature_names
-    );
-    let limit = match limit {
-        Some(limit) => {
-            if limit > digits.num_samples {
-                digits.num_samples
-            } else {
-                limit
-            }
-        }
-        None => digits.num_samples,
-    };
-    let mut values = Vec::with_capacity(limit);
-    for i in 0..limit {
-        let target = digits.target[i];
-        // shape the image in a 2d array
-        let mut image = vec![vec![0.; 8]; 8];
-        #[allow(clippy::needless_range_loop)] // x & y are in fact used
-        for x in 0..8 {
-            for y in 0..8 {
-                image[x][y] = digits.data[(i * 64) + (x * 8) + y];
-            }
-        }
-        // format the image into 2d SQL value
-        let mut rows = Vec::with_capacity(8);
-        for row in image {
-            rows.push(
-                "ARRAY[".to_string()
-                    + &row
-                        .iter()
-                        .map(|i| i.to_string())
-                        .collect::<Vec<String>>()
-                        .join(",")
-                    + "]",
-            );
-        }
-        let value = rows.join(",");
-        values.push(format!("(ARRAY[{value}], {target})"));
-    }
-    let values = values.join(", ");
-    let sql = format!("INSERT INTO pgml.digits (image, target) VALUES {values}");
-    Spi::run(&sql);
-    ("pgml.digits".to_string(), limit.try_into().unwrap())
-}
-
-pub fn load_iris(limit: Option<usize>) -> (String, i64) {
-    let iris = smartcore::dataset::iris::load_dataset();
-    Spi::run("DROP TABLE IF EXISTS pgml.iris");
-    Spi::run(
-        "CREATE TABLE pgml.iris (
-        sepal_length FLOAT4, 
-        sepal_width FLOAT4, 
-        petal_length FLOAT4, 
-        petal_width FLOAT4, 
-        target INTEGER
-    )",
-    );
-    // TODO replace run_with_args with upstream when PR is accepted
-    run_with_args(
-        "COMMENT ON TABLE pgml.iris IS '{description}'",
-        vec![(PgBuiltInOids::TEXTOID.oid(), iris.description.into_datum())],
-    );
-
-    info!(
-        "num_features: {}, num_samples: {}, feature_names: {:?}",
-        iris.num_features, iris.num_samples, iris.feature_names
-    );
-    let limit = match limit {
-        Some(limit) => {
-            if limit > iris.num_samples {
-                iris.num_samples
-            } else {
-                limit
-            }
-        }
-        None => iris.num_samples,
-    };
-    for i in 0..limit {
-        let sepal_length = iris.data[(i * iris.num_features)];
-        let sepal_width = iris.data[(i * iris.num_features) + 1];
-        let petal_length = iris.data[(i * iris.num_features) + 2];
-        let petal_width = iris.data[(i * iris.num_features) + 3];
-        let target = iris.target[i];
-        run_with_args(
-            "
-        INSERT INTO pgml.iris (sepal_length, sepal_width, petal_length, petal_width, target)
-        VALUES ($1, $2, $3, $4, $5)
-        ",
-            vec![
-                (PgBuiltInOids::FLOAT4OID.oid(), sepal_length.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), sepal_width.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), petal_length.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), petal_width.into_datum()),
-                (PgBuiltInOids::FLOAT4OID.oid(), target.into_datum()),
-            ],
-        );
-    }
-
-    ("pgml.iris".to_string(), limit.try_into().unwrap())
-}
-
-// TODO add upstream into smartcore
-// pub fn load_linnerud(limit: Option<usize>) -> (String, i64) {
-//     let linnerud = smartcore::dataset::linnerud::load_dataset();
-//     Spi::run("DROP TABLE IF EXISTS pgml.linnerud");
-//     Spi::run("CREATE TABLE pgml.linnerud(
-//         chins FLOAT4,
-//         situps FLOAT4,
-//         jumps FLOAT4,
-//         weight FLOAT4,
-//         waste FLOAT4,
-//         pulse FLOAT4
-//     )");
-//     // TODO replace run_with_args with upstream when PR is accepted
-//     run_with_args(
-//         "COMMENT ON TABLE pgml.linnerud IS '{description}'",
-//         vec![(PgBuiltInOids::TEXTOID.oid(), linnerud.description.into_datum())],
-//     );
-
-//     info!("num_features: {}, num_samples: {}, feature_names: {:?}", linnerud.num_features, linnerud.num_samples, linnerud.feature_names);
-//     let limit = match limit {
-//         Some(limit) => if limit > linnerud.num_samples { linnerud.num_samples} else { limit },
-//         None => linnerud.num_samples,
-//     };
-//     for i in 0..limit {
-//         let chins = linnerud.data[(i * linnerud.num_features) + 0];
-//         let situps = linnerud.data[(i * linnerud.num_features) + 1];
-//         let jumps = linnerud.data[(i * linnerud.num_features) + 2];
-//         let weight = linnerud.target[(i * linnerud.num_labels) + 0];
-//         let waste = linnerud.target[(i * linnerud.num_labels) + 1];
-//         let pulse = linnerud.target[(i * linnerud.num_labels) + 2];
-//         run_with_args("
-//         INSERT INTO pgml.iris (chins, situps, jumps, weight, waste, pulse)
-//         VALUES ($1, $2, $3, $4, $5)
-//         ", vec![
-//             (PgBuiltInOids::FLOAT4OID.oid(), chins.into_datum()),
-//             (PgBuiltInOids::FLOAT4OID.oid(), situps.into_datum()),
-//             (PgBuiltInOids::FLOAT4OID.oid(), jumps.into_datum()),
-//             (PgBuiltInOids::FLOAT4OID.oid(), weight.into_datum()),
-//             (PgBuiltInOids::FLOAT4OID.oid(), waste.into_datum()),
-//             (PgBuiltInOids::FLOAT4OID.oid(), pulse.into_datum()),
-//         ]);
-//     }
-
-//     ("pgml.linnerud".to_string(), limit.try_into().unwrap())
-// }
 
 pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
-    let breast_cancer = smartcore::dataset::breast_cancer::load_dataset();
     Spi::run("DROP TABLE IF EXISTS pgml.breast_cancer");
     Spi::run(
         r#"CREATE TABLE pgml.breast_cancer (
@@ -348,30 +146,22 @@ pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
         "malignant" BOOLEAN
     )"#,
     );
-    // TODO replace run_with_args with upstream when PR is accepted
-    run_with_args(
-        "COMMENT ON TABLE pgml.breast_cancer IS '{description}'",
-        vec![(
-            PgBuiltInOids::TEXTOID.oid(),
-            breast_cancer.description.into_datum(),
-        )],
-    );
 
-    info!(
-        "num_features: {}, num_samples: {}, feature_names: {:?}",
-        breast_cancer.num_features, breast_cancer.num_samples, breast_cancer.feature_names
-    );
     let limit = match limit {
-        Some(limit) => {
-            if limit > breast_cancer.num_samples {
-                breast_cancer.num_samples
-            } else {
-                limit
-            }
-        }
-        None => breast_cancer.num_samples,
+        Some(limit) => limit,
+        None => usize::MAX,
     };
-    for i in 0..limit {
+
+    let data: &[u8] = std::include_bytes!("datasets/breast_cancer.csv.gz");
+    let decoder = GzDecoder::new(data);
+    let mut csv = csv::ReaderBuilder::new().from_reader(decoder);
+
+    let mut inserted = 0;
+    for (i, row) in csv.deserialize().enumerate() {
+        if i >= limit {
+            break;
+        }
+        let row: BreastCancerRow = row.unwrap();
         run_with_args(
             r#"
         INSERT INTO pgml.breast_cancer ("mean radius", "mean texture", "mean perimeter", "mean area", "mean smoothness", "mean compactness", "mean concavity", "mean concave points", "mean symmetry", 
@@ -380,133 +170,452 @@ pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
             "worst fractal dimension", "malignant") 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)"#,
             vec![
+                (PgBuiltInOids::FLOAT4OID.oid(), row.mean_radius.into_datum()),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features)].into_datum(),
-                ),
-                (
-                    PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 1].into_datum(),
+                    row.mean_texture.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 2].into_datum(),
+                    row.mean_perimeter.into_datum(),
+                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.mean_area.into_datum()),
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.mean_smoothness.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 3].into_datum(),
+                    row.mean_compactness.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 4].into_datum(),
+                    row.mean_concavity.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 5].into_datum(),
+                    row.mean_concave_points.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 6].into_datum(),
+                    row.mean_symmetry.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 7].into_datum(),
+                    row.mean_fractal_dimension.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 8].into_datum(),
+                    row.radius_error.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 9].into_datum(),
+                    row.texture_error.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 10].into_datum(),
+                    row.perimeter_error.into_datum(),
+                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.area_error.into_datum()),
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.smoothness_error.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 11].into_datum(),
+                    row.compactness_error.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 12].into_datum(),
+                    row.concavity_error.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 13].into_datum(),
+                    row.concave_points_error.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 14].into_datum(),
+                    row.symmetry_error.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 15].into_datum(),
+                    row.fractal_dimension_error.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 16].into_datum(),
+                    row.worst_radius.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 17].into_datum(),
+                    row.worst_texture.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 18].into_datum(),
+                    row.worst_perimeter.into_datum(),
+                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.worst_area.into_datum()),
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.worst_smoothness.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 19].into_datum(),
+                    row.worst_compactness.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 20].into_datum(),
+                    row.worst_concavity.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 21].into_datum(),
+                    row.worst_concave_points.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 22].into_datum(),
+                    row.worst_symmetry.into_datum(),
                 ),
                 (
                     PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 23].into_datum(),
+                    row.worst_fractal_dimension.into_datum(),
                 ),
-                (
-                    PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 24].into_datum(),
-                ),
-                (
-                    PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 25].into_datum(),
-                ),
-                (
-                    PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 26].into_datum(),
-                ),
-                (
-                    PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 27].into_datum(),
-                ),
-                (
-                    PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 28].into_datum(),
-                ),
-                (
-                    PgBuiltInOids::FLOAT4OID.oid(),
-                    breast_cancer.data[(i * breast_cancer.num_features) + 29].into_datum(),
-                ),
-                (
-                    PgBuiltInOids::BOOLOID.oid(),
-                    (breast_cancer.target[i] == 0.).into_datum(),
-                ),
+                (PgBuiltInOids::BOOLOID.oid(), (row.target == 0).into_datum()),
             ],
         );
+        inserted += 1;
     }
 
-    ("pgml.breast_cancer".to_string(), limit.try_into().unwrap())
+    ("pgml.breast_cancer".to_string(), inserted)
+}
+
+#[derive(Deserialize)]
+struct DiabetesRow {
+    age: f32,
+    sex: f32,
+    bmi: f32,
+    bp: f32,
+    s1: f32,
+    s2: f32,
+    s3: f32,
+    s4: f32,
+    s5: f32,
+    s6: f32,
+    target: f32,
+}
+
+pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
+    Spi::run("DROP TABLE IF EXISTS pgml.diabetes");
+    Spi::run(
+        "CREATE TABLE pgml.diabetes (
+        age FLOAT4, 
+        sex FLOAT4, 
+        bmi FLOAT4, 
+        bp FLOAT4, 
+        s1 FLOAT4, 
+        s2 FLOAT4, 
+        s3 FLOAT4, 
+        s4 FLOAT4, 
+        s5 FLOAT4, 
+        s6 FLOAT4, 
+        target FLOAT4
+    )",
+    );
+
+    let limit = match limit {
+        Some(limit) => limit,
+        None => usize::MAX,
+    };
+
+    let data: &[u8] = std::include_bytes!("datasets/diabetes.csv.gz");
+    let decoder = GzDecoder::new(data);
+    let mut csv = csv::ReaderBuilder::new().from_reader(decoder);
+
+    let mut inserted = 0;
+    for (i, row) in csv.deserialize().enumerate() {
+        if i >= limit {
+            break;
+        }
+        let row: DiabetesRow = row.unwrap();
+        run_with_args(
+            "
+        INSERT INTO pgml.diabetes (age, sex, bmi, bp, s1, s2, s3, s4, s5, s6, target) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ",
+            vec![
+                (PgBuiltInOids::FLOAT4OID.oid(), row.age.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.sex.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.bmi.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.bp.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.s1.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.s2.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.s3.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.s4.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.s5.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.s6.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.target.into_datum()),
+            ],
+        );
+        inserted += 1;
+    }
+
+    ("pgml.diabetes".to_string(), inserted)
+}
+
+#[derive(Deserialize)]
+struct DigitsRow {
+    image: String,
+    target: i16,
+}
+
+pub fn load_digits(limit: Option<usize>) -> (String, i64) {
+    Spi::run("DROP TABLE IF EXISTS pgml.digits");
+    Spi::run("CREATE TABLE pgml.digits (image SMALLINT[][], target SMALLINT)");
+
+    let limit = match limit {
+        Some(limit) => limit,
+        None => usize::MAX,
+    };
+
+    let data: &[u8] = std::include_bytes!("datasets/digits.csv.gz");
+    let decoder = GzDecoder::new(data);
+    let mut csv = csv::ReaderBuilder::new().from_reader(decoder);
+
+    let mut inserted = 0;
+    for (i, row) in csv.deserialize().enumerate() {
+        if i >= limit {
+            break;
+        }
+        let row: DigitsRow = row.unwrap();
+        run_with_args(
+            "
+            INSERT INTO pgml.digits (image, target)
+            VALUES ($1::SMALLINT[][], $2)
+            ",
+            vec![
+                (PgBuiltInOids::TEXTOID.oid(), row.image.into_datum()),
+                (PgBuiltInOids::INT2OID.oid(), row.target.into_datum()),
+            ],
+        );
+        inserted += 1;
+    }
+
+    ("pgml.digits".to_string(), inserted)
+}
+
+#[derive(Deserialize)]
+struct IrisRow {
+    sepal_length: f32,
+    sepal_width: f32,
+    petal_length: f32,
+    petal_width: f32,
+    target: i32,
+}
+
+pub fn load_iris(limit: Option<usize>) -> (String, i64) {
+    Spi::run("DROP TABLE IF EXISTS pgml.iris");
+    Spi::run(
+        "CREATE TABLE pgml.iris (
+        sepal_length FLOAT4, 
+        sepal_width FLOAT4, 
+        petal_length FLOAT4, 
+        petal_width FLOAT4, 
+        target INT4
+    )",
+    );
+
+    let limit = match limit {
+        Some(limit) => limit,
+        None => usize::MAX,
+    };
+
+    let data: &[u8] = std::include_bytes!("datasets/iris.csv.gz");
+    let decoder = GzDecoder::new(data);
+    let mut csv = csv::ReaderBuilder::new().from_reader(decoder);
+
+    let mut inserted = 0;
+    for (i, row) in csv.deserialize().enumerate() {
+        if i >= limit {
+            break;
+        }
+        let row: IrisRow = row.unwrap();
+        run_with_args(
+            "
+        INSERT INTO pgml.iris (sepal_length, sepal_width, petal_length, petal_width, target)
+        VALUES ($1, $2, $3, $4, $5)
+        ",
+            vec![
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.sepal_length.into_datum(),
+                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.sepal_width.into_datum()),
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.petal_length.into_datum(),
+                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.petal_width.into_datum()),
+                (PgBuiltInOids::INT4OID.oid(), row.target.into_datum()),
+            ],
+        );
+        inserted += 1;
+    }
+
+    ("pgml.iris".to_string(), inserted)
+}
+
+#[derive(Deserialize)]
+struct LinnerudRow {
+    chins: f32,
+    situps: f32,
+    jumps: f32,
+    weight: f32,
+    waist: f32,
+    pulse: f32,
+}
+
+pub fn load_linnerud(limit: Option<usize>) -> (String, i64) {
+    Spi::run("DROP TABLE IF EXISTS pgml.linnerud");
+    Spi::run(
+        "CREATE TABLE pgml.linnerud(
+        chins FLOAT4,
+        situps FLOAT4,
+        jumps FLOAT4,
+        weight FLOAT4,
+        waist FLOAT4,
+        pulse FLOAT4
+    )",
+    );
+
+    let limit = match limit {
+        Some(limit) => limit,
+        None => usize::MAX,
+    };
+
+    let data: &[u8] = std::include_bytes!("datasets/linnerud.csv.gz");
+    let decoder = GzDecoder::new(data);
+    let mut csv = csv::ReaderBuilder::new().from_reader(decoder);
+
+    let mut inserted = 0;
+    for (i, row) in csv.deserialize().enumerate() {
+        if i >= limit {
+            break;
+        }
+        let row: LinnerudRow = row.unwrap();
+        run_with_args(
+            "
+        INSERT INTO pgml.linnerud (chins, situps, jumps, weight, waist, pulse)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ",
+            vec![
+                (PgBuiltInOids::FLOAT4OID.oid(), row.chins.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.situps.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.jumps.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.weight.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.waist.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.pulse.into_datum()),
+            ],
+        );
+        inserted += 1;
+    }
+
+    ("pgml.linnerud".to_string(), inserted)
+}
+
+#[derive(Deserialize)]
+struct WineRow {
+    alcohol: f32,
+    malic_acid: f32,
+    ash: f32,
+    alcalinity_of_ash: f32,
+    magnesium: f32,
+    total_phenols: f32,
+    flavanoids: f32,
+    nonflavanoid_phenols: f32,
+    proanthocyanins: f32,
+    hue: f32,
+    color_intensity: f32,
+    od280_od315_of_diluted_wines: f32,
+    proline: f32,
+    target: i32,
+}
+
+pub fn load_wine(limit: Option<usize>) -> (String, i64) {
+    Spi::run("DROP TABLE IF EXISTS pgml.wine");
+    Spi::run(
+        r#"CREATE TABLE pgml.wine (
+            alcohol FLOAT4,
+            malic_acid FLOAT4,
+            ash FLOAT4,
+            alcalinity_of_ash FLOAT4,
+            magnesium FLOAT4,
+            total_phenols FLOAT4,
+            flavanoids FLOAT4,
+            nonflavanoid_phenols FLOAT4,
+            proanthocyanins FLOAT4,
+            hue FLOAT4,
+            color_intensity FLOAT4,
+            "od280/od315_of_diluted_wines" FLOAT4,
+            proline FLOAT4,
+            target INT4
+        )"#,
+    );
+
+    let limit = match limit {
+        Some(limit) => limit,
+        None => usize::MAX,
+    };
+
+    let data: &[u8] = std::include_bytes!("datasets/wine.csv.gz");
+    let decoder = GzDecoder::new(data);
+    let mut csv = csv::ReaderBuilder::new().from_reader(decoder);
+
+    let mut inserted = 0;
+    for (i, row) in csv.deserialize().enumerate() {
+        if i >= limit {
+            break;
+        }
+        let row: WineRow = row.unwrap();
+        run_with_args(
+            r#"
+        INSERT INTO pgml.wine (alcohol, malic_acid, ash, alcalinity_of_ash, magnesium, total_phenols, flavanoids, nonflavanoid_phenols, proanthocyanins, color_intensity, hue, "od280/od315_of_diluted_wines", proline, target) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        "#,
+            vec![
+                (PgBuiltInOids::FLOAT4OID.oid(), row.alcohol.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.malic_acid.into_datum()),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.ash.into_datum()),
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.alcalinity_of_ash.into_datum(),
+                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.magnesium.into_datum()),
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.total_phenols.into_datum(),
+                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.flavanoids.into_datum()),
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.nonflavanoid_phenols.into_datum(),
+                ),
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.proanthocyanins.into_datum(),
+                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.hue.into_datum()),
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.color_intensity.into_datum(),
+                ),
+                (
+                    PgBuiltInOids::FLOAT4OID.oid(),
+                    row.od280_od315_of_diluted_wines.into_datum(),
+                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.proline.into_datum()),
+                (PgBuiltInOids::INT4OID.oid(), row.target.into_datum()),
+            ],
+        );
+        inserted += 1;
+    }
+
+    ("pgml.wine".to_string(), inserted)
 }
