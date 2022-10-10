@@ -53,7 +53,7 @@ Docker will also start the Dashboard app running locally at [http://localhost:80
 
 ## Quick Start
 
-Here is a simple PostgresML worklow to get you started. We'll import a Scikit dataset, train a couple models on it, and fetch real time predictions, all using only SQL.
+Here is a simple PostgresML workflow to get you started. We'll import a Scikit dataset, train a couple models on it, and fetch real time predictions, all using only SQL.
 
 1. Import the `digits` dataset:
 
@@ -123,7 +123,7 @@ Here is a simple PostgresML worklow to get you started. We'll import a Scikit da
         (1 row)
         ```
 
-3. Train an LightGBM model:
+3. Train a LightGBM model:
 
     === "SQL"
         ```sql
@@ -205,4 +205,4 @@ That's it, you just did machine learning with a few SQL queries! The following c
 4. Save it into the model store (a Postgres table)
 5. Load it and cache it during inference
 
-Check out our [Training](/user_guides/training/overview/) and [Predictions](/user_guides/predictions/overview/) documentation for more details. Some more advanced topics like [hyperparamter search](/user_guides/training/hyperparameter_search/) and [GPU acceleration](/user_guides/setup/gpu_support/) are available as well.
+Check out our [Training](/user_guides/training/overview/) and [Predictions](/user_guides/predictions/overview/) documentation for more details. Some more advanced topics like [hyperparameter search](/user_guides/training/hyperparameter_search/) and [GPU acceleration](/user_guides/setup/gpu_support/) are available as well.
