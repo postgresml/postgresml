@@ -2,7 +2,7 @@
 
 We've prepared a Docker image that will allow you to quickly spin up a new PostgreSQL database with PostgreML already installed. It also includes some Scikit toy datasets so you can easily experiment with PostgresML workflows without having to import your own data.
 
-You can skip to [Installation](/user_guides/setup/v2/installation/) if you're ready to start using your own data in a native PostgreSQL installation.
+You can skip to [Installation](/user_guides/setup/v2/installation/) for production installation instructions.
 
 === ":material-apple: OS X"
 
