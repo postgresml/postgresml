@@ -16,17 +16,17 @@ We've prebuilt docker images for common operating systems that will allow you to
 
 1. Clone the repo:
 ```bash
-$ git clone git@github.com:postgresml/postgresml.git
+git clone git@github.com:postgresml/postgresml.git
 ```
 
 2. Start dockerized services. PostgresML will run on port 5433, just in case you already have Postgres running:
 ```bash
-$ cd postgresml && docker-compose up
+cd postgresml && docker-compose up
 ```
 
 3. Connect to Postgres in the container with PostgresML installed:
 ```bash
-$ psql postgres://postgres@localhost:5433/pgml_development
+psql postgres://postgres@localhost:5433/pgml_development
 ```
 
 4. Validate your installation:
