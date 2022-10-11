@@ -11,10 +11,10 @@ SELECT pgml.load_dataset('linnerud');
 SELECT * FROM pgml.linnerud LIMIT 10;
 
 -- train a simple model on the data
-SELECT * FROM pgml.train_joint('Exercise vs Physiology', 'regression', 'pgml.linnerud', ARRAY['weight', 'waste', 'pulse']);
+SELECT * FROM pgml.train_joint('Exercise vs Physiology', 'regression', 'pgml.linnerud', ARRAY['weight', 'waist', 'pulse']);
 
 -- check out the predictions
-SELECT weight, waste, pulse, pgml.predict_joint('Exercise vs Physiology', ARRAY[chins, situps, jumps]) AS prediction
+SELECT weight, waist, pulse, pgml.predict_joint('Exercise vs Physiology', ARRAY[chins, situps, jumps]) AS prediction
 FROM pgml.linnerud 
 LIMIT 10;
 
@@ -24,7 +24,7 @@ SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'lasso');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'elastic_net');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'least_angle');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'lasso_least_angle');
-SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'orthoganl_matching_pursuit');
+SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'orthogonal_matching_pursuit');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'bayesian_ridge');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'automatic_relevance_determination');
 SELECT * FROM pgml.train_joint('Exercise vs Physiology', algorithm => 'stochastic_gradient_descent');
@@ -77,6 +77,6 @@ SELECT * FROM pgml.deploy('Exercise vs Physiology', 'rollback');
 SELECT * FROM pgml.deploy('Exercise vs Physiology', 'best_score', 'svm');
 
 -- check out the improved predictions
-SELECT weight, waste, pulse, pgml.predict_joint('Exercise vs Physiology', ARRAY[chins, situps, jumps]) AS prediction
+SELECT weight, waist, pulse, pgml.predict_joint('Exercise vs Physiology', ARRAY[chins, situps, jumps]) AS prediction
 FROM pgml.linnerud 
 LIMIT 10;

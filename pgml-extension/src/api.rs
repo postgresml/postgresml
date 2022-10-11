@@ -102,7 +102,6 @@ pub fn python_version() -> String {
 fn version() -> String {
     crate::VERSION.to_string()
 }
-
 #[allow(clippy::too_many_arguments)]
 #[pg_extern]
 fn train(
@@ -110,6 +109,50 @@ fn train(
     task: Option<default!(Task, "NULL")>,
     relation_name: Option<default!(&str, "NULL")>,
     y_column_name: Option<default!(&str, "NULL")>,
+    algorithm: default!(Algorithm, "'linear'"),
+    hyperparams: default!(JsonB, "'{}'"),
+    search: Option<default!(Search, "NULL")>,
+    search_params: default!(JsonB, "'{}'"),
+    search_args: default!(JsonB, "'{}'"),
+    test_size: default!(f32, 0.25),
+    test_sampling: default!(Sampling, "'last'"),
+    runtime: Option<default!(Runtime, "NULL")>,
+    automatic_deploy: Option<default!(bool, true)>,
+) -> impl std::iter::Iterator<
+    Item = (
+        name!(project, String),
+        name!(task, String),
+        name!(algorithm, String),
+        name!(deployed, bool),
+    ),
+> {
+    train_joint(
+        project_name,
+        task,
+        relation_name,
+        match y_column_name {
+            Some(y_column_name) => Some(vec![y_column_name.to_string()]),
+            None => None,
+        },
+        algorithm,
+        hyperparams,
+        search,
+        search_params,
+        search_args,
+        test_size,
+        test_sampling,
+        runtime,
+        automatic_deploy,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+#[pg_extern]
+fn train_joint(
+    project_name: &str,
+    task: Option<default!(Task, "NULL")>,
+    relation_name: Option<default!(&str, "NULL")>,
+    y_column_name: Option<default!(Vec<String>, "NULL")>,
     algorithm: default!(Algorithm, "'linear'"),
     hyperparams: default!(JsonB, "'{}'"),
     search: Option<default!(Search, "NULL")>,
@@ -364,6 +407,11 @@ fn deploy(
 
 #[pg_extern]
 fn predict(project_name: &str, features: Vec<f32>) -> f32 {
+    predict_joint(project_name, features)[0]
+}
+
+#[pg_extern]
+fn predict_joint(project_name: &str, features: Vec<f32>) -> Vec<f32> {
     let mut projects = PROJECT_NAME_TO_PROJECT_ID.lock();
     let project_id = match projects.get(project_name) {
         Some(project_id) => *project_id,
@@ -415,7 +463,12 @@ fn snapshot(
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
 ) -> impl std::iter::Iterator<Item = (name!(relation, String), name!(y_column_name, String))> {
-    Snapshot::create(relation_name, y_column_name, test_size, test_sampling);
+    Snapshot::create(
+        relation_name,
+        vec![y_column_name.to_string()],
+        test_size,
+        test_sampling,
+    );
     vec![(relation_name.to_string(), y_column_name.to_string())].into_iter()
 }
 
@@ -442,7 +495,7 @@ fn load_dataset(
 #[pg_extern]
 fn model_predict(model_id: i64, features: Vec<f32>) -> f32 {
     let estimator = crate::orm::file::find_deployed_estimator_by_model_id(model_id);
-    estimator.predict(&features)
+    estimator.predict(&features)[0]
 }
 
 #[pg_extern]

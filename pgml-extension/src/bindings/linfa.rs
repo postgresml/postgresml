@@ -52,8 +52,8 @@ impl LinearRegression {
 
 impl Bindings for LinearRegression {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
+    fn predict(&self, features: &[f32]) -> Vec<f32> {
+        self.predict_batch(features)
     }
 
     /// Predict a novel datapoint.
@@ -182,8 +182,8 @@ impl LogisticRegression {
 
 impl Bindings for LogisticRegression {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
+    fn predict(&self, features: &[f32]) -> Vec<f32> {
+        self.predict_batch(features)
     }
 
     /// Predict a novel datapoint.
@@ -290,8 +290,8 @@ impl Svm {
 
 impl Bindings for Svm {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
+    fn predict(&self, features: &[f32]) -> Vec<f32> {
+        self.predict_batch(features)
     }
 
     /// Predict a novel datapoint.

@@ -57,13 +57,17 @@ impl Model {
         // Set the runtime to one we recommend, unless the user knows better.
         let runtime = match runtime {
             Some(runtime) => runtime,
-            None => match algorithm {
-                Algorithm::xgboost => Runtime::rust,
-                Algorithm::lightgbm => Runtime::rust,
-                Algorithm::linear => match project.task {
-                    Task::classification => Runtime::python,
-                    Task::regression => Runtime::rust,
+            None => match snapshot.y_column_name.len() {
+                1 => match algorithm {
+                    Algorithm::xgboost => Runtime::rust,
+                    Algorithm::lightgbm => Runtime::rust,
+                    Algorithm::linear => match project.task {
+                        Task::classification => Runtime::python,
+                        Task::regression => Runtime::rust,
+                    },
+                    _ => Runtime::python,
                 },
+                // Joint regression is only supported in Python
                 _ => Runtime::python,
             },
         };

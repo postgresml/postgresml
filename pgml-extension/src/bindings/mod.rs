@@ -22,7 +22,7 @@ pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindi
 /// implement serde.
 pub trait Bindings: Send + Sync {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32;
+    fn predict(&self, features: &[f32]) -> Vec<f32>;
 
     /// Predict a set of datapoints.
     fn predict_batch(&self, features: &[f32]) -> Vec<f32>;
