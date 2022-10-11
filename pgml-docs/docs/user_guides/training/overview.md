@@ -1,67 +1,92 @@
 # Training
 
-The training function is at the heart of PostgresML. It's a powerful single call that can handle the different tasks of training depending on the arguments passed.
+The training function is at the heart of PostgresML. It's a powerful single mechanism that can handle many difference training tasks which are configurable with the function parameters.
 
 ## API
-Most parameters are optional other than the `project_name` which is a simple human readable identifier to organize your work. 
 
-```sql linenums="1" title="pgml.train"
+Most parameters are optional and have configured defaults. The `project_name` parameter is required and is an easily recognizable identifier to organize your work.
+
+```postgresql title="pgml.train()"
  pgml.train(
-	project_name TEXT,                       -- Human-friendly project name
-	task TEXT DEFAULT NULL,                  -- 'regression' or 'classification'
-	relation_name TEXT DEFAULT NULL,         -- name of table or view
-	y_column_name TEXT DEFAULT NULL,         -- aka "label" or "unknown" or "target"
-	algorithm TEXT DEFAULT 'linear',         -- statistical learning method
-	hyperparams JSONB DEFAULT '{}'::JSONB,   -- options for the model
-	search TEXT DEFAULT NULL,                -- hyperparam tuning, 'grid' or 'random'
-	search_params JSONB DEFAULT '{}'::JSONB, -- hyperparam search space
-	search_args JSONB DEFAULT '{}'::JSONB,   -- hyperparam options
-	test_size REAL DEFAULT 0.25,             -- fraction of the data for the test set
-	test_sampling TEXT DEFAULT 'random'      -- 'random', 'first' or 'last'  
+	project_name TEXT,
+	task TEXT DEFAULT NULL,
+	relation_name TEXT DEFAULT NULL,
+	y_column_name TEXT DEFAULT NULL,
+	algorithm TEXT DEFAULT 'linear',
+	hyperparams JSONB DEFAULT '{}'::JSONB,
+	search TEXT DEFAULT NULL,
+	search_params JSONB DEFAULT '{}'::JSONB,
+	search_args JSONB DEFAULT '{}'::JSONB,
+	test_size REAL DEFAULT 0.25,
+	test_sampling TEXT DEFAULT 'random'  
 )
 ```
 
-!!! example
-    A minimal first call for a project looks like:
+### Parameters
 
-    ```SQL
+| **Parameter** | **Description** | **Example** |
+----------------|-----------------|-------------|
+| `project_name` | An easily recognizable identifier to organize your work. | `My First PostgresML Project` |
+| `task` | The objective of the experiment: `regression` or `classification`. | `classification` |
+| `relation_name` | The Postgres table or view where the training data is stored or defined. | `public.users` |
+| `y_column_name` | The name of the label (aka "target" or "unknown") column in the training table. | `is_bot` |
+| `algorithm` | The algorithm to train on the dataset, see [Algorithm Selection](/user_guides/training/algorithm_selection/) for details. | `xgboost` |
+| `hyperparams ` | The hyperparameters to pass to the algorithm for training, JSON formatted. | `{ "n_estimators": 25 }` |
+| `search` | If set, PostgresML will perform a hyperparameter search to find the best hyperparameters for the algorithm. See [Hyperparameter Search](/user_guides/training/hyperparameter_search/) for details. | `grid` |
+| `search_params` | Search parameters used in the hyperparameter search, using the scikit-learn notation, JSON formatted. | ```{ "n_estimators": [5, 10, 25, 100] }``` |
+| `search_args` | Configuration parameters for the search. Currently only `n_iter` is supported for `random` search. | `{ "n_iter": 10 }` |
+| `test_size ` | Fraction of the dataset to use for the test set and algorithm validation. | `0.25` |
+| `test_sampling` | Algorithm used to fetch test data from the dataset: `random`, `first`, or `last`. | `random` |
+
+!!! example
+
+    ```postgresql
     SELECT * FROM pgml.train(
-        'My Classification Project', 
-        'classification', 
-        'my_table_name', 
-        'my_tables_target_column_name'
+        project_name => 'My Classification Project', 
+        task => 'classification', 
+        relation_name => 'pgml.digits',
+        y_column_name => 'target'
     );
     ```
 
-The `train` function requires an `task` the first time a `project_name` is used. That task is either `regression` or `classification`, which determines the relevant metrics and analysis performed for models trained toward a common goal. It also requires a `relation_name` and `y_column_name` that will be used to establish the first `Snapshot` of training and test data. By default, 25% of the data (specified by `test_size`) will be randomly sampled to measure the performance of the model after the `algorithm` has been fit to the rest. 
+    This will create a "My Classification Project", copy the `pgml.digits` table into the `pgml` schema, naming it `pgml.snapshot_{id}` where `id` is the primary key of the snapshot, and train a linear classification model on the snapshot using the `target` column as the label.
+
+When used for the first time in a project, `pgml.train()` function requires the `task` parameter, which can be either `regression` or `classification`. The task determines the relevant metrics and analysis performed on the data. All models trained within the project will refer to those metrics and analysis for benchmarking and deployment.
+
+The first time it's called, the function will also require a `relation_name` and `y_column_name`. The two arguments will be used to create the first snapshot of training and test data. By default, 25% of the data (specified by the `test_size` parameter) will be randomly sampled to measure the performance of the model after the `algorithm` has been trained on the 75% of the data. 
 
 !!! tip
-    Postgres supports named arguments for function calls, which allows you to pass only the arguments you need.
+    Postgres supports named arguments in functions, so you can easily regonize them and pass them as needed:
 
-    ```SQL
-        pgml.train('Project Name', algorithm => 'xgboost')
+    ```postgresql
+    SELECT * FROM pgml.train(
+        'My Classification Project',
+        algorithm => 'xgboost'
+    );
     ```
 
-Future calls to `train` may restate the same `task` for a project, or omit it, but can't change it. Projects manage their active model using the metrics relevant to a particular task, so changing it would mean some models in the project are no longer directly comparable. In that case, it's better to start a new project.
+Future calls to `pgml.train()` may restate the same `task` for a project or omit it, but they can't change it. Projects manage their deployed model using the metrics relevant to a particular task (e.g. `r2` or `f1`), so changing it would mean some models in the project are no longer directly comparable. In that case, it's better to start a new project.
 
 !!! note
-    If you'd like to train multiple models on the same `Snapshot`, follow up calls to `train` may omit the `relation_name`, `y_column_name`, `test_size` and `test_sampling` arguments to reuse identical data with multiple algorithms or hyperparams. The `Snapshot` is also saved after training runs for any follow up analysis required.
+    If you'd like to train multiple models on the same snapshot, follow up calls to `pgml.train()` may omit the `relation_name`, `y_column_name`, `test_size` and `test_sampling` arguments to reuse identical data with multiple algorithms or hyperparameters.
+
+    The snapshot is always saved after training runs if any follow up analysis required.
 
 
 
 ## Getting training data
-A large part of machine learning is acquiring, cleaning and preparing data for algorithms. Naturally, we think Postgres is a great place to store your data. For the purpose of this example, we'll load a toy dataset, a classic handwritten digits image collection from scikit-learn.
+A large part of the machine learning workflow is acquiring, cleaning, and preparing data for training algorithms. Naturally, we think Postgres is a great place to store your data. For the purpose of this example, we'll load a toy dataset, the classic handwritten digits image collection, from scikit-learn.
 
 === "SQL"
 
-    ```sql linenums="1"
-    pgml_development=# SELECT pgml.load_dataset('digits');
+    ```postgresql
+    SELECT pgml.load_dataset('digits');
     ```
 
 === "Output"
 
-    ```sql linenums="1"
-    NOTICE:  table "digits" does not exist, skipping -- (1)
+    ```
+    NOTICE:  table "pgml.digits" does not exist, skipping -- (1)
     load_dataset
     --------------
     OK
@@ -71,17 +96,17 @@ A large part of machine learning is acquiring, cleaning and preparing data for a
     1. This NOTICE can safely be ignored. PostgresML attempts to do a clean reload by dropping the `pgml.digits` table if it exists. The first time this command is run, the table does not exist.
 
 
-PostgresML loads this into a fixed table `pgml.digits`. You can examine the 2D arrays of image data, as well as the label in the `target` column.
+PostgresML loads this into the table `pgml.digits`. You can examine the 2D arrays of image data, as well as the label in the `target` column.
 
 === "SQL"
 
-    ```sql linenums="1"
-    pgml_development=# SELECT target, image FROM pgml.digits LIMIT 5;
+    ```postgresql
+    SELECT target, image FROM pgml.digits LIMIT 5;
     ```
 
 === "Output"
 
-    ```sql linenums="1"
+    ```
     target |                                                                                image
     --------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
          0 | {{0,0,5,13,9,1,0,0},{0,0,13,15,10,15,5,0},{0,3,15,2,0,11,8,0},{0,4,12,0,0,8,8,0},{0,5,8,0,0,9,8,0},{0,4,11,0,1,12,7,0},{0,2,14,5,10,12,0,0},{0,0,6,13,10,0,0,0}}

@@ -1,6 +1,11 @@
 # Installation
 
-A PostgresML deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](https://github.com/postgresml/postgresml/tree/master/pgml-extension/)) that facilitates the machine learning lifecycle inside the database. Additionally, we provide a dashboard ([pgml-dashboard](https://github.com/postgresml/postgresml/tree/master/pgml-dashboard/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use. 
+!!! tip
+    With the release of PostgresML 2.0, this documentation has been deprecated. New installation instructions are [available](/user_guides/setup/v2/installation/).
+
+A PostgresML deployment consists of two different runtimes. The foundational runtime is a Python extension for Postgres ([pgml-extension](https://github.com/postgresml/postgresml/tree/master/pgml-extension/)) that facilitates the machine learning lifecycle inside the database.
+
+Additionally, we provide a dashboard ([pgml-dashboard](https://github.com/postgresml/postgresml/tree/master/pgml-dashboard/)) that can connect to your Postgres server and provide additional management functionality. It will also provide visibility into the models you build and data they use. 
 
 ## Install PostgreSQL with PL/Python
 
@@ -37,14 +42,14 @@ To use our Python package inside PostgreSQL, we need to install it into the glob
 Change the `--database-url` option to point to your PostgreSQL server.
 
 ```bash
-$ sudo pip3 install pgml-extension
-$ python3 -m pgml_extension --database-url=postgres://user_name:password@localhost:5432/database_name
+sudo pip3 install pgml-extension
+python3 -m pgml_extension --database-url=postgres://user_name:password@localhost:5432/database_name
 ```
 
 If everything works, you should be able to run this successfully:
 
 ```bash
-$ psql -c 'SELECT pgml.version()' postgres://user_name:password@localhost:5432/database_name
+psql -c 'SELECT pgml.version()' postgres://user_name:password@localhost:5432/database_name
 ```
 
 ## Run the dashboard
@@ -53,20 +58,20 @@ The PostgresML dashboard is a Django app, that can be run against any PostgreSQL
 
 1. Clone the repo:
 ```bash
-$ git clone git@github.com:postgresml/postgresml.git && cd postgresml/pgml-dashboard
+git clone git@github.com:postgresml/postgresml.git && cd postgresml/pgml-dashboard
 ```
 
 2. Set your `PGML_DATABASE_URL` environment variable:
 ```bash
-$ echo PGML_DATABASE_URL=postgres://user_name:password@localhost:5432/database_name > .env
+echo PGML_DATABASE_URL=postgres://user_name:password@localhost:5432/database_name > .env
 ```
 
 3. Install dependencies:
 ```bash
-$ pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 4. Run the server:
 ```bash
-$ python manage.py runserver
+python manage.py runserver
 ```
