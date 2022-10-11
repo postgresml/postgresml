@@ -56,7 +56,7 @@ When used for the first time in a project, `pgml.train()` function requires the 
 The first time it's called, the function will also require a `relation_name` and `y_column_name`. The two arguments will be used to create the first snapshot of training and test data. By default, 25% of the data (specified by the `test_size` parameter) will be randomly sampled to measure the performance of the model after the `algorithm` has been trained on the 75% of the data. 
 
 !!! tip
-    Postgres supports named arguments in functions, so you can easily regonize them and pass them as needed:
+    Postgres supports named arguments in functions, so you can easily recognize them and pass them as needed:
 
     ```postgresql
     SELECT * FROM pgml.train(
