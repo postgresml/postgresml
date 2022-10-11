@@ -1,4 +1,4 @@
-# Training
+# Training Models
 
 The training function is at the heart of PostgresML. It's a powerful single mechanism that can handle many difference training tasks which are configurable with the function parameters.
 
