@@ -227,8 +227,8 @@ impl std::fmt::Debug for Estimator {
 
 impl Bindings for Estimator {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
+    fn predict(&self, features: &[f32]) -> Vec<f32> {
+        self.predict_batch(features)
     }
 
     /// Predict a novel datapoint.

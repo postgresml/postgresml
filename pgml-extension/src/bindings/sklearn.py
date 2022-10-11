@@ -67,19 +67,7 @@ _ALGORITHM_MAP = {
 }
 
 
-def estimator(algorithm, num_features, hyperparams):
-    """Returns the correct estimator based on algorithm names
-    we defined internally.
-
-    Parameters:
-        - algorithm: The human-readable name of the algorithm (see dict above).
-        - num_features: The number of features in X.
-        - hyperparams: JSON of hyperparameters.
-    """
-    return estimator_joint(algorithm, num_features, 1, hyperparams)
-
-
-def estimator_joint(algorithm, num_features, num_targets, hyperparams):
+def estimator(algorithm, num_features, num_targets, hyperparams):
     """Returns the correct estimator based on algorithm names we defined
     internally (see dict above).
 
@@ -97,6 +85,22 @@ def estimator_joint(algorithm, num_features, num_targets, hyperparams):
 
     def train(X_train, y_train):
         instance = _ALGORITHM_MAP[algorithm](**hyperparams)
+        if num_targets > 1 and algorithm in [
+            "bayesian_ridge_regression",
+            "automatic_relevance_determination_regression",
+            "stochastic_gradient_descent_regression",
+            "passive_aggressive_regression",
+            "theil_sen_regression",
+            "huber_regression",
+            "quantile_regression",
+            "svm_regression",
+            "nu_svm_regression",
+            "linear_svm_regression",
+            "ada_boost_regression",
+            "gradient_boosting_trees_regression",
+            "lightgbm_regression",
+        ]:
+            instance = sklearn.multioutput.MultiOutputRegressor(instance)
 
         X_train = np.asarray(X_train).reshape((-1, num_features))
 

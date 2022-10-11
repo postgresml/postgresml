@@ -119,7 +119,7 @@ impl Snapshot {
 
     pub fn create(
         relation_name: &str,
-        y_column_name: &str,
+        y_column_name: Vec<String>,
         test_size: f32,
         test_sampling: Sampling,
     ) -> Snapshot {
@@ -130,7 +130,7 @@ impl Snapshot {
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), relation_name.into_datum()),
-                    (PgBuiltInOids::TEXTARRAYOID.oid(), vec![y_column_name].into_datum()),
+                    (PgBuiltInOids::TEXTARRAYOID.oid(), y_column_name.into_datum()),
                     (PgBuiltInOids::FLOAT4OID.oid(), test_size.into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), test_sampling.to_string().into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), status.to_string().into_datum()),

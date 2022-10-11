@@ -307,6 +307,7 @@ fn fit(
                     &[
                         String::from(algorithm_task).into_py(py),
                         dataset.num_features.into_py(py),
+                        dataset.num_labels.into_py(py),
                         hyperparams.into_py(py),
                     ],
                 ),
@@ -350,8 +351,8 @@ impl std::fmt::Debug for Estimator {
 
 impl Bindings for Estimator {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
+    fn predict(&self, features: &[f32]) -> Vec<f32> {
+        self.predict_batch(features)
     }
 
     /// Predict a novel datapoint.
