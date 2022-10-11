@@ -1,93 +1,94 @@
 # Contributing
 
+Thank you for your interest in contributing to PostgresML! We are an open source, MIT licensed project, and we welcome all contributions, including bug fixes, features, documentation, typo fixes, and Github stars.
+
+Our project consists of three (3) applications:
+
+1. Postgres extension (`pgml-extension`)
+2. Dashboard web app (`pgml-dashboard`)
+3. Documentation (`pgml-docs`)
+
+The development environment for each differs slightly, but overall we use Python, Rust, and PostgreSQL, so as long as you have all of those installed, the setup should be straight forward.
+
+
+## Postgres extension
+
+PostgresML is a Rust extension written with `tcdi/pgx` crate. Local development therefore requires the [latest Rust compiler](https://www.rust-lang.org/learn/get-started) and PostgreSQL development headers and libraries.
+
+The extension code is located in:
+
+```bash
+cd pgml-extension/
+```
+
+Once there, you can initialize `pgx` and get going:
+
+```bash
+cargo install cargo-pgx --version "0.4.5"
+cargo pgx init # This will take a few minutes
+```
+
+`pgx` uses Postgres 13 by default. Since `pgml` is using shared memory, you need to add it to `shared_preload_libraries` in `postgresql.conf` which, for `pgx`, is located in `~/.pgx/data-13/postgresql.conf`.
+
+```
+shared_preload_libraries = 'pgml'
+```
+
+and you're ready to go:
+
+```bash
+cargo pgx run
+```
+
+
+If you ever want to reset the environment, simply spin up the database with `cargo pgx run` and drop the extension and metadata tables:
+
+```postgresql
+DROP EXTENSION pgml CASCADE;
+DROP SCHEMA pgml CASCADE;
+CREATE EXTENSION pgml;
+```
+
+## Dashboard app
+
+The Dashboard is a Django application, and requires no special setup apart for what's required for a normal Django project.
+
+```
+cd pgml-dashboard/
+```
+
+Once there, you can setup a virtual environment and get going:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.TEMPLATE .env
+python manage.py migrate
+python manage.py runserver
+```
+
+The dashboard expects to have a PostgreSQL database with the `pgml` extension installed into the `pgml_development` database. You can install it by following our [Installation](/user_guides/setup/v2/installation/) instructions or by pointing the Django app to the database started by `cargo pgx run`.
+
+## Documentation app
+
+The documentation app (you're using it right now) is using MkDocs.
+
+```
+cd pgml-docs/
+```
+
+Once there, you can setup a virtual environment and get going:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python -m mkdocs serve
+```
+
 ## General
 
-[Use Unix line endings](https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings).
+We are a cross-platform team, some of us use WSL and some use Linux or Mac OS. Keeping that in mind, it's good to use common line endings for all files to avoid production errors, e.g. broken Bash scripts.
 
-
-## Setup your development environment
-
-1. Install [pyenv](https://github.com/pyenv/pyenv) for your system to use the correct version of python specified in `.python-version`. Make sure your $PATH now includes `~/.pyenv/bin` && `~/.pyenv/shims`.
-
-2. Install [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) to isolate project dependencies which keeps `requirements.txt` clean and frozen.
-
-3. Install the version of python listed in `.python-version`:
-
-```
-$ pyenv install 3.10.4
-```
-
-Create the virtual env:
-
-```
-$ pyenv virtualenv 3.10.4 pgml-dashboard
-```
-
-Install the dependencies:
-
-```
-$ pip install -r requirements.txt
-```
-
-If you ever add new dependencies, freeze them:
-
-```
-$ pip freeze > requirements.txt
-```
-
-Make sure requirements.txt has no changes, which indicates your virtual environment is setup correctly.
-
-```
-$ git status
-```
-
-Setup your `.env`:
-
-```
-$ cp .env.TEMPLATE .env
-$ nano .env
-```
-
-Run the server:
-
-```
-$ ./manage.py runserver
-```
-
-## Maintain your development database
-
-How to reset your local database:
-
-```
-$ psql -c "DROP DATABASE pgml_development" postgres://postgres@127.0.0.1:5433
-$ psql -c "CREATE DATABASE pgml_development" postgres://postgres@127.0.0.1:5433
-$ psql -c "CREATE SCHEMA pgml" postgres://postgres@127.0.0.1:5433/pgml_development
-```
-
-Follow the installation instructions to create a local working Postgres environment, then install the `pgml-extension` from the git repository:
-
-```
-cd pgml-extension
-sudo python3 setup.py install
-sudo python3 -m pgml_extension --database-url=postgres://postgres@localhost:5433/pgml_development
-```
-
-Run the tests from the root of the repo:
-
-```
-cd pgml-extension
-ON_ERROR_STOP=1 psql -f tests/test.sql postgres://postgres@127.0.0.1:5433/pgml_development
-```
-
-One liner:
-```
-cd pgml-extension; sudo /bin/pip3 install .; psql -c "DROP DATABASE pgml_development" postgres://postgres@127.0.0.1:5433/; psql -c "CREATE DATABASE pgml_development" postgres://postgres@127.0.0.1:5433/; psql -c "create schema pgml" postgres://postgres@127.0.0.1:5433/pgml_development; sudo python3 -m pgml_extension --database-url=postgres://postgres@localhost:5433/pgml_development; ON_ERROR_STOP=1 psql -f tests/test.sql -P pager postgres://postgres@127.0.0.1:5433/pgml_development; cd ..
-```
-
-Make sure to run it exactly like this, from the root directory of the repo.
-
-## Update documentation
-
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+The project is presently using [Unix line endings](https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings).
