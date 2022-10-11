@@ -14,9 +14,24 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
+      - restore_cache:
+          key: extension-{{ checksum "pgml-extension/Cargo.lock" }}
+      - run:
+          name: "Build"
+          command: "cd pgml-extension; cargo pgx build --release"
+      - run:
+          name: "Test"
+          command: "cd pgml-extension; cargo pgx test --release"
+      - run:
+          name: "Install"
+          command: "cd pgml-extension; cargo pgx install --release"
       - run:
           name: "Train and predict"
           command: "cd pgml-extension; bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -c 'SELECT 1'"
+      - save_cache:
+          key: extension-{{ checksum "pgml-extension/Cargo.lock" }}
+          paths:
+          - pgml-extension/target
   dashboard:
     working_directory: pgml-dashboard
     docker:
