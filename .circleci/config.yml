@@ -15,7 +15,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: extension-{{ checksum "pgml-extension/Cargo.lock" }}
+          key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
       - run:
           name: "Build"
           command: "cd pgml-extension; cargo pgx build --release"
@@ -29,7 +29,7 @@ jobs:
           name: "Train and predict"
           command: "cd pgml-extension; bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -c 'SELECT 1'"
       - save_cache:
-          key: extension-{{ checksum "pgml-extension/Cargo.lock" }}
+          key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
           paths:
           - pgml-extension/target
   dashboard:
