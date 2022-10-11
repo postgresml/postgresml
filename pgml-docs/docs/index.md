@@ -43,7 +43,7 @@ h1.title {
 }
 </style>
 
-<h1 align="center" class="title">Lightning fast inference, <br />
+<h1 align="center" class="title">Lightning fast ML inference, <br />
 powered by the worlds <br /> most capable feature store</h1>
 
 <p align="center" class="subtitle">
