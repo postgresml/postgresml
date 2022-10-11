@@ -55,7 +55,7 @@ The impact of each hyperparameter is measured against the key metric (`r2` for r
 
 ## Performance
 
-In our exmaple above, the grid search will train `len(max_depth) * len(n_estimators) * len(learning_rate) = 6 * 4 * 4 = 96` combinations to compare all possible permutations of `search_params`.
+In our example above, the grid search will train `len(max_depth) * len(n_estimators) * len(learning_rate) = 6 * 4 * 4 = 96` combinations to compare all possible permutations of `search_params`.
 
 It only took about a minute on my computer because we're using optimized Rust/C++ XGBoost bindings, but you can delete some values if you want to speed things up even further. I like to watch all cores operate at 100% utilization in a separate terminal with `htop`:
 

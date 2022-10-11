@@ -56,7 +56,7 @@ Algorithm | Regression | Classification
 
 ## Comparing Algorithms
 
-Any of the above algorithms can be passed to our `pgml.train()` function using the `algorithm` parameter. If the parameter is omited, linear regression is used by default.
+Any of the above algorithms can be passed to our `pgml.train()` function using the `algorithm` parameter. If the parameter is omitted, linear regression is used by default.
 
 !!! example
 

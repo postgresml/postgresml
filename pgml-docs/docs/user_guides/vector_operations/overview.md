@@ -2,18 +2,35 @@
 
 PostgresML adds optimized vector operations that can be used inside SQL queries. Vector operations are particularly useful for dealing with embeddings that have been generated from other machine learning algorithms, and can provide functions like nearest neighbor calculations using various distance functions.
 
-Emeddings can be a relatively efficient mechanism to leverage the power of deep learning, without the runtime inference costs. These functions are fast with the most expensive distance functions computing upwards of ~100k per second for a memory resident dataset on modern hardware.
+Embeddings can be a relatively efficient mechanism to leverage the power of deep learning, without the runtime inference costs. These functions are fast with the most expensive distance functions computing upwards of ~100k per second for a memory resident dataset on modern hardware.
 
-The PostgreSQL planner will also [automatically parallelize](https://www.postgresql.org/docs/current/parallel-query.html) evalualtion on larger datasets, if configured to take advantage of multiple CPU cores when available.
+The PostgreSQL planner will also [automatically parallelize](https://www.postgresql.org/docs/current/parallel-query.html) evaluation on larger datasets, if configured to take advantage of multiple CPU cores when available.
 
 Vector operations are implemented in Rust using `ndarray` and BLAS, for maximum performance.
 
 ## Element-wise Arithmetic with Constants
 
 #### Addition
+
 ```postgresql
 pgml.add(a REAL[], b REAL) -> REAL[]
 ```
+
+=== "SQL"
+
+    ```postgresql
+    SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], 3);
+    ```
+
+=== "Ouput"
+
+    ```
+    pgml=# SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], 3);
+       add
+    ---------
+     {4,5,6}
+    (1 row)
+    ```
 
 #### Subtraction
 ```postgresql

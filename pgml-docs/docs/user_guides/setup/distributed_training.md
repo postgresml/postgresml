@@ -42,7 +42,7 @@ Official PostgreSQL [docs](https://www.postgresql.org/docs/12/postgres-fdw.html)
 
 ### Install the extension
 
-PostgreSQL comes with `postgres_fdw` already available, but the extension needs to be explicitely installed into the database. Connect to your PostgresML database as a superuser and run:
+PostgreSQL comes with `postgres_fdw` already available, but the extension needs to be explicitly installed into the database. Connect to your PostgresML database as a superuser and run:
 
 ```postgresql
 CREATE EXTENSION postgres_fdw;

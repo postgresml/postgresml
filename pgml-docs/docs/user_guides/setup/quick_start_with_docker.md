@@ -207,6 +207,6 @@ Check out our [Training](/user_guides/training/overview/) and [Predictions](/use
 
 ## Dashboard
 
-The Dashboard app is available at https://localhost:8000. You can use it to write experiments in Jupyer-style notebooks, manage projects, and visualize datasets used by PostgresML.
+The Dashboard app is available at https://localhost:8000. You can use it to write experiments in Jupyter-style notebooks, manage projects, and visualize datasets used by PostgresML.
 
 ![Dashboard](/images/dashboard/notebooks.png)

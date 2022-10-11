@@ -42,4 +42,4 @@ CREATE TABLE IF NOT EXISTS pgml.files(
 
 Models are partitioned into parts and stored in the `pgml.files` table. Most models are relatively small (just a few megabytes), but some neural networks can grow to gigabytes in size, and would therefore exceed the maximum possible size of a column Postgres.
 
-Partitioning fixes that limitation and allows us to store models up to 32TB in size (or larger, if we employ table partioning).
+Partitioning fixes that limitation and allows us to store models up to 32TB in size (or larger, if we employ table partitioning).
