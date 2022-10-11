@@ -5,73 +5,71 @@ version: 2.1
 orbs:
   rust: circleci/rust@1.6.0
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
-jobs:
-  extension:
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
-    steps:
-      - checkout
-      - restore_cache:
-          key: pgx
-      - run:
-          name: "PGX"
-          command: "cargo install pgx; cargo pgx init"
-      - save_cache:
-          key: pgx
-          paths:
-          - ~/.pgx
-      - restore_cache:
-          key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
-      - run:
-          name: "Build"
-          command: "cd pgml-extension; cargo pgx build --release"
-      - run:
-          name: "Test"
-          command: "cd pgml-extension; cargo pgx test --release"
-      - run:
-          name: "Install"
-          command: "cd pgml-extension; cargo pgx install --release"
-      - run:
-          name: "Train and predict"
-          command: "cd pgml-extension; bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -c 'SELECT 1'"
-      - save_cache:
-          key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
-          paths:
-          - pgml-extension/target
-  dashboard:
-    working_directory: pgml-dashboard
-    docker:
-      - image: cimg/python:3.10
-        environment:
-          DJANGO_SECRET_KEY: insecure-development-key-for-django
-          DJANGO_DEBUG: "True"
-          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
-          PGML_DATABASE_URL: postgres://circleci@circleci@127.0.0.1:5432/postgres
-          DJANGO_CSRF_TRUSTED_ORIGINS: http://127.0.0.1,http://localhost
-      - image: cimg/postgres:14
-        environment:
-          POSTGRES_PASSWORD: circleci
-    steps:
-      - checkout
-      - restore_cache:
-          key: dashboard-{{ checksum "requirements.txt" }}
-      - run:
-          name: Install dependencies
-          command: pip install -r requirements.txt
-      - run:
-          name: Run tests
-          command: python manage.py test
-      - save_cache:
-          key: dashboard-{{ checksum "requirements.txt" }}
-          paths:
-          - ~/.pip
-
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   end-to-end-tests:
     jobs:
-      - extension
-      # - dashboard
+      - rust/lint-test-build:
+          cache_version: v2
+          release: true
+          working_directory: ~/pgml-extension
+      - extension:
+          # Add steps to the job
+          # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+          steps:
+            - checkout
+            - restore_cache:
+                key: pgx
+            - run:
+                name: "PGX"
+                command: "cargo install pgx; cargo pgx init"
+            - save_cache:
+                key: pgx
+                paths:
+                - ~/.pgx
+            - restore_cache:
+                key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
+            - run:
+                name: "Build"
+                command: "cd pgml-extension; cargo pgx build --release"
+            - run:
+                name: "Test"
+                command: "cd pgml-extension; cargo pgx test --release"
+            - run:
+                name: "Install"
+                command: "cd pgml-extension; cargo pgx install --release"
+            - run:
+                name: "Train and predict"
+                command: "cd pgml-extension; bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -c 'SELECT 1'"
+            - save_cache:
+                key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
+                paths:
+                - pgml-extension/target
+      # - dashboard:
+      #     working_directory: pgml-dashboard
+      #     docker:
+      #       - image: cimg/python:3.10
+      #         environment:
+      #           DJANGO_SECRET_KEY: insecure-development-key-for-django
+      #           DJANGO_DEBUG: "True"
+      #           DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      #           PGML_DATABASE_URL: postgres://circleci@circleci@127.0.0.1:5432/postgres
+      #           DJANGO_CSRF_TRUSTED_ORIGINS: http://127.0.0.1,http://localhost
+      #       - image: cimg/postgres:14
+      #         environment:
+      #           POSTGRES_PASSWORD: circleci
+      #     steps:
+      #       - checkout
+      #       - restore_cache:
+      #           key: dashboard-{{ checksum "requirements.txt" }}
+      #       - run:
+      #           name: Install dependencies
+      #           command: pip install -r requirements.txt
+      #       - run:
+      #           name: Run tests
+      #           command: python manage.py test
+      #       - save_cache:
+      #           key: dashboard-{{ checksum "requirements.txt" }}
+      #           paths:
+      #           - ~/.pip
