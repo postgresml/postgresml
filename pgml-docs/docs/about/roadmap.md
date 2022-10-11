@@ -1,4 +1,4 @@
-# Roadmap
+# Road map
 This project is currently a proof of concept. Some important features, which we are currently thinking about or working on, are listed below.
 
 ## Production deployment
