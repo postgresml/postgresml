@@ -165,7 +165,7 @@ Here is a simple PostgresML workflow to get you started. We'll import a Scikit d
 
         Looks like LightGBM did better with default hyperparameters. It's automatically deployed and will be used for inference.
 
-4. Infer a few data point in real time:
+4. Infer a few data points in real time:
 
     === "SQL"
         ```postgresql
