@@ -34,7 +34,7 @@ Most parameters are optional and have configured defaults. The `project_name` pa
 | `hyperparams ` | The hyperparameters to pass to the algorithm for training, JSON formatted. | `{ "n_estimators": 25 }` |
 | `search` | If set, PostgresML will perform a hyperparameter search to find the best hyperparameters for the algorithm. See [Hyperparameter Search](/user_guides/training/hyperparameter_search/) for details. | `grid` |
 | `search_params` | Search parameters used in the hyperparameter search, using the scikit-learn notation, JSON formatted. | ```{ "n_estimators": [5, 10, 25, 100] }``` |
-| `search_args` | Configuration parameters for the search. Currently only `n_iter` is supported for `random` search. | `{ "n_iter": 10 }` |
+| `search_args` | Configuration parameters for the search, JSON formatted. Currently only `n_iter` is supported for `random` search. | `{ "n_iter": 10 }` |
 | `test_size ` | Fraction of the dataset to use for the test set and algorithm validation. | `0.25` |
 | `test_sampling` | Algorithm used to fetch test data from the dataset: `random`, `first`, or `last`. | `random` |
 
@@ -74,34 +74,39 @@ Future calls to `pgml.train()` may restate the same `task` for a project or omit
 
 
 
-## Getting training data
+## Getting Training Data
+
 A large part of the machine learning workflow is acquiring, cleaning, and preparing data for training algorithms. Naturally, we think Postgres is a great place to store your data. For the purpose of this example, we'll load a toy dataset, the classic handwritten digits image collection, from scikit-learn.
 
 === "SQL"
 
     ```postgresql
-    SELECT pgml.load_dataset('digits');
+    SELECT * FROM pgml.load_dataset('digits');
     ```
 
 === "Output"
 
     ```
-    NOTICE:  table "pgml.digits" does not exist, skipping -- (1)
-    load_dataset
-    --------------
-    OK
+    pgml=# SELECT * FROM pgml.load_dataset('digits');
+    NOTICE:  table "digits" does not exist, skipping
+     table_name  | rows
+    -------------+------
+     pgml.digits | 1797
     (1 row)
     ```
 
-    1. This NOTICE can safely be ignored. PostgresML attempts to do a clean reload by dropping the `pgml.digits` table if it exists. The first time this command is run, the table does not exist.
+    This `NOTICE` can safely be ignored. PostgresML attempts to do a clean reload by dropping the `pgml.digits` table if it exists. The first time this command is run, the table does not exist.
 
 
-PostgresML loads this into the table `pgml.digits`. You can examine the 2D arrays of image data, as well as the label in the `target` column.
+PostgresML loaded the Digits dataset into the `pgml.digits` table. You can examine the 2D arrays of image data, as well as the label in the `target` column:
 
 === "SQL"
 
     ```postgresql
-    SELECT target, image FROM pgml.digits LIMIT 5;
+    SELECT
+        target,
+        image
+    FROM pgml.digits LIMIT 5;
     ```
 
 === "Output"
@@ -117,21 +122,41 @@ PostgresML loads this into the table `pgml.digits`. You can examine the 2D array
     (5 rows)
     ```
 
-## Training the model
-Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](/user_guides/training/algorithm_selection/) reference for a complete list of available choices.
+## Training a Model
+
+Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](/user_guides/training/algorithm_selection/) for a complete list of available algorithms.
 
 === "SQL"
 
-    ```sql linenums="1"
-    SELECT * FROM pgml.train('Handwritten Digit Image Classifier', 'classification', 'pgml.digits', 'target');
+    ```postgresql
+    SELECT * FROM pgml.train(
+        'Handwritten Digit Image Classifier',
+        'classification',
+        'pgml.digits',
+        'target'
+    );
     ```
 
 === "Output"
-
-    ```sql linenums="1"
-                project_name            |     task       | algorithm |  status
+    ```
+    INFO:  Snapshotting table "pgml.digits", this may take a little while...
+    INFO:  Snapshot of table "pgml.digits" created and saved in "pgml"."snapshot_1"
+    INFO:  Dataset { num_features: 64, num_labels: 1, num_rows: 1797, num_train_rows: 1348, num_test_rows: 449 }
+    INFO:  Training Model { id: 1, algorithm: linear, runtime: python }
+    INFO:  Hyperparameter searches: 1, cross validation folds: 1
+    INFO:  Hyperparams: {}
+    INFO:  Metrics: {
+      "f1": 0.91903764,
+      "precision": 0.9175061,
+      "recall": 0.9205743,
+      "accuracy": 0.9175947,
+      "mcc": 0.90866333,
+      "fit_time": 0.17586434,
+      "score_time": 0.01282608
+    }
+                  project               |      task      | algorithm | deployed
     ------------------------------------+----------------+-----------+----------
-     Handwritten Digit Image Classifier | classification | linear    | deployed
+     Handwritten Digit Image Classifier | classification | linear    | t
     (1 row)
     ```
 
@@ -148,12 +173,14 @@ Now we can inspect some of the artifacts a training run creates.
 
 === "Output"
 
-    ```sql linenums="1"
-                    name                |        deployed_at         |     task       | algorithm | relation_name | y_column_name | test_sampling | test_size
-    ------------------------------------+----------------------------+----------------+-----------+---------------+---------------+---------------+-----------
-     Handwritten Digit Image Classifier | 2022-05-10 15:06:32.824305 | classification | linear    | pgml.digits   | {target}      | random        |      0.25
+    ```
+    pgml=# SELECT * FROM pgml.overview;
+                    name                |        deployed_at         |      task      | algorithm | runtime | relation_name | y_column_name | test_sampling | test_size
+    ------------------------------------+----------------------------+----------------+-----------+---------+---------------+---------------+---------------+-----------
+     Handwritten Digit Image Classifier | 2022-10-11 12:43:15.346482 | classification | linear    | python  | pgml.digits   | {target}      | last          |      0.25
     (1 row)
     ```
 
-- See the [Examples](https://github.com/postgresml/postgresml/tree/master/pgml-extension/examples) for more kinds of training with different types of features, algorithms and tasks.
-- See the [Models](/user_guides/schema/models/) reference for a complete description of the artifacts.
+## More Examples
+
+See [examples](https://github.com/postgresml/postgresml/tree/master/pgml-extension/examples) in our git repository for more kinds of training with different types of features, algorithms and tasks.
