@@ -43,6 +43,8 @@ linfa-svm = { path = "deps/linfa/algorithms/linfa-svm", features = ["serde"] }
 anyhow = { version = "1.0" }
 indexmap = { version = "1.0", features = ["serde"] }
 signal-hook = "0.3"
+flate2 = "1.0"
+csv = "1.1"
 
 [dev-dependencies]
 pgx-tests = "=0.4.5"
