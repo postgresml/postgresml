@@ -2,7 +2,7 @@
 
 ## General
 
-[Use unix line endings](https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings).
+[Use Unix line endings](https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings).
 
 
 ## Setup your development environment

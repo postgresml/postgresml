@@ -1,50 +1,64 @@
 # Deployments
 
-Models are automatically deployed if their key metric (__R__<sup>2</sup> for regression, __F__<sub>1</sub> for classification) is improved over the currently deployed version during training. If you want to manage deploys manually, you can always change which model is currently responsible for making predictions.
+A model is automatically deployed and used for predictions if its key metric (__R__<sup>2</sup> for regression, __F__<sub>1</sub> for classification) is improved during training over the previous version. Alternatively, if you want to manage deploys manually, you can always change which model is currently responsible for making predictions.
 
 
 ## API
 
-```sql linenums="1" title="pgml.deploy"
+```postgresql title="pgml.deploy()"
 pgml.deploy(
-	project_name TEXT,                            -- Human-friendly project name
-	strategy pgml.strategy DEFAULT 'best_score',  -- 'rollback', 'best_score', or 'most_recent'
-	algorithm pgml.algorithm DEFAULT NULL         -- filter candidates to a particular algorithm, NULL = all qualify
+	project_name TEXT,
+	strategy TEXT DEFAULT 'best_score',
+	algorithm TEXT DEFAULT NULL
 )
 ```
 
-## Strategies
-There are 3 different deployment strategies available
+### Parameters
 
-strategy | description
---- | ---
-most_recent | The most recently trained model for this project
-best_score | The model that achieved the best key metric score
-rollback | The model that was previously deployed for this project
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `project_name` | The name of the project used in `pgml.train()` and `pgml.predict()`. | `My First PostgresML Project` |
+| `strategy` | The deployment strategy to use for this deployment. | `rollback` |
+| `algorithm`  | Restrict the deployment to a specific algorithm. Useful when training on multiple algorithms and hyperparameters at the same time. | `xgboost` |
 
-The default deployment behavior allows any algorithm to qualify.
+
+#### Strategies
+
+There are 3 different deployment strategies available:
+
+| Strategy | Description |
+|----------|-------------|
+| `most_recent` | The most recently trained model for this project is immediately deployed, regardless of metrics. |
+| `best_score` | The model that achieved the best key metric score is immediately deployed. |
+| `rollback` | The model that was last deployed for this project is immediately redeployed, overriding the currently deployed model. |
+
+The default deployment behavior allows any algorithm to qualify. It's automatically used during training, but can be manually executed as well:
 
 === "SQL"
 
-	```sql linenums="1"
-	SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'best_score');
+	```postgresql
+	SELECT * FROM pgml.deploy(
+		'Handwritten Digit Image Classifier',
+		strategy => 'best_score'
+	);
 	```
 
 === "Output"
 
-	```sql linenums="1"
-                project_name            |    strategy    | algorithm
-	------------------------------------+----------------+----------------
-	 Handwritten Digit Image Classifier | classification | linear
+	```
+                  project               |  strategy  | algorithm
+	------------------------------------+------------+-----------
+	 Handwritten Digit Image Classifier | best_score | xgboost
 	(1 row)
 	```
 
-## Specific Algorithms
-Deployment candidates can be restricted to a specific algorithm by including the `algorithm` parameter.
+#### Specific Algorithms
+
+Deployment candidates can be restricted to a specific algorithm by including the `algorithm` parameter. This is useful when you're training multiple algorithms using different hyperparameters and want to restrict the deployment a single algorithm only:
 
 === "SQL"
 
-	```sql linenums="1"
+	```postgresql
 	SELECT * FROM pgml.deploy(
         project_name => 'Handwritten Digit Image Classifier', 
         strategy => 'best_score', 
@@ -54,7 +68,7 @@ Deployment candidates can be restricted to a specific algorithm by including the
 
 === "Output"
 
-	```sql linenums="1"
+	```
                 project_name            |    strategy    | algorithm
 	------------------------------------+----------------+----------------
 	 Handwritten Digit Image Classifier | classification | svm
@@ -62,39 +76,41 @@ Deployment candidates can be restricted to a specific algorithm by including the
 	```
 
 
-## Rolling back to a specific algorithm
-Rolling back creates a new deployment for the model that was deployed before the current one. Multiple rollbacks in a row will effectively oscillate between the two most recently deployed models, making rollbacks a relatively safe operation. 
+## Rolling Back
 
-=== "SQL"
+In case the new model isn't performing well in production, it's easy to rollback to the previous version. A rollback creates a new deployment for the old model. Multiple rollbacks in a row will oscillate between the two most recently deployed models, making rollbacks a safe and reversible operation.
+
+=== "Rollback 1"
 
 	```sql linenums="1"
-	SELECT * FROM pgml.deploy('Handwritten Digit Image Classifier', 'rollback', 'svm');
+	SELECT * FROM pgml.deploy(
+		'Handwritten Digit Image Classifier',
+		strategy => 'rollback'
+	);
 	```
 
 === "Output"
 
-	```sql linenums="1"
-                project_name            |    strategy    | algorithm
-	------------------------------------+----------------+----------------
-	 Handwritten Digit Image Classifier | classification | svm
+	```
+                 project               | strategy | algorithm
+	------------------------------------+----------+-----------
+	 Handwritten Digit Image Classifier | rollback | linear
 	(1 row)
 	```
 
-## Manual Deploys
-
-You can also manually deploy any previously trained model by inserting a new record into `pgml.deployments`. You will need to query the `pgml.projects` and `pgml.models` tables to find the desired IDs.
-
-!!! note 
-    Deployed models are cached at the session level to improve prediction times. Manual deploys created this way will not invalidate those caches, so active sessions will not use manual deploys until they reconnect. 
-
-=== "SQL"
-
-	```sql linenums="1"
-	INSERT INTO pgml.deploys (project_id, model_id, strategy,) VALUES (1, 1, 'rollback');
+=== "Rollback 2"
+	```postgresql
+	SELECT * FROM pgml.deploy(
+		'Handwritten Digit Image Classifier',
+		strategy => 'rollback'
+	);
 	```
 
 === "Output"
 
-	```sql linenums="1"
-    INSERT 0 1
+	```
+	              project               | strategy | algorithm
+	------------------------------------+----------+-----------
+	 Handwritten Digit Image Classifier | rollback | xgboost
+	(1 row)
 	```

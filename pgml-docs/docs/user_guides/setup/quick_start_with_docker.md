@@ -35,7 +35,7 @@ psql postgres://postgres@localhost:5433/pgml_development
 
     === "SQL"
 
-        ```sql
+        ```postgresql
         SELECT pgml.version();
         ```
 
@@ -49,17 +49,15 @@ psql postgres://postgres@localhost:5433/pgml_development
         (1 row)
         ```
 
-Docker will also start the Dashboard app running locally at [http://localhost:8000/](http://localhost:8000/)
-
 ## Quick Start
 
-Here is a simple PostgresML workflow to get you started. We'll import a Scikit dataset, train a couple models on it, and fetch real time predictions, all using only SQL.
+Here is a simple PostgresML workflow to get you started. We'll import a Scikit dataset, train a couple models on it and make real time predictions, all of it using only SQL.
 
 1. Import the `digits` dataset:
 
     === "SQL"
 
-        ```sql
+        ```postgresql
         SELECT * FROM pgml.load_dataset('digits');
         ```
     === "Output"
@@ -76,7 +74,7 @@ Here is a simple PostgresML workflow to get you started. We'll import a Scikit d
 
     === "SQL"
 
-        ```sql
+        ```postgresql
         SELECT * FROM pgml.train('My First PostgresML Project',
             task => 'classification',
             relation_name => 'pgml.digits',
@@ -126,7 +124,7 @@ Here is a simple PostgresML workflow to get you started. We'll import a Scikit d
 3. Train a LightGBM model:
 
     === "SQL"
-        ```sql
+        ```postgresql
         SELECT * FROM pgml.train('My First PostgresML Project',
             task => 'classification',
             relation_name => 'pgml.digits',
@@ -170,7 +168,7 @@ Here is a simple PostgresML workflow to get you started. We'll import a Scikit d
 4. Infer a few data point in real time:
 
     === "SQL"
-        ```sql
+        ```postgresql
         SELECT
             target,
             pgml.predict('My First PostgresML Project', image) AS prediction
@@ -197,7 +195,7 @@ Here is a simple PostgresML workflow to get you started. We'll import a Scikit d
         ```
 
 
-That's it, you just did machine learning with a few SQL queries! The following common machine learning tasks are performed automatically by PostgresML:
+The following common machine learning tasks are performed automatically by PostgresML:
 
 1. Snapshot the data so the experiment is reproducible
 2. Split the dataset into train and test sets
@@ -206,3 +204,9 @@ That's it, you just did machine learning with a few SQL queries! The following c
 5. Load it and cache it during inference
 
 Check out our [Training](/user_guides/training/overview/) and [Predictions](/user_guides/predictions/overview/) documentation for more details. Some more advanced topics like [hyperparameter search](/user_guides/training/hyperparameter_search/) and [GPU acceleration](/user_guides/setup/gpu_support/) are available as well.
+
+## Dashboard
+
+The Dashboard app is available at https://localhost:8000. You can use it to write experiments in Jupyter-style notebooks, manage projects, and visualize datasets used by PostgresML.
+
+![Dashboard](/images/dashboard/notebooks.png)

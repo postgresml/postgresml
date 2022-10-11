@@ -27,6 +27,11 @@ If your system Python is older, consider installing a newer version from [`ppa:d
 
 PostgresML is a Postgres extension and requires PostgreSQL to be installed. We support PostgreSQL 10 through 14. You can use the PostgreSQL version that comes with your system or get it from the [PostgreSQL PPA](https://wiki.postgresql.org/wiki/Apt).
 
+```bash
+sudo apt-get update && \
+sudo apt-get install postgresql
+```
+
 ### Install the extension
 
 === ":material-ubuntu: Ubuntu"
@@ -90,10 +95,9 @@ PostgresML is a Postgres extension and requires PostgreSQL to be installed. We s
 
 		```bash
 		export POSTGRES_VERSION=14
-		cargo install cargo-pgx && \
+		cargo install cargo-pgx --version "0.4.5" && \
 		cargo pgx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
-		cargo pgx package && \
-		cargo pgx install
+		cargo pgx package
 		```
 
 		**Without Python support:**
@@ -101,10 +105,23 @@ PostgresML is a Postgres extension and requires PostgreSQL to be installed. We s
 		```bash
 		export POSTGRES_VERSION=14
 		cp docker/Cargo.toml.no-python Cargo.toml && \
-		cargo install cargo-pgx && \
+		cargo install cargo-pgx --version "0.4.5" && \
 		cargo pgx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
-		cargo pgx package && \
-		cargo pgx install
+		cargo pgx package
+		```
+
+	6. Copy the extension binaries into Postgres system folders:
+
+		```bash
+		export POSTGRES_VERSION=14
+
+		# Copy the extension .so
+		sudo cp target/release/pgml-pg${POSTGRES_VERSION}/usr/lib/postgresql/${POSTGRES_VERSION}/lib/* \
+		   /usr/lib/postgresql/${POSTGRES_VERSION}/lib
+
+		# Copy the control & SQL files
+		sudo cp target/release/pgml-pg${POSTGRES_VERSION}/usr/share/postgresql/${POSTGRES_VERSION}/extension/* \
+		   /usr/share/postgresql/${POSTGRES_VERSION}/extension
 		```
 
 === ":material-apple: From Source (Mac)"
@@ -116,7 +133,7 @@ PostgresML is a Postgres extension and requires PostgreSQL to be installed. We s
 
 	2. Clone our git repository:
 
-		```bash
+		```
 		git clone https://github.com/postgresml/postgresml && \
 		cd postgresml && \
 		git submodule update --init --recursive && \
@@ -124,7 +141,7 @@ PostgresML is a Postgres extension and requires PostgreSQL to be installed. We s
 		```
 	3. Install PostgreSQL and other dependencies:
 
-		```bash
+		```
 		brew install llvm postgresql cmake openssl pkg-config
 		```
 
@@ -134,10 +151,9 @@ PostgresML is a Postgres extension and requires PostgreSQL to be installed. We s
 
 	4. Install [`pgx`](https://github.com/tcdi/pgx) and build the extension (this will take a few minutes):
 
-		```bash
+		```
 		cargo install cargo-pgx && \
 		cargo pgx init --pg14 /usr/bin/pg_config && \
-		cargo pgx package && \
 		cargo pgx install
 		```
 
@@ -152,6 +168,12 @@ PostgresML needs to be preloaded at server startup, so you need to add it into `
 shared_preload_libraries = 'pgml,pg_stat_statements'
 ```
 
+This setting change requires PostgreSQL to be restarted:
+
+```bash
+sudo service postgresql restart
+```
+
 #### Install into database
 
 Now that the extension is installed on your system, add it into the database where you'd like to use it:
@@ -160,7 +182,7 @@ Now that the extension is installed on your system, add it into the database whe
 
 	Connect to the database and create the extension:
 
-	```
+	```postgresql
 	CREATE EXTENSION pgml;
 	```
 
@@ -201,8 +223,8 @@ The dashboard is a Django application. Installing it requires no special depende
 	Install Python if you don't have it already:
 
 	```bash
-	apt-get update && \
-	apt-get install python3 python3-pip python3-virtualenv
+	sudo apt-get update && \
+	sudo apt-get install python3 python3-pip python3-virtualenv
 	```
 
 === ":material-apple: Mac"
@@ -213,7 +235,7 @@ The dashboard is a Django application. Installing it requires no special depende
 	brew install python3
 	```
 
-1. Clone our repository:
+1. Clone our repository (if you haven't already):
 
 	```bash
 	git clone https://github.com/postgresml/postgresml && \
@@ -230,7 +252,7 @@ The dashboard is a Django application. Installing it requires no special depende
 3. Run the dashboard:
 
 	```bash
-	python install -r requirements.txt && \
+	pip3 install -r requirements.txt && \
 	python manage.py migrate && \
 	python manage.py runserver
 	```

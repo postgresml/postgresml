@@ -39,9 +39,9 @@ GPU setup for LightGBM is covered in the [documentation](https://lightgbm.readth
     ```
 
 ## Scikit-learn
-None of the scikit-learn algorithms natively support GPU devices. There are a few projects to improve scikit performance with additional parralellism, although we currently have not integrated these with PostgresML:
+None of the scikit-learn algorithms natively support GPU devices. There are a few projects to improve scikit performance with additional parallelism, although we currently have not integrated these with PostgresML:
 
 - https://github.com/intel/scikit-learn-intelex
 - https://github.com/rapidsai/cuml
 
-If your project would benefit from GPU support, please consider opening an issue so we can prioritize integrations.
+If your project would benefit from GPU support, please consider opening an issue, so we can prioritize integrations.
