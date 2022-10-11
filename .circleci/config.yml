@@ -78,5 +78,5 @@ workflows:
       - rust/lint-test-build:
           release: true
           working_directory: ~/pgml-extension
-      - extension
+      # - extension
       # - dashboard
