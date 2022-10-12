@@ -2,53 +2,51 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
   extension:
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
+    working_directory: pgml-extension
     docker:
-      - image: levkk/postgresml:ci-2
+      - image: ubuntu:jammy # Ubuntu 22.10
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
       - run:
-          name: "Train and predict"
-          command: "cd pgml-extension; bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -c 'SELECT 1'"
-  dashboard:
-    working_directory: pgml-dashboard
-    docker:
-      - image: cimg/python:3.10
-        environment:
-          DJANGO_SECRET_KEY: insecure-development-key-for-django
-          DJANGO_DEBUG: "True"
-          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
-          PGML_DATABASE_URL: postgres://circleci@circleci@127.0.0.1:5432/postgres
-          DJANGO_CSRF_TRUSTED_ORIGINS: http://127.0.0.1,http://localhost
-      - image: cimg/postgres:14
-        environment:
-          POSTGRES_PASSWORD: circleci
-    steps:
-      - checkout
-      - restore_cache:
-          key: dashboard-{{ checksum "requirements.txt" }}
-      - run:
           name: Install dependencies
-          command: pip install -r requirements.txt
+          command: |
+            apt-get update && \
+            DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y \
+              curl \
+              build-essential \
+              libopenblas-dev \
+              clang \
+              python3-dev \
+              libpython3-dev \
+              postgresql \
+              postgresql-server-dev-14 \
+              pkg-config
       - run:
-          name: Run tests
-          command: python manage.py test
+          name: Move files to Postgres
+          command: mv . /var/lib/postgresql && chown postgres:postgres -R /var/lib/postgresql
+      - run:
+          name: Install Rust
+          command: |
+            sudo -u postgres -i
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+            source ~/.cargo/env
+            cargo install cargo-pgx
+            cargo pgx init --pg14 /usr/bin/pg_config
+            cargo pgx test
       - save_cache:
-          key: dashboard-{{ checksum "requirements.txt" }}
+          key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
           paths:
-          - ~/.pip
+          - /usr/lib/postgresql/target
+          - /usr/lib/postgresql/.cargo
+          - /usr/lib/postgresql/.pgx
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  end-to-end-tests:
+  tests:
     jobs:
       - extension
-      # - dashboard
