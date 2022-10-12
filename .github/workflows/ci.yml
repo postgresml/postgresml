@@ -15,7 +15,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update && \
-            DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y \
+            DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC sudo apt-get install -y \
               curl \
               build-essential \
               libopenblas-dev \
