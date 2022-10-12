@@ -36,7 +36,7 @@ jobs:
             - ~/.pgx
           key: ${{ runner.os }}-rust-${{ hashFiles('Cargo.toml') }}
       - name: Run tests
-        command: |
+        run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           source ~/.cargo/env
           cargo install cargo-pgx
