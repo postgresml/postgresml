@@ -43,8 +43,8 @@ h1.title {
 }
 </style>
 
-<h1 align="center" class="title">Lightning fast ML inference, <br />
-powered by the world's <br /> most capable feature store</h1>
+<h1 align="center" class="title">The fastest inference, powered<br />
+by the most capable feature store</h1>
 
 <p align="center" class="subtitle">
     Easily train and deploy fast online models using only SQL, with an open source <br /> Rust extension for PostgreSQL.
