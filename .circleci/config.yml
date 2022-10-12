@@ -13,15 +13,22 @@ jobs:
       - checkout
       - run:
           name: Install dependencies
-          command: apt-get update && apt-get install -y curl build-essential libopenblas-dev clang python3-dev libpython3-dev postgresql postgresql-server-dev-14
+          command: |
+            apt-get update && \
+            DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y \
+              curl \
+              build-essential \
+              libopenblas-dev \
+              clang \
+              python3-dev \
+              libpython3-dev \
+              postgresql \
+              postgresql-server-dev-14
       - run:
           name: Install Rust
           command: |
             curl https://sh.rustup.rs -sSf | sh -s -- -y;
             echo 'export PATH="${PATH}:~/.cargo/bin"' >> "$BASH_ENV"
-      - run:
-          name: Install Postgres
-          command: "apt-get update && apt-get install -y postgresql"
       - run:
           name: Install tcdi/pgx
           command: "cargo install cargo-pgx; cargo pgx init --pg14 /usr/bin/pg_config"
