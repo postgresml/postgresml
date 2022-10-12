@@ -118,6 +118,7 @@ nav:
             - Quick Start with Docker: user_guides/setup/quick_start_with_docker.md
             - Installation: 
                 - v2.0: user_guides/setup/v2/installation.md
+                - Upgrading from v1.0 to v2.0: user_guides/setup/v2/upgrade-from-v1.md
                 - v1.0: user_guides/setup/installation.md
             - Distributed Training: user_guides/setup/distributed_training.md
             - GPU Support: user_guides/setup/gpu_support.md

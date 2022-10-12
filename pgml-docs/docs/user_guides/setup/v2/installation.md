@@ -1,6 +1,6 @@
 # Installation
 
-The PostgresML deployment consists of two parts: the Posgres extension and the dashboard app. The extension provides all the machine learning functionality and can be used independently. The dashboard app provides a system overview for easier management and notebooks for writing experiments.
+The PostgresML deployment consists of two parts: the Postgres extension and the dashboard app. The extension provides all the machine learning functionality and can be used independently. The dashboard app provides a system overview for easier management and notebooks for writing experiments.
 
 ## Extension
 
@@ -177,6 +177,9 @@ sudo service postgresql restart
 #### Install into database
 
 Now that the extension is installed on your system, add it into the database where you'd like to use it:
+
+!!! note
+	If you already have a v1.0 installation, see [Upgrading to v2.0](/user_guides/setup/v2/upgrade-from-v1/)..
 
 === "SQL"
 
