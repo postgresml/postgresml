@@ -98,7 +98,7 @@ impl Bindings for Estimator {
 
     /// Predict a set of datapoints.
     fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
-        let results = self.predict_proba(&features);
+        let results = self.predict_proba(features);
 
         // LightGBM returns probabilities for classification. Convert to discrete classes.
         match self.num_classes {
