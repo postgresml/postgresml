@@ -43,7 +43,7 @@ h1.title {
 }
 </style>
 
-<h1 align="center" class="title">Microsecond inference, with the<br />
+<h1 align="center" class="title">Microsecond inference with the<br />
 most capable feature store</h1>
 
 <p align="center" class="subtitle">
