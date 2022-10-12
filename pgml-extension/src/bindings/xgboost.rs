@@ -248,23 +248,17 @@ impl Bindings for Estimator {
 
         match self.num_classes {
             2 => results.iter().map(|i| i.round()).collect(),
-            num_classes if num_classes > 2 => {
-                let mut argmax_results = Vec::with_capacity(results.len() / num_classes);
-                let mut max_i: usize = 0;
-                let mut max_probability = 0.0;
-                for (i, &probability) in results.iter().enumerate() {
-                    if i % num_classes == 0 && i > 0 {
-                        argmax_results.push((max_i % num_classes) as f32);
-                        max_probability = 0.0;
-                    }
-                    if probability > max_probability {
-                        max_probability = probability;
-                        max_i = i;
-                    }
-                }
-                argmax_results.push((max_i % num_classes) as f32);
-                argmax_results
-            }
+            num_classes if num_classes > 2 => results
+                .chunks(self.num_classes)
+                .map(|probabilities| {
+                    probabilities
+                        .iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.total_cmp(b))
+                        .map(|(index, _)| index)
+                        .unwrap() as f32
+                })
+                .collect(),
             _ => results,
         }
     }
