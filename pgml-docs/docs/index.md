@@ -47,7 +47,8 @@ h1.title {
 the most capable feature store</h1>
 
 <p align="center" class="subtitle">
-    Easily train and deploy fast online models using only SQL, with an open source <br /> Rust extension for PostgreSQL.
+  Easily train and deploy online models using only SQL, with an open source<br />
+  extension for PostgreSQL.
 </p>
 
 <p align="center" markdown>
