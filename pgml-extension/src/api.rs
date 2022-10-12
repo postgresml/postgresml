@@ -567,7 +567,12 @@ mod tests {
     #[pg_test]
     fn test_snapshot_lifecycle() {
         load_diabetes(Some(25));
-        let snapshot = Snapshot::create("pgml.diabetes", "target", 0.5, Sampling::last);
+        let snapshot = Snapshot::create(
+            "pgml.diabetes",
+            vec!["target".to_string()],
+            0.5,
+            Sampling::last,
+        );
         assert!(snapshot.id > 0);
     }
 
