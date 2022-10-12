@@ -30,10 +30,10 @@ jobs:
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
-          path:
-            - ~/.cargo
-            - target/
-            - ~/.pgx
+          path: |
+            ~/.cargo
+            target/
+            ~/.pgx
           key: ${{ runner.os }}-rust-${{ hashFiles('Cargo.toml') }}
       - name: Run tests
         run: |
