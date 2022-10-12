@@ -130,10 +130,7 @@ fn train(
         project_name,
         task,
         relation_name,
-        match y_column_name {
-            Some(y_column_name) => Some(vec![y_column_name.to_string()]),
-            None => None,
-        },
+        y_column_name.map(|y_column_name| vec![y_column_name.to_string()]),
         algorithm,
         hyperparams,
         search,

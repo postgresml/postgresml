@@ -294,6 +294,8 @@ impl Model {
             .collect()
     }
 
+    // The box is borrowed so that it may be reused by the caller
+    #[allow(clippy::borrowed_box)]
     fn test(
         &self,
         project: &Project,
@@ -484,6 +486,7 @@ impl Model {
             let mut score_times: Vec<Vec<f32>> = vec![vec![0.; cv]; all_hyperparams.len()];
             let mut test_scores: Vec<Vec<f32>> = vec![vec![0.; cv]; all_hyperparams.len()];
             let mut fold_scores: Vec<Vec<f32>> = vec![vec![0.; all_hyperparams.len()]; cv];
+            #[allow(clippy::explicit_counter_loop)]
             for (metrics, estimator) in izip!(all_metrics, all_estimators) {
                 let fold_i = i / all_hyperparams.len();
                 let hyperparams_i = i % all_hyperparams.len();
@@ -547,8 +550,8 @@ impl Model {
                     .map(|v| ArrayView1::from(v).std(0.))
                     .collect::<Vec<f32>>()),
             );
-            for k in 0..cv {
-                search_results.insert(format!("split{k}_test_score"), json!(fold_scores[k]));
+            for (k, score) in fold_scores.iter().enumerate() {
+                search_results.insert(format!("split{k}_test_score"), json!(score));
             }
             for param in best_hyperparams.unwrap().keys() {
                 let params: Vec<serde_json::Value> = all_hyperparams
