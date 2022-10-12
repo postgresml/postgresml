@@ -26,24 +26,23 @@ jobs:
               postgresql-server-dev-14 \
               pkg-config
       - run:
+          name: Move files to Postgres
+          command: mv . /var/lib/postgresql && chown postgres:postgres -R /var/lib/postgresql
+      - run:
           name: Install Rust
           command: |
-            curl https://sh.rustup.rs -sSf | sh -s -- -y;
-            echo 'export PATH="${PATH}:~/.cargo/bin"' >> "$BASH_ENV"
-      - run:
-          name: Install tcdi/pgx
-          command: "cargo install cargo-pgx; cargo pgx init --pg14 /usr/bin/pg_config"
-      - restore_cache:
-          key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
-      - run:
-          name: Tests
-          command: "cargo pgx test --release"
+            sudo -u postgres -i
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+            source ~/.cargo/env
+            cargo install cargo-pgx
+            cargo pgx init --pg14 /usr/bin/pg_config
+            cargo pgx test
       - save_cache:
           key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
           paths:
-          - target
-          - ~/.cargo
-          - ~/.pgx
+          - /usr/lib/postgresql/target
+          - /usr/lib/postgresql/.cargo
+          - /usr/lib/postgresql/.pgx
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
