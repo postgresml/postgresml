@@ -1,18 +1,17 @@
-name: CI
-
+name: Tests
 on:
   push:
     branches:
       - master
   workflow_dispatch:
-
 jobs:
-  deploy:
+  tests:
     runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: pgml-extension
     steps:
+      - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
           sudo apt-get update && \
@@ -26,7 +25,6 @@ jobs:
               postgresql \
               postgresql-server-dev-14 \
               pkg-config
-      - uses: actions/checkout@v3
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
