@@ -27,7 +27,7 @@ FROM pgml.diabetes
 LIMIT 10;
 
 -- Check predictions against a specific model id
-SELECT model_id, target, pgml.model_predict(model_id, ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
+SELECT model_id, target, pgml.predict(model_id, ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
 FROM pgml.diabetes
 CROSS JOIN LATERAL (
     SELECT pgml.models.id AS model_id FROM pgml.models

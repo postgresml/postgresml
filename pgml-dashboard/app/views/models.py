@@ -104,7 +104,7 @@ class ModelViewSet(viewsets.ModelViewSet):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT pgml.model_predict(
+                SELECT pgml.predict(
                     model_id => %s,
                     features => %s
                 )
