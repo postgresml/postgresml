@@ -1,4 +1,4 @@
-name: Deploy to beta
+name: CI
 
 on:
   push:
