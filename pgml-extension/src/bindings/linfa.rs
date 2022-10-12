@@ -52,8 +52,16 @@ impl LinearRegression {
 
 impl Bindings for LinearRegression {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> Vec<f32> {
-        self.predict_batch(features)
+    fn predict(&self, features: &[f32]) -> f32 {
+        self.predict_batch(features)[0]
+    }
+
+    fn predict_proba(&self, _features: &[f32]) -> Vec<f32> {
+        todo!("predict_proba is currently only supported by the Python runtime.")
+    }
+
+    fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
+        todo!("predict_joint is currently only supported by the Python runtime.")
     }
 
     /// Predict a novel datapoint.
@@ -66,11 +74,6 @@ impl Bindings for LinearRegression {
         self.estimator.predict(records).targets.into_raw_vec()
     }
 
-    /// Serialize self to bytes
-    fn to_bytes(&self) -> Vec<u8> {
-        rmp_serde::to_vec(self).unwrap()
-    }
-
     /// Deserialize self from bytes, with additional context
     fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
     where
@@ -78,6 +81,11 @@ impl Bindings for LinearRegression {
     {
         let estimator: LinearRegression = rmp_serde::from_read(bytes).unwrap();
         Box::new(estimator)
+    }
+
+    /// Serialize self to bytes
+    fn to_bytes(&self) -> Vec<u8> {
+        rmp_serde::to_vec(self).unwrap()
     }
 }
 
@@ -182,8 +190,16 @@ impl LogisticRegression {
 
 impl Bindings for LogisticRegression {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> Vec<f32> {
-        self.predict_batch(features)
+    fn predict(&self, features: &[f32]) -> f32 {
+        self.predict_batch(features)[0]
+    }
+
+    fn predict_proba(&self, _features: &[f32]) -> Vec<f32> {
+        todo!("predict_proba is currently only supported by the Python runtime.")
+    }
+
+    fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
+        todo!("predict_joint is currently only supported by the Python runtime.")
     }
 
     /// Predict a novel datapoint.
@@ -290,8 +306,16 @@ impl Svm {
 
 impl Bindings for Svm {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> Vec<f32> {
-        self.predict_batch(features)
+    fn predict(&self, features: &[f32]) -> f32 {
+        self.predict_batch(features)[0]
+    }
+
+    fn predict_proba(&self, _features: &[f32]) -> Vec<f32> {
+        todo!("predict_proba is currently only supported by the Python runtime.")
+    }
+
+    fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
+        todo!("predict_joint is currently only supported by the Python runtime.")
     }
 
     /// Predict a novel datapoint.

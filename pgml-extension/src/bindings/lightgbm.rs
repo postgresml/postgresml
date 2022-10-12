@@ -78,17 +78,27 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
 
 impl Bindings for Estimator {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> Vec<f32> {
-        self.predict_batch(features)
+    fn predict(&self, features: &[f32]) -> f32 {
+        self.predict_batch(features)[0]
     }
 
-    /// Predict a novel datapoint.
-    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
-        let results = self
-            .estimator
+    // Predict the raw probability of classes for a classifier.
+    fn predict_proba(&self, features: &[f32]) -> Vec<f32> {
+        self.estimator
             .predict(features, self.num_features.try_into().unwrap())
-            .unwrap();
-        let results: Vec<f32> = results.into_iter().map(|i| i as f32).collect();
+            .unwrap()
+            .into_iter()
+            .map(|i| i as f32)
+            .collect()
+    }
+
+    fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
+        todo!("predict_joint is currently only supported by the Python runtime.")
+    }
+
+    /// Predict a set of datapoints.
+    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
+        let results = self.predict_proba(&features);
 
         // LightGBM returns probabilities for classification. Convert to discrete classes.
         match self.num_classes {

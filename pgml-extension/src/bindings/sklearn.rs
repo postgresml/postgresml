@@ -295,46 +295,60 @@ fn fit(
 
     let hyperparams = serde_json::to_string(hyperparams).unwrap();
 
-    let (estimator, wrapper) = Python::with_gil(|py| -> (Py<PyAny>, Py<PyAny>) {
-        let module = PyModule::from_code(py, module, "", "").unwrap();
-        let estimator: Py<PyAny> = module.getattr("estimator").unwrap().into();
+    let (estimator, predict, predict_proba) =
+        Python::with_gil(|py| -> (Py<PyAny>, Py<PyAny>, Py<PyAny>) {
+            let module = PyModule::from_code(py, module, "", "").unwrap();
+            let estimator: Py<PyAny> = module.getattr("estimator").unwrap().into();
 
-        let train: Py<PyAny> = estimator
-            .call1(
-                py,
-                PyTuple::new(
+            let train: Py<PyAny> = estimator
+                .call1(
                     py,
-                    &[
-                        String::from(algorithm_task).into_py(py),
-                        dataset.num_features.into_py(py),
-                        dataset.num_labels.into_py(py),
-                        hyperparams.into_py(py),
-                    ],
-                ),
-            )
-            .unwrap();
+                    PyTuple::new(
+                        py,
+                        &[
+                            String::from(algorithm_task).into_py(py),
+                            dataset.num_features.into_py(py),
+                            dataset.num_labels.into_py(py),
+                            hyperparams.into_py(py),
+                        ],
+                    ),
+                )
+                .unwrap();
 
-        let estimator: Py<PyAny> = train
-            .call1(py, PyTuple::new(py, &[&dataset.x_train, &dataset.y_train]))
-            .unwrap();
+            let estimator: Py<PyAny> = train
+                .call1(py, PyTuple::new(py, &[&dataset.x_train, &dataset.y_train]))
+                .unwrap();
 
-        let predictor = module.getattr("predictor").unwrap();
+            let predict: Py<PyAny> = module
+                .getattr("predictor")
+                .unwrap()
+                .call1(PyTuple::new(py, &[&estimator]))
+                .unwrap()
+                .extract()
+                .unwrap();
 
-        let wrapper: Py<PyAny> = predictor
-            .call1(PyTuple::new(py, &[&estimator]))
-            .unwrap()
-            .extract()
-            .unwrap();
+            let predict_proba: Py<PyAny> = module
+                .getattr("predictor_proba")
+                .unwrap()
+                .call1(PyTuple::new(py, &[&estimator]))
+                .unwrap()
+                .extract()
+                .unwrap();
 
-        (estimator, wrapper)
-    });
+            (estimator, predict, predict_proba)
+        });
 
-    Box::new(Estimator { estimator, wrapper })
+    Box::new(Estimator {
+        estimator,
+        predict,
+        predict_proba,
+    })
 }
 
 pub struct Estimator {
     estimator: Py<PyAny>,
-    wrapper: Py<PyAny>,
+    predict: Py<PyAny>,
+    predict_proba: Py<PyAny>,
 }
 
 unsafe impl Send for Estimator {}
@@ -351,21 +365,33 @@ impl std::fmt::Debug for Estimator {
 
 impl Bindings for Estimator {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> Vec<f32> {
+    fn predict(&self, features: &[f32]) -> f32 {
+        self.predict_batch(features)[0]
+    }
+
+    fn predict_joint(&self, features: &[f32]) -> Vec<f32> {
         self.predict_batch(features)
     }
 
-    /// Predict a novel datapoint.
-    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
-        let y_hat: Vec<f32> = Python::with_gil(|py| -> Vec<f32> {
-            self.wrapper
+    fn predict_proba(&self, features: &[f32]) -> Vec<f32> {
+        Python::with_gil(|py| -> Vec<f32> {
+            self.predict_proba
                 .call1(py, PyTuple::new(py, &[features]))
                 .unwrap()
                 .extract(py)
                 .unwrap()
-        });
+        })
+    }
 
-        y_hat
+    /// Predict a novel datapoint.
+    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
+        Python::with_gil(|py| -> Vec<f32> {
+            self.predict
+                .call1(py, PyTuple::new(py, &[features]))
+                .unwrap()
+                .extract(py)
+                .unwrap()
+        })
     }
 
     /// Serialize self to bytes
@@ -404,15 +430,27 @@ impl Bindings for Estimator {
                 .extract()
                 .unwrap();
 
-            let predict = module.getattr("predictor").unwrap();
-
-            let wrapper: Py<PyAny> = predict
+            let predict: Py<PyAny> = module
+                .getattr("predictor")
+                .unwrap()
                 .call1(PyTuple::new(py, &[&estimator]))
                 .unwrap()
                 .extract()
                 .unwrap();
 
-            Box::new(Estimator { estimator, wrapper })
+            let predict_proba: Py<PyAny> = module
+                .getattr("predictor_proba")
+                .unwrap()
+                .call1(PyTuple::new(py, &[&estimator]))
+                .unwrap()
+                .extract()
+                .unwrap();
+
+            Box::new(Estimator {
+                estimator,
+                predict,
+                predict_proba,
+            })
         })
     }
 }

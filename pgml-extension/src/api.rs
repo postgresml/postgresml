@@ -405,13 +405,7 @@ fn deploy(
     vec![(project_name.to_string(), strategy.to_string(), algorithm)].into_iter()
 }
 
-#[pg_extern]
-fn predict(project_name: &str, features: Vec<f32>) -> f32 {
-    predict_joint(project_name, features)[0]
-}
-
-#[pg_extern]
-fn predict_joint(project_name: &str, features: Vec<f32>) -> Vec<f32> {
+fn get_model_id(project_name: &str) -> i64 {
     let mut projects = PROJECT_NAME_TO_PROJECT_ID.lock();
     let project_id = match projects.get(project_name) {
         Some(project_id) => *project_id,
@@ -448,12 +442,50 @@ fn predict_joint(project_name: &str, features: Vec<f32>) -> Vec<f32> {
         }
     };
 
-    let model_id = *PROJECT_ID_TO_DEPLOYED_MODEL_ID
+    *PROJECT_ID_TO_DEPLOYED_MODEL_ID
         .share()
         .get(&project_id)
-        .unwrap();
-    let estimator = crate::orm::file::find_deployed_estimator_by_model_id(model_id);
-    estimator.predict(&features)
+        .unwrap()
+}
+
+#[pg_extern(strict, name = "predict")]
+fn predict(project_name: &str, features: Vec<f32>) -> f32 {
+    predict_model(get_model_id(project_name), features)
+}
+
+#[pg_extern(strict, name = "predict_proba")]
+fn predict_proba(project_name: &str, features: Vec<f32>) -> Vec<f32> {
+    predict_model_proba(get_model_id(project_name), features)
+}
+
+#[pg_extern(strict, name = "predict_joint")]
+fn predict_joint(project_name: &str, features: Vec<f32>) -> Vec<f32> {
+    predict_model_joint(get_model_id(project_name), features)
+}
+
+#[pg_extern(strict, name = "predict_batch")]
+fn predict_batch(project_name: &str, features: Vec<f32>) -> Vec<f32> {
+    predict_model_batch(get_model_id(project_name), features)
+}
+
+#[pg_extern(strict, name = "predict")]
+fn predict_model(model_id: i64, features: Vec<f32>) -> f32 {
+    crate::orm::file::find_deployed_estimator_by_model_id(model_id).predict(&features)
+}
+
+#[pg_extern(strict, name = "predict_proba")]
+fn predict_model_proba(model_id: i64, features: Vec<f32>) -> Vec<f32> {
+    crate::orm::file::find_deployed_estimator_by_model_id(model_id).predict_proba(&features)
+}
+
+#[pg_extern(strict, name = "predict_joint")]
+fn predict_model_joint(model_id: i64, features: Vec<f32>) -> Vec<f32> {
+    crate::orm::file::find_deployed_estimator_by_model_id(model_id).predict_joint(&features)
+}
+
+#[pg_extern(strict, name = "predict_batch")]
+fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
+    crate::orm::file::find_deployed_estimator_by_model_id(model_id).predict_batch(&features)
 }
 
 #[pg_extern]
@@ -490,18 +522,6 @@ fn load_dataset(
     };
 
     vec![(name, rows)].into_iter()
-}
-
-#[pg_extern]
-fn model_predict(model_id: i64, features: Vec<f32>) -> f32 {
-    let estimator = crate::orm::file::find_deployed_estimator_by_model_id(model_id);
-    estimator.predict(&features)[0]
-}
-
-#[pg_extern]
-fn model_predict_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
-    let estimator = crate::orm::file::find_deployed_estimator_by_model_id(model_id);
-    estimator.predict_batch(&features)
 }
 
 #[cfg(feature = "python")]
