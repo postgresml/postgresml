@@ -3,80 +3,46 @@
 version: 2.1
 
 orbs:
-  rust: circleci/rust@1.6.0
+  rust: cimg/base:2022.10 # Ubuntu 22.10
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
-# jobs:
-#   extension:
-#     working_directory: pgml-extension
+jobs:
+  extension:
+    working_directory: pgml-extension
 
-#     # Add steps to the job
-#     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
-#     steps:
-#       - checkout
-#       - restore_cache:
-#           key: pgx
-#       - run:
-#           name: "PGX"
-#           command: "cargo install pgx; cargo pgx init"
-#       - save_cache:
-#           key: pgx
-#           paths:
-#           - ~/.pgx
-#       - restore_cache:
-#           key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
-#       - run:
-#           name: "Build"
-#           command: "cargo pgx build --release"
-#       - run:
-#           name: "Test"
-#           command: "cargo pgx test --release"
-#       - run:
-#           name: "Install"
-#           command: "cargo pgx install --release"
-#       - run:
-#           name: "Train and predict"
-#           command: "bash docker/entrypoint.sh psql -U postgres -p 5432 -h 127.0.0.1 -d pgml_development -c 'SELECT 1'"
-#       - save_cache:
-#           key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
-#           paths:
-#           - target
-#   dashboard:
-#     working_directory: pgml-dashboard
-#     docker:
-#       - image: cimg/python:3.10
-#         environment:
-#           DJANGO_SECRET_KEY: insecure-development-key-for-django
-#           DJANGO_DEBUG: "True"
-#           DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
-#           PGML_DATABASE_URL: postgres://circleci@circleci@127.0.0.1:5432/postgres
-#           DJANGO_CSRF_TRUSTED_ORIGINS: http://127.0.0.1,http://localhost
-#       - image: cimg/postgres:14
-#         environment:
-#           POSTGRES_PASSWORD: circleci
-#     steps:
-#       - checkout
-#       - restore_cache:
-#           key: dashboard-{{ checksum "requirements.txt" }}
-#       - run:
-#           name: Install dependencies
-#           command: pip install -r requirements.txt
-#       - run:
-#           name: Run tests
-#           command: python manage.py test
-#       - save_cache:
-#           key: dashboard-{{ checksum "requirements.txt" }}
-#           paths:
-#           - ~/.pip
+    # Add steps to the job
+    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+    steps:
+      - checkout
+      - run:
+          name: Install Rust
+          command: |
+            curl https://sh.rustup.rs -sSf | sh -s -- -y;
+            echo 'export PATH="${PATH}:~/.cargo/bin"' >> "$BASH_ENV"
+      - run:
+          name: Install Postgres
+          command: "apt-get update && apt-get install -y postgresql"
+      - run:
+          name: Install tcdi/pgx
+          command: "cargo install cargo-pgx; cargo pgx init --pg14 /usr/bin/pg_config"
+      - restore_cache:
+          key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
+      - run:
+          name: Tests
+          command: "cargo pgx test --release"
+      - save_cache:
+          key: extension-{{ checksum "pgml-extension/Cargo.toml" }}
+          paths:
+          - target
+          - ~/.cargo
+          - ~/.pgx
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
-workflows:
-  end-to-end-tests:
-    jobs:
-      - rust/lint-test-build:
-          release: true
-          working_directory: ~/project/pgml-extension
-      # - extension
-      # - dashboard
+# workflows:
+#   end-to-end-tests:
+#     jobs:
+#       - rust/lint-test-build:
+#           release: true
+#           working_directory: pgml-extension
+#       # - extension
+#       # - dashboard
