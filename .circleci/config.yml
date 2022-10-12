@@ -23,7 +23,8 @@ jobs:
               python3-dev \
               libpython3-dev \
               postgresql \
-              postgresql-server-dev-14
+              postgresql-server-dev-14 \
+              pkg-config
       - run:
           name: Install Rust
           command: |
