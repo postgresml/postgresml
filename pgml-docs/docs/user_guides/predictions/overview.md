@@ -103,3 +103,58 @@ Since it's so easy to train multiple algorithms with different hyperparameters, 
 PostgresML will automatically deploy a model only if it has better metrics than existing ones, so it's safe to experiment with different algorithms and hyperparameters.
 
 Take a look at [Deploying Models](/user_guides/predictions/deployments/) documentation for more details.
+
+## Specific Models
+
+You may also specify a model_id to predict rather than a project name, to use a particular training run. You can find model ids by querying the `pgml.models` table.  
+
+=== "SQL"
+
+    ```postgresql
+    SELECT models.id, models.algorithm, models.metrics
+    FROM pgml.models
+    JOIN pgml.projects 
+      ON projects.id = models.project_id
+    WHERE projects.name = 'Handwritten Digit Image Classifier';
+    ```
+
+=== "Output"
+
+    ``` 
+     id | algorithm |                                                                                                         metrics
+    
+    ----+-----------+-------------------------------------------------------------------------------------------------------------------------------------------------------
+    -------------------------------------------------------------------
+      1 | linear    | {"f1": 0.9190376400947571, "mcc": 0.9086633324623108, "recall": 0.9205743074417114, "accuracy": 0.9175946712493896, "fit_time": 0.8388963937759399, "p
+    recision": 0.9175060987472534, "score_time": 0.019625699147582054}
+    ```
+
+For example: make predictions with `model_id = 1`:
+
+=== "SQL"
+
+    ```postgresql
+    SELECT
+        target,
+        pgml.predict(1, image) AS prediction
+    FROM pgml.digits 
+    LIMIT 10;
+    ```
+
+=== "Output"
+
+    ```
+     target | prediction
+    --------+------------
+          0 |          0
+          1 |          1
+          2 |          2
+          3 |          3
+          4 |          4
+          5 |          5
+          6 |          6
+          7 |          7
+          8 |          8
+          9 |          9
+    (10 rows)
+    ```
