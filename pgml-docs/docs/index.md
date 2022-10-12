@@ -43,8 +43,8 @@ h1.title {
 }
 </style>
 
-<h1 align="center" class="title">Microsecond inference, on top of<br />
-the most capable feature store</h1>
+<h1 align="center" class="title">Microsecond inference, with the<br />
+most capable feature store</h1>
 
 <p align="center" class="subtitle">
   Easily train and deploy online models using only SQL, with an open source<br />
