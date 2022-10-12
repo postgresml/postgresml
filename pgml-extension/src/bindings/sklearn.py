@@ -123,6 +123,21 @@ def predictor(estimator):
     return predictor_joint(estimator, 1)
 
 
+def predictor_proba(estimator):
+    """Return the instantiated estimator
+    given the number of features in X.
+
+    Parameters:
+        - estimator: Scikit-Learn estimator, instantiated.
+        - num_targets: Used in joint models (more than 1 y target).
+    """
+    def predict_proba(X):
+        X = np.asarray(X).reshape((-1, estimator.n_features_in_))
+        y_hat = estimator.predict_proba(X)
+        return list(np.asarray(y_hat).flatten())
+
+    return predict_proba
+
 def predictor_joint(estimator, num_targets):
     """Return the instantiated estimator
     given the number of features in X.

@@ -25,6 +25,11 @@ SELECT target, pgml.predict('Handwritten Digits', image) AS prediction
 FROM pgml.digits 
 LIMIT 10;
 
+-- view raw class probabilities
+SELECT target, pgml.predict_proba('Handwritten Digits', image) AS prediction
+FROM pgml.digits
+LIMIT 10;
+
 --
 -- After a project has been trained, ommited parameters will be reused from previous training runs
 -- In these examples we'll reuse the training data snapshots from the initial call.

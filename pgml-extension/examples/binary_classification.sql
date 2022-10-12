@@ -48,6 +48,45 @@ SELECT malignant, pgml.predict(
 FROM pgml.breast_cancer 
 LIMIT 10;
 
+-- view raw class probabilities
+SELECT malignant, pgml.predict_proba(
+    'Breast Cancer Detection',
+    ARRAY[
+        "mean radius",
+        "mean texture",
+        "mean perimeter",
+        "mean area",
+        "mean smoothness",
+        "mean compactness",
+        "mean concavity",
+        "mean concave points",
+        "mean symmetry",
+        "mean fractal dimension",
+        "radius error",
+        "texture error",
+        "perimeter error",
+        "area error",
+        "smoothness error",
+        "compactness error",
+        "concavity error",
+        "concave points error",
+        "symmetry error",
+        "fractal dimension error",
+        "worst radius",
+        "worst texture",
+        "worst perimeter",
+        "worst area",
+        "worst smoothness",
+        "worst compactness",
+        "worst concavity",
+        "worst concave points",
+        "worst symmetry",
+        "worst fractal dimension"
+    ]
+) AS prediction
+FROM pgml.breast_cancer
+LIMIT 10;
+
 --
 -- After a project has been trained, ommited parameters will be reused from previous training runs
 -- In these examples we'll reuse the training data snapshots from the initial call.

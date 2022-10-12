@@ -48,8 +48,8 @@ fn get_linear_params(hyperparams: &Hyperparams) -> linear::LinearBoosterParamete
     let mut params = linear::LinearBoosterParametersBuilder::default();
     for (key, value) in hyperparams {
         match key.as_str() {
-            "alpha" => params.alpha(value.as_f64().unwrap() as f32),
-            "lambda" => params.lambda(value.as_f64().unwrap() as f32),
+            "alpha" | "reg_alpha" => params.alpha(value.as_f64().unwrap() as f32),
+            "lambda" | "reg_lambda" => params.lambda(value.as_f64().unwrap() as f32),
             "updater" => match value.as_str().unwrap() {
                 "shotgun" => params.updater(linear::LinearUpdate::Shotgun),
                 "coord_descent" => params.updater(linear::LinearUpdate::CoordDescent),
@@ -66,16 +66,16 @@ fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
     let mut params = tree::TreeBoosterParametersBuilder::default();
     for (key, value) in hyperparams {
         match key.as_str() {
-            "eta" => params.eta(value.as_f64().unwrap() as f32),
-            "gamma" => params.gamma(value.as_f64().unwrap() as f32),
+            "eta" | "learning_rate" => params.eta(value.as_f64().unwrap() as f32),
+            "gamma" | "min_split_loss" => params.gamma(value.as_f64().unwrap() as f32),
             "max_depth" => params.max_depth(value.as_u64().unwrap() as u32),
             "min_child_weight" => params.min_child_weight(value.as_f64().unwrap() as f32),
             "max_delta_step" => params.max_delta_step(value.as_f64().unwrap() as f32),
             "subsample" => params.subsample(value.as_f64().unwrap() as f32),
             "colsample_bytree" => params.colsample_bytree(value.as_f64().unwrap() as f32),
             "colsample_bylevel" => params.colsample_bylevel(value.as_f64().unwrap() as f32),
-            "lambda" => params.lambda(value.as_f64().unwrap() as f32),
-            "alpha" => params.alpha(value.as_f64().unwrap() as f32),
+            "lambda" | "reg_lambda" => params.lambda(value.as_f64().unwrap() as f32),
+            "alpha" | "reg_alpha" => params.alpha(value.as_f64().unwrap() as f32),
             "tree_method" => match value.as_str().unwrap() {
                 "auto" => params.tree_method(TreeMethod::Auto),
                 "exact" => params.tree_method(TreeMethod::Exact),
@@ -227,8 +227,16 @@ impl std::fmt::Debug for Estimator {
 
 impl Bindings for Estimator {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> Vec<f32> {
-        self.predict_batch(features)
+    fn predict(&self, features: &[f32]) -> f32 {
+        self.predict_batch(features)[0]
+    }
+
+    fn predict_proba(&self, _features: &[f32]) -> Vec<f32> {
+        todo!("predict_proba is currently only supported by the Python runtime.")
+    }
+
+    fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
+        todo!("predict_joint is currently only supported by the Python runtime.")
     }
 
     /// Predict a novel datapoint.

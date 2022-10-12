@@ -18,6 +18,11 @@ SELECT target, pgml.predict('Iris Flower Types', ARRAY[sepal_length, sepal_width
 FROM pgml.iris_view 
 LIMIT 10;
 
+-- view raw class probabilities
+SELECT target, pgml.predict_proba('Iris Flower Types', ARRAY[sepal_length, sepal_width, petal_length, petal_width]) AS prediction
+FROM pgml.iris_view
+LIMIT 10;
+
 --
 -- After a project has been trained, ommited parameters will be reused from previous training runs
 -- In these examples we'll reuse the training data snapshots from the initial call.
