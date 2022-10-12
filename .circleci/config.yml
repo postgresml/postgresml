@@ -12,6 +12,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install dependencies
+          command: apt-get update && apt-get install -y curl build-essential libopenblas-dev clang python3-dev libpython3-dev postgresql postgresql-server-dev-14
+      - run:
           name: Install Rust
           command: |
             curl https://sh.rustup.rs -sSf | sh -s -- -y;
