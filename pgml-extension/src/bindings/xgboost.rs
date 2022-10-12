@@ -140,7 +140,7 @@ pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<d
     fit(
         dataset,
         hyperparams,
-        learning::Objective::MultiSoftmax(dataset.num_distinct_labels.try_into().unwrap()),
+        learning::Objective::MultiSoftprob(dataset.num_distinct_labels.try_into().unwrap()),
     )
 }
 
@@ -205,12 +205,14 @@ fn fit(
     Box::new(Estimator {
         estimator: booster,
         num_features: dataset.num_features,
+        num_classes: dataset.num_distinct_labels,
     })
 }
 
 pub struct Estimator {
     estimator: xgboost::Booster,
     num_features: usize,
+    num_classes: usize,
 }
 
 unsafe impl Send for Estimator {}
@@ -231,8 +233,9 @@ impl Bindings for Estimator {
         self.predict_batch(features)[0]
     }
 
-    fn predict_proba(&self, _features: &[f32]) -> Vec<f32> {
-        todo!("predict_proba is currently only supported by the Python runtime.")
+    fn predict_proba(&self, features: &[f32]) -> Vec<f32> {
+        let x = DMatrix::from_dense(features, features.len() / self.num_features).unwrap();
+        self.estimator.predict(&x).unwrap()
     }
 
     fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
@@ -241,13 +244,29 @@ impl Bindings for Estimator {
 
     /// Predict a novel datapoint.
     fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
-        let x = DMatrix::from_dense(features, features.len() / self.num_features).unwrap();
-        self.estimator.predict(&x).unwrap()
+        let results = self.predict_proba(features);
+
+        match self.num_classes {
+            2 => results.iter().map(|i| i.round()).collect(),
+            num_classes if num_classes > 2 => results
+                .chunks(self.num_classes)
+                .map(|probabilities| {
+                    probabilities
+                        .iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.total_cmp(b))
+                        .map(|(index, _)| index)
+                        .unwrap() as f32
+                })
+                .collect(),
+            _ => results,
+        }
     }
 
     /// Serialize self to bytes
     fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::from((self.num_features as u64).to_be_bytes());
+        bytes.append(&mut (self.num_classes as u64).to_be_bytes().to_vec());
 
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
@@ -264,10 +283,12 @@ impl Bindings for Estimator {
         Self: Sized,
     {
         let num_features = u64::from_be_bytes(bytes[..8].try_into().unwrap()) as usize;
-        let estimator = Booster::load_buffer(&bytes[8..]).unwrap();
+        let num_classes = u64::from_be_bytes(bytes[8..16].try_into().unwrap()) as usize;
+        let estimator = Booster::load_buffer(&bytes[16..]).unwrap();
         Box::new(Estimator {
             estimator,
             num_features,
+            num_classes,
         })
     }
 }
