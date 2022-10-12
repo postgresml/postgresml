@@ -33,6 +33,9 @@ jobs:
             target/
             ~/.pgx
           key: ${{ runner.os }}-rust-${{ hashFiles('Cargo.toml') }}
+      - name: Submodules
+        run: |
+          git submodule update --init --recursive
       - name: Run tests
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
