@@ -24,10 +24,7 @@
 </p>
 
 <p align="center">
-    <a href="https://circleci.com/gh/postgresml/postgresml/tree/master"><img
-        src="https://circleci.com/gh/postgresml/postgresml/tree/master.svg?style=shield"
-        alt="Circle CI"
-    /></a>
+    ![example workflow](https://github.com/postgresml/postgresml/actions/workflows/ci.yml/badge.svg)
     <a href="https://pypistats.org/packages/pgml-extension"><img
         src="https://img.shields.io/pypi/dm/pgml-extension.svg" 
         alt="Downloads"
