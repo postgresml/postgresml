@@ -6,7 +6,7 @@ jobs:
   extension:
     working_directory: pgml-extension
     docker:
-      - image: cimg/base:2022.10 # Ubuntu 22.10
+      - image: ubuntu:jammy # Ubuntu 22.10
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
