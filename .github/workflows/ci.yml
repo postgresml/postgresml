@@ -41,8 +41,8 @@ jobs:
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           source ~/.cargo/env
           cargo install cargo-pgx --version "0.4.5"
-          cargo pgx init --pg14 /usr/bin/pg_config
-          cargo build --features pg14
+          cargo pgx init
+          cargo pgx test
 
 
 
