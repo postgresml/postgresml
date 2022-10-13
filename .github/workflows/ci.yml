@@ -1,22 +1,21 @@
-name: Deploy to beta
-
+name: Tests
 on:
   push:
     branches:
       - master
   workflow_dispatch:
-
 jobs:
-  deploy:
+  tests:
     runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: pgml-extension
     steps:
+      - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
           sudo apt-get update && \
-            DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y \
+            DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC sudo apt-get install -y \
               curl \
               build-essential \
               libopenblas-dev \
@@ -25,22 +24,27 @@ jobs:
               libpython3-dev \
               postgresql \
               postgresql-server-dev-14 \
-              pkg-config
-      - uses: actions/checkout@v3
+              pkg-config \
+              python3-pip \
+              python3
+          sudo pip3 install xgboost lightgbm scikit-learn
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
-          path:
-            - ~/.cargo
-            - target/
-            - ~/.pgx
+          path: |
+            ~/.cargo
+            target/
+            ~/.pgx
           key: ${{ runner.os }}-rust-${{ hashFiles('Cargo.toml') }}
+      - name: Submodules
+        run: |
+          git submodule update --init --recursive
       - name: Run tests
-        command: |
+        run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           source ~/.cargo/env
-          cargo install cargo-pgx
-          cargo pgx init --pg14 /usr/bin/pg_config
+          cargo install cargo-pgx --version "0.4.5"
+          cargo pgx init
           cargo pgx test
 
 
