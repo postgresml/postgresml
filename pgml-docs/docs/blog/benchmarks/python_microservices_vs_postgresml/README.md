@@ -27,7 +27,7 @@ CREATE TABLE public.flights_delay_mat (
 ### Data
 
 ```bash
-curl -oL ~/Desktop/flights.csv https://hyperparam-assets-public.s3.us-west-2.amazonaws.com/benchmarks/flights.csv
+curl -L -o ~/Desktop/flights.csv https://hyperparam-assets-public.s3.us-west-2.amazonaws.com/benchmarks/flights.csv
 ```
 
 ```postgresql
@@ -74,7 +74,7 @@ python train.py
 Install and start Redis if you don't have it already.
 
 ```bash
-curl -oL ~/Desktop/flights_sub.csv https://hyperparam-assets-public.s3.us-west-2.amazonaws.com/benchmarks/flights_sub.csv
+curl -L -o ~/Desktop/flights_sub.csv https://hyperparam-assets-public.s3.us-west-2.amazonaws.com/benchmarks/flights_sub.csv
 python load_redis.py
 ```
 
