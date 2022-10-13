@@ -185,7 +185,7 @@ fn train_joint(
                 .last_snapshot()
                 .expect("You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.");
 
-            info!("Using existing snashot from {}", snapshot.snapshot_name(),);
+            info!("Using existing snapshot from {}", snapshot.snapshot_name(),);
 
             snapshot
         }
