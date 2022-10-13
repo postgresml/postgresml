@@ -247,8 +247,7 @@ impl Bindings for Estimator {
         let results = self.predict_proba(features);
 
         match self.num_classes {
-            2 => results.iter().map(|i| i.round()).collect(),
-            num_classes if num_classes > 2 => results
+            num_classes if num_classes > 1 => results
                 .chunks(self.num_classes)
                 .map(|probabilities| {
                     probabilities
