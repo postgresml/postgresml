@@ -302,7 +302,16 @@ impl Bindings for Estimator {
     {
         let num_features = u64::from_be_bytes(bytes[..8].try_into().unwrap()) as usize;
         let num_classes = u64::from_be_bytes(bytes[8..16].try_into().unwrap()) as usize;
-        let estimator = Booster::load_buffer(&bytes[16..]).unwrap();
+        let mut estimator = Booster::load_buffer(&bytes[16..]).unwrap();
+
+        // Hardcoding it to two threads for now, but I need to fetch this from hyperparams instead maybe.
+        estimator.set_params(
+            &BoosterParametersBuilder::default()
+                .threads(Some(2))
+                .build()
+                .unwrap(),
+        ).expect("Failed to update XGBoost parameters for inference");
+
         Box::new(Estimator {
             estimator,
             num_features,
