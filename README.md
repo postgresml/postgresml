@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-    ![example workflow](https://github.com/postgresml/postgresml/actions/workflows/ci.yml/badge.svg)
+    <img alt="CI" src="https://github.com/postgresml/postgresml/actions/workflows/ci.yml/badge.svg" />
     <a href="https://pypistats.org/packages/pgml-extension"><img
         src="https://img.shields.io/pypi/dm/pgml-extension.svg" 
         alt="Downloads"
