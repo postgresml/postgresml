@@ -4,7 +4,7 @@ pub mod linfa;
 #[cfg(feature = "python")]
 pub mod sklearn;
 
-pub mod smartcore;
+// pub mod smartcore;
 
 #[cfg(feature = "python")]
 pub mod transformers;
