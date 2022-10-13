@@ -25,14 +25,6 @@
 
 <p align="center">
     <img alt="CI" src="https://github.com/postgresml/postgresml/actions/workflows/ci.yml/badge.svg" />
-    <a href="https://pypistats.org/packages/pgml-extension"><img
-        src="https://img.shields.io/pypi/dm/pgml-extension.svg" 
-        alt="Downloads"
-    /></a>
-    <a href="https://pypi.org/project/pgml-extension"><img 
-        src="https://img.shields.io/pypi/v/pgml-extension.svg" 
-        alt="Python Package Index"
-    /></a>
     <a href="https://discord.gg/DmyJP3qJ7U" target="_blank">
         <img src="https://img.shields.io/discord/1013868243036930099" alt="Join our Discord!" />
     </a>
