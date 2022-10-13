@@ -24,7 +24,10 @@ jobs:
               libpython3-dev \
               postgresql \
               postgresql-server-dev-14 \
-              pkg-config
+              pkg-config \
+              python3-pip \
+              python3
+          sudo pip3 install xgboost lightgbm scikit-learn
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
