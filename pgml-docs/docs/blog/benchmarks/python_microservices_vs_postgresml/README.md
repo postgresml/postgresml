@@ -32,6 +32,8 @@ curl -L -o ~/Desktop/flights.csv https://hyperparam-assets-public.s3.us-west-2.a
 
 ```postgresql
 \copy flights_delay_mat FROM '~/Desktop/flights.csv' CSV HEADER;
+
+CREATE INDEX ON flights_delay_mat USING btree(originairportid, year, month, dayofmonth);
 ```
 
 ### Train
