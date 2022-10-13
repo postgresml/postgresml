@@ -39,6 +39,7 @@ fn get_dart_params(hyperparams: &Hyperparams) -> dart::DartBoosterParameters {
                 _ => panic!("Unknown {:?}: {:?}", key, value),
             },
             "booster" | "n_estimators" | "boost_rounds" => &mut params, // Valid but not relevant to this section
+            "nthread" => &mut params,
             _ => panic!("Unknown {:?}: {:?}", key, value),
         };
     }
@@ -57,6 +58,7 @@ fn get_linear_params(hyperparams: &Hyperparams) -> linear::LinearBoosterParamete
                 _ => panic!("Unknown {:?}: {:?}", key, value),
             },
             "booster" | "n_estimators" | "boost_rounds" => &mut params, // Valid but not relevant to this section
+            "nthread" => &mut params,
             _ => panic!("Unknown {:?}: {:?}", key, value),
         };
     }
@@ -127,6 +129,7 @@ fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
             "max_leaves" => params.max_leaves(value.as_u64().unwrap() as u32),
             "max_bin" => params.max_bin(value.as_u64().unwrap() as u32),
             "booster" | "n_estimators" | "boost_rounds" => &mut params, // Valid but not relevant to this section
+            "nthread" => &mut params,
             _ => panic!("Unknown hyperparameter {:?}: {:?}", key, value),
         };
     }
@@ -182,6 +185,10 @@ fn fit(
                 _ => panic!("Unknown booster: {:?}", value),
             },
             _ => BoosterType::Tree(get_tree_params(hyperparams)),
+        })
+        .threads(match hyperparams.get("nthread") {
+            Some(value) => Some(value.as_i64().expect("nthread must be an integer") as u32),
+            None => None,
         })
         .verbose(true)
         .build()
