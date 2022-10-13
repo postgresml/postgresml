@@ -60,6 +60,21 @@ pub fn validate_python_dependencies() {
 #[pg_extern]
 pub fn validate_python_dependencies() {}
 
+#[pg_extern]
+pub fn validate_shared_library() {
+    let shared_preload_libraries: String = Spi::get_one(
+        "SELECT setting
+         FROM pg_settings
+         WHERE name = 'shared_preload_libraries'
+         LIMIT 1",
+    )
+    .unwrap();
+
+    if !shared_preload_libraries.contains("pgml") {
+        error!("`pgml` must be added to `shared_preload_libraries` setting or models cannot be deployed");
+    }
+}
+
 #[cfg(feature = "python")]
 #[pg_extern]
 pub fn sklearn_version() -> String {
@@ -102,6 +117,7 @@ pub fn python_version() -> String {
 fn version() -> String {
     crate::VERSION.to_string()
 }
+
 #[allow(clippy::too_many_arguments)]
 #[pg_extern]
 fn train(

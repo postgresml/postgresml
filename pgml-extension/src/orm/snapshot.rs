@@ -196,6 +196,11 @@ impl Snapshot {
                 let nullable = row[3].value::<bool>().unwrap();
                 let position = row[4].value::<i32>().unwrap() as usize;
                 let label = self.y_column_name.contains(&name);
+
+                if nullable {
+                    warning!("Column \"{}\" can contain nulls which can cause errors", name);
+                }
+
                 columns.push(
                     Column {
                         name,

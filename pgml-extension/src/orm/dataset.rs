@@ -22,8 +22,8 @@ impl Display for Dataset {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
-            "Dataset {{ num_features: {}, num_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
-            self.num_features, self.num_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
+            "Dataset {{ num_features: {}, num_labels: {}, num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            self.num_features, self.num_labels, self.num_distinct_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
         )
     }
 }

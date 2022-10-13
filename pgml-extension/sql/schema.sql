@@ -2,6 +2,7 @@
 --- Validate we have the necessary Python dependencies.
 ---
 SELECT pgml.validate_python_dependencies();
+SELECT pgml.validate_shared_library();
 
 --- 
 --- Track of updates to data

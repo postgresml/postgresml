@@ -9,6 +9,7 @@ use xgboost::parameters::*;
 use xgboost::{Booster, DMatrix};
 
 use crate::orm::dataset::Dataset;
+use crate::orm::task::Task;
 use crate::orm::Hyperparams;
 
 use crate::bindings::Bindings;
@@ -133,13 +134,19 @@ fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
 }
 
 pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, learning::Objective::RegLinear)
+    fit(
+        dataset,
+        hyperparams,
+        Task::regression,
+        learning::Objective::RegLinear,
+    )
 }
 
 pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
     fit(
         dataset,
         hyperparams,
+        Task::classification,
         learning::Objective::MultiSoftprob(dataset.num_distinct_labels.try_into().unwrap()),
     )
 }
@@ -147,6 +154,7 @@ pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<d
 fn fit(
     dataset: &Dataset,
     hyperparams: &Hyperparams,
+    task: Task,
     objective: learning::Objective,
 ) -> Box<dyn Bindings> {
     // split the train/test data into DMatrix
@@ -205,7 +213,11 @@ fn fit(
     Box::new(Estimator {
         estimator: booster,
         num_features: dataset.num_features,
-        num_classes: dataset.num_distinct_labels,
+        num_classes: if task == Task::regression {
+            1
+        } else {
+            dataset.num_distinct_labels
+        },
     })
 }
 
