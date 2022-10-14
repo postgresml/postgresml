@@ -96,6 +96,15 @@ We spent the majority of our time measuring inference, but it's worth to do a qu
 
 PostresML meanwhile enjoyed sharing RAM with the Postgres server and only allocated the memory needed by XGBoost. The overhead was still significant, but we managed to train the same model using only 5GB of RAM. PostgresML therefore allows to train models on datasets twice as large as Python, while using identical hardware.
 
+## What about MessagePack/Arrow/Protobuf?
+
+JSON is the most user-friendly format, but it's certainly not the fastest. MessagePack, Protobuf and Arrow, for example, are faster and more efficient at reading and storing binary information. So would using them instead of JSON in this benchmark be better? The answer is only slightly or not at all.
+
+Time to (de)serialize is important, but needing (de)serialization in the first place is the bottleneck. Taking data out of a remote system (e.g. a feature store like Redis), sending it over the wire, parsing it into a Python object (which requires memory allocation), only to convert it again to a binary type for XGBoost is causing unnecessary delays in the system.
+
+PostgresML does **one in-memory copy** of features from Postgres. No network, no (de)serialization, no unnecessary latency.
+
+
 ## Methodology
 
 ### Hardware
