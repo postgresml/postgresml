@@ -179,7 +179,7 @@ sudo service postgresql restart
 Now that the extension is installed on your system, add it into the database where you'd like to use it:
 
 !!! note
-	If you already have a v1.0 installation, see [Upgrading to v2.0](/user_guides/setup/v2/upgrade-from-v1/)..
+	If you already have a v1.0 installation, see [Upgrading to v2.0](/user_guides/setup/v2/upgrade-from-v1/).
 
 === "SQL"
 
