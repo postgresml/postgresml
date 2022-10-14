@@ -76,7 +76,7 @@ Meanwhile Python must allocate memory for each feature it receives from Redis, a
 
 We spent the majority of our time measuring inference, but it's worth to do a quick aside on training as well. Since Python uses Pandas to load the training dataset, it was notably more memory hungry. Before even loading data into XGBoost, it was already at 8GB RSS (resident set size), and during actual fitting, memory utilization went to almost 12GB.
 
-PostresML meanwhile enjoyed sharing RAM with the Postgres server and only allocated the memory needed by XGBoost to train the model. The overhead was still significant, but we managed to train the same model using only 5GB of RAM. This allows to train on datasets twice as large as with Python, while using the same hardware.
+PostresML meanwhile enjoyed sharing RAM with the Postgres server and only allocated the memory needed by XGBoost to train the model. The overhead was still significant, but we managed to train the same model using only 5GB of RAM. This allows to train on datasets twice as large as Python, while using the same hardware.
 
 ## Methodology
 
