@@ -14,7 +14,9 @@ image_alt: We're going really fast now.
 </p>
 
 
-In this post, we'll benchmark the unified PostgresML v2.0 architecture and compare it to decentralized Python machine learning microservices. Our goal is to demonstrate that inference at the data layer with Rust and Postgres is much faster than at the service layer with Python and Redis, the latter being the current industry standard.
+In this post, we'll benchmark the new data and inference collocation architecture implemented by PostgresML, and compare it to decentralized Python machine learning microservices, the latter commonly used in the industry today.
+
+At the end, we'll discover that PostgresML v2.0, implemented in Rust, outperforms the traditional Python architecture by a factor of 8 in both throughput and latency.
 
 ## Setting the stage
 
@@ -96,20 +98,52 @@ We spent the majority of our time measuring inference, but it's worth to do a qu
 
 PostresML meanwhile enjoyed sharing RAM with the Postgres server and only allocated the memory needed by XGBoost. The overhead was still significant, but we managed to train the same model using only 5GB of RAM. PostgresML therefore allows to train models on datasets twice as large as Python, while using identical hardware.
 
-## What about MessagePack/Arrow/Protobuf?
+## What about UltraJSON/MessagePack/Serializer X?
 
-JSON is the most user-friendly format, but it's certainly not the fastest. MessagePack, Protobuf and Arrow, for example, are faster and more efficient at reading and storing binary information. So would using them instead of JSON in this benchmark be better? The answer is only slightly or not at all.
+JSON is the most user-friendly format, but it's certainly not the fastest. MessagePack and Ultra JSON, for example, are faster and more efficient at reading and storing binary information. So would using them instead of Python's built-in `json` module in this benchmark be better? The answer is not really.
 
-Time to (de)serialize is important, but needing (de)serialization in the first place is the bottleneck. Taking data out of a remote system (e.g. a feature store like Redis), sending it over the wire, parsing it into a Python object (which requires memory allocation), only to convert it again to a binary type for XGBoost is causing unnecessary delays in the system.
+<center>
+	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=1855533349&amp;format=interactive"></iframe>
+</center>
+
+<center>
+	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=309145169&amp;format=interactive"></iframe>
+</center>
+
+Time to (de)serialize is important, but needing (de)serialization in the first place is the bottleneck. Taking data out of a remote system (e.g. a feature store like Redis), sending it over a network socket, parsing it into a Python object (which requires memory allocation), only to convert it again to a binary type for XGBoost, is causing unnecessary delays in the system.
 
 PostgresML does **one in-memory copy** of features from Postgres. No network, no (de)serialization, no unnecessary latency.
 
+
+## What about the real world?
+
+Testing over localhost is convenient, but not that realistic. In production deployments, the client and the server are on different machines, and in the case of the Python + Redis architecture, the feature store is yet another network hop away. To demonstrate this, we spun up 3 EC2 instances and ran the benchmark again.
+
+### Throughput
+
+<center>
+	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=179138052&amp;format=interactive"></iframe>
+</center>
+
+Network gap between Redis and Gunicorn made things worse...a lot worse. The same concurrency issue hit Postgres at 20 connections, and we used PgBouncer again to save the day.
+
+### Latency
+
+<center>
+	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=10610340&amp;format=interactive"></iframe>
+</center>
+
+Just like with our local benchmark, Python started to deteriorate at 20 clients quite significantly and exploded at 100 clients. Latency has a compound effect: the more slow clients are querying the system, the slower it gets for everyone waiting in line to get a prediction.
+
+PostgresML performed well in both cases. Data collocation removed any network latency to the feature store, and Rust, together with single-copy semantics of the inference layer, did the rest.
 
 ## Methodology
 
 ### Hardware
 
 Both the client and the server were located on the same machine. Redis was running locally as well. One can expect additional latency from Redis servers running over the network. The machine used was an 8 core, 16 threads AMD Ryzen 7 5800X with 32GB RAM, 1TB NVMe SSD and Ubuntu 22.04. Only the CPU was used for both training and inference.
+
+AWS EC2 benchmarks were done with one `c5.4xlarge` instance hosting Gunicorn and PostgresML, and two `c5.large` instances hosting the client and Redis, respectively.
 
 ### Configuration
 
