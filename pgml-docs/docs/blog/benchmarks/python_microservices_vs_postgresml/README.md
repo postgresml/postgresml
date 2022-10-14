@@ -52,7 +52,7 @@ SELECT * FROM pgml.train(
 ### Test
 
 ```bash
-pgbench -f pgbench.sql -p 28813 -h 127.0.0.1 pgml -t 10000 -c 1
+pgbench -f pgbench.sql -p 28813 -h 127.0.0.1 pgml -t 1000 -c 10 -j 10
 ```
 
 ## Python + Redis
@@ -83,7 +83,7 @@ python load_redis.py
 ### Test
 
 ```bash
-gunicorn predict:app -w 1
+gunicorn predict:app -w 5 -t 2
 ```
 
 In a separate tab (install Apache Bench first):
