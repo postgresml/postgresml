@@ -40,7 +40,7 @@ Python architecture will be composed of:
 
 PostgresML outperformed Gunicorn and Redis by a **factor of 8** on average.
 
-Most of the inference cost for Python came from fetching data from Redis, deserializing it, and inputting it into XGBoost to get a prediction. PostgresML colocates data and compute, so fetching data from a Postgres table, which already comes in standard floating point format, and passing it to XGBoost through a Rust function, is more efficient and therefore much faster.
+Most of the inference cost for Python came from fetching data from Redis, deserializing it, and inputting it into XGBoost to get a prediction. PostgresML collocates data and compute, so fetching data from a Postgres table, which already comes in standard floating point format, and passing it to XGBoost through a Rust function, is more efficient and therefore much faster.
 
 An interesting thing happened at 20 clients: PostgresML latency started to quickly increase. This may be surprising to some, but to Postgres enthusiasts it's well known issue: Postgres isn't very good at handling many connections at the same time. To mitigate this, we introduced PgBouncer, a well known Postgres proxy, in front of our database, and the latency decreased and continued to hold as we went to 100 clients.
 
@@ -88,7 +88,7 @@ Both the client and the server were located on the same machine. Redis was runni
 
 Gunicorn was running with 5 workers and 2 threads per worker. Postgres was given up to 100 connections, as is standard, but no more than 20 were used. XGBoost was set to use 2 threads during inference and all CPU cores (16 threads) during training. PgBouncer was given a `default_pool_size` of 10, so only 10 Postgres connections were used.
 
-Both `ab` and `pgbench` used all available resources, but are both very lightweight and the requests were a single JSON object and a single query respectively.
+Both `ab` and `pgbench` used all available resources, but are both very lightweight and the requests were a single JSON object and a single query respectively. Both of the clients use persistent connections, `ab` by using HTTP Keep-Alives and `pgbench` by keeping the Postgres connection open for the duration of the benchmark.
 
 ### ML
 
