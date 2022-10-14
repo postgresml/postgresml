@@ -108,7 +108,7 @@ It had terrible accuracy (in Python as well), most likely because we were missin
 
 ### Source code
 
-Benchmark source code can be found on [Github](https://github.com/postgresml/postgresml) in `pgml-docs/docs/blog/benchmarks/python_microservices_vs_postgresml/`
+Benchmark source code can be found on [Github](https://github.com/postgresml/postgresml/tree/master/pgml-docs/docs/blog/benchmarks/python_microservices_vs_postgresml/).
 
 ## Feedback
 
