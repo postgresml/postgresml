@@ -7,8 +7,6 @@ use serde_json::json;
 
 pub struct Estimator {
     estimator: lightgbm::Booster,
-    num_features: usize,
-    num_classes: usize,
 }
 
 unsafe impl Send for Estimator {}
@@ -65,46 +63,19 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
 
     let estimator = lightgbm::Booster::train(data, &json! {hyperparams}).unwrap();
 
-    Box::new(Estimator {
-        estimator,
-        num_features: dataset.num_features,
-        num_classes: if task == Task::regression {
-            1
-        } else {
-            dataset.num_distinct_labels
-        },
-    })
+    Box::new(Estimator { estimator })
 }
 
 impl Bindings for Estimator {
-    /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
-    }
-
-    // Predict the raw probability of classes for a classifier.
-    fn predict_proba(&self, features: &[f32]) -> Vec<f32> {
-        self.estimator
-            .predict(features, self.num_features.try_into().unwrap())
-            .unwrap()
-            .into_iter()
-            .map(|i| i as f32)
-            .collect()
-    }
-
-    fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
-        todo!("predict_joint is currently only supported by the Python runtime.")
-    }
-
     /// Predict a set of datapoints.
-    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
-        let results = self.predict_proba(features);
-
-        // LightGBM returns probabilities for classification. Convert to discrete classes.
-        match self.num_classes {
+    fn predict(&self, features: &[f32], num_features: usize, num_classes: usize) -> Vec<f32> {
+        let results = self.predict_proba(features, num_features);
+        match num_classes {
+            // TODO make lightgbm predict both classes like scikit and xgboost
+            0 => results,
             2 => results.iter().map(|i| i.round()).collect(),
-            num_classes if num_classes > 2 => results
-                .chunks(self.num_classes)
+            _ => results
+                .chunks(num_classes)
                 .map(|probabilities| {
                     probabilities
                         .iter()
@@ -114,19 +85,25 @@ impl Bindings for Estimator {
                         .unwrap() as f32
                 })
                 .collect(),
-            _ => results,
         }
+    }
+
+    // Predict the raw probability of classes for a classifier.
+    fn predict_proba(&self, features: &[f32], num_features: usize) -> Vec<f32> {
+        self.estimator
+            .predict(features, num_features as i32)
+            .unwrap()
+            .into_iter()
+            .map(|i| i as f32)
+            .collect()
     }
 
     /// Serialize self to bytes
     fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::from((self.num_features as u64).to_be_bytes());
-        bytes.append(&mut (self.num_classes as u64).to_be_bytes().to_vec());
-
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
         self.estimator.save_file(&path).unwrap();
-        bytes.append(&mut std::fs::read(&path).unwrap());
+        let bytes = std::fs::read(&path).unwrap();
         std::fs::remove_file(&path).unwrap();
 
         bytes
@@ -137,16 +114,17 @@ impl Bindings for Estimator {
     where
         Self: Sized,
     {
-        let num_features = u64::from_be_bytes(bytes[..8].try_into().unwrap()) as usize;
-        let num_classes = u64::from_be_bytes(bytes[8..16].try_into().unwrap()) as usize;
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
-        std::fs::write(&path, &bytes[16..]).unwrap();
-        let estimator = lightgbm::Booster::from_file(&path).unwrap();
+        std::fs::write(&path, &bytes).unwrap();
+        let mut estimator = lightgbm::Booster::from_file(&path);
+        if estimator.is_err() {
+            // backward compatibility w/ 2.0.0
+            std::fs::write(&path, &bytes[16..]).unwrap();
+            estimator = lightgbm::Booster::from_file(&path);
+        }
         Box::new(Estimator {
-            estimator,
-            num_features,
-            num_classes,
+            estimator: estimator.unwrap(),
         })
     }
 }

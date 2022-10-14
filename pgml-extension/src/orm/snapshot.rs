@@ -61,6 +61,30 @@ pub struct Snapshot {
     pub updated_at: Timestamp,
 }
 
+// Manually implemented since pgx::JsonB doesn't impl Clone
+impl Clone for Snapshot {
+    fn clone(&self) -> Self {
+        Snapshot {
+            id: self.id,
+            relation_name: self.relation_name.clone(),
+            y_column_name: self.y_column_name.clone(),
+            test_size: self.test_size,
+            test_sampling: self.test_sampling,
+            status: self.status,
+            columns: self
+                .columns
+                .as_ref()
+                .map(|columns| JsonB(columns.0.clone())),
+            analysis: self
+                .analysis
+                .as_ref()
+                .map(|analysis| JsonB(analysis.0.clone())),
+            created_at: self.created_at,
+            updated_at: self.updated_at,
+        }
+    }
+}
+
 impl Display for Snapshot {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         write!(f, "Snapshot {{ id: {}, relation_name: {}, y_column_name: {:?}, test_size: {}, test_sampling: {:?}, status: {:?} }}", self.id, self.relation_name, self.y_column_name, self.test_size, self.test_sampling, self.status)
@@ -68,6 +92,50 @@ impl Display for Snapshot {
 }
 
 impl Snapshot {
+    pub fn find(id: i64) -> Option<Snapshot> {
+        let mut snapshot = None;
+        Spi::connect(|client| {
+            let result = client
+                .select(
+                    "SELECT
+                        snapshots.id,
+                        snapshots.relation_name,
+                        snapshots.y_column_name,
+                        snapshots.test_size,
+                        snapshots.test_sampling::TEXT,
+                        snapshots.status::TEXT,
+                        snapshots.columns,
+                        snapshots.analysis,
+                        snapshots.created_at,
+                        snapshots.updated_at 
+                    FROM pgml.snapshots 
+                    WHERE id = $1 
+                    ORDER BY snapshots.id DESC 
+                    LIMIT 1;
+                    ",
+                    Some(1),
+                    Some(vec![(PgBuiltInOids::INT8OID.oid(), id.into_datum())]),
+                )
+                .first();
+            if !result.is_empty() {
+                snapshot = Some(Snapshot {
+                    id: result.get_datum(1).unwrap(),
+                    relation_name: result.get_datum(2).unwrap(),
+                    y_column_name: result.get_datum(3).unwrap(),
+                    test_size: result.get_datum(4).unwrap(),
+                    test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
+                    status: Status::from_str(result.get_datum(6).unwrap()).unwrap(),
+                    columns: result.get_datum(7),
+                    analysis: result.get_datum(8),
+                    created_at: result.get_datum(9).unwrap(),
+                    updated_at: result.get_datum(10).unwrap(),
+                });
+            }
+            Ok(Some(1))
+        });
+        snapshot
+    }
+
     pub fn find_last_by_project_id(project_id: i64) -> Option<Snapshot> {
         let mut snapshot = None;
         Spi::connect(|client| {
@@ -164,6 +232,30 @@ impl Snapshot {
         snapshot.unwrap()
     }
 
+    pub fn num_features(&self) -> usize {
+        let mut num_features: usize = 0;
+        let json = self.columns.as_ref().unwrap().0.clone();
+        let columns: Vec<Column> = serde_json::from_value(json).unwrap();
+        for column in columns {
+            if !column.label {
+                num_features += column.size;
+            }
+        }
+        num_features
+    }
+
+    pub fn num_classes(&self) -> usize {
+        let target = &self.y_column_name[0];
+        self.analysis
+            .as_ref()
+            .unwrap()
+            .0
+            .get(format!("{}_distinct", target))
+            .unwrap()
+            .as_f64()
+            .unwrap() as usize
+    }
+
     #[allow(clippy::format_push_string)]
     fn analyze(&mut self) {
         Spi::connect(|client| {
@@ -196,11 +288,6 @@ impl Snapshot {
                 let nullable = row[3].value::<bool>().unwrap();
                 let position = row[4].value::<i32>().unwrap() as usize;
                 let label = self.y_column_name.contains(&name);
-
-                if nullable {
-                    warning!("Column \"{}\" can contain nulls which can cause errors", name);
-                }
-
                 columns.push(
                     Column {
                         name,
@@ -314,6 +401,15 @@ impl Snapshot {
                 let cardinality = format!("{}_cardinality", column.name);
                 match analysis.get(&cardinality) {
                     Some(cardinality) => column.size = *cardinality as usize,
+                    None => (),
+                }
+                let nulls = format!("{}_nulls", &column.name);
+                match analysis.get(&nulls) {
+                    Some(&nulls) => {
+                        if nulls > 0.0 {
+                            warning!("{} contains NULL values", column.name);
+                        }
+                    }
                     None => (),
                 }
             }

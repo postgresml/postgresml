@@ -365,17 +365,9 @@ impl std::fmt::Debug for Estimator {
 
 impl Bindings for Estimator {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
-    }
-
-    fn predict_joint(&self, features: &[f32]) -> Vec<f32> {
-        self.predict_batch(features)
-    }
-
-    fn predict_proba(&self, features: &[f32]) -> Vec<f32> {
+    fn predict(&self, features: &[f32], _num_features: usize, _num_classes: usize) -> Vec<f32> {
         Python::with_gil(|py| -> Vec<f32> {
-            self.predict_proba
+            self.predict
                 .call1(py, PyTuple::new(py, &[features]))
                 .unwrap()
                 .extract(py)
@@ -383,10 +375,9 @@ impl Bindings for Estimator {
         })
     }
 
-    /// Predict a novel datapoint.
-    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
+    fn predict_proba(&self, features: &[f32], _num_features: usize) -> Vec<f32> {
         Python::with_gil(|py| -> Vec<f32> {
-            self.predict
+            self.predict_proba
                 .call1(py, PyTuple::new(py, &[features]))
                 .unwrap()
                 .extract(py)

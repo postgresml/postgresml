@@ -1,33 +1,13 @@
-use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 
-use once_cell::sync::Lazy;
 use pgx::*;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde_json::json;
 
-use crate::orm::Algorithm;
-use crate::orm::Model;
-use crate::orm::Project;
-use crate::orm::Runtime;
-use crate::orm::Sampling;
-use crate::orm::Search;
-use crate::orm::Snapshot;
-use crate::orm::Strategy;
-use crate::orm::Task;
-
-static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 1024>> =
-    PgLwLock::new();
-static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
-
-#[pg_guard]
-pub extern "C" fn _PG_init() {
-    pg_shmem_init!(PROJECT_ID_TO_DEPLOYED_MODEL_ID);
-}
+use crate::orm::*;
 
 #[cfg(feature = "python")]
 #[pg_extern]
@@ -263,7 +243,6 @@ fn train_joint(
     );
 
     let mut deploy = true;
-
     match automatic_deploy {
         // Deploy only if metrics are better than previous model.
         Some(true) | None => {
@@ -292,20 +271,7 @@ fn train_joint(
     };
 
     if deploy {
-        Spi::get_one_with_args::<i64>(
-            "INSERT INTO pgml.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml.strategy) RETURNING id",
-            vec![
-                (PgBuiltInOids::INT8OID.oid(), project.id.into_datum()),
-                (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
-                (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
-            ],
-        );
-        let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
-        if projects.len() == 1024 {
-            warning!("Active projects has exceeded capacity map, clearing caches.");
-            projects.clear();
-        }
-        projects.insert(project.id, model.id).unwrap();
+        project.deploy(model.id);
     }
 
     vec![(
@@ -399,106 +365,50 @@ fn deploy(
     let model_id = model_id.expect("No qualified models exist for this deployment.");
     let algorithm = algorithm.expect("No qualified models exist for this deployment.");
 
-    Spi::get_one_with_args::<i64>(
-        "INSERT INTO pgml.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml.strategy) RETURNING id",
-        vec![
-            (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
-            (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
-            (PgBuiltInOids::TEXTOID.oid(), strategy.to_string().into_datum()),
-        ]
-    );
-
-    let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
-    if projects.len() == 1024 {
-        warning!("Active projects has exceeded capacity map, clearing caches.");
-        projects.clear();
-    }
-    projects.insert(project_id, model_id).unwrap();
+    let project = Project::find(project_id).unwrap();
+    project.deploy(model_id);
 
     vec![(project_name.to_string(), strategy.to_string(), algorithm)].into_iter()
 }
 
-fn get_model_id(project_name: &str) -> i64 {
-    let mut projects = PROJECT_NAME_TO_PROJECT_ID.lock();
-    let project_id = match projects.get(project_name) {
-        Some(project_id) => *project_id,
-        None => {
-            let (project_id, model_id) = Spi::get_two_with_args::<i64, i64>(
-                "SELECT deployments.project_id, deployments.model_id 
-                FROM pgml.deployments
-                JOIN pgml.projects ON projects.id = deployments.project_id
-                WHERE projects.name = $1 
-                ORDER BY deployments.created_at DESC
-                LIMIT 1",
-                vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
-            );
-            let project_id = project_id.unwrap_or_else(|| {
-                error!(
-                    "No deployed model exists for the project named: `{}`",
-                    project_name
-                )
-            });
-            let model_id = model_id.unwrap_or_else(|| {
-                error!(
-                    "No deployed model exists for the project named: `{}`",
-                    project_name
-                )
-            });
-            projects.insert(project_name.to_string(), project_id);
-            let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
-            if projects.len() == 1024 {
-                warning!("Active projects have exceeded capacity map, clearing caches.");
-                projects.clear();
-            }
-            projects.insert(project_id, model_id).unwrap();
-            project_id
-        }
-    };
-
-    *PROJECT_ID_TO_DEPLOYED_MODEL_ID
-        .share()
-        .get(&project_id)
-        .unwrap()
-}
-
 #[pg_extern(strict, name = "predict")]
 fn predict(project_name: &str, features: Vec<f32>) -> f32 {
-    predict_model(get_model_id(project_name), features)
+    predict_model(Project::get_deployed_model_id(project_name), features)
 }
 
 #[pg_extern(strict, name = "predict_proba")]
 fn predict_proba(project_name: &str, features: Vec<f32>) -> Vec<f32> {
-    predict_model_proba(get_model_id(project_name), features)
+    predict_model_proba(Project::get_deployed_model_id(project_name), features)
 }
 
 #[pg_extern(strict, name = "predict_joint")]
 fn predict_joint(project_name: &str, features: Vec<f32>) -> Vec<f32> {
-    predict_model_joint(get_model_id(project_name), features)
+    predict_model_joint(Project::get_deployed_model_id(project_name), features)
 }
 
 #[pg_extern(strict, name = "predict_batch")]
 fn predict_batch(project_name: &str, features: Vec<f32>) -> Vec<f32> {
-    predict_model_batch(get_model_id(project_name), features)
+    predict_model_batch(Project::get_deployed_model_id(project_name), features)
 }
 
 #[pg_extern(strict, name = "predict")]
 fn predict_model(model_id: i64, features: Vec<f32>) -> f32 {
-    crate::orm::file::find_deployed_estimator_by_model_id(model_id).predict(&features)
+    Model::find_cached(model_id).predict(&features)
 }
 
 #[pg_extern(strict, name = "predict_proba")]
 fn predict_model_proba(model_id: i64, features: Vec<f32>) -> Vec<f32> {
-    crate::orm::file::find_deployed_estimator_by_model_id(model_id).predict_proba(&features)
+    Model::find_cached(model_id).predict_proba(&features)
 }
 
 #[pg_extern(strict, name = "predict_joint")]
 fn predict_model_joint(model_id: i64, features: Vec<f32>) -> Vec<f32> {
-    crate::orm::file::find_deployed_estimator_by_model_id(model_id).predict_joint(&features)
+    Model::find_cached(model_id).predict_joint(&features)
 }
 
 #[pg_extern(strict, name = "predict_batch")]
 fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
-    crate::orm::file::find_deployed_estimator_by_model_id(model_id).predict_batch(&features)
+    Model::find_cached(model_id).predict_batch(&features)
 }
 
 #[pg_extern]
