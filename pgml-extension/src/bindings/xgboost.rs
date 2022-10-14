@@ -9,7 +9,6 @@ use xgboost::parameters::*;
 use xgboost::{Booster, DMatrix};
 
 use crate::orm::dataset::Dataset;
-use crate::orm::task::Task;
 use crate::orm::Hyperparams;
 
 use crate::bindings::Bindings;
@@ -137,19 +136,13 @@ fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
 }
 
 pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(
-        dataset,
-        hyperparams,
-        Task::regression,
-        learning::Objective::RegLinear,
-    )
+    fit(dataset, hyperparams, learning::Objective::RegLinear)
 }
 
 pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
     fit(
         dataset,
         hyperparams,
-        Task::classification,
         learning::Objective::MultiSoftprob(dataset.num_distinct_labels.try_into().unwrap()),
     )
 }
@@ -157,7 +150,6 @@ pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<d
 fn fit(
     dataset: &Dataset,
     hyperparams: &Hyperparams,
-    task: Task,
     objective: learning::Objective,
 ) -> Box<dyn Bindings> {
     // split the train/test data into DMatrix
@@ -186,10 +178,11 @@ fn fit(
             },
             _ => BoosterType::Tree(get_tree_params(hyperparams)),
         })
-        .threads(match hyperparams.get("nthread") {
-            Some(value) => Some(value.as_i64().expect("nthread must be an integer") as u32),
-            None => None,
-        })
+        .threads(
+            hyperparams
+                .get("nthread")
+                .map(|value| value.as_i64().expect("nthread must be an integer") as u32),
+        )
         .verbose(true)
         .build()
         .unwrap();
@@ -217,21 +210,11 @@ fn fit(
     // train model, and print evaluation data
     let booster = Booster::train(&params).unwrap();
 
-    Box::new(Estimator {
-        estimator: booster,
-        num_features: dataset.num_features,
-        num_classes: if task == Task::regression {
-            1
-        } else {
-            dataset.num_distinct_labels
-        },
-    })
+    Box::new(Estimator { estimator: booster })
 }
 
 pub struct Estimator {
     estimator: xgboost::Booster,
-    num_features: usize,
-    num_classes: usize,
 }
 
 unsafe impl Send for Estimator {}
@@ -247,27 +230,13 @@ impl std::fmt::Debug for Estimator {
 }
 
 impl Bindings for Estimator {
-    /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
-    }
-
-    fn predict_proba(&self, features: &[f32]) -> Vec<f32> {
-        let x = DMatrix::from_dense(features, features.len() / self.num_features).unwrap();
-        self.estimator.predict(&x).unwrap()
-    }
-
-    fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
-        todo!("predict_joint is currently only supported by the Python runtime.")
-    }
-
-    /// Predict a novel datapoint.
-    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
-        let results = self.predict_proba(features);
-
-        match self.num_classes {
-            num_classes if num_classes > 1 => results
-                .chunks(self.num_classes)
+    fn predict(&self, features: &[f32], num_features: usize, num_classes: usize) -> Vec<f32> {
+        let x = DMatrix::from_dense(features, features.len() / num_features).unwrap();
+        let y = self.estimator.predict(&x).unwrap();
+        match num_classes {
+            0 => y,
+            _ => y
+                .chunks(num_classes)
                 .map(|probabilities| {
                     probabilities
                         .iter()
@@ -276,22 +245,22 @@ impl Bindings for Estimator {
                         .map(|(index, _)| index)
                         .unwrap() as f32
                 })
-                .collect(),
-            _ => results,
+                .collect::<Vec<f32>>(),
         }
+    }
+
+    fn predict_proba(&self, features: &[f32], num_features: usize) -> Vec<f32> {
+        let x = DMatrix::from_dense(features, features.len() / num_features).unwrap();
+        self.estimator.predict(&x).unwrap()
     }
 
     /// Serialize self to bytes
     fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::from((self.num_features as u64).to_be_bytes());
-        bytes.append(&mut (self.num_classes as u64).to_be_bytes().to_vec());
-
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
         self.estimator.save(std::path::Path::new(&path)).unwrap();
-        bytes.append(&mut std::fs::read(&path).unwrap());
+        let bytes = std::fs::read(&path).unwrap();
         std::fs::remove_file(&path).unwrap();
-
         bytes
     }
 
@@ -300,22 +269,13 @@ impl Bindings for Estimator {
     where
         Self: Sized,
     {
-        let num_features = u64::from_be_bytes(bytes[..8].try_into().unwrap()) as usize;
-        let num_classes = u64::from_be_bytes(bytes[8..16].try_into().unwrap()) as usize;
-        let estimator = Booster::load_buffer(&bytes[16..]).unwrap();
-
-        // Hardcoding it to two threads for now, but I need to fetch this from hyperparams instead maybe.
-        // estimator.set_params(
-        //     &BoosterParametersBuilder::default()
-        //         .threads(Some(2))
-        //         .build()
-        //         .unwrap(),
-        // ).expect("Failed to update XGBoost parameters for inference");
-
+        let mut estimator = Booster::load_buffer(bytes);
+        if estimator.is_err() {
+            // backward compatibility w/ 2.0.0
+            estimator = Booster::load_buffer(&bytes[16..]);
+        }
         Box::new(Estimator {
-            estimator,
-            num_features,
-            num_classes,
+            estimator: estimator.unwrap(),
         })
     }
 }

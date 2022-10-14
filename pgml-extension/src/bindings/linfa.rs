@@ -52,26 +52,16 @@ impl LinearRegression {
 
 impl Bindings for LinearRegression {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
-    }
-
-    fn predict_proba(&self, _features: &[f32]) -> Vec<f32> {
-        todo!("predict_proba is currently only supported by the Python runtime.")
-    }
-
-    fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
-        todo!("predict_joint is currently only supported by the Python runtime.")
+    fn predict(&self, features: &[f32], num_features: usize, _num_classes: usize) -> Vec<f32> {
+        let records =
+            ArrayView2::from_shape((features.len() / num_features, num_features), features)
+                .unwrap();
+        self.estimator.predict(records).targets.into_raw_vec()
     }
 
     /// Predict a novel datapoint.
-    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
-        let records = ArrayView2::from_shape(
-            (features.len() / self.num_features, self.num_features),
-            features,
-        )
-        .unwrap();
-        self.estimator.predict(records).targets.into_raw_vec()
+    fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Vec<f32> {
+        todo!("predict_proba is currently only supported by the Python runtime.")
     }
 
     /// Deserialize self from bytes, with additional context
@@ -189,21 +179,11 @@ impl LogisticRegression {
 }
 
 impl Bindings for LogisticRegression {
-    /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
-    }
-
-    fn predict_proba(&self, _features: &[f32]) -> Vec<f32> {
+    fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Vec<f32> {
         todo!("predict_proba is currently only supported by the Python runtime.")
     }
 
-    fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
-        todo!("predict_joint is currently only supported by the Python runtime.")
-    }
-
-    /// Predict a novel datapoint.
-    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
+    fn predict(&self, features: &[f32], _num_features: usize, _num_classes: usize) -> Vec<f32> {
         let records = ArrayView2::from_shape(
             (features.len() / self.num_features, self.num_features),
             features,
@@ -305,26 +285,15 @@ impl Svm {
 }
 
 impl Bindings for Svm {
-    /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
-    }
-
-    fn predict_proba(&self, _features: &[f32]) -> Vec<f32> {
+    fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Vec<f32> {
         todo!("predict_proba is currently only supported by the Python runtime.")
     }
 
-    fn predict_joint(&self, _features: &[f32]) -> Vec<f32> {
-        todo!("predict_joint is currently only supported by the Python runtime.")
-    }
-
     /// Predict a novel datapoint.
-    fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
-        let records = ArrayView2::from_shape(
-            (features.len() / self.num_features, self.num_features),
-            features,
-        )
-        .unwrap();
+    fn predict(&self, features: &[f32], num_features: usize, _num_classes: usize) -> Vec<f32> {
+        let records =
+            ArrayView2::from_shape((features.len() / num_features, num_features), features)
+                .unwrap();
 
         self.estimator.predict(records).targets.into_raw_vec()
     }
