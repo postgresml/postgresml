@@ -83,8 +83,10 @@ python load_redis.py
 ### Test
 
 ```bash
-gunicorn predict:app -w 5 -t 2
+OMP_NUM_THREADS=2 gunicorn predict:app -w 5 -t 2
 ```
+
+`OMP_NUM_THREADS` controls XGBoost (it's using OpenMP) parallelization.
 
 In a separate tab (install Apache Bench first):
 
