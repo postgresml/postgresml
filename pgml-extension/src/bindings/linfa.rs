@@ -12,7 +12,6 @@ use pgx::*;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LinearRegression {
     estimator: linfa_linear::FittedLinearRegression<f32>,
-    num_features: usize,
 }
 
 impl LinearRegression {
@@ -43,10 +42,7 @@ impl LinearRegression {
 
         let estimator = estimator.fit(&linfa_dataset).unwrap();
 
-        Box::new(LinearRegression {
-            estimator,
-            num_features: dataset.num_features,
-        })
+        Box::new(LinearRegression { estimator })
     }
 }
 
@@ -61,7 +57,7 @@ impl Bindings for LinearRegression {
 
     /// Predict a novel datapoint.
     fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Vec<f32> {
-        todo!("predict_proba is currently only supported by the Python runtime.")
+        unimplemented!("predict_proba is only available for classification.")
     }
 
     /// Deserialize self from bytes, with additional context
@@ -81,10 +77,7 @@ impl Bindings for LinearRegression {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LogisticRegression {
-    estimator_binary: Option<linfa_logistic::FittedLogisticRegression<f32, i32>>,
-    estimator_multi: Option<linfa_logistic::MultiFittedLogisticRegression<f32, i32>>,
-    num_features: usize,
-    num_distinct_labels: usize,
+    estimator: linfa_logistic::MultiFittedLogisticRegression<f32, i32>,
 }
 
 impl LogisticRegression {
@@ -104,113 +97,63 @@ impl LogisticRegression {
 
         let linfa_dataset = linfa::DatasetBase::from((records, targets));
 
-        if dataset.num_distinct_labels > 2 {
-            let mut estimator = linfa_logistic::MultiLogisticRegression::default();
+        let mut estimator = linfa_logistic::MultiLogisticRegression::default();
 
-            for (key, value) in hyperparams {
-                match key.as_str() {
-                    "fit_intercept" => {
-                        estimator = estimator
-                            .with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
-                    }
-                    "alpha" => {
-                        estimator =
-                            estimator.alpha(value.as_f64().expect("alpha must be a float") as f32)
-                    }
-                    "max_iterations" => {
-                        estimator = estimator.max_iterations(
-                            value.as_i64().expect("max_iterations must be an integer") as u64,
-                        )
-                    }
-                    "gradient_tolerance" => {
-                        estimator = estimator.gradient_tolerance(
-                            value.as_f64().expect("gradient_tolerance must be a float") as f32,
-                        )
-                    }
-                    _ => error!("Unknown {}: {:?}", key.as_str(), value),
-                };
-            }
-
-            let estimator = estimator.fit(&linfa_dataset).unwrap();
-
-            Box::new(LogisticRegression {
-                estimator_binary: None,
-                estimator_multi: Some(estimator),
-                num_features: dataset.num_features,
-                num_distinct_labels: dataset.num_distinct_labels,
-            })
-        } else {
-            let mut estimator = linfa_logistic::LogisticRegression::default();
-
-            for (key, value) in hyperparams {
-                match key.as_str() {
-                    "fit_intercept" => {
-                        estimator = estimator
-                            .with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
-                    }
-                    "alpha" => {
-                        estimator =
-                            estimator.alpha(value.as_f64().expect("alpha must be a float") as f32)
-                    }
-                    "max_iterations" => {
-                        estimator = estimator.max_iterations(
-                            value.as_i64().expect("max_iterations must be an integer") as u64,
-                        )
-                    }
-                    "gradient_tolerance" => {
-                        estimator = estimator.gradient_tolerance(
-                            value.as_f64().expect("gradient_tolerance must be a float") as f32,
-                        )
-                    }
-                    _ => error!("Unknown {}: {:?}", key.as_str(), value),
-                };
-            }
-
-            let estimator = estimator.fit(&linfa_dataset).unwrap();
-
-            Box::new(LogisticRegression {
-                estimator_binary: Some(estimator),
-                estimator_multi: None,
-                num_features: dataset.num_features,
-                num_distinct_labels: dataset.num_distinct_labels,
-            })
+        for (key, value) in hyperparams {
+            match key.as_str() {
+                "fit_intercept" => {
+                    estimator = estimator
+                        .with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
+                }
+                "alpha" => {
+                    estimator =
+                        estimator.alpha(value.as_f64().expect("alpha must be a float") as f32)
+                }
+                "max_iterations" => {
+                    estimator = estimator.max_iterations(
+                        value.as_i64().expect("max_iterations must be an integer") as u64,
+                    )
+                }
+                "gradient_tolerance" => {
+                    estimator = estimator.gradient_tolerance(
+                        value.as_f64().expect("gradient_tolerance must be a float") as f32,
+                    )
+                }
+                _ => error!("Unknown {}: {:?}", key.as_str(), value),
+            };
         }
+
+        let estimator = estimator.fit(&linfa_dataset).unwrap();
+
+        Box::new(LogisticRegression {
+            estimator: estimator,
+        })
     }
 }
 
 impl Bindings for LogisticRegression {
-    fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Vec<f32> {
-        todo!("predict_proba is currently only supported by the Python runtime.")
+    fn predict(&self, features: &[f32], num_features: usize, _num_classes: usize) -> Vec<f32> {
+        let records =
+            ArrayView2::from_shape((features.len() / num_features, num_features), features)
+                .unwrap();
+
+        self.estimator
+            .predict(records)
+            .targets
+            .into_raw_vec()
+            .into_iter()
+            .map(|x| x as f32)
+            .collect()
     }
 
-    fn predict(&self, features: &[f32], _num_features: usize, _num_classes: usize) -> Vec<f32> {
-        let records = ArrayView2::from_shape(
-            (features.len() / self.num_features, self.num_features),
-            features,
-        )
-        .unwrap();
+    fn predict_proba(&self, features: &[f32], num_features: usize) -> Vec<f32> {
+        let records =
+            ArrayView2::from_shape((features.len() / num_features, num_features), features)
+                .unwrap();
 
-        if self.num_distinct_labels > 2 {
-            self.estimator_multi
-                .as_ref()
-                .unwrap()
-                .predict(records)
-                .targets
-                .into_raw_vec()
-                .into_iter()
-                .map(|x| x as f32)
-                .collect()
-        } else {
-            self.estimator_binary
-                .as_ref()
-                .unwrap()
-                .predict(records)
-                .targets
-                .into_raw_vec()
-                .into_iter()
-                .map(|x| x as f32)
-                .collect()
-        }
+        self.estimator
+            .predict_probabilities(&records)
+            .into_raw_vec()
     }
 
     /// Deserialize self from bytes, with additional context
