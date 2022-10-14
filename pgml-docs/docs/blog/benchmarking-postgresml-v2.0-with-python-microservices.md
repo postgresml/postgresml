@@ -1,122 +1,115 @@
 
-In this blog post, we'll compare the unified PostgresML v2.0 architecture with the decentralized architecture of Python machine learning microservices. Our goal is to demonstrate that doing inference at the data layer with Rust is much faster and simpler than with standard architectures used across the industry today.
+In this blog post, we'll compare the unified PostgresML v2.0 architecture with the decentralized architecture of Python machine learning microservices. Our goal is to demonstrate that doing inference at the data layer with Rust and Postgres is much faster and simpler than with Python and Redis, as commonly done across the industry today.
 
 ## Setting the stage
 
 ### Data
 
-We'll be using the [Flight Status Prediction](https://www.kaggle.com/datasets/robikscube/flight-delay-dataset-20182022) dataset from Kaggle which ends up being about 1 GB of floating point features. We won't be using all columns because some of them are redundant, e.g. airport name and airport identifier mean the same thing.
+We'll be using the [Flight Status Prediction](https://www.kaggle.com/datasets/robikscube/flight-delay-dataset-20182022) dataset from Kaggle which, after some post-processing, ends up being about 1 GB of floating point features. We won't be using all columns because some of them are redundant, e.g. airport name and airport identifier which mean the same thing.
 
 ### Algorithm
 
 We'll be training an XGBoost model with default hyperparameters and 25 estimators (also known as boosting rounds).
 
-### Architectures
+### Candidate architectures
 
 #### PostgresML
 
-PostgresML architecture will be a single PostgreSQL server with the PostgresML 2.0 extension installed, as documented in our [Installation](/user_guides/setup/v2/installation/) instructions. The client will be [pgbench](https://www.postgresql.org/docs/current/pgbench.html).
+PostgresML architecture will be composed of:
+
+1. PostgreSQL server with PostgresML v2.0
+2. [pgbench](https://www.postgresql.org/docs/current/pgbench.html) client
 
 
 #### Python
 
 Python architecture will be composed of:
 
-1. Flask & Gunicorn HTTP/1.1 server speaking JSON
+1. Flask & Gunicorn server speaking JSON
 2. CSV file containing the dataset used for training
-3. Redis feature store containing the dataset used for inference
-4. [ab](https://httpd.apache.org/docs/2.4/programs/ab.html) HTTP client.
+3. Redis feature store with the inference dataset, serialized with JSON
+4. [ab](https://httpd.apache.org/docs/2.4/programs/ab.html) HTTP client
 
 ## Results
 
+### Latency
+
 <center>
-	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=663872992&amp;format=interactive"></iframe>
+	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=1092074944&amp;format=interactive"></iframe>
 </center>
+
+PostgresML outperformed Gunicorn and Redis by a **factor of 8** on average.
+
+Most of the inference cost for Python came from fetching data from Redis, deserializing it, and inputting it into XGBoost to get a prediction. PostgresML colocates data and compute, so fetching data from a Postgres table, which already comes in standard floating point format, and passing it to XGBoost through a Rust function, is more efficient and therefore much faster.
+
+An interesting thing happened at 20 clients: PostgresML latency started to quickly increase. This may be surprising to some, but to Postgres enthusiasts it's well known issue: Postgres isn't very good at handling many connections at the same time. To mitigate this, we introduced PgBouncer, a well known Postgres proxy, in front of our database, and the latency decreased and continued to hold as we went to 100 clients.
+
+Meanwhile Python latency continued to increase substantially.
+
+### Throughput
+
+<center>
+	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=188372587&amp;format=interactive"></iframe>
+</center>
+
+Since most system resources are limited, as is the case with the machine we used to perform this benchmark, latency directly impacts throughput. If active requests take a long time, requests waiting in the queue will take longer to be serviced.
+
+In this benchmark, PostgresML outperformed Python by a **factor of 8**. You'll note the same issue happening at 20 clients and the identical mitigation using PgBouncer to multiplex our requests.
+
+### Memory utilization
+
+<center>
+	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=1410199200&amp;format=interactive"></iframe>
+</center>
+
+Python is known for using more memory than more optimized languages, and in this case it did use **7 times** more than PostgresML.
+
+PostgresML is a Postgres extension and it shares RAM with the database server. Postgres is very efficient at fetching and allocating only the memory it needs; in this case, Postgres reuses `shared_buffers` and OS page cache to store rows used for inference, and requires very little to no memory allocation to serve queries.
+
+Meanwhile Python must allocate memory for each feature it receives from Redis, at the very least doubling memory requirements during inference. This benchmark did not measure Redis memory usage, which is an additional cost for running traditional machine learning microservices.
+
+## Quick note on training
 
 <center>
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=294879553&amp;format=interactive"></iframe>
 </center>
-Python training RAM: 11.6GB
-PostgresML training RAM: 5.2GB
+
+We spent the majority of our time measuring inference, but it's worth to do a quick aside on training as well. Since Python uses Pandas to load the training dataset, it was notably more memory hungry. Before even loading data into XGBoost, it was already at 8GB RSS (resident set size), and during actual fitting, memory utilization went to almost 12GB.
+
+PostresML meanwhile enjoyed sharing RAM with the Postgres server and only allocated the memory needed by XGBoost to train the model. The overhead was still significant, but we managed to train the same model using only 5GB of RAM.
 
 ## Methodology
 
-### PostgresML
+### Hardware
 
+Both the client and the server were located on the same machine. Redis was running locally as well. The machine is an 8 core, 16 threads AMD Ryzen 7 5800X with 32GB RAM and 1TB NVMe SSD. Both training and inference only used the CPU.
+
+### Configuration
+
+Gunicorn was running with 5 workers and 2 threads per worker. Postgres was given up to 100 connections, as is standard, but no more than 20 were used. XGBoost was set to use 2 threads during inference and all CPU cores (16 threads) during training. PgBouncer was given a `default_pool_size` of 10, so only 10 Postgres connections were used.
+
+Both `ab` and `pgbench` used all available resources, but are both very lightweight and the requests were a single JSON object and a single query respectively.
+
+### ML
+
+Data used for training and inference with PostgresML is available [here](https://static.postgresml.org/benchmarks/flights.csv). Data stored in the Redis feature store is available [here](https://static.postgresml.org/benchmarks/flights_sub.csv). It's only a subset because it was taking hours to load the entire dataset into Redis using a single Python process (28 million rows). Postgres `COPY` only took about a minute.
+
+PostgresML model was trained with:
+
+```postgresql
+SELECT * FROM pgml.train(
+	project_name => 'benchmark',
+	algorithm => 'xgboost',
+	hyperparams => '{ "n_estimators": 25 }'
+);
 ```
-pgbench -f pgbench.sql -p 28813 -h 127.0.0.1 pgml -t 10000 -c 1 --protocol extended
-pgbench (14.5 (Ubuntu 14.5-0ubuntu0.22.04.1), server 13.8)
-transaction type: pgbench.sql
-scaling factor: 1
-query mode: extended
-number of clients: 1
-number of threads: 1
-number of transactions per client: 10000
-number of transactions actually processed: 10000/10000
-latency average = 0.169 ms
-initial connection time = 0.995 ms
-tps = 5926.537018 (without initial connection time)
-```
 
-### Python
+It had terrible accuracy (in Python as well), most likely because we were missing any kind of weather information, which is likely what causes delays at airports.
 
-```
-ab -n 10000 -c 1 -T application/json -k -p ab.txt http://localhost:8000/
-This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
-Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
-Licensed to The Apache Software Foundation, http://www.apache.org/
+### Source code
 
-Benchmarking localhost (be patient)
-Completed 1000 requests
-Completed 2000 requests
-Completed 3000 requests
-Completed 4000 requests
-Completed 5000 requests
-Completed 6000 requests
-Completed 7000 requests
-Completed 8000 requests
-Completed 9000 requests
-Completed 10000 requests
-Finished 10000 requests
+Benchmark source code can be found on [Github](https://github.com/postgresml/postgresml) in `pgml-docs/docs/blog/benchmarks/python_microservices_vs_postgresml/`
 
+## Feedback
 
-Server Software:        gunicorn
-Server Hostname:        localhost
-Server Port:            8000
-
-Document Path:          /
-Document Length:        13 bytes
-
-Concurrency Level:      1
-Time taken for tests:   11.640 seconds
-Complete requests:      10000
-Failed requests:        0
-Keep-Alive requests:    0
-Total transferred:      1580000 bytes
-Total body sent:        1770000
-HTML transferred:       130000 bytes
-Requests per second:    859.09 [#/sec] (mean)
-Time per request:       1.164 [ms] (mean)
-Time per request:       1.164 [ms] (mean, across all concurrent requests)
-Transfer rate:          132.55 [Kbytes/sec] received
-                        148.49 kb/s sent
-                        281.05 kb/s total
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    0   0.0      0       0
-Processing:     1    1   0.4      1      19
-Waiting:        0    1   0.4      1      19
-Total:          1    1   0.4      1      19
-
-Percentage of the requests served within a certain time (ms)
-  50%      1
-  66%      1
-  75%      1
-  80%      1
-  90%      1
-  95%      1
-  98%      1
-  99%      2
- 100%     19 (longest request)
-```
+Many thanks and ❤️ to all those who are supporting this endeavor. We’d love to hear feedback from the broader ML and Engineering community about applications and other real world scenarios to help prioritize our work. You can show your support by starring us on our [Github](https://github.com/postgresml/postgresml).
