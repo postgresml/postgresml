@@ -83,15 +83,15 @@ PostgresML is a Postgres extension, and it shares RAM with the database server. 
 
 Meanwhile, Python must allocate memory for each feature it receives from Redis, at the very least doubling memory requirements. This benchmark did not measure Redis memory utilization, which is an additional and often substantial cost of running traditional machine learning microservices.
 
-## Quick note on training
+## Training
 
 <center>
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=294879553&amp;format=interactive"></iframe>
 </center>
 
-We spent the majority of our time measuring inference, but it's worth to do a quick aside on training. Since Python often uses Pandas to load and preprocess data, it is notably more memory hungry. Before even passing the data into XGBoost, we were already at 8GB RSS (resident set size); during actual fitting, memory utilization went to almost 12GB.
+Since Python often uses Pandas to load and preprocess data, it is notably more memory hungry. Before even passing the data into XGBoost, we were already at 8GB RSS (resident set size); during actual fitting, memory utilization went to almost 12GB. This test is another best case scenario for Python, since the data has already been preprocessed, and merely needs to be passed on to the algorithm.
 
-Meanwhile, PostresML enjoys sharing RAM with the Postgres server and only allocates the memory needed by XGBoost. The overhead was still significant, but we managed to train the same model using only 5GB of RAM. PostgresML therefore allows training models on datasets twice as large as Python, while using identical hardware.
+Meanwhile, PostresML enjoys sharing RAM with the Postgres server and only allocates the memory needed by XGBoost. The dataset has a significant size, but we managed to train the same model using only 5GB of RAM. PostgresML allows training models on datasets more than twice as large as Python, while using identical hardware.
 
 ## What about UltraJSON/MessagePack/Serializer X?
 
