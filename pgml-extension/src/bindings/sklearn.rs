@@ -444,4 +444,6 @@ impl Bindings for Estimator {
             })
         })
     }
+
+    fn update_params(&mut self, _task: Task, _hyperparams: &Hyperparams, _num_classes: usize) {}
 }

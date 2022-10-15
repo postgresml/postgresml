@@ -31,4 +31,7 @@ pub trait Bindings: Send + Sync + Debug {
     fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
     where
         Self: Sized;
+
+    /// Update booster parameters for inference.
+    fn update_params(&mut self, task: Task, hyperparams: &Hyperparams, num_classes: usize);
 }

@@ -10,6 +10,7 @@ use xgboost::{Booster, DMatrix};
 
 use crate::orm::dataset::Dataset;
 use crate::orm::Hyperparams;
+use crate::orm::Task;
 
 use crate::bindings::Bindings;
 
@@ -135,39 +136,25 @@ fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
     params.build().unwrap()
 }
 
-pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, learning::Objective::RegLinear)
+fn get_objective(task: Task, num_classes: usize) -> learning::Objective {
+    match task {
+        Task::classification => learning::Objective::MultiSoftprob(num_classes.try_into().unwrap()),
+        Task::regression => learning::Objective::RegLinear,
+    }
 }
 
-pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(
-        dataset,
-        hyperparams,
-        learning::Objective::MultiSoftprob(dataset.num_distinct_labels.try_into().unwrap()),
-    )
-}
-
-fn fit(
-    dataset: &Dataset,
+fn get_booster_params(
+    task: Task,
     hyperparams: &Hyperparams,
-    objective: learning::Objective,
-) -> Box<dyn Bindings> {
-    // split the train/test data into DMatrix
-    let mut dtrain = DMatrix::from_dense(&dataset.x_train, dataset.num_train_rows).unwrap();
-    let mut dtest = DMatrix::from_dense(&dataset.x_test, dataset.num_test_rows).unwrap();
-    dtrain.set_labels(&dataset.y_train).unwrap();
-    dtest.set_labels(&dataset.y_test).unwrap();
-
-    // specify datasets to evaluate against during training
-    let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
-
+    num_classes: usize,
+) -> BoosterParameters {
     let learning_params = learning::LearningTaskParametersBuilder::default()
-        .objective(objective)
+        .objective(get_objective(task, num_classes))
         .build()
         .unwrap();
 
     // overall configuration for Booster
-    let booster_params = BoosterParametersBuilder::default()
+    BoosterParametersBuilder::default()
         .learning_params(learning_params)
         .booster_type(match hyperparams.get("booster") {
             Some(value) => match value.as_str().unwrap() {
@@ -185,7 +172,29 @@ fn fit(
         )
         .verbose(true)
         .build()
-        .unwrap();
+        .unwrap()
+}
+
+pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, Task::regression)
+}
+
+pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, Task::classification)
+}
+
+fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bindings> {
+    // split the train/test data into DMatrix
+    let mut dtrain = DMatrix::from_dense(&dataset.x_train, dataset.num_train_rows).unwrap();
+    let mut dtest = DMatrix::from_dense(&dataset.x_test, dataset.num_test_rows).unwrap();
+    dtrain.set_labels(&dataset.y_train).unwrap();
+    dtest.set_labels(&dataset.y_test).unwrap();
+
+    // specify datasets to evaluate against during training
+    let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
+
+    // overall configuration for Booster
+    let booster_params = get_booster_params(task, hyperparams, dataset.num_distinct_labels);
 
     let mut builder = TrainingParametersBuilder::default();
     // number of training iterations is aliased
@@ -277,5 +286,12 @@ impl Bindings for Estimator {
         Box::new(Estimator {
             estimator: estimator.unwrap(),
         })
+    }
+
+    // Reset the hyperparams on the booster as they don't survive (de)serialization.
+    fn update_params(&mut self, task: Task, hyperparams: &Hyperparams, num_classes: usize) {
+        let booster_params = get_booster_params(task, hyperparams, num_classes);
+
+        self.estimator.set_params(&booster_params).unwrap();
     }
 }

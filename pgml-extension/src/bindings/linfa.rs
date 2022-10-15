@@ -77,6 +77,8 @@ impl Bindings for LinearRegression {
     fn to_bytes(&self) -> Vec<u8> {
         rmp_serde::to_vec(self).unwrap()
     }
+
+    fn update_params(&mut self, _task: Task, _hyperparams: &Hyperparams, _num_classes: usize) {}
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -226,6 +228,8 @@ impl Bindings for LogisticRegression {
     fn to_bytes(&self) -> Vec<u8> {
         rmp_serde::to_vec(self).unwrap()
     }
+
+    fn update_params(&mut self, _task: Task, _hyperparams: &Hyperparams, _num_classes: usize) {}
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -311,4 +315,6 @@ impl Bindings for Svm {
     fn to_bytes(&self) -> Vec<u8> {
         rmp_serde::to_vec(self).unwrap()
     }
+
+    fn update_params(&mut self, _task: Task, _hyperparams: &Hyperparams, _num_classes: usize) {}
 }

@@ -411,6 +411,11 @@ fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
     Model::find_cached(model_id).predict_batch(&features)
 }
 
+#[pg_extern(strict, name = "clear_cached")]
+fn clear_cached(project_name: &str) {
+    Model::remove_from_cache(Project::get_deployed_model_id(project_name))
+}
+
 #[pg_extern]
 fn snapshot(
     relation_name: &str,

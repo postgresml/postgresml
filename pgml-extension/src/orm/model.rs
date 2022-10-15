@@ -183,6 +183,12 @@ impl Model {
                 let snapshot = Snapshot::find(snapshot_id).unwrap();
                 let runtime = Runtime::from_str(result.get_datum(5).unwrap()).unwrap();
                 let algorithm = Algorithm::from_str(result.get_datum(4).unwrap()).unwrap();
+                let hyperparams: JsonB = result.get_datum(6).unwrap();
+                let num_features = snapshot.num_features();
+                let num_classes = match project.task {
+                    Task::regression => 0,
+                    Task::classification => snapshot.num_classes(),
+                };
 
                 let data = Spi::get_one_with_args::<Vec<u8>>(
                     "
@@ -199,7 +205,17 @@ impl Model {
                     Runtime::rust => {
                         match algorithm {
                             Algorithm::xgboost => {
-                                crate::bindings::xgboost::Estimator::from_bytes(&data)
+                                let mut bindings =
+                                    crate::bindings::xgboost::Estimator::from_bytes(&data);
+
+                                // XGBoost serializer has poor memory. I'm using this for nthread especially,
+                                // but maybe others are relevant too.
+                                bindings.update_params(
+                                    project.task,
+                                    &hyperparams.0.as_object().unwrap(),
+                                    num_classes,
+                                );
+                                bindings
                             }
                             Algorithm::lightgbm => {
                                 crate::bindings::lightgbm::Estimator::from_bytes(&data)
@@ -226,19 +242,13 @@ impl Model {
                     }
                 };
 
-                let num_features = snapshot.num_features();
-                let num_classes = match project.task {
-                    Task::regression => 0,
-                    Task::classification => snapshot.num_classes(),
-                };
-
                 model = Some(Model {
                     id: result.get_datum(1).unwrap(),
                     project_id,
                     snapshot_id,
                     algorithm,
                     runtime,
-                    hyperparams: result.get_datum(6).unwrap(),
+                    hyperparams,
                     status: Status::from_str(result.get_datum(7).unwrap()).unwrap(),
                     metrics: result.get_datum(8),
                     search: result
@@ -260,6 +270,11 @@ impl Model {
         });
 
         model.unwrap()
+    }
+
+    pub fn remove_from_cache(id: i64) {
+        let mut models = DEPLOYED_MODELS_BY_ID.lock();
+        let _ = models.remove(&id);
     }
 
     pub fn find_cached(id: i64) -> Arc<Model> {

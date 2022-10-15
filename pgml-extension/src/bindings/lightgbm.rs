@@ -127,4 +127,6 @@ impl Bindings for Estimator {
             estimator: estimator.unwrap(),
         })
     }
+
+    fn update_params(&mut self, _task: Task, _hyperparams: &Hyperparams, _num_classes: usize) {}
 }
