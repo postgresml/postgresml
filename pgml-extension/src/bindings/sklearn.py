@@ -16,6 +16,18 @@ import numpy as np
 import pickle
 import json
 
+from sklearn.metrics import (
+    r2_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    accuracy_score,
+    matthews_corrcoef,
+    roc_auc_score,
+    mean_squared_error,
+    mean_absolute_error,
+)
+
 _ALGORITHM_MAP = {
     "linear_regression": sklearn.linear_model.LinearRegression,
     "linear_classification": sklearn.linear_model.LogisticRegression,
@@ -131,12 +143,14 @@ def predictor_proba(estimator):
         - estimator: Scikit-Learn estimator, instantiated.
         - num_targets: Used in joint models (more than 1 y target).
     """
+
     def predict_proba(X):
         X = np.asarray(X).reshape((-1, estimator.n_features_in_))
         y_hat = estimator.predict_proba(X)
         return list(np.asarray(y_hat).flatten())
 
     return predict_proba
+
 
 def predictor_joint(estimator, num_targets):
     """Return the instantiated estimator
@@ -146,6 +160,7 @@ def predictor_joint(estimator, num_targets):
         - estimator: Scikit-Learn estimator, instantiated.
         - num_targets: Used in joint models (more than 1 y target).
     """
+
     def predict(X):
         X = np.asarray(X).reshape((-1, estimator.n_features_in_))
         y_hat = estimator.predict(X)
@@ -181,3 +196,79 @@ def load(data):
         Scikit-Learn estimator
     """
     return pickle.loads(bytes(data))
+
+
+def calculate_metric(metric_name):
+    if metric_name == "r2":
+        func = r2_score
+    elif metric_name == "f1":
+        func = f1_score
+    elif metric_name == "precision":
+        func = precision_score
+    elif metric_name == "recall":
+        func = recall_score
+    elif metric_name == "roc_auc":
+        func = roc_auc_score
+    elif metric_name == "accuracy":
+        func = accuracy_score
+    elif metric_name == "mcc":
+        func = matthews_corrcoef
+    elif metric_name == "mse":
+        func = mean_squarred_error
+    elif metric_name == "mae":
+        func = mean_absolute_error
+    else:
+        raise Exception(f"Unknown metric requested: {metric_name}")
+
+    def wrapper(y_true, y_hat):
+        y_true = np.asarray(y_true).reshape((-1, 1))
+        y_hat = np.asarray(y_hat).reshape((-1, 1))
+
+        return func(y_true, y_hat)
+
+    return wrapper
+
+
+def regression_metrics(y_true, y_hat):
+    y_true = np.asarray(y_true).reshape((-1, 1))
+    y_hat = np.asarray(y_hat).reshape((-1, 1))
+
+    r2 = r2_score(y_true, y_hat)
+    mse = mean_squared_error(y_true, y_hat)
+    mae = mean_absolute_error(y_true, y_hat)
+
+    return {
+        "r2": r2,
+        "mse": mse,
+        "mae": mae,
+    }
+
+
+def classification_metrics(y_true, y_hat):
+    y_true = np.asarray(y_true).reshape((-1, 1))
+    y_hat = np.asarray(y_hat).reshape((-1, 1))
+
+    unique_labels = set()
+
+    for label in y_hat:
+        unique_labels.add(label[0])
+    for label in y_true:
+        unique_labels.add(label[0])
+
+    multiclass = len(unique_labels) > 2
+
+    f1 = f1_score(y_true, y_hat, average=("macro" if multiclass else "binary"))
+    precision = precision_score(
+        y_true, y_hat, average=("macro" if multiclass else "binary")
+    )
+    recall = recall_score(y_true, y_hat, average=("macro" if multiclass else "binary"))
+    accuracy = accuracy_score(y_true, y_hat)
+    mcc = matthews_corrcoef(y_true, y_hat)
+
+    return {
+        "f1": f1,
+        "precision": precision,
+        "recall": recall,
+        "accuracy": accuracy,
+        "mcc": mcc,
+    }

@@ -442,6 +442,9 @@ impl Model {
         let mut metrics = IndexMap::new();
         match self.project.task {
             Task::regression => {
+                #[cfg(feature = "python")]
+                let sklearn_metrics = crate::bindings::sklearn::regression_metrics(&y_test, &y_hat);
+
                 let y_test = ArrayView1::from(&y_test);
                 let y_hat = ArrayView1::from(&y_hat);
 
@@ -454,8 +457,30 @@ impl Model {
                     "mean_squared_error".to_string(),
                     y_hat.mean_squared_error(&y_test).unwrap(),
                 );
+
+                #[cfg(feature = "python")]
+                metrics.insert("sklearn_r2".to_string(), sklearn_metrics["r2"]);
+
+                #[cfg(feature = "python")]
+                metrics.insert(
+                    "sklearn_mean_absolute_error".to_string(),
+                    sklearn_metrics["mae"],
+                );
+
+                #[cfg(feature = "python")]
+                metrics.insert(
+                    "sklearn_mean_squared_error".to_string(),
+                    sklearn_metrics["mse"],
+                );
             }
             Task::classification => {
+                #[cfg(feature = "python")]
+                let sklearn_metrics = crate::bindings::sklearn::classification_metrics(
+                    &y_test,
+                    &y_hat,
+                    dataset.num_distinct_labels,
+                );
+
                 if dataset.num_distinct_labels == 2 {
                     let y_hat = ArrayView1::from(&y_hat).mapv(Pr::new);
                     let y_test: Vec<bool> = y_test.iter().map(|&i| i == 1.).collect();
@@ -464,6 +489,9 @@ impl Model {
                         y_hat.roc(&y_test).unwrap().area_under_curve(),
                     );
                     metrics.insert("log_loss".to_string(), y_hat.log_loss(&y_test).unwrap());
+
+                    #[cfg(feature = "python")]
+                    metrics.insert("sklearn_roc_auc".to_string(), sklearn_metrics["roc_auc"]);
                 }
 
                 let y_hat: Vec<usize> = y_hat.into_iter().map(|i| i.round() as usize).collect();
@@ -476,6 +504,20 @@ impl Model {
                 metrics.insert("recall".to_string(), confusion_matrix.recall());
                 metrics.insert("accuracy".to_string(), confusion_matrix.accuracy());
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
+
+                #[cfg(feature = "python")]
+                metrics.insert("sklearn_f1".to_string(), sklearn_metrics["f1"]);
+                #[cfg(feature = "python")]
+                metrics.insert(
+                    "sklearn_precision".to_string(),
+                    sklearn_metrics["precision"],
+                );
+                #[cfg(feature = "python")]
+                metrics.insert("sklearn_recall".to_string(), sklearn_metrics["recall"]);
+                #[cfg(feature = "python")]
+                metrics.insert("sklearn_accuracy".to_string(), sklearn_metrics["accuracy"]);
+                #[cfg(feature = "python")]
+                metrics.insert("sklearn_mcc".to_string(), sklearn_metrics["mcc"]);
             }
         }
 

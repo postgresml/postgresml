@@ -474,12 +474,59 @@ pub fn transform_string(
     ))
 }
 
+#[cfg(feature = "python")]
+#[pg_extern(name = "sklearn_f1_score")]
+pub fn sklearn_f1_score(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> f32 {
+    crate::bindings::sklearn::f1(&ground_truth, &y_hat)
+}
+
+#[cfg(feature = "python")]
+#[pg_extern(name = "sklearn_r2_score")]
+pub fn sklearn_r2_score(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> f32 {
+    crate::bindings::sklearn::r2(&ground_truth, &y_hat)
+}
+
+#[cfg(feature = "python")]
+#[pg_extern(name = "sklearn_regression_metrics")]
+pub fn sklearn_regression_metrics(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> JsonB {
+    JsonB(
+        serde_json::from_str(
+            &serde_json::to_string(&crate::bindings::sklearn::regression_metrics(
+                &ground_truth,
+                &y_hat,
+            ))
+            .unwrap(),
+        )
+        .unwrap(),
+    )
+}
+
+#[cfg(feature = "python")]
+#[pg_extern(name = "sklearn_classification_metrics")]
+pub fn sklearn_classification_metrics(
+    ground_truth: Vec<f32>,
+    y_hat: Vec<f32>,
+    num_classes: i64,
+) -> JsonB {
+    JsonB(
+        serde_json::from_str(
+            &serde_json::to_string(&crate::bindings::sklearn::classification_metrics(
+                &ground_truth,
+                &y_hat,
+                num_classes as usize,
+            ))
+            .unwrap(),
+        )
+        .unwrap(),
+    )
+}
+
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
     use super::*;
     use crate::orm::algorithm::Algorithm;
-    use crate::orm::dataset::{load_diabetes, load_digits};
+    use crate::orm::dataset::{load_breast_cancer, load_diabetes, load_digits};
     use crate::orm::runtime::Runtime;
     use crate::orm::sampling::Sampling;
     use crate::orm::Hyperparams;
@@ -540,7 +587,7 @@ mod tests {
     }
 
     #[pg_test]
-    fn test_train_classification() {
+    fn test_train_multiclass_classification() {
         load_digits(None);
 
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
@@ -570,6 +617,43 @@ mod tests {
 
             assert_eq!(result.len(), 1);
             assert_eq!(result[0].0, String::from("Test project 2"));
+            assert_eq!(result[0].1, String::from("classification"));
+            assert_eq!(result[0].2, String::from("xgboost"));
+            // assert_eq!(result[0].3, true);
+        }
+    }
+
+    #[pg_test]
+    fn test_train_binary_classification() {
+        load_breast_cancer(None);
+
+        // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
+        // to test deployments.
+        let setting =
+            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'");
+
+        info!("Data directory: {}", setting.unwrap());
+
+        for runtime in [Runtime::python, Runtime::rust] {
+            let result: Vec<(String, String, String, bool)> = train(
+                "Test project 3",
+                Some(Task::classification),
+                Some("pgml.breast_cancer"),
+                Some("malignant"),
+                Algorithm::xgboost,
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                None,
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                0.25,
+                Sampling::last,
+                Some(runtime),
+                Some(true),
+            )
+            .collect();
+
+            assert_eq!(result.len(), 1);
+            assert_eq!(result[0].0, String::from("Test project 3"));
             assert_eq!(result[0].1, String::from("classification"));
             assert_eq!(result[0].2, String::from("xgboost"));
             // assert_eq!(result[0].3, true);
