@@ -489,6 +489,31 @@ pub fn recall(ground_truth: &[f32], y_hat: &[f32]) -> f32 {
     sklearn_metric("recall", ground_truth, y_hat)
 }
 
+pub fn confusion_matrix(ground_truth: &[f32], y_hat: &[f32]) -> Vec<Vec<f32>> {
+    let module = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/bindings/sklearn.py"
+    ));
+
+    Python::with_gil(|py| -> Vec<Vec<f32>> {
+        let module = PyModule::from_code(py, module, "", "").unwrap();
+        let calculate_metric = module.getattr("calculate_metric").unwrap();
+        let wrapper: Py<PyAny> = calculate_metric
+            .call1(PyTuple::new(py, &["confusion_matrix"]))
+            .unwrap()
+            .extract()
+            .unwrap();
+
+        let matrix: Vec<Vec<f32>> = wrapper
+            .call1(py, PyTuple::new(py, &[ground_truth, y_hat]))
+            .unwrap()
+            .extract(py)
+            .unwrap();
+
+        matrix
+    })
+}
+
 pub fn regression_metrics(ground_truth: &[f32], y_hat: &[f32]) -> HashMap<String, f32> {
     let module = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
