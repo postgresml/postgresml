@@ -26,6 +26,7 @@ from sklearn.metrics import (
     roc_auc_score,
     mean_squared_error,
     mean_absolute_error,
+    confusion_matrix,
 )
 
 _ALGORITHM_MAP = {
@@ -217,6 +218,8 @@ def calculate_metric(metric_name):
         func = mean_squarred_error
     elif metric_name == "mae":
         func = mean_absolute_error
+    elif metric_name == "confusion_matrix":
+        func = confusion_matrix
     else:
         raise Exception(f"Unknown metric requested: {metric_name}")
 
@@ -224,7 +227,10 @@ def calculate_metric(metric_name):
         y_true = np.asarray(y_true).reshape((-1, 1))
         y_hat = np.asarray(y_hat).reshape((-1, 1))
 
-        return func(y_true, y_hat)
+        if metric_name == "confusion_matrix":
+            return list(func(y_true, y_hat))
+        else:
+            return func(y_true, y_hat)
 
     return wrapper
 

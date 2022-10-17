@@ -8,7 +8,7 @@ use std::time::Instant;
 use ::linfa::prelude::{BinaryClassification, Pr, SingleTargetRegression, ToConfusionMatrix};
 use indexmap::IndexMap;
 use itertools::{izip, Itertools};
-use ndarray::ArrayView1;
+use ndarray::{ArrayView1, ArrayView2};
 use once_cell::sync::Lazy;
 use pgx::*;
 use rand::prelude::SliceRandom;
@@ -481,6 +481,11 @@ impl Model {
                     dataset.num_distinct_labels,
                 );
 
+                // You can always compare Scikit's confusion matrix to ours
+                // for debugging.
+                #[cfg(feature = "python")]
+                let _sklearn_conf = crate::bindings::sklearn::confusion_matrix(&y_test, &y_hat);
+
                 if dataset.num_distinct_labels == 2 {
                     let y_hat = ArrayView1::from(&y_hat).mapv(Pr::new);
                     let y_test: Vec<bool> = y_test.iter().map(|&i| i == 1.).collect();
@@ -499,11 +504,27 @@ impl Model {
                 let y_hat = ArrayView1::from(&y_hat);
                 let y_test = ArrayView1::from(&y_test);
                 let confusion_matrix = y_hat.confusion_matrix(y_test).unwrap();
+
+                // These have to be identical to Scikits.
+                let pgml_confusion_matrix =
+                    crate::metrics::confusion_matrix(&y_test, &y_hat, dataset.num_distinct_labels);
+                let pgml_metrics = crate::metrics::metrics(
+                    &ArrayView2::from(&pgml_confusion_matrix),
+                    dataset.num_distinct_labels,
+                );
+                let pgml_f1 = crate::metrics::f1(&pgml_metrics);
+                let pgml_recall = crate::metrics::recall(&pgml_metrics);
+                let pgml_precision = crate::metrics::precision(&pgml_metrics);
+
                 metrics.insert("f1".to_string(), confusion_matrix.f1_score());
                 metrics.insert("precision".to_string(), confusion_matrix.precision());
                 metrics.insert("recall".to_string(), confusion_matrix.recall());
                 metrics.insert("accuracy".to_string(), confusion_matrix.accuracy());
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
+
+                metrics.insert("pgml_f1".to_string(), pgml_f1);
+                metrics.insert("pgml_recall".to_string(), pgml_recall);
+                metrics.insert("pgml_precision".to_string(), pgml_precision);
 
                 #[cfg(feature = "python")]
                 metrics.insert("sklearn_f1".to_string(), sklearn_metrics["f1"]);
