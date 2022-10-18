@@ -7,11 +7,12 @@ use pgx::*;
 use pyo3::prelude::*;
 use serde_json::json;
 
+use crate::bindings::sklearn::package_version;
 use crate::orm::*;
 
 #[cfg(feature = "python")]
 #[pg_extern]
-pub fn validate_python_dependencies() {
+pub fn validate_python_dependencies() -> bool {
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys").unwrap();
         let version: String = sys.getattr("version").unwrap().extract().unwrap();
@@ -28,17 +29,32 @@ pub fn validate_python_dependencies() {
         }
     });
 
-    let sklearn_version = sklearn_version();
-
     info!(
-        "Scikit-learn {}, XGBoost 1.62, LightGBM 3.3.2",
-        sklearn_version
+        "Scikit-learn {}, XGBoost {}, LightGBM {}, NumPy {}",
+        package_version("sklearn"),
+        package_version("xgboost"),
+        package_version("lightgbm"),
+        package_version("numpy"),
     );
+
+    true
 }
 
 #[cfg(not(feature = "python"))]
 #[pg_extern]
 pub fn validate_python_dependencies() {}
+
+#[cfg(feature = "python")]
+#[pg_extern]
+pub fn python_package_version(name: &str) -> String {
+    package_version(name)
+}
+
+#[cfg(not(feature = "python"))]
+#[pg_extern]
+pub fn python_package_version(name: &str) {
+    error!("Python is not installed, recompile with `--features python`");
+}
 
 #[pg_extern]
 pub fn validate_shared_library() {
@@ -53,25 +69,6 @@ pub fn validate_shared_library() {
     if !shared_preload_libraries.contains("pgml") {
         error!("`pgml` must be added to `shared_preload_libraries` setting or models cannot be deployed");
     }
-}
-
-#[cfg(feature = "python")]
-#[pg_extern]
-pub fn sklearn_version() -> String {
-    let mut version = String::new();
-
-    Python::with_gil(|py| {
-        let sklearn = py.import("sklearn").unwrap();
-        version = sklearn.getattr("__version__").unwrap().extract().unwrap();
-    });
-
-    version
-}
-
-#[cfg(not(feature = "python"))]
-#[pg_extern]
-pub fn sklearn_version() -> String {
-    String::from("Scikit-learn is not installed, recompile with `--features python`")
 }
 
 #[cfg(feature = "python")]
@@ -91,6 +88,25 @@ fn python_version() -> String {
 #[pg_extern]
 pub fn python_version() -> String {
     String::from("Python is not installed, recompile with `--features python`")
+}
+
+#[cfg(feature = "python")]
+#[pg_extern]
+pub fn numpy_version() -> String {
+    let mut version = String::new();
+
+    Python::with_gil(|py| {
+        let numpy = py.import("numpy").unwrap();
+        version = numpy.getattr("__version__").unwrap().extract().unwrap();
+    });
+
+    version
+}
+
+#[cfg(not(feature = "python"))]
+#[pg_extern]
+pub fn numpy_version() -> String {
+    String::from("numpy is not installed, recompile with `--features python`")
 }
 
 #[pg_extern]
