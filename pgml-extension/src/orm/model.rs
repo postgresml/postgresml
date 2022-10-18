@@ -515,6 +515,7 @@ impl Model {
                 let pgml_f1 = crate::metrics::f1(&pgml_metrics);
                 let pgml_recall = crate::metrics::recall(&pgml_metrics);
                 let pgml_precision = crate::metrics::precision(&pgml_metrics);
+                let pgml_f1_micro = crate::metrics::f1_micro(&pgml_metrics);
 
                 metrics.insert("f1".to_string(), confusion_matrix.f1_score());
                 metrics.insert("precision".to_string(), confusion_matrix.precision());
@@ -525,9 +526,12 @@ impl Model {
                 metrics.insert("pgml_f1".to_string(), pgml_f1);
                 metrics.insert("pgml_recall".to_string(), pgml_recall);
                 metrics.insert("pgml_precision".to_string(), pgml_precision);
+                metrics.insert("pgml_f1_micro".to_string(), pgml_f1_micro);
 
                 #[cfg(feature = "python")]
                 metrics.insert("sklearn_f1".to_string(), sklearn_metrics["f1"]);
+                #[cfg(feature = "python")]
+                metrics.insert("sklearn_f1_micro".to_string(), sklearn_metrics["f1_micro"]);
                 #[cfg(feature = "python")]
                 metrics.insert(
                     "sklearn_precision".to_string(),
