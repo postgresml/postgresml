@@ -562,3 +562,14 @@ pub fn classification_metrics(
 
     scores
 }
+
+pub fn package_version(name: &str) -> String {
+    let mut version = String::new();
+
+    Python::with_gil(|py| {
+        let package = py.import(name).unwrap();
+        version = package.getattr("__version__").unwrap().extract().unwrap();
+    });
+
+    version
+}
