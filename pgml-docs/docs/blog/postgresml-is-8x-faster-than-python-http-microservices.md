@@ -56,11 +56,13 @@ Throughput is defined as the number of XGBoost predictions the architecture can 
 
 In Python, most of the bottleneck comes from having to fetch and deserialize Redis data. Since the features are externally stored, they need to be passed through Python and into XGBoost. XGBoost itself is written in C++, and it's Python library only provides a convenient interface. The prediction coming out of XGBoost has to go through Python again, serialized as JSON, and sent via HTTP to the client. 
 
-This is pretty much the bare minimum amount of work you can do for an inference microservice, but PostgresML, on the other hand, collocates data and compute. It fetches data from a Postgres table, which already comes in a standard floating point format, and our Rust inference layer forwards it to XGBoost via a pointer.
+This is pretty much the bare minimum amount of work you can do for an inference microservice.
+
+PostgresML, on the other hand, collocates data and compute. It fetches data from a Postgres table, which already comes in a standard floating point format, and the Rust inference layer forwards it to XGBoost via a pointer.
 
 An interesting thing happened when the benchmark hit 20 clients: PostgresML throughput starts to quickly decrease. This may be surprising to some, but to Postgres enthusiasts it's a known issue: Postgres isn't very good at handling many concurrent active connections. To mitigate this, we introduced PgBouncer (a Postgres proxy and pooler) in front of the database, and the throughput increased back up, and continued to hold as we went to 100 clients.
 
-It's worth noting that the benchmarking machine had only 16 available CPU threads (8 cores). If more cores were available, the bottleneck would occur with more clients are connected. The general recommendation for Postgres servers it to open around 2 connections per available CPU core, although newer versions of PostgreSQL have been incrementally chipping away at this limitation.
+It's worth noting that the benchmarking machine had only 16 available CPU threads (8 cores). If more cores were available, the bottleneck would only occur with more clients. The general recommendation for Postgres servers it to open around 2 connections per available CPU core, although newer versions of PostgreSQL have been incrementally chipping away at this limitation.
 
 #### Why throughput is important
 
@@ -76,17 +78,15 @@ Latency is defined as the time it takes to return a single XGBoost prediction. S
 
 In this benchmark, PostgresML outperformed Python by a **factor of 8** as well. You'll note the same issue happens at 20 clients, and the same mitigation using PgBouncer reduces its impact. Meanwhile, Python's latency continues to increase substantially.
 
-Latency is a good metric to use when describing the performance of an architecture. In layman's terms, if I were to use this service, I would expect to get a prediction back in at most this amount of time, irrespective of how many other clients are using it.
+Latency is a good metric to use when describing the performance of an architecture. In layman's terms, if I were to use this service, I would get a prediction back in at most this long, irrespective of how many other clients are using it.
 
 #### Why latency is important
 
-Latency is important in machine learning services because they are often running as an addition to the main application, and sometimes have to be accessed multiple times during a single HTTP request.
+Latency is important in machine learning services because they are often running as an addition to the main application, and sometimes have to be accessed multiple times during the same HTTP request.
 
-Let's take the example of an e-commerce website (I felt old writing that, I don't think people use those terms anymore). A typical storefront wants to show many personalization models concurrently. Examples of such models could be "buy it again" (recommendation on what the customer should buy based on their purchase history; sounds like a regression) or "popular in your area" (geographic clustering of customer purchase histories) or "customers like you bought this item" (a nearest neighbour model).
+Let's take the example of an e-commerce website. A typical storefront wants to show many personalization models concurrently. Examples of such models could include "buy it again" recommendations for recurring purchases (binary classification), or "popular items in your area" (geographic clustering of purchase histories) or "customers like you bought this item" (nearest neighbour model).
 
-All of these models are important because they have been proven, over time, to be very successful at driving purchases. If the inference layer latency is high, the models start to compete for very expensive real estate of the front and checkout pages, and the business has to drop some of them or suffer from slow page loads. Hungry customers are impatient: nobody likes a slow app when they are trying to order groceries or dinner.
-
-That felt like a long detour through the grocery store. Let's get back to engineering.
+All of these models are important because they have been proven, over time, to be very successful at driving purchases. If inference latency is high, the models start to compete for very expensive real estate, front page and checkout, and the business has to drop some of them or, more likely, suffer from slow page loads. Nobody likes a slow app when they are trying to order groceries or dinner.
 
 ### Memory utilization
 
@@ -114,14 +114,14 @@ Meanwhile, PostresML enjoys sharing RAM with the Postgres server and only alloca
 
 #### Why memory utilization is important
 
-This is another example of doing more with less. Most machine learning algorithms, outside of FAANG and research universities, require the dataset to fit into the memory of a single machine. Distributed training is not where we want it to be, and there is so much value to be extracted from a simple linear regression.
+This is another example of doing more with less. Most machine learning algorithms, outside of FAANG and research universities, require the dataset to fit into the memory of a single machine. Distributed training is not where we want it to be, and there is still so much value to be extracted from simple linear regressions.
 
-Using less RAM allows to train larger and better models on larger and more complete datasets. If you happen to suffer from large machine learning compute bills, using less RAM can also give you a good surprise at the end of your fiscal year.
+Using less RAM allows to train larger and better models on larger and more complete datasets. If you happen to suffer from large machine learning compute bills, using less RAM can be a pleasant surprise at the end of your fiscal year.
 
 
 ## What about UltraJSON/MessagePack/Serializer X?
 
-We spent a lot of time talking about serialization, so it makes sense to talk about prior work in this field.
+We spent a lot of time talking about serialization, so it makes sense to look at prior work in that field.
 
 JSON is the most user-friendly format, but it's certainly not the fastest. MessagePack and Ultra JSON, for example, are sometimes faster and more efficient at reading and storing binary information. So, would using them in this benchmark be better, instead of Python's built-in `json` module?
 
@@ -154,13 +154,13 @@ To demonstrate this, we spun up 3 EC2 instances and ran the benchmark again. Thi
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=10610340&amp;format=interactive"></iframe>
 </center>
 
-Network gap between Redis and Gunicorn made things worse...a lot worse. Fetching data from a feature store running on a different machine, added milliseconds to the request the Python architecture could not spare. The additional latency compounded, and in a system that has finite resources, caused contention. Most Gunicorn threads were simply waiting on the network, and thousands of requests were stuck in the queue.
+Network gap between Redis and Gunicorn made things worse...a lot worse. Fetching data from a remote feature store added milliseconds to the request the Python architecture could not spare. The additional latency compounded, and in a system that has finite resources, caused contention. Most Gunicorn threads were simply waiting on the network, and thousands of requests were stuck in the queue.
 
-PostgresML didn't have this issue, because the features and the Rust inference layer live on the same system. That architectural choice removes network latency and (de)serialization from the equation.
+PostgresML didn't have this issue, because the features and the Rust inference layer live on the same system. This architectural choice removes network latency and (de)serialization from the equation.
 
 You'll note the concurrency issue we discussed earlier hit Postgres at 20 connections, and we used PgBouncer again to save the day.
 
-Scaling Postgres, once you know how to do it, isn't that difficult.
+Scaling Postgres, once you know how to do it, isn't as difficult as it sounds.
 
 ## Methodology
 
