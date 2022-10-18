@@ -1,11 +1,11 @@
-use xgboost::parameters::tree::*;
-use xgboost::parameters::*;
 /// XGBoost implementation.
 ///
 /// XGBoost is a family of gradient-boosted decision tree algorithms,
 /// that are very effective on real-world datasets.
 ///
 /// It uses its own dense matrix.
+use xgboost::parameters::tree::*;
+use xgboost::parameters::*;
 use xgboost::{Booster, DMatrix};
 
 use crate::orm::dataset::Dataset;
