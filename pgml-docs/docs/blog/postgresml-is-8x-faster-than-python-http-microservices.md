@@ -1,6 +1,6 @@
 ---
 author: Lev Kokotov
-description: PostgresML v2.0 outperforms Python HTTP microservices by a factor of 8 in throughput, latency, and memory utilization.
+description: PostgresML's architecture gives it a huge performance advantage over traditional deployments when it comes to latency, throughput and memory utilization.
 image: http://localhost:8001/images/logos/logo-small.png
 image_alt: We're going really fast now.
 ---
