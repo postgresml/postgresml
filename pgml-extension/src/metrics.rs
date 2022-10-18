@@ -122,6 +122,17 @@ pub fn f1(metrics: &Vec<ConfusionMatrixMetrics>) -> f32 {
     f1s.iter().sum::<f32>() / f1s.len() as f32
 }
 
+pub fn f1_micro(metrics: &Vec<ConfusionMatrixMetrics>) -> f32 {
+    let tp = metrics.iter().map(|m| m.tp).sum::<f32>();
+    let fn_ = metrics.iter().map(|m| m.fn_).sum::<f32>();
+    let fp = metrics.iter().map(|m| m.fp).sum::<f32>();
+
+    let recall = tp / (tp + fn_);
+    let precision = tp / (tp + fp);
+
+    2. * ((precision * recall) / (precision + recall))
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -141,5 +152,6 @@ mod test {
 
         assert_eq!(mat[(3, 3)], 2.0);
         assert_eq!(f1(&metrics), 1.0);
+        assert_eq!(f1_micro(&metrics), 1.0);
     }
 }

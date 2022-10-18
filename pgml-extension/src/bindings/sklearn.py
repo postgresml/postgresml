@@ -264,6 +264,7 @@ def classification_metrics(y_true, y_hat):
     multiclass = len(unique_labels) > 2
 
     f1 = f1_score(y_true, y_hat, average=("macro" if multiclass else "binary"))
+    f1_micro = f1_score(y_true, y_hat, average="micro")
     precision = precision_score(
         y_true, y_hat, average=("macro" if multiclass else "binary")
     )
@@ -273,6 +274,7 @@ def classification_metrics(y_true, y_hat):
 
     return {
         "f1": f1,
+        "f1_micro": f1_micro,
         "precision": precision,
         "recall": recall,
         "accuracy": accuracy,
