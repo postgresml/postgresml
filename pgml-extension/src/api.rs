@@ -7,6 +7,7 @@ use pgx::*;
 use pyo3::prelude::*;
 use serde_json::json;
 
+#[cfg(feature = "python")]
 use crate::bindings::sklearn::package_version;
 use crate::orm::*;
 
