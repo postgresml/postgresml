@@ -52,7 +52,7 @@ Both architectures host the same XGBoost model, running predictions against the 
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=188372587&amp;format=interactive"></iframe>
 </center>
 
-Throughput is defined as the number of XGBoost predictions the architecture can serve per second. Using this definition, in our benchmarks, PostgresML outperformed Python and Redis, running on the same machine, by a **factor of 8**.
+Throughput is defined as the number of XGBoost predictions the architecture can serve per second. In this benchmark, PostgresML outperformed Python and Redis, running on the same machine, by a **factor of 8**.
 
 In Python, most of the bottleneck comes from having to fetch and deserialize Redis data. Since the features are externally stored, they need to be passed through Python and into XGBoost. XGBoost itself is written in C++, and it's Python library only provides a convenient interface. The prediction coming out of XGBoost has to go through Python again, serialized as JSON, and sent via HTTP to the client. 
 
