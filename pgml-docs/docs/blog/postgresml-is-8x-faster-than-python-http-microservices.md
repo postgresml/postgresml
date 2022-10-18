@@ -10,7 +10,7 @@ image_alt: We're going really fast now.
 <p class="author">
   <img width="54px" height="54px" src="/images/team/lev.jpg" alt="Author" />
   Lev Kokotov<br/>
-  October 17, 2022
+  October 18, 2022
 </p>
 
 Machine learning architectures can be some of the most complex, expensive and _difficult_ arenas in modern systems. The number of technologies and the amount of required hardware compete for tightening headcount, hosting, and latency budgets. Unfortunately, the trend in the industry is only getting worse along these lines, with increased usage of state-of-the-art architectures that center around data warehouses, microservices and NoSQL databases.
