@@ -35,7 +35,7 @@ jobs:
             ~/.cargo
             pgml-extension/target
             ~/.pgx
-          key: ${{ runner.os }}-rust-${{ hashFiles('pgml-extension/Cargo.toml') }}
+          key: ${{ runner.os }}-rust-${{ hashFiles('pgml-extension/Cargo.lock') }}
       - name: Submodules
         run: |
           git submodule update --init --recursive
@@ -54,7 +54,7 @@ jobs:
           cargo pgx stop
           cargo pgx start
 
-          psql -p 28813 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
+          # psql -p 28813 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
 
           cargo pgx stop
 

@@ -1,5 +1,4 @@
 # Cargo
-Cargo.lock
 /target
 **/*.rs.bk
 
