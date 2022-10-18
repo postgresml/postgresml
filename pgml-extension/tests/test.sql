@@ -12,9 +12,9 @@ SELECT pgml.load_dataset('iris');
 SELECT pgml.load_dataset('linnerud');
 SELECT pgml.load_dataset('wine');
 
-\i tests/binary_classification.sql
-\i tests/image_classification.sql
-\i tests/joint_regression.sql
-\i tests/multi_classification.sql
-\i tests/regression.sql
-\i tests/vectors.sql
+\i examples/binary_classification.sql
+\i examples/image_classification.sql
+\i examples/joint_regression.sql
+\i examples/multi_classification.sql
+\i examples/regression.sql
+\i examples/vectors.sql
