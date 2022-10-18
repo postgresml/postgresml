@@ -12,7 +12,7 @@ jobs:
         working-directory: pgml-extension
     services:
       postgres:
-        image: postgres
+        image: postgres:14:5
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PASSWORD: postgres
@@ -65,7 +65,7 @@ jobs:
           cargo pgx test
       - name: Install Extension
         run: |  
-          export POSTGRES_VERSION=15
+          export POSTGRES_VERSION=14
 
           cargo pgx package
 
