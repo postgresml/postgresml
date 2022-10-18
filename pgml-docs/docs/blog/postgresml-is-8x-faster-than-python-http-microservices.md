@@ -78,7 +78,7 @@ Latency is defined as the time it takes to return a single XGBoost prediction. S
 
 In this benchmark, PostgresML outperformed Python by a **factor of 8** as well. You'll note the same issue happens at 20 clients, and the same mitigation using PgBouncer reduces its impact. Meanwhile, Python's latency continues to increase substantially.
 
-Latency is a good metric to use when describing the performance of an architecture. In layman's terms, if I were to use this service, I would get a prediction back in at most this long, irrespective of how many other clients are using it.
+Latency is a good metric to use when describing the performance of an architecture. In other words, if I were to use this service, I would get a prediction back in at most this long, irrespective of how many other clients are using it.
 
 #### Why latency is important
 
@@ -166,13 +166,13 @@ Scaling Postgres, once you know how to do it, isn't as difficult as it sounds.
 
 ### Hardware
 
-Both the client and the server in the first benchmark were located on the same machine. Redis was locally as well. The machine is an 8 core, 16 threads AMD Ryzen 7 5800X with 32GB RAM, 1TB NVMe SSD and Ubuntu 22.04.
+Both the client and the server in the first benchmark were located on the same machine. Redis was local as well. The machine is an 8 core, 16 threads AMD Ryzen 7 5800X with 32GB RAM, 1TB NVMe SSD running Ubuntu 22.04.
 
 AWS EC2 benchmarks were done with one `c5.4xlarge` instance hosting Gunicorn and PostgresML, and two `c5.large` instances hosting the client and Redis, respectively. They were located in the same VPC.
 
 ### Configuration
 
-Gunicorn was running with 5 workers and 2 threads per worker. Postgres was using 1, 5, and 20 connections respectively of the number of clients. PgBouncer was given a `default_pool_size` of 10, so a maximum of 10 Postgres connections were used for 20 and 100 clients.
+Gunicorn was running with 5 workers and 2 threads per worker. Postgres was using 1, 5 and 20 connections for 1, 5 and 20 clients, respectively. PgBouncer was given a `default_pool_size` of 10, so a maximum of 10 Postgres connections were used for 20 and 100 clients.
 
 XGBoost was allowed to use 2 threads during inference, and all available CPU cores (16 threads) during training.
 
