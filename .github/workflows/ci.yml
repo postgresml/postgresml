@@ -39,6 +39,11 @@ jobs:
       - name: Submodules
         run: |
           git submodule update --init --recursive
+      - name: Run examples
+        run: |
+          createdb pgml
+          psql -U postgres -h 127.0.0.1 pgml -c 'CREATE EXTENSION IF NOT EXISTS pgml'
+          psql -U postgres -h 127.0.0.1 pgml -f tests/test.sql -P pager
       - name: Run tests
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
