@@ -21,6 +21,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
@@ -52,9 +54,9 @@ jobs:
           git submodule update --init --recursive
       - name: Run examples
         run: |
-          PGPASSWORD=postgres psql -U postgres -h localhost postgres -c 'CREATE DATABASE pgml'
-          PGPASSWORD=postgres psql -U postgres -h localhost pgml -c 'CREATE EXTENSION IF NOT EXISTS pgml'
-          PGPASSWORD=postgres psql -U postgres -h localhost pgml -f tests/test.sql -P pager
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 postgres -c 'CREATE DATABASE pgml'
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 pgml -c 'CREATE EXTENSION IF NOT EXISTS pgml'
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 pgml -f tests/test.sql -P pager
       - name: Run tests
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
