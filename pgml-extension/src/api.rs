@@ -91,25 +91,6 @@ pub fn python_version() -> String {
     String::from("Python is not installed, recompile with `--features python`")
 }
 
-#[cfg(feature = "python")]
-#[pg_extern]
-pub fn numpy_version() -> String {
-    let mut version = String::new();
-
-    Python::with_gil(|py| {
-        let numpy = py.import("numpy").unwrap();
-        version = numpy.getattr("__version__").unwrap().extract().unwrap();
-    });
-
-    version
-}
-
-#[cfg(not(feature = "python"))]
-#[pg_extern]
-pub fn numpy_version() -> String {
-    String::from("numpy is not installed, recompile with `--features python`")
-}
-
 #[pg_extern]
 fn version() -> String {
     crate::VERSION.to_string()
