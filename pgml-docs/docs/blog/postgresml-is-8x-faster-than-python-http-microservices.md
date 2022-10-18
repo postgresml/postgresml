@@ -172,7 +172,7 @@ AWS EC2 benchmarks were done with one `c5.4xlarge` instance hosting Gunicorn and
 
 ### Configuration
 
-Gunicorn was running with 5 workers and 2 threads per worker. Postgres was using 1, 5, and 20 connections respective of the number of clients. PgBouncer was given a `default_pool_size` of 10, so a maximuim of 10 Postgres connections were used for 20 and 100 clients.
+Gunicorn was running with 5 workers and 2 threads per worker. Postgres was using 1, 5, and 20 connections respectively of the number of clients. PgBouncer was given a `default_pool_size` of 10, so a maximum of 10 Postgres connections were used for 20 and 100 clients.
 
 XGBoost was allowed to use 2 threads during inference, and all available CPU cores (16 threads) during training.
 
