@@ -65,7 +65,7 @@ jobs:
           cargo pgx test
       - name: Install Extension
         run: |  
-          export POSTGRES_VERSION=14
+          export POSTGRES_VERSION=15
 
           cargo pgx package
 
@@ -81,6 +81,3 @@ jobs:
           PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 postgres -c 'CREATE DATABASE pgml'
           PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 pgml -c 'CREATE EXTENSION IF NOT EXISTS pgml'
           PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 pgml -f tests/test.sql -P pager
-
-
-
