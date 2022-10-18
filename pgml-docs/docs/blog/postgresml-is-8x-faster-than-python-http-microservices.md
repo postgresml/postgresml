@@ -13,9 +13,9 @@ image_alt: We're going really fast now.
   October 17, 2022
 </p>
 
-Machine learning architectures can be some of the most complex, expensive and _difficult_ arenas in modern systems. The number of technologies and the amount of required hardware compete for tightening headcount, hosting, and latency budgets. Unfortunately, the trend in industry is only getting worse along these lines, with increased usage of state-of-the-art architectures that center around data warehouses, microservices and NoSQL databases.
+Machine learning architectures can be some of the most complex, expensive and _difficult_ arenas in modern systems. The number of technologies and the amount of required hardware compete for tightening headcount, hosting, and latency budgets. Unfortunately, the trend in the industry is only getting worse along these lines, with increased usage of state-of-the-art architectures that center around data warehouses, microservices and NoSQL databases.
 
-PostgresML is a simpler alternative to that ever-growing complexity. In this post, we explore some additional performance benefits of a more elegant architecture and discover that PostgresML outperforms traditional Python microservices by a factor of 8 in local tests and by a factor of 40 on AWS EC2.
+PostgresML is a simpler alternative to that ever-growing complexity. In this post, we explore some additional performance benefits of a more elegant architecture and discover that PostgresML outperforms traditional Python microservices by a **factor of 8** in local tests and by a **factor of 40** on AWS EC2.
 
 ## Candidate architectures
 
