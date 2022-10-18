@@ -51,5 +51,12 @@ jobs:
 
           cargo pgx test
 
+          cargo pgx stop
+          cargo pgx start
+
+          psql -p 28813 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
+
+          cargo pgx stop
+
 
 
