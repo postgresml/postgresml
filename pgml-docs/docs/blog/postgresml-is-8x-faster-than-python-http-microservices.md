@@ -1,7 +1,7 @@
 ---
 author: Lev Kokotov
 description: PostgresML's architecture gives it a huge performance advantage over traditional deployments when it comes to latency, throughput and memory utilization.
-image: http://localhost:8001/images/logos/logo-small.png
+image: https://postgresml.org/images/logos/logo-small.png
 image_alt: We're going really fast now.
 ---
 
@@ -13,13 +13,15 @@ image_alt: We're going really fast now.
   October 17, 2022
 </p>
 
-Machine learning architectures can be some of the most complex, expensive and _difficult_ arenas in modern systems. The number of technologies and the amount of hardware required compete for tightening headcount, hosting and latency budgets. Unfortunately, the trend in industry is only getting worse along these lines using state-of-the-art architectures that center around data warehouses, microservices and NoSQL databases.
+Machine learning architectures can be some of the most complex, expensive and _difficult_ arenas in modern systems. The number of technologies and the amount of required hardware compete for tightening headcount, hosting, and latency budgets. Unfortunately, the trend in the industry is only getting worse along these lines, with increased usage of state-of-the-art architectures that center around data warehouses, microservices and NoSQL databases.
 
-PostgresML is a simpler alternative to that ever-growing complexity. In this post we explore some additional performance benefits a more elegant architecture offers.
+PostgresML is a simpler alternative to that ever-growing complexity. In this post, we explore some additional performance benefits of a more elegant architecture and discover that PostgresML outperforms traditional Python microservices by a **factor of 8** in local tests and by a **factor of 40** on AWS EC2.
 
 ## Candidate architectures
 
-To consider Python microservices with every possible advantage, we first benchmark with Python and Redis running inside the same container. Our goal being to avoid any additional network latency, and put it on a more even footing with PostgresML. Later, testing a networked microservice is relatively devastating. The full source code for both benchmarking setups is available [online](https://github.com/postgresml/postgresml/tree/master/pgml-docs/docs/blog/benchmarks/python_microservices_vs_postgresml).
+To consider Python microservices with every possible advantage, we run the first benchmark with Python and Redis located on the same machine. Our goal is to avoid any additional network latency, which puts it a more even footing with PostgresML. Our second test takes place on AWS EC2, with Redis and Gunicorn separated by a network; this benchmark proves to be relatively devastating.
+
+The full source code for both benchmarks is available on [Github](https://github.com/postgresml/postgresml/tree/master/pgml-docs/docs/blog/benchmarks/python_microservices_vs_postgresml).
 
 ### PostgresML
 
@@ -40,7 +42,7 @@ Python architecture is composed of:
 
 ### ML
 
-Both architectures host the same XGBoost model, running predictions against the same dataset.
+Both architectures host the same XGBoost model, running predictions against the same dataset. See [Methodology](#ml_1) for more details.
 
 ## Results
 
@@ -50,13 +52,15 @@ Both architectures host the same XGBoost model, running predictions against the 
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=188372587&amp;format=interactive"></iframe>
 </center>
 
-Throughput is defined as the number of XGBoost predictions we can serve per second. PostgresML outperforms Python and Redis collocated in the same container by a **factor of 8**.
+Throughput is defined as the number of XGBoost predictions we can serve per second. PostgresML outperforms Python and Redis collocated on the same machine by a **factor of 8**.
 
-In Python, most of the cost comes from fetching and deserializing Redis data, passing it through Python into XGBoost, and returning the prediction serialized as JSON in the HTTP response. This is pretty much the bare minimum amount of work you can do for an inference microservice.
+In Python, most of the bottleneck comes from fetching and deserializing Redis data, passing it through Python into XGBoost, and returning the prediction serialized as JSON in the HTTP response. This is pretty much the bare minimum amount of work you can do for an inference microservice.
 
-PostgresML, on the other hand, collocates data and compute, so fetching data from a Postgres table, which already comes in a standard floating point format, and passing it to XGBoost as a pointer through Rust, is much more efficient and therefore much faster.
+PostgresML, on the other hand, collocates data and compute, so fetching data from a Postgres table, which already comes in a standard floating point format, and passing it to XGBoost as a pointer through Rust, is much more efficient, and therefore much faster.
 
-An interesting thing happens at 20 clients vs 16 hardware threads available: PostgresML throughput starts to quickly decrease. This may be surprising to some, but to Postgres enthusiasts it's a known issue: Postgres isn't very good at handling many concurrent active connections. To mitigate this, we introduce PgBouncer (a Postgres proxy) in front of the database, and the throughput increases back up and continues to hold as we go to 100 clients.
+An interesting thing happens at 20 clients: PostgresML throughput starts to quickly decrease. This may be surprising to some, but to Postgres enthusiasts it's a known issue: Postgres isn't very good at handling many concurrent active connections. To mitigate this, we introduce PgBouncer (a Postgres proxy) in front of the database, and the throughput increases back up and continues to hold as we go to 100 clients.
+
+It's worth noting that the benchmarking machine had only 16 available CPU threads (8 cores). If more cores were available, the bottleneck would occur when more clients are connected.
 
 ### Latency
 
@@ -79,9 +83,9 @@ Meanwhile, Python latency continues to increase substantially.
 
 Python is known for using more memory than more optimized languages and, in this case, it uses **7 times** more than PostgresML.
 
-PostgresML is a Postgres extension, and it shares RAM with the database server. Postgres is very efficient at fetching and allocating only the memory it needs. It reuses `shared_buffers` and OS page cache to store rows for inference, and requires very little to no memory allocation to serve queries.
+PostgresML is a Postgres extension, and it shares RAM with the database server. Postgres is very efficient at fetching and allocating only the memory it needs: it reuses `shared_buffers` and OS page cache to store rows for inference, and requires very little to no memory allocation to serve queries.
 
-Meanwhile, Python must allocate memory for each feature it receives from Redis, at the very least doubling memory requirements. This benchmark did not measure Redis memory utilization, which is an additional and often substantial cost of running traditional machine learning microservices.
+Meanwhile, Python must allocate memory for each feature it receives from Redis, and to serve HTTP requests. This benchmark did not measure Redis memory utilization, which is an additional and often substantial cost of running traditional machine learning microservices.
 
 ## Training
 
@@ -89,13 +93,13 @@ Meanwhile, Python must allocate memory for each feature it receives from Redis, 
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=294879553&amp;format=interactive"></iframe>
 </center>
 
-Since Python often uses Pandas to load and preprocess data, it is notably more memory hungry. Before even passing the data into XGBoost, we were already at 8GB RSS (resident set size); during actual fitting, memory utilization went to almost 12GB. This test is another best case scenario for Python, since the data has already been preprocessed, and merely needs to be passed on to the algorithm.
+Since Python often uses Pandas to load and preprocess data, it is notably more memory hungry. Before even passing the data into XGBoost, we were already at 8GB RSS (resident set size); during actual fitting, memory utilization went to almost 12GB. This test is another best case scenario for Python, since the data has already been preprocessed, and was merely passed on to the algorithm.
 
-Meanwhile, PostresML enjoys sharing RAM with the Postgres server and only allocates the memory needed by XGBoost. The dataset has a significant size, but we managed to train the same model using only 5GB of RAM. PostgresML allows training models on datasets more than twice as large as Python, while using identical hardware.
+Meanwhile, PostresML enjoys sharing RAM with the Postgres server and only allocates the memory needed by XGBoost. The dataset size was significant, but we managed to train the same model using only 5GB of RAM. PostgresML therefore allows training models on datasets at least twice as large as Python, all the while using identical hardware.
 
 ## What about UltraJSON/MessagePack/Serializer X?
 
-JSON is the most user-friendly format, but it's certainly not the fastest. MessagePack and Ultra JSON, for example, are faster and more efficient at reading and storing binary information. So would using them instead of Python's built-in `json` module in this benchmark be better? The answer is not really.
+JSON is the most user-friendly format, but it's certainly not the fastest. MessagePack and Ultra JSON, for example, are faster and more efficient at reading and storing binary information. So would using them in this benchmark be better, instead of Python's built-in `json` module? The answer is: not really.
 
 <center>
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=1855533349&amp;format=interactive"></iframe>
@@ -112,25 +116,23 @@ PostgresML does **one in-memory copy** of features from Postgres. No network, no
 
 ## What about the real world?
 
-Testing over localhost is convenient, but not that realistic. In production deployments, the client and the server are on different machines, and in the case of the Python + Redis architecture, the feature store is yet another network hop away. To demonstrate this, we spun up 3 EC2 instances and ran the benchmark again.
+Testing over localhost is convenient, but it's not that realistic. In production deployments, the client and the server are on different machines, and in the case of the Python + Redis architecture, the feature store is yet another network hop away. To demonstrate this, we spun up 3 EC2 instances and ran the benchmark again.
 
-### Throughput
+This time, PostgresML outperformed Python and Redis **by a factor of 40**.
 
 <center>
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=179138052&amp;format=interactive"></iframe>
 </center>
 
-Network gap between Redis and Gunicorn made things worse...a lot worse. The same concurrency issue hit Postgres at 20 connections, and we used PgBouncer again to save the day.
-
-### Latency
-
 <center>
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLNYEaLD92xfrWhx6c2Q248NJGC6Sh9l1wm055HdTPZbakjQg0PVS9KqyuWrNepYvLeOdVNfbmhCwf/pubchart?oid=10610340&amp;format=interactive"></iframe>
 </center>
 
-Just like with our local benchmark, Python starts to deteriorate at 20 clients quite significantly and explodes at 100 clients. Latency has a compound effect: the more slow clients are querying the system, the slower it gets for everyone waiting in line to get a prediction.
+Network gap between Redis and Gunicorn made things worse...a lot worse. Fetching data from a feature store running on a different machine, added milliseconds to the request the Python architecture could not spare. The additional latency compounded, and in a system that has finite resources, caused contention. Most Gunicorn threads were simply waiting on the network, and thousands of requests were stuck in the queue.
 
-PostgresML performs well in both cases. Data collocation removes any network latency to the feature store, and Rust, together with single-copy semantics of the inference layer, did the rest.
+PostgresML did not have this issue, simply because the features and the Rust inference layer live on the same system, which removes network latency and (de)serialization from the equation.
+
+You'll note the concurrency issue we discussed earlier hit Postgres at 20 connections, and we used PgBouncer again to save the day.
 
 ## Methodology
 
@@ -151,13 +153,13 @@ Both `ab` and `pgbench` use all available resources, but are very lightweight; t
 
 ### Data
 
-We use the [Flight Status Prediction](https://www.kaggle.com/datasets/robikscube/flight-delay-dataset-20182022) dataset from Kaggle. After some post-processing, it ends up being about 2 GB of floating point features. We don't use all columns because some of them are redundant, e.g. airport name and airport identifier, which refer to the same thing.
+We used the [Flight Status Prediction](https://www.kaggle.com/datasets/robikscube/flight-delay-dataset-20182022) dataset from Kaggle. After some post-processing, it ended up being about 2 GB of floating point features. We didn't use all columns because some of them are redundant, e.g. airport name and airport identifier, which refer to the same thing.
 
 ### Model
 
-We train an XGBoost model with default hyperparameters and 25 estimators (also known as boosting rounds).
+Our XGBoost model was trained with default hyperparameters and 25 estimators (also known as boosting rounds).
 
-Data used for training and inference is available [here](https://static.postgresml.org/benchmarks/flights.csv). Data stored in the Redis feature store is available [here](https://static.postgresml.org/benchmarks/flights_sub.csv). It's only a subset because it was taking hours to load the entire dataset into Redis with a single Python process (28 million rows). Postgres `COPY` only took about a minute.
+Data used for training and inference is available [here](https://static.postgresml.org/benchmarks/flights.csv). Data stored in the Redis feature store is available [here](https://static.postgresml.org/benchmarks/flights_sub.csv). It's only a subset because it was taking hours to load the entire dataset into Redis with a single Python process (28 million rows). Meanwhile, Postgres `COPY` only took about a minute.
 
 PostgresML model is trained with:
 
