@@ -2,7 +2,7 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - '**'
   workflow_dispatch:
 jobs:
   tests:
@@ -52,11 +52,6 @@ jobs:
       - name: Submodules
         run: |
           git submodule update --init --recursive
-      - name: Run examples
-        run: |
-          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 postgres -c 'CREATE DATABASE pgml'
-          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 pgml -c 'CREATE EXTENSION IF NOT EXISTS pgml'
-          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 pgml -f tests/test.sql -P pager
       - name: Run tests
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
@@ -68,6 +63,24 @@ jobs:
           fi
 
           cargo pgx test
+      - name: Install Extension
+        run: |  
+          export POSTGRES_VERSION=14
+
+          cargo pgx package
+
+          # Copy the extension .so
+          sudo cp target/release/pgml-pg${POSTGRES_VERSION}/usr/lib/postgresql/${POSTGRES_VERSION}/lib/* \
+             /usr/lib/postgresql/${POSTGRES_VERSION}/lib
+
+          # Copy the control & SQL files
+          sudo cp target/release/pgml-pg${POSTGRES_VERSION}/usr/share/postgresql/${POSTGRES_VERSION}/extension/* \
+             /usr/share/postgresql/${POSTGRES_VERSION}/extension
+      - name: Run examples
+        run: |
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 postgres -c 'CREATE DATABASE pgml'
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 pgml -c 'CREATE EXTENSION IF NOT EXISTS pgml'
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 pgml -f tests/test.sql -P pager
 
 
 
