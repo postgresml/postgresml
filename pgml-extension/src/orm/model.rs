@@ -505,17 +505,18 @@ impl Model {
                 let y_test = ArrayView1::from(&y_test);
                 let confusion_matrix = y_hat.confusion_matrix(y_test).unwrap();
 
-                // These have to be identical to Scikits.
-                let pgml_confusion_matrix =
-                    crate::metrics::confusion_matrix(&y_test, &y_hat, dataset.num_distinct_labels);
-                let pgml_metrics = crate::metrics::metrics(
-                    &ArrayView2::from(&pgml_confusion_matrix),
+                // These have to be identical to Scikit.
+                let pgml_confusion_matrix = crate::metrics::ConfusionMatrix::new(
+                    &y_test,
+                    &y_hat,
                     dataset.num_distinct_labels,
                 );
-                let pgml_f1 = crate::metrics::f1(&pgml_metrics);
-                let pgml_recall = crate::metrics::recall(&pgml_metrics);
-                let pgml_precision = crate::metrics::precision(&pgml_metrics);
-                let pgml_f1_micro = crate::metrics::f1_micro(&pgml_metrics);
+
+                let pgml_f1 = pgml_confusion_matrix.f1(crate::metrics::Average::Macro);
+                let pgml_recall = pgml_confusion_matrix.recall();
+                let pgml_precision = pgml_confusion_matrix.precision();
+                let pgml_f1_micro = pgml_confusion_matrix.f1(crate::metrics::Average::Micro);
+                let pgml_accuracy = pgml_confusion_matrix.accuracy();
 
                 metrics.insert("f1".to_string(), confusion_matrix.f1_score());
                 metrics.insert("precision".to_string(), confusion_matrix.precision());
@@ -527,6 +528,7 @@ impl Model {
                 metrics.insert("pgml_recall".to_string(), pgml_recall);
                 metrics.insert("pgml_precision".to_string(), pgml_precision);
                 metrics.insert("pgml_f1_micro".to_string(), pgml_f1_micro);
+                metrics.insert("pgml_accuracy".to_string(), pgml_accuracy);
 
                 #[cfg(feature = "python")]
                 metrics.insert("sklearn_f1".to_string(), sklearn_metrics["f1"]);
