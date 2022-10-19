@@ -518,7 +518,7 @@ impl Model {
                 // These are validated against Scikit and seem to be correct.
                 metrics.insert(
                     "f1".to_string(),
-                    pgml_confusion_matrix.f1(crate::metrics::Average::Micro),
+                    pgml_confusion_matrix.f1(crate::metrics::Average::Macro),
                 );
                 metrics.insert("precision".to_string(), pgml_confusion_matrix.precision());
                 metrics.insert("recall".to_string(), pgml_confusion_matrix.recall());
