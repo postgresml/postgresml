@@ -19,7 +19,7 @@ PostgresML is a simpler alternative to that ever-growing complexity. In this pos
 
 ## Candidate architectures
 
-To consider Python microservices with every possible advantage, our first benchmark is ran with Python and Redis located on the same machine. Our goal is to avoid any additional network latency, which puts it on a more even footing with PostgresML. Our second test takes place on AWS EC2, with Redis and Gunicorn separated by a network; this benchmark proves to be relatively devastating.
+To consider Python microservices with every possible advantage, our first benchmark is run with Python and Redis located on the same machine. Our goal is to avoid any additional network latency, which puts it on a more even footing with PostgresML. Our second test takes place on AWS EC2, with Redis and Gunicorn separated by a network; this benchmark proves to be relatively devastating.
 
 The full source code for both benchmarks is available on [Github](https://github.com/postgresml/postgresml/tree/master/pgml-docs/docs/blog/benchmarks/python_microservices_vs_postgresml).
 
@@ -60,7 +60,7 @@ This is pretty much the bare minimum amount of work you can do for an inference 
 
 PostgresML, on the other hand, collocates data and compute. It fetches data from a Postgres table, which already comes in a standard floating point format, and the Rust inference layer forwards it to XGBoost via a pointer.
 
-An interesting thing happened when the benchmark hit 20 clients: PostgresML throughput starts to quickly decrease. This may be surprising to some, but to Postgres enthusiasts it's a known issue: Postgres isn't very good at handling many concurrent active connections. To mitigate this, we introduced PgBouncer (a Postgres proxy and pooler) in front of the database, and the throughput increased back up, and continued to hold as we went to 100 clients.
+An interesting thing happened when the benchmark hit 20 clients: PostgresML throughput starts to quickly decrease. This may be surprising to some, but to Postgres enthusiasts it's a known issue: Postgres isn't very good at handling more concurrent active connections than CPU threads. To mitigate this, we introduced PgBouncer (a Postgres proxy and pooler) in front of the database, and the throughput increased back up, and continued to hold as we went to 100 clients.
 
 It's worth noting that the benchmarking machine had only 16 available CPU threads (8 cores). If more cores were available, the bottleneck would only occur with more clients. The general recommendation for Postgres servers it to open around 2 connections per available CPU core, although newer versions of PostgreSQL have been incrementally chipping away at this limitation.
 
