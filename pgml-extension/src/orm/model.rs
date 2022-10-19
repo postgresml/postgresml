@@ -8,7 +8,7 @@ use std::time::Instant;
 use ::linfa::prelude::{BinaryClassification, Pr, SingleTargetRegression, ToConfusionMatrix};
 use indexmap::IndexMap;
 use itertools::{izip, Itertools};
-use ndarray::{ArrayView1, ArrayView2};
+use ndarray::ArrayView1;
 use once_cell::sync::Lazy;
 use pgx::*;
 use rand::prelude::SliceRandom;
@@ -442,8 +442,8 @@ impl Model {
         let mut metrics = IndexMap::new();
         match self.project.task {
             Task::regression => {
-                #[cfg(feature = "python")]
-                let sklearn_metrics = crate::bindings::sklearn::regression_metrics(&y_test, &y_hat);
+                // #[cfg(feature = "python")]
+                // let sklearn_metrics = crate::bindings::sklearn::regression_metrics(&y_test, &y_hat);
 
                 let y_test = ArrayView1::from(&y_test);
                 let y_hat = ArrayView1::from(&y_hat);
@@ -458,93 +458,90 @@ impl Model {
                     y_hat.mean_squared_error(&y_test).unwrap(),
                 );
 
-                #[cfg(feature = "python")]
-                metrics.insert("sklearn_r2".to_string(), sklearn_metrics["r2"]);
+                // #[cfg(feature = "python")]
+                // metrics.insert("sklearn_r2".to_string(), sklearn_metrics["r2"]);
 
-                #[cfg(feature = "python")]
-                metrics.insert(
-                    "sklearn_mean_absolute_error".to_string(),
-                    sklearn_metrics["mae"],
-                );
+                // #[cfg(feature = "python")]
+                // metrics.insert(
+                //     "sklearn_mean_absolute_error".to_string(),
+                //     sklearn_metrics["mae"],
+                // );
 
-                #[cfg(feature = "python")]
-                metrics.insert(
-                    "sklearn_mean_squared_error".to_string(),
-                    sklearn_metrics["mse"],
-                );
+                // #[cfg(feature = "python")]
+                // metrics.insert(
+                //     "sklearn_mean_squared_error".to_string(),
+                //     sklearn_metrics["mse"],
+                // );
             }
             Task::classification => {
-                #[cfg(feature = "python")]
-                let sklearn_metrics = crate::bindings::sklearn::classification_metrics(
-                    &y_test,
-                    &y_hat,
-                    dataset.num_distinct_labels,
-                );
+                // #[cfg(feature = "python")]
+                // let sklearn_metrics = crate::bindings::sklearn::classification_metrics(
+                //     &y_test,
+                //     &y_hat,
+                //     dataset.num_distinct_labels,
+                // );
 
                 // You can always compare Scikit's confusion matrix to ours
                 // for debugging.
-                #[cfg(feature = "python")]
-                let _sklearn_conf = crate::bindings::sklearn::confusion_matrix(&y_test, &y_hat);
+                // #[cfg(feature = "python")]
+                // let _sklearn_conf = crate::bindings::sklearn::confusion_matrix(&y_test, &y_hat);
 
                 if dataset.num_distinct_labels == 2 {
                     let y_hat = ArrayView1::from(&y_hat).mapv(Pr::new);
                     let y_test: Vec<bool> = y_test.iter().map(|&i| i == 1.).collect();
+
                     metrics.insert(
                         "roc_auc".to_string(),
                         y_hat.roc(&y_test).unwrap().area_under_curve(),
                     );
                     metrics.insert("log_loss".to_string(), y_hat.log_loss(&y_test).unwrap());
 
-                    #[cfg(feature = "python")]
-                    metrics.insert("sklearn_roc_auc".to_string(), sklearn_metrics["roc_auc"]);
+                    // #[cfg(feature = "python")]
+                    // metrics.insert("sklearn_roc_auc".to_string(), sklearn_metrics["roc_auc"]);
                 }
 
                 let y_hat: Vec<usize> = y_hat.into_iter().map(|i| i.round() as usize).collect();
                 let y_test: Vec<usize> = y_test.iter().map(|i| i.round() as usize).collect();
                 let y_hat = ArrayView1::from(&y_hat);
                 let y_test = ArrayView1::from(&y_test);
+
+                // This one is buggy (Linfa).
                 let confusion_matrix = y_hat.confusion_matrix(y_test).unwrap();
 
-                // These have to be identical to Scikit.
+                // This has to be identical to Scikit.
                 let pgml_confusion_matrix = crate::metrics::ConfusionMatrix::new(
                     &y_test,
                     &y_hat,
                     dataset.num_distinct_labels,
                 );
 
-                let pgml_f1 = pgml_confusion_matrix.f1(crate::metrics::Average::Macro);
-                let pgml_recall = pgml_confusion_matrix.recall();
-                let pgml_precision = pgml_confusion_matrix.precision();
-                let pgml_f1_micro = pgml_confusion_matrix.f1(crate::metrics::Average::Micro);
-                let pgml_accuracy = pgml_confusion_matrix.accuracy();
+                // These are validated against Scikit and seem to be correct.
+                metrics.insert(
+                    "f1".to_string(),
+                    pgml_confusion_matrix.f1(crate::metrics::Average::Micro),
+                );
+                metrics.insert("precision".to_string(), pgml_confusion_matrix.precision());
+                metrics.insert("recall".to_string(), pgml_confusion_matrix.recall());
+                metrics.insert("accuracy".to_string(), pgml_confusion_matrix.accuracy());
 
-                metrics.insert("f1".to_string(), confusion_matrix.f1_score());
-                metrics.insert("precision".to_string(), confusion_matrix.precision());
-                metrics.insert("recall".to_string(), confusion_matrix.recall());
-                metrics.insert("accuracy".to_string(), confusion_matrix.accuracy());
+                // This one is inaccurate, I have it in my TODO to reimplement.
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
 
-                metrics.insert("pgml_f1".to_string(), pgml_f1);
-                metrics.insert("pgml_recall".to_string(), pgml_recall);
-                metrics.insert("pgml_precision".to_string(), pgml_precision);
-                metrics.insert("pgml_f1_micro".to_string(), pgml_f1_micro);
-                metrics.insert("pgml_accuracy".to_string(), pgml_accuracy);
-
-                #[cfg(feature = "python")]
-                metrics.insert("sklearn_f1".to_string(), sklearn_metrics["f1"]);
-                #[cfg(feature = "python")]
-                metrics.insert("sklearn_f1_micro".to_string(), sklearn_metrics["f1_micro"]);
-                #[cfg(feature = "python")]
-                metrics.insert(
-                    "sklearn_precision".to_string(),
-                    sklearn_metrics["precision"],
-                );
-                #[cfg(feature = "python")]
-                metrics.insert("sklearn_recall".to_string(), sklearn_metrics["recall"]);
-                #[cfg(feature = "python")]
-                metrics.insert("sklearn_accuracy".to_string(), sklearn_metrics["accuracy"]);
-                #[cfg(feature = "python")]
-                metrics.insert("sklearn_mcc".to_string(), sklearn_metrics["mcc"]);
+                // #[cfg(feature = "python")]
+                // metrics.insert("sklearn_f1".to_string(), sklearn_metrics["f1"]);
+                // #[cfg(feature = "python")]
+                // metrics.insert("sklearn_f1_micro".to_string(), sklearn_metrics["f1_micro"]);
+                // #[cfg(feature = "python")]
+                // metrics.insert(
+                //     "sklearn_precision".to_string(),
+                //     sklearn_metrics["precision"],
+                // );
+                // #[cfg(feature = "python")]
+                // metrics.insert("sklearn_recall".to_string(), sklearn_metrics["recall"]);
+                // #[cfg(feature = "python")]
+                // metrics.insert("sklearn_accuracy".to_string(), sklearn_metrics["accuracy"]);
+                // #[cfg(feature = "python")]
+                // metrics.insert("sklearn_mcc".to_string(), sklearn_metrics["mcc"]);
             }
         }
 

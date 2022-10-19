@@ -1,5 +1,5 @@
 /// Module providing various metrics used to rank the algorithms.
-use ndarray::{Array2, ArrayView1, ArrayView2};
+use ndarray::{Array2, ArrayView1};
 use std::collections::{BTreeSet, HashMap};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
