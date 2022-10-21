@@ -1,10 +1,11 @@
 Package: postgresql-pgml-PGVERSION
 Version: PACKAGE_VERSION
-Section: base
+Section: database
 Priority: optional
 Architecture: ARCH
 Depends: postgresql-PGVERSION, libopenblas-dev, postgresql-server-dev-PGVERSION, python3, python3-dev, libpython3-dev
 Maintainer: PostgresML <team@postgresml.org>
+Homepage: https://postgresml.org
 Description: PostgresML - machine learning with PostgreSQL
  PostgresML is a PostgreSQL extension that allows to do machine
  learning directly in the database. It allows to both train
