@@ -108,7 +108,7 @@ database = urlparse(os.environ.get("PGML_DATABASE_URL", "postgres:///pgml_develo
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "OPTIONS": {"options": "-c search_path=pgml,public"},
+        "OPTIONS": {"options": "-c search_path=public,pgml"},
         "NAME": database.path[1:],
         "USER": database.username,
         "PASSWORD": database.password,

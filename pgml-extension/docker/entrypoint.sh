@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # Exit on error, real CI
-set -e
-
 echo "Starting Postgres..."
 service postgresql start
 
