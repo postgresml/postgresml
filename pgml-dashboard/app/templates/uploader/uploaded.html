@@ -22,7 +22,7 @@ LIMIT 10</code></pre>
   </div>
 <p> All columns were converted to text, so you'll need to cast them to the appropriate data type before training a model, for example:</p>
   <div class="markdown-body">
-    <pre><code class="language-sql">CREATE MATERIALIZED VIEW public.{{ table_name }}_view AS
+    <pre><code class="language-sql">CREATE VIEW public.{{ table_name }}_view AS
 SELECT {% for column in columns %}
   CAST({{ column }} AS FLOAT4){% if not forloop.last %},{% else %}
 {% endif %}{% endfor %}FROM public.{{ table_name }}</code></pre>
