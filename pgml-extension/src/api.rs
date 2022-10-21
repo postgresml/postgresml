@@ -538,6 +538,7 @@ mod tests {
     #[pg_test]
     fn test_snapshot_lifecycle() {
         load_diabetes(Some(25));
+
         let snapshot = Snapshot::create(
             "pgml.diabetes",
             vec!["target".to_string()],
@@ -545,6 +546,19 @@ mod tests {
             Sampling::last,
         );
         assert!(snapshot.id > 0);
+    }
+
+    #[pg_test]
+    #[should_panic]
+    fn test_not_fully_qualified_table() {
+        load_diabetes(Some(25));
+
+        let result = std::panic::catch_unwind(|| {
+            let _snapshot =
+                Snapshot::create("diabetes", vec!["target".to_string()], 0.5, Sampling::last);
+        });
+
+        assert!(result.is_err());
     }
 
     #[pg_test]

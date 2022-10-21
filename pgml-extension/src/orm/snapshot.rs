@@ -193,6 +193,10 @@ impl Snapshot {
     ) -> Snapshot {
         let mut snapshot: Option<Snapshot> = None;
         let status = Status::in_progress;
+
+        // Validate table exists.
+        let (_schema_name, _table_name) = Self::fully_qualified_table(relation_name);
+
         Spi::connect(|client| {
             let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4::pgml.sampling, $5::pgml.status) RETURNING id, relation_name, y_column_name, test_size, test_sampling::TEXT, status::TEXT, columns, analysis, created_at, updated_at;",
                 Some(1),
@@ -256,22 +260,61 @@ impl Snapshot {
             .unwrap() as usize
     }
 
+    fn fully_qualified_table(relation_name: &str) -> (String, String) {
+        info!("Validating relation: {}", relation_name);
+
+        let parts = relation_name
+            .split('.')
+            .map(|name| name.to_string())
+            .collect::<Vec<String>>();
+
+        let (schema_name, table_name) = match parts.len() {
+            1 => (None, parts[0].clone()),
+            2 => (Some(parts[0].clone()), parts[1].clone()),
+            _ => error!(
+                "Relation name \"{}\" is not parsable into schema name and table name",
+                relation_name
+            ),
+        };
+
+        match schema_name {
+            None => {
+                let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'public'", vec![
+                    (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
+                ]).unwrap();
+
+                let error = format!("Relation \"{}\" could not be found in the public schema. Please specify the table schema, e.g. pgml.{}", table_name, table_name);
+
+                match table_count {
+                    0 => error!("{}", error),
+                    1 => (String::from("public"), table_name),
+                    _ => error!("{}", error),
+                }
+            }
+
+            Some(schema_name) => {
+                let exists = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = $2", vec![
+                    (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum()),
+                    (PgBuiltInOids::TEXTOID.oid(), schema_name.clone().into_datum()),
+                ]).unwrap();
+
+                if exists == 1 {
+                    (schema_name, table_name)
+                } else {
+                    error!(
+                        "Relation \"{}\".\"{}\" doesn't exist",
+                        schema_name, table_name
+                    );
+                }
+            }
+        }
+    }
+
     #[allow(clippy::format_push_string)]
     fn analyze(&mut self) {
+        let (schema_name, table_name) = Self::fully_qualified_table(&self.relation_name);
+
         Spi::connect(|client| {
-            let parts = self
-                .relation_name
-                .split('.')
-                .map(|name| name.to_string())
-                .collect::<Vec<String>>();
-            let (schema_name, table_name) = match parts.len() {
-                1 => (String::from("public"), parts[0].clone()),
-                2 => (parts[0].clone(), parts[1].clone()),
-                _ => error!(
-                    "Relation name {} is not parsable into schema name and table name",
-                    self.relation_name
-                ),
-            };
             let mut columns: Vec<Column> = Vec::new();
             client.select("SELECT column_name::TEXT, udt_name::TEXT, is_nullable::BOOLEAN, ordinal_position::INTEGER FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position ASC",
                 None,
