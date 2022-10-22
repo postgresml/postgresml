@@ -34,7 +34,6 @@ class ModelView(DetailView):
         if object is None:
             return HttpResponseNotFound("Model not found")
 
-        
         context["title"] = object.project.name + " - " + object.algorithm
         try:  # v1 models have dict columns
             context["features"] = {
@@ -44,7 +43,9 @@ class ModelView(DetailView):
         except AttributeError:  # v2 models have list columns
             context["features"] = {
                 feature: object.snapshot.analysis.get(f"{feature}_p50")
-                for feature in map(lambda column: column["name"], filter(lambda column: not column["label"], object.snapshot.columns))
+                for feature in map(
+                    lambda column: column["name"], filter(lambda column: not column["label"], object.snapshot.columns)
+                )
             }
 
         if object.search and "search_results" in object.metrics:

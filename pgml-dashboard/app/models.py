@@ -150,7 +150,7 @@ class Model(models.Model):
 
     @property
     def key_metric(self):
-        return self.metrics[self.project.key_metric_name] or float('nan')
+        return self.metrics[self.project.key_metric_name] or float("nan")
 
     def live(self):
         last_deployment = Deployment.objects.filter(project=self.project).last()

@@ -106,7 +106,6 @@ def get(request, id):
                     "samples": SafeString(json.dumps(sample)),
                 }
 
-
     # TODO reconsider spaces in column_names, fix during snapshot?
     fixed_columns = OrderedDict()
     for column_name, values in columns.items():
