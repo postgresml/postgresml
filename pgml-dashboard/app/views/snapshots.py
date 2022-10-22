@@ -60,8 +60,7 @@ def get(request, id):
         samples = []
 
     columns = OrderedDict()
-    try:
-        # v1.0 format
+    try:  # v1 snapshots have dict columns
         column_names = sorted(list(snapshot.columns.keys()))
         for target in snapshot.y_column_name:
             column_names.remove(target)
@@ -86,8 +85,7 @@ def get(request, id):
                     "dip": snapshot.analysis[column_name + "_dip"],
                     "samples": SafeString(json.dumps(sample)),
                 }
-    except:
-        # v2.0 format
+    except AttributeError:  # v2 models have list columns
         for column in snapshot.columns:
             column_name = column["name"]
             if "[]" not in column_name:
@@ -98,13 +96,13 @@ def get(request, id):
                 columns[column_name] = {
                     "name": column_name,
                     "type": column["pg_type"],
-                    "q1": snapshot.analysis[column_name + "_p25"],
-                    "median": snapshot.analysis[column_name + "_p50"],
-                    "q3": snapshot.analysis[column_name + "_p75"],
-                    "mean": snapshot.analysis[column_name + "_mean"],
-                    "stddev": snapshot.analysis[column_name + "_stddev"],
-                    "min": snapshot.analysis[column_name + "_min"],
-                    "max": snapshot.analysis[column_name + "_max"],
+                    "q1": snapshot.analysis.get(column_name + "_p25"),
+                    "median": snapshot.analysis.get(column_name + "_p50"),
+                    "q3": snapshot.analysis.get(column_name + "_p75"),
+                    "mean": snapshot.analysis.get(column_name + "_mean"),
+                    "stddev": snapshot.analysis.get(column_name + "_stddev"),
+                    "min": snapshot.analysis.get(column_name + "_min"),
+                    "max": snapshot.analysis.get(column_name + "_max"),
                     "samples": SafeString(json.dumps(sample)),
                 }
 
