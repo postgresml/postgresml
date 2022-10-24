@@ -1,4 +1,6 @@
+-- Exit on error (psql)
 \set ON_ERROR_STOP true
+\timing on
 
 -- Elementwise arithmetic w/ constants
 SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], 3);

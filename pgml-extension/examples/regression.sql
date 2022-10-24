@@ -11,7 +11,7 @@
 
 -- Exit on error (psql)
 \set ON_ERROR_STOP true
-\timing
+\timing on
 
 SELECT pgml.load_dataset('diabetes');
 

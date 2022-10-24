@@ -1,5 +1,6 @@
 -- Exit on error (psql)
 \set ON_ERROR_STOP true
+\timing on
 
 SELECT pgml.load_dataset('breast_cancer');
 
@@ -45,7 +46,8 @@ SELECT malignant, pgml.predict(
         "worst fractal dimension"
     ]
 ) AS prediction
-FROM pgml.breast_cancer 
+FROM pgml.breast_cancer
+ORDER BY random()
 LIMIT 10;
 
 -- view raw class probabilities
@@ -85,6 +87,7 @@ SELECT malignant, pgml.predict_proba(
     ]
 ) AS prediction
 FROM pgml.breast_cancer
+ORDER BY random()
 LIMIT 10;
 
 --
