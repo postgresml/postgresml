@@ -56,7 +56,7 @@ extra_css:
 extra:
     social:
         - icon: fontawesome/brands/github
-          link: https://github.com/postgresml
+          link: https://github.com/postgresml/postgresml
         - icon: fontawesome/brands/discord
           link: https://discord.gg/DmyJP3qJ7U
     generator: false
