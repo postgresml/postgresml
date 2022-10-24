@@ -57,3 +57,6 @@ panic = "unwind"
 opt-level = 3
 lto = "fat"
 codegen-units = 1
+
+[profile.test]
+opt-level = 3
