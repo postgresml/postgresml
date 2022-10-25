@@ -51,6 +51,7 @@ mod tests {
             vec!["target".to_string()],
             0.5,
             Sampling::last,
+            false,
         );
         let classification = Project::create("classification", Task::classification);
         let breast_cancer = Snapshot::create(
@@ -58,6 +59,7 @@ mod tests {
             vec!["malignant".to_string()],
             0.5,
             Sampling::last,
+            false,
         );
 
         let mut regressors = Vec::new();
