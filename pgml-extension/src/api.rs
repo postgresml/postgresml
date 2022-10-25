@@ -112,6 +112,7 @@ fn train(
     test_sampling: default!(Sampling, "'last'"),
     runtime: Option<default!(Runtime, "NULL")>,
     automatic_deploy: Option<default!(bool, true)>,
+    materialize_snapshot: default!(bool, false),
 ) -> impl std::iter::Iterator<
     Item = (
         name!(project, String),
@@ -134,6 +135,7 @@ fn train(
         test_sampling,
         runtime,
         automatic_deploy,
+        materialize_snapshot,
     )
 }
 
@@ -153,6 +155,7 @@ fn train_joint(
     test_sampling: default!(Sampling, "'last'"),
     runtime: Option<default!(Runtime, "NULL")>,
     automatic_deploy: Option<default!(bool, true)>,
+    materialize_snapshot: default!(bool, false),
 ) -> impl std::iter::Iterator<
     Item = (
         name!(project, String),
@@ -196,13 +199,16 @@ fn train_joint(
                     .expect("You must pass a `y_column_name` when you pass a `relation_name`"),
                 test_size,
                 test_sampling,
+                materialize_snapshot,
             );
 
-            info!(
-                "Snapshot of table \"{}\" created and saved in {}",
-                relation_name,
-                snapshot.snapshot_name(),
-            );
+            if materialize_snapshot {
+                info!(
+                    "Snapshot of table \"{}\" created and saved in {}",
+                    relation_name,
+                    snapshot.snapshot_name(),
+                );
+            }
 
             snapshot
         }
@@ -421,6 +427,7 @@ fn snapshot(
         vec![y_column_name.to_string()],
         test_size,
         test_sampling,
+        true,
     );
     vec![(relation_name.to_string(), y_column_name.to_string())].into_iter()
 }
@@ -544,6 +551,7 @@ mod tests {
             vec!["target".to_string()],
             0.5,
             Sampling::last,
+            true,
         );
         assert!(snapshot.id > 0);
     }
@@ -554,8 +562,13 @@ mod tests {
         load_diabetes(Some(25));
 
         let result = std::panic::catch_unwind(|| {
-            let _snapshot =
-                Snapshot::create("diabetes", vec!["target".to_string()], 0.5, Sampling::last);
+            let _snapshot = Snapshot::create(
+                "diabetes",
+                vec!["target".to_string()],
+                0.5,
+                Sampling::last,
+                true,
+            );
         });
 
         assert!(result.is_err());
@@ -587,6 +600,7 @@ mod tests {
                 Sampling::last,
                 Some(runtime),
                 Some(true),
+                false,
             )
             .collect();
 
@@ -624,6 +638,7 @@ mod tests {
                 Sampling::last,
                 Some(runtime),
                 Some(true),
+                false,
             )
             .collect();
 
@@ -661,6 +676,7 @@ mod tests {
                 Sampling::last,
                 Some(runtime),
                 Some(true),
+                true,
             )
             .collect();
 

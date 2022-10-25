@@ -59,6 +59,7 @@ pub struct Snapshot {
     pub analysis: Option<JsonB>,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
+    pub materialized: bool,
 }
 
 // Manually implemented since pgx::JsonB doesn't impl Clone
@@ -81,6 +82,7 @@ impl Clone for Snapshot {
                 .map(|analysis| JsonB(analysis.0.clone())),
             created_at: self.created_at,
             updated_at: self.updated_at,
+            materialized: self.materialized,
         }
     }
 }
@@ -107,7 +109,8 @@ impl Snapshot {
                         snapshots.columns,
                         snapshots.analysis,
                         snapshots.created_at,
-                        snapshots.updated_at 
+                        snapshots.updated_at,
+                        snapshots.materialized
                     FROM pgml.snapshots 
                     WHERE id = $1 
                     ORDER BY snapshots.id DESC 
@@ -129,6 +132,7 @@ impl Snapshot {
                     analysis: result.get_datum(8),
                     created_at: result.get_datum(9).unwrap(),
                     updated_at: result.get_datum(10).unwrap(),
+                    materialized: result.get_datum(11).unwrap(),
                 });
             }
             Ok(Some(1))
@@ -151,7 +155,8 @@ impl Snapshot {
                         snapshots.columns,
                         snapshots.analysis,
                         snapshots.created_at,
-                        snapshots.updated_at 
+                        snapshots.updated_at,
+                        snapshots.materialized
                     FROM pgml.snapshots 
                     JOIN pgml.models
                       ON models.snapshot_id = snapshots.id
@@ -178,6 +183,7 @@ impl Snapshot {
                     analysis: result.get_datum(8),
                     created_at: result.get_datum(9).unwrap(),
                     updated_at: result.get_datum(10).unwrap(),
+                    materialized: result.get_datum(11).unwrap(),
                 });
             }
             Ok(Some(1))
@@ -190,6 +196,7 @@ impl Snapshot {
         y_column_name: Vec<String>,
         test_size: f32,
         test_sampling: Sampling,
+        materialized: bool,
     ) -> Snapshot {
         let mut snapshot: Option<Snapshot> = None;
         let status = Status::in_progress;
@@ -198,7 +205,7 @@ impl Snapshot {
         let (_schema_name, _table_name) = Self::fully_qualified_table(relation_name);
 
         Spi::connect(|client| {
-            let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status) VALUES ($1, $2, $3, $4::pgml.sampling, $5::pgml.status) RETURNING id, relation_name, y_column_name, test_size, test_sampling::TEXT, status::TEXT, columns, analysis, created_at, updated_at;",
+            let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status, materialized) VALUES ($1, $2, $3, $4::pgml.sampling, $5::pgml.status, $6) RETURNING id, relation_name, y_column_name, test_size, test_sampling::TEXT, status::TEXT, columns, analysis, created_at, updated_at;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), relation_name.into_datum()),
@@ -206,6 +213,7 @@ impl Snapshot {
                     (PgBuiltInOids::FLOAT4OID.oid(), test_size.into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), test_sampling.to_string().into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), status.to_string().into_datum()),
+                    (PgBuiltInOids::BOOLOID.oid(), materialized.clone().into_datum()),
                 ])
             ).first();
             let mut s = Snapshot {
@@ -219,15 +227,18 @@ impl Snapshot {
                 analysis: None, // 8
                 created_at: result.get_datum(9).unwrap(),
                 updated_at: result.get_datum(10).unwrap(),
+                materialized,
             };
-            let mut sql = format!(
-                r#"CREATE TABLE "pgml"."snapshot_{}" AS SELECT * FROM {}"#,
-                s.id, s.relation_name
-            );
-            if s.test_sampling == Sampling::random {
-                sql += " ORDER BY random()";
+            if materialized {
+                let mut sql = format!(
+                    r#"CREATE TABLE "pgml"."snapshot_{}" AS SELECT * FROM {}"#,
+                    s.id, s.relation_name
+                );
+                if s.test_sampling == Sampling::random {
+                    sql += " ORDER BY random()";
+                }
+                client.select(&sql, None, None);
             }
-            client.select(&sql, None, None);
             s.analyze();
             snapshot = Some(s);
             Ok(Some(1))
@@ -424,10 +435,7 @@ impl Snapshot {
             }
 
             let stats = stats.join(", ");
-            let sql = format!(
-                r#"SELECT {stats} FROM "pgml"."snapshot_{}" {laterals}"#,
-                self.id
-            );
+            let sql = format!(r#"SELECT {stats} FROM {} {laterals}"#, self.relation_name(),);
             let result = client.select(&sql, Some(1), None).first();
             let mut analysis = HashMap::new();
             for (i, field) in fields.iter().enumerate() {
@@ -476,13 +484,24 @@ impl Snapshot {
             let mut columns: Vec<Column> = serde_json::from_value(json).unwrap();
             columns.sort();
             let sql = format!(
-                "SELECT {} FROM {}",
+                "SELECT {} FROM {} {}",
                 columns
                     .iter()
                     .map(|c| c.quoted_name())
                     .collect::<Vec<String>>()
                     .join(", "),
-                self.snapshot_name()
+                self.relation_name(),
+                match self.materialized {
+                    // If the snapshot is materialized, we already randomized it.
+                    true => "",
+                    false => {
+                        if self.test_sampling == Sampling::random {
+                            "ORDER BY random()"
+                        } else {
+                            ""
+                        }
+                    }
+                },
             );
 
             let mut num_labels: usize = 0;
@@ -623,5 +642,12 @@ impl Snapshot {
 
     pub fn snapshot_name(&self) -> String {
         format!("\"pgml\".\"snapshot_{}\"", self.id)
+    }
+
+    pub fn relation_name(&self) -> String {
+        match self.materialized {
+            true => self.snapshot_name(),
+            false => self.relation_name.clone(),
+        }
     }
 }
