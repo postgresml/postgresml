@@ -261,8 +261,6 @@ impl Snapshot {
     }
 
     fn fully_qualified_table(relation_name: &str) -> (String, String) {
-        info!("Validating relation: {}", relation_name);
-
         let parts = relation_name
             .split('.')
             .map(|name| name.to_string())
