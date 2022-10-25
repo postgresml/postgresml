@@ -98,15 +98,6 @@ class Snapshot(models.Model):
         return self.relation_name
 
     @property
-    def table_type(self):
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"SELECT pg_size_pretty(pg_total_relation_size(%s))",
-                [self.snapshot_name],
-            )
-            return cursor.fetchone()[0]
-
-    @property
     def table_size(self):
         """How big is the snapshot according to Postgres."""
         try:
@@ -115,7 +106,19 @@ class Snapshot(models.Model):
                     f"SELECT pg_size_pretty(pg_total_relation_size(%s))",
                     [self.snapshot_name],
                 )
-                return cursor.fetchone()[0]
+                size = cursor.fetchone()[0]
+                return size
+                # TODO:
+                # Figure out if it's a view (not a table) and
+                # report accordingly.
+                #
+                # This is not a good heuristic:
+                #
+                # if size == "0 bytes":
+                #     # Likely a view that doesn't report size
+                #     return "Unknown"
+                # else:
+                #     return size
         except:
             return 0
 
