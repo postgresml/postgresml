@@ -1,6 +1,7 @@
 /// Module providing various metrics used to rank the algorithms.
-use ndarray::{Array2, ArrayView1};
 use std::collections::{BTreeSet, HashMap};
+
+use ndarray::{Array2, ArrayView1};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Average {
@@ -146,6 +147,10 @@ impl ConfusionMatrix {
         let recall = tp / (tp + fn_);
         let precision = tp / (tp + fp);
 
+        // We risk NaN in f1_micro when precision + recall == 0, because that indicates that
+        // both precision and recall are terrible, and the model is likely broken, so giving
+        // a NaN that is incomparable to other more valid scores will prevent incorrect
+        // comparisons across deceptively comparable scores.
         2. * ((precision * recall) / (precision + recall))
     }
 

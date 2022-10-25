@@ -48,8 +48,8 @@ impl Display for Model {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         write!(
             f,
-            "Model {{ id: {}, algorithm: {:?}, runtime: {:?} }}",
-            self.id, self.algorithm, self.runtime
+            "Model {{ id: {}, task: {:?}, algorithm: {:?}, runtime: {:?} }}",
+            self.id, self.project.task, self.algorithm, self.runtime
         )
     }
 }
@@ -442,8 +442,20 @@ impl Model {
         let mut metrics = IndexMap::new();
         match self.project.task {
             Task::regression => {
-                // #[cfg(feature = "python")]
-                // let sklearn_metrics = crate::bindings::sklearn::regression_metrics(&y_test, &y_hat);
+                #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
+                {
+                    let sklearn_metrics =
+                        crate::bindings::sklearn::regression_metrics(&y_test, &y_hat);
+                    metrics.insert("sklearn_r2".to_string(), sklearn_metrics["r2"]);
+                    metrics.insert(
+                        "sklearn_mean_absolute_error".to_string(),
+                        sklearn_metrics["mae"],
+                    );
+                    metrics.insert(
+                        "sklearn_mean_squared_error".to_string(),
+                        sklearn_metrics["mse"],
+                    );
+                }
 
                 let y_test = ArrayView1::from(&y_test);
                 let y_hat = ArrayView1::from(&y_hat);
@@ -457,34 +469,34 @@ impl Model {
                     "mean_squared_error".to_string(),
                     y_hat.mean_squared_error(&y_test).unwrap(),
                 );
-
-                // #[cfg(feature = "python")]
-                // metrics.insert("sklearn_r2".to_string(), sklearn_metrics["r2"]);
-
-                // #[cfg(feature = "python")]
-                // metrics.insert(
-                //     "sklearn_mean_absolute_error".to_string(),
-                //     sklearn_metrics["mae"],
-                // );
-
-                // #[cfg(feature = "python")]
-                // metrics.insert(
-                //     "sklearn_mean_squared_error".to_string(),
-                //     sklearn_metrics["mse"],
-                // );
             }
             Task::classification => {
-                // #[cfg(feature = "python")]
-                // let sklearn_metrics = crate::bindings::sklearn::classification_metrics(
-                //     &y_test,
-                //     &y_hat,
-                //     dataset.num_distinct_labels,
-                // );
+                #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
+                {
+                    let sklearn_metrics = crate::bindings::sklearn::classification_metrics(
+                        &y_test,
+                        &y_hat,
+                        dataset.num_distinct_labels,
+                    );
 
-                // You can always compare Scikit's confusion matrix to ours
-                // for debugging.
-                // #[cfg(feature = "python")]
-                // let _sklearn_conf = crate::bindings::sklearn::confusion_matrix(&y_test, &y_hat);
+                    if dataset.num_distinct_labels == 2 {
+                        metrics.insert("sklearn_roc_auc".to_string(), sklearn_metrics["roc_auc"]);
+                    }
+
+                    metrics.insert("sklearn_f1".to_string(), sklearn_metrics["f1"]);
+                    metrics.insert("sklearn_f1_micro".to_string(), sklearn_metrics["f1_micro"]);
+                    metrics.insert(
+                        "sklearn_precision".to_string(),
+                        sklearn_metrics["precision"],
+                    );
+                    metrics.insert("sklearn_recall".to_string(), sklearn_metrics["recall"]);
+                    metrics.insert("sklearn_accuracy".to_string(), sklearn_metrics["accuracy"]);
+                    metrics.insert("sklearn_mcc".to_string(), sklearn_metrics["mcc"]);
+
+                    // You can always compare Scikit's confusion matrix to ours
+                    // for debugging.
+                    // let _sklearn_conf = crate::bindings::sklearn::confusion_matrix(&y_test, &y_hat);
+                }
 
                 if dataset.num_distinct_labels == 2 {
                     let y_hat = ArrayView1::from(&y_hat).mapv(Pr::new);
@@ -495,9 +507,6 @@ impl Model {
                         y_hat.roc(&y_test).unwrap().area_under_curve(),
                     );
                     metrics.insert("log_loss".to_string(), y_hat.log_loss(&y_test).unwrap());
-
-                    // #[cfg(feature = "python")]
-                    // metrics.insert("sklearn_roc_auc".to_string(), sklearn_metrics["roc_auc"]);
                 }
 
                 let y_hat: Vec<usize> = y_hat.into_iter().map(|i| i.round() as usize).collect();
@@ -526,22 +535,6 @@ impl Model {
 
                 // This one is inaccurate, I have it in my TODO to reimplement.
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
-
-                // #[cfg(feature = "python")]
-                // metrics.insert("sklearn_f1".to_string(), sklearn_metrics["f1"]);
-                // #[cfg(feature = "python")]
-                // metrics.insert("sklearn_f1_micro".to_string(), sklearn_metrics["f1_micro"]);
-                // #[cfg(feature = "python")]
-                // metrics.insert(
-                //     "sklearn_precision".to_string(),
-                //     sklearn_metrics["precision"],
-                // );
-                // #[cfg(feature = "python")]
-                // metrics.insert("sklearn_recall".to_string(), sklearn_metrics["recall"]);
-                // #[cfg(feature = "python")]
-                // metrics.insert("sklearn_accuracy".to_string(), sklearn_metrics["accuracy"]);
-                // #[cfg(feature = "python")]
-                // metrics.insert("sklearn_mcc".to_string(), sklearn_metrics["mcc"]);
             }
         }
 
@@ -569,14 +562,55 @@ impl Model {
 
         metrics.insert("fit_time".to_string(), fit_time.as_secs_f32());
         metrics.insert("score_time".to_string(), score_time.as_secs_f32());
-        info!(
-            "Metrics: {}",
-            serde_json::to_string_pretty(&metrics).unwrap()
-        );
+        info!("Metrics: {:?}", &metrics);
 
         let mut bindings = None;
         std::mem::swap(&mut self.bindings, &mut bindings);
         (bindings.unwrap(), metrics)
+    }
+
+    pub fn fit_time(&self) -> f32 {
+        self.metrics
+            .as_ref()
+            .unwrap()
+            .0
+            .get("fit_time")
+            .unwrap()
+            .as_f64()
+            .unwrap() as f32
+    }
+
+    pub fn score_time(&self) -> f32 {
+        self.metrics
+            .as_ref()
+            .unwrap()
+            .0
+            .get("score_time")
+            .unwrap()
+            .as_f64()
+            .unwrap() as f32
+    }
+
+    pub fn f1(&self) -> f32 {
+        self.metrics
+            .as_ref()
+            .unwrap()
+            .0
+            .get("f1")
+            .unwrap()
+            .as_f64()
+            .unwrap() as f32
+    }
+
+    pub fn r2(&self) -> f32 {
+        self.metrics
+            .as_ref()
+            .unwrap()
+            .0
+            .get("r2")
+            .unwrap()
+            .as_f64()
+            .unwrap() as f32
     }
 
     fn fit(&mut self, dataset: &Dataset) {
