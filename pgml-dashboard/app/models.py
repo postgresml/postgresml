@@ -67,6 +67,7 @@ class Snapshot(models.Model):
     analysis = models.JSONField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    materialized = models.BooleanField()
 
     class Meta:
         db_table = '"pgml"."snapshots"'
@@ -125,7 +126,10 @@ class Snapshot(models.Model):
 
     @property
     def snapshot_name(self):
-        return f"snapshot_{self.id}"
+        if self.materialized:
+            return f"snapshot_{self.id}"
+        else:
+            return self.relation_name
 
 
 class Model(models.Model):
