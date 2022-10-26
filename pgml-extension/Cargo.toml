@@ -15,6 +15,7 @@ pg13 = ["pgx/pg13", "pgx-tests/pg13" ]
 pg14 = ["pgx/pg14", "pgx-tests/pg14" ]
 pg_test = []
 python = ["pyo3"]
+cuda = ["xgboost/cuda"]
 
 [dependencies]
 pgx = "=0.4.5"
@@ -60,6 +61,3 @@ codegen-units = 1
 
 [profile.test]
 opt-level = 3
-
-[features]
-cuda = ["xgboost/cuda"]
