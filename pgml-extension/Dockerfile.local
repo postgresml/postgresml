@@ -4,7 +4,7 @@ MAINTAINER team@postgresml.com
 RUN apt-get update
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-RUN apt-get update && apt-get install -y curl lsb-release  python3 python3-pip  tzdata sudo cmake libpq-dev libclang-dev wget postgresql-plpython3-14 postgresql-14
+RUN apt-get update && apt-get install -y curl lsb-release python3 python3-pip tzdata sudo cmake libpq-dev libclang-dev wget postgresql-plpython3-14 postgresql-14
 
 RUN echo "deb [trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" >> /etc/apt/sources.list
 RUN cat /etc/apt/sources.list

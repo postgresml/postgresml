@@ -48,8 +48,8 @@ impl Display for Model {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         write!(
             f,
-            "Model {{ id: {}, algorithm: {:?}, runtime: {:?} }}",
-            self.id, self.algorithm, self.runtime
+            "Model {{ id: {}, task: {:?}, algorithm: {:?}, runtime: {:?} }}",
+            self.id, self.project.task, self.algorithm, self.runtime
         )
     }
 }
@@ -457,6 +457,21 @@ impl Model {
         let mut metrics = IndexMap::new();
         match self.project.task {
             Task::regression => {
+                #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
+                {
+                    let sklearn_metrics =
+                        crate::bindings::sklearn::regression_metrics(&y_test, &y_hat);
+                    metrics.insert("sklearn_r2".to_string(), sklearn_metrics["r2"]);
+                    metrics.insert(
+                        "sklearn_mean_absolute_error".to_string(),
+                        sklearn_metrics["mae"],
+                    );
+                    metrics.insert(
+                        "sklearn_mean_squared_error".to_string(),
+                        sklearn_metrics["mse"],
+                    );
+                }
+
                 let y_test = ArrayView1::from(&y_test);
                 let y_hat = ArrayView1::from(&y_hat);
 
@@ -471,9 +486,37 @@ impl Model {
                 );
             }
             Task::classification => {
+                #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
+                {
+                    let sklearn_metrics = crate::bindings::sklearn::classification_metrics(
+                        &y_test,
+                        &y_hat,
+                        dataset.num_distinct_labels,
+                    );
+
+                    if dataset.num_distinct_labels == 2 {
+                        metrics.insert("sklearn_roc_auc".to_string(), sklearn_metrics["roc_auc"]);
+                    }
+
+                    metrics.insert("sklearn_f1".to_string(), sklearn_metrics["f1"]);
+                    metrics.insert("sklearn_f1_micro".to_string(), sklearn_metrics["f1_micro"]);
+                    metrics.insert(
+                        "sklearn_precision".to_string(),
+                        sklearn_metrics["precision"],
+                    );
+                    metrics.insert("sklearn_recall".to_string(), sklearn_metrics["recall"]);
+                    metrics.insert("sklearn_accuracy".to_string(), sklearn_metrics["accuracy"]);
+                    metrics.insert("sklearn_mcc".to_string(), sklearn_metrics["mcc"]);
+
+                    // You can always compare Scikit's confusion matrix to ours
+                    // for debugging.
+                    // let _sklearn_conf = crate::bindings::sklearn::confusion_matrix(&y_test, &y_hat);
+                }
+
                 if dataset.num_distinct_labels == 2 {
                     let y_hat = ArrayView1::from(&y_hat).mapv(Pr::new);
                     let y_test: Vec<bool> = y_test.iter().map(|&i| i == 1.).collect();
+
                     metrics.insert(
                         "roc_auc".to_string(),
                         y_hat.roc(&y_test).unwrap().area_under_curve(),
@@ -485,11 +528,27 @@ impl Model {
                 let y_test: Vec<usize> = y_test.iter().map(|i| i.round() as usize).collect();
                 let y_hat = ArrayView1::from(&y_hat);
                 let y_test = ArrayView1::from(&y_test);
+
+                // This one is buggy (Linfa).
                 let confusion_matrix = y_hat.confusion_matrix(y_test).unwrap();
-                metrics.insert("f1".to_string(), confusion_matrix.f1_score());
-                metrics.insert("precision".to_string(), confusion_matrix.precision());
-                metrics.insert("recall".to_string(), confusion_matrix.recall());
-                metrics.insert("accuracy".to_string(), confusion_matrix.accuracy());
+
+                // This has to be identical to Scikit.
+                let pgml_confusion_matrix = crate::metrics::ConfusionMatrix::new(
+                    &y_test,
+                    &y_hat,
+                    dataset.num_distinct_labels,
+                );
+
+                // These are validated against Scikit and seem to be correct.
+                metrics.insert(
+                    "f1".to_string(),
+                    pgml_confusion_matrix.f1(crate::metrics::Average::Macro),
+                );
+                metrics.insert("precision".to_string(), pgml_confusion_matrix.precision());
+                metrics.insert("recall".to_string(), pgml_confusion_matrix.recall());
+                metrics.insert("accuracy".to_string(), pgml_confusion_matrix.accuracy());
+
+                // This one is inaccurate, I have it in my TODO to reimplement.
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
             }
         }
@@ -518,14 +577,55 @@ impl Model {
 
         metrics.insert("fit_time".to_string(), fit_time.as_secs_f32());
         metrics.insert("score_time".to_string(), score_time.as_secs_f32());
-        info!(
-            "Metrics: {}",
-            serde_json::to_string_pretty(&metrics).unwrap()
-        );
+        info!("Metrics: {:?}", &metrics);
 
         let mut bindings = None;
         std::mem::swap(&mut self.bindings, &mut bindings);
         (bindings.unwrap(), metrics)
+    }
+
+    pub fn fit_time(&self) -> f32 {
+        self.metrics
+            .as_ref()
+            .unwrap()
+            .0
+            .get("fit_time")
+            .unwrap()
+            .as_f64()
+            .unwrap() as f32
+    }
+
+    pub fn score_time(&self) -> f32 {
+        self.metrics
+            .as_ref()
+            .unwrap()
+            .0
+            .get("score_time")
+            .unwrap()
+            .as_f64()
+            .unwrap() as f32
+    }
+
+    pub fn f1(&self) -> f32 {
+        self.metrics
+            .as_ref()
+            .unwrap()
+            .0
+            .get("f1")
+            .unwrap()
+            .as_f64()
+            .unwrap() as f32
+    }
+
+    pub fn r2(&self) -> f32 {
+        self.metrics
+            .as_ref()
+            .unwrap()
+            .0
+            .get("r2")
+            .unwrap()
+            .as_f64()
+            .unwrap() as f32
     }
 
     fn fit(&mut self, dataset: &Dataset) {

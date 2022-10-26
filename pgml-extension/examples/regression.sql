@@ -11,7 +11,7 @@
 
 -- Exit on error (psql)
 \set ON_ERROR_STOP true
-\timing
+\timing on
 
 SELECT pgml.load_dataset('diabetes');
 
@@ -49,7 +49,7 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lasso');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'elastic_net');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'least_angle');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lasso_least_angle');
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'orthoganl_matching_pursuit');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'orthogonal_matching_pursuit');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'bayesian_ridge');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'automatic_relevance_determination');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'stochastic_gradient_descent');

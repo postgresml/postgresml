@@ -7,6 +7,8 @@
 ///
 /// Our implementation below calls into Python wrappers
 /// defined in `src/bindings/sklearn.py`.
+use std::collections::HashMap;
+
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
@@ -446,4 +448,130 @@ impl Bindings for Estimator {
     }
 
     fn update_params(&mut self, _task: Task, _hyperparams: &Hyperparams, _num_classes: usize) {}
+}
+
+fn sklearn_metric(name: &str, ground_truth: &[f32], y_hat: &[f32]) -> f32 {
+    let module = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/bindings/sklearn.py"
+    ));
+
+    Python::with_gil(|py| -> f32 {
+        let module = PyModule::from_code(py, module, "", "").unwrap();
+        let calculate_metric = module.getattr("calculate_metric").unwrap();
+        let wrapper: Py<PyAny> = calculate_metric
+            .call1(PyTuple::new(py, &[name]))
+            .unwrap()
+            .extract()
+            .unwrap();
+
+        let score: f32 = wrapper
+            .call1(py, PyTuple::new(py, &[ground_truth, y_hat]))
+            .unwrap()
+            .extract(py)
+            .unwrap();
+
+        score
+    })
+}
+
+pub fn f1(ground_truth: &[f32], y_hat: &[f32]) -> f32 {
+    sklearn_metric("f1", ground_truth, y_hat)
+}
+
+pub fn r2(ground_truth: &[f32], y_hat: &[f32]) -> f32 {
+    sklearn_metric("r2", ground_truth, y_hat)
+}
+
+pub fn precision(ground_truth: &[f32], y_hat: &[f32]) -> f32 {
+    sklearn_metric("precision", ground_truth, y_hat)
+}
+
+pub fn recall(ground_truth: &[f32], y_hat: &[f32]) -> f32 {
+    sklearn_metric("recall", ground_truth, y_hat)
+}
+
+pub fn confusion_matrix(ground_truth: &[f32], y_hat: &[f32]) -> Vec<Vec<f32>> {
+    let module = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/bindings/sklearn.py"
+    ));
+
+    Python::with_gil(|py| -> Vec<Vec<f32>> {
+        let module = PyModule::from_code(py, module, "", "").unwrap();
+        let calculate_metric = module.getattr("calculate_metric").unwrap();
+        let wrapper: Py<PyAny> = calculate_metric
+            .call1(PyTuple::new(py, &["confusion_matrix"]))
+            .unwrap()
+            .extract()
+            .unwrap();
+
+        let matrix: Vec<Vec<f32>> = wrapper
+            .call1(py, PyTuple::new(py, &[ground_truth, y_hat]))
+            .unwrap()
+            .extract(py)
+            .unwrap();
+
+        matrix
+    })
+}
+
+pub fn regression_metrics(ground_truth: &[f32], y_hat: &[f32]) -> HashMap<String, f32> {
+    let module = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/bindings/sklearn.py"
+    ));
+
+    Python::with_gil(|py| -> HashMap<String, f32> {
+        let module = PyModule::from_code(py, module, "", "").unwrap();
+        let calculate_metric = module.getattr("regression_metrics").unwrap();
+        let scores: HashMap<String, f32> = calculate_metric
+            .call1(PyTuple::new(py, &[ground_truth, y_hat]))
+            .unwrap()
+            .extract()
+            .unwrap();
+
+        scores
+    })
+}
+
+pub fn classification_metrics(
+    ground_truth: &[f32],
+    y_hat: &[f32],
+    num_classes: usize,
+) -> HashMap<String, f32> {
+    let module = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/bindings/sklearn.py"
+    ));
+
+    let mut scores = Python::with_gil(|py| -> HashMap<String, f32> {
+        let module = PyModule::from_code(py, module, "", "").unwrap();
+        let calculate_metric = module.getattr("classification_metrics").unwrap();
+        let scores: HashMap<String, f32> = calculate_metric
+            .call1(PyTuple::new(py, &[ground_truth, y_hat]))
+            .unwrap()
+            .extract()
+            .unwrap();
+
+        scores
+    });
+
+    if num_classes == 2 {
+        let roc_auc = sklearn_metric("roc_auc", ground_truth, y_hat);
+        scores.insert("roc_auc".to_string(), roc_auc);
+    }
+
+    scores
+}
+
+pub fn package_version(name: &str) -> String {
+    let mut version = String::new();
+
+    Python::with_gil(|py| {
+        let package = py.import(name).unwrap();
+        version = package.getattr("__version__").unwrap().extract().unwrap();
+    });
+
+    version
 }

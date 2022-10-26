@@ -1,6 +1,6 @@
 [package]
 name = "pgml"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2021"
 
 [lib]
@@ -15,10 +15,11 @@ pg13 = ["pgx/pg13", "pgx-tests/pg13" ]
 pg14 = ["pgx/pg14", "pgx-tests/pg14" ]
 pg_test = []
 python = ["pyo3"]
+cuda = ["xgboost/cuda"]
 
 [dependencies]
 pgx = "=0.4.5"
-xgboost = { git="https://github.com/postgresml/rust-xgboost.git" }
+xgboost = { git="https://github.com/postgresml/rust-xgboost.git", branch = "master" }
 once_cell = "1"
 rand = "0.8"
 ndarray = { version = "0.15.6", features = ["serde", "blas"] }
@@ -57,3 +58,6 @@ panic = "unwind"
 opt-level = 3
 lto = "fat"
 codegen-units = 1
+
+[profile.test]
+opt-level = 3

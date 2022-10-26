@@ -1,17 +1,17 @@
 ---
---- Test our functions.
+--- Create the extension and load sample data into a database.
 ---
 --- Usage:
 ---
 ---   $ cargo pgx run --release
----   $ psql -P pager-off -h localhost -p 28813 -d pgml -f tests/test.sql
+---   $ psql -P pager-off -h localhost -p 28813 -d pgml -f sql/setup_examples.sql
 ---
 \set ON_ERROR_STOP true
 \timing on
 
--- Reset the test database to a clean state on each run.
-DROP EXTENSION IF EXISTS pgml CASCADE;
-DROP SCHEMA IF EXISTS pgml CASCADE;
+-- The intention is to only allow setup_examples.sql to run on a database that
+-- has not had example data installed before, e.g. docker run. This should
+-- error and stop the process if the extension is already present.
 CREATE EXTENSION pgml;
 
 SELECT pgml.load_dataset('breast_cancer');
@@ -26,4 +26,3 @@ SELECT pgml.load_dataset('wine');
 \i examples/joint_regression.sql
 \i examples/multi_classification.sql
 \i examples/regression.sql
-\i examples/vectors.sql

@@ -7,11 +7,13 @@ use pgx::*;
 use pyo3::prelude::*;
 use serde_json::json;
 
+#[cfg(feature = "python")]
+use crate::bindings::sklearn::package_version;
 use crate::orm::*;
 
 #[cfg(feature = "python")]
 #[pg_extern]
-pub fn validate_python_dependencies() {
+pub fn validate_python_dependencies() -> bool {
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys").unwrap();
         let version: String = sys.getattr("version").unwrap().extract().unwrap();
@@ -28,17 +30,32 @@ pub fn validate_python_dependencies() {
         }
     });
 
-    let sklearn_version = sklearn_version();
-
     info!(
-        "Scikit-learn {}, XGBoost 1.62, LightGBM 3.3.2",
-        sklearn_version
+        "Scikit-learn {}, XGBoost {}, LightGBM {}, NumPy {}",
+        package_version("sklearn"),
+        package_version("xgboost"),
+        package_version("lightgbm"),
+        package_version("numpy"),
     );
+
+    true
 }
 
 #[cfg(not(feature = "python"))]
 #[pg_extern]
 pub fn validate_python_dependencies() {}
+
+#[cfg(feature = "python")]
+#[pg_extern]
+pub fn python_package_version(name: &str) -> String {
+    package_version(name)
+}
+
+#[cfg(not(feature = "python"))]
+#[pg_extern]
+pub fn python_package_version(name: &str) {
+    error!("Python is not installed, recompile with `--features python`");
+}
 
 #[pg_extern]
 pub fn validate_shared_library() {
@@ -53,25 +70,6 @@ pub fn validate_shared_library() {
     if !shared_preload_libraries.contains("pgml") {
         error!("`pgml` must be added to `shared_preload_libraries` setting or models cannot be deployed");
     }
-}
-
-#[cfg(feature = "python")]
-#[pg_extern]
-pub fn sklearn_version() -> String {
-    let mut version = String::new();
-
-    Python::with_gil(|py| {
-        let sklearn = py.import("sklearn").unwrap();
-        version = sklearn.getattr("__version__").unwrap().extract().unwrap();
-    });
-
-    version
-}
-
-#[cfg(not(feature = "python"))]
-#[pg_extern]
-pub fn sklearn_version() -> String {
-    String::from("Scikit-learn is not installed, recompile with `--features python`")
 }
 
 #[cfg(feature = "python")]
@@ -114,6 +112,7 @@ fn train(
     test_sampling: default!(Sampling, "'last'"),
     runtime: Option<default!(Runtime, "NULL")>,
     automatic_deploy: Option<default!(bool, true)>,
+    materialize_snapshot: default!(bool, false),
 ) -> impl std::iter::Iterator<
     Item = (
         name!(project, String),
@@ -136,6 +135,7 @@ fn train(
         test_sampling,
         runtime,
         automatic_deploy,
+        materialize_snapshot,
     )
 }
 
@@ -155,6 +155,7 @@ fn train_joint(
     test_sampling: default!(Sampling, "'last'"),
     runtime: Option<default!(Runtime, "NULL")>,
     automatic_deploy: Option<default!(bool, true)>,
+    materialize_snapshot: default!(bool, false),
 ) -> impl std::iter::Iterator<
     Item = (
         name!(project, String),
@@ -198,13 +199,16 @@ fn train_joint(
                     .expect("You must pass a `y_column_name` when you pass a `relation_name`"),
                 test_size,
                 test_sampling,
+                materialize_snapshot,
             );
 
-            info!(
-                "Snapshot of table \"{}\" created and saved in {}",
-                relation_name,
-                snapshot.snapshot_name(),
-            );
+            if materialize_snapshot {
+                info!(
+                    "Snapshot of table \"{}\" created and saved in {}",
+                    relation_name,
+                    snapshot.snapshot_name(),
+                );
+            }
 
             snapshot
         }
@@ -428,6 +432,7 @@ fn snapshot(
         vec![y_column_name.to_string()],
         test_size,
         test_sampling,
+        true,
     );
     vec![(relation_name.to_string(), y_column_name.to_string())].into_iter()
 }
@@ -479,12 +484,59 @@ pub fn transform_string(
     ))
 }
 
+#[cfg(feature = "python")]
+#[pg_extern(name = "sklearn_f1_score")]
+pub fn sklearn_f1_score(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> f32 {
+    crate::bindings::sklearn::f1(&ground_truth, &y_hat)
+}
+
+#[cfg(feature = "python")]
+#[pg_extern(name = "sklearn_r2_score")]
+pub fn sklearn_r2_score(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> f32 {
+    crate::bindings::sklearn::r2(&ground_truth, &y_hat)
+}
+
+#[cfg(feature = "python")]
+#[pg_extern(name = "sklearn_regression_metrics")]
+pub fn sklearn_regression_metrics(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> JsonB {
+    JsonB(
+        serde_json::from_str(
+            &serde_json::to_string(&crate::bindings::sklearn::regression_metrics(
+                &ground_truth,
+                &y_hat,
+            ))
+            .unwrap(),
+        )
+        .unwrap(),
+    )
+}
+
+#[cfg(feature = "python")]
+#[pg_extern(name = "sklearn_classification_metrics")]
+pub fn sklearn_classification_metrics(
+    ground_truth: Vec<f32>,
+    y_hat: Vec<f32>,
+    num_classes: i64,
+) -> JsonB {
+    JsonB(
+        serde_json::from_str(
+            &serde_json::to_string(&crate::bindings::sklearn::classification_metrics(
+                &ground_truth,
+                &y_hat,
+                num_classes as usize,
+            ))
+            .unwrap(),
+        )
+        .unwrap(),
+    )
+}
+
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
     use super::*;
     use crate::orm::algorithm::Algorithm;
-    use crate::orm::dataset::{load_diabetes, load_digits};
+    use crate::orm::dataset::{load_breast_cancer, load_diabetes, load_digits};
     use crate::orm::runtime::Runtime;
     use crate::orm::sampling::Sampling;
     use crate::orm::Hyperparams;
@@ -498,13 +550,33 @@ mod tests {
     #[pg_test]
     fn test_snapshot_lifecycle() {
         load_diabetes(Some(25));
+
         let snapshot = Snapshot::create(
             "pgml.diabetes",
             vec!["target".to_string()],
             0.5,
             Sampling::last,
+            true,
         );
         assert!(snapshot.id > 0);
+    }
+
+    #[pg_test]
+    #[should_panic]
+    fn test_not_fully_qualified_table() {
+        load_diabetes(Some(25));
+
+        let result = std::panic::catch_unwind(|| {
+            let _snapshot = Snapshot::create(
+                "diabetes",
+                vec!["target".to_string()],
+                0.5,
+                Sampling::last,
+                true,
+            );
+        });
+
+        assert!(result.is_err());
     }
 
     #[pg_test]
@@ -533,6 +605,7 @@ mod tests {
                 Sampling::last,
                 Some(runtime),
                 Some(true),
+                false,
             )
             .collect();
 
@@ -545,7 +618,7 @@ mod tests {
     }
 
     #[pg_test]
-    fn test_train_classification() {
+    fn test_train_multiclass_classification() {
         load_digits(None);
 
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
@@ -570,11 +643,50 @@ mod tests {
                 Sampling::last,
                 Some(runtime),
                 Some(true),
+                false,
             )
             .collect();
 
             assert_eq!(result.len(), 1);
             assert_eq!(result[0].0, String::from("Test project 2"));
+            assert_eq!(result[0].1, String::from("classification"));
+            assert_eq!(result[0].2, String::from("xgboost"));
+            // assert_eq!(result[0].3, true);
+        }
+    }
+
+    #[pg_test]
+    fn test_train_binary_classification() {
+        load_breast_cancer(None);
+
+        // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
+        // to test deployments.
+        let setting =
+            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'");
+
+        info!("Data directory: {}", setting.unwrap());
+
+        for runtime in [Runtime::python, Runtime::rust] {
+            let result: Vec<(String, String, String, bool)> = train(
+                "Test project 3",
+                Some(Task::classification),
+                Some("pgml.breast_cancer"),
+                Some("malignant"),
+                Algorithm::xgboost,
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                None,
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
+                0.25,
+                Sampling::last,
+                Some(runtime),
+                Some(true),
+                true,
+            )
+            .collect();
+
+            assert_eq!(result.len(), 1);
+            assert_eq!(result[0].0, String::from("Test project 3"));
             assert_eq!(result[0].1, String::from("classification"));
             assert_eq!(result[0].2, String::from("xgboost"));
             // assert_eq!(result[0].3, true);
