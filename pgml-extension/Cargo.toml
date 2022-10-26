@@ -18,7 +18,7 @@ python = ["pyo3"]
 
 [dependencies]
 pgx = "=0.4.5"
-xgboost = { git="https://github.com/postgresml/rust-xgboost.git" }
+xgboost = { git="https://github.com/postgresml/rust-xgboost.git", rev = "13fb2a7302a51d3e2e35238a3cb274373e38c100", features = ["cuda"] }
 once_cell = "1"
 rand = "0.8"
 ndarray = { version = "0.15.6", features = ["serde", "blas"] }
