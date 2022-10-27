@@ -8,7 +8,7 @@ ARG PGVERSION=14
 ARG DEBIAN_FRONTEND=noninteractive
 ARG PACKAGE_VERSION=2.0.0
 ARG PACKAGE_PYTHON=true
-ARG PACKAGE_CUDA=true
+ARG PACKAGE_CUDA=false
 ENV TZ=Etc/UTC
 
 # Apt-fast
@@ -30,7 +30,6 @@ RUN echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https:
 RUN apt-get update && apt-fast install postgresql-${PGVERSION} libopenblas-dev cmake postgresql-server-dev-${PGVERSION} pkg-config libssl-dev build-essential libclang-dev clang libpython3-dev python3-dev -y
 
 # CUDA
-# ARM64
 COPY docker/install_cuda.sh install_cuda.sh
 RUN bash install_cuda.sh
 

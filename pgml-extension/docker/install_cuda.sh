@@ -10,7 +10,7 @@ else
 fi
 
 # ARM
-if [[ ${ARCH} == "aarch64" ]]; then
+if [[ ${ARCH} == "arm64" ]]; then
     wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/sbsa/cuda-keyring_1.0-1_all.deb
 fi
 
