@@ -15,10 +15,11 @@ pg13 = ["pgx/pg13", "pgx-tests/pg13" ]
 pg14 = ["pgx/pg14", "pgx-tests/pg14" ]
 pg_test = []
 python = ["pyo3"]
+cuda = ["xgboost/cuda", "lightgbm/cuda"]
 
 [dependencies]
 pgx = "=0.4.5"
-xgboost = { git="https://github.com/postgresml/rust-xgboost.git" }
+xgboost = { git="https://github.com/postgresml/rust-xgboost.git", branch = "master" }
 once_cell = "1"
 rand = "0.8"
 ndarray = { version = "0.15.6", features = ["serde", "blas"] }
@@ -32,7 +33,7 @@ rmp-serde = { version = "1.1.0" }
 typetag = "0.2"
 pyo3 = { version = "0.17", features = ["auto-initialize"], optional = true }
 heapless = "0.7.13"
-lightgbm = { git="https://github.com/postgresml/lightgbm-rs" }
+lightgbm = { git="https://github.com/postgresml/lightgbm-rs", branch = "main" }
 parking_lot = "0.12"
 itertools = "*"
 linfa = { path = "deps/linfa" }
