@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [features]
-default = ["pg13", "python"]
+default = ["pg13", "python", "cuda"]
 pg10 = ["pgx/pg10", "pgx-tests/pg10" ]
 pg11 = ["pgx/pg11", "pgx-tests/pg11" ]
 pg12 = ["pgx/pg12", "pgx-tests/pg12" ]
