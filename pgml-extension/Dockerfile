@@ -30,10 +30,9 @@ RUN echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https:
 RUN apt-get update && apt-fast install postgresql-${PGVERSION} libopenblas-dev cmake postgresql-server-dev-${PGVERSION} pkg-config libssl-dev build-essential libclang-dev clang libpython3-dev python3-dev -y
 
 # CUDA
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
-RUN dpkg -i cuda-keyring_1.0-1_all.deb
-RUN apt-get update
-RUN apt-get -y install cuda
+# ARM64
+COPY docker/install_cuda.sh install_cuda.sh
+RUN bash install_cuda.sh
 
 USER postgres
 
