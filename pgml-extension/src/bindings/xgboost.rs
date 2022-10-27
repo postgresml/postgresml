@@ -274,8 +274,23 @@ impl Bindings for Estimator {
             // backward compatibility w/ 2.0.0
             estimator = Booster::load_buffer(&bytes[16..]);
         }
-        Box::new(Estimator {
-            estimator: estimator.unwrap(),
-        })
+
+        let mut estimator = estimator.unwrap();
+
+        // Get concurrency setting
+        let concurrency: i64 = Spi::get_one(
+            "
+            SELECT COALESCE(
+                current_setting('pgml.predict_concurrency', true),
+                '2'
+            )::bigint",
+        )
+        .unwrap();
+
+        estimator
+            .set_param("nthread", &concurrency.to_string())
+            .expect("could not set nthread XGBoost parameter");
+
+        Box::new(Estimator { estimator })
     }
 }
