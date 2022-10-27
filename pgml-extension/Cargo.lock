@@ -3255,7 +3255,7 @@ checksum = "f40009d85759725a34da6d89a94e63d7bdc50a862acf0dbc7c8e488f1edcb6f5"
 [[package]]
 name = "xgboost"
 version = "0.2.0"
-source = "git+https://github.com/postgresml/rust-xgboost.git?branch=master#074896f106c944866ad3fbe4a0f0bed9d4a3dc74"
+source = "git+https://github.com/postgresml/rust-xgboost.git?branch=master#8f3a8fb7a60f7a63c787c1767dad9480a9eaa829"
 dependencies = [
  "derive_builder 0.11.2",
  "indexmap",
@@ -3268,7 +3268,7 @@ dependencies = [
 [[package]]
 name = "xgboost-sys"
 version = "0.2.0"
-source = "git+https://github.com/postgresml/rust-xgboost.git?branch=master#074896f106c944866ad3fbe4a0f0bed9d4a3dc74"
+source = "git+https://github.com/postgresml/rust-xgboost.git?branch=master#8f3a8fb7a60f7a63c787c1767dad9480a9eaa829"
 dependencies = [
  "bindgen 0.61.0",
  "cmake",
