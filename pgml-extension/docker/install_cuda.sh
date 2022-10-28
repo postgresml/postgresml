@@ -2,6 +2,9 @@
 #
 # Install CUDA.
 #
+set -e
+
+UBUNTU_VERSION=$(lsb_release -a | grep Release | awk '{ print $2 }')
 
 if [[ $(uname -a) == *"aarch64"* ]]; then
     ARCH="arm64"
