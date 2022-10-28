@@ -31,7 +31,7 @@ RUN apt-get update && apt-fast install postgresql-${PGVERSION} libopenblas-dev c
 
 # CUDA
 COPY docker/install_cuda.sh install_cuda.sh
-RUN bash install_cuda.sh
+RUN UBUNTU_VERSION=${UBUNTU_VERSION} bash install_cuda.sh
 
 USER postgres
 
