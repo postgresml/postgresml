@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
+use std::time::Instant;
 
 use indexmap::IndexMap;
 use pgx::*;
@@ -348,6 +349,7 @@ impl Snapshot {
 
     #[allow(clippy::format_push_string)]
     fn analyze(&mut self) {
+        let now = Instant::now();
         Spi::connect(|client| {
             // We have to pull this analysis data into Rust as opposed to using Postgres
             // json_build_object(...), because Postgres functions have a limit of 100 arguments.
@@ -438,7 +440,8 @@ impl Snapshot {
                         .unwrap(),
                 );
             }
-
+            analysis.insert("time".to_string(), now.elapsed().as_secs_f32());
+            
             for column in &self.columns {
                 let nulls = format!("{}_nulls", &column.name);
                 match analysis.get(&nulls) {
