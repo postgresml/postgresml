@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
 
+use indexmap::IndexMap;
 use pgx::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -47,7 +47,7 @@ impl Ord for Column {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Snapshot {
     pub id: i64,
     pub relation_name: String,
@@ -56,32 +56,10 @@ pub struct Snapshot {
     pub test_sampling: Sampling,
     pub status: Status,
     pub columns: Vec<Column>,
-    pub analysis: Option<JsonB>,
+    pub analysis: Option<IndexMap<String, f32>>,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
     pub materialized: bool,
-}
-
-// Manually implemented since pgx::JsonB doesn't impl Clone
-impl Clone for Snapshot {
-    fn clone(&self) -> Self {
-        Snapshot {
-            id: self.id,
-            relation_name: self.relation_name.clone(),
-            y_column_name: self.y_column_name.clone(),
-            test_size: self.test_size,
-            test_sampling: self.test_sampling,
-            status: self.status,
-            columns: self.columns.clone(),
-            analysis: self
-                .analysis
-                .as_ref()
-                .map(|analysis| JsonB(analysis.0.clone())),
-            created_at: self.created_at.clone(),
-            updated_at: self.updated_at.clone(),
-            materialized: self.materialized,
-        }
-    }
 }
 
 impl Display for Snapshot {
@@ -120,6 +98,8 @@ impl Snapshot {
             if !result.is_empty() {
                 let jsonb: JsonB = result.get_datum(7).unwrap();
                 let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
+                let jsonb: JsonB = result.get_datum(8).unwrap();
+                let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
                 snapshot = Some(Snapshot {
                     id: result.get_datum(1).unwrap(),
                     relation_name: result.get_datum(2).unwrap(),
@@ -128,7 +108,7 @@ impl Snapshot {
                     test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
                     status: Status::from_str(result.get_datum(6).unwrap()).unwrap(),
                     columns,
-                    analysis: result.get_datum(8),
+                    analysis,
                     created_at: result.get_datum(9).unwrap(),
                     updated_at: result.get_datum(10).unwrap(),
                     materialized: result.get_datum(11).unwrap(),
@@ -173,6 +153,8 @@ impl Snapshot {
             if !result.is_empty() {
                 let jsonb: JsonB = result.get_datum(7).unwrap();
                 let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
+                let jsonb: JsonB = result.get_datum(8).unwrap();
+                let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
                 snapshot = Some(Snapshot {
                     id: result.get_datum(1).unwrap(),
                     relation_name: result.get_datum(2).unwrap(),
@@ -181,7 +163,7 @@ impl Snapshot {
                     test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
                     status: Status::from_str(result.get_datum(6).unwrap()).unwrap(),
                     columns,
-                    analysis: result.get_datum(8),
+                    analysis,
                     created_at: result.get_datum(9).unwrap(),
                     updated_at: result.get_datum(10).unwrap(),
                     materialized: result.get_datum(11).unwrap(),
@@ -292,7 +274,7 @@ impl Snapshot {
     }
 
     pub fn num_features(&self) -> usize {
-        let analysis = self.analysis.as_ref().unwrap().0.as_object().unwrap();
+        let analysis = self.analysis.as_ref().unwrap();
         let mut num_features: usize = 0;
         for column in &self.columns {
             if !column.label {
@@ -300,7 +282,7 @@ impl Snapshot {
                 let cardinality = format!("{}_cardinality", column.name);
                 match analysis.get(&cardinality) {
                     Some(cardinality) => {
-                        num_features += column.size * cardinality.as_f64().unwrap() as usize;
+                        num_features += column.size * *cardinality as usize;
                     },
                     None => num_features += column.size,
                 }
@@ -311,13 +293,8 @@ impl Snapshot {
 
     pub fn num_classes(&self) -> usize {
         let target = &self.y_column_name[0];
-        self.analysis
-            .as_ref()
-            .unwrap()
-            .0
-            .get(format!("{}_distinct", target))
-            .unwrap()
-            .as_f64()
+        *self.analysis.as_ref().unwrap()
+            .get(&format!("{}_distinct", target))
             .unwrap() as usize
     }
 
@@ -452,7 +429,7 @@ impl Snapshot {
             let stats = stats.join(", ");
             let sql = format!(r#"SELECT {stats} FROM {} {laterals}"#, self.relation_name(),);
             let result = client.select(&sql, Some(1), None).first();
-            let mut analysis = HashMap::new();
+            let mut analysis = IndexMap::new();
             for (i, field) in fields.iter().enumerate() {
                 analysis.insert(
                     field.to_owned(),
@@ -473,11 +450,10 @@ impl Snapshot {
                     None => error!("{} has no analysis for NULL values", column.name),
                 }
             }
-            let analysis_datum = JsonB(json!(analysis));
-            self.analysis = Some(JsonB(json!(analysis)));
+            self.analysis = Some(analysis);
             client.select("UPDATE pgml.snapshots SET status = $1::pgml.status, analysis = $2 WHERE id = $3", Some(1), Some(vec![
                 (PgBuiltInOids::TEXTOID.oid(), Status::successful.to_string().into_datum()),
-                (PgBuiltInOids::JSONBOID.oid(), analysis_datum.into_datum()),
+                (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.analysis)).into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ]));
 
@@ -600,19 +576,15 @@ impl Snapshot {
             });
 
             log!(
-                "Snapshot analysis: {}",
-                serde_json::to_string(&self.analysis).unwrap()
+                "Snapshot analysis: {:?}",
+                self.analysis.as_ref().unwrap()
             );
 
             let stat = format!("{}_distinct", self.y_column_name[0]);
-            let num_distinct_labels = self
+            let num_distinct_labels = *self
                 .analysis
-                .as_ref()
-                .unwrap()
-                .0
-                .get(stat)
-                .unwrap()
-                .as_f64()
+                .as_ref().unwrap()
+                .get(&stat)
                 .unwrap() as usize;
 
             data = Some(Dataset {
