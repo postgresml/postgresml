@@ -55,7 +55,7 @@ pub struct Snapshot {
     pub test_size: f32,
     pub test_sampling: Sampling,
     pub status: Status,
-    pub columns: Option<JsonB>,
+    pub columns: Vec<Column>,
     pub analysis: Option<JsonB>,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
@@ -72,10 +72,7 @@ impl Clone for Snapshot {
             test_size: self.test_size,
             test_sampling: self.test_sampling,
             status: self.status,
-            columns: self
-                .columns
-                .as_ref()
-                .map(|columns| JsonB(columns.0.clone())),
+            columns: self.columns.clone(),
             analysis: self
                 .analysis
                 .as_ref()
@@ -121,6 +118,8 @@ impl Snapshot {
                 )
                 .first();
             if !result.is_empty() {
+                let jsonb: JsonB = result.get_datum(7).unwrap();
+                let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
                 snapshot = Some(Snapshot {
                     id: result.get_datum(1).unwrap(),
                     relation_name: result.get_datum(2).unwrap(),
@@ -128,7 +127,7 @@ impl Snapshot {
                     test_size: result.get_datum(4).unwrap(),
                     test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
                     status: Status::from_str(result.get_datum(6).unwrap()).unwrap(),
-                    columns: result.get_datum(7),
+                    columns,
                     analysis: result.get_datum(8),
                     created_at: result.get_datum(9).unwrap(),
                     updated_at: result.get_datum(10).unwrap(),
@@ -172,6 +171,8 @@ impl Snapshot {
                 )
                 .first();
             if !result.is_empty() {
+                let jsonb: JsonB = result.get_datum(7).unwrap();
+                let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
                 snapshot = Some(Snapshot {
                     id: result.get_datum(1).unwrap(),
                     relation_name: result.get_datum(2).unwrap(),
@@ -179,7 +180,7 @@ impl Snapshot {
                     test_size: result.get_datum(4).unwrap(),
                     test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
                     status: Status::from_str(result.get_datum(6).unwrap()).unwrap(),
-                    columns: result.get_datum(7),
+                    columns,
                     analysis: result.get_datum(8),
                     created_at: result.get_datum(9).unwrap(),
                     updated_at: result.get_datum(10).unwrap(),
@@ -202,10 +203,47 @@ impl Snapshot {
         let status = Status::in_progress;
 
         // Validate table exists.
-        let (_schema_name, _table_name) = Self::fully_qualified_table(relation_name);
+        let (schema_name, table_name) = Self::fully_qualified_table(relation_name);
 
         Spi::connect(|client| {
-            let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status, materialized) VALUES ($1, $2, $3, $4::pgml.sampling, $5::pgml.status, $6) RETURNING id, relation_name, y_column_name, test_size, test_sampling::TEXT, status::TEXT, columns, analysis, created_at, updated_at;",
+            let mut columns: Vec<Column> = Vec::new();
+            client.select("SELECT column_name::TEXT, udt_name::TEXT, is_nullable::BOOLEAN, ordinal_position::INTEGER FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position ASC",
+                None,
+                Some(vec![
+                    (PgBuiltInOids::TEXTOID.oid(), schema_name.into_datum()),
+                    (PgBuiltInOids::TEXTOID.oid(), table_name.into_datum()),
+                ]))
+            .for_each(|row| {
+                let name = row[1].value::<String>().unwrap();
+                let mut pg_type = row[2].value::<String>().unwrap();
+                if pg_type.starts_with('_') {
+                    pg_type = pg_type[1..].to_string() + "[]";
+                }
+                let nullable = row[3].value::<bool>().unwrap();
+                let position = row[4].value::<i32>().unwrap() as usize;
+                let label = y_column_name.contains(&name);
+                columns.push(
+                    Column {
+                        name,
+                        pg_type,
+                        nullable,
+                        label,
+                        position,
+                        size: 1,
+                    }
+                );
+            });
+
+            for column in &y_column_name {
+                if !columns.iter().any(|c| c.label && &c.name == column) {
+                    error!(
+                        "Column `{}` not found. Did you pass the correct `y_column_name`?",
+                        column
+                    )
+                }
+            }
+
+            let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status, columns, materialized) VALUES ($1, $2, $3, $4::pgml.sampling, $5::pgml.status, $6, $7) RETURNING id, relation_name, y_column_name, test_size, test_sampling::TEXT, status::TEXT, columns, analysis, created_at, updated_at;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), relation_name.into_datum()),
@@ -213,9 +251,11 @@ impl Snapshot {
                     (PgBuiltInOids::FLOAT4OID.oid(), test_size.into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), test_sampling.to_string().into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), status.to_string().into_datum()),
+                    (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(columns)).into_datum()),
                     (PgBuiltInOids::BOOLOID.oid(), materialized.clone().into_datum()),
                 ])
             ).first();
+
             let mut s = Snapshot {
                 id: result.get_datum(1).unwrap(),
                 relation_name: result.get_datum(2).unwrap(),
@@ -223,7 +263,7 @@ impl Snapshot {
                 test_size: result.get_datum(4).unwrap(),
                 test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
                 status,         // 6
-                columns: None,  // 7
+                columns,        // 7
                 analysis: None, // 8
                 created_at: result.get_datum(9).unwrap(),
                 updated_at: result.get_datum(10).unwrap(),
@@ -247,13 +287,23 @@ impl Snapshot {
         snapshot.unwrap()
     }
 
+    pub fn num_labels(&self) -> usize {
+        self.y_column_name.len()
+    }
+
     pub fn num_features(&self) -> usize {
+        let analysis = self.analysis.as_ref().unwrap().0.as_object().unwrap();
         let mut num_features: usize = 0;
-        let json = self.columns.as_ref().unwrap().0.clone();
-        let columns: Vec<Column> = serde_json::from_value(json).unwrap();
-        for column in columns {
+        for column in &self.columns {
             if !column.label {
-                num_features += column.size;
+                // Multiplying by array size to get num features
+                let cardinality = format!("{}_cardinality", column.name);
+                match analysis.get(&cardinality) {
+                    Some(cardinality) => {
+                        num_features += column.size * cardinality.as_f64().unwrap() as usize;
+                    },
+                    None => num_features += column.size,
+                }
             }
         }
         num_features
@@ -321,46 +371,7 @@ impl Snapshot {
 
     #[allow(clippy::format_push_string)]
     fn analyze(&mut self) {
-        let (schema_name, table_name) = Self::fully_qualified_table(&self.relation_name);
-
         Spi::connect(|client| {
-            let mut columns: Vec<Column> = Vec::new();
-            client.select("SELECT column_name::TEXT, udt_name::TEXT, is_nullable::BOOLEAN, ordinal_position::INTEGER FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position ASC",
-                None,
-                Some(vec![
-                    (PgBuiltInOids::TEXTOID.oid(), schema_name.into_datum()),
-                    (PgBuiltInOids::TEXTOID.oid(), table_name.into_datum()),
-                ]))
-            .for_each(|row| {
-                let name = row[1].value::<String>().unwrap();
-                let mut pg_type = row[2].value::<String>().unwrap();
-                if pg_type.starts_with('_') {
-                    pg_type = pg_type[1..].to_string() + "[]";
-                }
-                let nullable = row[3].value::<bool>().unwrap();
-                let position = row[4].value::<i32>().unwrap() as usize;
-                let label = self.y_column_name.contains(&name);
-                columns.push(
-                    Column {
-                        name,
-                        pg_type,
-                        nullable,
-                        label,
-                        position,
-                        size: 1,
-                    }
-                );
-            });
-
-            for column in &self.y_column_name {
-                if !columns.iter().any(|c| c.label && &c.name == column) {
-                    error!(
-                        "Column `{}` not found. Did you pass the correct `y_column_name`?",
-                        column
-                    )
-                }
-            }
-
             // We have to pull this analysis data into Rust as opposed to using Postgres
             // json_build_object(...), because Postgres functions have a limit of 100 arguments.
             // Any table that has more than 10 columns will exceed the Postgres limit since we
@@ -368,7 +379,7 @@ impl Snapshot {
             let mut stats = vec![r#"count(*)::FLOAT4 AS "samples""#.to_string()];
             let mut fields = vec!["samples".to_string()];
             let mut laterals = String::new();
-            for column in &columns {
+            for column in &self.columns {
                 match column.pg_type.as_str() {
                     "bool" | "int2" | "int4" | "int8" | "float4" | "float8" => {
                         let name = &column.name;
@@ -422,10 +433,14 @@ impl Snapshot {
                         stats.push(format!(
                             r#"max({lateral_table}.{unnested_column})::FLOAT4 AS "{name}_max""#
                         ));
+                        stats.push(format!(
+                            r#"sum(({stats_safe_name} IS NULL)::INT)::FLOAT4 AS "{name}_nulls""#
+                        ));
                         fields.push(format!("{name}_dims"));
                         fields.push(format!("{name}_cardinality"));
                         fields.push(format!("{name}_min"));
                         fields.push(format!("{name}_max"));
+                        fields.push(format!("{name}_nulls"));
                         laterals += &format!(", LATERAL (SELECT unnest({stats_safe_name}) AS {unnested_column}) {lateral_table}");
                     }
                     &_ => {
@@ -446,30 +461,23 @@ impl Snapshot {
                         .unwrap(),
                 );
             }
-            for column in &mut columns {
-                let cardinality = format!("{}_cardinality", column.name);
-                match analysis.get(&cardinality) {
-                    Some(cardinality) => column.size = *cardinality as usize,
-                    None => (),
-                }
+
+            for column in &self.columns {
                 let nulls = format!("{}_nulls", &column.name);
                 match analysis.get(&nulls) {
-                    Some(&nulls) => {
-                        if nulls > 0.0 {
+                    Some(nulls) => {
+                        if *nulls > 0_f32 {
                             warning!("{} contains NULL values", column.name);
                         }
                     }
-                    None => (),
+                    None => error!("{} has no analysis for NULL values", column.name),
                 }
             }
             let analysis_datum = JsonB(json!(analysis));
-            let column_datum = JsonB(json!(columns));
             self.analysis = Some(JsonB(json!(analysis)));
-            self.columns = Some(JsonB(json!(columns)));
-            client.select("UPDATE pgml.snapshots SET status = $1::pgml.status, analysis = $2, columns = $3 WHERE id = $4", Some(1), Some(vec![
+            client.select("UPDATE pgml.snapshots SET status = $1::pgml.status, analysis = $2 WHERE id = $3", Some(1), Some(vec![
                 (PgBuiltInOids::TEXTOID.oid(), Status::successful.to_string().into_datum()),
                 (PgBuiltInOids::JSONBOID.oid(), analysis_datum.into_datum()),
-                (PgBuiltInOids::JSONBOID.oid(), column_datum.into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ]));
 
@@ -480,12 +488,9 @@ impl Snapshot {
     pub fn dataset(&self) -> Dataset {
         let mut data = None;
         Spi::connect(|client| {
-            let json = self.columns.as_ref().unwrap().0.clone();
-            let mut columns: Vec<Column> = serde_json::from_value(json).unwrap();
-            columns.sort();
             let sql = format!(
                 "SELECT {} FROM {} {}",
-                columns
+                self.columns
                     .iter()
                     .map(|c| c.quoted_name())
                     .collect::<Vec<String>>()
@@ -503,16 +508,6 @@ impl Snapshot {
                     }
                 },
             );
-
-            let mut num_labels: usize = 0;
-            let mut num_features: usize = 0;
-            for column in &columns {
-                if column.label {
-                    num_labels += column.size;
-                } else {
-                    num_features += column.size;
-                }
-            }
 
             // Postgres Arrays arrays are 1 indexed and so are SPI tuples...
             let result = client.select(&sql, None, None);
@@ -532,6 +527,9 @@ impl Snapshot {
                 );
             }
 
+            let num_features = self.num_features();
+            let num_labels = self.num_labels();
+
             let mut x_train: Vec<f32> = Vec::with_capacity(num_train_rows * num_features);
             let mut y_train: Vec<f32> = Vec::with_capacity(num_train_rows * num_labels);
             let mut x_test: Vec<f32> = Vec::with_capacity(num_test_rows * num_features);
@@ -541,7 +539,7 @@ impl Snapshot {
             // row: SpiHeapTupleData
             // row[i]: SpiHeapTupleDataEntry
             result.enumerate().for_each(|(i, row)| {
-                for column in &columns {
+                for column in &self.columns {
                     let vector = if column.label {
                         if i < num_train_rows {
                             &mut y_train
