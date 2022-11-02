@@ -116,7 +116,7 @@ If we increase the number of replicas, latency decreases and throughput increase
 !!! success
 	The most impressive result is serving close to a million predictions with an average latency of less than 1ms. You might notice though that `950160.7` isn't quite one million, and that's true.
 
-	We couldn't reach one million with 1000 clients, but then we increased to 2000, and we got our magic number: **1,021,692.7 req/sec**, with an average latency of **1.7ms**.
+	We couldn't reach one million with 1000 clients, so we increased to 2000 and got our magic number: **1,021,692.7 req/sec**, with an average latency of **1.7ms**.
 
 ### Batching Predictions
 
