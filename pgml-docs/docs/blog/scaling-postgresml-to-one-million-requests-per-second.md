@@ -124,7 +124,7 @@ Batching is a proven method to optimize performance. If you need to get several 
 
 We should precede this result by stating that PostgresML does not yet have a batch prediction API as such. Our `pgml.predict()` function can predict multiple points, but we haven't implemented a query pattern to pass multiple Postgres rows to that function at the same time. Once we do, based on our tests, we should see a quadratic increase in performance.
 
-Regardless of that limitation, we still managed to get better results by batching queries together since Postgres needed to do less query parsing and data fetching, and we saved on network roundtrip time as well.
+Regardless of that limitation, we still managed to get better results by batching queries together since Postgres needed to do less query parsing and data fetching, and we saved on network round trip as well.
 
 <center>
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRm4aEylX8xMNmO-HFFxr67gbZDQ8rh_vss1HvX0tWAUD_zxkwYYNhiBObT1LVe8m6ELZ0seOzmH0ZL/pubchart?oid=1506211879&amp;format=interactive"></iframe>
@@ -141,7 +141,7 @@ If batching did not work at all, we would see a linear increase in latency and a
 
 All systems, at some point in their lifetime, will come under more load than they were designed for; what happens then is an important feature (or bug) of their design. Horizontal scaling is never immediate: it takes a bit of time to spin up additional hardware to handle the load. It can take a second, or a minute, depending on availability, but in both cases, existing resources need to serve traffic the best way they can.
 
-We were hoping to test PostgresML to its breaking point, but we couldn't quite get there. As load (number of clients) increased beyond provisioned capacity, the only thing we saw was a gradual increase in latency. Throughput remained roughly the same. This gradual latency increase was caused by simple queuing: the replicas couldn't serve requests concurrenctly so they had to wait, patiently, in the poolers.
+We were hoping to test PostgresML to its breaking point, but we couldn't quite get there. As load (number of clients) increased beyond provisioned capacity, the only thing we saw was a gradual increase in latency. Throughput remained roughly the same. This gradual latency increase was caused by simple queuing: the replicas couldn't serve requests concurrently so they had to wait, patiently, in the poolers.
 
 <center>
 	![Queuing](/images/illustrations/queueing.svg) <br />
@@ -220,7 +220,7 @@ PgCat, written in asynchronous Rust, was running on `c5.xlarge` machines (4 vCPU
 The pooler did a decent amount of work around parsing queries, making sure they are read-only `SELECT`s, and routing them, at random, to replicas. If any replica was down for any reason, it would route around it to remaining machines.
 
 #### Postgres Replicas
-Postgres replicas were running on `c5.9xlarge` machines with 36 vCPUs and 72 GB of RAM. The hot dataset fit entirely in memory. The servers were intentionally saturated to maximum capacity before scaling up to test queuing and graceful degradation of performance.
+Postgres replicas were running on `c5.9xlarge` machines with 36 vCPUs and 72 GB of RAM. The hot dataset fits entirely in memory. The servers were intentionally saturated to maximum capacity before scaling up to test queuing and graceful degradation of performance.
 
 
 #### Raw Results
