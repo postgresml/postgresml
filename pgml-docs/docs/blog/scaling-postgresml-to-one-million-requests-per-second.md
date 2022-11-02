@@ -26,7 +26,7 @@ Inference speed varies based on the model complexity (e.g. `n_estimators` for XG
 If you're a Postgres enthusiast (or a database engineer), scaling Postgres may not be a secret to you, and you can jump straight to the [results](#results). For everyone else, here is a diagram showing the final state of our system:
 
 <center>
-![Scaling PostgresML](/images/illustrations/scaling-postgresml-1.svg) <br />
+![Scaling PostgresML](/images/illustrations/scaling-postgresml-3.svg) <br />
 _System Architecture_
 </center>
 
