@@ -10,7 +10,10 @@ The question "Does it Scale?" has become somewhat of a meme in software engineer
 
 At PostgresML, we are very concerned with scale. Our engineering background took us through scaling OLTP and OLAP Postgres to 100 TB+, so we're certain that Postgres scales, but could we scale machine learning alongside it?
 
-In this post, we'll discuss all the challenges facing scaling machine learning inference with PostgresML, and how we solved them to achieve an impressive **1 million XGBoost predictions per second** on commodity hardware. 
+In this post, we'll discuss some challenges facing machine learning inference with PostgresML, and how we solved them to achieve an impressive **1 million XGBoost predictions per second** on commodity hardware.
+
+If you missed our previous post and are wondering why someone would combine machine learning and Postgres, take a look at our PostgresML vs. Python [benchmark](/blog/postgresml-is-8x-faster-than-python-http-microservices).
+
 
 ## An Image Worth Four Thousand Words
 
@@ -47,15 +50,13 @@ We intentionally don't discuss scaling the primary in this post, because shardin
 
 #### Clients
 
-Clients are regular Postgres connections coming from web apps, job queues, or pretty much anywhere that needs data. They can be long-living or ephemeral and they typically grow in numbers as the application scales.
+Clients are regular Postgres connections coming from web apps, job queues, or pretty much anywhere that needs data. They can be long-living or ephemeral and they typically grow in number as the application scales.
 
-Most modern deployments use containers which are added as load on the app increases, and removed as the load decreases. This is called dynamic horizontal scaling, and it's an effective way to adapt to changing traffic patterns of a regular application.
-
-Arguably the most important rule of any system is: the number of clients can change at any time, and the system must adapt.
+Most modern deployments use containers which are added as load on the app increases, and removed as the load decreases. This is called dynamic horizontal scaling, and it's an effective way to adapt to changing traffic patterns experienced by most businesses.
 
 #### Load Balancer
 
-The load balancer is a way to spread traffic across horizontally scalable components, by routing new connections to targets in a round robin (or random) fashion. It's typically a very large box (or a fast router), but even those need to be scaled if traffic suddenly increases. Thankfully, since we're running our system on AWS, this is already taken care of, for a reasonably small fee.
+The load balancer is a way to spread traffic across horizontally scalable components, by routing new connections to targets in a round robin (or random) fashion. It's typically a very large box (or a fast router), but even those need to be scaled if traffic suddenly increases. Since we're running our system on AWS, this is already taken care of, for a reasonably small fee, by using an Elastic Load Balancer.
 
 #### PgCat
 
@@ -70,7 +71,7 @@ There are many poolers available presently, the most notable being PgBouncer, wh
 
 - Load balancing of read queries
 - Failover in case a read replica is broken
-- Automatic sharding (this feature is still in progress)
+- Sharding (this feature is still being developed)
 
 In this benchmark, we used its load balancing feature to evenly distribute our XGBoost predictions across our Postgres replicas.
 
@@ -113,17 +114,17 @@ As the demand on PostgresML increases, the system gracefully handles the load. I
 If we increase the number of replicas, latency decreases and throughput increases and holds as the number of clients increases in parallel. We get the best result with 5 replicas, but this number is variable and can be changed as needs for latency compete with cost.
 
 !!! success
-	The most impressive result is serving close to a million predictions with an average latency of less than 1ms. You might notice that `950160.7` isn't quite one million, and that's true.
+	The most impressive result is serving close to a million predictions with an average latency of less than 1ms. You might notice though that `950160.7` isn't quite one million, and that's true.
 
 	We couldn't reach one million with 1000 clients, but then we increased to 2000, and we got our magic number: **1,021,692.7 req/sec**, with an average latency of **1.7ms**.
 
 ### Batching Predictions
 
-Batching is a proven method to optimize performance. If you need to get several data points, batch the request into one query, and it should run faster than making separate individual requests.
+Batching is a proven method to optimize performance. If you need to get several data points, batch the requests into one query, and it should run faster than making individual requests.
 
-We should precede this result by stating that PostgresML does not yet have a batch prediction API as such. Our `pgml.predict()` function can predict multiple points, but we haven't implemented a query pattern to pass multiple Postgres rows to that function at the same time. Once we do, based on our tests, we'll should see a quadratic increase in performance.
+We should precede this result by stating that PostgresML does not yet have a batch prediction API as such. Our `pgml.predict()` function can predict multiple points, but we haven't implemented a query pattern to pass multiple Postgres rows to that function at the same time. Once we do, based on our tests, we should see a quadratic increase in performance.
 
-Regardless of that limitation, we still managed to get better results by batching queries together since Postgres needed to do less query parsing and data fetching.
+Regardless of that limitation, we still managed to get better results by batching queries together since Postgres needed to do less query parsing and data fetching, and we saved on network roundtrip time as well.
 
 <center>
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRm4aEylX8xMNmO-HFFxr67gbZDQ8rh_vss1HvX0tWAUD_zxkwYYNhiBObT1LVe8m6ELZ0seOzmH0ZL/pubchart?oid=1506211879&amp;format=interactive"></iframe>
@@ -133,17 +134,33 @@ Regardless of that limitation, we still managed to get better results by batchin
 	<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRm4aEylX8xMNmO-HFFxr67gbZDQ8rh_vss1HvX0tWAUD_zxkwYYNhiBObT1LVe8m6ELZ0seOzmH0ZL/pubchart?oid=1488435965&amp;format=interactive"></iframe>
 </center>
 
-If batching did not work at all, we would see a linear increase in latency and a linear decrease throughput. That did not happen, as we saw a good increase in throughput and a sublinear increase in latency. A modest success, but a success nonetheless.
+If batching did not work at all, we would see a linear increase in latency and a linear decrease in throughput. That did not happen, as we saw a good increase in throughput and a sublinear increase in latency. A modest success, but a success nonetheless.
+
+
+### Graceful Degradation and Queuing
+
+All systems, at some point in their lifetime, will come under more load than they were designed for; what happens then is an important feature (or bug) of their design. Horizontal scaling is never immediate: it takes a bit of time to spin up additional hardware to handle the load. It can take a second, or a minute, depending on availability, but in both cases, existing resources need to serve traffic the best way they can.
+
+We were hoping to test PostgresML to its breaking point, but we couldn't quite get there. As load (number of clients) increased beyond provisioned capacity, the only thing we saw was a gradual increase in latency. Throughput remained roughly the same. This gradual latency increase was caused by simple queuing: the replicas couldn't serve requests concurrenctly so they had to wait, patiently, in the poolers.
+
+<center>
+	![Queuing](/images/illustrations/queueing.svg) <br />
+	_"What's taking so long over there!?"_
+</center>
+
+Among many others, this is a very important feature of any proxy: it's a FIFO queue (first in, first out). If the system is underutilized, queue size is 0 and all requests are served as quickly as physically possible. If the system is overutilized, the queue size increases, holds as the number of requests stabilizes, and decreases back to 0 as the system is scaled up to accommodate new traffic.
+
+Queueing overall is not desirable, but it's a feature, not a bug. While autoscaling spins up an additional replica, the app continues to work, although a few milliseconds slower, which is a good trade off for not overspending on hardware.
 
 ## What's Next
 
-Horizontal scaling and high availability are fascinating topics in software engineering. After doing this benchmark, we had no more doubts about our chosen architecture. Needing to serve 1 million predictions per second is rare, but having the ability to do that and more, if desired, is an important aspect for any new system.
+Horizontal scaling and high availability are fascinating topics in software engineering. After doing this benchmark, we had no more doubts about our chosen architecture. Needing to serve 1 million predictions per second is rare, but having the ability to do that, and more if desired, is an important aspect for any new system.
 
-The next challenge for us is to scale writes horizontally. In the database world, this means sharding the database into multiple separate databases using a hashing function, and automatically routing both reads and writes to the right shards. There are many possible solutions on the market for this already, e.g. Citus and Foreign Data Wrappers, but none are as horizontally scalable as we want, although we will incorporate them into our architecture until we build the one we really want.
+The next challenge for us is to scale writes horizontally. In the database world, this means sharding the database into multiple separate machines using a hashing function, and automatically routing both reads and writes to the right shards. There are many possible solutions on the market for this already, e.g. Citus and Foreign Data Wrappers, but none are as horizontally scalable to our liking, although we will incorporate them into our architecture until we build the one we really want.
 
 For that purpose, we're building our own open source [Postgres proxy](https://github.com/levkk/pgcat/) which we discussed earlier in the article. As we progress further in our journey, we'll be adding more features and performance improvements.
 
-By combining PgCat with PostgresML, we are aiming to build the next version of machine learning infrastructure that can power anything from two-person startups, like us, to unicorns and massive enterprises, without the data ever leaving our favorite database.
+By combining PgCat with PostgresML, we are aiming to build the next generation of machine learning infrastructure that can power anything from two-person startups, like us, to unicorns and massive enterprises, without the data ever leaving our favorite database.
 
 
 ## Methodology
@@ -188,20 +205,35 @@ FROM flights_mat_3 LIMIT :limit;
 
 where `:limit` is the batch size of 1, 5, and 20, depending on the benchmark.
 
+#### Model
+
+The model is roughly the same as the one we used in our previous [post](/blog/postgresml-is-8x-faster-than-python-http-microservices), with just one extra feature added, which improved R<sup>2</sup> a little bit.
+
 ### Hardware
 
 #### Client
-The client was a `c5n.4xlarge` box on EC2. We chose the `c5n` class to have the 100GBit NIC, because we wanted it to saturate our network as much as possible.
+The client was a `c5n.4xlarge` box on EC2. We chose the `c5n` class to have the 100 GBit NIC, since we wanted it to saturate our network as much as possible. Thousands of clients were simulated using [`pgbench`](https://www.postgresql.org/docs/current/pgbench.html) with `-c n` where `n` is the number of clients.
 
 #### PgCat Pooler
-PgCat was running on `c5.xlarge` machines (4 vCPUs, 8GB RAM) with 4 Tokio workers. We used between 1 and 35 machines, and scaled them in increments of 5-20 at a time.
+PgCat, written in asynchronous Rust, was running on `c5.xlarge` machines (4 vCPUs, 8GB RAM) with 4 Tokio workers. We used between 1 and 35 machines, and scaled them in increments of 5-20 at a time.
+
+The pooler did a decent amount of work around parsing queries, making sure they are read-only `SELECT`s, and routing them, at random, to replicas. If any replica was down for any reason, it would route around it to remaining machines.
 
 #### Postgres Replicas
-Postgres replicas were running on `c5.9xlarge` machines with 36 vCPUs. The hot dataset fit entirely in RAM. The servers were intentionally saturated to maximum capacity before scaling up to test queuing and graceful degradation of performance.
+Postgres replicas were running on `c5.9xlarge` machines with 36 vCPUs and 72 GB of RAM. The hot dataset fit entirely in memory. The servers were intentionally saturated to maximum capacity before scaling up to test queuing and graceful degradation of performance.
+
+
+#### Raw Results
+
+Raw latency data is available [here](https://static.postgresml.org/benchmarks/reads-latency.csv) and raw throughput data is available [here](https://static.postgresml.org/benchmarks/reads-throughput.csv).
+
+## Feedback
+
+Many thanks and ❤️ to all those who are supporting this endeavor. We’d love to hear feedback from the broader ML and Engineering community about applications and other real world scenarios to help prioritize our work. You can show your support by starring us on our [Github](https://github.com/postgresml/postgresml/).
 
 
 ## We're Hiring!
 
-[PostgresML](https://github.com/postgresml/postgresml/) and [PgCat](https://github.com/levkk/pgcat/) are free and open source, but to support their development, and many more things we're building, and want to build in the future, we started a company. We're only a few months old, and we have raised enough funding to say, for the first time ever: we're hiring!
+[PostgresML](https://github.com/postgresml/postgresml/) and [PgCat](https://github.com/levkk/pgcat/) are free and open source, and to support their development, and many more things we're building, we started a company. We're only a few months old, and we have raised enough funding to say, for the first time ever: we're hiring!
 
 We're looking for software engineers interested in machine learning, solving big problems, databases, and anything in between. Don't hesitate to reach out to <a href="mailto:team@postgresml.org">team@postgresml.org</a>.
