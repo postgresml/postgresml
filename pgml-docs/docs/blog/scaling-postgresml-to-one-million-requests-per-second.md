@@ -1,3 +1,10 @@
+---
+author: Lev Kokotov
+description: Addressing horizontal scalability concerns, we've benchmarked PostgresML and ended up with an incredible 1 million requests per second using commodity hardware.
+image: https://static.postgresml.org/benchmarks/Slow-Down-Sign.jpg
+image_alt: PostgresML at 1 million requests per second
+---
+
 # Scaling PostgresML to 1 Million Requests per Second
 
 <p class="author">
