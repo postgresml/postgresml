@@ -236,4 +236,10 @@ Many thanks and ❤️ to all those who are supporting this endeavor. We’d lov
 
 [PostgresML](https://github.com/postgresml/postgresml/) and [PgCat](https://github.com/levkk/pgcat/) are free and open source, and to support their development, and many more things we're building, we started a company. We're only a few months old, and we have raised enough funding to say, for the first time ever: we're hiring!
 
-We're looking for software engineers interested in machine learning, solving big problems, databases, and anything in between. Don't hesitate to reach out to <a href="mailto:team@postgresml.org">team@postgresml.org</a>.
+We're looking for software engineers interested in machine learning, solving big problems, databases, and anything in between. Don't hesitate to reach out to <a href="mailto:team@postgresml.org">team@postgresml.org</a> or in [Discord](https://discord.gg/DmyJP3qJ7U).
+
+## Call to Early Adopters
+
+If your organization can benefit from simplified and fast machine learning, get in touch! We can help deploy PostgresML internally, and collaborate on new and existing features. Join our [Discord](https://discord.gg/DmyJP3qJ7U) or [email](mailto:team@postgresml.org) us!
+
+
