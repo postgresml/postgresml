@@ -151,6 +151,7 @@ nav:
         - PostgresML is Moving to Rust for our 2.0 Release: blog/postgresml-is-moving-to-rust-for-our-2.0-release.md
         - "Backwards Compatible or Bust: Python Inside Rust Inside Postgres": blog/backwards-compatible-or-bust-python-inside-rust-inside-postgres.md
         - PostgresML is 8-40x faster than Python HTTP microservices: blog/postgresml-is-8x-faster-than-python-http-microservices.md
+        #- Scaling PostgresML to 1 Million Requests per Second: blog/scaling-postgresml-to-one-million-requests-per-second.md
     - About:
         - Team: about/team.md
         - Roadmap: about/roadmap.md
