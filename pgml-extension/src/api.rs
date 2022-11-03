@@ -526,6 +526,72 @@ pub fn sklearn_classification_metrics(
     )
 }
 
+#[pg_extern]
+pub fn dump_all(path: &str) {
+    let p = std::path::Path::new(path).join("projects.csv");
+    Spi::run(&format!(
+        "COPY pgml.projects TO '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("snapshots.csv");
+    Spi::run(&format!(
+        "COPY pgml.snapshots TO '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("models.csv");
+    Spi::run(&format!(
+        "COPY pgml.models TO '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("files.csv");
+    Spi::run(&format!(
+        "COPY pgml.files TO '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("deployments.csv");
+    Spi::run(&format!(
+        "COPY pgml.deployments TO '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+}
+
+#[pg_extern]
+pub fn load_all(path: &str) {
+    let p = std::path::Path::new(path).join("projects.csv");
+    Spi::run(&format!(
+        "COPY pgml.projects FROM '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("snapshots.csv");
+    Spi::run(&format!(
+        "COPY pgml.snapshots FROM '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("models.csv");
+    Spi::run(&format!(
+        "COPY pgml.models FROM '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("files.csv");
+    Spi::run(&format!(
+        "COPY pgml.files FROM '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("deployments.csv");
+    Spi::run(&format!(
+        "COPY pgml.deployments FROM '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+}
+
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
@@ -686,5 +752,11 @@ mod tests {
             assert_eq!(result[0].2, String::from("xgboost"));
             // assert_eq!(result[0].3, true);
         }
+    }
+
+    #[pg_test]
+    fn test_dump_load() {
+        dump_all("/tmp");
+        load_all("/tmp");
     }
 }
