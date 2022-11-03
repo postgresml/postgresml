@@ -123,6 +123,7 @@ impl Bindings for Estimator {
             std::fs::write(&path, &bytes[16..]).unwrap();
             estimator = lightgbm::Booster::from_file(&path);
         }
+        std::fs::remove_file(&path).unwrap();
         Box::new(Estimator {
             estimator: estimator.unwrap(),
         })
