@@ -2,7 +2,9 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use pgx::iter::TableIterator;
 use pgx::*;
+
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde_json::json;
@@ -100,21 +102,22 @@ fn version() -> String {
 #[pg_extern]
 fn train(
     project_name: &str,
-    task: Option<default!(Task, "NULL")>,
-    relation_name: Option<default!(&str, "NULL")>,
-    y_column_name: Option<default!(&str, "NULL")>,
+    task: default!(Option<Task>, "NULL"),
+    relation_name: default!(Option<&str>, "NULL"),
+    y_column_name: default!(Option<&str>, "NULL"),
     algorithm: default!(Algorithm, "'linear'"),
     hyperparams: default!(JsonB, "'{}'"),
-    search: Option<default!(Search, "NULL")>,
+    search: default!(Option<Search>, "NULL"),
     search_params: default!(JsonB, "'{}'"),
     search_args: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
-    runtime: Option<default!(Runtime, "NULL")>,
-    automatic_deploy: Option<default!(bool, true)>,
+    runtime: default!(Option<Runtime>, "NULL"),
+    automatic_deploy: default!(Option<bool>, true),
     materialize_snapshot: default!(bool, false),
-) -> impl std::iter::Iterator<
-    Item = (
+) -> TableIterator<
+    'static,
+    (
         name!(project, String),
         name!(task, String),
         name!(algorithm, String),
@@ -143,21 +146,22 @@ fn train(
 #[pg_extern]
 fn train_joint(
     project_name: &str,
-    task: Option<default!(Task, "NULL")>,
-    relation_name: Option<default!(&str, "NULL")>,
-    y_column_name: Option<default!(Vec<String>, "NULL")>,
+    task: default!(Option<Task>, "NULL"),
+    relation_name: default!(Option<&str>, "NULL"),
+    y_column_name: default!(Option<Vec<String>>, "NULL"),
     algorithm: default!(Algorithm, "'linear'"),
     hyperparams: default!(JsonB, "'{}'"),
-    search: Option<default!(Search, "NULL")>,
+    search: default!(Option<Search>, "NULL"),
     search_params: default!(JsonB, "'{}'"),
     search_args: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
-    runtime: Option<default!(Runtime, "NULL")>,
-    automatic_deploy: Option<default!(bool, true)>,
+    runtime: default!(Option<Runtime>, "NULL"),
+    automatic_deploy: default!(Option<bool>, true),
     materialize_snapshot: default!(bool, false),
-) -> impl std::iter::Iterator<
-    Item = (
+) -> TableIterator<
+    'static,
+    (
         name!(project, String),
         name!(task, String),
         name!(algorithm, String),
@@ -278,22 +282,25 @@ fn train_joint(
         project.deploy(model.id);
     }
 
-    vec![(
-        project.name,
-        project.task.to_string(),
-        model.algorithm.to_string(),
-        deploy,
-    )]
-    .into_iter()
+    TableIterator::new(
+        vec![(
+            project.name,
+            project.task.to_string(),
+            model.algorithm.to_string(),
+            deploy,
+        )]
+        .into_iter(),
+    )
 }
 
 #[pg_extern]
 fn deploy(
     project_name: &str,
     strategy: Strategy,
-    algorithm: Option<default!(Algorithm, "NULL")>,
-) -> impl std::iter::Iterator<
-    Item = (
+    algorithm: default!(Option<Algorithm>, "NULL"),
+) -> TableIterator<
+    'static,
+    (
         name!(project, String),
         name!(strategy, String),
         name!(algorithm, String),
@@ -372,7 +379,9 @@ fn deploy(
     let project = Project::find(project_id).unwrap();
     project.deploy(model_id);
 
-    vec![(project_name.to_string(), strategy.to_string(), algorithm)].into_iter()
+    TableIterator::new(
+        vec![(project_name.to_string(), strategy.to_string(), algorithm)].into_iter(),
+    )
 }
 
 #[pg_extern(strict, name = "predict")]
@@ -421,7 +430,7 @@ fn snapshot(
     y_column_name: &str,
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
-) -> impl std::iter::Iterator<Item = (name!(relation, String), name!(y_column_name, String))> {
+) -> TableIterator<'static, (name!(relation, String), name!(y_column_name, String))> {
     Snapshot::create(
         relation_name,
         vec![y_column_name.to_string()],
@@ -429,14 +438,14 @@ fn snapshot(
         test_sampling,
         true,
     );
-    vec![(relation_name.to_string(), y_column_name.to_string())].into_iter()
+    TableIterator::new(vec![(relation_name.to_string(), y_column_name.to_string())].into_iter())
 }
 
 #[pg_extern]
 fn load_dataset(
     source: &str,
-    limit: Option<default!(i64, "NULL")>,
-) -> impl std::iter::Iterator<Item = (name!(table_name, String), name!(rows, i64))> {
+    limit: default!(Option<i64>, "NULL"),
+) -> TableIterator<'static, (name!(table_name, String), name!(rows, i64))> {
     // cast limit since pgx doesn't support usize
     let limit: Option<usize> = limit.map(|limit| limit.try_into().unwrap());
     let (name, rows) = match source {
@@ -449,7 +458,7 @@ fn load_dataset(
         _ => error!("Unknown source: `{source}`"),
     };
 
-    vec![(name, rows)].into_iter()
+    TableIterator::new(vec![(name, rows)].into_iter())
 }
 
 #[cfg(feature = "python")]
@@ -624,7 +633,6 @@ mod tests {
     }
 
     #[pg_test]
-    #[should_panic]
     fn test_not_fully_qualified_table() {
         load_diabetes(Some(25));
 
