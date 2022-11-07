@@ -85,7 +85,7 @@ In this benchmark, we used its load balancing feature to evenly distribute XGBoo
 
 Scaling Postgres reads is pretty straight forward. If more read queries are coming in, we add a replica to serve the increased load. If the load is decreasing, we remove a replica to save money. The data is replicated from the primary, so all replicas are identical, and all of them can serve any query, or in our case, an XGBoost prediction. PgCat can dynamically add and remove replicas from its config without disconnecting clients, we can add and remove replicas as needed, without downtime.
 
-#### Parallelizing Inference
+#### Parallelizing XGBoost
 
 Scaling XGBoost predictions is a little bit more interesting. XGBoost cannot serve predictions concurrently because of internal data structure locks. This is common to many other machine learning algorithms as well, because making predictions can temporarily modify internal components of the model.
 
