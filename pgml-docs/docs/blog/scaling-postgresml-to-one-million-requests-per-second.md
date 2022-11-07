@@ -13,11 +13,11 @@ image_alt: PostgresML at 1 million requests per second
   November 7, 2022
 </p>
 
-The question "Does it Scale?" has become somewhat of a meme in software engineering. There is a good reason for it though, because most businesses plan for success. If your app, online store, or SaaS takes off, you want to be sure that the system powering it can serve all your customers.
+The question "Does it Scale?" has become somewhat of a meme in software engineering. There is a good reason for it though, because most businesses plan for success. If your app, online store, or SaaS becomes popular, you want to be sure that the system powering it can serve all your new customers.
 
-At PostgresML, we are very concerned with scale. Our engineering background took us through scaling OLTP and OLAP Postgres to 100 TB+, so we're certain that Postgres scales, but could we scale machine learning alongside it?
+At PostgresML, we are very concerned with scale. Our engineering background took us through scaling PostgreSQL to 100 TB+, so we're certain that it scales, but could we scale machine learning alongside it?
 
-In this post, we'll discuss some challenges facing machine learning inference with PostgresML, and how we solved them to achieve an impressive **1 million XGBoost predictions per second** on commodity hardware.
+In this post, we'll discuss how we horizontally scaled PostgresML to achieve more than **1 million XGBoost predictions per second** on commodity hardware.
 
 If you missed our previous post and are wondering why someone would combine machine learning and Postgres, take a look at our PostgresML vs. Python [benchmark](/blog/postgresml-is-8x-faster-than-python-http-microservices).
 
@@ -26,7 +26,7 @@ If you missed our previous post and are wondering why someone would combine mach
 
 Our thesis, and the reason why we chose Postgres as our host for machine learning, is that scaling machine learning inference is very similar to scaling read queries in a typical database cluster.
 
-Inference speed varies based on the model complexity (e.g. `n_estimators` for XGBoost) and the size of the dataset (how many features the model uses), which is analogous to query complexity and table size in the database world. Scaling the latter is mostly a solved problem.
+Inference speed varies based on the model complexity (e.g. `n_estimators` for XGBoost) and the size of the dataset (how many features the model uses), which is analogous to query complexity and table size in the database world and, as we'll demonstrate further on, scaling the latter is mostly a solved problem.
 
 ### System Architecture
 
@@ -85,8 +85,18 @@ In this benchmark, we used its load balancing feature to evenly distribute XGBoo
 
 #### Postgres Replicas
 
-Scaling Postgres reads is a solved problem. If more read queries are coming in, add a replica to serve the increased load. If the load is decreasing, remove a replica to save money. The data is replicated from the primary, so all replicas are identical, and all of them can serve any query, or in our case, an XGBoost prediction.
+Scaling Postgres reads overall is pretty straight forward. If more read queries are coming in, we add a replica to serve the increased load. If the load is decreasing, we remove a replica to save money. The data is replicated from the primary, so all replicas are identical, and all of them can serve any query, or in our case, an XGBoost prediction.
 
+Scaling XGBoost predictions however, is a little bit more interesting. XGBoost cannot serve predictions concurrently because of internal data structure locks. This is common to many other machine learning algorithms as well, because making predictions can temporarily modify internal components of the model.
+
+PostgresML bypasses that limitation because of how Postgres itself handles concurrency:
+
+<center>
+	<img height="300" width="auto" style="height: 300px" src="/images/illustrations/postgres-multiprocess-2.png" alt="Inside a replica" /> <br />
+  _PostgresML concurrency_
+</center>
+
+PostgreSQL uses the fork/multiprocessing model to serve multiple clients concurrenctly: each new client connection becomes an independent system process. PostgresML loads all models inside the process' memory space. This means that each connection has its own copy of the XGBoost model and PostgresML ends up serving multiple XGBoost predictions at the same time without any lock contention. 
 
 ## Results
 
@@ -141,7 +151,7 @@ If batching did not work at all, we would see a linear increase in latency and a
 
 All systems, at some point in their lifetime, will come under more load than they were designed for; what happens then is an important feature (or bug) of their design. Horizontal scaling is never immediate: it takes a bit of time to spin up additional hardware to handle the load. It can take a second, or a minute, depending on availability, but in both cases, existing resources need to serve traffic the best way they can.
 
-We were hoping to test PostgresML to its breaking point, but we couldn't quite get there. As load (number of clients) increased beyond provisioned capacity, the only thing we saw was a gradual increase in latency. Throughput remained roughly the same. This gradual latency increase was caused by simple queuing: the replicas couldn't serve requests concurrently, so the requests had to patiently wait in the poolers.
+We were hoping to test PostgresML to its breaking point, but we couldn't quite get there. As the load (number of clients) increased beyond provisioned capacity, the only thing we saw was a gradual increase in latency. Throughput remained roughly the same. This gradual latency increase was caused by simple queuing: the replicas couldn't serve requests concurrently, so the requests had to patiently wait in the poolers.
 
 <center>
 	![Queuing](/images/illustrations/queueing.svg) <br />
@@ -154,7 +164,7 @@ Queueing overall is not desirable, but it's a feature, not a bug. While autoscal
 
 As the demand on PostgresML increases, the system gracefully handles the load. If the number of replicas stays the same, latency slowly increases, all the while remaining well below acceptable ranges. Throughput holds as well, as increasing number of clients evenly split available resources.
 
-If we increase the number of replicas, latency decreases and throughput increases and eventually stabilizies as the number of clients increases in parallel. We get the best result with 5 replicas, but this number is variable and can be changed as needs for latency compete with cost.
+If we increase the number of replicas, latency decreases and throughput increases, as the number of clients increases in parallel. We get the best result with 5 replicas, but this number is variable and can be changed as needs for latency compete with cost.
 
 
 ## What's Next
