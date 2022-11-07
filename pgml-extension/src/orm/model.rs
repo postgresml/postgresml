@@ -105,7 +105,7 @@ impl Model {
                   (PgBuiltInOids::TEXTOID.oid(), search.map(|search| search.to_string()).into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_params.into_datum()),
                   (PgBuiltInOids::JSONBOID.oid(), search_args.into_datum()),
-                  (PgBuiltInOids::INT4OID.oid(), (dataset.num_features as i64).into_datum()),
+                  (PgBuiltInOids::INT8OID.oid(), (dataset.num_features as i64).into_datum()),
               ])
           ).first();
             if !result.is_empty() {
