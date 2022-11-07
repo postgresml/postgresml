@@ -604,8 +604,9 @@ mod tests {
 
     #[pg_test]
     fn test_project_lifecycle() {
-        assert!(Project::create("test", Task::regression).id > 0);
-        assert!(Project::find(1).unwrap().id > 0);
+        let project = Project::create("test", Task::regression);
+        assert!(project.id > 0);
+        assert!(Project::find(project.id).unwrap().id > 0);
     }
 
     #[pg_test]
