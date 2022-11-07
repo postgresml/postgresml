@@ -83,7 +83,7 @@ In this benchmark, we used its load balancing feature to evenly distribute XGBoo
 
 ### Postgres Replicas
 
-Scaling Postgres reads is pretty straight forward. If more read queries are coming in, we add a replica to serve the increased load. If the load is decreasing, we remove a replica to save money. The data is replicated from the primary, so all replicas are identical, and all of them can serve any query, or in our case, an XGBoost prediction. PgCat can dynamically add and remove replicas from its config without disconnecting clients, we can add and remove replicas as needed, without downtime.
+Scaling Postgres reads is pretty straight forward. If more read queries are coming in, we add a replica to serve the increased load. If the load is decreasing, we remove a replica to save money. The data is replicated from the primary, so all replicas are identical, and all of them can serve any query, or in our case, an XGBoost prediction. PgCat can dynamically add and remove replicas from its config without disconnecting clients, so we can add and remove replicas as needed, without downtime.
 
 #### Parallelizing XGBoost
 
