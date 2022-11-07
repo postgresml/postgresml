@@ -17,7 +17,7 @@ The question "Does it Scale?" has become somewhat of a meme in software engineer
 
 At PostgresML, we are very concerned with scale. Our engineering background took us through scaling PostgreSQL to 100 TB+, so we're certain that it scales, but could we scale machine learning alongside it?
 
-In this post, we'll discuss how we horizontally scaled PostgresML to achieve more than **1 million XGBoost predictions per second** on commodity hardware.
+In this post, we'll discuss how we horizontally scale PostgresML to achieve more than **1 million XGBoost predictions per second** on commodity hardware.
 
 If you missed our previous post and are wondering why someone would combine machine learning and Postgres, take a look at our PostgresML vs. Python [benchmark](/blog/postgresml-is-8x-faster-than-python-http-microservices).
 
@@ -96,7 +96,7 @@ PostgresML bypasses that limitation because of how Postgres itself handles concu
   _PostgresML concurrency_
 </center>
 
-PostgreSQL uses the fork/multiprocessing architecture to serve multiple clients concurrenctly: each new client connection becomes an independent OS process. During connection startup, PostgresML loads all models inside the process' memory space. This means that each connection has its own copy of the XGBoost model and PostgresML ends up serving multiple XGBoost predictions at the same time without any lock contention.
+PostgreSQL uses the fork/multiprocessing architecture to serve multiple clients concurrently: each new client connection becomes an independent OS process. During connection startup, PostgresML loads all models inside the process' memory space. This means that each connection has its own copy of the XGBoost model and PostgresML ends up serving multiple XGBoost predictions at the same time without any lock contention.
 
 ## Results
 
