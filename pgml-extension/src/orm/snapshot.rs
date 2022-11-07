@@ -80,8 +80,8 @@ impl Clone for Snapshot {
                 .analysis
                 .as_ref()
                 .map(|analysis| JsonB(analysis.0.clone())),
-            created_at: self.created_at,
-            updated_at: self.updated_at,
+            created_at: self.created_at.clone(),
+            updated_at: self.updated_at.clone(),
             materialized: self.materialized,
         }
     }
