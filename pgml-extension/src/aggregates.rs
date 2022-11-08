@@ -8,7 +8,7 @@ use parking_lot::Mutex;
 static PROJECT_NAME: Lazy<Mutex<String>> = Lazy::new(|| Mutex::new(String::new()));
 
 #[pg_extern(strict, name = "predict_agg_st")]
-fn predict_agg_st(mut aggregates: Vec<f32>, project_name: &str, aggregate: &Vec<f32>) -> Vec<f32> {
+fn predict_agg_st(mut aggregates: Vec<f32>, project_name: &str, aggregate: Vec<f32>) -> Vec<f32> {
     // This is fast, don't worry, I tested
     let mut name = PROJECT_NAME.lock();
     name.clear();
