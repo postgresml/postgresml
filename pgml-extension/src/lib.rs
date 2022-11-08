@@ -8,6 +8,7 @@ use pgx::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+pub mod aggregates;
 pub mod api;
 pub mod bindings;
 pub mod metrics;

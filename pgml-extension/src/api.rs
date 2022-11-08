@@ -400,7 +400,7 @@ fn predict_joint(project_name: &str, features: Vec<f32>) -> Vec<f32> {
 }
 
 #[pg_extern(strict, name = "predict_batch")]
-fn predict_batch(project_name: &str, features: Vec<f32>) -> Vec<f32> {
+pub fn predict_batch(project_name: &str, features: Vec<f32>) -> Vec<f32> {
     predict_model_batch(Project::get_deployed_model_id(project_name), features)
 }
 

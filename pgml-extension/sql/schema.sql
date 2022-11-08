@@ -205,3 +205,14 @@ INNER JOIN (
 ) d ON d.project_id = p.id
 INNER JOIN pgml.models m ON m.id = d.model_id
 ORDER BY p.name ASC;
+
+CREATE AGGREGATE pgml.predict_agg(
+	project_name TEXT,
+	features REAL[]
+)
+(
+	sfunc = pgml.predict_agg_st,
+	stype = REAL[],
+	finalfunc = pgml.predict_agg_final,
+	initcond = '{}'
+);
