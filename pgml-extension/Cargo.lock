@@ -1571,6 +1571,7 @@ dependencies = [
  "openblas-src",
  "parking_lot",
  "pgx",
+ "pgx-pg-sys",
  "pgx-tests",
  "pyo3",
  "rand",

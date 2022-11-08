@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use crate::heap_tuple::PgHeapTuple;
 use pgx::iter::TableIterator;
 use pgx::*;
 
@@ -387,6 +388,47 @@ fn deploy(
 #[pg_extern(strict, name = "predict")]
 fn predict(project_name: &str, features: Vec<f32>) -> f32 {
     predict_model(Project::get_deployed_model_id(project_name), features)
+}
+
+#[pg_extern(strict, name = "predict")]
+fn predict_composite(_project_name: &str, features: pgx::datum::AnyElement) {
+    let datum = features.datum();
+
+    // SELECT * FROM pg_type WHERE oid = 2249.
+    if features.oid() != pgx_pg_sys::RECORDOID {
+        error!("This function can only accept `record` types.");
+    }
+
+    // This panics if above check isn't present.
+    // The argument is a are composite datum.
+    let tuple = unsafe { PgHeapTuple::from_composite_datum(datum) };
+
+    for index in 1..tuple.len() + 1 {
+        let attribute = tuple
+            .get_attribute_by_index(index.try_into().unwrap())
+            .unwrap();
+
+        match attribute.atttypid {
+            pgx_pg_sys::TEXTOID => {
+                let element: Result<Option<String>, TryFromDatumError> =
+                    tuple.get_by_index(index.try_into().unwrap());
+                info!("Element {}: {}", index, element.unwrap().unwrap());
+            }
+            pgx_pg_sys::INT8OID => {
+                let element: Result<Option<i64>, TryFromDatumError> =
+                    tuple.get_by_index(index.try_into().unwrap());
+                info!("Element {}: {}", index, element.unwrap().unwrap());
+            }
+            pgx_pg_sys::INT4OID => {
+                let element: Result<Option<i32>, TryFromDatumError> =
+                    tuple.get_by_index(index.try_into().unwrap());
+                info!("Element {}: {}", index, element.unwrap().unwrap());
+            }
+            _ => error!("Unsupported type oid: {}", attribute.atttypid),
+        };
+    }
+
+    error!("Categorical variables are not supported yet. Soon!");
 }
 
 #[pg_extern(strict, name = "predict_proba")]

@@ -18,6 +18,7 @@ cuda = ["xgboost/cuda", "lightgbm/cuda"]
 
 [dependencies]
 pgx = "=0.5.6"
+pgx-pg-sys = "=0.5.6"
 xgboost = { git="https://github.com/postgresml/rust-xgboost.git", branch = "master" }
 once_cell = "1"
 rand = "0.8"
