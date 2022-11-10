@@ -46,7 +46,7 @@ mod tests {
         dataset::load_diabetes(None);
         dataset::load_breast_cancer(None);
         let regression = Project::create("regression", Task::regression);
-        let diabetes = Snapshot::create(
+        let mut diabetes = Snapshot::create(
             "pgml.diabetes",
             vec!["target".to_string()],
             0.5,
@@ -54,7 +54,7 @@ mod tests {
             false,
         );
         let classification = Project::create("classification", Task::classification);
-        let breast_cancer = Snapshot::create(
+        let mut breast_cancer = Snapshot::create(
             "pgml.breast_cancer",
             vec!["malignant".to_string()],
             0.5,
@@ -68,7 +68,7 @@ mod tests {
             regressors.extend([Runtime::python, Runtime::rust].map(|runtime| {
                 let model = Model::create(
                     &regression,
-                    &diabetes,
+                    &mut diabetes,
                     algorithm,
                     JsonB(serde_json::Value::Object(Hyperparams::new())),
                     None,
@@ -89,7 +89,7 @@ mod tests {
             classifiers.extend([Runtime::python, Runtime::rust].map(|runtime| {
                 let model = Model::create(
                     &classification,
-                    &breast_cancer,
+                    &mut breast_cancer,
                     algorithm,
                     JsonB(serde_json::Value::Object(Hyperparams::new())),
                     None,

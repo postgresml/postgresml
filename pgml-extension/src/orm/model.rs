@@ -11,12 +11,14 @@ use itertools::{izip, Itertools};
 use ndarray::ArrayView1;
 use once_cell::sync::Lazy;
 use pgx::*;
+use pgx::heap_tuple::PgHeapTuple;
 use rand::prelude::SliceRandom;
 use serde_json::json;
 
 use crate::bindings::*;
 use crate::orm::Dataset;
 use crate::orm::*;
+use crate::orm::snapshot::Statistics::TextCategorical;
 
 #[allow(clippy::type_complexity)]
 static DEPLOYED_MODELS_BY_ID: Lazy<Mutex<HashMap<i64, Arc<Model>>>> =
@@ -58,7 +60,7 @@ impl Model {
     #[allow(clippy::too_many_arguments)]
     pub fn create(
         project: &Project,
-        snapshot: &Snapshot,
+        snapshot: &mut Snapshot,
         algorithm: Algorithm,
         hyperparams: JsonB,
         search: Option<Search>,
@@ -259,7 +261,7 @@ impl Model {
             Ok(Some(1))
         });
 
-        model.unwrap()
+        model.expect(&format!("pgml.models WHERE id = {:?} could not be loaded. Does it exist?", id))
     }
 
     pub fn find_cached(id: i64) -> Arc<Model> {
@@ -804,6 +806,147 @@ impl Model {
                 (PgBuiltInOids::BYTEAOID.oid(), self.bindings.as_ref().unwrap().to_bytes().into_datum()),
             ]
             ).unwrap();
+    }
+
+    pub fn preprocess(&self, rows: &[pgx::datum::AnyElement]) -> Vec<f32> {
+        let mut features = Vec::new(); // TODO pre-allocate space
+        let columns = &self.snapshot.columns;
+        for row in rows {
+            match row.oid() {
+                pgx_pg_sys::RECORDOID => {
+                    let tuple = unsafe { PgHeapTuple::from_composite_datum(row.datum()) };
+                    for index in 1..tuple.len() + 1 {
+                        let column = &columns[index - 1];
+                        let attribute = tuple
+                            .get_attribute_by_index(index.try_into().unwrap())
+                            .unwrap();
+
+                        match attribute.atttypid {
+                            pgx_pg_sys::TEXTOID | pgx_pg_sys::VARCHAROID | pgx_pg_sys::UNKNOWNOID => {
+                                let element: Result<Option<String>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                match &element {
+                                    Ok(option) => {
+                                        match &option {
+                                            Some(element) => {
+                                                match &column.statistics {
+                                                    TextCategorical { nulls, categories } => {
+                                                        let id = match categories.get(element) {
+                                                            Some(category) => category.id,
+                                                            None => 0,
+                                                        };
+                                                        features.push(id as f32);
+                                                    }
+                                                    _ => error!("Mismatched feature, expected text in position {:?}", index)
+                                                }
+                                            }
+                                            None => error!("NULL input in position {:?}", index)
+                                        }
+                                    }
+                                    Err(e) => {
+                                        info!("Couldn't cast data: {:?}, {:?}", &e, &attribute)
+                                    }
+                                }
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::BOOLOID => {
+                                let element: Result<Option<bool>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                features.push(element.as_ref().unwrap().unwrap() as i8 as f32);
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::BPCHAROID => {
+                                let element: Result<Option<char>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                features.push(element.as_ref().unwrap().unwrap() as i8 as f32);
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::INT2OID => {
+                                let element: Result<Option<i16>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                features.push(element.as_ref().unwrap().unwrap() as f32);
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::INT4OID => {
+                                let element: Result<Option<i32>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                features.push(element.as_ref().unwrap().unwrap() as f32);
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::INT8OID => {
+                                let element: Result<Option<i64>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                features.push(element.as_ref().unwrap().unwrap() as f32);
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::FLOAT4OID => {
+                                let element: Result<Option<f32>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                features.push(element.as_ref().unwrap().unwrap() as f32);
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::FLOAT8OID | pgx_pg_sys::NUMERICOID => {
+                                let element: Result<Option<f64>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                features.push(element.as_ref().unwrap().unwrap() as f32);
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::BOOLARRAYOID => {
+                                let element: Result<Option<Vec<bool>>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                for j in element.as_ref().unwrap().as_ref().unwrap() {
+                                    features.push(*j as i8 as f32);
+                                }
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::INT2ARRAYOID => {
+                                let element: Result<Option<Vec<i16>>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                for j in element.as_ref().unwrap().as_ref().unwrap() {
+                                    features.push(*j as f32);
+                                }
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::INT4ARRAYOID => {
+                                let element: Result<Option<Vec<i32>>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                for j in element.as_ref().unwrap().as_ref().unwrap() {
+                                    features.push(*j as f32);
+                                }
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::INT8ARRAYOID => {
+                                let element: Result<Option<Vec<i64>>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                for j in element.as_ref().unwrap().as_ref().unwrap() {
+                                    features.push(*j as f32);
+                                }
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::FLOAT4ARRAYOID => {
+                                let element: Result<Option<Vec<f32>>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                for j in element.as_ref().unwrap().as_ref().unwrap() {
+                                    features.push(*j as f32);
+                                }
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::FLOAT8ARRAYOID | pgx_pg_sys::NUMERICARRAYOID => {
+                                let element: Result<Option<Vec<f64>>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                for j in element.as_ref().unwrap().as_ref().unwrap() {
+                                    features.push(*j as f32);
+                                }
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            _ => error!("Unsupported type oid: {}", attribute.atttypid),
+                        };
+                    }
+                },
+                _ => error!("This preprocessing requires Postgres `record` types created with `row()`.")
+            }
+        }
+        features
     }
 
     pub fn predict(&self, features: &[f32]) -> f32 {

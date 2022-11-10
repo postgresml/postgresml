@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
+use ndarray::array;
 
 use pgx::iter::{SetOfIterator, TableIterator};
 use pgx::*;
+use pgx::prelude::PgHeapTuple;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
@@ -180,7 +182,7 @@ fn train_joint(
         error!("Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.", project.name, project.task);
     }
 
-    let snapshot = match relation_name {
+    let mut snapshot = match relation_name {
         None => {
             let snapshot = project
                 .last_snapshot()
@@ -224,7 +226,7 @@ fn train_joint(
     //     hyperparams["random_state"] = 0
     let model = Model::create(
         &project,
-        &snapshot,
+        &mut snapshot,
         algorithm,
         hyperparams,
         search,
@@ -407,6 +409,11 @@ fn predict_batch(project_name: &str, features: Vec<f32>) -> SetOfIterator<'stati
 }
 
 #[pg_extern(strict, name = "predict")]
+fn predict_row(project_name: &str, row: pgx::datum::AnyElement) -> f32 {
+    predict_model_row(Project::get_deployed_model_id(project_name), row)
+}
+
+#[pg_extern(strict, name = "predict")]
 fn predict_model(model_id: i64, features: Vec<f32>) -> f32 {
     Model::find_cached(model_id).predict(&features)
 }
@@ -425,6 +432,14 @@ fn predict_model_joint(model_id: i64, features: Vec<f32>) -> Vec<f32> {
 fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
     Model::find_cached(model_id).predict_batch(&features)
 }
+
+#[pg_extern(strict, name = "predict")]
+fn predict_model_row(model_id: i64, row: pgx::datum::AnyElement) -> f32 {
+    let model = Model::find_cached(model_id);
+    let features = model.preprocess(&[row]);
+    model.predict(&features)
+}
+
 
 #[pg_extern]
 fn snapshot(

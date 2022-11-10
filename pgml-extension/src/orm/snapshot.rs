@@ -1,25 +1,73 @@
 use std::cmp::Ordering;
+use std::collections::btree_map::Entry;
 use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
 use std::time::Instant;
+use std::collections::HashMap;
+use std::hash::BuildHasherDefault;
 
+use hashers::fx_hash::FxHasher;
 use indexmap::IndexMap;
 use pgx::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use ndarray_stats::QuantileExt;
 
 use crate::orm::Dataset;
 use crate::orm::Sampling;
 use crate::orm::Status;
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub(crate) struct Ventile {
+    tile: usize,
+    min: f32,
+    max: f32,
+    members: usize,
+}
+
+impl PartialEq for Ventile {
+    fn eq(&self, other: &Self) -> bool {
+        self.tile == other.tile
+    }
+}
+
+impl Eq for Ventile {}
+
+
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
-pub struct Column {
+pub(crate) struct Category {
+    pub(crate) id: usize,
+    pub(crate) members: usize,
+}
+
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
+pub(crate) enum Statistics {
+    Continuous {
+        nulls: usize,
+        ventiles: Vec<Ventile>,
+    },
+    IntegerCategorical {
+        nulls: usize,
+        categories: Vec<usize>,
+    },
+    TextCategorical {
+        nulls: usize,
+        categories: HashMap<String, Category>,
+    },
+    Array {
+        nulls: usize,
+    }
+}
+
+#[derive(Debug, Eq, Serialize, Deserialize, Clone)]
+pub(crate) struct Column {
     name: String,
     pg_type: String,
     nullable: bool,
     label: bool,
     position: usize,
     size: usize,
+    pub(crate) statistics: Statistics,
 }
 
 impl Column {
@@ -36,7 +84,13 @@ impl Column {
     }
 }
 
-impl PartialOrd for Column {
+impl PartialEq<Self> for Column {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
+impl PartialOrd<Self> for Column {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -50,17 +104,17 @@ impl Ord for Column {
 
 #[derive(Debug, Clone)]
 pub struct Snapshot {
-    pub id: i64,
-    pub relation_name: String,
-    pub y_column_name: Vec<String>,
-    pub test_size: f32,
-    pub test_sampling: Sampling,
-    pub status: Status,
-    pub columns: Vec<Column>,
-    pub analysis: Option<IndexMap<String, f32>>,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
-    pub materialized: bool,
+    pub(crate) id: i64,
+    pub(crate) relation_name: String,
+    pub(crate) y_column_name: Vec<String>,
+    pub(crate) test_size: f32,
+    pub(crate) test_sampling: Sampling,
+    pub(crate) status: Status,
+    pub(crate) columns: Vec<Column>,
+    pub(crate) analysis: Option<IndexMap<String, f32>>,
+    pub(crate) created_at: Timestamp,
+    pub(crate) updated_at: Timestamp,
+    pub(crate) materialized: bool,
 }
 
 impl Display for Snapshot {
@@ -99,8 +153,8 @@ impl Snapshot {
             if !result.is_empty() {
                 let jsonb: JsonB = result.get_datum(7).unwrap();
                 let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
-                let jsonb: JsonB = result.get_datum(8).unwrap();
-                let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
+                // let jsonb: JsonB = result.get_datum(8).unwrap();
+                // let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
                 snapshot = Some(Snapshot {
                     id: result.get_datum(1).unwrap(),
                     relation_name: result.get_datum(2).unwrap(),
@@ -109,7 +163,7 @@ impl Snapshot {
                     test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
                     status: Status::from_str(result.get_datum(6).unwrap()).unwrap(),
                     columns,
-                    analysis,
+                    analysis: None,
                     created_at: result.get_datum(9).unwrap(),
                     updated_at: result.get_datum(10).unwrap(),
                     materialized: result.get_datum(11).unwrap(),
@@ -199,12 +253,42 @@ impl Snapshot {
             .for_each(|row| {
                 let name = row[1].value::<String>().unwrap();
                 let mut pg_type = row[2].value::<String>().unwrap();
+                let mut size = 1;
                 if pg_type.starts_with('_') {
                     pg_type = pg_type[1..].to_string() + "[]";
+                    size = 0;
                 }
                 let nullable = row[3].value::<bool>().unwrap();
                 let position = row[4].value::<i32>().unwrap() as usize;
                 let label = y_column_name.contains(&name);
+                let statistics = match pg_type.as_str() {
+                    "float4" | "float8" => {
+                        Statistics::Continuous {
+                            nulls: 0,
+                            ventiles: Vec::with_capacity(20),
+                        }
+                    },
+                    "bool" | "bpchar" | "int2" | "int4" | "int8"  => {
+                        Statistics::IntegerCategorical {
+                            nulls: 0,
+                            categories: Vec::new(),
+                        }
+                    },
+                    "text" | "varchar" => {
+                        Statistics::TextCategorical {
+                            nulls: 0,
+                            categories: HashMap::new(),
+                        }
+                    },
+                    "bool[]" | "int2[]" | "int4[]" | "int8[]" | "float4[]" | "float8[]" => {
+                        Statistics::Array {
+                            nulls: 0,
+                        }
+                    }
+                    _ => {
+                        error!("unhandled type: `{}` for `{}`", pg_type, name);
+                    }
+                };
                 columns.push(
                     Column {
                         name,
@@ -212,7 +296,8 @@ impl Snapshot {
                         nullable,
                         label,
                         position,
-                        size: 1,
+                        size,
+                        statistics
                     }
                 );
             });
@@ -275,18 +360,10 @@ impl Snapshot {
     }
 
     pub fn num_features(&self) -> usize {
-        let analysis = self.analysis.as_ref().unwrap();
         let mut num_features: usize = 0;
         for column in &self.columns {
             if !column.label {
-                // Multiplying by array size to get num features
-                let cardinality = format!("{}_cardinality", column.name);
-                match analysis.get(&cardinality) {
-                    Some(cardinality) => {
-                        num_features += column.size * *cardinality as usize;
-                    },
-                    None => num_features += column.size,
-                }
+                num_features += column.size;
             }
         }
         num_features
@@ -350,113 +427,87 @@ impl Snapshot {
     #[allow(clippy::format_push_string)]
     fn analyze(&mut self) {
         let now = Instant::now();
-        Spi::connect(|client| {
-            // We have to pull this analysis data into Rust as opposed to using Postgres
-            // json_build_object(...), because Postgres functions have a limit of 100 arguments.
-            // Any table that has more than 10 columns will exceed the Postgres limit since we
-            // calculate 10 statistics per column.
-            let mut stats = vec![r#"count(*)::FLOAT4 AS "samples""#.to_string()];
-            let mut fields = vec!["samples".to_string()];
-            let mut laterals = String::new();
-            for column in &self.columns {
-                match column.pg_type.as_str() {
-                    "bool" | "int2" | "int4" | "int8" | "float4" | "float8" => {
-                        let name = &column.name;
-                        let stats_safe_name = column.stats_safe_name();
-                        stats.push(format!(r#"min({stats_safe_name})::FLOAT4 AS "{name}_min""#));
-                        stats.push(format!(r#"max({stats_safe_name})::FLOAT4 AS "{name}_max""#));
-                        stats.push(format!(
-                            r#"avg({stats_safe_name})::FLOAT4 AS "{name}_mean""#
-                        ));
-                        stats.push(format!(
-                            r#"stddev({stats_safe_name})::FLOAT4 AS "{name}_stddev""#
-                        ));
-                        stats.push(format!(r#"percentile_disc(0.25) within group (order by {stats_safe_name})::FLOAT4 AS "{name}_p25""#));
-                        stats.push(format!(r#"percentile_disc(0.5) within group (order by {stats_safe_name})::FLOAT4 AS "{name}_p50""#));
-                        stats.push(format!(r#"percentile_disc(0.75) within group (order by {stats_safe_name})::FLOAT4 AS "{name}_p75""#));
-                        stats.push(format!(
-                            r#"count({stats_safe_name})::FLOAT4 AS "{name}_count""#
-                        ));
-                        stats.push(format!(
-                            r#"count(distinct {stats_safe_name})::FLOAT4 AS "{name}_distinct""#
-                        ));
-                        stats.push(format!(
-                            r#"sum(({stats_safe_name} IS NULL)::INT)::FLOAT4 AS "{name}_nulls""#
-                        ));
-                        fields.push(format!("{name}_min"));
-                        fields.push(format!("{name}_max"));
-                        fields.push(format!("{name}_mean"));
-                        fields.push(format!("{name}_stddev"));
-                        fields.push(format!("{name}_p25"));
-                        fields.push(format!("{name}_p50"));
-                        fields.push(format!("{name}_p75"));
-                        fields.push(format!("{name}_count"));
-                        fields.push(format!("{name}_distinct"));
-                        fields.push(format!("{name}_nulls"));
-                    }
-                    "bool[]" | "int2[]" | "int4[]" | "int8[]" | "float4[]" | "float8[]" => {
-                        let name = &column.name;
-                        let stats_safe_name = column.stats_safe_name();
-                        let quoted_name = column.quoted_name();
-                        let unnested_column = format!(r#""unnested_{}""#, name);
-                        let lateral_table = format!(r#""{}_lateral""#, name);
-                        stats.push(format!(
-                            r#"max(array_ndims({quoted_name}))::FLOAT4 AS "{name}_dims""#
-                        ));
-                        stats.push(format!(
-                            r#"max(cardinality({quoted_name}))::FLOAT4 AS "{name}_cardinality""#
-                        ));
-                        stats.push(format!(
-                            r#"min({lateral_table}.{unnested_column})::FLOAT4 AS "{name}_min""#
-                        ));
-                        stats.push(format!(
-                            r#"max({lateral_table}.{unnested_column})::FLOAT4 AS "{name}_max""#
-                        ));
-                        stats.push(format!(
-                            r#"sum(({stats_safe_name} IS NULL)::INT)::FLOAT4 AS "{name}_nulls""#
-                        ));
-                        fields.push(format!("{name}_dims"));
-                        fields.push(format!("{name}_cardinality"));
-                        fields.push(format!("{name}_min"));
-                        fields.push(format!("{name}_max"));
-                        fields.push(format!("{name}_nulls"));
-                        laterals += &format!(", LATERAL (SELECT unnest({stats_safe_name}) AS {unnested_column}) {lateral_table}");
-                    }
-                    &_ => {
-                        error!("unhandled type: `{}` for `{}`", column.pg_type, column.name);
-                    }
-                }
-            }
+        let raw_dataset = self.dataset();
 
-            let stats = stats.join(", ");
-            let sql = format!(r#"SELECT {stats} FROM {} {laterals}"#, self.relation_name(),);
-            let result = client.select(&sql, Some(1), None).first();
-            let mut analysis = IndexMap::new();
-            for (i, field) in fields.iter().enumerate() {
-                analysis.insert(
-                    field.to_owned(),
-                    result
-                        .get_datum::<f32>((i + 1).try_into().unwrap())
-                        .unwrap(),
-                );
-            }
-            analysis.insert("time".to_string(), now.elapsed().as_secs_f32());
-            
-            for column in &self.columns {
-                let nulls = format!("{}_nulls", &column.name);
-                match analysis.get(&nulls) {
-                    Some(nulls) => {
-                        if *nulls > 0_f32 {
-                            warning!("{} contains NULL values", column.name);
-                        }
+        let mut features = ndarray::ArrayView2::from_shape(
+            (raw_dataset.num_train_rows, raw_dataset.num_features),
+            &raw_dataset.x_train,
+        )
+            .unwrap();
+
+        let mut c = 0;
+        let mut a = 0;
+        for data in features.columns() {
+            let column = &mut self.columns[c];
+            info!("c: {} a: {} column: {:?} data: {:?}", c, a, column, data);
+
+            match &mut column.statistics {
+                Statistics::Continuous { nulls, ventiles } => {
+                    c += 1;
+                    let data = data.to_vec().sort_by(|a,b| a.partial_cmp(b).unwrap());
+
+                },
+                Statistics::IntegerCategorical { nulls, ref mut categories } => {
+                    c += 1;
+                    let mut cs = vec![0; *data.max().unwrap() as usize + 1];
+                    for i in data {
+                        cs[*i as usize] += 1;
                     }
-                    None => error!("{} has no analysis for NULL values", column.name),
+                    categories.extend(cs);
+                },
+                Statistics::TextCategorical {nulls, categories} => {
+                    c += 1;
+                },
+                Statistics::Array { nulls } => {
+                    if a < column.size {
+                        a += 1;
+                    } else {
+                        c += 1;
+                        a = 0;
+                    }
                 }
             }
-            self.analysis = Some(analysis);
-            client.select("UPDATE pgml.snapshots SET status = $1::pgml.status, analysis = $2 WHERE id = $3", Some(1), Some(vec![
+        }
+
+        // for column in &self.columns {
+        //     match column.statistics {
+        //         Statistics::Continuous(nulls, ventiles) => {}
+        //         Statistics::IntegerCategorical(nulls, categories) => {},
+        //         Statistics::TextCategorical(nulls, categories) => {},
+        //         Statistics::Array(nulls, size) => {}
+        //         "bpchar" | "bool" | "int2" | "int4" | "int8" => {
+        //             // categoricals
+        //         },
+        //         "float4" | "float8" => {
+        //             // fields.push(format!("{name}_min"));
+        //             // fields.push(format!("{name}_max"));
+        //             // fields.push(format!("{name}_mean"));
+        //             // fields.push(format!("{name}_stddev"));
+        //             // fields.push(format!("{name}_p25"));
+        //             // fields.push(format!("{name}_p50"));
+        //             // fields.push(format!("{name}_p75"));
+        //             // fields.push(format!("{name}_count"));
+        //             // fields.push(format!("{name}_distinct"));
+        //             // fields.push(format!("{name}_nulls"));
+        //         }
+        //         "bool[]" | "int2[]" | "int4[]" | "int8[]" | "float4[]" | "float8[]" => {
+        //             // fields.push(format!("{name}_dims"));
+        //             // fields.push(format!("{name}_cardinality"));
+        //             // fields.push(format!("{name}_min"));
+        //             // fields.push(format!("{name}_max"));
+        //             // fields.push(format!("{name}_nulls"));
+        //         },
+        //         "text" | "varchar" => {
+        //             // fields.push(format!("{name}_nulls"));
+        //         }
+        //         _ => error!("unhandled type: `{}` for `{}`", column.pg_type, column.name)
+        //     }
+        // }
+
+        Spi::connect(|client| {
+            client.select("UPDATE pgml.snapshots SET status = $1::pgml.status, columns = $2 WHERE id = $3", Some(1), Some(vec![
                 (PgBuiltInOids::TEXTOID.oid(), Status::successful.to_string().into_datum()),
-                (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.analysis)).into_datum()),
+                (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.columns)).into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ]));
 
@@ -464,7 +515,11 @@ impl Snapshot {
         });
     }
 
-    pub fn dataset(&self) -> Dataset {
+    pub fn dataset(&mut self) -> Dataset {
+        self.raw_dataset()
+    }
+
+    pub fn raw_dataset(&mut self) -> Dataset {
         let mut data = None;
         Spi::connect(|client| {
             let sql = format!(
@@ -518,7 +573,7 @@ impl Snapshot {
             // row: SpiHeapTupleData
             // row[i]: SpiHeapTupleDataEntry
             result.enumerate().for_each(|(i, row)| {
-                for column in &self.columns {
+                for column in &mut self.columns {
                     let vector = if column.label {
                         if i < num_train_rows {
                             &mut y_train
@@ -535,25 +590,68 @@ impl Snapshot {
                             vector.push(row[column.position].value::<bool>().unwrap() as u8 as f32)
                         }
                         "bool[]" => {
-                            for j in row[column.position].value::<Vec<bool>>().unwrap() {
+                            let vec = row[column.position].value::<Vec<bool>>().unwrap();
+                            if column.size == 0 {
+                                column.size = vec.len();
+                            } else if column.size != vec.len() {
+                                error!("Mismatched array length for feature `{}`. Expected: {} Received: {}", column.name, column.size, vec.len());
+                            }
+
+                            for j in vec {
+                                vector.push(j as u8 as f32)
+                            }
+                        }
+                        "bpchar" => {
+                            vector.push(row[column.position].value::<i8>().unwrap() as f32)
+                        }
+                        "bpchar[]" => {
+                            let vec = row[column.position].value::<Vec<i8>>().unwrap();
+                            if column.size == 0 {
+                                column.size = vec.len();
+                            } else if column.size != vec.len() {
+                                error!("Mismatched array length for feature `{}`. Expected: {} Received: {}", column.name, column.size, vec.len());
+                            }
+
+                            for j in vec {
                                 vector.push(j as u8 as f32)
                             }
                         }
                         "int2" => vector.push(row[column.position].value::<i16>().unwrap() as f32),
                         "int2[]" => {
-                            for j in row[column.position].value::<Vec<i16>>().unwrap() {
+                            let vec = row[column.position].value::<Vec<i16>>().unwrap();
+                            if column.size == 0 {
+                                column.size = vec.len();
+                            } else if column.size != vec.len() {
+                                error!("Mismatched array length for feature `{}`. Expected: {} Received: {}", column.name, column.size, vec.len());
+                            }
+
+                            for j in vec {
                                 vector.push(j as f32)
                             }
                         }
                         "int4" => vector.push(row[column.position].value::<i32>().unwrap() as f32),
                         "int4[]" => {
-                            for j in row[column.position].value::<Vec<i32>>().unwrap() {
+                            let vec = row[column.position].value::<Vec<i32>>().unwrap();
+                            if column.size == 0 {
+                                column.size = vec.len();
+                            } else if column.size != vec.len() {
+                                error!("Mismatched array length for feature `{}`. Expected: {} Received: {}", column.name, column.size, vec.len());
+                            }
+
+                            for j in vec {
                                 vector.push(j as f32)
                             }
                         }
                         "int8" => vector.push(row[column.position].value::<i64>().unwrap() as f32),
                         "int8[]" => {
-                            for j in row[column.position].value::<Vec<i64>>().unwrap() {
+                            let vec = row[column.position].value::<Vec<i64>>().unwrap();
+                            if column.size == 0 {
+                                column.size = vec.len();
+                            } else if column.size != vec.len() {
+                                error!("Mismatched array length for feature `{}`. Expected: {} Received: {}", column.name, column.size, vec.len());
+                            }
+
+                            for j in vec {
                                 vector.push(j as f32)
                             }
                         }
@@ -561,7 +659,14 @@ impl Snapshot {
                             vector.push(row[column.position].value::<f32>().unwrap() as f32)
                         }
                         "float4[]" => {
-                            for j in row[column.position].value::<Vec<f32>>().unwrap() {
+                            let vec = row[column.position].value::<Vec<f32>>().unwrap();
+                            if column.size == 0 {
+                                column.size = vec.len();
+                            } else if column.size != vec.len() {
+                                error!("Mismatched array length for feature `{}`. Expected: {} Received: {}", column.name, column.size, vec.len());
+                            }
+
+                            for j in vec {
                                 vector.push(j as f32)
                             }
                         }
@@ -569,26 +674,55 @@ impl Snapshot {
                             vector.push(row[column.position].value::<f64>().unwrap() as f32)
                         }
                         "float8[]" => {
-                            for j in row[column.position].value::<Vec<f64>>().unwrap() {
+                            let vec = row[column.position].value::<Vec<f64>>().unwrap();
+                            if column.size == 0 {
+                                column.size = vec.len();
+                            } else if column.size != vec.len() {
+                                error!("Mismatched array length for feature `{}`. Expected: {} Received: {}", column.name, column.size, vec.len());
+                            }
+
+                            for j in vec {
                                 vector.push(j as f32)
                             }
+                        }
+                        "text" | "varchar" => {
+                            // we handle text categorical encoding on the fly for memory efficiency
+                            let text = row[column.position].value::<String>().unwrap();
+                            let id = match column.statistics {
+                                Statistics::TextCategorical { nulls, ref mut categories } => {
+                                    let id = categories.len() + 1;
+                                    let values = categories.entry(text).or_insert(Category {id: id, members: 0 });
+                                    values.members += 1;
+                                    values.id
+                                }
+                                _ => error!("non text categorical stats for text column")
+                            };
+                            vector.push(id as f32);
                         }
                         _ => error!("unhandled type: `{}` for `{}`", column.pg_type, column.name),
                     }
                 }
             });
 
-            log!(
-                "Snapshot analysis: {:?}",
-                self.analysis.as_ref().unwrap()
+            info!(
+                "Snapshot columns: {:?}",
+                self.columns
+            );
+            info!(
+                "Snapshot features: {:?}",
+                x_train
             );
 
-            let stat = format!("{}_distinct", self.y_column_name[0]);
-            let num_distinct_labels = *self
-                .analysis
-                .as_ref().unwrap()
-                .get(&stat)
-                .unwrap() as usize;
+            let num_features = self.num_features();
+            let num_labels = self.num_labels();
+
+            let label = self.columns.iter().find(|c| c.name == self.y_column_name[0]).unwrap();
+            let num_distinct_labels = match &label.statistics {
+                Statistics::Continuous { nulls, ventiles } => 0,
+                Statistics::IntegerCategorical { nulls, categories } => categories.len(),
+                Statistics::TextCategorical {nulls, categories} => categories.len(),
+                Statistics::Array { nulls } => 0,
+            };
 
             data = Some(Dataset {
                 x_train,
