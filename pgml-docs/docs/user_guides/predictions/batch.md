@@ -39,7 +39,7 @@ Note that we are passing the result of `array_agg()` to our function because we 
 
 ## Collecting Results
 
-Batch predictions have to be fetched in a subquery or a CTE because they are using the `array_agg()` aggregate. To get the results back in a easily usable form, `pgml.predict_batch()` returns a `setof` result instead of a normal array, and that can be then built into a table:
+Batch predictions have to be fetched in a subquery or a CTE because they are using the `array_agg()` aggregate. To get the results back in an easily usable form, `pgml.predict_batch()` returns a `setof` result instead of a normal array, and that can be then built into a table:
 
 === "SQL"
 	
