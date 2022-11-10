@@ -129,6 +129,7 @@ nav:
             - Joint Optimization: user_guides/training/joint_optimization.md
         - Predictions: 
             - Prediction Overview: user_guides/predictions/overview.md
+            - Batch Predictions: user_guides/predictions/batch.md
             - Deploying Models: user_guides/predictions/deployments.md
         - Vector Operations: user_guides/vector_operations/overview.md
         - Transformers:
