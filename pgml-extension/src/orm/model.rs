@@ -261,7 +261,7 @@ impl Model {
             Ok(Some(1))
         });
 
-        model.expect(&format!("pgml.models WHERE id = {:?} could not be loaded. Does it exist?", id))
+        model.unwrap_or_else(|| error!("pgml.models WHERE id = {:?} could not be loaded. Does it exist?", id))
     }
 
     pub fn find_cached(id: i64) -> Arc<Model> {
@@ -830,7 +830,7 @@ impl Model {
                                         match &option {
                                             Some(element) => {
                                                 match &column.statistics {
-                                                    TextCategorical { nulls, categories } => {
+                                                    TextCategorical { nulls: _, categories } => {
                                                         let id = match categories.get(element) {
                                                             Some(category) => category.id,
                                                             None => 0,

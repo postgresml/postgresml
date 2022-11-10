@@ -1,12 +1,8 @@
 use std::cmp::Ordering;
-use std::collections::btree_map::Entry;
 use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
-use std::time::Instant;
 use std::collections::HashMap;
-use std::hash::BuildHasherDefault;
 
-use hashers::fx_hash::FxHasher;
 use indexmap::IndexMap;
 use pgx::*;
 use serde::{Deserialize, Serialize};
@@ -74,14 +70,6 @@ impl Column {
     fn quoted_name(&self) -> String {
         format!(r#""{}""#, self.name)
     }
-
-    fn stats_safe_name(&self) -> String {
-        match self.pg_type.as_str() {
-            "bool" => self.quoted_name() + "::INT4",
-            "bool[]" => self.quoted_name() + "::INT4[]",
-            _ => self.quoted_name(),
-        }
-    }
 }
 
 impl PartialEq<Self> for Column {
@@ -112,8 +100,8 @@ pub struct Snapshot {
     pub(crate) status: Status,
     pub(crate) columns: Vec<Column>,
     pub(crate) analysis: Option<IndexMap<String, f32>>,
-    pub(crate) created_at: Timestamp,
-    pub(crate) updated_at: Timestamp,
+    created_at: Timestamp,
+    updated_at: Timestamp,
     pub(crate) materialized: bool,
 }
 
@@ -320,7 +308,7 @@ impl Snapshot {
                     (PgBuiltInOids::TEXTOID.oid(), test_sampling.to_string().into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), status.to_string().into_datum()),
                     (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(columns)).into_datum()),
-                    (PgBuiltInOids::BOOLOID.oid(), materialized.clone().into_datum()),
+                    (PgBuiltInOids::BOOLOID.oid(), materialized.into_datum()),
                 ])
             ).first();
 
@@ -426,10 +414,9 @@ impl Snapshot {
 
     #[allow(clippy::format_push_string)]
     fn analyze(&mut self) {
-        let now = Instant::now();
         let raw_dataset = self.dataset();
 
-        let mut features = ndarray::ArrayView2::from_shape(
+        let features = ndarray::ArrayView2::from_shape(
             (raw_dataset.num_train_rows, raw_dataset.num_features),
             &raw_dataset.x_train,
         )
@@ -442,12 +429,11 @@ impl Snapshot {
             info!("c: {} a: {} column: {:?} data: {:?}", c, a, column, data);
 
             match &mut column.statistics {
-                Statistics::Continuous { nulls, ventiles } => {
+                Statistics::Continuous { nulls: _, ventiles: _ } => {
                     c += 1;
-                    let data = data.to_vec().sort_by(|a,b| a.partial_cmp(b).unwrap());
-
+                    // let data = data.to_vec().sort_by(|a,b| a.partial_cmp(b).unwrap());
                 },
-                Statistics::IntegerCategorical { nulls, ref mut categories } => {
+                Statistics::IntegerCategorical { nulls: _, ref mut categories } => {
                     c += 1;
                     let mut cs = vec![0; *data.max().unwrap() as usize + 1];
                     for i in data {
@@ -455,10 +441,10 @@ impl Snapshot {
                     }
                     categories.extend(cs);
                 },
-                Statistics::TextCategorical {nulls, categories} => {
+                Statistics::TextCategorical {nulls: _, categories: _} => {
                     c += 1;
                 },
-                Statistics::Array { nulls } => {
+                Statistics::Array { nulls: _ } => {
                     if a < column.size {
                         a += 1;
                     } else {
@@ -689,9 +675,9 @@ impl Snapshot {
                             // we handle text categorical encoding on the fly for memory efficiency
                             let text = row[column.position].value::<String>().unwrap();
                             let id = match column.statistics {
-                                Statistics::TextCategorical { nulls, ref mut categories } => {
+                                Statistics::TextCategorical { nulls: _, ref mut categories } => {
                                     let id = categories.len() + 1;
-                                    let values = categories.entry(text).or_insert(Category {id: id, members: 0 });
+                                    let values = categories.entry(text).or_insert(Category {id, members: 0 });
                                     values.members += 1;
                                     values.id
                                 }
@@ -718,10 +704,10 @@ impl Snapshot {
 
             let label = self.columns.iter().find(|c| c.name == self.y_column_name[0]).unwrap();
             let num_distinct_labels = match &label.statistics {
-                Statistics::Continuous { nulls, ventiles } => 0,
-                Statistics::IntegerCategorical { nulls, categories } => categories.len(),
-                Statistics::TextCategorical {nulls, categories} => categories.len(),
-                Statistics::Array { nulls } => 0,
+                Statistics::Continuous { nulls: _, ventiles: _ } => 0,
+                Statistics::IntegerCategorical { nulls: _, categories } => categories.len(),
+                Statistics::TextCategorical {nulls: _, categories} => categories.len(),
+                Statistics::Array { nulls: _ } => 0,
             };
 
             data = Some(Dataset {

@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
-use ndarray::array;
 
 use pgx::iter::{SetOfIterator, TableIterator};
 use pgx::*;
-use pgx::prelude::PgHeapTuple;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
