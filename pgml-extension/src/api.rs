@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 
-use pgx::iter::{TableIterator, SetOfIterator};
+use pgx::iter::{SetOfIterator, TableIterator};
 use pgx::*;
 
 #[cfg(feature = "python")]
@@ -402,7 +402,7 @@ fn predict_joint(project_name: &str, features: Vec<f32>) -> Vec<f32> {
 #[pg_extern(strict, name = "predict_batch")]
 fn predict_batch(project_name: &str, features: Vec<f32>) -> SetOfIterator<'static, f32> {
     SetOfIterator::new(
-        predict_model_batch(Project::get_deployed_model_id(project_name), features).into_iter()
+        predict_model_batch(Project::get_deployed_model_id(project_name), features).into_iter(),
     )
 }
 
