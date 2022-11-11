@@ -58,7 +58,7 @@ The PostgresML dashboard is a Django app, that can be run against any PostgreSQL
 
 1. Clone the repo:
 ```bash
-git clone git@github.com:postgresml/postgresml.git && cd postgresml/pgml-dashboard
+git clone https://github.com/postgresml/postgresml && cd postgresml/pgml-dashboard
 ```
 
 2. Set your `PGML_DATABASE_URL` environment variable:
