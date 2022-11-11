@@ -18,7 +18,7 @@ You can skip to [Installation](/user_guides/setup/v2/installation/) for producti
 
 1. Clone the repo:
 ```bash
-git clone git@github.com:postgresml/postgresml.git
+git clone https://github.com/postgresml/postgresml
 ```
 
 2. Start Dockerized services. PostgresML will run on port 5433, just in case you already have Postgres running:
