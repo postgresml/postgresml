@@ -115,6 +115,7 @@ DATABASES = {
         "HOST": database.hostname,
         "PORT": database.port,
         "SCHEMA": "pgml",
+        "CONN_MAX_AGE": 60,
     }
 }
 
