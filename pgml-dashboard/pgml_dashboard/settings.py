@@ -169,10 +169,10 @@ if URL_PREFIX:
     if not URL_PREFIX.endswith("/"):
         URL_PREFIX += "/"
 
-if DEBUG:
-    STATIC_URL = "/static/"
-else:
+if URL_PREFIX:
     STATIC_URL = "/" + URL_PREFIX + "/static/"
+else:
+    STATIC_URL = "/static/"
 
 STATIC_ROOT = "static"
 
