@@ -777,7 +777,7 @@ impl Model {
 
             self.bindings = best_estimator;
             self.hyperparams = JsonB(json!(best_hyperparams.unwrap().clone()));
-            self.metrics = Some(JsonB(json!(best_metrics.unwrap())));
+            self.metrics = Some(JsonB(json!(metrics)));
         };
 
         Spi::get_one_with_args::<i64>(
