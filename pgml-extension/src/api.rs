@@ -115,6 +115,7 @@ fn train(
     runtime: default!(Option<Runtime>, "NULL"),
     automatic_deploy: default!(Option<bool>, true),
     materialize_snapshot: default!(bool, false),
+    preprocess: default!(JsonB, "'{}'"),
 ) -> TableIterator<
     'static,
     (
@@ -139,6 +140,7 @@ fn train(
         runtime,
         automatic_deploy,
         materialize_snapshot,
+        preprocess,
     )
 }
 
@@ -159,6 +161,7 @@ fn train_joint(
     runtime: default!(Option<Runtime>, "NULL"),
     automatic_deploy: default!(Option<bool>, true),
     materialize_snapshot: default!(bool, false),
+    preprocess: default!(JsonB, "'{}'"),
 ) -> TableIterator<
     'static,
     (
@@ -204,6 +207,7 @@ fn train_joint(
                 test_size,
                 test_sampling,
                 materialize_snapshot,
+                preprocess,
             );
 
             if materialize_snapshot {
@@ -445,6 +449,7 @@ fn snapshot(
     y_column_name: &str,
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
+    preprocess: default!(JsonB, "'{}'"),
 ) -> TableIterator<'static, (name!(relation, String), name!(y_column_name, String))> {
     Snapshot::create(
         relation_name,
@@ -452,6 +457,7 @@ fn snapshot(
         test_size,
         test_sampling,
         true,
+        preprocess,
     );
     TableIterator::new(vec![(relation_name.to_string(), y_column_name.to_string())].into_iter())
 }

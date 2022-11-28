@@ -18,7 +18,7 @@ use serde_json::json;
 use crate::bindings::*;
 use crate::orm::Dataset;
 use crate::orm::*;
-use crate::orm::snapshot::Statistics::TextCategorical;
+// use crate::orm::snapshot::Statistics::TextCategorical;
 
 #[allow(clippy::type_complexity)]
 static DEPLOYED_MODELS_BY_ID: Lazy<Mutex<HashMap<i64, Arc<Model>>>> =
@@ -830,13 +830,13 @@ impl Model {
                                         match &option {
                                             Some(element) => {
                                                 match &column.statistics {
-                                                    TextCategorical { nulls: _, categories } => {
-                                                        let id = match categories.get(element) {
-                                                            Some(category) => category.id,
-                                                            None => 0,
-                                                        };
-                                                        features.push(id as f32);
-                                                    }
+                                                    // TextCategorical { nulls: _, categories } => {
+                                                    //     let id = match categories.get(element) {
+                                                    //         Some(category) => category.id,
+                                                    //         None => 0,
+                                                    //     };
+                                                    //     features.push(id as f32);
+                                                    // }
                                                     _ => error!("Mismatched feature, expected text in position {:?}", index)
                                                 }
                                             }
