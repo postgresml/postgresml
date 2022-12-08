@@ -11,6 +11,8 @@ CREATE TABLE test (
 
 insert into test VALUES
 ('one', 2, NULL, 1, 1.0, true, ARRAY[1, 1, 1, 1], 1),
+[0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 4.0, 6.0, 6.0,
+10.0, 12.0, 3.0, 2.0, 3.0, 3.0, 3.0, 3.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, -1.401826, -0.86266214, 0.2156656, 0.2156656, 0.75482947, 1.2939934, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, -1.46385, -0.87831, -0.29277, 0.29277, 0.87831, 1.46385, -1.46385, -0.87831, -0.29277, 0.29277, 0.87831, 1.46385, -1.46385, -0.87831, -0.29277, 0.29277, 0.87831, 1.46385, -1.46385, -0.87831, -0.29277, 0.29277, 0.87831, 1.46385
 ('one', 4, 'bye', 2, 2.0, NULL, ARRAY[2, 2, 2, 2], 2),
 ('one', 6, 'hi', 3, NULL, true, ARRAY[3, 3, 3, 3], 3),
 ('one', NULL, 'hi', 4, 4.0, false, ARRAY[4, 4, 4, 4], 4),
@@ -20,10 +22,50 @@ insert into test VALUES
 ('two', 16, 'hi', 8, 8.0, false, ARRAY[8, 8, 8, 8], 8);
 
 select pgml.train('test', 'regression', 'test', 'target', preprocess => '{
-    "name": {"impute": "mode", "encode": {"ordinal": ["one"]}}
+    "name": {"impute": "mode", "encode": {"ordinal": ["one", "two"]}}
     }'
 );
 select pgml.predict('test', ('one', 2, 'hi', 1, 1.0, true, ARRAY[1, 1, 1, 1]));
+
+select pgml.train('test', 'regression', 'test', 'target', preprocess => '{
+    "name": {"scale": "standard" },
+    "id": {"scale": "standard" },
+    "description": {"scale": "standard" },
+    "big": {"scale": "min_max" },
+    "value": {"scale": "preserve" },
+    "category": {"scale": "robust" },
+    "image": {"scale": "max_abs" }
+    }'
+);
+
+select pgml.train('diabetes', 'regression', 'pgml.diabetes', 'target', preprocess => '{
+    "age": {"scale": "preserve" },
+    "sex": {"scale": "preserve" },
+    "bmi": {"scale": "preserve" },
+    "bp": {"scale": "preserve" },
+    "s1": {"scale": "preserve" },
+    "s2": {"scale": "preserve" },
+    "s3": {"scale": "preserve" },
+    "s4": {"scale": "preserve" },
+    "s5": {"scale": "preserve" },
+    "s6": {"scale": "preserve" }
+    }'
+);
+
+select pgml.train('diabetes', 'regression', 'pgml.diabetes', 'target', preprocess => '{
+    "age": {"scale": "min_max" },
+    "sex": {"scale": "min_max" },
+    "bmi": {"scale": "min_max" },
+    "bp": {"scale": "min_max" },
+    "s1": {"scale": "min_max" },
+    "s2": {"scale": "min_max" },
+    "s3": {"scale": "min_max" },
+    "s4": {"scale": "min_max" },
+    "s5": {"scale": "min_max" },
+    "s6": {"scale": "min_max" }
+    }'
+);
+
 
 preprocess => {
 “TEXT” => [

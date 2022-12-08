@@ -8,8 +8,6 @@ use indexmap::IndexMap;
 use pgx::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use ndarray_stats::QuantileExt;
-use pgx_pg_sys::stat;
 
 use crate::orm::Dataset;
 use crate::orm::Sampling;
@@ -26,10 +24,12 @@ pub(crate) struct Category {
 pub(crate) struct Statistics {
     min: f32,
     max: f32,
+    max_abs: f32,
     mean: f32,
-    variance: f32,
     median: f32,
     mode: f32,
+    variance: f32,
+    std_dev: f32,
     missing: usize,
     distinct: usize,
     histogram: Vec<usize>,
@@ -42,10 +42,12 @@ impl Default for Statistics {
         Statistics {
             min: f32::NAN,
             max: f32::NAN,
+            max_abs: f32::NAN,
             mean: f32::NAN,
-            variance: f32::NAN,
             median: f32::NAN,
             mode: f32::NAN,
+            variance: f32::NAN,
+            std_dev: f32::NAN,
             missing: 0,
             distinct: 0,
             histogram: vec![0; 20],
@@ -71,7 +73,7 @@ pub(crate) enum Encode {
     // Encode each category as ascending integer values
     ordinal(Vec<String>),
     // Encode each category as the mean of the target
-    target(HashMap<String,f32>),
+    target,
 }
 
 // How to replace missing values
@@ -124,15 +126,19 @@ pub(crate) struct Column {
 }
 
 impl Column {
+    fn categorical_type(pg_type: &str) -> bool {
+        match pg_type {
+            "bool" | "bpchar" | "int2" | "int4" | "int8" | "text" | "varchar" => true,
+            _ => false,
+        }
+    }
+
     fn quoted_name(&self) -> String {
         format!(r#""{}""#, self.name)
     }
 
     fn is_categorical(&self) -> bool {
-        match self.pg_type.as_str() {
-            "bool" | "bpchar" | "int2" | "int4" | "int8" | "text" | "varchar" => true,
-            _ => false,
-        }
+        Self::categorical_type(self.pg_type.as_str())
     }
 }
 
@@ -314,14 +320,24 @@ impl Snapshot {
                 let position = row[4].value::<i32>().unwrap() as usize;
                 let label = y_column_name.contains(&name);
                 let statistics = Statistics::default();
-                let preprocessor = match preprocessors.get(&name) {
+                let default_impute = if Column::categorical_type(&pg_type) {
+                    Impute::mean
+                } else {
+                    Impute::mode
+                };
+                let mut preprocessor = match preprocessors.get(&name) {
                     Some(preprocessor) => preprocessor.clone(),
                     None => Preprocessor {
                         encode: Encode::label,
-                        impute: Impute::mean,
+                        impute: default_impute,
                         scale: Scale::standard,
                     },
                 };
+
+                if Column::categorical_type(&pg_type) && preprocessor.impute == Impute::mean {
+                    warning!("Cannot impute `mean` for categorical variable {:?}. Setting to impute `mode`.", name);
+                    preprocessor.impute = Impute::mode;
+                }
 
                 columns.push(
                     Column {
@@ -358,7 +374,7 @@ impl Snapshot {
                 ])
             ).first();
 
-            let mut s = Snapshot {
+            let s = Snapshot {
                 id: result.get_datum(1).unwrap(),
                 relation_name: result.get_datum(2).unwrap(),
                 y_column_name: result.get_datum(3).unwrap(),
@@ -458,151 +474,253 @@ impl Snapshot {
         }
     }
 
+    fn analyze(array: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &mut Column) {
+        info!("Snapshot analyze: {:?}", column.name);
+        let mut data = array.iter().filter_map(|n| if n.is_nan() { None } else { Some(*n) }).collect::<Vec<f32>>();
+        data.sort_by(|a, b| a.total_cmp(&b));
+
+        // TODO handle multiple columns from arrays clobbering/appending to the same stats
+        let mut statistics = &mut column.statistics;
+        statistics.min = *data.first().unwrap();
+        statistics.max = *data.last().unwrap();
+        statistics.max_abs = if statistics.max.abs() > statistics.min.abs() { statistics.max.abs() } else { statistics.min.abs() };
+        statistics.mean = data.iter().sum::<f32>() / data.len() as f32;
+        statistics.median = data[data.len() / 2];
+        statistics.missing = array.len() - data.len();
+        statistics.variance = data.iter().map(|i| {
+            let diff = statistics.mean - (*i);
+            diff * diff
+        }).sum::<f32>() / data.len() as f32;
+        statistics.std_dev = statistics.variance.sqrt();
+        let mut i = 0;
+        let histogram_boundaries = ndarray::Array::linspace(statistics.min, statistics.max, 21);
+        let mut h = 0;
+        let ventile_size = data.len() as f32 / 20.;
+        let mut streak = 1;
+        let mut max_streak = 0;
+        let mut previous = f32::NAN;
+
+        match &column.preprocessor.encode {
+            Encode::target => {
+                // let values = HashMap<f32, f32>::new();
+                // for value in data {
+                //     sum = values.entry(value).or_insert(0_f32);
+                //     valuers.insert(value, sum + )
+                // }
+                todo!("update the statistics.categories to be the average target values. Calculate the label average using permutation crate")
+            }
+            _ => {}
+        }
+
+        let mut modes = Vec::new();
+        for &value in &data {
+            if value == previous {
+                streak += 1;
+                info!("streak: {} {} {}", column.name, streak, value);
+            } else if !previous.is_nan() {
+                if streak > max_streak  {
+                    info!("new mode: {} {} {}", column.name, streak, previous);
+                    modes = vec![previous];
+                    max_streak = streak;
+                } else if streak == max_streak {
+                    info!("tied mode: {} {} {}", column.name, streak, previous);
+                    modes.push(previous);
+                }
+                info!("not mode: {} {} {}", column.name, streak, previous);
+                streak = 1;
+                statistics.distinct += 1;
+            }
+            previous = value;
+                // match &column.preprocessor.encode {
+                //     Encode::ordinal(values) => {
+                //     },
+                //     _ => {}
+                // }
+
+            // histogram
+            while value >= histogram_boundaries[h] && h < statistics.histogram.len() {
+                h += 1;
+            }
+            statistics.histogram[h - 1] += 1;
+
+            // ventiles
+            // IMPROVEMENT fill in all 19 ventiles even if there are fewer training data points.
+            let v = (i as f32 / ventile_size) as usize;
+            if v < 19 {
+                statistics.ventiles[v] = value;
+            }
+            i += 1;
+        }
+        // Pick the mode in the middle
+        if !previous.is_nan() {
+            statistics.distinct += 1;
+            if streak > max_streak {
+                statistics.mode = previous;
+            } else {
+                statistics.mode = modes[modes.len() / 2];
+            }
+        }
+    }
+
+    fn preprocess(processed_data: &mut Vec<f32>, data: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &mut Column, slot: usize) {
+        let num_features = processed_data.len() / data.len();
+        let statistics = &column.statistics;
+        for (i, &d) in data.iter().enumerate() {
+            let mut value = d;
+            if value.is_nan() {
+                match &column.preprocessor.impute {
+                    Impute::mean => value = statistics.mean,
+                    Impute::median => value = statistics.median,
+                    Impute::mode => value = statistics.mode,
+                    Impute::min => value = statistics.min,
+                    Impute::max => value = statistics.max,
+                    Impute::zero => value = 0.,
+                    Impute::error => error!("{} missing values for {}", statistics.missing, column.name),
+                }
+            }
+
+            match &column.preprocessor.encode {
+                Encode::label | Encode::ordinal {..} => {
+                    // done during initial read
+                },
+                _ => todo!()
+            //     Encode::one_hot { limit, min_frequency } => {
+            //         todo!()
+            //         // for i in 0..column.statistics.distinct {
+            //             // TODO don't ignore scaling
+            //             // if v == i as f32 {
+            //             //     processed_features[c + i] = 1
+            //             // }
+            //         // }
+            //     },
+            //     Encode::target => {},
+            }
+            if column.is_categorical() {
+            } else {
+                match column.preprocessor.scale {
+                    Scale::standard => {
+                        value = (value - statistics.mean) / statistics.std_dev
+                    }
+                    Scale::min_max => {
+                        value = (value - statistics.min) / (statistics.max - statistics.min)
+                    }
+                    Scale::max_abs => {
+                        value = value - statistics.max_abs
+                    }
+                    Scale::robust => {
+                        value = (value - statistics.median) / (statistics.ventiles[15] - statistics.ventiles[5])
+                    }
+                    Scale::preserve => {}
+                }
+            }
+            processed_data[num_features * i + slot] = value;
+        }
+    }
+
     pub fn dataset(&mut self) -> Dataset {
         let numeric_encoded_dataset = self.numeric_encoded_dataset();
+
+        // TODO dry up these feature/label blocks
+        // Analyze features
         let features = ndarray::ArrayView2::from_shape(
             (numeric_encoded_dataset.num_train_rows, numeric_encoded_dataset.num_features),
             &numeric_encoded_dataset.x_train,
         ).unwrap();
-        let mut columns: Vec<usize> = Vec::with_capacity(numeric_encoded_dataset.num_features);
+        let mut feature_columns: Vec<usize> = Vec::with_capacity(numeric_encoded_dataset.num_features);
+        // Array columns are treated as multiple features that are analyzed independently, because that is the most straightforward thing to do
         self.columns.iter().for_each(|column| {
             if !column.label {
                 for _ in 0..column.size {
-                    columns.push(column.position); // TODO add array column indicators to combine stats
+                    feature_columns.push(column.position);
                 }
             }
         });
-
-        Zip::from(features.columns()) // TODO compute statistics for the label columns
-            .and(&mut columns)
+        Zip::from(features.columns())
+            .and(&mut feature_columns)
             .for_each(|data, position| {
-                let mut sorted = data.to_vec();
                 let column = &mut self.columns[*position - 1];
-                sorted.sort_by(|a, b| a.total_cmp(&b));
-
-                let mut statistics = &mut column.statistics;
-                statistics.min = *sorted.first().unwrap();
-                statistics.max = *sorted.last().unwrap();
-                statistics.mean = sorted.iter().sum::<f32>() / sorted.len() as f32;
-                statistics.median = sorted[sorted.len() / 2];
-                statistics.variance = (sorted.iter().map(|i| {
-                    let diff = statistics.mean - (*i);
-                    diff * diff
-                }).sum::<f32>() / sorted.len() as f32).sqrt();
+                Self::analyze(&data, column);
+            });
 
 
-                let mut i = 0;
-                let histogram_boundaries = ndarray::Array::linspace(statistics.min, statistics.max, 21);
-                let mut h = 0;
-                let mut ventile_size = sorted.len() as f32 / 20.;
-                let mut streak = 1;
-                let mut max_streak = 0;
-                let mut previous = f32::NAN;
-                for value in &sorted {
-                    if value.is_nan() {
-                        statistics.missing += 1;
-                    } else if *value == previous {
-                        streak += 1;
-                    } else {
-                        statistics.distinct += 1;
-                        if streak > max_streak {
-                            statistics.mode = *value;
-                            max_streak = streak;
-                        }
-                        streak = 1;
-                        previous = *value;
-                    }
-
-                    // histogram
-                    while *value >= histogram_boundaries[h] && h < statistics.histogram.len() {
-                        h += 1;
-                    }
-                    statistics.histogram[h - 1] += 1;
-
-                    // ventiles
-                    let v = (i as f32 / ventile_size) as usize;
-                    statistics.ventiles[v] = *value;
-
-                    i += 1;
+        // Analyze labels
+        let labels = ndarray::ArrayView2::from_shape(
+            (numeric_encoded_dataset.num_train_rows, numeric_encoded_dataset.num_labels),
+            &numeric_encoded_dataset.y_train,
+        ).unwrap();
+        let mut label_columns: Vec<usize> = Vec::with_capacity(numeric_encoded_dataset.num_labels);
+        // Array columns are treated as multiple features that are analyzed independently, because that is the most straightforward thing to do
+        self.columns.iter().for_each(|column| {
+            if column.label {
+                for _ in 0..column.size {
+                    label_columns.push(column.position);
                 }
+            }
+        });
+        Zip::from(labels.columns())
+            .and(&mut label_columns)
+            .for_each(|data, position| {
+                let column = &mut self.columns[*position - 1];
+                Self::analyze(&data, column);
             });
 
         // TODO add a column for Impute::missing, move to num_features()
         let total_width = self.columns.iter().map(|column| {
-            if column.is_categorical() {
+            if column.label {
+                0
+            } else if column.is_categorical() {
                 match column.preprocessor.encode {
-                    Encode::label => column.size,
-                    _ => column.size * column.statistics.distinct,
+                    Encode::label | Encode::target | Encode::ordinal(..) => column.size,
+                    Encode::one_hot { .. } => column.size * column.statistics.distinct,
                 }
             } else {
                 column.size
             }
         }).sum::<usize>();
 
-        // TODO extract to reusable function for predictions
-        let processed_features = vec![0_f32, total_width * numeric_encoded_dataset.num_train_rows];
-        let mut c = 0;
+        let mut x_train = vec![0_f32; total_width * numeric_encoded_dataset.num_train_rows];
+        let mut slot = 0;
         Zip::from(features.columns())
-            .and(&mut columns)
+            .and(&mut feature_columns)
             .for_each(|data, position| {
                 let column = &mut self.columns[*position - 1];
-                let mut statistics = &mut column.statistics;
+                Self::preprocess(&mut x_train, &data, column, slot);
+                slot += 1;
+            });
 
-                if column.is_categorical() && column.preprocessor.impute == Impute::mean {
-                    error!("Cannot impute `{:?}` for categorical variable `{:?}`. Did you mean to impute `mode`?", column.preprocessor.impute, column.name);
-                }
-                info!("imputing {}: {:?}", column.name, column.preprocessor.impute);
-                let offset = c * data.len();
-                for (i, &d) in data.enumerate() {
-                    let mut value = d;
-                    if value.is_nan() {
-                        match &column.preprocessor.impute {
-                            Impute::mean => value = statistics.mean,
-                            Impute::median => value = statistics.median,
-                            Impute::mode => value = statistics.mode,
-                            Impute::min => value = statistics.min,
-                            Impute::max => value = statistics.max,
-                            Impute::zero => value = 0.,
-                            Impute::error => error!("{} missing values for {}", statistics.missing, column.name),
-                        }
-                    }
-
-                    match &column.preprocessor.encode {
-                        Encode::label => {},
-                        Encode::one_hot => {
-                            for i in 0..column.statistics.distinct {
-                                // TODO don't ignore scaling
-                                if v == i as f32 {
-                                    processed_features[c + i] = 1
-                                }
-                            }
-                        },
-                        Encode::target => {},
-                        Encode::ordinal(values) => {},
-                    }
-                    if column.is_categorical() {
-                    } else {
-                        match column.preprocessor.scale {
-                            _ => {}
-                        }
-                    }
-
-                    for i in 0..data.len() {
-                        processed_features[offset + i] = data[i];
-                    }
-                    c += 1;
-                }
+        let mut x_test = vec![0_f32; total_width * numeric_encoded_dataset.num_test_rows];
+        let mut slot = 0;
+        let test_features = ndarray::ArrayView2::from_shape(
+            (numeric_encoded_dataset.num_test_rows, numeric_encoded_dataset.num_features),
+            &numeric_encoded_dataset.x_test,
+        ).unwrap();
+        Zip::from(test_features.columns())
+            .and(&mut feature_columns)
+            .for_each(|data, position| {
+                let column = &mut self.columns[*position - 1];
+                Self::preprocess(&mut x_test, &data, column, slot);
+                slot += 1;
             });
 
         info!(
-            "Snapshot columns: {:?}",
-            self.columns
+            "Snapshot columns: {:?}", self.columns
         );
         info!(
-            "Snapshot features: {:?}",
+            "Snapshot raw features: {:?} {:?}",
+            numeric_encoded_dataset.x_train.len(),
             numeric_encoded_dataset.x_train
         );
-        numeric_encoded_dataset
+        info!(
+            "Snapshot encoded features: {:?} {:?}",
+            x_train.len(),
+            x_train
+        );
+
+        Dataset {
+            x_train,
+            x_test,
+            ..numeric_encoded_dataset
+        }
     }
 
     // Encodes the raw training dataset
@@ -675,7 +793,10 @@ impl Snapshot {
                     };
                     match column.pg_type.as_str() {
                         "bool" => {
-                            vector.push(row[column.position].value::<bool>().unwrap() as u8 as f32)
+                            match row[column.position].value::<bool>() {
+                                Some(v) => vector.push(v as u8 as f32),
+                                None => vector.push(f32::NAN),
+                            }
                         }
                         "bool[]" => {
                             let vec = row[column.position].value::<Vec<bool>>().unwrap();
@@ -685,7 +806,10 @@ impl Snapshot {
                             }
                         }
                         "bpchar" => {
-                            vector.push(row[column.position].value::<i8>().unwrap() as f32)
+                            match row[column.position].value::<i8>() {
+                                Some(v) => vector.push(v as f32),
+                                None => vector.push(f32::NAN),
+                            }
                         }
                         "bpchar[]" => {
                             let vec = row[column.position].value::<Vec<i8>>().unwrap();
@@ -695,7 +819,12 @@ impl Snapshot {
                                 vector.push(j as u8 as f32)
                             }
                         }
-                        "int2" => vector.push(row[column.position].value::<i16>().unwrap() as f32),
+                        "int2" => {
+                            match row[column.position].value::<i16>() {
+                                Some(v) => vector.push(v as f32),
+                                None => vector.push(f32::NAN),
+                            }
+                        },
                         "int2[]" => {
                             let vec = row[column.position].value::<Vec<i16>>().unwrap();
                             check_column_size(column, vec.len());
@@ -704,7 +833,12 @@ impl Snapshot {
                                 vector.push(j as f32)
                             }
                         }
-                        "int4" => vector.push(row[column.position].value::<i32>().unwrap() as f32),
+                        "int4" => {
+                            match row[column.position].value::<i32>() {
+                                Some(v) => vector.push(v as f32),
+                                None => vector.push(f32::NAN),
+                            }
+                        },
                         "int4[]" => {
                             let vec = row[column.position].value::<Vec<i32>>().unwrap();
                             check_column_size(column, vec.len());
@@ -713,7 +847,12 @@ impl Snapshot {
                                 vector.push(j as f32)
                             }
                         }
-                        "int8" => vector.push(row[column.position].value::<i64>().unwrap() as f32),
+                        "int8" => {
+                            match row[column.position].value::<i64>() {
+                                Some(v) => vector.push(v as f32),
+                                None => vector.push(f32::NAN),
+                            }
+                        }
                         "int8[]" => {
                             let vec = row[column.position].value::<Vec<i64>>().unwrap();
                             check_column_size(column, vec.len());
@@ -723,7 +862,10 @@ impl Snapshot {
                             }
                         }
                         "float4" => {
-                            vector.push(row[column.position].value::<f32>().unwrap() as f32)
+                            match row[column.position].value::<f32>() {
+                                Some(v) => vector.push(v),
+                                None => vector.push(f32::NAN),
+                            }
                         }
                         "float4[]" => {
                             let vec = row[column.position].value::<Vec<f32>>().unwrap();
@@ -734,7 +876,10 @@ impl Snapshot {
                             }
                         }
                         "float8" => {
-                            vector.push(row[column.position].value::<f64>().unwrap() as f32)
+                            match row[column.position].value::<f64>() {
+                                Some(v) => vector.push(v as f32),
+                                None => vector.push(f32::NAN),
+                            }
                         }
                         "float8[]" => {
                             let vec = row[column.position].value::<Vec<f64>>().unwrap();
@@ -745,10 +890,30 @@ impl Snapshot {
                             }
                         }
                         "text" | "varchar" => {
-                            // label encode text on the fly for memory efficiency
-                            let text = row[column.position].value::<String>().unwrap();
-                            let value = (column.statistics.categories.len() + 1) as f32;
-                            let category = column.statistics.categories.entry(text).or_insert(Category { value, members: 0 });
+                            // encode text on the fly for memory efficiency.
+                            // TODO don't leak novel keys from the test set, use a NOVEL placeholder
+                            let text = match row[column.position].value::<String>() {
+                                Some(text) => text,
+                                None => "NULL".to_string(),
+                            };
+                            let len = column.statistics.categories.len();
+                            let category = column.statistics.categories.entry(text.clone()).or_insert_with(|| {
+                                let value = if text == "NULL".to_string() {
+                                    f32::NAN
+                                } else {
+                                    match &column.preprocessor.encode {
+                                        Encode::label | Encode::target | Encode::one_hot { .. } => (len + 1) as f32,
+                                        Encode::ordinal(values) => match values.iter().position(|v| v == text.as_str()) {
+                                            Some(i) => i as f32,
+                                            None => error!("value is not present in ordinal: {:?}. Valid values: {:?}", text, values),
+                                        },
+                                    }
+                                };
+                                Category {
+                                    value,
+                                    members: 0
+                                }
+                            });
                             category.members += 1;
                             vector.push(category.value);
                         }
