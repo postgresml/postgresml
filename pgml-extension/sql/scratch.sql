@@ -38,7 +38,7 @@ select pgml.train('test', 'regression', 'test', 'target', preprocess => '{
     }'
 );
 
-select pgml.train('diabetes', 'regression', 'pgml.diabetes', 'target', preprocess => '{
+select pgml.train('diabetes', 'regression', 'pgml.diabetes', 'target', algorithm => 'linear', preprocess => '{
     "age": {"scale": "preserve" },
     "sex": {"scale": "preserve" },
     "bmi": {"scale": "preserve" },
@@ -52,7 +52,22 @@ select pgml.train('diabetes', 'regression', 'pgml.diabetes', 'target', preproces
     }'
 );
 
-select pgml.train('diabetes', 'regression', 'pgml.diabetes', 'target', preprocess => '{
+select pgml.train('diabetes', 'regression', 'pgml.diabetes', 'target', algorithm => 'lasso', preprocess => '{
+    "age": {"scale": "standard" },
+    "sex": {"scale": "standard" },
+    "bmi": {"scale": "standard" },
+    "bp": {"scale": "standard" },
+    "s1": {"scale": "standard" },
+    "s2": {"scale": "standard" },
+    "s3": {"scale": "standard" },
+    "s4": {"scale": "standard" },
+    "s5": {"scale": "standard" },
+    "s6": {"scale": "standard" }
+    }'
+);
+
+
+select pgml.train('diabetes', 'regression', 'pgml.diabetes', 'target', algorithm => 'lasso', preprocess => '{
     "age": {"scale": "min_max" },
     "sex": {"scale": "min_max" },
     "bmi": {"scale": "min_max" },

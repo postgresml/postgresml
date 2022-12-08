@@ -557,7 +557,7 @@ impl Model {
         let now = Instant::now();
         self.bindings = Some(fit(dataset, hyperparams));
         let fit_time = now.elapsed();
-        info!("fit complete");
+
         let now = Instant::now();
         let mut metrics = self.test(dataset);
         let score_time = now.elapsed();

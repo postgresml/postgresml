@@ -475,7 +475,7 @@ impl Snapshot {
     }
 
     fn analyze(array: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &mut Column) {
-        info!("Snapshot analyze: {:?}", column.name);
+        info!("Snapshot analyzing {:?}", column.name);
         let mut data = array.iter().filter_map(|n| if n.is_nan() { None } else { Some(*n) }).collect::<Vec<f32>>();
         data.sort_by(|a, b| a.total_cmp(&b));
 
@@ -516,17 +516,13 @@ impl Snapshot {
         for &value in &data {
             if value == previous {
                 streak += 1;
-                info!("streak: {} {} {}", column.name, streak, value);
             } else if !previous.is_nan() {
                 if streak > max_streak  {
-                    info!("new mode: {} {} {}", column.name, streak, previous);
                     modes = vec![previous];
                     max_streak = streak;
                 } else if streak == max_streak {
-                    info!("tied mode: {} {} {}", column.name, streak, previous);
                     modes.push(previous);
                 }
-                info!("not mode: {} {} {}", column.name, streak, previous);
                 streak = 1;
                 statistics.distinct += 1;
             }
@@ -560,6 +556,7 @@ impl Snapshot {
                 statistics.mode = modes[modes.len() / 2];
             }
         }
+        info!("  {:?}", statistics);
     }
 
     fn preprocess(processed_data: &mut Vec<f32>, data: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &mut Column, slot: usize) {
@@ -701,20 +698,6 @@ impl Snapshot {
                 Self::preprocess(&mut x_test, &data, column, slot);
                 slot += 1;
             });
-
-        info!(
-            "Snapshot columns: {:?}", self.columns
-        );
-        info!(
-            "Snapshot raw features: {:?} {:?}",
-            numeric_encoded_dataset.x_train.len(),
-            numeric_encoded_dataset.x_train
-        );
-        info!(
-            "Snapshot encoded features: {:?} {:?}",
-            x_train.len(),
-            x_train
-        );
 
         Dataset {
             x_train,
