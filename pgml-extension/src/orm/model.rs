@@ -825,29 +825,25 @@ impl Model {
                             pgx_pg_sys::TEXTOID | pgx_pg_sys::VARCHAROID | pgx_pg_sys::UNKNOWNOID => {
                                 let element: Result<Option<String>, TryFromDatumError> =
                                     tuple.get_by_index(index.try_into().unwrap());
-                                match &element {
+                                match element {
                                     Ok(option) => {
-                                        match &option {
-                                            Some(element) => {
-                                                match &column.statistics {
-                                                    // TextCategorical { nulls: _, categories } => {
-                                                    //     let id = match categories.get(element) {
-                                                    //         Some(category) => category.id,
-                                                    //         None => 0,
-                                                    //     };
-                                                    //     features.push(id as f32);
-                                                    // }
-                                                    _ => error!("Mismatched feature, expected text in position {:?}", index)
-                                                }
-                                            }
-                                            None => error!("NULL input in position {:?}", index)
+                                        let string = if option.is_some() {
+                                            option.unwrap()
+                                        } else {
+                                            "NULL".to_string()
+                                        };
+
+                                        let category = column.statistics.categories.get(&string);
+                                        match category {
+                                            Some(category) => features.push(category.value),
+                                            None => features.push(f32::NAN),
                                         }
                                     }
                                     Err(e) => {
                                         info!("Couldn't cast data: {:?}, {:?}", &e, &attribute)
                                     }
                                 }
-                                info!("Element {}: {:?}", index, element);
+                                // info!("Element {}: {:?}", index, element);
                             },
                             pgx_pg_sys::BOOLOID => {
                                 let element: Result<Option<bool>, TryFromDatumError> =

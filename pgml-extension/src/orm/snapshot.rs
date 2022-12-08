@@ -34,7 +34,7 @@ pub(crate) struct Statistics {
     distinct: usize,
     histogram: Vec<usize>,
     ventiles: Vec<f32>,
-    categories: HashMap<String, Category>,
+    pub categories: HashMap<String, Category>,
 }
 
 impl Default for Statistics {
@@ -115,13 +115,13 @@ pub(crate) struct Preprocessor {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub(crate) struct Column {
-    name: String,
-    pg_type: String,
-    nullable: bool,
-    label: bool,
-    position: usize,
-    size: usize,
-    preprocessor: Preprocessor,
+    pub(crate) name: String,
+    pub(crate) pg_type: String,
+    pub(crate) nullable: bool,
+    pub(crate) label: bool,
+    pub(crate) position: usize,
+    pub(crate) size: usize,
+    pub(crate) preprocessor: Preprocessor,
     pub(crate) statistics: Statistics,
 }
 
@@ -207,6 +207,7 @@ impl Snapshot {
                 .first();
             if !result.is_empty() {
                 let jsonb: JsonB = result.get_datum(7).unwrap();
+                info!("json: {:?}", jsonb);
                 let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
                 // let jsonb: JsonB = result.get_datum(8).unwrap();
                 // let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
@@ -527,11 +528,6 @@ impl Snapshot {
                 statistics.distinct += 1;
             }
             previous = value;
-                // match &column.preprocessor.encode {
-                //     Encode::ordinal(values) => {
-                //     },
-                //     _ => {}
-                // }
 
             // histogram
             while value >= histogram_boundaries[h] && h < statistics.histogram.len() {
@@ -556,10 +552,11 @@ impl Snapshot {
                 statistics.mode = modes[modes.len() / 2];
             }
         }
+
         info!("  {:?}", statistics);
     }
 
-    fn preprocess(processed_data: &mut Vec<f32>, data: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &mut Column, slot: usize) {
+    pub(crate) fn preprocess(processed_data: &mut Vec<f32>, data: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &Column, slot: usize) {
         let num_features = processed_data.len() / data.len();
         let statistics = &column.statistics;
         for (i, &d) in data.iter().enumerate() {
@@ -610,6 +607,7 @@ impl Snapshot {
                     Scale::preserve => {}
                 }
             }
+            info!("column: {:?} num_features: {}  i: {} slot: {}", column, num_features, i, slot);
             processed_data[num_features * i + slot] = value;
         }
     }
@@ -660,6 +658,15 @@ impl Snapshot {
                 let column = &mut self.columns[*position - 1];
                 Self::analyze(&data, column);
             });
+
+        Spi::connect(|client| {
+            client.select("UPDATE pgml.snapshots SET columns = $1 WHERE id = $2", Some(1), Some(vec![
+                (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.columns)).into_datum()),
+                (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
+            ]));
+
+            Ok(Some(1))
+        });
 
         // TODO add a column for Impute::missing, move to num_features()
         let total_width = self.columns.iter().map(|column| {

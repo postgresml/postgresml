@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use ndarray::Zip;
 use pgx::iter::{SetOfIterator, TableIterator};
 use pgx::*;
 
@@ -438,8 +439,35 @@ fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
 #[pg_extern(strict, name = "predict")]
 fn predict_model_row(model_id: i64, row: pgx::datum::AnyElement) -> f32 {
     let model = Model::find_cached(model_id);
-    let features = model.preprocess(&[row]);
-    model.predict(&features)
+    let numeric_encoded_features = model.preprocess(&[row]);
+    info!("features: {}", numeric_encoded_features.len());
+    let mut processed = vec![0_f32; numeric_encoded_features.len()];
+
+    let features = ndarray::ArrayView2::from_shape(
+        (1, numeric_encoded_features.len()),
+        &numeric_encoded_features,
+    ).unwrap();
+    let mut feature_columns: Vec<usize> = Vec::with_capacity(numeric_encoded_features.len());
+
+    // Array columns are treated as multiple features that are analyzed independently, because that is the most straightforward thing to do
+    model.snapshot.columns.iter().for_each(|column| {
+        if !column.label {
+            for _ in 0..column.size {
+                feature_columns.push(column.position);
+            }
+        }
+    });
+
+    let mut slot = 0;
+    Zip::from(features.columns())
+        .and(&mut feature_columns)
+        .for_each(|data, position| {
+            let column = &model.snapshot.columns[*position - 1];
+            Snapshot::preprocess(&mut processed, &data, column, slot);
+            slot += 1;
+        });
+
+    model.predict(&processed)
 }
 
 
