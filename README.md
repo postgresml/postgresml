@@ -38,10 +38,10 @@
 
 The dashboard makes it easy to compare different algorithms or hyperparameters across models and datasets.
 
-[![PostgresML dashboard](pgml-docs/docs/images/dashboard/models.png)](https://demo.postgresml.org/)
+[![PostgresML dashboard](pgml-docs/docs/images/dashboard/models.png)](https://cloud.postgresml.org/)
 
 <h2 align="center">
-    See it in action — <a href="https://demo.postgresml.org/" target="_blank">demo.postgresml.org</a>
+    See it in action — <a href="https://cloud.postgresml.org/" target="_blank">cloud.postgresml.org</a>
 </h2>
 
 ## What's in the box
