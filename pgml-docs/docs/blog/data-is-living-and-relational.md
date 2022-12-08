@@ -84,7 +84,7 @@ We think it’s worth attempting to move the machine learning process and modern
 </center>
 
 <center markdown>
-  [Try the PostgresML Gym](https://gym.postgresml.org/){ .md-button .md-button--primary }
+  [Try the PostgresML Gym](https://cloud.postgresml.org/){ .md-button .md-button--primary }
 </center>
 
 Many thanks and ❤️ to all those who are supporting this endeavor. We’d love to hear feedback from the broader ML and Engineering community about applications and other real world scenarios to help prioritize our work. 
