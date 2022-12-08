@@ -81,7 +81,7 @@ LIMIT 100;
 
 Checkmate.
 
-Check out our [free PostgresML tutorials](https://gym.postgresml.org) if you haven't already, and become a machine learning engineer with just a few lines of SQL.
+Check out our [free PostgresML tutorials](https://cloud.postgresml.org) if you haven't already, and become a machine learning engineer with just a few lines of SQL.
 
 
 [^1]: [Enterprise Redis Twitch Case Study](https://twitter.com/Redisinc/status/962856298088992768)

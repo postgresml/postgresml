@@ -57,7 +57,7 @@ These queries can execute in milliseconds on large production-sized corpora with
 The following full blown example is for demonstration purposes only of a 3rd generation search engine. You can test it for real in the PostgresML Gym to build up a complete understanding.
 
 <center markdown>
-  [Try the PostgresML Gym](https://gym.postgresml.org/){ .md-button .md-button--primary }
+  [Try the PostgresML Gym](https://cloud.postgresml.org/){ .md-button .md-button--primary }
 </center>
 
 ```sql title="search.sql" linenums="1"
@@ -120,7 +120,7 @@ If you'd like to play through an interactive notebook to generate models for sea
 </center>
 
 <center markdown>
-  [Try the PostgresML Gym](https://gym.postgresml.org/){ .md-button .md-button--primary }
+  [Try the PostgresML Gym](https://cloud.postgresml.org/){ .md-button .md-button--primary }
 </center>
 
 Many thanks and ❤️ to all those who are supporting this endeavor. We’d love to hear feedback from the broader ML and Engineering community about applications and other real world scenarios to help prioritize our work. 

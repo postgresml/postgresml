@@ -52,7 +52,7 @@ most capable feature store</h1>
 </p>
 
 <p align="center" markdown>
-  [Try PostgresML Free](https://gym.postgresml.org/signup/){ .md-button .md-button--primary }
+  [Try PostgresML Free](https://cloud.postgresml.org/signup/){ .md-button .md-button--primary }
   [Docs](/user_guides/setup/quick_start_with_docker/){ .md-button }
 </p>
 
@@ -207,5 +207,5 @@ We're building on the shoulders of giants. These machine learning libraries and 
 </center>
 
 <p align="center" markdown>
-  [Try PostgresML Free](https://gym.postgresml.org/signup/){ .md-button .md-button--primary }
+  [Try PostgresML Free](https://cloud.postgresml.org/signup/){ .md-button .md-button--primary }
 </p>

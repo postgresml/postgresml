@@ -243,5 +243,5 @@ Many thanks and ❤️ to all those who are supporting this endeavor. We’d lov
 </center>
 
 <center markdown>
-  [Try the PostgresML Gym](https://gym.postgresml.org/){ .md-button .md-button--primary }
+  [Try the PostgresML Gym](https://cloud.postgresml.org/){ .md-button .md-button--primary }
 </center>
