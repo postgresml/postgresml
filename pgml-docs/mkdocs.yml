@@ -18,8 +18,8 @@ dev_addr: 0.0.0.0:8001
 theme:
     name: material
     custom_dir: overrides
-    favicon: /images/logos/favicon.ico
-    logo: /images/logos/logo-small.png
+    favicon: /images/icon2.ico
+    logo: /images/logo3.png
     locale: en
     font:
         text: Roboto
