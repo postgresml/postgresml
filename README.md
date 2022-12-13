@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://postgresml.org/">
-    <img src="pgml-docs/docs/images/owl_blue.png" width="175" alt="PostgresML">
+    <img src="pgml-docs/docs/images/owl_gradient.png" width="175" alt="PostgresML">
   </a>
 </p>
   
