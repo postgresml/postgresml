@@ -13,7 +13,7 @@ watch:
 - overrides
 - mkdocs.yml
 
-dev_addr: 0.0.0.0:8001
+dev_addr: localhost:8001
 
 theme:
     name: material
