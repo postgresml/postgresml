@@ -60,8 +60,6 @@ extra:
         - icon: fontawesome/brands/discord
           link: https://discord.gg/DmyJP3qJ7U
     generator: false
-    analytics:
-        provider: umami
 
 copyright: Copyright &copy; 2022 PostgresML Team
 
