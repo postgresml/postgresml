@@ -191,7 +191,7 @@ class Notebook(models.Model):
         return self.name
 
     def to_markdown(self):
-        """Convert the notebook to markdown so it's easily sharable."""
+        """Convert the notebook to markdown so it's easily shareable."""
         result = []
         for cell in self.notebookcell_set.filter(deleted_at__isnull=True).order_by("cell_number"):
             result.append(cell.markdown())

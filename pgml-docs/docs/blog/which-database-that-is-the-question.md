@@ -20,7 +20,7 @@ Choosing a database for your product sounds like a hard problem. These days, we 
 
 ## Redis
 
-Redis is not really a database. It's a key-value store that keeps your data in memory. If Redis accidently restarts, due to power failure for example, you'll lose some or all of your keys, depending on configuration. Don't get me wrong, I love Redis; it's fast, it has cool data structures like sets and HyperLogLog, and it can even horizontally scale most of its features in cluster mode.
+Redis is not really a database. It's a key-value store that keeps your data in memory. If Redis accidentally restarts, due to power failure for example, you'll lose some or all of your keys, depending on configuration. Don't get me wrong, I love Redis; it's fast, it has cool data structures like sets and HyperLogLog, and it can even horizontally scale most of its features in cluster mode.
 
 For this and many of its other properties, it is the key-value store of choice for high throughput systems like ML feature stores, job queues, Twitter and Twitch[^1]. None of those systems however expect your data to be safe. In fact, if it's gone, your product should be able to go on like nothing really happened. For those deployments, machine learning and other features it powers, are treated as just a nice to have.
 

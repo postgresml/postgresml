@@ -1761,7 +1761,7 @@
   fields:
     notebook: 4
     cell_type: 1
-    contents: 'So far we''ve focussed on Classification tasks which divide the world
+    contents: 'So far we''ve focused on Classification tasks which divide the world
       into discrete groups. Sometimes we need to take a more nuanced view when issues
       are not black and white. Sometimes there are no hard boundaries between options,
       or sometimes one sort of classification error might be much more painful than
@@ -1772,7 +1772,7 @@
       For this example, we''ll look at several medical indicators that correlate with
       the progression of diabetes one year later. Let''s load up the data and take
       a look'
-    rendering: '<article class="markdown-body"><p>So far we''ve focussed on Classification
+    rendering: '<article class="markdown-body"><p>So far we''ve focused on Classification
       tasks which divide the world into discrete groups. Sometimes we need to take
       a more nuanced view when issues are not black and white. Sometimes there are
       no hard boundaries between options, or sometimes one sort of classification

@@ -366,7 +366,7 @@ fn deploy(
             "
             );
         }
-        _ => error!("invalid stategy"),
+        _ => error!("invalid strategy"),
     }
     sql += "\nLIMIT 1";
     let (model_id, algorithm) = Spi::get_two_with_args::<i64, String>(
