@@ -17,7 +17,7 @@ use ndarray::{Array1, Array2};
 use rmp_serde;
 use serde_json;
 use smartcore;
-/// Caculate model metrics used to evaluate its performance.
+/// Calculate model metrics used to evaluate its performance.
 pub fn calc_metrics(
     y_test: &Array1<f32>,
     y_hat: &Array1<f32>,
@@ -70,7 +70,7 @@ pub fn calc_metrics(
 /// algorithms we use in PostgresML.
 #[typetag::serialize(tag = "type")]
 pub trait Estimator: Send + Sync + Debug {
-    /// Validate the algorithm agains the test dataset.
+    /// Validate the algorithm against the test dataset.
     fn test(&self, task: Task, data: &Dataset) -> HashMap<String, f32>;
 
     /// Predict a novel datapoint.

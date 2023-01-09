@@ -438,7 +438,7 @@ impl Model {
         let y_hat = self.predict_batch(&dataset.x_test);
         let y_test = &dataset.y_test;
 
-        // Caculate metrics to evaluate this estimator and its hyperparams
+        // Calculate metrics to evaluate this estimator and its hyperparams
         let mut metrics = IndexMap::new();
         match self.project.task {
             Task::regression => {

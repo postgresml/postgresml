@@ -72,7 +72,7 @@ q:before, q:after {
 	content: none;
 }
 
-/* Site wide elemenet styles */
+/* Site wide element styles */
 a {
     color: var(--highlite-blue);
     text-decoration: none;

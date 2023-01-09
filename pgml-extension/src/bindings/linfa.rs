@@ -98,7 +98,7 @@ impl LogisticRegression {
         )
         .unwrap();
 
-        // Copy to convert to i32 because LogisticRegression doesn't contineous targets.
+        // Copy to convert to i32 because LogisticRegression doesn't continuous targets.
         let y_train: Vec<i32> = dataset.y_train.iter().map(|x| *x as i32).collect();
         let targets = ArrayView1::from_shape(dataset.num_train_rows, &y_train).unwrap();
 
@@ -249,7 +249,7 @@ impl Svm {
 
         let mut hyperparams = hyperparams.clone();
 
-        // Default to Guassian kernel, all the others are deathly slow.
+        // Default to Gaussian kernel, all the others are deathly slow.
         if !hyperparams.contains_key(&String::from("kernel")) {
             hyperparams.insert("kernel".to_string(), serde_json::Value::from("rbf"));
         }

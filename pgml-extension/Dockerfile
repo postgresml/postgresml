@@ -19,7 +19,7 @@ RUN apt-get update && apt-get -y install apt-fast
 
 RUN apt-fast install apt-fast curl unzip gpg wget -y
 
-# PostgresSQL
+# PostgreSQL
 RUN curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg > /dev/null
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 
@@ -71,4 +71,3 @@ ENV OUTPUT_DIR=/output
 
 # Run
 ENTRYPOINT ["bash", "docker/build_ubuntu_deb.sh", "/output"]
-
