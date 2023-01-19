@@ -22,11 +22,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    environment:
+      ROCKET_ADDRESS: 0.0.0.0
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pgml_development
     command:
-      - python3
-      - manage.py
-      - runserver
-      - 0.0.0.0:8000
+      - cargo
+      - run
   docs:
     build:
       context: ./pgml-docs/

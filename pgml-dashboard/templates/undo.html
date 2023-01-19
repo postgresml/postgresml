@@ -1,0 +1,34 @@
+<turbo-frame id="cell_<%= cell.id %>">
+  <section class="notebook-cell notebook-delete-undo" data-controller="notebook-cell" data-notebook-cell-target="undo">
+    <div class="flex">
+      <div class="cell-number"><%= cell.cell_number %></div>
+      <div class="flex-grow margin-right-1">
+        <div class="notebook-rendering" data-turbo="false">
+          <div class="markdown-body">
+            <p>Are you sure you want to delete this cell? You can undo this or delete this cell forever.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="notebook-button">
+        <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>?bust_cache=<%= bust_cache %>" method="get">
+          <button type="submit" title="Undo cell delete">
+            <span class="material-symbols-outlined">
+              replay
+            </span>
+          </button>
+        </form>
+      </div>
+      <div class="notebook-button">
+        <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/delete" method="post">
+          <input type="hidden" name="confirm" value="true" />
+          <button type="submit" title="Delete forever">
+            <span class="material-symbols-outlined">
+              delete_forever
+            </span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+</turbo-frame>
