@@ -875,3 +875,25 @@ impl UploadedFile {
         Ok(())
     }
 }
+
+// Shared context models.
+#[derive(Debug, Default, Clone)]
+pub struct User {
+    pub id: i64,
+    pub email: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct Cluster {
+    pub id: i64,
+    pub name: String,
+}
+
+impl Default for Cluster {
+    fn default() -> Cluster {
+        Cluster {
+            id: -1,
+            name: "Local".to_string(),
+        }
+    }
+}

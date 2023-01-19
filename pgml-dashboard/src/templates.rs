@@ -5,13 +5,14 @@ use sqlx::{Column, Executor, PgPool, Row, Statement, TypeInfo, ValueRef};
 
 use std::collections::HashMap;
 
-use crate::models;
+use crate::{models, Context};
 
 #[derive(TemplateOnce)]
 #[template(path = "projects.html")]
 pub struct Projects {
     pub topic: String,
     pub projects: Vec<models::Project>,
+    pub context: Context,
 }
 
 #[derive(TemplateOnce)]
@@ -19,6 +20,7 @@ pub struct Projects {
 pub struct Notebooks {
     pub topic: String,
     pub notebooks: Vec<models::Notebook>,
+    pub context: Context,
 }
 
 #[derive(TemplateOnce)]
@@ -27,6 +29,7 @@ pub struct Notebook {
     pub topic: String,
     pub notebook: models::Notebook,
     pub cells: Vec<models::Cell>,
+    pub context: Context,
 }
 
 #[derive(TemplateOnce)]
@@ -207,6 +210,7 @@ pub struct Models {
     pub topic: String,
     pub projects: Vec<models::Project>,
     pub models: HashMap<i64, Vec<models::Model>>,
+    pub context: Context,
     // pub min_scores: HashMap<i64, f64>,
     // pub max_scores: HashMap<i64, f64>,
 }
@@ -219,6 +223,7 @@ pub struct Model {
     pub project: models::Project,
     pub snapshot: models::Snapshot,
     pub deployed: bool,
+    pub context: Context,
 }
 
 #[derive(TemplateOnce)]
@@ -227,6 +232,7 @@ pub struct Snapshots {
     pub topic: String,
     pub snapshots: Vec<models::Snapshot>,
     pub table_sizes: HashMap<i64, String>,
+    pub context: Context,
 }
 
 #[derive(TemplateOnce)]
@@ -238,6 +244,7 @@ pub struct Snapshot {
     pub projects: HashMap<i64, models::Project>,
     pub table_size: String,
     pub samples: HashMap<String, Vec<f32>>,
+    pub context: Context,
 }
 
 #[derive(TemplateOnce)]
@@ -246,6 +253,7 @@ pub struct Deployments {
     pub topic: String,
     pub projects: Vec<models::Project>,
     pub deployments: HashMap<i64, Vec<models::Deployment>>,
+    pub context: Context,
 }
 
 #[derive(TemplateOnce)]
@@ -255,6 +263,7 @@ pub struct Deployment {
     pub project: models::Project,
     pub model: models::Model,
     pub deployment: models::Deployment,
+    pub context: Context,
 }
 
 #[derive(TemplateOnce)]
@@ -263,6 +272,7 @@ pub struct Project {
     pub topic: String,
     pub project: models::Project,
     pub models: Vec<models::Model>,
+    pub context: Context,
 }
 
 #[derive(TemplateOnce)]
@@ -270,6 +280,7 @@ pub struct Project {
 pub struct Uploader {
     pub topic: String,
     pub error: Option<String>,
+    pub context: Context,
 }
 
 #[derive(TemplateOnce)]
@@ -279,4 +290,5 @@ pub struct Uploaded {
     pub sql: Sql,
     pub columns: Vec<String>,
     pub table_name: String,
+    pub context: Context,
 }

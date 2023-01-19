@@ -721,3 +721,19 @@ input[type=checkbox]:checked:after {
   color: var(--highlite-green);
   filter:  brightness(0.75);
 }
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+}
+
+.li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ul {
+  display: flex;
+  align-items: center;
+}
