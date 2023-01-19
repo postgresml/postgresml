@@ -16,7 +16,7 @@ use std::sync::Arc;
 mod errors;
 mod forms;
 pub mod guards;
-mod models;
+pub mod models;
 mod responses;
 mod templates;
 
