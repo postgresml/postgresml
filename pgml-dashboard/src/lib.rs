@@ -23,9 +23,23 @@ mod templates;
 use guards::Cluster;
 use responses::{BadRequest, ResponseOk};
 
+/// This struct contains information specific to the cluster being displayed in the dashboard.
+///
+/// The dashboard is built to manage multiple clusters, but the server itself by design is stateless.
+/// This gives it a bit of shared state that allows the dashboard to display cluster-specific information.
+#[derive(Debug, Default, Clone)]
+pub struct Context {
+    pub user: models::User,
+    pub cluster: models::Cluster, 
+}
+
+/// Globally shared state, saved in memory.
+///
+/// If this state is reset, it should be trivial to rebuild it from a persistent medium, e.g. the database.
 #[derive(Debug)]
 pub struct Clusters {
     pools: Arc<Mutex<HashMap<i64, PgPool>>>,
+    contexts: Arc<Mutex<HashMap<i64, Context>>>,
 }
 
 impl Clusters {
@@ -43,6 +57,23 @@ impl Clusters {
         Ok(pool)
     }
 
+    /// Set the context for a cluster_id.
+    ///
+    ///This ideally should be set
+    /// on every request to avoid stale cache.
+    pub fn set_context(&self, cluster_id: i64, context: Context) {
+        self.contexts.lock().insert(cluster_id, context);
+    }
+
+    /// Retrieve cluster context for the request.
+    pub fn get_context(&self, cluster_id: i64) -> Context {
+        match self.contexts.lock().get(&cluster_id) {
+            Some(context) => context.clone(),
+            None => Context::default(),
+        }
+    }
+
+    /// Retrieve cluster connection pool reference.
     pub fn get(&self, cluster_id: i64) -> Option<PgPool> {
         match self.pools.lock().get(&cluster_id) {
             Some(pool) => Some(pool.clone()),
@@ -50,6 +81,7 @@ impl Clusters {
         }
     }
 
+    /// Delete a cluster connection pool reference.
     pub fn delete(&self, cluster_id: i64) {
         let _ = self.pools.lock().remove(&cluster_id);
     }
@@ -57,6 +89,7 @@ impl Clusters {
     pub fn new() -> Clusters {
         Clusters {
             pools: Arc::new(Mutex::new(HashMap::new())),
+            contexts: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 }
@@ -72,6 +105,7 @@ pub async fn project_index(cluster: Cluster) -> Result<ResponseOk, errors::Error
         templates::Projects {
             topic: "projects".to_string(),
             projects: models::Project::all(cluster.pool()).await?,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),
@@ -88,6 +122,7 @@ pub async fn project_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors
             topic: "projects".to_string(),
             project,
             models,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),
@@ -100,6 +135,7 @@ pub async fn notebook_index(cluster: Cluster) -> Result<ResponseOk, errors::Erro
         templates::Notebooks {
             topic: "notebooks".to_string(),
             notebooks: models::Notebook::all(cluster.pool()).await?,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),
@@ -128,6 +164,7 @@ pub async fn notebook_get(cluster: Cluster, id: i64) -> Result<ResponseOk, error
             topic: "notebooks".to_string(),
             cells: notebook.cells(cluster.pool()).await?,
             notebook: notebook,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),
@@ -343,6 +380,7 @@ pub async fn models_index(cluster: Cluster) -> Result<ResponseOk, errors::Error>
             topic: "models".to_string(),
             projects,
             models,
+            context: cluster.context.clone(),
             // min_scores,
             // max_scores,
         }
@@ -364,6 +402,7 @@ pub async fn models_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors:
             model,
             snapshot,
             project,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),
@@ -385,6 +424,7 @@ pub async fn snapshots_index(cluster: Cluster) -> Result<ResponseOk, errors::Err
             topic: "snapshots".to_string(),
             snapshots,
             table_sizes,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),
@@ -410,6 +450,7 @@ pub async fn snapshots_get(cluster: Cluster, id: i64) -> Result<ResponseOk, erro
             models,
             projects,
             samples,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),
@@ -433,6 +474,7 @@ pub async fn deployments_index(cluster: Cluster) -> Result<ResponseOk, errors::E
             topic: "deployments".to_string(),
             projects,
             deployments,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),
@@ -451,6 +493,7 @@ pub async fn deployments_get(cluster: Cluster, id: i64) -> Result<ResponseOk, er
             project,
             deployment,
             model,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),
@@ -458,11 +501,12 @@ pub async fn deployments_get(cluster: Cluster, id: i64) -> Result<ResponseOk, er
 }
 
 #[get("/uploader")]
-pub async fn uploader_index() -> ResponseOk {
+pub async fn uploader_index(cluster: Cluster) -> ResponseOk {
     ResponseOk(
         templates::Uploader {
             topic: "uploader".to_string(),
             error: None,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),
@@ -488,6 +532,7 @@ pub async fn uploader_upload(
             templates::Uploader {
                 topic: "uploader".to_string(),
                 error: Some(err.to_string()),
+                context: cluster.context.clone(),
             }
             .render_once()
             .unwrap(),
@@ -509,6 +554,7 @@ pub async fn uploaded_index(cluster: Cluster, table_name: &str) -> ResponseOk {
             table_name: table_name.to_string(),
             columns: sql.columns.clone(),
             sql,
+            context: cluster.context.clone(),
         }
         .render_once()
         .unwrap(),

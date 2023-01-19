@@ -5,11 +5,12 @@ use sqlx::PgPool;
 
 use std::env::var;
 
-use crate::Clusters;
+use crate::{Clusters, Context};
 
 #[derive(Debug)]
 pub struct Cluster {
     pool: PgPool,
+    pub context: Context,
 }
 
 impl<'a> Cluster {
@@ -38,17 +39,17 @@ impl<'r> FromRequest<'r> for Cluster {
             None => -1,
         };
 
-        let pools = match request.guard::<&State<Clusters>>().await {
+        let shared_state = match request.guard::<&State<Clusters>>().await {
             Outcome::Success(pool) => pool,
             _ => return Outcome::Forward(()),
         };
 
-        let pool = match pools.get(cluster_id) {
+        let pool = match shared_state.get(cluster_id) {
             Some(pool) => pool,
             None => return Outcome::Failure((Status::BadRequest, ())),
         };
 
-        Outcome::Success(Cluster { pool })
+        Outcome::Success(Cluster { pool, context: shared_state.get_context(cluster_id) })
     }
 }
 

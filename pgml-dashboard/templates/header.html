@@ -83,7 +83,7 @@
       <script>0</script>
 
         <header>
-            <nav>
+            <nav class="nav">
                 <ul>
                     <li class="logo">
                         <a href="/dashboard/">
@@ -129,6 +129,10 @@
                     <% } %>
 
                     <li><a href="https://postgresml.org/user_guides/training/overview/" data-turbo="false" target="_blank"><span class="material-symbols-outlined">menu_book</span>Docs</a></li>
+                </ul>
+
+                <ul class="ul">
+                  <li class="li"><%= context.cluster.name %></li>
                 </ul>
             </nav>
         </header>
