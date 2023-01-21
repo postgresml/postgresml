@@ -821,35 +821,32 @@ impl Model {
                             .unwrap();
 
                         match attribute.atttypid {
-                            pgx_pg_sys::TEXTOID | pgx_pg_sys::VARCHAROID | pgx_pg_sys::BPCHAROID | pgx_pg_sys::UNKNOWNOID => {
+                            pgx_pg_sys::UNKNOWNOID => {
+                                error!("Type information missing for column: {:?}. If this is intended to be a TEXT column, you will need to explicitly cast it, e.g. convert `'my_value'` to `'my_value'::TEXT`. {:?}", column.name, a);
+                            }
+                            pgx_pg_sys::TEXTOID | pgx_pg_sys::VARCHAROID | pgx_pg_sys::BPCHAROID => {
                                 let element: Result<Option<String>, TryFromDatumError> =
                                     tuple.get_by_index(index.try_into().unwrap());
                                 match element {
                                     Ok(option) => {
-                                        let key = match option {
+                                        let key = match option.as_ref() {
                                             Some(key) => key,
-                                            None => crate::orm::snapshot::NULL_CATEGORY_KEY.to_string(),
+                                            None => crate::orm::snapshot::NULL_CATEGORY_KEY,
                                         };
-                                        let category = column.statistics.categories.as_ref().unwrap().get(&key);
+                                        let category = column.statistics.categories.as_ref().unwrap().get(key);
                                         match category {
                                             Some(category) => features.push(category.value),
                                             None => features.push(f32::NAN),
                                         }
+                                        info!("Element {}: {:?}", index, option);
                                     }
                                     Err(e) => {
-                                        info!("Couldn't cast data: {:?}, {:?}", &e, &attribute)
+                                        error!("Couldn't cast data: {:?}, {:?}", &e, &attribute)
                                     }
                                 }
-                                // info!("Element {}: {:?}", index, element);
                             },
                             pgx_pg_sys::BOOLOID => {
                                 let element: Result<Option<bool>, TryFromDatumError> =
-                                    tuple.get_by_index(index.try_into().unwrap());
-                                features.push(element.as_ref().unwrap().unwrap() as i8 as f32);
-                                info!("Element {}: {:?}", index, element);
-                            },
-                            pgx_pg_sys::BPCHAROID => {
-                                let element: Result<Option<char>, TryFromDatumError> =
                                     tuple.get_by_index(index.try_into().unwrap());
                                 features.push(element.as_ref().unwrap().unwrap() as i8 as f32);
                                 info!("Element {}: {:?}", index, element);
@@ -878,10 +875,16 @@ impl Model {
                                 features.push(element.as_ref().unwrap().unwrap() as f32);
                                 info!("Element {}: {:?}", index, element);
                             },
-                            pgx_pg_sys::FLOAT8OID | pgx_pg_sys::NUMERICOID => {
+                            pgx_pg_sys::FLOAT8OID => {
                                 let element: Result<Option<f64>, TryFromDatumError> =
                                     tuple.get_by_index(index.try_into().unwrap());
                                 features.push(element.as_ref().unwrap().unwrap() as f32);
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::NUMERICOID => {
+                                let element: Result<Option<pgx::datum::Numeric>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                features.push(element.as_ref().unwrap().as_ref().unwrap().to_string().parse::<f32>().unwrap());
                                 info!("Element {}: {:?}", index, element);
                             },
                             pgx_pg_sys::BOOLARRAYOID => {
@@ -924,11 +927,19 @@ impl Model {
                                 }
                                 info!("Element {}: {:?}", index, element);
                             },
-                            pgx_pg_sys::FLOAT8ARRAYOID | pgx_pg_sys::NUMERICARRAYOID => {
+                            pgx_pg_sys::FLOAT8ARRAYOID => {
                                 let element: Result<Option<Vec<f64>>, TryFromDatumError> =
                                     tuple.get_by_index(index.try_into().unwrap());
                                 for j in element.as_ref().unwrap().as_ref().unwrap() {
                                     features.push(*j as f32);
+                                }
+                                info!("Element {}: {:?}", index, element);
+                            },
+                            pgx_pg_sys::NUMERICARRAYOID => {
+                                let element: Result<Option<Vec<pgx::datum::Numeric>>, TryFromDatumError> =
+                                    tuple.get_by_index(index.try_into().unwrap());
+                                for j in element.as_ref().unwrap().as_ref().unwrap() {
+                                    features.push(j.to_string().parse::<f32>().unwrap());
                                 }
                                 info!("Element {}: {:?}", index, element);
                             },

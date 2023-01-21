@@ -263,8 +263,9 @@ impl Snapshot {
                 .first();
             if !result.is_empty() {
                 let jsonb: JsonB = result.get_datum(7).unwrap();
-                info!("json: {:?}", jsonb);
-                let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
+                let json = serde_json::to_string_pretty(&jsonb).unwrap();
+                info!("json: {}", json);
+                let columns: Vec<Column> = serde_json::from_str(&json).unwrap();
                 // let jsonb: JsonB = result.get_datum(8).unwrap();
                 // let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
                 snapshot = Some(Snapshot {
@@ -637,6 +638,13 @@ impl Snapshot {
                 statistics.mode = previous;
             } else {
                 statistics.mode = modes[modes.len() / 2];
+            }
+        }
+
+        // Fill missing ventiles with the preceding value
+        for i in 1..statistics.ventiles.len() {
+            if statistics.ventiles[i].is_nan() {
+                statistics.ventiles[i] = statistics.ventiles[i - 1];
             }
         }
 
