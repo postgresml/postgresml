@@ -661,10 +661,9 @@ impl Snapshot {
             }
 
             match &column.preprocessor.encode {
-                Encode::target_mean | Encode::ordinal {..} => {
+                Encode::target_mean | Encode::ordinal {..} | Encode::native => {
                     // done during initial read
                 },
-                Encode::native => {},
                 Encode::one_hot { limit, min_frequency } => {
                     todo!()
                     // for i in 0..column.statistics.distinct {
