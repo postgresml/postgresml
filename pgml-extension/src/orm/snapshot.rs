@@ -13,6 +13,10 @@ use crate::orm::Dataset;
 use crate::orm::Sampling;
 use crate::orm::Status;
 
+// Categories use a designated string to represent NULL categorical values,
+// rather than Option<String> = None, because the JSONB serialization schema
+// only supports String keys in JSON objects, unlike a Rust HashMap.
+pub(crate) const NULL_CATEGORY_KEY: &str = "__NULL__";
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub(crate) struct Category {
@@ -34,7 +38,7 @@ pub(crate) struct Statistics {
     distinct: usize,
     histogram: Vec<usize>,
     ventiles: Vec<f32>,
-    pub categories: HashMap<String, Category>,
+    pub categories: Option<HashMap<String, Category>>,
 }
 
 impl Default for Statistics {
@@ -52,7 +56,7 @@ impl Default for Statistics {
             distinct: 0,
             histogram: vec![0; 20],
             ventiles: vec![f32::NAN; 19],
-            categories: HashMap::new(),
+            categories: None,
         }
     }
 }
@@ -60,9 +64,9 @@ impl Default for Statistics {
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 #[allow(non_camel_case_types)]
 pub(crate) enum Encode {
-    // Encode each category as a unique integer value, this is a no-op for integer columns
+    // Encode each category as the mean of the target
     #[default]
-    label,
+    target_mean,
     // Encode each category as one boolean column per category
     one_hot {
         #[serde(default)]
@@ -72,8 +76,8 @@ pub(crate) enum Encode {
     },
     // Encode each category as ascending integer values
     ordinal(Vec<String>),
-    // Encode each category as the mean of the target
-    target,
+    // For use with algorithms that directly support the data type
+    native,
 }
 
 // How to replace missing values
@@ -121,24 +125,76 @@ pub(crate) struct Column {
     pub(crate) label: bool,
     pub(crate) position: usize,
     pub(crate) size: usize,
+    pub(crate) array: bool,
     pub(crate) preprocessor: Preprocessor,
     pub(crate) statistics: Statistics,
 }
 
 impl Column {
+    // Categorical vs Quantitative
+    // Categorical -> Ordinal vs Nominal
+    // Quantitative -> Discrete vs Continuous
+    // Ambiguity between discrete values and categorical variables
+    // There is no treatment difference between ordinal categorical and discrete quantitative variables
     fn categorical_type(pg_type: &str) -> bool {
+        Column::nominal_type(pg_type) || Column::ordinal_type(pg_type)
+    }
+
+    fn ordinal_type(_pg_type: &str) -> bool {
+        false
+    }
+
+    fn nominal_type(pg_type: &str) -> bool {
         match pg_type {
-            "bool" | "bpchar" | "int2" | "int4" | "int8" | "text" | "varchar" => true,
+            "bpchar" | "text" | "varchar" |
+            "bpchar[]" | "text[]" | "varchar[]" => true,
             _ => false,
         }
     }
 
-    fn quoted_name(&self) -> String {
-        format!(r#""{}""#, self.name)
+    fn quantitative_type(pg_type: &str) -> bool {
+        Column::continuous_type(pg_type) || Column::discrete_type(pg_type)
     }
 
+    fn continuous_type(pg_type: &str) -> bool {
+        match pg_type {
+            "float4" | "float8" | "numeric" |
+            "float4[]" | "float8[]" | "numeric[]" => true,
+            _ => false,
+        }
+    }
+
+    fn discrete_type(pg_type: &str) -> bool {
+        match pg_type {
+            "bool" | "int2" | "int4" | "int8" |
+            "bool[]" | "int2[]" | "int4[]" | "int8[]" => true,
+            _ => false,
+        }
+    }
+
+    // TODO this depends on configuration, not postgres type
     fn is_categorical(&self) -> bool {
         Self::categorical_type(self.pg_type.as_str())
+    }
+
+    fn is_nominal(&self) -> bool {Self::nominal_type(self.pg_type.as_str())}
+
+    fn is_ordinal(&self) -> bool {Self::ordinal_type(self.pg_type.as_str())}
+
+    fn is_quantitative(&self) -> bool {
+        Self::quantitative_type(self.pg_type.as_str())
+    }
+
+    fn is_continuous(&self) -> bool {
+        Self::continuous_type(self.pg_type.as_str())
+    }
+
+    fn is_discrete(&self) -> bool {
+        Self::discrete_type(self.pg_type.as_str())
+    }
+
+    fn quoted_name(&self) -> String {
+        format!(r#""{}""#, self.name)
     }
 }
 
@@ -313,32 +369,57 @@ impl Snapshot {
                 let name = row[1].value::<String>().unwrap();
                 let mut pg_type = row[2].value::<String>().unwrap();
                 let mut size = 1;
+                let mut array = false;
                 if pg_type.starts_with('_') {
                     size = 0;
+                    array = true;
                     pg_type = pg_type[1..].to_string() + "[]";
                 }
                 let nullable = row[3].value::<bool>().unwrap();
                 let position = row[4].value::<i32>().unwrap() as usize;
                 let label = y_column_name.contains(&name);
-                let statistics = Statistics::default();
+                let mut statistics = Statistics::default();
+
                 let default_impute = if Column::categorical_type(&pg_type) {
-                    Impute::mean
-                } else {
                     Impute::mode
+                } else {
+                    Impute::mean
                 };
-                let mut preprocessor = match preprocessors.get(&name) {
-                    Some(preprocessor) => preprocessor.clone(),
+                let default_encode = if Column::categorical_type(&pg_type) {
+                    Encode::target_mean
+                } else {
+                    Encode::native
+                };
+                if Column::categorical_type(&pg_type) {
+                    statistics.categories = Some(HashMap::new());
+                }
+
+                let preprocessor = match preprocessors.get(&name) {
+                    Some(preprocessor) => {
+                        let preprocessor = preprocessor.clone();
+                        if Column::categorical_type(&pg_type) {
+                            if preprocessor.impute == Impute::mean {
+                                error!("Error initializing preprocessor for column: {:?}.\n\n  You can not specify {{\"impute: mean\"}} for a categorical variable. `target` and `mode` are valid alternatives.", name);
+                            }
+                            if preprocessor.scale != Scale::preserve {
+                                error!("Error initializing preprocessor for column: {:?}.\n\n  It does not make sense to {{\"scale: {:?}}} a categorical variable. Please specify the default `preserve`.", name, preprocessor.scale);
+                            }
+                            if preprocessor.encode == Encode::native {
+                                error!("Error initializing preprocessor for column: {:?}.\n\n  It does not make sense to {{\"encode: {:?}}} a text variable. `one_hot` and `target_mean` are valid alternatives.", name, preprocessor.scale);
+                            }
+                        } else {
+                            if preprocessor.encode != Encode::native {
+                                error!("Error initializing preprocessor for column: {:?}.\n\n  It does not make sense to {{\"encode: {:?}}} a continuous variable. Please use the default `native`.", name, preprocessor.scale);
+                            }
+                        }
+                        preprocessor
+                    },
                     None => Preprocessor {
-                        encode: Encode::label,
+                        encode: default_encode,
                         impute: default_impute,
-                        scale: Scale::standard,
+                        scale: Scale::preserve,
                     },
                 };
-
-                if Column::categorical_type(&pg_type) && preprocessor.impute == Impute::mean {
-                    warning!("Cannot impute `mean` for categorical variable {:?}. Setting to impute `mode`.", name);
-                    preprocessor.impute = Impute::mode;
-                }
 
                 columns.push(
                     Column {
@@ -348,6 +429,7 @@ impl Snapshot {
                         label,
                         position,
                         size,
+                        array,
                         statistics,
                         preprocessor,
                     }
@@ -475,8 +557,23 @@ impl Snapshot {
         }
     }
 
-    fn analyze(array: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &mut Column) {
-        info!("Snapshot analyzing {:?}", column.name);
+    fn analyze(array: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &mut Column, target: &ndarray::ArrayView<f32, ndarray::Ix1>) {
+        // target encode if necessary before analyzing
+        match &column.preprocessor.encode {
+            Encode::target_mean => {
+                let categories = column.statistics.categories.as_mut().unwrap();
+                let mut sums = vec![0_f32; categories.len() + 1];
+                Zip::from(array).and(target).for_each(|&value, &target| {
+                    sums[value as usize] += target;
+                });
+                for mut category in categories.values_mut() {
+                    let sum = sums[category.value as usize];
+                    category.value = sum / category.members as f32;
+                }
+            }
+            _ => {}
+        }
+
         let mut data = array.iter().filter_map(|n| if n.is_nan() { None } else { Some(*n) }).collect::<Vec<f32>>();
         data.sort_by(|a, b| a.total_cmp(&b));
 
@@ -484,7 +581,7 @@ impl Snapshot {
         let mut statistics = &mut column.statistics;
         statistics.min = *data.first().unwrap();
         statistics.max = *data.last().unwrap();
-        statistics.max_abs = if statistics.max.abs() > statistics.min.abs() { statistics.max.abs() } else { statistics.min.abs() };
+        statistics.max_abs = if statistics.min.abs() > statistics.max.abs() { statistics.min.abs() } else { statistics.max.abs() };
         statistics.mean = data.iter().sum::<f32>() / data.len() as f32;
         statistics.median = data[data.len() / 2];
         statistics.missing = array.len() - data.len();
@@ -501,18 +598,8 @@ impl Snapshot {
         let mut max_streak = 0;
         let mut previous = f32::NAN;
 
-        match &column.preprocessor.encode {
-            Encode::target => {
-                // let values = HashMap<f32, f32>::new();
-                // for value in data {
-                //     sum = values.entry(value).or_insert(0_f32);
-                //     valuers.insert(value, sum + )
-                // }
-                todo!("update the statistics.categories to be the average target values. Calculate the label average using permutation crate")
-            }
-            _ => {}
-        }
 
+        // TODO calculate correlation between data and target
         let mut modes = Vec::new();
         for &value in &data {
             if value == previous {
@@ -553,7 +640,7 @@ impl Snapshot {
             }
         }
 
-        info!("  {:?}", statistics);
+        info!("Column {:?}: {:?}", column.name, statistics);
     }
 
     pub(crate) fn preprocess(processed_data: &mut Vec<f32>, data: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &Column, slot: usize) {
@@ -574,40 +661,36 @@ impl Snapshot {
             }
 
             match &column.preprocessor.encode {
-                Encode::label | Encode::ordinal {..} => {
+                Encode::target_mean | Encode::ordinal {..} => {
                     // done during initial read
                 },
-                _ => todo!()
-            //     Encode::one_hot { limit, min_frequency } => {
-            //         todo!()
-            //         // for i in 0..column.statistics.distinct {
-            //             // TODO don't ignore scaling
-            //             // if v == i as f32 {
-            //             //     processed_features[c + i] = 1
-            //             // }
-            //         // }
-            //     },
-            //     Encode::target => {},
+                Encode::native => {},
+                Encode::one_hot { limit, min_frequency } => {
+                    todo!()
+                    // for i in 0..column.statistics.distinct {
+                        // TODO don't ignore scaling
+                        // if v == i as f32 {
+                        //     processed_features[c + i] = 1
+                        // }
+                    // }
+                },
             }
-            if column.is_categorical() {
-            } else {
-                match column.preprocessor.scale {
-                    Scale::standard => {
-                        value = (value - statistics.mean) / statistics.std_dev
-                    }
-                    Scale::min_max => {
-                        value = (value - statistics.min) / (statistics.max - statistics.min)
-                    }
-                    Scale::max_abs => {
-                        value = value - statistics.max_abs
-                    }
-                    Scale::robust => {
-                        value = (value - statistics.median) / (statistics.ventiles[15] - statistics.ventiles[5])
-                    }
-                    Scale::preserve => {}
+            match column.preprocessor.scale {
+                Scale::standard => {
+                    value = (value - statistics.mean) / statistics.std_dev
                 }
+                Scale::min_max => {
+                    value = (value - statistics.min) / (statistics.max - statistics.min)
+                }
+                Scale::max_abs => {
+                    value = value - statistics.max_abs
+                }
+                Scale::robust => {
+                    value = (value - statistics.median) / (statistics.ventiles[15] - statistics.ventiles[5])
+                }
+                Scale::preserve => {}
             }
-            info!("column: {:?} num_features: {}  i: {} slot: {}", column, num_features, i, slot);
+            // info!("column: {:?} num_features: {}  i: {} slot: {}", column, num_features, i, slot);
             processed_data[num_features * i + slot] = value;
         }
     }
@@ -615,7 +698,29 @@ impl Snapshot {
     pub fn dataset(&mut self) -> Dataset {
         let numeric_encoded_dataset = self.numeric_encoded_dataset();
 
-        // TODO dry up these feature/label blocks
+        // TODO dry up these Analyze label/feature blocks
+        // Analyze labels
+        let labels = ndarray::ArrayView2::from_shape(
+            (numeric_encoded_dataset.num_train_rows, numeric_encoded_dataset.num_labels),
+            &numeric_encoded_dataset.y_train,
+        ).unwrap();
+        let target_data = labels.columns().into_iter().next().unwrap();
+        let mut label_columns: Vec<usize> = Vec::with_capacity(numeric_encoded_dataset.num_labels);
+        // Array columns are treated as multiple features that are analyzed independently, because that is the most straightforward thing to do
+        self.columns.iter().for_each(|column| {
+            if column.label {
+                for _ in 0..column.size {
+                    label_columns.push(column.position);
+                }
+            }
+        });
+        Zip::from(labels.columns())
+            .and(&mut label_columns)
+            .for_each(|data, position| {
+                let column = &mut self.columns[*position - 1];
+                Self::analyze(&data, column, &target_data);
+            });
+
         // Analyze features
         let features = ndarray::ArrayView2::from_shape(
             (numeric_encoded_dataset.num_train_rows, numeric_encoded_dataset.num_features),
@@ -634,30 +739,10 @@ impl Snapshot {
             .and(&mut feature_columns)
             .for_each(|data, position| {
                 let column = &mut self.columns[*position - 1];
-                Self::analyze(&data, column);
+                Self::analyze(&data, column, &target_data);
             });
 
 
-        // Analyze labels
-        let labels = ndarray::ArrayView2::from_shape(
-            (numeric_encoded_dataset.num_train_rows, numeric_encoded_dataset.num_labels),
-            &numeric_encoded_dataset.y_train,
-        ).unwrap();
-        let mut label_columns: Vec<usize> = Vec::with_capacity(numeric_encoded_dataset.num_labels);
-        // Array columns are treated as multiple features that are analyzed independently, because that is the most straightforward thing to do
-        self.columns.iter().for_each(|column| {
-            if column.label {
-                for _ in 0..column.size {
-                    label_columns.push(column.position);
-                }
-            }
-        });
-        Zip::from(labels.columns())
-            .and(&mut label_columns)
-            .for_each(|data, position| {
-                let column = &mut self.columns[*position - 1];
-                Self::analyze(&data, column);
-            });
 
         Spi::connect(|client| {
             client.select("UPDATE pgml.snapshots SET columns = $1 WHERE id = $2", Some(1), Some(vec![
@@ -674,7 +759,7 @@ impl Snapshot {
                 0
             } else if column.is_categorical() {
                 match column.preprocessor.encode {
-                    Encode::label | Encode::target | Encode::ordinal(..) => column.size,
+                    Encode::target_mean | Encode::native | Encode::ordinal(..) => column.size,
                     Encode::one_hot { .. } => column.size * column.statistics.distinct,
                 }
             } else {
@@ -713,8 +798,7 @@ impl Snapshot {
         }
     }
 
-    // Encodes the raw training dataset
-    // - replacing TEXT with label ids.
+    // Encodes categorical text values (and all others) into f32 for memory efficiency and type homogenization.
     pub fn numeric_encoded_dataset(&mut self) -> Dataset {
         let mut data = None;
         Spi::connect(|client| {
@@ -781,122 +865,101 @@ impl Snapshot {
                     } else {
                         &mut x_test
                     };
-                    match column.pg_type.as_str() {
-                        "bool" => {
-                            match row[column.position].value::<bool>() {
-                                Some(v) => vector.push(v as u8 as f32),
-                                None => vector.push(f32::NAN),
-                            }
-                        }
-                        "bool[]" => {
-                            let vec = row[column.position].value::<Vec<bool>>().unwrap();
-                            check_column_size(column, vec.len());
-                            for j in vec {
-                                vector.push(j as u8 as f32)
-                            }
-                        }
-                        "bpchar" => {
-                            match row[column.position].value::<i8>() {
-                                Some(v) => vector.push(v as f32),
-                                None => vector.push(f32::NAN),
-                            }
-                        }
-                        "bpchar[]" => {
-                            let vec = row[column.position].value::<Vec<i8>>().unwrap();
-                            check_column_size(column, vec.len());
 
-                            for j in vec {
-                                vector.push(j as u8 as f32)
-                            }
-                        }
-                        "int2" => {
-                            match row[column.position].value::<i16>() {
-                                Some(v) => vector.push(v as f32),
-                                None => vector.push(f32::NAN),
-                            }
-                        },
-                        "int2[]" => {
-                            let vec = row[column.position].value::<Vec<i16>>().unwrap();
-                            check_column_size(column, vec.len());
+                    if column.is_quantitative() || column.preprocessor.encode == Encode::native {
+                        // All quantitative and native types are cast directly to f32
+                        if column.array {
+                            match column.pg_type.as_str() {
+                                // TODO handle NULL in arrays
+                                "bool[]" => {
+                                    let vec = row[column.position].value::<Vec<bool>>().unwrap();
+                                    check_column_size(column, vec.len());
+                                    for j in vec {
+                                        vector.push(j as u8 as f32)
+                                    }
+                                }
+                                "int2[]" => {
+                                    let vec = row[column.position].value::<Vec<i16>>().unwrap();
+                                    check_column_size(column, vec.len());
 
-                            for j in vec {
-                                vector.push(j as f32)
-                            }
-                        }
-                        "int4" => {
-                            match row[column.position].value::<i32>() {
-                                Some(v) => vector.push(v as f32),
-                                None => vector.push(f32::NAN),
-                            }
-                        },
-                        "int4[]" => {
-                            let vec = row[column.position].value::<Vec<i32>>().unwrap();
-                            check_column_size(column, vec.len());
+                                    for j in vec {
+                                        vector.push(j as f32)
+                                    }
+                                }
+                                "int4[]" => {
+                                    let vec = row[column.position].value::<Vec<i32>>().unwrap();
+                                    check_column_size(column, vec.len());
 
-                            for j in vec {
-                                vector.push(j as f32)
-                            }
-                        }
-                        "int8" => {
-                            match row[column.position].value::<i64>() {
-                                Some(v) => vector.push(v as f32),
-                                None => vector.push(f32::NAN),
-                            }
-                        }
-                        "int8[]" => {
-                            let vec = row[column.position].value::<Vec<i64>>().unwrap();
-                            check_column_size(column, vec.len());
+                                    for j in vec {
+                                        vector.push(j as f32)
+                                    }
+                                }
+                                "int8[]" => {
+                                    let vec = row[column.position].value::<Vec<i64>>().unwrap();
+                                    check_column_size(column, vec.len());
 
-                            for j in vec {
-                                vector.push(j as f32)
-                            }
-                        }
-                        "float4" => {
-                            match row[column.position].value::<f32>() {
-                                Some(v) => vector.push(v),
-                                None => vector.push(f32::NAN),
-                            }
-                        }
-                        "float4[]" => {
-                            let vec = row[column.position].value::<Vec<f32>>().unwrap();
-                            check_column_size(column, vec.len());
+                                    for j in vec {
+                                        vector.push(j as f32)
+                                    }
+                                }
+                                "float4[]" => {
+                                    let vec = row[column.position].value::<Vec<f32>>().unwrap();
+                                    check_column_size(column, vec.len());
 
-                            for j in vec {
-                                vector.push(j as f32)
-                            }
-                        }
-                        "float8" => {
-                            match row[column.position].value::<f64>() {
-                                Some(v) => vector.push(v as f32),
-                                None => vector.push(f32::NAN),
-                            }
-                        }
-                        "float8[]" => {
-                            let vec = row[column.position].value::<Vec<f64>>().unwrap();
-                            check_column_size(column, vec.len());
+                                    for j in vec {
+                                        vector.push(j as f32)
+                                    }
+                                }
+                                "float8[]" => {
+                                    let vec = row[column.position].value::<Vec<f64>>().unwrap();
+                                    check_column_size(column, vec.len());
 
-                            for j in vec {
-                                vector.push(j as f32)
+                                    for j in vec {
+                                        vector.push(j as f32)
+                                    }
+                                }
+                                _ => error!("Unhandled type for quantitative array column: {} {:?}", column.name, column.pg_type)
                             }
-                        }
-                        "text" | "varchar" => {
-                            // encode text on the fly for memory efficiency.
-                            // TODO don't leak novel keys from the test set, use a NOVEL placeholder
-                            let text = match row[column.position].value::<String>() {
-                                Some(text) => text,
-                                None => "NULL".to_string(),
+                        } else { // scalar
+                            let float = match column.pg_type.as_str() {
+                                "bool" => row[column.position].value::<bool>().map(|v| v as u8 as f32),
+                                "int2" => row[column.position].value::<i16>().map(|v| v as f32),
+                                "int4" => row[column.position].value::<i32>().map(|v| v as f32),
+                                "int8" => row[column.position].value::<i64>().map(|v| v as f32),
+                                "float4" => row[column.position].value::<f32>(),
+                                "float8" => row[column.position].value::<f64>().map(|v| v as f32),
+                                _ => error!("Unhandled type for quantitative scalar column: {} {:?}", column.name, column.pg_type)
                             };
-                            let len = column.statistics.categories.len();
-                            let category = column.statistics.categories.entry(text.clone()).or_insert_with(|| {
-                                let value = if text == "NULL".to_string() {
-                                    f32::NAN
-                                } else {
-                                    match &column.preprocessor.encode {
-                                        Encode::label | Encode::target | Encode::one_hot { .. } => (len + 1) as f32,
-                                        Encode::ordinal(values) => match values.iter().position(|v| v == text.as_str()) {
-                                            Some(i) => i as f32,
-                                            None => error!("value is not present in ordinal: {:?}. Valid values: {:?}", text, values),
+                            match float {
+                                Some(f) => vector.push(f),
+                                None => vector.push(f32::NAN),
+                            }
+                        }
+                    } else { // is_categorical
+                        let categories = column.statistics.categories.as_mut().unwrap();
+                        let key = match column.pg_type.as_str() {
+                            "bool" => row[column.position].value::<bool>().map(|v| v.to_string() ),
+                            "int2" => row[column.position].value::<i16>().map(|v| v.to_string() ),
+                            "int4" => row[column.position].value::<i32>().map(|v| v.to_string() ),
+                            "int8" => row[column.position].value::<i64>().map(|v| v.to_string() ),
+                            "float4" => row[column.position].value::<f32>().map(|v| v.to_string() ),
+                            "float8" => row[column.position].value::<f64>().map(|v| v.to_string() ),
+                            "bpchar" | "text" | "varchar" => row[column.position].value::<String>().map(|v| v.to_string() ),
+                            _ => error!("Unhandled type for categorical variable: {} {:?}", column.name, column.pg_type)
+                        };
+                        let key = key.unwrap_or_else(|| NULL_CATEGORY_KEY.to_string());
+                        let len = categories.len();
+                        if i < num_train_rows {
+                            let category = categories.entry(key).or_insert_with_key(|key| {
+                                let value = match key.as_str() {
+                                    NULL_CATEGORY_KEY => 0_f32, // NULL values are always Category 0
+                                    _ => match &column.preprocessor.encode {
+                                        Encode::target_mean | Encode::one_hot { .. } => (len + 1) as f32,
+                                        Encode::ordinal(values) => match values.iter().position(|v| v == key.as_str()) {
+                                            Some(i) => (i + 1) as f32,
+                                            None => error!("value is not present in ordinal: {:?}. Valid values: {:?}", key, values),
                                         },
+                                        Encode::native => error!("can't native encode a text value")
                                     }
                                 };
                                 Category {
@@ -906,8 +969,13 @@ impl Snapshot {
                             });
                             category.members += 1;
                             vector.push(category.value);
+                        } else {
+                            let category = categories.get(&key);
+                            match category {
+                                Some(category) => vector.push(category.value),
+                                None => vector.push(f32::NAN),
+                            }
                         }
-                        _ => error!("unhandled type: `{}` for `{}`", column.pg_type, column.name),
                     }
                 }
             });
@@ -916,7 +984,11 @@ impl Snapshot {
             let num_labels = self.num_labels();
 
             let label = self.columns.iter().find(|c| c.name == self.y_column_name[0]).unwrap();
-            let num_distinct_labels = label.statistics.categories.len();
+            let num_distinct_labels = if label.is_categorical() {
+                label.statistics.categories.as_ref().unwrap().len()
+            } else {
+                0
+            };
             data = Some(Dataset {
                 x_train,
                 y_train,

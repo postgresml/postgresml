@@ -18,7 +18,6 @@ use serde_json::json;
 use crate::bindings::*;
 use crate::orm::Dataset;
 use crate::orm::*;
-// use crate::orm::snapshot::Statistics::TextCategorical;
 
 #[allow(clippy::type_complexity)]
 static DEPLOYED_MODELS_BY_ID: Lazy<Mutex<HashMap<i64, Arc<Model>>>> =
@@ -822,18 +821,16 @@ impl Model {
                             .unwrap();
 
                         match attribute.atttypid {
-                            pgx_pg_sys::TEXTOID | pgx_pg_sys::VARCHAROID | pgx_pg_sys::UNKNOWNOID => {
+                            pgx_pg_sys::TEXTOID | pgx_pg_sys::VARCHAROID | pgx_pg_sys::BPCHAROID | pgx_pg_sys::UNKNOWNOID => {
                                 let element: Result<Option<String>, TryFromDatumError> =
                                     tuple.get_by_index(index.try_into().unwrap());
                                 match element {
                                     Ok(option) => {
-                                        let string = if option.is_some() {
-                                            option.unwrap()
-                                        } else {
-                                            "NULL".to_string()
+                                        let key = match option {
+                                            Some(key) => key,
+                                            None => crate::orm::snapshot::NULL_CATEGORY_KEY.to_string(),
                                         };
-
-                                        let category = column.statistics.categories.get(&string);
+                                        let category = column.statistics.categories.as_ref().unwrap().get(&key);
                                         match category {
                                             Some(category) => features.push(category.value),
                                             None => features.push(f32::NAN),

@@ -21,8 +21,10 @@ insert into test VALUES
 ('two', 14, 'what', 7, 7.0, true, ARRAY[7, 7, 7, 7], 7),
 ('two', 16, 'hi', 8, 8.0, false, ARRAY[8, 8, 8, 8], 8);
 
+select pgml.train('test', 'regression', 'test', 'target');
+
 select pgml.train('test', 'regression', 'test', 'target', preprocess => '{
-    "name": {"impute": "mode", "encode": {"ordinal": ["one", "two"]}}
+    "name": {"impute": "mean", "encode": {"ordinal": ["one", "two"]}}
     }'
 );
 select pgml.deploy('test', 'most_recent');
