@@ -13,7 +13,9 @@ async fn main() {
         .add(-1, &pgml_dashboard::guards::default_database_url())
         .unwrap();
 
-    pgml_dashboard::migrate(&clusters.get(-1).unwrap()).await.unwrap();
+    pgml_dashboard::migrate(&clusters.get(-1).unwrap())
+        .await
+        .unwrap();
 
     let _ = rocket::build()
         .manage(clusters)

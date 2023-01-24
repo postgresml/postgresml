@@ -1,19 +1,29 @@
-<% include!("header.html"); %>
-<section>
-  <h1><span class="material-symbols-outlined">apps</span>Projects</h1> 
-  <ol class="object_list project_list">
-    <% for project in projects { %>
-    <li>
-      <a href="/dashboard/projects/<%= project.id %>/">
-        <span><%= project.name %></span>
-        <span>
-          <time datetime="<% project.created_at; %>">
-            <% project.created_at; %> 
-          </time>
-        </span>
-      </a>
-    </li>
-    <% } %>
-  </ol>
-</section>
-<% include!("footer.html"); %>
+
+<% if context.standalone { include!("header.html"); } else { %>
+<turbo-frame id="dashboard_main">
+<% } %>
+
+  <section>
+    <h1><span class="material-symbols-outlined">apps</span>Projects</h1> 
+    <ol class="object_list project_list">
+      <% for project in projects { %>
+      <li>
+        <a href="/dashboard/projects/<%= project.id %>/" data-turbo-target="_top">
+          <span><%= project.name %></span>
+          <span>
+            <time datetime="<% project.created_at; %>">
+              <% project.created_at; %> 
+            </time>
+          </span>
+        </a>
+      </li>
+      <% } %>
+    </ol>
+  </section>
+
+<% if context.standalone { include!("footer.html"); } else { %>
+</turbo-frame>
+<% } %>
+
+
+

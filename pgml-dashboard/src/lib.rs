@@ -27,10 +27,21 @@ use responses::{BadRequest, ResponseOk};
 ///
 /// The dashboard is built to manage multiple clusters, but the server itself by design is stateless.
 /// This gives it a bit of shared state that allows the dashboard to display cluster-specific information.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct Context {
     pub user: models::User,
-    pub cluster: models::Cluster, 
+    pub cluster: models::Cluster,
+    pub standalone: bool,
+}
+
+impl Default for Context {
+    fn default() -> Context {
+        Context {
+            user: models::User::default(),
+            cluster: models::Cluster::default(),
+            standalone: true,
+        }
+    }
 }
 
 /// Globally shared state, saved in memory.

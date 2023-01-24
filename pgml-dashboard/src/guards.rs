@@ -49,7 +49,10 @@ impl<'r> FromRequest<'r> for Cluster {
             None => return Outcome::Failure((Status::BadRequest, ())),
         };
 
-        Outcome::Success(Cluster { pool, context: shared_state.get_context(cluster_id) })
+        Outcome::Success(Cluster {
+            pool,
+            context: shared_state.get_context(cluster_id),
+        })
     }
 }
 
