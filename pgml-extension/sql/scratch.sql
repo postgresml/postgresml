@@ -24,11 +24,12 @@ insert into test VALUES
 select pgml.train('test', 'regression', 'test', 'target');
 
 select pgml.train('test', 'regression', 'test', 'target', preprocess => '{
-    "name": {"impute": "mean", "encode": {"ordinal": ["one", "two"]}}
+    "name": {"impute": "mode", "encode": {"ordinal": ["one", "two"]}}
     }'
 );
 select pgml.deploy('test', 'most_recent');
-select pgml.predict('test', ('one', 2, 'hi', 1, 1.0, true, ARRAY[1, 1, 1, 1]));
+select pgml.predict('test', ('one'::TEXT, 2, 'hi'::CHAR(4), 1, 1.0, true, ARRAY[1, 1, 1, 1]));
+select pgml.predict('test', ('one'::TEXT, 4, 'hi'::TEXT, 1, 1.0, true, ARRAY[2, 2, 2, 2]));
 
 select pgml.train('test', 'regression', 'test', 'target', preprocess => '{
     "name": {"scale": "standard" },

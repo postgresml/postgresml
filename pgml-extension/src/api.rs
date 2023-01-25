@@ -439,8 +439,7 @@ fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
 #[pg_extern(strict, name = "predict")]
 fn predict_model_row(model_id: i64, row: pgx::datum::AnyElement) -> f32 {
     let model = Model::find_cached(model_id);
-    let numeric_encoded_features = model.preprocess(&[row]);
-    info!("features: {}", numeric_encoded_features.len());
+    let numeric_encoded_features = model.numeric_encode_features(&[row]);
     let mut processed = vec![0_f32; numeric_encoded_features.len()];
 
     let features = ndarray::ArrayView2::from_shape(
