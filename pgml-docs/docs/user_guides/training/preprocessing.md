@@ -45,9 +45,9 @@ select pgml.train(
 
 In some cases, it may make sense to use multiple steps for a single column. For example, the `clouds` column will be target encoded, and then scaled to the standard range to avoid dominating other variables, but there are some interactions between preprocessors to keep in mind. 
 
-- `NULL` is treated as an additional, independent category during encoding, so columns that `encode` will only ever `impute` `NaN` values.
+- `NULL` and `NaN` are treated as additional, independent categories if seen during training, so columns that `encode` will only ever `impute` novel when novel data is encountered during training values.
 - It usually makes sense to scale all variables to the same scale.
-- It does not usually help to scale the labels.
+- It does not usually help to scale or preprocess the target data, as that is essentially the problem formulation and/or task selection.
 
 !!! note
     TEXT is used in this document to also refer to VARCHAR and CHAR(N) types.
@@ -80,6 +80,8 @@ preprocess => '{
     "clouds": {"encode": "one_hot" }
 }
 ```
+!!! note
+    All one-hot encoded data is scaled from 0-1 by definition, and will not be further scaled, unlike the other encodings which are scaled. 
 
 ### `ordinal` encoding
 Some categorical variables have a natural ordering, like months of the year, or days of the week that can be effectively treated as a discrete quantitative variable. You may set the order of your categorical values, by passing an exhaustive ordered array. e.g. 

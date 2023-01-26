@@ -1,4 +1,4 @@
-CREATE TABLE test (
+CREATE TABLE raw (
     name TEXT,
     id INT4,
     description varchar(10),
@@ -9,10 +9,8 @@ CREATE TABLE test (
     target FLOAT4
 );
 
-insert into test VALUES
+INSERT INTO raw VALUES
 ('one', 2, NULL, 1, 1.0, true, ARRAY[1, 1, 1, 1], 1),
-[0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 4.0, 6.0, 6.0,
-10.0, 12.0, 3.0, 2.0, 3.0, 3.0, 3.0, 3.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, -1.401826, -0.86266214, 0.2156656, 0.2156656, 0.75482947, 1.2939934, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, -1.46385, -0.87831, -0.29277, 0.29277, 0.87831, 1.46385, -1.46385, -0.87831, -0.29277, 0.29277, 0.87831, 1.46385, -1.46385, -0.87831, -0.29277, 0.29277, 0.87831, 1.46385, -1.46385, -0.87831, -0.29277, 0.29277, 0.87831, 1.46385
 ('one', 4, 'bye', 2, 2.0, NULL, ARRAY[2, 2, 2, 2], 2),
 ('one', 6, 'hi', 3, NULL, true, ARRAY[3, 3, 3, 3], 3),
 ('one', NULL, 'hi', 4, 4.0, false, ARRAY[4, 4, 4, 4], 4),
@@ -20,6 +18,35 @@ insert into test VALUES
 ('two', 12, 'hi', 6, 6.0, false, ARRAY[6, 6, 6, 6], 6),
 ('two', 14, 'what', 7, 7.0, true, ARRAY[7, 7, 7, 7], 7),
 ('two', 16, 'hi', 8, 8.0, false, ARRAY[8, 8, 8, 8], 8);
+
+CREATE TABLE processed (
+    name FLOAT4 NOT NULL,
+    id FLOAT4 NOT NULL,
+    description FLOAT4 NOT NULL,
+    big FLOAT4 NOT NULL,
+    value FLOAT4 NOT NULL,
+    category FLOAT4 NOT NULL,
+    image FLOAT4[],
+    target FLOAT4 NOT NULL
+);
+INSERT INTO processed
+SELECT
+  CASE WHEN name IS NULL THEN 0
+       WHEN name = 'one' THEN 1
+       WHEN name = 'two' THEN 2
+  END AS name,
+  COALESCE(id, 10),
+  CASE WHEN description IS NULL THEN 0
+       WHEN description = 'bye' THEN 1
+       WHEN description ='hi' THEN 2
+       ELSE 1
+  END AS description,
+  big,
+  COALESCE(value, 4.0),
+  COALESCE(category::INT4::FLOAT4, 0.5),
+  image,
+  target
+FROM raw;
 
 select pgml.train('test', 'regression', 'test', 'target');
 

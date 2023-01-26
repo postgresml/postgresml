@@ -369,7 +369,7 @@ pub enum Runtime {
     Rust,
 }
 
-#[derive(FromRow)]
+#[derive(FromRow, Debug)]
 #[allow(dead_code)]
 pub struct Model {
     pub id: i64,
@@ -520,7 +520,7 @@ impl Model {
     }
 }
 
-#[derive(FromRow)]
+#[derive(FromRow, Debug)]
 #[allow(dead_code)]
 pub struct Snapshot {
     pub id: i64,
@@ -587,6 +587,7 @@ impl Snapshot {
     }
 
     pub fn rows(&self) -> Option<i64> {
+        println!("analysis: {:?}", self.analysis);
         match self.analysis.as_ref() {
             Some(analysis) => match analysis.get("samples") {
                 Some(samples) => Some(samples.as_f64().unwrap() as i64),
@@ -633,6 +634,7 @@ impl Snapshot {
     }
 
     pub fn columns<'a>(&'a self) -> Option<Vec<&'a serde_json::Map<String, serde_json::Value>>> {
+        println!("\n\ncolumns: {:?}", self.columns);
         match self.columns.as_ref() {
             Some(columns) => match columns.as_array() {
                 Some(columns) => Some(
@@ -665,18 +667,14 @@ impl Snapshot {
     }
 
     pub fn labels<'a>(&'a self) -> Option<Vec<&'a serde_json::Map<String, serde_json::Value>>> {
-        match self.columns() {
-            Some(columns) => Some(
-                columns
-                    .into_iter()
-                    .filter(|column| {
-                        self.y_column_name
-                            .contains(&column["name"].as_str().unwrap().to_string())
-                    })
-                    .collect(),
-            ),
-            None => None,
-        }
+        println!("\n\nlabels: {:?}", self.columns);
+        let labels = self.columns().map(|columns|
+            columns
+                .into_iter()
+                .filter(|&column| column.get("label").unwrap().as_bool().unwrap())
+                .collect()
+        );
+        labels
     }
 
     pub async fn models(&self, pool: &PgPool) -> anyhow::Result<Vec<Model>> {
@@ -684,15 +682,23 @@ impl Snapshot {
     }
 
     pub fn target_stddev(&self, name: &str) -> f32 {
-        self.analysis
-            .as_ref()
-            .unwrap()
-            .as_object()
-            .unwrap()
-            .get(&format!("{}_stddev", name))
-            .unwrap()
-            .as_f64()
-            .unwrap() as f32
+        let columns = self.columns().unwrap();
+        let column = columns.iter().find(|c|
+            c.get("name").unwrap().as_str().unwrap() == name
+        );
+        match column {
+            Some(column) => {
+                column.get("statistics")
+                    .unwrap()
+                    .as_object()
+                    .unwrap()
+                    .get("std_dev")
+                    .unwrap()
+                    .as_f64()
+                    .unwrap() as f32
+            },
+            None => 0.
+        }
     }
 }
 

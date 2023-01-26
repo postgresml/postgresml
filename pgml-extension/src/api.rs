@@ -439,33 +439,22 @@ fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
 #[pg_extern(strict, name = "predict")]
 fn predict_model_row(model_id: i64, row: pgx::datum::AnyElement) -> f32 {
     let model = Model::find_cached(model_id);
+    let snapshot = &model.snapshot;
     let numeric_encoded_features = model.numeric_encode_features(&[row]);
-    let mut processed = vec![0_f32; numeric_encoded_features.len()];
+    let features_width = snapshot.features_width();
+    let mut processed = vec![0_f32; features_width];
 
-    let features = ndarray::ArrayView2::from_shape(
-        (1, numeric_encoded_features.len()),
+    let feature_data = ndarray::ArrayView2::from_shape(
+        (1, features_width),
         &numeric_encoded_features,
     ).unwrap();
-    let mut feature_columns: Vec<usize> = Vec::with_capacity(numeric_encoded_features.len());
 
-    // Array columns are treated as multiple features that are analyzed independently, because that is the most straightforward thing to do
-    model.snapshot.columns.iter().for_each(|column| {
-        if !column.label {
-            for _ in 0..column.size {
-                feature_columns.push(column.position);
-            }
-        }
-    });
-
-    let mut slot = 0;
-    Zip::from(features.columns())
-        .and(&mut feature_columns)
+    Zip::from(feature_data.columns())
+        .and(&snapshot.feature_positions())
         .for_each(|data, position| {
-            let column = &model.snapshot.columns[*position - 1];
-            Snapshot::preprocess(&mut processed, &data, column, slot);
-            slot += 1;
+            let column = &snapshot.columns[position.column_position - 1];
+            column.preprocess(&data, &mut processed, features_width, position.row_position);
         });
-
     model.predict(&processed)
 }
 

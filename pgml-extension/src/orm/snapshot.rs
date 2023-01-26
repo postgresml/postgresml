@@ -66,6 +66,7 @@ impl Default for Statistics {
 }
 
 // How to encode categorical values
+// TODO add limit and min_frequency params to all
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 #[allow(non_camel_case_types)]
 pub(crate) enum Encode {
@@ -73,14 +74,7 @@ pub(crate) enum Encode {
     #[default]
     target_mean,
     // Encode each category as one boolean column per category
-    one_hot {
-        // prevent perfect correlation by dropping at least 1 column (dummies)
-        #[serde(default)]
-        limit: usize,
-        // additionally drop categories that are infrequent
-        #[serde(default)]
-        min_frequency: f32
-    },
+    one_hot,
     // Encode each category as ascending integer values
     ordinal(Vec<String>),
     // For use with algorithms that directly support the data type
@@ -138,11 +132,6 @@ pub(crate) struct Column {
 }
 
 impl Column {
-    // Categorical vs Quantitative
-    // Categorical -> Ordinal vs Nominal
-    // Quantitative -> Discrete vs Continuous
-    // Ambiguity between discrete values and categorical variables
-    // There is no treatment difference between ordinal categorical and discrete quantitative variables
     fn categorical_type(pg_type: &str) -> bool {
         Column::nominal_type(pg_type) || Column::ordinal_type(pg_type)
     }
@@ -184,7 +173,7 @@ impl Column {
     }
 
     #[inline]
-    pub fn get_category_value(&self, key: &str) -> f32 {
+    pub(crate) fn get_category_value(&self, key: &str) -> f32 {
         match self.statistics.categories.as_ref().unwrap().get(key) {
             Some(category) => category.value,
             None => f32::NAN,
@@ -192,7 +181,7 @@ impl Column {
     }
 
     #[inline]
-    pub fn scale(&self, value: f32) -> f32 {
+    pub(crate) fn scale(&self, value: f32) -> f32 {
         match self.preprocessor.scale {
             Scale::standard => (value - self.statistics.mean) / self.statistics.std_dev,
             Scale::min_max => (value - self.statistics.min) / (self.statistics.max - self.statistics.min),
@@ -203,7 +192,7 @@ impl Column {
     }
 
     #[inline]
-    pub fn impute(&self, value: f32) -> f32 {
+    pub(crate) fn impute(&self, value: f32) -> f32 {
         if value.is_nan() {
             match &self.preprocessor.impute {
                 Impute::mean => self.statistics.mean,
@@ -217,6 +206,126 @@ impl Column {
         } else {
             value
         }
+    }
+
+    pub(crate) fn encoded_width(&self) -> usize {
+        match self.preprocessor.encode {
+            Encode::one_hot => self.statistics.categories.as_ref().unwrap().len(),
+            _ => 1
+        }
+    }
+
+    pub(crate) fn array_width(&self) -> usize {
+        self.size
+    }
+
+    pub(crate) fn preprocess(&self, data: &ndarray::ArrayView<f32, ndarray::Ix1>, processed_data: &mut Vec<f32>, features_width: usize, position: usize) {
+        for (row, &d) in data.iter().enumerate() {
+            let value = self.impute(d);
+            match &self.preprocessor.encode {
+                Encode::one_hot => {
+                    for i in 0..self.statistics.categories.as_ref().unwrap().len() {
+                        let one_hot = if i == value as usize { 1. } else { 0. } as f32;
+                        processed_data[row * features_width + position + i] = one_hot;
+                    }
+                },
+                _ => {
+                    processed_data[row * features_width + position] = self.scale(value);
+                }
+            };
+        }
+    }
+
+    fn analyze(&mut self, array: &ndarray::ArrayView<f32, ndarray::Ix1>, target: &ndarray::ArrayView<f32, ndarray::Ix1>) {
+        // target encode if necessary before analyzing
+        match &self.preprocessor.encode {
+            Encode::target_mean => {
+                let categories = self.statistics.categories.as_mut().unwrap();
+                let mut sums = vec![0_f32; categories.len() + 1];
+                Zip::from(array).and(target).for_each(|&value, &target| {
+                    sums[value as usize] += target;
+                });
+                for mut category in categories.values_mut() {
+                    let sum = sums[category.value as usize];
+                    category.value = sum / category.members as f32;
+                }
+            }
+            _ => {}
+        }
+
+        // Data is filtered for NaN because it is not well defined statistically, and they are counted as separate stat
+        let mut data = array.iter().filter_map(|n| if n.is_nan() { None } else { Some(*n) }).collect::<Vec<f32>>();
+        data.sort_by(|a, b| a.total_cmp(&b));
+
+        // FixMe: Arrays are analyzed many times, clobbering/appending to the same stats
+        let mut statistics = &mut self.statistics;
+        statistics.min = *data.first().unwrap();
+        statistics.max = *data.last().unwrap();
+        statistics.max_abs = if statistics.min.abs() > statistics.max.abs() { statistics.min.abs() } else { statistics.max.abs() };
+        statistics.mean = data.iter().sum::<f32>() / data.len() as f32;
+        statistics.median = data[data.len() / 2];
+        statistics.missing = array.len() - data.len();
+        statistics.variance = data.iter().map(|i| {
+            let diff = statistics.mean - (*i);
+            diff * diff
+        }).sum::<f32>() / data.len() as f32;
+        statistics.std_dev = statistics.variance.sqrt();
+        let mut i = 0;
+        let histogram_boundaries = ndarray::Array::linspace(statistics.min, statistics.max, 21);
+        let mut h = 0;
+        let ventile_size = data.len() as f32 / 20.;
+        let mut streak = 1;
+        let mut max_streak = 0;
+        let mut previous = f32::NAN;
+
+        let mut modes = Vec::new();
+        for &value in &data {
+            // mode candidates form streaks
+            if value == previous {
+                streak += 1;
+            } else if !previous.is_nan() {
+                if streak > max_streak  {
+                    modes = vec![previous];
+                    max_streak = streak;
+                } else if streak == max_streak {
+                    modes.push(previous);
+                }
+                streak = 1;
+                statistics.distinct += 1;
+            }
+            previous = value;
+
+            // histogram
+            while value >= histogram_boundaries[h] && h < statistics.histogram.len() {
+                h += 1;
+            }
+            statistics.histogram[h - 1] += 1;
+
+            // ventiles
+            let v = (i as f32 / ventile_size) as usize;
+            if v < 19 {
+                statistics.ventiles[v] = value;
+            }
+            i += 1;
+        }
+        // Pick the mode in the middle of all the candidates with the longest streaks
+        if !previous.is_nan() {
+            statistics.distinct += 1;
+            if streak > max_streak {
+                statistics.mode = previous;
+            } else {
+                statistics.mode = modes[modes.len() / 2];
+            }
+        }
+
+        // Fill missing ventiles with the preceding value, when there are fewer than 20 points
+        for i in 1..statistics.ventiles.len() {
+            if statistics.ventiles[i].is_nan() {
+                statistics.ventiles[i] = statistics.ventiles[i - 1];
+            }
+        }
+
+        info!("Column {:?}: {:?}", self.name, statistics);
     }
 }
 
@@ -232,6 +341,12 @@ impl Ord for Column {
     fn cmp(&self, other: &Self) -> Ordering {
         self.position.cmp(&other.position)
     }
+}
+
+// Array and one hot encoded columns take up multiple positions in a feature row
+pub struct ColumnRowPosition {
+    pub(crate) column_position: usize,
+    pub(crate) row_position: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -506,27 +621,62 @@ impl Snapshot {
         snapshot.unwrap()
     }
 
-    pub fn num_labels(&self) -> usize {
-        self.y_column_name.len()
+    pub(crate) fn labels(&self) -> impl Iterator<Item = &Column> {
+        self.columns.iter().filter(|c| c.label )
     }
 
-    pub fn num_features(&self) -> usize {
-        // TODO fix up for one hot encoding
-        let mut num_features: usize = 0;
-        for column in &self.columns {
-            if !column.label {
-                num_features += column.size;
+    pub(crate) fn label_positions(&self) -> Vec<ColumnRowPosition> {
+        let mut label_positions = Vec::with_capacity(self.num_labels());
+        let mut row_position = 0;
+        for column in self.labels() {
+            for _ in 0..column.size {
+                label_positions.push(ColumnRowPosition {column_position: column.position, row_position});
+                row_position += column.encoded_width();
             }
         }
-        num_features
+        label_positions
     }
 
-    pub fn num_classes(&self) -> usize {
-        let target = &self.y_column_name[0];
-        *self.analysis.as_ref().unwrap()
-            .get(&format!("{}_distinct", target))
-            .unwrap() as usize
+    pub(crate) fn features(&self) -> impl Iterator<Item = &Column> {
+        self.columns.iter().filter(|c| !c.label )
     }
+
+    pub(crate) fn feature_positions(&self) -> Vec<ColumnRowPosition> {
+        let mut feature_positions = Vec::with_capacity(self.num_features());
+        let mut row_position = 0;
+        for column in self.features() {
+            for _ in 0..column.size {
+                feature_positions.push(ColumnRowPosition {column_position: column.position, row_position});
+                row_position += column.encoded_width();
+            }
+        }
+        feature_positions
+    }
+
+    pub(crate) fn num_labels(&self) -> usize {
+        self.labels().map(|f| f.size ).sum::<usize>()
+    }
+
+    pub(crate) fn first_label(&self) -> &Column {
+        self.labels().filter(|l| l.name == self.y_column_name[0] ).next().unwrap()
+    }
+
+    pub(crate) fn num_classes(&self) -> usize {
+        match &self.first_label().statistics.categories {
+            Some(categories) => categories.len(),
+            None => 0,
+        }
+    }
+
+    pub(crate) fn num_features(&self) -> usize {
+        self.features().map(|c| c.size ).sum::<usize>()
+    }
+
+    pub(crate) fn features_width(&self) -> usize {
+        self.features().map(|f| f.array_width() * f.encoded_width() ).sum::<usize>()
+    }
+
+
 
     fn fully_qualified_table(relation_name: &str) -> (String, String) {
         let parts = relation_name
@@ -576,173 +726,44 @@ impl Snapshot {
         }
     }
 
-    fn analyze(array: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &mut Column, target: &ndarray::ArrayView<f32, ndarray::Ix1>) {
-        // target encode if necessary before analyzing
-        match &column.preprocessor.encode {
-            Encode::target_mean => {
-                let categories = column.statistics.categories.as_mut().unwrap();
-                let mut sums = vec![0_f32; categories.len() + 1];
-                Zip::from(array).and(target).for_each(|&value, &target| {
-                    sums[value as usize] += target;
-                });
-                for mut category in categories.values_mut() {
-                    let sum = sums[category.value as usize];
-                    category.value = sum / category.members as f32;
-                }
-            }
-            _ => {}
-        }
-
-        // Data is filtered for NaN because it is not well defined statistically, and they are counted as separate stat
-        let mut data = array.iter().filter_map(|n| if n.is_nan() { None } else { Some(*n) }).collect::<Vec<f32>>();
-        data.sort_by(|a, b| a.total_cmp(&b));
-
-        // FixMe: Arrays are clobbering/appending to the same stats, as new columns come in
-        let mut statistics = &mut column.statistics;
-        statistics.min = *data.first().unwrap();
-        statistics.max = *data.last().unwrap();
-        statistics.max_abs = if statistics.min.abs() > statistics.max.abs() { statistics.min.abs() } else { statistics.max.abs() };
-        statistics.mean = data.iter().sum::<f32>() / data.len() as f32;
-        statistics.median = data[data.len() / 2];
-        statistics.missing = array.len() - data.len();
-        statistics.variance = data.iter().map(|i| {
-            let diff = statistics.mean - (*i);
-            diff * diff
-        }).sum::<f32>() / data.len() as f32;
-        statistics.std_dev = statistics.variance.sqrt();
-        let mut i = 0;
-        let histogram_boundaries = ndarray::Array::linspace(statistics.min, statistics.max, 21);
-        let mut h = 0;
-        let ventile_size = data.len() as f32 / 20.;
-        let mut streak = 1;
-        let mut max_streak = 0;
-        let mut previous = f32::NAN;
-
-        // TODO calculate correlation between data and target
-        let mut modes = Vec::new();
-        for &value in &data {
-            // mode candidates form streaks
-            if value == previous {
-                streak += 1;
-            } else if !previous.is_nan() {
-                if streak > max_streak  {
-                    modes = vec![previous];
-                    max_streak = streak;
-                } else if streak == max_streak {
-                    modes.push(previous);
-                }
-                streak = 1;
-                statistics.distinct += 1;
-            }
-            previous = value;
-
-            // histogram
-            while value >= histogram_boundaries[h] && h < statistics.histogram.len() {
-                h += 1;
-            }
-            statistics.histogram[h - 1] += 1;
-
-            // ventiles
-            let v = (i as f32 / ventile_size) as usize;
-            if v < 19 {
-                statistics.ventiles[v] = value;
-            }
-            i += 1;
-        }
-        // Pick the mode in the middle of all the candidates with the longest streaks
-        if !previous.is_nan() {
-            statistics.distinct += 1;
-            if streak > max_streak {
-                statistics.mode = previous;
-            } else {
-                statistics.mode = modes[modes.len() / 2];
-            }
-        }
-
-        // Fill missing ventiles with the preceding value, when there are fewer than 20 points
-        for i in 1..statistics.ventiles.len() {
-            if statistics.ventiles[i].is_nan() {
-                statistics.ventiles[i] = statistics.ventiles[i - 1];
-            }
-        }
-
-        info!("Column {:?}: {:?}", column.name, statistics);
-    }
-
-    pub(crate) fn preprocess(processed_data: &mut Vec<f32>, data: &ndarray::ArrayView<f32, ndarray::Ix1>, column: &Column, slot: usize) {
-        let num_features = processed_data.len() / data.len();
-        for (i, &d) in data.iter().enumerate() {
-
-            let value = column.impute(d);
-
-            match &column.preprocessor.encode {
-                Encode::one_hot {..} => {
-                    todo!();
-                    // TODO use limit and min_frequency
-                    // for i in 0..column.statistics.distinct {
-                    //     if value == i as f32 {
-                    //         // TODO to implement slot/column logic
-                    //         processed_features[c + i] = 1
-                    //     }
-                    // }
-                }
-                _ => {  }
-            }
-            let value = column.scale(value);
-
-            processed_data[num_features * i + slot] = value;
-        }
-    }
-
     pub fn dataset(&mut self) -> Dataset {
         let numeric_encoded_dataset = self.numeric_encoded_dataset();
 
         // Analyze labels
-        let labels = ndarray::ArrayView2::from_shape(
+        let label_data = ndarray::ArrayView2::from_shape(
             (numeric_encoded_dataset.num_train_rows, numeric_encoded_dataset.num_labels),
             &numeric_encoded_dataset.y_train,
         ).unwrap();
-        let target_data = labels.columns().into_iter().next().unwrap();
-        let mut label_columns: Vec<usize> = Vec::with_capacity(numeric_encoded_dataset.num_labels);
-        // Array columns are treated as multiple features that are analyzed independently, because that is the most straightforward thing to do
-        self.columns.iter().for_each(|column| {
-            if column.label {
-                for _ in 0..column.size {
-                    label_columns.push(column.position);
-                }
-            }
-        });
-        Zip::from(labels.columns())
-            .and(&mut label_columns)
+        // The data for the first label
+        let target_data = label_data.columns().into_iter().next().unwrap();
+
+        Zip::from(label_data.columns())
+            .and(&self.label_positions())
             .for_each(|data, position| {
-                let column = &mut self.columns[*position - 1];
-                Self::analyze(&data, column, &target_data);
+                let column = &mut self.columns[position.column_position - 1]; // lookup the mutable one
+                column.analyze(&data, &target_data);
             });
 
         // Analyze features
-        let features = ndarray::ArrayView2::from_shape(
+        let feature_data = ndarray::ArrayView2::from_shape(
             (numeric_encoded_dataset.num_train_rows, numeric_encoded_dataset.num_features),
             &numeric_encoded_dataset.x_train,
         ).unwrap();
-        let mut feature_columns: Vec<usize> = Vec::with_capacity(numeric_encoded_dataset.num_features);
-        // Array columns are treated as multiple features that are analyzed independently, because that is the most straightforward thing to do
-        self.columns.iter().for_each(|column| {
-            if !column.label {
-                for _ in 0..column.size {
-                    feature_columns.push(column.position);
-                }
-            }
-        });
-        Zip::from(features.columns())
-            .and(&mut feature_columns)
+        Zip::from(feature_data.columns())
+            .and(&self.feature_positions())
             .for_each(|data, position| {
-                let column = &mut self.columns[*position - 1];
-                Self::analyze(&data, column, &target_data);
+                let column = &mut self.columns[position.column_position - 1]; // lookup the mutable one
+                column.analyze(&data, &target_data);
             });
+
+        let mut analysis = IndexMap::new();
+        analysis.insert("samples".to_string(), numeric_encoded_dataset.num_rows as f32);
+        self.analysis = Some(analysis);
 
         // Record the analysis
         Spi::connect(|client| {
-            client.select("UPDATE pgml.snapshots SET columns = $1 WHERE id = $2", Some(1), Some(vec![
+            client.select("UPDATE pgml.snapshots SET analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
+                (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.analysis)).into_datum()),
                 (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.columns)).into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ]));
@@ -750,41 +771,25 @@ impl Snapshot {
             Ok(Some(1))
         });
 
-        let total_width = self.columns.iter().map(|column| {
-            if column.label {
-                0
-            } else if column.statistics.categories.is_some() {
-                match column.preprocessor.encode {
-                    Encode::target_mean | Encode::native | Encode::ordinal(..) => column.size,
-                    Encode::one_hot { .. } => column.size * column.statistics.distinct,
-                }
-            } else {
-                column.size
-            }
-        }).sum::<usize>();
-
-        let mut x_train = vec![0_f32; total_width * numeric_encoded_dataset.num_train_rows];
-        let mut slot = 0;
-        Zip::from(features.columns())
-            .and(&mut feature_columns)
+        let features_width = self.features_width();
+        let mut x_train = vec![0_f32; features_width * numeric_encoded_dataset.num_train_rows];
+        Zip::from(feature_data.columns())
+            .and(&self.feature_positions())
             .for_each(|data, position| {
-                let column = &mut self.columns[*position - 1];
-                Self::preprocess(&mut x_train, &data, column, slot);
-                slot += 1;
+                let column = &self.columns[position.column_position - 1];
+                column.preprocess(&data, &mut x_train, features_width, position.row_position);
             });
 
-        let mut x_test = vec![0_f32; total_width * numeric_encoded_dataset.num_test_rows];
-        let mut slot = 0;
+        let mut x_test = vec![0_f32; features_width * numeric_encoded_dataset.num_test_rows];
         let test_features = ndarray::ArrayView2::from_shape(
             (numeric_encoded_dataset.num_test_rows, numeric_encoded_dataset.num_features),
             &numeric_encoded_dataset.x_test,
         ).unwrap();
         Zip::from(test_features.columns())
-            .and(&mut feature_columns)
+            .and(&self.feature_positions())
             .for_each(|data, position| {
-                let column = &mut self.columns[*position - 1];
-                Self::preprocess(&mut x_test, &data, column, slot);
-                slot += 1;
+                let column = &self.columns[position.column_position - 1];
+                column.preprocess(&data, &mut x_test, features_width, position.row_position);
             });
 
         Dataset {
@@ -976,14 +981,6 @@ impl Snapshot {
                 }
             });
 
-            let num_features = self.num_features();
-            let num_labels = self.num_labels();
-
-            let label = self.columns.iter().find(|c| c.name == self.y_column_name[0]).unwrap();
-            let num_distinct_labels = match &label.statistics.categories {
-                Some(categories) => categories.len(),
-                None => 0,
-            };
             data = Some(Dataset {
                 x_train,
                 y_train,
@@ -994,7 +991,8 @@ impl Snapshot {
                 num_rows,
                 num_test_rows,
                 num_train_rows,
-                num_distinct_labels,
+                // TODO rename and audit this
+                num_distinct_labels: self.num_classes(),
             });
 
             Ok(Some(()))
@@ -1019,6 +1017,7 @@ impl Snapshot {
     }
 }
 
+#[inline]
 fn check_column_size(column: &mut Column, len: usize) {
     if column.size == 0 {
         column.size = len;
