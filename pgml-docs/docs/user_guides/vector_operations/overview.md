@@ -22,7 +22,7 @@ pgml.add(a REAL[], b REAL) -> REAL[]
     SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], 3);
     ```
 
-=== "Ouput"
+=== "Output"
 
     ```
     pgml=# SELECT pgml.add(ARRAY[1.0, 2.0, 3.0], 3);
@@ -78,17 +78,17 @@ pgml.norm_l0(vector REAL[]) -> REAL
 
 #### Manhattan distance from origin
 ```postgresql
-pgml.norm_l1(vector REAL[]) -> REAL 
+pgml.norm_l1(vector REAL[]) -> REAL
 ```
 
 #### Euclidean distance from origin
 ```postgresql
-pgml.norm_l2(vector REAL[]) -> REAL 
+pgml.norm_l2(vector REAL[]) -> REAL
 ```
 
 #### Absolute value of largest element
 ```postgresql
-pgml.norm_max(vector REAL[]) -> REAL 
+pgml.norm_max(vector REAL[]) -> REAL
 ```
 
 ## Normalization
@@ -135,8 +135,8 @@ pgml.cosine_similarity(a REAL[], b REAL[]) -> REAL
 If we had precalculated the embeddings for a set of user and product data, we could find the 100 best products for a user with a similarity search.
 
 ```postgresql
-SELECT 
-    products.id, 
+SELECT
+    products.id,
     pgml.cosine_similarity(
         users.embedding,
         products.embedding

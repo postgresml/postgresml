@@ -178,7 +178,7 @@ The default for predict in a classification problem classifies the statement as 
     Time: 18.101 ms
     ```
 
-This shows that there is a 6.26% chance for category 0 (negative sentiment), and a 93.73% chance it's category 1 (postive sentiment).
+This shows that there is a 6.26% chance for category 0 (negative sentiment), and a 93.73% chance it's category 1 (positive sentiment).
 
 See the [task documentation](https://huggingface.co/tasks/text-classification) for more examples, use cases, models and datasets.
 
@@ -352,6 +352,6 @@ The default for predict in a classification problem classifies the statement as 
     Time: 18.101 ms
     ```
 
-This shows that there is a 6.26% chance for category 0 (negative sentiment), and a 93.73% chance it's category 1 (postive sentiment).
+This shows that there is a 6.26% chance for category 0 (negative sentiment), and a 93.73% chance it's category 1 (positive sentiment).
 
 See the [task documentation](https://huggingface.co/tasks/text-classification) for more examples, use cases, models and datasets.

@@ -70,7 +70,8 @@ CREATE TABLE IF NOT EXISTS pgml.snapshots(
 	columns JSONB,
 	analysis JSONB,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
-	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp()
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT clock_timestamp(),
+	materialized BOOLEAN DEFAULT false
 );
 SELECT pgml.auto_updated_at('pgml.snapshots');
 

@@ -8,6 +8,7 @@ ARG PGVERSION=14
 ARG DEBIAN_FRONTEND=noninteractive
 ARG PACKAGE_VERSION=2.0.0
 ARG PACKAGE_PYTHON=true
+ARG PACKAGE_CUDA=false
 ENV TZ=Etc/UTC
 
 # Apt-fast
@@ -16,9 +17,9 @@ RUN apt-get update && apt-get install software-properties-common -y
 RUN add-apt-repository ppa:apt-fast/stable --yes
 RUN apt-get update && apt-get -y install apt-fast
 
-RUN  apt-fast install apt-fast curl unzip gpg -y
+RUN apt-fast install apt-fast curl unzip gpg wget -y
 
-# PostgresSQL
+# PostgreSQL
 RUN curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg > /dev/null
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 
@@ -28,18 +29,25 @@ RUN echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https:
 
 RUN apt-get update && apt-fast install postgresql-${PGVERSION} libopenblas-dev cmake postgresql-server-dev-${PGVERSION} pkg-config libssl-dev build-essential libclang-dev clang libpython3-dev python3-dev -y
 
+# CUDA
+COPY docker/install_cuda.sh install_cuda.sh
+RUN bash install_cuda.sh
+
 USER postgres
+
 
 # Install Rust
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH="/var/lib/postgresql/.cargo/bin:${PATH}"
 
 # Install tcdi/pgx
-RUN cargo install cargo-pgx --version 0.4.5
+RUN cargo install cargo-pgx --version 0.5.6
 RUN cargo pgx init --pg${PGVERSION} /usr/bin/pg_config
+
 
 COPY --chown=postgres:postgres . /app
 WORKDIR /app
+
 
 # cargo pgx package command ignores --no-default-features sadly, so we
 # have to have a separate Cargo.toml without Python. No big deal.
@@ -47,7 +55,11 @@ WORKDIR /app
 ENV PACKAGE_PYTHON=${PACKAGE_PYTHON}
 RUN bash -c 'if [[ "${PACKAGE_PYTHON}" == "false" ]]; then cp docker/Cargo.toml.no-python Cargo.toml; fi'
 
+ENV PACKAGE_CUDA=${PACKAGE_CUDA}
+RUN bash -c 'if [[ "${PACKAGE_CUDA}" == "true" ]]; then cp docker/Cargo.toml.cuda Cargo.toml; fi'
+
 # Build and upload package to S3
+ENV CUDACXX=/usr/local/cuda/bin/nvcc
 RUN cargo pgx package
 
 # Deb file goes here, mount it on your local system
@@ -59,4 +71,3 @@ ENV OUTPUT_DIR=/output
 
 # Run
 ENTRYPOINT ["bash", "docker/build_ubuntu_deb.sh", "/output"]
-

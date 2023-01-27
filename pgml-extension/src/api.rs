@@ -2,7 +2,10 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use ndarray::Zip;
+use pgx::iter::{SetOfIterator, TableIterator};
 use pgx::*;
+
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde_json::json;
@@ -100,20 +103,23 @@ fn version() -> String {
 #[pg_extern]
 fn train(
     project_name: &str,
-    task: Option<default!(Task, "NULL")>,
-    relation_name: Option<default!(&str, "NULL")>,
-    y_column_name: Option<default!(&str, "NULL")>,
+    task: default!(Option<Task>, "NULL"),
+    relation_name: default!(Option<&str>, "NULL"),
+    y_column_name: default!(Option<&str>, "NULL"),
     algorithm: default!(Algorithm, "'linear'"),
     hyperparams: default!(JsonB, "'{}'"),
-    search: Option<default!(Search, "NULL")>,
+    search: default!(Option<Search>, "NULL"),
     search_params: default!(JsonB, "'{}'"),
     search_args: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
-    runtime: Option<default!(Runtime, "NULL")>,
-    automatic_deploy: Option<default!(bool, true)>,
-) -> impl std::iter::Iterator<
-    Item = (
+    runtime: default!(Option<Runtime>, "NULL"),
+    automatic_deploy: default!(Option<bool>, true),
+    materialize_snapshot: default!(bool, false),
+    preprocess: default!(JsonB, "'{}'"),
+) -> TableIterator<
+    'static,
+    (
         name!(project, String),
         name!(task, String),
         name!(algorithm, String),
@@ -134,6 +140,8 @@ fn train(
         test_sampling,
         runtime,
         automatic_deploy,
+        materialize_snapshot,
+        preprocess,
     )
 }
 
@@ -141,20 +149,23 @@ fn train(
 #[pg_extern]
 fn train_joint(
     project_name: &str,
-    task: Option<default!(Task, "NULL")>,
-    relation_name: Option<default!(&str, "NULL")>,
-    y_column_name: Option<default!(Vec<String>, "NULL")>,
+    task: default!(Option<Task>, "NULL"),
+    relation_name: default!(Option<&str>, "NULL"),
+    y_column_name: default!(Option<Vec<String>>, "NULL"),
     algorithm: default!(Algorithm, "'linear'"),
     hyperparams: default!(JsonB, "'{}'"),
-    search: Option<default!(Search, "NULL")>,
+    search: default!(Option<Search>, "NULL"),
     search_params: default!(JsonB, "'{}'"),
     search_args: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
-    runtime: Option<default!(Runtime, "NULL")>,
-    automatic_deploy: Option<default!(bool, true)>,
-) -> impl std::iter::Iterator<
-    Item = (
+    runtime: default!(Option<Runtime>, "NULL"),
+    automatic_deploy: default!(Option<bool>, true),
+    materialize_snapshot: default!(bool, false),
+    preprocess: default!(JsonB, "'{}'"),
+) -> TableIterator<
+    'static,
+    (
         name!(project, String),
         name!(task, String),
         name!(algorithm, String),
@@ -173,7 +184,7 @@ fn train_joint(
         error!("Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.", project.name, project.task);
     }
 
-    let snapshot = match relation_name {
+    let mut snapshot = match relation_name {
         None => {
             let snapshot = project
                 .last_snapshot()
@@ -196,13 +207,17 @@ fn train_joint(
                     .expect("You must pass a `y_column_name` when you pass a `relation_name`"),
                 test_size,
                 test_sampling,
+                materialize_snapshot,
+                preprocess,
             );
 
-            info!(
-                "Snapshot of table \"{}\" created and saved in {}",
-                relation_name,
-                snapshot.snapshot_name(),
-            );
+            if materialize_snapshot {
+                info!(
+                    "Snapshot of table \"{}\" created and saved in {}",
+                    relation_name,
+                    snapshot.snapshot_name(),
+                );
+            }
 
             snapshot
         }
@@ -214,7 +229,7 @@ fn train_joint(
     //     hyperparams["random_state"] = 0
     let model = Model::create(
         &project,
-        &snapshot,
+        &mut snapshot,
         algorithm,
         hyperparams,
         search,
@@ -272,22 +287,25 @@ fn train_joint(
         project.deploy(model.id);
     }
 
-    vec![(
-        project.name,
-        project.task.to_string(),
-        model.algorithm.to_string(),
-        deploy,
-    )]
-    .into_iter()
+    TableIterator::new(
+        vec![(
+            project.name,
+            project.task.to_string(),
+            model.algorithm.to_string(),
+            deploy,
+        )]
+        .into_iter(),
+    )
 }
 
 #[pg_extern]
 fn deploy(
     project_name: &str,
     strategy: Strategy,
-    algorithm: Option<default!(Algorithm, "NULL")>,
-) -> impl std::iter::Iterator<
-    Item = (
+    algorithm: default!(Option<Algorithm>, "NULL"),
+) -> TableIterator<
+    'static,
+    (
         name!(project, String),
         name!(strategy, String),
         name!(algorithm, String),
@@ -353,7 +371,7 @@ fn deploy(
             "
             );
         }
-        _ => error!("invalid stategy"),
+        _ => error!("invalid strategy"),
     }
     sql += "\nLIMIT 1";
     let (model_id, algorithm) = Spi::get_two_with_args::<i64, String>(
@@ -366,7 +384,9 @@ fn deploy(
     let project = Project::find(project_id).unwrap();
     project.deploy(model_id);
 
-    vec![(project_name.to_string(), strategy.to_string(), algorithm)].into_iter()
+    TableIterator::new(
+        vec![(project_name.to_string(), strategy.to_string(), algorithm)].into_iter(),
+    )
 }
 
 #[pg_extern(strict, name = "predict")]
@@ -385,8 +405,15 @@ fn predict_joint(project_name: &str, features: Vec<f32>) -> Vec<f32> {
 }
 
 #[pg_extern(strict, name = "predict_batch")]
-fn predict_batch(project_name: &str, features: Vec<f32>) -> Vec<f32> {
-    predict_model_batch(Project::get_deployed_model_id(project_name), features)
+fn predict_batch(project_name: &str, features: Vec<f32>) -> SetOfIterator<'static, f32> {
+    SetOfIterator::new(
+        predict_model_batch(Project::get_deployed_model_id(project_name), features).into_iter(),
+    )
+}
+
+#[pg_extern(strict, name = "predict")]
+fn predict_row(project_name: &str, row: pgx::datum::AnyElement) -> f32 {
+    predict_model_row(Project::get_deployed_model_id(project_name), row)
 }
 
 #[pg_extern(strict, name = "predict")]
@@ -409,27 +436,53 @@ fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
     Model::find_cached(model_id).predict_batch(&features)
 }
 
+#[pg_extern(strict, name = "predict")]
+fn predict_model_row(model_id: i64, row: pgx::datum::AnyElement) -> f32 {
+    let model = Model::find_cached(model_id);
+    let snapshot = &model.snapshot;
+    let numeric_encoded_features = model.numeric_encode_features(&[row]);
+    let features_width = snapshot.features_width();
+    let mut processed = vec![0_f32; features_width];
+
+    let feature_data = ndarray::ArrayView2::from_shape(
+        (1, features_width),
+        &numeric_encoded_features,
+    ).unwrap();
+
+    Zip::from(feature_data.columns())
+        .and(&snapshot.feature_positions)
+        .for_each(|data, position| {
+            let column = &snapshot.columns[position.column_position - 1];
+            column.preprocess(&data, &mut processed, features_width, position.row_position);
+        });
+    model.predict(&processed)
+}
+
+
 #[pg_extern]
 fn snapshot(
     relation_name: &str,
     y_column_name: &str,
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
-) -> impl std::iter::Iterator<Item = (name!(relation, String), name!(y_column_name, String))> {
+    preprocess: default!(JsonB, "'{}'"),
+) -> TableIterator<'static, (name!(relation, String), name!(y_column_name, String))> {
     Snapshot::create(
         relation_name,
         vec![y_column_name.to_string()],
         test_size,
         test_sampling,
+        true,
+        preprocess,
     );
-    vec![(relation_name.to_string(), y_column_name.to_string())].into_iter()
+    TableIterator::new(vec![(relation_name.to_string(), y_column_name.to_string())].into_iter())
 }
 
 #[pg_extern]
 fn load_dataset(
     source: &str,
-    limit: Option<default!(i64, "NULL")>,
-) -> impl std::iter::Iterator<Item = (name!(table_name, String), name!(rows, i64))> {
+    limit: default!(Option<i64>, "NULL"),
+) -> TableIterator<'static, (name!(table_name, String), name!(rows, i64))> {
     // cast limit since pgx doesn't support usize
     let limit: Option<usize> = limit.map(|limit| limit.try_into().unwrap());
     let (name, rows) = match source {
@@ -442,7 +495,7 @@ fn load_dataset(
         _ => error!("Unknown source: `{source}`"),
     };
 
-    vec![(name, rows)].into_iter()
+    TableIterator::new(vec![(name, rows)].into_iter())
 }
 
 #[cfg(feature = "python")]
@@ -519,6 +572,72 @@ pub fn sklearn_classification_metrics(
     )
 }
 
+#[pg_extern]
+pub fn dump_all(path: &str) {
+    let p = std::path::Path::new(path).join("projects.csv");
+    Spi::run(&format!(
+        "COPY pgml.projects TO '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("snapshots.csv");
+    Spi::run(&format!(
+        "COPY pgml.snapshots TO '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("models.csv");
+    Spi::run(&format!(
+        "COPY pgml.models TO '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("files.csv");
+    Spi::run(&format!(
+        "COPY pgml.files TO '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("deployments.csv");
+    Spi::run(&format!(
+        "COPY pgml.deployments TO '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+}
+
+#[pg_extern]
+pub fn load_all(path: &str) {
+    let p = std::path::Path::new(path).join("projects.csv");
+    Spi::run(&format!(
+        "COPY pgml.projects FROM '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("snapshots.csv");
+    Spi::run(&format!(
+        "COPY pgml.snapshots FROM '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("models.csv");
+    Spi::run(&format!(
+        "COPY pgml.models FROM '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("files.csv");
+    Spi::run(&format!(
+        "COPY pgml.files FROM '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+
+    let p = std::path::Path::new(path).join("deployments.csv");
+    Spi::run(&format!(
+        "COPY pgml.deployments FROM '{}' CSV HEADER",
+        p.to_str().unwrap()
+    ));
+}
+
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
@@ -531,8 +650,9 @@ mod tests {
 
     #[pg_test]
     fn test_project_lifecycle() {
-        assert!(Project::create("test", Task::regression).id > 0);
-        assert!(Project::find(1).unwrap().id > 0);
+        let project = Project::create("test", Task::regression);
+        assert!(project.id > 0);
+        assert!(Project::find(project.id).unwrap().id > 0);
     }
 
     #[pg_test]
@@ -544,18 +664,25 @@ mod tests {
             vec!["target".to_string()],
             0.5,
             Sampling::last,
+            true,
+            JsonB(serde_json::Value::Object(Hyperparams::new()))
         );
         assert!(snapshot.id > 0);
     }
 
     #[pg_test]
-    #[should_panic]
     fn test_not_fully_qualified_table() {
         load_diabetes(Some(25));
 
         let result = std::panic::catch_unwind(|| {
-            let _snapshot =
-                Snapshot::create("diabetes", vec!["target".to_string()], 0.5, Sampling::last);
+            let _snapshot = Snapshot::create(
+                "diabetes",
+                vec!["target".to_string()],
+                0.5,
+                Sampling::last,
+                true,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
+            );
         });
 
         assert!(result.is_err());
@@ -587,6 +714,8 @@ mod tests {
                 Sampling::last,
                 Some(runtime),
                 Some(true),
+                false,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             )
             .collect();
 
@@ -624,6 +753,8 @@ mod tests {
                 Sampling::last,
                 Some(runtime),
                 Some(true),
+                false,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             )
             .collect();
 
@@ -661,6 +792,8 @@ mod tests {
                 Sampling::last,
                 Some(runtime),
                 Some(true),
+                true,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             )
             .collect();
 
@@ -670,5 +803,11 @@ mod tests {
             assert_eq!(result[0].2, String::from("xgboost"));
             // assert_eq!(result[0].3, true);
         }
+    }
+
+    #[pg_test]
+    fn test_dump_load() {
+        dump_all("/tmp");
+        load_all("/tmp");
     }
 }

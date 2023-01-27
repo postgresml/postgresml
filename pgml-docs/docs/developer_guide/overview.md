@@ -34,12 +34,17 @@ cargo pgx init # This will take a few minutes
 shared_preload_libraries = 'pgml'
 ```
 
-and you're ready to go:
+Then you're ready to go:
 
 ```bash
 cargo pgx run
 ```
 
+By default, the extension is built without CUDA support for XGBoost and LightGBM. You'll need to install CUDA locally to build and enable the `cuda` feature for cargo. CUDA can be downloaded [here](https://developer.nvidia.com/cuda-downloads?target_os=Linux).
+
+```bash
+CUDACXX=/usr/local/cuda/bin/nvcc cargo pgx run --release --features pg13,python,cuda 
+```
 
 If you ever want to reset the environment, simply spin up the database with `cargo pgx run` and drop the extension and metadata tables:
 

@@ -1,9 +1,9 @@
 # GPU Support
 
-PostgresML is capable of leveraging GPUs when the underlying libraries and hardware are properly configured on the database server. 
+PostgresML is capable of leveraging GPUs when the underlying libraries and hardware are properly configured on the database server. The CUDA runtime is statically linked during the build process, so it does not introduce additional dependencies on the runtime host.
 
 !!! tip
-    Models trained on GPU will also require GPU support to make predictions.
+    Models trained on GPU may also require GPU support to make predictions. Consult the documentation for each library on configuring training vs inference.
 
 ## Tensorflow
 GPU setup for Tensorflow is covered in the [documentation](https://www.tensorflow.org/install/pip). You may acquire pre-trained GPU enabled models for fine tuning from [Hugging Face](/user_guides/transformers/fine_tuning/). 
@@ -15,7 +15,7 @@ GPU setup for Torch is covered in the [documentation](https://pytorch.org/get-st
 GPU setup for Flax is covered in the [documentation](https://github.com/google/jax#pip-installation-gpu-cuda). You may acquire pre-trained GPU enabled models for fine tuning from [Hugging Face](/user_guides/transformers/fine_tuning/). 
 
 ## XGBoost 
-GPU setup for XGBoost is covered in the [documentation](https://xgboost.readthedocs.io/en/stable/gpu/index.html).
+GPU setup for XGBoost is covered in the [documentation](https://xgboost.readthedocs.io/en/stable/gpu/index.html). 
 
 !!! example 
     ```sql linenums="1"
@@ -34,7 +34,7 @@ GPU setup for LightGBM is covered in the [documentation](https://lightgbm.readth
         pgml.train(
             'GPU project', 
             algorithm => 'lightgbm', 
-            hyperparams => '{"device" : "gpu"}'
+            hyperparams => '{"device" : "cuda"}'
         );
     ```
 

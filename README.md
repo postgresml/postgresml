@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://postgresml.org/">
-    <img src="pgml-dashboard/app/static/images/logo-small.png" width="175" alt="PostgresML">
+    <img src="pgml-docs/docs/images/owl_gradient.png" width="175" alt="PostgresML">
   </a>
 </p>
   
@@ -38,10 +38,10 @@
 
 The dashboard makes it easy to compare different algorithms or hyperparameters across models and datasets.
 
-[![PostgresML dashboard](pgml-docs/docs/images/dashboard/models.png)](https://demo.postgresml.org/)
+[![PostgresML dashboard](pgml-docs/docs/images/dashboard/models.png)](https://cloud.postgresml.org/)
 
 <h2 align="center">
-    See it in action — <a href="https://demo.postgresml.org/" target="_blank">demo.postgresml.org</a>
+    See it in action — <a href="https://cloud.postgresml.org/" target="_blank">cloud.postgresml.org</a>
 </h2>
 
 ## What's in the box
@@ -69,7 +69,7 @@ Vector operations make working with learned emebeddings a snap, for things like 
 Since your data never leaves the database, you retain the speed, reliability and security you expect in your foundational stateful services. Leverage your existing infrastructure and expertise to deliver new capabilities.
 
 ### Open source
-We're building on the shoulders of giants. These machine learning libraries and Postgres have recieved extensive academic and industry use, and we'll continue their tradition to build with the community. Licensed under MIT.
+We're building on the shoulders of giants. These machine learning libraries and Postgres have received extensive academic and industry use, and we'll continue their tradition to build with the community. Licensed under MIT.
 
 ## Quick Start
 

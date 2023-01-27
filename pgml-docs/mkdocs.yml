@@ -13,13 +13,13 @@ watch:
 - overrides
 - mkdocs.yml
 
-dev_addr: 0.0.0.0:8001
+dev_addr: localhost:8001
 
 theme:
     name: material
     custom_dir: overrides
-    favicon: /images/logos/favicon.ico
-    logo: /images/logos/logo-small.png
+    favicon: /images/owl.ico
+    logo: /images/owl_white.png
     locale: en
     font:
         text: Roboto
@@ -60,6 +60,8 @@ extra:
         - icon: fontawesome/brands/discord
           link: https://discord.gg/DmyJP3qJ7U
     generator: false
+    analytics:
+        provider: umami
 
 copyright: Copyright &copy; 2022 PostgresML Team
 
@@ -129,6 +131,7 @@ nav:
             - Joint Optimization: user_guides/training/joint_optimization.md
         - Predictions: 
             - Prediction Overview: user_guides/predictions/overview.md
+            - Batch Predictions: user_guides/predictions/batch.md
             - Deploying Models: user_guides/predictions/deployments.md
         - Vector Operations: user_guides/vector_operations/overview.md
         - Transformers:
@@ -151,6 +154,7 @@ nav:
         - PostgresML is Moving to Rust for our 2.0 Release: blog/postgresml-is-moving-to-rust-for-our-2.0-release.md
         - "Backwards Compatible or Bust: Python Inside Rust Inside Postgres": blog/backwards-compatible-or-bust-python-inside-rust-inside-postgres.md
         - PostgresML is 8-40x faster than Python HTTP microservices: blog/postgresml-is-8x-faster-than-python-http-microservices.md
+        - Scaling PostgresML to 1 Million Requests per Second: blog/scaling-postgresml-to-one-million-requests-per-second.md
     - About:
         - Team: about/team.md
         - Roadmap: about/roadmap.md

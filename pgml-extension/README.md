@@ -10,7 +10,7 @@ See [our blog](https://postgresml.org/blog/postgresml-is-moving-to-rust-for-our-
 
 PostgresML 2.0 requires Python 3.7 or above and the Rust compiler and toolchain. You can download the Rust compiler [here](https://rust-lang.org).
 
-We develop this extension on Ubuntu, so it'll work best there, but it's very likely to work on other distros as well. Windows is only supported through WSL2. It's been tested and it works. Mac OS is supported, however due to a bug in LLVM's distribution of OpenMP, Apple M1s and M2s are not currently supported. The issue is being tracked [here](https://github.com/postgresml/postgresml/issues/364).
+We develop this extension on Ubuntu, so it'll work best there, but it's very likely to work on other distros as well. Windows is only supported through WSL2. It's been tested and it works. Mac OS is also supported.
 
 ## Dependencies
 
@@ -20,6 +20,10 @@ If you haven't already, install:
 - `libclang-dev`
 - `libopenblas-dev`
 - `build-essential`
+- `libssl-dev`
+- `openssl-sys`
+- `pkg-config`
+- `libreadline-dev`
 - `libpython3-dev` (Python 3.7 or higher)
 
 ## Python
@@ -41,7 +45,7 @@ shared_preload_libraries = 'pgml'     # (change requires restart)
 ## Local development
 
 0. `git submodule update --init --recursive`
-1. `cargo install cargo-pgx`
+1. `cargo install cargo-pgx --version=0.5.6` version needs to match Cargo.toml
 2. `cargo pgx init` (this will take a while, go get a coffee)
 3. `cargo pgx run`
 4. `DROP EXTENSION IF EXISTS pgml; DROP SCHEMA IF EXISTS pgml CASCADE;`

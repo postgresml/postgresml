@@ -34,7 +34,7 @@ This is good enough for most of the use cases out there, without introducing any
   <figcaption>What we were promised</figcaption>
 </figure>
 
-Academics have spent decades inventing many algorithms that use orders of magnitude more compute eking out marginally better results that often aren't worth it in practice. Not to generally disparage academia, their work has consistently improved our world, but we need to pay attention to tradeoffs. SQL is another acronym similiarly pioneered in the 1970's. One difference between SQL and BM25 is that everyone has heard of the former before reading this blog post, for good reason.
+Academics have spent decades inventing many algorithms that use orders of magnitude more compute eking out marginally better results that often aren't worth it in practice. Not to generally disparage academia, their work has consistently improved our world, but we need to pay attention to tradeoffs. SQL is another acronym similarly pioneered in the 1970's. One difference between SQL and BM25 is that everyone has heard of the former before reading this blog post, for good reason.
 
 If you actually want to meaningfully improve search results, you generally need to add new data sources. Relevance is much more often revealed by the way other things **_relate_** to the document, rather than the content of the document itself. Google proved the point 23 years ago. Pagerank doesn't rely on the page content itself as much as it uses metadata from _links to the pages_. We live in a connected world and it's the interplay among things that reveal their relevance, whether that is links for websites, sales for products, shares for social posts... It's the greater context around the document that matters.
 
@@ -57,7 +57,7 @@ These queries can execute in milliseconds on large production-sized corpora with
 The following full blown example is for demonstration purposes only of a 3rd generation search engine. You can test it for real in the PostgresML Gym to build up a complete understanding.
 
 <center markdown>
-  [Try the PostgresML Gym](https://gym.postgresml.org/){ .md-button .md-button--primary }
+  [Try the PostgresML Gym](https://cloud.postgresml.org/){ .md-button .md-button--primary }
 </center>
 
 ```sql title="search.sql" linenums="1"
@@ -120,7 +120,7 @@ If you'd like to play through an interactive notebook to generate models for sea
 </center>
 
 <center markdown>
-  [Try the PostgresML Gym](https://gym.postgresml.org/){ .md-button .md-button--primary }
+  [Try the PostgresML Gym](https://cloud.postgresml.org/){ .md-button .md-button--primary }
 </center>
 
 Many thanks and ❤️ to all those who are supporting this endeavor. We’d love to hear feedback from the broader ML and Engineering community about applications and other real world scenarios to help prioritize our work. 

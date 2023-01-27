@@ -6,7 +6,8 @@ A local documentation server will automatically be started by docker-compose, bu
 
 ```bash
 $ pip install -r requirements.txt
-$ mkdocs serve localhost:8001
+$ mkdocs serve
 ```
 
-Then visit http://localhost:8001/ to see the docs
+Then visit http://localhost:8001/ to see the docs. (The development endpoint
+is configured with `dev_addr` in `mkdocs.yaml`.)

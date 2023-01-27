@@ -39,7 +39,7 @@ CROSS JOIN LATERAL (
 LIMIT 10;
 
 --
--- After a project has been trained, ommited parameters will be reused from previous training runs
+-- After a project has been trained, omitted parameters will be reused from previous training runs
 -- In these examples we'll reuse the training data snapshots from the initial call.
 --
 

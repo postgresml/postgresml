@@ -1,0 +1,26 @@
+[package]
+name = "pgml-dashboard"
+version = "0.1.1"
+edition = "2021"
+authors = ["Lev Kokotov <lev@postgresml.org>"]
+license = "MIT"
+description = "Web dashboard for PostgresML, an end-to-end machine learning platform for PostgreSQL"
+homepage = "https://postgresml.org"
+repository = "https://github.com/postgremsl/postgresml"
+include = ["src/", "sqlx-data.json", "templates/", "migrations/", "static/"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sailfish = "0.5.0"
+rocket = {version = "0.5.0-rc.2", features = ["secrets"] }
+sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "postgres", "json", "tls", "migrate", "time", "uuid", "bigdecimal", "offline",] }
+anyhow = "1"
+tokio = { version = "1", features = ["full"] }
+rand = "0.8"
+parking_lot = "0.12"
+comrak = "0.15"
+bigdecimal = "0.3"
+chrono = "0.4"
+serde_json = "1"
+csv-async = "1"

@@ -25,7 +25,7 @@ FROM pgml.iris_view
 LIMIT 10;
 
 --
--- After a project has been trained, ommited parameters will be reused from previous training runs
+-- After a project has been trained, omitted parameters will be reused from previous training runs
 -- In these examples we'll reuse the training data snapshots from the initial call.
 --
 
@@ -56,7 +56,7 @@ SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'xgboost', hyperparam
 SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
 -- SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
--- SELECT * FROM pgml.train('Iris Flower Types', algorithim => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
+-- SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 
 
 -- check out all that hard work
