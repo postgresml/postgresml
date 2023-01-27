@@ -22,7 +22,7 @@ SELECT left(image::text, 40) || ',...}', target FROM pgml.digits LIMIT 10;
 SELECT * FROM pgml.train('Handwritten Digits', 'classification', 'pgml.digits', 'target');
 
 -- check out the predictions
-SELECT target, pgml.predict('Handwritten Digits', image) AS prediction
+SELECT target, pgml.predict('Handwritten Digits', image::FLOAT4[]) AS prediction
 FROM pgml.digits 
 LIMIT 10;
 

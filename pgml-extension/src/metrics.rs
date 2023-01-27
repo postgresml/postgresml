@@ -3,7 +3,7 @@ use std::collections::{BTreeSet, HashMap};
 
 use ndarray::{Array2, ArrayView1};
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Average {
     Micro,
     Macro,

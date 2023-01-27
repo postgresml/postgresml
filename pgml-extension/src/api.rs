@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use ndarray::Zip;
 use pgx::iter::{SetOfIterator, TableIterator};
 use pgx::*;
 
@@ -115,6 +116,7 @@ fn train(
     runtime: default!(Option<Runtime>, "NULL"),
     automatic_deploy: default!(Option<bool>, true),
     materialize_snapshot: default!(bool, false),
+    preprocess: default!(JsonB, "'{}'"),
 ) -> TableIterator<
     'static,
     (
@@ -139,6 +141,7 @@ fn train(
         runtime,
         automatic_deploy,
         materialize_snapshot,
+        preprocess,
     )
 }
 
@@ -159,6 +162,7 @@ fn train_joint(
     runtime: default!(Option<Runtime>, "NULL"),
     automatic_deploy: default!(Option<bool>, true),
     materialize_snapshot: default!(bool, false),
+    preprocess: default!(JsonB, "'{}'"),
 ) -> TableIterator<
     'static,
     (
@@ -180,7 +184,7 @@ fn train_joint(
         error!("Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.", project.name, project.task);
     }
 
-    let snapshot = match relation_name {
+    let mut snapshot = match relation_name {
         None => {
             let snapshot = project
                 .last_snapshot()
@@ -204,6 +208,7 @@ fn train_joint(
                 test_size,
                 test_sampling,
                 materialize_snapshot,
+                preprocess,
             );
 
             if materialize_snapshot {
@@ -224,7 +229,7 @@ fn train_joint(
     //     hyperparams["random_state"] = 0
     let model = Model::create(
         &project,
-        &snapshot,
+        &mut snapshot,
         algorithm,
         hyperparams,
         search,
@@ -407,6 +412,11 @@ fn predict_batch(project_name: &str, features: Vec<f32>) -> SetOfIterator<'stati
 }
 
 #[pg_extern(strict, name = "predict")]
+fn predict_row(project_name: &str, row: pgx::datum::AnyElement) -> f32 {
+    predict_model_row(Project::get_deployed_model_id(project_name), row)
+}
+
+#[pg_extern(strict, name = "predict")]
 fn predict_model(model_id: i64, features: Vec<f32>) -> f32 {
     Model::find_cached(model_id).predict(&features)
 }
@@ -426,12 +436,36 @@ fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
     Model::find_cached(model_id).predict_batch(&features)
 }
 
+#[pg_extern(strict, name = "predict")]
+fn predict_model_row(model_id: i64, row: pgx::datum::AnyElement) -> f32 {
+    let model = Model::find_cached(model_id);
+    let snapshot = &model.snapshot;
+    let numeric_encoded_features = model.numeric_encode_features(&[row]);
+    let features_width = snapshot.features_width();
+    let mut processed = vec![0_f32; features_width];
+
+    let feature_data = ndarray::ArrayView2::from_shape(
+        (1, features_width),
+        &numeric_encoded_features,
+    ).unwrap();
+
+    Zip::from(feature_data.columns())
+        .and(&snapshot.feature_positions)
+        .for_each(|data, position| {
+            let column = &snapshot.columns[position.column_position - 1];
+            column.preprocess(&data, &mut processed, features_width, position.row_position);
+        });
+    model.predict(&processed)
+}
+
+
 #[pg_extern]
 fn snapshot(
     relation_name: &str,
     y_column_name: &str,
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
+    preprocess: default!(JsonB, "'{}'"),
 ) -> TableIterator<'static, (name!(relation, String), name!(y_column_name, String))> {
     Snapshot::create(
         relation_name,
@@ -439,6 +473,7 @@ fn snapshot(
         test_size,
         test_sampling,
         true,
+        preprocess,
     );
     TableIterator::new(vec![(relation_name.to_string(), y_column_name.to_string())].into_iter())
 }
@@ -630,6 +665,7 @@ mod tests {
             0.5,
             Sampling::last,
             true,
+            JsonB(serde_json::Value::Object(Hyperparams::new()))
         );
         assert!(snapshot.id > 0);
     }
@@ -645,6 +681,7 @@ mod tests {
                 0.5,
                 Sampling::last,
                 true,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             );
         });
 
@@ -678,6 +715,7 @@ mod tests {
                 Some(runtime),
                 Some(true),
                 false,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             )
             .collect();
 
@@ -716,6 +754,7 @@ mod tests {
                 Some(runtime),
                 Some(true),
                 false,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             )
             .collect();
 
@@ -754,6 +793,7 @@ mod tests {
                 Some(runtime),
                 Some(true),
                 true,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             )
             .collect();
 
