@@ -19,6 +19,24 @@ INSERT INTO raw VALUES
 ('two', 14, 'what', 7, 7.0, true, ARRAY[7, 7, 7, 7], 7),
 ('two', 16, 'hi', 8, 8.0, false, ARRAY[8, 8, 8, 8], 8);
 
+INFO:  train: [1.0, 2.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+INFO:  train: [1.0, 4.0, 1.0, 2.0, 2.0, 0.6, 2.0, 2.0, 2.0, 2.0]
+INFO:  train: [1.0, 6.0, 2.0, 3.0, 3.6, 1.0, 3.0, 3.0, 3.0, 3.0]
+INFO:  train: [1.0, 6.8, 2.0, 4.0, 4.0, 0.0, 4.0, 4.0, 4.0, 4.0]
+INFO:  train: [0.0, 10.0, 2.0, 5.0, 5.0, 1.0, 5.0, 5.0, 5.0, 5.0]
+INFO:  train: [2.0, 12.0, 2.0, 6.0, 6.0, 0.0, 6.0, 6.0, 6.0, 6.0]
+INFO:  test: [2.0, 14.0, 2.0, 7.0, 7.0, 1.0, 7.0, 7.0, 7.0, 7.0]
+INFO:  test: [2.0, 16.0, 2.0, 8.0, 8.0, 0.0, 8.0, 8.0, 8.0, 8.0]
+
+INFO:  train: [1.0, 2.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+INFO:  train: [1.0, 4.0, 2.0, 2.0, 2.0, 0.6, 2.0, 2.0, 2.0, 2.0]
+INFO:  train: [1.0, 6.0, 3.0, 3.0, 3.6, 1.0, 3.0, 3.0, 3.0, 3.0]
+INFO:  train: [1.0, 6.8, 3.0, 4.0, 4.0, 0.0, 4.0, 4.0, 4.0, 4.0]
+INFO:  train: [0.0, 10.0, 3.0, 5.0, 5.0, 1.0, 5.0, 5.0, 5.0, 5.0]
+INFO:  train: [3.0, 12.0, 3.0, 6.0, 6.0, 0.0, 6.0, 6.0, 6.0, 6.0]
+INFO:  test: [3.0, 14.0, 3.0, 7.0, 7.0, 1.0, 7.0, 7.0, 7.0, 7.0]
+INFO:  test: [3.0, 16.0, 3.0, 8.0, 8.0, 0.0, 8.0, 8.0, 8.0, 8.0]
+
 CREATE TABLE processed (
     name FLOAT4 NOT NULL,
     id FLOAT4 NOT NULL,
@@ -35,28 +53,37 @@ SELECT
        WHEN name = 'one' THEN 1
        WHEN name = 'two' THEN 2
   END AS name,
-  COALESCE(id, 10),
+  COALESCE(id, 6.8),
   CASE WHEN description IS NULL THEN 0
        WHEN description = 'bye' THEN 1
        WHEN description ='hi' THEN 2
-       ELSE 1
+       ELSE 2
   END AS description,
   big,
-  COALESCE(value, 4.0),
-  COALESCE(category::INT4::FLOAT4, 0.5),
+  COALESCE(value, 3.6),
+  COALESCE(category::INT4::FLOAT4, 0.6),
   image,
   target
 FROM raw;
 
-select pgml.train('test', 'regression', 'test', 'target');
+select pgml.train('raw', 'regression', 'raw', 'target');
 
-select pgml.train('test', 'regression', 'test', 'target', preprocess => '{
-    "name": {"impute": "mode", "encode": {"ordinal": ["one", "two"]}}
+select pgml.train('raw', 'regression', 'raw', 'target',
+    preprocess => '{
+        "description": {"impute": "mode", "encode": "native"},
+        "id": {"impute": "mean"},
+        "value": {"impute": "mean"},
+        "category": {"impute": "mean"}
     }'
 );
-select pgml.deploy('test', 'most_recent');
-select pgml.predict('test', ('one'::TEXT, 2, 'hi'::CHAR(4), 1, 1.0, true, ARRAY[1, 1, 1, 1]));
-select pgml.predict('test', ('one'::TEXT, 4, 'hi'::TEXT, 1, 1.0, true, ARRAY[2, 2, 2, 2]));
+select pgml.deploy('raw', 'most_recent');
+select pgml.predict('raw', ('one'::TEXT, 2, 'hi'::CHAR(4), 1, 1.0, true, ARRAY[1, 1, 1, 1]));
+select pgml.predict('raw', ('one'::TEXT, 4, 'hi'::TEXT, 1, 1.0, true, ARRAY[2, 2, 2, 2]));
+
+select pgml.train('processed', 'regression', 'processed', 'target');
+select pgml.deploy('processed', 'most_recent');
+select pgml.predict('processed', (1, 1, 1, 1.0, 2, 2, 2, 2));
+select pgml.predict('processed', ARRAY[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0]::FLOAT4[]);
 
 select pgml.train('test', 'regression', 'test', 'target', preprocess => '{
     "name": {"scale": "standard" },

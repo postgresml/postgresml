@@ -450,7 +450,7 @@ fn predict_model_row(model_id: i64, row: pgx::datum::AnyElement) -> f32 {
     ).unwrap();
 
     Zip::from(feature_data.columns())
-        .and(&snapshot.feature_positions())
+        .and(&snapshot.feature_positions)
         .for_each(|data, position| {
             let column = &snapshot.columns[position.column_position - 1];
             column.preprocess(&data, &mut processed, features_width, position.row_position);

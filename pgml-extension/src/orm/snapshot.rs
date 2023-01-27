@@ -70,15 +70,15 @@ impl Default for Statistics {
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 #[allow(non_camel_case_types)]
 pub(crate) enum Encode {
-    // Encode each category as the mean of the target
+    // For use with algorithms that directly support the data type
     #[default]
+    native,
+    // Encode each category as the mean of the target
     target_mean,
     // Encode each category as one boolean column per category
     one_hot,
     // Encode each category as ascending integer values
     ordinal(Vec<String>),
-    // For use with algorithms that directly support the data type
-    native,
 }
 
 // How to replace missing values
@@ -86,6 +86,8 @@ pub(crate) enum Encode {
 #[allow(non_camel_case_types)]
 pub(crate) enum Impute {
     #[default]
+    // Raises an error at runtime
+    error,
     mean,
     median,
     mode,
@@ -93,19 +95,17 @@ pub(crate) enum Impute {
     max,
     // Replaces with 0
     zero,
-    // Raises an error at runtime
-    error,
 }
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 #[allow(non_camel_case_types)]
 pub(crate) enum Scale {
     #[default]
+    preserve,
     standard,
     min_max,
     max_abs,
     robust,
-    preserve,
 }
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
@@ -148,26 +148,6 @@ impl Column {
         }
     }
 
-    fn quantitative_type(pg_type: &str) -> bool {
-        Column::continuous_type(pg_type) || Column::discrete_type(pg_type)
-    }
-
-    fn continuous_type(pg_type: &str) -> bool {
-        match pg_type {
-            "float4" | "float8" | "numeric" |
-            "float4[]" | "float8[]" | "numeric[]" => true,
-            _ => false,
-        }
-    }
-
-    fn discrete_type(pg_type: &str) -> bool {
-        match pg_type {
-            "bool" | "int2" | "int4" | "int8" |
-            "bool[]" | "int2[]" | "int4[]" | "int8[]" => true,
-            _ => false,
-        }
-    }
-
     fn quoted_name(&self) -> String {
         format!(r#""{}""#, self.name)
     }
@@ -201,7 +181,7 @@ impl Column {
                 Impute::min => self.statistics.min,
                 Impute::max => self.statistics.max,
                 Impute::zero => 0.,
-                Impute::error => error!("{} missing values for {}", self.statistics.missing, self.name),
+                Impute::error => error!("{} missing values for {}. You may provide a preprocessor to impute a value. e.g:\n\n pgml.train(preprocessor => '{{{:?}: {{\"impute\": \"mean\"}}}}'", self.statistics.missing, self.name, self.name),
             }
         } else {
             value
@@ -210,7 +190,7 @@ impl Column {
 
     pub(crate) fn encoded_width(&self) -> usize {
         match self.preprocessor.encode {
-            Encode::one_hot => self.statistics.categories.as_ref().unwrap().len(),
+            Encode::one_hot => self.statistics.categories.as_ref().unwrap().len() - 1,
             _ => 1
         }
     }
@@ -224,14 +204,12 @@ impl Column {
             let value = self.impute(d);
             match &self.preprocessor.encode {
                 Encode::one_hot => {
-                    for i in 0..self.statistics.categories.as_ref().unwrap().len() {
+                    for i in 0..self.statistics.categories.as_ref().unwrap().len() - 1 {
                         let one_hot = if i == value as usize { 1. } else { 0. } as f32;
                         processed_data[row * features_width + position + i] = one_hot;
                     }
                 },
-                _ => {
-                    processed_data[row * features_width + position] = self.scale(value);
-                }
+                _ => processed_data[row * features_width + position] = self.scale(value),
             };
         }
     }
@@ -344,6 +322,7 @@ impl Ord for Column {
 }
 
 // Array and one hot encoded columns take up multiple positions in a feature row
+#[derive(Debug, Clone)]
 pub struct ColumnRowPosition {
     pub(crate) column_position: usize,
     pub(crate) row_position: usize,
@@ -363,6 +342,7 @@ pub struct Snapshot {
     pub(crate) created_at: Timestamp,
     pub(crate) updated_at: Timestamp,
     pub(crate) materialized: bool,
+    pub(crate) feature_positions: Vec<ColumnRowPosition>,
 }
 
 impl Display for Snapshot {
@@ -403,7 +383,7 @@ impl Snapshot {
                 let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
                 // let jsonb: JsonB = result.get_datum(8).unwrap();
                 // let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
-                snapshot = Some(Snapshot {
+                let mut s = Snapshot {
                     id: result.get_datum(1).unwrap(),
                     relation_name: result.get_datum(2).unwrap(),
                     y_column_name: result.get_datum(3).unwrap(),
@@ -415,7 +395,10 @@ impl Snapshot {
                     created_at: result.get_datum(9).unwrap(),
                     updated_at: result.get_datum(10).unwrap(),
                     materialized: result.get_datum(11).unwrap(),
-                });
+                    feature_positions: Vec::new(),
+                };
+                s.feature_positions = s.feature_positions();
+                snapshot = Some(s)
             }
             Ok(Some(1))
         });
@@ -458,7 +441,8 @@ impl Snapshot {
                 let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
                 let jsonb: JsonB = result.get_datum(8).unwrap();
                 let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
-                snapshot = Some(Snapshot {
+
+                let mut s = Snapshot {
                     id: result.get_datum(1).unwrap(),
                     relation_name: result.get_datum(2).unwrap(),
                     y_column_name: result.get_datum(3).unwrap(),
@@ -470,7 +454,10 @@ impl Snapshot {
                     created_at: result.get_datum(9).unwrap(),
                     updated_at: result.get_datum(10).unwrap(),
                     materialized: result.get_datum(11).unwrap(),
-                });
+                    feature_positions: Vec::new(),
+                };
+                s.feature_positions = s.feature_positions();
+                snapshot = Some(s)
             }
             Ok(Some(1))
         });
@@ -515,25 +502,10 @@ impl Snapshot {
                 let position = row[4].value::<i32>().unwrap() as usize;
                 let label = y_column_name.contains(&name);
                 let mut statistics = Statistics::default();
-
-                let default_impute = if Column::categorical_type(&pg_type) {
-                    Impute::mode
-                } else {
-                    Impute::mean
-                };
-                let default_encode = if Column::quantitative_type(&pg_type) {
-                    Encode::native
-                } else {
-                    Encode::target_mean
-                };
-
                 let preprocessor = match preprocessors.get(&name) {
                     Some(preprocessor) => {
                         let preprocessor = preprocessor.clone();
                         if Column::categorical_type(&pg_type) {
-                            if preprocessor.encode == Encode::native {
-                                error!("Error initializing preprocessor for column: {:?}.\n\n  It does not make sense to {{\"encode: {:?}}} a text variable. `ordinal`, `one_hot` and `target_mean` are valid alternatives.", name, preprocessor.scale);
-                            }
                             if preprocessor.impute == Impute::mean && preprocessor.encode != Encode::target_mean {
                                 error!("Error initializing preprocessor for column: {:?}.\n\n  You can not specify {{\"impute: mean\"}} for a categorical variable unless it is also encoded using `target_mean`, because there is no \"average\" category. `{{\"impute: mode\"}}` is valid alternative, since there is a most common category. Another option would be to encode using target_mean, and then the target mean will be imputed for missing categoricals.", name);
                             }
@@ -544,15 +516,19 @@ impl Snapshot {
                         }
                         preprocessor
                     },
-                    None => Preprocessor {
-                        encode: default_encode,
-                        impute: default_impute,
-                        scale: Scale::preserve,
-                    },
+                    None => Preprocessor::default(),
                 };
 
-                if preprocessor.encode != Encode::native {
-                    statistics.categories = Some(HashMap::new());
+                if Column::categorical_type(&pg_type) || preprocessor.encode != Encode::native {
+                    let mut categories = HashMap::new();
+                    categories.insert(
+                        NULL_CATEGORY_KEY.to_string(),
+                        Category {
+                            value: 0.,
+                            members: 0,
+                        }
+                    );
+                    statistics.categories = Some(categories);
                 }
 
                 columns.push(
@@ -603,7 +579,9 @@ impl Snapshot {
                 created_at: result.get_datum(9).unwrap(),
                 updated_at: result.get_datum(10).unwrap(),
                 materialized,
+                feature_positions: Vec::new(),
             };
+
             if materialized {
                 let mut sql = format!(
                     r#"CREATE TABLE "pgml"."snapshot_{}" AS SELECT * FROM {}"#,
@@ -792,6 +770,8 @@ impl Snapshot {
                 column.preprocess(&data, &mut x_test, features_width, position.row_position);
             });
 
+        self.feature_positions = self.feature_positions();
+
         Dataset {
             x_train,
             x_test,
@@ -887,12 +867,11 @@ impl Snapshot {
                                     let value = match key.as_str() {
                                         NULL_CATEGORY_KEY => 0_f32, // NULL values are always Category 0
                                         _ => match &column.preprocessor.encode {
-                                            Encode::target_mean | Encode::one_hot { .. } => (len + 1) as f32,
+                                            Encode::target_mean | Encode::native | Encode::one_hot { .. } => len as f32,
                                             Encode::ordinal(values) => match values.iter().position(|v| v == key.as_str()) {
                                                 Some(i) => (i + 1) as f32,
                                                 None => error!("value is not present in ordinal: {:?}. Valid values: {:?}", key, values),
-                                            },
-                                            Encode::native => error!("can't native encode a text value")
+                                            }
                                         }
                                     };
                                     Category {
@@ -980,6 +959,10 @@ impl Snapshot {
                     }
                 }
             });
+
+            // recompute the number of features now that we know array widths
+            let num_features = self.num_features();
+            let num_labels = self.num_labels();
 
             data = Some(Dataset {
                 x_train,
