@@ -413,6 +413,7 @@ pub async fn models_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors:
 pub async fn snapshots_index(cluster: Cluster) -> Result<ResponseOk, errors::Error> {
     let snapshots = models::Snapshot::all(cluster.pool()).await?;
     let mut table_sizes = HashMap::new();
+
     for snapshot in &snapshots {
         let table_size = snapshot.table_size(cluster.pool()).await?;
         table_sizes.insert(snapshot.id, table_size);

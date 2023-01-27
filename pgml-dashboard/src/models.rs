@@ -665,13 +665,15 @@ impl Snapshot {
     }
 
     pub fn labels<'a>(&'a self) -> Option<Vec<&'a serde_json::Map<String, serde_json::Value>>> {
-        let labels = self.columns().map(|columns|
+        self.columns().map(|columns|
             columns
                 .into_iter()
-                .filter(|&column| column.get("label").unwrap().as_bool().unwrap())
+                .filter(|column| {
+                    self.y_column_name
+                        .contains(&column["name"].as_str().unwrap().to_string())
+                })
                 .collect()
-        );
-        labels
+        )
     }
 
     pub async fn models(&self, pool: &PgPool) -> anyhow::Result<Vec<Model>> {
@@ -679,22 +681,34 @@ impl Snapshot {
     }
 
     pub fn target_stddev(&self, name: &str) -> f32 {
-        let columns = self.columns().unwrap();
-        let column = columns.iter().find(|c|
-            c.get("name").unwrap().as_str().unwrap() == name
-        );
-        match column {
-            Some(column) => {
-                column.get("statistics")
-                    .unwrap()
-                    .as_object()
-                    .unwrap()
-                    .get("std_dev")
-                    .unwrap()
-                    .as_f64()
-                    .unwrap() as f32
-            },
-            None => 0.
+        match self.analysis
+            .as_ref()
+            .unwrap()
+            .as_object()
+            .unwrap()
+            .get(&format!("{}_stddev", name)) {
+            // 2.1
+            Some(value) => value.as_f64().unwrap() as f32,
+            // 2.2+
+            None => {
+                let columns = self.columns().unwrap();
+                let column = columns.iter().find(|column|
+                    &column["name"].as_str().unwrap() == &name
+                );
+                match column {
+                    Some(column) => {
+                        column.get("statistics")
+                            .unwrap()
+                            .as_object()
+                            .unwrap()
+                            .get("std_dev")
+                            .unwrap()
+                            .as_f64()
+                            .unwrap() as f32
+                    },
+                    None => 0.
+                }
+            }
         }
     }
 }
