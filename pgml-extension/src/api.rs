@@ -665,6 +665,7 @@ mod tests {
             0.5,
             Sampling::last,
             true,
+            JsonB(serde_json::Value::Object(Hyperparams::new()))
         );
         assert!(snapshot.id > 0);
     }
@@ -680,6 +681,7 @@ mod tests {
                 0.5,
                 Sampling::last,
                 true,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             );
         });
 
@@ -713,6 +715,7 @@ mod tests {
                 Some(runtime),
                 Some(true),
                 false,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             )
             .collect();
 
@@ -751,6 +754,7 @@ mod tests {
                 Some(runtime),
                 Some(true),
                 false,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             )
             .collect();
 
@@ -789,6 +793,7 @@ mod tests {
                 Some(runtime),
                 Some(true),
                 true,
+                JsonB(serde_json::Value::Object(Hyperparams::new()))
             )
             .collect();
 

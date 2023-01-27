@@ -235,7 +235,7 @@ impl Column {
         let mut data = array.iter().filter_map(|n| if n.is_nan() { None } else { Some(*n) }).collect::<Vec<f32>>();
         data.sort_by(|a, b| a.total_cmp(&b));
 
-        // FixMe: Arrays are analyzed many times, clobbering/appending to the same stats
+        // FixMe: Arrays are analyzed many times, clobbering/appending to the same stats, columns are also re-analyzed in memory during tests, which can cause unnexpected failures
         let mut statistics = &mut self.statistics;
         statistics.min = *data.first().unwrap();
         statistics.max = *data.last().unwrap();
@@ -257,6 +257,7 @@ impl Column {
         let mut previous = f32::NAN;
 
         let mut modes = Vec::new();
+        statistics.distinct = 0; // necessary reset before array columns clobber
         for &value in &data {
             // mode candidates form streaks
             if value == previous {
@@ -642,7 +643,7 @@ impl Snapshot {
     pub(crate) fn num_classes(&self) -> usize {
         match &self.first_label().statistics.categories {
             Some(categories) => categories.len(),
-            None => 0,
+            None => self.first_label().statistics.distinct,
         }
     }
 
@@ -775,6 +776,7 @@ impl Snapshot {
         Dataset {
             x_train,
             x_test,
+            num_distinct_labels: self.num_classes(), // changes after analysis
             ..numeric_encoded_dataset
         }
     }

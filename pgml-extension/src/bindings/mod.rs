@@ -52,6 +52,7 @@ mod tests {
             0.5,
             Sampling::last,
             false,
+            JsonB(serde_json::Value::Object(Hyperparams::new()))
         );
         let classification = Project::create("classification", Task::classification);
         let mut breast_cancer = Snapshot::create(
@@ -60,6 +61,7 @@ mod tests {
             0.5,
             Sampling::last,
             false,
+            JsonB(serde_json::Value::Object(Hyperparams::new()))
         );
 
         let mut regressors = Vec::new();
