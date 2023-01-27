@@ -1,5 +1,4 @@
 <% include!("header.html"); %>
-<% println!("hi"); %>
 <section>
   <h1><span class="material-symbols-outlined">storage</span><%= snapshot.relation_name %>   
     <% if &snapshot.status == "created" { %>
@@ -15,10 +14,7 @@
     <dt>Table Size</dt>
     <dd><%= table_size %></dd>
     <dt>Rows</dt>
-    <% println!("a1"); %>
-
     <dd><%= snapshot.rows().unwrap() %></dd>
-<% println!("a2"); %>
     <dt>Features</dt>
     <dd><%= snapshot.feature_size().unwrap() %></dd>
     <dt>Created</dt>
@@ -26,7 +22,6 @@
   </dl>
 </section>
 
-<% println!("2"); %>
 <% if !models.is_empty() { %>
 <section>
   <h2><span class="material-symbols-outlined">model_training</span>Models</h2>
@@ -41,7 +36,6 @@
       </a>
     </li>
     <% for model in models.iter() { %>
-    <% println!("models: {:?}", model); %>
     <li>
       <a href="/dashboard/models/<%= model.id %>">
         <span class="material-symbols-outlined">
@@ -65,7 +59,6 @@
   </ol>
 </section>
 <% } %>
-<% println!("3"); %>
 
 <section>
   <h2><span class="material-symbols-outlined">label_important</span>Labels</h2>

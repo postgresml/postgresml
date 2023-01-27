@@ -587,7 +587,6 @@ impl Snapshot {
     }
 
     pub fn rows(&self) -> Option<i64> {
-        println!("analysis: {:?}", self.analysis);
         match self.analysis.as_ref() {
             Some(analysis) => match analysis.get("samples") {
                 Some(samples) => Some(samples.as_f64().unwrap() as i64),
@@ -634,7 +633,6 @@ impl Snapshot {
     }
 
     pub fn columns<'a>(&'a self) -> Option<Vec<&'a serde_json::Map<String, serde_json::Value>>> {
-        println!("\n\ncolumns: {:?}", self.columns);
         match self.columns.as_ref() {
             Some(columns) => match columns.as_array() {
                 Some(columns) => Some(
@@ -667,7 +665,6 @@ impl Snapshot {
     }
 
     pub fn labels<'a>(&'a self) -> Option<Vec<&'a serde_json::Map<String, serde_json::Value>>> {
-        println!("\n\nlabels: {:?}", self.columns);
         let labels = self.columns().map(|columns|
             columns
                 .into_iter()

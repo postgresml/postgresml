@@ -433,14 +433,12 @@ pub async fn snapshots_index(cluster: Cluster) -> Result<ResponseOk, errors::Err
 #[get("/snapshots/<id>")]
 pub async fn snapshots_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors::Error> {
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), id).await?;
-    println!("snapshot: {:?}", snapshot);
     let samples = snapshot.samples(cluster.pool(), 500).await?;
     let models = snapshot.models(cluster.pool()).await?;
     let mut projects = HashMap::new();
 
     for model in &models {
         projects.insert(model.project_id, model.project(cluster.pool()).await?);
-        println!("model: {:?}", model);
     }
 
     Ok(ResponseOk(
