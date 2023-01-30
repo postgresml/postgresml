@@ -216,46 +216,23 @@ That's it, PostgresML is ready. You can validate the installation by running:
 	(1 row)
 	```
 
-## Dashboard
+## Run the dashboard
 
-The dashboard is a Django application. Installing it requires no special dependencies or commands:
+The dashboard is a web app that can be run against any Postgres database with the extension installed. There is a Dockerfile included with the source code if you wish to run it as a container. Basic installation can be achieved with:
 
+1. Clone the repo (if you haven't already for the extension):
+```bash
+git clone https://github.com/postgresml/postgresml && cd postgresml/pgml-dashboard
+```
 
-=== ":material-linux: :material-microsoft: Linux & WSL"
+2. Set the `DATABASE_URL` environment variable:
+```bash
+export DATABASE_URL=postgres://user_name:password@localhost:5432/database_name
+```
 
-	Install Python if you don't have it already:
+3. Build and run the web application:
+```bash
+cargo run
+```
 
-	```bash
-	sudo apt-get update && \
-	sudo apt-get install python3 python3-pip python3-virtualenv
-	```
-
-=== ":material-apple: Mac"
-
-	Install Python if you don't have it already:
-
-	```bash
-	brew install python3
-	```
-
-1. Clone our repository (if you haven't already):
-
-	```bash
-	git clone https://github.com/postgresml/postgresml && \
-	cd postgresml/pgml-dashboard
-	```
-
-2. Setup a virtual environment (recommended but not required):
-
-	```bash
-	virtualenv venv && \
-	source venv/bin/activate
-	```
-
-3. Run the dashboard:
-
-	```bash
-	pip3 install -r requirements.txt && \
-	python manage.py migrate && \
-	python manage.py runserver
-	```
+The dashboard can be packaged for distribution. You'll need to copy the static files along with the `target/release` directory to your server.
