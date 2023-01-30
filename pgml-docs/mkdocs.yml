@@ -127,6 +127,7 @@ nav:
         - Training:
             - Training Overview: user_guides/training/overview.md
             - Algorithm Selection: user_guides/training/algorithm_selection.md
+            - Preprocessing Data:  user_guides/training/preprocessing.md
             - Hyperparameter Search: user_guides/training/hyperparameter_search.md
             - Joint Optimization: user_guides/training/joint_optimization.md
         - Predictions: 

@@ -29,7 +29,7 @@ There are 3 steps to preprocessing data:
 These preprocessing steps may be specified on a per-column basis to the [train()](/user_guides/training/overview/) function. By default, PostgresML does minimal preprocessing on training data, and will raise an error during analysis if NULL values are encountered without a preprocessor. All types other than `TEXT` are treated as quantitative variables and cast to floating point representations before passing them to the underlying algorithm implementations.   
 
 ```postgresql title="pgml.train()"
-select pgml.train(
+SELECT pgml.train(
     project_name => 'preprocessed_model', 
     task => 'classification', 
     relation_name => 'weather_data',
@@ -51,6 +51,14 @@ In some cases, it may make sense to use multiple steps for a single column. For 
 
 !!! note
     TEXT is used in this document to also refer to VARCHAR and CHAR(N) types.
+
+## Predicting with Preprocessors
+
+A model that has been trained with preprocessors should use a Postgres tuple for prediction, rather than a `FLOAT4[]`. Tuples may contain multiple different types (like `TEXT` and `BIGINT`), while an ARRAY may only contain a single type. You can use parenthesis around values to create a Postgres tuple.
+
+```postgresql title="pgml.predict()"
+    SELECT pgml.predict('preprocessed_model', ('jan', 'nimbus', 0.5, 7));
+```
 
 ## Categorical encodings
 Encoding categorical variables is an O(N log(M)) where N is the number of rows, and M is the number of distinct categories.   
