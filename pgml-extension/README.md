@@ -1,16 +1,16 @@
-# PostgresML 2.0
+# PostgresML Extension
 
-PostgresML is a PostgreSQL extension providing end-to-end machine learning inside your database. The extension is written in Rust using `tcdi/pgx` and provides LightGBM, XGBoost and [Linfa](https://github.com/rust-ml/linfa) algorithms.
+PostgresML is a PostgreSQL extension providing end-to-end machine learning inside your database. The extension is primarily written in Rust using [pgx](https://github.com/tcdi/pgx) and provides a SQL interface to various machine learning algorithm implementations such as [XGBoost](https://github.com/dmlc/xgboost), [LightGBM](https://github.com/microsoft/LightGBM), and [other classical methods](https://github.com/rust-ml/linfa).
 
-A backwards compatibility layer to Scikit-learn is provided as well, so the entirety of Scikit, XGBoost and LightGBM are available via the standard Scikit interface using Python. The Python layer is written using `pyo3`.
+Python seems to be the de facto ML industry standard, so we also include "reference" implementations of classical algorithms from Scikit-learn as well for comparison to the Rust implementations, but runtime performance and correctness. The Python integration is written using `pyo3`.
 
-See [our blog](https://postgresml.org/blog/postgresml-is-moving-to-rust-for-our-2.0-release/) for a performance comparison to Python.
+See [our blog](https://postgresml.org/blog/postgresml-is-moving-to-rust-for-our-2.0-release/) for a performance comparison and further motivations.
 
 ## Requirements
 
-PostgresML 2.0 requires Python 3.7 or above and the Rust compiler and toolchain. You can download the Rust compiler [here](https://rust-lang.org).
+PostgresML requires Python 3.7 or above and the Rust compiler and toolchain. You can download the Rust compiler [here](https://rust-lang.org).
 
-We develop this extension on Ubuntu, so it'll work best there, but it's very likely to work on other distros as well. Windows is only supported through WSL2. It's been tested and it works. Mac OS is also supported.
+We develop and test this extension on Linux, OS X, and Windows using WSL2.
 
 ## Dependencies
 
@@ -36,7 +36,7 @@ If your system comes with Python 3.6 or lower, you'll need to install `libpython
 
 ## Update postgresql.conf
 
-PostgresML 2.0 requires to be loaded as a shared library. For local development, this is in `~/.pgx/data-13/postgresql.conf`:
+PostgresML requires to be loaded as a shared library. For local development, this is in `~/.pgx/data-13/postgresql.conf`:
 
 ```
 shared_preload_libraries = 'pgml'     # (change requires restart)
@@ -53,6 +53,19 @@ shared_preload_libraries = 'pgml'     # (change requires restart)
 6. `SELECT * FROM pgml.load_dataset('diabetes');`
 7. `SELECT * FROM pgml.train('Project name', 'regression', 'pgml.diabetes', 'target', 'xgboost');`
 8. `SELECT target, pgml.predict('Project name', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) FROM pgml.diabetes LIMIT 10;`
+
+## Testing
+
+Run unit tests:
+```commandline
+cargo test
+```
+
+Run integration tests:
+```commandline
+cargo pgx run --release
+psql -h localhost -p 28813 -d pgml -f tests/test.sql -P pager
+```
 
 ## Packaging
 

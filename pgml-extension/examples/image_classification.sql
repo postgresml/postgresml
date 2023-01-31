@@ -95,6 +95,6 @@ SELECT * FROM pgml.deploy('Handwritten Digits', 'rollback');
 SELECT * FROM pgml.deploy('Handwritten Digits', 'best_score', 'svm');
 
 -- check out the improved predictions
-SELECT target, pgml.predict('Handwritten Digits', image) AS prediction
+SELECT target, pgml.predict('Handwritten Digits', image::FLOAT4[]) AS prediction
 FROM pgml.digits 
 LIMIT 10;
