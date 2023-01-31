@@ -49,9 +49,15 @@ psql postgres://postgres@localhost:5433/pgml_development
         (1 row)
         ```
 
-## Quick Start
+5. Browse the dashboard on [http://localhost:8000/](http://localhost:8000/){:target=_blank}
 
-Here is a simple PostgresML workflow to get you started. We'll import a Scikit dataset, train a couple models on it and make real time predictions, all of it using only SQL.
+!!! note
+    If you'd like to preserve your database over multiple docker sessions, use `docker-compose stop` or `ctrl+c` when you shut down the containers. `docker-compose down` will remove the docker volumes, and completely reset the database.
+
+
+## Basic Workflow
+
+Here is a simple PostgresML example to get you started. We'll import a Scikit dataset, train a couple models on it and make real time predictions, all of it using only SQL.
 
 1. Import the `digits` dataset:
 
@@ -207,6 +213,6 @@ Check out our [Training](/user_guides/training/overview/) and [Predictions](/use
 
 ## Dashboard
 
-The Dashboard app is available at https://localhost:8000. You can use it to write experiments in Jupyter-style notebooks, manage projects, and visualize datasets used by PostgresML.
+The Dashboard app is available at [http://localhost:8000/](http://localhost:8000/){:target=_blank}. You can use it to write experiments in Jupyter-style notebooks, manage projects, and visualize datasets used by PostgresML.
 
 ![Dashboard](/images/dashboard/notebooks.png)
