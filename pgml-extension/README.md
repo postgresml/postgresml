@@ -45,7 +45,7 @@ shared_preload_libraries = 'pgml'     # (change requires restart)
 ## Local development
 
 0. `git submodule update --init --recursive`
-1. `cargo install cargo-pgx --version=0.5.6` version needs to match Cargo.toml
+1. `cargo install cargo-pgx --version=0.7.1` version needs to match Cargo.toml
 2. `cargo pgx init` (this will take a while, go get a coffee)
 3. `cargo pgx run`
 4. `DROP EXTENSION IF EXISTS pgml; DROP SCHEMA IF EXISTS pgml CASCADE;`

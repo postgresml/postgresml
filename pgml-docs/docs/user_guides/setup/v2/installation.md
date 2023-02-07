@@ -69,14 +69,17 @@ sudo apt-get install postgresql
 		sudo apt-get update && \
 		sudo apt-get install -y \
 			postgresql-server-dev-${POSTGRES_VERSION} \
-			libpython3-dev \
-			libclang-dev \
-			cmake \
-			pkg-config \
-			libssl-dev \
-			clang \
+			bison \
 			build-essential \
+			clang \
+			cmake \
+			flex \
+			libclang-dev \
 			libopenblas-dev \
+			libpython3-dev \
+			libreadline-dev \
+			libssl-dev \
+			pkg-config \
 			python3-dev
 		```
 
