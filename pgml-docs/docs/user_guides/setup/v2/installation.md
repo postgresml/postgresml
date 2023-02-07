@@ -68,7 +68,7 @@ sudo apt-get install postgresql
 		export POSTGRES_VERSION=14
 		sudo apt-get update && \
 		sudo apt-get install -y \
-			postgresql-server-${POSTGRES_VERSION}-dev \
+			postgresql-server-dev-${POSTGRES_VERSION} \
 			libpython3-dev \
 			libclang-dev \
 			cmake \
@@ -95,7 +95,7 @@ sudo apt-get install postgresql
 
 		```bash
 		export POSTGRES_VERSION=14
-		cargo install cargo-pgx --version "0.4.5" && \
+		cargo install cargo-pgx --version "0.7.1" && \
 		cargo pgx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
 		cargo pgx package
 		```
@@ -105,7 +105,7 @@ sudo apt-get install postgresql
 		```bash
 		export POSTGRES_VERSION=14
 		cp docker/Cargo.toml.no-python Cargo.toml && \
-		cargo install cargo-pgx --version "0.4.5" && \
+		cargo install cargo-pgx --version "0.7.1" && \
 		cargo pgx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
 		cargo pgx package
 		```

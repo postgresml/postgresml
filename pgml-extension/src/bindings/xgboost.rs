@@ -285,7 +285,7 @@ impl Bindings for Estimator {
                 '2'
             )::bigint",
         )
-        .unwrap();
+        .unwrap().unwrap();
 
         estimator
             .set_param("nthread", &concurrency.to_string())

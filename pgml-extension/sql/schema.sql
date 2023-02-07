@@ -103,7 +103,7 @@ SELECT pgml.auto_updated_at('pgml.models');
 
 
 ---
---- Deployements determine which model is live
+--- Deployments determine which model is live
 ---
 CREATE TABLE IF NOT EXISTS pgml.deployments(
 	id BIGSERIAL PRIMARY KEY,

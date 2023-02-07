@@ -378,30 +378,31 @@ impl Snapshot {
                     Some(1),
                     Some(vec![(PgBuiltInOids::INT8OID.oid(), id.into_datum())]),
                 )
+                .unwrap()
                 .first();
             if !result.is_empty() {
-                let jsonb: JsonB = result.get_datum(7).unwrap();
+                let jsonb: JsonB = result.get(7).unwrap().unwrap();
                 let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
-                // let jsonb: JsonB = result.get_datum(8).unwrap();
+                // let jsonb: JsonB = result.get(8).unwrap();
                 // let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
                 let mut s = Snapshot {
-                    id: result.get_datum(1).unwrap(),
-                    relation_name: result.get_datum(2).unwrap(),
-                    y_column_name: result.get_datum(3).unwrap(),
-                    test_size: result.get_datum(4).unwrap(),
-                    test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
-                    status: Status::from_str(result.get_datum(6).unwrap()).unwrap(),
+                    id: result.get(1).unwrap().unwrap(),
+                    relation_name: result.get(2).unwrap().unwrap(),
+                    y_column_name: result.get(3).unwrap().unwrap(),
+                    test_size: result.get(4).unwrap().unwrap(),
+                    test_sampling: Sampling::from_str(result.get(5).unwrap().unwrap()).unwrap(),
+                    status: Status::from_str(result.get(6).unwrap().unwrap()).unwrap(),
                     columns,
                     analysis: None,
-                    created_at: result.get_datum(9).unwrap(),
-                    updated_at: result.get_datum(10).unwrap(),
-                    materialized: result.get_datum(11).unwrap(),
+                    created_at: result.get(9).unwrap().unwrap(),
+                    updated_at: result.get(10).unwrap().unwrap(),
+                    materialized: result.get(11).unwrap().unwrap(),
                     feature_positions: Vec::new(),
                 };
                 s.feature_positions = s.feature_positions();
                 snapshot = Some(s)
             }
-            Ok(Some(1))
+            result
         });
         snapshot
     }
@@ -436,31 +437,32 @@ impl Snapshot {
                         project_id.into_datum(),
                     )]),
                 )
+                .unwrap()
                 .first();
             if !result.is_empty() {
-                let jsonb: JsonB = result.get_datum(7).unwrap();
+                let jsonb: JsonB = result.get(7).unwrap().unwrap();
                 let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
-                let jsonb: JsonB = result.get_datum(8).unwrap();
+                let jsonb: JsonB = result.get(8).unwrap().unwrap();
                 let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
 
                 let mut s = Snapshot {
-                    id: result.get_datum(1).unwrap(),
-                    relation_name: result.get_datum(2).unwrap(),
-                    y_column_name: result.get_datum(3).unwrap(),
-                    test_size: result.get_datum(4).unwrap(),
-                    test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
-                    status: Status::from_str(result.get_datum(6).unwrap()).unwrap(),
+                    id: result.get(1).unwrap().unwrap(),
+                    relation_name: result.get(2).unwrap().unwrap(),
+                    y_column_name: result.get(3).unwrap().unwrap(),
+                    test_size: result.get(4).unwrap().unwrap(),
+                    test_sampling: Sampling::from_str(result.get(5).unwrap().unwrap()).unwrap(),
+                    status: Status::from_str(result.get(6).unwrap().unwrap()).unwrap(),
                     columns,
                     analysis,
-                    created_at: result.get_datum(9).unwrap(),
-                    updated_at: result.get_datum(10).unwrap(),
-                    materialized: result.get_datum(11).unwrap(),
+                    created_at: result.get(9).unwrap().unwrap(),
+                    updated_at: result.get(10).unwrap().unwrap(),
+                    materialized: result.get(11).unwrap().unwrap(),
                     feature_positions: Vec::new(),
                 };
                 s.feature_positions = s.feature_positions();
                 snapshot = Some(s)
             }
-            Ok(Some(1))
+            result
         });
         snapshot
     }
@@ -489,9 +491,10 @@ impl Snapshot {
                     (PgBuiltInOids::TEXTOID.oid(), schema_name.into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), table_name.into_datum()),
                 ]))
+            .unwrap()
             .for_each(|row| {
-                let name = row[1].value::<String>().unwrap();
-                let mut pg_type = row[2].value::<String>().unwrap();
+                let name = row[1].value::<String>().unwrap().unwrap();
+                let mut pg_type = row[2].value::<String>().unwrap().unwrap();
                 let mut size = 1;
                 let mut array = false;
                 if pg_type.starts_with('_') {
@@ -499,8 +502,8 @@ impl Snapshot {
                     array = true;
                     pg_type = pg_type[1..].to_string() + "[]";
                 }
-                let nullable = row[3].value::<bool>().unwrap();
-                let position = row[4].value::<i32>().unwrap() as usize;
+                let nullable = row[3].value::<bool>().unwrap().unwrap();
+                let position = row[4].value::<i32>().unwrap().unwrap() as usize;
                 let label = y_column_name.contains(&name);
                 let mut statistics = Statistics::default();
                 let preprocessor = match preprocessors.get(&name) {
@@ -566,19 +569,19 @@ impl Snapshot {
                     (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(columns)).into_datum()),
                     (PgBuiltInOids::BOOLOID.oid(), materialized.into_datum()),
                 ])
-            ).first();
+            ).unwrap().first();
 
             let s = Snapshot {
-                id: result.get_datum(1).unwrap(),
-                relation_name: result.get_datum(2).unwrap(),
-                y_column_name: result.get_datum(3).unwrap(),
-                test_size: result.get_datum(4).unwrap(),
-                test_sampling: Sampling::from_str(result.get_datum(5).unwrap()).unwrap(),
+                id: result.get(1).unwrap().unwrap(),
+                relation_name: result.get(2).unwrap().unwrap(),
+                y_column_name: result.get(3).unwrap().unwrap(),
+                test_size: result.get(4).unwrap().unwrap(),
+                test_sampling: Sampling::from_str(result.get(5).unwrap().unwrap()).unwrap(),
                 status,         // 6
                 columns,        // 7
                 analysis: None, // 8
-                created_at: result.get_datum(9).unwrap(),
-                updated_at: result.get_datum(10).unwrap(),
+                created_at: result.get(9).unwrap().unwrap(),
+                updated_at: result.get(10).unwrap().unwrap(),
                 materialized,
                 feature_positions: Vec::new(),
             };
@@ -591,10 +594,10 @@ impl Snapshot {
                 if s.test_sampling == Sampling::random {
                     sql += " ORDER BY random()";
                 }
-                client.select(&sql, None, None);
+                client.select(&sql, None, None).unwrap();
             }
             snapshot = Some(s);
-            Ok(Some(1))
+            result
         });
 
         snapshot.unwrap()
@@ -676,7 +679,7 @@ impl Snapshot {
             None => {
                 let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'public'", vec![
                     (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
-                ]).unwrap();
+                ]).unwrap().unwrap();
 
                 let error = format!("Relation \"{}\" could not be found in the public schema. Please specify the table schema, e.g. pgml.{}", table_name, table_name);
 
@@ -693,7 +696,7 @@ impl Snapshot {
                     (PgBuiltInOids::TEXTOID.oid(), schema_name.clone().into_datum()),
                 ]).unwrap();
 
-                if exists == 1 {
+                if exists == Some(1) {
                     (schema_name, table_name)
                 } else {
                     error!(
@@ -740,15 +743,14 @@ impl Snapshot {
         self.analysis = Some(analysis);
 
         // Record the analysis
-        Spi::connect(|client| {
-            client.select("UPDATE pgml.snapshots SET analysis = $1, columns = $2 WHERE id = $3", Some(1), Some(vec![
+        Spi::run_with_args(
+            "UPDATE pgml.snapshots SET analysis = $1, columns = $2 WHERE id = $3",
+            Some(vec![
                 (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.analysis)).into_datum()),
                 (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.columns)).into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
-            ]));
-
-            Ok(Some(1))
-        });
+            ])
+        ).unwrap();
 
         let features_width = self.features_width();
         let mut x_train = vec![0_f32; features_width * numeric_encoded_dataset.num_train_rows];
@@ -807,7 +809,7 @@ impl Snapshot {
             );
 
             // Postgres Arrays arrays are 1 indexed and so are SPI tuples...
-            let result = client.select(&sql, None, None);
+            let result = client.select(&sql, None, None).unwrap();
             let num_rows = result.len();
 
             let num_test_rows = if self.test_size > 1.0 {
@@ -853,13 +855,13 @@ impl Snapshot {
                         // Categorical encoding types
                         Some(categories) => {
                             let key = match column.pg_type.as_str() {
-                                "bool" => row[column.position].value::<bool>().map(|v| v.to_string() ),
-                                "int2" => row[column.position].value::<i16>().map(|v| v.to_string() ),
-                                "int4" => row[column.position].value::<i32>().map(|v| v.to_string() ),
-                                "int8" => row[column.position].value::<i64>().map(|v| v.to_string() ),
-                                "float4" => row[column.position].value::<f32>().map(|v| v.to_string() ),
-                                "float8" => row[column.position].value::<f64>().map(|v| v.to_string() ),
-                                "bpchar" | "text" | "varchar" => row[column.position].value::<String>().map(|v| v.to_string() ),
+                                "bool" => row[column.position].value::<bool>().unwrap().map(|v| v.to_string() ),
+                                "int2" => row[column.position].value::<i16>().unwrap().map(|v| v.to_string() ),
+                                "int4" => row[column.position].value::<i32>().unwrap().map(|v| v.to_string() ),
+                                "int8" => row[column.position].value::<i64>().unwrap().map(|v| v.to_string() ),
+                                "float4" => row[column.position].value::<f32>().unwrap().map(|v| v.to_string() ),
+                                "float8" => row[column.position].value::<f64>().unwrap().map(|v| v.to_string() ),
+                                "bpchar" | "text" | "varchar" => row[column.position].value::<String>().unwrap().map(|v| v.to_string() ),
                                 _ => error!("Unhandled type for categorical variable: {} {:?}", column.name, column.pg_type)
                             };
                             let key = key.unwrap_or_else(|| NULL_CATEGORY_KEY.to_string());
@@ -894,14 +896,14 @@ impl Snapshot {
                                 match column.pg_type.as_str() {
                                     // TODO handle NULL in arrays
                                     "bool[]" => {
-                                        let vec = row[column.position].value::<Vec<bool>>().unwrap();
+                                        let vec = row[column.position].value::<Vec<bool>>().unwrap().unwrap();
                                         check_column_size(column, vec.len());
                                         for j in vec {
                                             vector.push(j as u8 as f32)
                                         }
                                     }
                                     "int2[]" => {
-                                        let vec = row[column.position].value::<Vec<i16>>().unwrap();
+                                        let vec = row[column.position].value::<Vec<i16>>().unwrap().unwrap();
                                         check_column_size(column, vec.len());
 
                                         for j in vec {
@@ -909,7 +911,7 @@ impl Snapshot {
                                         }
                                     }
                                     "int4[]" => {
-                                        let vec = row[column.position].value::<Vec<i32>>().unwrap();
+                                        let vec = row[column.position].value::<Vec<i32>>().unwrap().unwrap();
                                         check_column_size(column, vec.len());
 
                                         for j in vec {
@@ -917,7 +919,7 @@ impl Snapshot {
                                         }
                                     }
                                     "int8[]" => {
-                                        let vec = row[column.position].value::<Vec<i64>>().unwrap();
+                                        let vec = row[column.position].value::<Vec<i64>>().unwrap().unwrap();
                                         check_column_size(column, vec.len());
 
                                         for j in vec {
@@ -925,7 +927,7 @@ impl Snapshot {
                                         }
                                     }
                                     "float4[]" => {
-                                        let vec = row[column.position].value::<Vec<f32>>().unwrap();
+                                        let vec = row[column.position].value::<Vec<f32>>().unwrap().unwrap();
                                         check_column_size(column, vec.len());
 
                                         for j in vec {
@@ -933,7 +935,7 @@ impl Snapshot {
                                         }
                                     }
                                     "float8[]" => {
-                                        let vec = row[column.position].value::<Vec<f64>>().unwrap();
+                                        let vec = row[column.position].value::<Vec<f64>>().unwrap().unwrap();
                                         check_column_size(column, vec.len());
 
                                         for j in vec {
@@ -944,12 +946,12 @@ impl Snapshot {
                                 }
                             } else { // scalar
                                 let float = match column.pg_type.as_str() {
-                                    "bool" => row[column.position].value::<bool>().map(|v| v as u8 as f32),
-                                    "int2" => row[column.position].value::<i16>().map(|v| v as f32),
-                                    "int4" => row[column.position].value::<i32>().map(|v| v as f32),
-                                    "int8" => row[column.position].value::<i64>().map(|v| v as f32),
-                                    "float4" => row[column.position].value::<f32>(),
-                                    "float8" => row[column.position].value::<f64>().map(|v| v as f32),
+                                    "bool" => row[column.position].value::<bool>().unwrap().map(|v| v as u8 as f32),
+                                    "int2" => row[column.position].value::<i16>().unwrap().map(|v| v as f32),
+                                    "int4" => row[column.position].value::<i32>().unwrap().map(|v| v as f32),
+                                    "int8" => row[column.position].value::<i64>().unwrap().map(|v| v as f32),
+                                    "float4" => row[column.position].value::<f32>().unwrap(),
+                                    "float8" => row[column.position].value::<f64>().unwrap().map(|v| v as f32),
                                     _ => error!("Unhandled type for quantitative scalar column: {} {:?}", column.name, column.pg_type)
                                 };
                                 match float {
@@ -980,8 +982,8 @@ impl Snapshot {
                 num_distinct_labels: self.num_classes(),
             });
 
-            Ok(Some(()))
-        });
+            Ok::<std::option::Option<()>, i64>(Some(())) // this return type is nonsense
+        }).unwrap();
 
         let data = data.unwrap();
 
