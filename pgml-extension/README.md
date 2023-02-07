@@ -44,9 +44,30 @@ shared_preload_libraries = 'pgml'     # (change requires restart)
 
 ## Local development
 
-0. `git submodule update --init --recursive`
+### Fetch submodules
+
+```bash
+git submodule update --init --recursive
+```
+
+### Using Docker (optional)
+
+You can develop the extension locally without modifying your local system. To do that, install Docker and then:
+
+1. `docker build -t postgresml:local -f Dockerfile.dev .`
+2. `docker run -v $(pwd):/app -it postgresml:local bash`
+3. `cargo pgx run`
+
+### Without Docker
+
 1. `cargo install cargo-pgx --version=0.7.1` version needs to match Cargo.toml
 2. `cargo pgx init` (this will take a while, go get a coffee)
+3. `cargo pgx run`
+
+### Basic test
+
+1. `ALTER SYSTEM SET shared_preload_libraries TO 'pgml'`
+2. `cargo pgx stop`
 3. `cargo pgx run`
 4. `DROP EXTENSION IF EXISTS pgml; DROP SCHEMA IF EXISTS pgml CASCADE;`
 5. `CREATE EXTENSION pgml;`
