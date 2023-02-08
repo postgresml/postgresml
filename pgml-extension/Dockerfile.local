@@ -11,7 +11,7 @@ RUN cat /etc/apt/sources.list
 RUN apt-get update && apt-get install -y postgresql-pgml-14
 
 # Cache this, quicker
-RUN pip3 install xgboost skikit-learn diptest torch lightgbm transformers datasets sentencepiece sacremoses sacrebleu rouge
+RUN pip3 install xgboost scikit-learn diptest torch lightgbm transformers datasets sentencepiece sacremoses sacrebleu rouge
 
 COPY --chown=postgres:postgres . /app
 WORKDIR /app
