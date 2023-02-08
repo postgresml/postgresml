@@ -22,6 +22,7 @@ mod templates;
 
 use guards::Cluster;
 use responses::{BadRequest, ResponseOk};
+use sqlx::Executor;
 
 /// This struct contains information specific to the cluster being displayed in the dashboard.
 ///
@@ -50,6 +51,10 @@ impl Clusters {
             .max_connections(5)
             .idle_timeout(std::time::Duration::from_millis(15_000))
             .min_connections(0)
+            .after_connect(|conn, _meta| Box::pin(async move {
+                conn.execute("SET application_name = 'pgml_dashboard';").await?;
+                Ok(())
+            }))
             .connect_lazy(database_url)?;
 
         pools.insert(cluster_id, pool.clone());
