@@ -10,6 +10,55 @@ Our project consists of three (3) applications:
 
 The development environment for each differs slightly, but overall we use Python, Rust, and PostgreSQL, so as long as you have all of those installed, the setup should be straight forward.
 
+## Build Dependencies
+
+1. Install the latest Rust compiler from [rust-lang.org](https://www.rust-lang.org/learn/get-started).
+
+2. Install a [modern version](https://apt.kitware.com/) of CMake.
+
+3. Install PostgreSQL development headers and other dependencies:
+
+    ```commandline
+    export POSTGRES_VERSION=15
+    sudo apt-get update && \
+    sudo apt-get install -y \
+        postgresql-server-dev-${POSTGRES_VERSION} \
+        bison \
+        build-essential \
+        clang \
+        cmake \
+        flex \
+        libclang-dev \
+        libopenblas-dev \
+        libpython3-dev \
+        libreadline-dev \
+        libssl-dev \
+        pkg-config \
+        python3-dev
+    ```
+
+4. Install the Python dependencies
+    
+    If your system comes with Python 3.6 or lower, you'll need to install `libpython3.7-dev` or higher. You can get it from [`ppa:deadsnakes/ppa`](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa):
+
+    ```commandline
+    sudo add-apt-repository ppa:deadsnakes/ppa && \
+    sudo apt update && sudo apt install -y libpython3.7-dev
+    ```
+
+    With Python 3.7+ installed, install the package dependencies  
+
+    ```commandline
+    sudo pip3 install xgboost lightgbm scikit-learn
+    ```
+   
+5. Clone our git repository:
+
+    ```commandline
+    git clone https://github.com/postgresml/postgresml && \
+    cd postgresml && \
+    git submodule update --init --recursive && \
+    ```
 
 ## Postgres extension
 
@@ -17,63 +66,151 @@ PostgresML is a Rust extension written with `tcdi/pgx` crate. Local development 
 
 The extension code is located in:
 
-```bash
+```commandline
 cd pgml-extension/
 ```
 
+You'll need to install basic dependencies
+
 Once there, you can initialize `pgx` and get going:
 
-```bash
-cargo install cargo-pgx --version "0.4.5"
+#### Pgx command line and environments
+```commandline
+cargo install cargo-pgx --version "0.7.1" && \
 cargo pgx init # This will take a few minutes
 ```
 
-`pgx` uses Postgres 13 by default. Since `pgml` is using shared memory, you need to add it to `shared_preload_libraries` in `postgresql.conf` which, for `pgx`, is located in `~/.pgx/data-13/postgresql.conf`.
+#### Update postgresql.conf
+
+`pgx` uses Postgres 15 by default. Since `pgml` is using shared memory, you need to add it to `shared_preload_libraries` in `postgresql.conf` which, for `pgx`, is located in `~/.pgx/data-15/postgresql.conf`.
 
 ```
-shared_preload_libraries = 'pgml'
+shared_preload_libraries = 'pgml'     # (change requires restart)
 ```
 
-Then you're ready to go:
+Run the unit tests
 
-```bash
+```commandline
+cargo pgx test
+```
+
+Run the integration tests:
+```commandline
+cargo pgx run --release
+psql -h localhost -p 28813 -d pgml -f tests/test.sql -P pager
+```
+
+Run an interactive psql session
+
+```commandline
 cargo pgx run
+```
+
+Create the extension in your database:
+
+```commandline
+CREATE EXTENSION pgml;
+```
+
+That's it, PostgresML is ready. You can validate the installation by running:
+
+=== "SQL"
+	```sql
+	SELECT pgml.version();
+	```
+
+=== "Output"
+
+	```
+	postgres=# select pgml.version();
+	      version      
+	-------------------
+	 2.2.0
+	(1 row)
+	```
+
+Basic extension usage:
+
+```sql
+SELECT * FROM pgml.load_dataset('diabetes');
+SELECT * FROM pgml.train('Project name', 'regression', 'pgml.diabetes', 'target', 'xgboost');
+SELECT target, pgml.predict('Project name', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) FROM pgml.diabetes LIMIT 10;
+```
+
+If you're going to run the dashboard against this database to develop both the extension and 
+
+```commandline
+
 ```
 
 By default, the extension is built without CUDA support for XGBoost and LightGBM. You'll need to install CUDA locally to build and enable the `cuda` feature for cargo. CUDA can be downloaded [here](https://developer.nvidia.com/cuda-downloads?target_os=Linux).
 
-```bash
-CUDACXX=/usr/local/cuda/bin/nvcc cargo pgx run --release --features pg13,python,cuda 
+
+```commandline
+CUDACXX=/usr/local/cuda/bin/nvcc cargo pgx run --release --features pg15,python,cuda 
 ```
 
 If you ever want to reset the environment, simply spin up the database with `cargo pgx run` and drop the extension and metadata tables:
 
 ```postgresql
-DROP EXTENSION pgml CASCADE;
-DROP SCHEMA pgml CASCADE;
+DROP EXTENSION IF EXISTS pgml CASCADE;
+DROP SCHEMA IF EXISTS pgml CASCADE;
 CREATE EXTENSION pgml;
 ```
 
-## Dashboard app
 
-The Dashboard is a Django application, and requires no special setup apart for what's required for a normal Django project.
+#### Packaging
 
-```
-cd pgml-dashboard/
-```
-
-Once there, you can setup a virtual environment and get going:
+This requires Docker. Once Docker is installed, you can run:
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.TEMPLATE .env
-python manage.py migrate
-python manage.py runserver
+bash build_extension.sh
 ```
 
-The dashboard expects to have a PostgreSQL database with the `pgml` extension installed into the `pgml_development` database. You can install it by following our [Installation](/user_guides/setup/v2/installation/) instructions or by pointing the Django app to the database started by `cargo pgx run`.
+which will produce a `.deb` file in the current directory (this will take about 20 minutes). The deb file can be installed with `apt-get`, for example:
+
+```bash
+apt-get install ./postgresql-pgml-12_0.0.4-ubuntu20.04-amd64.deb
+```
+
+which will take care of installing its dependencies as well. Make sure to run this as root and not with sudo.
+
+## Run the dashboard
+
+The dashboard is a web app that can be run against any Postgres database with the extension installed. There is a Dockerfile included with the source code if you wish to run it as a container. 
+
+The dashboard requires a Postgres database with the [pgml-extension](https://github.com/postgresml/postgresml/tree/master/pgml-extension) to generate the core schema. See that subproject for developer setup.
+
+We develop and test this web application on Linux, OS X, and Windows using WSL2.
+
+Basic installation can be achieved with:
+
+1. Clone the repo (if you haven't already for the extension):
+```commandline
+  cd postgresml/pgml-dashboard
+```
+
+2. Set the `DATABASE_URL` environment variable, for example to a running interactive `cargo pgx run` session started previously:
+```commandline
+export DATABASE_URL=postgres://localhost:28815/pgml
+```
+
+3. Run migrations
+```commandline
+sqlx migrate run
+```
+
+4. Run tests:
+```commandline
+cargo test
+```
+
+5. Incremental and automatic compilation for development cycles is supported with: 
+```commandline
+cargo watch --exec run
+```
+
+The dashboard can be packaged for distribution. You'll need to copy the static files along with the `target/release` directory to your server.
 
 ## Documentation app
 
@@ -83,9 +220,9 @@ The documentation app (you're using it right now) is using MkDocs.
 cd pgml-docs/
 ```
 
-Once there, you can setup a virtual environment and get going:
+Once there, you can set up a virtual environment and get going:
 
-```bash
+```commandline
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt

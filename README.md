@@ -44,6 +44,8 @@ The dashboard makes it easy to compare different algorithms or hyperparameters a
     See it in action — <a href="https://cloud.postgresml.org/" target="_blank">cloud.postgresml.org</a>
 </h2>
 
+Please see the [quick start instructions](https://postgresml.org/user_guides/setup/quick_start_with_docker/) for general information on installing or deploying PostgresML. A [developer guide](https://postgresml.org/developer_guide/overview/) is also available for those who would like to contribute.
+
 ## What's in the box
 See the documentation for a complete **[list of functionality](https://postgresml.org/)**.
 

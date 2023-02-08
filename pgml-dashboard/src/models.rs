@@ -86,7 +86,7 @@ pub struct Notebook {
 impl Notebook {
     pub async fn get_by_id(pool: &PgPool, id: i64) -> anyhow::Result<Notebook> {
         Ok(
-            sqlx::query_as!(Notebook, "SELECT * FROM notebooks WHERE id = $1", id,)
+            sqlx::query_as!(Notebook, "SELECT * FROM pgml.notebooks WHERE id = $1", id,)
                 .fetch_one(pool)
                 .await?,
         )
@@ -95,7 +95,7 @@ impl Notebook {
     pub async fn create(pool: &PgPool, name: &str) -> anyhow::Result<Notebook> {
         Ok(sqlx::query_as!(
             Notebook,
-            "INSERT INTO notebooks (name) VALUES ($1) RETURNING *",
+            "INSERT INTO pgml.notebooks (name) VALUES ($1) RETURNING *",
             name,
         )
         .fetch_one(pool)
@@ -103,7 +103,7 @@ impl Notebook {
     }
 
     pub async fn all(pool: &PgPool) -> anyhow::Result<Vec<Notebook>> {
-        Ok(sqlx::query_as!(Notebook, "SELECT * FROM notebooks")
+        Ok(sqlx::query_as!(Notebook, "SELECT * FROM pgml.notebooks")
             .fetch_all(pool)
             .await?)
     }
@@ -111,7 +111,7 @@ impl Notebook {
     pub async fn cells(&self, pool: &PgPool) -> anyhow::Result<Vec<Cell>> {
         Ok(sqlx::query_as!(
             Cell,
-            "SELECT * FROM notebook_cells
+            "SELECT * FROM pgml.notebook_cells
                 WHERE notebook_id = $1
                 AND deleted_at IS NULL
             ORDER BY cell_number",
@@ -123,7 +123,7 @@ impl Notebook {
 
     pub async fn reset(&self, pool: &PgPool) -> anyhow::Result<()> {
         let _ = sqlx::query!(
-            "UPDATE notebook_cells
+            "UPDATE pgml.notebook_cells
                 SET
                 execution_time = NULL,
                 rendering = NULL
@@ -189,15 +189,15 @@ impl Cell {
             "
             WITH
                 lock AS (
-                    SELECT * FROM notebooks WHERE id = $1 FOR UPDATE
+                    SELECT * FROM pgml.notebooks WHERE id = $1 FOR UPDATE
                 ),
                 max_cell AS (
                     SELECT COALESCE(MAX(cell_number), 0) AS cell_number
-                    FROM notebook_cells
+                    FROM pgml.notebook_cells
                     WHERE notebook_id = $1
                     AND deleted_at IS NULL
                 )
-            INSERT INTO notebook_cells
+            INSERT INTO pgml.notebook_cells
                 (notebook_id, cell_type, contents, cell_number, version)
             VALUES
                 ($1, $2, $3, (SELECT cell_number + 1 FROM max_cell), 1)
@@ -231,7 +231,7 @@ impl Cell {
                     cell_number,
                     version,
                     deleted_at
-                FROM notebook_cells
+                FROM pgml.notebook_cells
                 WHERE id = $1
                 ",
             id,
@@ -250,7 +250,7 @@ impl Cell {
         self.contents = contents.to_string();
 
         let _ = sqlx::query!(
-            "UPDATE notebook_cells
+            "UPDATE pgml.notebook_cells
             SET
                 cell_type = $1,
                 contents = $2,
@@ -269,7 +269,7 @@ impl Cell {
     pub async fn delete(&self, pool: &PgPool) -> anyhow::Result<Cell> {
         Ok(sqlx::query_as!(
             Cell,
-            "UPDATE notebook_cells
+            "UPDATE pgml.notebook_cells
             SET deleted_at = NOW()
             WHERE id = $1
             RETURNING id,
@@ -337,7 +337,7 @@ impl Cell {
         };
 
         sqlx::query!(
-            "UPDATE notebook_cells SET rendering = $1 WHERE id = $2",
+            "UPDATE pgml.notebook_cells SET rendering = $1 WHERE id = $2",
             rendering,
             self.id
         )
@@ -797,7 +797,7 @@ impl UploadedFile {
     pub async fn create(pool: &PgPool) -> anyhow::Result<UploadedFile> {
         Ok(sqlx::query_as!(
             UploadedFile,
-            "INSERT INTO uploaded_files (id, created_at) VALUES (DEFAULT, DEFAULT)
+            "INSERT INTO pgml.uploaded_files (id, created_at) VALUES (DEFAULT, DEFAULT)
                 RETURNING id, created_at"
         )
         .fetch_one(pool)

@@ -7,11 +7,12 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [features]
-default = ["pg13", "python"]
+default = ["pg15", "python"]
 pg11 = ["pgx/pg11", "pgx-tests/pg11" ]
 pg12 = ["pgx/pg12", "pgx-tests/pg12" ]
 pg13 = ["pgx/pg13", "pgx-tests/pg13" ]
 pg14 = ["pgx/pg14", "pgx-tests/pg14" ]
+pg15 = ["pgx/pg15", "pgx-tests/pg15" ]
 pg_test = []
 python = ["pyo3"]
 cuda = ["xgboost/cuda", "lightgbm/cuda"]
