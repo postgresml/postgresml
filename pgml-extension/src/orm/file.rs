@@ -50,6 +50,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
                 Some(1),
                 Some(vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())]),
             )
+            .unwrap()
             .first();
 
         if result.is_empty() {
@@ -58,25 +59,19 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
                 model_id
             );
         } else {
-            data = Some(
-                result
-                    .get_datum(1)
-                    .expect("Project has gone missing. Your model store has been corrupted."),
-            );
-            runtime = Some(
-                result
-                    .get_datum(2)
-                    .expect("Runtime for model is corrupted."),
-            );
-            algorithm = Some(
-                result
-                    .get_datum(3)
-                    .expect("Algorithm for model is corrupted."),
-            );
-            task = Some(result.get_datum(4).expect("Task for project is corrupted."));
+            data = result
+                    .get(1)
+                    .expect("Project has gone missing. Your model store has been corrupted.");
+            runtime = result
+                    .get(2)
+                    .expect("Runtime for model is corrupted.");
+            algorithm = result
+                    .get(3)
+                    .expect("Algorithm for model is corrupted.");
+            task = result.get(4).expect("Task for project is corrupted.");
         }
 
-        Ok(Some(1))
+        result
     });
 
     let (data, runtime, algorithm) = Spi::get_three_with_args::<Vec<u8>, String, String>(
@@ -86,7 +81,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
         WHERE models.id = $1
         LIMIT 1",
         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
-    );
+    ).unwrap();
 
     let data = data.unwrap();
     let runtime = Runtime::from_str(&runtime.unwrap()).unwrap();

@@ -56,6 +56,6 @@ impl<'r> FromRequest<'r> for Cluster {
 pub fn default_database_url() -> String {
     match var("DATABASE_URL") {
         Ok(val) => val,
-        Err(_) => "postgres:///dashboard".to_string(),
+        Err(_) => "postgres:///pgml".to_string(),
     }
 }

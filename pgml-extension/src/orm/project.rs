@@ -51,7 +51,7 @@ impl Project {
                     ORDER BY deployments.created_at DESC
                     LIMIT 1",
                     vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
-                );
+                ).unwrap();
                 let project_id = project_id.unwrap_or_else(|| {
                     error!(
                         "No deployed model exists for the project named: `{}`",
@@ -90,7 +90,7 @@ impl Project {
                 (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
                 (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
             ],
-        );
+        ).unwrap();
         let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
         if projects.len() == 1024 {
             warning!("Active projects has exceeded capacity map, clearing caches.");
@@ -108,17 +108,17 @@ impl Project {
                 Some(vec![
                     (PgBuiltInOids::INT8OID.oid(), id.into_datum()),
                 ])
-            ).first();
+            ).unwrap().first();
             if !result.is_empty() {
                 project = Some(Project {
-                    id: result.get_datum(1).unwrap(),
-                    name: result.get_datum(2).unwrap(),
-                    task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
-                    created_at: result.get_datum(4).unwrap(),
-                    updated_at: result.get_datum(5).unwrap(),
+                    id: result.get(1).unwrap().unwrap(),
+                    name: result.get(2).unwrap().unwrap(),
+                    task: Task::from_str(result.get(3).unwrap().unwrap()).unwrap(),
+                    created_at: result.get(4).unwrap().unwrap(),
+                    updated_at: result.get(5).unwrap().unwrap(),
                 });
             }
-            Ok(Some(1))
+            result
         });
 
         project
@@ -133,17 +133,17 @@ impl Project {
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),
                 ])
-            ).first();
+            ).unwrap().first();
             if !result.is_empty() {
                 project = Some(Project {
-                    id: result.get_datum(1).unwrap(),
-                    name: result.get_datum(2).unwrap(),
-                    task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
-                    created_at: result.get_datum(4).unwrap(),
-                    updated_at: result.get_datum(5).unwrap(),
+                    id: result.get(1).unwrap().unwrap(),
+                    name: result.get(2).unwrap().unwrap(),
+                    task: Task::from_str(result.get(3).unwrap().unwrap()).unwrap(),
+                    created_at: result.get(4).unwrap().unwrap(),
+                    updated_at: result.get(5).unwrap().unwrap(),
                 });
             }
-            Ok(Some(1))
+            result
         });
 
         project
@@ -152,24 +152,24 @@ impl Project {
     pub fn create(name: &str, task: Task) -> Project {
         let mut project: Option<Project> = None;
 
-        Spi::connect(|client| {
-            let result = client.select(r#"INSERT INTO pgml.projects (name, task) VALUES ($1, $2::pgml.task) RETURNING id, name, task::TEXT, created_at, updated_at;"#,
+        Spi::connect(|mut client| {
+            let result = client.update(r#"INSERT INTO pgml.projects (name, task) VALUES ($1, $2::pgml.task) RETURNING id, name, task::TEXT, created_at, updated_at;"#,
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),
                     (PgBuiltInOids::TEXTOID.oid(), task.to_string().into_datum()),
                 ])
-            ).first();
+            ).unwrap().first();
             if !result.is_empty() {
                 project = Some(Project {
-                    id: result.get_datum(1).unwrap(),
-                    name: result.get_datum(2).unwrap(),
-                    task: Task::from_str(result.get_datum(3).unwrap()).unwrap(),
-                    created_at: result.get_datum(4).unwrap(),
-                    updated_at: result.get_datum(5).unwrap(),
+                    id: result.get(1).unwrap().unwrap(),
+                    name: result.get(2).unwrap().unwrap(),
+                    task: Task::from_str(result.get(3).unwrap().unwrap()).unwrap(),
+                    created_at: result.get(4).unwrap().unwrap(),
+                    updated_at: result.get(5).unwrap().unwrap(),
                 });
             }
-            Ok(Some(1))
+            result
         });
         project.unwrap()
     }

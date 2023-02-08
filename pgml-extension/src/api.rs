@@ -68,7 +68,7 @@ pub fn validate_shared_library() {
          WHERE name = 'shared_preload_libraries'
          LIMIT 1",
     )
-    .unwrap();
+    .unwrap().unwrap();
 
     if !shared_preload_libraries.contains("pgml") {
         error!("`pgml` must be added to `shared_preload_libraries` setting or models cannot be deployed");
@@ -259,7 +259,7 @@ fn train_joint(
     match automatic_deploy {
         // Deploy only if metrics are better than previous model.
         Some(true) | None => {
-            if let Some(deployed_metrics) = deployed_metrics {
+            if let Ok(Some(deployed_metrics)) = deployed_metrics {
                 let deployed_metrics = deployed_metrics.0.as_object().unwrap();
                 match project.task {
                     Task::classification => {
@@ -314,7 +314,7 @@ fn deploy(
     let (project_id, task) = Spi::get_two_with_args::<i64, String>(
         "SELECT id, task::TEXT from pgml.projects WHERE name = $1",
         vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
-    );
+    ).unwrap();
 
     let project_id =
         project_id.unwrap_or_else(|| error!("Project named `{}` does not exist.", project_name));
@@ -377,7 +377,7 @@ fn deploy(
     let (model_id, algorithm) = Spi::get_two_with_args::<i64, String>(
         &sql,
         vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
-    );
+    ).unwrap();
     let model_id = model_id.expect("No qualified models exist for this deployment.");
     let algorithm = algorithm.expect("No qualified models exist for this deployment.");
 
@@ -578,31 +578,31 @@ pub fn dump_all(path: &str) {
     Spi::run(&format!(
         "COPY pgml.projects TO '{}' CSV HEADER",
         p.to_str().unwrap()
-    ));
+    )).unwrap();
 
     let p = std::path::Path::new(path).join("snapshots.csv");
     Spi::run(&format!(
         "COPY pgml.snapshots TO '{}' CSV HEADER",
         p.to_str().unwrap()
-    ));
+    )).unwrap();
 
     let p = std::path::Path::new(path).join("models.csv");
     Spi::run(&format!(
         "COPY pgml.models TO '{}' CSV HEADER",
         p.to_str().unwrap()
-    ));
+    )).unwrap();
 
     let p = std::path::Path::new(path).join("files.csv");
     Spi::run(&format!(
         "COPY pgml.files TO '{}' CSV HEADER",
         p.to_str().unwrap()
-    ));
+    )).unwrap();
 
     let p = std::path::Path::new(path).join("deployments.csv");
     Spi::run(&format!(
         "COPY pgml.deployments TO '{}' CSV HEADER",
         p.to_str().unwrap()
-    ));
+    )).unwrap();
 }
 
 #[pg_extern]
@@ -611,31 +611,31 @@ pub fn load_all(path: &str) {
     Spi::run(&format!(
         "COPY pgml.projects FROM '{}' CSV HEADER",
         p.to_str().unwrap()
-    ));
+    )).unwrap();
 
     let p = std::path::Path::new(path).join("snapshots.csv");
     Spi::run(&format!(
         "COPY pgml.snapshots FROM '{}' CSV HEADER",
         p.to_str().unwrap()
-    ));
+    )).unwrap();
 
     let p = std::path::Path::new(path).join("models.csv");
     Spi::run(&format!(
         "COPY pgml.models FROM '{}' CSV HEADER",
         p.to_str().unwrap()
-    ));
+    )).unwrap();
 
     let p = std::path::Path::new(path).join("files.csv");
     Spi::run(&format!(
         "COPY pgml.files FROM '{}' CSV HEADER",
         p.to_str().unwrap()
-    ));
+    )).unwrap();
 
     let p = std::path::Path::new(path).join("deployments.csv");
     Spi::run(&format!(
         "COPY pgml.deployments FROM '{}' CSV HEADER",
         p.to_str().unwrap()
-    ));
+    )).unwrap();
 }
 
 #[cfg(any(test, feature = "pg_test"))]
@@ -695,7 +695,7 @@ mod tests {
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
         // to test deployments.
         let setting =
-            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'");
+            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
 
         info!("Data directory: {}", setting.unwrap());
 
@@ -734,7 +734,7 @@ mod tests {
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
         // to test deployments.
         let setting =
-            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'");
+            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
 
         info!("Data directory: {}", setting.unwrap());
 
@@ -773,7 +773,7 @@ mod tests {
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
         // to test deployments.
         let setting =
-            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'");
+            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
 
         info!("Data directory: {}", setting.unwrap());
 

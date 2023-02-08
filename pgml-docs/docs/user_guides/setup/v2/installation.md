@@ -25,7 +25,7 @@ If your system Python is older, consider installing a newer version from [`ppa:d
 
 #### PostgreSQL
 
-PostgresML is a Postgres extension and requires PostgreSQL to be installed. We support PostgreSQL 10 through 14. You can use the PostgreSQL version that comes with your system or get it from the [PostgreSQL PPA](https://wiki.postgresql.org/wiki/Apt).
+PostgresML is a Postgres extension and requires PostgreSQL to be installed. We support PostgreSQL 11 through 15. You can use the PostgreSQL version that comes with your system or get it from the [PostgreSQL PPA](https://wiki.postgresql.org/wiki/Apt).
 
 ```bash
 sudo apt-get update && \
@@ -45,7 +45,7 @@ sudo apt-get install postgresql
 	2. Install the extension:
 
 		```
-		export POSTGRES_VERSION=14
+		export POSTGRES_VERSION=15
 		sudo apt-get update && sudo apt-get install -y postgresql-pgml-${POSTGRES_VERSION}
 		```
 
@@ -54,9 +54,9 @@ sudo apt-get install postgresql
 
 === ":material-linux: :material-microsoft: From Source (Linux & WSL)"
 
-	These instructions assume a Debian flavor Linux and PostgreSQL 14. Adjust the PostgreSQL
+	These instructions assume a Debian flavor Linux and PostgreSQL 15. Adjust the PostgreSQL
 	version accordingly if yours is different. Other flavors of Linux should work, but have not been tested.
-	PostgreSQL 10 through 14 are supported.
+	PostgreSQL 11 through 15 are supported.
 
 	1. Install the latest Rust compiler from [rust-lang.org](https://www.rust-lang.org/learn/get-started).
 
@@ -65,18 +65,21 @@ sudo apt-get install postgresql
 	3. Install PostgreSQL development headers and other dependencies:
 
 		```bash
-		export POSTGRES_VERSION=14
+		export POSTGRES_VERSION=15
 		sudo apt-get update && \
 		sudo apt-get install -y \
-			postgresql-server-${POSTGRES_VERSION}-dev \
-			libpython3-dev \
-			libclang-dev \
-			cmake \
-			pkg-config \
-			libssl-dev \
-			clang \
+			postgresql-server-dev-${POSTGRES_VERSION} \
+			bison \
 			build-essential \
+			clang \
+			cmake \
+			flex \
+			libclang-dev \
 			libopenblas-dev \
+			libpython3-dev \
+			libreadline-dev \
+			libssl-dev \
+			pkg-config \
 			python3-dev
 		```
 
@@ -94,8 +97,8 @@ sudo apt-get install postgresql
 		**With Python support:**
 
 		```bash
-		export POSTGRES_VERSION=14
-		cargo install cargo-pgx --version "0.4.5" && \
+		export POSTGRES_VERSION=15
+		cargo install cargo-pgx --version "0.7.1" && \
 		cargo pgx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
 		cargo pgx package
 		```
@@ -103,9 +106,9 @@ sudo apt-get install postgresql
 		**Without Python support:**
 
 		```bash
-		export POSTGRES_VERSION=14
+		export POSTGRES_VERSION=15
 		cp docker/Cargo.toml.no-python Cargo.toml && \
-		cargo install cargo-pgx --version "0.4.5" && \
+		cargo install cargo-pgx --version "0.7.1" && \
 		cargo pgx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
 		cargo pgx package
 		```
@@ -113,7 +116,7 @@ sudo apt-get install postgresql
 	6. Copy the extension binaries into Postgres system folders:
 
 		```bash
-		export POSTGRES_VERSION=14
+		export POSTGRES_VERSION=15
 
 		# Copy the extension .so
 		sudo cp target/release/pgml-pg${POSTGRES_VERSION}/usr/lib/postgresql/${POSTGRES_VERSION}/lib/* \
@@ -153,7 +156,7 @@ sudo apt-get install postgresql
 
 		```
 		cargo install cargo-pgx && \
-		cargo pgx init --pg14 /usr/bin/pg_config && \
+		cargo pgx init --pg15 /usr/bin/pg_config && \
 		cargo pgx install
 		```
 
@@ -194,7 +197,7 @@ Now that the extension is installed on your system, add it into the database whe
 	```
 	postgres=# CREATE EXTENSION pgml;
 	INFO:  Python version: 3.10.4 (main, Jun 29 2022, 12:14:53) [GCC 11.2.0]
-	INFO:  Scikit-learn 1.1.1, XGBoost 1.62, LightGBM 3.3.2
+	INFO:  Scikit-learn 1.1.3, XGBoost 1.7.1, LightGBM 3.3.3, NumPy 1.23.5
 	CREATE EXTENSION
 	```
 
@@ -212,7 +215,7 @@ That's it, PostgresML is ready. You can validate the installation by running:
 	postgres=# select pgml.version();
 	      version      
 	-------------------
-	 2.0.0
+	 2.2.0
 	(1 row)
 	```
 
