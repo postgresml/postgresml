@@ -549,7 +549,7 @@ impl Snapshot {
                     analysis,
                     created_at,
                     updated_at
-                FROM pgml.snapshots
+                FROM pgml.snapshots JOIN pg_class ON oid::regclass::text = relation_name
             "
         )
         .fetch_all(pool)
@@ -568,7 +568,7 @@ impl Snapshot {
                     analysis,
                     created_at,
                     updated_at
-                FROM pgml.snapshots
+                FROM pgml.snapshots JOIN pg_class ON oid::regclass::text = relation_name
                 WHERE id = $1",
             id,
         )
