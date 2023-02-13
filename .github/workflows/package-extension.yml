@@ -2,13 +2,6 @@ name: Build PostgresML Rust package
 
 on:
   workflow_dispatch:
-    inputs:
-      withPython:
-        type: choice
-        options:
-          - "true"
-          - "false"
-        default: "true"
 
 jobs:
   build:
