@@ -23,11 +23,11 @@ jobs:
         git submodule update --init --recursive
     - name: Build package
       run: |
-        docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-control /usr/lib/postgresql/11/bin/pg_config'
-        docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-control /usr/lib/postgresql/12/bin/pg_config'
-        docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-control /usr/lib/postgresql/13/bin/pg_config'
-        docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-control /usr/lib/postgresql/14/bin/pg_config'
-        docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-control /usr/lib/postgresql/15/bin/pg_config'
+        docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/11/bin/pg_config'
+        docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/12/bin/pg_config'
+        docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/13/bin/pg_config'
+        docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/14/bin/pg_config'
+        docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/15/bin/pg_config'
     # - name: Publish package
     #   env:
     #     AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
