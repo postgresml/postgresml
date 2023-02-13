@@ -21,6 +21,7 @@ jobs:
         curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
         sudo gem install deb-s3-0.11.4.gem
         git submodule update --init --recursive
+        chmod 777 . -R
     - name: Build package
       run: |
         docker run -v $(pwd):/app levkk/postgresml:builder bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/11/bin/pg_config'
