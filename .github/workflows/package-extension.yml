@@ -18,7 +18,7 @@ jobs:
         curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
         sudo gem install deb-s3-0.11.4.gem
     - name: Build package
-      run:
+      run: |
         docker run -v $(pwd):/app levkk/postgresml:build cargo pgx package --pg-control /usr/lib/postgresql/11/bin/pg_config
         docker run -v $(pwd):/app levkk/postgresml:build cargo pgx package --pg-control /usr/lib/postgresql/12/bin/pg_config
         docker run -v $(pwd):/app levkk/postgresml:build cargo pgx package --pg-control /usr/lib/postgresql/13/bin/pg_config
