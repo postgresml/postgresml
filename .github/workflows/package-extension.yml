@@ -20,6 +20,7 @@ jobs:
         sudo apt install -y ruby curl
         curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
         sudo gem install deb-s3-0.11.4.gem
+        git submodule update --init --recursive
     - name: Build package
       run: |
         docker run -v $(pwd):/app levkk/postgresml:builder cargo pgx package --pg-control /usr/lib/postgresql/11/bin/pg_config
