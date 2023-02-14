@@ -44,6 +44,9 @@ jobs:
           export PGVERSION=${pg}
           export ARCH=amd64
 
+          # Fix permissions
+          sudo chown -R ${USER}:${USER} target/release
+
           mkdir -p target/release/pgml-pg${pg}/DEBIAN
           (cat control | envsubst) > target/release/pgml-pg${pg}/DEBIAN/control
           dpkg-deb --build target/release/pgml-pg${pg} postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu1-amd64.deb
