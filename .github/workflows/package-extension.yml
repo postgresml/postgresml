@@ -23,6 +23,7 @@ jobs:
     - name: Validate cargo is working
       uses: postgresml/gh-actions-cargo@master
       with:
+        working-directory: pgml-extension
         command: version
     - name: Install dependencies
       env:
@@ -81,36 +82,43 @@ jobs:
     - name: Install pgx
       uses: postgresml/gh-actions-cargo@master
       with:
+        working-directory: pgml-extension
         command: install
         args: cargo-pgx --version "0.7.1"
     - name: pgx init
       uses: postgresml/gh-actions-cargo@master
       with:
+        working-directory: pgml-extension
         command: pgx
         args: init --pg11=/usr/lib/postgresql/11/bin/pg_config --pg12=/usr/lib/postgresql/12/bin/pg_config --pg13=/usr/lib/postgresql/13/bin/pg_config --pg14=/usr/lib/postgresql/14/bin/pg_config --pg15=/usr/lib/postgresql/15/bin/pg_config
     - name: Build Postgres 11
       uses: postgresml/gh-actions-cargo@master
       with:
+        working-directory: pgml-extension
         command: pgx
         args: package --pg-config /usr/lib/postgresql/11/bin/pg_config
     - name: Build Postgres 12
       uses: postgresml/gh-actions-cargo@master
       with:
+        working-directory: pgml-extension
         command: pgx
         args: package --pg-config /usr/lib/postgresql/12/bin/pg_config
     - name: Build Postgres 13
       uses: postgresml/gh-actions-cargo@master
       with:
+        working-directory: pgml-extension
         command: pgx
         args: package --pg-config /usr/lib/postgresql/13/bin/pg_config
     - name: Build Postgres 14
       uses: postgresml/gh-actions-cargo@master
       with:
+        working-directory: pgml-extension
         command: pgx
         args: package --pg-config /usr/lib/postgresql/14/bin/pg_config
     - name: Build Postgres 15
       uses: postgresml/gh-actions-cargo@master
       with:
+        working-directory: pgml-extension
         command: pgx
         args: package --pg-config /usr/lib/postgresql/15/bin/pg_config
     - name: Build debs
