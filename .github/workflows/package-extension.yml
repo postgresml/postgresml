@@ -17,21 +17,9 @@ jobs:
         working-directory: pgml-extension
     steps:
     - uses: actions/checkout@v3
-    - name: Cache tools
     - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      uses: actions/cache@v3
       with:
-        path: |
-          ~/.cargo
-          ~/.rustup
-        key: ${{ runner.os }}-postgresml-deps
-    - name: Cache artifacts
-      uses: actions/cache@v3
-      with:
-        path: pgml-extension/target
-        key: ${{ runner.os }}-postgresml-artifacts
+        toolchain: stable
     - name: Install dependencies
       env:
         DEBIAN_FRONTEND: noninteractive
