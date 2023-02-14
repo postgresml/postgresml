@@ -20,8 +20,10 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-    - uses: postgresml/gh-actions-cargo@master
-      command: version
+    - name: Validate cargo is working
+      uses: postgresml/gh-actions-cargo@master
+      with:
+        command: version
     - name: Install dependencies
       env:
         DEBIAN_FRONTEND: noninteractive
