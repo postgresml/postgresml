@@ -26,9 +26,6 @@ jobs:
         git submodule update --init --recursive
         chmod 777 . -R
         dpkg-deb --version
-    - name: Docker login
-      run: |
-        echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u postgresml --password-stdin
     - name: Build package
       run: |
         docker run -v $(pwd):/app ghcr.io/postgresml/postgresml-builder:latest bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/11/bin/pg_config'
