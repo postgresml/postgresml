@@ -77,31 +77,38 @@ jobs:
     - name: Install pgx
       uses: actions-rs/cargo@v1
       with:
-        command: install cargo-pgx --version "0.7.1"
+        command: install
+        args: cargo-pgx --version "0.7.1"
     - name: pgx init
       uses: actions-rs/cargo@v1
       with:
-        command: pgx init
+        command: pgx
+        args: init
     - name: Build Postgres 11
       uses: actions-rs/cargo@v1
       with:
-        command: pgx package --pg-config /usr/lib/postgresql/11/bin/pg_config
+        command: pgx
+        args: package --pg-config /usr/lib/postgresql/11/bin/pg_config
     - name: Build Postgres 12
       uses: actions-rs/cargo@v1
       with:
-        command: pgx package --pg-config /usr/lib/postgresql/12/bin/pg_config
+        command: pgx
+        args: package --pg-config /usr/lib/postgresql/12/bin/pg_config
     - name: Build Postgres 13
       uses: actions-rs/cargo@v1
       with:
-        command: pgx package --pg-config /usr/lib/postgresql/13/bin/pg_config
+        command: pgx
+        args: package --pg-config /usr/lib/postgresql/13/bin/pg_config
     - name: Build Postgres 14
       uses: actions-rs/cargo@v1
       with:
-        command: pgx package --pg-config /usr/lib/postgresql/14/bin/pg_config
+        command: pgx
+        args: package --pg-config /usr/lib/postgresql/14/bin/pg_config
     - name: Build Postgres 15
       uses: actions-rs/cargo@v1
       with:
-        command: pgx package --pg-config /usr/lib/postgresql/15/bin/pg_config
+        command: pgx
+        args: package --pg-config /usr/lib/postgresql/15/bin/pg_config
     - name: Build debs
       env:
         AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
