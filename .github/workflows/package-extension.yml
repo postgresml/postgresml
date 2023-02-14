@@ -2,6 +2,9 @@ name: Build PostgresML Rust package
 
 on:
   workflow_dispatch:
+    inputs:
+      packageVersion:
+        default: "2.2.0"
 
 jobs:
   build:
@@ -9,35 +12,44 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: pgml-extension
     steps:
     - uses: actions/checkout@v3
     - name: Install dependencies
-      run:
+      run: |
         sudo apt update
         sudo apt install -y ruby curl
         curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
         sudo gem install deb-s3-0.11.4.gem
+        git submodule update --init --recursive
+        chmod 777 . -R
+        dpkg-deb --version
     - name: Build package
-      run:
-        docker run -v $(pwd):/app levkk/postgresml:build cargo pgx package --pg-control /usr/lib/postgresql/11/bin/pg_config
-        docker run -v $(pwd):/app levkk/postgresml:build cargo pgx package --pg-control /usr/lib/postgresql/12/bin/pg_config
-        docker run -v $(pwd):/app levkk/postgresml:build cargo pgx package --pg-control /usr/lib/postgresql/13/bin/pg_config
-        docker run -v $(pwd):/app levkk/postgresml:build cargo pgx package --pg-control /usr/lib/postgresql/14/bin/pg_config
-        docker run -v $(pwd):/app levkk/postgresml:build cargo pgx package --pg-control /usr/lib/postgresql/15/bin/pg_config
-    # - name: Publish package
-    #   env:
-    #     AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
-    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #     AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
-    #   working-directory: postgresml/pgml-extension
-    #   run: |
-    #     if [[ $(uname -a) == *"aarch64"* ]]; then
-    #         ARCH="arm64"
-    #     else
-    #         ARCH="amd64"
-    #     fi
+      run: |
+        docker run -v $(pwd):/app ghcr.io/postgresml/postgresml-builder:latest bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/11/bin/pg_config'
+        docker run -v $(pwd):/app ghcr.io/postgresml/postgresml-builder:latest bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/12/bin/pg_config'
+        docker run -v $(pwd):/app ghcr.io/postgresml/postgresml-builder:latest bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/13/bin/pg_config'
+        docker run -v $(pwd):/app ghcr.io/postgresml/postgresml-builder:latest bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/14/bin/pg_config'
+        docker run -v $(pwd):/app ghcr.io/postgresml/postgresml-builder:latest bash -c '$HOME/.cargo/bin/cargo pgx package --pg-config /usr/lib/postgresql/15/bin/pg_config'
+    - name: Build debs
+      env:
+        AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+      run: |
+        for pg in {11..15}; do
+          export PACKAGE_VERSION=${{ inputs.packageVersion }}
+          export PGVERSION=${pg}
+          export ARCH=amd64
 
-    #     deb-s3 upload \
-    #       --bucket apt.postgresml.org \
-    #       postgresql-pgml-${{ inputs.postgresVersion }}_${{ inputs.packageVersion }}-ubuntu${{ inputs.ubuntuVersion }}-${ARCH}.deb \
-    #       --codename ${{ inputs.ubuntuName }}
+          mkdir -p target/release/pgml-pg${pg}/DEBIAN
+          (cat control | envsubst) > target/release/pgml-pg${pg}/DEBIAN/control
+          dpkg-deb --build target/release/pgml-pg${pg} postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu1-amd64.deb
+
+          deb-s3 upload \
+            --bucket apt.postgresml.org \
+            postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu1-amd64.deb \
+            --codename jammy
+        done
