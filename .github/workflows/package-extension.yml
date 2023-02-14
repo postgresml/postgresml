@@ -20,6 +20,8 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
+    - uses: postgresml/gh-actions-cargo@master
+      command: version
     - name: Install dependencies
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -75,43 +77,37 @@ jobs:
         sudo gem install deb-s3-0.11.4.gem
         dpkg-deb --version
     - name: Install pgx
-      uses: actions-rs/cargo@v1
+      uses: postgresml/gh-actions-cargo@master
       with:
         command: install
         args: cargo-pgx --version "0.7.1"
     - name: pgx init
-      uses: actions-rs/cargo@v1
+      uses: postgresml/gh-actions-cargo@master
       with:
         command: pgx
-        args: |
-          init \
-            --pg11=/usr/lib/postgresql/11/bin/pg_config \
-            --pg12=/usr/lib/postgresql/12/bin/pg_config \
-            --pg13=/usr/lib/postgresql/13/bin/pg_config \
-            --pg14=/usr/lib/postgresql/14/bin/pg_config \
-            --pg15=/usr/lib/postgresql/15/bin/pg_config
+        args: init --pg11=/usr/lib/postgresql/11/bin/pg_config --pg12=/usr/lib/postgresql/12/bin/pg_config --pg13=/usr/lib/postgresql/13/bin/pg_config --pg14=/usr/lib/postgresql/14/bin/pg_config --pg15=/usr/lib/postgresql/15/bin/pg_config
     - name: Build Postgres 11
-      uses: actions-rs/cargo@v1
+      uses: postgresml/gh-actions-cargo@master
       with:
         command: pgx
         args: package --pg-config /usr/lib/postgresql/11/bin/pg_config
     - name: Build Postgres 12
-      uses: actions-rs/cargo@v1
+      uses: postgresml/gh-actions-cargo@master
       with:
         command: pgx
         args: package --pg-config /usr/lib/postgresql/12/bin/pg_config
     - name: Build Postgres 13
-      uses: actions-rs/cargo@v1
+      uses: postgresml/gh-actions-cargo@master
       with:
         command: pgx
         args: package --pg-config /usr/lib/postgresql/13/bin/pg_config
     - name: Build Postgres 14
-      uses: actions-rs/cargo@v1
+      uses: postgresml/gh-actions-cargo@master
       with:
         command: pgx
         args: package --pg-config /usr/lib/postgresql/14/bin/pg_config
     - name: Build Postgres 15
-      uses: actions-rs/cargo@v1
+      uses: postgresml/gh-actions-cargo@master
       with:
         command: pgx
         args: package --pg-config /usr/lib/postgresql/15/bin/pg_config
