@@ -37,10 +37,8 @@ jobs:
         git submodule update --init --recursive
         sudo apt-get update
         sudo apt-get install -y software-properties-common
-        sudo add-apt-repository ppa:apt-fast/stable --yes
-        sudo apt update && sudo apt-get install -y apt-fast
         sudo apt install -y --fix-missing
-        sudo apt-get update && sudo apt-fast install -y \
+        sudo apt-get update && sudo apt-get install -y \
           libopenblas-dev \
           libssl-dev \
           bison \
@@ -62,7 +60,7 @@ jobs:
           postgresql-server-dev-14 \
           lsb-release
         sudo add-apt-repository ppa:deadsnakes/ppa --yes
-        sudo apt update && apt-fast install -y \
+        sudo apt update && apt-get install -y \
           python3.10 \
           python3-pip \
           libpython3.10-dev \
