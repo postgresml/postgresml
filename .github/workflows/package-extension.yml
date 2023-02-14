@@ -35,10 +35,17 @@ jobs:
         TZ: Etc/UTC
       run: |
         git submodule update --init --recursive
-        sudo apt-get update
+
+        # PostgreSQL apt
+        curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
+        sudo sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+        sudo sudo apt update
+
         sudo apt-get install -y software-properties-common
+        sudo add-apt-repository ppa:apt-fast/stable --yes
+        sudo apt update && sudo apt-get install -y apt-fast
         sudo apt install -y --fix-missing
-        sudo apt-get update && sudo apt-get install -y \
+        sudo apt-get update && sudo apt-fast install -y \
           libopenblas-dev \
           libssl-dev \
           bison \
@@ -60,7 +67,7 @@ jobs:
           postgresql-server-dev-14 \
           lsb-release
         sudo add-apt-repository ppa:deadsnakes/ppa --yes
-        sudo apt update && apt-get install -y \
+        sudo apt update && apt-fast install -y \
           python3.10 \
           python3-pip \
           libpython3.10-dev \
@@ -68,9 +75,6 @@ jobs:
         curl https://sh.rustup.rs -sSf | sh -s -- -y
         $HOME/.cargo/bin/cargo install cargo-pgx --version "0.7.1"
         sudo $HOME/.cargo/bin/cargo pgx init
-        curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
-        sudo sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-        sudo sudo apt update
         sudo sudo apt-get install -y postgresql-15 postgresql-13 postgresql-12 postgresql-11
         sudo sudo apt install -y postgresql-server-dev-15 postgresql-server-dev-13 postgresql-server-dev-12 postgresql-server-dev-11
         sudo apt update
