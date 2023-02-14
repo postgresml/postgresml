@@ -45,7 +45,7 @@ jobs:
           export ARCH=amd64
 
           # Fix permissions
-          chown -R ${USER}:${USER} target/release
+          sudo chown -R ${USER}:${USER} target/release
 
           mkdir -p target/release/pgml-pg${pg}/DEBIAN
           (cat control | envsubst) > target/release/pgml-pg${pg}/DEBIAN/control
