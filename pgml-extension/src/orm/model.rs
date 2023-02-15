@@ -79,6 +79,7 @@ impl Model {
                     Algorithm::linear => match project.task {
                         Task::classification => Runtime::python,
                         Task::regression => Runtime::rust,
+                        _ => error!("No default runtime available for tasks other than `classification` and `regression` when using a linear algorithm."),
                     },
                     _ => Runtime::python,
                 },
@@ -130,6 +131,7 @@ impl Model {
                     num_classes: match project.task {
                         Task::regression => 0,
                         Task::classification => snapshot.num_classes(),
+                        _ => todo!("num_classes for huggingface"),
                     },
                     num_features: snapshot.num_features(),
                 });
@@ -205,6 +207,7 @@ impl Model {
                                 Task::classification => {
                                     crate::bindings::linfa::LogisticRegression::from_bytes(&data)
                                 }
+                                _ => error!("No default runtime available for tasks other than `classification` and `regression` when using a linear algorithm."),
                             },
                             Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data),
                             _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
@@ -224,6 +227,7 @@ impl Model {
                 let num_classes = match project.task {
                     Task::regression => 0,
                     Task::classification => snapshot.num_classes(),
+                    _ => todo!("num_classes for huggingface"),
                 };
 
                 model = Some(Model {
@@ -288,6 +292,7 @@ impl Model {
                     Algorithm::svm => linfa::Svm::fit,
                     _ => todo!(),
                 },
+                _ => todo!("fit for huggingface"),
             },
 
             #[cfg(not(feature = "python"))]
@@ -366,6 +371,7 @@ impl Model {
                     Algorithm::lightgbm => sklearn::lightgbm_classification,
                     _ => panic!("{:?} does not support classification", self.algorithm),
                 },
+                _ => todo!("fit for huggingface"),
             },
         }
     }
@@ -530,6 +536,7 @@ impl Model {
                 // This one is inaccurate, I have it in my TODO to reimplement.
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
             }
+            _ => error!("no tests for huggingface")
         }
 
         metrics
@@ -678,6 +685,10 @@ impl Model {
             let target_metric = match self.project.task {
                 Task::regression => "r2",
                 Task::classification => "f1",
+                Task::text_classification => "f1",
+                Task::question_answering => "f1",
+                Task::translation => "blue",
+                Task::summarization => "rouge_ngram_f1",
             };
             let mut i = 0;
             let mut best_index = 0;
@@ -961,6 +972,8 @@ impl Model {
                 .as_ref()
                 .unwrap()
                 .predict_proba(features, self.num_features),
+            _ => error!("no predict_proba for huggingface")
+
         }
     }
 
@@ -974,6 +987,7 @@ impl Model {
             Task::classification => {
                 error!("You can't predict joint probabilities for a classification model")
             }
+            _ => error!("no predict_joint for huggingface")
         }
     }
 

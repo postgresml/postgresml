@@ -6,6 +6,10 @@ use serde::Deserialize;
 pub enum Task {
     regression,
     classification,
+    text_classification,
+    question_answering,
+    translation,
+    summarization,
 }
 
 impl std::str::FromStr for Task {
@@ -15,6 +19,10 @@ impl std::str::FromStr for Task {
         match input {
             "regression" => Ok(Task::regression),
             "classification" => Ok(Task::classification),
+            "text_classification" => Ok(Task::classification),
+            "question_answering" => Ok(Task::classification),
+            "translation" => Ok(Task::classification),
+            "summarization" => Ok(Task::classification),
             _ => Err(()),
         }
     }
@@ -25,6 +33,10 @@ impl std::string::ToString for Task {
         match *self {
             Task::regression => "regression".to_string(),
             Task::classification => "classification".to_string(),
+            Task::text_classification => "text_classification".to_string(),
+            Task::question_answering => "question_answering".to_string(),
+            Task::translation => "translation".to_string(),
+            Task::summarization => "summarization".to_string(),
         }
     }
 }

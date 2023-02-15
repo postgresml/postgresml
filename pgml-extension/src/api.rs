@@ -276,6 +276,7 @@ fn train_joint(
                             deploy = false;
                         }
                     }
+                    _ => error!("Training only supports `classification` and `regression` task types.")
                 }
             }
         }
@@ -345,6 +346,9 @@ fn deploy(
                     "{predicate}\nORDER BY models.metrics->>'f1' DESC NULLS LAST"
                 );
             }
+
+            _ => todo!("Training only supports `classification` and `regression` task types.")
+
         },
 
         Strategy::most_recent => {
@@ -524,6 +528,163 @@ pub fn transform_string(
         &task_json, &args.0, &inputs,
     ))
 }
+
+#[cfg(feature = "python")]
+#[allow(clippy::too_many_arguments)]
+#[pg_extern]
+fn tune(
+    project_name: &str,
+    task: default!(Option<Task>, "NULL"),
+    relation_name: default!(Option<&str>, "NULL"),
+    y_column_name: default!(Option<&str>, "NULL"),
+    algorithm: default!(Algorithm, "transformers"),
+    hyperparams: default!(JsonB, "'{}'"),
+    search: default!(Option<Search>, "NULL"),
+    search_params: default!(JsonB, "'{}'"),
+    search_args: default!(JsonB, "'{}'"),
+    test_size: default!(f32, 0.25),
+    test_sampling: default!(Sampling, "'last'"),
+    runtime: default!(Option<Runtime>, "NULL"),
+    automatic_deploy: default!(Option<bool>, true),
+    materialize_snapshot: default!(bool, false),
+    preprocess: default!(JsonB, "'{}'"),
+) -> TableIterator<
+    'static,
+    (
+        name!(status, String),
+        name!(task, String),
+        name!(algorithm, String),
+        name!(deployed, bool),
+    ),
+> {
+    let project = match Project::find_by_name(project_name) {
+        Some(project) => project,
+        None => Project::create(project_name, match task {
+            Some(task) => task,
+            None => error!("Project `{}` does not exist. To create a new project, provide the task (regression or classification).", project_name),
+        }),
+    };
+
+    if task.is_some() && task.unwrap() != project.task {
+        error!("Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.", project.name, project.task);
+    }
+
+    let mut snapshot = match relation_name {
+        None => {
+            let snapshot = project
+                .last_snapshot()
+                .expect("You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.");
+
+            info!("Using existing snapshot from {}", snapshot.snapshot_name(),);
+
+            snapshot
+        }
+
+
+        Some(relation_name) => {
+            info!(
+                "Snapshotting table \"{}\", this may take a little while...",
+                relation_name
+            );
+
+            let snapshot = Snapshot::create(
+                relation_name,
+                vec![y_column_name.expect("You must pass a `y_column_name` when you pass a `relation_name`").to_string()],
+                test_size,
+                test_sampling,
+                materialize_snapshot,
+                preprocess,
+            );
+
+            if materialize_snapshot {
+                info!(
+                    "Snapshot of table \"{}\" created and saved in {}",
+                    relation_name,
+                    snapshot.snapshot_name(),
+                );
+            }
+
+            snapshot
+        }
+    };
+
+    // # Default repeatable random state when possible
+    // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);
+    // if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
+    //     hyperparams["random_state"] = 0
+    let model = Model::create(
+        &project,
+        &mut snapshot,
+        algorithm,
+        hyperparams,
+        search,
+        search_params,
+        search_args,
+        runtime,
+    );
+
+    let new_metrics: &serde_json::Value = &model.metrics.unwrap().0;
+    let new_metrics = new_metrics.as_object().unwrap();
+
+    let deployed_metrics = Spi::get_one_with_args::<JsonB>(
+        "
+        SELECT models.metrics
+        FROM pgml.models
+        JOIN pgml.deployments
+            ON deployments.model_id = models.id
+        JOIN pgml.projects
+            ON projects.id = deployments.project_id
+        WHERE projects.name = $1
+        ORDER by deployments.created_at DESC
+        LIMIT 1;",
+        vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
+    );
+
+    let mut deploy = true;
+    match automatic_deploy {
+        // Deploy only if metrics are better than previous model.
+        Some(true) | None => {
+            if let Ok(Some(deployed_metrics)) = deployed_metrics {
+                let deployed_metrics = deployed_metrics.0.as_object().unwrap();
+                match project.task {
+                    Task::classification => {
+                        if deployed_metrics.get("f1").unwrap().as_f64()
+                            > new_metrics.get("f1").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
+                    Task::regression => {
+                        if deployed_metrics.get("r2").unwrap().as_f64()
+                            > new_metrics.get("r2").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
+                    _ => todo!("Deploy tuned based on new metrics.")
+                }
+
+            }
+        }
+
+        Some(false) => deploy = false,
+    };
+
+    if deploy {
+        project.deploy(model.id);
+    }
+
+    TableIterator::new(
+        vec![(
+            project.name,
+            project.task.to_string(),
+            model.algorithm.to_string(),
+            deploy,
+        )]
+        .into_iter(),
+    )
+}
+
 
 #[cfg(feature = "python")]
 #[pg_extern(name = "sklearn_f1_score")]
@@ -811,3 +972,7 @@ mod tests {
         load_all("/tmp");
     }
 }
+
+
+
+

@@ -105,6 +105,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
                     Task::classification => {
                         crate::bindings::linfa::LogisticRegression::from_bytes(&data)
                     }
+                    _ => error!("Rust runtime only supports `classification` and `regression` task types for linear algorithms."),
                 },
                 Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data),
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),

@@ -1,6 +1,9 @@
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
+use pgx::iter::{SetOfIterator, TableIterator};
+use pgx::*;
+
 pub fn transform(
     task: &serde_json::Value,
     args: &serde_json::Value,
@@ -32,4 +35,8 @@ pub fn transform(
             .unwrap()
     });
     serde_json::from_str(&results).unwrap()
+}
+
+pub fn load_dataset() {
+
 }
