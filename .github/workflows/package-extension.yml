@@ -134,7 +134,7 @@ jobs:
 
           mkdir -p target/release/pgml-pg${pg}/DEBIAN
           (cat control | envsubst) > target/release/pgml-pg${pg}/DEBIAN/control
-          dpkg-deb --build target/release/pgml-pg${pg} postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu22.04-amd64.deb --root-owner-group
+          dpkg-deb --root-owner-group --build target/release/pgml-pg${pg} postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu22.04-amd64.deb
 
           deb-s3 upload \
             --bucket apt.postgresml.org \
