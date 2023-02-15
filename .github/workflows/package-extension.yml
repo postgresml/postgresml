@@ -70,7 +70,7 @@ jobs:
           postgresql-server-dev-12 \
           postgresql-server-dev-11 \
           lsb-release \
-          ython3.10 \
+          python3.10 \
           python3-pip \
           libpython3.10-dev \
           python3.10-dev \
