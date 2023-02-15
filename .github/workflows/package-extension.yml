@@ -1,4 +1,4 @@
-name: Build PostgresML Rust package
+name: package extension (deb)
 
 on:
   workflow_dispatch:
