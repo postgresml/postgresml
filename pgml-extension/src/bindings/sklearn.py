@@ -215,7 +215,7 @@ def calculate_metric(metric_name):
     elif metric_name == "mcc":
         func = matthews_corrcoef
     elif metric_name == "mse":
-        func = mean_squarred_error
+        func = mean_squared_error
     elif metric_name == "mae":
         func = mean_absolute_error
     elif metric_name == "confusion_matrix":
