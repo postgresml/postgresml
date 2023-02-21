@@ -1529,7 +1529,7 @@ dependencies = [
 
 [[package]]
 name = "pgml-dashboard"
-version = "0.1.1"
+version = "2.2.0"
 dependencies = [
  "anyhow",
  "bigdecimal",
