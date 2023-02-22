@@ -1,9 +1,11 @@
 // Markdown
 use comrak::{markdown_to_html, ComrakExtensionOptions, ComrakOptions};
 
+use rocket::futures::TryFutureExt;
 // Templates
 use sailfish::TemplateOnce;
 
+use sqlx::postgres::PgRow;
 // Database
 use sqlx::postgres::types::PgInterval;
 use sqlx::types::time::PrimitiveDateTime;
@@ -17,6 +19,7 @@ use tokio::io::{AsyncBufReadExt, AsyncSeekExt};
 
 use crate::templates;
 use std::collections::HashMap;
+use std::str::FromStr;
 
 #[derive(FromRow, Debug, Clone)]
 pub struct Project {
@@ -550,8 +553,7 @@ impl Snapshot {
                     created_at,
                     updated_at
                 FROM pgml.snapshots JOIN pg_class ON oid::regclass::text = relation_name"
-        )
-        .fetch_all(pool)
+        ).fetch_all(pool)
         .await?)
     }
     pub async fn get_by_id(pool: &PgPool, id: i64) -> anyhow::Result<Snapshot> {
@@ -567,7 +569,7 @@ impl Snapshot {
                     analysis,
                     created_at,
                     updated_at
-                FROM pgml.snapshots JOIN pg_class ON oid::regclass::text = relation_name
+                FROM pgml.snapshots
                 WHERE id = $1",
             id,
         )
@@ -575,14 +577,41 @@ impl Snapshot {
         .await?)
     }
 
-    pub async fn table_size(&self, pool: &PgPool) -> anyhow::Result<String> {
-        let row =
-            sqlx::query("SELECT pg_size_pretty(pg_total_relation_size($1))::TEXT AS table_size")
-                .bind(&self.relation_name)
-                .fetch_one(pool)
-                .await?;
+    pub async fn relation_exists(&self, pool: &PgPool) -> anyhow::Result<bool> {
+        let relations_in_db = sqlx::query(
+            "SELECT relation_name from pgml.snapshots 
+            JOIN pg_class ON oid::regclass::text= relation_name",
+        )
+        .bind(&self.relation_name)
+        .fetch_all(pool)
+        .await?;
 
-        Ok(row.try_get("table_size")?)
+        let mut relation_exists = false;
+
+        for relation in relations_in_db {
+            let value: String = relation.get("relation_name");
+            if value == self.relation_name {
+                relation_exists = true;
+            }
+        }
+        Ok(relation_exists)
+    }
+
+    pub async fn table_size(&self, pool: &PgPool) -> anyhow::Result<String> {
+        let relation_exists = self.relation_exists(pool).await?;
+
+        if relation_exists {
+            let row = sqlx::query(
+                "SELECT pg_size_pretty(pg_total_relation_size($1))::TEXT AS table_size",
+            )
+            .bind(&self.relation_name)
+            .fetch_one(pool)
+            .await?;
+
+            Ok(row.try_get("table_size")?)
+        } else {
+            Ok(String::from("0 bytes"))
+        }
     }
 
     pub fn rows(&self) -> Option<i64> {
@@ -600,26 +629,29 @@ impl Snapshot {
         pool: &PgPool,
         rows: i64,
     ) -> anyhow::Result<HashMap<String, Vec<f32>>> {
-        let rows = sqlx::query(&format!(
-            "SELECT row_to_json(row) r
-            FROM (SELECT * FROM {} LIMIT $1) row",
-            self.relation_name
-        ))
-        .bind(rows)
-        .fetch_all(pool)
-        .await?;
-
+        let relation_exists = self.relation_exists(pool).await?;
         let mut samples = HashMap::new();
 
-        rows.iter().for_each(|row| {
-            let r: serde_json::Value = row.try_get("r").unwrap();
-            let obj = r.as_object().unwrap();
+        if relation_exists {
+            let rows = sqlx::query(&format!(
+                "SELECT row_to_json(row) r
+                FROM (SELECT * FROM {} LIMIT $1) row",
+                self.relation_name
+            ))
+            .bind(rows)
+            .fetch_all(pool)
+            .await?;
 
-            for (key, value) in obj.iter() {
-                let rf = samples.entry(key.clone()).or_insert(Vec::new());
-                rf.push(value.as_f64().unwrap_or(0.) as f32);
-            }
-        });
+            rows.iter().for_each(|row| {
+                let r: serde_json::Value = row.try_get("r").unwrap();
+                let obj = r.as_object().unwrap();
+
+                for (key, value) in obj.iter() {
+                    let rf = samples.entry(key.clone()).or_insert(Vec::new());
+                    rf.push(value.as_f64().unwrap_or(0.) as f32);
+                }
+            });
+        }
 
         Ok(samples)
     }
@@ -664,7 +696,7 @@ impl Snapshot {
     }
 
     pub fn labels<'a>(&'a self) -> Option<Vec<&'a serde_json::Map<String, serde_json::Value>>> {
-        self.columns().map(|columns|
+        self.columns().map(|columns| {
             columns
                 .into_iter()
                 .filter(|column| {
@@ -672,40 +704,42 @@ impl Snapshot {
                         .contains(&column["name"].as_str().unwrap().to_string())
                 })
                 .collect()
-        )
+        })
     }
 
     pub async fn models(&self, pool: &PgPool) -> anyhow::Result<Vec<Model>> {
+        println!("########Came here######");
         Model::get_by_snapshot_id(pool, self.id).await
     }
 
     pub fn target_stddev(&self, name: &str) -> f32 {
-        match self.analysis
+        match self
+            .analysis
             .as_ref()
             .unwrap()
             .as_object()
             .unwrap()
-            .get(&format!("{}_stddev", name)) {
+            .get(&format!("{}_stddev", name))
+        {
             // 2.1
             Some(value) => value.as_f64().unwrap() as f32,
             // 2.2+
             None => {
                 let columns = self.columns().unwrap();
-                let column = columns.iter().find(|column|
-                    &column["name"].as_str().unwrap() == &name
-                );
+                let column = columns
+                    .iter()
+                    .find(|column| &column["name"].as_str().unwrap() == &name);
                 match column {
-                    Some(column) => {
-                        column.get("statistics")
-                            .unwrap()
-                            .as_object()
-                            .unwrap()
-                            .get("std_dev")
-                            .unwrap()
-                            .as_f64()
-                            .unwrap() as f32
-                    },
-                    None => 0.
+                    Some(column) => column
+                        .get("statistics")
+                        .unwrap()
+                        .as_object()
+                        .unwrap()
+                        .get("std_dev")
+                        .unwrap()
+                        .as_f64()
+                        .unwrap() as f32,
+                    None => 0.,
                 }
             }
         }

@@ -31,7 +31,7 @@ use sqlx::Executor;
 #[derive(Debug, Default, Clone)]
 pub struct Context {
     pub user: models::User,
-    pub cluster: models::Cluster, 
+    pub cluster: models::Cluster,
 }
 
 /// Globally shared state, saved in memory.
@@ -51,10 +51,13 @@ impl Clusters {
             .max_connections(5)
             .idle_timeout(std::time::Duration::from_millis(15_000))
             .min_connections(0)
-            .after_connect(|conn, _meta| Box::pin(async move {
-                conn.execute("SET application_name = 'pgml_dashboard';").await?;
-                Ok(())
-            }))
+            .after_connect(|conn, _meta| {
+                Box::pin(async move {
+                    conn.execute("SET application_name = 'pgml_dashboard';")
+                        .await?;
+                    Ok(())
+                })
+            })
             .connect_lazy(database_url)?;
 
         pools.insert(cluster_id, pool.clone());
@@ -440,8 +443,13 @@ pub async fn snapshots_index(cluster: Cluster) -> Result<ResponseOk, errors::Err
 pub async fn snapshots_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors::Error> {
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), id).await?;
     let samples = snapshot.samples(cluster.pool(), 500).await?;
+
+    println!("Samples: {:?}",samples);
+
     let models = snapshot.models(cluster.pool()).await?;
     let mut projects = HashMap::new();
+
+    
 
     for model in &models {
         projects.insert(model.project_id, model.project(cluster.pool()).await?);
