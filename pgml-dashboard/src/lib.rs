@@ -448,8 +448,7 @@ pub async fn snapshots_get(cluster: Cluster, id: i64) -> Result<ResponseOk, erro
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), id).await?;
     let samples = snapshot.samples(cluster.pool(), 500).await?;
 
-    println!("Samples: {:?}", samples);
-
+    
     let models = snapshot.models(cluster.pool()).await?;
     let mut projects = HashMap::new();
 

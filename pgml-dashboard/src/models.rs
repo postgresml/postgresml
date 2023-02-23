@@ -709,7 +709,6 @@ impl Snapshot {
     }
 
     pub async fn models(&self, pool: &PgPool) -> anyhow::Result<Vec<Model>> {
-        println!("########Came here######");
         Model::get_by_snapshot_id(pool, self.id).await
     }
 
