@@ -13,7 +13,7 @@
     <dt>Snapshot ID</dt>
     <dd><%= snapshot.id %></dd>
     <dt>Table Size</dt>
-    <dd><%= table_size %></dd>
+    <dd><%= snapshot.table_size %></dd>
     <dt>Rows</dt>
     <dd><%= snapshot.rows().unwrap() %></dd>
     <dt>Features</dt>
@@ -61,6 +61,7 @@
 </section>
 <% } %>
 
+<% if snapshot.exists { %>
 <section>
   <h2><span class="material-symbols-outlined">label_important</span>Labels</h2>
   <% for label in snapshot.labels().unwrap().iter() {
@@ -131,5 +132,9 @@
   }
   renderCharts();
 </script>
-
+<%} else { %>
+  <section>
+    <h2> Data no longer exists to plot statistics</h2>
+  </section>
+<% }%>
 <% include!("footer.html"); %>

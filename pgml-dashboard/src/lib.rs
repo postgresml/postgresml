@@ -400,12 +400,8 @@ pub async fn models_index(cluster: Cluster) -> Result<ResponseOk, errors::Error>
 #[get("/models/<id>")]
 pub async fn models_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors::Error> {
     let model = models::Model::get_by_id(cluster.pool(), id).await?;
-    let mut snapshot = models::Snapshot::get_by_id(cluster.pool(), model.snapshot_id).await?;
+    let snapshot = models::Snapshot::get_by_id(cluster.pool(), model.snapshot_id).await?;
     let project = models::Project::get_by_id(cluster.pool(), model.project_id).await?;
-
-    if !snapshot.relation_exists(cluster.pool()).await? {
-        snapshot.relation_name = String::from("");
-    }
 
     Ok(ResponseOk(
         templates::Model {
@@ -424,18 +420,11 @@ pub async fn models_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors:
 #[get("/snapshots")]
 pub async fn snapshots_index(cluster: Cluster) -> Result<ResponseOk, errors::Error> {
     let snapshots = models::Snapshot::all(cluster.pool()).await?;
-    let mut table_sizes = HashMap::new();
-
-    for snapshot in &snapshots {
-        let table_size = snapshot.table_size(cluster.pool()).await?;
-        table_sizes.insert(snapshot.id, table_size);
-    }
 
     Ok(ResponseOk(
         templates::Snapshots {
             topic: "snapshots".to_string(),
             snapshots,
-            table_sizes,
             context: cluster.context.clone(),
         }
         .render_once()
@@ -448,7 +437,6 @@ pub async fn snapshots_get(cluster: Cluster, id: i64) -> Result<ResponseOk, erro
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), id).await?;
     let samples = snapshot.samples(cluster.pool(), 500).await?;
 
-    
     let models = snapshot.models(cluster.pool()).await?;
     let mut projects = HashMap::new();
 
@@ -459,7 +447,6 @@ pub async fn snapshots_get(cluster: Cluster, id: i64) -> Result<ResponseOk, erro
     Ok(ResponseOk(
         templates::Snapshot {
             topic: "snapshots".to_string(),
-            table_size: snapshot.table_size(cluster.pool()).await?,
             snapshot,
             models,
             projects,

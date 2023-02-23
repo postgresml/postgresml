@@ -231,7 +231,6 @@ pub struct Model {
 pub struct Snapshots {
     pub topic: String,
     pub snapshots: Vec<models::Snapshot>,
-    pub table_sizes: HashMap<i64, String>,
     pub context: Context,
 }
 
@@ -242,7 +241,6 @@ pub struct Snapshot {
     pub snapshot: models::Snapshot,
     pub models: Vec<models::Model>,
     pub projects: HashMap<i64, models::Project>,
-    pub table_size: String,
     pub samples: HashMap<String, Vec<f32>>,
     pub context: Context,
 }

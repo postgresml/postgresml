@@ -536,6 +536,8 @@ pub struct Snapshot {
     pub analysis: Option<serde_json::Value>,
     pub created_at: PrimitiveDateTime,
     pub updated_at: PrimitiveDateTime,
+    pub exists: bool,
+    pub table_size: String,
 }
 
 impl Snapshot {
@@ -551,8 +553,22 @@ impl Snapshot {
                     columns,
                     analysis,
                     created_at,
-                    updated_at
-                FROM pgml.snapshots JOIN pg_class ON oid::regclass::text = relation_name"
+                    updated_at,
+                    CASE 
+                        WHEN EXISTS (
+                                SELECT 1
+                                FROM pg_class c
+                                WHERE c.oid::regclass::text = relation_name
+                            ) THEN pg_size_pretty(pg_total_relation_size(relation_name::regclass))
+                        ELSE '0 Bytes'
+                    END AS \"table_size!\", 
+                    EXISTS (
+                        SELECT 1
+                        FROM pg_class c
+                        WHERE c.oid::regclass::text = relation_name
+                    ) AS \"exists!\"
+                    FROM pgml.snapshots
+                    "
         )
         .fetch_all(pool)
         .await?)
@@ -569,50 +585,25 @@ impl Snapshot {
                     columns,
                     analysis,
                     created_at,
-                    updated_at
-                FROM pgml.snapshots
-                WHERE id = $1",
+                    updated_at,
+                    CASE 
+                        WHEN EXISTS (
+                                SELECT 1
+                                FROM pg_class c
+                                WHERE c.oid::regclass::text = relation_name
+                            ) THEN pg_size_pretty(pg_total_relation_size(relation_name::regclass))
+                        ELSE '0 Bytes'
+                    END AS \"table_size!\", 
+                    EXISTS (
+                        SELECT 1
+                        FROM pg_class c
+                        WHERE c.oid::regclass::text = relation_name
+                    ) AS \"exists!\"
+                    FROM pgml.snapshots WHERE id = $1",
             id,
         )
         .fetch_one(pool)
         .await?)
-    }
-
-    pub async fn relation_exists(&self, pool: &PgPool) -> anyhow::Result<bool> {
-        let relations_in_db = sqlx::query(
-            "SELECT relation_name from pgml.snapshots 
-            JOIN pg_class ON oid::regclass::text= relation_name",
-        )
-        .bind(&self.relation_name)
-        .fetch_all(pool)
-        .await?;
-
-        let mut relation_exists = false;
-
-        for relation in relations_in_db {
-            let value: String = relation.get("relation_name");
-            if value == self.relation_name {
-                relation_exists = true;
-            }
-        }
-        Ok(relation_exists)
-    }
-
-    pub async fn table_size(&self, pool: &PgPool) -> anyhow::Result<String> {
-        let relation_exists = self.relation_exists(pool).await?;
-
-        if relation_exists {
-            let row = sqlx::query(
-                "SELECT pg_size_pretty(pg_total_relation_size($1))::TEXT AS table_size",
-            )
-            .bind(&self.relation_name)
-            .fetch_one(pool)
-            .await?;
-
-            Ok(row.try_get("table_size")?)
-        } else {
-            Ok(String::from("0 bytes"))
-        }
     }
 
     pub fn rows(&self) -> Option<i64> {
@@ -630,10 +621,9 @@ impl Snapshot {
         pool: &PgPool,
         rows: i64,
     ) -> anyhow::Result<HashMap<String, Vec<f32>>> {
-        let relation_exists = self.relation_exists(pool).await?;
         let mut samples = HashMap::new();
 
-        if relation_exists {
+        if self.exists {
             let rows = sqlx::query(&format!(
                 "SELECT row_to_json(row) r
                 FROM (SELECT * FROM {} LIMIT $1) row",

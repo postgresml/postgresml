@@ -1,0 +1,9 @@
+
+SELECT id,relation_name,y_column_name,
+       CASE
+              WHEN pg_class.oid::regclass::text = relation_name
+	      THEN  pg_size_pretty(pg_total_relation_size(oid))
+       ELSE '0 Bytes'
+       END
+       AS table_size
+FROM pgml.snapshots 
