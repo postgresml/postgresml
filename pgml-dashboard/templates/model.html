@@ -12,8 +12,10 @@
   <dl>
     <dt>Project</dt>
     <dd><a href="/dashboard/projects/<%= project.id %>"><%= project.name %></a></dd>
+    <% if !snapshot.relation_name.is_empty() {%>
     <dt>Snapshot</dt>
     <dd><a href="/dashboard/snapshots/<%= snapshot.id %>"><%= snapshot.relation_name %></a></dd>
+    <%}%>
     <dt>Created</dt>
     <dd><time datetime="<% model.created_at; %>"><% model.created_at; %></time></dd>
   </dl>

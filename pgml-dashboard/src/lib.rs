@@ -400,9 +400,13 @@ pub async fn models_index(cluster: Cluster) -> Result<ResponseOk, errors::Error>
 #[get("/models/<id>")]
 pub async fn models_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors::Error> {
     let model = models::Model::get_by_id(cluster.pool(), id).await?;
-    let snapshot = models::Snapshot::get_by_id(cluster.pool(), model.snapshot_id).await?;
+    let mut snapshot = models::Snapshot::get_by_id(cluster.pool(), model.snapshot_id).await?;
     let project = models::Project::get_by_id(cluster.pool(), model.project_id).await?;
 
+    if !snapshot.relation_exists(cluster.pool()).await? {
+        snapshot.relation_name = String::from("");
+    }
+    
     Ok(ResponseOk(
         templates::Model {
             topic: "models".to_string(),
