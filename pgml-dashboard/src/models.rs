@@ -553,7 +553,8 @@ impl Snapshot {
                     created_at,
                     updated_at
                 FROM pgml.snapshots JOIN pg_class ON oid::regclass::text = relation_name"
-        ).fetch_all(pool)
+        )
+        .fetch_all(pool)
         .await?)
     }
     pub async fn get_by_id(pool: &PgPool, id: i64) -> anyhow::Result<Snapshot> {
