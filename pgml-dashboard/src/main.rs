@@ -29,3 +29,6 @@ async fn main() {
         .await
         .expect("failed to shut down Rocket");
 }
+
+
+mod tests;
