@@ -30,5 +30,4 @@ async fn main() {
         .expect("failed to shut down Rocket");
 }
 
-
 mod tests;
