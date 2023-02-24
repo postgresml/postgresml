@@ -1,11 +1,9 @@
 // Markdown
 use comrak::{markdown_to_html, ComrakExtensionOptions, ComrakOptions};
 
-use rocket::futures::TryFutureExt;
 // Templates
 use sailfish::TemplateOnce;
 
-use sqlx::postgres::PgRow;
 // Database
 use sqlx::postgres::types::PgInterval;
 use sqlx::types::time::PrimitiveDateTime;
@@ -19,7 +17,6 @@ use tokio::io::{AsyncBufReadExt, AsyncSeekExt};
 
 use crate::templates;
 use std::collections::HashMap;
-use std::str::FromStr;
 
 #[derive(FromRow, Debug, Clone)]
 pub struct Project {
