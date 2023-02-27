@@ -30,8 +30,6 @@ async fn main() {
         .expect("failed to shut down Rocket");
 }
 
-
-
 #[cfg(test)]
 mod test {
     use pgml_dashboard::Clusters;
@@ -62,7 +60,7 @@ mod test {
         let selector = Selector::parse("a").unwrap();
         let mut output = Vec::<String>::new();
         for element in document.select(&selector) {
-            let href =  element.value().attr("href").unwrap();
+            let href = element.value().attr("href").unwrap();
             if href.contains(pattern) && href != pattern {
                 output.push(String::from(href));
             }
@@ -114,17 +112,76 @@ mod test {
 
     #[rocket::async_test]
     async fn test_snapshot_entries() {
+        let snapshots_endpoint = "/dashboard/snapshots/";
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/snapshots/").dispatch().await;
+        let response = client.get(snapshots_endpoint).dispatch().await;
 
         let body = response.into_string().await.unwrap();
-        let snapshot_links =  get_href_links(body.as_str(),"/dashboard/snapshots/");
+        let snapshot_links = get_href_links(body.as_str(), snapshots_endpoint);
 
         for link in snapshot_links {
             let response = client.get(link.as_str()).dispatch().await;
             assert_eq!(response.status().code, 200);
         }
-        
-        
+    }
+
+    #[rocket::async_test]
+    async fn test_notebook_entries() {
+        let notebooks_endpoint = "/dashboard/notebooks/";
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let response = client.get(notebooks_endpoint).dispatch().await;
+
+        let body = response.into_string().await.unwrap();
+        let notebook_links = get_href_links(body.as_str(), notebooks_endpoint);
+
+        for link in notebook_links {
+            let response = client.get(link.as_str()).dispatch().await;
+            assert_eq!(response.status().code, 200);
+        }
+    }
+
+    #[rocket::async_test]
+    async fn test_project_entries() {
+        let projects_endpoint = "/dashboard/projects/";
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let response = client.get(projects_endpoint).dispatch().await;
+
+        let body = response.into_string().await.unwrap();
+        let project_links = get_href_links(body.as_str(), projects_endpoint);
+
+        for link in project_links {
+            let response = client.get(link.as_str()).dispatch().await;
+            assert_eq!(response.status().code, 200);
+        }
+    }
+
+    #[rocket::async_test]
+    async fn test_model_entries() {
+        let models_endpoint = "/dashboard/models/";
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let response = client.get(models_endpoint).dispatch().await;
+
+        let body = response.into_string().await.unwrap();
+        let model_links = get_href_links(body.as_str(), models_endpoint);
+
+        for link in model_links {
+            let response = client.get(link.as_str()).dispatch().await;
+            assert_eq!(response.status().code, 200);
+        }
+    }
+
+    #[rocket::async_test]
+    async fn test_deployment_entries() {
+        let deployments_endpoint = "/dashboard/deployments/";
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let response = client.get(deployments_endpoint).dispatch().await;
+
+        let body = response.into_string().await.unwrap();
+        let deployment_links = get_href_links(body.as_str(), deployments_endpoint);
+
+        for link in deployment_links {
+            let response = client.get(link.as_str()).dispatch().await;
+            assert_eq!(response.status().code, 200);
+        }
     }
 }
