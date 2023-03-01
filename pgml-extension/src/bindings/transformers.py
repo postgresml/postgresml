@@ -22,22 +22,25 @@ def load_dataset(name, subset, limit: None, kwargs: "{}"):
     else:
         dataset = datasets.load_dataset(name, subset, **kwargs)
 
-    dict = None
+    data = None
+    types = None
     if isinstance(dataset, datasets.Dataset):
-        sample = dataset.to_dict()
+        data = dataset.to_dict()
+        types = {name: feature.dtype for name, feature in dataset.features.items()}
     elif isinstance(dataset, datasets.DatasetDict):
-        dict = {}
+        data = {}
         # Merge train/test splits, we'll re-split back in PostgresML.
         for name, split in dataset.items():
+            types = {name: feature.dtype for name, feature in split.features.items()}
             for field, values in split.to_dict().items():
-                if field in dict:
-                    dict[field] += values
+                if field in data:
+                    data[field] += values
                 else:
-                    dict[field] = values
+                    data[field] = values
     else:
         raise PgMLException(f"Unhandled dataset type: {type(dataset)}")
 
-    return json.dumps(dict)
+    return json.dumps({"data": data, "types": types})
 
 
 class Model:

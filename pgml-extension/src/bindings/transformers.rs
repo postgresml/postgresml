@@ -73,38 +73,34 @@ pub fn load_dataset(
 
     // Columns are a (name: String, values: Vec<Value>) pair
     let json: serde_json::Value = serde_json::from_str(&dataset).unwrap();
-    let columns = json.as_object().unwrap();
-    let column_names = columns
+    let json = json.as_object().unwrap();
+    let types = json.get("types").unwrap().as_object().unwrap();
+    let data = json.get("data").unwrap().as_object().unwrap();
+    let column_names = types
         .iter()
-        .map(|(key, _values)| key.clone())
+        .map(|(name, _type)| name.clone())
         .collect::<Vec<String>>()
         .join(", ");
-    let column_types = columns
+    let column_types = types
         .iter()
-        .map(|(key, values)| {
-            let mut column = format!("{key} ");
-            let first_value = values.as_array().unwrap().first().unwrap();
-            if first_value.is_boolean() {
-                column.push_str("BOOLEAN");
-            } else if first_value.is_i64() {
-                column.push_str("INT8");
-            } else if first_value.is_f64() {
-                column.push_str("FLOAT8");
-            } else if first_value.is_string() {
-                column.push_str("TEXT");
-            } else if first_value.is_object() {
-                column.push_str("JSONB");
-            } else {
-                error!("unhandled pg_type reading dataset: {:?}", first_value);
+        .map(|(name, type_)| {
+            let type_ = match type_.as_str().unwrap() {
+                "string" => "TEXT",
+                "dict" => "JSONB",
+                "int64" => "INT8",
+                "int32" => "INT4",
+                "int16" => "INT2",
+                "float64" => "FLOAT8",
+                "float32" => "FLOAT4",
+                "float16" => "FLOAT4",
+                "bool" => "BOOLEAN",
+                _ => error!("unhandled dataset feature while reading dataset: {:?}", type_),
             };
-            column
+            format!("{name} {type_}")
         })
         .collect::<Vec<String>>()
         .join(", ");
-
-    let num_cols = columns.keys().len();
-    let num_rows = columns.values().next().unwrap().as_array().unwrap().len();
-    let placeholders = columns
+    let column_placeholders = types
         .iter()
         .enumerate()
         .map(|(i, _)| {
@@ -113,41 +109,38 @@ pub fn load_dataset(
         })
         .collect::<Vec<String>>()
         .join(", ");
+    let num_cols = types.len();
+    let num_rows = data.values().next().unwrap().as_array().unwrap().len();
     Spi::run(&format!(r#"DROP TABLE IF EXISTS {table_name}"#)).unwrap();
     Spi::run(&format!(r#"CREATE TABLE {table_name} ({column_types})"#)).unwrap();
-    let insert = format!(r#"INSERT INTO {table_name} ({column_names}) VALUES ({placeholders})"#);
+    let insert = format!(r#"INSERT INTO {table_name} ({column_names}) VALUES ({column_placeholders})"#);
     for i in 0..num_rows {
         let mut row = Vec::with_capacity(num_cols);
-        for (_column, values) in columns {
+        for (name, values) in data {
             let value = values.as_array().unwrap().get(i).unwrap();
-            if value.is_boolean() {
-                row.push((
-                    PgBuiltInOids::BOOLOID.oid(),
-                    value.as_bool().unwrap().into_datum(),
-                ));
-            } else if value.is_i64() {
-                row.push((
-                    PgBuiltInOids::INT8OID.oid(),
-                    value.as_i64().unwrap().into_datum(),
-                ));
-            } else if value.is_f64() {
-                row.push((
-                    PgBuiltInOids::FLOAT8OID.oid(),
-                    value.as_f64().unwrap().into_datum(),
-                ));
-            } else if value.is_string() {
-                row.push((
+            match types.get(name).unwrap().as_str().unwrap() {
+                "string" => row.push((
                     PgBuiltInOids::TEXTOID.oid(),
                     value.as_str().unwrap().into_datum(),
-                ));
-            } else if value.is_object() {
-                row.push((
+                )),
+                "dict" => row.push((
                     PgBuiltInOids::JSONBOID.oid(),
                     JsonB(value.clone()).into_datum(),
-                ));
-            } else {
-                error!("unhandled pg_type reading row: {:?}", value);
-            };
+                )),
+                "int64" | "int32" | "int16" => row.push((
+                    PgBuiltInOids::INT8OID.oid(),
+                    value.as_i64().unwrap().into_datum(),
+                )),
+                "float64" | "float32" | "float16" => row.push((
+                    PgBuiltInOids::FLOAT8OID.oid(),
+                    value.as_f64().unwrap().into_datum(),
+                )),
+                "bool" => row.push((
+                    PgBuiltInOids::BOOLOID.oid(),
+                    value.as_bool().unwrap().into_datum(),
+                )),
+                type_ => error!("unhandled dataset value type while reading dataset: {:?} {:?}", value, type_),
+            }
         }
         Spi::run_with_args(&insert, Some(row)).unwrap();
     }
