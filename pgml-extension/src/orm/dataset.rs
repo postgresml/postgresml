@@ -139,7 +139,8 @@ pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
         "worst fractal dimension" FLOAT4,
         "malignant" BOOLEAN
     )"#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let limit = match limit {
         Some(limit) => limit,
@@ -312,7 +313,8 @@ pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
         s6 FLOAT4, 
         target FLOAT4
     )",
-    ).unwrap();
+    )
+    .unwrap();
 
     let limit = match limit {
         Some(limit) => limit,
@@ -347,7 +349,8 @@ pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
                 (PgBuiltInOids::FLOAT4OID.oid(), row.s6.into_datum()),
                 (PgBuiltInOids::FLOAT4OID.oid(), row.target.into_datum()),
             ]),
-        ).unwrap();
+        )
+        .unwrap();
         inserted += 1;
     }
 
@@ -388,7 +391,8 @@ pub fn load_digits(limit: Option<usize>) -> (String, i64) {
                 (PgBuiltInOids::TEXTOID.oid(), row.image.into_datum()),
                 (PgBuiltInOids::INT2OID.oid(), row.target.into_datum()),
             ]),
-        ).unwrap();
+        )
+        .unwrap();
         inserted += 1;
     }
 
@@ -414,7 +418,8 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
         petal_width FLOAT4, 
         target INT4
     )",
-    ).unwrap();
+    )
+    .unwrap();
 
     let limit = match limit {
         Some(limit) => limit,
@@ -449,7 +454,8 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
                 (PgBuiltInOids::FLOAT4OID.oid(), row.petal_width.into_datum()),
                 (PgBuiltInOids::INT4OID.oid(), row.target.into_datum()),
             ]),
-        ).unwrap();
+        )
+        .unwrap();
         inserted += 1;
     }
 
@@ -477,7 +483,8 @@ pub fn load_linnerud(limit: Option<usize>) -> (String, i64) {
         waist FLOAT4,
         pulse FLOAT4
     )",
-    ).unwrap();
+    )
+    .unwrap();
 
     let limit = match limit {
         Some(limit) => limit,
@@ -507,7 +514,8 @@ pub fn load_linnerud(limit: Option<usize>) -> (String, i64) {
                 (PgBuiltInOids::FLOAT4OID.oid(), row.waist.into_datum()),
                 (PgBuiltInOids::FLOAT4OID.oid(), row.pulse.into_datum()),
             ]),
-        ).unwrap();
+        )
+        .unwrap();
         inserted += 1;
     }
 
@@ -551,7 +559,8 @@ pub fn load_wine(limit: Option<usize>) -> (String, i64) {
             proline FLOAT4,
             target INT4
         )"#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let limit = match limit {
         Some(limit) => limit,

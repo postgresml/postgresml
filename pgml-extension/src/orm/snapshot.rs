@@ -1,10 +1,10 @@
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
-use std::collections::HashMap;
 
-use ndarray::Zip;
 use indexmap::IndexMap;
+use ndarray::Zip;
 use pgx::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -142,8 +142,7 @@ impl Column {
 
     fn nominal_type(pg_type: &str) -> bool {
         match pg_type {
-            "bpchar" | "text" | "varchar" |
-            "bpchar[]" | "text[]" | "varchar[]" => true,
+            "bpchar" | "text" | "varchar" | "bpchar[]" | "text[]" | "varchar[]" => true,
             _ => false,
         }
     }
@@ -164,10 +163,15 @@ impl Column {
     pub(crate) fn scale(&self, value: f32) -> f32 {
         match self.preprocessor.scale {
             Scale::standard => (value - self.statistics.mean) / self.statistics.std_dev,
-            Scale::min_max => (value - self.statistics.min) / (self.statistics.max - self.statistics.min),
+            Scale::min_max => {
+                (value - self.statistics.min) / (self.statistics.max - self.statistics.min)
+            }
             Scale::max_abs => value / self.statistics.max_abs,
-            Scale::robust => (value - self.statistics.median) / (self.statistics.ventiles[15] - self.statistics.ventiles[5]),
-            Scale::preserve => value
+            Scale::robust => {
+                (value - self.statistics.median)
+                    / (self.statistics.ventiles[15] - self.statistics.ventiles[5])
+            }
+            Scale::preserve => value,
         }
     }
 
@@ -191,7 +195,7 @@ impl Column {
     pub(crate) fn encoded_width(&self) -> usize {
         match self.preprocessor.encode {
             Encode::one_hot => self.statistics.categories.as_ref().unwrap().len() - 1,
-            _ => 1
+            _ => 1,
         }
     }
 
@@ -199,7 +203,13 @@ impl Column {
         self.size
     }
 
-    pub(crate) fn preprocess(&self, data: &ndarray::ArrayView<f32, ndarray::Ix1>, processed_data: &mut Vec<f32>, features_width: usize, position: usize) {
+    pub(crate) fn preprocess(
+        &self,
+        data: &ndarray::ArrayView<f32, ndarray::Ix1>,
+        processed_data: &mut Vec<f32>,
+        features_width: usize,
+        position: usize,
+    ) {
         for (row, &d) in data.iter().enumerate() {
             let value = self.impute(d);
             match &self.preprocessor.encode {
@@ -208,13 +218,17 @@ impl Column {
                         let one_hot = if i == value as usize { 1. } else { 0. } as f32;
                         processed_data[row * features_width + position + i] = one_hot;
                     }
-                },
+                }
                 _ => processed_data[row * features_width + position] = self.scale(value),
             };
         }
     }
 
-    fn analyze(&mut self, array: &ndarray::ArrayView<f32, ndarray::Ix1>, target: &ndarray::ArrayView<f32, ndarray::Ix1>) {
+    fn analyze(
+        &mut self,
+        array: &ndarray::ArrayView<f32, ndarray::Ix1>,
+        target: &ndarray::ArrayView<f32, ndarray::Ix1>,
+    ) {
         // target encode if necessary before analyzing
         match &self.preprocessor.encode {
             Encode::target_mean => {
@@ -232,21 +246,32 @@ impl Column {
         }
 
         // Data is filtered for NaN because it is not well defined statistically, and they are counted as separate stat
-        let mut data = array.iter().filter_map(|n| if n.is_nan() { None } else { Some(*n) }).collect::<Vec<f32>>();
+        let mut data = array
+            .iter()
+            .filter_map(|n| if n.is_nan() { None } else { Some(*n) })
+            .collect::<Vec<f32>>();
         data.sort_by(|a, b| a.total_cmp(&b));
 
         // FixMe: Arrays are analyzed many times, clobbering/appending to the same stats, columns are also re-analyzed in memory during tests, which can cause unnexpected failures
         let mut statistics = &mut self.statistics;
         statistics.min = *data.first().unwrap();
         statistics.max = *data.last().unwrap();
-        statistics.max_abs = if statistics.min.abs() > statistics.max.abs() { statistics.min.abs() } else { statistics.max.abs() };
+        statistics.max_abs = if statistics.min.abs() > statistics.max.abs() {
+            statistics.min.abs()
+        } else {
+            statistics.max.abs()
+        };
         statistics.mean = data.iter().sum::<f32>() / data.len() as f32;
         statistics.median = data[data.len() / 2];
         statistics.missing = array.len() - data.len();
-        statistics.variance = data.iter().map(|i| {
-            let diff = statistics.mean - (*i);
-            diff * diff
-        }).sum::<f32>() / data.len() as f32;
+        statistics.variance = data
+            .iter()
+            .map(|i| {
+                let diff = statistics.mean - (*i);
+                diff * diff
+            })
+            .sum::<f32>()
+            / data.len() as f32;
         statistics.std_dev = statistics.variance.sqrt();
         let mut i = 0;
         let histogram_boundaries = ndarray::Array::linspace(statistics.min, statistics.max, 21);
@@ -263,7 +288,7 @@ impl Column {
             if value == previous {
                 streak += 1;
             } else if !previous.is_nan() {
-                if streak > max_streak  {
+                if streak > max_streak {
                     modes = vec![previous];
                     max_streak = streak;
                 } else if streak == max_streak {
@@ -443,7 +468,8 @@ impl Snapshot {
                 let jsonb: JsonB = result.get(7).unwrap().unwrap();
                 let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
                 let jsonb: JsonB = result.get(8).unwrap().unwrap();
-                let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
+                let analysis: Option<IndexMap<String, f32>> =
+                    Some(serde_json::from_value(jsonb.0).unwrap());
 
                 let mut s = Snapshot {
                     id: result.get(1).unwrap().unwrap(),
@@ -481,7 +507,8 @@ impl Snapshot {
         // Validate table exists.
         let (schema_name, table_name) = Self::fully_qualified_table(relation_name);
 
-        let preprocessors: HashMap<String, Preprocessor> = serde_json::from_value(preprocess.0).expect("is valid");
+        let preprocessors: HashMap<String, Preprocessor> =
+            serde_json::from_value(preprocess.0).expect("is valid");
 
         Spi::connect(|client| {
             let mut columns: Vec<Column> = Vec::new();
@@ -604,7 +631,7 @@ impl Snapshot {
     }
 
     pub(crate) fn labels(&self) -> impl Iterator<Item = &Column> {
-        self.columns.iter().filter(|c| c.label )
+        self.columns.iter().filter(|c| c.label)
     }
 
     pub(crate) fn label_positions(&self) -> Vec<ColumnRowPosition> {
@@ -612,7 +639,10 @@ impl Snapshot {
         let mut row_position = 0;
         for column in self.labels() {
             for _ in 0..column.size {
-                label_positions.push(ColumnRowPosition {column_position: column.position, row_position});
+                label_positions.push(ColumnRowPosition {
+                    column_position: column.position,
+                    row_position,
+                });
                 row_position += column.encoded_width();
             }
         }
@@ -620,7 +650,7 @@ impl Snapshot {
     }
 
     pub(crate) fn features(&self) -> impl Iterator<Item = &Column> {
-        self.columns.iter().filter(|c| !c.label )
+        self.columns.iter().filter(|c| !c.label)
     }
 
     pub(crate) fn feature_positions(&self) -> Vec<ColumnRowPosition> {
@@ -628,7 +658,10 @@ impl Snapshot {
         let mut row_position = 0;
         for column in self.features() {
             for _ in 0..column.size {
-                feature_positions.push(ColumnRowPosition {column_position: column.position, row_position});
+                feature_positions.push(ColumnRowPosition {
+                    column_position: column.position,
+                    row_position,
+                });
                 row_position += column.encoded_width();
             }
         }
@@ -636,11 +669,14 @@ impl Snapshot {
     }
 
     pub(crate) fn num_labels(&self) -> usize {
-        self.labels().map(|f| f.size ).sum::<usize>()
+        self.labels().map(|f| f.size).sum::<usize>()
     }
 
     pub(crate) fn first_label(&self) -> &Column {
-        self.labels().filter(|l| l.name == self.y_column_name[0] ).next().unwrap()
+        self.labels()
+            .filter(|l| l.name == self.y_column_name[0])
+            .next()
+            .unwrap()
     }
 
     pub(crate) fn num_classes(&self) -> usize {
@@ -651,14 +687,14 @@ impl Snapshot {
     }
 
     pub(crate) fn num_features(&self) -> usize {
-        self.features().map(|c| c.size ).sum::<usize>()
+        self.features().map(|c| c.size).sum::<usize>()
     }
 
     pub(crate) fn features_width(&self) -> usize {
-        self.features().map(|f| f.array_width() * f.encoded_width() ).sum::<usize>()
+        self.features()
+            .map(|f| f.array_width() * f.encoded_width())
+            .sum::<usize>()
     }
-
-
 
     fn fully_qualified_table(relation_name: &str) -> (String, String) {
         let parts = relation_name
@@ -713,9 +749,13 @@ impl Snapshot {
 
         // Analyze labels
         let label_data = ndarray::ArrayView2::from_shape(
-            (numeric_encoded_dataset.num_train_rows, numeric_encoded_dataset.num_labels),
+            (
+                numeric_encoded_dataset.num_train_rows,
+                numeric_encoded_dataset.num_labels,
+            ),
             &numeric_encoded_dataset.y_train,
-        ).unwrap();
+        )
+        .unwrap();
         // The data for the first label
         let target_data = label_data.columns().into_iter().next().unwrap();
 
@@ -728,9 +768,13 @@ impl Snapshot {
 
         // Analyze features
         let feature_data = ndarray::ArrayView2::from_shape(
-            (numeric_encoded_dataset.num_train_rows, numeric_encoded_dataset.num_features),
+            (
+                numeric_encoded_dataset.num_train_rows,
+                numeric_encoded_dataset.num_features,
+            ),
             &numeric_encoded_dataset.x_train,
-        ).unwrap();
+        )
+        .unwrap();
         Zip::from(feature_data.columns())
             .and(&self.feature_positions())
             .for_each(|data, position| {
@@ -739,18 +783,28 @@ impl Snapshot {
             });
 
         let mut analysis = IndexMap::new();
-        analysis.insert("samples".to_string(), numeric_encoded_dataset.num_rows as f32);
+        analysis.insert(
+            "samples".to_string(),
+            numeric_encoded_dataset.num_rows as f32,
+        );
         self.analysis = Some(analysis);
 
         // Record the analysis
         Spi::run_with_args(
             "UPDATE pgml.snapshots SET analysis = $1, columns = $2 WHERE id = $3",
             Some(vec![
-                (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.analysis)).into_datum()),
-                (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.columns)).into_datum()),
+                (
+                    PgBuiltInOids::JSONBOID.oid(),
+                    JsonB(json!(self.analysis)).into_datum(),
+                ),
+                (
+                    PgBuiltInOids::JSONBOID.oid(),
+                    JsonB(json!(self.columns)).into_datum(),
+                ),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
-            ])
-        ).unwrap();
+            ]),
+        )
+        .unwrap();
 
         let features_width = self.features_width();
         let mut x_train = vec![0_f32; features_width * numeric_encoded_dataset.num_train_rows];
@@ -763,9 +817,13 @@ impl Snapshot {
 
         let mut x_test = vec![0_f32; features_width * numeric_encoded_dataset.num_test_rows];
         let test_features = ndarray::ArrayView2::from_shape(
-            (numeric_encoded_dataset.num_test_rows, numeric_encoded_dataset.num_features),
+            (
+                numeric_encoded_dataset.num_test_rows,
+                numeric_encoded_dataset.num_features,
+            ),
             &numeric_encoded_dataset.x_test,
-        ).unwrap();
+        )
+        .unwrap();
         Zip::from(test_features.columns())
             .and(&self.feature_positions())
             .for_each(|data, position| {
@@ -1009,6 +1067,9 @@ fn check_column_size(column: &mut Column, len: usize) {
     if column.size == 0 {
         column.size = len;
     } else if column.size != len {
-        error!("Mismatched array length for feature `{}`. Expected: {} Received: {}", column.name, column.size, len);
+        error!(
+            "Mismatched array length for feature `{}`. Expected: {} Received: {}",
+            column.name, column.size, len
+        );
     }
 }

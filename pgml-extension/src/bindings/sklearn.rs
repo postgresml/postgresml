@@ -17,7 +17,7 @@ use crate::bindings::Bindings;
 
 use crate::orm::*;
 
-static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(||
+static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
         let src = include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
@@ -26,7 +26,7 @@ static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(||
 
         PyModule::from_code(py, src, "", "").unwrap().into()
     })
-);
+});
 
 pub fn linear_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
     fit(dataset, hyperparams, "linear_regression")
@@ -412,15 +412,15 @@ impl Bindings for Estimator {
         Python::with_gil(|py| -> Box<dyn Bindings> {
             let load = PY_MODULE.getattr(py, "load").unwrap();
             let estimator: Py<PyAny> = load
-                .call1(py,PyTuple::new(py, &[bytes]))
+                .call1(py, PyTuple::new(py, &[bytes]))
                 .unwrap()
                 .extract(py)
                 .unwrap();
 
             let predict: Py<PyAny> = PY_MODULE
-                .getattr(py,"predictor")
+                .getattr(py, "predictor")
                 .unwrap()
-                .call1(py,PyTuple::new(py, &[&estimator]))
+                .call1(py, PyTuple::new(py, &[&estimator]))
                 .unwrap()
                 .extract(py)
                 .unwrap();
@@ -428,7 +428,7 @@ impl Bindings for Estimator {
             let predict_proba: Py<PyAny> = PY_MODULE
                 .getattr(py, "predictor_proba")
                 .unwrap()
-                .call1(py,PyTuple::new(py, &[&estimator]))
+                .call1(py, PyTuple::new(py, &[&estimator]))
                 .unwrap()
                 .extract(py)
                 .unwrap();
@@ -446,7 +446,7 @@ fn sklearn_metric(name: &str, ground_truth: &[f32], y_hat: &[f32]) -> f32 {
     Python::with_gil(|py| -> f32 {
         let calculate_metric = PY_MODULE.getattr(py, "calculate_metric").unwrap();
         let wrapper: Py<PyAny> = calculate_metric
-            .call1(py,PyTuple::new(py, &[name]))
+            .call1(py, PyTuple::new(py, &[name]))
             .unwrap()
             .extract(py)
             .unwrap();
@@ -481,7 +481,7 @@ pub fn confusion_matrix(ground_truth: &[f32], y_hat: &[f32]) -> Vec<Vec<f32>> {
     Python::with_gil(|py| -> Vec<Vec<f32>> {
         let calculate_metric = PY_MODULE.getattr(py, "calculate_metric").unwrap();
         let wrapper: Py<PyAny> = calculate_metric
-            .call1(py,PyTuple::new(py, &["confusion_matrix"]))
+            .call1(py, PyTuple::new(py, &["confusion_matrix"]))
             .unwrap()
             .extract(py)
             .unwrap();
@@ -498,9 +498,9 @@ pub fn confusion_matrix(ground_truth: &[f32], y_hat: &[f32]) -> Vec<Vec<f32>> {
 
 pub fn regression_metrics(ground_truth: &[f32], y_hat: &[f32]) -> HashMap<String, f32> {
     Python::with_gil(|py| -> HashMap<String, f32> {
-        let calculate_metric = PY_MODULE.getattr(py,"regression_metrics").unwrap();
+        let calculate_metric = PY_MODULE.getattr(py, "regression_metrics").unwrap();
         let scores: HashMap<String, f32> = calculate_metric
-            .call1(py,PyTuple::new(py, &[ground_truth, y_hat]))
+            .call1(py, PyTuple::new(py, &[ground_truth, y_hat]))
             .unwrap()
             .extract(py)
             .unwrap();
@@ -517,7 +517,7 @@ pub fn classification_metrics(
     let mut scores = Python::with_gil(|py| -> HashMap<String, f32> {
         let calculate_metric = PY_MODULE.getattr(py, "classification_metrics").unwrap();
         let scores: HashMap<String, f32> = calculate_metric
-            .call1(py,PyTuple::new(py, &[ground_truth, y_hat]))
+            .call1(py, PyTuple::new(py, &[ground_truth, y_hat]))
             .unwrap()
             .extract(py)
             .unwrap();

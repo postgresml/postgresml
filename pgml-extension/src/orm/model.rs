@@ -10,8 +10,8 @@ use indexmap::IndexMap;
 use itertools::{izip, Itertools};
 use ndarray::ArrayView1;
 use once_cell::sync::Lazy;
-use pgx::*;
 use pgx::heap_tuple::PgHeapTuple;
+use pgx::*;
 use rand::prelude::SliceRandom;
 use serde_json::json;
 
@@ -154,8 +154,9 @@ impl Model {
                     Status::successful.to_string().into_datum(),
                 ),
                 (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
-            ])
-        ).unwrap();
+            ]),
+        )
+        .unwrap();
 
         model
     }
@@ -189,7 +190,9 @@ impl Model {
                         WHERE files.model_id = $1
                         LIMIT 1",
                     vec![(PgBuiltInOids::INT8OID.oid(), id.into_datum())],
-                ).unwrap().unwrap();
+                )
+                .unwrap()
+                .unwrap();
 
                 let bindings: Box<dyn Bindings> = match runtime {
                     Runtime::rust => {
@@ -240,7 +243,8 @@ impl Model {
                     status: Status::from_str(result.get(7).unwrap().unwrap()).unwrap(),
                     metrics: result.get(8).unwrap(),
                     search: result
-                        .get(9).unwrap()
+                        .get(9)
+                        .unwrap()
                         .map(|search| Search::from_str(search).unwrap()),
                     search_params: result.get(10).unwrap().unwrap(),
                     search_args: result.get(11).unwrap().unwrap(),
@@ -257,7 +261,12 @@ impl Model {
             result
         });
 
-        model.unwrap_or_else(|| error!("pgml.models WHERE id = {:?} could not be loaded. Does it exist?", id))
+        model.unwrap_or_else(|| {
+            error!(
+                "pgml.models WHERE id = {:?} could not be loaded. Does it exist?",
+                id
+            )
+        })
     }
 
     pub fn find_cached(id: i64) -> Arc<Model> {
@@ -536,7 +545,7 @@ impl Model {
                 // This one is inaccurate, I have it in my TODO to reimplement.
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
             }
-            _ => error!("no tests for huggingface")
+            _ => error!("no tests for huggingface"),
         }
 
         metrics
@@ -628,7 +637,7 @@ impl Model {
                 check_for_interrupts!();
             })
         }
-            .unwrap();
+        .unwrap();
 
         let mut n_iter: usize = 10;
         let mut cv: usize = if self.search.is_some() { 5 } else { 1 };
@@ -799,7 +808,7 @@ impl Model {
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ],
         )
-            .unwrap();
+        .unwrap();
 
         // Save the bindings.
         Spi::get_one_with_args::<i64>(
@@ -830,42 +839,73 @@ impl Model {
                                     pgx_pg_sys::UNKNOWNOID => {
                                         error!("Type information missing for column: {:?}. If this is intended to be a TEXT or other categorical column, you will need to explicitly cast it, e.g. change `{:?}` to `CAST({:?} AS TEXT)`.", column.name, column.name, column.name);
                                     }
-                                    pgx_pg_sys::TEXTOID | pgx_pg_sys::VARCHAROID | pgx_pg_sys::BPCHAROID => {
+                                    pgx_pg_sys::TEXTOID
+                                    | pgx_pg_sys::VARCHAROID
+                                    | pgx_pg_sys::BPCHAROID => {
                                         let element: Result<Option<String>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().unwrap_or(snapshot::NULL_CATEGORY_KEY.to_string())
+                                        element
+                                            .unwrap()
+                                            .unwrap_or(snapshot::NULL_CATEGORY_KEY.to_string())
                                     }
                                     pgx_pg_sys::BOOLOID => {
                                         let element: Result<Option<bool>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
                                     pgx_pg_sys::INT2OID => {
                                         let element: Result<Option<i16>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
                                     pgx_pg_sys::INT4OID => {
                                         let element: Result<Option<i32>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
                                     pgx_pg_sys::INT8OID => {
                                         let element: Result<Option<i64>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
                                     pgx_pg_sys::FLOAT4OID => {
                                         let element: Result<Option<f32>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
                                     pgx_pg_sys::FLOAT8OID => {
                                         let element: Result<Option<f64>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
-                                    _ => error!("Unsupported type for categorical column: {:?}. oid: {:?}", column.name, attribute.atttypid),
+                                    _ => error!(
+                                        "Unsupported type for categorical column: {:?}. oid: {:?}",
+                                        column.name, attribute.atttypid
+                                    ),
                                 };
                                 let value = column.get_category_value(&key);
                                 features.push(value);
@@ -878,22 +918,27 @@ impl Model {
                                     pgx_pg_sys::BOOLOID => {
                                         let element: Result<Option<bool>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as u8 as f32));
+                                        features.push(
+                                            element.unwrap().map_or(f32::NAN, |v| v as u8 as f32),
+                                        );
                                     }
                                     pgx_pg_sys::INT2OID => {
                                         let element: Result<Option<i16>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        features
+                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgx_pg_sys::INT4OID => {
                                         let element: Result<Option<i32>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        features
+                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgx_pg_sys::INT8OID => {
                                         let element: Result<Option<i64>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        features
+                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgx_pg_sys::FLOAT4OID => {
                                         let element: Result<Option<f32>, TryFromDatumError> =
@@ -903,7 +948,8 @@ impl Model {
                                     pgx_pg_sys::FLOAT8OID => {
                                         let element: Result<Option<f64>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        features
+                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     // TODO handle NULL to NaN for arrays
                                     pgx_pg_sys::BOOLARRAYOID => {
@@ -948,13 +994,18 @@ impl Model {
                                             features.push(*j as f32);
                                         }
                                     }
-                                    _ => error!("Unsupported type for quantitative column: {:?}. oid: {:?}", column.name, attribute.atttypid),
+                                    _ => error!(
+                                        "Unsupported type for quantitative column: {:?}. oid: {:?}",
+                                        column.name, attribute.atttypid
+                                    ),
                                 }
                             }
                         }
                     }
                 }
-                _ => error!("This preprocessing requires Postgres `record` types created with `row()`.")
+                _ => error!(
+                    "This preprocessing requires Postgres `record` types created with `row()`."
+                ),
             }
         }
         features
@@ -972,8 +1023,7 @@ impl Model {
                 .as_ref()
                 .unwrap()
                 .predict_proba(features, self.num_features),
-            _ => error!("no predict_proba for huggingface")
-
+            _ => error!("no predict_proba for huggingface"),
         }
     }
 
@@ -987,7 +1037,7 @@ impl Model {
             Task::classification => {
                 error!("You can't predict joint probabilities for a classification model")
             }
-            _ => error!("no predict_joint for huggingface")
+            _ => error!("no predict_joint for huggingface"),
         }
     }
 

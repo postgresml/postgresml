@@ -51,7 +51,8 @@ impl Project {
                     ORDER BY deployments.created_at DESC
                     LIMIT 1",
                     vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
-                ).unwrap();
+                )
+                .unwrap();
                 let project_id = project_id.unwrap_or_else(|| {
                     error!(
                         "No deployed model exists for the project named: `{}`",
