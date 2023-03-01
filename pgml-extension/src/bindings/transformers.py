@@ -14,75 +14,33 @@ def transform(task, args, inputs):
 
     return json.dumps(pipe(inputs, **args))
 
-def load_dataset(name, subset, limit: None, **kwargs):
+def load_dataset(name, subset, limit: None, kwargs: "{}"):
+    kwargs = json.loads(kwargs)
+
     if limit:
         dataset = datasets.load_dataset(name, subset, split=f"train[:{limit}]", **kwargs)
     else:
         dataset = datasets.load_dataset(name, subset, **kwargs)
 
+    dict = None
     if isinstance(dataset, datasets.Dataset):
-        sample = dataset[0]
+        sample = dataset.to_dict()
     elif isinstance(dataset, datasets.DatasetDict):
-        sample = dataset["train"][0]
+        dict = {}
+        # Merge train/test splits, we'll re-split back in PostgresML.
+        for name, split in dataset.items():
+            for field, values in split.to_dict().items():
+                if field in dict:
+                    dict[field] += values
+                else:
+                    dict[field] = values
     else:
         raise PgMLException(f"Unhandled dataset type: {type(dataset)}")
 
-    columns = OrderedDict()
-    for key, value in sample.items():
-        column = c(key)
-        columns[column] = _PYTHON_TO_PG_MAP[type(value)]
-
-    table_name = f"pgml.{c(name)}"
-    plpy.execute(f"DROP TABLE IF EXISTS {table_name}")
-    plpy.execute(f"""CREATE TABLE {table_name} ({", ".join([f"{name} {type}" for name, type in columns.items()])})""")
-
-    if isinstance(dataset, datasets.Dataset):
-        load_dataset_rows(dataset, table_name)
-    elif isinstance(dataset, datasets.DatasetDict):
-        for name, rows in dataset.items():
-            if name == "unsupervised":
-                # postgresml doesn't provide unsupervised learning methods
-                continue
-            load_dataset_rows(rows, table_name)
+    return json.dumps(dict)
 
 
-def load_dataset_rows(rows, table_name):
-    for row in rows:
-        plpy.execute(
-            f"""INSERT INTO {table_name} ({", ".join([c(v) for v in row.keys()])}) 
-            VALUES ({", ".join([q(v) for v in row.values()])})"""
-        )
-
-
-def transform(task, args, inputs):
-    cache = args.pop("cache", True)
-
-    # construct the cache key from task
-    key = task
-    if type(key) == dict:
-        key = tuple(sorted(key.items()))
-
-    if cache and key in _pipeline_cache:
-        pipe = _pipeline_cache.get(key)
-    else:
-        with timer("Initializing pipeline"):
-            if type(task) == str:
-                pipe = transformers.pipeline(task)
-            else:
-                pipe = transformers.pipeline(**task)
-            if cache:
-                _pipeline_cache[key] = pipe
-
-    if pipe.task == "question-answering":
-        inputs = [json.loads(input) for input in inputs]
-
-    with timer("inference"):
-        result = pipe(inputs, **args)
-
-    return result
-
-
-class Model(BaseModel):
+class Model:
     @property
     def algorithm(self):
         if self._algorithm is None:

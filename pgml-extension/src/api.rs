@@ -485,18 +485,23 @@ fn snapshot(
 #[pg_extern]
 fn load_dataset(
     source: &str,
+    subset: default!(Option<String>, "NULL"),
     limit: default!(Option<i64>, "NULL"),
+    kwargs: default!(JsonB, "'{}'"),
 ) -> TableIterator<'static, (name!(table_name, String), name!(rows, i64))> {
     // cast limit since pgx doesn't support usize
     let limit: Option<usize> = limit.map(|limit| limit.try_into().unwrap());
     let (name, rows) = match source {
-        "breast_cancer" => crate::orm::dataset::load_breast_cancer(limit),
-        "diabetes" => crate::orm::dataset::load_diabetes(limit),
-        "digits" => crate::orm::dataset::load_digits(limit),
-        "iris" => crate::orm::dataset::load_iris(limit),
-        "linnerud" => crate::orm::dataset::load_linnerud(limit),
-        "wine" => crate::orm::dataset::load_wine(limit),
-        _ => error!("Unknown source: `{source}`"),
+        "breast_cancer" => dataset::load_breast_cancer(limit),
+        "diabetes" => dataset::load_diabetes(limit),
+        "digits" => dataset::load_digits(limit),
+        "iris" => dataset::load_iris(limit),
+        "linnerud" => dataset::load_linnerud(limit),
+        "wine" => dataset::load_wine(limit),
+        _ => {
+            let rows = crate::bindings::transformers::load_dataset(source, subset, limit, &kwargs.0);
+            (source.into(), rows as i64)
+        },
     };
 
     TableIterator::new(vec![(name, rows)].into_iter())
@@ -537,7 +542,7 @@ fn tune(
     task: default!(Option<Task>, "NULL"),
     relation_name: default!(Option<&str>, "NULL"),
     y_column_name: default!(Option<&str>, "NULL"),
-    algorithm: default!(Algorithm, "transformers"),
+    algorithm: default!(Option<&str>, "NULL"),
     hyperparams: default!(JsonB, "'{}'"),
     search: default!(Option<Search>, "NULL"),
     search_params: default!(JsonB, "'{}'"),
@@ -608,6 +613,8 @@ fn tune(
         }
     };
 
+    let model_name = algorithm;
+
     // # Default repeatable random state when possible
     // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);
     // if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
@@ -615,7 +622,7 @@ fn tune(
     let model = Model::create(
         &project,
         &mut snapshot,
-        algorithm,
+        Algorithm::transformers,
         hyperparams,
         search,
         search_params,
