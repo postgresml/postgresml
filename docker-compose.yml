@@ -2,10 +2,10 @@ version: "3"
 services:
   postgres:
     healthcheck:
-      test: psql -c 'SELECT 1' -U postgres -h 127.0.0.1
-      interval: 2s
-      retries: 3
-      timeout: 2s
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 1s
+      timeout: 5s
+      retries: 100
     build:
       context: ./pgml-extension/
       dockerfile: Dockerfile.local
@@ -16,7 +16,8 @@ services:
       - infinity
   dashboard:
     depends_on:
-      - postgres
+       postgres:
+         condition: service_healthy
     build:
       context: ./pgml-dashboard/
       dockerfile: Dockerfile
@@ -25,9 +26,7 @@ services:
     environment:
       ROCKET_ADDRESS: 0.0.0.0
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/pgml_development
-    command:
-      - cargo
-      - run
+    command: bash -c "sqlx migrate run && cargo run"
   docs:
     build:
       context: ./pgml-docs/
