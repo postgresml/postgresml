@@ -94,7 +94,10 @@ pub fn load_dataset(
                 "float32" => "FLOAT4",
                 "float16" => "FLOAT4",
                 "bool" => "BOOLEAN",
-                _ => error!("unhandled dataset feature while reading dataset: {:?}", type_),
+                _ => error!(
+                    "unhandled dataset feature while reading dataset: {:?}",
+                    type_
+                ),
             };
             format!("{name} {type_}")
         })
@@ -113,7 +116,8 @@ pub fn load_dataset(
     let num_rows = data.values().next().unwrap().as_array().unwrap().len();
     Spi::run(&format!(r#"DROP TABLE IF EXISTS {table_name}"#)).unwrap();
     Spi::run(&format!(r#"CREATE TABLE {table_name} ({column_types})"#)).unwrap();
-    let insert = format!(r#"INSERT INTO {table_name} ({column_names}) VALUES ({column_placeholders})"#);
+    let insert =
+        format!(r#"INSERT INTO {table_name} ({column_names}) VALUES ({column_placeholders})"#);
     for i in 0..num_rows {
         let mut row = Vec::with_capacity(num_cols);
         for (name, values) in data {
@@ -139,7 +143,10 @@ pub fn load_dataset(
                     PgBuiltInOids::BOOLOID.oid(),
                     value.as_bool().unwrap().into_datum(),
                 )),
-                type_ => error!("unhandled dataset value type while reading dataset: {:?} {:?}", value, type_),
+                type_ => error!(
+                    "unhandled dataset value type while reading dataset: {:?} {:?}",
+                    value, type_
+                ),
             }
         }
         Spi::run_with_args(&insert, Some(row)).unwrap();

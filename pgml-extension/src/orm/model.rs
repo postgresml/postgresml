@@ -88,13 +88,13 @@ impl Model {
             },
         };
 
-        let dataset = snapshot.dataset();
+        let dataset = snapshot.dataset(project.task);
         let status = Status::in_progress;
         // Create the model record.
         Spi::connect(|client| {
             let result = client.select("
-          INSERT INTO pgml.models (project_id, snapshot_id, algorithm, runtime, hyperparams, status, search, search_params, search_args, num_features) 
-          VALUES ($1, $2, cast($3 AS pgml.algorithm), cast($4 AS pgml.runtime), $5, cast($6 as pgml.status), $7, $8, $9, $10) 
+          INSERT INTO pgml.models (project_id, snapshot_id, algorithm, runtime, hyperparams, status, search, search_params, search_args, num_features)
+          VALUES ($1, $2, cast($3 AS pgml.algorithm), cast($4 AS pgml.runtime), $5, cast($6 as pgml.status), $7, $8, $9, $10)
           RETURNING id, project_id, snapshot_id, algorithm, runtime, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
                                        Some(1),
                                        Some(vec![
@@ -142,9 +142,13 @@ impl Model {
 
         let mut model = model.unwrap();
 
-        info!("Training {}", model);
-
-        model.fit(&dataset);
+        if model.algorithm == Algorithm::transformers {
+            info!("Tuning {}", model);
+            // todo!("tuning");
+        } else {
+            info!("Training {}", model);
+            model.fit(&dataset);
+        }
 
         Spi::run_with_args(
             "UPDATE pgml.models SET status = $1::pgml.status WHERE id = $2",
@@ -694,10 +698,12 @@ impl Model {
             let target_metric = match self.project.task {
                 Task::regression => "r2",
                 Task::classification => "f1",
-                Task::text_classification => "f1",
                 Task::question_answering => "f1",
                 Task::translation => "blue",
                 Task::summarization => "rouge_ngram_f1",
+                Task::text_classification => "f1",
+                Task::text_generation => "perplexity",
+                Task::text2text => "perplexity",
             };
             let mut i = 0;
             let mut best_index = 0;

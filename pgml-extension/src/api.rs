@@ -544,7 +544,7 @@ fn tune(
     task: default!(Option<Task>, "NULL"),
     relation_name: default!(Option<&str>, "NULL"),
     y_column_name: default!(Option<&str>, "NULL"),
-    algorithm: default!(Option<&str>, "NULL"),
+    model_name: default!(Option<&str>, "NULL"),
     hyperparams: default!(JsonB, "'{}'"),
     search: default!(Option<Search>, "NULL"),
     search_params: default!(JsonB, "'{}'"),
@@ -618,7 +618,7 @@ fn tune(
 
     // algorithm will be transformers, stash the model_name in a hyperparam for v1 compatibility.
     let mut hyperparams = hyperparams.0.as_object().unwrap().clone();
-    hyperparams.insert(String::from("model_name"), json!(algorithm));
+    hyperparams.insert(String::from("model_name"), json!(model_name));
     let hyperparams = JsonB(json!(hyperparams));
 
     // # Default repeatable random state when possible
