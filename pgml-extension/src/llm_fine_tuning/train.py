@@ -106,8 +106,7 @@ def train(
 
     if not os.path.exists(output_dir):
         msg = "Folder %s doesn't exist .. creating one" % output_dir
-        log.error(msg)
-    else:
+        log.debug(msg)
         os.mkdir(output_dir)
 
     if os.path.exists(filename):
