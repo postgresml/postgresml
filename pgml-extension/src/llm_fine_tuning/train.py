@@ -167,15 +167,15 @@ def train(
             1
         )  # Very important to wait for the process to termiante. Otherwise file won't be available for pandas
 
-    if os.path.exists(gpu_utilization_file):
-        log.info(
-            "Displaying GPU utilization details from file %s", gpu_utilization_file
-        )
-        gpu_df = parse_gpu_utilization_file("/tmp/gpu-stats.csv")
-        log.info("#####GPU Utilization####")
-        log.info(gpu_df)
-        log.info("#####GPU Utilization Summary####")
-        log.info(gpu_df.describe())
+        if os.path.exists(gpu_utilization_file):
+            log.info(
+                "Displaying GPU utilization details from file %s", gpu_utilization_file
+            )
+            gpu_df = parse_gpu_utilization_file("/tmp/gpu-stats.csv")
+            log.info("#####GPU Utilization####")
+            log.info(gpu_df)
+            log.info("#####GPU Utilization Summary####")
+            log.info(gpu_df.describe())
 
 
 if __name__ == "__main__":
