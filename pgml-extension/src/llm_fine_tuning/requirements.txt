@@ -1,0 +1,9 @@
+torch==1.13.1
+torchvision==0.14.1
+torchaudio==0.13.1
+datasets==2.10.1
+transformers==4.26.1
+rich==13.3.1
+black==23.1.0
+tqdm==4.64.1
+pandas==1.5.3
