@@ -38,8 +38,6 @@ sudo apt install python3-pip
 
 **Help**
 
-Below command will show all the options available
-
 `python train.py --help`
 
 ### Inference
@@ -48,9 +46,22 @@ Below command will show all the options available
 
 **Help**
 
-Below command will show all the options available
-
 `python generate.py --help`
+
+### Metrics
+
+*Perplexity* is computed for a given text data.
+
+`python metrics.py --model_name <model name or path> --tokenizer_name <tokenizer name or path>`
+
+**Help**
+
+`python metrics.py --help`
+
+References:
+- [Huggingface](https://huggingface.co/docs/transformers/perplexity)
+- [Gradient](https://thegradient.pub/understanding-evaluation-metrics-for-language-models/)
+- [Towards Datascience](https://towardsdatascience.com/perplexity-of-language-models-revisited-6b9b4cf46792)
 
 
 
