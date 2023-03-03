@@ -80,6 +80,12 @@ torch.manual_seed(42)
     help="Disable saving model and tokenizer after training - useful for benchmarking runtimes",
     show_default=True,
 )
+@click.option(
+    "--local_rank"
+)
+@click.option(
+    "--deepspeed"
+)
 def train(
     filename,
     column_name,
@@ -91,6 +97,8 @@ def train(
     get_gpu_utilization,
     gpu_utilization_file,
     disable_save,
+    local_rank,
+    deepspeed,
 ):
     cuda_available = torch.cuda.is_available()
 
@@ -151,7 +159,9 @@ def train(
         num_train_epochs=epochs,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
+        deepspeed="./ds_config.json",
     )
+    
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     trainer = Trainer(
