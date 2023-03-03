@@ -74,6 +74,12 @@ torch.manual_seed(42)
     help="File to write GPU stats if get_gpu_status flag is True",
     show_default=True,
 )
+@click.option(
+    "--disable_save",
+    default=False,
+    help="Disable saving model and tokenizer after training - useful for benchmarking runtimes",
+    show_default=True,
+)
 def train(
     filename,
     column_name,
@@ -84,6 +90,7 @@ def train(
     output_dir,
     get_gpu_utilization,
     gpu_utilization_file,
+    disable_save,
 ):
     cuda_available = torch.cuda.is_available()
 
@@ -157,8 +164,10 @@ def train(
 
     log.info("Training initiated")
     trainer.train()
-    trainer.save_model(output_dir + "/model")
-    tokenizer.save_pretrained(output_dir + "/tokenizer")
+
+    if not disable_save:
+        trainer.save_model(output_dir + "/model")
+        tokenizer.save_pretrained(output_dir + "/tokenizer")
 
     if nvidia_smi_query_started:
         process.terminate()
