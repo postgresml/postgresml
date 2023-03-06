@@ -45,11 +45,10 @@ torch.manual_seed(42)
     show_default=True,
 )
 def metrics(filename, column_name, model_name, tokenizer_name, stride):
-
     if os.path.exists(filename):
         test = load_dataset("csv", data_files=filename)
     else:
-        msg = "File %s doesn't exist"%filename
+        msg = "File %s doesn't exist" % filename
         raise ValueError(msg)
 
     cuda_available = torch.cuda.is_available()
@@ -63,7 +62,6 @@ def metrics(filename, column_name, model_name, tokenizer_name, stride):
 
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
-    
     encodings = tokenizer("\n\n".join(test["train"][column_name]), return_tensors="pt")
 
     max_length = model.config.n_positions
@@ -96,6 +94,7 @@ def metrics(filename, column_name, model_name, tokenizer_name, stride):
 
     ppl = torch.exp(torch.stack(nlls).sum() / end_loc)
     log.info("Perplexity = %0.3f (lower is better)" % ppl)
+
 
 if __name__ == "__main__":
     metrics()

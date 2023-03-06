@@ -3,15 +3,14 @@ import click
 import pandas as pd
 import torch
 from torch.utils.data import random_split
-from datasets import load_dataset, Dataset
+
+from datasets import load_dataset
 from transformers import (
     AutoTokenizer,
     TrainingArguments,
     Trainer,
     AutoModelForCausalLM,
-    IntervalStrategy,
     DataCollatorForLanguageModeling,
-    pipeline,
 )
 
 
@@ -80,11 +79,13 @@ torch.manual_seed(42)
     help="Disable saving model and tokenizer after training - useful for benchmarking runtimes",
     show_default=True,
 )
+@click.option("--local_rank")
+@click.option("--deepspeed")
 @click.option(
-    "--local_rank"
-)
-@click.option(
-    "--deepspeed"
+    "--fp16",
+    default=False,
+    help="Use FP16 instead of FP32 for model training",
+    show_default=True,
 )
 def train(
     filename,
@@ -99,6 +100,7 @@ def train(
     disable_save,
     local_rank,
     deepspeed,
+    fp16,
 ):
     cuda_available = torch.cuda.is_available()
 
@@ -160,10 +162,11 @@ def train(
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
         deepspeed="./ds_config.json",
+        fp16=fp16,
     )
-    
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+
     trainer = Trainer(
         model=model,
         args=training_args,

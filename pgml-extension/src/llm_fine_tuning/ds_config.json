@@ -1,5 +1,8 @@
 {
   "train_batch_size" : "auto",
+  "fp16": {
+    "enabled": "auto"
+  },
   "zero_optimization": {
      "stage": 2,
      "offload_optimizer": {
