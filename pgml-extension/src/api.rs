@@ -546,15 +546,10 @@ fn tune(
     y_column_name: default!(Option<&str>, "NULL"),
     model_name: default!(Option<&str>, "NULL"),
     hyperparams: default!(JsonB, "'{}'"),
-    search: default!(Option<Search>, "NULL"),
-    search_params: default!(JsonB, "'{}'"),
-    search_args: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
     test_sampling: default!(Sampling, "'last'"),
-    runtime: default!(Option<Runtime>, "NULL"),
     automatic_deploy: default!(Option<bool>, true),
     materialize_snapshot: default!(bool, false),
-    preprocess: default!(JsonB, "'{}'"),
 ) -> TableIterator<
     'static,
     (
@@ -564,6 +559,7 @@ fn tune(
         name!(deployed, bool),
     ),
 > {
+    let preprocess = JsonB(serde_json::from_str("{}").unwrap());
     let project = match Project::find_by_name(project_name) {
         Some(project) => project,
         None => Project::create(project_name, match task {
@@ -625,15 +621,10 @@ fn tune(
     // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);
     // if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
     //     hyperparams["random_state"] = 0
-    let model = Model::create(
+    let model = Model::tune(
         &project,
         &mut snapshot,
-        Algorithm::transformers,
-        hyperparams,
-        search,
-        search_params,
-        search_args,
-        runtime,
+        &hyperparams
     );
 
     let new_metrics: &serde_json::Value = &model.metrics.unwrap().0;

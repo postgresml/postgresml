@@ -34,8 +34,52 @@ You can view the newly loaded data in your Postgres database:
     103 | {"en": "ROLES_OF_TRANSLATORS", "es": "Rafael Osuna rosuna@wol. es Traductor"}
     (5 rows)
     ```
+This huggingface dataset stores the data as language key pairs in a JSON document. To use it with PostgresML, we'll need to provide a `VIEW` that structures the data into more primitively typed columns. 
 
-When you're constructing your own datasets for translation, it's important to mirror the same table structure. You'll need a `JSONB` column named `translation`, that has first has a "from" language name/value pair, and then a "to" language name/value pair. In this English to Spanish example we use from "en" to "es". You'll pass a `y_column_name` of `translation` to tune the model.
+=== "SQL"
+
+    ```sql linenums="1"
+    CREATE OR REPLACE VIEW kde4_en_to_es AS
+    SELECT translation->>'en' AS "en", translation->>'es' AS "es"
+    FROM pgml.kde4;
+    ```
+
+=== "Result"
+
+    ```sql  linenums="1"
+    CREATE VIEW
+    ```
+
+Now, we can see the data in more normalized form. The exact column names don't matter for now, we'll specify which one is the target during the training call, and the other one will be used as the input.
+
+=== "SQL"
+
+    ```sql linenums="1"
+    SELECT * FROM kde4_en_to_es LIMIT 10;
+    ```
+
+=== "Result"
+
+    ```sql  linenums="1"
+                                                en                                            |                                                   es
+    
+    --------------------------------------------------------------------------------------------+--------------------------------------------------------------------------
+    ------------------------------
+     Lauri Watts                                                                                | Lauri Watts
+     & Lauri. Watts. mail;                                                                      | & Lauri. Watts. mail;
+     ROLES_OF_TRANSLATORS                                                                       | Rafael Osuna rosuna@wol. es Traductor Miguel Revilla Rodríguez yo@miguelr
+    evilla. com Traductor
+     2006-02-26 3.5.1                                                                           | 2006-02-26 3.5.1
+     The Babel & konqueror; plugin gives you quick access to the Babelfish translation service. | La extensión Babel de & konqueror; le permite un acceso rápido al servici
+    o de traducción de Babelfish.
+     KDE                                                                                        | KDE
+     kdeaddons                                                                                  | kdeaddons
+     konqueror                                                                                  | konqueror
+     plugins                                                                                    | extensiones
+     babelfish                                                                                  | babelfish
+    (10 rows)
+     ```
+
 
 ### Tune the model
 Tuning is very similar to training with PostgresML, although we specify a `model_name` to download from Hugging Face instead of the base `algorithm`.
@@ -43,9 +87,9 @@ Tuning is very similar to training with PostgresML, although we specify a `model
 ```sql linenums="1" title="tune.sql"
 SELECT pgml.tune(
     'Translate English to Spanish',
-    task => 'translation_en_to_es',
-    relation_name => 'pgml.kde4',
-    y_column_name => 'translation',
+    task => 'translation',
+    relation_name => 'kde4_en_to_es',
+    y_column_name => 'es', -- translate into spanish
     model_name => 'Helsinki-NLP/opus-mt-en-es',
     hyperparams => '{
         "learning_rate": 2e-5,
@@ -310,8 +354,7 @@ SELECT pgml.tune(
         "per_device_eval_batch_size": 2,
         "num_train_epochs": 1,
         "weight_decay": 0.01,
-        "max_input_length": 1024,
-        "max_summary_length": 128
+        "max_length": 1024,
     }',
     test_size => 0.2,
     test_sampling => 'last'

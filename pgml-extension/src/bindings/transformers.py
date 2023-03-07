@@ -1,7 +1,19 @@
-import transformers
-import json
+import os
 import datasets
-
+import json
+import transformers
+import shutil
+from transformers import (
+    AutoTokenizer,
+    DataCollatorWithPadding,
+    DefaultDataCollator,
+    DataCollatorForSeq2Seq,
+    AutoModelForSequenceClassification,
+    AutoModelForQuestionAnswering,
+    AutoModelForSeq2SeqLM,
+    TrainingArguments,
+    Trainer,
+)
 def transform(task, args, inputs):
     task = json.loads(task)
     args = json.loads(args)
@@ -41,6 +53,276 @@ def load_dataset(name, subset, limit: None, kwargs: "{}"):
         raise PgMLException(f"Unhandled dataset type: {type(dataset)}")
 
     return json.dumps({"data": data, "types": types})
+
+def tokenize_text_classification(tokenizer, max_length, x, y):
+    encoding = tokenizer(x, padding=True, truncation=True)
+    encoding["label"] = y
+    return datasets.Dataset.from_dict(encoding.data)
+
+def tokenize_translation(tokenizer, max_length, x, y):
+    encoding = tokenizer(x, max_length=max_length, truncation=True, text_target=y)
+    return datasets.Dataset.from_dict(encoding.data)
+
+def tokenize_summarization(tokenizer, max_length, x, y):
+    encoding = tokenizer(x, max_length=max_length, truncation=True, text_target=y)
+    return datasets.Dataset.from_dict(encoding.data)
+
+def tokenize_question_answering(tokenizer, max_length, x, y):
+    pass
+
+def compute_metrics_summarization(self, dataset):
+    feature = self.snapshot.feature_names[0]
+    label = self.snapshot.y_column_name[0]
+
+    all_preds = []
+    all_labels = [d for d in dataset[label]]
+
+    batch_size = self.hyperparams["per_device_eval_batch_size"]
+    batches = int(math.ceil(len(dataset) / batch_size))
+
+    with torch.no_grad():
+        for i in range(batches):
+            slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
+            inputs = slice[feature]
+            tokens = self.tokenizer.batch_encode_plus(
+                inputs,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+                return_token_type_ids=False,
+            ).to(self.model.device)
+            predictions = self.model.generate(**tokens)
+            decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
+            all_preds.extend(decoded_preds)
+
+    bleu = BLEU().corpus_score(all_preds, [[l] for l in all_labels])
+    rouge = Rouge().get_scores(all_preds, all_labels, avg=True)
+    return {
+        "bleu": bleu.score,
+        "rouge_ngram_f1": rouge["rouge-1"]["f"],
+        "rouge_ngram_precision": rouge["rouge-1"]["p"],
+        "rouge_ngram_recall": rouge["rouge-1"]["r"],
+        "rouge_bigram_f1": rouge["rouge-2"]["f"],
+        "rouge_bigram_precision": rouge["rouge-2"]["p"],
+        "rouge_bigram_recall": rouge["rouge-2"]["r"],
+    }
+
+def compute_metrics_text_classification(self, dataset):
+    feature = label = None
+    for name, type in dataset.features.items():
+        if isinstance(type, datasets.features.features.ClassLabel):
+            label = name
+        elif isinstance(type, datasets.features.features.Value):
+            feature = name
+        else:
+            raise PgMLException(f"Unhandled feature type: {type}")
+    logits = torch.Tensor(device="cpu")
+
+    batch_size = self.hyperparams["per_device_eval_batch_size"]
+    batches = int(len(dataset) / batch_size) + 1
+
+    with torch.no_grad():
+        for i in range(batches):
+            slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
+            tokens = self.tokenizer(slice[feature], padding=True, truncation=True, return_tensors="pt")
+            tokens.to(self.model.device)
+            result = self.model(**tokens).logits.to("cpu")
+            logits = torch.cat((logits, result), 0)
+
+    metrics = {}
+
+    y_pred = logits.argmax(-1)
+    y_prob = torch.nn.functional.softmax(logits, dim=-1)
+    y_test = numpy.array(dataset[label]).flatten()
+
+    metrics["mean_squared_error"] = mean_squared_error(y_test, y_pred)
+    metrics["r2"] = r2_score(y_test, y_pred)
+    metrics["f1"] = f1_score(y_test, y_pred, average="weighted")
+    metrics["precision"] = precision_score(y_test, y_pred, average="weighted")
+    metrics["recall"] = recall_score(y_test, y_pred, average="weighted")
+    metrics["accuracy"] = accuracy_score(y_test, y_pred)
+    metrics["log_loss"] = log_loss(y_test, y_prob)
+    roc_auc_y_prob = y_prob
+    if y_prob.shape[1] == 2:  # binary classification requires only the greater label by passed to roc_auc_score
+        roc_auc_y_prob = y_prob[:, 1]
+    metrics["roc_auc"] = roc_auc_score(y_test, roc_auc_y_prob, average="weighted", multi_class="ovo")
+
+    return metrics
+
+def compute_metrics_translation(self, dataset):
+    all_preds = []
+    all_labels = [d[self.algorithm["to"]] for d in dataset[self.snapshot.y_column_name[0]]]
+
+    batch_size = self.hyperparams["per_device_eval_batch_size"]
+    batches = int(len(dataset) / batch_size) + 1
+
+    with torch.no_grad():
+        for i in range(batches):
+            slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
+            inputs = [ex[self.algorithm["from"]] for ex in slice[self.snapshot.y_column_name[0]]]
+            tokens = self.tokenizer.batch_encode_plus(
+                inputs,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+                return_token_type_ids=False,
+            ).to(self.model.device)
+            predictions = self.model.generate(**tokens)
+            decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
+            all_preds.extend(decoded_preds)
+
+    bleu = BLEU().corpus_score(all_preds, [[l] for l in all_labels])
+    rouge = Rouge().get_scores(all_preds, all_labels, avg=True)
+    return {
+        "bleu": bleu.score,
+        "rouge_ngram_f1": rouge["rouge-1"]["f"],
+        "rouge_ngram_precision": rouge["rouge-1"]["p"],
+        "rouge_ngram_recall": rouge["rouge-1"]["r"],
+        "rouge_bigram_f1": rouge["rouge-2"]["f"],
+        "rouge_bigram_precision": rouge["rouge-2"]["p"],
+        "rouge_bigram_recall": rouge["rouge-2"]["r"],
+    }
+
+def compute_metrics_question_answering(self, dataset):
+    batch_size = self.hyperparams["per_device_eval_batch_size"]
+    batches = int(len(dataset) / batch_size) + 1
+
+    with torch.no_grad():
+        for i in range(batches):
+            slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
+            tokens = self.algorithm["tokenizer"].encode_plus(
+                slice["question"], slice["context"], return_tensors="pt"
+            )
+            tokens.to(self.algorithm["model"].device)
+            outputs = self.algorithm["model"](**tokens)
+            answer_start = torch.argmax(outputs[0])
+            answer_end = torch.argmax(outputs[1]) + 1
+            answer = self.algorithm["tokenizer"].convert_tokens_to_string(
+                self.algorithm["tokenizer"].convert_ids_to_tokens(tokens["input_ids"][0][answer_start:answer_end])
+            )
+
+    def compute_exact_match(prediction, truth):
+        return int(normalize_text(prediction) == normalize_text(truth))
+
+    def compute_f1(prediction, truth):
+        pred_tokens = normalize_text(prediction).split()
+        truth_tokens = normalize_text(truth).split()
+
+        # if either the prediction or the truth is no-answer then f1 = 1 if they agree, 0 otherwise
+        if len(pred_tokens) == 0 or len(truth_tokens) == 0:
+            return int(pred_tokens == truth_tokens)
+
+        common_tokens = set(pred_tokens) & set(truth_tokens)
+
+        # if there are no common tokens then f1 = 0
+        if len(common_tokens) == 0:
+            return 0
+
+        prec = len(common_tokens) / len(pred_tokens)
+        rec = len(common_tokens) / len(truth_tokens)
+
+        return 2 * (prec * rec) / (prec + rec)
+
+    def get_gold_answers(example):
+        """helper function that retrieves all possible true answers from a squad2.0 example"""
+
+        gold_answers = [answer["text"] for answer in example.answers if answer["text"]]
+
+        # if gold_answers doesn't exist it's because this is a negative example -
+        # the only correct answer is an empty string
+        if not gold_answers:
+            gold_answers = [""]
+
+        return gold_answers
+
+    metrics = {}
+    metrics["exact_match"] = 0
+
+    return metrics
+
+def tune(task, hyperparams, x_train, x_test, y_train, y_test):
+    hyperparams = json.loads(hyperparams)
+    model_name = hyperparams.pop("model_name")
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    path = os.path.join("/tmp", "postgresml", "models", str(os.getpid()))
+
+    algorithm = {}
+
+    if task == "text_classification":
+        model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
+        train = tokenize_text_classification(tokenizer, max_length, x_train, y_train)
+        test = tokenize_text_classification(tokenizer, max_length, x_test, y_test)
+        data_collator = DefaultDataCollator()
+    elif task == "question_answering":
+        max_length = hyperparams.pop("max_length", None)
+        algorithm["stride"] = hyperparams.pop("stride", 128)
+        algorithm["model"] = AutoModelForQuestionAnswering.from_pretrained(model_name)
+        train = tokenize_question_answering(tokenizer, max_length, x_train, y_train)
+        test = tokenize_question_answering(tokenizer, max_length, x_test, y_test)
+        data_collator = DefaultDataCollator()
+    elif task == "summarization":
+        max_length = hyperparams.pop("max_length", 1024)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        train = tokenize_summarization(tokenizer, max_length, x_train, y_train)
+        test = tokenize_summarization(tokenizer, max_length, x_test, y_test)
+        data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
+    elif task == "translation":
+        max_length = hyperparams.pop("max_length", None)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        train = tokenize_translation(tokenizer, max_length, x_train, y_train)
+        test = tokenize_translation(tokenizer, max_length, x_test, y_test)
+        data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="pt")
+    else:
+        raise PgMLException(f"unhandled task type: {task}")
+    trainer = Trainer(
+        model=model,
+        args=TrainingArguments(output_dir=path, **hyperparams),
+        train_dataset=train,
+        eval_dataset=test,
+        tokenizer=tokenizer,
+        data_collator=data_collator,
+    )
+    trainer.train()
+    model.eval()
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    # Test
+    if task == "summarization":
+        metrics = compute_metrics_summarization(test)
+    elif task == "text-classification":
+        metrics = compute_metrics_text_classification(test)
+    elif task == "question-answering":
+        metrics = compute_metrics_question_answering(test)
+    elif task.startswith("translation"):
+        metrics = compute_metrics_translation(test)
+    else:
+        raise PgMLException(f"unhandled task type: {task}")
+
+    # Save the results
+    if os.path.isdir(path):
+        shutil.rmtree(path, ignore_errors=True)
+    trainer.save_model()
+    # for filename in os.listdir(path):
+    #     filepath = os.path.join(path, filename)
+    #     part = 0
+    #     max_size = 100_000_000
+    #     with open(filepath, mode="rb") as file:
+    #         while True:
+    #             data = file.read(max_size)
+    #             if not data:
+    #                 break
+    #             plpy.execute(
+    #                 f"""
+    #                 INSERT into pgml.files (model_id, path, part, data)
+    #                 VALUES ({q(self.id)}, {q(filepath)}, {q(part)}, '\\x{data.hex()}')
+    #                 """
+    #             )
+    #             part += 1
+    # shutil.rmtree(path, ignore_errors=True)
+
+    return path
 
 
 class Model:
@@ -99,140 +381,140 @@ class Model:
         return self._algorithm
 
     def train(self):
-        dataset = self.snapshot.dataset
+        # dataset = self.snapshot.dataset
+        #
+        # self._algorithm = {"tokenizer": AutoTokenizer.from_pretrained(self.algorithm_name)}
+        # if self.project.task == "text-classification":
+        #     self._algorithm["model"] = AutoModelForSequenceClassification.from_pretrained(
+        #         self.algorithm_name, num_labels=2
+        #     )
+        #     tokenized_dataset = self.tokenize_text_classification(dataset)
+        #     data_collator = DefaultDataCollator()
+        # elif self.project.task == "question-answering":
+        #     self._algorithm["max_length"] = self.hyperparams.pop("max_length", 384)
+        #     self._algorithm["stride"] = self.hyperparams.pop("stride", 128)
+        #     self._algorithm["model"] = AutoModelForQuestionAnswering.from_pretrained(self.algorithm_name)
+        #     tokenized_dataset = self.tokenize_question_answering(dataset)
+        #     data_collator = DefaultDataCollator()
+        # elif self.project.task == "summarization":
+        #     self._algorithm["max_summary_length"] = self.hyperparams.pop("max_summary_length", 1024)
+        #     self._algorithm["max_input_length"] = self.hyperparams.pop("max_input_length", 128)
+        #     self._algorithm["model"] = AutoModelForSeq2SeqLM.from_pretrained(self.algorithm_name)
+        #     tokenized_dataset = self.tokenize_summarization(dataset)
+        #     data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model)
+        # elif self.project.task.startswith("translation"):
+        #     task = self.project.task.split("_")
+        #     if task[0] != "translation" and task[2] != "to":
+        #         raise PgMLException(f"unhandled translation task: {self.project.task}")
+        #     self._algorithm["max_length"] = self.hyperparams.pop("max_length", None)
+        #     self._algorithm["from"] = task[1]
+        #     self._algorithm["to"] = task[3]
+        #     self._algorithm["model"] = AutoModelForSeq2SeqLM.from_pretrained(self.algorithm_name)
+        #     tokenized_dataset = self.tokenize_translation(dataset)
+        #     data_collator = DataCollatorForSeq2Seq(self.tokenizer, model=self.model, return_tensors="pt")
+        # else:
+        #     raise PgMLException(f"unhandled task type: {self.project.task}")
 
-        self._algorithm = {"tokenizer": AutoTokenizer.from_pretrained(self.algorithm_name)}
-        if self.project.task == "text-classification":
-            self._algorithm["model"] = AutoModelForSequenceClassification.from_pretrained(
-                self.algorithm_name, num_labels=2
-            )
-            tokenized_dataset = self.tokenize_text_classification(dataset)
-            data_collator = DefaultDataCollator()
-        elif self.project.task == "question-answering":
-            self._algorithm["max_length"] = self.hyperparams.pop("max_length", 384)
-            self._algorithm["stride"] = self.hyperparams.pop("stride", 128)
-            self._algorithm["model"] = AutoModelForQuestionAnswering.from_pretrained(self.algorithm_name)
-            tokenized_dataset = self.tokenize_question_answering(dataset)
-            data_collator = DefaultDataCollator()
-        elif self.project.task == "summarization":
-            self._algorithm["max_summary_length"] = self.hyperparams.pop("max_summary_length", 1024)
-            self._algorithm["max_input_length"] = self.hyperparams.pop("max_input_length", 128)
-            self._algorithm["model"] = AutoModelForSeq2SeqLM.from_pretrained(self.algorithm_name)
-            tokenized_dataset = self.tokenize_summarization(dataset)
-            data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model)
-        elif self.project.task.startswith("translation"):
-            task = self.project.task.split("_")
-            if task[0] != "translation" and task[2] != "to":
-                raise PgMLException(f"unhandled translation task: {self.project.task}")
-            self._algorithm["max_length"] = self.hyperparams.pop("max_length", None)
-            self._algorithm["from"] = task[1]
-            self._algorithm["to"] = task[3]
-            self._algorithm["model"] = AutoModelForSeq2SeqLM.from_pretrained(self.algorithm_name)
-            tokenized_dataset = self.tokenize_translation(dataset)
-            data_collator = DataCollatorForSeq2Seq(self.tokenizer, model=self.model, return_tensors="pt")
-        else:
-            raise PgMLException(f"unhandled task type: {self.project.task}")
+        # training_args = TrainingArguments(
+        #     output_dir=self.path,
+        #     **self.hyperparams,
+        # )
+        #
+        # trainer = Trainer(
+        #     model=self.model,
+        #     args=training_args,
+        #     train_dataset=tokenized_dataset["train"],
+        #     eval_dataset=tokenized_dataset["test"],
+        #     tokenizer=self.tokenizer,
+        #     data_collator=data_collator,
+        # )
+        #
+        # trainer.train()
+        #
+        # self.model.eval()
+        #
+        # if torch.cuda.is_available():
+        #     torch.cuda.empty_cache()
+        #
+        # # Test
+        # if self.project.task == "summarization":
+        #     self.metrics = self.compute_metrics_summarization(dataset["test"])
+        # elif self.project.task == "text-classification":
+        #     self.metrics = self.compute_metrics_text_classification(dataset["test"])
+        # elif self.project.task == "question-answering":
+        #     self.metrics = self.compute_metrics_question_answering(dataset["test"])
+        # elif self.project.task.startswith("translation"):
+        #     self.metrics = self.compute_metrics_translation(dataset["test"])
+        # else:
+        #     raise PgMLException(f"unhandled task type: {self.project.task}")
+        #
+        # # Save the results
+        # if os.path.isdir(self.path):
+        #     shutil.rmtree(self.path, ignore_errors=True)
+        # trainer.save_model()
+        # for filename in os.listdir(self.path):
+        #     path = os.path.join(self.path, filename)
+        #     part = 0
+        #     max_size = 100_000_000
+        #     with open(path, mode="rb") as file:
+        #         while True:
+        #             data = file.read(max_size)
+        #             if not data:
+        #                 break
+        #             plpy.execute(
+        #                 f"""
+        #                 INSERT into pgml.files (model_id, path, part, data)
+        #                 VALUES ({q(self.id)}, {q(path)}, {q(part)}, '\\x{data.hex()}')
+        #                 """
+        #             )
+        #             part += 1
+        # shutil.rmtree(self.path, ignore_errors=True)
 
-        training_args = TrainingArguments(
-            output_dir=self.path,
-            **self.hyperparams,
-        )
-
-        trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=tokenized_dataset["train"],
-            eval_dataset=tokenized_dataset["test"],
-            tokenizer=self.tokenizer,
-            data_collator=data_collator,
-        )
-
-        trainer.train()
-
-        self.model.eval()
-
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
-        # Test
-        if self.project.task == "summarization":
-            self.metrics = self.compute_metrics_summarization(dataset["test"])
-        elif self.project.task == "text-classification":
-            self.metrics = self.compute_metrics_text_classification(dataset["test"])
-        elif self.project.task == "question-answering":
-            self.metrics = self.compute_metrics_question_answering(dataset["test"])
-        elif self.project.task.startswith("translation"):
-            self.metrics = self.compute_metrics_translation(dataset["test"])
-        else:
-            raise PgMLException(f"unhandled task type: {self.project.task}")
-
-        # Save the results
-        if os.path.isdir(self.path):
-            shutil.rmtree(self.path, ignore_errors=True)
-        trainer.save_model()
-        for filename in os.listdir(self.path):
-            path = os.path.join(self.path, filename)
-            part = 0
-            max_size = 100_000_000
-            with open(path, mode="rb") as file:
-                while True:
-                    data = file.read(max_size)
-                    if not data:
-                        break
-                    plpy.execute(
-                        f"""
-                        INSERT into pgml.files (model_id, path, part, data) 
-                        VALUES ({q(self.id)}, {q(path)}, {q(part)}, '\\x{data.hex()}')
-                        """
-                    )
-                    part += 1
-        shutil.rmtree(self.path, ignore_errors=True)
-
-    def tokenize_summarization(self, dataset):
-        feature = self.snapshot.feature_names[0]
-        label = self.snapshot.y_column_name[0]
-
-        max_input_length = self.algorithm["max_input_length"]
-        max_summary_length = self.algorithm["max_summary_length"]
-
-        def preprocess_function(examples):
-            inputs = [doc for doc in examples[feature]]
-            model_inputs = self.tokenizer(inputs, max_length=max_input_length, truncation=True)
-
-            with self.tokenizer.as_target_tokenizer():
-                labels = self.tokenizer(examples[label], max_length=max_summary_length, truncation=True)
-
-            model_inputs["labels"] = labels["input_ids"]
-            return model_inputs
-
-        return dataset.map(preprocess_function, batched=True, remove_columns=dataset["train"].column_names)
-
-    def tokenize_text_classification(self, dataset):
-        # text classification only supports a single feature other than the label
-        feature = self.snapshot.feature_names[0]
-        tokenizer = self.tokenizer
-
-        def preprocess_function(examples):
-            return tokenizer(examples[feature], padding=True, truncation=True)
-
-        return dataset.map(preprocess_function, batched=True)
-
-    def tokenize_translation(self, dataset):
-        max_length = self.algorithm["max_length"]
-
-        def preprocess_function(examples):
-            inputs = [ex[self.algorithm["from"]] for ex in examples[self.snapshot.y_column_name[0]]]
-            targets = [ex[self.algorithm["to"]] for ex in examples[self.snapshot.y_column_name[0]]]
-            model_inputs = self.tokenizer(inputs, max_length=max_length, truncation=True)
-
-            # Set up the tokenizer for targets
-            with self.tokenizer.as_target_tokenizer():
-                labels = self.tokenizer(targets, max_length=max_length, truncation=True)
-
-            model_inputs["labels"] = labels["input_ids"]
-            return model_inputs
-
-        return dataset.map(preprocess_function, batched=True, remove_columns=dataset["train"].column_names)
+    # def tokenize_summarization(self, dataset):
+    #     feature = self.snapshot.feature_names[0]
+    #     label = self.snapshot.y_column_name[0]
+    #
+    #     max_input_length = self.algorithm["max_input_length"]
+    #     max_summary_length = self.algorithm["max_summary_length"]
+    #
+    #     def preprocess_function(examples):
+    #         inputs = [doc for doc in examples[feature]]
+    #         model_inputs = self.tokenizer(inputs, max_length=max_input_length, truncation=True)
+    #
+    #         with self.tokenizer.as_target_tokenizer():
+    #             labels = self.tokenizer(examples[label], max_length=max_summary_length, truncation=True)
+    #
+    #         model_inputs["labels"] = labels["input_ids"]
+    #         return model_inputs
+    #
+    #     return dataset.map(preprocess_function, batched=True, remove_columns=dataset["train"].column_names)
+    #
+    # def tokenize_text_classification(self, dataset):
+    #     # text classification only supports a single feature other than the label
+    #     feature = self.snapshot.feature_names[0]
+    #     tokenizer = self.tokenizer
+    #
+    #     def preprocess_function(examples):
+    #         return tokenizer(examples[feature], padding=True, truncation=True)
+    #
+    #     return dataset.map(preprocess_function, batched=True)
+    #
+    # def tokenize_translation(self, dataset):
+    #     max_length = self.algorithm["max_length"]
+    #
+    #     def preprocess_function(examples):
+    #         inputs = [ex[self.algorithm["from"]] for ex in examples[self.snapshot.y_column_name[0]]]
+    #         targets = [ex[self.algorithm["to"]] for ex in examples[self.snapshot.y_column_name[0]]]
+    #         model_inputs = self.tokenizer(inputs, max_length=max_length, truncation=True)
+    #
+    #         # Set up the tokenizer for targets
+    #         with self.tokenizer.as_target_tokenizer():
+    #             labels = self.tokenizer(targets, max_length=max_length, truncation=True)
+    #
+    #         model_inputs["labels"] = labels["input_ids"]
+    #         return model_inputs
+    #
+    #     return dataset.map(preprocess_function, batched=True, remove_columns=dataset["train"].column_names)
 
     def tokenize_question_answering(self, dataset):
         tokenizer = self._algorithm["tokenizer"]

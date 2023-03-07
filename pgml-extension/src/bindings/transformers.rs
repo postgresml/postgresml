@@ -1,7 +1,10 @@
+use std::collections::HashMap;
+use std::path::PathBuf;
 use once_cell::sync::Lazy;
 use pgx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
+use crate::orm::{Task, TextDataset};
 
 static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
@@ -39,6 +42,26 @@ pub fn transform(
             .unwrap()
     });
     serde_json::from_str(&results).unwrap()
+}
+
+pub fn tune(
+    task: &Task,
+    dataset: TextDataset,
+    hyperparams: &JsonB,
+) -> PathBuf {
+    let task = task.to_string();
+    let hyperparams = serde_json::to_string(&hyperparams.0).unwrap();
+
+    let path = Python::with_gil(|py| -> String {
+        let tune = PY_MODULE.getattr(py, "tune").unwrap();
+        tune
+            .call1(py, (&task, &hyperparams, dataset.x_train, dataset.x_test, dataset.y_train, dataset.y_test))
+            .unwrap()
+            .extract(py)
+            .unwrap()
+    });
+    info!("path: {path:?}");
+    PathBuf::from(path)
 }
 
 pub fn load_dataset(

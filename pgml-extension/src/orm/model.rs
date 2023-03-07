@@ -16,7 +16,7 @@ use rand::prelude::SliceRandom;
 use serde_json::json;
 
 use crate::bindings::*;
-use crate::orm::Dataset;
+use crate::orm::{Dataset, TextDataset};
 use crate::orm::*;
 
 #[allow(clippy::type_complexity)]
@@ -88,7 +88,7 @@ impl Model {
             },
         };
 
-        let dataset = snapshot.dataset(project.task);
+        let dataset = snapshot.tabular_dataset();
         let status = Status::in_progress;
         // Create the model record.
         Spi::connect(|client| {
@@ -130,8 +130,7 @@ impl Model {
                     bindings: None,
                     num_classes: match project.task {
                         Task::regression => 0,
-                        Task::classification => snapshot.num_classes(),
-                        _ => todo!("num_classes for huggingface"),
+                        _ => snapshot.num_classes(),
                     },
                     num_features: snapshot.num_features(),
                 });
@@ -142,13 +141,8 @@ impl Model {
 
         let mut model = model.unwrap();
 
-        if model.algorithm == Algorithm::transformers {
-            info!("Tuning {}", model);
-            // todo!("tuning");
-        } else {
-            info!("Training {}", model);
-            model.fit(&dataset);
-        }
+        info!("Training {}", model);
+        model.fit(&dataset);
 
         Spi::run_with_args(
             "UPDATE pgml.models SET status = $1::pgml.status WHERE id = $2",
@@ -162,6 +156,120 @@ impl Model {
         )
         .unwrap();
 
+        model
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn tune(
+        project: &Project,
+        snapshot: &mut Snapshot,
+        hyperparams: &JsonB
+    ) -> Model {
+        let mut model: Option<Model> = None;
+        let dataset = snapshot.text_dataset();
+
+        // Create the model record.
+        Spi::connect(|client| {
+            let result = client.select("
+          INSERT INTO pgml.models (project_id, snapshot_id, algorithm, runtime, hyperparams, status, search, search_params, search_args, num_features)
+          VALUES ($1, $2, cast($3 AS pgml.algorithm), cast($4 AS pgml.runtime), $5, cast($6 as pgml.status), $7, $8, $9, $10)
+          RETURNING id, project_id, snapshot_id, algorithm, runtime::TEXT, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
+                                       Some(1),
+                                       Some(vec![
+                                           (PgBuiltInOids::INT8OID.oid(), project.id.into_datum()),
+                                           (PgBuiltInOids::INT8OID.oid(), snapshot.id.into_datum()),
+                                           (PgBuiltInOids::TEXTOID.oid(), Algorithm::transformers.to_string().into_datum()),
+                                           (PgBuiltInOids::TEXTOID.oid(), Runtime::python.to_string().into_datum()),
+                                           (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(hyperparams)).into_datum()),
+                                           (PgBuiltInOids::TEXTOID.oid(), Status::in_progress.to_string().into_datum()),
+                                           (PgBuiltInOids::TEXTOID.oid(), None::<Option<Search>>.into_datum()),
+                                           (PgBuiltInOids::JSONBOID.oid(), JsonB(serde_json::from_str("{}").unwrap()).into_datum()),
+                                           (PgBuiltInOids::JSONBOID.oid(), JsonB(serde_json::from_str("{}").unwrap()).into_datum()),
+                                           (PgBuiltInOids::INT8OID.oid(), (dataset.num_features as i64).into_datum()),
+                                       ]),
+            ).unwrap().first();
+            if !result.is_empty() {
+                model = Some(Model {
+                    id: result.get(1).unwrap().unwrap(),
+                    project_id: result.get(2).unwrap().unwrap(),
+                    snapshot_id: result.get(3).unwrap().unwrap(),
+                    algorithm: Algorithm::from_str(result.get(4).unwrap().unwrap()).unwrap(),
+                    runtime: Runtime::from_str(result.get(5).unwrap().unwrap()).unwrap(),
+                    hyperparams: result.get(6).unwrap().unwrap(),
+                    status: Status::from_str(result.get(7).unwrap().unwrap()).unwrap(),
+                    metrics: result.get(8).unwrap(),
+                    search: result.get(9).unwrap().map(|search| Search::from_str(search).unwrap()),
+                    search_params: result.get(10).unwrap().unwrap(),
+                    search_args: result.get(11).unwrap().unwrap(),
+                    created_at: result.get(12).unwrap().unwrap(),
+                    updated_at: result.get(13).unwrap().unwrap(),
+                    project: project.clone(),
+                    snapshot: snapshot.clone(),
+                    bindings: None,
+                    num_classes: 0,
+                    num_features: snapshot.num_features(),
+                });
+            }
+
+            result
+        });
+
+        let mut model = model.unwrap();
+
+        info!("Tuning {}", model);
+        let path = transformers::tune(&project.task, dataset, &model.hyperparams);
+
+
+
+        let now = Instant::now();
+        let fit_time = now.elapsed();
+
+        let now = Instant::now();
+        let score_time = now.elapsed();
+
+        let mut metrics = IndexMap::new();
+        metrics.insert("fit_time".to_string(), fit_time.as_secs_f32());
+        metrics.insert("score_time".to_string(), score_time.as_secs_f32());
+        metrics.insert("perplexity".to_string(), 1.0_f32);
+        model.metrics = Some(JsonB(json!(metrics)));
+        info!("Metrics: {:?}", &metrics);
+
+        Spi::get_one_with_args::<i64>(
+            "UPDATE pgml.models SET hyperparams = $1, metrics = $2 WHERE id = $3 RETURNING id",
+            vec![
+                (
+                    PgBuiltInOids::JSONBOID.oid(),
+                    JsonB(model.hyperparams.0.clone()).into_datum(),
+                ),
+                (
+                    PgBuiltInOids::JSONBOID.oid(),
+                    JsonB(model.metrics.as_ref().unwrap().0.clone()).into_datum(),
+                ),
+                (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+            ],
+        )
+        .unwrap();
+
+        // Save the bindings.
+        // Spi::get_one_with_args::<i64>(
+        //     "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
+        //     vec![
+        //         (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+        //         (PgBuiltInOids::BYTEAOID.oid(), model.bindings.as_ref().unwrap().to_bytes().into_datum()),
+        //     ],
+        // ).unwrap();
+
+        Spi::run_with_args(
+            "UPDATE pgml.models SET status = $1::pgml.status WHERE id = $2",
+            Some(vec![
+                (
+                    PgBuiltInOids::TEXTOID.oid(),
+                    Status::successful.to_string().into_datum(),
+                ),
+                (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+            ]),
+        )
+        .unwrap();
         model
     }
 
@@ -233,8 +341,7 @@ impl Model {
                 let num_features = snapshot.num_features();
                 let num_classes = match project.task {
                     Task::regression => 0,
-                    Task::classification => snapshot.num_classes(),
-                    _ => todo!("num_classes for huggingface"),
+                    _ => snapshot.num_classes(),
                 };
 
                 model = Some(Model {
@@ -305,7 +412,7 @@ impl Model {
                     Algorithm::svm => linfa::Svm::fit,
                     _ => todo!(),
                 },
-                _ => todo!("fit for huggingface"),
+                _ => error!("use pgml.tune for transformers tasks"),
             },
 
             #[cfg(not(feature = "python"))]
@@ -384,7 +491,7 @@ impl Model {
                     Algorithm::lightgbm => sklearn::lightgbm_classification,
                     _ => panic!("{:?} does not support classification", self.algorithm),
                 },
-                _ => todo!("fit for huggingface"),
+                _ => error!("use pgml.tune for transformers tasks"),
             },
         }
     }

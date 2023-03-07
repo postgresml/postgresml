@@ -11,7 +11,7 @@ use serde_json::json;
 
 use crate::orm::Sampling;
 use crate::orm::Status;
-use crate::orm::{Dataset, Task};
+use crate::orm::{Dataset, TextDataset};
 
 // Categories use a designated string to represent NULL categorical values,
 // rather than Option<String> = None, because the JSONB serialization schema
@@ -785,77 +785,70 @@ impl Snapshot {
         (num_train_rows, num_test_rows)
     }
 
-    pub fn dataset(&mut self, task: Task) -> Dataset {
-        match task {
-            Task::summarization => self.summarization_dataset(),
-            _ => self.tabular_dataset(),
-        }
-    }
 
-    pub fn summarization_dataset(&mut self) -> Dataset {
-        todo!("fix vec string and f32");
-        // let mut data = None;
+    pub fn text_dataset(&mut self) -> TextDataset {
+        let mut data = None;
 
-        // Spi::connect(|client| {
-        //     let result = client.select(&self.select_sql(), None, None).unwrap();
-        //     let num_rows = result.len();
-        //     let (num_train_rows, num_test_rows) = self.train_test_split(num_rows);
-        //     let num_features = self.num_features();
-        //     let num_labels = self.num_labels();
-        //
-        //     let mut x_train: Vec<String> = Vec::with_capacity(num_train_rows * num_features);
-        //     let mut y_train: Vec<String> = Vec::with_capacity(num_train_rows * num_labels);
-        //     let mut x_test: Vec<String> = Vec::with_capacity(num_test_rows * num_features);
-        //     let mut y_test: Vec<String> = Vec::with_capacity(num_test_rows * num_labels);
-        //
-        //     result.enumerate().for_each(|(i, row)| {
-        //         for column in &mut self.columns {
-        //             let vector = if column.label {
-        //                 if i < num_train_rows {
-        //                     &mut y_train
-        //                 } else {
-        //                     &mut y_test
-        //                 }
-        //             } else if i < num_train_rows {
-        //                 &mut x_train
-        //             } else {
-        //                 &mut x_test
-        //             };
-        //
-        //             match column.pg_type.as_str() {
-        //                 "bpchar" | "text" | "varchar" => {
-        //                     match row[column.position].value::<String>().unwrap() {
-        //                         Some(text) => vector.push(text),
-        //                         None => error!("NULL training text is not handled"),
-        //                     }
-        //                 }
-        //                 _ => error!("only text type columns are supported"),
-        //             }
-        //         }
-        //     });
-        //
-        //     // data = Some(Dataset {
-        //     //     x_train,
-        //     //     y_train,
-        //     //     x_test,
-        //     //     y_test,
-        //     //     num_features,
-        //     //     num_labels,
-        //     //     num_rows,
-        //     //     num_test_rows,
-        //     //     num_train_rows,
-        //     //     // TODO rename and audit this
-        //     //     num_distinct_labels: self.num_classes(),
-        //     // });
-        //
-        //     Ok::<std::option::Option<()>, i64>(Some(())) // this return type is nonsense
-        // }).unwrap();
-        //
-        // let data = data.unwrap();
-        //
-        // info!("{}", data);
-        //
-        // data
+        Spi::connect(|client| {
+            let result = client.select(&self.select_sql(), None, None).unwrap();
+            let num_rows = result.len();
+            let (num_train_rows, num_test_rows) = self.train_test_split(num_rows);
+            let num_features = self.num_features();
+            let num_labels = self.num_labels();
+
+            let mut x_train: Vec<String> = Vec::with_capacity(num_train_rows * num_features);
+            let mut y_train: Vec<String> = Vec::with_capacity(num_train_rows * num_labels);
+            let mut x_test: Vec<String> = Vec::with_capacity(num_test_rows * num_features);
+            let mut y_test: Vec<String> = Vec::with_capacity(num_test_rows * num_labels);
+
+            result.enumerate().for_each(|(i, row)| {
+                for column in &mut self.columns {
+                    let vector = if column.label {
+                        if i < num_train_rows {
+                            &mut y_train
+                        } else {
+                            &mut y_test
+                        }
+                    } else if i < num_train_rows {
+                        &mut x_train
+                    } else {
+                        &mut x_test
+                    };
+
+                    match column.pg_type.as_str() {
+                        "bpchar" | "text" | "varchar" => {
+                            match row[column.position].value::<String>().unwrap() {
+                                Some(text) => vector.push(text),
+                                None => error!("NULL training text is not handled"),
+                            }
+                        }
+                        _ => error!("only text type columns are supported"),
+                    }
+                }
+            });
+
+            data = Some(TextDataset {
+                x_train,
+                y_train,
+                x_test,
+                y_test,
+                num_features,
+                num_labels,
+                num_rows,
+                num_test_rows,
+                num_train_rows,
+                // TODO rename and audit this
+                num_distinct_labels: self.num_classes(),
+            });
+
+            Ok::<std::option::Option<()>, i64>(Some(())) // this return type is nonsense
+        }).unwrap();
+
+        let data = data.unwrap();
+
+        info!("{}", data);
+
+        data
     }
 
     pub fn tabular_dataset(&mut self) -> Dataset{
