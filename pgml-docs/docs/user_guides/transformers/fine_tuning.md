@@ -333,7 +333,8 @@ Or, it might be interesting to concat the title to the text field to see how rel
 
 ```sql linenums="1" title="concat_title.sql"
 CREATE OR REPLACE VIEW billsum_training_data
-AS SELECT title || '\n' || "text" AS "text", summary FROM pgml.billsum;
+AS SELECT title || '\n' || "text" AS "text", summary FROM pgml.billsum 
+LIMIT 10;
 ```
 
 
@@ -354,12 +355,13 @@ SELECT pgml.tune(
         "per_device_eval_batch_size": 2,
         "num_train_epochs": 1,
         "weight_decay": 0.01,
-        "max_length": 1024,
+        "max_length": 1024
     }',
     test_size => 0.2,
     test_sampling => 'last'
 );
 ```
+
 
 ### Make predictions
 

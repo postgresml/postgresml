@@ -16,7 +16,6 @@ use rand::prelude::SliceRandom;
 use serde_json::json;
 
 use crate::bindings::*;
-use crate::orm::{Dataset, TextDataset};
 use crate::orm::*;
 
 #[allow(clippy::type_complexity)]
@@ -217,20 +216,7 @@ impl Model {
         let mut model = model.unwrap();
 
         info!("Tuning {}", model);
-        let path = transformers::tune(&project.task, dataset, &model.hyperparams);
-
-
-
-        let now = Instant::now();
-        let fit_time = now.elapsed();
-
-        let now = Instant::now();
-        let score_time = now.elapsed();
-
-        let mut metrics = IndexMap::new();
-        metrics.insert("fit_time".to_string(), fit_time.as_secs_f32());
-        metrics.insert("score_time".to_string(), score_time.as_secs_f32());
-        metrics.insert("perplexity".to_string(), 1.0_f32);
+        let (path, metrics) = transformers::tune(&project.task, dataset, &model.hyperparams);
         model.metrics = Some(JsonB(json!(metrics)));
         info!("Metrics: {:?}", &metrics);
 
@@ -249,7 +235,6 @@ impl Model {
             ],
         )
         .unwrap();
-
         // Save the bindings.
         // Spi::get_one_with_args::<i64>(
         //     "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
@@ -258,7 +243,6 @@ impl Model {
         //         (PgBuiltInOids::BYTEAOID.oid(), model.bindings.as_ref().unwrap().to_bytes().into_datum()),
         //     ],
         // ).unwrap();
-
         Spi::run_with_args(
             "UPDATE pgml.models SET status = $1::pgml.status WHERE id = $2",
             Some(vec![

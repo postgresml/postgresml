@@ -48,20 +48,26 @@ pub fn tune(
     task: &Task,
     dataset: TextDataset,
     hyperparams: &JsonB,
-) -> PathBuf {
+) -> (PathBuf, HashMap<String, f64>) {
     let task = task.to_string();
     let hyperparams = serde_json::to_string(&hyperparams.0).unwrap();
 
-    let path = Python::with_gil(|py| -> String {
+    let (path, metrics) = Python::with_gil(|py| -> (String, HashMap<String, f64>) {
         let tune = PY_MODULE.getattr(py, "tune").unwrap();
-        tune
-            .call1(py, (&task, &hyperparams, dataset.x_train, dataset.x_test, dataset.y_train, dataset.y_test))
-            .unwrap()
+        let result = tune
+            .call1(py, (&task, &hyperparams, dataset.x_train, dataset.x_test, dataset.y_train, dataset.y_test));
+        let result = match result {
+            Err(e) => {
+                let traceback = e.traceback(py).unwrap().format().unwrap();
+                error!("{traceback} {e}")
+            },
+            Ok(o) => o
+        };
+        result
             .extract(py)
             .unwrap()
     });
-    info!("path: {path:?}");
-    PathBuf::from(path)
+    (PathBuf::from(path), metrics)
 }
 
 pub fn load_dataset(

@@ -1,8 +1,24 @@
 import os
-import datasets
 import json
-import transformers
+import math
 import shutil
+import time
+
+import datasets
+from rouge import Rouge
+from sacrebleu.metrics import BLEU
+from sklearn.metrics import (
+    mean_squared_error,
+    r2_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+    accuracy_score,
+    log_loss,
+)
+import torch
+import transformers
 from transformers import (
     AutoTokenizer,
     DataCollatorWithPadding,
@@ -61,6 +77,7 @@ def tokenize_text_classification(tokenizer, max_length, x, y):
 
 def tokenize_translation(tokenizer, max_length, x, y):
     encoding = tokenizer(x, max_length=max_length, truncation=True, text_target=y)
+    print(str(encoding.data.keys()))
     return datasets.Dataset.from_dict(encoding.data)
 
 def tokenize_summarization(tokenizer, max_length, x, y):
@@ -70,29 +87,24 @@ def tokenize_summarization(tokenizer, max_length, x, y):
 def tokenize_question_answering(tokenizer, max_length, x, y):
     pass
 
-def compute_metrics_summarization(self, dataset):
-    feature = self.snapshot.feature_names[0]
-    label = self.snapshot.y_column_name[0]
-
+def compute_metrics_summarization(model, tokenizer, hyperparams, x, y):
     all_preds = []
-    all_labels = [d for d in dataset[label]]
+    all_labels = y_test
 
-    batch_size = self.hyperparams["per_device_eval_batch_size"]
-    batches = int(math.ceil(len(dataset) / batch_size))
-
+    batch_size = hyperparams["per_device_eval_batch_size"]
+    batches = int(math.ceil(len(y_test) / batch_size))
     with torch.no_grad():
         for i in range(batches):
-            slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
-            inputs = slice[feature]
-            tokens = self.tokenizer.batch_encode_plus(
+            inputs = x[i * batch_size : min((i + 1) * batch_size, len(x))]
+            tokens = tokenizer.batch_encode_plus(
                 inputs,
                 padding=True,
                 truncation=True,
                 return_tensors="pt",
                 return_token_type_ids=False,
-            ).to(self.model.device)
-            predictions = self.model.generate(**tokens)
-            decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
+            ).to(model.device)
+            predictions = model.generate(**tokens)
+            decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
             all_preds.extend(decoded_preds)
 
     bleu = BLEU().corpus_score(all_preds, [[l] for l in all_labels])
@@ -149,28 +161,27 @@ def compute_metrics_text_classification(self, dataset):
 
     return metrics
 
-def compute_metrics_translation(self, dataset):
+def compute_metrics_translation(model, tokenizer, hyperparams, x, y):
     all_preds = []
-    all_labels = [d[self.algorithm["to"]] for d in dataset[self.snapshot.y_column_name[0]]]
+    all_labels = y
 
-    batch_size = self.hyperparams["per_device_eval_batch_size"]
-    batches = int(len(dataset) / batch_size) + 1
+    batch_size = hyperparams["per_device_eval_batch_size"]
+    batches = int(len(x) / batch_size) + 1
 
     with torch.no_grad():
         for i in range(batches):
-            slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
-            inputs = [ex[self.algorithm["from"]] for ex in slice[self.snapshot.y_column_name[0]]]
-            tokens = self.tokenizer.batch_encode_plus(
+            inputs = x[i * batch_size : min((i + 1) * batch_size, len(x))]
+
+            tokens = tokenizer.batch_encode_plus(
                 inputs,
                 padding=True,
                 truncation=True,
                 return_tensors="pt",
                 return_token_type_ids=False,
-            ).to(self.model.device)
-            predictions = self.model.generate(**tokens)
-            decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
+            ).to(model.device)
+            predictions = model.generate(**tokens)
+            decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
             all_preds.extend(decoded_preds)
-
     bleu = BLEU().corpus_score(all_preds, [[l] for l in all_labels])
     rouge = Rouge().get_scores(all_preds, all_labels, avg=True)
     return {
@@ -282,23 +293,28 @@ def tune(task, hyperparams, x_train, x_test, y_train, y_test):
         tokenizer=tokenizer,
         data_collator=data_collator,
     )
+    start = time.perf_counter()
     trainer.train()
-    model.eval()
+    fit_time = time.perf_counter() - start
 
+    model.eval()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
     # Test
+    start = time.perf_counter()
     if task == "summarization":
-        metrics = compute_metrics_summarization(test)
+        metrics = compute_metrics_summarization(model, tokenizer, hyperparams, x_test, y_test)
     elif task == "text-classification":
-        metrics = compute_metrics_text_classification(test)
+        metrics = compute_metrics_text_classification(model, tokenizer, hyperparams, x_test, y_test)
     elif task == "question-answering":
-        metrics = compute_metrics_question_answering(test)
-    elif task.startswith("translation"):
-        metrics = compute_metrics_translation(test)
+        metrics = compute_metrics_question_answering(model, tokenizer, hyperparams, x_test, y_test)
+    elif task == "translation":
+        metrics = compute_metrics_translation(model, tokenizer, hyperparams, x_test, y_test)
     else:
         raise PgMLException(f"unhandled task type: {task}")
+    metrics["score_time"] = time.perf_counter() - start
+    metrics["fit_time"] = fit_time
 
     # Save the results
     if os.path.isdir(path):
@@ -322,7 +338,7 @@ def tune(task, hyperparams, x_train, x_test, y_train, y_test):
     #             part += 1
     # shutil.rmtree(path, ignore_errors=True)
 
-    return path
+    return (path, metrics)
 
 
 class Model:
@@ -380,7 +396,7 @@ class Model:
 
         return self._algorithm
 
-    def train(self):
+    # def train(self):
         # dataset = self.snapshot.dataset
         #
         # self._algorithm = {"tokenizer": AutoTokenizer.from_pretrained(self.algorithm_name)}

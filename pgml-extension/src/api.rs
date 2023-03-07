@@ -626,7 +626,6 @@ fn tune(
         &mut snapshot,
         &hyperparams
     );
-
     let new_metrics: &serde_json::Value = &model.metrics.unwrap().0;
     let new_metrics = new_metrics.as_object().unwrap();
 
@@ -651,21 +650,35 @@ fn tune(
             if let Ok(Some(deployed_metrics)) = deployed_metrics {
                 let deployed_metrics = deployed_metrics.0.as_object().unwrap();
                 match project.task {
-                    Task::classification => {
+                    Task::classification | Task::question_answering | Task::text_classification => {
                         if deployed_metrics.get("f1").unwrap().as_f64()
                             > new_metrics.get("f1").unwrap().as_f64()
                         {
                             deploy = false;
                         }
                     }
-                    Task::regression => {
+                    Task::regression=> {
                         if deployed_metrics.get("r2").unwrap().as_f64()
                             > new_metrics.get("r2").unwrap().as_f64()
                         {
                             deploy = false;
                         }
                     }
-                    _ => todo!("Deploy tuned based on new metrics."),
+                    Task::translation=> {
+                        if deployed_metrics.get("bleu").unwrap().as_f64()
+                            > new_metrics.get("bleu").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
+                    Task::summarization=> {
+                        if deployed_metrics.get("rouge_ngram_f1").unwrap().as_f64()
+                            > new_metrics.get("rouge_ngram_f1").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
+                    Task::text_generation | Task::text2text => todo!()
                 }
             }
         }
