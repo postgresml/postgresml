@@ -8,6 +8,8 @@ async fn index() -> Redirect {
 
 #[rocket::main]
 async fn main() {
+    dotenv::dotenv().ok();
+
     let clusters = pgml_dashboard::Clusters::new();
     clusters
         .add(-1, &pgml_dashboard::guards::default_database_url())
