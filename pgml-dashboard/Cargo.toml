@@ -14,7 +14,7 @@ include = ["src/", "sqlx-data.json", "templates/", "migrations/", "static/"]
 [dependencies]
 sailfish = "0.5.0"
 rocket = {version = "0.5.0-rc.2", features = ["secrets"] }
-sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "postgres", "json", "tls", "migrate", "time", "uuid", "bigdecimal", "offline",] }
+sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "postgres", "json", "tls", "migrate", "time", "uuid", "bigdecimal",] }
 anyhow = "1"
 tokio = { version = "1", features = ["full"] }
 rand = "0.8"
@@ -25,3 +25,4 @@ chrono = "0.4"
 serde_json = "1"
 csv-async = "1"
 scraper = "0.14.0"
+dotenv = "0.15"
