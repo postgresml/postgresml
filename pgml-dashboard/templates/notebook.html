@@ -1,7 +1,7 @@
 <% include!("header.html"); %>
 
 <div data-controller="notebook">
-  <section>
+  <section class="notebook-title">
     <div class="flex flex-center">
       <div>
         <h1 class="flex-grow" data-action="click->notebook#renameNotebook" data-notebook-target="notebookName">
@@ -36,7 +36,7 @@
     include!("cell.html");
   } %>
 
-  <section class="notebook-cell" data-controller="notebook-cell">
+  <section class="notebook-last-cell notebook-cell" data-controller="notebook-cell">
     <div class="notebook-cell-edit">
       <form action="/dashboard/notebooks/<%= notebook.id %>/cell" method="post" data-notebook-cell-target="form" data-action="notebook-cell#freezeScrollOnNextRender notebook-cell#play">
         <div class="flex">

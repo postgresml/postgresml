@@ -503,6 +503,9 @@ nav ol, nav ul {
   list-style: none;
 }
 
+.notebook-title {
+    padding: 1rem;
+}
 
 .notebook-cell.active {
   border: 1px solid var(--gray-8);
@@ -519,8 +522,7 @@ nav ol, nav ul {
 }
 
 main turbo-frame:first-of-type .notebook-cell {
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    border-radius: 10px 10px 0px 0px;
     border-top: 1px solid var(--gray-8);
 }
 
@@ -533,6 +535,10 @@ main turbo-frame:first-of-type .notebook-cell {
   border-top: 1px solid var(--gray-10);
   border-bottom: 1px solid var(--gray-10);
   background: var(--gray-10);
+}
+
+.notebook-last-cell {
+    border-radius: 0px 0px 10px 10px;
 }
 
 .notebook-cell article.markdown-body {
