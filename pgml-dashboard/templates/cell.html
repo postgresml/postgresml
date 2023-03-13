@@ -8,18 +8,18 @@
     <div class="notebook-cell-edit">
       <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit" method="post" data-notebook-cell-target="form" data-action="notebook-cell#play">
         <div class="flex">
-          <div class="flex-grow">
+          <div class="flex-grow margin-right-1">
             <textarea name="contents" data-notebook-cell-target="editor"><%= cell.contents %></textarea>
           </div>
-          <div class="flex flex-end">
+          <div class="notebook-buttons flex-end">
             <select name="cell_type" data-action="notebook-cell#selectCellType" title="Select cell type" data-notebook-cell-target="type">
               <option value="3" <% if cell.cell_type == 3 { %>selected<% } %>>SQL</option>
               <option value="1" <% if cell.cell_type == 1 { %>selected<% } %>>Markdown</option>
             </select>
-            <button type="submit" class="button notebook-button" title="Execute cell" data-notebook-cell-target="play">
+            <button type="submit" title="Execute cell" data-notebook-cell-target="play">
               <span class="material-symbols-outlined">play_arrow</span>
             </button>
-             <button class="button notebook-button" title="Cancel edit" data-action="notebook-cell#cancelEdit">
+             <button title="Cancel edit" data-action="notebook-cell#cancelEdit">
               <span class="material-symbols-outlined">cancel</span>
             </button>
           </div>
@@ -35,7 +35,7 @@
     <div>
       <div class="flex">
         <div class="cell-number"><%= cell.cell_number %></div>
-        <div class="flex-grow margin-right-1">
+        <div class="notebook-render-container">
           <% if cell.code() { %>
           <div class="markdown-body notebook-contents">
             <pre><code class="language-sql"><%- cell.contents %></code></pre>
@@ -48,9 +48,9 @@
           </div>
           <% } %>
         </div>
-          
-        <% if cell.code() && !edit { %>
-        <div class="notebook-button">
+        
+        <div class="notebook-buttons">
+          <% if cell.code() && !edit { %>
           <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/play" method="post" data-action="notebook-cell#play">
             <button type="submit" title="Execute cell" data-notebook-cell-target="play">
               <span class="material-symbols-outlined">
@@ -58,16 +58,12 @@
               </span>
             </button>
           </form>
-        </div>
-        <% } %>
-        <div class="notebook-button">
+          <% } %>
           <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/remove" method="post">
             <button type="submit" title="Delete cell">
               <span class="material-symbols-outlined">delete_forever</span>
             </button>
           </form>
-        </div>
-        <div class="notebook-button">
           <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit?bust_cache=<%= bust_cache %>" method="get">
             <button type="submit" title="Edit cell">
               <span class="material-symbols-outlined">edit</span>

@@ -10,7 +10,7 @@
         </div>
       </div>
 
-      <div class="notebook-button">
+      <div class="notebook-buttons">
         <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>?bust_cache=<%= bust_cache %>" method="get">
           <button type="submit" title="Undo cell delete">
             <span class="material-symbols-outlined">
@@ -18,8 +18,6 @@
             </span>
           </button>
         </form>
-      </div>
-      <div class="notebook-button">
         <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/delete" method="post">
           <input type="hidden" name="confirm" value="true" />
           <button type="submit" title="Delete forever">
