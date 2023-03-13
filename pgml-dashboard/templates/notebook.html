@@ -1,22 +1,20 @@
 <% include!("header.html"); %>
 
 <div data-controller="notebook">
-  <section>
+  <section class="notebook-title">
     <div class="flex flex-center">
-      <div>
+      <div class="notebook-render-container">
         <h1 class="flex-grow" data-action="click->notebook#renameNotebook" data-notebook-target="notebookName">
           <span class="material-symbols-outlined">newspaper</span>
           <%= notebook.name %>
         </h1>
       </div>
-      <div class="flex-grow">
+      <div class="notebook-buttons">
         <form class="hidden" action="/dashboard/notebooks/<%= notebook.id %>/rename" method="post" data-notebook-target="renameNotebookForm">
           <h1><input type="text" name="name" value="<%= notebook.name %>" required></h1>
         </form>
-      </div>
-      <div>
         <form action="/dashboard/notebooks/<%= notebook.id %>/reset" method="post">
-          <button type="submit" title="Reset all executable cells" style="padding: 0.5rem 1rem;">
+          <button type="submit" title="Reset all executable cells">
             <span class="material-symbols-outlined">replay</span>
           </button>
         </form>
@@ -36,19 +34,19 @@
     include!("cell.html");
   } %>
 
-  <section class="notebook-cell" data-controller="notebook-cell">
+  <section class="notebook-last-cell notebook-cell" data-controller="notebook-cell">
     <div class="notebook-cell-edit">
       <form action="/dashboard/notebooks/<%= notebook.id %>/cell" method="post" data-notebook-cell-target="form" data-action="notebook-cell#freezeScrollOnNextRender notebook-cell#play">
         <div class="flex">
-          <div class="flex-grow">
+          <div class="flex-grow margin-right-1">
             <textarea data-cell-id="new" name="contents" data-notebook-cell-target="editor"></textarea>
           </div>
-          <div class="flex flex-end">
+          <div class="notebook-buttons flex-end">
             <select name="cell_type" id="cell_type" data-action="notebook-cell#selectCellType" title="Select cell type" data-notebook-cell-target="type">
               <option value="3" selected>SQL</option>
               <option value="1">Markdown</option>
             </select>
-            <button type="submit" class="button notebook-button" title="Create cell" data-notebook-cell-target="play">
+            <button type="submit" title="Create cell" data-notebook-cell-target="play">
               <span class="material-symbols-outlined">play_arrow</span>
             </button>
           </div>

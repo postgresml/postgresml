@@ -305,67 +305,6 @@ footer {
     height: 0;
 }
 
-@media only screen and (max-width: 690px) {
-    header {
-        top: unset;
-        left: 0;
-        bottom: 0;
-        position: fixed;
-        border: 0;
-        padding: 0;
-        width: 100%;
-    }
-    header nav a {
-        font-size: 0;
-    }
-    header nav ul li.logo {
-        display: none;
-    }
-    header nav ul li {
-        width: 24%;
-        padding: 15px 0;
-        text-align: center;
-    }
-    header nav a span.material-symbols-outlined {
-        font-size: 3rem;
-    }
-    main {
-        padding: 0px 0 100px;
-    }
-    dl {        
-        max-height: 6em;
-    }
-    dt {
-        margin-top: 1em;
-    }
-    dt, dd {
-        margin-right: 2em;
-    }
-    figure {
-        display: inline-block;
-        width: 75vmin;
-        height: 75vmin;
-        margin: 30px 0;
-    }
-    section {
-        border-radius: 0;
-        margin: 0 0 20px;
-    }
-}
-
-@media only screen and (max-width: 300px) {
-    dl {        
-        max-height: 12em;
-    }
-    dt {
-        margin-top: 1em;
-    }
-    dt, dd {
-        margin-right: 2em;
-    }
-}
-
-
 ol.object_list {
     width: 100%;
 }
@@ -503,6 +442,10 @@ nav ol, nav ul {
   list-style: none;
 }
 
+.notebook-title {
+    padding: 1rem;
+    margin: 20px auto 20px auto;
+}
 
 .notebook-cell.active {
   border: 1px solid var(--gray-8);
@@ -510,7 +453,6 @@ nav ol, nav ul {
 }
 
 .notebook-cell-edit {
-  border: 1px solid var(--gray-8);
   margin-bottom: 1rem;
 }
 
@@ -519,13 +461,12 @@ nav ol, nav ul {
 }
 
 main turbo-frame:first-of-type .notebook-cell {
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    border-radius: 10px 10px 0px 0px;
     border-top: 1px solid var(--gray-8);
 }
 
 .notebook-cell {
-  margin: 0 20px;
+  margin: 0 auto;
   border-radius: 0;
   padding: 1rem;
   border-left: 2px solid var(--gray-8);
@@ -533,6 +474,10 @@ main turbo-frame:first-of-type .notebook-cell {
   border-top: 1px solid var(--gray-10);
   border-bottom: 1px solid var(--gray-10);
   background: var(--gray-10);
+}
+
+.notebook-last-cell {
+    border-radius: 0px 0px 10px 10px;
 }
 
 .notebook-cell article.markdown-body {
@@ -564,8 +509,10 @@ main turbo-frame:first-of-type .notebook-cell {
   color: #000;
 }
 
-.notebook-button {
-  margin: 0.1rem;
+.notebook-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.2rem;
 }
 
 .notebook-contents code {
@@ -596,6 +543,10 @@ main turbo-frame:first-of-type .notebook-cell {
   align-items: flex-end;
 }
 
+.flex-start {
+    align-items: flex-start;
+}
+
 .flex-row-reverse {
   flex-direction: row-reverse;
 }
@@ -605,16 +556,9 @@ main turbo-frame:first-of-type .notebook-cell {
   font-family: monospace;
 }
 
-.notebook-cell .button {
-  height: fit-content;
-  width: fit-content;
+.notebook-cell button, .notebook-title button, .markdown-body button {
   padding: 2px 5px;
-  margin-bottom: 0.12rem;
-  margin-left: 0.2rem;
-}
-
-.notebook-cell .notebook-button button, .markdown-body button {
-  padding: 2px 5px;
+  height: 2rem;
 }
 
 .notebook-cell .button-delete {
@@ -625,13 +569,18 @@ main turbo-frame:first-of-type .notebook-cell {
   font-weight: bold;
   background: rgb(240, 240, 240);
   border: 1px solid var(--gray-7);
-  padding: 0.5rem 6px;
+  height: 2rem;
   border-radius: 2px;
-  margin-bottom: 2px;
 }
 
 .notebook-duration {
   margin-top: 1rem;
+}
+
+.notebook-render-container {
+    min-width: 0px;
+    flex: 1;
+    margin-right: 1rem;
 }
 
 .notebook-rendering .markdown-body {
@@ -651,6 +600,8 @@ main turbo-frame:first-of-type .notebook-cell {
 */
 .CodeMirror {
   font-size: 1rem;
+  border: 1px solid var(--gray-8);
+  border-radius: 10px;
 }
 
 /*
@@ -736,4 +687,75 @@ input[type=checkbox]:checked:after {
 .ul {
   display: flex;
   align-items: center;
+}
+
+
+@media only screen and (max-width: 690px) {
+    header {
+        top: unset;
+        left: 0;
+        bottom: 0;
+        position: fixed;
+        border: 0;
+        padding: 0;
+        width: 100%;
+    }
+    header nav a {
+        font-size: 0;
+    }
+    header nav ul li.logo {
+        display: none;
+    }
+    header nav ul li {
+        width: 24%;
+        padding: 15px 0;
+        text-align: center;
+    }
+    header nav a span.material-symbols-outlined {
+        font-size: 3rem;
+    }
+    main {
+        padding: 0px 0 100px;
+    }
+    dl {        
+        max-height: 6em;
+    }
+    dt {
+        margin-top: 1em;
+    }
+    dt, dd {
+        margin-right: 2em;
+    }
+    figure {
+        display: inline-block;
+        width: 75vmin;
+        height: 75vmin;
+        margin: 30px 0;
+    }
+    section {
+        border-radius: 0;
+        margin: 0 0 20px;
+    }
+    main turbo-frame:first-of-type .notebook-cell {
+        border-radius: 0px;
+    }
+    .notebook-last-cell {
+        border-radius: 0px;
+    }
+    .notebook-buttons {
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+}
+
+@media only screen and (max-width: 300px) {
+    dl {        
+        max-height: 12em;
+    }
+    dt {
+        margin-top: 1em;
+    }
+    dt, dd {
+        margin-right: 2em;
+    }
 }
