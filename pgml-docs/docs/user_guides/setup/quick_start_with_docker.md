@@ -1,6 +1,6 @@
 # Quick Start w/ Docker
 
-We've prepared a Docker image that will allow you to quickly spin up a new PostgreSQL database with PostgreML already installed. It also includes some Scikit toy datasets so you can easily experiment with PostgresML workflows without having to import your own data.
+We've prepared a Docker image that will allow you to quickly spin up a new PostgreSQL database with PostgresML already installed. It also includes some Scikit toy datasets so you can easily experiment with PostgresML workflows without having to import your own data.
 
 You can skip to [Installation](/user_guides/setup/v2/installation/) for production installation instructions.
 
