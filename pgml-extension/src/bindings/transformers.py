@@ -30,6 +30,9 @@ from transformers import (
     TrainingArguments,
     Trainer,
 )
+
+__cache_transformer_by_model_id = {}
+
 def transform(task, args, inputs):
     task = json.loads(task)
     args = json.loads(args)
@@ -77,7 +80,6 @@ def tokenize_text_classification(tokenizer, max_length, x, y):
 
 def tokenize_translation(tokenizer, max_length, x, y):
     encoding = tokenizer(x, max_length=max_length, truncation=True, text_target=y)
-    print(str(encoding.data.keys()))
     return datasets.Dataset.from_dict(encoding.data)
 
 def tokenize_summarization(tokenizer, max_length, x, y):
@@ -89,10 +91,10 @@ def tokenize_question_answering(tokenizer, max_length, x, y):
 
 def compute_metrics_summarization(model, tokenizer, hyperparams, x, y):
     all_preds = []
-    all_labels = y_test
+    all_labels = y
 
     batch_size = hyperparams["per_device_eval_batch_size"]
-    batches = int(math.ceil(len(y_test) / batch_size))
+    batches = int(math.ceil(len(y) / batch_size))
     with torch.no_grad():
         for i in range(batches):
             inputs = x[i * batch_size : min((i + 1) * batch_size, len(x))]
@@ -106,7 +108,6 @@ def compute_metrics_summarization(model, tokenizer, hyperparams, x, y):
             predictions = model.generate(**tokens)
             decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
             all_preds.extend(decoded_preds)
-
     bleu = BLEU().corpus_score(all_preds, [[l] for l in all_labels])
     rouge = Rouge().get_scores(all_preds, all_labels, avg=True)
     return {
@@ -131,7 +132,7 @@ def compute_metrics_text_classification(self, dataset):
     logits = torch.Tensor(device="cpu")
 
     batch_size = self.hyperparams["per_device_eval_batch_size"]
-    batches = int(len(dataset) / batch_size) + 1
+    batches = int(math.ceil(len(dataset) / batch_size))
 
     with torch.no_grad():
         for i in range(batches):
@@ -166,12 +167,10 @@ def compute_metrics_translation(model, tokenizer, hyperparams, x, y):
     all_labels = y
 
     batch_size = hyperparams["per_device_eval_batch_size"]
-    batches = int(len(x) / batch_size) + 1
-
+    batches = int(math.ceil(len(y) / batch_size))
     with torch.no_grad():
         for i in range(batches):
             inputs = x[i * batch_size : min((i + 1) * batch_size, len(x))]
-
             tokens = tokenizer.batch_encode_plus(
                 inputs,
                 padding=True,
@@ -196,7 +195,7 @@ def compute_metrics_translation(model, tokenizer, hyperparams, x, y):
 
 def compute_metrics_question_answering(self, dataset):
     batch_size = self.hyperparams["per_device_eval_batch_size"]
-    batches = int(len(dataset) / batch_size) + 1
+    batches = int(math.ceil(len(dataset) / batch_size))
 
     with torch.no_grad():
         for i in range(batches):
@@ -251,11 +250,10 @@ def compute_metrics_question_answering(self, dataset):
 
     return metrics
 
-def tune(task, hyperparams, x_train, x_test, y_train, y_test):
+def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
     hyperparams = json.loads(hyperparams)
     model_name = hyperparams.pop("model_name")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    path = os.path.join("/tmp", "postgresml", "models", str(os.getpid()))
 
     algorithm = {}
 
@@ -320,25 +318,68 @@ def tune(task, hyperparams, x_train, x_test, y_train, y_test):
     if os.path.isdir(path):
         shutil.rmtree(path, ignore_errors=True)
     trainer.save_model()
-    # for filename in os.listdir(path):
-    #     filepath = os.path.join(path, filename)
-    #     part = 0
-    #     max_size = 100_000_000
-    #     with open(filepath, mode="rb") as file:
-    #         while True:
-    #             data = file.read(max_size)
-    #             if not data:
-    #                 break
-    #             plpy.execute(
-    #                 f"""
-    #                 INSERT into pgml.files (model_id, path, part, data)
-    #                 VALUES ({q(self.id)}, {q(filepath)}, {q(part)}, '\\x{data.hex()}')
-    #                 """
-    #             )
-    #             part += 1
-    # shutil.rmtree(path, ignore_errors=True)
 
-    return (path, metrics)
+    return metrics
+
+class MissingModelError(Exception):
+    pass
+
+def get_transformer_by_model_id(model_id):
+    global __cache_transformer_by_model_id
+    if model_id in __cache_transformer_by_model_id:
+        return __cache_transformer_by_model_id[model_id]
+    else:
+        raise MissingModelError
+
+def load_model(model_id, task, dir):
+    if task == "summarization":
+        __cache_transformer_by_model_id[model_id] = {
+            "tokenizer": AutoTokenizer.from_pretrained(dir),
+            "model": AutoModelForSeq2SeqLM.from_pretrained(dir),
+        }
+    elif task == "text_classification":
+        __cache_transformer_by_model_id[model_id] = {
+            "tokenizer": AutoTokenizer.from_pretrained(dir),
+            "model": AutoModelForSequenceClassification.from_pretrained(dir),
+        }
+    elif task == "translation":
+        __cache_transformer_by_model_id[model_id] = {
+            "tokenizer": AutoTokenizer.from_pretrained(dir),
+            "model": AutoModelForSeq2SeqLM.from_pretrained(dir),
+        }
+    elif task == "question_answering":
+        __cache_transformer_by_model_id[model_id] = {
+            "tokenizer": AutoTokenizer.from_pretrained(dir),
+            "model": AutoModelForQuestionAnswering.from_pretrained(dir),
+        }
+    else:
+        raise Exception(f"unhandled task type: {task}")
+
+def generate(model_id, data):
+    result = get_transformer_by_model_id(model_id)
+    tokenizer = result["tokenizer"]
+    model = result["model"]
+
+    all_preds = []
+
+    batch_size = 1 # TODO hyperparams
+    batches = int(math.ceil(len(data) / batch_size))
+
+    with torch.no_grad():
+        for i in range(batches):
+            start = i * batch_size
+            end = min((i + 1) * batch_size, len(data))
+            tokens = tokenizer.batch_encode_plus(
+                data[start:end],
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+                return_token_type_ids=False,
+            ).to(model.device)
+            predictions = model.generate(**tokens)
+            decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+            all_preds.extend(decoded_preds)
+    return all_preds
 
 
 class Model:
@@ -648,7 +689,7 @@ class Model:
         logits = torch.Tensor(device="cpu")
 
         batch_size = self.hyperparams["per_device_eval_batch_size"]
-        batches = int(len(dataset) / batch_size) + 1
+        batches = int(math.ceil(len(dataset) / batch_size))
 
         with torch.no_grad():
             for i in range(batches):
@@ -683,7 +724,7 @@ class Model:
         all_labels = [d[self.algorithm["to"]] for d in dataset[self.snapshot.y_column_name[0]]]
 
         batch_size = self.hyperparams["per_device_eval_batch_size"]
-        batches = int(len(dataset) / batch_size) + 1
+        batches = int(math.ceil(len(dataset) / batch_size))
 
         with torch.no_grad():
             for i in range(batches):
@@ -714,7 +755,7 @@ class Model:
 
     def compute_metrics_question_answering(self, dataset):
         batch_size = self.hyperparams["per_device_eval_batch_size"]
-        batches = int(len(dataset) / batch_size) + 1
+        batches = int(math.ceil(len(dataset) / batch_size))
 
         with torch.no_grad():
             for i in range(batches):
@@ -815,7 +856,7 @@ class Model:
         all_preds = []
 
         batch_size = self.hyperparams["per_device_eval_batch_size"]
-        batches = int(len(data) / batch_size) + 1
+        batches = int(math.ceil(len(data) / batch_size))
 
         with torch.no_grad():
             for i in range(batches):
@@ -837,7 +878,7 @@ class Model:
         all_preds = []
 
         batch_size = self.hyperparams["per_device_eval_batch_size"]
-        batches = int(len(data) / batch_size) + 1
+        batches = int(math.ceil(len(data) / batch_size))
 
         with torch.no_grad():
             for i in range(batches):

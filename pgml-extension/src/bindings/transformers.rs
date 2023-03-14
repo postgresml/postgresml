@@ -1,10 +1,11 @@
-use std::collections::HashMap;
-use std::path::PathBuf;
+use crate::orm::{Task, TextDataset};
 use once_cell::sync::Lazy;
 use pgx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
-use crate::orm::{Task, TextDataset};
+use std::collections::HashMap;
+use std::io::Write;
+use std::path::PathBuf;
 
 static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
@@ -48,26 +49,101 @@ pub fn tune(
     task: &Task,
     dataset: TextDataset,
     hyperparams: &JsonB,
-) -> (PathBuf, HashMap<String, f64>) {
+    path: &std::path::PathBuf,
+) -> HashMap<String, f64> {
     let task = task.to_string();
     let hyperparams = serde_json::to_string(&hyperparams.0).unwrap();
 
-    let (path, metrics) = Python::with_gil(|py| -> (String, HashMap<String, f64>) {
+    let metrics = Python::with_gil(|py| -> HashMap<String, f64> {
         let tune = PY_MODULE.getattr(py, "tune").unwrap();
-        let result = tune
-            .call1(py, (&task, &hyperparams, dataset.x_train, dataset.x_test, dataset.y_train, dataset.y_test));
+        let result = tune.call1(
+            py,
+            (
+                &task,
+                &hyperparams,
+                path.to_str().unwrap(),
+                dataset.x_train,
+                dataset.x_test,
+                dataset.y_train,
+                dataset.y_test,
+            ),
+        );
         let result = match result {
             Err(e) => {
                 let traceback = e.traceback(py).unwrap().format().unwrap();
                 error!("{traceback} {e}")
-            },
-            Ok(o) => o
+            }
+            Ok(o) => o,
         };
-        result
-            .extract(py)
-            .unwrap()
+        result.extract(py).unwrap()
     });
-    (PathBuf::from(path), metrics)
+    metrics
+}
+
+pub fn generate(model_id: i64, inputs: Vec<&str>) -> Vec<String> {
+    Python::with_gil(|py| -> Vec<String> {
+        let generate = PY_MODULE.getattr(py, "generate").unwrap();
+        // cloning inputs in case we have to re-call on error is rather unfortunate here
+        let result = generate.call1(py, (model_id, inputs.clone()));
+        let result = match result {
+            Err(e) => {
+                if e.get_type(py).name().unwrap() == "MissingModelError" {
+                    let mut dir = std::path::PathBuf::from("/tmp/postgresml/models");
+                    dir.push(model_id.to_string());
+                    if !dir.exists() {
+                        dump_model(model_id, dir.clone());
+                    }
+                    let task = Spi::get_one_with_args::<String>(
+                        "SELECT task::TEXT
+                        FROM pgml.projects
+                        JOIN pgml.models
+                          ON models.project_id = projects.id
+                      WHERE models.id = $1",
+                        vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
+                    )
+                    .unwrap()
+                    .unwrap();
+
+                    let load = PY_MODULE.getattr(py, "load_model").unwrap();
+                    load.call1(py, (model_id, task, dir)).unwrap();
+
+                    generate.call1(py, (model_id, inputs)).unwrap()
+                } else {
+                    let traceback = e.traceback(py).unwrap().format().unwrap();
+                    error!("{traceback} {e}")
+                }
+            }
+            Ok(o) => o,
+        };
+        result.extract(py).unwrap()
+    })
+}
+
+fn dump_model(model_id: i64, dir: PathBuf) {
+    if dir.exists() {
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+    std::fs::create_dir_all(&dir).unwrap();
+    Spi::connect(|client| {
+        let result = client.select("SELECT path, part, data FROM pgml.files WHERE model_id = $1 ORDER BY path ASC, part ASC",
+               None,
+                Some(vec![
+                    (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
+                ])
+            ).unwrap();
+        for row in result {
+            let mut path = dir.clone();
+            path.push(row.get::<String>(1).unwrap().unwrap());
+            let data: Vec<u8> = row.get(3).unwrap().unwrap();
+            let mut file = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)
+                .unwrap();
+            file.write(&data).unwrap();
+            file.flush().unwrap();
+        }
+    });
 }
 
 pub fn load_dataset(

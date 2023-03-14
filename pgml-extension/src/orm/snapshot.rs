@@ -785,7 +785,6 @@ impl Snapshot {
         (num_train_rows, num_test_rows)
     }
 
-
     pub fn text_dataset(&mut self) -> TextDataset {
         let mut data = None;
 
@@ -842,7 +841,8 @@ impl Snapshot {
             });
 
             Ok::<std::option::Option<()>, i64>(Some(())) // this return type is nonsense
-        }).unwrap();
+        })
+        .unwrap();
 
         let data = data.unwrap();
 
@@ -851,7 +851,7 @@ impl Snapshot {
         data
     }
 
-    pub fn tabular_dataset(&mut self) -> Dataset{
+    pub fn tabular_dataset(&mut self) -> Dataset {
         let numeric_encoded_dataset = self.numeric_encoded_dataset();
 
         // Analyze labels
@@ -940,7 +940,7 @@ impl Snapshot {
 
         self.feature_positions = self.feature_positions();
 
-        Dataset{
+        Dataset {
             x_train,
             x_test,
             num_distinct_labels: self.num_classes(), // changes after analysis
@@ -949,7 +949,7 @@ impl Snapshot {
     }
 
     // Encodes categorical text values (and all others) into f32 for memory efficiency and type homogenization.
-    pub fn numeric_encoded_dataset(&mut self) -> Dataset{
+    pub fn numeric_encoded_dataset(&mut self) -> Dataset {
         let mut data = None;
         Spi::connect(|client| {
             // Postgres Arrays arrays are 1 indexed and so are SPI tuples...

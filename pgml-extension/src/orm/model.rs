@@ -159,11 +159,7 @@ impl Model {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn tune(
-        project: &Project,
-        snapshot: &mut Snapshot,
-        hyperparams: &JsonB
-    ) -> Model {
+    pub fn tune(project: &Project, snapshot: &mut Snapshot, hyperparams: &JsonB) -> Model {
         let mut model: Option<Model> = None;
         let dataset = snapshot.text_dataset();
 
@@ -197,7 +193,10 @@ impl Model {
                     hyperparams: result.get(6).unwrap().unwrap(),
                     status: Status::from_str(result.get(7).unwrap().unwrap()).unwrap(),
                     metrics: result.get(8).unwrap(),
-                    search: result.get(9).unwrap().map(|search| Search::from_str(search).unwrap()),
+                    search: result
+                        .get(9)
+                        .unwrap()
+                        .map(|search| Search::from_str(search).unwrap()),
                     search_params: result.get(10).unwrap().unwrap(),
                     search_args: result.get(11).unwrap().unwrap(),
                     created_at: result.get(12).unwrap().unwrap(),
@@ -214,9 +213,11 @@ impl Model {
         });
 
         let mut model = model.unwrap();
+        let id = model.id;
+        let path = std::path::PathBuf::from(format!("/tmp/postgresml/models/{id}"));
 
         info!("Tuning {}", model);
-        let (path, metrics) = transformers::tune(&project.task, dataset, &model.hyperparams);
+        let metrics = transformers::tune(&project.task, dataset, &model.hyperparams, &path);
         model.metrics = Some(JsonB(json!(metrics)));
         info!("Metrics: {:?}", &metrics);
 
@@ -235,14 +236,24 @@ impl Model {
             ],
         )
         .unwrap();
+
         // Save the bindings.
-        // Spi::get_one_with_args::<i64>(
-        //     "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
-        //     vec![
-        //         (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
-        //         (PgBuiltInOids::BYTEAOID.oid(), model.bindings.as_ref().unwrap().to_bytes().into_datum()),
-        //     ],
-        // ).unwrap();
+        for entry in std::fs::read_dir(&path).unwrap() {
+            let path = entry.unwrap().path();
+            let bytes = std::fs::read(&path).unwrap();
+            for (i, chunk) in bytes.chunks(100_000_000).enumerate() {
+                Spi::get_one_with_args::<i64>(
+                    "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, $2, $3, $4) RETURNING id",
+                    vec![
+                        (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+                        (PgBuiltInOids::TEXTOID.oid(), path.file_name().unwrap().to_str().into_datum()),
+                        (PgBuiltInOids::INT8OID.oid(), (i as i64).into_datum()),
+                        (PgBuiltInOids::BYTEAOID.oid(), chunk.into_datum()),
+                    ],
+                ).unwrap();
+            }
+        }
+
         Spi::run_with_args(
             "UPDATE pgml.models SET status = $1::pgml.status WHERE id = $2",
             Some(vec![

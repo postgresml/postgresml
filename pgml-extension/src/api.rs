@@ -537,6 +537,21 @@ pub fn transform_string(
 }
 
 #[cfg(feature = "python")]
+#[pg_extern(name = "generate")]
+fn generate(project_name: &str, inputs: &str) -> String {
+    generate_batch(project_name, Vec::from([inputs]))
+        .first()
+        .unwrap()
+        .to_string()
+}
+
+#[cfg(feature = "python")]
+#[pg_extern(name = "generate")]
+fn generate_batch(project_name: &str, inputs: Vec<&str>) -> Vec<String> {
+    crate::bindings::transformers::generate(Project::get_deployed_model_id(project_name), inputs)
+}
+
+#[cfg(feature = "python")]
 #[allow(clippy::too_many_arguments)]
 #[pg_extern]
 fn tune(
@@ -562,10 +577,16 @@ fn tune(
     let preprocess = JsonB(serde_json::from_str("{}").unwrap());
     let project = match Project::find_by_name(project_name) {
         Some(project) => project,
-        None => Project::create(project_name, match task {
-            Some(task) => task,
-            None => error!("Project `{}` does not exist. To create a new project, provide the task (regression or classification).", project_name),
-        }),
+        None => Project::create(
+            project_name,
+            match task {
+                Some(task) => task,
+                None => error!(
+                    "Project `{}` does not exist. To create a new project, provide the task.",
+                    project_name
+                ),
+            },
+        ),
     };
 
     if task.is_some() && task.unwrap() != project.task {
@@ -621,11 +642,7 @@ fn tune(
     // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);
     // if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
     //     hyperparams["random_state"] = 0
-    let model = Model::tune(
-        &project,
-        &mut snapshot,
-        &hyperparams
-    );
+    let model = Model::tune(&project, &mut snapshot, &hyperparams);
     let new_metrics: &serde_json::Value = &model.metrics.unwrap().0;
     let new_metrics = new_metrics.as_object().unwrap();
 
@@ -657,28 +674,28 @@ fn tune(
                             deploy = false;
                         }
                     }
-                    Task::regression=> {
+                    Task::regression => {
                         if deployed_metrics.get("r2").unwrap().as_f64()
                             > new_metrics.get("r2").unwrap().as_f64()
                         {
                             deploy = false;
                         }
                     }
-                    Task::translation=> {
+                    Task::translation => {
                         if deployed_metrics.get("bleu").unwrap().as_f64()
                             > new_metrics.get("bleu").unwrap().as_f64()
                         {
                             deploy = false;
                         }
                     }
-                    Task::summarization=> {
+                    Task::summarization => {
                         if deployed_metrics.get("rouge_ngram_f1").unwrap().as_f64()
                             > new_metrics.get("rouge_ngram_f1").unwrap().as_f64()
                         {
                             deploy = false;
                         }
                     }
-                    Task::text_generation | Task::text2text => todo!()
+                    Task::text_generation | Task::text2text => todo!(),
                 }
             }
         }

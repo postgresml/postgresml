@@ -41,7 +41,8 @@ This huggingface dataset stores the data as language key pairs in a JSON documen
     ```sql linenums="1"
     CREATE OR REPLACE VIEW kde4_en_to_es AS
     SELECT translation->>'en' AS "en", translation->>'es' AS "es"
-    FROM pgml.kde4;
+    FROM pgml.kde4
+    LIMIT 10;
     ```
 
 === "Result"
@@ -170,7 +171,7 @@ Tuning has a nearly identical API to training, except you may pass the name of a
 ```sql linenums="1" title="tune.sql"
 SELECT pgml.tune(
     'IMDB Review Sentiment',
-    task => 'text-classification',
+    task => 'text_classification',
     relation_name => 'pgml.imdb',
     y_column_name => 'label',
     model_name => 'distilbert-base-uncased',
