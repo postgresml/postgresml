@@ -44,7 +44,13 @@ torch.manual_seed(42)
     help="Stride length for computing perplexity",
     show_default=True,
 )
-def metrics(filename, column_name, model_name, tokenizer_name, stride):
+@click.option(
+    "--max_length_key",
+    default="n_positions",
+    help="Key in model configuration that maps to max length of the embeddings",
+    show_default=True,
+)
+def metrics(filename, column_name, model_name, tokenizer_name, stride, max_length_key):
     if os.path.exists(filename):
         test = load_dataset("csv", data_files=filename)
     else:
@@ -55,16 +61,25 @@ def metrics(filename, column_name, model_name, tokenizer_name, stride):
 
     device = "cpu"
     if cuda_available:
-        device = "cuda"
-        model = AutoModelForCausalLM.from_pretrained(model_name).cuda()
-    else:
-        model = AutoModelForCausalLM.from_pretrained(model_name)
+        device = "cuda:0"
+    model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
 
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
-    encodings = tokenizer("\n\n".join(test["train"][column_name]), return_tensors="pt")
+    full_text = ""
+    for entry in test["train"][column_name]:
+        if entry:
+            full_text += "\n\n" + entry
 
-    max_length = model.config.n_positions
+    encodings = tokenizer(full_text, return_tensors="pt")
+
+    config = model.config.to_dict()
+    if max_length_key in config.keys():
+        max_length = config[max_length_key]
+    else:
+        log.info("Configuration keys " + ",".join(config.keys()))
+        raise ValueError("%s does not exist in model configuration"%max_length_key)
+
     stride = min(stride, max_length)
     seq_len = encodings.input_ids.size(1)
 
@@ -93,7 +108,7 @@ def metrics(filename, column_name, model_name, tokenizer_name, stride):
             break
 
     ppl = torch.exp(torch.stack(nlls).sum() / end_loc)
-    log.info("Perplexity = %0.3f (lower is better)" % ppl)
+    log.info("Number of parameters = %d, Perplexity = %0.3f (lower is better)" % (model.num_parameters(), ppl))
 
 
 if __name__ == "__main__":
