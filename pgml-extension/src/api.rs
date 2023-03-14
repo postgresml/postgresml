@@ -697,7 +697,13 @@ fn tune(
                             deploy = false;
                         }
                     }
-                    Task::text_generation | Task::text2text => todo!(),
+                    Task::text_generation | Task::text2text => {
+                        if deployed_metrics.get("perplexity").unwrap().as_f64()
+                            < new_metrics.get("perplexity").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    },
                 }
             }
         }

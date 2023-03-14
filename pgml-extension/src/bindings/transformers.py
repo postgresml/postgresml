@@ -4,6 +4,7 @@ import math
 import shutil
 import time
 
+
 import datasets
 from rouge import Rouge
 from sacrebleu.metrics import BLEU
@@ -18,6 +19,7 @@ from sklearn.metrics import (
     log_loss,
 )
 import torch
+from tqdm import tqdm
 import transformers
 from transformers import (
     AutoTokenizer,
@@ -257,9 +259,54 @@ def compute_metrics_question_answering(model, tokenizer, hyperparams, x, y):
     return metrics
 
 def compute_metrics_text_generation(model, tokenizer, hyperparams, y):
+    full_text = ""
+    for entry in y:
+        if entry:
+            full_text += "\n\n" + entry
+
+    encodings = tokenizer(full_text, return_tensors="pt")
+
     # TODO
+    stride = 512
+    max_length_key = "n_positions"
+    config = model.config.to_dict()
+    if max_length_key in config.keys():
+        max_length = config[max_length_key]
+    else:
+        log.info("Configuration keys " + ",".join(config.keys()))
+        raise ValueError(f"{max_length_key} does not exist in model configuration")
+
+    stride = min(stride, max_length)
+    seq_len = encodings.input_ids.size(1)
+
+    nlls = []
+    prev_end_loc = 0
+    for begin_loc in tqdm(range(0, seq_len, stride)):
+        end_loc = min(begin_loc + max_length, seq_len)
+        trg_len = end_loc - prev_end_loc  # may be different from stride on last loop
+        input_ids = encodings.input_ids[:, begin_loc:end_loc].to(model.device)
+        target_ids = input_ids.clone()
+        target_ids[:, :-trg_len] = -100
+
+        with torch.no_grad():
+            outputs = model(input_ids, labels=target_ids)
+
+            # loss is calculated using CrossEntropyLoss which averages over input tokens.
+            # Multiply it with trg_len to get the summation instead of average.
+            # We will take average over all the tokens to get the true average
+            # in the last step of this example.
+            neg_log_likelihood = outputs.loss * trg_len
+
+        nlls.append(neg_log_likelihood)
+
+        prev_end_loc = end_loc
+        if end_loc == seq_len:
+            break
+
+    perplexity = torch.exp(torch.stack(nlls).sum() / end_loc)
+
     return {
-        "perplexity": 0
+        "perplexity": perplexity
     }
 
 def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
@@ -296,6 +343,7 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
     elif task == "text-generation":
         tokenizer.pad_token = tokenizer.eos_token
         model = AutoModelForCausalLM.from_pretrained(model_name)
+        model.resize_token_embeddings(len(tokenizer))
         train = tokenize_text_generation(tokenizer, y_train)
         test = tokenize_text_generation(tokenizer, y_test)
         data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False, return_tensors="pt")
