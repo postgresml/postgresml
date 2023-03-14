@@ -1,11 +1,14 @@
-use crate::orm::{Task, TextDataset};
+use std::collections::HashMap;
+use std::io::Write;
+use std::path::PathBuf;
+use std::str::FromStr;
+
 use once_cell::sync::Lazy;
 use pgx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
-use std::collections::HashMap;
-use std::io::Write;
-use std::path::PathBuf;
+
+use crate::orm::{Task, TextDataset};
 
 static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
@@ -105,7 +108,8 @@ pub fn generate(model_id: i64, inputs: Vec<&str>) -> Vec<String> {
                     .unwrap();
 
                     let load = PY_MODULE.getattr(py, "load_model").unwrap();
-                    load.call1(py, (model_id, task, dir)).unwrap();
+                    let task = Task::from_str(&task).unwrap();
+                    load.call1(py, (model_id, task.to_string(), dir)).unwrap();
 
                     generate.call1(py, (model_id, inputs)).unwrap()
                 } else {
@@ -219,7 +223,16 @@ pub fn load_dataset(
         .join(", ");
     let num_cols = types.len();
     let num_rows = data.values().next().unwrap().as_array().unwrap().len();
-    Spi::run(&format!(r#"DROP TABLE IF EXISTS {table_name}"#)).unwrap();
+
+    // Avoid the existence warning by checking the schema for the table first
+    let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'", vec![
+        (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
+    ]).unwrap().unwrap();
+    match table_count {
+        1 => Spi::run(&format!(r#"DROP TABLE IF EXISTS {table_name}"#)).unwrap(),
+        _ => (),
+    }
+
     Spi::run(&format!(r#"CREATE TABLE {table_name} ({column_types})"#)).unwrap();
     let insert =
         format!(r#"INSERT INTO {table_name} ({column_names}) VALUES ({column_placeholders})"#);

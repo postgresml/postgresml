@@ -104,7 +104,7 @@ fn version() -> String {
 #[pg_extern]
 fn train(
     project_name: &str,
-    task: default!(Option<Task>, "NULL"),
+    task: default!(Option<&str>, "NULL"),
     relation_name: default!(Option<&str>, "NULL"),
     y_column_name: default!(Option<&str>, "NULL"),
     algorithm: default!(Algorithm, "'linear'"),
@@ -150,7 +150,7 @@ fn train(
 #[pg_extern]
 fn train_joint(
     project_name: &str,
-    task: default!(Option<Task>, "NULL"),
+    task: default!(Option<&str>, "NULL"),
     relation_name: default!(Option<&str>, "NULL"),
     y_column_name: default!(Option<Vec<String>>, "NULL"),
     algorithm: default!(Algorithm, "'linear'"),
@@ -173,6 +173,7 @@ fn train_joint(
         name!(deployed, bool),
     ),
 > {
+    let task = task.map(|t| Task::from_str(t).unwrap());
     let project = match Project::find_by_name(project_name) {
         Some(project) => project,
         None => Project::create(project_name, match task {
@@ -556,7 +557,7 @@ fn generate_batch(project_name: &str, inputs: Vec<&str>) -> Vec<String> {
 #[pg_extern]
 fn tune(
     project_name: &str,
-    task: default!(Option<Task>, "NULL"),
+    task: default!(Option<&str>, "NULL"),
     relation_name: default!(Option<&str>, "NULL"),
     y_column_name: default!(Option<&str>, "NULL"),
     model_name: default!(Option<&str>, "NULL"),
@@ -574,6 +575,7 @@ fn tune(
         name!(deployed, bool),
     ),
 > {
+    let task = task.map(|t| Task::from_str(t).unwrap());
     let preprocess = JsonB(serde_json::from_str("{}").unwrap());
     let project = match Project::find_by_name(project_name) {
         Some(project) => project,

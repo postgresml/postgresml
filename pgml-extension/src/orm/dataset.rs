@@ -92,6 +92,17 @@ impl Display for TextDataset {
     }
 }
 
+fn drop_table_if_exists(table_name: &str) {
+    // Avoid the existence for DROP TABLE IF EXISTS warning by checking the schema for the table first
+    let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'", vec![
+        (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
+    ]).unwrap().unwrap();
+    match table_count {
+        1 => Spi::run(&format!(r#"DROP TABLE {table_name}"#)).unwrap(),
+        _ => (),
+    }
+}
+
 #[derive(Deserialize)]
 struct BreastCancerRow {
     mean_radius: f32,
@@ -128,7 +139,7 @@ struct BreastCancerRow {
 }
 
 pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.breast_cancer").unwrap();
+    drop_table_if_exists("breast_cancer");
     Spi::run(
         r#"CREATE TABLE pgml.breast_cancer (
         "mean radius" FLOAT4, 
@@ -322,7 +333,7 @@ struct DiabetesRow {
 }
 
 pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.diabetes").unwrap();
+    drop_table_if_exists("diabetes");
     Spi::run(
         "CREATE TABLE pgml.diabetes (
         age FLOAT4, 
@@ -388,7 +399,7 @@ struct DigitsRow {
 }
 
 pub fn load_digits(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.digits").unwrap();
+    drop_table_if_exists("digits");
     Spi::run("CREATE TABLE pgml.digits (image SMALLINT[][], target SMALLINT)").unwrap();
 
     let limit = match limit {
@@ -433,7 +444,7 @@ struct IrisRow {
 }
 
 pub fn load_iris(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.iris").unwrap();
+    drop_table_if_exists("iris");
     Spi::run(
         "CREATE TABLE pgml.iris (
         sepal_length FLOAT4, 
@@ -497,7 +508,7 @@ struct LinnerudRow {
 }
 
 pub fn load_linnerud(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.linnerud").unwrap();
+    drop_table_if_exists("linnerud");
     Spi::run(
         "CREATE TABLE pgml.linnerud(
         chins FLOAT4,
@@ -565,7 +576,7 @@ struct WineRow {
 }
 
 pub fn load_wine(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.wine").unwrap();
+    drop_table_if_exists("wine");
     Spi::run(
         r#"CREATE TABLE pgml.wine (
             alcohol FLOAT4,

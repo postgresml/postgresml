@@ -22,11 +22,13 @@ import transformers
 from transformers import (
     AutoTokenizer,
     DataCollatorWithPadding,
-    DefaultDataCollator,
+    DataCollatorForLanguageModeling,
     DataCollatorForSeq2Seq,
+    DefaultDataCollator,
     AutoModelForSequenceClassification,
     AutoModelForQuestionAnswering,
     AutoModelForSeq2SeqLM,
+    AutoModelForCausalLM,
     TrainingArguments,
     Trainer,
 )
@@ -84,6 +86,10 @@ def tokenize_translation(tokenizer, max_length, x, y):
 
 def tokenize_summarization(tokenizer, max_length, x, y):
     encoding = tokenizer(x, max_length=max_length, truncation=True, text_target=y)
+    return datasets.Dataset.from_dict(encoding.data)
+
+def tokenize_text_generation(tokenizer, y):
+    encoding = tokenizer(y)
     return datasets.Dataset.from_dict(encoding.data)
 
 def tokenize_question_answering(tokenizer, max_length, x, y):
@@ -193,7 +199,7 @@ def compute_metrics_translation(model, tokenizer, hyperparams, x, y):
         "rouge_bigram_recall": rouge["rouge-2"]["r"],
     }
 
-def compute_metrics_question_answering(self, dataset):
+def compute_metrics_question_answering(model, tokenizer, hyperparams, x, y):
     batch_size = self.hyperparams["per_device_eval_batch_size"]
     batches = int(math.ceil(len(dataset) / batch_size))
 
@@ -250,6 +256,12 @@ def compute_metrics_question_answering(self, dataset):
 
     return metrics
 
+def compute_metrics_text_generation(model, tokenizer, hyperparams, y):
+    # TODO
+    return {
+        "perplexity": 0
+    }
+
 def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
     hyperparams = json.loads(hyperparams)
     model_name = hyperparams.pop("model_name")
@@ -257,12 +269,12 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
 
     algorithm = {}
 
-    if task == "text_classification":
+    if task == "text-classification":
         model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
         train = tokenize_text_classification(tokenizer, max_length, x_train, y_train)
         test = tokenize_text_classification(tokenizer, max_length, x_test, y_test)
         data_collator = DefaultDataCollator()
-    elif task == "question_answering":
+    elif task == "question-answering":
         max_length = hyperparams.pop("max_length", None)
         algorithm["stride"] = hyperparams.pop("stride", 128)
         algorithm["model"] = AutoModelForQuestionAnswering.from_pretrained(model_name)
@@ -281,8 +293,15 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
         train = tokenize_translation(tokenizer, max_length, x_train, y_train)
         test = tokenize_translation(tokenizer, max_length, x_test, y_test)
         data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="pt")
+    elif task == "text-generation":
+        tokenizer.pad_token = tokenizer.eos_token
+        model = AutoModelForCausalLM.from_pretrained(model_name)
+        train = tokenize_text_generation(tokenizer, y_train)
+        test = tokenize_text_generation(tokenizer, y_test)
+        data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False, return_tensors="pt")
     else:
         raise PgMLException(f"unhandled task type: {task}")
+
     trainer = Trainer(
         model=model,
         args=TrainingArguments(output_dir=path, **hyperparams),
@@ -309,6 +328,8 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
         metrics = compute_metrics_question_answering(model, tokenizer, hyperparams, x_test, y_test)
     elif task == "translation":
         metrics = compute_metrics_translation(model, tokenizer, hyperparams, x_test, y_test)
+    elif task == "text-generation":
+        metrics = compute_metrics_text_generation(model, tokenizer, hyperparams, y_test)
     else:
         raise PgMLException(f"unhandled task type: {task}")
     metrics["score_time"] = time.perf_counter() - start
@@ -337,7 +358,7 @@ def load_model(model_id, task, dir):
             "tokenizer": AutoTokenizer.from_pretrained(dir),
             "model": AutoModelForSeq2SeqLM.from_pretrained(dir),
         }
-    elif task == "text_classification":
+    elif task == "text-classification":
         __cache_transformer_by_model_id[model_id] = {
             "tokenizer": AutoTokenizer.from_pretrained(dir),
             "model": AutoModelForSequenceClassification.from_pretrained(dir),
@@ -347,11 +368,17 @@ def load_model(model_id, task, dir):
             "tokenizer": AutoTokenizer.from_pretrained(dir),
             "model": AutoModelForSeq2SeqLM.from_pretrained(dir),
         }
-    elif task == "question_answering":
+    elif task == "question-answering":
         __cache_transformer_by_model_id[model_id] = {
             "tokenizer": AutoTokenizer.from_pretrained(dir),
             "model": AutoModelForQuestionAnswering.from_pretrained(dir),
         }
+    elif task == "text-generation":
+        __cache_transformer_by_model_id[model_id] = {
+            "tokenizer": AutoTokenizer.from_pretrained(dir),
+            "model": AutoModelForCausalLM.from_pretrained(dir),
+        }
+
     else:
         raise Exception(f"unhandled task type: {task}")
 

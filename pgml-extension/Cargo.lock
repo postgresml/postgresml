@@ -1715,9 +1715,9 @@ dependencies = [
 
 [[package]]
 name = "pgx"
-version = "0.7.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c3d224bd3a4fe3798498c16cb37a955e7c4a4e4e9bb01e6dfd8c3738c903d4f"
+checksum = "fc91f19f84e7c1ba7b25953b042bd487b6e1bbec4c3af09f61a6ac31207ff776"
 dependencies = [
  "atomic-traits",
  "bitflags",
@@ -1742,9 +1742,9 @@ dependencies = [
 
 [[package]]
 name = "pgx-macros"
-version = "0.7.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "100cd28f400753e7aeb54820d63ebafff8c1b87018d55f18404477f8c047dd9e"
+checksum = "1ebfde3c33353d42c2fbcc76bea758b37018b33b1391c93d6402546569914e94"
 dependencies = [
  "pgx-sql-entity-graph",
  "proc-macro2",
@@ -1754,9 +1754,9 @@ dependencies = [
 
 [[package]]
 name = "pgx-pg-config"
-version = "0.7.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ce4f7099005b82e1b386a82a98dd436b734804974ee539b814eb4d1a78e4c1f"
+checksum = "e97c27bab88fdb7b94e549b02267ab9595bd9d1043718d6d72bc2d34cf1e3952"
 dependencies = [
  "dirs 4.0.0",
  "eyre",
@@ -1771,9 +1771,9 @@ dependencies = [
 
 [[package]]
 name = "pgx-pg-sys"
-version = "0.7.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "081d104fcb693fdef1a911f11c2aad295a6b778de67069e54c40b46702c1b2d8"
+checksum = "6b79c48c564bed305d202b852321603107e5f3ac31f25ea2cc4031475f38d0b3"
 dependencies = [
  "bindgen 0.60.1",
  "eyre",
@@ -1793,9 +1793,9 @@ dependencies = [
 
 [[package]]
 name = "pgx-sql-entity-graph"
-version = "0.7.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e03b43619e70e955894ba94883132d88ff7acf0cd15fd14e50c837a2bd3a6595"
+checksum = "573a8d8c23be24c39f7b7fbbc7e15d95aa0327acd61ba95c9c9f237fec51f205"
 dependencies = [
  "convert_case",
  "eyre",
@@ -1813,9 +1813,9 @@ dependencies = [
 
 [[package]]
 name = "pgx-tests"
-version = "0.7.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4069f5b6c98d5542bacac0fdb072d6198297267df132fedd4499a156937e4ca"
+checksum = "fc09f25ae560bc4e3308022999416966beda5b60d2957b9ab92bffaf2d6a86c3"
 dependencies = [
  "clap-cargo",
  "eyre",

@@ -163,7 +163,7 @@ impl Project {
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),
-                    (PgBuiltInOids::TEXTOID.oid(), task.to_string().into_datum()),
+                    (PgBuiltInOids::TEXTOID.oid(), task.to_pg_enum().into_datum()),
                 ])
             ).unwrap().first();
             if !result.is_empty() {

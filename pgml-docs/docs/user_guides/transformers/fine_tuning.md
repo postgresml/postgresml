@@ -171,7 +171,7 @@ Tuning has a nearly identical API to training, except you may pass the name of a
 ```sql linenums="1" title="tune.sql"
 SELECT pgml.tune(
     'IMDB Review Sentiment',
-    task => 'text_classification',
+    task => 'text-classification',
     relation_name => 'pgml.imdb',
     y_column_name => 'label',
     model_name => 'distilbert-base-uncased',
@@ -401,3 +401,27 @@ The default for predict in a classification problem classifies the statement as 
 This shows that there is a 6.26% chance for category 0 (negative sentiment), and a 93.73% chance it's category 1 (positive sentiment).
 
 See the [task documentation](https://huggingface.co/tasks/text-classification) for more examples, use cases, models and datasets.
+
+
+
+## Text Generation
+
+```postgresql linenums="1"
+    SELECT pgml.load_dataset('bookcorpus', "limit" => 100);
+    
+    SELECT pgml.tune(
+        'GPT Generator',
+        task => 'text-generation',
+        relation_name => 'pgml.bookcorpus',
+        y_column_name => 'text',
+        model_name => 'gpt2',
+        hyperparams => '{
+            "learning_rate": 2e-5,
+            "num_train_epochs": 1
+        }',
+        test_size => 0.2,
+        test_sampling => 'last'
+    );  
+    
+    SELECT pgml.generate('GPT Generator', 'While I wandered weak and weary');
+```
