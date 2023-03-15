@@ -4,6 +4,9 @@ __pycache__/
 metrics.ipynb
 netflix_titles_medium.csv
 netflix_titles_400.csv
-*sample.csv
+*sample*.csv
 *.db
 *.ipynb
+*train*.csv
+*test*.csv
+*.txt

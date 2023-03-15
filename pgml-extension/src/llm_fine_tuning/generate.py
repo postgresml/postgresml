@@ -46,8 +46,26 @@ log = logging.getLogger("rich")
     help="Temperature for the models",
     show_default=True,
 )
+@click.option(
+    "--repetition_penalty",
+    default=1.0,
+    help="Repetition penalty can be used to penalize words that were already generated or belong to the context.",
+    show_default=True,
+)
+@click.option(
+    "--top_k",
+    default=50,
+    help="Top K sampling",
+    show_default=True,
+)
+@click.option(
+    "--top_p",
+    default=0.95,
+    help="Top P cumulative probability sampling",
+    show_default=True,
+)
 def generate(
-    prompt, model_name, tokenizer_name, min_length, max_length, num_return_sequences, temperature
+    prompt, model_name, tokenizer_name, min_length, max_length, num_return_sequences, temperature, repetition_penalty,top_k,top_p
 ):
     cuda_available = torch.cuda.is_available()
     model = AutoModelForCausalLM.from_pretrained(model_name)
@@ -69,10 +87,15 @@ def generate(
         min_length=min_length,
         num_return_sequences=num_return_sequences,
         temperature=temperature,
+        repetition_penalty = repetition_penalty,
+        top_k = top_k,
+        top_p = top_p,
     )
 
+    fp = open("output.txt","w")
     for _id, output in enumerate(outputs):
-        log.info("Generated %d: %s" % (_id, output["generated_text"]))
+        fp.write("Generated %d: %s" % (_id, output["generated_text"]))
+    fp.close()
 
 
 if __name__ == "__main__":
