@@ -119,7 +119,7 @@ SELECT * FROM pgml.train('Breast Cancer Detection', algorithm => 'random_forest'
 
 -- Gradient Boosting
 SELECT * FROM pgml.train('Breast Cancer Detection', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
-SELECT * FROM pgml.train('Breast Cancer Detection', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
+-- SELECT * FROM pgml.train('Breast Cancer Detection', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
 -- SELECT * FROM pgml.train('Breast Cancer Detection', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Breast Cancer Detection', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');

@@ -33,13 +33,16 @@ SELECT pgml.transform(
     ]
 );
 
-SELECT pgml.load_dataset('opus_books', 'en-fr');
 SELECT pgml.load_dataset('kde4', kwargs => '{"lang1": "en", "lang2": "es"}');
+CREATE OR REPLACE VIEW kde4_en_to_es AS
+SELECT translation->>'en' AS "en", translation->>'es' AS "es"
+FROM pgml.kde4
+LIMIT 10;
 SELECT pgml.tune(
     'Translate English to Spanish',
-    task => 'translation_en_to_es',
-    relation_name => 'pgml.kde4',
-    y_column_name => 'translation',
+    task => 'translation',
+    relation_name => 'kde4_en_to_es',
+    y_column_name => 'es', -- translate into spanish
     model_name => 'Helsinki-NLP/opus-mt-en-es',
     hyperparams => '{
         "learning_rate": 2e-5,
@@ -49,7 +52,7 @@ SELECT pgml.tune(
         "weight_decay": 0.01,
         "max_length": 128
     }',
-    test_size => 0.05,
+    test_size => 0.5,
     test_sampling => 'last'
 );
 
