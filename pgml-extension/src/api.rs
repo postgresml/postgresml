@@ -414,8 +414,33 @@ fn deploy(
 }
 
 #[pg_extern(strict, name = "predict")]
-fn predict(project_name: &str, features: Vec<f32>) -> f32 {
+fn predict_f32(project_name: &str, features: Vec<f32>) -> f32 {
     predict_model(Project::get_deployed_model_id(project_name), features)
+}
+
+#[pg_extern(strict, name = "predict")]
+fn predict_f64(project_name: &str, features: Vec<f64>) -> f32 {
+    predict_f32(project_name, features.iter().map(|&i| i as f32).collect())
+}
+
+#[pg_extern(strict, name = "predict")]
+fn predict_i16(project_name: &str, features: Vec<i16>) -> f32 {
+    predict_f32(project_name, features.iter().map(|&i| i as f32).collect())
+}
+
+#[pg_extern(strict, name = "predict")]
+fn predict_i32(project_name: &str, features: Vec<i32>) -> f32 {
+    predict_f32(project_name, features.iter().map(|&i| i as f32).collect())
+}
+
+#[pg_extern(strict, name = "predict")]
+fn predict_i64(project_name: &str, features: Vec<i64>) -> f32 {
+    predict_f32(project_name, features.iter().map(|&i| i as f32).collect())
+}
+
+#[pg_extern(strict, name = "predict")]
+fn predict_bool(project_name: &str, features: Vec<bool>) -> f32 {
+    predict_f32(project_name, features.iter().map(|&i| i as u8 as f32).collect())
 }
 
 #[pg_extern(strict, name = "predict_proba")]

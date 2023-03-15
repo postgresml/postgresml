@@ -22,7 +22,7 @@ SELECT left(image::text, 40) || ',...}', target FROM pgml.digits LIMIT 10;
 SELECT * FROM pgml.train('Handwritten Digits', 'classification', 'pgml.digits', 'target');
 
 -- check out the predictions
-SELECT target, pgml.predict('Handwritten Digits', image::FLOAT4[]) AS prediction
+SELECT target, pgml.predict('Handwritten Digits', image) AS prediction
 FROM pgml.digits 
 LIMIT 10;
 
@@ -95,6 +95,6 @@ SELECT * FROM pgml.deploy('Handwritten Digits', 'rollback');
 SELECT * FROM pgml.deploy('Handwritten Digits', 'best_score', 'svm');
 
 -- check out the improved predictions
-SELECT target, pgml.predict('Handwritten Digits', image::FLOAT4[]) AS prediction
+SELECT target, pgml.predict('Handwritten Digits', image) AS prediction
 FROM pgml.digits 
 LIMIT 10;
