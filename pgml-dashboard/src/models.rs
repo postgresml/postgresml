@@ -60,16 +60,22 @@ impl Project {
 
     pub fn key_metric_name(&self) -> anyhow::Result<&'static str> {
         match self.task.as_ref().unwrap().as_str() {
-            "classification" | "text-classification" => Ok("f1"),
+            "classification" | "text_classification" | "question_answering" => Ok("f1"),
             "regression" => Ok("r2"),
+            "summarization" => Ok("rouge_ngram_f1"),
+            "translation" => Ok("bleu"),
+            "text_generation" | "text2text" => Ok("perplexity"),
             task => Err(anyhow::anyhow!("Unhandled task: {}", task)),
         }
     }
 
     pub fn key_metric_display_name(&self) -> anyhow::Result<&'static str> {
         match self.task.as_ref().unwrap().as_str() {
-            "classification" | "text-classification" => Ok("F<sup>1</sup>"),
+            "classification" | "text_classification" | "question_answering" => Ok("F<sup>1</sup>"),
             "regression" => Ok("R<sup>2</sup>"),
+            "summarization" => Ok("Rouge Ngram F<sup>1</sup>"),
+            "translation" => Ok("Bleu"),
+            "text_generation" | "text2text" => Ok("Perplexity"),
             task => Err(anyhow::anyhow!("Unhandled task: {}", task)),
         }
     }

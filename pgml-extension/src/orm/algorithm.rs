@@ -37,6 +37,7 @@ pub enum Algorithm {
     hist_gradient_boosting,
     linear_svm,
     lightgbm,
+    transformers,
 }
 
 impl std::str::FromStr for Algorithm {
@@ -77,6 +78,7 @@ impl std::str::FromStr for Algorithm {
             "hist_gradient_boosting" => Ok(Algorithm::hist_gradient_boosting),
             "linear_svm" => Ok(Algorithm::linear_svm),
             "lightgbm" => Ok(Algorithm::lightgbm),
+            "transformers" => Ok(Algorithm::transformers),
             _ => Err(()),
         }
     }
@@ -120,6 +122,7 @@ impl std::string::ToString for Algorithm {
             Algorithm::hist_gradient_boosting => "hist_gradient_boosting".to_string(),
             Algorithm::linear_svm => "linear_svm".to_string(),
             Algorithm::lightgbm => "lightgbm".to_string(),
+            Algorithm::transformers => "transformers".to_string(),
         }
     }
 }

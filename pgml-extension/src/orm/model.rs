@@ -10,13 +10,12 @@ use indexmap::IndexMap;
 use itertools::{izip, Itertools};
 use ndarray::ArrayView1;
 use once_cell::sync::Lazy;
-use pgx::*;
 use pgx::heap_tuple::PgHeapTuple;
+use pgx::*;
 use rand::prelude::SliceRandom;
 use serde_json::json;
 
 use crate::bindings::*;
-use crate::orm::Dataset;
 use crate::orm::*;
 
 #[allow(clippy::type_complexity)]
@@ -79,6 +78,7 @@ impl Model {
                     Algorithm::linear => match project.task {
                         Task::classification => Runtime::python,
                         Task::regression => Runtime::rust,
+                        _ => error!("No default runtime available for tasks other than `classification` and `regression` when using a linear algorithm."),
                     },
                     _ => Runtime::python,
                 },
@@ -87,13 +87,13 @@ impl Model {
             },
         };
 
-        let dataset = snapshot.dataset();
+        let dataset = snapshot.tabular_dataset();
         let status = Status::in_progress;
         // Create the model record.
         Spi::connect(|client| {
             let result = client.select("
-          INSERT INTO pgml.models (project_id, snapshot_id, algorithm, runtime, hyperparams, status, search, search_params, search_args, num_features) 
-          VALUES ($1, $2, cast($3 AS pgml.algorithm), cast($4 AS pgml.runtime), $5, cast($6 as pgml.status), $7, $8, $9, $10) 
+          INSERT INTO pgml.models (project_id, snapshot_id, algorithm, runtime, hyperparams, status, search, search_params, search_args, num_features)
+          VALUES ($1, $2, cast($3 AS pgml.algorithm), cast($4 AS pgml.runtime), $5, cast($6 as pgml.status), $7, $8, $9, $10)
           RETURNING id, project_id, snapshot_id, algorithm, runtime, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
                                        Some(1),
                                        Some(vec![
@@ -129,7 +129,7 @@ impl Model {
                     bindings: None,
                     num_classes: match project.task {
                         Task::regression => 0,
-                        Task::classification => snapshot.num_classes(),
+                        _ => snapshot.num_classes(),
                     },
                     num_features: snapshot.num_features(),
                 });
@@ -141,7 +141,6 @@ impl Model {
         let mut model = model.unwrap();
 
         info!("Training {}", model);
-
         model.fit(&dataset);
 
         Spi::run_with_args(
@@ -152,9 +151,120 @@ impl Model {
                     Status::successful.to_string().into_datum(),
                 ),
                 (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
-            ])
-        ).unwrap();
+            ]),
+        )
+        .unwrap();
 
+        model
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn tune(project: &Project, snapshot: &mut Snapshot, hyperparams: &JsonB) -> Model {
+        let mut model: Option<Model> = None;
+        let dataset = snapshot.text_dataset();
+
+        // Create the model record.
+        Spi::connect(|client| {
+            let result = client.select("
+          INSERT INTO pgml.models (project_id, snapshot_id, algorithm, runtime, hyperparams, status, search, search_params, search_args, num_features)
+          VALUES ($1, $2, cast($3 AS pgml.algorithm), cast($4 AS pgml.runtime), $5, cast($6 as pgml.status), $7, $8, $9, $10)
+          RETURNING id, project_id, snapshot_id, algorithm, runtime::TEXT, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
+                                       Some(1),
+                                       Some(vec![
+                                           (PgBuiltInOids::INT8OID.oid(), project.id.into_datum()),
+                                           (PgBuiltInOids::INT8OID.oid(), snapshot.id.into_datum()),
+                                           (PgBuiltInOids::TEXTOID.oid(), Algorithm::transformers.to_string().into_datum()),
+                                           (PgBuiltInOids::TEXTOID.oid(), Runtime::python.to_string().into_datum()),
+                                           (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(hyperparams)).into_datum()),
+                                           (PgBuiltInOids::TEXTOID.oid(), Status::in_progress.to_string().into_datum()),
+                                           (PgBuiltInOids::TEXTOID.oid(), None::<Option<Search>>.into_datum()),
+                                           (PgBuiltInOids::JSONBOID.oid(), JsonB(serde_json::from_str("{}").unwrap()).into_datum()),
+                                           (PgBuiltInOids::JSONBOID.oid(), JsonB(serde_json::from_str("{}").unwrap()).into_datum()),
+                                           (PgBuiltInOids::INT8OID.oid(), (dataset.num_features as i64).into_datum()),
+                                       ]),
+            ).unwrap().first();
+            if !result.is_empty() {
+                model = Some(Model {
+                    id: result.get(1).unwrap().unwrap(),
+                    project_id: result.get(2).unwrap().unwrap(),
+                    snapshot_id: result.get(3).unwrap().unwrap(),
+                    algorithm: Algorithm::from_str(result.get(4).unwrap().unwrap()).unwrap(),
+                    runtime: Runtime::from_str(result.get(5).unwrap().unwrap()).unwrap(),
+                    hyperparams: result.get(6).unwrap().unwrap(),
+                    status: Status::from_str(result.get(7).unwrap().unwrap()).unwrap(),
+                    metrics: result.get(8).unwrap(),
+                    search: result
+                        .get(9)
+                        .unwrap()
+                        .map(|search| Search::from_str(search).unwrap()),
+                    search_params: result.get(10).unwrap().unwrap(),
+                    search_args: result.get(11).unwrap().unwrap(),
+                    created_at: result.get(12).unwrap().unwrap(),
+                    updated_at: result.get(13).unwrap().unwrap(),
+                    project: project.clone(),
+                    snapshot: snapshot.clone(),
+                    bindings: None,
+                    num_classes: 0,
+                    num_features: snapshot.num_features(),
+                });
+            }
+
+            result
+        });
+
+        let mut model = model.unwrap();
+        let id = model.id;
+        let path = std::path::PathBuf::from(format!("/tmp/postgresml/models/{id}"));
+
+        info!("Tuning {}", model);
+        let metrics = transformers::tune(&project.task, dataset, &model.hyperparams, &path);
+        model.metrics = Some(JsonB(json!(metrics)));
+        info!("Metrics: {:?}", &metrics);
+
+        Spi::get_one_with_args::<i64>(
+            "UPDATE pgml.models SET hyperparams = $1, metrics = $2 WHERE id = $3 RETURNING id",
+            vec![
+                (
+                    PgBuiltInOids::JSONBOID.oid(),
+                    JsonB(model.hyperparams.0.clone()).into_datum(),
+                ),
+                (
+                    PgBuiltInOids::JSONBOID.oid(),
+                    JsonB(model.metrics.as_ref().unwrap().0.clone()).into_datum(),
+                ),
+                (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+            ],
+        )
+        .unwrap();
+
+        // Save the bindings.
+        for entry in std::fs::read_dir(&path).unwrap() {
+            let path = entry.unwrap().path();
+            let bytes = std::fs::read(&path).unwrap();
+            for (i, chunk) in bytes.chunks(100_000_000).enumerate() {
+                Spi::get_one_with_args::<i64>(
+                    "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, $2, $3, $4) RETURNING id",
+                    vec![
+                        (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+                        (PgBuiltInOids::TEXTOID.oid(), path.file_name().unwrap().to_str().into_datum()),
+                        (PgBuiltInOids::INT8OID.oid(), (i as i64).into_datum()),
+                        (PgBuiltInOids::BYTEAOID.oid(), chunk.into_datum()),
+                    ],
+                ).unwrap();
+            }
+        }
+
+        Spi::run_with_args(
+            "UPDATE pgml.models SET status = $1::pgml.status WHERE id = $2",
+            Some(vec![
+                (
+                    PgBuiltInOids::TEXTOID.oid(),
+                    Status::successful.to_string().into_datum(),
+                ),
+                (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+            ]),
+        )
+        .unwrap();
         model
     }
 
@@ -187,7 +297,9 @@ impl Model {
                         WHERE files.model_id = $1
                         LIMIT 1",
                     vec![(PgBuiltInOids::INT8OID.oid(), id.into_datum())],
-                ).unwrap().unwrap();
+                )
+                .unwrap()
+                .unwrap();
 
                 let bindings: Box<dyn Bindings> = match runtime {
                     Runtime::rust => {
@@ -205,6 +317,7 @@ impl Model {
                                 Task::classification => {
                                     crate::bindings::linfa::LogisticRegression::from_bytes(&data)
                                 }
+                                _ => error!("No default runtime available for tasks other than `classification` and `regression` when using a linear algorithm."),
                             },
                             Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data),
                             _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
@@ -223,7 +336,7 @@ impl Model {
                 let num_features = snapshot.num_features();
                 let num_classes = match project.task {
                     Task::regression => 0,
-                    Task::classification => snapshot.num_classes(),
+                    _ => snapshot.num_classes(),
                 };
 
                 model = Some(Model {
@@ -236,7 +349,8 @@ impl Model {
                     status: Status::from_str(result.get(7).unwrap().unwrap()).unwrap(),
                     metrics: result.get(8).unwrap(),
                     search: result
-                        .get(9).unwrap()
+                        .get(9)
+                        .unwrap()
                         .map(|search| Search::from_str(search).unwrap()),
                     search_params: result.get(10).unwrap().unwrap(),
                     search_args: result.get(11).unwrap().unwrap(),
@@ -253,7 +367,12 @@ impl Model {
             result
         });
 
-        model.unwrap_or_else(|| error!("pgml.models WHERE id = {:?} could not be loaded. Does it exist?", id))
+        model.unwrap_or_else(|| {
+            error!(
+                "pgml.models WHERE id = {:?} could not be loaded. Does it exist?",
+                id
+            )
+        })
     }
 
     pub fn find_cached(id: i64) -> Arc<Model> {
@@ -288,6 +407,7 @@ impl Model {
                     Algorithm::svm => linfa::Svm::fit,
                     _ => todo!(),
                 },
+                _ => error!("use pgml.tune for transformers tasks"),
             },
 
             #[cfg(not(feature = "python"))]
@@ -366,6 +486,7 @@ impl Model {
                     Algorithm::lightgbm => sklearn::lightgbm_classification,
                     _ => panic!("{:?} does not support classification", self.algorithm),
                 },
+                _ => error!("use pgml.tune for transformers tasks"),
             },
         }
     }
@@ -530,6 +651,7 @@ impl Model {
                 // This one is inaccurate, I have it in my TODO to reimplement.
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
             }
+            _ => error!("no tests for huggingface"),
         }
 
         metrics
@@ -621,7 +743,7 @@ impl Model {
                 check_for_interrupts!();
             })
         }
-            .unwrap();
+        .unwrap();
 
         let mut n_iter: usize = 10;
         let mut cv: usize = if self.search.is_some() { 5 } else { 1 };
@@ -678,6 +800,12 @@ impl Model {
             let target_metric = match self.project.task {
                 Task::regression => "r2",
                 Task::classification => "f1",
+                Task::question_answering => "f1",
+                Task::translation => "blue",
+                Task::summarization => "rouge_ngram_f1",
+                Task::text_classification => "f1",
+                Task::text_generation => "perplexity",
+                Task::text2text => "perplexity",
             };
             let mut i = 0;
             let mut best_index = 0;
@@ -788,7 +916,7 @@ impl Model {
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ],
         )
-            .unwrap();
+        .unwrap();
 
         // Save the bindings.
         Spi::get_one_with_args::<i64>(
@@ -819,42 +947,73 @@ impl Model {
                                     pgx_pg_sys::UNKNOWNOID => {
                                         error!("Type information missing for column: {:?}. If this is intended to be a TEXT or other categorical column, you will need to explicitly cast it, e.g. change `{:?}` to `CAST({:?} AS TEXT)`.", column.name, column.name, column.name);
                                     }
-                                    pgx_pg_sys::TEXTOID | pgx_pg_sys::VARCHAROID | pgx_pg_sys::BPCHAROID => {
+                                    pgx_pg_sys::TEXTOID
+                                    | pgx_pg_sys::VARCHAROID
+                                    | pgx_pg_sys::BPCHAROID => {
                                         let element: Result<Option<String>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().unwrap_or(snapshot::NULL_CATEGORY_KEY.to_string())
+                                        element
+                                            .unwrap()
+                                            .unwrap_or(snapshot::NULL_CATEGORY_KEY.to_string())
                                     }
                                     pgx_pg_sys::BOOLOID => {
                                         let element: Result<Option<bool>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
                                     pgx_pg_sys::INT2OID => {
                                         let element: Result<Option<i16>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
                                     pgx_pg_sys::INT4OID => {
                                         let element: Result<Option<i32>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
                                     pgx_pg_sys::INT8OID => {
                                         let element: Result<Option<i64>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
                                     pgx_pg_sys::FLOAT4OID => {
                                         let element: Result<Option<f32>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
                                     pgx_pg_sys::FLOAT8OID => {
                                         let element: Result<Option<f64>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        element.unwrap().map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
+                                                k.to_string()
+                                            })
                                     }
-                                    _ => error!("Unsupported type for categorical column: {:?}. oid: {:?}", column.name, attribute.atttypid),
+                                    _ => error!(
+                                        "Unsupported type for categorical column: {:?}. oid: {:?}",
+                                        column.name, attribute.atttypid
+                                    ),
                                 };
                                 let value = column.get_category_value(&key);
                                 features.push(value);
@@ -867,22 +1026,27 @@ impl Model {
                                     pgx_pg_sys::BOOLOID => {
                                         let element: Result<Option<bool>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as u8 as f32));
+                                        features.push(
+                                            element.unwrap().map_or(f32::NAN, |v| v as u8 as f32),
+                                        );
                                     }
                                     pgx_pg_sys::INT2OID => {
                                         let element: Result<Option<i16>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        features
+                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgx_pg_sys::INT4OID => {
                                         let element: Result<Option<i32>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        features
+                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgx_pg_sys::INT8OID => {
                                         let element: Result<Option<i64>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        features
+                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgx_pg_sys::FLOAT4OID => {
                                         let element: Result<Option<f32>, TryFromDatumError> =
@@ -892,7 +1056,8 @@ impl Model {
                                     pgx_pg_sys::FLOAT8OID => {
                                         let element: Result<Option<f64>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
-                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        features
+                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     // TODO handle NULL to NaN for arrays
                                     pgx_pg_sys::BOOLARRAYOID => {
@@ -937,13 +1102,18 @@ impl Model {
                                             features.push(*j as f32);
                                         }
                                     }
-                                    _ => error!("Unsupported type for quantitative column: {:?}. oid: {:?}", column.name, attribute.atttypid),
+                                    _ => error!(
+                                        "Unsupported type for quantitative column: {:?}. oid: {:?}",
+                                        column.name, attribute.atttypid
+                                    ),
                                 }
                             }
                         }
                     }
                 }
-                _ => error!("This preprocessing requires Postgres `record` types created with `row()`.")
+                _ => error!(
+                    "This preprocessing requires Postgres `record` types created with `row()`."
+                ),
             }
         }
         features
@@ -961,6 +1131,7 @@ impl Model {
                 .as_ref()
                 .unwrap()
                 .predict_proba(features, self.num_features),
+            _ => error!("no predict_proba for huggingface"),
         }
     }
 
@@ -974,6 +1145,7 @@ impl Model {
             Task::classification => {
                 error!("You can't predict joint probabilities for a classification model")
             }
+            _ => error!("no predict_joint for huggingface"),
         }
     }
 

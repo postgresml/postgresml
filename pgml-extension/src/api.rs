@@ -68,7 +68,8 @@ pub fn validate_shared_library() {
          WHERE name = 'shared_preload_libraries'
          LIMIT 1",
     )
-    .unwrap().unwrap();
+    .unwrap()
+    .unwrap();
 
     if !shared_preload_libraries.contains("pgml") {
         error!("`pgml` must be added to `shared_preload_libraries` setting or models cannot be deployed");
@@ -103,7 +104,7 @@ fn version() -> String {
 #[pg_extern]
 fn train(
     project_name: &str,
-    task: default!(Option<Task>, "NULL"),
+    task: default!(Option<&str>, "NULL"),
     relation_name: default!(Option<&str>, "NULL"),
     y_column_name: default!(Option<&str>, "NULL"),
     algorithm: default!(Algorithm, "'linear'"),
@@ -149,7 +150,7 @@ fn train(
 #[pg_extern]
 fn train_joint(
     project_name: &str,
-    task: default!(Option<Task>, "NULL"),
+    task: default!(Option<&str>, "NULL"),
     relation_name: default!(Option<&str>, "NULL"),
     y_column_name: default!(Option<Vec<String>>, "NULL"),
     algorithm: default!(Algorithm, "'linear'"),
@@ -172,6 +173,7 @@ fn train_joint(
         name!(deployed, bool),
     ),
 > {
+    let task = task.map(|t| Task::from_str(t).unwrap());
     let project = match Project::find_by_name(project_name) {
         Some(project) => project,
         None => Project::create(project_name, match task {
@@ -276,6 +278,9 @@ fn train_joint(
                             deploy = false;
                         }
                     }
+                    _ => error!(
+                        "Training only supports `classification` and `regression` task types."
+                    ),
                 }
             }
         }
@@ -314,7 +319,8 @@ fn deploy(
     let (project_id, task) = Spi::get_two_with_args::<i64, String>(
         "SELECT id, task::TEXT from pgml.projects WHERE name = $1",
         vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
-    ).unwrap();
+    )
+    .unwrap();
 
     let project_id =
         project_id.unwrap_or_else(|| error!("Project named `{}` does not exist.", project_name));
@@ -332,17 +338,34 @@ fn deploy(
     }
     match strategy {
         Strategy::best_score => match task {
+            Task::classification | Task::question_answering | Task::text_classification => {
+                let _ = write!(
+                    sql,
+                    "{predicate}\nORDER BY models.metrics->>'f1' DESC NULLS LAST"
+                );
+            }
             Task::regression => {
                 let _ = write!(
                     sql,
                     "{predicate}\nORDER BY models.metrics->>'r2' DESC NULLS LAST"
                 );
             }
-
-            Task::classification => {
+            Task::summarization => {
                 let _ = write!(
                     sql,
-                    "{predicate}\nORDER BY models.metrics->>'f1' DESC NULLS LAST"
+                    "{predicate}\nORDER BY models.metrics->>'rouge_ngram_f1' DESC NULLS LAST"
+                );
+            }
+            Task::text_generation | Task::text2text => {
+                let _ = write!(
+                    sql,
+                    "{predicate}\nORDER BY models.metrics->>'perplexity' ASC NULLS LAST"
+                );
+            }
+            Task::translation => {
+                let _ = write!(
+                    sql,
+                    "{predicate}\nORDER BY models.metrics->>'bleu' DESC NULLS LAST"
                 );
             }
         },
@@ -377,7 +400,8 @@ fn deploy(
     let (model_id, algorithm) = Spi::get_two_with_args::<i64, String>(
         &sql,
         vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
-    ).unwrap();
+    )
+    .unwrap();
     let model_id = model_id.expect("No qualified models exist for this deployment.");
     let algorithm = algorithm.expect("No qualified models exist for this deployment.");
 
@@ -444,10 +468,8 @@ fn predict_model_row(model_id: i64, row: pgx::datum::AnyElement) -> f32 {
     let features_width = snapshot.features_width();
     let mut processed = vec![0_f32; features_width];
 
-    let feature_data = ndarray::ArrayView2::from_shape(
-        (1, features_width),
-        &numeric_encoded_features,
-    ).unwrap();
+    let feature_data =
+        ndarray::ArrayView2::from_shape((1, features_width), &numeric_encoded_features).unwrap();
 
     Zip::from(feature_data.columns())
         .and(&snapshot.feature_positions)
@@ -457,7 +479,6 @@ fn predict_model_row(model_id: i64, row: pgx::datum::AnyElement) -> f32 {
         });
     model.predict(&processed)
 }
-
 
 #[pg_extern]
 fn snapshot(
@@ -481,18 +502,24 @@ fn snapshot(
 #[pg_extern]
 fn load_dataset(
     source: &str,
+    subset: default!(Option<String>, "NULL"),
     limit: default!(Option<i64>, "NULL"),
+    kwargs: default!(JsonB, "'{}'"),
 ) -> TableIterator<'static, (name!(table_name, String), name!(rows, i64))> {
     // cast limit since pgx doesn't support usize
     let limit: Option<usize> = limit.map(|limit| limit.try_into().unwrap());
     let (name, rows) = match source {
-        "breast_cancer" => crate::orm::dataset::load_breast_cancer(limit),
-        "diabetes" => crate::orm::dataset::load_diabetes(limit),
-        "digits" => crate::orm::dataset::load_digits(limit),
-        "iris" => crate::orm::dataset::load_iris(limit),
-        "linnerud" => crate::orm::dataset::load_linnerud(limit),
-        "wine" => crate::orm::dataset::load_wine(limit),
-        _ => error!("Unknown source: `{source}`"),
+        "breast_cancer" => dataset::load_breast_cancer(limit),
+        "diabetes" => dataset::load_diabetes(limit),
+        "digits" => dataset::load_digits(limit),
+        "iris" => dataset::load_iris(limit),
+        "linnerud" => dataset::load_linnerud(limit),
+        "wine" => dataset::load_wine(limit),
+        _ => {
+            let rows =
+                crate::bindings::transformers::load_dataset(source, subset, limit, &kwargs.0);
+            (source.into(), rows as i64)
+        }
     };
 
     TableIterator::new(vec![(name, rows)].into_iter())
@@ -523,6 +550,195 @@ pub fn transform_string(
     JsonB(crate::bindings::transformers::transform(
         &task_json, &args.0, &inputs,
     ))
+}
+
+#[cfg(feature = "python")]
+#[pg_extern(name = "generate")]
+fn generate(project_name: &str, inputs: &str) -> String {
+    generate_batch(project_name, Vec::from([inputs]))
+        .first()
+        .unwrap()
+        .to_string()
+}
+
+#[cfg(feature = "python")]
+#[pg_extern(name = "generate")]
+fn generate_batch(project_name: &str, inputs: Vec<&str>) -> Vec<String> {
+    crate::bindings::transformers::generate(Project::get_deployed_model_id(project_name), inputs)
+}
+
+#[cfg(feature = "python")]
+#[allow(clippy::too_many_arguments)]
+#[pg_extern]
+fn tune(
+    project_name: &str,
+    task: default!(Option<&str>, "NULL"),
+    relation_name: default!(Option<&str>, "NULL"),
+    y_column_name: default!(Option<&str>, "NULL"),
+    model_name: default!(Option<&str>, "NULL"),
+    hyperparams: default!(JsonB, "'{}'"),
+    test_size: default!(f32, 0.25),
+    test_sampling: default!(Sampling, "'last'"),
+    automatic_deploy: default!(Option<bool>, true),
+    materialize_snapshot: default!(bool, false),
+) -> TableIterator<
+    'static,
+    (
+        name!(status, String),
+        name!(task, String),
+        name!(algorithm, String),
+        name!(deployed, bool),
+    ),
+> {
+    let task = task.map(|t| Task::from_str(t).unwrap());
+    let preprocess = JsonB(serde_json::from_str("{}").unwrap());
+    let project = match Project::find_by_name(project_name) {
+        Some(project) => project,
+        None => Project::create(
+            project_name,
+            match task {
+                Some(task) => task,
+                None => error!(
+                    "Project `{}` does not exist. To create a new project, provide the task.",
+                    project_name
+                ),
+            },
+        ),
+    };
+
+    if task.is_some() && task.unwrap() != project.task {
+        error!("Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.", project.name, project.task);
+    }
+
+    let mut snapshot = match relation_name {
+        None => {
+            let snapshot = project
+                .last_snapshot()
+                .expect("You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.");
+
+            info!("Using existing snapshot from {}", snapshot.snapshot_name(),);
+
+            snapshot
+        }
+
+        Some(relation_name) => {
+            info!(
+                "Snapshotting table \"{}\", this may take a little while...",
+                relation_name
+            );
+
+            let snapshot = Snapshot::create(
+                relation_name,
+                vec![y_column_name
+                    .expect("You must pass a `y_column_name` when you pass a `relation_name`")
+                    .to_string()],
+                test_size,
+                test_sampling,
+                materialize_snapshot,
+                preprocess,
+            );
+
+            if materialize_snapshot {
+                info!(
+                    "Snapshot of table \"{}\" created and saved in {}",
+                    relation_name,
+                    snapshot.snapshot_name(),
+                );
+            }
+
+            snapshot
+        }
+    };
+
+    // algorithm will be transformers, stash the model_name in a hyperparam for v1 compatibility.
+    let mut hyperparams = hyperparams.0.as_object().unwrap().clone();
+    hyperparams.insert(String::from("model_name"), json!(model_name));
+    let hyperparams = JsonB(json!(hyperparams));
+
+    // # Default repeatable random state when possible
+    // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);
+    // if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
+    //     hyperparams["random_state"] = 0
+    let model = Model::tune(&project, &mut snapshot, &hyperparams);
+    let new_metrics: &serde_json::Value = &model.metrics.unwrap().0;
+    let new_metrics = new_metrics.as_object().unwrap();
+
+    let deployed_metrics = Spi::get_one_with_args::<JsonB>(
+        "
+        SELECT models.metrics
+        FROM pgml.models
+        JOIN pgml.deployments
+            ON deployments.model_id = models.id
+        JOIN pgml.projects
+            ON projects.id = deployments.project_id
+        WHERE projects.name = $1
+        ORDER by deployments.created_at DESC
+        LIMIT 1;",
+        vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
+    );
+
+    let mut deploy = true;
+    match automatic_deploy {
+        // Deploy only if metrics are better than previous model.
+        Some(true) | None => {
+            if let Ok(Some(deployed_metrics)) = deployed_metrics {
+                let deployed_metrics = deployed_metrics.0.as_object().unwrap();
+                match project.task {
+                    Task::classification | Task::question_answering | Task::text_classification => {
+                        if deployed_metrics.get("f1").unwrap().as_f64()
+                            > new_metrics.get("f1").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
+                    Task::regression => {
+                        if deployed_metrics.get("r2").unwrap().as_f64()
+                            > new_metrics.get("r2").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
+                    Task::translation => {
+                        if deployed_metrics.get("bleu").unwrap().as_f64()
+                            > new_metrics.get("bleu").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
+                    Task::summarization => {
+                        if deployed_metrics.get("rouge_ngram_f1").unwrap().as_f64()
+                            > new_metrics.get("rouge_ngram_f1").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
+                    Task::text_generation | Task::text2text => {
+                        if deployed_metrics.get("perplexity").unwrap().as_f64()
+                            < new_metrics.get("perplexity").unwrap().as_f64()
+                        {
+                            deploy = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        Some(false) => deploy = false,
+    };
+
+    if deploy {
+        project.deploy(model.id);
+    }
+
+    TableIterator::new(
+        vec![(
+            project.name,
+            project.task.to_string(),
+            model.algorithm.to_string(),
+            deploy,
+        )]
+        .into_iter(),
+    )
 }
 
 #[cfg(feature = "python")]
@@ -578,31 +794,36 @@ pub fn dump_all(path: &str) {
     Spi::run(&format!(
         "COPY pgml.projects TO '{}' CSV HEADER",
         p.to_str().unwrap()
-    )).unwrap();
+    ))
+    .unwrap();
 
     let p = std::path::Path::new(path).join("snapshots.csv");
     Spi::run(&format!(
         "COPY pgml.snapshots TO '{}' CSV HEADER",
         p.to_str().unwrap()
-    )).unwrap();
+    ))
+    .unwrap();
 
     let p = std::path::Path::new(path).join("models.csv");
     Spi::run(&format!(
         "COPY pgml.models TO '{}' CSV HEADER",
         p.to_str().unwrap()
-    )).unwrap();
+    ))
+    .unwrap();
 
     let p = std::path::Path::new(path).join("files.csv");
     Spi::run(&format!(
         "COPY pgml.files TO '{}' CSV HEADER",
         p.to_str().unwrap()
-    )).unwrap();
+    ))
+    .unwrap();
 
     let p = std::path::Path::new(path).join("deployments.csv");
     Spi::run(&format!(
         "COPY pgml.deployments TO '{}' CSV HEADER",
         p.to_str().unwrap()
-    )).unwrap();
+    ))
+    .unwrap();
 }
 
 #[pg_extern]
@@ -611,31 +832,36 @@ pub fn load_all(path: &str) {
     Spi::run(&format!(
         "COPY pgml.projects FROM '{}' CSV HEADER",
         p.to_str().unwrap()
-    )).unwrap();
+    ))
+    .unwrap();
 
     let p = std::path::Path::new(path).join("snapshots.csv");
     Spi::run(&format!(
         "COPY pgml.snapshots FROM '{}' CSV HEADER",
         p.to_str().unwrap()
-    )).unwrap();
+    ))
+    .unwrap();
 
     let p = std::path::Path::new(path).join("models.csv");
     Spi::run(&format!(
         "COPY pgml.models FROM '{}' CSV HEADER",
         p.to_str().unwrap()
-    )).unwrap();
+    ))
+    .unwrap();
 
     let p = std::path::Path::new(path).join("files.csv");
     Spi::run(&format!(
         "COPY pgml.files FROM '{}' CSV HEADER",
         p.to_str().unwrap()
-    )).unwrap();
+    ))
+    .unwrap();
 
     let p = std::path::Path::new(path).join("deployments.csv");
     Spi::run(&format!(
         "COPY pgml.deployments FROM '{}' CSV HEADER",
         p.to_str().unwrap()
-    )).unwrap();
+    ))
+    .unwrap();
 }
 
 #[cfg(any(test, feature = "pg_test"))]
@@ -665,7 +891,7 @@ mod tests {
             0.5,
             Sampling::last,
             true,
-            JsonB(serde_json::Value::Object(Hyperparams::new()))
+            JsonB(serde_json::Value::Object(Hyperparams::new())),
         );
         assert!(snapshot.id > 0);
     }
@@ -681,7 +907,7 @@ mod tests {
                 0.5,
                 Sampling::last,
                 true,
-                JsonB(serde_json::Value::Object(Hyperparams::new()))
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
             );
         });
 
@@ -695,14 +921,15 @@ mod tests {
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
         // to test deployments.
         let setting =
-            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
+            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'")
+                .unwrap();
 
         info!("Data directory: {}", setting.unwrap());
 
         for runtime in [Runtime::python, Runtime::rust] {
             let result: Vec<(String, String, String, bool)> = train(
                 "Test project",
-                Some(Task::regression),
+                Some(&Task::regression.to_string()),
                 Some("pgml.diabetes"),
                 Some("target"),
                 Algorithm::linear,
@@ -715,7 +942,7 @@ mod tests {
                 Some(runtime),
                 Some(true),
                 false,
-                JsonB(serde_json::Value::Object(Hyperparams::new()))
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
             )
             .collect();
 
@@ -734,14 +961,15 @@ mod tests {
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
         // to test deployments.
         let setting =
-            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
+            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'")
+                .unwrap();
 
         info!("Data directory: {}", setting.unwrap());
 
         for runtime in [Runtime::python, Runtime::rust] {
             let result: Vec<(String, String, String, bool)> = train(
                 "Test project 2",
-                Some(Task::classification),
+                Some(&Task::classification.to_string()),
                 Some("pgml.digits"),
                 Some("target"),
                 Algorithm::xgboost,
@@ -754,7 +982,7 @@ mod tests {
                 Some(runtime),
                 Some(true),
                 false,
-                JsonB(serde_json::Value::Object(Hyperparams::new()))
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
             )
             .collect();
 
@@ -773,14 +1001,15 @@ mod tests {
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
         // to test deployments.
         let setting =
-            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
+            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'")
+                .unwrap();
 
         info!("Data directory: {}", setting.unwrap());
 
         for runtime in [Runtime::python, Runtime::rust] {
             let result: Vec<(String, String, String, bool)> = train(
                 "Test project 3",
-                Some(Task::classification),
+                Some(&Task::classification.to_string()),
                 Some("pgml.breast_cancer"),
                 Some("malignant"),
                 Algorithm::xgboost,
@@ -793,7 +1022,7 @@ mod tests {
                 Some(runtime),
                 Some(true),
                 true,
-                JsonB(serde_json::Value::Object(Hyperparams::new()))
+                JsonB(serde_json::Value::Object(Hyperparams::new())),
             )
             .collect();
 

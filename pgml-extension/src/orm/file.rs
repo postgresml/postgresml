@@ -60,14 +60,10 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
             );
         } else {
             data = result
-                    .get(1)
-                    .expect("Project has gone missing. Your model store has been corrupted.");
-            runtime = result
-                    .get(2)
-                    .expect("Runtime for model is corrupted.");
-            algorithm = result
-                    .get(3)
-                    .expect("Algorithm for model is corrupted.");
+                .get(1)
+                .expect("Project has gone missing. Your model store has been corrupted.");
+            runtime = result.get(2).expect("Runtime for model is corrupted.");
+            algorithm = result.get(3).expect("Algorithm for model is corrupted.");
             task = result.get(4).expect("Task for project is corrupted.");
         }
 
@@ -81,7 +77,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
         WHERE models.id = $1
         LIMIT 1",
         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
-    ).unwrap();
+    )
+    .unwrap();
 
     let data = data.unwrap();
     let runtime = Runtime::from_str(&runtime.unwrap()).unwrap();
@@ -105,6 +102,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
                     Task::classification => {
                         crate::bindings::linfa::LogisticRegression::from_bytes(&data)
                     }
+                    _ => error!("Rust runtime only supports `classification` and `regression` task types for linear algorithms."),
                 },
                 Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data),
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),

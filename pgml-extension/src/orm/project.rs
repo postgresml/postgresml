@@ -43,7 +43,7 @@ impl Project {
         let project_id = match projects.get(project_name) {
             Some(project_id) => *project_id,
             None => {
-                let (project_id, model_id) = Spi::get_two_with_args::<i64, i64>(
+                let result = Spi::get_two_with_args::<i64, i64>(
                     "SELECT deployments.project_id, deployments.model_id 
                     FROM pgml.deployments
                     JOIN pgml.projects ON projects.id = deployments.project_id
@@ -51,7 +51,14 @@ impl Project {
                     ORDER BY deployments.created_at DESC
                     LIMIT 1",
                     vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
-                ).unwrap();
+                );
+                let (project_id, model_id) = match result {
+                    Ok(o) => o,
+                    Err(_) => error!(
+                        "No deployed model exists for the project named: `{}`",
+                        project_name
+                    ),
+                };
                 let project_id = project_id.unwrap_or_else(|| {
                     error!(
                         "No deployed model exists for the project named: `{}`",
@@ -74,7 +81,6 @@ impl Project {
                 project_id
             }
         };
-
         *PROJECT_ID_TO_DEPLOYED_MODEL_ID
             .share()
             .get(&project_id)
@@ -157,7 +163,7 @@ impl Project {
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),
-                    (PgBuiltInOids::TEXTOID.oid(), task.to_string().into_datum()),
+                    (PgBuiltInOids::TEXTOID.oid(), task.to_pg_enum().into_datum()),
                 ])
             ).unwrap().first();
             if !result.is_empty() {

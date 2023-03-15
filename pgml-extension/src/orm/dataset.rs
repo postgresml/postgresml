@@ -68,6 +68,41 @@ impl Dataset {
     }
 }
 
+#[derive(Debug)]
+pub struct TextDataset {
+    pub x_train: Vec<String>,
+    pub y_train: Vec<String>,
+    pub x_test: Vec<String>,
+    pub y_test: Vec<String>,
+    pub num_features: usize,
+    pub num_labels: usize,
+    pub num_rows: usize,
+    pub num_train_rows: usize,
+    pub num_test_rows: usize,
+    pub num_distinct_labels: usize,
+}
+
+impl Display for TextDataset {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "TextDataset {{ num_features: {}, num_labels: {}, num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            self.num_features, self.num_labels, self.num_distinct_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
+        )
+    }
+}
+
+fn drop_table_if_exists(table_name: &str) {
+    // Avoid the existence for DROP TABLE IF EXISTS warning by checking the schema for the table first
+    let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'", vec![
+        (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
+    ]).unwrap().unwrap();
+    match table_count {
+        1 => Spi::run(&format!(r#"DROP TABLE {table_name}"#)).unwrap(),
+        _ => (),
+    }
+}
+
 #[derive(Deserialize)]
 struct BreastCancerRow {
     mean_radius: f32,
@@ -104,7 +139,7 @@ struct BreastCancerRow {
 }
 
 pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.breast_cancer").unwrap();
+    drop_table_if_exists("breast_cancer");
     Spi::run(
         r#"CREATE TABLE pgml.breast_cancer (
         "mean radius" FLOAT4, 
@@ -139,7 +174,8 @@ pub fn load_breast_cancer(limit: Option<usize>) -> (String, i64) {
         "worst fractal dimension" FLOAT4,
         "malignant" BOOLEAN
     )"#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let limit = match limit {
         Some(limit) => limit,
@@ -297,7 +333,7 @@ struct DiabetesRow {
 }
 
 pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.diabetes").unwrap();
+    drop_table_if_exists("diabetes");
     Spi::run(
         "CREATE TABLE pgml.diabetes (
         age FLOAT4, 
@@ -312,7 +348,8 @@ pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
         s6 FLOAT4, 
         target FLOAT4
     )",
-    ).unwrap();
+    )
+    .unwrap();
 
     let limit = match limit {
         Some(limit) => limit,
@@ -347,7 +384,8 @@ pub fn load_diabetes(limit: Option<usize>) -> (String, i64) {
                 (PgBuiltInOids::FLOAT4OID.oid(), row.s6.into_datum()),
                 (PgBuiltInOids::FLOAT4OID.oid(), row.target.into_datum()),
             ]),
-        ).unwrap();
+        )
+        .unwrap();
         inserted += 1;
     }
 
@@ -361,7 +399,7 @@ struct DigitsRow {
 }
 
 pub fn load_digits(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.digits").unwrap();
+    drop_table_if_exists("digits");
     Spi::run("CREATE TABLE pgml.digits (image SMALLINT[][], target SMALLINT)").unwrap();
 
     let limit = match limit {
@@ -388,7 +426,8 @@ pub fn load_digits(limit: Option<usize>) -> (String, i64) {
                 (PgBuiltInOids::TEXTOID.oid(), row.image.into_datum()),
                 (PgBuiltInOids::INT2OID.oid(), row.target.into_datum()),
             ]),
-        ).unwrap();
+        )
+        .unwrap();
         inserted += 1;
     }
 
@@ -405,7 +444,7 @@ struct IrisRow {
 }
 
 pub fn load_iris(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.iris").unwrap();
+    drop_table_if_exists("iris");
     Spi::run(
         "CREATE TABLE pgml.iris (
         sepal_length FLOAT4, 
@@ -414,7 +453,8 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
         petal_width FLOAT4, 
         target INT4
     )",
-    ).unwrap();
+    )
+    .unwrap();
 
     let limit = match limit {
         Some(limit) => limit,
@@ -449,7 +489,8 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
                 (PgBuiltInOids::FLOAT4OID.oid(), row.petal_width.into_datum()),
                 (PgBuiltInOids::INT4OID.oid(), row.target.into_datum()),
             ]),
-        ).unwrap();
+        )
+        .unwrap();
         inserted += 1;
     }
 
@@ -467,7 +508,7 @@ struct LinnerudRow {
 }
 
 pub fn load_linnerud(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.linnerud").unwrap();
+    drop_table_if_exists("linnerud");
     Spi::run(
         "CREATE TABLE pgml.linnerud(
         chins FLOAT4,
@@ -477,7 +518,8 @@ pub fn load_linnerud(limit: Option<usize>) -> (String, i64) {
         waist FLOAT4,
         pulse FLOAT4
     )",
-    ).unwrap();
+    )
+    .unwrap();
 
     let limit = match limit {
         Some(limit) => limit,
@@ -507,7 +549,8 @@ pub fn load_linnerud(limit: Option<usize>) -> (String, i64) {
                 (PgBuiltInOids::FLOAT4OID.oid(), row.waist.into_datum()),
                 (PgBuiltInOids::FLOAT4OID.oid(), row.pulse.into_datum()),
             ]),
-        ).unwrap();
+        )
+        .unwrap();
         inserted += 1;
     }
 
@@ -533,7 +576,7 @@ struct WineRow {
 }
 
 pub fn load_wine(limit: Option<usize>) -> (String, i64) {
-    Spi::run("DROP TABLE IF EXISTS pgml.wine").unwrap();
+    drop_table_if_exists("wine");
     Spi::run(
         r#"CREATE TABLE pgml.wine (
             alcohol FLOAT4,
@@ -551,7 +594,8 @@ pub fn load_wine(limit: Option<usize>) -> (String, i64) {
             proline FLOAT4,
             target INT4
         )"#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let limit = match limit {
         Some(limit) => limit,

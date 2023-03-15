@@ -3,6 +3,7 @@ use crate::orm::dataset::Dataset;
 use crate::orm::task::Task;
 use crate::orm::Hyperparams;
 use lightgbm;
+use pgx::*;
 use serde_json::json;
 
 pub struct Estimator {
@@ -52,6 +53,7 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
                 hyperparams.insert("objective".to_string(), serde_json::Value::from("binary"));
             }
         }
+        _ => error!("lightgbm only supports `regression` and `classification` tasks."),
     };
 
     let data = lightgbm::Dataset::from_vec(
