@@ -338,34 +338,36 @@ fn deploy(
     }
     match strategy {
         Strategy::best_score => match task {
+            Task::classification | Task::question_answering | Task::text_classification => {
+                let _ = write!(
+                    sql,
+                    "{predicate}\nORDER BY models.metrics->>'f1' DESC NULLS LAST"
+                );
+            }
             Task::regression => {
                 let _ = write!(
                     sql,
                     "{predicate}\nORDER BY models.metrics->>'r2' DESC NULLS LAST"
                 );
             }
-
-            Task::classification => {
+            Task::summarization => {
                 let _ = write!(
                     sql,
-                    "{predicate}\nORDER BY models.metrics->>'f1' DESC NULLS LAST"
+                    "{predicate}\nORDER BY models.metrics->>'rouge_ngram_f1' DESC NULLS LAST"
                 );
             }
-
-            Task::text_generation => {
-                let _ = write!(
-                    sql,
-                    "{predicate}\nORDER BY models.metrics->>'perplexity' ASC NULLS LAST"
-                );
-            }
-
-            Task::text_generation => {
+            Task::text_generation | Task::text2text => {
                 let _ = write!(
                     sql,
                     "{predicate}\nORDER BY models.metrics->>'perplexity' ASC NULLS LAST"
                 );
             }
-            _ => todo!("Training only supports `classification` and `regression` task types."),
+            Task::translation => {
+                let _ = write!(
+                    sql,
+                    "{predicate}\nORDER BY models.metrics->>'bleu' DESC NULLS LAST"
+                );
+            }
         },
 
         Strategy::most_recent => {
@@ -716,7 +718,7 @@ fn tune(
                         {
                             deploy = false;
                         }
-                    },
+                    }
                 }
             }
         }
@@ -927,7 +929,7 @@ mod tests {
         for runtime in [Runtime::python, Runtime::rust] {
             let result: Vec<(String, String, String, bool)> = train(
                 "Test project",
-                Some(Task::regression),
+                Some(&Task::regression.to_string()),
                 Some("pgml.diabetes"),
                 Some("target"),
                 Algorithm::linear,
@@ -967,7 +969,7 @@ mod tests {
         for runtime in [Runtime::python, Runtime::rust] {
             let result: Vec<(String, String, String, bool)> = train(
                 "Test project 2",
-                Some(Task::classification),
+                Some(&Task::classification.to_string()),
                 Some("pgml.digits"),
                 Some("target"),
                 Algorithm::xgboost,
@@ -1007,7 +1009,7 @@ mod tests {
         for runtime in [Runtime::python, Runtime::rust] {
             let result: Vec<(String, String, String, bool)> = train(
                 "Test project 3",
-                Some(Task::classification),
+                Some(&Task::classification.to_string()),
                 Some("pgml.breast_cancer"),
                 Some("malignant"),
                 Algorithm::xgboost,
