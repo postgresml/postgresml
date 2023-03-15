@@ -352,6 +352,19 @@ fn deploy(
                 );
             }
 
+            Task::text_generation => {
+                let _ = write!(
+                    sql,
+                    "{predicate}\nORDER BY models.metrics->>'perplexity' ASC NULLS LAST"
+                );
+            }
+
+            Task::text_generation => {
+                let _ = write!(
+                    sql,
+                    "{predicate}\nORDER BY models.metrics->>'perplexity' ASC NULLS LAST"
+                );
+            }
             _ => todo!("Training only supports `classification` and `regression` task types."),
         },
 

@@ -90,8 +90,8 @@ def tokenize_summarization(tokenizer, max_length, x, y):
     encoding = tokenizer(x, max_length=max_length, truncation=True, text_target=y)
     return datasets.Dataset.from_dict(encoding.data)
 
-def tokenize_text_generation(tokenizer, y):
-    encoding = tokenizer(y)
+def tokenize_text_generation(tokenizer, max_length, y):
+    encoding = tokenizer(y, max_length=max_length)
     return datasets.Dataset.from_dict(encoding.data)
 
 def tokenize_question_answering(tokenizer, max_length, x, y):
@@ -266,15 +266,10 @@ def compute_metrics_text_generation(model, tokenizer, hyperparams, y):
 
     encodings = tokenizer(full_text, return_tensors="pt")
 
-    # TODO
+    # TODO make these more configurable
     stride = 512
-    max_length_key = "n_positions"
     config = model.config.to_dict()
-    if max_length_key in config.keys():
-        max_length = config[max_length_key]
-    else:
-        log.info("Configuration keys " + ",".join(config.keys()))
-        raise ValueError(f"{max_length_key} does not exist in model configuration")
+    max_length = config.get("n_positions", 1024)
 
     stride = min(stride, max_length)
     seq_len = encodings.input_ids.size(1)
@@ -341,15 +336,15 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
         test = tokenize_translation(tokenizer, max_length, x_test, y_test)
         data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="pt")
     elif task == "text-generation":
+        max_length = hyperparams.pop("max_length", None)
         tokenizer.pad_token = tokenizer.eos_token
         model = AutoModelForCausalLM.from_pretrained(model_name)
         model.resize_token_embeddings(len(tokenizer))
-        train = tokenize_text_generation(tokenizer, y_train)
-        test = tokenize_text_generation(tokenizer, y_test)
+        train = tokenize_text_generation(tokenizer, max_length, y_train)
+        test = tokenize_text_generation(tokenizer, max_length, y_test)
         data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False, return_tensors="pt")
     else:
         raise PgMLException(f"unhandled task type: {task}")
-
     trainer = Trainer(
         model=model,
         args=TrainingArguments(output_dir=path, **hyperparams),
@@ -361,7 +356,6 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
     start = time.perf_counter()
     trainer.train()
     fit_time = time.perf_counter() - start
-
     model.eval()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
