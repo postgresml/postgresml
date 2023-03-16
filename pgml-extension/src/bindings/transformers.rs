@@ -83,11 +83,18 @@ pub fn tune(
     metrics
 }
 
-pub fn generate(model_id: i64, inputs: Vec<&str>) -> Vec<String> {
+pub fn generate(
+    model_id: i64,
+    inputs: Vec<&str>,
+    config: JsonB,
+) -> Vec<String> {
     Python::with_gil(|py| -> Vec<String> {
         let generate = PY_MODULE.getattr(py, "generate").unwrap();
+        let config = serde_json::to_string(&config.0).unwrap();
         // cloning inputs in case we have to re-call on error is rather unfortunate here
-        let result = generate.call1(py, (model_id, inputs.clone()));
+        // similarly, using a json string to pass kwargs is also unfortunate extra parsing
+        // it'd be nice to clean all this up one day
+        let result = generate.call1(py, (model_id, inputs.clone(), &config));
         let result = match result {
             Err(e) => {
                 if e.get_type(py).name().unwrap() == "MissingModelError" {
@@ -111,7 +118,7 @@ pub fn generate(model_id: i64, inputs: Vec<&str>) -> Vec<String> {
                     let task = Task::from_str(&task).unwrap();
                     load.call1(py, (model_id, task.to_string(), dir)).unwrap();
 
-                    generate.call1(py, (model_id, inputs)).unwrap()
+                    generate.call1(py, (model_id, inputs, config)).unwrap()
                 } else {
                     let traceback = e.traceback(py).unwrap().format().unwrap();
                     error!("{traceback} {e}")

@@ -579,8 +579,16 @@ pub fn transform_string(
 
 #[cfg(feature = "python")]
 #[pg_extern(name = "generate")]
-fn generate(project_name: &str, inputs: &str) -> String {
-    generate_batch(project_name, Vec::from([inputs]))
+fn generate(
+    project_name: &str,
+    inputs: &str,
+    config: default!(JsonB, "'{}'"),
+) -> String {
+    generate_batch(
+        project_name,
+        Vec::from([inputs]),
+        config,
+    )
         .first()
         .unwrap()
         .to_string()
@@ -588,8 +596,16 @@ fn generate(project_name: &str, inputs: &str) -> String {
 
 #[cfg(feature = "python")]
 #[pg_extern(name = "generate")]
-fn generate_batch(project_name: &str, inputs: Vec<&str>) -> Vec<String> {
-    crate::bindings::transformers::generate(Project::get_deployed_model_id(project_name), inputs)
+fn generate_batch(
+    project_name: &str,
+    inputs: Vec<&str>,
+    config: default!(JsonB, "'{}'"),
+) -> Vec<String> {
+    crate::bindings::transformers::generate(
+        Project::get_deployed_model_id(project_name),
+        inputs,
+        config,
+    )
 }
 
 #[cfg(feature = "python")]
