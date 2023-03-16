@@ -22,15 +22,16 @@ import torch
 from tqdm import tqdm
 import transformers
 from transformers import (
-    AutoTokenizer,
-    DataCollatorWithPadding,
-    DataCollatorForLanguageModeling,
-    DataCollatorForSeq2Seq,
-    DefaultDataCollator,
-    AutoModelForSequenceClassification,
+    AutoModelForCausalLM,
     AutoModelForQuestionAnswering,
     AutoModelForSeq2SeqLM,
-    AutoModelForCausalLM,
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    DataCollatorForLanguageModeling,
+    DataCollatorForSeq2Seq,
+    DataCollatorWithPadding,
+    DefaultDataCollator,
+    GenerationConfig,
     TrainingArguments,
     Trainer,
 )
@@ -424,11 +425,11 @@ def load_model(model_id, task, dir):
     else:
         raise Exception(f"unhandled task type: {task}")
 
-def generate(model_id, data):
+def generate(model_id, data, config):
     result = get_transformer_by_model_id(model_id)
     tokenizer = result["tokenizer"]
     model = result["model"]
-
+    config = json.loads(config)
     all_preds = []
 
     batch_size = 1 # TODO hyperparams
@@ -445,7 +446,7 @@ def generate(model_id, data):
                 return_tensors="pt",
                 return_token_type_ids=False,
             ).to(model.device)
-            predictions = model.generate(**tokens)
+            predictions = model.generate(**tokens, **config)
             decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
             all_preds.extend(decoded_preds)
     return all_preds
