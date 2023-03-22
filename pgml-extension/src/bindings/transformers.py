@@ -101,7 +101,7 @@ def tokenize_summarization(tokenizer, max_length, x, y):
     return datasets.Dataset.from_dict(encoding.data)
 
 def tokenize_text_generation(tokenizer, max_length, y):
-    encoding = tokenizer(y, max_length=max_length)
+    encoding = tokenizer(y, max_length=max_length, truncation=True, padding="max_length")
     return datasets.Dataset.from_dict(encoding.data)
 
 def tokenize_question_answering(tokenizer, max_length, x, y):
