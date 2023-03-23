@@ -146,9 +146,24 @@ def train(
         model = AutoModelForCausalLM.from_pretrained(model_name)
 
     model.resize_token_embeddings(len(tokenizer))
-
-    def tokenize_function(examples):
-        return tokenizer(examples[column_name])
+    
+    log.info(dataset)
+    
+    def tokenize_function(element):
+        context_length = tokenizer.model_max_length
+        outputs = tokenizer(
+            element[column_name],
+            truncation=True,
+            max_length=context_length,
+            return_overflowing_tokens=True,
+            return_length=True,
+            padding='max_length',
+        )
+        input_batch = []
+        for length, input_ids in zip(outputs["length"], outputs["input_ids"]):
+            if length == context_length:
+                input_batch.append(input_ids)
+        return {"input_ids": input_batch}
 
     tokenized_datasets = dataset.map(
         tokenize_function, batched=True, remove_columns=dataset["train"].column_names

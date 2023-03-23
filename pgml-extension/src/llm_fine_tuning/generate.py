@@ -94,7 +94,7 @@ def generate(
 
     fp = open("output.txt","w")
     for _id, output in enumerate(outputs):
-        fp.write("Generated %d: %s" % (_id, output["generated_text"]))
+        fp.write("Generated %d: %s\n" % (_id, output["generated_text"]))
     fp.close()
 
 
