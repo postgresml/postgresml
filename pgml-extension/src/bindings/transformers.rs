@@ -83,11 +83,7 @@ pub fn tune(
     metrics
 }
 
-pub fn generate(
-    model_id: i64,
-    inputs: Vec<&str>,
-    config: JsonB,
-) -> Vec<String> {
+pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Vec<String> {
     Python::with_gil(|py| -> Vec<String> {
         let generate = PY_MODULE.getattr(py, "generate").unwrap();
         let config = serde_json::to_string(&config.0).unwrap();

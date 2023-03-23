@@ -440,7 +440,10 @@ fn predict_i64(project_name: &str, features: Vec<i64>) -> f32 {
 
 #[pg_extern(strict, name = "predict")]
 fn predict_bool(project_name: &str, features: Vec<bool>) -> f32 {
-    predict_f32(project_name, features.iter().map(|&i| i as u8 as f32).collect())
+    predict_f32(
+        project_name,
+        features.iter().map(|&i| i as u8 as f32).collect(),
+    )
 }
 
 #[pg_extern(strict, name = "predict_proba")]
@@ -579,16 +582,8 @@ pub fn transform_string(
 
 #[cfg(feature = "python")]
 #[pg_extern(name = "generate")]
-fn generate(
-    project_name: &str,
-    inputs: &str,
-    config: default!(JsonB, "'{}'"),
-) -> String {
-    generate_batch(
-        project_name,
-        Vec::from([inputs]),
-        config,
-    )
+fn generate(project_name: &str, inputs: &str, config: default!(JsonB, "'{}'")) -> String {
+    generate_batch(project_name, Vec::from([inputs]), config)
         .first()
         .unwrap()
         .to_string()
