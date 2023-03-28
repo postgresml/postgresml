@@ -52,7 +52,7 @@ def transform(task, args, inputs):
 
     return json.dumps(pipe(inputs, **args))
 
-def embed(project, text, kwargs: "{}"):
+def embed(project, text, kwargs):
     kwargs = json.loads(kwargs)
     if project not in __cache_sentence_transformer_by_project_name:
         __cache_sentence_transformer_by_project_name[project] = SentenceTransformer(project)
