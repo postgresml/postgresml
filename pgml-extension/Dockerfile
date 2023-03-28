@@ -32,7 +32,7 @@ RUN apt update && apt-fast install -y \
 	python3-pip \
 	libpython3.10-dev \
 	python3.10-dev
-RUN pip3 install xgboost scikit-learn torch lightgbm transformers datasets
+RUN pip3 install xgboost scikit-learn torch lightgbm transformers datasets sentence_transformers
 RUN useradd postgresml -m -s /bin/bash -G sudo
 RUN echo 'postgresml ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 USER postgresml
