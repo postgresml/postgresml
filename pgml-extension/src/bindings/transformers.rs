@@ -57,7 +57,11 @@ pub fn embed(project: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f32> 
                 py,
                 PyTuple::new(
                     py,
-                    &[project.to_string().into_py(py), text.to_string().into_py(py), kwargs.into_py(py)],
+                    &[
+                        project.to_string().into_py(py),
+                        text.to_string().into_py(py),
+                        kwargs.into_py(py),
+                    ],
                 ),
             )
             .unwrap()
