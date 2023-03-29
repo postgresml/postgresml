@@ -38,7 +38,7 @@ from transformers import (
 )
 
 __cache_transformer_by_model_id = {}
-__cache_sentence_transformer_by_project_name = {}
+__cache_sentence_transformer_by_name = {}
 
 def transform(task, args, inputs):
     task = json.loads(task)
@@ -52,11 +52,11 @@ def transform(task, args, inputs):
 
     return json.dumps(pipe(inputs, **args))
 
-def embed(project, text, kwargs):
+def embed(transformer, text, kwargs):
     kwargs = json.loads(kwargs)
-    if project not in __cache_sentence_transformer_by_project_name:
-        __cache_sentence_transformer_by_project_name[project] = SentenceTransformer(project)
-    model = __cache_sentence_transformer_by_project_name[project]
+    if transformer not in __cache_sentence_transformer_by_name:
+        __cache_sentence_transformer_by_name[transformer] = SentenceTransformer(transformer)
+    model = __cache_sentence_transformer_by_name[transformer]
     return model.encode(text, **kwargs)
 
 def load_dataset(name, subset, limit: None, kwargs: "{}"):

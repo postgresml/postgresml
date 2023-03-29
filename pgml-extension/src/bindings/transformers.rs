@@ -48,7 +48,7 @@ pub fn transform(
     serde_json::from_str(&results).unwrap()
 }
 
-pub fn embed(project: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f32> {
+pub fn embed(transformer: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f32> {
     let kwargs = serde_json::to_string(kwargs).unwrap();
     Python::with_gil(|py| -> Vec<f32> {
         let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed").unwrap().into();
@@ -58,7 +58,7 @@ pub fn embed(project: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f32> 
                 PyTuple::new(
                     py,
                     &[
-                        project.to_string().into_py(py),
+                        transformer.to_string().into_py(py),
                         text.to_string().into_py(py),
                         kwargs.into_py(py),
                     ],

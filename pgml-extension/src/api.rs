@@ -554,8 +554,8 @@ fn load_dataset(
 }
 
 #[pg_extern]
-pub fn embed(project: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
-    crate::bindings::transformers::embed(project, &text, &kwargs.0)
+pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
+    crate::bindings::transformers::embed(transformer, &text, &kwargs.0)
 }
 
 #[cfg(feature = "python")]
