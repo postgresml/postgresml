@@ -8,6 +8,7 @@ import time
 import datasets
 from rouge import Rouge
 from sacrebleu.metrics import BLEU
+from sentence_transformers import SentenceTransformer
 from sklearn.metrics import (
     mean_squared_error,
     r2_score,
@@ -37,6 +38,7 @@ from transformers import (
 )
 
 __cache_transformer_by_model_id = {}
+__cache_sentence_transformer_by_name = {}
 
 def transform(task, args, inputs):
     task = json.loads(task)
@@ -49,6 +51,13 @@ def transform(task, args, inputs):
         inputs = [json.loads(input) for input in inputs]
 
     return json.dumps(pipe(inputs, **args))
+
+def embed(transformer, text, kwargs):
+    kwargs = json.loads(kwargs)
+    if transformer not in __cache_sentence_transformer_by_name:
+        __cache_sentence_transformer_by_name[transformer] = SentenceTransformer(transformer)
+    model = __cache_sentence_transformer_by_name[transformer]
+    return model.encode(text, **kwargs)
 
 def load_dataset(name, subset, limit: None, kwargs: "{}"):
     kwargs = json.loads(kwargs)

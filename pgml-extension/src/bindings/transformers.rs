@@ -48,6 +48,28 @@ pub fn transform(
     serde_json::from_str(&results).unwrap()
 }
 
+pub fn embed(transformer: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f32> {
+    let kwargs = serde_json::to_string(kwargs).unwrap();
+    Python::with_gil(|py| -> Vec<f32> {
+        let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed").unwrap().into();
+        embed
+            .call1(
+                py,
+                PyTuple::new(
+                    py,
+                    &[
+                        transformer.to_string().into_py(py),
+                        text.to_string().into_py(py),
+                        kwargs.into_py(py),
+                    ],
+                ),
+            )
+            .unwrap()
+            .extract(py)
+            .unwrap()
+    })
+}
+
 pub fn tune(
     task: &Task,
     dataset: TextDataset,

@@ -553,6 +553,11 @@ fn load_dataset(
     TableIterator::new(vec![(name, rows)].into_iter())
 }
 
+#[pg_extern]
+pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
+    crate::bindings::transformers::embed(transformer, &text, &kwargs.0)
+}
+
 #[cfg(feature = "python")]
 #[pg_extern(name = "transform")]
 pub fn transform_json(
