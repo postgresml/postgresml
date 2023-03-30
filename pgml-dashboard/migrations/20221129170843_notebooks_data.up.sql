@@ -303,7 +303,7 @@ INSERT INTO pgml.notebook_cells VALUES (33, 1, 3, 28, 1, 'SELECT * FROM pgml.tra
   task => ''classification'', -- we want to classify into true or false
   relation_name => ''fraud_samples'', -- our view of the data
   y_column_name => ''fraudulent'', -- the "labels"
-  test_sampling => ''last'', -- the part of the data to use for testing our model
+  test_data_selection => ''last'', -- the part of the data to use for testing our model
   test_size => 0.5 -- use half the data for tests
 );', NULL, NULL, NULL);
 INSERT INTO pgml.notebook_cells VALUES (34, 1, 1, 29, 1, 'Oops. We''re going to get an error:
