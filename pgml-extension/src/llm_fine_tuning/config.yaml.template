@@ -1,0 +1,36 @@
+model:
+  - gpt2
+  # - gpt2-large
+  # - gpt2-medium
+
+prompt:
+  - prompt1.txt
+  - prompt2.txt
+  - prompt3.txt
+
+min_length:
+  - 50
+
+max_length:
+  - 100
+
+temperature:
+  - 1.0
+
+top_k:
+  - 50
+
+top_p:
+  - 0.95
+
+repetition_penalty:
+  - 1.0
+
+num_return_sequences:
+  - 1
+
+
+postgres: 
+  connection: postgresql://<username>:<password>@<host_name>:<port>/<database> #Note postgresql and not postgres in the connection - importnat for sqlalchemy
+  table_name : <table_name>
+
