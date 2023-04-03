@@ -30,6 +30,7 @@ from pathlib import Path
 from sqlalchemy import create_engine
 import os
 import warnings
+import json
 
 #logging.disable(logging.INFO)
 warnings.filterwarnings('ignore')
@@ -42,24 +43,16 @@ logging.basicConfig(
 log = logging.getLogger("rich")
 
 
-def generate(params):
-    prompt = params["prompt"]
-    model_name = params["model"]
-    tokenizer_name = params["model"]
-    min_length = params["min_length"]
-    max_length = params["max_length"]
-    num_return_sequences = params["num_return_sequences"]
-    temperature = params["temperature"]
-    repetition_penalty = params["repetition_penalty"]
-    top_k = params["top_k"]
-    top_p = params["top_p"]
-
-    if os.path.exists(prompt):
-        log.info("Reading prompt from file")
-        prompt = Path(prompt).read_text()
-        params["prompt"] = prompt
-
+def generate(model, params):
+    log.info("Model in generate %s"%model)
     cuda_available = torch.cuda.is_available()
+    if os.path.exists(model):
+        model_name = model + "/model/"
+        tokenizer_name = model + "/tokenizer/"
+    else:
+        model_name = model
+        tokenizer_name = model
+    
     model = AutoModelForCausalLM.from_pretrained(model_name,torch_dtype=torch.float16)
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
@@ -68,46 +61,65 @@ def generate(params):
     else:
         device = "cpu"
 
+    generator = pipeline(
+        "text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        device=device,
+    )
+
     output_data = []
-    data = params
-    try:
-        log.info("Generating text..")
-        generator = pipeline(
-            "text-generation",
-            model=model,
-            tokenizer=tokenizer,
-            device=device,
-            max_length=max_length,
-        )
+    for param in track(params, description= model_name):
+        prompt = param["prompt"]
 
-        min_length = min(min_length, max_length)
+        if os.path.exists(prompt):
+            log.info("Reading prompt from file")
+            prompt = Path(prompt).read_text()
+            param["prompt"] = prompt
 
-        outputs = generator(
-            prompt,
-            do_sample=True,
-            min_length=min_length,
-            num_return_sequences=num_return_sequences,
-            temperature=temperature,
-            repetition_penalty=repetition_penalty,
-            top_k=top_k,
-            top_p=top_p,
-        )
+        min_length = param["min_length"]
+        max_length = param["max_length"]
+        num_return_sequences = param["num_return_sequences"]
+        temperature = param["temperature"]
+        repetition_penalty = param["repetition_penalty"]
+        top_k = param["top_k"]
+        top_p = param["top_p"]
 
-        counter = 0
-        for output in outputs:
-            key = "output_%d" % counter
-            if isinstance(output, dict):
-                data[key] = output["generated_text"]
-                counter += 1
-            if isinstance(output, list):
-                for tt in output:
-                    data[key] = tt["generated_text"]
+        data = param
+        data["model"] = model_name
+        try:
+            log.info("Generating text..")
+
+            min_length = min(min_length, max_length)
+
+            outputs = generator(
+                prompt,
+                do_sample=True,
+                min_length=min_length,
+                max_length=max_length,
+                num_return_sequences=num_return_sequences,
+                temperature=temperature,
+                repetition_penalty=repetition_penalty,
+                top_k=top_k,
+                top_p=top_p,
+            )
+
+            counter = 0
+            for output in outputs:
+                if isinstance(output, dict):
+                    data["sequence_id"] = counter
+                    data["generated_text"] = output["generated_text"]
                     counter += 1
-        data["error"] = "N/A"
-    except Exception as e:
-        data["error"] = str(e)
+                if isinstance(output, list):
+                    for tt in output:
+                        data["sequence_id"] = counter
+                        data["generated_text"] = tt["generated_text"]
+                        counter += 1
+            data["error"] = "N/A"
+        except Exception as e:
+            data["error"] = str(e)
 
-    output_data.append(data)
+        output_data.append(data)
     return pd.DataFrame.from_dict(output_data)
 
 
@@ -142,16 +154,20 @@ def bulk_generate(config_file, dry_run):
     connection = config["postgres"]["connection"]
     table_name = config["postgres"]["table_name"]
     config.pop("postgres")
-    parameter_grid = list(ParameterGrid(config))
-    log.info("Total runs = %d" % len(parameter_grid))
 
-    engine = create_engine(connection, echo=False)
+    models = config.pop("model")
+    parameter_grid = list(ParameterGrid(config))
+    log.info("Total runs = %d" % len(parameter_grid)*len(models))
+
+    
 
     counter = 0
-    for param in track(parameter_grid):
-        df = generate(param)
+    for model in models:
+        log.info(model)
+        df = generate(model,parameter_grid)
         if not dry_run:
-            df.to_sql(table_name, engine, if_exists="append")
+            engine = create_engine(connection, echo=False)
+            df.to_sql(table_name, engine, if_exists="append", index=False)
         counter+=1
 
 if __name__ == "__main__":
