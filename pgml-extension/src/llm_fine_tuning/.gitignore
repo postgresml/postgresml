@@ -1,5 +1,5 @@
 venv
-results
+results*
 __pycache__/
 metrics.ipynb
 netflix_titles_medium.csv

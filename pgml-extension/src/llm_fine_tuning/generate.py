@@ -3,6 +3,9 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import logging
 from rich.logging import RichHandler
+import os
+from pathlib import Path
+
 
 FORMAT = "%(message)s"
 logging.basicConfig(
@@ -64,9 +67,20 @@ log = logging.getLogger("rich")
     help="Top P cumulative probability sampling",
     show_default=True,
 )
+@click.option(
+    "--outfile",
+    default="output.txt",
+    help="Output file name",
+    show_default=True,
+)
 def generate(
-    prompt, model_name, tokenizer_name, min_length, max_length, num_return_sequences, temperature, repetition_penalty,top_k,top_p
+    prompt, model_name, tokenizer_name, min_length, max_length, num_return_sequences, temperature, repetition_penalty,top_k,top_p, outfile
 ):
+    
+    if os.path.exists(prompt):
+        log.info("Reading prompt from file")
+        prompt = Path(prompt).read_text()
+    
     cuda_available = torch.cuda.is_available()
     model = AutoModelForCausalLM.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -92,9 +106,10 @@ def generate(
         top_p = top_p,
     )
 
-    fp = open("output.txt","w")
+    fp = open(outfile,"w")
     for _id, output in enumerate(outputs):
         fp.write("Generated %d: %s\n" % (_id, output["generated_text"]))
+        
     fp.close()
 
 

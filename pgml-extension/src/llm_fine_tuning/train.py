@@ -80,7 +80,7 @@ torch.manual_seed(42)
     show_default=True,
 )
 @click.option("--local_rank")
-@click.option("--deepspeed")
+#@click.option("--deepspeed")
 @click.option(
     "--fp16",
     default=False,
@@ -99,7 +99,7 @@ def train(
     gpu_utilization_file,
     disable_save,
     local_rank,
-    deepspeed,
+#    deepspeed,
     fp16,
 ):
     cuda_available = torch.cuda.is_available()
@@ -169,14 +169,15 @@ def train(
         tokenize_function, batched=True, remove_columns=dataset["train"].column_names
     )
     log.info(tokenized_datasets)
-    train_dataset, eval_dataset = random_split(tokenized_datasets["train"], [0.8, 0.2])
+    train_dataset, eval_dataset = random_split(tokenized_datasets["train"], [0.99, 0.01])
 
     training_args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=epochs,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        deepspeed="./ds_config.json",
+        save_strategy="steps",
+#        deepspeed="./ds_config.json",
         fp16=fp16,
     )
 
