@@ -31,7 +31,7 @@ from sqlalchemy import create_engine
 import os
 import warnings
 
-logging.disable(logging.INFO)
+#logging.disable(logging.INFO)
 warnings.filterwarnings('ignore')
 #set_global_logging_level(logging.ERROR, ["transformers", "nlp", "torch", "tensorflow", "tensorboard", "wandb"])
 
@@ -60,7 +60,7 @@ def generate(params):
         params["prompt"] = prompt
 
     cuda_available = torch.cuda.is_available()
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name,torch_dtype=torch.float16)
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
     if cuda_available:
@@ -68,40 +68,45 @@ def generate(params):
     else:
         device = "cpu"
 
-    generator = pipeline(
-        "text-generation",
-        model=model,
-        tokenizer=tokenizer,
-        device=device,
-        max_length=max_length,
-    )
-
-    min_length = min(min_length, max_length)
-
-    outputs = generator(
-        prompt,
-        do_sample=True,
-        min_length=min_length,
-        num_return_sequences=num_return_sequences,
-        temperature=temperature,
-        repetition_penalty=repetition_penalty,
-        top_k=top_k,
-        top_p=top_p,
-    )
-
     output_data = []
     data = params
+    try:
+        log.info("Generating text..")
+        generator = pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            device=device,
+            max_length=max_length,
+        )
 
-    counter = 0
-    for output in outputs:
-        key = "output_%d" % counter
-        if isinstance(output, dict):
-            data[key] = output["generated_text"]
-            counter += 1
-        if isinstance(output, list):
-            for tt in output:
-                data[key] = tt["generated_text"]
+        min_length = min(min_length, max_length)
+
+        outputs = generator(
+            prompt,
+            do_sample=True,
+            min_length=min_length,
+            num_return_sequences=num_return_sequences,
+            temperature=temperature,
+            repetition_penalty=repetition_penalty,
+            top_k=top_k,
+            top_p=top_p,
+        )
+
+        counter = 0
+        for output in outputs:
+            key = "output_%d" % counter
+            if isinstance(output, dict):
+                data[key] = output["generated_text"]
                 counter += 1
+            if isinstance(output, list):
+                for tt in output:
+                    data[key] = tt["generated_text"]
+                    counter += 1
+        data["error"] = "N/A"
+    except Exception as e:
+        data["error"] = str(e)
+
     output_data.append(data)
     return pd.DataFrame.from_dict(output_data)
 
@@ -142,10 +147,12 @@ def bulk_generate(config_file, dry_run):
 
     engine = create_engine(connection, echo=False)
 
+    counter = 0
     for param in track(parameter_grid):
         df = generate(param)
         if not dry_run:
             df.to_sql(table_name, engine, if_exists="append")
+        counter+=1
 
 if __name__ == "__main__":
     bulk_generate()
