@@ -116,6 +116,7 @@ pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Vec<String> 
         let result = match result {
             Err(e) => {
                 if e.get_type(py).name().unwrap() == "MissingModelError" {
+                    info!("Loading model into cache for connection reuse");
                     let mut dir = std::path::PathBuf::from("/tmp/postgresml/models");
                     dir.push(model_id.to_string());
                     if !dir.exists() {
@@ -220,7 +221,7 @@ pub fn load_dataset(
         .map(|(name, type_)| {
             let type_ = match type_.as_str().unwrap() {
                 "string" => "TEXT",
-                "dict" => "JSONB",
+                "dict" | "list" => "JSONB",
                 "int64" => "INT8",
                 "int32" => "INT4",
                 "int16" => "INT2",
@@ -228,10 +229,7 @@ pub fn load_dataset(
                 "float32" => "FLOAT4",
                 "float16" => "FLOAT4",
                 "bool" => "BOOLEAN",
-                _ => error!(
-                    "unhandled dataset feature while reading dataset: {:?}",
-                    type_
-                ),
+                _ => error!("unhandled dataset feature while reading dataset: {}", type_),
             };
             format!("{name} {type_}")
         })
@@ -270,7 +268,7 @@ pub fn load_dataset(
                     PgBuiltInOids::TEXTOID.oid(),
                     value.as_str().unwrap().into_datum(),
                 )),
-                "dict" => row.push((
+                "dict" | "list" => row.push((
                     PgBuiltInOids::JSONBOID.oid(),
                     JsonB(value.clone()).into_datum(),
                 )),
