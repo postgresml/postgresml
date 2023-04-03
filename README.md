@@ -31,7 +31,7 @@
 </p>
 
 <p align="center">
-    Train and deploy models to make online predictions using only SQL, with an open source extension for Postgres. Manage your projects and visualize datasets using the built in dashboard.
+    Train and deploy models to make online predictions using only SQL, with an open source extension for Postgres. Manage your projects and visualize datasets using the built-in dashboard.
 </p>
 
 ![PostgresML in practice](pgml-docs/docs/images/console.png)
@@ -52,7 +52,7 @@ See the documentation for a complete **[list of functionality](https://postgresm
 ### All your favorite algorithms
 Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/) with no extra configuration.
 
-### Managed model deployements
+### Managed model deployments
 Models can be periodically retrained and automatically promoted to production depending on their key metric. Rollback capability is provided to ensure that you're always able to serve the highest quality predictions, along with historical logs of all deployments for long term study.
 
 ### Online and offline support
@@ -65,7 +65,7 @@ Run standard analysis on your datasets to detect outliers, bimodal distributions
 Use either grid or random searches with cross validation on your training set to discover the most important knobs to tweak on your favorite algorithm.
 
 ### SQL native vector operations
-Vector operations make working with learned emebeddings a snap, for things like nearest neighbor searches or other similarity comparisons.
+Vector operations make working with learned embeddings a snap, for things like nearest neighbor searches or other similarity comparisons.
 
 ### The performance of Postgres
 Since your data never leaves the database, you retain the speed, reliability and security you expect in your foundational stateful services. Leverage your existing infrastructure and expertise to deliver new capabilities.
