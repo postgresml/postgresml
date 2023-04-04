@@ -53,13 +53,15 @@ def generate(model, params):
         model_name = model
         tokenizer_name = model
     
-    model = AutoModelForCausalLM.from_pretrained(model_name,torch_dtype=torch.float16)
+
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
     if cuda_available:
         device = "cuda:0"
+        model = AutoModelForCausalLM.from_pretrained(model_name,torch_dtype=torch.float16)
     else:
         device = "cpu"
+        model = AutoModelForCausalLM.from_pretrained(model_name)
 
     generator = pipeline(
         "text-generation",
@@ -157,9 +159,7 @@ def bulk_generate(config_file, dry_run):
 
     models = config.pop("model")
     parameter_grid = list(ParameterGrid(config))
-    log.info("Total runs = %d" % len(parameter_grid)*len(models))
-
-    
+    log.info("Total runs = %d" % (len(parameter_grid)*len(models)))
 
     counter = 0
     for model in models:
