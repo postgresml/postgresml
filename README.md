@@ -30,21 +30,228 @@
     </a>
 </p>
 
-<p align="center">
-    Train and deploy models to make online predictions using only SQL, with an open source extension for Postgres. Manage your projects and visualize datasets using the built-in dashboard.
-</p>
 
-![PostgresML in practice](pgml-docs/docs/images/console.png)
+## Table of contents
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Getting started](#getting-started)
+- [Natural Language Processing](#nlp-tasks)
+- [Regression](#regression)
+- [Classification](#classification)
 
-The dashboard makes it easy to compare different algorithms or hyperparameters across models and datasets.
+## Introduction
+PostgresML is a PostgreSQL extension that enables you to perform ML training and inference on text and tabular data using SQL queries. With PostgresML, you can seamlessly integrate machine learning models into your PostgreSQL database and harness the power of cutting-edge algorithms to process text and tabular data efficiently.
 
-[![PostgresML dashboard](pgml-docs/docs/images/dashboard/models.png)](https://cloud.postgresml.org/)
+### Text Data
+- Perform natural language processing (NLP) tasks like sentiment analysis, question and answering, translation, summarization and text generation
+- Access 1000s of state-of-the-art language models like GPT-2, GPT-J, GPT-Neo from :hugging_face: HuggingFace model hub
+- Fine tune large language models (LLMs) on your own text data for different tasks
 
-<h2 align="center">
-    See it in action — <a href="https://cloud.postgresml.org/" target="_blank">cloud.postgresml.org</a>
-</h2>
+**Translation**
+<table>
+<tr>
+<td>SQL Query</td>
+<td>Result </td>
+</tr>
+<tr>
+<td>
 
-Please see the [quick start instructions](https://postgresml.org/user_guides/setup/quick_start_with_docker/) for general information on installing or deploying PostgresML. A [developer guide](https://postgresml.org/docs/guides/setup/developers) is also available for those who would like to contribute.
+```sql
+SELECT pgml.transform(
+    'translation_en_to_fr',
+    inputs => ARRAY[
+        'Welcome to the future!',
+        'Where have you been all this time?'
+    ]
+) AS french;
+```
+</td>
+<td>
+
+```sql
+                         french                                 
+------------------------------------------------------------
+
+[
+    {"translation_text": "Bienvenue à l'avenir!"},
+    {"translation_text": "Où êtes-vous allé tout ce temps?"}
+]
+```
+</td>
+</tr>
+</table>
+
+
+
+**Sentiment Analysis**
+<table>
+<tr>
+<td>SQL Query</td>
+<td>Result </td>
+</tr>
+<tr>
+<td>
+
+```sql
+SELECT pgml.transform(
+
+    '{"model": "roberta-large-mnli"}'::JSONB,
+    inputs => ARRAY
+    [
+        'I love how amazingly simple ML has become!', 
+        'I hate doing mundane and thankless tasks. ☹️'
+    ]
+
+) AS positivity;
+```
+</td>
+<td>
+
+```sql
+                    positivity
+------------------------------------------------------
+[
+    {"label": "NEUTRAL", "score": 0.8143417835235596}, 
+    {"label": "NEUTRAL", "score": 0.7637073993682861}
+]
+```
+</td>
+</tr>
+</table>
+
+
+### Tabular data
+- [47+ classification and regression algorithms](https://postgresml.org/docs/guides/training/algorithm_selection)
+- [8 - 40X faster inference than HTTP based model serving](https://postgresml.org/blog/postgresml-is-8x-faster-than-python-http-microservices)
+- [Millions of transactions per second](https://postgresml.org/blog/scaling-postgresml-to-one-million-requests-per-second)
+- [Horizontal scalability](https://github.com/postgresml/pgcat)
+
+
+**Training a classification model**
+
+<table>
+<tr>
+<td> Training </td>
+<td> Inference </td>
+</tr>
+<tr>
+<td>
+
+
+```sql
+SELECT * FROM pgml.train(
+    'Handwritten Digit Image Classifier',
+    algorithm => 'xgboost',
+    'classification',
+    'pgml.digits',
+    'target'
+);
+```
+
+</td>
+<td>
+
+```sql
+SELECT pgml.predict(
+    'My Classification Project', 
+    ARRAY[0.1, 2.0, 5.0]
+) AS prediction;
+```
+</td>
+</tr>
+</table>
+
+## Installation
+PostgresML installation consists of three parts: PostgreSQL database, Postgres extension for machine learning and a dashboard app. The extension provides all the machine learning functionality and can be used independently using any SQL IDE. The dashboard app provides a eays to use interface for writing SQL notebooks, performing and tracking ML experiments and ML models.
+
+### Docker
+
+Step 1: Clone this repository
+
+```bash
+git clone git@github.com:postgresml/postgresml.git
+```
+
+Step 2: Start dockerized services. PostgresML will run on port 5433, just in case you already have Postgres running. You can find Docker installation instructions [here](https://docs.docker.com/desktop/)
+```bash
+cd postgresml
+docker-compose up
+```
+
+Step 3: Connect to PostgresDB with PostgresML enabled using a SQL IDE or [`psql`](https://www.postgresql.org/docs/current/app-psql.html)
+```bash
+postgres://postgres@localhost:5433/pgml_development
+```
+
+### Free trial
+If you want to check out the functionality without the hassle of Docker please go ahead and start PostgresML by signing up for a free account [here](https://postgresml.org/signup). We will provide 5GiB disk space on a shared tenant.
+
+## Getting Started
+
+### IDE support
+- DBeaver
+- Data Grip
+- Tableau
+- Power BI
+- Jupyter
+- VSCode
+
+## NLP Tasks
+- Text Classification
+- Token Classification
+- Table Question Answering
+- Question Answering
+- Zero-Shot Classification
+- Translation
+- Summarization
+- nConversational
+- Text Generation
+- Text2Text Generation
+- Fill-Mask
+- Sentence Similarity
+
+## Regression
+## Classification
+
+## Applications
+### Text
+- AI writing partner 
+- Chatbot for customer support
+- Social media post analysis
+- Fintech
+- Healthcare
+- Insurance
+
+
+### Tabular data
+- Fraud detection
+- Recommendation
+
+
+## Benefits
+- Access to hugging face models - a little more about open source language models 
+- Ease of fine tuning and why
+- Rust based extension and its benefits
+- Problems with HTTP serving and how PML enables microsecond latency 
+- Pgcat for horizontal scaling
+
+## Concepts
+- Database
+- Extension
+- ML on text data
+- Transform operation
+- Fine tune operation
+- ML on tabular data
+- Train operation
+- Deploy operation
+- Predict operation
+
+## Deployment
+- Docker images
+  - CPU
+  - GPU
+- Data persistence on local/EC2/EKS
+- Deployment on AWS using docker images
 
 ## What's in the box
 See the documentation for a complete **[list of functionality](https://postgresml.org/)**.
@@ -73,35 +280,6 @@ Since your data never leaves the database, you retain the speed, reliability and
 ### Open source
 We're building on the shoulders of giants. These machine learning libraries and Postgres have received extensive academic and industry use, and we'll continue their tradition to build with the community. Licensed under MIT.
 
-## Quick Start
+## Frequently Asked Questions (FAQs)
 
-1) Clone this repo:
 
-```bash
-$ git clone git@github.com:postgresml/postgresml.git
-```
-
-2) Start dockerized services. PostgresML will run on port 5433, just in case you already have Postgres running:
-
-```bash
-$ cd postgresml && docker-compose up
-```
-
-3) Connect to PostgreSQL in the Docker container with PostgresML installed:
-
-```bash
-$ psql postgres://postgres@localhost:5433/pgml_development
-```
-
-4) Validate your installation:
-
-```sql
-pgml_development=# SELECT pgml.version();
- 
- version
----------
- 0.8.1
-(1 row)
-```
-
-See the documentation for a complete guide to **[working with PostgresML](https://postgresml.org/)**.
