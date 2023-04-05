@@ -48,13 +48,8 @@ PostgresML is a PostgreSQL extension that enables you to perform ML training and
 - Fine tune large language models (LLMs) on your own text data for different tasks
 
 **Translation**
-<table>
-<tr>
-<td>SQL Query</td>
-<td>Result </td>
-</tr>
-<tr>
-<td>
+
+*SQL Query*
 
 ```sql
 SELECT pgml.transform(
@@ -65,10 +60,9 @@ SELECT pgml.transform(
     ]
 ) AS french;
 ```
-</td>
-<td>
+*Result*
 
-```sql
+```bash
                          french                                 
 ------------------------------------------------------------
 
@@ -77,20 +71,11 @@ SELECT pgml.transform(
     {"translation_text": "Où êtes-vous allé tout ce temps?"}
 ]
 ```
-</td>
-</tr>
-</table>
 
 
 
 **Sentiment Analysis**
-<table>
-<tr>
-<td>SQL Query</td>
-<td>Result </td>
-</tr>
-<tr>
-<td>
+*SQL Query*
 
 ```sql
 SELECT pgml.transform(
@@ -104,10 +89,8 @@ SELECT pgml.transform(
 
 ) AS positivity;
 ```
-</td>
-<td>
-
-```sql
+*Result*
+```bash
                     positivity
 ------------------------------------------------------
 [
@@ -115,10 +98,6 @@ SELECT pgml.transform(
     {"label": "NEUTRAL", "score": 0.7637073993682861}
 ]
 ```
-</td>
-</tr>
-</table>
-
 
 ### Tabular data
 - [47+ classification and regression algorithms](https://postgresml.org/docs/guides/training/algorithm_selection)
@@ -129,15 +108,7 @@ SELECT pgml.transform(
 
 **Training a classification model**
 
-<table>
-<tr>
-<td> Training </td>
-<td> Inference </td>
-</tr>
-<tr>
-<td>
-
-
+*Training*
 ```sql
 SELECT * FROM pgml.train(
     'Handwritten Digit Image Classifier',
@@ -148,18 +119,13 @@ SELECT * FROM pgml.train(
 );
 ```
 
-</td>
-<td>
-
+*Inference*
 ```sql
 SELECT pgml.predict(
     'My Classification Project', 
     ARRAY[0.1, 2.0, 5.0]
 ) AS prediction;
 ```
-</td>
-</tr>
-</table>
 
 ## Installation
 PostgresML installation consists of three parts: PostgreSQL database, Postgres extension for machine learning and a dashboard app. The extension provides all the machine learning functionality and can be used independently using any SQL IDE. The dashboard app provides a eays to use interface for writing SQL notebooks, performing and tracking ML experiments and ML models.
@@ -190,8 +156,10 @@ If you want to check out the functionality without the hassle of Docker please g
 
 ### Option 1
 - On local installation go to dashboard app at `http://localhost:8000/` to use SQL notebooks.
+
 - On the free tier click on **Dashboard** button to use SQL notebooks.
 ![dashboard](pgml-docs/docs/images/dashboard.png)
+
 - Try one of the pre-built SQL notebooks
 ![notebooks](pgml-docs/docs/images/notebooks.png)
 
@@ -215,7 +183,7 @@ If you want to check out the functionality without the hassle of Docker please g
 - Zero-Shot Classification
 - Translation
 - Summarization
-- nConversational
+- Conversational
 - Text Generation
 - Text2Text Generation
 - Fill-Mask
