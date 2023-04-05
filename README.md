@@ -44,7 +44,7 @@ PostgresML is a PostgreSQL extension that enables you to perform ML training and
 
 ### Text Data
 - Perform natural language processing (NLP) tasks like sentiment analysis, question and answering, translation, summarization and text generation
-- Access 1000s of state-of-the-art language models like GPT-2, GPT-J, GPT-Neo from :hugging_face: HuggingFace model hub
+- Access 1000s of state-of-the-art language models like GPT-2, GPT-J, GPT-Neo from :hugs: HuggingFace model hub
 - Fine tune large language models (LLMs) on your own text data for different tasks
 
 **Translation**
