@@ -49,7 +49,7 @@ PostgresML is a PostgreSQL extension that enables you to perform ML training and
 
 **Translation**
 
-*SQL Query*
+*SQL query*
 
 ```sql
 SELECT pgml.transform(
@@ -62,7 +62,7 @@ SELECT pgml.transform(
 ```
 *Result*
 
-```bash
+```json
                          french                                 
 ------------------------------------------------------------
 
@@ -75,27 +75,24 @@ SELECT pgml.transform(
 
 
 **Sentiment Analysis**
-*SQL Query*
+*SQL query*
 
 ```sql
 SELECT pgml.transform(
-
-    '{"model": "roberta-large-mnli"}'::JSONB,
-    inputs => ARRAY
-    [
+    task   => 'text-classification',
+    inputs => ARRAY[
         'I love how amazingly simple ML has become!', 
         'I hate doing mundane and thankless tasks. ☹️'
     ]
-
 ) AS positivity;
 ```
 *Result*
-```bash
+```json
                     positivity
 ------------------------------------------------------
 [
-    {"label": "NEUTRAL", "score": 0.8143417835235596}, 
-    {"label": "NEUTRAL", "score": 0.7637073993682861}
+    {"label": "POSITIVE", "score": 0.9995759129524232}, 
+    {"label": "NEGATIVE", "score": 0.9903519749641418}
 ]
 ```
 
@@ -144,7 +141,7 @@ cd postgresml
 docker-compose up
 ```
 
-Step 3: Connect to PostgresDB with PostgresML enabled using a SQL IDE or [`psql`](https://www.postgresql.org/docs/current/app-psql.html)
+Step 3: Connect to PostgresDB with PostgresML enabled using a SQL IDE or <a href="https://www.postgresql.org/docs/current/app-psql.html" target="_blank">psql</a>
 ```bash
 postgres://postgres@localhost:5433/pgml_development
 ```
@@ -165,18 +162,106 @@ If you want to check out the functionality without the hassle of Docker please g
 
 ### Option 2
 - Use any of these popular tools to connect to PostgresML and write SQL queries
-  - [Apache Superset](https://superset.apache.org/)
-  - [DBeaver](https://dbeaver.io/)
-  - [Data Grip](https://www.jetbrains.com/datagrip/)
-  - [Postico 2](https://eggerapps.at/postico2/)
-  - [Popsql](https://popsql.com/)
-  - [Tableau](https://www.tableau.com/)
-  - [Power BI](https://powerbi.microsoft.com/en-us/)
-  - [Jupyter](https://jupyter.org/)
-  - [VSCode](https://code.visualstudio.com/)
+  - <a href="https://superset.apache.org/" target="_blank">Apache Superset</a>
+  - <a href="https://dbeaver.io/" target="_blank">DBeaver</a>
+  - <a href="https://www.jetbrains.com/datagrip/" target="_blank">Data Grip</a>
+  - <a href="https://eggerapps.at/postico2/" target="_blank">Postico 2</a>
+  - <a href="https://popsql.com/" target="_blank">Popsql</a>
+  - <a href="https://www.tableau.com/" target="_blank">Tableau</a>
+  - <a href="https://powerbi.microsoft.com/en-us/" target="_blank">PowerBI</a>
+  - <a href="https://jupyter.org/" target="_blank">Jupyter</a>
+  - <a href="https://code.visualstudio.com/" target="_blank">VSCode</a>
 
 ## NLP Tasks
-- Text Classification
+PostgresML integrates 🤗 Hugging Face Transformers to bring state-of-the-art NLP models into the data layer. There are tens of thousands of pre-trained models with pipelines to turn raw text in your database into useful results. Many state of the art deep learning architectures have been published and made available from Hugging Face <a href= "https://huggingface.co/models" target="_blank">model hub</a>.
+
+You can call different NLP tasks and customize using them using the following SQL query.
+
+```sql
+SELECT pgml.transform(
+    task   => TEXT OR JSONB,     -- Pipeline initializer arguments
+    inputs => TEXT[] OR BYTEA[], -- inputs for inference
+    args   => JSONB              -- (optional) arguments to the pipeline.
+)
+```
+### Text Classification
+
+Text classification involves assigning a label or category to a given text. Common use cases include sentiment analysis, natural language inference, and the assessment of grammatical correctness.
+![text classification](pgml-docs/docs/images/text-classification.png)
+
+*Basic SQL query*
+```sql
+SELECT pgml.transform(
+    task   => 'text-classification',
+    inputs => ARRAY[
+        'I love how amazingly simple ML has become!', 
+        'I hate doing mundane and thankless tasks. ☹️'
+    ]
+) AS positivity;
+```
+*Result*
+```json
+                    positivity
+------------------------------------------------------
+[
+    {"label": "POSITIVE", "score": 0.9995759129524232}, 
+    {"label": "NEGATIVE", "score": 0.9903519749641418}
+]
+```
+
+A fine-tune checkpoint of DistilBERT-base-uncased that is tuned on Stanford Sentiment Treebank(sst2) is used as a default <a href="https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english" target="_blank">model</a> for text classification.
+
+*SQL query using specific model*
+
+To use one of the over 19,000 models available on Hugging Face, include the name of the desired model and its associated task as a JSONB object in the SQL query. For example, if you want to use a RoBERTa <a href="https://huggingface.co/models?pipeline_tag=text-classification" target="_blank">model</a> trained on around 40,000 English tweets and that has POS (positive), NEG (negative), and NEU (neutral) labels for its classes, include this information in the JSONB object when making your query.
+
+```sql
+SELECT pgml.transform(
+    inputs => ARRAY[
+        'I love how amazingly simple ML has become!', 
+        'I hate doing mundane and thankless tasks. ☹️'
+    ],
+    task  => '{"task": "text-classification", 
+              "model": "finiteautomata/bertweet-base-sentiment-analysis"
+             }'::JSONB
+) AS positivity;
+```
+*Result*
+```json
+                    positivity
+-----------------------------------------------
+[
+    {"label": "POS", "score": 0.992932200431826}, 
+    {"label": "NEG", "score": 0.975599765777588}
+]
+```
+
+*SQL query using models from specific industry*
+
+By selecting a model that has been specifically designed for a particular industry, you can achieve more accurate and relevant text classification. An example of such a model is <a href="https://huggingface.co/ProsusAI/finbert" target="_blank">FinBERT</a>, a pre-trained NLP model that has been optimized for analyzing sentiment in financial text. FinBERT was created by training the BERT language model on a large financial corpus, and fine-tuning it to specifically classify financial sentiment. When using FinBERT, the model will provide softmax outputs for three different labels: positive, negative, or neutral.
+
+```sql
+SELECT pgml.transform(
+    inputs => ARRAY[
+        'Stocks rallied and the British pound gained.', 
+        'Stocks making the biggest moves midday: Nvidia, Palantir and more'
+    ],
+    task => '{"task": "text-classification", 
+              "model": "ProsusAI/finbert"
+             }'::JSONB
+) AS market_sentiment;
+```
+
+*Result*
+```json
+
+                    market_sentiment
+------------------------------------------------------
+[
+    {"label": "positive", "score": 0.8983612656593323}, 
+    {"label": "neutral", "score": 0.8062630891799927}
+]
+```
 - Token Classification
 - Table Question Answering
 - Question Answering
