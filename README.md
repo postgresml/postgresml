@@ -194,7 +194,7 @@ If you want to check out the functionality without the hassle of Docker please g
 ![dashboard](pgml-docs/docs/images/dashboard.png)
 
 ### Option 2
-- Use any of the following popular tools to connect PostgresML and write SQL queries.
+- Use any of these popular tools to connect to PostgresML and write SQL queries
   - Apache Superset
   - DBeaver
   - Data Grip
