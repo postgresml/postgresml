@@ -195,13 +195,15 @@ If you want to check out the functionality without the hassle of Docker please g
 
 ### Option 2
 - Use any of these popular tools to connect to PostgresML and write SQL queries
-  - Apache Superset
-  - DBeaver
-  - Data Grip
-  - Tableau
-  - Power BI
-  - Jupyter
-  - VSCode
+  - [Apache Superset](https://superset.apache.org/)
+  - [DBeaver](https://dbeaver.io/)
+  - [Data Grip](https://www.jetbrains.com/datagrip/)
+  - [Postico 2](https://eggerapps.at/postico2/)
+  - [Popsql](https://popsql.com/)
+  - [Tableau](https://www.tableau.com/)
+  - [Power BI](https://powerbi.microsoft.com/en-us/)
+  - [Jupyter](https://jupyter.org/)
+  - [VSCode](https://code.visualstudio.com/)
 
 ## NLP Tasks
 - Text Classification
