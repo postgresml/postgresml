@@ -189,9 +189,11 @@ If you want to check out the functionality without the hassle of Docker please g
 ## Getting Started
 
 ### Option 1
-- On local installation go to dashboard app at `http://localhost:8000/` and use SQL notebooks to get started.
-- On the free tier click on **Dashboard** button to use SQL notebooks
+- On local installation go to dashboard app at `http://localhost:8000/` to use SQL notebooks.
+- On the free tier click on **Dashboard** button to use SQL notebooks.
 ![dashboard](pgml-docs/docs/images/dashboard.png)
+- Try one of the pre-built SQL notebooks
+![notebooks](pgml-docs/docs/images/notebooks.png)
 
 ### Option 2
 - Use any of these popular tools to connect to PostgresML and write SQL queries
