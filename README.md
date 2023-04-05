@@ -62,7 +62,7 @@ SELECT pgml.transform(
 ```
 *Result*
 
-```json
+```sql
                          french                                 
 ------------------------------------------------------------
 
@@ -87,7 +87,7 @@ SELECT pgml.transform(
 ) AS positivity;
 ```
 *Result*
-```json
+```sql
                     positivity
 ------------------------------------------------------
 [
@@ -200,7 +200,7 @@ SELECT pgml.transform(
 ) AS positivity;
 ```
 *Result*
-```json
+```sql
                     positivity
 ------------------------------------------------------
 [
@@ -227,7 +227,7 @@ SELECT pgml.transform(
 ) AS positivity;
 ```
 *Result*
-```json
+```sql
                     positivity
 -----------------------------------------------
 [
@@ -253,7 +253,7 @@ SELECT pgml.transform(
 ```
 
 *Result*
-```json
+```sql
 
                     market_sentiment
 ------------------------------------------------------
