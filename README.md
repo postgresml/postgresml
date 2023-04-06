@@ -188,6 +188,7 @@ SELECT pgml.transform(
 ## Text Classification
 
 Text classification involves assigning a label or category to a given text. Common use cases include sentiment analysis, natural language inference, and the assessment of grammatical correctness.
+
 ![text classification](pgml-docs/docs/images/text-classification.png)
 
 ### Sentiment Analysis
@@ -217,7 +218,7 @@ The default <a href="https://huggingface.co/distilbert-base-uncased-finetuned-ss
 
 *Using specific model*
 
-To use one of the over 19,000 models available on Hugging Face, include the name of the desired model and its associated task as a JSONB object in the SQL query. For example, if you want to use a RoBERTa <a href="https://huggingface.co/models?pipeline_tag=text-classification" target="_blank">model</a> trained on around 40,000 English tweets and that has POS (positive), NEG (negative), and NEU (neutral) labels for its classes, include this information in the JSONB object when making your query.
+To use one of the over 19,000 models available on Hugging Face, include the name of the desired model and `text-classification` task as a JSONB object in the SQL query. For example, if you want to use a RoBERTa <a href="https://huggingface.co/models?pipeline_tag=text-classification" target="_blank">model</a> trained on around 40,000 English tweets and that has POS (positive), NEG (negative), and NEU (neutral) labels for its classes, include this information in the JSONB object when making your query.
 
 ```sql
 SELECT pgml.transform(
@@ -276,7 +277,7 @@ NLI, or Natural Language Inference, is a type of model that determines the relat
 
 The GLUE dataset is the benchmark dataset for evaluating NLI models. There are different variants of NLI models, such as Multi-Genre NLI, Question NLI, and Winograd NLI.
 
-If you want to use an NLI model, you can find them on the :hugs: Hugging Face model hub. Look for models with "nli" or "mnli".
+If you want to use an NLI model, you can find them on the :hugs: Hugging Face model hub. Look for models with "mnli".
 
 ```sql
 SELECT pgml.transform(
@@ -324,7 +325,7 @@ SELECT pgml.transform(
 ### Quora Question Pairs (QQP)
 The Quora Question Pairs model is designed to evaluate whether two given questions are paraphrases of each other. This model takes the two questions and assigns a binary value as output. LABEL_0 indicates that the questions are paraphrases of each other and LABEL_1 indicates that the questions are not paraphrases. The benchmark dataset used for this task is the Quora Question Pairs dataset within the GLUE benchmark, which contains a collection of question pairs and their corresponding labels.
 
-If you want to use an QQP model, you can find them on the :hugs: Hugging Face model hub. Look for models with "qqp".
+If you want to use an QQP model, you can find them on the :hugs: Hugging Face model hub. Look for models with `qqp`.
 
 ```sql
 SELECT pgml.transform(
@@ -349,7 +350,7 @@ SELECT pgml.transform(
 ### Grammatical Correctness
 Linguistic Acceptability is a task that involves evaluating the grammatical correctness of a sentence. The model used for this task assigns one of two classes to the sentence, either "acceptable" or "unacceptable". LABEL_0 indicates acceptable and LABEL_1 indicates unacceptable. The benchmark dataset used for training and evaluating models for this task is the Corpus of Linguistic Acceptability (CoLA), which consists of a collection of texts along with their corresponding labels. 
 
-If you want to use a grammatical correctness model, you can find them on the :hugs: Hugging Face model hub. Look for models with "cola".
+If you want to use a grammatical correctness model, you can find them on the :hugs: Hugging Face model hub. Look for models with `cola`.
 
 ```sql
 SELECT pgml.transform(
@@ -369,23 +370,60 @@ SELECT pgml.transform(
     {"label": "LABEL_1", "score": 0.9576480388641356}
 ]
 ```
-### Token Classification
-### Table Question Answering
-### Question Answering
-### Zero-Shot Classification
-### Translation
-### Summarization
-### Conversational
-### Text Generation
-### Text2Text Generation
-### Fill-Mask
-### Sentence Similarity
 
-## Regression
-## Classification
+## Zero-Shot Classification
+Zero Shot Classification is a task where the model predicts a class that it hasn't seen during the training phase. This task leverages a pre-trained language model and is a type of transfer learning. Transfer learning involves using a model that was initially trained for one task in a different application. Zero Shot Classification is especially helpful when there is a scarcity of labeled data available for the specific task at hand.
 
-## Applications
-### Text
+![zero-shot classification](pgml-docs/docs/images/zero-shot-classification.png)
+
+In the example provided below, we will demonstrate how to classify a given sentence into a class that the model has not encountered before. To achieve this, we make use of `args` in the SQL query, which allows us to provide `candidate_labels`. You can customize these labels to suit the context of your task. We will use `facebook/bart-large-mnli` model.
+
+Look for models with `mnli` to use a zero-shot classification model on the :hugs: Hugging Face model hub.
+
+```sql
+SELECT pgml.transform(
+    inputs => ARRAY[
+        'I have a problem with my iphone that needs to be resolved asap!!'
+    ],
+    task => '{
+                "task": "zero-shot-classification", 
+                "model": "facebook/bart-large-mnli"
+             }'::JSONB,
+    args => '{
+                "candidate_labels": ["urgent", "not urgent", "phone", "tablet", "computer"]
+             }'::JSONB
+) AS zero_shot;
+```
+*Result*
+
+```sql
+                   zero_shot
+------------------------------------------------------
+[
+    {
+        "labels": ["urgent", "phone", "computer", "not urgent", "tablet"], 
+        "scores": [0.503635, 0.47879, 0.012600, 0.002655, 0.002308], 
+        "sequence": "I have a problem with my iphone that needs to be resolved asap!!"
+    }
+]
+```
+## Token Classification
+## Table Question Answering
+## Question Answering
+
+## Translation
+## Summarization
+## Conversational
+## Text Generation
+## Text2Text Generation
+## Fill-Mask
+## Sentence Similarity
+
+# Regression
+# Classification
+
+<!-- # Applications
+## Text
 - AI writing partner 
 - Chatbot for customer support
 - Social media post analysis
@@ -404,7 +442,7 @@ SELECT pgml.transform(
 - Ease of fine tuning and why
 - Rust based extension and its benefits
 - Problems with HTTP serving and how PML enables microsecond latency 
-- Pgcat for horizontal scaling
+- Pgcat for horizontal scaling -->
 
 ## Concepts
 - Database
