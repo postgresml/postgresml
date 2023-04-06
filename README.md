@@ -189,7 +189,7 @@ SELECT pgml.transform(
 Text classification involves assigning a label or category to a given text. Common use cases include sentiment analysis, natural language inference, and the assessment of grammatical correctness.
 ![text classification](pgml-docs/docs/images/text-classification.png)
 
-*Basic SQL query*
+*Sentiment Analysis*
 ```sql
 SELECT pgml.transform(
     task   => 'text-classification',
@@ -208,10 +208,10 @@ SELECT pgml.transform(
     {"label": "NEGATIVE", "score": 0.9903519749641418}
 ]
 ```
+The default <a href="https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english" target="_blank">model</a> used for text classification is a fine-tuned version of DistilBERT-base-uncased that has been specifically optimized for the Stanford Sentiment Treebank dataset (sst2).
 
-A fine-tune checkpoint of DistilBERT-base-uncased that is tuned on Stanford Sentiment Treebank(sst2) is used as a default <a href="https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english" target="_blank">model</a> for text classification.
 
-*SQL query using specific model*
+*Sentiment Analysis using specific model*
 
 To use one of the over 19,000 models available on Hugging Face, include the name of the desired model and its associated task as a JSONB object in the SQL query. For example, if you want to use a RoBERTa <a href="https://huggingface.co/models?pipeline_tag=text-classification" target="_blank">model</a> trained on around 40,000 English tweets and that has POS (positive), NEG (negative), and NEU (neutral) labels for its classes, include this information in the JSONB object when making your query.
 
@@ -236,7 +236,7 @@ SELECT pgml.transform(
 ]
 ```
 
-*SQL query using models from specific industry*
+*Sentiment analysis using industry specific model*
 
 By selecting a model that has been specifically designed for a particular industry, you can achieve more accurate and relevant text classification. An example of such a model is <a href="https://huggingface.co/ProsusAI/finbert" target="_blank">FinBERT</a>, a pre-trained NLP model that has been optimized for analyzing sentiment in financial text. FinBERT was created by training the BERT language model on a large financial corpus, and fine-tuning it to specifically classify financial sentiment. When using FinBERT, the model will provide softmax outputs for three different labels: positive, negative, or neutral.
 
@@ -262,17 +262,37 @@ SELECT pgml.transform(
     {"label": "neutral", "score": 0.8062630891799927}
 ]
 ```
-- Token Classification
-- Table Question Answering
-- Question Answering
-- Zero-Shot Classification
-- Translation
-- Summarization
-- Conversational
-- Text Generation
-- Text2Text Generation
-- Fill-Mask
-- Sentence Similarity
+
+*Natural Language Infenrence (NLI)*
+
+In NLI the model determines the relationship between two given texts. Concretely, the model takes a premise and a hypothesis and returns a class that can either be:
+- entailment, which means the hypothesis is true.
+- contraction, which means the hypothesis is false.
+- neutral, which means there's no relation between the hypothesis and the premise.
+
+The benchmark dataset for this task is GLUE (General Language Understanding Evaluation). NLI models have different variants, such as Multi-Genre NLI, Question NLI and Winograd NLI.
+
+```sql
+SELECT pgml.transform(
+    inputs => ARRAY[
+        'A soccer game with multiple males playing. Some men are playing a sport.'
+    ],
+    task => '{"task": "text-classification", 
+              "model": "roberta-large-mnli"
+             }'::JSONB
+) AS nli;
+```
+### Token Classification
+### Table Question Answering
+### Question Answering
+### Zero-Shot Classification
+### Translation
+### Summarization
+### Conversational
+### Text Generation
+### Text2Text Generation
+### Fill-Mask
+### Sentence Similarity
 
 ## Regression
 ## Classification
