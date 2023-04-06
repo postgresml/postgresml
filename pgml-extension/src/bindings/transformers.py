@@ -3,7 +3,7 @@ import json
 import math
 import shutil
 import time
-
+import numpy as np
 
 import datasets
 from rouge import Rouge
@@ -40,6 +40,12 @@ from transformers import (
 __cache_transformer_by_model_id = {}
 __cache_sentence_transformer_by_name = {}
 
+class NumpyJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.float32):
+            return float(obj)
+        return super().default(obj)
+
 def transform(task, args, inputs):
     task = json.loads(task)
     args = json.loads(args)
@@ -50,7 +56,7 @@ def transform(task, args, inputs):
     if pipe.task == "question-answering":
         inputs = [json.loads(input) for input in inputs]
 
-    return json.dumps(pipe(inputs, **args))
+    return json.dumps(pipe(inputs, **args), cls = NumpyJSONEncoder)
 
 def embed(transformer, text, kwargs):
     kwargs = json.loads(kwargs)
