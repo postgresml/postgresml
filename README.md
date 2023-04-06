@@ -321,8 +321,10 @@ SELECT pgml.transform(
 ]
 ```
 
-### Quora Question Pairs
+### Quora Question Pairs (QQP)
 The Quora Question Pairs model is designed to evaluate whether two given questions are paraphrases of each other. This model takes the two questions and assigns a binary value as output. LABEL_0 indicates that the questions are paraphrases of each other and LABEL_1 indicates that the questions are not paraphrases. The benchmark dataset used for this task is the Quora Question Pairs dataset within the GLUE benchmark, which contains a collection of question pairs and their corresponding labels.
+
+If you want to use an QQP model, you can find them on the :hugs: Hugging Face model hub. Look for models with "qqp".
 
 ```sql
 SELECT pgml.transform(
@@ -341,6 +343,30 @@ SELECT pgml.transform(
 ------------------------------------------------------
 [
     {"label": "LABEL_0", "score": 0.9988721013069152}
+]
+```
+
+### Grammatical Correctness
+Linguistic Acceptability is a task that involves evaluating the grammatical correctness of a sentence. The model used for this task assigns one of two classes to the sentence, either "acceptable" or "unacceptable". LABEL_0 indicates acceptable and LABEL_1 indicates unacceptable. The benchmark dataset used for training and evaluating models for this task is the Corpus of Linguistic Acceptability (CoLA), which consists of a collection of texts along with their corresponding labels. 
+
+If you want to use a grammatical correctness model, you can find them on the :hugs: Hugging Face model hub. Look for models with "cola".
+
+```sql
+SELECT pgml.transform(
+    inputs => ARRAY[
+        'I will walk to home when I went through the bus.'
+    ],
+    task => '{"task": "text-classification", 
+              "model": "textattack/distilbert-base-uncased-CoLA"
+             }'::JSONB
+) AS grammatical_correctness;
+```
+*Result*
+```sql
+                   grammatical_correctness
+------------------------------------------------------
+[
+    {"label": "LABEL_1", "score": 0.9576480388641356}
 ]
 ```
 ### Token Classification
