@@ -31,18 +31,19 @@
 </p>
 
 
-## Table of contents
+# Table of contents
 - [Introduction](#introduction)
 - [Installation](#installation)
 - [Getting started](#getting-started)
 - [Natural Language Processing](#nlp-tasks)
+    - [Text Classification](#text-classification)
 - [Regression](#regression)
 - [Classification](#classification)
 
-## Introduction
+# Introduction
 PostgresML is a PostgreSQL extension that enables you to perform ML training and inference on text and tabular data using SQL queries. With PostgresML, you can seamlessly integrate machine learning models into your PostgreSQL database and harness the power of cutting-edge algorithms to process text and tabular data efficiently.
 
-### Text Data
+## Text Data
 - Perform natural language processing (NLP) tasks like sentiment analysis, question and answering, translation, summarization and text generation
 - Access 1000s of state-of-the-art language models like GPT-2, GPT-J, GPT-Neo from :hugs: HuggingFace model hub
 - Fine tune large language models (LLMs) on your own text data for different tasks
@@ -96,7 +97,7 @@ SELECT pgml.transform(
 ]
 ```
 
-### Tabular data
+## Tabular data
 - [47+ classification and regression algorithms](https://postgresml.org/docs/guides/training/algorithm_selection)
 - [8 - 40X faster inference than HTTP based model serving](https://postgresml.org/blog/postgresml-is-8x-faster-than-python-http-microservices)
 - [Millions of transactions per second](https://postgresml.org/blog/scaling-postgresml-to-one-million-requests-per-second)
@@ -124,10 +125,10 @@ SELECT pgml.predict(
 ) AS prediction;
 ```
 
-## Installation
+# Installation
 PostgresML installation consists of three parts: PostgreSQL database, Postgres extension for machine learning and a dashboard app. The extension provides all the machine learning functionality and can be used independently using any SQL IDE. The dashboard app provides a eays to use interface for writing SQL notebooks, performing and tracking ML experiments and ML models.
 
-### Docker
+## Docker
 
 Step 1: Clone this repository
 
@@ -146,12 +147,12 @@ Step 3: Connect to PostgresDB with PostgresML enabled using a SQL IDE or <a href
 postgres://postgres@localhost:5433/pgml_development
 ```
 
-### Free trial
+## Free trial
 If you want to check out the functionality without the hassle of Docker please go ahead and start PostgresML by signing up for a free account [here](https://postgresml.org/signup). We will provide 5GiB disk space on a shared tenant.
 
-## Getting Started
+# Getting Started
 
-### Option 1
+## Option 1
 - On local installation go to dashboard app at `http://localhost:8000/` to use SQL notebooks.
 
 - On the free tier click on **Dashboard** button to use SQL notebooks.
@@ -160,7 +161,7 @@ If you want to check out the functionality without the hassle of Docker please g
 - Try one of the pre-built SQL notebooks
 ![notebooks](pgml-docs/docs/images/notebooks.png)
 
-### Option 2
+## Option 2
 - Use any of these popular tools to connect to PostgresML and write SQL queries
   - <a href="https://superset.apache.org/" target="_blank">Apache Superset</a>
   - <a href="https://dbeaver.io/" target="_blank">DBeaver</a>
@@ -172,7 +173,7 @@ If you want to check out the functionality without the hassle of Docker please g
   - <a href="https://jupyter.org/" target="_blank">Jupyter</a>
   - <a href="https://code.visualstudio.com/" target="_blank">VSCode</a>
 
-## NLP Tasks
+# NLP Tasks
 PostgresML integrates 🤗 Hugging Face Transformers to bring state-of-the-art NLP models into the data layer. There are tens of thousands of pre-trained models with pipelines to turn raw text in your database into useful results. Many state of the art deep learning architectures have been published and made available from Hugging Face <a href= "https://huggingface.co/models" target="_blank">model hub</a>.
 
 You can call different NLP tasks and customize using them using the following SQL query.
@@ -184,12 +185,15 @@ SELECT pgml.transform(
     args   => JSONB              -- (optional) arguments to the pipeline.
 )
 ```
-### Text Classification
+## Text Classification
 
 Text classification involves assigning a label or category to a given text. Common use cases include sentiment analysis, natural language inference, and the assessment of grammatical correctness.
 ![text classification](pgml-docs/docs/images/text-classification.png)
 
-*Sentiment Analysis*
+### Sentiment Analysis
+Sentiment analysis is a type of natural language processing technique that involves analyzing a piece of text to determine the sentiment or emotion expressed within it. It can be used to classify a text as positive, negative, or neutral, and has a wide range of applications in fields such as marketing, customer service, and political analysis.
+
+*Basic usage*
 ```sql
 SELECT pgml.transform(
     task   => 'text-classification',
@@ -211,7 +215,7 @@ SELECT pgml.transform(
 The default <a href="https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english" target="_blank">model</a> used for text classification is a fine-tuned version of DistilBERT-base-uncased that has been specifically optimized for the Stanford Sentiment Treebank dataset (sst2).
 
 
-*Sentiment Analysis using specific model*
+*Using specific model*
 
 To use one of the over 19,000 models available on Hugging Face, include the name of the desired model and its associated task as a JSONB object in the SQL query. For example, if you want to use a RoBERTa <a href="https://huggingface.co/models?pipeline_tag=text-classification" target="_blank">model</a> trained on around 40,000 English tweets and that has POS (positive), NEG (negative), and NEU (neutral) labels for its classes, include this information in the JSONB object when making your query.
 
@@ -236,7 +240,7 @@ SELECT pgml.transform(
 ]
 ```
 
-*Sentiment analysis using industry specific model*
+*Using industry specific model*
 
 By selecting a model that has been specifically designed for a particular industry, you can achieve more accurate and relevant text classification. An example of such a model is <a href="https://huggingface.co/ProsusAI/finbert" target="_blank">FinBERT</a>, a pre-trained NLP model that has been optimized for analyzing sentiment in financial text. FinBERT was created by training the BERT language model on a large financial corpus, and fine-tuning it to specifically classify financial sentiment. When using FinBERT, the model will provide softmax outputs for three different labels: positive, negative, or neutral.
 
@@ -263,14 +267,16 @@ SELECT pgml.transform(
 ]
 ```
 
-*Natural Language Infenrence (NLI)*
+### Natural Language Inference (NLI)
 
-In NLI the model determines the relationship between two given texts. Concretely, the model takes a premise and a hypothesis and returns a class that can either be:
-- entailment, which means the hypothesis is true.
-- contraction, which means the hypothesis is false.
-- neutral, which means there's no relation between the hypothesis and the premise.
+NLI, or Natural Language Inference, is a type of model that determines the relationship between two texts. The model takes a premise and a hypothesis as inputs and returns a class, which can be one of three types:
+- Entailment: This means that the hypothesis is true based on the premise.
+- Contradiction: This means that the hypothesis is false based on the premise.
+- Neutral: This means that there is no relationship between the hypothesis and the premise.
 
-The benchmark dataset for this task is GLUE (General Language Understanding Evaluation). NLI models have different variants, such as Multi-Genre NLI, Question NLI and Winograd NLI.
+The GLUE dataset is the benchmark dataset for evaluating NLI models. There are different variants of NLI models, such as Multi-Genre NLI, Question NLI, and Winograd NLI.
+
+If you want to use an NLI model, you can find them on the :hugs: Hugging Face model hub. Look for models with "nli" or "mnli".
 
 ```sql
 SELECT pgml.transform(
@@ -281,6 +287,61 @@ SELECT pgml.transform(
               "model": "roberta-large-mnli"
              }'::JSONB
 ) AS nli;
+```
+*Result*
+```sql
+                          nli
+------------------------------------------------------
+[
+    {"label": "ENTAILMENT", "score": 0.98837411403656}
+]
+```
+### Question Natural Language Inference (QNLI)
+The QNLI task involves determining whether a given question can be answered by the information in a provided document. If the answer can be found in the document, the label assigned is "entailment". Conversely, if the answer cannot be found in the document, the label assigned is "not entailment".
+
+If you want to use an QNLI model, you can find them on the :hugs: Hugging Face model hub. Look for models with "qnli".
+
+```sql
+SELECT pgml.transform(
+    inputs => ARRAY[
+        'Where is the capital of France?, Paris is the capital of France.'
+    ],
+    task => '{"task": "text-classification", 
+              "model": "cross-encoder/qnli-electra-base"
+             }'::JSONB
+) AS qnli;
+```
+
+*Result*
+```sql
+                          qnli
+------------------------------------------------------
+[
+    {"label": "LABEL_0", "score": 0.9978110194206238}
+]
+```
+
+### Quora Question Pairs
+The Quora Question Pairs model is designed to evaluate whether two given questions are paraphrases of each other. This model takes the two questions and assigns a binary value as output. LABEL_0 indicates that the questions are paraphrases of each other and LABEL_1 indicates that the questions are not paraphrases. The benchmark dataset used for this task is the Quora Question Pairs dataset within the GLUE benchmark, which contains a collection of question pairs and their corresponding labels.
+
+```sql
+SELECT pgml.transform(
+    inputs => ARRAY[
+        'Which city is the capital of France?, Where is the capital of France?'
+    ],
+    task => '{"task": "text-classification", 
+              "model": "textattack/bert-base-uncased-QQP"
+             }'::JSONB
+) AS qqp;
+```
+
+*Result*
+```sql
+                          qqp
+------------------------------------------------------
+[
+    {"label": "LABEL_0", "score": 0.9988721013069152}
+]
 ```
 ### Token Classification
 ### Table Question Answering
