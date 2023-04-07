@@ -271,7 +271,6 @@ SELECT pgml.transform(
 ```
 
 ### Natural Language Inference (NLI)
-
 NLI, or Natural Language Inference, is a type of model that determines the relationship between two texts. The model takes a premise and a hypothesis as inputs and returns a class, which can be one of three types:
 - Entailment: This means that the hypothesis is true based on the premise.
 - Contradiction: This means that the hypothesis is false based on the premise.
@@ -578,73 +577,6 @@ SELECT pgml.transform(
 # Regression
 # Classification
 
-<!-- # Applications
-## Text
-- AI writing partner 
-- Chatbot for customer support
-- Social media post analysis
-- Fintech
-- Healthcare
-- Insurance
 
-
-### Tabular data
-- Fraud detection
-- Recommendation
-
-
-## Benefits
-- Access to hugging face models - a little more about open source language models 
-- Ease of fine tuning and why
-- Rust based extension and its benefits
-- Problems with HTTP serving and how PML enables microsecond latency 
-- Pgcat for horizontal scaling -->
-
-## Concepts
-- Database
-- Extension
-- ML on text data
-- Transform operation
-- Fine tune operation
-- ML on tabular data
-- Train operation
-- Deploy operation
-- Predict operation
-
-## Deployment
-- Docker images
-  - CPU
-  - GPU
-- Data persistence on local/EC2/EKS
-- Deployment on AWS using docker images
-
-## What's in the box
-See the documentation for a complete **[list of functionality](https://postgresml.org/)**.
-
-### All your favorite algorithms
-Whether you need a simple linear regression, or extreme gradient boosting, we've included support for all classification and regression algorithms in [Scikit Learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/) with no extra configuration.
-
-### Managed model deployments
-Models can be periodically retrained and automatically promoted to production depending on their key metric. Rollback capability is provided to ensure that you're always able to serve the highest quality predictions, along with historical logs of all deployments for long term study.
-
-### Online and offline support
-Predictions are served via a standard Postgres connection to ensure that your core apps can always access both your data and your models in real time. Pure SQL workflows also enable batch predictions to cache results in native Postgres tables for lookup.
-
-### Instant visualizations
-Run standard analysis on your datasets to detect outliers, bimodal distributions, feature correlation, and other common data visualizations on your datasets. Everything is cataloged in the dashboard for easy reference.
-
-### Hyperparameter search
-Use either grid or random searches with cross validation on your training set to discover the most important knobs to tweak on your favorite algorithm.
-
-### SQL native vector operations
-Vector operations make working with learned embeddings a snap, for things like nearest neighbor searches or other similarity comparisons.
-
-### The performance of Postgres
-Since your data never leaves the database, you retain the speed, reliability and security you expect in your foundational stateful services. Leverage your existing infrastructure and expertise to deliver new capabilities.
-
-### Open source
-We're building on the shoulders of giants. These machine learning libraries and Postgres have received extensive academic and industry use, and we'll continue their tradition to build with the community. Licensed under MIT.
-
-## Frequently Asked Questions (FAQs)
 
 
