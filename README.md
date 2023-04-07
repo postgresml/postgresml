@@ -205,9 +205,7 @@ SELECT pgml.transform(
 ) AS positivity;
 ```
 *Result*
-```sql
-                    positivity
-------------------------------------------------------
+```json
 [
     {"label": "POSITIVE", "score": 0.9995759129524232}, 
     {"label": "NEGATIVE", "score": 0.9903519749641418}
@@ -232,9 +230,7 @@ SELECT pgml.transform(
 ) AS positivity;
 ```
 *Result*
-```sql
-                    positivity
------------------------------------------------
+```json
 [
     {"label": "POS", "score": 0.992932200431826}, 
     {"label": "NEG", "score": 0.975599765777588}
@@ -258,10 +254,7 @@ SELECT pgml.transform(
 ```
 
 *Result*
-```sql
-
-                    market_sentiment
-------------------------------------------------------
+```json
 [
     {"label": "positive", "score": 0.8983612656593323}, 
     {"label": "neutral", "score": 0.8062630891799927}
@@ -290,9 +283,7 @@ SELECT pgml.transform(
 ) AS nli;
 ```
 *Result*
-```sql
-                          nli
-------------------------------------------------------
+```json
 [
     {"label": "ENTAILMENT", "score": 0.98837411403656}
 ]
@@ -314,9 +305,7 @@ SELECT pgml.transform(
 ```
 
 *Result*
-```sql
-                          qnli
-------------------------------------------------------
+```json
 [
     {"label": "LABEL_0", "score": 0.9978110194206238}
 ]
@@ -339,9 +328,7 @@ SELECT pgml.transform(
 ```
 
 *Result*
-```sql
-                          qqp
-------------------------------------------------------
+```json
 [
     {"label": "LABEL_0", "score": 0.9988721013069152}
 ]
@@ -363,9 +350,7 @@ SELECT pgml.transform(
 ) AS grammatical_correctness;
 ```
 *Result*
-```sql
-                   grammatical_correctness
-------------------------------------------------------
+```json
 [
     {"label": "LABEL_1", "score": 0.9576480388641356}
 ]
@@ -396,9 +381,7 @@ SELECT pgml.transform(
 ```
 *Result*
 
-```sql
-                   zero_shot
-------------------------------------------------------
+```json
 [
     {
         "labels": ["urgent", "phone", "computer", "not urgent", "tablet"], 
@@ -424,9 +407,7 @@ SELECT pgml.transform(
 ) as ner;
 ```
 *Result*
-```sql
-                   ner
-------------------------------------------------------
+```json
 [[
     {"end": 9,  "word": "Omar", "index": 3,  "score": 0.997110, "start": 5,  "entity": "I-PER"}, 
     {"end": 27, "word": "New",  "index": 8,  "score": 0.999372, "start": 24, "entity": "I-LOC"}, 
@@ -450,9 +431,7 @@ select pgml.transform(
 ) as pos;
 ```
 *Result*
-```sql
-                   pos
-------------------------------------------------------
+```json
 [[
     {"end": 1,  "word": "i",         "index": 1, "score": 0.999, "start": 0,  "entity": "PRON"},
     {"end": 6,  "word": "live",      "index": 2, "score": 0.998, "start": 2,  "entity": "VERB"},
