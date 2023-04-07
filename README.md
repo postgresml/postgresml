@@ -440,16 +440,28 @@ select pgml.transform(
     {"end": 20, "word": ".",         "index": 5, "score": 0.999, "start": 19, "entity": "PUNCT"}
 ]]
 ```
-## Question Answering
-## Table Question Answering
 ## Translation
-## Summarization
-## Conversational
-## Text Generation
-## Text2Text Generation
-## Fill-Mask
-## Sentence Similarity
+![translation](pgml-docs/docs/images/translation.png)
 
+## Summarization
+![summarization](pgml-docs/docs/images/summarization.png)
+
+## Question Answering
+![question answering](pgml-docs/docs/images/question-answering.png)
+
+## Table Question Answering
+![table question answering](pgml-docs/docs/images/table-question-answering.png)
+## Text Generation
+![text generation](pgml-docs/docs/images/text-generation.png)
+
+### Text2Text Generation
+## Fill-Mask
+![fill mask](pgml-docs/docs/images/fill-mask.png)
+
+## Sentence Similarity
+![sentence similarity](pgml-docs/docs/images/sentence-similarity.png)
+
+<!-- ## Conversational -->
 # Regression
 # Classification
 
