@@ -450,19 +450,123 @@ select pgml.transform(
 ]]
 ```
 ## Translation
+Translation is the task of converting text written in one language into another language.
+
 ![translation](pgml-docs/docs/images/translation.png)
 
+You have the option to select from over 2000 models available on the Hugging Face <a href="https://huggingface.co/models?pipeline_tag=translation" target="_blank">hub</a> for translation.
+
+```sql
+select pgml.transform(
+    inputs => array[
+            	'How are you?'
+    ],
+	task => '{"task": "translation", 
+              "model": "Helsinki-NLP/opus-mt-en-fr"
+    }'::JSONB	
+);
+```
+*Result*
+```json
+[
+    {"translation_text": "Comment allez-vous ?"}
+]
+```
 ## Summarization
+Summarization involves creating a condensed version of a document that includes the important information while reducing its length. Different models can be used for this task, with some models extracting the most relevant text from the original document, while other models generate completely new text that captures the essence of the original content.
+
 ![summarization](pgml-docs/docs/images/summarization.png)
 
+```sql
+select pgml.transform(
+	task => '{"task": "summarization", 
+              "model": "sshleifer/distilbart-cnn-12-6"
+    }'::JSONB,
+	inputs => array[
+	'Paris is the capital and most populous city of France, with an estimated population of 2,175,601 residents as of 2018, in an area of more than 105 square kilometres (41 square miles). The City of Paris is the centre and seat of government of the region and province of Île-de-France, or Paris Region, which has an estimated population of 12,174,880, or about 18 percent of the population of France as of 2017.'
+	]
+);
+```
+*Result*
+```json
+[
+    {"summary_text": " Paris is the capital and most populous city of France, with an estimated population of 2,175,601 residents as of 2018 . The city is the centre and seat of government of the region and province of Île-de-France, or Paris Region . Paris Region has an estimated 18 percent of the population of France as of 2017 ."}
+    ]
+```
+You can control the length of summary_text by passing `min_length` and `max_length` as arguments to the SQL query.
+
+```sql
+select pgml.transform(
+	task => '{"task": "summarization", 
+              "model": "sshleifer/distilbart-cnn-12-6"
+    }'::JSONB,
+	inputs => array[
+	'Paris is the capital and most populous city of France, with an estimated population of 2,175,601 residents as of 2018, in an area of more than 105 square kilometres (41 square miles). The City of Paris is the centre and seat of government of the region and province of Île-de-France, or Paris Region, which has an estimated population of 12,174,880, or about 18 percent of the population of France as of 2017.'
+	],
+	args => '{
+            "min_length" : 20,
+            "max_length" : 70
+	}'::JSONB
+);
+```
+
+```json
+[
+    {"summary_text": " Paris is the capital and most populous city of France, with an estimated population of 2,175,601 residents as of 2018 . City of Paris is centre and seat of government of the region and province of Île-de-France, or Paris Region, which has an estimated 12,174,880, or about 18 percent"
+    }  
+]
+```
 ## Question Answering
+Question Answering models are designed to retrieve the answer to a question from a given text, which can be particularly useful for searching for information within a document. It's worth noting that some question answering models are capable of generating answers even without any contextual information.
+
 ![question answering](pgml-docs/docs/images/question-answering.png)
 
-## Table Question Answering
-![table question answering](pgml-docs/docs/images/table-question-answering.png)
+```sql
+SELECT pgml.transform(
+    'question-answering',
+    inputs => ARRAY[
+        '{
+            "question": "Where do I live?",
+            "context": "My name is Merve and I live in İstanbul."
+        }'
+    ]
+) AS answer;
+```
+*Result*
+
+```json
+{
+    "end"   :  39, 
+    "score" :  0.9538117051124572, 
+    "start" :  31, 
+    "answer": "İstanbul"
+}
+```
+<!-- ## Table Question Answering
+![table question answering](pgml-docs/docs/images/table-question-answering.png) -->
+
 ## Text Generation
+Text generation is the task of producing new text, such as filling in incomplete sentences or paraphrasing existing text. It has various use cases, including code generation and story generation. Completion generation models can predict the next word in a text sequence, while text-to-text generation models are trained to learn the mapping between pairs of texts, such as translating between languages. Popular models for text generation include GPT-based models, T5, T0, and BART. These models can be trained to accomplish a wide range of tasks, including text classification, summarization, and translation.
+
 ![text generation](pgml-docs/docs/images/text-generation.png)
 
+```sql
+SELECT pgml.transform(
+    task => 'text-generation',
+    inputs => ARRAY[
+        'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone'
+    ]
+) AS answer;
+```
+*Result*
+
+```json
+[
+    [
+        {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, and eight for the Dragon-lords in their halls of blood.\n\nEach of the guild-building systems is one-man"}
+    ]
+]
+```
 ### Text2Text Generation
 ## Fill-Mask
 ![fill mask](pgml-docs/docs/images/fill-mask.png)
