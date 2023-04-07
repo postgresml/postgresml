@@ -42,7 +42,6 @@
     - [Translation](#translation)
     - [Summarization](#summarization)
     - [Question Answering](#question-answering)
-    - [Table Question Answering](#table-question-answering)
     - [Text Generation](#text-generation)
     - [Fill-Mask](#fill-mask)
     - [Sentence Similarity](#sentence-similarity)
