@@ -566,6 +566,74 @@ SELECT pgml.transform(
     ]
 ]
 ```
+
+To use a specific model from :hugs: model hub, pass the model name along with task name in task.
+
+```sql
+SELECT pgml.transform(
+    task => '{
+        "task" : "text-generation",
+        "model" : "gpt2-medium"
+    }'::JSONB,
+    inputs => ARRAY[
+        'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone'
+    ]
+) AS answer;
+```
+*Result*
+```json
+[
+    [{"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone.\n\nThis place has a deep connection to the lore of ancient Elven civilization. It is home to the most ancient of artifacts,"}]
+]
+```
+To make the generated text longer, you can include the argument `max_length` and specify the desired maximum length of the text.
+
+```sql
+SELECT pgml.transform(
+    task => '{
+        "task" : "text-generation",
+        "model" : "gpt2-medium"
+    }'::JSONB,
+    inputs => ARRAY[
+        'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone'
+    ],
+    args => '{
+			"max_length" : 200
+		}'::JSONB 
+) AS answer;
+```
+*Result*
+```json
+[
+    [{"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, Three for the Dwarfs and the Elves, One for the Gnomes of the Mines, and Two for the Elves of Dross.\"\n\nHobbits: The Fellowship is the first book of J.R.R. Tolkien's story-cycle, and began with his second novel - The Two Towers - and ends in The Lord of the Rings.\n\n\nIt is a non-fiction novel, so there is no copyright claim on some parts of the story but the actual text of the book is copyrighted by author J.R.R. Tolkien.\n\n\nThe book has been classified into two types: fantasy novels and children's books\n\nHobbits: The Fellowship is the first book of J.R.R. Tolkien's story-cycle, and began with his second novel - The Two Towers - and ends in The Lord of the Rings.It"}]
+]
+```
+If you want the model to generate more than one output, you can specify the number of desired output sequences by including the argument `num_return_sequences` in the arguments.
+
+```sql
+SELECT pgml.transform(
+    task => '{
+        "task" : "text-generation",
+        "model" : "gpt2-medium"
+    }'::JSONB,
+    inputs => ARRAY[
+        'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone'
+    ],
+    args => '{
+			"num_return_sequences" : 3
+		}'::JSONB 
+) AS answer;
+```
+*Result*
+```json
+[
+    [
+        {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, and Thirteen for the human-men in their hall of fire.\n\nAll of us, our families, and our people"}, 
+        {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, and the tenth for a King! As each of these has its own special story, so I have written them into the game."}, 
+        {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone… What's left in the end is your heart's desire after all!\n\nHans: (Trying to be brave)"}
+    ]
+]
+```
 ### Text2Text Generation
 ## Fill-Mask
 ![fill mask](pgml-docs/docs/images/fill-mask.png)
