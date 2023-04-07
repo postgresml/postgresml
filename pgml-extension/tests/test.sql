@@ -27,3 +27,4 @@ SELECT pgml.load_dataset('wine');
 \i examples/multi_classification.sql
 \i examples/regression.sql
 \i examples/vectors.sql
+
