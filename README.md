@@ -45,9 +45,8 @@
     - [Text Generation](#text-generation)
     - [Text-to-Text Generation](#text-to-text-generation)
     - [Fill-Mask](#fill-mask)
-    - [Sentence Similarity](#sentence-similarity)
-- [Regression](#regression)
-- [Classification](#classification)
+<!-- - [Regression](#regression)
+- [Classification](#classification) -->
 
 # Introduction
 PostgresML is a PostgreSQL extension that enables you to perform ML training and inference on text and tabular data using SQL queries. With PostgresML, you can seamlessly integrate machine learning models into your PostgreSQL database and harness the power of cutting-edge algorithms to process text and tabular data efficiently.
@@ -729,16 +728,52 @@ SELECT pgml.transform(
     {"generated_text": "Je suis très heureux"}
 ]
 ```
+Similar to other tasks, we can specify a model for text-to-text generation.
 
+```sql
+SELECT pgml.transform(
+    task => '{
+        "task" : "text2text-generation",
+        "model" : "bigscience/T0"
+    }'::JSONB,
+    inputs => ARRAY[
+        'Is the word ''table'' used in the same meaning in the two previous sentences? Sentence A: you can leave the books on the table over there. Sentence B: the tables in this book are very hard to read.'
+
+    ]
+) AS answer;
+
+```
 ## Fill-Mask
+Fill-mask refers to a task where certain words in a sentence are hidden or "masked", and the objective is to predict what words should fill in those masked positions. Such models are valuable when we want to gain statistical insights about the language used to train the model.
 ![fill mask](pgml-docs/docs/images/fill-mask.png)
 
-## Sentence Similarity
+```sql
+SELECT pgml.transform(
+    task => '{
+        "task" : "fill-mask"
+    }'::JSONB,
+    inputs => ARRAY[
+        'Paris is the <mask> of France.'
+
+    ]
+) AS answer;
+```
+*Result*
+```json
+[
+    {"score": 0.679, "token": 812,   "sequence": "Paris is the capital of France.",    "token_str": " capital"}, 
+    {"score": 0.051, "token": 32357, "sequence": "Paris is the birthplace of France.", "token_str": " birthplace"}, 
+    {"score": 0.038, "token": 1144,  "sequence": "Paris is the heart of France.",      "token_str": " heart"}, 
+    {"score": 0.024, "token": 29778, "sequence": "Paris is the envy of France.",       "token_str": " envy"}, 
+    {"score": 0.022, "token": 1867,  "sequence": "Paris is the Capital of France.",    "token_str": " Capital"}]
+```
+<!-- ## Sentence Similarity
+Sentence Similarity involves determining the degree of similarity between two texts. To accomplish this, Sentence similarity models convert the input texts into vectors (embeddings) that encapsulate semantic information, and then measure the proximity (or similarity) between the vectors. This task is especially beneficial for tasks such as information retrieval and clustering/grouping.
 ![sentence similarity](pgml-docs/docs/images/sentence-similarity.png)
 
 <!-- ## Conversational -->
-# Regression
-# Classification
+<!-- # Regression
+# Classification -->
 
 
 
