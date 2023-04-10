@@ -43,6 +43,7 @@
     - [Summarization](#summarization)
     - [Question Answering](#question-answering)
     - [Text Generation](#text-generation)
+    - [Text-to-Text Generation](#text-to-text-generation)
     - [Fill-Mask](#fill-mask)
     - [Sentence Similarity](#sentence-similarity)
 - [Regression](#regression)
@@ -633,7 +634,102 @@ SELECT pgml.transform(
     ]
 ]
 ```
-### Text2Text Generation
+Text generation typically utilizes a greedy search algorithm that selects the word with the highest probability as the next word in the sequence. However, an alternative method called beam search can be used, which aims to minimize the possibility of overlooking hidden high probability word combinations. Beam search achieves this by retaining the num_beams most likely hypotheses at each step and ultimately selecting the hypothesis with the highest overall probability. We set `num_beams > 1` and `early_stopping=True` so that generation is finished when all beam hypotheses reached the EOS token.
+
+```sql
+SELECT pgml.transform(
+    task => '{
+        "task" : "text-generation",
+        "model" : "gpt2-medium"
+    }'::JSONB,
+    inputs => ARRAY[
+        'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone'
+    ],
+    args => '{
+			"num_beams" : 5,
+			"early_stopping" : true
+		}'::JSONB 
+) AS answer;
+```
+
+*Result*
+```json
+[[
+    {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, Nine for the Dwarves in their caverns of ice, Ten for the Elves in their caverns of fire, Eleven for the"}
+]]
+```
+Sampling methods involve selecting the next word or sequence of words at random from the set of possible candidates, weighted by their probabilities according to the language model. This can result in more diverse and creative text, as well as avoiding repetitive patterns. In its most basic form, sampling means randomly picking the next word $w_t$ according to its conditional probability distribution: 
+$$ w_t \approx P(w_t|w_{1:t-1})$$
+
+
+However, the randomness of the sampling method can also result in less coherent or inconsistent text, depending on the quality of the model and the chosen sampling parameters such as temperature, top-k, or top-p. Therefore, choosing an appropriate sampling method and parameters is crucial for achieving the desired balance between creativity and coherence in generated text.
+
+You can pass `do_sample = True` in the arguments to use sampling methods. It is recommended to alter `temperature` or `top_p` but not both.
+
+*Temperature*
+```sql
+SELECT pgml.transform(
+    task => '{
+        "task" : "text-generation",
+        "model" : "gpt2-medium"
+    }'::JSONB,
+    inputs => ARRAY[
+        'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone'
+    ],
+    args => '{
+			"do_sample" : true,
+			"temperature" : 0.9
+		}'::JSONB 
+) AS answer;
+```
+*Result*
+```json
+[[{"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, and Thirteen for the Giants and Men of S.A.\n\nThe First Seven-Year Time-Traveling Trilogy is"}]]
+```
+*Top p*
+
+```sql
+SELECT pgml.transform(
+    task => '{
+        "task" : "text-generation",
+        "model" : "gpt2-medium"
+    }'::JSONB,
+    inputs => ARRAY[
+        'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone'
+    ],
+    args => '{
+			"do_sample" : true,
+			"top_p" : 0.8
+		}'::JSONB 
+) AS answer;
+```
+*Result*
+```json
+[[{"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, Four for the Elves of the forests and fields, and Three for the Dwarfs and their warriors.\" ―Lord Rohan [src"}]]
+```
+## Text-to-Text Generation
+Text-to-text generation methods, such as T5, are neural network architectures designed to perform various natural language processing tasks, including summarization, translation, and question answering. T5 is a transformer-based architecture pre-trained on a large corpus of text data using denoising autoencoding. This pre-training process enables the model to learn general language patterns and relationships between different tasks, which can be fine-tuned for specific downstream tasks. During fine-tuning, the T5 model is trained on a task-specific dataset to learn how to perform the specific task.
+![text-to-text](pgml-docs/docs/images/text-to-text-generation.png)
+
+*Translation*
+```sql
+SELECT pgml.transform(
+    task => '{
+        "task" : "text2text-generation"
+    }'::JSONB,
+    inputs => ARRAY[
+        'translate from English to French: I''m very happy'
+    ]
+) AS answer;
+```
+
+*Result*
+```json
+[
+    {"generated_text": "Je suis très heureux"}
+]
+```
+
 ## Fill-Mask
 ![fill mask](pgml-docs/docs/images/fill-mask.png)
 
