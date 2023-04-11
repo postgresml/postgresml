@@ -10,7 +10,7 @@ services:
       context: ./pgml-extension/
       dockerfile: Dockerfile.local
     ports:
-      - "6453:5432"
+      - "5433:5432"
     command:
       - sleep
       - infinity
