@@ -45,6 +45,7 @@
     - [Text Generation](#text-generation)
     - [Text-to-Text Generation](#text-to-text-generation)
     - [Fill-Mask](#fill-mask)
+- [Vector Database](#vector-database)
 <!-- - [Regression](#regression)
 - [Classification](#classification) -->
 
@@ -55,6 +56,7 @@ PostgresML is a PostgreSQL extension that enables you to perform ML training and
 - Perform natural language processing (NLP) tasks like sentiment analysis, question and answering, translation, summarization and text generation
 - Access 1000s of state-of-the-art language models like GPT-2, GPT-J, GPT-Neo from :hugs: HuggingFace model hub
 - Fine tune large language models (LLMs) on your own text data for different tasks
+- Use your existing PostgreSQL database as a vector database by generating embeddings from text stored in the database.
 
 **Translation**
 
@@ -767,6 +769,13 @@ SELECT pgml.transform(
     {"score": 0.024, "token": 29778, "sequence": "Paris is the envy of France.",       "token_str": " envy"}, 
     {"score": 0.022, "token": 1867,  "sequence": "Paris is the Capital of France.",    "token_str": " Capital"}]
 ```
+
+# Vector Database
+A vector database is a type of database that stores and manages vectors, which are mathematical representations of data points in a multi-dimensional space. Vectors can be used to represent a wide range of data types, including images, text, audio, and numerical data. It is designed to support efficient searching and retrieval of vectors, using methods such as nearest neighbor search, clustering, and indexing. These methods enable applications to find vectors that are similar to a given query vector, which is useful for tasks such as image search, recommendation systems, and natural language processing.
+
+PostgresML allows you to use your existing PostgreSQL database as a vector database by generating embeddings from text stored in the database. To generate embeddings, you can use the `pgml.embed` function, which takes a transformer name and a text value as input. This function automatically downloads and caches the transformer for future reuse, which saves time and resources.
+
+
 <!-- ## Sentence Similarity
 Sentence Similarity involves determining the degree of similarity between two texts. To accomplish this, Sentence similarity models convert the input texts into vectors (embeddings) that encapsulate semantic information, and then measure the proximity (or similarity) between the vectors. This task is especially beneficial for tasks such as information retrieval and clustering/grouping.
 ![sentence similarity](pgml-docs/docs/images/sentence-similarity.png)
