@@ -182,7 +182,25 @@ If you want to check out the functionality without the hassle of Docker, [sign u
   - <a href="https://powerbi.microsoft.com/en-us/" target="_blank">PowerBI</a>
   - <a href="https://jupyter.org/" target="_blank">Jupyter</a>
   - <a href="https://code.visualstudio.com/" target="_blank">VSCode</a>
-
+## Option 3
+- Connect directly to the database with your favorite programming language
+  - C++: <a href="https://www.tutorialspoint.com/postgresql/postgresql_c_cpp.htm" target="_blank">libpqxx</a>
+  - C#: <a href="https://github.com/npgsql/npgsql" target="_blank">Npgsql</a>,<a href="https://github.com/DapperLib/Dapper" target="_blank">Dapper</a>, or <a href="https://github.com/dotnet/efcore" target="_blank">Entity Framework Core</a>
+  - Elixer: <a href="https://github.com/elixir-ecto/ecto" target="_blank">ecto</a> or <a href="https://github.com/elixir-ecto/postgrex" target="_blank">Postgrex</a>
+  - Go: <a href="https://github.com/jackc/pgx" target="_blank">pgx</a>, <a href="https://github.com/go-pg/pg" target="_blank">pg</a> or <a href="https://github.com/uptrace/bun" target="_blank">Bun</a>
+  - Haskell: <a href="https://hackage.haskell.org/package/postgresql-simple" target="_blank">postgresql-simple</a>
+  - Java & Scala: <a href="https://jdbc.postgresql.org/" target="_blank">JDBC</a> or <a href="https://github.com/slick/slick" target="_blank">Slick</a> 
+  - Julia: <a href="https://github.com/iamed2/LibPQ.jl" target="_blank">LibPQ.jl</a> 
+  - Lua: <a href="https://github.com/leafo/pgmoon" target="_blank">pgmoon</a>
+  - Node: <a href="https://github.com/brianc/node-postgres" target="_blank">node-postgres</a>, <a href="https://github.com/vitaly-t/pg-promise" target="_blank">pg-promise</a>, or <a href="https://sequelize.org/" target="_blank">Sequelize</a>
+  - Perl: <a href="https://github.com/bucardo/dbdpg" target="_blank">DBD::Pg</a>
+  - PHP: <a href="https://laravel.com/" target="_blank">Laravel</a> or <a href="https://www.php.net/manual/en/book.pgsql.php" target="_blank">PHP</a> 
+  - Python: <a href="https://github.com/psycopg/psycopg2/" target="_blank">psycopg2</a>, <a href="https://www.sqlalchemy.org/" target="_blank">SQLAlchemy</a>, or <a href="https://www.djangoproject.com/" target="_blank">Django</a>
+  - R: <a href="https://github.com/r-dbi/DBI" target="_blank">DBI</a> or <a href="https://github.com/ankane/dbx" target="_blank">dbx</a>
+  - Ruby: <a href="https://github.com/ged/ruby-pg" target="_blank">pg</a> or <a href="https://rubyonrails.org/" target="_blank">Rails</a>
+  - Rust: <a href="https://crates.io/crates/postgres" target="_blank">postgres</a>, <a href="https://github.com/launchbadge/sqlx" target="_blank">SQLx</a> or <a href="https://github.com/diesel-rs/diesel" target="_blank">Diesel</a>
+  - Swift: <a href="https://github.com/vapor/postgres-nio" target="_blank">PostgresNIO</a> or <a href="https://github.com/codewinsdotcom/PostgresClientKit" target="_blank">PostgresClientKit</a> 
+  - ... open a PR to add your favorite language and connector.
 # NLP Tasks
 PostgresML integrates 🤗 Hugging Face Transformers to bring state-of-the-art NLP models into the data layer. There are tens of thousands of pre-trained models with pipelines to turn raw text in your database into useful results. Many state of the art deep learning architectures have been published and made available from Hugging Face <a href= "https://huggingface.co/models" target="_blank">model hub</a>.
 
