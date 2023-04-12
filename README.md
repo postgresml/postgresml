@@ -152,7 +152,7 @@ cd postgresml
 docker-compose up
 ```
 
-Step 3: Connect to PostgresDB with PostgresML enabled using a SQL IDE or <a href="https://www.postgresql.org/docs/current/app-psql.html" target="_blank">psql</a>
+Step 3: Connect to Postgres using an SQL IDE or <a href="https://www.postgresql.org/docs/current/app-psql.html" target="_blank">psql</a>
 ```bash
 postgres://postgres@localhost:5433/pgml_development
 ```
