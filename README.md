@@ -158,7 +158,7 @@ postgres://postgres@localhost:5433/pgml_development
 ```
 
 ## Free trial
-If you want to check out the functionality without the hassle of Docker please go ahead and start PostgresML by signing up for a free account [here](https://postgresml.org/signup). We will provide 5GiB disk space on a shared tenant.
+If you want to check out the functionality without the hassle of Docker, [sign up for a free PostgresML account](https://postgresml.org/signup). We will provide 5GiB of storage for your data and demo notebooks to help you get started.
 
 # Getting Started
 
