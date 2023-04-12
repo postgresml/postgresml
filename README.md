@@ -136,7 +136,7 @@ SELECT pgml.predict(
 ```
 
 # Installation
-PostgresML installation consists of three parts: PostgreSQL database, Postgres extension for machine learning and a dashboard app. The extension provides all the machine learning functionality and can be used independently using any SQL IDE. The dashboard app provides a eays to use interface for writing SQL notebooks, performing and tracking ML experiments and ML models.
+PostgresML installation consists of three parts: PostgreSQL database, Postgres extension for machine learning and a dashboard app. The extension provides all the machine learning functionality and can be used independently using any SQL IDE. The dashboard app provides an easy to use interface for writing SQL notebooks, performing and tracking ML experiments and ML models.
 
 ## Docker
 
