@@ -165,7 +165,7 @@ If you want to check out the functionality without the hassle of Docker, [sign u
 ## Option 1
 - On local installation go to dashboard app at `http://localhost:8000/` to use SQL notebooks.
 
-- On the free tier click on **Dashboard** button to use SQL notebooks.
+- On the hosted console click on the **Dashboard** button to connect to your instance with SQL notebooks.
 ![dashboard](pgml-docs/docs/images/dashboard.png)
 
 - Try one of the pre-built SQL notebooks
