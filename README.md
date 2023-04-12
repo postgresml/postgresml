@@ -50,7 +50,7 @@
 - [Classification](#classification) -->
 
 # Introduction
-PostgresML is a PostgreSQL extension that enables you to perform ML training and inference on text and tabular data using SQL queries. With PostgresML, you can seamlessly integrate machine learning models into your PostgreSQL database and harness the power of cutting-edge algorithms to process text and tabular data efficiently.
+PostgresML is a machine learning extension to PostgreSQL that enables you to perform training and inference on text and tabular data using SQL queries. With PostgresML, you can seamlessly integrate machine learning models into your PostgreSQL database and harness the power of cutting-edge algorithms to process data efficiently.
 
 ## Text Data
 - Perform natural language processing (NLP) tasks like sentiment analysis, question and answering, translation, summarization and text generation
