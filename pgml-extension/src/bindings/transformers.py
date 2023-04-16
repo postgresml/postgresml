@@ -39,6 +39,7 @@ from transformers import (
 
 __cache_transformer_by_model_id = {}
 __cache_sentence_transformer_by_name = {}
+__cache_transform_pipeline_model_by_name = {}
 
 class NumpyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -46,12 +47,18 @@ class NumpyJSONEncoder(json.JSONEncoder):
             return float(obj)
         return super().default(obj)
 
-def transform(task, args, inputs):
+def transform(task, args, inputs, cache_model):
     task = json.loads(task)
     args = json.loads(args)
     inputs = json.loads(inputs)
 
-    pipe = transformers.pipeline(**task)
+    model = task.get("model")
+    cached_model = __cache_transform_pipeline_model_by_name.get(model) if model is not None else None
+    
+    pipe = cached_model or transformers.pipeline(**task)
+
+    if cache_model and cached_model is None and model is not None:
+        __cache_transform_pipeline_model_by_name[model] = pipe
 
     if pipe.task == "question-answering":
         inputs = [json.loads(input) for input in inputs]

@@ -11,9 +11,10 @@ The Hugging Face [`Pipeline`](https://huggingface.co/docs/transformers/main_clas
 
 ```sql linenums="1" title="transformer.sql"
 pgml.transform(
-    task TEXT OR JSONB,      -- task name or full pipeline initializer arguments
-    call JSONB,              -- additional call arguments alongside the inputs
-    inputs TEXT[] OR BYTEA[] -- inputs for inference
+    task TEXT OR JSONB,       -- task name or full pipeline initializer arguments
+    call JSONB,               -- additional call arguments alongside the inputs
+    inputs TEXT[] OR BYTEA[], -- inputs for inference
+    cache_model BOOLEAN       -- if true, the model will be cached in memory. FALSE by default
 )
 ```
 
@@ -73,7 +74,8 @@ Sentiment analysis is one use of `text-classification`, but there are [many othe
         inputs => ARRAY[
             'I love how amazingly simple ML has become!', 
             'I hate doing mundane and thankless tasks. ☹️'
-        ]
+        ],
+        cache_model => TRUE
     ) AS positivity;
     ```
 
