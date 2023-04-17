@@ -12,49 +12,78 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
-          sudo apt-get update && \
-            DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC sudo apt-get install -y \
-              curl \
-              build-essential \
-              libopenblas-dev \
-              clang \
-              python3-dev \
-              libpython3-dev \
-              postgresql \
-              postgresql-server-dev-14 \
-              pkg-config \
-              python3-pip \
-              python3
+          git submodule update --init --recursive
+
+        # PostgreSQL apt
+        curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
+        sudo sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+
+        sudo apt-get install -y software-properties-common
+        sudo add-apt-repository ppa:apt-fast/stable --yes
+        sudo add-apt-repository ppa:deadsnakes/ppa --yes
+        sudo apt update
+
+        sudo apt-get install -y apt-fast
+        sudo apt-get update && sudo apt-fast install -y \
+          libopenblas-dev \
+          libssl-dev \
+          bison \
+          flex \
+          pkg-config \
+          cmake \
+          libreadline-dev \
+          libz-dev \
+          curl \
+          lsb-release \
+          tzdata \
+          sudo \
+          cmake \
+          libpq-dev \
+          libclang-dev \
+          wget \
+          postgresql-15 \
+          postgresql-14 \
+          postgresql-13 \
+          postgresql-12 \
+          postgresql-11 \
+          postgresql-server-dev-15 \
+          postgresql-server-dev-14 \
+          postgresql-server-dev-13 \
+          postgresql-server-dev-12 \
+          postgresql-server-dev-11 \
+          lsb-release \
+          python3.10 \
+          python3-pip \
+          libpython3.10-dev \
+          python3.10-dev \
+
           sudo pip3 install xgboost lightgbm scikit-learn
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
-          path: |
-            ~/.cargo
-            pgml-extension/target
-            ~/.pgx
+          path: pgml-extension/target
           key: ${{ runner.os }}-rust-${{ hashFiles('pgml-extension/Cargo.lock') }}
       - name: Submodules
         run: |
           git submodule update --init --recursive
+      - name: Install pgx
+      uses: postgresml/gh-actions-cargo@master
+      with:
+        working-directory: pgml-extension
+        command: install
+        args: cargo-pgx --version "0.7.4"
+    - name: pgx init
+      uses: postgresml/gh-actions-cargo@master
+      with:
+        working-directory: pgml-extension
+        command: pgx
+        args: |
+          init \
+          --pg11=/usr/lib/postgresql/11/bin/pg_config \
+          --pg12=/usr/lib/postgresql/12/bin/pg_config \
+          --pg13=/usr/lib/postgresql/13/bin/pg_config \
+          --pg14=/usr/lib/postgresql/14/bin/pg_config \
+          --pg15=/usr/lib/postgresql/15/bin/pg_config
       - name: Run tests
         run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          source ~/.cargo/env
-          cargo install cargo-pgx --version "0.7.1"
-
-          if [[ ! -d ~/.pgx ]]; then
-            cargo pgx init
-          fi
-
           cargo pgx test
-
-          cargo pgx stop
-          cargo pgx start
-
-          # psql -p 28813 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
-
-          cargo pgx stop
-
-
-
