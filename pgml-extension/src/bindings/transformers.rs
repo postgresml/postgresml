@@ -25,7 +25,7 @@ pub fn transform(
     task: &serde_json::Value,
     args: &serde_json::Value,
     inputs: &Vec<String>,
-    cache_model: bool 
+    cache: bool 
 ) -> serde_json::Value {
     let task = serde_json::to_string(task).unwrap();
     let args = serde_json::to_string(args).unwrap();
@@ -39,7 +39,7 @@ pub fn transform(
                 py,
                 PyTuple::new(
                     py,
-                    &[task.into_py(py), args.into_py(py), inputs.into_py(py), cache_model.into_py(py)],
+                    &[task.into_py(py), args.into_py(py), inputs.into_py(py), cache.into_py(py)],
                 ),
             )
             .unwrap()
