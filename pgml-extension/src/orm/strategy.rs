@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 use serde::Deserialize;
 
 #[derive(PostgresEnum, Copy, Clone, Eq, PartialEq, Debug, Deserialize)]

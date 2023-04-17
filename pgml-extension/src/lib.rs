@@ -4,7 +4,7 @@ extern crate openblas_src;
 extern crate serde;
 extern crate signal_hook;
 
-use pgx::*;
+use pgrx::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

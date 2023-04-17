@@ -3,7 +3,7 @@
 ---
 --- Usage:
 ---
----   $ cargo pgx run --release
+---   $ cargo pgrx run --release
 ---   $ psql -h localhost -p 28815 -d pgml -f tests/test.sql -P pager
 ---
 \set ON_ERROR_STOP true

@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 use serde::Deserialize;
 
 #[derive(PostgresEnum, Copy, Clone, Eq, PartialEq, Debug, Deserialize)]
@@ -14,7 +14,7 @@ pub enum Task {
     text2text,
 }
 
-// unfortunately the pgx macro expands the enum names to underscore, but huggingface uses dash
+// unfortunately the pgrx macro expands the enum names to underscore, but huggingface uses dash
 impl Task {
     pub fn to_pg_enum(&self) -> String {
         match *self {

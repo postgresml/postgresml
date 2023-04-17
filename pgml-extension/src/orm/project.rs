@@ -4,7 +4,7 @@ use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
 
 use once_cell::sync::Lazy;
-use pgx::*;
+use pgrx::*;
 
 use crate::orm::*;
 

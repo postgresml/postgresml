@@ -3,7 +3,7 @@ use crate::orm::dataset::Dataset;
 use crate::orm::task::Task;
 use crate::orm::Hyperparams;
 use lightgbm;
-use pgx::*;
+use pgrx::*;
 use serde_json::json;
 
 pub struct Estimator {

@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 
 #[pg_extern(immutable, parallel_safe, strict, name = "add")]
 fn add_scalar_s(vector: Vec<f32>, addend: f32) -> Vec<f32> {

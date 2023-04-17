@@ -13,7 +13,7 @@ use crate::orm::Hyperparams;
 
 use crate::bindings::Bindings;
 
-use pgx::*;
+use pgrx::*;
 
 #[pg_extern]
 fn xgboost_version() -> String {

@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use indexmap::IndexMap;
 use ndarray::Zip;
-use pgx::*;
+use pgrx::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
