@@ -61,7 +61,9 @@ jobs:
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
-          path: pgml-extension/target
+          path: |
+            pgml-extension/target
+            ~/.cargo
           key: ${{ runner.os }}-rust-${{ hashFiles('pgml-extension/Cargo.lock') }}
       - name: Submodules
         run: |
@@ -77,13 +79,7 @@ jobs:
         with:
           working-directory: pgml-extension
           command: pgx
-          args: |
-            init \
-            --pg11=/usr/lib/postgresql/11/bin/pg_config \
-            --pg12=/usr/lib/postgresql/12/bin/pg_config \
-            --pg13=/usr/lib/postgresql/13/bin/pg_config \
-            --pg14=/usr/lib/postgresql/14/bin/pg_config \
-            --pg15=/usr/lib/postgresql/15/bin/pg_config
+          args: init --pg11=/usr/lib/postgresql/11/bin/pg_config --pg12=/usr/lib/postgresql/12/bin/pg_config --pg13=/usr/lib/postgresql/13/bin/pg_config --pg14=/usr/lib/postgresql/14/bin/pg_config --pg15=/usr/lib/postgresql/15/bin/pg_config
       - name: pgx init
         uses: postgresml/gh-actions-cargo@master
         with:
