@@ -68,21 +68,21 @@ jobs:
       - name: Submodules
         run: |
           git submodule update --init --recursive
-      - name: Install pgx
+      - name: Install pgrx
         uses: postgresml/gh-actions-cargo@master
         with:
           working-directory: pgml-extension
           command: install
-          args: cargo-pgx --version "0.7.4"
-      - name: pgx init
+          args: cargo-pgrx --version "0.7.4"
+      - name: pgrx init
         uses: postgresml/gh-actions-cargo@master
         with:
           working-directory: pgml-extension
-          command: pgx
+          command: pgrx
           args: init --pg11=/usr/lib/postgresql/11/bin/pg_config --pg12=/usr/lib/postgresql/12/bin/pg_config --pg13=/usr/lib/postgresql/13/bin/pg_config --pg14=/usr/lib/postgresql/14/bin/pg_config --pg15=/usr/lib/postgresql/15/bin/pg_config
-      - name: pgx init
+      - name: pgrx test
         uses: postgresml/gh-actions-cargo@master
         with:
           working-directory: pgml-extension
-          command: pgx
+          command: pgrx
           args: test
