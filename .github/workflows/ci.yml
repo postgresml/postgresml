@@ -43,7 +43,7 @@ jobs:
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           source ~/.cargo/env
-          cargo install cargo-pgrx --version "0.7.1"
+          cargo install cargo-pgrx --version "0.7.4"
 
           if [[ ! -d ~/.pgrx ]]; then
             cargo pgrx init
