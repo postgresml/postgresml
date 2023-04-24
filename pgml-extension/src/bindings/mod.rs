@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 #[allow(unused_imports)] // used for test macros
-use pgx::*;
+use pgrx::*;
 
 use crate::orm::*;
 

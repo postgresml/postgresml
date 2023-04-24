@@ -30,3 +30,17 @@ SELECT pgml.distance_l1(ARRAY[1.0, 2.0, 3.0]::FLOAT4[], ARRAY[4.0, 5.0, 6.0]::FL
 SELECT pgml.distance_l2(ARRAY[1.0, 2.0, 3.0]::FLOAT4[], ARRAY[4.0, 5.0, 6.0]::FLOAT4[]);
 SELECT pgml.dot_product(ARRAY[1.0, 2.0, 3.0]::FLOAT4[], ARRAY[4.0, 5.0, 6.0]::FLOAT4[]);
 SELECT pgml.cosine_similarity(ARRAY[1.0, 2.0, 3.0]::FLOAT4[], ARRAY[1.0, 2.0, 3.0]::FLOAT4[]);
+
+-- Aggregates
+WITH vectors AS (
+SELECT * FROM (
+    VALUES
+        (ARRAY[-2,-4,-6,-8]::FLOAT4[]),
+        (ARRAY[-1,-2,-3,-4]::FLOAT4[]),
+        (ARRAY[0,0,0,0]::FLOAT4[]),
+        (ARRAY[1,2,3,4]::FLOAT4[]),
+        (ARRAY[1,2,3,4]::FLOAT4[]),
+        (NULL)
+    ) AS vectors (embedding)
+) SELECT pgml.sum(embedding), pgml.min(embedding), pgml.max(embedding), pgml.min_abs(embedding), pgml.max_abs(embedding), pgml.divide(pgml.sum(embedding), count(embedding)) as avg
+  FROM vectors;

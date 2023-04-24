@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use once_cell::sync::Lazy;
-use pgx::*;
+use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 

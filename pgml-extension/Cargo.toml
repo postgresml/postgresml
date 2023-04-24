@@ -1,6 +1,6 @@
 [package]
 name = "pgml"
-version = "2.4.0"
+version = "2.4.1"
 edition = "2021"
 
 [lib]
@@ -8,18 +8,18 @@ crate-type = ["cdylib"]
 
 [features]
 default = ["pg15", "python"]
-pg11 = ["pgx/pg11", "pgx-tests/pg11" ]
-pg12 = ["pgx/pg12", "pgx-tests/pg12" ]
-pg13 = ["pgx/pg13", "pgx-tests/pg13" ]
-pg14 = ["pgx/pg14", "pgx-tests/pg14" ]
-pg15 = ["pgx/pg15", "pgx-tests/pg15" ]
+pg11 = ["pgrx/pg11", "pgrx-tests/pg11" ]
+pg12 = ["pgrx/pg12", "pgrx-tests/pg12" ]
+pg13 = ["pgrx/pg13", "pgrx-tests/pg13" ]
+pg14 = ["pgrx/pg14", "pgrx-tests/pg14" ]
+pg15 = ["pgrx/pg15", "pgrx-tests/pg15" ]
 pg_test = []
 python = ["pyo3"]
 cuda = ["xgboost/cuda", "lightgbm/cuda"]
 
 [dependencies]
-pgx = "=0.7.4"
-pgx-pg-sys = "=0.7.4"
+pgrx = "=0.7.4"
+pgrx-pg-sys = "=0.7.4"
 xgboost = { git="https://github.com/postgresml/rust-xgboost.git", branch = "master" }
 once_cell = "1"
 rand = "0.8"
@@ -48,7 +48,7 @@ flate2 = "1.0"
 csv = "1.1"
 
 [dev-dependencies]
-pgx-tests = "=0.7.4"
+pgrx-tests = "=0.7.4"
 
 [profile.dev]
 panic = "unwind"

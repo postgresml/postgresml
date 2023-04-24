@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 
 #[pg_extern(immutable, parallel_safe, strict, name = "add")]
 fn add_scalar_s(vector: Vec<f32>, addend: f32) -> Vec<f32> {
@@ -329,6 +329,664 @@ fn cosine_similarity_d(vector: Vec<f64>, other: Vec<f64>) -> f64 {
         dot / (a_norm * b_norm)
     }
 }
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct SumS;
+
+#[pg_aggregate]
+impl Aggregate for SumS {
+    const NAME: &'static str = "sum";
+    type Args = Option<Vec<f32>>;
+    type State = Option<Vec<f32>>;
+    type Finalize = Vec<f32>;
+
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {},
+            Some(arg) => {
+                match current {
+                    None => {
+                        _ = current.insert(arg);
+                    }
+                    Some(ref mut vec) => {
+                        for (i, v) in arg.iter().enumerate() {
+                            vec[i] += v;
+                        }
+                    }
+                }
+            }
+        }
+        current
+    }
+
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                for (i, v) in second_inner.iter().enumerate() {
+                    first_inner[i] += v;
+                }
+                first
+            }
+        }
+    }
+
+    fn finalize(
+        mut current: Self::State,
+        _direct_arg: Self::OrderedSetArgs,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::Finalize {
+        let inner = current.get_or_insert_with(|| Vec::new() );
+
+        inner.clone()
+    }
+}
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct SumD;
+
+#[pg_aggregate]
+impl Aggregate for SumD {
+    const NAME: &'static str = "sum";
+    type Args = Option<Vec<f64>>;
+    type State = Option<Vec<f64>>;
+    type Finalize = Vec<f64>;
+
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {},
+            Some(arg) => {
+                match current {
+                    None => {
+                        _ = current.insert(arg);
+                    }
+                    Some(ref mut vec) => {
+                        for (i, v) in arg.iter().enumerate() {
+                            vec[i] += v;
+                        }
+                    }
+                }
+            }
+        }
+        current
+    }
+
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                for (i, v) in second_inner.iter().enumerate() {
+                    first_inner[i] += v;
+                }
+                first
+            }
+        }
+    }
+
+    fn finalize(
+        mut current: Self::State,
+        _direct_arg: Self::OrderedSetArgs,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::Finalize {
+        let inner = current.get_or_insert_with(|| Vec::new() );
+
+        inner.clone()
+    }
+}
+
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct MaxAbsS;
+
+#[pg_aggregate]
+impl Aggregate for MaxAbsS {
+    const NAME: &'static str = "max_abs";
+    type Args = Option<Vec<f32>>;
+    type State = Option<Vec<f32>>;
+    type Finalize = Vec<f32>;
+
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {},
+            Some(arg) => {
+                match current {
+                    None => {
+                        _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                    }
+                    Some(ref mut vec) => {
+                        for (i, &v) in arg.iter().enumerate() {
+                            if v.abs() > vec[i].abs() {
+                                vec[i] = v.abs();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        current
+    }
+
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                for (i, &v) in second_inner.iter().enumerate() {
+                    if v.abs() > first_inner[i].abs() {
+                        first_inner[i] = v.abs();
+                    }
+                }
+                first
+            }
+        }
+    }
+
+    fn finalize(
+        mut current: Self::State,
+        _direct_arg: Self::OrderedSetArgs,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::Finalize {
+        let inner = current.get_or_insert_with(|| Vec::new() );
+
+        inner.clone()
+    }
+}
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct MaxAbsD {}
+
+#[pg_aggregate]
+impl Aggregate for MaxAbsD {
+    const NAME: &'static str = "max_abs";
+    type Args = Option<Vec<f64>>;
+    type State = Option<Vec<f64>>;
+    type Finalize = Vec<f64>;
+
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {},
+            Some(arg) => {
+                match current {
+                    None => {
+                        _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                    }
+                    Some(ref mut vec) => {
+                        for (i, &v) in arg.iter().enumerate() {
+                            if v.abs() > vec[i].abs() {
+                                vec[i] = v.abs();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        current
+    }
+
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                for (i, &v) in second_inner.iter().enumerate() {
+                    if v.abs() > first_inner[i].abs() {
+                        first_inner[i] = v.abs();
+                    }
+                }
+                first
+            }
+        }
+    }
+
+    fn finalize(
+        mut current: Self::State,
+        _direct_arg: Self::OrderedSetArgs,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::Finalize {
+        let inner = current.get_or_insert_with(|| Vec::new() );
+
+        inner.clone()
+    }
+}
+
+
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct MaxS;
+
+#[pg_aggregate]
+impl Aggregate for MaxS {
+    const NAME: &'static str = "max";
+    type Args = Option<Vec<f32>>;
+    type State = Option<Vec<f32>>;
+    type Finalize = Vec<f32>;
+
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {},
+            Some(arg) => {
+                match current {
+                    None => {
+                        _ = current.insert(arg);
+                    }
+                    Some(ref mut vec) => {
+                        for (i, &v) in arg.iter().enumerate() {
+                            if v > vec[i] {
+                                vec[i] = v;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        current
+    }
+
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                for (i, &v) in second_inner.iter().enumerate() {
+                    if v > first_inner[i] {
+                        first_inner[i] = v;
+                    }
+                }
+                first
+            }
+        }
+    }
+
+    fn finalize(
+        mut current: Self::State,
+        _direct_arg: Self::OrderedSetArgs,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::Finalize {
+        let inner = current.get_or_insert_with(|| Vec::new() );
+
+        inner.clone()
+    }
+}
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct MaxD {}
+
+#[pg_aggregate]
+impl Aggregate for MaxD {
+    const NAME: &'static str = "max";
+    type Args = Option<Vec<f64>>;
+    type State = Option<Vec<f64>>;
+    type Finalize = Vec<f64>;
+
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {},
+            Some(arg) => {
+                match current {
+                    None => {
+                        _ = current.insert(arg);
+                    }
+                    Some(ref mut vec) => {
+                        for (i, &v) in arg.iter().enumerate() {
+                            if v > vec[i] {
+                                vec[i] = v;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        current
+    }
+
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                for (i, &v) in second_inner.iter().enumerate() {
+                    if v > first_inner[i] {
+                        first_inner[i] = v;
+                    }
+                }
+                first
+            }
+        }
+    }
+
+    fn finalize(
+        mut current: Self::State,
+        _direct_arg: Self::OrderedSetArgs,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::Finalize {
+        let inner = current.get_or_insert_with(|| Vec::new() );
+
+        inner.clone()
+    }
+}
+
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct MinS;
+
+#[pg_aggregate]
+impl Aggregate for MinS {
+    const NAME: &'static str = "min";
+    type Args = Option<Vec<f32>>;
+    type State = Option<Vec<f32>>;
+    type Finalize = Vec<f32>;
+
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {},
+            Some(arg) => {
+                match current {
+                    None => {
+                        _ = current.insert(arg);
+                    }
+                    Some(ref mut vec) => {
+                        for (i, &v) in arg.iter().enumerate() {
+                            if v < vec[i] {
+                                vec[i] = v;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        current
+    }
+
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                for (i, &v) in second_inner.iter().enumerate() {
+                    if v < first_inner[i] {
+                        first_inner[i] = v;
+                    }
+                }
+                first
+            }
+        }
+    }
+
+    fn finalize(
+        mut current: Self::State,
+        _direct_arg: Self::OrderedSetArgs,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::Finalize {
+        let inner = current.get_or_insert_with(|| Vec::new() );
+
+        inner.clone()
+    }
+}
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct MinD {}
+
+#[pg_aggregate]
+impl Aggregate for MinD {
+    const NAME: &'static str = "min";
+    type Args = Option<Vec<f64>>;
+    type State = Option<Vec<f64>>;
+    type Finalize = Vec<f64>;
+
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {},
+            Some(arg) => {
+                match current {
+                    None => {
+                        _ = current.insert(arg);
+                    }
+                    Some(ref mut vec) => {
+                        for (i, &v) in arg.iter().enumerate() {
+                            if v < vec[i] {
+                                vec[i] = v;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        current
+    }
+
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                for (i, &v) in second_inner.iter().enumerate() {
+                    if v < first_inner[i] {
+                        first_inner[i] = v;
+                    }
+                }
+                first
+            }
+        }
+    }
+
+    fn finalize(
+        mut current: Self::State,
+        _direct_arg: Self::OrderedSetArgs,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::Finalize {
+        let inner = current.get_or_insert_with(|| Vec::new() );
+
+        inner.clone()
+    }
+}
+
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct MinAbsS;
+
+#[pg_aggregate]
+impl Aggregate for MinAbsS {
+    const NAME: &'static str = "min_abs";
+    type Args = Option<Vec<f32>>;
+    type State = Option<Vec<f32>>;
+    type Finalize = Vec<f32>;
+
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {},
+            Some(arg) => {
+                match current {
+                    None => {
+                        _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                    }
+                    Some(ref mut vec) => {
+                        for (i, &v) in arg.iter().enumerate() {
+                            if v.abs() < vec[i].abs() {
+                                vec[i] = v.abs();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        current
+    }
+
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                for (i, &v) in second_inner.iter().enumerate() {
+                    if v.abs() < first_inner[i].abs() {
+                        first_inner[i] = v.abs();
+                    }
+                }
+                first
+            }
+        }
+    }
+
+    fn finalize(
+        mut current: Self::State,
+        _direct_arg: Self::OrderedSetArgs,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::Finalize {
+        let inner = current.get_or_insert_with(|| Vec::new() );
+
+        inner.clone()
+    }
+}
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct MinAbsD {}
+
+#[pg_aggregate]
+impl Aggregate for MinAbsD {
+    const NAME: &'static str = "min_abs";
+    type Args = Option<Vec<f64>>;
+    type State = Option<Vec<f64>>;
+    type Finalize = Vec<f64>;
+
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {},
+            Some(arg) => {
+                match current {
+                    None => {
+                        _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                    }
+                    Some(ref mut vec) => {
+                        for (i, &v) in arg.iter().enumerate() {
+                            if v.abs() < vec[i].abs() {
+                                vec[i] = v.abs();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        current
+    }
+
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                for (i, &v) in second_inner.iter().enumerate() {
+                    if v.abs() < first_inner[i].abs() {
+                        first_inner[i] = v.abs();
+                    }
+                }
+                first
+            }
+        }
+    }
+
+    fn finalize(
+        mut current: Self::State,
+        _direct_arg: Self::OrderedSetArgs,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::Finalize {
+        let inner = current.get_or_insert_with(|| Vec::new() );
+
+        inner.clone()
+    }
+}
+
 
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]

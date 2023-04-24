@@ -3,7 +3,7 @@
 ## PostgresML
 
 ```
-cargo pgx run --release
+cargo pgrx run --release
 ```
 
 ### Schema

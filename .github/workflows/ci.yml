@@ -34,7 +34,7 @@ jobs:
           path: |
             ~/.cargo
             pgml-extension/target
-            ~/.pgx
+            ~/.pgrx
           key: ${{ runner.os }}-rust-${{ hashFiles('pgml-extension/Cargo.lock') }}
       - name: Submodules
         run: |
@@ -43,20 +43,20 @@ jobs:
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           source ~/.cargo/env
-          cargo install cargo-pgx --version "0.7.1"
+          cargo install cargo-pgrx --version "0.7.1"
 
-          if [[ ! -d ~/.pgx ]]; then
-            cargo pgx init
+          if [[ ! -d ~/.pgrx ]]; then
+            cargo pgrx init
           fi
 
-          cargo pgx test
+          cargo pgrx test
 
-          cargo pgx stop
-          cargo pgx start
+          cargo pgrx stop
+          cargo pgrx start
 
           # psql -p 28813 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
 
-          cargo pgx stop
+          cargo pgrx stop
 
 
 

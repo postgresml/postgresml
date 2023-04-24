@@ -62,7 +62,7 @@ The development environment for each differs slightly, but overall we use Python
 
 ## Postgres extension
 
-PostgresML is a Rust extension written with `tcdi/pgx` crate. Local development therefore requires the [latest Rust compiler](https://www.rust-lang.org/learn/get-started) and PostgreSQL development headers and libraries.
+PostgresML is a Rust extension written with `tcdi/pgrx` crate. Local development therefore requires the [latest Rust compiler](https://www.rust-lang.org/learn/get-started) and PostgreSQL development headers and libraries.
 
 The extension code is located in:
 
@@ -72,17 +72,17 @@ cd pgml-extension/
 
 You'll need to install basic dependencies
 
-Once there, you can initialize `pgx` and get going:
+Once there, you can initialize `pgrx` and get going:
 
 #### Pgx command line and environments
 ```commandline
-cargo install cargo-pgx --version "0.7.1" && \
-cargo pgx init # This will take a few minutes
+cargo install cargo-pgrx --version "0.7.4" && \
+cargo pgrx init # This will take a few minutes
 ```
 
 #### Update postgresql.conf
 
-`pgx` uses Postgres 15 by default. Since `pgml` is using shared memory, you need to add it to `shared_preload_libraries` in `postgresql.conf` which, for `pgx`, is located in `~/.pgx/data-15/postgresql.conf`.
+`pgrx` uses Postgres 15 by default. Since `pgml` is using shared memory, you need to add it to `shared_preload_libraries` in `postgresql.conf` which, for `pgrx`, is located in `~/.pgrx/data-15/postgresql.conf`.
 
 ```
 shared_preload_libraries = 'pgml'     # (change requires restart)
@@ -91,19 +91,19 @@ shared_preload_libraries = 'pgml'     # (change requires restart)
 Run the unit tests
 
 ```commandline
-cargo pgx test
+cargo pgrx test
 ```
 
 Run the integration tests:
 ```commandline
-cargo pgx run --release
+cargo pgrx run --release
 psql -h localhost -p 28813 -d pgml -f tests/test.sql -P pager
 ```
 
 Run an interactive psql session
 
 ```commandline
-cargo pgx run
+cargo pgrx run
 ```
 
 Create the extension in your database:
@@ -147,10 +147,10 @@ By default, the extension is built without CUDA support for XGBoost and LightGBM
 
 
 ```commandline
-CUDACXX=/usr/local/cuda/bin/nvcc cargo pgx run --release --features pg15,python,cuda 
+CUDACXX=/usr/local/cuda/bin/nvcc cargo pgrx run --release --features pg15,python,cuda 
 ```
 
-If you ever want to reset the environment, simply spin up the database with `cargo pgx run` and drop the extension and metadata tables:
+If you ever want to reset the environment, simply spin up the database with `cargo pgrx run` and drop the extension and metadata tables:
 
 ```postgresql
 DROP EXTENSION IF EXISTS pgml CASCADE;
@@ -190,7 +190,7 @@ Basic installation can be achieved with:
   cd postgresml/pgml-dashboard
 ```
 
-2. Set the `DATABASE_URL` environment variable, for example to a running interactive `cargo pgx run` session started previously:
+2. Set the `DATABASE_URL` environment variable, for example to a running interactive `cargo pgrx run` session started previously:
 ```commandline
 export DATABASE_URL=postgres://localhost:28815/pgml
 ```

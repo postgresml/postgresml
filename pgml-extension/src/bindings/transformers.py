@@ -6,6 +6,7 @@ import time
 import numpy as np
 
 import datasets
+from InstructorEmbedding import INSTRUCTOR
 from rouge import Rouge
 from sacrebleu.metrics import BLEU
 from sentence_transformers import SentenceTransformer
@@ -67,10 +68,23 @@ def transform(task, args, inputs, cache):
 
 def embed(transformer, text, kwargs):
     kwargs = json.loads(kwargs)
+    instructor = transformer.startswith("hkunlp/instructor")
+    if instructor:
+        klass = INSTRUCTOR
+        text = [[kwargs.pop("instruction"), text]]
+    else:
+        klass = SentenceTransformer
+
     if transformer not in __cache_sentence_transformer_by_name:
-        __cache_sentence_transformer_by_name[transformer] = SentenceTransformer(transformer)
+        __cache_sentence_transformer_by_name[transformer] = klass(transformer)
     model = __cache_sentence_transformer_by_name[transformer]
-    return model.encode(text, **kwargs)
+
+    result = model.encode(text, **kwargs)
+    if instructor:
+        result = result[0]
+
+    return result
+
 
 def load_dataset(name, subset, limit: None, kwargs: "{}"):
     kwargs = json.loads(kwargs)

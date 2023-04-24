@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 use flate2::read::GzDecoder;
-use pgx::*;
+use pgrx::*;
 use serde::Deserialize;
 
 #[derive(Debug)]
