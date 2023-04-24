@@ -92,15 +92,15 @@ sudo apt-get install postgresql
 		cd pgml-extension
 		```
 	
-	5. Install [`pgx`](https://github.com/tcdi/pgx) and build the extension (this will take a few minutes):
+	5. Install [`pgrx`](https://github.com/tcdi/pgrx) and build the extension (this will take a few minutes):
 
 		**With Python support:**
 
 		```bash
 		export POSTGRES_VERSION=15
-		cargo install cargo-pgx --version "0.7.1" && \
-		cargo pgx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
-		cargo pgx package
+		cargo install cargo-pgrx --version "0.7.4" && \
+		cargo pgrx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
+		cargo pgrx package
 		```
 
 		**Without Python support:**
@@ -108,9 +108,9 @@ sudo apt-get install postgresql
 		```bash
 		export POSTGRES_VERSION=15
 		cp docker/Cargo.toml.no-python Cargo.toml && \
-		cargo install cargo-pgx --version "0.7.1" && \
-		cargo pgx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
-		cargo pgx package
+		cargo install cargo-pgrx --version "0.7.4" && \
+		cargo pgrx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
+		cargo pgrx package
 		```
 
 	6. Copy the extension binaries into Postgres system folders:
@@ -152,12 +152,12 @@ sudo apt-get install postgresql
 		For example, `openssl` requires some environment variables set in `~/.zsh` for
 		the compiler to find the library.
 
-	4. Install [`pgx`](https://github.com/tcdi/pgx) and build the extension (this will take a few minutes):
+	4. Install [`pgrx`](https://github.com/tcdi/pgrx) and build the extension (this will take a few minutes):
 
 		```
-		cargo install cargo-pgx && \
-		cargo pgx init --pg15 /usr/bin/pg_config && \
-		cargo pgx install
+		cargo install cargo-pgrx && \
+		cargo pgrx init --pg15 /usr/bin/pg_config && \
+		cargo pgrx install
 		```
 
 
