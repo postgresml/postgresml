@@ -3,8 +3,8 @@ use std::fmt::Write;
 use std::str::FromStr;
 
 use ndarray::Zip;
-use pgx::iter::{SetOfIterator, TableIterator};
-use pgx::*;
+use pgrx::iter::{SetOfIterator, TableIterator};
+use pgrx::*;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
@@ -464,7 +464,7 @@ fn predict_batch(project_name: &str, features: Vec<f32>) -> SetOfIterator<'stati
 }
 
 #[pg_extern(strict, name = "predict")]
-fn predict_row(project_name: &str, row: pgx::datum::AnyElement) -> f32 {
+fn predict_row(project_name: &str, row: pgrx::datum::AnyElement) -> f32 {
     predict_model_row(Project::get_deployed_model_id(project_name), row)
 }
 
@@ -489,7 +489,7 @@ fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
 }
 
 #[pg_extern(strict, name = "predict")]
-fn predict_model_row(model_id: i64, row: pgx::datum::AnyElement) -> f32 {
+fn predict_model_row(model_id: i64, row: pgrx::datum::AnyElement) -> f32 {
     let model = Model::find_cached(model_id);
     let snapshot = &model.snapshot;
     let numeric_encoded_features = model.numeric_encode_features(&[row]);
@@ -534,7 +534,7 @@ fn load_dataset(
     limit: default!(Option<i64>, "NULL"),
     kwargs: default!(JsonB, "'{}'"),
 ) -> TableIterator<'static, (name!(table_name, String), name!(rows, i64))> {
-    // cast limit since pgx doesn't support usize
+    // cast limit since pgrx doesn't support usize
     let limit: Option<usize> = limit.map(|limit| limit.try_into().unwrap());
     let (name, rows) = match source {
         "breast_cancer" => dataset::load_breast_cancer(limit),

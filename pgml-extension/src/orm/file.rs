@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use once_cell::sync::Lazy;
-use pgx::*;
+use pgrx::*;
 
 use crate::bindings::Bindings;
 
