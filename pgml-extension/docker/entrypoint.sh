@@ -15,6 +15,9 @@ echo "Creating user and database..."
 echo "Installing pgml extension..."
 psql -U postgres -h 127.0.0.1 pgml_development -f sql/setup_examples.sql -P pager
 
+echo "Installing pgvector.. "
+psql -U postgres -h 127.0.0.1 pgml_development -c 'CREATE EXTENSION vector'
+
 echo "Ready!"
 if [[ ! -z $@ ]]; then
 	echo
