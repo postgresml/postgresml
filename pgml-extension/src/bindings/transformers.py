@@ -42,11 +42,13 @@ __cache_transformer_by_model_id = {}
 __cache_sentence_transformer_by_name = {}
 __cache_transform_pipeline_by_task = {}
 
+
 class NumpyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.float32):
             return float(obj)
         return super().default(obj)
+
 
 def transform(task, args, inputs, cache):
     task = json.loads(task)
@@ -65,7 +67,8 @@ def transform(task, args, inputs, cache):
     if pipe.task == "question-answering":
         inputs = [json.loads(input) for input in inputs]
 
-    return json.dumps(pipe(inputs, **args), cls = NumpyJSONEncoder)
+    return json.dumps(pipe(inputs, **args), cls=NumpyJSONEncoder)
+
 
 def embed(transformer, text, kwargs):
     kwargs = json.loads(kwargs)
@@ -92,7 +95,9 @@ def load_dataset(name, subset, limit: None, kwargs: "{}"):
     kwargs = json.loads(kwargs)
 
     if limit:
-        dataset = datasets.load_dataset(name, subset, split=f"train[:{limit}]", **kwargs)
+        dataset = datasets.load_dataset(
+            name, subset, split=f"train[:{limit}]", **kwargs
+        )
     else:
         dataset = datasets.load_dataset(name, subset, **kwargs)
 
@@ -116,25 +121,33 @@ def load_dataset(name, subset, limit: None, kwargs: "{}"):
 
     return json.dumps({"data": data, "types": types})
 
+
 def tokenize_text_classification(tokenizer, max_length, x, y):
     encoding = tokenizer(x, padding=True, truncation=True)
     encoding["label"] = y
     return datasets.Dataset.from_dict(encoding.data)
 
+
 def tokenize_translation(tokenizer, max_length, x, y):
     encoding = tokenizer(x, max_length=max_length, truncation=True, text_target=y)
     return datasets.Dataset.from_dict(encoding.data)
+
 
 def tokenize_summarization(tokenizer, max_length, x, y):
     encoding = tokenizer(x, max_length=max_length, truncation=True, text_target=y)
     return datasets.Dataset.from_dict(encoding.data)
 
+
 def tokenize_text_generation(tokenizer, max_length, y):
-    encoding = tokenizer(y, max_length=max_length, truncation=True, padding="max_length")
+    encoding = tokenizer(
+        y, max_length=max_length, truncation=True, padding="max_length"
+    )
     return datasets.Dataset.from_dict(encoding.data)
+
 
 def tokenize_question_answering(tokenizer, max_length, x, y):
     pass
+
 
 def compute_metrics_summarization(model, tokenizer, hyperparams, x, y):
     all_preds = []
@@ -153,7 +166,9 @@ def compute_metrics_summarization(model, tokenizer, hyperparams, x, y):
                 return_token_type_ids=False,
             ).to(model.device)
             predictions = model.generate(**tokens)
-            decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+            decoded_preds = tokenizer.batch_decode(
+                predictions, skip_special_tokens=True
+            )
             all_preds.extend(decoded_preds)
     bleu = BLEU().corpus_score(all_preds, [[l] for l in all_labels])
     rouge = Rouge().get_scores(all_preds, all_labels, avg=True)
@@ -166,6 +181,7 @@ def compute_metrics_summarization(model, tokenizer, hyperparams, x, y):
         "rouge_bigram_precision": rouge["rouge-2"]["p"],
         "rouge_bigram_recall": rouge["rouge-2"]["r"],
     }
+
 
 def compute_metrics_text_classification(self, dataset):
     feature = label = None
@@ -183,8 +199,12 @@ def compute_metrics_text_classification(self, dataset):
 
     with torch.no_grad():
         for i in range(batches):
-            slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
-            tokens = self.tokenizer(slice[feature], padding=True, truncation=True, return_tensors="pt")
+            slice = dataset.select(
+                range(i * batch_size, min((i + 1) * batch_size, len(dataset)))
+            )
+            tokens = self.tokenizer(
+                slice[feature], padding=True, truncation=True, return_tensors="pt"
+            )
             tokens.to(self.model.device)
             result = self.model(**tokens).logits.to("cpu")
             logits = torch.cat((logits, result), 0)
@@ -203,11 +223,16 @@ def compute_metrics_text_classification(self, dataset):
     metrics["accuracy"] = accuracy_score(y_test, y_pred)
     metrics["log_loss"] = log_loss(y_test, y_prob)
     roc_auc_y_prob = y_prob
-    if y_prob.shape[1] == 2:  # binary classification requires only the greater label by passed to roc_auc_score
+    if (
+        y_prob.shape[1] == 2
+    ):  # binary classification requires only the greater label by passed to roc_auc_score
         roc_auc_y_prob = y_prob[:, 1]
-    metrics["roc_auc"] = roc_auc_score(y_test, roc_auc_y_prob, average="weighted", multi_class="ovo")
+    metrics["roc_auc"] = roc_auc_score(
+        y_test, roc_auc_y_prob, average="weighted", multi_class="ovo"
+    )
 
     return metrics
+
 
 def compute_metrics_translation(model, tokenizer, hyperparams, x, y):
     all_preds = []
@@ -226,7 +251,9 @@ def compute_metrics_translation(model, tokenizer, hyperparams, x, y):
                 return_token_type_ids=False,
             ).to(model.device)
             predictions = model.generate(**tokens)
-            decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+            decoded_preds = tokenizer.batch_decode(
+                predictions, skip_special_tokens=True
+            )
             all_preds.extend(decoded_preds)
     bleu = BLEU().corpus_score(all_preds, [[l] for l in all_labels])
     rouge = Rouge().get_scores(all_preds, all_labels, avg=True)
@@ -240,13 +267,16 @@ def compute_metrics_translation(model, tokenizer, hyperparams, x, y):
         "rouge_bigram_recall": rouge["rouge-2"]["r"],
     }
 
+
 def compute_metrics_question_answering(model, tokenizer, hyperparams, x, y):
     batch_size = self.hyperparams["per_device_eval_batch_size"]
     batches = int(math.ceil(len(dataset) / batch_size))
 
     with torch.no_grad():
         for i in range(batches):
-            slice = dataset.select(range(i * batch_size, min((i + 1) * batch_size, len(dataset))))
+            slice = dataset.select(
+                range(i * batch_size, min((i + 1) * batch_size, len(dataset)))
+            )
             tokens = self.algorithm["tokenizer"].encode_plus(
                 slice["question"], slice["context"], return_tensors="pt"
             )
@@ -255,7 +285,9 @@ def compute_metrics_question_answering(model, tokenizer, hyperparams, x, y):
             answer_start = torch.argmax(outputs[0])
             answer_end = torch.argmax(outputs[1]) + 1
             answer = self.algorithm["tokenizer"].convert_tokens_to_string(
-                self.algorithm["tokenizer"].convert_ids_to_tokens(tokens["input_ids"][0][answer_start:answer_end])
+                self.algorithm["tokenizer"].convert_ids_to_tokens(
+                    tokens["input_ids"][0][answer_start:answer_end]
+                )
             )
 
     def compute_exact_match(prediction, truth):
@@ -296,6 +328,7 @@ def compute_metrics_question_answering(model, tokenizer, hyperparams, x, y):
     metrics["exact_match"] = 0
 
     return metrics
+
 
 def compute_metrics_text_generation(model, tokenizer, hyperparams, y):
     full_text = ""
@@ -339,9 +372,8 @@ def compute_metrics_text_generation(model, tokenizer, hyperparams, y):
 
     perplexity = torch.exp(torch.stack(nlls).sum() / end_loc)
 
-    return {
-        "perplexity": perplexity
-    }
+    return {"perplexity": perplexity}
+
 
 def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
     hyperparams = json.loads(hyperparams)
@@ -351,7 +383,9 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
     algorithm = {}
 
     if task == "text-classification":
-        model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_name, num_labels=2
+        )
         train = tokenize_text_classification(tokenizer, max_length, x_train, y_train)
         test = tokenize_text_classification(tokenizer, max_length, x_test, y_test)
         data_collator = DefaultDataCollator()
@@ -373,7 +407,9 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
         model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
         train = tokenize_translation(tokenizer, max_length, x_train, y_train)
         test = tokenize_translation(tokenizer, max_length, x_test, y_test)
-        data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="pt")
+        data_collator = DataCollatorForSeq2Seq(
+            tokenizer, model=model, return_tensors="pt"
+        )
     elif task == "text-generation":
         max_length = hyperparams.pop("max_length", None)
         tokenizer.pad_token = tokenizer.eos_token
@@ -381,7 +417,9 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
         model.resize_token_embeddings(len(tokenizer))
         train = tokenize_text_generation(tokenizer, max_length, y_train)
         test = tokenize_text_generation(tokenizer, max_length, y_test)
-        data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False, return_tensors="pt")
+        data_collator = DataCollatorForLanguageModeling(
+            tokenizer, mlm=False, return_tensors="pt"
+        )
     else:
         raise PgMLException(f"unhandled task type: {task}")
     trainer = Trainer(
@@ -402,13 +440,21 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
     # Test
     start = time.perf_counter()
     if task == "summarization":
-        metrics = compute_metrics_summarization(model, tokenizer, hyperparams, x_test, y_test)
+        metrics = compute_metrics_summarization(
+            model, tokenizer, hyperparams, x_test, y_test
+        )
     elif task == "text-classification":
-        metrics = compute_metrics_text_classification(model, tokenizer, hyperparams, x_test, y_test)
+        metrics = compute_metrics_text_classification(
+            model, tokenizer, hyperparams, x_test, y_test
+        )
     elif task == "question-answering":
-        metrics = compute_metrics_question_answering(model, tokenizer, hyperparams, x_test, y_test)
+        metrics = compute_metrics_question_answering(
+            model, tokenizer, hyperparams, x_test, y_test
+        )
     elif task == "translation":
-        metrics = compute_metrics_translation(model, tokenizer, hyperparams, x_test, y_test)
+        metrics = compute_metrics_translation(
+            model, tokenizer, hyperparams, x_test, y_test
+        )
     elif task == "text-generation":
         metrics = compute_metrics_text_generation(model, tokenizer, hyperparams, y_test)
     else:
@@ -423,8 +469,10 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
 
     return metrics
 
+
 class MissingModelError(Exception):
     pass
+
 
 def get_transformer_by_model_id(model_id):
     global __cache_transformer_by_model_id
@@ -432,6 +480,7 @@ def get_transformer_by_model_id(model_id):
         return __cache_transformer_by_model_id[model_id]
     else:
         raise MissingModelError
+
 
 def load_model(model_id, task, dir):
     if task == "summarization":
@@ -463,6 +512,7 @@ def load_model(model_id, task, dir):
     else:
         raise Exception(f"unhandled task type: {task}")
 
+
 def generate(model_id, data, config):
     result = get_transformer_by_model_id(model_id)
     tokenizer = result["tokenizer"]
@@ -470,7 +520,7 @@ def generate(model_id, data, config):
     config = json.loads(config)
     all_preds = []
 
-    batch_size = 1 # TODO hyperparams
+    batch_size = 1  # TODO hyperparams
     batches = int(math.ceil(len(data) / batch_size))
 
     with torch.no_grad():
@@ -485,7 +535,9 @@ def generate(model_id, data, config):
                 return_token_type_ids=False,
             ).to(model.device)
             predictions = model.generate(**tokens, **config)
-            decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+            decoded_preds = tokenizer.batch_decode(
+                predictions, skip_special_tokens=True
+            )
             all_preds.extend(decoded_preds)
     return all_preds
 
@@ -494,9 +546,12 @@ def assign_device(device=None):
     if device is not None:
         if device == "cpu" or "cuda:" in device:
             return device
+        if "cuda" in device and not torch.cuda.is_available():
+            raise Exception("CUDA is not available")
 
-    device = "cpu"
     if torch.cuda.is_available():
         device = "cuda:" + str(os.getpid() % torch.cuda.device_count())
+    else:
+        device = "cpu"
 
     return device
