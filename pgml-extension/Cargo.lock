@@ -1688,7 +1688,7 @@ dependencies = [
 
 [[package]]
 name = "pgml"
-version = "2.4.1"
+version = "2.4.2"
 dependencies = [
  "anyhow",
  "blas",
