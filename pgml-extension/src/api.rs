@@ -16,7 +16,15 @@ use crate::orm::*;
 
 #[cfg(feature = "python")]
 #[pg_extern]
+pub fn activate_venv(venv: &str) -> bool {
+    crate::bindings::venv::activate_venv(venv)
+}
+
+#[cfg(feature = "python")]
+#[pg_extern]
 pub fn validate_python_dependencies() -> bool {
+    crate::bindings::venv::activate();
+
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys").unwrap();
         let version: String = sys.getattr("version").unwrap().extract().unwrap();
@@ -51,6 +59,7 @@ pub fn validate_python_dependencies() {}
 #[cfg(feature = "python")]
 #[pg_extern]
 pub fn python_package_version(name: &str) -> String {
+    crate::bindings::venv::activate();
     package_version(name)
 }
 
@@ -79,6 +88,7 @@ pub fn validate_shared_library() {
 #[cfg(feature = "python")]
 #[pg_extern]
 fn python_version() -> String {
+    crate::bindings::venv::activate();
     let mut version = String::new();
 
     Python::with_gil(|py| {
@@ -564,10 +574,10 @@ pub fn transform_json(
     task: JsonB,
     args: default!(JsonB, "'{}'"),
     inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
-    cache: default!(bool, false)
+    cache: default!(bool, false),
 ) -> JsonB {
     JsonB(crate::bindings::transformers::transform(
-        &task.0, &args.0, &inputs, cache
+        &task.0, &args.0, &inputs, cache,
     ))
 }
 
@@ -577,13 +587,13 @@ pub fn transform_string(
     task: String,
     args: default!(JsonB, "'{}'"),
     inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
-    cache: default!(bool, false)
+    cache: default!(bool, false),
 ) -> JsonB {
     let mut task_map = HashMap::new();
     task_map.insert("task", task);
     let task_json = json!(task_map);
     JsonB(crate::bindings::transformers::transform(
-        &task_json, &args.0, &inputs, cache
+        &task_json, &args.0, &inputs, cache,
     ))
 }
 

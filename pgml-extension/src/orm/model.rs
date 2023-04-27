@@ -87,6 +87,10 @@ impl Model {
             },
         };
 
+        if runtime == Runtime::python {
+            crate::bindings::venv::activate();
+        }
+
         let dataset = snapshot.tabular_dataset();
         let status = Status::in_progress;
         // Create the model record.

@@ -11,6 +11,8 @@ pub mod linfa;
 pub mod sklearn;
 #[cfg(feature = "python")]
 pub mod transformers;
+#[cfg(feature = "python")]
+pub mod venv;
 pub mod xgboost;
 
 pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings>;
