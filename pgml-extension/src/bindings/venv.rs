@@ -2,9 +2,10 @@
 
 use once_cell::sync::Lazy;
 use pgrx::*;
+use pgrx_pg_sys::AsPgCStr;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
-use std::ffi::{c_char, CString};
+use std::ffi::CStr;
 
 static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
@@ -27,13 +28,12 @@ pub fn activate_venv(venv: &str) -> bool {
 
 pub fn activate() -> bool {
     unsafe {
-        let config_name = CString::new("pgml.venv").unwrap();
-        let option =
-            pgrx_pg_sys::GetConfigOption(config_name.as_ptr() as *const c_char, true, false);
+        let config_name = "pgml.venv".to_string();
+        let option = pgrx_pg_sys::GetConfigOption(config_name.as_pg_cstr(), true, false);
         if option.is_null() {
             false
         } else {
-            let venv = std::ffi::CStr::from_ptr(option).to_str().unwrap();
+            let venv = CStr::from_ptr(option).to_str().unwrap();
             activate_venv(venv)
         }
     }
