@@ -346,19 +346,17 @@ impl Aggregate for SumS {
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match arg {
-            None => {},
-            Some(arg) => {
-                match current {
-                    None => {
-                        _ = current.insert(arg);
-                    }
-                    Some(ref mut vec) => {
-                        for (i, v) in arg.iter().enumerate() {
-                            vec[i] += v;
-                        }
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg);
+                }
+                Some(ref mut vec) => {
+                    for (i, v) in arg.iter().enumerate() {
+                        vec[i] += v;
                     }
                 }
-            }
+            },
         }
         current
     }
@@ -366,7 +364,7 @@ impl Aggregate for SumS {
     fn combine(
         mut first: Self::State,
         second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo
+        _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
@@ -386,7 +384,7 @@ impl Aggregate for SumS {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new() );
+        let inner = current.get_or_insert_with(|| Vec::new());
 
         inner.clone()
     }
@@ -408,19 +406,17 @@ impl Aggregate for SumD {
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match arg {
-            None => {},
-            Some(arg) => {
-                match current {
-                    None => {
-                        _ = current.insert(arg);
-                    }
-                    Some(ref mut vec) => {
-                        for (i, v) in arg.iter().enumerate() {
-                            vec[i] += v;
-                        }
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg);
+                }
+                Some(ref mut vec) => {
+                    for (i, v) in arg.iter().enumerate() {
+                        vec[i] += v;
                     }
                 }
-            }
+            },
         }
         current
     }
@@ -428,7 +424,7 @@ impl Aggregate for SumD {
     fn combine(
         mut first: Self::State,
         second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo
+        _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
@@ -448,12 +444,11 @@ impl Aggregate for SumD {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new() );
+        let inner = current.get_or_insert_with(|| Vec::new());
 
         inner.clone()
     }
 }
-
 
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MaxAbsS;
@@ -471,21 +466,19 @@ impl Aggregate for MaxAbsS {
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match arg {
-            None => {},
-            Some(arg) => {
-                match current {
-                    None => {
-                        _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
-                    }
-                    Some(ref mut vec) => {
-                        for (i, &v) in arg.iter().enumerate() {
-                            if v.abs() > vec[i].abs() {
-                                vec[i] = v.abs();
-                            }
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                }
+                Some(ref mut vec) => {
+                    for (i, &v) in arg.iter().enumerate() {
+                        if v.abs() > vec[i].abs() {
+                            vec[i] = v.abs();
                         }
                     }
                 }
-            }
+            },
         }
         current
     }
@@ -493,7 +486,7 @@ impl Aggregate for MaxAbsS {
     fn combine(
         mut first: Self::State,
         second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo
+        _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
@@ -515,7 +508,7 @@ impl Aggregate for MaxAbsS {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new() );
+        let inner = current.get_or_insert_with(|| Vec::new());
 
         inner.clone()
     }
@@ -537,21 +530,19 @@ impl Aggregate for MaxAbsD {
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match arg {
-            None => {},
-            Some(arg) => {
-                match current {
-                    None => {
-                        _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
-                    }
-                    Some(ref mut vec) => {
-                        for (i, &v) in arg.iter().enumerate() {
-                            if v.abs() > vec[i].abs() {
-                                vec[i] = v.abs();
-                            }
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                }
+                Some(ref mut vec) => {
+                    for (i, &v) in arg.iter().enumerate() {
+                        if v.abs() > vec[i].abs() {
+                            vec[i] = v.abs();
                         }
                     }
                 }
-            }
+            },
         }
         current
     }
@@ -559,7 +550,7 @@ impl Aggregate for MaxAbsD {
     fn combine(
         mut first: Self::State,
         second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo
+        _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
@@ -581,13 +572,11 @@ impl Aggregate for MaxAbsD {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new() );
+        let inner = current.get_or_insert_with(|| Vec::new());
 
         inner.clone()
     }
 }
-
-
 
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MaxS;
@@ -605,21 +594,19 @@ impl Aggregate for MaxS {
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match arg {
-            None => {},
-            Some(arg) => {
-                match current {
-                    None => {
-                        _ = current.insert(arg);
-                    }
-                    Some(ref mut vec) => {
-                        for (i, &v) in arg.iter().enumerate() {
-                            if v > vec[i] {
-                                vec[i] = v;
-                            }
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg);
+                }
+                Some(ref mut vec) => {
+                    for (i, &v) in arg.iter().enumerate() {
+                        if v > vec[i] {
+                            vec[i] = v;
                         }
                     }
                 }
-            }
+            },
         }
         current
     }
@@ -627,7 +614,7 @@ impl Aggregate for MaxS {
     fn combine(
         mut first: Self::State,
         second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo
+        _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
@@ -649,7 +636,7 @@ impl Aggregate for MaxS {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new() );
+        let inner = current.get_or_insert_with(|| Vec::new());
 
         inner.clone()
     }
@@ -671,21 +658,19 @@ impl Aggregate for MaxD {
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match arg {
-            None => {},
-            Some(arg) => {
-                match current {
-                    None => {
-                        _ = current.insert(arg);
-                    }
-                    Some(ref mut vec) => {
-                        for (i, &v) in arg.iter().enumerate() {
-                            if v > vec[i] {
-                                vec[i] = v;
-                            }
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg);
+                }
+                Some(ref mut vec) => {
+                    for (i, &v) in arg.iter().enumerate() {
+                        if v > vec[i] {
+                            vec[i] = v;
                         }
                     }
                 }
-            }
+            },
         }
         current
     }
@@ -693,7 +678,7 @@ impl Aggregate for MaxD {
     fn combine(
         mut first: Self::State,
         second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo
+        _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
@@ -715,12 +700,11 @@ impl Aggregate for MaxD {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new() );
+        let inner = current.get_or_insert_with(|| Vec::new());
 
         inner.clone()
     }
 }
-
 
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MinS;
@@ -738,21 +722,19 @@ impl Aggregate for MinS {
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match arg {
-            None => {},
-            Some(arg) => {
-                match current {
-                    None => {
-                        _ = current.insert(arg);
-                    }
-                    Some(ref mut vec) => {
-                        for (i, &v) in arg.iter().enumerate() {
-                            if v < vec[i] {
-                                vec[i] = v;
-                            }
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg);
+                }
+                Some(ref mut vec) => {
+                    for (i, &v) in arg.iter().enumerate() {
+                        if v < vec[i] {
+                            vec[i] = v;
                         }
                     }
                 }
-            }
+            },
         }
         current
     }
@@ -760,7 +742,7 @@ impl Aggregate for MinS {
     fn combine(
         mut first: Self::State,
         second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo
+        _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
@@ -782,7 +764,7 @@ impl Aggregate for MinS {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new() );
+        let inner = current.get_or_insert_with(|| Vec::new());
 
         inner.clone()
     }
@@ -804,21 +786,19 @@ impl Aggregate for MinD {
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match arg {
-            None => {},
-            Some(arg) => {
-                match current {
-                    None => {
-                        _ = current.insert(arg);
-                    }
-                    Some(ref mut vec) => {
-                        for (i, &v) in arg.iter().enumerate() {
-                            if v < vec[i] {
-                                vec[i] = v;
-                            }
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg);
+                }
+                Some(ref mut vec) => {
+                    for (i, &v) in arg.iter().enumerate() {
+                        if v < vec[i] {
+                            vec[i] = v;
                         }
                     }
                 }
-            }
+            },
         }
         current
     }
@@ -826,7 +806,7 @@ impl Aggregate for MinD {
     fn combine(
         mut first: Self::State,
         second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo
+        _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
@@ -848,12 +828,11 @@ impl Aggregate for MinD {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new() );
+        let inner = current.get_or_insert_with(|| Vec::new());
 
         inner.clone()
     }
 }
-
 
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MinAbsS;
@@ -871,21 +850,19 @@ impl Aggregate for MinAbsS {
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match arg {
-            None => {},
-            Some(arg) => {
-                match current {
-                    None => {
-                        _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
-                    }
-                    Some(ref mut vec) => {
-                        for (i, &v) in arg.iter().enumerate() {
-                            if v.abs() < vec[i].abs() {
-                                vec[i] = v.abs();
-                            }
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                }
+                Some(ref mut vec) => {
+                    for (i, &v) in arg.iter().enumerate() {
+                        if v.abs() < vec[i].abs() {
+                            vec[i] = v.abs();
                         }
                     }
                 }
-            }
+            },
         }
         current
     }
@@ -893,7 +870,7 @@ impl Aggregate for MinAbsS {
     fn combine(
         mut first: Self::State,
         second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo
+        _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
@@ -915,7 +892,7 @@ impl Aggregate for MinAbsS {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new() );
+        let inner = current.get_or_insert_with(|| Vec::new());
 
         inner.clone()
     }
@@ -937,21 +914,19 @@ impl Aggregate for MinAbsD {
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match arg {
-            None => {},
-            Some(arg) => {
-                match current {
-                    None => {
-                        _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
-                    }
-                    Some(ref mut vec) => {
-                        for (i, &v) in arg.iter().enumerate() {
-                            if v.abs() < vec[i].abs() {
-                                vec[i] = v.abs();
-                            }
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                }
+                Some(ref mut vec) => {
+                    for (i, &v) in arg.iter().enumerate() {
+                        if v.abs() < vec[i].abs() {
+                            vec[i] = v.abs();
                         }
                     }
                 }
-            }
+            },
         }
         current
     }
@@ -959,7 +934,7 @@ impl Aggregate for MinAbsD {
     fn combine(
         mut first: Self::State,
         second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo
+        _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
@@ -981,12 +956,11 @@ impl Aggregate for MinAbsD {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new() );
+        let inner = current.get_or_insert_with(|| Vec::new());
 
         inner.clone()
     }
 }
-
 
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]

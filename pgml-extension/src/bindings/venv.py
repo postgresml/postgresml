@@ -1,0 +1,25 @@
+#
+# Activate and use virtualenv
+#
+import os
+import sys
+
+__venv = None
+
+def activate_venv(venv):
+    global __venv
+    if __venv == venv:
+        return True
+
+    if sys.platform in ('win32', 'win64', 'cygwin'):
+        activate_this = os.path.join(venv, 'Scripts', 'activate_this.py')
+    else:
+        activate_this = os.path.join(venv, 'bin', 'activate_this.py')
+
+    if os.path.exists(activate_this):
+        exec(open(activate_this).read(), dict(__file__=activate_this))
+        __venv = venv
+        return True
+    else:
+        print("Virtualenv not found: %s" % venv)
+        return False

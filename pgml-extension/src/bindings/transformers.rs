@@ -25,8 +25,10 @@ pub fn transform(
     task: &serde_json::Value,
     args: &serde_json::Value,
     inputs: &Vec<String>,
-    cache: bool 
+    cache: bool,
 ) -> serde_json::Value {
+    crate::bindings::venv::activate();
+
     let task = serde_json::to_string(task).unwrap();
     let args = serde_json::to_string(args).unwrap();
     let inputs = serde_json::to_string(inputs).unwrap();
@@ -39,7 +41,12 @@ pub fn transform(
                 py,
                 PyTuple::new(
                     py,
-                    &[task.into_py(py), args.into_py(py), inputs.into_py(py), cache.into_py(py)],
+                    &[
+                        task.into_py(py),
+                        args.into_py(py),
+                        inputs.into_py(py),
+                        cache.into_py(py),
+                    ],
                 ),
             )
             .unwrap()
@@ -50,6 +57,8 @@ pub fn transform(
 }
 
 pub fn embed(transformer: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f32> {
+    crate::bindings::venv::activate();
+
     let kwargs = serde_json::to_string(kwargs).unwrap();
     Python::with_gil(|py| -> Vec<f32> {
         let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed").unwrap().into();
@@ -77,6 +86,8 @@ pub fn tune(
     hyperparams: &JsonB,
     path: &std::path::PathBuf,
 ) -> HashMap<String, f64> {
+    crate::bindings::venv::activate();
+
     let task = task.to_string();
     let hyperparams = serde_json::to_string(&hyperparams.0).unwrap();
 
@@ -107,6 +118,8 @@ pub fn tune(
 }
 
 pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Vec<String> {
+    crate::bindings::venv::activate();
+
     Python::with_gil(|py| -> Vec<String> {
         let generate = PY_MODULE.getattr(py, "generate").unwrap();
         let config = serde_json::to_string(&config.0).unwrap();
@@ -183,6 +196,8 @@ pub fn load_dataset(
     limit: Option<usize>,
     kwargs: &serde_json::Value,
 ) -> usize {
+    crate::bindings::venv::activate();
+
     let kwargs = serde_json::to_string(kwargs).unwrap();
 
     let dataset = Python::with_gil(|py| -> String {

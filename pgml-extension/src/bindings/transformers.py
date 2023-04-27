@@ -51,6 +51,7 @@ class NumpyJSONEncoder(json.JSONEncoder):
 def transform(task, args, inputs, cache):
     task = json.loads(task)
     args = json.loads(args)
+    args["device"] = assign_device(args.get("device"))
     inputs = json.loads(inputs)
 
     if cache:
@@ -68,6 +69,7 @@ def transform(task, args, inputs, cache):
 
 def embed(transformer, text, kwargs):
     kwargs = json.loads(kwargs)
+    kwargs["device"] = assign_device(kwargs.get("device"))
     instructor = transformer.startswith("hkunlp/instructor")
     if instructor:
         klass = INSTRUCTOR
@@ -486,3 +488,15 @@ def generate(model_id, data, config):
             decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
             all_preds.extend(decoded_preds)
     return all_preds
+
+
+def assign_device(device=None):
+    if device is not None:
+        if device == "cpu" or "cuda:" in device:
+            return device
+
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda:" + str(os.getpid() % torch.cuda.device_count())
+
+    return device
