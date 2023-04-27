@@ -7,6 +7,8 @@ use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 use std::ffi::CStr;
 
+static CONFIG_NAME: &'static str = "pgml.venv";
+
 static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
         let src = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/bindings/venv.py"));
@@ -28,8 +30,7 @@ pub fn activate_venv(venv: &str) -> bool {
 
 pub fn activate() -> bool {
     unsafe {
-        let config_name = "pgml.venv".to_string();
-        let option = pgrx_pg_sys::GetConfigOption(config_name.as_pg_cstr(), true, false);
+        let option = pgrx_pg_sys::GetConfigOption(CONFIG_NAME.as_pg_cstr(), true, false);
         if option.is_null() {
             false
         } else {
