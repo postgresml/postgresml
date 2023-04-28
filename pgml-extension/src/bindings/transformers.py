@@ -53,8 +53,9 @@ class NumpyJSONEncoder(json.JSONEncoder):
 def transform(task, args, inputs, cache):
     task = json.loads(task)
     args = json.loads(args)
-    args["device"] = assign_device(args.get("device"))
     inputs = json.loads(inputs)
+
+    task["device"] = assign_device(task.get("device"))
 
     if cache:
         key = ",".join([f"{key}:{val}" for (key, val) in sorted(task.items())])
