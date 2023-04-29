@@ -37,7 +37,7 @@ RUN useradd postgresml -m -s /bin/bash -G sudo
 RUN echo 'postgresml ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 USER postgresml
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-RUN $HOME/.cargo/bin/cargo install cargo-pgrx --version "0.7.4"
+RUN $HOME/.cargo/bin/cargo install cargo-pgrx --version "0.8.2" --locked
 RUN $HOME/.cargo/bin/cargo pgrx init
 RUN curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
 RUN sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'

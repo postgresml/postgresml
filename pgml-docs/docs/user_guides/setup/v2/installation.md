@@ -98,7 +98,7 @@ sudo apt-get install postgresql
 
 		```bash
 		export POSTGRES_VERSION=15
-		cargo install cargo-pgrx --version "0.7.4" && \
+		cargo install cargo-pgrx --version "0.8.2" --locked && \
 		cargo pgrx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
 		cargo pgrx package
 		```
@@ -108,7 +108,7 @@ sudo apt-get install postgresql
 		```bash
 		export POSTGRES_VERSION=15
 		cp docker/Cargo.toml.no-python Cargo.toml && \
-		cargo install cargo-pgrx --version "0.7.4" && \
+		cargo install cargo-pgrx --version "0.8.2" --locked && \
 		cargo pgrx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
 		cargo pgrx package
 		```

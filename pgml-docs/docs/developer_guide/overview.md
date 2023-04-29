@@ -76,7 +76,7 @@ Once there, you can initialize `pgrx` and get going:
 
 #### Pgx command line and environments
 ```commandline
-cargo install cargo-pgrx --version "0.7.4" && \
+cargo install cargo-pgrx --version "0.8.2" --locked && \
 cargo pgrx init # This will take a few minutes
 ```
 
