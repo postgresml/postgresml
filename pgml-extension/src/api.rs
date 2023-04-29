@@ -21,7 +21,7 @@ pub fn activate_venv(venv: &str) -> bool {
 }
 
 #[cfg(feature = "python")]
-#[pg_extern]
+#[pg_extern(immutable, parallel_safe)]
 pub fn validate_python_dependencies() -> bool {
     crate::bindings::venv::activate();
 
@@ -105,7 +105,7 @@ pub fn python_version() -> String {
     String::from("Python is not installed, recompile with `--features python`")
 }
 
-#[pg_extern]
+#[pg_extern(immutable, parallel_safe)]
 fn version() -> String {
     crate::VERSION.to_string()
 }
@@ -423,32 +423,32 @@ fn deploy(
     )
 }
 
-#[pg_extern(strict, name = "predict")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_f32(project_name: &str, features: Vec<f32>) -> f32 {
     predict_model(Project::get_deployed_model_id(project_name), features)
 }
 
-#[pg_extern(strict, name = "predict")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_f64(project_name: &str, features: Vec<f64>) -> f32 {
     predict_f32(project_name, features.iter().map(|&i| i as f32).collect())
 }
 
-#[pg_extern(strict, name = "predict")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_i16(project_name: &str, features: Vec<i16>) -> f32 {
     predict_f32(project_name, features.iter().map(|&i| i as f32).collect())
 }
 
-#[pg_extern(strict, name = "predict")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_i32(project_name: &str, features: Vec<i32>) -> f32 {
     predict_f32(project_name, features.iter().map(|&i| i as f32).collect())
 }
 
-#[pg_extern(strict, name = "predict")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_i64(project_name: &str, features: Vec<i64>) -> f32 {
     predict_f32(project_name, features.iter().map(|&i| i as f32).collect())
 }
 
-#[pg_extern(strict, name = "predict")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_bool(project_name: &str, features: Vec<bool>) -> f32 {
     predict_f32(
         project_name,
@@ -456,49 +456,49 @@ fn predict_bool(project_name: &str, features: Vec<bool>) -> f32 {
     )
 }
 
-#[pg_extern(strict, name = "predict_proba")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict_proba")]
 fn predict_proba(project_name: &str, features: Vec<f32>) -> Vec<f32> {
     predict_model_proba(Project::get_deployed_model_id(project_name), features)
 }
 
-#[pg_extern(strict, name = "predict_joint")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict_joint")]
 fn predict_joint(project_name: &str, features: Vec<f32>) -> Vec<f32> {
     predict_model_joint(Project::get_deployed_model_id(project_name), features)
 }
 
-#[pg_extern(strict, name = "predict_batch")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict_batch")]
 fn predict_batch(project_name: &str, features: Vec<f32>) -> SetOfIterator<'static, f32> {
     SetOfIterator::new(
         predict_model_batch(Project::get_deployed_model_id(project_name), features).into_iter(),
     )
 }
 
-#[pg_extern(strict, name = "predict")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_row(project_name: &str, row: pgrx::datum::AnyElement) -> f32 {
     predict_model_row(Project::get_deployed_model_id(project_name), row)
 }
 
-#[pg_extern(strict, name = "predict")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_model(model_id: i64, features: Vec<f32>) -> f32 {
     Model::find_cached(model_id).predict(&features)
 }
 
-#[pg_extern(strict, name = "predict_proba")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict_proba")]
 fn predict_model_proba(model_id: i64, features: Vec<f32>) -> Vec<f32> {
     Model::find_cached(model_id).predict_proba(&features)
 }
 
-#[pg_extern(strict, name = "predict_joint")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict_joint")]
 fn predict_model_joint(model_id: i64, features: Vec<f32>) -> Vec<f32> {
     Model::find_cached(model_id).predict_joint(&features)
 }
 
-#[pg_extern(strict, name = "predict_batch")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict_batch")]
 fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
     Model::find_cached(model_id).predict_batch(&features)
 }
 
-#[pg_extern(strict, name = "predict")]
+#[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_model_row(model_id: i64, row: pgrx::datum::AnyElement) -> f32 {
     let model = Model::find_cached(model_id);
     let snapshot = &model.snapshot;
@@ -563,13 +563,13 @@ fn load_dataset(
     TableIterator::new(vec![(name, rows)].into_iter())
 }
 
-#[pg_extern]
+#[pg_extern(immutable, parallel_safe)]
 pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
     crate::bindings::transformers::embed(transformer, &text, &kwargs.0)
 }
 
 #[cfg(feature = "python")]
-#[pg_extern(name = "transform")]
+#[pg_extern(immutable, parallel_safe, name = "transform")]
 pub fn transform_json(
     task: JsonB,
     args: default!(JsonB, "'{}'"),
@@ -582,7 +582,7 @@ pub fn transform_json(
 }
 
 #[cfg(feature = "python")]
-#[pg_extern(name = "transform")]
+#[pg_extern(immutable, parallel_safe, name = "transform")]
 pub fn transform_string(
     task: String,
     args: default!(JsonB, "'{}'"),
@@ -598,7 +598,7 @@ pub fn transform_string(
 }
 
 #[cfg(feature = "python")]
-#[pg_extern(name = "generate")]
+#[pg_extern(immutable, parallel_safe, name = "generate")]
 fn generate(project_name: &str, inputs: &str, config: default!(JsonB, "'{}'")) -> String {
     generate_batch(project_name, Vec::from([inputs]), config)
         .first()
@@ -607,7 +607,7 @@ fn generate(project_name: &str, inputs: &str, config: default!(JsonB, "'{}'")) -
 }
 
 #[cfg(feature = "python")]
-#[pg_extern(name = "generate")]
+#[pg_extern(immutable, parallel_safe, name = "generate")]
 fn generate_batch(
     project_name: &str,
     inputs: Vec<&str>,
@@ -622,7 +622,7 @@ fn generate_batch(
 
 #[cfg(feature = "python")]
 #[allow(clippy::too_many_arguments)]
-#[pg_extern]
+#[pg_extern(parallel_safe)]
 fn tune(
     project_name: &str,
     task: default!(Option<&str>, "NULL"),

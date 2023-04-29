@@ -333,13 +333,14 @@ fn cosine_similarity_d(vector: Vec<f64>, other: Vec<f64>) -> f64 {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct SumS;
 
-#[pg_aggregate]
+#[pg_aggregate(parrallel_safe)]
 impl Aggregate for SumS {
     const NAME: &'static str = "sum";
     type Args = Option<Vec<f32>>;
     type State = Option<Vec<f32>>;
     type Finalize = Vec<f32>;
 
+    #[pgrx(immutable, parallel_safe)]
     fn state(
         mut current: Self::State,
         arg: Self::Args,
@@ -361,6 +362,7 @@ impl Aggregate for SumS {
         current
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn combine(
         mut first: Self::State,
         second: Self::State,
@@ -379,6 +381,7 @@ impl Aggregate for SumS {
         }
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn finalize(
         mut current: Self::State,
         _direct_arg: Self::OrderedSetArgs,
@@ -393,13 +396,14 @@ impl Aggregate for SumS {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct SumD;
 
-#[pg_aggregate]
+#[pg_aggregate(parrallel_safe)]
 impl Aggregate for SumD {
     const NAME: &'static str = "sum";
     type Args = Option<Vec<f64>>;
     type State = Option<Vec<f64>>;
     type Finalize = Vec<f64>;
 
+    #[pgrx(immutable, parallel_safe)]
     fn state(
         mut current: Self::State,
         arg: Self::Args,
@@ -421,6 +425,7 @@ impl Aggregate for SumD {
         current
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn combine(
         mut first: Self::State,
         second: Self::State,
@@ -439,6 +444,7 @@ impl Aggregate for SumD {
         }
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn finalize(
         mut current: Self::State,
         _direct_arg: Self::OrderedSetArgs,
@@ -453,13 +459,14 @@ impl Aggregate for SumD {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MaxAbsS;
 
-#[pg_aggregate]
+#[pg_aggregate(parrallel_safe)]
 impl Aggregate for MaxAbsS {
     const NAME: &'static str = "max_abs";
     type Args = Option<Vec<f32>>;
     type State = Option<Vec<f32>>;
     type Finalize = Vec<f32>;
 
+    #[pgrx(immutable, parallel_safe)]
     fn state(
         mut current: Self::State,
         arg: Self::Args,
@@ -483,6 +490,7 @@ impl Aggregate for MaxAbsS {
         current
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn combine(
         mut first: Self::State,
         second: Self::State,
@@ -503,6 +511,7 @@ impl Aggregate for MaxAbsS {
         }
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn finalize(
         mut current: Self::State,
         _direct_arg: Self::OrderedSetArgs,
@@ -517,13 +526,14 @@ impl Aggregate for MaxAbsS {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MaxAbsD {}
 
-#[pg_aggregate]
+#[pg_aggregate(parrallel_safe)]
 impl Aggregate for MaxAbsD {
     const NAME: &'static str = "max_abs";
     type Args = Option<Vec<f64>>;
     type State = Option<Vec<f64>>;
     type Finalize = Vec<f64>;
 
+    #[pgrx(immutable, parallel_safe)]
     fn state(
         mut current: Self::State,
         arg: Self::Args,
@@ -547,6 +557,7 @@ impl Aggregate for MaxAbsD {
         current
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn combine(
         mut first: Self::State,
         second: Self::State,
@@ -567,6 +578,7 @@ impl Aggregate for MaxAbsD {
         }
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn finalize(
         mut current: Self::State,
         _direct_arg: Self::OrderedSetArgs,
@@ -581,13 +593,14 @@ impl Aggregate for MaxAbsD {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MaxS;
 
-#[pg_aggregate]
+#[pg_aggregate(parrallel_safe)]
 impl Aggregate for MaxS {
     const NAME: &'static str = "max";
     type Args = Option<Vec<f32>>;
     type State = Option<Vec<f32>>;
     type Finalize = Vec<f32>;
 
+    #[pgrx(immutable, parallel_safe)]
     fn state(
         mut current: Self::State,
         arg: Self::Args,
@@ -611,6 +624,7 @@ impl Aggregate for MaxS {
         current
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn combine(
         mut first: Self::State,
         second: Self::State,
@@ -631,6 +645,7 @@ impl Aggregate for MaxS {
         }
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn finalize(
         mut current: Self::State,
         _direct_arg: Self::OrderedSetArgs,
@@ -645,13 +660,14 @@ impl Aggregate for MaxS {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MaxD {}
 
-#[pg_aggregate]
+#[pg_aggregate(parrallel_safe)]
 impl Aggregate for MaxD {
     const NAME: &'static str = "max";
     type Args = Option<Vec<f64>>;
     type State = Option<Vec<f64>>;
     type Finalize = Vec<f64>;
 
+    #[pgrx(immutable, parallel_safe)]
     fn state(
         mut current: Self::State,
         arg: Self::Args,
@@ -675,6 +691,7 @@ impl Aggregate for MaxD {
         current
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn combine(
         mut first: Self::State,
         second: Self::State,
@@ -695,6 +712,7 @@ impl Aggregate for MaxD {
         }
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn finalize(
         mut current: Self::State,
         _direct_arg: Self::OrderedSetArgs,
@@ -709,13 +727,14 @@ impl Aggregate for MaxD {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MinS;
 
-#[pg_aggregate]
+#[pg_aggregate(parrallel_safe)]
 impl Aggregate for MinS {
     const NAME: &'static str = "min";
     type Args = Option<Vec<f32>>;
     type State = Option<Vec<f32>>;
     type Finalize = Vec<f32>;
 
+    #[pgrx(immutable, parallel_safe)]
     fn state(
         mut current: Self::State,
         arg: Self::Args,
@@ -739,6 +758,7 @@ impl Aggregate for MinS {
         current
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn combine(
         mut first: Self::State,
         second: Self::State,
@@ -759,6 +779,7 @@ impl Aggregate for MinS {
         }
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn finalize(
         mut current: Self::State,
         _direct_arg: Self::OrderedSetArgs,
@@ -773,13 +794,14 @@ impl Aggregate for MinS {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MinD {}
 
-#[pg_aggregate]
+#[pg_aggregate(parrallel_safe)]
 impl Aggregate for MinD {
     const NAME: &'static str = "min";
     type Args = Option<Vec<f64>>;
     type State = Option<Vec<f64>>;
     type Finalize = Vec<f64>;
 
+    #[pgrx(immutable, parallel_safe)]
     fn state(
         mut current: Self::State,
         arg: Self::Args,
@@ -803,6 +825,7 @@ impl Aggregate for MinD {
         current
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn combine(
         mut first: Self::State,
         second: Self::State,
@@ -823,6 +846,7 @@ impl Aggregate for MinD {
         }
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn finalize(
         mut current: Self::State,
         _direct_arg: Self::OrderedSetArgs,
@@ -837,13 +861,14 @@ impl Aggregate for MinD {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MinAbsS;
 
-#[pg_aggregate]
+#[pg_aggregate(parrallel_safe)]
 impl Aggregate for MinAbsS {
     const NAME: &'static str = "min_abs";
     type Args = Option<Vec<f32>>;
     type State = Option<Vec<f32>>;
     type Finalize = Vec<f32>;
 
+    #[pgrx(immutable, parallel_safe)]
     fn state(
         mut current: Self::State,
         arg: Self::Args,
@@ -867,6 +892,7 @@ impl Aggregate for MinAbsS {
         current
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn combine(
         mut first: Self::State,
         second: Self::State,
@@ -887,6 +913,7 @@ impl Aggregate for MinAbsS {
         }
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn finalize(
         mut current: Self::State,
         _direct_arg: Self::OrderedSetArgs,
@@ -901,13 +928,14 @@ impl Aggregate for MinAbsS {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MinAbsD {}
 
-#[pg_aggregate]
+#[pg_aggregate(parrallel_safe)]
 impl Aggregate for MinAbsD {
     const NAME: &'static str = "min_abs";
     type Args = Option<Vec<f64>>;
     type State = Option<Vec<f64>>;
     type Finalize = Vec<f64>;
 
+    #[pgrx(immutable, parallel_safe)]
     fn state(
         mut current: Self::State,
         arg: Self::Args,
@@ -931,6 +959,7 @@ impl Aggregate for MinAbsD {
         current
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn combine(
         mut first: Self::State,
         second: Self::State,
@@ -951,6 +980,7 @@ impl Aggregate for MinAbsD {
         }
     }
 
+    #[pgrx(immutable, parallel_safe)]
     fn finalize(
         mut current: Self::State,
         _direct_arg: Self::OrderedSetArgs,
