@@ -62,6 +62,8 @@ IMMUTABLE STRICT PARALLEL SAFE
 LANGUAGE c /* Rust */
 AS 'MODULE_PATHNAME', 'transform_json_wrapper';
 
+DROP AGGREGATE IF EXISTS pgml."sum"(real[]);
+
 -- src/vectors.rs:336
 -- pgml::vectors::sum_s_state
 DROP FUNCTION IF EXISTS pgml."sum_s_state"(real[], real[]);
@@ -96,7 +98,6 @@ AS 'MODULE_PATHNAME', 'sum_s_combine_wrapper';
 
 -- src/vectors.rs:336
 -- pgml::vectors::SumS
-DROP AGGREGATE IF EXISTS pgml."SumS"(real[]);
 CREATE AGGREGATE pgml.sum (
 	real[] /* core::option::Option<alloc::vec::Vec<f32>> */
 )
@@ -106,6 +107,8 @@ CREATE AGGREGATE pgml.sum (
 	FINALFUNC = pgml."sum_s_finalize", /* pgml::vectors::SumS::final */
 	COMBINEFUNC = pgml."sum_s_combine" /* pgml::vectors::SumS::combine */
 );
+
+DROP AGGREGATE IF EXISTS pgml."sum"(double precision[]);
 
 -- src/vectors.rs:399
 -- pgml::vectors::sum_d_state
@@ -141,7 +144,6 @@ AS 'MODULE_PATHNAME', 'sum_d_combine_wrapper';
 
 -- src/vectors.rs:399
 -- pgml::vectors::SumD
-DROP AGGREGATE IF EXISTS pgml."SumD"(double precision[]);
 CREATE AGGREGATE pgml.sum (
 	double precision[] /* core::option::Option<alloc::vec::Vec<f64>> */
 )
@@ -360,7 +362,7 @@ AS 'MODULE_PATHNAME', 'predict_model_wrapper';
 
 -- src/api.rs:447
 -- pgml::api::predict
-DROP FUNCTION IF EXISTS pgml."predict"(TEXT, real[]);
+DROP FUNCTION IF EXISTS pgml."predict"(TEXT, bigint[]);
 CREATE  FUNCTION pgml."predict"(
 	"project_name" TEXT, /* &str */
 	"features" bigint[] /* alloc::vec::Vec<i64> */
@@ -393,7 +395,7 @@ AS 'MODULE_PATHNAME', 'predict_i16_wrapper';
 
 -- src/api.rs:432
 -- pgml::api::predict
-DROP FUNCTION IF EXISTS pgml."predict"(TEXT, smallint[]);
+DROP FUNCTION IF EXISTS pgml."predict"(TEXT,  double precision[]);
 CREATE  FUNCTION pgml."predict"(
 	"project_name" TEXT, /* &str */
 	"features" double precision[] /* alloc::vec::Vec<f64> */
@@ -608,6 +610,8 @@ IMMUTABLE STRICT PARALLEL SAFE
 LANGUAGE c /* Rust */
 AS 'MODULE_PATHNAME', 'multiply_scalar_d_wrapper';
 
+DROP AGGREGATE IF EXISTS pgml."min"(real[]);
+
 -- src/vectors.rs:730
 -- pgml::vectors::min_s_state
 DROP FUNCTION IF EXISTS pgml."min_s_state"(real[], real[]);
@@ -642,7 +646,6 @@ AS 'MODULE_PATHNAME', 'min_s_combine_wrapper';
 
 -- src/vectors.rs:730
 -- pgml::vectors::MinS
-DROP AGGREGATE IF EXISTS pgml."min"(real[]);
 CREATE AGGREGATE pgml.min (
 	real[] /* core::option::Option<alloc::vec::Vec<f32>> */
 )
@@ -652,6 +655,8 @@ CREATE AGGREGATE pgml.min (
 	FINALFUNC = pgml."min_s_finalize", /* pgml::vectors::MinS::final */
 	COMBINEFUNC = pgml."min_s_combine" /* pgml::vectors::MinS::combine */
 );
+
+DROP AGGREGATE IF EXISTS pgml."min"(double precision[]);
 
 -- src/vectors.rs:797
 -- pgml::vectors::min_d_state
@@ -687,7 +692,6 @@ AS 'MODULE_PATHNAME', 'min_d_combine_wrapper';
 
 -- src/vectors.rs:797
 -- pgml::vectors::MinD
-DROP AGGREGATE IF EXISTS pgml."min"(double precision[]);
 CREATE AGGREGATE pgml.min (
 	double precision[] /* core::option::Option<alloc::vec::Vec<f64>> */
 )
@@ -697,6 +701,8 @@ CREATE AGGREGATE pgml.min (
 	FINALFUNC = pgml."min_d_finalize", /* pgml::vectors::MinD::final */
 	COMBINEFUNC = pgml."min_d_combine" /* pgml::vectors::MinD::combine */
 );
+
+DROP AGGREGATE IF EXISTS pgml."min_abs"(real[]);
 
 -- src/vectors.rs:864
 -- pgml::vectors::min_abs_s_state
@@ -732,7 +738,6 @@ AS 'MODULE_PATHNAME', 'min_abs_s_combine_wrapper';
 
 -- src/vectors.rs:864
 -- pgml::vectors::MinAbsS
-DROP AGGREGATE IF EXISTS pgml."min_abs"(real[]);
 CREATE AGGREGATE pgml.min_abs (
 	real[] /* core::option::Option<alloc::vec::Vec<f32>> */
 )
@@ -742,6 +747,8 @@ CREATE AGGREGATE pgml.min_abs (
 	FINALFUNC = pgml."min_abs_s_finalize", /* pgml::vectors::MinAbsS::final */
 	COMBINEFUNC = pgml."min_abs_s_combine" /* pgml::vectors::MinAbsS::combine */
 );
+
+DROP AGGREGATE IF EXISTS pgml."min_abs"(double precision[]);
 
 -- src/vectors.rs:931
 -- pgml::vectors::min_abs_d_state
@@ -777,7 +784,6 @@ AS 'MODULE_PATHNAME', 'min_abs_d_combine_wrapper';
 
 -- src/vectors.rs:931
 -- pgml::vectors::MinAbsD
-DROP AGGREGATE IF EXISTS pgml."min_abs"(double precision[]);
 CREATE AGGREGATE pgml.min_abs (
 	double precision[] /* core::option::Option<alloc::vec::Vec<f64>> */
 )
@@ -787,6 +793,8 @@ CREATE AGGREGATE pgml.min_abs (
 	FINALFUNC = pgml."min_abs_d_finalize", /* pgml::vectors::MinAbsD::final */
 	COMBINEFUNC = pgml."min_abs_d_combine" /* pgml::vectors::MinAbsD::combine */
 );
+
+DROP AGGREGATE IF EXISTS pgml."max"(real[]);
 
 -- src/vectors.rs:596
 -- pgml::vectors::max_s_state
@@ -822,7 +830,6 @@ AS 'MODULE_PATHNAME', 'max_s_combine_wrapper';
 
 -- src/vectors.rs:596
 -- pgml::vectors::MaxS
-DROP AGGREGATE IF EXISTS pgml."max"(real[]);
 CREATE AGGREGATE pgml.max (
 	real[] /* core::option::Option<alloc::vec::Vec<f32>> */
 )
@@ -832,6 +839,8 @@ CREATE AGGREGATE pgml.max (
 	FINALFUNC = pgml."max_s_finalize", /* pgml::vectors::MaxS::final */
 	COMBINEFUNC = pgml."max_s_combine" /* pgml::vectors::MaxS::combine */
 );
+
+DROP AGGREGATE IF EXISTS pgml."max"(double precision[]);
 
 -- src/vectors.rs:663
 -- pgml::vectors::max_d_state
@@ -867,7 +876,6 @@ AS 'MODULE_PATHNAME', 'max_d_combine_wrapper';
 
 -- src/vectors.rs:663
 -- pgml::vectors::MaxD
-DROP AGGREGATE IF EXISTS pgml."max"(double precision[]);
 CREATE AGGREGATE pgml.max (
 	double precision[] /* core::option::Option<alloc::vec::Vec<f64>> */
 )
@@ -877,6 +885,8 @@ CREATE AGGREGATE pgml.max (
 	FINALFUNC = pgml."max_d_finalize", /* pgml::vectors::MaxD::final */
 	COMBINEFUNC = pgml."max_d_combine" /* pgml::vectors::MaxD::combine */
 );
+
+DROP AGGREGATE IF EXISTS pgml."max_abs"(real[]);
 
 -- src/vectors.rs:462
 -- pgml::vectors::max_abs_s_state
@@ -912,7 +922,6 @@ AS 'MODULE_PATHNAME', 'max_abs_s_combine_wrapper';
 
 -- src/vectors.rs:462
 -- pgml::vectors::MaxAbsS
-DROP AGGREGATE IF EXISTS pgml."max_abs"(real[]);
 CREATE AGGREGATE pgml.max_abs (
 	real[] /* core::option::Option<alloc::vec::Vec<f32>> */
 )
@@ -922,6 +931,8 @@ CREATE AGGREGATE pgml.max_abs (
 	FINALFUNC = pgml."max_abs_s_finalize", /* pgml::vectors::MaxAbsS::final */
 	COMBINEFUNC = pgml."max_abs_s_combine" /* pgml::vectors::MaxAbsS::combine */
 );
+
+DROP AGGREGATE IF EXISTS pgml."max_abs"(double precision[]);
 
 -- src/vectors.rs:529
 -- pgml::vectors::max_abs_d_state
@@ -957,7 +968,6 @@ AS 'MODULE_PATHNAME', 'max_abs_d_combine_wrapper';
 
 -- src/vectors.rs:529
 -- pgml::vectors::MaxAbsD
-DROP AGGREGATE IF EXISTS pgml."max_abs"(double precision[]);
 CREATE AGGREGATE pgml.max_abs (
 	double precision[] /* core::option::Option<alloc::vec::Vec<f64>> */
 )
@@ -1184,7 +1194,7 @@ AS 'MODULE_PATHNAME', 'add_vector_s_wrapper';
 
 -- src/vectors.rs:54
 -- pgml::vectors::add
-DROP FUNCTION IF EXISTS pgml."add"(real[], real);
+DROP FUNCTION IF EXISTS pgml."add"(double precision[], double precision[]);
 CREATE  FUNCTION pgml."add"(
 	"vector" double precision[], /* alloc::vec::Vec<f64> */
 	"addend" double precision[] /* alloc::vec::Vec<f64> */
@@ -1206,7 +1216,7 @@ AS 'MODULE_PATHNAME', 'add_scalar_s_wrapper';
 
 -- src/vectors.rs:9
 -- pgml::vectors::add
-DROP FUNCTION IF EXISTS pgml."add"(real[], real);
+DROP FUNCTION IF EXISTS pgml."add"(double precision[], double precision);
 CREATE  FUNCTION pgml."add"(
 	"vector" double precision[], /* alloc::vec::Vec<f64> */
 	"addend" double precision /* f64 */
@@ -1268,7 +1278,7 @@ AS 'MODULE_PATHNAME', 'tune_wrapper';
 
 -- src/api.rs:115
 -- pgml::api::train
-DROP FUNCTION IF EXISTS pgml."train"(text, text, text, text, pgml.Algorithm, jsonb, pgml.Search, jsonb, jsonb, real, pgml.Sampling, bool, bool, jsonb);
+DROP FUNCTION IF EXISTS pgml."train"(text, text, text, text, pgml.Algorithm, jsonb, pgml.Search, jsonb, jsonb, real, pgml.Sampling, pgml.Runtime, bool, bool, jsonb);
 CREATE  FUNCTION pgml."train"(
 	"project_name" TEXT, /* &str */
 	"task" TEXT DEFAULT NULL, /* core::option::Option<&str> */
