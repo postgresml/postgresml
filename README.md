@@ -186,7 +186,7 @@ If you want to check out the functionality without the hassle of Docker, [sign u
 - Connect directly to the database with your favorite programming language
   - C++: <a href="https://www.tutorialspoint.com/postgresql/postgresql_c_cpp.htm" target="_blank">libpqxx</a>
   - C#: <a href="https://github.com/npgsql/npgsql" target="_blank">Npgsql</a>,<a href="https://github.com/DapperLib/Dapper" target="_blank">Dapper</a>, or <a href="https://github.com/dotnet/efcore" target="_blank">Entity Framework Core</a>
-  - Elixer: <a href="https://github.com/elixir-ecto/ecto" target="_blank">ecto</a> or <a href="https://github.com/elixir-ecto/postgrex" target="_blank">Postgrex</a>
+  - Elixir: <a href="https://github.com/elixir-ecto/ecto" target="_blank">ecto</a> or <a href="https://github.com/elixir-ecto/postgrex" target="_blank">Postgrex</a>
   - Go: <a href="https://github.com/jackc/pgx" target="_blank">pgx</a>, <a href="https://github.com/go-pg/pg" target="_blank">pg</a> or <a href="https://github.com/uptrace/bun" target="_blank">Bun</a>
   - Haskell: <a href="https://hackage.haskell.org/package/postgresql-simple" target="_blank">postgresql-simple</a>
   - Java & Scala: <a href="https://jdbc.postgresql.org/" target="_blank">JDBC</a> or <a href="https://github.com/slick/slick" target="_blank">Slick</a> 
