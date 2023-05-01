@@ -51,18 +51,18 @@ Adding PostgresML as a memory backend to AutoGPT is a relatively simple process.
     pip install -r requirements.txt
     ```
 
-1. Start PostgresML using [Docker](https://github.com/postgresml/postgresml#docker) or [sign up for a free PostgresML account](https://postgresml.org/signup). 
+2. Start PostgresML using [Docker](https://github.com/postgresml/postgresml#docker) or [sign up for a free PostgresML account](https://postgresml.org/signup). 
 
-2. Install `postgresql` command line utility
+3. Install `postgresql` command line utility
     - Ubuntu: `sudo apt install libpq-dev`
     - Centos/Fedora/Cygwin/Babun.: `sudo yum install libpq-devel`
     - Mac: `brew install postgresql`
 
-3. Install `psycopg2` in 
+4. Install `psycopg2` in 
 
     - `pip install psycopg2`
 
-4. Setting up environment variables
+5. Setting up environment variables
 
     In your `.env` file set the following if you are using Docker:
 
