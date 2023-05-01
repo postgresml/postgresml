@@ -19,7 +19,7 @@
 </h2>
 
 <p align="center">
-    Generative AI and Simple ML with 
+    Generative AI and Traditional ML with 
     <a href="https://www.postgresql.org/" target="_blank">PostgreSQL</a>
 </p>
 
@@ -86,6 +86,7 @@ SELECT pgml.transform(
 
 
 **Sentiment Analysis**
+
 *SQL query*
 
 ```sql
@@ -754,15 +755,21 @@ Similar to other tasks, we can specify a model for text-to-text generation.
 SELECT pgml.transform(
     task => '{
         "task" : "text2text-generation",
-        "model" : "bigscience/T0"
+        "model" : "t5-small"
     }'::JSONB,
     inputs => ARRAY[
-        'Is the word ''table'' used in the same meaning in the two previous sentences? Sentence A: you can leave the books on the table over there. Sentence B: the tables in this book are very hard to read.'
+         'translate from English to French: I''m very happy'
 
     ]
 ) AS answer;
-
 ```
+*Result*
+```json
+[
+    {"generated_text": "Je suis très heureux"}
+]
+```
+
 ## Fill-Mask
 Fill-mask refers to a task where certain words in a sentence are hidden or "masked", and the objective is to predict what words should fill in those masked positions. Such models are valuable when we want to gain statistical insights about the language used to train the model.
 ![fill mask](pgml-docs/docs/images/fill-mask.png)
@@ -838,8 +845,14 @@ The index is being created on the embedding column in the tweet_embeddings table
 By creating an index on the embedding column, the database can quickly search for and retrieve records that are similar to a given query vector. This can be useful for a variety of machine learning applications, such as similarity search or recommendation systems.
 
 ```sql
-CREATE INDEX ON tweet_embeddings USING ivfflat (embedding vector_cosine_ops);
+CREATE EXTENSION vector; -- installing pgvector
+
+CREATE TABLE items (text text, embedding vector(768));
+insert into items select text, embedding from tweet_embeddings;
+
+CREATE INDEX ON items USING ivfflat (embedding vector_cosine_ops);
 ```
+
 ## Step 3: Querying the index using embeddings for your queries
 Once your embeddings have been indexed, you can use them to perform queries against your database. To do this, you'll need to provide a query embedding that represents the query you want to perform. The index will then return the closest matching embeddings from your database, based on the similarity between the query embedding and the stored embeddings.
 
