@@ -49,7 +49,7 @@ The development environment for each differs slightly, but overall we use Python
     With Python 3.7+ installed, install the package dependencies  
 
     ```commandline
-    sudo pip3 install xgboost lightgbm scikit-learn
+    sudo pip3 install -r pgml-extension/requirements.txt
     ```
    
 5. Clone our git repository:

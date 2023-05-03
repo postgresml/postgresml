@@ -27,7 +27,7 @@ jobs:
               pkg-config \
               python3-pip \
               python3
-          sudo pip3 install xgboost lightgbm scikit-learn
+          sudo pip3 install -r requirements.txt
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
