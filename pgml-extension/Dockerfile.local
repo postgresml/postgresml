@@ -11,10 +11,9 @@ RUN cat /etc/apt/sources.list
 RUN apt-get update && apt-get install -y postgresql-pgml-14
 
 # Cache this, quicker
-RUN pip3 install xgboost scikit-learn diptest torch lightgbm transformers datasets sentencepiece sentence_transformers sacremoses sacrebleu rouge
-
 COPY --chown=postgres:postgres . /app
 WORKDIR /app
+RUN pip3 install -r requirements.txt
 
 # Listen on 0.0.0.0 and allow 'root' to connect without a password.
 # Please modify for production deployments accordingly.
