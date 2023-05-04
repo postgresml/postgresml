@@ -92,6 +92,11 @@ def embed(transformer, text, kwargs):
     return result
 
 
+def is_embed_cached(transformer):
+    """Check if the tranformer we're about to use is already in CPU/GPU memory."""
+    return transformer in __cache_sentence_transformer_by_name
+
+
 def load_dataset(name, subset, limit: None, kwargs: "{}"):
     kwargs = json.loads(kwargs)
 
