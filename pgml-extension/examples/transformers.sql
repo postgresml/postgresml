@@ -2,6 +2,8 @@
 \set ON_ERROR_STOP true
 \timing on
 
+SELECT pgml.embed('intfloat/e5-small', 'hi mom');
+
 
 SELECT pgml.transform(
     'translation_en_to_fr',
@@ -87,5 +89,4 @@ SELECT pgml.transform(
         }'
     ]
 ) AS answer;
-
 
