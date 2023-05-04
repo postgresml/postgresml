@@ -62,13 +62,17 @@ pub fn embed(transformer: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f
     let kwargs = serde_json::to_string(kwargs).unwrap();
     Python::with_gil(|py| -> Vec<f32> {
         let is_embed_cached: Py<PyAny> = PY_MODULE.getattr(py, "is_embed_cached").unwrap().into();
-        let cached: bool  = is_embed_cached.call1(
-            py,
-            PyTuple::new(py, &[transformer.to_string().into_py(py)])
-        ).unwrap().extract(py).unwrap();
+        let cached: bool = is_embed_cached
+            .call1(py, PyTuple::new(py, &[transformer.to_string().into_py(py)]))
+            .unwrap()
+            .extract(py)
+            .unwrap();
 
         if !cached {
-            info!("Cache miss for \"{}\", loading transformer, please wait", transformer);
+            info!(
+                "Cache miss for \"{}\", loading transformer, please wait",
+                transformer
+            );
         }
 
         let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed").unwrap().into();
