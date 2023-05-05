@@ -85,6 +85,12 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost', hyperpa
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
 
+-- runtimes
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear', runtime => 'python');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear', runtime => 'rust');
+
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost', runtime => 'python', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost', runtime => 'rust', hyperparams => '{"n_estimators": 10}');
 
 -- check out all that hard work
 SELECT trained_models.* FROM pgml.trained_models 
