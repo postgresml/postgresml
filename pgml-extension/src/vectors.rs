@@ -1,331 +1,335 @@
 use pgrx::*;
+use pgrx::array::RawArray;
 
 #[pg_extern(immutable, parallel_safe, strict, name = "add")]
-fn add_scalar_s(vector: Vec<f32>, addend: f32) -> Vec<f32> {
-    vector.as_slice().iter().map(|a| a + addend).collect()
+fn add_scalar_s(vector: Array<f32>, addend: f32) -> Vec<f32> {
+    vector.iter_deny_null().map(|a| a + addend).collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "add")]
-fn add_scalar_d(vector: Vec<f64>, addend: f64) -> Vec<f64> {
-    vector.as_slice().iter().map(|a| a + addend).collect()
+fn add_scalar_d(vector: Array<f64>, addend: f64) -> Vec<f64> {
+    vector.iter_deny_null().map(|a| a + addend).collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "subtract")]
-fn subtract_scalar_s(vector: Vec<f32>, subtahend: f32) -> Vec<f32> {
-    vector.as_slice().iter().map(|a| a - subtahend).collect()
+fn subtract_scalar_s(vector: Array<f32>, subtahend: f32) -> Vec<f32> {
+    vector.iter_deny_null().map(|a| a - subtahend).collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "subtract")]
-fn subtract_scalar_d(vector: Vec<f64>, subtahend: f64) -> Vec<f64> {
-    vector.as_slice().iter().map(|a| a - subtahend).collect()
+fn subtract_scalar_d(vector: Array<f64>, subtahend: f64) -> Vec<f64> {
+    vector.iter_deny_null().map(|a| a - subtahend).collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "multiply")]
-fn multiply_scalar_s(vector: Vec<f32>, multiplicand: f32) -> Vec<f32> {
-    vector.as_slice().iter().map(|a| a * multiplicand).collect()
+fn multiply_scalar_s(vector: Array<f32>, multiplicand: f32) -> Vec<f32> {
+    vector.iter_deny_null().map(|a| a * multiplicand).collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "multiply")]
-fn multiply_scalar_d(vector: Vec<f64>, multiplicand: f64) -> Vec<f64> {
-    vector.as_slice().iter().map(|a| a * multiplicand).collect()
+fn multiply_scalar_d(vector: Array<f64>, multiplicand: f64) -> Vec<f64> {
+    vector.iter_deny_null().map(|a| a * multiplicand).collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "divide")]
-fn divide_scalar_s(vector: Vec<f32>, dividend: f32) -> Vec<f32> {
-    vector.as_slice().iter().map(|a| a / dividend).collect()
+fn divide_scalar_s(vector: Array<f32>, dividend: f32) -> Vec<f32> {
+    vector.iter_deny_null().map(|a| a / dividend).collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "divide")]
-fn divide_scalar_d(vector: Vec<f64>, dividend: f64) -> Vec<f64> {
-    vector.as_slice().iter().map(|a| a / dividend).collect()
+fn divide_scalar_d(vector: Array<f64>, dividend: f64) -> Vec<f64> {
+    vector.iter_deny_null().map(|a| a / dividend).collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "add")]
-fn add_vector_s(vector: Vec<f32>, addend: Vec<f32>) -> Vec<f32> {
-    vector
-        .as_slice()
-        .iter()
-        .zip(addend.as_slice().iter())
+fn add_vector_s(vector: Array<f32>, addend: Array<f32>) -> Vec<f32> {
+    vector.iter_deny_null()
+        .zip(addend.iter_deny_null())
         .map(|(a, b)| a + b)
         .collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "add")]
-fn add_vector_d(vector: Vec<f64>, addend: Vec<f64>) -> Vec<f64> {
+fn add_vector_d(vector: Array<f64>, addend: Array<f64>) -> Vec<f64> {
     vector
-        .as_slice()
-        .iter()
-        .zip(addend.as_slice().iter())
+        .iter_deny_null()
+        .zip(addend.iter_deny_null())
         .map(|(a, b)| a + b)
         .collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "subtract")]
-fn subtract_vector_s(vector: Vec<f32>, subtahend: Vec<f32>) -> Vec<f32> {
+fn subtract_vector_s(vector: Array<f32>, subtahend: Array<f32>) -> Vec<f32> {
     vector
-        .as_slice()
-        .iter()
-        .zip(subtahend.as_slice().iter())
+        .iter_deny_null()
+        .zip(subtahend.iter_deny_null())
         .map(|(a, b)| a - b)
         .collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "subtract")]
-fn subtract_vector_d(vector: Vec<f64>, subtahend: Vec<f64>) -> Vec<f64> {
+fn subtract_vector_d(vector: Array<f64>, subtahend: Array<f64>) -> Vec<f64> {
     vector
-        .as_slice()
-        .iter()
-        .zip(subtahend.as_slice().iter())
+        .iter_deny_null()
+        .zip(subtahend.iter_deny_null())
         .map(|(a, b)| a - b)
         .collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "multiply")]
-fn multiply_vector_s(vector: Vec<f32>, multiplicand: Vec<f32>) -> Vec<f32> {
+fn multiply_vector_s(vector: Array<f32>, multiplicand: Array<f32>) -> Vec<f32> {
     vector
-        .as_slice()
-        .iter()
-        .zip(multiplicand.as_slice().iter())
+        .iter_deny_null()
+        .zip(multiplicand.iter_deny_null())
         .map(|(a, b)| a * b)
         .collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "multiply")]
-fn multiply_vector_d(vector: Vec<f64>, multiplicand: Vec<f64>) -> Vec<f64> {
+fn multiply_vector_d(vector: Array<f64>, multiplicand: Array<f64>) -> Vec<f64> {
     vector
-        .as_slice()
-        .iter()
-        .zip(multiplicand.as_slice().iter())
+        .iter_deny_null()
+        .zip(multiplicand.iter_deny_null())
         .map(|(a, b)| a * b)
         .collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "divide")]
-fn divide_vector_s(vector: Vec<f32>, dividend: Vec<f32>) -> Vec<f32> {
+fn divide_vector_s(vector: Array<f32>, dividend: Array<f32>) -> Vec<f32> {
     vector
-        .as_slice()
-        .iter()
-        .zip(dividend.as_slice().iter())
+        .iter_deny_null()
+        .zip(dividend.iter_deny_null())
         .map(|(a, b)| a / b)
         .collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "divide")]
-fn divide_vector_d(vector: Vec<f64>, dividend: Vec<f64>) -> Vec<f64> {
+fn divide_vector_d(vector: Array<f64>, dividend: Array<f64>) -> Vec<f64> {
     vector
-        .as_slice()
-        .iter()
-        .zip(dividend.as_slice().iter())
+        .iter_deny_null()
+        .zip(dividend.iter_deny_null())
         .map(|(a, b)| a / b)
         .collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_l0")]
-fn norm_l0_s(vector: Vec<f32>) -> f32 {
+fn norm_l0_s(vector: Array<f32>) -> f32 {
     vector
-        .as_slice()
-        .iter()
-        .map(|a| if *a == 0.0 { 0.0 } else { 1.0 })
+        .iter_deny_null()
+        .map(|a| if a == 0.0 { 0.0 } else { 1.0 })
         .sum()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_l0")]
-fn norm_l0_d(vector: Vec<f64>) -> f64 {
+fn norm_l0_d(vector: Array<f64>) -> f64 {
     vector
-        .as_slice()
-        .iter()
-        .map(|a| if *a == 0.0 { 0.0 } else { 1.0 })
+        .iter_deny_null()
+        .map(|a| if a == 0.0 { 0.0 } else { 1.0 })
         .sum()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_l1")]
-fn norm_l1_s(vector: Vec<f32>) -> f32 {
-    unsafe { blas::sasum(vector.len().try_into().unwrap(), vector.as_slice(), 1) }
+fn norm_l1_s(vector: Array<f32>) -> f32 {
+    unsafe {
+        let vector: &[f32] = RawArray::from_array(vector).unwrap().data().as_ref();
+        blas::sasum(vector.len().try_into().unwrap(), vector, 1)
+    }
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_l1")]
-fn norm_l1_d(vector: Vec<f64>) -> f64 {
-    unsafe { blas::dasum(vector.len().try_into().unwrap(), vector.as_slice(), 1) }
+fn norm_l1_d(vector: Array<f64>) -> f64 {
+    unsafe {
+        let vector: &[f64] = RawArray::from_array(vector).unwrap().data().as_ref();
+        blas::dasum(vector.len().try_into().unwrap(), vector, 1)
+    }
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_l2")]
-fn norm_l2_s(vector: Vec<f32>) -> f32 {
-    unsafe { blas::snrm2(vector.len().try_into().unwrap(), vector.as_slice(), 1) }
+fn norm_l2_s(vector: Array<f32>) -> f32 {
+    unsafe {
+        let vector: &[f32] = RawArray::from_array(vector).unwrap().data().as_ref();
+        blas::snrm2(vector.len().try_into().unwrap(), vector, 1)
+    }
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_l2")]
-fn norm_l2_d(vector: Vec<f64>) -> f64 {
-    unsafe { blas::dnrm2(vector.len().try_into().unwrap(), vector.as_slice(), 1) }
+fn norm_l2_d(vector: Array<f64>) -> f64 {
+    unsafe {
+        let vector: &[f64] = RawArray::from_array(vector).unwrap().data().as_ref();
+        blas::dnrm2(vector.len().try_into().unwrap(), vector, 1)
+    }
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_max")]
-fn norm_max_s(vector: Vec<f32>) -> f32 {
+fn norm_max_s(vector: Array<f32>) -> f32 {
     unsafe {
-        let index = blas::isamax(vector.len().try_into().unwrap(), vector.as_slice(), 1);
+        let vector: &[f32] = RawArray::from_array(vector).unwrap().data().as_ref();
+        let index = blas::isamax(vector.len().try_into().unwrap(), vector, 1);
         vector[index - 1].abs()
     }
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_max")]
-fn norm_max_d(vector: Vec<f64>) -> f64 {
+fn norm_max_d(vector: Array<f64>) -> f64 {
     unsafe {
-        let index = blas::idamax(vector.len().try_into().unwrap(), vector.as_slice(), 1);
+        let vector: &[f64] = RawArray::from_array(vector).unwrap().data().as_ref();
+        let index = blas::idamax(vector.len().try_into().unwrap(), vector, 1);
         vector[index - 1].abs()
     }
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "normalize_l1")]
-fn normalize_l1_s(vector: Vec<f32>) -> Vec<f32> {
+fn normalize_l1_s(vector: Array<f32>) -> Vec<f32> {
     let norm: f32;
     unsafe {
-        norm = blas::sasum(vector.len().try_into().unwrap(), vector.as_slice(), 1);
+        let vector: &[f32] = RawArray::from_array(vector).unwrap().data().as_ref();
+        norm = blas::sasum(vector.len().try_into().unwrap(), vector, 1);
+        vector.iter().map(|a| a / norm).collect()
     }
-    divide_scalar_s(vector, norm)
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "normalize_l1")]
-fn normalize_l1_d(vector: Vec<f64>) -> Vec<f64> {
+fn normalize_l1_d(vector: Array<f64>) -> Vec<f64> {
     let norm: f64;
     unsafe {
-        norm = blas::dasum(vector.len().try_into().unwrap(), vector.as_slice(), 1);
+        let vector: &[f64] = RawArray::from_array(vector).unwrap().data().as_ref();
+        norm = blas::dasum(vector.len().try_into().unwrap(), vector, 1);
+        vector.iter().map(|a| a / norm).collect()
     }
-    divide_scalar_d(vector, norm)
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "normalize_l2")]
-fn normalize_l2_s(vector: Vec<f32>) -> Vec<f32> {
+fn normalize_l2_s(vector: Array<f32>) -> Vec<f32> {
     let norm: f32;
     unsafe {
-        norm = blas::snrm2(vector.len().try_into().unwrap(), vector.as_slice(), 1);
+        let vector: &[f32] = RawArray::from_array(vector).unwrap().data().as_ref();
+        norm = blas::snrm2(vector.len().try_into().unwrap(), vector, 1);
+        vector.iter().map(|a| a / norm).collect()
     }
-    divide_scalar_s(vector, norm)
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "normalize_l2")]
-fn normalize_l2_d(vector: Vec<f64>) -> Vec<f64> {
+fn normalize_l2_d(vector: Array<f64>) -> Vec<f64> {
     let norm: f64;
     unsafe {
-        norm = blas::dnrm2(vector.len().try_into().unwrap(), vector.as_slice(), 1);
+        let vector: &[f64] = RawArray::from_array(vector).unwrap().data().as_ref();
+        norm = blas::dnrm2(vector.len().try_into().unwrap(), vector, 1);
+        vector.iter().map(|a| a / norm).collect()
     }
-    divide_scalar_d(vector, norm)
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "normalize_max")]
-fn normalize_max_s(vector: Vec<f32>) -> Vec<f32> {
+fn normalize_max_s(vector: Array<f32>) -> Vec<f32> {
     let norm;
     unsafe {
-        let index = blas::isamax(vector.len().try_into().unwrap(), vector.as_slice(), 1);
+        let vector: &[f32] = RawArray::from_array(vector).unwrap().data().as_ref();
+        let index = blas::isamax(vector.len().try_into().unwrap(), vector, 1);
         norm = vector[index - 1].abs();
+        vector.iter().map(|a| a / norm).collect()
     }
-    divide_scalar_s(vector, norm)
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "normalize_max")]
-fn normalize_max_d(vector: Vec<f64>) -> Vec<f64> {
+fn normalize_max_d(vector: Array<f64>) -> Vec<f64> {
     let norm;
     unsafe {
-        let index = blas::idamax(vector.len().try_into().unwrap(), vector.as_slice(), 1);
+        let vector: &[f64] = RawArray::from_array(vector).unwrap().data().as_ref();
+        let index = blas::idamax(vector.len().try_into().unwrap(), vector, 1);
         norm = vector[index - 1].abs();
+        vector.iter().map(|a| a / norm).collect()
     }
-    divide_scalar_d(vector, norm)
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "distance_l1")]
-fn distance_l1_s(vector: Vec<f32>, other: Vec<f32>) -> f32 {
+fn distance_l1_s(vector: Array<f32>, other: Array<f32>) -> f32 {
     vector
-        .as_slice()
-        .iter()
-        .zip(other.as_slice().iter())
+        .iter_deny_null()
+        .zip(other.iter_deny_null())
         .map(|(a, b)| (a - b).abs())
         .sum()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "distance_l1")]
-fn distance_l1_d(vector: Vec<f64>, other: Vec<f64>) -> f64 {
+fn distance_l1_d(vector: Array<f64>, other: Array<f64>) -> f64 {
     vector
-        .as_slice()
-        .iter()
-        .zip(other.as_slice().iter())
+        .iter_deny_null()
+        .zip(other.iter_deny_null())
         .map(|(a, b)| (a - b).abs())
         .sum()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "distance_l2")]
-fn distance_l2_s(vector: Vec<f32>, other: Vec<f32>) -> f32 {
+fn distance_l2_s(vector: Array<f32>, other: Array<f32>) -> f32 {
     vector
-        .as_slice()
-        .iter()
-        .zip(other.as_slice().iter())
+        .iter_deny_null()
+        .zip(other.iter_deny_null())
         .map(|(a, b)| (a - b).powf(2.0))
         .sum::<f32>()
         .sqrt()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "distance_l2")]
-fn distance_l2_d(vector: Vec<f64>, other: Vec<f64>) -> f64 {
+fn distance_l2_d(vector: Array<f64>, other: Array<f64>) -> f64 {
     vector
-        .as_slice()
-        .iter()
-        .zip(other.as_slice().iter())
+        .iter_deny_null()
+        .zip(other.iter_deny_null())
         .map(|(a, b)| (a - b).powf(2.0))
         .sum::<f64>()
         .sqrt()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "dot_product")]
-fn dot_product_s(vector: Vec<f32>, other: Vec<f32>) -> f32 {
+fn dot_product_s(vector: Array<f32>, other: Array<f32>) -> f32 {
     unsafe {
+        let vector: &[f32] = RawArray::from_array(vector).unwrap().data().as_ref();
+        let other: &[f32] = RawArray::from_array(other).unwrap().data().as_ref();
         blas::sdot(
             vector.len().try_into().unwrap(),
-            vector.as_slice(),
+            vector,
             1,
-            other.as_slice(),
+            other,
             1,
         )
     }
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "dot_product")]
-fn dot_product_d(vector: Vec<f64>, other: Vec<f64>) -> f64 {
+fn dot_product_d(vector: Array<f64>, other: Array<f64>) -> f64 {
     unsafe {
+        let vector: &[f64] = RawArray::from_array(vector).unwrap().data().as_ref();
+        let other: &[f64] = RawArray::from_array(other).unwrap().data().as_ref();
         blas::ddot(
             vector.len().try_into().unwrap(),
-            vector.as_slice(),
+            vector,
             1,
-            other.as_slice(),
+            other,
             1,
         )
     }
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "cosine_similarity")]
-fn cosine_similarity_s(vector: Vec<f32>, other: Vec<f32>) -> f32 {
+fn cosine_similarity_s(vector: Array<f32>, other: Array<f32>) -> f32 {
     unsafe {
-        let dot = blas::sdot(
-            vector.len().try_into().unwrap(),
-            vector.as_slice(),
-            1,
-            other.as_slice(),
-            1,
-        );
-        let a_norm = blas::snrm2(vector.len().try_into().unwrap(), vector.as_slice(), 1);
-        let b_norm = blas::snrm2(other.len().try_into().unwrap(), other.as_slice(), 1);
+        let vector: &[f32] = RawArray::from_array(vector).unwrap().data().as_ref();
+        let other: &[f32] = RawArray::from_array(other).unwrap().data().as_ref();
+        let len = vector.len() as i32;
+        let dot = blas::sdot(len, vector, 1, other, 1);
+        let a_norm = blas::snrm2(len, vector, 1);
+        let b_norm = blas::snrm2(len, other, 1);
         dot / (a_norm * b_norm)
     }
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "cosine_similarity")]
-fn cosine_similarity_d(vector: Vec<f64>, other: Vec<f64>) -> f64 {
+fn cosine_similarity_d(vector: Array<f64>, other: Array<f64>) -> f64 {
     unsafe {
-        let dot = blas::ddot(
-            vector.len().try_into().unwrap(),
-            vector.as_slice(),
-            1,
-            other.as_slice(),
-            1,
-        );
-        let a_norm = blas::dnrm2(vector.len().try_into().unwrap(), vector.as_slice(), 1);
-        let b_norm = blas::dnrm2(other.len().try_into().unwrap(), other.as_slice(), 1);
+        let vector: &[f64] = RawArray::from_array(vector).unwrap().data().as_ref();
+        let other: &[f64] = RawArray::from_array(other).unwrap().data().as_ref();
+        let len = vector.len() as i32;
+        let dot = blas::ddot(len, vector, 1, other, 1);
+        let a_norm = blas::dnrm2(len, vector, 1);
+        let b_norm = blas::dnrm2(len, other, 1);
         dot / (a_norm * b_norm)
     }
 }
@@ -341,7 +345,7 @@ impl Aggregate for SumS {
     type Finalize = Vec<f32>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state(
+    fn state<'a>(
         mut current: Self::State,
         arg: Self::Args,
         _fcinfo: pg_sys::FunctionCallInfo,
@@ -999,299 +1003,253 @@ mod tests {
 
     #[pg_test]
     fn test_add_scalar_s() {
-        assert_eq!(
-            add_scalar_s([1.0, 2.0, 3.0].to_vec(), 1.0),
-            [2.0, 3.0, 4.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.add(ARRAY[1,2,3]::float4[], 1)");
+        assert_eq!(result, Ok(Some([2.0, 3.0, 4.0].to_vec())));
     }
 
     #[pg_test]
     fn test_add_scalar_d() {
-        assert_eq!(
-            add_scalar_d([1.0, 2.0, 3.0].to_vec(), 1.0),
-            [2.0, 3.0, 4.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.add(ARRAY[1,2,3]::float8[], 1)");
+        assert_eq!(result, Ok(Some([2.0, 3.0, 4.0].to_vec())));
     }
 
     #[pg_test]
     fn test_subtract_scalar_s() {
-        assert_eq!(
-            subtract_scalar_s([1.0, 2.0, 3.0].to_vec(), 1.0),
-            [0.0, 1.0, 2.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.subtract(ARRAY[1,2,3]::float4[], 1)");
+        assert_eq!(result, Ok(Some([0.0, 1.0, 2.0].to_vec())));
     }
 
     #[pg_test]
     fn test_subtract_scalar_d() {
-        assert_eq!(
-            subtract_scalar_d([1.0, 2.0, 3.0].to_vec(), 1.0),
-            [0.0, 1.0, 2.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.subtract(ARRAY[1,2,3]::float8[], 1)");
+        assert_eq!(result, Ok(Some([0.0, 1.0, 2.0].to_vec())));
     }
 
     #[pg_test]
     fn test_multiply_scalar_s() {
-        assert_eq!(
-            multiply_scalar_d([1.0, 2.0, 3.0].to_vec(), 2.0),
-            [2.0, 4.0, 6.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.multiply(ARRAY[1,2,3]::float4[], 2)");
+        assert_eq!(result, Ok(Some([2.0, 4.0, 6.0].to_vec())));
     }
 
     #[pg_test]
     fn test_multiply_scalar_d() {
-        assert_eq!(
-            multiply_scalar_d([1.0, 2.0, 3.0].to_vec(), 2.0),
-            [2.0, 4.0, 6.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.multiply(ARRAY[1,2,3]::float8[], 2)");
+        assert_eq!(result, Ok(Some([2.0, 4.0, 6.0].to_vec())));
     }
 
     #[pg_test]
     fn test_divide_scalar_s() {
-        assert_eq!(
-            divide_scalar_s([2.0, 4.0, 6.0].to_vec(), 2.0),
-            [1.0, 2.0, 3.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.divide(ARRAY[1,2,3]::float4[], 10)");
+        assert_eq!(result, Ok(Some([0.1, 0.2, 0.3].to_vec())));
     }
 
     #[pg_test]
     fn test_divide_scalar_d() {
-        assert_eq!(
-            divide_scalar_d([2.0, 4.0, 6.0].to_vec(), 2.0),
-            [1.0, 2.0, 3.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.divide(ARRAY[1,2,3]::float8[], 10)");
+        assert_eq!(result, Ok(Some([0.1, 0.2, 0.3].to_vec())));
     }
 
     #[pg_test]
     fn test_add_vector_s() {
-        assert_eq!(
-            add_vector_s([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            [2.0, 4.0, 6.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.add(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])");
+        assert_eq!(result, Ok(Some([2.0, 4.0, 6.0].to_vec())));
     }
 
     #[pg_test]
     fn test_add_vector_d() {
-        assert_eq!(
-            add_vector_d([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            [2.0, 4.0, 6.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.add(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])");
+        assert_eq!(result, Ok(Some([2.0, 4.0, 6.0].to_vec())));
     }
 
     #[pg_test]
     fn test_subtract_vector_s() {
-        assert_eq!(
-            subtract_vector_s([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            [0.0, 0.0, 0.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.subtract(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])");
+        assert_eq!(result, Ok(Some([0.0, 0.0, 0.0].to_vec())));
     }
 
     #[pg_test]
     fn test_subtract_vector_d() {
-        assert_eq!(
-            subtract_vector_d([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            [0.0, 0.0, 0.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.subtract(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])");
+        assert_eq!(result, Ok(Some([0.0, 0.0, 0.0].to_vec())));
     }
 
     #[pg_test]
     fn test_multiply_vector_s() {
-        assert_eq!(
-            multiply_vector_s([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            [1.0, 4.0, 9.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.subtract(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])");
+        assert_eq!(result, Ok(Some([0.0, 0.0, 0.0].to_vec())));
     }
 
     #[pg_test]
     fn test_multiply_vector_d() {
-        assert_eq!(
-            multiply_vector_d([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            [1.0, 4.0, 9.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.multiply(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])");
+        assert_eq!(result, Ok(Some([1.0, 4.0, 9.0].to_vec())));
     }
 
     #[pg_test]
     fn test_divide_vector_s() {
-        assert_eq!(
-            divide_vector_s([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            [1.0, 1.0, 1.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.divide(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])");
+        assert_eq!(result, Ok(Some([1.0, 1.0, 1.0].to_vec())));
     }
 
     #[pg_test]
     fn test_divide_vector_d() {
-        assert_eq!(
-            divide_vector_d([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            [1.0, 1.0, 1.0].to_vec()
-        )
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.divide(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])");
+        assert_eq!(result, Ok(Some([1.0, 1.0, 1.0].to_vec())));
     }
 
     #[pg_test]
     fn test_norm_l0_s() {
-        assert_eq!(norm_l0_s([1.0, 2.0, 3.0].to_vec()), 3.0)
+        let result = Spi::get_one::<f32>("SELECT pgml.norm_l0(ARRAY[1,2,3]::float4[])");
+        assert_eq!(result, Ok(Some(3.0)));
     }
 
     #[pg_test]
     fn test_norm_l0_d() {
-        assert_eq!(norm_l0_d([1.0, 2.0, 3.0].to_vec()), 3.0)
+        let result = Spi::get_one::<f64>("SELECT pgml.norm_l0(ARRAY[1,2,3]::float8[])");
+        assert_eq!(result, Ok(Some(3.0)));
     }
 
     #[pg_test]
     fn test_norm_l1_s() {
-        assert_eq!(norm_l1_s([1.0, 2.0, 3.0].to_vec()), 6.0)
+        let result = Spi::get_one::<f32>("SELECT pgml.norm_l1(ARRAY[1,2,3]::float4[])");
+        assert_eq!(result, Ok(Some(6.0)));
     }
 
     #[pg_test]
     fn test_norm_l1_d() {
-        assert_eq!(norm_l1_d([1.0, 2.0, 3.0].to_vec()), 6.0)
+        let result = Spi::get_one::<f64>("SELECT pgml.norm_l1(ARRAY[1,2,3]::float8[])");
+        assert_eq!(result, Ok(Some(6.0)));
     }
 
     #[pg_test]
     fn test_norm_l2_s() {
-        assert_eq!(norm_l2_s([1.0, 2.0, 3.0].to_vec()), 3.7416575);
+        let result = Spi::get_one::<f32>("SELECT pgml.norm_l2(ARRAY[1,2,3]::float4[])");
+        assert_eq!(result, Ok(Some(3.7416575)));
     }
 
     #[pg_test]
     fn test_norm_l2_d() {
-        assert_eq!(norm_l2_d([1.0, 2.0, 3.0].to_vec()), 3.7416573867739413);
+        let result = Spi::get_one::<f64>("SELECT pgml.norm_l2(ARRAY[1,2,3]::float8[])");
+        assert_eq!(result, Ok(Some(3.7416573867739413)));
     }
 
     #[pg_test]
     fn test_norm_max_s() {
-        assert_eq!(norm_max_s([1.0, 2.0, 3.0].to_vec()), 3.0);
-        assert_eq!(norm_max_s([1.0, 2.0, 3.0, -4.0].to_vec()), 4.0);
+        let result = Spi::get_one::<f32>("SELECT pgml.norm_max(ARRAY[1,2,3]::float4[])");
+        assert_eq!(result, Ok(Some(3.0)));
+
+        let result = Spi::get_one::<f32>("SELECT pgml.norm_max(ARRAY[1,2,3,-4]::float4[])");
+        assert_eq!(result, Ok(Some(4.0)));
     }
 
     #[pg_test]
     fn test_norm_max_d() {
-        assert_eq!(norm_max_d([1.0, 2.0, 3.0].to_vec()), 3.0);
-        assert_eq!(norm_max_d([1.0, 2.0, 3.0, -4.0].to_vec()), 4.0);
+        let result = Spi::get_one::<f64>("SELECT pgml.norm_max(ARRAY[1,2,3]::float8[])");
+        assert_eq!(result, Ok(Some(3.0)));
+
+        let result = Spi::get_one::<f64>("SELECT pgml.norm_max(ARRAY[1,2,3,-4]::float8[])");
+        assert_eq!(result, Ok(Some(4.0)));
     }
 
     #[pg_test]
     fn test_normalize_l1_s() {
-        assert_eq!(
-            normalize_l1_s([1.0, 2.0, 3.0].to_vec()),
-            [0.16666667, 0.33333334, 0.5].to_vec()
-        );
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.normalize_l1(ARRAY[1,2,3]::float4[])");
+        assert_eq!(result, Ok(Some([0.16666667, 0.33333334, 0.5].to_vec())));
     }
 
     #[pg_test]
     fn test_normalize_l1_d() {
-        assert_eq!(
-            normalize_l1_d([1.0, 2.0, 3.0].to_vec()),
-            [0.16666666666666666, 0.3333333333333333, 0.5].to_vec()
-        );
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.normalize_l1(ARRAY[1,2,3]::float8[])");
+        assert_eq!(result, Ok(Some([0.16666666666666666, 0.3333333333333333, 0.5].to_vec())));
     }
 
     #[pg_test]
     fn test_normalize_l2_s() {
-        assert_eq!(
-            normalize_l2_s([1.0, 2.0, 3.0].to_vec()),
-            [0.26726124, 0.5345225, 0.8017837].to_vec()
-        );
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.normalize_l2(ARRAY[1,2,3]::float4[])");
+        assert_eq!(result, Ok(Some([0.26726124, 0.5345225, 0.8017837].to_vec())));
     }
 
     #[pg_test]
     fn test_normalize_l2_d() {
-        assert_eq!(
-            normalize_l2_d([1.0, 2.0, 3.0].to_vec()),
-            [0.2672612419124244, 0.5345224838248488, 0.8017837257372732].to_vec()
-        );
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.normalize_l2(ARRAY[1,2,3]::float8[])");
+        assert_eq!(result, Ok(Some([0.2672612419124244, 0.5345224838248488, 0.8017837257372732].to_vec())));
     }
 
     #[pg_test]
     fn test_normalize_max_s() {
-        assert_eq!(
-            normalize_max_s([1.0, 2.0, 3.0].to_vec()),
-            [0.33333334, 0.6666667, 1.0].to_vec()
-        );
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.normalize_max(ARRAY[1,2,3]::float4[])");
+        assert_eq!(result, Ok(Some([0.33333334, 0.6666667, 1.0].to_vec())));
     }
 
     #[pg_test]
     fn test_normalize_max_d() {
-        assert_eq!(
-            normalize_max_d([1.0, 2.0, 3.0].to_vec()),
-            [0.3333333333333333, 0.6666666666666666, 1.0].to_vec()
-        );
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.normalize_max(ARRAY[1,2,3]::float8[])");
+        assert_eq!(result, Ok(Some([0.3333333333333333, 0.6666666666666666, 1.0].to_vec())));
     }
 
     #[pg_test]
     fn test_distance_l1_s() {
-        assert_eq!(
-            distance_l1_s([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            0.0
-        );
+        let result = Spi::get_one::<f32>("SELECT pgml.distance_l1(ARRAY[1,2,3]::float4[],ARRAY[1,2,3]::float4[])");
+        assert_eq!(result, Ok(Some(0.0)));
     }
 
     #[pg_test]
     fn test_distance_l1_d() {
-        assert_eq!(
-            distance_l1_d([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            0.0
-        );
+        let result = Spi::get_one::<f64>("SELECT pgml.distance_l1(ARRAY[1,2,3]::float8[],ARRAY[1,2,3]::float8[])");
+        assert_eq!(result, Ok(Some(0.0)));
     }
 
     #[pg_test]
     fn test_distance_l2_s() {
-        assert_eq!(
-            distance_l2_s([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            0.0
-        );
+        let result = Spi::get_one::<f32>("SELECT pgml.distance_l2(ARRAY[1,2,3]::float4[],ARRAY[1,2,3]::float4[])");
+        assert_eq!(result, Ok(Some(0.0)));
     }
 
     #[pg_test]
     fn test_distance_l2_d() {
-        assert_eq!(
-            distance_l2_d([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            0.0
-        );
+        let result = Spi::get_one::<f64>("SELECT pgml.distance_l2(ARRAY[1,2,3]::float8[],ARRAY[1,2,3]::float8[])");
+        assert_eq!(result, Ok(Some(0.0)));
     }
 
     #[pg_test]
     fn test_dot_product_s() {
-        assert_eq!(
-            dot_product_s([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            14.0
-        );
-        assert_eq!(
-            dot_product_s([1.0, 2.0, 3.0].to_vec(), [2.0, 3.0, 4.0].to_vec()),
-            20.0
-        );
+        let result = Spi::get_one::<f32>("SELECT pgml.dot_product(ARRAY[1,2,3]::float4[],ARRAY[1,2,3]::float4[])");
+        assert_eq!(result, Ok(Some(14.0)));
+
+        let result = Spi::get_one::<f32>("SELECT pgml.dot_product(ARRAY[1,2,3]::float4[],ARRAY[2,3,4]::float4[])");
+        assert_eq!(result, Ok(Some(20.0)));
     }
 
     #[pg_test]
     fn test_dot_product_d() {
-        assert_eq!(
-            dot_product_d([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            14.0
-        );
-        assert_eq!(
-            dot_product_d([1.0, 2.0, 3.0].to_vec(), [2.0, 3.0, 4.0].to_vec()),
-            20.0
-        );
+        let result = Spi::get_one::<f64>("SELECT pgml.dot_product(ARRAY[1,2,3]::float8[],ARRAY[1,2,3]::float8[])");
+        assert_eq!(result, Ok(Some(14.0)));
+
+        let result = Spi::get_one::<f64>("SELECT pgml.dot_product(ARRAY[1,2,3]::float8[],ARRAY[2,3,4]::float8[])");
+        assert_eq!(result, Ok(Some(20.0)));
     }
 
     #[pg_test]
     fn test_cosine_similarity_s() {
-        assert_eq!(
-            cosine_similarity_s([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            0.99999994
-        );
-        assert_eq!(
-            cosine_similarity_s([1.0, 2.0, 3.0].to_vec(), [2.0, 3.0, 4.0].to_vec()),
-            0.9925833
-        );
+        let result = Spi::get_one::<f32>("SELECT pgml.cosine_similarity(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])");
+        assert_eq!(result, Ok(Some(0.99999994)));
+
+        let result = Spi::get_one::<f32>("SELECT pgml.cosine_similarity(ARRAY[1,2,3]::float4[], ARRAY[2.0, 3.0, 4.0]::float4[])");
+        assert_eq!(result, Ok(Some(0.9925833)));
+
+        let result = Spi::get_one::<f32>("SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float4[], ARRAY[0,0,1,1,0,1,1]::float4[])");
+        assert_eq!(result, Ok(Some(0.4472136)));
     }
 
     #[pg_test]
     fn test_cosine_similarity_d() {
-        assert_eq!(
-            cosine_similarity_d([1.0, 2.0, 3.0].to_vec(), [1.0, 2.0, 3.0].to_vec()),
-            1.0
-        );
-        assert_eq!(
-            cosine_similarity_d([1.0, 2.0, 3.0].to_vec(), [2.0, 3.0, 4.0].to_vec()),
-            0.9925833339709303
-        );
+        let result = Spi::get_one::<f64>("SELECT pgml.cosine_similarity(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])");
+        assert_eq!(result, Ok(Some(1.0)));
+
+        let result = Spi::get_one::<f64>("SELECT pgml.cosine_similarity(ARRAY[1,2,3]::float8[], ARRAY[2.0, 3.0, 4.0]::float8[])");
+        assert_eq!(result, Ok(Some(0.9925833339709303)));
+
+        let result = Spi::get_one::<f64>("SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float8[], ARRAY[0,0,1,1,0,1,1]::float8[])");
+        assert_eq!(result, Ok(Some(0.4472135954999579)));
     }
 }
