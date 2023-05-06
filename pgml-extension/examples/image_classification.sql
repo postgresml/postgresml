@@ -65,6 +65,12 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', hyperpara
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 2}');
 
+-- runtimes
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear', runtime => 'python');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear', runtime => 'rust');
+
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', runtime => 'python', hyperparams => '{"n_estimators": 10}');
+SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', runtime => 'rust', hyperparams => '{"n_estimators": 10}');
 
 -- check out all that hard work
 SELECT trained_models.* FROM pgml.trained_models 
