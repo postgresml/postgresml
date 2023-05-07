@@ -1,6 +1,18 @@
 use pgrx::array::RawArray;
 use pgrx::*;
 
+// Vector operations that return a vec require an allocation,
+// that currently dominates the runtime 10x. In these cases,
+// and cases where there is no BLAS equivalent, we use Rust.
+// In other cases, where we can use BLAS, that return a scalar,
+// we use BLAS for optimal performance. The difference between
+// Rust and BLAS for these functions appears to be vectorization.
+// Rust does not have standardized SIMD support at this time.
+// PGRX also does not have mutable zero copy Array support at this
+// time, so we use Vecs for the return type. When these two issues
+// are resolved upstream, we'll port everything to SIMD Rust and
+// use mutable zero copy Array return types, and drop our BLAS
+// dependency.
 #[pg_extern(immutable, parallel_safe, strict, name = "add")]
 fn add_scalar_s(vector: Array<f32>, addend: f32) -> Vec<f32> {
     vector.iter_deny_null().map(|a| a + addend).collect()
@@ -60,19 +72,19 @@ fn add_vector_d(vector: Array<f64>, addend: Array<f64>) -> Vec<f64> {
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "subtract")]
-fn subtract_vector_s(vector: Array<f32>, subtahend: Array<f32>) -> Vec<f32> {
+fn subtract_vector_s(vector: Array<f32>, subtrahend: Array<f32>) -> Vec<f32> {
     vector
         .iter_deny_null()
-        .zip(subtahend.iter_deny_null())
+        .zip(subtrahend.iter_deny_null())
         .map(|(a, b)| a - b)
         .collect()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "subtract")]
-fn subtract_vector_d(vector: Array<f64>, subtahend: Array<f64>) -> Vec<f64> {
+fn subtract_vector_d(vector: Array<f64>, subtrahend: Array<f64>) -> Vec<f64> {
     vector
         .iter_deny_null()
-        .zip(subtahend.iter_deny_null())
+        .zip(subtrahend.iter_deny_null())
         .map(|(a, b)| a - b)
         .collect()
 }
@@ -329,7 +341,7 @@ pub struct SumS;
 #[pg_aggregate(parrallel_safe)]
 impl Aggregate for SumS {
     const NAME: &'static str = "sum";
-    type Args = Option<Vec<f32>>;
+    type Args = Option<Array<'static, f32>>;
     type State = Option<Vec<f32>>;
     type Finalize = Vec<f32>;
 
@@ -343,13 +355,12 @@ impl Aggregate for SumS {
             None => {}
             Some(arg) => match current {
                 None => {
-                    _ = current.insert(arg);
+                    _ = current.insert(arg.iter_deny_null().collect());
                 }
-                Some(ref mut vec) => {
-                    for (i, v) in arg.iter().enumerate() {
-                        vec[i] += v;
-                    }
-                }
+                Some(ref mut vec) => unsafe {
+                    let arg: &[f32] = RawArray::from_array(arg).unwrap().data().as_ref();
+                    blas::saxpy(vec.len().try_into().unwrap(), 1.0, arg, 1, vec.as_mut_slice(), 1);
+                },
             },
         }
         current
@@ -366,23 +377,19 @@ impl Aggregate for SumS {
             (Some(_), None) => first,
             (None, Some(_)) => second,
             (Some(first_inner), Some(second_inner)) => {
-                for (i, v) in second_inner.iter().enumerate() {
-                    first_inner[i] += v;
+                unsafe {
+                    blas::saxpy(
+                        first_inner.len().try_into().unwrap(),
+                        1.0,
+                        second_inner,
+                        1,
+                        first_inner,
+                        1,
+                    );
                 }
                 first
             }
         }
-    }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn finalize(
-        mut current: Self::State,
-        _direct_arg: Self::OrderedSetArgs,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
-
-        inner.clone()
     }
 }
 
@@ -392,7 +399,7 @@ pub struct SumD;
 #[pg_aggregate(parrallel_safe)]
 impl Aggregate for SumD {
     const NAME: &'static str = "sum";
-    type Args = Option<Vec<f64>>;
+    type Args = Option<Array<'static, f64>>;
     type State = Option<Vec<f64>>;
     type Finalize = Vec<f64>;
 
@@ -406,11 +413,71 @@ impl Aggregate for SumD {
             None => {}
             Some(arg) => match current {
                 None => {
-                    _ = current.insert(arg);
+                    _ = current.insert(arg.iter_deny_null().collect());
+                }
+                Some(ref mut vec) => unsafe {
+                    let arg: &[f64] = RawArray::from_array(arg).unwrap().data().as_ref();
+                    blas::daxpy(vec.len().try_into().unwrap(), 1.0, arg, 1, vec, 1);
+                },
+            },
+        }
+        current
+    }
+
+    #[pgrx(immutable, parallel_safe)]
+    fn combine(
+        mut first: Self::State,
+        second: Self::State,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match (&mut first, &second) {
+            (None, None) => None,
+            (Some(_), None) => first,
+            (None, Some(_)) => second,
+            (Some(first_inner), Some(second_inner)) => {
+                unsafe {
+                    blas::daxpy(
+                        first_inner.len().try_into().unwrap(),
+                        1.0,
+                        second_inner,
+                        1,
+                        first_inner,
+                        1,
+                    );
+                }
+                first
+            }
+        }
+    }
+}
+
+#[derive(Copy, Clone, Default, Debug)]
+pub struct MaxAbsS;
+
+#[pg_aggregate(parrallel_safe)]
+impl Aggregate for MaxAbsS {
+    const NAME: &'static str = "max_abs";
+    type Args = Option<Array<'static, f32>>;
+    type State = Option<Vec<f32>>;
+    type Finalize = Vec<f32>;
+
+    #[pgrx(immutable, parallel_safe)]
+    fn state(
+        mut current: Self::State,
+        arg: Self::Args,
+        _fcinfo: pg_sys::FunctionCallInfo,
+    ) -> Self::State {
+        match arg {
+            None => {}
+            Some(arg) => match current {
+                None => {
+                    _ = current.insert(arg.iter_deny_null().map(|v| v.abs()).collect());
                 }
                 Some(ref mut vec) => {
-                    for (i, v) in arg.iter().enumerate() {
-                        vec[i] += v;
+                    for (i, v) in arg.iter_deny_null().enumerate() {
+                        if v.abs() > vec[i].abs() {
+                            vec[i] = v.abs();
+                        }
                     }
                 }
             },
@@ -430,71 +497,6 @@ impl Aggregate for SumD {
             (None, Some(_)) => second,
             (Some(first_inner), Some(second_inner)) => {
                 for (i, v) in second_inner.iter().enumerate() {
-                    first_inner[i] += v;
-                }
-                first
-            }
-        }
-    }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn finalize(
-        mut current: Self::State,
-        _direct_arg: Self::OrderedSetArgs,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
-
-        inner.clone()
-    }
-}
-
-#[derive(Copy, Clone, Default, Debug)]
-pub struct MaxAbsS;
-
-#[pg_aggregate(parrallel_safe)]
-impl Aggregate for MaxAbsS {
-    const NAME: &'static str = "max_abs";
-    type Args = Option<Vec<f32>>;
-    type State = Option<Vec<f32>>;
-    type Finalize = Vec<f32>;
-
-    #[pgrx(immutable, parallel_safe)]
-    fn state(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
-        match arg {
-            None => {}
-            Some(arg) => match current {
-                None => {
-                    _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
-                }
-                Some(ref mut vec) => {
-                    for (i, &v) in arg.iter().enumerate() {
-                        if v.abs() > vec[i].abs() {
-                            vec[i] = v.abs();
-                        }
-                    }
-                }
-            },
-        }
-        current
-    }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
-        match (&mut first, &second) {
-            (None, None) => None,
-            (Some(_), None) => first,
-            (None, Some(_)) => second,
-            (Some(first_inner), Some(second_inner)) => {
-                for (i, &v) in second_inner.iter().enumerate() {
                     if v.abs() > first_inner[i].abs() {
                         first_inner[i] = v.abs();
                     }
@@ -502,17 +504,6 @@ impl Aggregate for MaxAbsS {
                 first
             }
         }
-    }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn finalize(
-        mut current: Self::State,
-        _direct_arg: Self::OrderedSetArgs,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
-
-        inner.clone()
     }
 }
 
@@ -522,7 +513,7 @@ pub struct MaxAbsD {}
 #[pg_aggregate(parrallel_safe)]
 impl Aggregate for MaxAbsD {
     const NAME: &'static str = "max_abs";
-    type Args = Option<Vec<f64>>;
+    type Args = Option<Array<'static, f64>>;
     type State = Option<Vec<f64>>;
     type Finalize = Vec<f64>;
 
@@ -536,10 +527,10 @@ impl Aggregate for MaxAbsD {
             None => {}
             Some(arg) => match current {
                 None => {
-                    _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                    _ = current.insert(arg.iter_deny_null().map(|v| v.abs()).collect());
                 }
                 Some(ref mut vec) => {
-                    for (i, &v) in arg.iter().enumerate() {
+                    for (i, v) in arg.iter_deny_null().enumerate() {
                         if v.abs() > vec[i].abs() {
                             vec[i] = v.abs();
                         }
@@ -561,7 +552,7 @@ impl Aggregate for MaxAbsD {
             (Some(_), None) => first,
             (None, Some(_)) => second,
             (Some(first_inner), Some(second_inner)) => {
-                for (i, &v) in second_inner.iter().enumerate() {
+                for (i, v) in second_inner.iter().enumerate() {
                     if v.abs() > first_inner[i].abs() {
                         first_inner[i] = v.abs();
                     }
@@ -569,17 +560,6 @@ impl Aggregate for MaxAbsD {
                 first
             }
         }
-    }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn finalize(
-        mut current: Self::State,
-        _direct_arg: Self::OrderedSetArgs,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
-
-        inner.clone()
     }
 }
 
@@ -589,7 +569,7 @@ pub struct MaxS;
 #[pg_aggregate(parrallel_safe)]
 impl Aggregate for MaxS {
     const NAME: &'static str = "max";
-    type Args = Option<Vec<f32>>;
+    type Args = Option<Array<'static, f32>>;
     type State = Option<Vec<f32>>;
     type Finalize = Vec<f32>;
 
@@ -603,10 +583,10 @@ impl Aggregate for MaxS {
             None => {}
             Some(arg) => match current {
                 None => {
-                    _ = current.insert(arg);
+                    _ = current.insert(arg.iter_deny_null().collect());
                 }
                 Some(ref mut vec) => {
-                    for (i, &v) in arg.iter().enumerate() {
+                    for (i, v) in arg.iter_deny_null().enumerate() {
                         if v > vec[i] {
                             vec[i] = v;
                         }
@@ -636,17 +616,6 @@ impl Aggregate for MaxS {
                 first
             }
         }
-    }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn finalize(
-        mut current: Self::State,
-        _direct_arg: Self::OrderedSetArgs,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
-
-        inner.clone()
     }
 }
 
@@ -656,7 +625,7 @@ pub struct MaxD {}
 #[pg_aggregate(parrallel_safe)]
 impl Aggregate for MaxD {
     const NAME: &'static str = "max";
-    type Args = Option<Vec<f64>>;
+    type Args = Option<Array<'static, f64>>;
     type State = Option<Vec<f64>>;
     type Finalize = Vec<f64>;
 
@@ -670,10 +639,10 @@ impl Aggregate for MaxD {
             None => {}
             Some(arg) => match current {
                 None => {
-                    _ = current.insert(arg);
+                    _ = current.insert(arg.iter_deny_null().collect());
                 }
                 Some(ref mut vec) => {
-                    for (i, &v) in arg.iter().enumerate() {
+                    for (i, v) in arg.iter_deny_null().enumerate() {
                         if v > vec[i] {
                             vec[i] = v;
                         }
@@ -704,17 +673,6 @@ impl Aggregate for MaxD {
             }
         }
     }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn finalize(
-        mut current: Self::State,
-        _direct_arg: Self::OrderedSetArgs,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
-
-        inner.clone()
-    }
 }
 
 #[derive(Copy, Clone, Default, Debug)]
@@ -723,7 +681,7 @@ pub struct MinS;
 #[pg_aggregate(parrallel_safe)]
 impl Aggregate for MinS {
     const NAME: &'static str = "min";
-    type Args = Option<Vec<f32>>;
+    type Args = Option<Array<'static, f32>>;
     type State = Option<Vec<f32>>;
     type Finalize = Vec<f32>;
 
@@ -737,10 +695,10 @@ impl Aggregate for MinS {
             None => {}
             Some(arg) => match current {
                 None => {
-                    _ = current.insert(arg);
+                    _ = current.insert(arg.iter_deny_null().collect());
                 }
                 Some(ref mut vec) => {
-                    for (i, &v) in arg.iter().enumerate() {
+                    for (i, v) in arg.iter_deny_null().enumerate() {
                         if v < vec[i] {
                             vec[i] = v;
                         }
@@ -770,17 +728,6 @@ impl Aggregate for MinS {
                 first
             }
         }
-    }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn finalize(
-        mut current: Self::State,
-        _direct_arg: Self::OrderedSetArgs,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
-
-        inner.clone()
     }
 }
 
@@ -790,7 +737,7 @@ pub struct MinD {}
 #[pg_aggregate(parrallel_safe)]
 impl Aggregate for MinD {
     const NAME: &'static str = "min";
-    type Args = Option<Vec<f64>>;
+    type Args = Option<Array<'static, f64>>;
     type State = Option<Vec<f64>>;
     type Finalize = Vec<f64>;
 
@@ -804,10 +751,10 @@ impl Aggregate for MinD {
             None => {}
             Some(arg) => match current {
                 None => {
-                    _ = current.insert(arg);
+                    _ = current.insert(arg.iter_deny_null().collect());
                 }
                 Some(ref mut vec) => {
-                    for (i, &v) in arg.iter().enumerate() {
+                    for (i, v) in arg.iter_deny_null().enumerate() {
                         if v < vec[i] {
                             vec[i] = v;
                         }
@@ -838,17 +785,6 @@ impl Aggregate for MinD {
             }
         }
     }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn finalize(
-        mut current: Self::State,
-        _direct_arg: Self::OrderedSetArgs,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
-
-        inner.clone()
-    }
 }
 
 #[derive(Copy, Clone, Default, Debug)]
@@ -857,7 +793,7 @@ pub struct MinAbsS;
 #[pg_aggregate(parrallel_safe)]
 impl Aggregate for MinAbsS {
     const NAME: &'static str = "min_abs";
-    type Args = Option<Vec<f32>>;
+    type Args = Option<Array<'static, f32>>;
     type State = Option<Vec<f32>>;
     type Finalize = Vec<f32>;
 
@@ -871,10 +807,10 @@ impl Aggregate for MinAbsS {
             None => {}
             Some(arg) => match current {
                 None => {
-                    _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                    _ = current.insert(arg.iter_deny_null().map(|v| v.abs()).collect());
                 }
                 Some(ref mut vec) => {
-                    for (i, &v) in arg.iter().enumerate() {
+                    for (i, v) in arg.iter_deny_null().enumerate() {
                         if v.abs() < vec[i].abs() {
                             vec[i] = v.abs();
                         }
@@ -905,17 +841,6 @@ impl Aggregate for MinAbsS {
             }
         }
     }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn finalize(
-        mut current: Self::State,
-        _direct_arg: Self::OrderedSetArgs,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
-
-        inner.clone()
-    }
 }
 
 #[derive(Copy, Clone, Default, Debug)]
@@ -924,7 +849,7 @@ pub struct MinAbsD {}
 #[pg_aggregate(parrallel_safe)]
 impl Aggregate for MinAbsD {
     const NAME: &'static str = "min_abs";
-    type Args = Option<Vec<f64>>;
+    type Args = Option<Array<'static, f64>>;
     type State = Option<Vec<f64>>;
     type Finalize = Vec<f64>;
 
@@ -938,10 +863,10 @@ impl Aggregate for MinAbsD {
             None => {}
             Some(arg) => match current {
                 None => {
-                    _ = current.insert(arg.into_iter().map(|v| v.abs()).collect());
+                    _ = current.insert(arg.iter_deny_null().map(|v| v.abs()).collect());
                 }
                 Some(ref mut vec) => {
-                    for (i, &v) in arg.iter().enumerate() {
+                    for (i, v) in arg.iter_deny_null().enumerate() {
                         if v.abs() < vec[i].abs() {
                             vec[i] = v.abs();
                         }
@@ -971,17 +896,6 @@ impl Aggregate for MinAbsD {
                 first
             }
         }
-    }
-
-    #[pgrx(immutable, parallel_safe)]
-    fn finalize(
-        mut current: Self::State,
-        _direct_arg: Self::OrderedSetArgs,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
-
-        inner.clone()
     }
 }
 
@@ -1296,5 +1210,65 @@ mod tests {
 
         let result = Spi::get_one::<f64>("SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float8[], ARRAY[0,0,1,1,0,1,1]::float8[])");
         assert_eq!(result, Ok(Some(0.4472135954999579)));
+    }
+
+    #[pg_test]
+    fn test_sum_s() {
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.sum(a) FROM (VALUES (ARRAY[1,2]::float4[]), (ARRAY[1,2]::float4[]), (ARRAY[1,2]::float4[])) AS v(a)");
+        assert_eq!(result, Ok(Some([3.0, 6.0].to_vec())));
+    }
+
+    #[pg_test]
+    fn test_sum_d() {
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.sum(a) FROM (VALUES (ARRAY[1,2]::float8[]), (ARRAY[1,2]::float8[]), (ARRAY[1,2]::float8[])) AS v(a)");
+        assert_eq!(result, Ok(Some([3.0, 6.0].to_vec())));
+    }
+
+    #[pg_test]
+    fn test_max_abs_s() {
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.max_abs(a) FROM (VALUES (ARRAY[1,2]::float4[]), (ARRAY[2,-3]::float4[]), (ARRAY[-3,4]::float4[])) AS v(a)");
+        assert_eq!(result, Ok(Some([3.0, 4.0].to_vec())));
+    }
+
+    #[pg_test]
+    fn test_max_abs_d() {
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.max_abs(a) FROM (VALUES (ARRAY[3,0]::float8[]), (ARRAY[-1,-2]::float8[]), (ARRAY[2,-4]::float8[])) AS v(a)");
+        assert_eq!(result, Ok(Some([3.0, 4.0].to_vec())));
+    }
+
+    #[pg_test]
+    fn test_min_abs_s() {
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.min_abs(a) FROM (VALUES (ARRAY[1,2]::float4[]), (ARRAY[2,-3]::float4[]), (ARRAY[-3,4]::float4[])) AS v(a)");
+        assert_eq!(result, Ok(Some([1.0, 2.0].to_vec())));
+    }
+
+    #[pg_test]
+    fn test_min_abs_d() {
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.min_abs(a) FROM (VALUES (ARRAY[3,0]::float8[]), (ARRAY[-1,-2]::float8[]), (ARRAY[2,-4]::float8[])) AS v(a)");
+        assert_eq!(result, Ok(Some([1.0, 0.0].to_vec())));
+    }
+
+    #[pg_test]
+    fn test_max_s() {
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.max(a) FROM (VALUES (ARRAY[1,2]::float4[]), (ARRAY[2,-3]::float4[]), (ARRAY[-3,4]::float4[])) AS v(a)");
+        assert_eq!(result, Ok(Some([2.0, 4.0].to_vec())));
+    }
+
+    #[pg_test]
+    fn test_max_d() {
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.max(a) FROM (VALUES (ARRAY[3,0]::float8[]), (ARRAY[-1,-2]::float8[]), (ARRAY[2,-4]::float8[])) AS v(a)");
+        assert_eq!(result, Ok(Some([3.0, 0.0].to_vec())));
+    }
+
+    #[pg_test]
+    fn test_min_s() {
+        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.min(a) FROM (VALUES (ARRAY[1,2]::float4[]), (ARRAY[2,-3]::float4[]), (ARRAY[-3,4]::float4[])) AS v(a)");
+        assert_eq!(result, Ok(Some([-3.0, -3.0].to_vec())));
+    }
+
+    #[pg_test]
+    fn test_min_d() {
+        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.min(a) FROM (VALUES (ARRAY[3,0]::float8[]), (ARRAY[-1,-2]::float8[]), (ARRAY[2,-4]::float8[])) AS v(a)");
+        assert_eq!(result, Ok(Some([-1.0, -4.0].to_vec())));
     }
 }
