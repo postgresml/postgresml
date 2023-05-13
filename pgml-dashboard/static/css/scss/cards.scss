@@ -1,0 +1,208 @@
+
+[data-bs-theme="dark"] {
+    .card {
+        --bs-card-bg: rgba(33, 34, 36, 1);
+        --bs-card-border-color: transparent;
+        --bs-card-color: #DEE0E7;
+        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.245) 15.62%, rgba(53, 51, 56, 0.28) 67.01%);
+
+        &.card-opacity-50 {
+            --bs-card-bg: rgba(33, 34, 36, 0.5);
+        }
+
+        .input-group-text {
+            --bs-border-color: transparent;
+
+            background-color: var(--bs-card-bg);
+            color: var(--bs-card-color);
+        }
+    }
+
+    .card-title {
+        --bs-card-title-color: var(--bs-card-color);
+    }
+
+    .card-footer {
+        --bs-card-cap-bg: var(--bs-card-bg);
+    }
+}
+
+[data-bs-theme="light"] {
+    .card {
+        --bs-card-color: #111213;
+        --bs-card-border-color: transparent;
+        --bs-card-bg: rgba(250, 250, 250, 0.7);
+        background: linear-gradient(260.55deg, rgba(255, 255, 255, 0.56) 15.62%, rgba(255, 255, 255, 0.28) 67.01%);
+    }
+}
+
+.card {
+    --bs-card-spacer-y: 32px;
+    --bs-card-spacer-x: 32px;    
+    
+    backdrop-filter: blur(8px);
+
+    &.select-hover {
+        &:hover {
+            --bs-card-border-color: #{$purple};
+        }
+
+        &.active {
+            --bs-card-border-color: #{$purple};
+        }
+    }
+
+    &.card-lg {
+        --bs-card-spacer-y: 40px;
+        --bs-card-spacer-x: 40px;
+    }
+    
+    &.gradient-purple {
+        background: linear-gradient(48.19deg, #D940FF 0%, #9E02FE 24.43%, #00D1FF 100%) !important;
+        border: 0; // This causes breakage.
+    }
+
+    &.card-dark {
+        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.245) 15.62%, rgba(53, 51, 56, 0.28) 67.01%); 
+    }
+
+    .list-group > .list-group-item {
+        padding-left: 0px;
+    }
+}
+
+.generic-card {
+    @extend .card;
+
+    background: linear-gradient(260.55deg, rgba(255, 255, 255, 0.56) 15.62%, rgba(255, 255, 255, 0.28) 67.01%);
+
+    &:hover {
+        box-shadow: 20px 20px 24px rgba(49, 67, 89, 0.13);
+    }
+
+    > .card-body {
+        > .card-img-top {
+            margin-bottom: 24px;
+        }
+
+        > .card-title {
+            font-size: 2rem;
+            line-height: 150%;
+            font-weight: 700;
+        }
+    }
+
+}
+
+.feature-card {
+    @extend .card, .card-lg, .card-dark;
+
+    --bs-card-title-spacer-y: 1rem;
+    
+    &:hover {
+        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.54) 15.62%, rgba(53, 51, 56, 0.72) 67.01%);
+    }
+
+    > .card-body {
+        display: flex; 
+        flex-direction: column;
+    
+        > .card-img-top {
+            margin-bottom: 2rem;
+        }
+
+        > .card-title {
+            font-size: 2rem;
+            line-height: 150%;
+            font-weight: 700;
+        }
+
+        > .card-text {
+            margin-bottom: 2rem;
+        }
+
+        > .card-btn {
+            margin: auto auto 0px auto;
+        }
+    }
+}
+
+.testimonial-card {
+    @extend .card;
+    @extend .card-lg;
+
+    min-width: Min(25rem, 75vw);
+    background: linear-gradient(260.55deg, rgba(255, 255, 255, 0.56) 15.62%, rgba(255, 255, 255, 0.28) 67.01%);
+
+    &> .card-body {
+        display: flex; 
+        flex-direction: column;
+        justify-content: space-between;
+    }
+}
+
+.plan-card {
+    @extend .card;
+    @extend .card-lg;
+
+    --bs-card-title-spacer-y: 0px;
+
+    background: linear-gradient(260.55deg, rgba(255, 255, 255, 0.56) 15.62%, rgba(255, 255, 255, 0.28) 67.01%);
+
+    &:hover {
+        box-shadow: 20px 20px 24px rgba(49, 67, 89, 0.13);
+    }
+
+    > .card-body {
+        display: flex; 
+        flex-direction: column; 
+
+        > .card-img-top {
+            margin-bottom: 2rem;
+        }
+        
+        & .card-title {
+            font-weight: 600; 
+            line-height: 130%; 
+            font-size: 1.5rem;
+        }
+
+        & .card-subtitle {
+            line-height: 140%; 
+            font-weight: 400; 
+            font-size: 14px;
+        }
+
+        .card-btn {
+            margin: auto 0px 0px;
+        }
+
+        .card-expand {
+            @extend a;
+
+            border: none;
+            padding: 0px;
+
+            &.collapsed:before {
+                content:'More Details';
+                display:block;
+            }
+            &:before
+            {
+                content:'Hide Details';
+                display:block;
+            }
+        }
+
+        .list-group-item {
+            font-weight: 500;
+        }
+    }
+}
+
+.form-card {
+    @extend .card;
+    @extend .card-lg;
+
+    min-width: 25vw;
+}

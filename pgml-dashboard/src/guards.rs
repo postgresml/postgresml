@@ -1,11 +1,18 @@
+use std::env::var;
+
 use rocket::http::{CookieJar, Status};
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket::State;
 use sqlx::PgPool;
 
-use std::env::var;
-
 use crate::{Clusters, Context};
+
+pub fn default_database_url() -> String {
+    match var("DATABASE_URL") {
+        Ok(val) => val,
+        Err(_) => "postgres:///pgml".to_string(),
+    }
+}
 
 #[derive(Debug)]
 pub struct Cluster {
@@ -53,12 +60,5 @@ impl<'r> FromRequest<'r> for Cluster {
             pool,
             context: shared_state.get_context(cluster_id),
         })
-    }
-}
-
-pub fn default_database_url() -> String {
-    match var("DATABASE_URL") {
-        Ok(val) => val,
-        Err(_) => "postgres:///pgml".to_string(),
     }
 }

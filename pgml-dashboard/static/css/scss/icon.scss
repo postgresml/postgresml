@@ -1,0 +1,90 @@
+.icon {
+    border-radius: #{$border-radius};
+    width: 44px; 
+    height: 44px;
+    padding: 8px; 
+
+    &-pink {
+        @extend .icon;
+        background: linear-gradient(42.63deg, #C44899 3.81%, #FF4567 100%); 
+        box-shadow: 8px 8px 24px rgba(255, 69, 103, 0.32);
+    }
+
+    &-green {
+        @extend .icon;
+        background: linear-gradient(225deg, #44FFDD 0%, #05C168 100%);
+        box-shadow: 8px 8px 24px rgba(7, 192, 108, 0.32);
+    }
+
+    &-gray {
+        @extend .icon;
+        background: linear-gradient(45deg, #A3A3B5 0%, #EEEEEE 100%);
+        box-shadow: 8px 8px 24px rgba(120, 120, 120, 0.32);
+    }
+
+    &-purple {
+        @extend .icon;
+        background: linear-gradient(45deg, #5337FF 0%, #A175FF 100%);
+        box-shadow: 8px 8px 24px rgba(163, 116, 253, 0.32);
+    }
+    &-orange {
+        @extend .icon;
+        background: linear-gradient(225deg, #FFB444 22.93%, #FF6644 100%);
+        box-shadow: 8px 8px 24px rgba(250, 179, 73, 0.32);
+    }
+    &-blue {
+        @extend .icon;
+        background: linear-gradient(225deg, #3EDCFF 0%, #3E9AFF 100%);
+        box-shadow: 8px 8px 24px rgba(66, 152, 252, 0.32);
+    }
+    &-party {
+        @extend .icon;
+        background: linear-gradient(48.19deg, #D940FF 0%, #8F02FE 24.43%, #5162FF 52.6%, #00D1FF 100%);
+        box-shadow: 8px 8px 24px rgba(128, 67, 254, 0.32);
+    }
+}
+
+.icon-lg {
+    width: 56px; 
+    height: 56px;
+    padding: 12px; 
+
+    &-pink {
+        @extend .icon-pink;
+        @extend .icon-lg;
+    }
+
+    &-green {
+        @extend .icon-green;
+        @extend .icon-lg;
+    }
+
+    &-orange {
+        @extend .icon-orange;
+        @extend .icon-lg;
+    }
+    &-party {
+        @extend .icon-party;
+        @extend .icon-lg;
+    }
+}
+
+.icon-xl {
+    border-radius: #{$border-radius-lg};
+    width: 80px; 
+    height: 80px;
+    padding: 16px; 
+
+    &-party {
+        @extend .icon-party;
+        @extend .icon-xl;
+    }
+}
+
+.icon-alt-padding {
+    padding: 12px;
+}
+
+.icon-alt-shadow {
+    box-shadow: 8px 8px 24px rgba(163, 116, 253, 0.32);
+}

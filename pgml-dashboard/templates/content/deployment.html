@@ -1,0 +1,20 @@
+<section>
+  <h1><span class="material-symbols-outlined">inventory</span>Deployment
+    <% if deployment.active.unwrap() { %>
+      <span class="material-symbols-outlined success">star</span>
+    <% } else { %>
+      <span class="material-symbols-outlined">cancel</span>
+    <% } %>
+  </h1>
+
+  <dl>
+    <dt>Project</dt>
+    <dd><a href="/dashboard/projects/<%= project.id %>"><%= project.name %></a></dd>
+    <dt>Model</dt>
+    <dd><a href="/dashboard/models/<%= model.id %>"><%= model.algorithm %></a></dd>
+    <dt>Reason</dt>
+    <dd><%= deployment.human_readable_strategy() %></dd>
+    <dt>Deployed</dt>
+    <dd><time datetime="<% deployment.created_at; %>"><% deployment.created_at; %></time></dd>
+  </dl>
+</section>

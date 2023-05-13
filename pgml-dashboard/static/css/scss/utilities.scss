@@ -1,0 +1,95 @@
+// spacing custome classes, extend Boostrap 
+.gap-4_5 {
+    gap: 2rem;
+}
+
+.py-6 {
+    padding-top: 7rem;
+    padding-bottom: 7rem;
+}
+
+// position custome classes, extend Boostrap 
+.top {
+    &-n15 {
+        top: -15% !important;
+    }
+
+    &-35 {
+        top: 35% !important;
+    }
+}
+
+.bottom {
+    &-n35 {
+        bottom: -35% !important;
+    }
+
+    &-n15 {
+        bottom: -15% !important;
+    }
+
+    &-10 {
+        bottom: 10% !important;
+    }
+}
+
+.start {
+    &-n15 {
+        left: -15% !important;
+    }
+
+    &-n5 {
+        left: -5% !important;
+    }
+
+    &-10 {
+        left: 10% !important;
+    }
+
+    &-15 {
+        left: 15% !important;
+    }
+}
+
+.end {
+    &-n35 {
+        right: -35% !important;
+    }
+    
+    &-n15 {
+        right: -15% !important;
+    }
+    
+    &-n10 {
+        right: -10% !important;
+    }
+    
+    &-n5 {
+        right: -5% !important;
+    }
+    
+    &-10 {
+        right: 10% !important;
+    }
+}
+
+// sizing custome classes, extend Bootstrap
+.w {
+    &-10 {
+        width: 10% !important;
+    }
+    
+    &-30 {
+        width: 30% !important;
+    }
+}
+
+.h {
+    &-10 {
+        height: 10% !important;
+    }
+    
+    &-30 {
+        height: 30% !important;
+    }
+}

@@ -1,0 +1,5 @@
+<div class="d-flex gap-2 mw-100 flex-wrap">
+  <% for b in boxes { %>
+    <%- b.render_once().unwrap() %>
+  <% } %>
+</div>

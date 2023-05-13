@@ -1,0 +1,119 @@
+.x-scroll-container {
+    @extend .noselect;
+    
+    display: flex; 
+    flex-wrap: nowrap;
+    overflow-x: scroll;
+    width: 100vw;
+    position: relative;
+
+    &::-webkit-scrollbar {
+        background: transparent; 
+
+        &-thumb {
+            background: transparent;
+        }
+    }
+
+    @include media-breakpoint-up(lg) {
+        &:hover {
+            cursor: grab;
+    
+            &::-webkit-scrollbar {
+                display: block; 
+                background: transparent;
+                &-track {
+                    background: #{$gray-800};
+                    margin: 40vw;
+                }
+                &-thumb {
+                    background: #{$purple};
+                }
+            }
+        }
+
+        &:active {
+            cursor: grabbing;
+        }
+    }
+
+    &> * {
+        min-width: min(25rem, 75vw);
+    }
+
+    &> *:first-child {
+        margin-left: 3rem;
+    }
+
+    &> *:last-child {
+        margin-right: 3rem;
+    }
+
+    &.container-align {
+        @include media-breakpoint-up(lg) {
+            &> *:first-child {
+                margin-left: calc((100vw - 951px) / 2);
+            }
+
+            &> *:last-child {
+                margin-right: calc((100vw - 951px) / 2);
+            }
+        }
+
+        @include media-breakpoint-up(xl) {
+            &> *:first-child {
+                margin-left: calc((100vw - 1119px) / 2);
+            }
+
+            &> *:last-child {
+                margin-right: calc((100vw - 1119px) / 2);
+            }
+        }
+
+        @include media-breakpoint-up(xxl) {
+            &> *:first-child {
+                margin-left: calc((100vw - 1300px) / 2);
+            }
+
+            &> *:last-child {
+                margin-right: calc((100vw - 1300px) / 2);
+            }
+        }
+    }
+}
+
+.toc-container {
+    @extend .z-1; 
+
+    position: sticky; 
+    top: 0;
+    height: 2.5rem;
+    overflow: visible;
+
+    // hide scrollbar while expanding and collapsing
+    .collapsing {
+        &::-webkit-scrollbar {
+            display: none;
+        }
+        scrollbar-width: none; // firefox
+    }
+
+    .show {
+        height: 100%;
+        max-height: 80vh;
+    }
+    
+    .collapse {
+        overflow-y: auto;
+    }
+    
+    @include media-breakpoint-up(xxl) {
+        height: 100%;
+        max-height: 80vh;
+
+        .collapse {
+            height: 100%;
+            max-height: calc(80vh - 2.5rem);
+        }
+    }
+}

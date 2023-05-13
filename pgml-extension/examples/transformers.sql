@@ -2,7 +2,7 @@
 \set ON_ERROR_STOP true
 \timing on
 
-SELECT pgml.embed('intfloat/e5-small', 'hi mom');
+SELECT pgml.embed('intfloat/e5-small', 'hi mom', '{"device": "cuda"}');
 
 
 SELECT pgml.transform(

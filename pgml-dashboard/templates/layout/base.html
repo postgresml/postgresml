@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en-US" data-bs-theme="dark">
+
+  <% include!("head.html"); %>
+
+  <body>
+    <main>
+      <div class="container-fluid bg-primary py-4 min-vh-100">
+        <div class="ellipse-container position-absolute" style="margin: -2rem; height: 100vh; width: 100vw;">
+          <div class="ellipse-21" style="width: 35vw; height: 35vh; top: 0vh; left: -7vw"></div>
+        </div>
+
+        <div class="container mb-4 mb-xxl-5">
+          <% include!("nav/top.html"); %>
+        </div>
+
+        <div class="container mb-4 mb-xxl-5">
+          <div class="row position-relative">
+            <% include!("nav/side.html"); %>
+
+            <%- content.unwrap_or_default() %>
+
+            <% include!("nav/toc.html"); %>
+          </div>
+        </div>
+      </div>
+
+      <% include!("footer.html"); %>
+    </main>
+
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+  </body>
+</html>

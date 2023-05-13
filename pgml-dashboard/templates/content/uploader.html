@@ -1,0 +1,47 @@
+<section>
+  <% if error.is_some() { %>
+  <h1><span class="material-symbols-outlined" style="color: var(--highlite-red)">cloud_upload</span>Error</h1>
+  <% } else { %>
+  <h1><span class="material-symbols-outlined">cloud_upload</span>Upload Data</h1>
+  <% } %>
+  
+  <% if error.is_some() { %>
+    <p>Hmm, something went wrong. Make sure:</p>
+  <% } else { %>
+    <p>You can upload your datasets using the CSV format. Before uploading, make sure:</p>
+  <% } %>
+  
+  <ol>
+    <li>If the CSV has a header, the column names are alphanumeric, contain no spaces and don't start with a number</li>
+    <li>The CSV is comma (<code>,</code>) delimited</li>
+  </ol>
+
+  <% if error.is_some() { %>
+  <h4>Error: </h4>
+  <div class="markdown-body">
+    <pre><code><%= error.unwrap() %></code></pre>
+  </div>
+  <% } %>
+
+  <p>If you are exporting data from a PostgreSQL database, you can use <code>psql</code> to generate a valid CSV file with a header:</p>
+  <div class="markdown-body">
+    <pre><code class="language-sql">\copy your_table_name TO 'output.csv' CSV HEADER</code></pre>
+  </div>
+
+</section>
+
+<section>
+  <form action="/dashboard/uploader" method="post" enctype="multipart/form-data">
+    <div class="flex flex-center">
+      <input id="file" type="file" name="file" accept="text/csv,application/json" required="true" />
+      <div class="flex flex-center" style="margin-left: 2rem;">
+        <input type="checkbox" name="has_header" checked id="has_header" style="margin-right: 0.5rem;" checked />
+        <label for="has_header">My CSV has a header</label>
+      </div>
+    </div>
+
+    <div class="button-container">
+      <button type="submit">Upload</button>
+    </div>
+  </form>
+</section>

@@ -1,0 +1,52 @@
+.generic-table {
+    .header {
+        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.54) 15.62%, rgba(53, 51, 56, 0.72) 67.01%);
+
+        p {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: .5rem 0rem;
+        }
+    }
+
+    .header-alt {
+        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.245) 15.62%, rgba(53, 51, 56, 0.28) 67.01%);
+        backdrop-filter: blur(8px);
+    }
+
+    &> * {
+        border-bottom: 1px solid #{$gray-600};
+        background-color: #{$gray-800};
+        background-color: #17181A;
+
+        p {
+            font-weight: 500;
+            margin: .5rem 0rem;
+        }
+    }
+
+    &> .row:first-child {
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        border-bottom: none;
+    }
+
+    &> .row:last-child {
+        border-bottom-left-radius: 16px;
+        border-bottom-right-radius: 16px;
+        border-bottom: none;
+    }
+}
+
+.log-table {
+    @extend .table;
+
+    .entry-FATAL {
+        background-color: #{$danger};
+    }
+
+    td {
+        padding-top: .25rem;
+        padding-bottom: .25rem;
+    }
+}

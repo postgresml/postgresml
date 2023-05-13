@@ -1,0 +1,31 @@
+<section>
+   <h1>
+    <span class="material-symbols-outlined">newspaper</span>Notebooks
+  </h1> 
+
+  <% if !notebooks.is_empty() { %>
+  <ol class="object_list">
+    <% for notebook in notebooks { %>
+    <li>
+      <a href="/dashboard/notebooks/<%= notebook.id %>/">
+        <span>
+          <%= notebook.name %>
+        </span>
+      </a>
+    </li>
+    <% } %>
+  </ol>
+  <% } %>
+
+  <h2>New notebook</h2>
+
+  <form action="/dashboard/notebooks" method="post">
+    <div class="input-container">
+      <input type="text" name="name" required placeholder="New unique notebook name" size="50" />
+    </div>
+
+    <div class="button-container">
+      <button class="next" type="submit">Create notebook</button>
+    </div>
+  </form>
+</section>
