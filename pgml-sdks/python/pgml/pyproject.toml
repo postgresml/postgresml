@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "pgml-memory"
+name = "pgml"
 version = "0.1.0"
 description = ""
 authors = ["Santi Adavani <santi@hyperparam.ai>"]
 readme = "README.md"
-packages = [{include = "pgml_memory"}]
+packages = [{include = "pgml"}]
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4.0"
