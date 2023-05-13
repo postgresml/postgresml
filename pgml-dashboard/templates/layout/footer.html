@@ -1,0 +1,44 @@
+<div class="container-fluid bg-primary p-5">
+  <div class="container mb-5">
+    <h5 class="h5 d-flex align-items-center gap-2 mb-5">
+      <img src="/dashboard/static/images/owl_gradient.svg" alt="PostgresML Logo" height="30" width="21">
+      <span>Postgres<span class="fw-semibold">ML</span></span>
+    </h5>
+
+    <div class="row">
+      <div class="col-12 col-lg-6 col-xl-4">
+        <nav class="nav d-flex flex-column">
+          <a class="nav-link text-white" href="/">PostgresML</a>
+          <a class="nav-link text-white" href="https://github.com/postgresml/postgresml">Github</a>
+          <a class="nav-link text-white" href="/docs/guides/setup/quick_start_with_docker" data-turbo="false">Documentation</a>
+          <a class="nav-link text-white" href="mailto:team@postgresml.org">Contact Us</a>
+          <a class="nav-link text-white" href="https://discord.gg/DmyJP3qJ7U">Discord</a>
+        </nav>
+      </div>
+      <div class="col-12 col-lg-6 col-xl-4">
+        <nav class="nav d-flex flex-column">
+          <a class="nav-link text-white" href="<%= crate::utils::config::signup_url() %>">Create an Account</a>
+          <a class="nav-link text-white" href="/login">Login</a>
+          <a class="nav-link text-white" href="/tos" data-turbo="false">Terms of Service</a>
+          <a class="nav-link text-white" href="/privacy" data-turbo="false">Privacy Policy</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <div class="container pt-5">
+    <div class="d-flex justify-content-between gap-2">
+      <h6 class="h6 d-lg-flex d-none align-items-center gap-2">
+        <span>Powered by</span>
+        <img src="/dashboard/static/images/owl_gradient.svg" alt="PostgresML Logo" height="25" width="17">
+        <span>Postgres<span class="fw-semibold">ML</span></span>
+      </h6>
+
+      <div class="d-flex gap-2 align-items-center justify-content-end">
+        <a href="https://discord.gg/DmyJP3qJ7U" rel="noopener" target="_blank" title="discord.gg">
+          <img src="/dashboard/static/images/icons/discord-white.svg" height="32" width="32" alt="Discord" />
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

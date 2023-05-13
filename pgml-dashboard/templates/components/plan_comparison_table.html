@@ -1,0 +1,49 @@
+
+<div class="pt-5 generic-table text-white">
+  <div class="row header">
+    <div class="col-11 offset-1">
+      <p><%= header.to_string() %></p>
+    </div>
+  </div>
+
+  <% for row in rows.into_iter() { %>
+    <% let (test, free, business, enterprise) = row; %>
+  <div class="row">
+    <div class="col-2 offset-1">
+      <div class="d-flex flex-column align-items-start h-100">
+        <p><%= test %></p>
+      </div>
+    </div>
+
+    <div class="col-3">
+      <div class="d-flex flex-column align-items-center justify-content-center h-100">
+        <% if free { %>
+        <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+        <% } else { %>
+        <img loading="lazy" src="/static/images/icons/remove.svg" width="24" height="24" alt="Remove" />
+        <% } %>
+      </div>
+    </div>
+
+    <div class="col-3">
+      <div class="d-flex flex-column align-items-center justify-content-center h-100">
+        <% if business { %>
+        <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+        <% } else { %>
+        <img loading="lazy" src="/static/images/icons/remove.svg" width="24" height="24" alt="Remove" />
+        <% } %>
+      </div>
+    </div>
+
+    <div class="col-3">
+      <div class="d-flex flex-column align-items-center justify-content-center h-100">
+        <% if enterprise { %>
+        <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+        <% } else { %>
+        <img loading="lazy" src="/static/images/icons/remove.svg" width="24" height="24" alt="Remove" />
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <% } %>
+</div>

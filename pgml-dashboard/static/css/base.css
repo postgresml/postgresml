@@ -1,132 +1,24 @@
-:root {
-    --gray-0: #000000;
-    --gray-1: #1C1C1C;
-    --gray-2: #373737;
-    --gray-3: #606060;
-    --gray-4: #808080;
-    --gray-5: #929292;
-    --gray-6: #ADADAD;
-    --gray-7: #C8C8C8;
-    --gray-8: rgba(242, 244, 246, 1);
-    --gray-9: rgba(251, 252, 253, 1);
-    --gray-10: rgba(255, 255, 255, 1);
-    --color-1: rgb(2, 2, 40);
-    --color-2: rgb(10, 20, 80);
-    --color-3: rgb(20, 40, 120);
-    --color-4: rgb(40, 80, 160);
-    --color-5: rgb(80, 160, 220);
-    --color-6: rgb(160, 220, 250);
-    --color-7: rgb(205, 229, 255);
-    --color-8: rgb(225, 241, 255);
-    --color-9: rgb(240, 243, 255);
-    --shadow-2: rgba(0,0,0,0.25);
-    --highlite-red: #FF4444;
-    --highlite-orange: #FF8B1F;
-    --highlite-yellow: #FFD600;
-    --highlite-green: #93DB1D;
-    --highlite-blue: rgb(19, 145, 255);
-    --highlite-purple: #CC00FF;
-}
-
-/* http://meyerweb.com/eric/tools/css/reset/ 
-   v2.0 | 20110126
-   License: none (public domain)
-*/
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed, 
-figure, figcaption, footer, header, hgroup, 
-menu, nav, output, ruby, section, summary,
-time, mark, audio, video {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	font-size: 100%;
-	font: inherit;
-	vertical-align: baseline;
-}
-article, aside, details, figcaption, figure, 
-footer, header, hgroup, menu, nav, section {
-	display: block;
-}
-body {
-	line-height: 1;
-    min-height: 100vh;
-}
-ol, ul {
-	list-style: none;
-}
-blockquote, q {
-	quotes: none;
-}
-blockquote:before, blockquote:after,
-q:before, q:after {
-	content: '';
-	content: none;
-}
-
-/* Site wide elemenet styles */
-a {
-    color: var(--highlite-blue);
-    text-decoration: none;
-}
-h1 {
-    font-size: 3em;
-    font-weight: 100;
-    margin: 0 0 0.5em;
-    color: var(--gray-1);
-    vertical-align: center;
-}
-h1 span.material-symbols-outlined:first-of-type {
-    font-size: 1em;
-    position: relative;
-    top: 10px;
-    margin-right: 10px; 
-}
-h2 {
-    font-size: 2em;
-    font-weight: 300;
-    margin: 0 0 1em 0;
-    padding: 0 0 0;
-    color: var(--gray-1);
-}
-h2 span.material-symbols-outlined:first-of-type {
-    margin: 0 5px 0 0;
-}
-h3 {
-    font-size: 1.5em;
-    font-weight: 500;
-    margin: 1em 0 1em 0;
-    color: var(--gray-1);
-}
-code {
-    font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
-}
-figure {
-    display: inline-block;
-    width: 30vmin;
-    height: 30vmin;
-    margin: 30px;
-    border-radius: 10px;
-}
+/* Site wide element styles */
+.row { padding: 0 1em;}
 section {
-    background-color: var(--gray-10);
-    padding: 30px;
-    margin: 20px min(5vw, 20px);
+    background-color: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
     box-shadow: 0 1px 2px var(--shadow-2);
     overflow: auto;
-    min-width: 70vw;
-    max-width: 90vw;
 }
 
+section > h1 {
+  padding: 1em 1em 0.5em;
+}
+section > h1 > span.material-symbols-outlined {
+  margin-right: 0.5em;
+}
+section > h2 {
+  padding: 1em 1em 0.5em;
+}
+section > form {
+  padding: 1em 25px 0.5em;
+}
 /* Tables, sticky headers, overflow scroll, rounded corners, stripes and highlights */
 table {
     border-collapse: separate;
@@ -186,13 +78,6 @@ table tbody tr:hover {
 }
 
 /* Body */
-body {
-    font-family: Roboto, "Microsoft Sans Serif", "Helvetica Neue", Arial, sans-serif;
-    font-weight: normal;
-    color: var(--gray-3);
-    background-color: var(--color-9);
-}
-
 .success {
     color: var(--highlite-green);
 }
@@ -227,83 +112,6 @@ b {
     font-weight: bolder;
 }
 
-/* Header */
-header {
-    background-color: var(--color-1);
-    margin: auto;
-    vertical-align: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10;
-    overflow: hidden;
-}
-header a {
-    color: var(--gray-7);
-}
-header a:hover {
-    color: var(--gray-10);
-}
-header li.logo {
-    color: var(--gray-10);
-    font-size: 1.5em;
-    font-weight: 300;
-    margin-right: 30px;
-}
-header li.logo b {
-    color: var(--highlite-blue);
-    font-weight: 400;
-}
-header li.selected {
-    position: relative;
-}
-header li.selected span.material-symbols-outlined,
-header li.selected a {
-    font-weight: 600;
-    color: var(--gray-10);
-}
-header li.selected a::after {
-    content: "◢◣";
-    color: var(--gray-10); 
-    position: absolute;
-    letter-spacing: -2.5px;
-    bottom: -8px;
-    left: calc(50% - 0.5em);
-}
-header img {
-    vertical-align: middle;
-}
-header nav ul {
-    white-space: nowrap;
-}
-header li {
-    display: inline-block;
-    padding: 10px 10px;
-    border-style: 1px solid var(--color-3);
-    position: relative;
-}
-header a span.material-symbols-outlined {
-    vertical-align: middle;
-    font-size: 1em;
-    padding: 3px;
-    margin-top: -3px;
-}
-
-/* Main */
-main {
-    padding: 45px 0 45px;
-    margin: auto;
-    overflow: visible;
-    width: 100%;
-    max-width: fit-content;
-    background-color: var(--color-9);
-}
-
-/* Footer */
-footer {
-    height: 0;
-}
 
 ol.object_list {
     width: 100%;
@@ -320,15 +128,6 @@ ol.object_list h3 {
 }
 ol.object_list li {
     display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    color: var(--gray-3);
-    width: 100%;
-    height: 2em;
-    position: relative;
-    margin: 0 -30px;
-    padding: 0 30px;
 }
 ol.object_list li a {
     display: flex;
@@ -352,9 +151,6 @@ ol.object_list li a::after {
     margin: 0 0 0 1em;
 }
 ol.object_list li span {
-    padding-top: 0.5em;
-    height: 1.5em;
-    margin-left: 1em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -469,11 +265,7 @@ main turbo-frame:first-of-type .notebook-cell {
   margin: 0 auto;
   border-radius: 0;
   padding: 1rem;
-  border-left: 2px solid var(--gray-8);
-  border-right: 1px solid var(--gray-8);
-  border-top: 1px solid var(--gray-10);
-  border-bottom: 1px solid var(--gray-10);
-  background: var(--gray-10);
+border: 1px solid rgba(255,255,255,0);
 }
 
 .notebook-last-cell {
@@ -481,16 +273,14 @@ main turbo-frame:first-of-type .notebook-cell {
 }
 
 .notebook-cell article.markdown-body {
-    background-color: inherit;
+
 }
 
 .notebook-cell .markdown-body pre {
-    background-color: var(--gray-8);
 }
 
 .notebook-cell:hover {
-    border-top: 1px solid var(--gray-8);
-    border-bottom: 1px solid var(--gray-8);
+border: 1px solid rgba(255,255,255,0.3);
 }
 
 .notebook-cell.selected {
@@ -505,9 +295,6 @@ main turbo-frame:first-of-type .notebook-cell {
     background: var(--gray-10);
 }
 
-.language-sql {
-  color: #000;
-}
 
 .notebook-buttons {
     display: flex;
@@ -595,13 +382,32 @@ main turbo-frame:first-of-type .notebook-cell {
   margin-bottom: 1rem;
 }
 
+.notebook-contents {
+  background-color: var(--bs-gray-900) !important;
+  border: 1px solid var(--bs-gray-600);
+  border-radius: 10px;
+  color: var(--bs-gray-200) !important;
+}
+
+.notebook-buttons button {
+  background-color: var(--bs-gray-200);
+  border: 1px solid var(--bs-gray-900);
+  border-radius: 5px;
+}
+
+.notebook-buttons button:hover {
+  background-color: var(--bs-gray-100);
+}
+
 /*
 * Customize editor
 */
 .CodeMirror {
   font-size: 1rem;
-  border: 1px solid var(--gray-8);
+  border: 1px solid var(--bs-gray-600);
   border-radius: 10px;
+  background-color: var(--bs-gray-900) !important;
+  color: var(--bs-gray-300) !important;
 }
 
 /*
@@ -619,14 +425,14 @@ body.uploader section .markdown-body{
   margin: 1rem 0;
 }
 
-body.uploader ul { 
-   list-style-type: disc; 
-   list-style-position: inside; 
+body.uploader ul {
+   list-style-type: disc;
+   list-style-position: inside;
 }
 
-body.uploader ol { 
-   list-style-type: decimal; 
-   list-style-position: inside; 
+body.uploader ol {
+   list-style-type: decimal;
+   list-style-position: inside;
 }
 
 body.uploader section li {
@@ -651,12 +457,12 @@ input[type=checkbox] {
 
   background: transparent;
   border: 1px solid var(--gray-5);
-  
+
   height: 1.6em;
   width: 1.6em;
-  
+
   border-radius: 3px;
-  
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -714,10 +520,7 @@ input[type=checkbox]:checked:after {
     header nav a span.material-symbols-outlined {
         font-size: 3rem;
     }
-    main {
-        padding: 0px 0 100px;
-    }
-    dl {        
+    dl {
         max-height: 6em;
     }
     dt {
@@ -749,7 +552,7 @@ input[type=checkbox]:checked:after {
 }
 
 @media only screen and (max-width: 300px) {
-    dl {        
+    dl {
         max-height: 12em;
     }
     dt {

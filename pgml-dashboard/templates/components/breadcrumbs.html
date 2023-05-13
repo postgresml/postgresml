@@ -1,0 +1,40 @@
+<nav class="navbar-console" data-controller="search">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <% for link in links {
+        let active = if link.active {
+          "active"
+        } else {
+          ""
+        };
+  
+        let area = if link.active {
+          r#"aria-current="page""#
+        } else {
+          ""
+        };
+  
+      %>
+        <li class="breadcrumb-item <%= active %> fs-6" <%- area %>>
+          <a class="btn btn-tertiary" href="<%= link.href %>">
+            <%= link.name %>  
+          </a>
+        </li>
+      <% } %>
+    </ol>
+  </nav>
+
+  <nav class="d-flex gap-3 align-items-center">
+    <button type="text" class="btn-search d-flex gap-2" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+      <span class="material-symbols-outlined">
+        search
+      </span>
+      <span>search</span>
+    </button>
+    <a href="/logout" class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary">Logout</a>
+    <a href="/support" class="btn btn-tertiary p-0 pe-2">
+      <img loading="lazy" src="/dashboard/static/images/icons/help.svg" width="30" height="30" alt="help" />
+    </a>
+  </nav>
+  <% include!("search_modal.html"); %>
+</nav>

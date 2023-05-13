@@ -1,0 +1,14 @@
+<section>
+  <h1><span class="material-symbols-outlined">storage</span>Snapshots</h1> 
+  <ol class="object_list snapshot_list">
+    <% for snapshot in snapshots { %>
+    <li>
+      <a href="/dashboard/snapshots/<%= snapshot.id %>">
+        <span><%= snapshot.relation_name %> </span>
+        <span><%= snapshot.table_size %></span>
+        <span><time datetime="<% snapshot.created_at; %>"><% snapshot.created_at; %></time></span>
+      </a>
+    </li>
+    <% } %>
+  </ol>
+</section>

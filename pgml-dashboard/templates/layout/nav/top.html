@@ -1,0 +1,70 @@
+<nav class="navbar horizontal navbar-expand-lg" data-controller="search">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+      <img src="/dashboard/static/images/owl_gradient.svg" alt="PostgresML Logo" height="30" width="21">
+      <span class="fw-normal position-relative overflow-visible">Postgres
+        <span class="fw-semibold">ML</span>
+        <span class="beta-badge position-absolute bottom-0 end-0 pe-0 mb-n3">Beta</span>
+      </span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav flex-grow-1 justify-content-center me-auto mb-2 mb-lg-0">
+        <li class="nav-item d-flex align-items-center">
+          <a class="nav-link" href="/dashboard/notebooks">Notebooks</a>
+        </li>
+        <li class="nav-item d-flex align-items-center">
+          <a class="nav-link" href="/dashboard/projects">Projects</a>
+        </li>
+        <li class="nav-item d-flex align-items-center">
+          <a class="nav-link" href="/dashboard/models">Models</a>
+        </li>
+        <li class="nav-item d-flex align-items-center">
+          <a class="nav-link" href="/dashboard/deployments">Deployments</a>
+        </li>
+        <li class="nav-item d-flex align-items-center">
+          <a class="nav-link" href="/dashboard/snapshots">Snapshots</a>
+        </li>
+        <li class="nav-item d-flex align-items-center">
+          <a class="nav-link" href="/docs/guides/setup/quick_start_with_docker/">Docs</a>
+        </li>
+        <li class="nav-item d-flex align-items-center">
+          <a class="nav-link" href="/blog/postgresml-raises-4.7M-to-launch-serverless-ai-application-databases-based-on-postgres">Blog</a>
+        </li>
+        <li class="nav-item d-flex align-items-center">
+          <a class="nav-link" href="https://github.com/postgresml/postgresml" target="_blank">Open Source</a>
+        </li>
+        <!--
+        <li class="nav-item d-flex align-items-center">
+          <a class="nav-link" href="/team/">Team</a>
+        </li>
+        -->
+      </ul>
+
+
+      <div class="d-flex gap-3 flex-wrap flex-lg-nowrap">
+        <button type="text" class="btn-search d-flex gap-2" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+          <img loading="lazy" src="/dashboard/static/images/icons/search.svg" width="24" height="24" alt="search" />
+          <span>search</span>
+        </button>
+    <!--
+        <div class="d-flex gap-2 justify-content-end align-items-center">
+          <% if user.as_ref().is_none() { %>
+          <a class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/login">Sign In</a>
+          <a class="btn btn-primary" href="<%- crate::utils::config::signup_url() %>">Get Started</a>
+          <% } else { %>
+          <a class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/clusters">Console</a>
+          <a href="/support" class="btn btn-tertiary p-0 ps-2">
+            <img loading="lazy" src="/dashboard/static/images/icons/help.svg" width="30" height="30" alt="help" />
+          </a>
+          <% } %>
+        </div>
+    -->
+      </div>
+    </div>
+  </div>
+  <% include!("../../components/search_modal.html");%>
+</nav>
+

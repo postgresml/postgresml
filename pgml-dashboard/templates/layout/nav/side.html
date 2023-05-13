@@ -1,0 +1,17 @@
+<% if !nav_links.is_empty() {%>
+  <nav class="col-12 col-xxl-2 col-xl-3 px-xl-0 pb-4 pt-xl-0 pt-xl-4 order-1 order-xl-2 order-xxl-1">
+    <div class="card card-dark nav guides">
+      <div class="card-body py-2 py-xl-4">
+        <h6 class="mb-2 pb-2 d-none d-xl-block"><%= nav_title.clone().unwrap_or_default() %></h6>
+        <a class="h6 px-0 my-1 d-flex justify-content-between align-items-center d-xl-none text-white" role="button" data-bs-toggle="collapse" href="#guides" aria-expanded="false" aria-congrols="guides">
+          <span><%= nav_title.clone().unwrap_or_default() %></span><span class="material-symbols-outlined" >expand_more</span>
+        </a>
+        <div style="font-size: 1rem;" class="d-xl-block collapse border-top pt-2" id="guides">
+          <% for doc_link in nav_links.into_iter() { %>
+            <%- doc_link.render_once().unwrap() %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </nav>
+<% } %>

@@ -1,0 +1,75 @@
+<section>
+  <h1><span class="material-symbols-outlined">model_training</span><%= model.algorithm %>
+    <% if deployed { %>
+      <span class="material-symbols-outlined success">star</span>
+    <% } else { %>
+      <span class="material-symbols-outlined">cancel</span>
+    <% } %>
+  </h1>
+
+  <dl>
+    <dt>Project</dt>
+    <dd><a href="/dashboard/projects/<%= project.id %>"><%= project.name %></a></dd>
+      <dt>Snapshot</dt>
+      <dd><a href="/dashboard/snapshots/<%= snapshot.id %>"><%= snapshot.relation_name %></a></dd>
+    <dt>Created</dt>
+    <dd><time datetime="<% model.created_at; %>"><% model.created_at; %></time></dd>
+  </dl>
+
+  <h2>Metrics</h2>
+  <% if !model.metrics().is_empty() { %>
+  <dl class="model_metrics">
+    <% for (key, value) in model.metrics().iter() { %>
+      <% if key == "search_results" {} else { %>
+    <dt><%= key %></dt>
+    <dd><%= format!("{:.4}", value.as_f64().unwrap_or(0.)) %></dd>
+      <% } %>
+    <% } %>
+  </dl>
+  <% } else { %>
+  <i>no metrics</i>
+  <% } %>
+
+  <h2>Hyperparams</h2>
+  <% if !model.hyperparams().is_empty() { %>
+  <dl class="model_metrics">
+    <% for (key, value) in model.hyperparams().iter() { %>
+    <dt><%= key %></dt>
+    <dd><%= value.to_string().replace("\"", "") %></dd>
+    <% } %>
+  </dl>
+  <% } else { %>
+  <i>no hyperparams</i>
+  <% } %>
+
+<% if model.search.is_some() && model.search_results().is_some() { %>
+  <h2>Hyperparam Search - <%= model.search.as_ref().unwrap() %> </h2>
+  <% for (param, values) in model.search_params().iter() { %>
+    <h3><%= param %></h3>
+    <pre><code><%= values.to_string() %></code></pre>
+    <figure id="graph_<%= param %>_test_score"></figure>
+    <figure id="graph_<%= param %>_fit_time"></figure>
+    <figure id="graph_<%= param %>_score_time"></figure>
+  <% } %>
+
+
+<script defer type="module">
+  import { renderHyperparam } from '/dashboard/static/js/main.js'
+
+  // Injecting variables into JS from Django templates is best left the pros ;)
+  var best_index = 0;
+
+  <% for (name, series) in model.search_results().unwrap().iter() { %>
+  var <%= name %> = <%= series.to_string() %>;
+  <% } %>
+
+  <% for (param, _) in model.search_params().iter() { %>
+  renderHyperparam("graph_<%= param %>_test_score", "<%= param %>", "Test Score", param_<%= param %>, 0, mean_test_score, std_test_score);
+  renderHyperparam("graph_<%= param %>_fit_time", "<%= param %>", "Fit Time", param_<%= param %>, 0, mean_test_score, std_test_score);
+  renderHyperparam("graph_<%= param %>_score_time", "<%= param %>", "Score Time", param_<%= param %>, 0, mean_test_score, std_test_score);
+  <% } %>
+</script>
+
+<% } %>
+</section>
+

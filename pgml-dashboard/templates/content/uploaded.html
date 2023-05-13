@@ -1,0 +1,24 @@
+<section>
+  <h1><span class="material-symbols-outlined" style="color: var(--highlite-green)">cloud_upload</span>Upload Successful</h1>
+
+  <h2><span class="material-symbols-outlined">data_array</span>Preview</h2>
+  
+  <%- sql.render_once().unwrap() %>
+  <h2><span class="material-symbols-outlined">table_rows</span>Next Steps</h2>
+  <p>Your data has been saved in <strong><%= table_name %></strong> table. You can explore the data in a <a href="/dashboard/notebooks/">notebook</a>:</p>
+  <div class="markdown-body">
+    <pre><code class="language-sql">SELECT * FROM <%= table_name %> LIMIT 10</code></pre>
+  </div>
+  <p> All columns were converted to text, so you'll need to cast them to the appropriate data type before training a model, for example:</p>
+  <div class="markdown-body">
+    <pre><code class="language-sql">CREATE VIEW <%= table_name %>_view AS
+SELECT <% let mut iter = columns.iter().peekable(); while let Some(column) = iter.next() { %>
+  CAST(<%= column %> AS FLOAT4)<% if iter.peek().is_some() { %>,<% } %> <% } %>
+FROM public.<%= table_name %></code></pre>
+  </div>
+  <p>You can now run experiments and build models using <a href="/dashboard/notebooks">Notebooks</a>:</p>
+  <div class="markdown-body">
+    <pre><code class="language-sql">SELECT * FROM <%= table_name %>_view
+LIMIT 10</code></pre>
+  </div>
+</section>

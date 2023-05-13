@@ -1,0 +1,203 @@
+<div class="container-fluid py-5 bg-white ellipse-container" id="plans" data-bs-theme="light">
+    <div class="ellipse-22 w-30 h-50 top-0 end-0"></div>
+    <div class="ellipse-18 w-50 h-50 bottom-0 start-n15"></div>
+    <div class="ellipse-19 w-50 h-30 bottom-n35 start-0"></div>
+    <div class="container my-5">
+      <div class="d-flex justify-content-center mb-5">
+        <h2 class="display-2 text-center">We Have the Perfect<br /><span class="party-time">Plan For You</span></h2>
+      </div>
+    </div>
+
+    <div class="container my-5">
+      <div class="row pb-5 gy-5">
+        <div class="col-12 col-xl-4">
+          <div class="plan-card h-100">
+            <div class="card-body">
+              <img loading="lazy" width="56" height="56" src="/static/images/icons/ellipse.svg" alt="ellipse" class="icon-lg-pink card-img-top" />
+
+              <div class="d-flex flex-column mb-4">
+                <span class="beta-badge align-self-start p-0 pb-1 fw-semibold">Private Alpha</span>
+                <div>
+                  <div class="d-flex justify-content-between">
+                    <h3 class="card-title">Serverless</h3>
+                    <h4 class="card-title">$0</h4>
+                  </div>
+                  <div>
+                    <h4 class="card-subtitle">Starting at</h4>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <h4 class="card-subtitle">For startups </br>Free, without cache acceleration</h4>
+              </div>
+  
+              <ul class="list-group collapse freePlanCollapse d-sm-block mb-4">
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  $0.25/hr per GB GPU cache
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Multi GPU burst capability
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Cache your models on the GPU
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Instant scalability up to 256GB GPU
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Scale further with advanced sharding functionality
+                </li>
+              </ul>
+
+              <div class="my-2 d-sm-none">
+                <button class="card-expand collapsed" data-bs-toggle="collapse" data-bs-target=".freePlanCollapse" aria-expanded="false" aria-controls="freePlanCollapse"></button>
+              </div>
+              
+              <form class="card-btn" action="/plans" method="post">
+                <input type="hidden" value="serverless" name="plan">
+                <button type="submit" class="btn btn-secondary w-100" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary">
+                  <% if user.as_ref().is_none() { %>
+                    Get Started For Free
+                  <% } else { %>
+                    Start Free Project
+                  <% } %>
+                </button>
+              </form>
+              
+
+            </div>
+          </div>
+        </div>
+  
+        <div class="col-12 col-xl-4">
+          <div class="plan-card h-100">
+            <div class="card-body">
+              <img loading="lazy" width="56" height="56" src="/static/images/icons/triangle.svg" alt="triangle" class="icon-lg-orange card-img-top"/>
+
+              <div class="d-flex flex-column mb-4">
+                <span class="beta-badge align-self-start p-0 pb-1 fw-semibold">Public Beta</span>
+                <div class="d-flex justify-content-between">
+                  <h3 class="card-title">Dedicated</h3>
+                  <h4 class="card-title">$0.60/hr</h4>
+                </div>
+                <div>
+                  <h4 class="card-subtitle">Starting at</h4>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <h4 class="card-subtitle">For orgs of any size </br>Dedicated cluster with fixed hardware</h4>
+              </div>
+
+              <ul class="list-group collapse businessPlanCollapse d-sm-block mb-4">
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Choose CPU, RAM or GPU resources
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Horizontally scalable inference with replicas
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  High availability for your production applications
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Multiple users
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Multiple databases
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Automated Backups
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Metrics
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Logs
+                </li>
+              </ul>
+              <div class="my-2 d-sm-none">
+                <button class="card-expand collapsed" data-bs-toggle="collapse" data-bs-target=".businessPlanCollapse" aria-expanded="false" aria-controls="businessPlanCollapse"></button>
+              </div>
+
+              <form class="card-btn" action="/plans" method="post">
+                <input type="hidden" value="dedicated" name="plan">
+                <button type="submit" class="btn btn-primary w-100" >
+                  <% if user.as_ref().is_none() { %>
+                    Get Started Today
+                  <% } else { %>
+                    Start Project
+                  <% } %>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+          <div class="plan-card h-100">
+            <div class="card-body">
+              <img loading="lazy" width="56" height="56" src="/static/images/icons/square.svg" alt="square" class="icon-lg-green card-img-top" />
+              
+              <div class="d-flex flex-column mb-4">
+                <span class="beta-badge align-self-start p-0 pb-1 fw-semibold">Custom Timelines</span>
+                <div class="d-flex justify-content-between">
+                  <h3 class="card-title">Enterprise</span></h3>
+                  <h4 class="card-title">--</h4>
+                </div>
+                <div>
+                  <h4 class="card-subtitle">Custom Pricing</h4>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <h4 class="card-subtitle">For orgs with custom needs </br>Your hardware, your way</h4>
+              </div>
+
+              <ul class="list-group collapse enterprisePlanCollapse d-sm-block mb-4">
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Customized hardware
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Solution Architecture support
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Private VPC/On-prem deployments
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Access Control Lists
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-2">
+                  <img loading="lazy" src="/static/images/icons/checkmark.svg" width="15" height="11" alt="Checkmark" />
+                  Single Sign-on
+                </li>
+              </ul>
+
+              <div class="my-2 d-sm-none">
+                <button class="card-expand collapsed" data-bs-toggle="collapse" data-bs-target=".enterprisePlanCollapse" aria-expanded="false" aria-controls="enterprisePlanCollapse"></button>
+              </div>
+
+              <a href="mailto:team@postgresml.org" class="btn btn-secondary card-btn" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary">Contact Us</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

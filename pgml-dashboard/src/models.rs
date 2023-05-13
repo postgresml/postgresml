@@ -1,22 +1,14 @@
-// Markdown
+use std::collections::HashMap;
+
 use comrak::{markdown_to_html, ComrakExtensionOptions, ComrakOptions};
-
-// Templates
+use csv_async::AsyncReaderBuilder;
 use sailfish::TemplateOnce;
-
-// Database
 use sqlx::postgres::types::PgInterval;
 use sqlx::types::time::PrimitiveDateTime;
 use sqlx::{FromRow, PgPool, Row};
-
-// CSV parser
-use csv_async::AsyncReaderBuilder;
-
-// Files
 use tokio::io::{AsyncBufReadExt, AsyncSeekExt};
 
 use crate::templates;
-use std::collections::HashMap;
 
 #[derive(FromRow, Debug, Clone)]
 pub struct Project {
@@ -932,6 +924,12 @@ impl UploadedFile {
 pub struct User {
     pub id: i64,
     pub email: String,
+}
+
+impl User {
+    pub fn is_anonymous(&self) -> bool {
+        self.id == 0
+    }
 }
 
 #[derive(Debug, Clone)]

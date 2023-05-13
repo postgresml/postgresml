@@ -2,27 +2,27 @@
 extern crate rocket;
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
+use parking_lot::Mutex;
 use rocket::form::Form;
 use rocket::response::Redirect;
 use rocket::route::Route;
-
+use sailfish::TemplateOnce;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
-use parking_lot::Mutex;
-use sailfish::TemplateOnce;
-use std::sync::Arc;
-
-mod errors;
-mod forms;
+pub mod api;
+pub mod fairings;
+pub mod forms;
 pub mod guards;
 pub mod models;
-mod responses;
-mod templates;
-mod utils;
+pub mod responses;
+pub mod templates;
+pub mod utils;
 
+use crate::templates::Layout;
 use guards::Cluster;
-use responses::{BadRequest, ResponseOk};
+use responses::{BadRequest, Error, ResponseOk};
 use sqlx::Executor;
 
 #[derive(Debug, Default, Clone)]
@@ -115,51 +115,36 @@ impl Clusters {
     }
 }
 
-#[get("/")]
-pub async fn index() -> Redirect {
-    Redirect::to("/dashboard/notebooks")
-}
-
 #[get("/projects")]
-pub async fn project_index(cluster: Cluster) -> Result<ResponseOk, errors::Error> {
+pub async fn project_index(cluster: Cluster) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
+        Layout::new("Projects").render(
         templates::Projects {
-            topic: "projects".to_string(),
             projects: models::Project::all(cluster.pool()).await?,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+        })
     ))
 }
 
 #[get("/projects/<id>")]
-pub async fn project_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors::Error> {
+pub async fn project_get(cluster: Cluster, id: i64) -> Result<ResponseOk, Error> {
     let project = models::Project::get_by_id(cluster.pool(), id).await?;
     let models = models::Model::get_by_project_id(cluster.pool(), id).await?;
 
     Ok(ResponseOk(
+        Layout::new(&project.name).render(
         templates::Project {
-            topic: "projects".to_string(),
             project,
             models,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+        })
     ))
 }
 
 #[get("/notebooks")]
-pub async fn notebook_index(cluster: Cluster) -> Result<ResponseOk, errors::Error> {
+pub async fn notebook_index(cluster: Cluster) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
-        templates::Notebooks {
-            topic: "notebooks".to_string(),
-            notebooks: models::Notebook::all(cluster.pool()).await?,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+        Layout::new("Notebooks").render(templates::Notebooks {
+        notebooks: models::Notebook::all(&cluster.pool()).await?,
+    })
     ))
 }
 
@@ -167,7 +152,7 @@ pub async fn notebook_index(cluster: Cluster) -> Result<ResponseOk, errors::Erro
 pub async fn notebook_create(
     cluster: Cluster,
     data: Form<forms::Notebook<'_>>,
-) -> Result<Redirect, errors::Error> {
+) -> Result<Redirect, Error> {
     let notebook = crate::models::Notebook::create(cluster.pool(), data.name).await?;
 
     Ok(Redirect::to(format!(
@@ -177,23 +162,19 @@ pub async fn notebook_create(
 }
 
 #[get("/notebooks/<id>")]
-pub async fn notebook_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors::Error> {
+pub async fn notebook_get(cluster: Cluster, id: i64) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), id).await?;
 
     Ok(ResponseOk(
-        templates::Notebook {
-            topic: "notebooks".to_string(),
+        Layout::new("Notebooks").render(templates::Notebook {
             cells: notebook.cells(cluster.pool()).await?,
-            notebook: notebook,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+            notebook,
+        })
     ))
 }
 
 #[post("/notebooks/<id>/reset")]
-pub async fn notebook_reset(cluster: Cluster, id: i64) -> Result<Redirect, errors::Error> {
+pub async fn notebook_reset(cluster: Cluster, id: i64) -> Result<Redirect, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), id).await?;
     notebook.reset(cluster.pool()).await?;
 
@@ -205,7 +186,7 @@ pub async fn cell_create(
     cluster: Cluster,
     id: i64,
     cell: Form<forms::Cell<'_>>,
-) -> Result<Redirect, errors::Error> {
+) -> Result<Redirect, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), id).await?;
     let mut cell = models::Cell::create(
         cluster.pool(),
@@ -224,7 +205,7 @@ pub async fn cell_get(
     cluster: Cluster,
     notebook_id: i64,
     cell_id: i64,
-) -> Result<ResponseOk, errors::Error> {
+) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
@@ -252,7 +233,7 @@ pub async fn cell_edit(
     notebook_id: i64,
     cell_id: i64,
     data: Form<forms::Cell<'_>>,
-) -> Result<ResponseOk, errors::Error> {
+) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let mut cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
@@ -287,7 +268,7 @@ pub async fn cell_trigger_edit(
     cluster: Cluster,
     notebook_id: i64,
     cell_id: i64,
-) -> Result<ResponseOk, errors::Error> {
+) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     let bust_cache = std::time::SystemTime::now()
@@ -313,7 +294,7 @@ pub async fn cell_play(
     cluster: Cluster,
     notebook_id: i64,
     cell_id: i64,
-) -> Result<ResponseOk, errors::Error> {
+) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let mut cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     cell.render(cluster.pool()).await?;
@@ -340,7 +321,7 @@ pub async fn cell_remove(
     cluster: Cluster,
     notebook_id: i64,
     cell_id: i64,
-) -> Result<ResponseOk, errors::Error> {
+) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     let bust_cache = std::time::SystemTime::now()
@@ -363,7 +344,7 @@ pub async fn cell_delete(
     cluster: Cluster,
     notebook_id: i64,
     cell_id: i64,
-) -> Result<Redirect, errors::Error> {
+) -> Result<Redirect, Error> {
     let _notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
@@ -376,7 +357,7 @@ pub async fn cell_delete(
 }
 
 #[get("/models")]
-pub async fn models_index(cluster: Cluster) -> Result<ResponseOk, errors::Error> {
+pub async fn models_index(cluster: Cluster) -> Result<ResponseOk, Error> {
     let projects = models::Project::all(cluster.pool()).await?;
     let mut models = HashMap::new();
     // let mut max_scores = HashMap::new();
@@ -397,56 +378,47 @@ pub async fn models_index(cluster: Cluster) -> Result<ResponseOk, errors::Error>
     }
 
     Ok(ResponseOk(
+        Layout::new("Models").render(
         templates::Models {
-            topic: "models".to_string(),
             projects,
             models,
-            context: cluster.context.clone(),
             // min_scores,
             // max_scores,
-        }
-        .render_once()
-        .unwrap(),
+        })
     ))
 }
 
 #[get("/models/<id>")]
-pub async fn models_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors::Error> {
+pub async fn models_get(cluster: Cluster, id: i64) -> Result<ResponseOk, Error> {
     let model = models::Model::get_by_id(cluster.pool(), id).await?;
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), model.snapshot_id).await?;
     let project = models::Project::get_by_id(cluster.pool(), model.project_id).await?;
 
     Ok(ResponseOk(
+        Layout::new("Models").render(
         templates::Model {
-            topic: "models".to_string(),
             deployed: model.deployed(cluster.pool()).await?,
             model,
             snapshot,
             project,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+        })
     ))
 }
 
 #[get("/snapshots")]
-pub async fn snapshots_index(cluster: Cluster) -> Result<ResponseOk, errors::Error> {
+pub async fn snapshots_index(cluster: Cluster) -> Result<ResponseOk, Error> {
     let snapshots = models::Snapshot::all(cluster.pool()).await?;
 
     Ok(ResponseOk(
+        Layout::new("Models").render(
         templates::Snapshots {
-            topic: "snapshots".to_string(),
             snapshots,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+        })
     ))
 }
 
 #[get("/snapshots/<id>")]
-pub async fn snapshots_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors::Error> {
+pub async fn snapshots_get(cluster: Cluster, id: i64) -> Result<ResponseOk, Error> {
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), id).await?;
     let samples = snapshot.samples(cluster.pool(), 500).await?;
 
@@ -458,21 +430,18 @@ pub async fn snapshots_get(cluster: Cluster, id: i64) -> Result<ResponseOk, erro
     }
 
     Ok(ResponseOk(
+        Layout::new("Snapshots").render(
         templates::Snapshot {
-            topic: "snapshots".to_string(),
             snapshot,
             models,
             projects,
             samples,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+        })
     ))
 }
 
 #[get("/deployments")]
-pub async fn deployments_index(cluster: Cluster) -> Result<ResponseOk, errors::Error> {
+pub async fn deployments_index(cluster: Cluster) -> Result<ResponseOk, Error> {
     let projects = models::Project::all(cluster.pool()).await?;
     let mut deployments = HashMap::new();
 
@@ -484,46 +453,37 @@ pub async fn deployments_index(cluster: Cluster) -> Result<ResponseOk, errors::E
     }
 
     Ok(ResponseOk(
+        Layout::new("Deployments").render(
         templates::Deployments {
-            topic: "deployments".to_string(),
             projects,
             deployments,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+        })
     ))
 }
 
 #[get("/deployments/<id>")]
-pub async fn deployments_get(cluster: Cluster, id: i64) -> Result<ResponseOk, errors::Error> {
+pub async fn deployments_get(cluster: Cluster, id: i64) -> Result<ResponseOk, Error> {
     let deployment = models::Deployment::get_by_id(cluster.pool(), id).await?;
     let project = models::Project::get_by_id(cluster.pool(), deployment.project_id).await?;
     let model = models::Model::get_by_id(cluster.pool(), deployment.model_id).await?;
 
     Ok(ResponseOk(
+        Layout::new("Deployments").render(
         templates::Deployment {
-            topic: "deployments".to_string(),
             project,
             deployment,
             model,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+        })
     ))
 }
 
 #[get("/uploader")]
-pub async fn uploader_index(cluster: Cluster) -> ResponseOk {
+pub async fn uploader_index() -> ResponseOk {
     ResponseOk(
+        Layout::new("Uploader").render(
         templates::Uploader {
-            topic: "uploader".to_string(),
             error: None,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+        })
     )
 }
 
@@ -543,13 +503,10 @@ pub async fn uploader_upload(
             uploaded_file.table_name()
         ))),
         Err(err) => Err(BadRequest(
+            Layout::new("Uploader").render(
             templates::Uploader {
-                topic: "uploader".to_string(),
                 error: Some(err.to_string()),
-                context: cluster.context.clone(),
-            }
-            .render_once()
-            .unwrap(),
+            })
         )),
     }
 }
@@ -564,21 +521,17 @@ pub async fn uploaded_index(cluster: Cluster, table_name: &str) -> ResponseOk {
     .await
     .unwrap();
     ResponseOk(
+        Layout::new("Uploader").render(
         templates::Uploaded {
-            topic: "uploader".to_string(),
             table_name: table_name.to_string(),
             columns: sql.columns.clone(),
             sql,
-            context: cluster.context.clone(),
-        }
-        .render_once()
-        .unwrap(),
+        }),
     )
 }
 
-pub fn paths() -> Vec<Route> {
+pub fn routes() -> Vec<Route> {
     routes![
-        index,
         notebook_index,
         project_index,
         project_get,

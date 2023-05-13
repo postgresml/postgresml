@@ -1,0 +1,126 @@
+.btn {
+    --bs-btn-border-radius: var(--bs-border-radius-pill);
+    --bs-btn-padding-x: 22px;
+    --bs-btn-padding-y: 12px; // Need to decrease from style because border radius gets in the way.
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    &[disabled], &:disabled {
+        cursor: not-allowed; 
+    }
+
+    &.btn-primary {
+        border: 0;
+        @extend .fw-semibold;
+        
+        &:hover {
+            background: linear-gradient(48.19deg, #D940FF 0%, #8F02FE 24.43%, #5162FF 52.6%, #00D1FF 100%);
+        }
+
+        &:active {
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(48.19deg, #FB40FF 0%, #BB02FE 24.43%, #00D1FF 100%);
+        }
+    }
+
+    &.btn-secondary {
+        @extend .fw-semibold;
+        background-color: transparent;
+        --bs-btn-border-color: #{$gray-400};
+        --bs-btn-border-width: 2px;
+        --bs-btn-hover-border-color: transparent;
+        --bs-btn-active-border-color: transparent;
+        --bs-btn-padding-x: 20px;
+        --bs-btn-padding-y: 10px; 
+
+        // the attached canvas for border in secondary-btn.js
+        &> .secondary-btn-canvas {
+            position: absolute;
+            border: None;
+            display: None;
+        }
+        
+        &:hover {
+            background-color: transparent;
+    
+            &> .secondary-btn-canvas {
+                display: block;
+            }
+        }
+    
+        &:active {
+            background-color: transparent;
+    
+            &> .secondary-btn-canvas {
+                filter: brightness(65%);
+                display: block;
+            }
+        }
+    }
+
+    &.btn-tertiary {
+        color: #{$gray-300};
+
+        &:hover {
+            color: #{$gray-100};
+            text-shadow: 0 0 0.65px white, 0 0 0.65px white;
+        }
+
+        span {
+            font-size: 2rem;
+        }
+
+        &:active {
+            color: #{$gray-100};
+            font-weight: 500;
+            --bs-btn-active-border-color: transparent;
+        }
+    }
+}
+
+.btn-code-toolbar {
+    @extend .btn; 
+    @extend .btn-tertiary; 
+    @extend .noselect;
+
+    @extend .z-1;
+
+    color: inherit;
+    padding: 0px;
+
+    &:hover {
+        color: #{$purple};
+        text-shadow: none;
+    }
+
+    &:disabled, &[disabled] {
+        color: #{$slate-shade-700} !important;
+    }
+}
+
+.btn-copy {
+    @extend .btn-code-toolbar;
+    position: absolute; 
+    top: 4px;
+    right: 4px;
+}
+
+.btn-search {
+    padding: 10px 14px;
+    min-width: 10rem;
+    color: #{$hp-white};
+    background-color: transparent;
+    border-radius: var(--bs-border-radius-pill);
+    border: 2px solid #{$gray-600};
+
+    &:hover {
+        cursor: text;
+        border: 2px solid #{$gray-400};
+    }
+
+    @include media-breakpoint-down(lg) {
+        width: 100%;
+    }
+}

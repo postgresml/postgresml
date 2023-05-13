@@ -1,0 +1,139 @@
+.navbar {
+    --bs-navbar-padding-y: 0;
+    --bs-navbar-padding-x: 24px;
+    border: 1px solid rgba(33, 33, 35, 0.5);
+
+    &.horizontal {
+        --bs-navbar-padding-x: 1.25rem;
+        --bs-navbar-padding-y: 1.25rem;
+        border-radius: var(--bs-border-radius-pill);
+        @include media-breakpoint-down(lg) {
+            border-radius: 12px;
+        }
+    }
+
+    .nav-link {
+        --bs-nav-link-padding-y: 16px;
+        --bs-nav-link-font-weight: 500;
+        --bs-nav-link-padding-x: 24px;
+        --bs-nav-pills-border-radius: 4px;
+    }
+
+    .nav {
+        max-width: 100%;
+    }
+
+    .nav-item {
+        max-width: 100%;
+
+        a {
+            span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        &.active {
+
+            > a {
+                color: #{$gray-100};
+                background: #{$purple};
+            }
+
+            .nav-marker {
+                background: #{$purple};
+            }
+
+            >.nav-link {
+                --bs-nav-link-color: #{$purple};
+            }
+        }
+    }
+
+    .navbar-toggler {
+        border: 0px;
+
+        &:focus {
+            text-decoration: none;
+            outline: 0;
+            box-shadow: 0 0 0;
+        }
+    }
+}
+
+.offcanvas-body {
+    --bs-offcanvas-padding-x: 0;
+}
+
+.nav-tabs {
+
+    .nav-link {
+        @extend .btn, .btn-tertiary, .rounded-0;
+        border: none;
+
+        &.active {
+            border-bottom: var(--bs-nav-tabs-border-width) solid #{$purple};
+        }
+    }
+}
+
+.navbar-console {
+    @extend .navbar;
+    @extend .horizontal;
+
+    background-color: var(--bs-body-bg) !important;
+    border-bottom: 1px solid #{$gray-500};
+    border-radius: 0px;
+    gap: 12px;
+
+    @include media-breakpoint-down(lg) {
+        padding: 12px 0px;
+    }
+}
+
+.sidenav-container {
+    @extend .z-1;
+    position: sticky; 
+    top: 0px; 
+    height: 100vh;
+    background-color: var(--bs-body-bg);
+    border-right: 1px solid #{$gray-500};
+
+    @include media-breakpoint-down(lg) {
+        height: 100%;
+        border: none;
+    }
+}
+
+.sidenav {
+    border: none;
+    align-items: start;
+    background-color: var(--bs-body-bg) !important;
+
+    @include media-breakpoint-down(lg) {
+        border-bottom: 1px solid #{$gray-500};
+    }
+}
+
+.toc, .guides {
+    --bs-border-color: #{$gray-500};
+    .nav-link {
+        text-decoration: none;
+        --bs-nav-link-color: #{$gray-100};
+        --bs-nav-link-hover-color: #{$purple};
+
+        &.purple, &:active, &.active {
+            color: #{$purple};
+        }
+
+        &:focus:not(:hover) {
+            color: #{$gray-100}
+        }
+
+    }
+    [aria-expanded=false] {
+        span.material-symbols-outlined {
+            transform: rotate(-90deg);
+        }
+    }
+}

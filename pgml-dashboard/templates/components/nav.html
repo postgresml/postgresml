@@ -1,0 +1,79 @@
+<nav class="navbar sidenav nav-pills navbar-expand-lg py-2">
+  <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+    <div class="offcanvas-header">
+      <h6 class="offcanvas-title" id="offcanvasNavbarLabel">PostgresML</h6>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <ul class="nav flex-column justify-content-end flex-grow-1">
+        <li class="nav-item d-none d-lg-flex py-2 mb-3">
+          <a class="nav-link d-flex justify-content-start align-items-center gap-2 fs-5" href="/clusters">
+            <img src="/dashboard/static/images/owl_gradient.svg" alt="PostgresML Logo" height="30" width="21">
+            <span class="text-white position-relative overflow-visible">Postgres
+              <span class="fw-semibold">ML</span>
+              <span class="beta-badge position-absolute bottom-0 end-0 pe-0 mb-n3">Beta</span>
+            </span>
+          </a>
+        </li>
+        <% for link in links {
+          let active = if link.active {
+            "active"
+          } else {
+            ""
+          };
+
+          let aria = if link.active {
+            r#"area-current="page""#
+          } else {
+            ""
+          };
+        %>
+        <li class="nav-item <%= active %>" <%- aria %>>
+          <a
+            class="nav-link d-flex align-items-center justify-content-start gap-2"
+            href="<%= link.href %>"
+          >
+            <% if link.icon.as_ref().is_some() { %>
+            <span class="material-symbols-outlined %>"><%- link.icon.unwrap() %></span>
+            <% } %>
+            <span><%= link.name %></span>
+          </a>
+
+          <% if link.nav.is_some() { %>
+          <ul class="nav flex-column justify-content-end flex-grow-1 ps-5">
+
+            <% for link in link.nav.unwrap().links.iter() {
+              let active = if link.active {
+                "active"
+              } else {
+                ""
+              };
+
+              let aria = if link.active {
+                r#"area-current="page""#
+              } else {
+                ""
+              };
+            %>
+            <li class="nav-item <%= active %>" <%- aria %>>
+              <a class="nav-link d-flex justify-content-start align-items-center gap-2" href="<%= link.href %>">
+                <% if link.icon.as_ref().is_some() { %>
+                  <span class="material-symbols-outlined %>"><%- link.icon.unwrap() %></span>
+                  <% } %>
+                <span><%= link.name %></span>
+              </a>
+            </li>
+
+            <% } %>
+          </ul>
+
+          <% } %>
+        </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>

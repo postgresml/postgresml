@@ -1,21 +1,28 @@
-use rocket::http::{CookieJar, Status};
+use std::env::var;
+
+use rocket::http::{CookieJar};
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket::State;
 use sqlx::PgPool;
 
-use std::env::var;
-
 use crate::{Clusters, Context};
+
+pub fn default_database_url() -> String {
+    match var("DATABASE_URL") {
+        Ok(val) => val,
+        Err(_) => "postgres:///pgml".to_string(),
+    }
+}
 
 #[derive(Debug)]
 pub struct Cluster {
-    pool: PgPool,
+    pool: Option<PgPool>,
     pub context: Context,
 }
 
 impl<'a> Cluster {
     pub fn pool(&'a self) -> &'a PgPool {
-        &self.pool
+        self.pool.as_ref().unwrap()
     }
 }
 
@@ -44,21 +51,11 @@ impl<'r> FromRequest<'r> for Cluster {
             _ => return Outcome::Forward(()),
         };
 
-        let pool = match shared_state.get(cluster_id) {
-            Some(pool) => pool,
-            None => return Outcome::Failure((Status::BadRequest, ())),
-        };
+        let pool = shared_state.get(cluster_id);
 
         Outcome::Success(Cluster {
             pool,
             context: shared_state.get_context(cluster_id),
         })
-    }
-}
-
-pub fn default_database_url() -> String {
-    match var("DATABASE_URL") {
-        Ok(val) => val,
-        Err(_) => "postgres:///pgml".to_string(),
     }
 }

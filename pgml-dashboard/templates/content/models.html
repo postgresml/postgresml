@@ -1,0 +1,47 @@
+<section>
+<h1><span class="material-symbols-outlined">model_training</span>Models</h1>
+<% for project in &projects { %>
+  <h2><%= project.name %> </h2>
+  <ol class="object_list model_list">
+    <li>
+        <span></span>
+        <span><b>Algorithm</b></span>
+        <span><b><%- project.key_metric_display_name().unwrap() %></b></span>
+        <figure></figure>
+    </li>
+    <% for model in &models[&project.id] { %>
+    <li>
+      <a href="/dashboard/models/<%= model.id %>">
+        <span class="material-symbols-outlined">
+          <% if model.search.is_some() { %>
+            <% if model.search.as_ref().unwrap().as_str() == "grid" { %>
+              grid_on
+            <% } %>
+            <% if model.search.as_ref().unwrap().as_str() == "random" { %>
+              shuffle
+            <% } %>
+          <% } else { %>
+            check_circle
+          <% } %>
+        </span>
+        <span><%= model.algorithm %></span>
+        <span><%= format!("{:.4}", model.key_metric(&project).unwrap()) %></span>
+        <figure id="model_<%= model.id %>"></figure>
+      </a>
+    </li>
+    <% } %>
+  </ol>
+<% } %>
+</section>
+<script defer type="module">
+  import { renderModel } from '/dashboard/static/js/main.js'
+
+  function renderCharts() {
+  <% for project in &projects { %> 
+  <% for model in &models[&project.id] { %>
+     renderModel(<%= model.id %>, <%= model.key_metric(project).unwrap() %>, [0, 1]);
+  <% } %>
+  <% } %>
+  };
+  renderCharts();
+</script>

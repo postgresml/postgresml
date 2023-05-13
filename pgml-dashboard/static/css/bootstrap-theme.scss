@@ -1,0 +1,800 @@
+@import "bootstrap-5.3.0-alpha1/scss/functions";
+
+//
+// Default SASS Variable Overrides
+//
+$primary: #0D0D0E;
+$secondary: #FFF;
+$danger: #ff4136;
+$border-radius: 8px;
+$border-radius-lg: 16px;
+
+// Background Colors
+$bg-white: #F8FAFC;
+$bg-black: #0D0D0E;
+
+// Neutral Scale
+$gray-100: #FAFAFA;
+$gray-200: #DBDBDC;
+$gray-300: #ABACB0;
+$gray-400: #919196;
+$gray-500: #4A4A4B;
+$gray-600: #2d2d2d;
+$gray-700: #262626;
+$gray-800: #212123;
+$gray-900: #0A0A0B;
+
+// Violet Scale
+$violet-shade-100: #A105FF;
+
+// Neon Scale 
+$neon-tint-100: #5162FF;
+$neon-tint-200: #6271FF;
+
+// Teal Scale
+$teal-tint-100: #00E0FF;
+
+// Peach Scale 
+$peach-tint-100: #E9467A;
+
+// Slate Scale 
+$slate-tint-1000: #F4F2FF;
+$slate-tint-700: #D3CEFF;
+$slate-tint-600: #C8C2FF;
+$slate-tint-500: #BDB5FF;
+$slate-tint-100: #9185FF;
+
+$slate-shade-700: #3A3566;
+
+// Colors
+$purple: $slate-tint-100;
+$pink: #e7477c;
+$hp-white: #{$gray-200};
+
+// Gradient
+$hp-gradient: linear-gradient(48.19deg, #D940FF 0%, #9E02FE 24.43%, #00D1FF 100%);
+$hp-gradient-active: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(48.19deg, #FB40FF 0%, #BB02FE 24.43%, #00D1FF 100%);
+
+// Buttons.
+$btn-border-width: 1px;
+$btn-transition: none;
+$btn-box-shadow: none;
+
+// Forms
+$input-padding-y: 20px;
+$input-padding-x: 16px;
+$input-btn-focus-box-shadow: none;
+$form-label-font-weight: 500;
+$form-check-input-width: 1.4em;
+$form-check-input-checked-color: #{$primary};
+$form-check-input-checked-bg-color: #{$hp-white};
+$form-check-input-checked-border-color: #{$hp-white};
+$form-check-input-border-radius: 4px;
+$form-check-input-border: 2px solid var(--bs-border-color);
+$form-check-input-active-filter: none;
+$form-check-label-cursor: pointer;
+$form-check-radio-checked-bg-image: none;
+$form-range-track-height: .4rem;
+$form-range-track-box-shadow: none;
+$form-range-thumb-width: 1rem;
+$form-range-thumb-box-shadow: none;
+$form-range-thumb-transition: none;
+$form-range-thumb-active-bg: #{$primary};
+$form-range-thumb-bg: #{$primary};
+$form-range-thumb-border: 4px solid #{$purple};
+$form-range-track-bg: #111213;
+$input-box-shadow: none;
+
+// Badge
+$badge-font-weight: normal;
+$badge-font-size: 0.65em;
+
+// Navbar
+$navbar-nav-link-padding-x: 1rem;
+
+// Nav Tabs
+$nav-link-transition: none;
+$nav-tabs-border-width: 2px;
+$nav-tabs-border-radius: 0px;
+$nav-underline-border-width: 2px;
+$nav-tabs-link-active-color: #{$gray-100};
+$nav-tabs-link-active-bg: transparent;
+
+//Grid
+$enable-cssgrid: true;
+$enable-shadows: true;
+
+// Spaces
+$card-box-shadow: 16px 20px 24px rgba(6, 20, 37, 0.04);
+$card-border-radius: 20px;
+$enable-negative-margins: true;
+
+// Dropdown
+$dropdown-border-radius: 2px;
+
+// Modal
+$modal-backdrop-opacity: 0.70;
+
+// Toast
+$toast-border-width: 0;
+$toast-box-shadow: none;
+
+// Alert
+$alert-border-width: 2px;
+
+// breadcrumb
+$breadcrumb-padding-x:              1rem;
+$breadcrumb-item-padding-x:         1rem;
+$breadcrumb-margin-bottom:          0px;
+$breadcrumb-divider:                quote("<");
+
+@import "./bootstrap-5.3.0-alpha1/scss/variables";
+@import "./bootstrap-5.3.0-alpha1/scss/variables-dark";
+@import "./bootstrap-5.3.0-alpha1/scss/maps";
+@import "./bootstrap-5.3.0-alpha1/scss/mixins";
+@import "./bootstrap-5.3.0-alpha1/scss/utilities";
+
+// Font
+@import "scss/font.scss";
+
+// @import "./bootstrap-5.3.0-alpha1/scss/bootstrap.scss";
+@import "./bootstrap-5.3.0-alpha1/scss/root";
+@import "./bootstrap-5.3.0-alpha1/scss/reboot";
+@import "./bootstrap-5.3.0-alpha1/scss/type";
+@import "./bootstrap-5.3.0-alpha1/scss/images";
+@import "./bootstrap-5.3.0-alpha1/scss/containers";
+@import "./bootstrap-5.3.0-alpha1/scss/grid";
+@import "./bootstrap-5.3.0-alpha1/scss/tables";
+@import "./bootstrap-5.3.0-alpha1/scss/forms";
+@import "./bootstrap-5.3.0-alpha1/scss/buttons";
+@import "./bootstrap-5.3.0-alpha1/scss/transitions";
+// @import "./bootstrap-5.3.0-alpha1/scss/dropdown";
+// @import "./bootstrap-5.3.0-alpha1/scss/button-group";
+@import "./bootstrap-5.3.0-alpha1/scss/nav";
+@import "./bootstrap-5.3.0-alpha1/scss/navbar";
+@import "./bootstrap-5.3.0-alpha1/scss/card";
+// @import "./bootstrap-5.3.0-alpha1/scss/accordion";
+@import "./bootstrap-5.3.0-alpha1/scss/breadcrumb";
+// @import "./bootstrap-5.3.0-alpha1/scss/pagination";
+@import "./bootstrap-5.3.0-alpha1/scss/badge";
+@import "./bootstrap-5.3.0-alpha1/scss/alert";
+// @import "./bootstrap-5.3.0-alpha1/scss/progress";
+@import "./bootstrap-5.3.0-alpha1/scss/list-group";
+@import "./bootstrap-5.3.0-alpha1/scss/close";
+@import "./bootstrap-5.3.0-alpha1/scss/toasts";
+@import "./bootstrap-5.3.0-alpha1/scss/modal";
+@import "./bootstrap-5.3.0-alpha1/scss/tooltip";
+// @import "./bootstrap-5.3.0-alpha1/scss/popover";
+// @import "./bootstrap-5.3.0-alpha1/scss/carousel";
+// @import "./bootstrap-5.3.0-alpha1/scss/spinners";
+@import "./bootstrap-5.3.0-alpha1/scss/offcanvas";
+// @import "./bootstrap-5.3.0-alpha1/scss/placeholders";
+
+@import "./bootstrap-5.3.0-alpha1/scss/helpers";
+
+@import "./bootstrap-5.3.0-alpha1/scss/utilities/api";
+
+// custom imports
+@import './scss/icon.scss';
+@import './scss/ellipse.scss';
+@import './scss/cards.scss';
+@import './scss/containers.scss';
+@import './scss/tables.scss';
+@import './scss/badges.scss';
+@import './scss/buttons.scss';
+@import './scss/utilities.scss';
+@import './scss/admonitions.scss';
+@import './scss/breadcrumb.scss';
+@import './scss/navs.scss';
+
+[data-bs-theme="dark"] {
+    --bs-heading-color: #{$gray-100};
+    --bs-tertiary-bg: #2F3033;
+    --bs-tertiary-color: #{$hp-white};
+    --bs-body-bg: #17181A;
+    --bs-body-color: #DEE0E7;
+    --bs-body-secondary-color: #BEBEC1;
+
+    --bs-info-bg-subtle: transparent;
+    --bs-info-border-subtle: #{$purple};
+    --bs-info-text: #{$gray-100};
+
+    --bs-success-bg-subtle: transparent;
+    --bs-success-border-subtle: #{$purple};
+    --bs-success-text: #{$gray-100};
+
+    --bs-link-color: #{$purple};
+    --bs-link-hover-color:#{$purple};
+
+    .list-group-item {
+        --bs-list-group-color: #{$hp-white};
+    }
+
+    .form-control {
+        --bs-form-control-bg: #212224;
+        --bs-body-color: #DEE0E7;
+        --bs-border-color: #212224;
+
+        &:disabled {
+            --bs-form-control-disabled-bg: #212224;
+        }
+
+        &:focus {
+            border-color: var(--bs-form-control-bg);
+        }
+    }
+
+    .form-label {
+        color: #{$gray-100};
+    }
+
+    .input-group-text {
+        --bs-border-color: #212224;
+
+        background-color: #212224;
+        color: #DEE0E7;
+    }
+
+    body {
+        --bs-body-color: #ABADB4;
+        --bs-danger-text: rgba(240, 76, 64, 1);
+        --bs-secondary-color: rgba(145, 145, 150, 1);
+    }
+
+    .btn {
+        &.btn-primary {
+            --bs-btn-bg: #{$gray-100};
+            --bs-btn-color: #2D2D2F;
+        }
+
+        &.btn-secondary {
+            --bs-btn-color: #{$hp-white};
+            --bs-btn-hover-color: #{$hp-white};
+            --bs-btn-active-color: #{$hp-white};
+        }
+    }
+
+    .text-black {
+        color: #111213 !important;
+    }
+
+    .text-white {
+        color: #{$gray-100} !important;
+    }
+
+    .navbar {
+        background: #151516;
+
+        .nav-link {
+            --bs-nav-link-color: #{$gray-300};
+            --bs-nav-link-hover-color: #{$gray-100};
+
+        &:hover {
+            text-shadow: 0 0 .65px white, 0 0 .65px white; //change font weight without element resizing
+        }
+
+            &:active {
+                color: #{$gray-200};
+            }
+        }
+    }
+
+    .bg-body-tertiary {
+        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.245) 15.62%, rgba(53, 51, 56, 0.28) 67.01%);
+
+        p, ol, ul, li, table {
+            color: #{$gray-100};
+        }
+    }
+
+    code {
+        --bs-code-color: #{$gray-100};
+    }
+}
+
+// We inject the light theme inside the body all over the home page.
+body {
+    [data-bs-theme="light"] {
+        --bs-body-bg: #{$gray-100};
+        --bs-body-color: #111213;
+        --bs-body-color-rgb: rgb(17, 18, 19);
+        color: var(--bs-body-color);
+    }
+}
+
+[data-bs-theme="light"] {
+
+    --bs-heading-color: #111213;
+
+    --bs-link-color: #{$purple};
+
+    body {
+        --bs-body-bg: #{$gray-100};
+        --bs-body-color: #111213;
+        --bs-body-color-rgb: rgb(17, 18, 19);
+        color: var(--bs-body-color);
+    }
+
+    .list-group-item {
+        --bs-list-group-item-color: #111213;
+        --bs-list-group-color: #111213;
+    }
+
+    .btn {
+        &.btn-primary {
+            --bs-btn-bg: #111213;
+            --bs-btn-border-color: #{$gray-100};
+            --bs-btn-color: #{$gray-100};
+        }
+
+        &.btn-secondary {
+            --bs-btn-color: #111213;
+            --bs-btn-hover-color: #111213;
+            --bs-btn-active-color: #111213;
+        }
+    }
+
+    .navbar {
+        background: #{$hp-white};
+        .nav-link {
+            --bs-nav-link-color: #{$gray-700};
+            --bs-nav-link-hover-color: #{$gray-900};
+
+        &:hover {
+            text-shadow: 0 0 .65px black, 0 0 .65px black; //change font weight without element resizing
+        }
+
+            &:active {
+                color: #{$gray-800};
+            }
+        }
+    }
+}
+
+.form-control {
+    border-radius: var(--bs-border-radius-pill);
+}
+
+
+/**
+ * Code with a copy button.
+ *
+ * Used not only in docs but also in clusters UI.
+ * */
+pre:hover {
+  .btn-copy {
+    opacity: 1;
+  }
+}
+
+pre {
+    position: relative;
+    overflow-x: hidden;
+    padding: 12px;
+    border-radius: #{$border-radius};
+
+    &:hover {
+        .code-toolbar {
+            background-color: $gray-600;
+            color: #{$slate-tint-500};
+        }
+    }
+
+    code {
+        overflow-x: auto;
+        display: block;
+        border: none;
+    }
+
+    .code-toolbar {
+        display: flex;
+        gap: 4px;
+        position: absolute; 
+        top: 4px;
+        right: 4px;
+        background: transparent;
+        padding: 4px;
+        color: #{$slate-shade-700};
+    }
+}
+
+.docs {
+
+    div.results {
+        overflow-x: auto;
+        margin: 24px 24px;
+
+        .code-toolbar {
+            display: none;
+        }
+
+        pre {
+            background-color: #{$gray-500};
+            code {
+                background-color: #{$gray-500};
+            }
+        }
+
+        .title {
+            background-color: #{$gray-700};
+            border-start-start-radius: 8px;
+            border-start-end-radius: 8px;
+            padding: 8px 24px;
+            background-color: #{$gray-700};
+            color: #{$gray-100};
+        }
+
+        &.with-title {
+            pre {
+                padding: 12px 24px;
+                border-start-start-radius: 0px;
+                border-start-end-radius: 0px;
+            }
+        }
+    }
+
+    div.code-block {
+        overflow-x: auto;
+        border: 2px solid $slate-tint-1000;
+        border-radius: 8px;
+        margin: 24px 0px;
+
+        .title {
+            background-color: #{$gray-700};
+            border-start-start-radius: 8px;
+            border-start-end-radius: 8px;
+            padding: 8px 24px;
+            color: #{$gray-100};
+        }
+
+        pre {
+            margin: 0px;
+        }
+
+        &.with-title {
+            .code-toolbar {
+                top: -38px;
+                background: transparent;
+            }
+
+            &:hover {
+                .code-toolbar {
+                    color: #{$slate-tint-500};                    
+                }
+            }
+
+            pre {
+                overflow: visible;
+                padding: 12px 24px;
+                border-start-start-radius: 0px;
+                border-start-end-radius: 0px;
+            }
+        }
+        
+        .execution-time {
+            display: flex; 
+            align-items: center;
+            gap: 6px;
+            border-top: 2px solid $slate-tint-1000;
+            background-color: #{$gray-600};
+            padding: 12px;
+            color: #{$gray-100};
+
+            span.material-symbols-outlined {
+                font-size: 1rem;
+                color: #{$purple};
+            }
+        }
+    }
+
+    table {
+        top: -1rem;
+        margin-bottom: 0;
+        white-space: nowrap;
+        color: #{$gray-100};
+        th {
+            font-weight: 800;
+        }
+        tr:hover > * {
+            color: #{$gray-100};
+            background-color: rgba(50, 54, 58, 0.3);
+        }
+    }
+
+    pre {
+        background-color: #{$gray-600};
+        border-radius: #{$border-radius};
+
+        code {
+            border: none;
+            white-space: inherit;
+        }
+    }
+
+    code {
+        @extend .rounded-1;
+
+        color: #{$gray-100};
+        background-color: #{$gray-600};
+        border: 1px solid #{$slate-tint-1000};
+        padding: 2px;
+        white-space: nowrap;
+    }
+
+    img {
+        @extend .img-fluid;
+        margin-top: 1rem;
+        border-radius: #{$border-radius};
+    }
+
+    .alert p:last-of-type {
+        margin-bottom: 0;
+    }
+
+    blockquote {
+        padding: 0 2rem;
+    }
+
+    figure {
+        @extend .my-3;
+    }
+
+    li:not(.nav-item) {
+        margin: 0.8rem 0;
+    }
+}
+
+// Override white overrides.
+.text-white {
+    color: #{$gray-100} !important;
+}
+
+.bg-white {
+    background-color: #{$bg-white} !important;
+}
+
+.bg-white-2 {
+    background-color: #EAEAEA !important;
+}
+
+// Gradient link.
+a:not(.btn, .nav .nav-link, .breadcrumb-item a, .list-group-item, .a-reset, .navbar .nav-link, .navbar .navbar-brand) {
+    text-decoration: none;
+    color: var(--bs-link-color);
+    background-color: transparent;
+}
+
+a.a-reset {
+    text-decoration: none;
+}
+
+// Our flagship gradient.
+.party-time {
+    background: linear-gradient(270deg, #26CBFF 0%, #808CFF 50%, #C92FFF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+// Remove padding from large screens.
+@include media-breakpoint-up(lg) {
+    body {
+        padding: 0;
+    }
+}
+
+.min-vh-lg-100 {
+    @include media-breakpoint-up(lg) {
+        min-height: 100vh !important;
+    }
+}
+
+// Override text-bg-dark colors.
+.text-bg-dark {
+    color: rgba(219, 219, 220, 1);
+    background-color: rgba(38, 38, 38, 1) !important;
+}
+
+// displays
+.display-2 {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 80px;
+}
+
+input {
+    &.form-check-input {
+        &[type=radio]:checked {
+            border-width: 5px;
+        }
+
+        &:hover {
+            cursor: pointer;
+        }
+    }
+
+    &.form-range[type=range] {
+        cursor: pointer;
+    }
+
+    // Firefox
+    &.form-range[type="range"]::-moz-range-progress {
+        background-color: #{$purple};
+        height: 4px;
+        border: 0;
+    }
+
+    // IE
+    &.form-range[type="range"]::-ms-fill-lower {
+        background-color: #{$purple};
+    }
+
+    // Chrome (doesn't really work as designed)
+    &.form-range[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 24px;
+        width: 24px;
+        position: relative;
+        bottom: 4px;
+        border-radius: 50%;
+        border: #{$form-range-thumb-border};
+        background: #{$form-range-thumb-bg};
+    }
+
+    &.form-range[type=range]::-webkit-slider-runnable-track {
+      height: #{$form-range-track-height};
+      border: 0;
+    }
+
+    &.form-range[type=range]:focus::-webkit-slider-runnable-track {
+        background: #{$purple};
+    }
+    // End of Chrome
+}
+
+.bg-map {
+    background-image: url('/dashboard/static/images/map.webp');
+    background-repeat: repeat-x;
+    background-size: 100% auto;
+}
+
+table {
+    @extend .table;
+    @extend .table-bordered;
+    @extend .table-hover;
+}
+
+.animate-rotate {
+    animation: rotation 60s infinite linear;
+}
+
+.animate-scale {
+    animation: scaling 30s infinite linear;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes scaling {
+  0% {
+    transform: scale(1.0, 1.0);
+  }
+  100% {
+    transform: scale(0.5, 0.5);
+  }
+}
+
+.list-group {
+    --bs-list-group-bg: transparent;
+    --bs-list-group-border-width: 0;
+    --bs-list-group-border-color: transparent;
+    --bs-list-group-color: #{$primary};
+}
+
+.tooltip {
+    --bs-tooltip-bg: #{$primary};
+    --bs-tooltip-color: #fff;
+    --bs-tooltip-arrow-width: 0;
+    --bs-tooltip-arrow-height: 0;
+    --bs-tooltip-margin: 0 0 1rem 0;
+    --bs-tooltip-padding-y: 16px;
+    --bs-tooltip-padding-x: 16px;
+}
+
+.modal {
+    --bs-modal-margin: 1.65rem;
+    --bs-modal-header-padding: 0;
+    --bs-modal-width: 75vw;
+
+    @include media-breakpoint-up(lg) {
+        --bs-modal-width: 40rem;
+    }
+
+    .input-group > :not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
+        border-radius: 0rem 2rem 2rem 0rem;
+    }
+
+    .input-group:not(.has-validation) > :not(:last-child):not(.dropdown-toggle):not(.dropdown-menu):not(.form-floating), .input-group:not(.has-validation) > .dropdown-toggle:nth-last-child(n+3), .input-group:not(.has-validation) > .form-floating:not(:last-child) > .form-control, .input-group:not(.has-validation) > .form-floating:not(:last-child) > .form-select {
+        border-radius: 2rem 0rem 0rem 2rem;
+    }
+
+    .modal-content {
+        box-shadow: none;
+        background-color: transparent;
+        border: none;
+    }
+
+    .modal-header {
+        border: none;
+    }
+}
+
+.alert {
+    &> div> span.material-symbols-outlined {
+        color: #{$purple};
+        font-weight: 600;
+    }
+    pre {
+        @extend .py-3;
+        @extend .px-3;
+    }
+}
+
+.alert-warning {
+    .material-symbols-outlined {
+        color: #{$yellow};
+        font-weight: 500;
+    }
+    --bs-alert-border-color: #{$yellow};
+}
+
+// scrollbar customization for Chrome, Edge, Opera, Safari, all browsers on iOS
+// TODO: Fix firefox scrollbar design.
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: #{$gray-800};
+}
+
+::-webkit-scrollbar-thumb {
+    width: 8px;
+    background: #{$purple};
+}
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+}
+
+html, body, main {
+    height: 100%;
+}
+
+article {
+    font-family: "Roboto", Helvetica;
+
+    p {
+        line-height: 1.6rem;
+        print-color-adjust: exact;
+    }
+}
+
+.syntax-highlight {
+    background: linear-gradient(225deg, #3EDCFF 0%, #3E9AFF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
