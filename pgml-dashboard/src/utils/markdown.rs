@@ -959,7 +959,8 @@ impl SearchIndex {
                 .to_str()
                 .unwrap()
                 .to_string()
-                .strip_prefix("content")
+                .split("content")
+                .last()
                 .unwrap()
                 .to_string();
             let mut doc = Document::default();
