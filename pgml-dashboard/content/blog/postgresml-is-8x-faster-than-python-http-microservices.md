@@ -7,7 +7,7 @@ image_alt: We're going really fast now.
 # PostgresML is 8-40x faster than Python HTTP microservices
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Lev Kokotov</p>
     <p class="m-0">October 18, 2022</p>

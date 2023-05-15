@@ -8,7 +8,7 @@ image_alt: postgresml-as-a-memory-backend-to-auto-gpt
 # PostgresML as a memory backend to Auto-GPT
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/santi.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/santi.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Santi Adavani</p>
     <p class="m-0">May 3, 2023</p>
@@ -92,7 +92,7 @@ Adding PostgresML as a memory backend to Auto-GPT is a relatively simple process
     ```
 
     If you are using [PostgresML cloud](<%- crate::utils::config::signup_url() %>), use the hostname and credentials from the cloud platform.
-    ![pgml-cloud-settings](/static/images/blog/pgml-cloud-settings.png)
+    ![pgml-cloud-settings](/dashboard/static/images/blog/pgml-cloud-settings.png)
 
 !!! note
 
@@ -109,7 +109,7 @@ python -m autogpt -m postgresml
 
 You will see Auto-GPT in action with PostgresML backend as shown below. You should see *Using memory of type: PostgresMLMemory* in the logs.
 
-![pgml-action](/static/images/blog/pgml-autogpt-action.png)
+![pgml-action](/dashboard/static/images/blog/pgml-autogpt-action.png)
 
 ## Conclusion
 In this blog post, I showed you how to add PostgresML as a memory backend to Auto-GPT. Adding PostgresML as a memory backend can significantly accelerate performance and scalability of Auto-GPT. It can enable you to rapidly prototype with Auto-GPT and build AI-powered applications.

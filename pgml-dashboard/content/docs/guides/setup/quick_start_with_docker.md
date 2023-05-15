@@ -221,4 +221,4 @@ Check out our [Training](/docs/guides/training/overview/) and [Predictions](/doc
 
 The Dashboard app is available at <a href="http://localhost:8000/" target="_blank">localhost:8000</a>. You can use it to write experiments in Jupyter-style notebooks, manage projects, and visualize datasets used by PostgresML.
 
-![Dashboard](/static/images/dashboard/notebooks.png)
+![Dashboard](/dashboard/static/images/dashboard/notebooks.png)

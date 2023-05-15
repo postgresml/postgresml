@@ -31,7 +31,7 @@ SELECT * FROM pgml.load_dataset('diabetes');
 
 You should see something like this:
 
-![IDE](/static/images/gym/ide.png)
+![IDE](/dashboard/static/images/gym/ide.png)
 
 We have more example [Scikit datasets](https://scikit-learn.org/stable/datasets/toy_dataset.html) available:
 
@@ -50,7 +50,7 @@ if we want to see what dataset we just loaded looks like, we can run:
 SELECT * FROM pgml.diabetes LIMIT 5;
 ```
 
-![Data](/static/images/gym/data.png)
+![Data](/dashboard/static/images/gym/data.png)
 
 The `diabetes` dataset is a toy (small, not realistic) dataset published by Scikit Learn. It contains ten feature columns and one label column:
 
@@ -91,7 +91,7 @@ SELECT * FROM pgml.train(
 
 You should see this:
 
-![Train](/static/images/gym/train.png)
+![Train](/dashboard/static/images/gym/train.png)
 
 By executing `pmgl.train()` we did the following:
 
@@ -128,7 +128,7 @@ SELECT pgml.predict(
 
 You should see something like this:
 
-![Prediction](/static/images/gym/predict.png)
+![Prediction](/dashboard/static/images/gym/predict.png)
 
 The `prediction` column represents the possible value of the `target` column given the new features we just passed into the `pgml.predict()` function. You can just as easily predict multiple points and compare them to the actual labels in the dataset:
 
@@ -147,7 +147,7 @@ Sometimes the model will be pretty close, but sometimes it will be way off. That
 
 By creating our first project, we made the Dashboard a little bit more interesting. This is how the `pgml.diabetes` snapshot we just created looks like:
 
-![Snapshot](/static/images/gym/snapshot.png)
+![Snapshot](/dashboard/static/images/gym/snapshot.png)
 
 As you can see, we automatically performed some analysis on the data. Visualizing the data is important to understand how it could potentially behave given different models, and maybe even predict how it could evolve in the future.
 
@@ -167,7 +167,7 @@ SELECT * FROM pgml.train(
 
 If you navigate to the Models tab, you should see all three algorithms you just trained:
 
-![Trained Algorithms](/static/images/gym/trained_models.png)
+![Trained Algorithms](/dashboard/static/images/gym/trained_models.png)
 
 Huh, apparently XGBoost isn't as good we originally thought! In this case, a simple linear regression did significantly better than all the others. It's hard to know which algorithm will perform best given a dataset; even experienced machine learning engineers get this one wrong.
 

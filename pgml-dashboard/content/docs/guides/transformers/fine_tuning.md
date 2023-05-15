@@ -152,7 +152,7 @@ Without tuning, DistilBERT classifies every single movie review as `positive`, a
 
 Once our model has been fine tuned on the dataset, it'll be saved and deployed with a Project visible in the Dashboard, just like models built from simpler algorithms.
 
-![Fine Tuning](/static/images/dashboard/tuning.png)
+![Fine Tuning](/dashboard/static/images/dashboard/tuning.png)
 
 ### Prepare the data
 The IMDB dataset has 50,000 examples of user reviews with positive or negative viewing experiences as the labels, and is split 50/50 into training and evaluation datasets.

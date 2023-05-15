@@ -103,4 +103,4 @@ Try experimenting with multiple algorithms to explore their performance characte
 
 The PostgresML dashboard makes it easy to compare various algorithms on your dataset. You can explore individual metrics & compare algorithms to each other, all trained on the same dataset for a fair benchmark.
 
-![Model Selection](/static/images/dashboard/models.png)
+![Model Selection](/dashboard/static/images/dashboard/models.png)

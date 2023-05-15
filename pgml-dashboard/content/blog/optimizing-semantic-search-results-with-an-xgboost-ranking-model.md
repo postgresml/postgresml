@@ -8,7 +8,7 @@ image_alt: Embeddings can be combined into personalized perspectives when stored
 # Optimizing semantic search results with an XGBoost model in your database
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Montana Low</p>
     <p class="m-0">May 3, 2023</p>
@@ -26,7 +26,7 @@ This article is the fourth in a multipart series that will show you how to build
 3) [Personalizing embedding results with application data](/blog/personalize-embedding-vector-search-results-with-huggingface-and-pgvector)
 4) [Optimizing semantic search results with an XGBoost model](/blog/optimizing-semantic-search-results-with-an-xgboost-model)
 
-<img src="/static/images/blog/models_1.webp" alt="Models allow us to predict the future." />
+<img src="/dashboard/static/images/blog/models_1.webp" alt="Models allow us to predict the future." />
 <center><p><i>Models can be trained on application data, to reach an objective.</i></p></center>
 
 ## Custom Ranking Models

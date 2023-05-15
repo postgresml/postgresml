@@ -2,7 +2,7 @@
 
 Models are an artifact of calls to `pgml.train()`. See [Training Overview](/docs/guides/training/overview/) for ways to create new models.
 
-![Models](/static/images/dashboard/model.png)
+![Models](/dashboard/static/images/dashboard/model.png)
 
 ## Schema
 

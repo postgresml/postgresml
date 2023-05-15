@@ -8,7 +8,7 @@ image_alt: PostgresML launches a serverless AI application database in the cloud
 # PostgresML raises $4.7M to launch serverless AI application databases based on Postgres
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Montana Low, CEO</p>
     <p class="m-0">May 10, 2023</p>
@@ -19,7 +19,7 @@ Developing AI-powered applications requires a range of APIs for carrying out tas
 
 With PostgresML, developers can prototype and deploy AI applications quickly and at scale in a matter of minutes — a task that would otherwise have taken weeks. By streamlining the infrastructure requirements, PostgresML allows developers to concentrate on creating intelligent and engaging applications.
 
-<img src="/static/images/blog/cloud.webp" alt="Embeddings can be combined into personalized perspectives when stored as vectors in the database." />
+<img src="/dashboard/static/images/blog/cloud.webp" alt="Embeddings can be combined into personalized perspectives when stored as vectors in the database." />
 
 ## Our Serverless AI Cloud
 
@@ -29,7 +29,7 @@ Creating a new database in this cluster takes a few milliseconds. That database 
 
 Even though PgCat is barely a year old, there are already production workloads handling hundreds of thousands of queries per second at companies like Instacart and OneSignal. Our own deployment is already managing hundreds of independent databases, and launching many new ones every day.
 
-<img src="/static/images/blog/elephants.webp" alt="We're managing hundreds of independent PostgresML deployments" />
+<img src="/dashboard/static/images/blog/elephants.webp" alt="We're managing hundreds of independent PostgresML deployments" />
 
 ## Open Source is the Way Forward
 
@@ -41,7 +41,7 @@ By integrating all the leading machine learning libraries like Torch, Tensorflow
 
 Many amazing open and collaborative communities are shaping the future of our industry, and we will continue to innovate and contribute alongside them. If you’d like to see more of the things you can do with an AI application database, check out the [latest series of articles](/blog/generating-llm-embeddings-with-open-source-models-in-postgresml).
 
-<img src="/static/images/blog/community.webp" alt="Our software is free and open source, built around a community" />
+<img src="/dashboard/static/images/blog/community.webp" alt="Our software is free and open source, built around a community" />
 
 ## Thanks to Our Community
 

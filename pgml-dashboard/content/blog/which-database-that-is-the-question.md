@@ -8,7 +8,7 @@ image_alt: Okay, that was a bit of a spoiler
 # Which Database, That is the Question
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Lev Kokotov</p>
     <p class="m-0">September 1, 2022</p>
@@ -45,7 +45,7 @@ If we denormalize this data, by either flattening it into a key-value store or j
 
 ## PostgreSQL
 
-![Postgres is the way](/static/images/blog/postgres-is-the-way.jpg)
+![Postgres is the way](/dashboard/static/images/blog/postgres-is-the-way.jpg)
 
 Okay, that was a bit of a spoiler.
 

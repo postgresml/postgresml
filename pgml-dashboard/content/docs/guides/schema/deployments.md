@@ -2,7 +2,7 @@
 
 Deployments are an artifact of calls to `pgml.deploy()` and `pgml.train()`. See [Deployments](/docs/guides/predictions/deployments/) for ways to create new deployments manually.
 
-![Deployment](/static/images/dashboard/deployment.png)
+![Deployment](/dashboard/static/images/dashboard/deployment.png)
 
 ## Schema
 

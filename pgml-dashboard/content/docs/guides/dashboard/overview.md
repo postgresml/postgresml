@@ -17,23 +17,23 @@ psql -f pgml-extension/sql/test.sql \
 
 Projects organize Models that are all striving toward the same task. They aren't much more than a name to group a collection of models. You can see the currently deployed model for each project indicated by a <span class="material-symbols-outlined">star</span>.
 
-![Project](/static/images/dashboard/project.png)
+![Project](/dashboard/static/images/dashboard/project.png)
 
 ### Models
 
 Models are the result of training an algorithm on a snapshot of a dataset. They record metrics depending on their projects task, and are scored accordingly. Some models are the result of a hyperparameter search, and include additional analysis on the range of hyperparameters they are tested against.
 
-![Model](/static/images/dashboard/model.png)
+![Model](/dashboard/static/images/dashboard/model.png)
 
 ### Snapshots
 
 A snapshot is created during training runs to record the data used for further analysis, or to train additional models against identical data.
 
-![Snapshot](/static/images/dashboard/snapshot.png)
+![Snapshot](/dashboard/static/images/dashboard/snapshot.png)
 
 ### Deployments
 
 Every deployment is recorded to track models over time.
 
-![Deployment](/static/images/dashboard/deployment.png)
+![Deployment](/dashboard/static/images/dashboard/deployment.png)
 

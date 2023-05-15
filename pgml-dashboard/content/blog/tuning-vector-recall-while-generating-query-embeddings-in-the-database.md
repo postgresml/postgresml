@@ -8,7 +8,7 @@ image_alt: Embeddings represent high level information like text, images and aud
 # Tuning vector recall while generating query embeddings in the database
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Montana Low</p>
     <p class="m-0">April 28, 2023</p>
@@ -28,7 +28,7 @@ This article is the second in a multipart series that will show you how to build
 
 The previous article discussed how to generate embeddings that perform better than OpenAI's `text-embedding-ada-002` and save them in a table with a vector index. In this article, we'll show you how to query those embeddings effectively.
 
-<img src="/static/images/blog/embeddings_2.webp" alt="embeddings are vectors in an abstract space" />
+<img src="/dashboard/static/images/blog/embeddings_2.webp" alt="embeddings are vectors in an abstract space" />
 <center><p><i>Embeddings show us the relationships between rows in the database, using natural language.</i></p></center>
 
 Our example data is based on 5 million DVD reviews from Amazon customers submitted over a decade. For reference, that's more data than fits in a Pinecone Pod at the time of writing. Webscale: check. Let's start with a quick refresher on the data in our `pgml.amazon_us_reviews` table:
@@ -183,7 +183,7 @@ There's some good stuff happening in those query results, so let's break it down
 
 This seems to actually just work out of the box... but, there is some room for improvement.
 
-![img.png](/static/images/blog/the_dude.jpg)
+![img.png](/dashboard/static/images/blog/the_dude.jpg)
 <center><p><i>Yeah, well, that's just like, your opinion, man</i></p></center>
 
 1) __It's a single persons opinion__ - We're searching individual reviews, not all reviews for a movie. The correct answer to this request is undisputedly "Episode V: The Empire Strikes Back". Ok, maybe "Blade Runner", but I really did like "Back to the Future"... Oh no, someone on the internet is wrong, and we need to fix it!

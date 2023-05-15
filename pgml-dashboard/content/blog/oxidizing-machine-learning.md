@@ -7,7 +7,7 @@ description: Machine learning in Python is slow and error-prone, while Rust make
 # Oxidizing Machine Learning
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Lev Kokotov</p>
     <p class="m-0">September 7, 2022</p>

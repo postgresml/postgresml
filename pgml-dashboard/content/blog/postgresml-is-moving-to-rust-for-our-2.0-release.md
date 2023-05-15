@@ -9,7 +9,7 @@ PostgresML is Moving to Rust for our 2.0 Release
 ================================================
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Montana Low</p>
     <p class="m-0">September 19, 2022</p>
@@ -24,7 +24,7 @@ Python is generally touted as fast enough for machine learning, and is the de fa
 ## Ambition Starts With a Simple Benchmark
 
 <figure>
-	<img alt="Ferris the crab" src="/static/images/blog/rust_programming_crab_sea.webp" />
+	<img alt="Ferris the crab" src="/dashboard/static/images/blog/rust_programming_crab_sea.webp" />
 	<center class="mt-2"><figcaption>Rust mascot image by opensource.com</figcaption></center>
 </figure>
 
@@ -198,7 +198,7 @@ We're building with the Rust [pgrx](https://github.com/tcdi/pgrx/tree/master/pgr
 ML isn't just about basic math and a little bit of business logic. It's about all those complicated algorithms beyond linear regression for gradient boosting and deep learning. The good news is that most of these libraries are implemented in C/C++, and just have Python bindings. There are also bindings for Rust ([lightgbm](https://github.com/vaaaaanquish/lightgbm-rs), [xgboost](https://github.com/davechallis/rust-xgboost), [tensorflow](https://github.com/tensorflow/rust), [torch](https://github.com/LaurentMazare/tch-rs)).
 
 <figure>
-  <img alt="It's all abstraction" src="/static/images/blog/abstraction.webp" />
+  <img alt="It's all abstraction" src="/dashboard/static/images/blog/abstraction.webp" />
 	<center class="mt-2"><figcaption>Layers of abstraction must remain a good value.</figcaption></center>
 </figure>
 
@@ -260,7 +260,7 @@ Many thanks and ❤️ to all those who are supporting this endeavor. We’d lov
   <video controls autoplay loop muted width="90%" style="box-shadow: 0 0 8px #000;">
     <source src="https://static.postgresml.org/postgresml-org-static/gym_demo.webm" type="video/webm">
     <source src="https://static.postgresml.org/postgresml-org-static/gym_demo.mp4" type="video/mp4">
-    <img src="/static/images/demos/gym_demo.png" alt="PostgresML in practice" loading="lazy">
+    <img src="/dashboard/static/images/demos/gym_demo.png" alt="PostgresML in practice" loading="lazy">
   </video>
 </center>
 

@@ -26,7 +26,7 @@ Data is Living and Relational
 ================================
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Montana Low</p>
     <p class="m-0">August 25, 2022</p>
@@ -58,7 +58,7 @@ Announcing the PostgresML Gym 🎉
 
 Instead of starting from the academic perspective that data is dead, PostgresML embraces the living and dynamic nature of data produced by modern organizations. It's relational and growing in multiple dimensions.
 
-![relational data](/static/images/illustrations/uml.png)
+![relational data](/dashboard/static/images/illustrations/uml.png)
 
 Relational data:
 
@@ -76,7 +76,7 @@ We think it’s worth attempting to move the machine learning process and modern
   <video controls autoplay loop muted width="90%" style="box-shadow: 0 0 8px #000;">
     <source src="https://static.postgresml.org/postgresml-org-static/gym_demo.webm" type="video/webm">
     <source src="https://static.postgresml.org/postgresml-org-static/gym_demo.mp4" type="video/mp4">
-    <img src="/static/images/demos/gym_demo.png" alt="PostgresML in practice" loading="lazy">
+    <img src="/dashboard/static/images/demos/gym_demo.png" alt="PostgresML in practice" loading="lazy">
   </video>
 </center>
 

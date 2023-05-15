@@ -8,7 +8,7 @@ image_alt: We were promised flying cars
 # Postgres Full Text Search is Awesome!
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Montana Low</p>
     <p class="m-0">August 31, 2022</p>
@@ -30,7 +30,7 @@ This is good enough for most of the use cases out there, without introducing any
 
 <center>
 
-![Flying Car](/static/images/blog/delorean.jpg)
+![Flying Car](/dashboard/static/images/blog/delorean.jpg)
 
 <div class="my-2">
     <i>What we were promised</i>
@@ -116,7 +116,7 @@ If you'd like to play through an interactive notebook to generate models for sea
   <video controls autoplay loop muted width="90%" style="box-shadow: 0 0 8px #000;">
     <source src="https://static.postgresml.org/postgresml-org-static/gym_demo.webm" type="video/webm">
     <source src="https://static.postgresml.org/postgresml-org-static/gym_demo.mp4" type="video/mp4">
-    <img src="/static/images/demos/gym_demo.png" alt="PostgresML in practice" loading="lazy">
+    <img src="/dashboard/static/images/demos/gym_demo.png" alt="PostgresML in practice" loading="lazy">
   </video>
 </center>
 

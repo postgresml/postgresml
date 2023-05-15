@@ -8,7 +8,7 @@ image_alt: Embeddings show us the relationships between rows in the database
 # Generating LLM embeddings with open source models in PostgresML
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Montana Low</p>
     <p class="m-0">April 21, 2023</p>
@@ -30,7 +30,7 @@ In recent years, embeddings have become an increasingly popular technique in mac
 
 They can also turn natural language into quantitative features for downstream machine learning models and applications.
 
-<img src="/static/images/blog/embeddings_1.webp" alt="embeddings are vectors in an abstract space" />
+<img src="/dashboard/static/images/blog/embeddings_1.webp" alt="embeddings are vectors in an abstract space" />
 <center><p><i>Embeddings show us the relationships between rows in the database.</i></p></center>
 
 A popular use case driving the adoption of "vector databases" is doing similarity search on embeddings, often referred to as "Semantic Search". This is a powerful technique that allows you to find similar items in large datasets by comparing their vectors. For example, you could use it to find similar products in an e-commerce site, similar songs in a music streaming service, or similar documents given a text query.

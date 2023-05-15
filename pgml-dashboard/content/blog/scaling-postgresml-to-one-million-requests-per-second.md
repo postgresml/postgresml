@@ -7,7 +7,7 @@ image_alt: PostgresML at 1 million requests per second
 # Scaling PostgresML to 1 Million Requests per Second
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
   	<p class="m-0">Lev Kokotov</p>
   	<p class="m-0">November 7, 2022</p>
@@ -32,7 +32,7 @@ Part of our thesis, and the reason why we chose Postgres as our host for machine
 Inference speed varies based on the model complexity (e.g. `n_estimators` for XGBoost) and the size of the dataset (how many features the model uses), which is analogous to query complexity and table size in the database world and, as we'll demonstrate further on, scaling the latter is mostly a solved problem.
 
 <center class="mb-3">
-	<img src="/static/images/illustrations/scaling-postgresml-3.svg" alt="Scaling PostgresML" />
+	<img src="/dashboard/static/images/illustrations/scaling-postgresml-3.svg" alt="Scaling PostgresML" />
 	<p class="mt-3">
 		<i>System Architecture</i>
 	</p>
@@ -91,7 +91,7 @@ PostgresML bypasses that limitation because of how Postgres itself handles concu
 
 <center>
 
-<img height="300" width="auto" style="height: 300px" src="/static/images/illustrations/postgres-multiprocess-2.png" alt="Inside a replica" /> <br />
+<img height="300" width="auto" style="height: 300px" src="/dashboard/static/images/illustrations/postgres-multiprocess-2.png" alt="Inside a replica" /> <br />
 
 <i>PostgresML concurrency</i>
 
@@ -157,7 +157,7 @@ We were hoping to test PostgresML to its breaking point, but we couldn't quite g
 
 <center>
 
-![Queuing](/static/images/illustrations/queueing.svg) <br />
+![Queuing](/dashboard/static/images/illustrations/queueing.svg) <br />
 
 <i>"What's taking so long over there!?"</i>
 

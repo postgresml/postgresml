@@ -8,7 +8,7 @@ image_alt: Embeddings can be combined into personalized perspectives when stored
 # Personalize embedding results with application data in your database
 
 <div class="d-flex align-items-center mb-4">
-  <img width="54px" height="54px" src="/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
+  <img width="54px" height="54px" src="/dashboard/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Montana Low</p>
     <p class="m-0">May 3, 2023</p>
@@ -26,7 +26,7 @@ This article is the third in a multipart series that will show you how to build 
 3) [Personalizing embedding results with application data](/blog/personalize-embedding-vector-search-results-with-huggingface-and-pgvector)
 4) Optimizing semantic results with an XGBoost ranking model - coming soon!
 
-<img src="/static/images/blog/embeddings_3.webp" alt="Embeddings can be combined into personalized perspectives when stored as vectors in the database." />
+<img src="/dashboard/static/images/blog/embeddings_3.webp" alt="Embeddings can be combined into personalized perspectives when stored as vectors in the database." />
 <center><p><i>Embeddings can be combined into personalized perspectives when stored as vectors in the database.</i></p></center>
 
 ## Personalization

@@ -2,7 +2,7 @@
 
 Projects are an artifact of calls to `pgml.train()`. See [Training Overview](/docs/guides/training/overview/) for ways to create new projects.
 
-![Projects](/static/images/dashboard/project.png)
+![Projects](/dashboard/static/images/dashboard/project.png)
 
 ## Schema
 
