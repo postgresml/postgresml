@@ -14,11 +14,11 @@ pub mod components;
 pub use head::*;
 
 #[derive(TemplateOnce, Default)]
-#[template(path = "not_found.html")]
+#[template(path = "content/not_found.html")]
 pub struct NotFound {}
 
 #[derive(TemplateOnce, Default)]
-#[template(path = "error.html")]
+#[template(path = "content/error.html")]
 pub struct Error {
     pub error: String,
 }
