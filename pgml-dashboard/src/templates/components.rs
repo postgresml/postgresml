@@ -71,10 +71,3 @@ pub struct Breadcrumbs<'a> {
 pub struct Boxes<'a> {
     pub boxes: Vec<Box<'a>>,
 }
-
-#[derive(TemplateOnce)]
-#[template(path = "components/plan_comparison_table.html")]
-pub struct PlanComparisonTable<'a> {
-    pub header: &'a str,
-    pub rows: Vec<(String, bool, bool, bool)>,
-}

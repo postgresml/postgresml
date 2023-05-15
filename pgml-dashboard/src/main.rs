@@ -8,8 +8,7 @@ use rocket::{
     response::Redirect,
 };
 
-use pgml_dashboard::{responses::BadRequest, responses, utils::{config, markdown}};
-use pgml_dashboard::responses::Response;
+use pgml_dashboard::{responses::{self, BadRequest, Response}, utils::{config, markdown}};
 
 #[rocket::get("/")]
 async fn index() -> Redirect {
@@ -125,7 +124,7 @@ async fn main() {
         .manage(clusters)
         .manage(markdown::SearchIndex::open().unwrap())
         .mount("/", rocket::routes![index, error])
-        .mount("/static", FileServer::from(&config::static_dir()))
+        .mount("/dashboard/static", FileServer::from(&config::static_dir()))
         .mount("/dashboard", pgml_dashboard::routes())
         .mount("/", pgml_dashboard::api::docs::routes())
         .register(

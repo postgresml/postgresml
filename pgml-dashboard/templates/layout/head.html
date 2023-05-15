@@ -21,8 +21,8 @@
   <meta property="og:image" content="<%= head.image.clone().unwrap() %>">
   <meta name="twitter:image" content="<%= head.image.clone().unwrap() %>">
   <% } else { %>
-  <meta property="og:image" content="https://postgresml.org/static/images/owl_gradient.png">
-  <meta name="twitter:image" content="https://postgresml.org/static/images/owl_gradient.png">
+  <meta property="og:image" content="https://postgresml.org/dashboard/static/images/owl_gradient.png">
+  <meta name="twitter:image" content="https://postgresml.org/dashboard/static/images/owl_gradient.png">
   <% } %>
 
   <meta property="og:site_name" content="PostgresML">
@@ -36,9 +36,9 @@
   <meta name="twitter:creator" content="@postgresml">
   <meta name="twitter:title" content="<%= head.title %> – PostgresML">
 
-  <link rel="icon" href="/static/images/owl.ico">
+  <link rel="icon" href="/dashboard/static/images/owl.ico">
   <link rel="stylesheet" href="<%- config::css_url() %>">
-  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/dashboard/static/css/base.css">
   <script defer src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,7 +46,7 @@
 
   <script async src="https://data.cloud.hyperparam.ai/script.js" data-website-id="499122fd-f307-4e8d-af4b-88b9f5e9903b"></script>
   <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
-  <script defer type="module" src="/static/js/libs/turbo-7.3.0.min.js"></script>
+  <script defer type="module" src="/dashboard/static/js/libs/turbo-7.3.0.min.js"></script>
   <script defer src="https://cdn.plot.ly/plotly-2.11.1.min.js"></script>
 
   <!-- Code Mirror -->
@@ -61,9 +61,9 @@
   <script type="importmap-shim">
     {
       "imports": {
-        "@hotwired/stimulus": "/static/js/libs/stimulus-3.2.1.min.js",
-        "@lodash/core": "/static/js/libs/lodash-4.17.15-core.js",
-        "@postgresml/main": "/static/js/main.js"
+        "@hotwired/stimulus": "<%= config::js_url("libs/stimulus-3.2.1.min.js") %>",
+        "@lodash/core": "<%= config::js_url("libs/lodash-4.17.15-core.js") %>",
+        "@postgresml/main": "<%= config::js_url("main.js") %>"
       }
     }
   </script>

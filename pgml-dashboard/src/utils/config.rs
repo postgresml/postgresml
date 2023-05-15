@@ -62,7 +62,7 @@ pub fn deployment() -> String {
 
 pub fn css_url() -> String {
     if dev_mode() {
-        return "/static/css/style.css".to_string();
+        return "/dashboard/static/css/style.css".to_string();
     }
 
     let filename = match var("CSS_VERSION") {
@@ -70,7 +70,7 @@ pub fn css_url() -> String {
         Err(_) => "style.css".to_string(),
     };
 
-    let path = format!("/static/css/{filename}");
+    let path = format!("/dashboard/static/css/{filename}");
 
     match var("ASSETS_DOMAIN") {
         Ok(domain) => format!("https://{domain}/{path}"),
@@ -92,7 +92,7 @@ pub fn js_url(name: &str) -> String {
         }
     };
 
-    let path = format!("/static/js/{name}");
+    let path = format!("/dashboard/static/js/{name}");
 
     match var("ASSETS_DOMAIN") {
         Ok(domain) => format!("https://{domain}/{path}"),
