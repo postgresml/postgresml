@@ -954,7 +954,7 @@ impl SearchIndex {
             let path_field = schema.get_field("path").unwrap();
             let title_regex_field = schema.get_field("title_regex").unwrap();
 
-            info!("found path: {path}");
+            info!("found path: {path}", path=path.display());
             let path = path
                 .to_str()
                 .unwrap()
