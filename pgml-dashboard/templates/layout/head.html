@@ -40,7 +40,6 @@
   <link rel="stylesheet" href="<%- config::css_url() %>">
   <link rel="stylesheet" href="/static/css/base.css">
   <script defer src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=swap">
@@ -48,6 +47,7 @@
   <script async src="https://data.cloud.hyperparam.ai/script.js" data-website-id="499122fd-f307-4e8d-af4b-88b9f5e9903b"></script>
   <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
   <script defer type="module" src="/static/js/libs/turbo-7.3.0.min.js"></script>
+  <script defer src="https://cdn.plot.ly/plotly-2.11.1.min.js"></script>
 
   <!-- Code Mirror -->
   <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
@@ -58,12 +58,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css" integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/show-hint.min.css" integrity="sha512-OmcLQEy8iGiD7PSm85s06dnR7G7C9C0VqahIPAj/KHk5RpOCmnC6R2ob1oK4/uwYhWa9BF1GC6tzxsC8TIx7Jg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-  <!-- Sentry -->
   <script type="importmap-shim">
     {
       "imports": {
         "@hotwired/stimulus": "/static/js/libs/stimulus-3.2.1.min.js",
-        "@plotly/plotly": "https://cdn.plot.ly/plotly-2.18.2.min.js",
         "@lodash/core": "/static/js/libs/lodash-4.17.15-core.js",
         "@postgresml/main": "/static/js/main.js"
       }

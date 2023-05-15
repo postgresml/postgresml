@@ -1,7 +1,6 @@
 import {
     Controller
 } from '@hotwired/stimulus';
-import '@plotly/plotly'
 
 export default class extends Controller {
 
