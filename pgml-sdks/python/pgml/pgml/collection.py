@@ -6,11 +6,13 @@ import logging
 from rich.logging import RichHandler
 from rich.progress import track
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import hashlib
 import json
 
 from .dbutils import *
+
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 FORMAT = "%(message)s"
 logging.basicConfig(
@@ -30,7 +32,10 @@ class Collection:
         self._create_splitter_table()
         self._create_models_table()
         self._create_chunks_table()
+        self.register_text_splitter()
+        self.register_embeddings_model()
 
+    
     def _create_documents_table(self) -> None:
         self.documents_table = self.name + ".documents"
         conn = self.pool.getconn()
@@ -156,7 +161,8 @@ class Collection:
                               ON DELETE CASCADE\
                               ON UPDATE CASCADE\
                               DEFERRABLE INITIALLY DEFERRED,\
-                    content     text NOT NULL);"
+                            chunk_id    int8 NOT NULL,\
+                            chunk     text NOT NULL);"
             % (self.chunks_table, self.documents_table, self.splitters_table)
         )
         run_create_or_insert_statement(conn, create_statement)
@@ -221,3 +227,119 @@ class Collection:
             run_create_or_insert_statement(conn, insert_statement, verbose)
 
         self.pool.putconn(conn)
+
+    def register_text_splitter(
+        self,
+        splitter_name: Optional[str] = "RecursiveCharacterTextSplitter",
+        splitter_params: Optional[Dict[str, Any]] = {},
+    ) -> None:
+        conn = self.pool.getconn()
+        select_statement = "SELECT * FROM %s WHERE name = %s AND parameters = %s" % (
+            self.splitters_table,
+            sql.Literal(splitter_name).as_string(conn),
+            sql.Literal(json.dumps(splitter_params)).as_string(conn),
+        )
+        results = run_select_statement(conn, select_statement)
+        if len(results) > 0:
+            log.info(
+                "Splitter %s with parameters %s already exists in %s"
+                % (splitter_name, splitter_params, self.splitters_table)
+            )
+        else:
+            insert_statement = "INSERT INTO %s (name, parameters) VALUES (%s, %s)" % (
+                self.splitters_table,
+                sql.Literal(splitter_name).as_string(conn),
+                sql.Literal(json.dumps(splitter_params)).as_string(conn),
+            )
+            run_create_or_insert_statement(conn, insert_statement)
+            results = run_select_statement(conn, select_statement)
+        self.pool.putconn(conn)
+
+        return results[0][0]
+
+    def get_text_splitters(self) -> Dict[str,Any]:
+        conn = self.pool.getconn()
+        select_statement = "SELECT id, name, parameters FROM %s"%(self.splitters_table)
+        results = run_select_statement(conn,select_statement)
+        splitters = []
+        for result in results:
+            splitters.append({"id": result[0], "name": result[1], "parameters": result[2]})
+
+        self.pool.putconn(conn)
+        return splitters
+
+    def get_text_chunks(
+        self,
+        splitter_id: int = 1
+    ) -> None:
+        conn = self.pool.getconn()
+        log.info("Using splitter id %d" % splitter_id)
+        select_statement = "SELECT name, parameters FROM %s WHERE id = %d"%(self.splitters_table,splitter_id)
+        results = run_select_statement(conn,select_statement)
+        splitter_name = results[0][0]
+        splitter_params = results[0][1]
+        if splitter_name == "RecursiveCharacterTextSplitter":
+            text_splitter = RecursiveCharacterTextSplitter(**splitter_params)
+        else:
+            raise ValueError("%s is not supported" % splitter_name)
+        # Get all documents
+        select_statement = "SELECT id, text FROM %s" % self.documents_table
+        results = run_select_statement(conn, select_statement)
+        for result in results:
+            log.debug("Came into chunk insertion")
+            document = result[0]
+            text = result[1]
+            chunks = text_splitter.create_documents([text])
+            for chunk_id, chunk in enumerate(chunks):
+                insert_statement = (
+                    "INSERT INTO %s (document,splitter,chunk_id, chunk) VALUES (%s, %s, %s, %s);"
+                    % (
+                        self.chunks_table,
+                        sql.Literal(document).as_string(conn),
+                        sql.Literal(splitter_id).as_string(conn),
+                        sql.Literal(chunk_id).as_string(conn),
+                        sql.Literal(chunk.page_content).as_string(conn),
+                    )
+                )
+                run_create_or_insert_statement(conn, insert_statement)
+        self.pool.putconn(conn)
+
+    def register_embeddings_model(
+        self,
+        model_name: Optional[str] = "hkunlp/instructor-base",
+        model_params: Optional[Dict[str, Any]] = {},
+    ) -> None:
+        conn = self.pool.getconn()
+        select_statement = "SELECT * FROM %s WHERE name = %s AND parameters = %s" % (
+            self.models_table,
+            sql.Literal(model_name).as_string(conn),
+            sql.Literal(json.dumps(model_params)).as_string(conn),
+        )
+        results = run_select_statement(conn, select_statement)
+        if len(results) > 0:
+            log.info(
+                "Splitter %s with parameters %s already exists in %s"
+                % (model_name, model_params, self.models_table)
+            )
+        else:
+            insert_statement = "INSERT INTO %s (name, parameters) VALUES (%s, %s)" % (
+                self.models_table,
+                sql.Literal(model_name).as_string(conn),
+                sql.Literal(json.dumps(model_params)).as_string(conn),
+            )
+            run_create_or_insert_statement(conn, insert_statement)
+            results = run_select_statement(conn, select_statement)
+        self.pool.putconn(conn)
+
+        return results[0][0]
+    
+    def get_embeddings_model(self) -> Dict[str,Any]:
+        conn = self.pool.getconn()
+        select_statement = "SELECT id, name, parameters FROM %s"%(self.models_table)
+        results = run_select_statement(conn,select_statement)
+        splitters = []
+        for result in results:
+            splitters.append({"id": result[0], "name": result[1], "parameters": result[2]})
+
+        self.pool.putconn(conn)
+        return splitters

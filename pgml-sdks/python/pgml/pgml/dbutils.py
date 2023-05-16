@@ -31,6 +31,7 @@ def run_create_or_insert_statement(
 
     if not autocommit:
         conn.commit()
+
     cur.close()
 
 
