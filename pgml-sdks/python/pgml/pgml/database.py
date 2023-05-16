@@ -6,16 +6,18 @@ import logging
 from rich.logging import RichHandler
 from rich.progress import track
 
+from typing import List, Dict, Optional
 
 from .collection import Collection
-
+from .dbutils import *
+import os
 
 FORMAT = "%(message)s"
 logging.basicConfig(
-    level="NOTSET", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+    level=os.environ.get("LOGLEVEL", "INFO"), format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
 )
-
 log = logging.getLogger("rich")
+
 
 class Database:
     def __init__(self, conninfo: str) -> None:
@@ -30,33 +32,34 @@ class Database:
         """
         self.conninfo = conninfo
         self.pool = ConnectionPool(conninfo)
-        conn = self.pool.getconn()
         log.info("Creating table pgml.collections")
         create_statement = "CREATE TABLE IF NOT EXISTS pgml.collections \
                             (id  serial8 PRIMARY KEY,\
                             created_at  timestamptz NOT NULL DEFAULT now(),\
                             name  text NOT NULL)"
-        conn.execute(create_statement)
-        conn.commit()
-        self.pool.putconn(conn)
+        run_create_or_insert_statement(self.pool, create_statement)
 
-
-    def create_collection(self, name: str) -> None:
-        conn = self.pool.getconn()
-        cur = conn.cursor()
-        cur.execute("SELECT name FROM pgml.collections")
+    def create_collection(self, name: str) -> Collection:
+        # Get collection names
+        results = run_select_statement(self.pool, "SELECT name FROM pgml.collections")
         name = name.lower()
-        names = [res[0] for res in cur.fetchall()]
+        names = [res[0] for res in results]
+
         if name in names:
-            log.info("%s already exists.."%name)
+            log.info("Collection with name %s already exists.." % name)
         else:
-            insert_statement = "INSERT INTO pgml.collections (name) VALUES ('%s')"%(name)
-            cur.execute(insert_statement)
+            insert_statement = "INSERT INTO pgml.collections (name) VALUES ('%s')" % (
+                name
+            )
+            run_create_or_insert_statement(self.pool, insert_statement)
+            # Create collection object
+        return Collection(self.pool, name)
 
-        conn.commit()
-        cur.close()
-        self.pool.putconn(conn)
-
-        # Create collection object
-        Collection(self.pool, name)
-        
+    def delete_collection(self, name: str) -> None:
+        results = run_select_statement(
+            self.pool, "SELECT nspname FROM pg_catalog.pg_namespace;"
+        )
+        names = [res[0] for res in results]
+        if name in names:
+            drop_statement = "DROP SCHEMA IF EXISTS %s CASCADE" % name
+            run_drop_or_delete_statement(self.pool, drop_statement)
