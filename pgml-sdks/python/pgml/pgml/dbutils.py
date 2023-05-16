@@ -1,4 +1,5 @@
 from psycopg_pool import ConnectionPool
+from psycopg import Connection
 from typing import List, Any
 
 import logging
@@ -8,16 +9,18 @@ import os
 
 FORMAT = "%(message)s"
 logging.basicConfig(
-    level=os.environ.get("LOGLEVEL", "INFO"), format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+    level=os.environ.get("LOGLEVEL", "INFO"),
+    format=FORMAT,
+    datefmt="[%X]",
+    handlers=[RichHandler()],
 )
 log = logging.getLogger("rich")
 
 
 def run_create_or_insert_statement(
-    pool: ConnectionPool, statement: str, autocommit: bool = False
+    conn: Connection, statement: str, autocommit: bool = False
 ) -> None:
     log.info("Running %s .. " % statement)
-    conn = pool.getconn()
     if autocommit:
         conn.autocommit = autocommit
     cur = conn.cursor()
@@ -29,26 +32,21 @@ def run_create_or_insert_statement(
     if not autocommit:
         conn.commit()
     cur.close()
-    pool.putconn(conn)
 
 
-def run_select_statement(pool: ConnectionPool, statement: str) -> List[Any]:
+def run_select_statement(conn: Connection, statement: str) -> List[Any]:
     log.info("Running %s .. " % statement)
-    conn = pool.getconn()
     cur = conn.cursor()
     cur.execute(statement)
     results = cur.fetchall()
     conn.commit()
     cur.close()
-    pool.putconn(conn)
     return results
 
 
-def run_drop_or_delete_statement(pool: ConnectionPool, statement: str) -> None:
+def run_drop_or_delete_statement(conn: Connection, statement: str) -> None:
     log.info("Running %s .. " % statement)
-    conn = pool.getconn()
     cur = conn.cursor()
     cur.execute(statement)
     conn.commit()
     cur.close()
-    pool.putconn(conn)

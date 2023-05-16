@@ -32,12 +32,16 @@ class TestCollectionEmbedding(unittest.TestCase):
     
     def test_upsert_documents(self):
         self.collection.upsert_documents(self.documents)
-        results = run_select_statement(self.db.pool,"SELECT id FROM %s"%self.collection.documents_table)
+        conn = self.db.pool.getconn()
+        results = run_select_statement(conn,"SELECT id FROM %s"%self.collection.documents_table)
+        self.db.pool.putconn(conn)
         assert len(results) >= len(self.documents)
     
     def test_upsert_documents_no_ids(self):
         self.collection.upsert_documents(self.documents_no_ids)
-        results = run_select_statement(self.db.pool,"SELECT id FROM %s"%self.collection.documents_table)
+        conn = self.db.pool.getconn()
+        results = run_select_statement(conn,"SELECT id FROM %s"%self.collection.documents_table)
+        self.db.pool.putconn(conn)
         assert len(results) >= len(self.documents_no_ids)
     
     

@@ -14,7 +14,10 @@ import os
 
 FORMAT = "%(message)s"
 logging.basicConfig(
-    level=os.environ.get("LOGLEVEL", "INFO"), format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+    level=os.environ.get("LOGLEVEL", "INFO"),
+    format=FORMAT,
+    datefmt="[%X]",
+    handlers=[RichHandler()],
 )
 log = logging.getLogger("rich")
 
@@ -37,11 +40,14 @@ class Database:
                             (id  serial8 PRIMARY KEY,\
                             created_at  timestamptz NOT NULL DEFAULT now(),\
                             name  text NOT NULL)"
-        run_create_or_insert_statement(self.pool, create_statement)
+        conn = self.pool.getconn()
+        run_create_or_insert_statement(conn, create_statement)
+        self.pool.putconn(conn)
 
     def create_collection(self, name: str) -> Collection:
         # Get collection names
-        results = run_select_statement(self.pool, "SELECT name FROM pgml.collections")
+        conn = self.pool.getconn()
+        results = run_select_statement(conn, "SELECT name FROM pgml.collections")
         name = name.lower()
         names = [res[0] for res in results]
 
@@ -51,8 +57,9 @@ class Database:
             insert_statement = "INSERT INTO pgml.collections (name) VALUES ('%s')" % (
                 name
             )
-            run_create_or_insert_statement(self.pool, insert_statement)
+            run_create_or_insert_statement(conn, insert_statement)
             # Create collection object
+        self.pool.putconn(conn)
         return Collection(self.pool, name)
 
     def delete_collection(self, name: str) -> None:
