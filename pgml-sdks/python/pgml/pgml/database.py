@@ -49,7 +49,7 @@ class Database:
         conn = self.pool.getconn()
         results = run_select_statement(conn, "SELECT name FROM pgml.collections")
         name = name.lower()
-        names = [res[0] for res in results]
+        names = [res["name"] for res in results]
 
         if name in names:
             log.info("Collection with name %s already exists.." % name)
@@ -66,7 +66,7 @@ class Database:
         results = run_select_statement(
             self.pool, "SELECT nspname FROM pg_catalog.pg_namespace;"
         )
-        names = [res[0] for res in results]
+        names = [res["name"] for res in results]
         if name in names:
             drop_statement = "DROP SCHEMA IF EXISTS %s CASCADE" % name
             run_drop_or_delete_statement(self.pool, drop_statement)

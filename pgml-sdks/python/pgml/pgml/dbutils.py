@@ -39,7 +39,14 @@ def run_select_statement(conn: Connection, statement: str) -> List[Any]:
     log.info("Running %s .. " % statement)
     cur = conn.cursor()
     cur.execute(statement)
-    results = cur.fetchall()
+    qresults = cur.fetchall()
+    colnames = [desc[0] for desc in cur.description]
+    results = []
+    for result in qresults:
+        _dict = {}
+        for _id,col in enumerate(colnames):
+            _dict[col] = result[_id]
+        results.append(_dict)
     conn.commit()
     cur.close()
     return results

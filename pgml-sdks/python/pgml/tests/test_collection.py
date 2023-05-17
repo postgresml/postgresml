@@ -52,8 +52,8 @@ class TestCollection(unittest.TestCase):
         assert splitters[0]["name"] == "RecursiveCharacterTextSplitter"
     
     def test_default_embeddings_model(self):
-        model_id = self.collection.register_embeddings_model()
-        models = self.collection.get_embeddings_model()
+        model_id = self.collection.register_model()
+        models = self.collection.get_models()
         
         assert model_id == 1
         assert models[0]["name"] == "hkunlp/instructor-base"

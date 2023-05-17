@@ -33,9 +33,8 @@ class Collection:
         self._create_models_table()
         self._create_chunks_table()
         self.register_text_splitter()
-        self.register_embeddings_model()
+        self.register_model()
 
-    
     def _create_documents_table(self) -> None:
         self.documents_table = self.name + ".documents"
         conn = self.pool.getconn()
@@ -119,14 +118,22 @@ class Collection:
             "CREATE TABLE IF NOT EXISTS %s (\
                             id          serial8 PRIMARY KEY, \
                             created_at  timestamptz NOT NULL DEFAULT now(), \
+                            task        text NOT NULL, \
                             name        text NOT NULL, \
                             parameters  jsonb NOT NULL DEFAULT '{}'\
                     );"
             % (self.models_table)
         )
         run_create_or_insert_statement(conn, create_statement)
+
         index_statement = (
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS created_at_index ON %s (created_at);"
+            % (self.models_table)
+        )
+        run_create_or_insert_statement(conn, index_statement, autocommit=True)
+
+        index_statement = (
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS task_index ON %s (task);"
             % (self.models_table)
         )
         run_create_or_insert_statement(conn, index_statement, autocommit=True)
@@ -255,29 +262,27 @@ class Collection:
             results = run_select_statement(conn, select_statement)
         self.pool.putconn(conn)
 
-        return results[0][0]
+        return results[0]["id"]
 
-    def get_text_splitters(self) -> Dict[str,Any]:
+    def get_text_splitters(self) -> Dict[str, Any]:
         conn = self.pool.getconn()
-        select_statement = "SELECT id, name, parameters FROM %s"%(self.splitters_table)
-        results = run_select_statement(conn,select_statement)
-        splitters = []
-        for result in results:
-            splitters.append({"id": result[0], "name": result[1], "parameters": result[2]})
-
+        select_statement = "SELECT id, name, parameters FROM %s" % (
+            self.splitters_table
+        )
+        splitters = run_select_statement(conn, select_statement)
         self.pool.putconn(conn)
         return splitters
 
-    def get_text_chunks(
-        self,
-        splitter_id: int = 1
-    ) -> None:
+    def get_text_chunks(self, splitter_id: int = 1) -> None:
         conn = self.pool.getconn()
         log.info("Using splitter id %d" % splitter_id)
-        select_statement = "SELECT name, parameters FROM %s WHERE id = %d"%(self.splitters_table,splitter_id)
-        results = run_select_statement(conn,select_statement)
-        splitter_name = results[0][0]
-        splitter_params = results[0][1]
+        select_statement = "SELECT name, parameters FROM %s WHERE id = %d" % (
+            self.splitters_table,
+            splitter_id,
+        )
+        results = run_select_statement(conn, select_statement)
+        splitter_name = results[0]["name"]
+        splitter_params = results[0]["parameters"]
         if splitter_name == "RecursiveCharacterTextSplitter":
             text_splitter = RecursiveCharacterTextSplitter(**splitter_params)
         else:
@@ -287,8 +292,8 @@ class Collection:
         results = run_select_statement(conn, select_statement)
         for result in results:
             log.debug("Came into chunk insertion")
-            document = result[0]
-            text = result[1]
+            document = result["id"]
+            text = result["text"]
             chunks = text_splitter.create_documents([text])
             for chunk_id, chunk in enumerate(chunks):
                 insert_statement = (
@@ -304,42 +309,55 @@ class Collection:
                 run_create_or_insert_statement(conn, insert_statement)
         self.pool.putconn(conn)
 
-    def register_embeddings_model(
+    def register_model(
         self,
+        task: Optional[str] = "embedding",
         model_name: Optional[str] = "hkunlp/instructor-base",
         model_params: Optional[Dict[str, Any]] = {},
     ) -> None:
         conn = self.pool.getconn()
-        select_statement = "SELECT * FROM %s WHERE name = %s AND parameters = %s" % (
-            self.models_table,
-            sql.Literal(model_name).as_string(conn),
-            sql.Literal(json.dumps(model_params)).as_string(conn),
+        select_statement = (
+            "SELECT * FROM %s WHERE name = %s AND parameters = %s AND task = %s"
+            % (
+                self.models_table,
+                sql.Literal(model_name).as_string(conn),
+                sql.Literal(json.dumps(model_params)).as_string(conn),
+                sql.Literal(task).as_string(conn),
+            )
         )
         results = run_select_statement(conn, select_statement)
         if len(results) > 0:
             log.info(
-                "Splitter %s with parameters %s already exists in %s"
-                % (model_name, model_params, self.models_table)
+                "Model %s for %s task with parameters %s already exists in %s"
+                % (model_name, task, model_params, self.models_table)
             )
         else:
-            insert_statement = "INSERT INTO %s (name, parameters) VALUES (%s, %s)" % (
-                self.models_table,
-                sql.Literal(model_name).as_string(conn),
-                sql.Literal(json.dumps(model_params)).as_string(conn),
+            insert_statement = (
+                "INSERT INTO %s (task, name, parameters) VALUES (%s, %s, %s)"
+                % (
+                    self.models_table,
+                    sql.Literal(task).as_string(conn),
+                    sql.Literal(model_name).as_string(conn),
+                    sql.Literal(json.dumps(model_params)).as_string(conn),
+                )
             )
             run_create_or_insert_statement(conn, insert_statement)
             results = run_select_statement(conn, select_statement)
         self.pool.putconn(conn)
 
-        return results[0][0]
-    
-    def get_embeddings_model(self) -> Dict[str,Any]:
-        conn = self.pool.getconn()
-        select_statement = "SELECT id, name, parameters FROM %s"%(self.models_table)
-        results = run_select_statement(conn,select_statement)
-        splitters = []
-        for result in results:
-            splitters.append({"id": result[0], "name": result[1], "parameters": result[2]})
+        return results[0]["id"]
 
+    def get_models(self) -> Dict[str, Any]:
+        conn = self.pool.getconn()
+        select_statement = "SELECT id, task, name, parameters FROM %s" % (
+            self.models_table
+        )
+        models = run_select_statement(conn, select_statement)
         self.pool.putconn(conn)
-        return splitters
+        return models
+
+    def generate_embeddings(self, model_id: Optional[int] = 1, splitter_id: Optional[int] = 1) -> None:
+        conn = self.pool.getconn()
+        
+        self.pool.putconn(conn)
+        pass
