@@ -50,20 +50,17 @@ class NumpyJSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def transform(task, args, inputs, cache):
+def transform(task, args, inputs):
     task = json.loads(task)
     args = json.loads(args)
     inputs = json.loads(inputs)
 
-    task["device"] = assign_device(task.get("device"))
+    ensure_device(task)
 
-    if cache:
-        key = ",".join([f"{key}:{val}" for (key, val) in sorted(task.items())])
-        if key not in __cache_transform_pipeline_by_task:
-            __cache_transform_pipeline_by_task[key] = transformers.pipeline(**task)
-        pipe = __cache_transform_pipeline_by_task[key]
-    else:
-        pipe = transformers.pipeline(**task)
+    key = ",".join([f"{key}:{val}" for (key, val) in sorted(task.items())])
+    if key not in __cache_transform_pipeline_by_task:
+        __cache_transform_pipeline_by_task[key] = transformers.pipeline(**task)
+    pipe = __cache_transform_pipeline_by_task[key]
 
     if pipe.task == "question-answering":
         inputs = [json.loads(input) for input in inputs]
@@ -73,7 +70,7 @@ def transform(task, args, inputs, cache):
 
 def embed(transformer, text, kwargs):
     kwargs = json.loads(kwargs)
-    kwargs["device"] = assign_device(kwargs.get("device"))
+    ensure_device(kwargs)
     instructor = transformer.startswith("hkunlp/instructor")
     if instructor:
         klass = INSTRUCTOR
@@ -543,16 +540,12 @@ def generate(model_id, data, config):
     return all_preds
 
 
-def assign_device(device=None):
-    if device is not None:
-        if device == "cpu" or "cuda:" in device:
-            return device
-        if "cuda" in device and not torch.cuda.is_available():
-            raise Exception("CUDA is not available")
+def ensure_device(kwargs):
+    device = kwargs.get("device")
+    device_map = kwargs.get("device_map")
+    if device is None and device_map is None:
+        if torch.cuda.is_available():
+            kwargs["device"] = "cuda:" + str(os.getpid() % torch.cuda.device_count())
+        else:
+            kwargs["device"] = "cpu"
 
-    if torch.cuda.is_available():
-        device = "cuda:" + str(os.getpid() % torch.cuda.device_count())
-    else:
-        device = "cpu"
-
-    return device

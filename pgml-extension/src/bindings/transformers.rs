@@ -25,7 +25,6 @@ pub fn transform(
     task: &serde_json::Value,
     args: &serde_json::Value,
     inputs: &Vec<String>,
-    cache: bool,
 ) -> serde_json::Value {
     crate::bindings::venv::activate();
 
@@ -45,7 +44,6 @@ pub fn transform(
                         task.into_py(py),
                         args.into_py(py),
                         inputs.into_py(py),
-                        cache.into_py(py),
                     ],
                 ),
             )
