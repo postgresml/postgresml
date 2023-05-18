@@ -23,7 +23,7 @@ log = logging.getLogger("rich")
 
 
 class Database:
-    def __init__(self, conninfo: str) -> None:
+    def __init__(self, conninfo: str, min_connections: Optional[int] = 1) -> None:
         """Initialize Database object
         Creates pgml.collections table if it doesn't exist
 
@@ -34,7 +34,7 @@ class Database:
             None
         """
         self.conninfo = conninfo
-        self.pool = ConnectionPool(conninfo)
+        self.pool = ConnectionPool(conninfo, min_size=min_connections)
         log.info("Creating table pgml.collections")
         create_statement = "CREATE TABLE IF NOT EXISTS pgml.collections \
                             (id  serial8 PRIMARY KEY,\
