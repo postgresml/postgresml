@@ -24,6 +24,13 @@ use guards::Cluster;
 use responses::{BadRequest, ResponseOk};
 use sqlx::Executor;
 
+#[derive(Debug, Default, Clone)]
+pub struct ClustersSettings {
+    pub max_connections: u32,
+    pub idle_timeout: u64,
+    pub min_connections: u32,
+}
+
 /// This struct contains information specific to the cluster being displayed in the dashboard.
 ///
 /// The dashboard is built to manage multiple clusters, but the server itself by design is stateless.
@@ -44,13 +51,18 @@ pub struct Clusters {
 }
 
 impl Clusters {
-    pub fn add(&self, cluster_id: i64, database_url: &str) -> anyhow::Result<PgPool> {
+    pub fn add(
+        &self,
+        cluster_id: i64,
+        database_url: &str,
+        settings: ClustersSettings,
+    ) -> anyhow::Result<PgPool> {
         let mut pools = self.pools.lock();
 
         let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .idle_timeout(std::time::Duration::from_millis(15_000))
-            .min_connections(0)
+            .max_connections(settings.max_connections)
+            .idle_timeout(std::time::Duration::from_millis(settings.idle_timeout))
+            .min_connections(settings.min_connections)
             .after_connect(|conn, _meta| {
                 Box::pin(async move {
                     conn.execute("SET application_name = 'pgml_dashboard';")
