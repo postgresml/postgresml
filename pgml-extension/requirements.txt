@@ -1,4 +1,4 @@
-accelerate==0.16.0
+accelerate==0.19.0
 datasets==2.10.1
 deepspeed==0.8.1
 InstructorEmbedding
@@ -15,5 +15,5 @@ torch==1.13.1
 torchaudio==0.13.1
 torchvision==0.14.1
 tqdm==4.64.1
-transformers==4.26.1
+transformers==4.28.1
 xgboost
