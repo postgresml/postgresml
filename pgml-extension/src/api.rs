@@ -570,10 +570,12 @@ pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> 
 
 #[cfg(feature = "python")]
 #[pg_extern(immutable, parallel_safe, name = "transform")]
+#[allow(unused_variables)] // cache is maintained for api compatibility
 pub fn transform_json(
     task: JsonB,
     args: default!(JsonB, "'{}'"),
     inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
+    cache: default!(bool, false)
 ) -> JsonB {
     JsonB(crate::bindings::transformers::transform(
         &task.0, &args.0, &inputs,
@@ -582,10 +584,12 @@ pub fn transform_json(
 
 #[cfg(feature = "python")]
 #[pg_extern(immutable, parallel_safe, name = "transform")]
+#[allow(unused_variables)] // cache is maintained for api compatibility
 pub fn transform_string(
     task: String,
     args: default!(JsonB, "'{}'"),
     inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
+    cache: default!(bool, false)
 ) -> JsonB {
     let mut task_map = HashMap::new();
     task_map.insert("task", task);
