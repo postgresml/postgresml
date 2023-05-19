@@ -6,7 +6,7 @@ This Python SDK provides an easy interface to use PostgresML generative AI capab
 - [Quickstart](#quickstart)
 
 ### Quickstart
-1. Install Python 3.11. This package should work for Python >=3.8. However, at this time, only Python 3.11 has been tested.
+1. Install Python 3.11. SDK should work for Python >=3.8. However, at this time, we have only tested Python 3.11.
 2. Clone the repository and checkout the SDK branch (before PR)
 ```
 git clone https://github.com/postgresml/postgresml

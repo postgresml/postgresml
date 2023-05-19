@@ -11,7 +11,7 @@ conninfo = os.environ.get("PGML_CONNECTION", local_pgml)
 db = Database(conninfo)
 
 collection_name = "test_pgml_sdk_1"
-collection = db.create_collection(collection_name)
+collection = db.create_or_get_collection(collection_name)
 
 
 data = load_dataset("squad", split="train")

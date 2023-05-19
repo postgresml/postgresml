@@ -56,7 +56,7 @@ def run_select_statement(conn: Connection, statement: str) -> List[Any]:
     """
     The function runs a select statement on a database connection and returns the results as a list of
     dictionaries.
-    
+
     :param conn: The `conn` parameter is a connection object that represents a connection to a database.
     It is used to execute SQL statements and retrieve results from the database
     :type conn: Connection
@@ -88,7 +88,7 @@ def run_drop_or_delete_statement(conn: Connection, statement: str) -> None:
     """
     This function executes a given SQL statement to drop or delete data from a database using a provided
     connection object.
-    
+
     :param conn: The parameter `conn` is of type `Connection`, which is likely a connection object to a
     database. It is used to execute SQL statements on the database
     :type conn: Connection

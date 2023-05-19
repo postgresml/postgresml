@@ -14,7 +14,11 @@ import hashlib
 import json
 import uuid
 import os
-from .dbutils import run_drop_or_delete_statement, run_create_or_insert_statement, run_select_statement
+from .dbutils import (
+    run_drop_or_delete_statement,
+    run_create_or_insert_statement,
+    run_select_statement,
+)
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
@@ -30,6 +34,7 @@ log = logging.getLogger("rich")
 """
 Collection class to store tables for documents, chunks, models, splitters, and embeddings
 """
+
 
 class Collection:
     def __init__(self, pool: ConnectionPool, name: str) -> None:
@@ -730,11 +735,24 @@ class Collection:
         results = run_select_statement(conn, select_statement)
 
         model = results[0]["name"]
+
+        embeddings_table_statement = (
+            "SELECT oid FROM %s WHERE model = %d AND splitter = %d"
+            % (self.transforms_table, model_id, splitter_id)
+        )
+
+        embedding_table_results = run_select_statement(conn, embeddings_table_statement)
+        if embedding_table_results:
+            embeddings_table = embedding_table_results[0]["oid"]
+        else:
+            rprint(
+                "Embeddings for model id %d and splitter id %d do not exist.\nPlease run collection.generate_embeddings(model_id = %d, splitter_id = %d)"
+                % (model_id, splitter_id, model_id, splitter_id)
+            )
+            return []
+
         query_embeddings = self._get_embeddings(
             conn, query, model_name=model, parameters=query_parameters
-        )
-        embeddings_table = self._create_or_get_embeddings_table(
-            conn, model_id=model_id, splitter_id=splitter_id
         )
 
         select_statement = (

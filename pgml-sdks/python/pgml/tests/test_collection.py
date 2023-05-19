@@ -27,7 +27,7 @@ class TestCollection(unittest.TestCase):
             for i in range(1, 4)
         ]
         
-        self.collection = self.db.create_collection(self.collection_name)
+        self.collection = self.db.create_or_get_collection(self.collection_name)
     
     def test_create_collection(self):
         assert isinstance(self.collection,Collection)

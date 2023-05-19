@@ -9,7 +9,11 @@ from rich.progress import track
 from typing import List, Dict, Optional
 
 from .collection import Collection
-from .dbutils import run_select_statement, run_create_or_insert_statement, run_drop_or_delete_statement
+from .dbutils import (
+    run_select_statement,
+    run_create_or_insert_statement,
+    run_drop_or_delete_statement,
+)
 import os
 
 FORMAT = "%(message)s"
@@ -48,7 +52,7 @@ class Database:
         run_create_or_insert_statement(conn, create_statement)
         self.pool.putconn(conn)
 
-    def create_collection(self, name: str) -> Collection:
+    def create_or_get_collection(self, name: str) -> Collection:
         """
         This function creates a new collection in a PostgreSQL database if it does not already exist and
         returns a Collection object.
