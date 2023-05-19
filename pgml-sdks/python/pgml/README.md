@@ -31,7 +31,7 @@ If it is not up to date with `pgml.embed` please [signup for a free database](ht
 ```
 export PGML_CONNECTION="postgres://<username>:<password>@<hostname>:<port>/pgm<database>"
 ```
-5. Run a **vector search** example
+6. Run a **vector search** example
 ```
 python examples/vector_search.py
 ```
