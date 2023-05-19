@@ -23,6 +23,14 @@ poetry shell
 poetry install
 poetry build
 ```
+5. SDK uses your local PostgresML database by default 
+`postgres://postgres@127.0.0.1:5433/pgml_development`
+
+If it is not up to date with `pgml.embed` please [signup for a free database](https://postgresml.org/signup) and set `PGML_CONNECTION` environment variable with serverless hosted database.
+
+```
+export PGML_CONNECTION="postgres://<username>:<password>@<hostname>:<port>/pgm<database>"
+```
 5. Run a **vector search** example
 ```
 python examples/vector_search.py
