@@ -9,7 +9,7 @@ from rich.progress import track
 from typing import List, Dict, Optional
 
 from .collection import Collection
-from .dbutils import *
+from .dbutils import run_select_statement, run_create_or_insert_statement, run_drop_or_delete_statement
 import os
 
 FORMAT = "%(message)s"

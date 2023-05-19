@@ -13,8 +13,8 @@ from typing import List, Dict, Optional, Any
 import hashlib
 import json
 import uuid
-
-from .dbutils import *
+import os
+from .dbutils import run_drop_or_delete_statement, run_create_or_insert_statement, run_select_statement
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
@@ -27,6 +27,9 @@ logging.basicConfig(
 )
 log = logging.getLogger("rich")
 
+"""
+Collection class to store tables for documents, chunks, models, splitters, and embeddings
+"""
 
 class Collection:
     def __init__(self, pool: ConnectionPool, name: str) -> None:
