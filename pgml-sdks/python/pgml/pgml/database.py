@@ -24,14 +24,18 @@ log = logging.getLogger("rich")
 
 class Database:
     def __init__(self, conninfo: str, min_connections: Optional[int] = 1) -> None:
-        """Initialize Database object
-        Creates pgml.collections table if it doesn't exist
+        """
+        This function initializes a connection pool and creates a table in a PostgreSQL database if it does
+        not already exist.
 
-        Args:
-            conninfo (str) : Postgres connection info postgresql://username:password@host:port/db
-
-        Returns:
-            None
+        :param conninfo: A string containing the connection information for the PostgreSQL database, such
+        as the host, port, database name, username, and password
+        :type conninfo: str
+        :param min_connections: The minimum number of connections that should be maintained in the
+        connection pool at all times. If there are no available connections in the pool when a new
+        connection is requested, a new connection will be created up to the maximum size of the pool,
+        defaults to 1
+        :type min_connections: Optional[int] (optional)
         """
         self.conninfo = conninfo
         self.pool = ConnectionPool(conninfo, min_size=min_connections)
@@ -45,6 +49,14 @@ class Database:
         self.pool.putconn(conn)
 
     def create_collection(self, name: str) -> Collection:
+        """
+        This function creates a new collection in a PostgreSQL database if it does not already exist and
+        returns a Collection object.
+
+        :param name: The name of the collection to be created
+        :type name: str
+        :return: A Collection object is being returned.
+        """
         # Get collection names
         conn = self.pool.getconn()
         results = run_select_statement(conn, "SELECT name FROM pgml.collections")
@@ -63,6 +75,12 @@ class Database:
         return Collection(self.pool, name)
 
     def delete_collection(self, name: str) -> None:
+        """
+        This function deletes a PostgreSQL schema if it exists.
+
+        :param name: The name of the collection (or schema) to be deleted
+        :type name: str
+        """
         conn = self.pool.getconn()
         results = run_select_statement(
             conn, "SELECT nspname FROM pg_catalog.pg_namespace;"
