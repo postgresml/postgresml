@@ -215,7 +215,7 @@ That's it, PostgresML is ready. You can validate the installation by running:
 	postgres=# select pgml.version();
 	      version      
 	-------------------
-	 2.4.4
+	 2.4.5
 	(1 row)
 	```
 
