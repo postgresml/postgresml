@@ -9,7 +9,7 @@ import os
 
 FORMAT = "%(message)s"
 logging.basicConfig(
-    level=os.environ.get("LOGLEVEL", "INFO"),
+    level=os.environ.get("LOGLEVEL", "ERROR"),
     format=FORMAT,
     datefmt="[%X]",
     handlers=[RichHandler()],

@@ -6,6 +6,8 @@ from psycopg import Connection
 import logging
 from rich.logging import RichHandler
 from rich.progress import track
+from rich import print as rprint
+
 
 from typing import List, Dict, Optional, Any
 import hashlib
@@ -18,7 +20,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 FORMAT = "%(message)s"
 logging.basicConfig(
-    level=os.environ.get("LOGLEVEL", "INFO"),
+    level=os.environ.get("LOGLEVEL", "ERROR"),
     format=FORMAT,
     datefmt="[%X]",
     handlers=[RichHandler()],
@@ -253,7 +255,7 @@ class Collection:
         verbose: bool = False,
     ) -> None:
         conn = self.pool.getconn()
-        for document in documents:
+        for document in track(documents, description="Upserting documents"):
             if text_key in list(document.keys()):
                 text = document.pop(text_key)
             else:
@@ -341,9 +343,13 @@ class Collection:
 
         # Get all documents
         # todo: get documents that are not chunked
-        select_statement = "SELECT id, text FROM %s" % self.documents_table
+        select_statement = (
+            "SELECT id, text FROM %s WHERE id NOT IN (SELECT document FROM %s WHERE splitter = %d);"
+            % (self.documents_table, self.chunks_table, splitter_id)
+        )
+
         results = run_select_statement(conn, select_statement)
-        for result in results:
+        for result in track(results, description="Generating chunks"):
             log.debug("Came into chunk insertion")
             document = result["id"]
             text = result["text"]
@@ -416,23 +422,13 @@ class Collection:
         model_name: str = "",
         parameters: Dict[str, Any] = {},
     ) -> int:
-        if parameters:
-            embed_statement = (
-                "SELECT pgml.embed(transformer => %s, text => '%s', kwargs => %s) as embedding;"
-                % (
-                    sql.Literal(model_name).as_string(conn),
-                    sql.Literal(json.dumps(parameters)).as_string(conn),
-                    text,
-                )
+        embed_statement = (
+            "SELECT pgml.embed(transformer => %s, text => '%s') as embedding;"
+            % (
+                sql.Literal(model_name).as_string(conn),
+                text,
             )
-        else:
-            embed_statement = (
-                "SELECT pgml.embed(transformer => %s, text => '%s') as embedding;"
-                % (
-                    sql.Literal(model_name).as_string(conn),
-                    text,
-                )
-            )
+        )
         vector = run_select_statement(conn, embed_statement)[0]["embedding"]
         return vector
 
@@ -523,29 +519,24 @@ class Collection:
 
         model = results[0]["name"]
         model_params = results[0]["parameters"]
-        # get all chunks
-        # todo: get all chunks that don't have embeddings
-        if model_params:
-            embeddings_statement = (
-                "SELECT id, chunk, pgml.embed(text => chunk, transformer => %s, kwargs => %s) FROM %s WHERE splitter = %d;"
-                % (
-                    sql.Literal(model).as_string(conn),
-                    sql.Literal(json.dumps(model_params)).as_string(conn),
-                    self.chunks_table,
-                    splitter_id,
-                )
+
+        # get all chunks that don't have embeddings
+        embeddings_statement = (
+            "SELECT id, chunk, \
+                pgml.embed(text => chunk, transformer => %s, kwargs => %s) FROM %s \
+                WHERE splitter = %d AND id NOT IN (SELECT chunk FROM %s);"
+            % (
+                sql.Literal(model).as_string(conn),
+                sql.Literal(json.dumps(model_params)).as_string(conn),
+                self.chunks_table,
+                splitter_id,
+                embeddings_table,
             )
-        else:
-            embeddings_statement = (
-                "SELECT id, chunk, pgml.embed(text => chunk, transformer => %s) FROM %s WHERE splitter = %d;"
-                % (
-                    sql.Literal(model).as_string(conn),
-                    self.chunks_table,
-                    splitter_id,
-                )
-            )
+        )
+
+        rprint("Generating embeddings using %s ... " % model)
         results = run_select_statement(conn, embeddings_statement)
-        for result in results:
+        for result in track(results, description="Inserting embeddings"):
             insert_statement = "INSERT INTO %s (chunk, embedding) VALUES (%d, %s);" % (
                 embeddings_table,
                 result["id"],
@@ -570,11 +561,9 @@ class Collection:
         results = run_select_statement(conn, select_statement)
 
         model = results[0]["name"]
-
         query_embeddings = self._get_embeddings(
             conn, query, model_name=model, parameters=query_parameters
         )
-
         embeddings_table = self._create_or_get_embeddings_table(
             conn, model_id=model_id, splitter_id=splitter_id
         )
@@ -607,6 +596,7 @@ class Collection:
             document_result = run_select_statement(conn, select_statement)
             _out["metadata"] = document_result[0]["metadata"]
             search_results.append(_out)
+
         self.pool.putconn(conn)
 
         return search_results

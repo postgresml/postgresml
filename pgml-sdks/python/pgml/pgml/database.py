@@ -14,7 +14,7 @@ import os
 
 FORMAT = "%(message)s"
 logging.basicConfig(
-    level=os.environ.get("LOGLEVEL", "INFO"),
+    level=os.environ.get("LOGLEVEL", "ERROR"),
     format=FORMAT,
     datefmt="[%X]",
     handlers=[RichHandler()],
@@ -63,10 +63,13 @@ class Database:
         return Collection(self.pool, name)
 
     def delete_collection(self, name: str) -> None:
+        conn = self.pool.getconn()
         results = run_select_statement(
-            self.pool, "SELECT nspname FROM pg_catalog.pg_namespace;"
+            conn, "SELECT nspname FROM pg_catalog.pg_namespace;"
         )
-        names = [res["name"] for res in results]
+        names = [res["nspname"] for res in results]
         if name in names:
             drop_statement = "DROP SCHEMA IF EXISTS %s CASCADE" % name
-            run_drop_or_delete_statement(self.pool, drop_statement)
+            run_drop_or_delete_statement(conn, drop_statement)
+
+        self.pool.putconn(conn)
