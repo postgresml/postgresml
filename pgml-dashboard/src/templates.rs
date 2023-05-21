@@ -181,6 +181,11 @@ impl Sql {
                         serde_json::to_string(&value)?
                     }
 
+                    "vector" => {
+                        let value: pgvector::Vector = row.try_get(i)?;
+                        format!("{:?}", value.to_vec())
+                    }
+
                     unknown => {
                         // TODO
                         // Implement everything here: https://docs.rs/sqlx/latest/sqlx/postgres/types/index.html
