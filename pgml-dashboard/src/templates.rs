@@ -1,5 +1,5 @@
 use sailfish::TemplateOnce;
-use sqlx::postgres::types::{PgMoney, PgInterval};
+use sqlx::postgres::types::PgMoney;
 use sqlx::types::time::PrimitiveDateTime;
 use sqlx::{Column, Executor, PgPool, Row, Statement, TypeInfo, ValueRef};
 
