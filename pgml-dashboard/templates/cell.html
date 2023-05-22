@@ -75,8 +75,14 @@
       <div class="notebook-duration">
         <div class="markdown-body">
           <div class="flex flex-row-reverse">
-            <code>Time: <%- (cell.execution_time.unwrap().microseconds as f64) / 1000.0 %>ms</code>
-            <!-- <code>Time: <%- 1 / 1000%>ms</code> -->
+            <code>Time: <%- 
+              match cell.execution_time.unwrap().microseconds {
+                microseconds @ 1000000.. => format!("{}s", (microseconds as f64) / 1000000.),
+                microseconds @ 1000..=999999 => format!("{}ms", (microseconds as f64) / 1000.),
+                microseconds @ 0..=999 => format!("{}μs", microseconds),
+                _ => "0".to_string(),
+              }
+            %></code>
           </div>
         </div>
       </div>
