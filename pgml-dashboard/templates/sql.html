@@ -24,6 +24,15 @@
       <% } %>
     </tbody>
   </table>
+  <code>
+    Time: 
+    <%- match execution_duration.as_micros() {
+      microseconds @ 1000000.. => format!("{}s", (microseconds as f64) / 1000000.),
+      microseconds @ 1000..=999999 => format!("{}ms", (microseconds as f64) / 1000.),
+      microseconds @ 0..=999 => format!("{}μs", microseconds),
+      _ => "0".to_string(),
+    } %>
+  </code>
 </div>
 
 <% } %>
