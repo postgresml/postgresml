@@ -190,15 +190,15 @@ class Collection:
                             table_name  text PRIMARY KEY,\
                             created_at  timestamptz NOT NULL DEFAULT now(), \
                             task        text NOT NULL, \
-                            splitter    int8 NOT NULL REFERENCES %s\
+                            splitter_id    int8 NOT NULL REFERENCES %s\
                               ON DELETE CASCADE\
                               ON UPDATE CASCADE\
                               DEFERRABLE INITIALLY DEFERRED,\
-                            model       int8 NOT NULL REFERENCES %s\
+                            model_id      int8 NOT NULL REFERENCES %s\
                               ON DELETE CASCADE\
                               ON UPDATE CASCADE\
                               DEFERRABLE INITIALLY DEFERRED,\
-                            UNIQUE (task, splitter, model)\
+                            UNIQUE (task, splitter_id, model_id)\
                     );"
             % (self.transforms_table, self.splitters_table, self.models_table)
         )
@@ -556,7 +556,7 @@ class Collection:
         database.
         """
         select_statement = (
-            "SELECT table_name FROM %s WHERE task='embedding' AND model = %d AND splitter = %d"
+            "SELECT table_name FROM %s WHERE task='embedding' AND model_id = %d AND splitter_id = %d"
             % (self.transforms_table, model_id, splitter_id)
         )
         results = run_select_statement(conn, select_statement)
@@ -594,7 +594,7 @@ class Collection:
 
             # Insert this name in transforms table
             insert_statement = (
-                "INSERT INTO %s (table_name, task, model, splitter) VALUES (%s, 'embedding', %d, %d)"
+                "INSERT INTO %s (table_name, task, model_id, splitter_id) VALUES (%s, 'embedding', %d, %d)"
                 % (self.transforms_table, sql.Literal(table_name).as_string(conn), model_id, splitter_id)
             )
             run_create_or_insert_statement(conn, insert_statement)
@@ -711,7 +711,7 @@ class Collection:
         model = results[0]["name"]
 
         embeddings_table_statement = (
-            "SELECT table_name FROM %s WHERE model = %d AND splitter = %d"
+            "SELECT table_name FROM %s WHERE model_id = %d AND splitter_id = %d"
             % (self.transforms_table, model_id, splitter_id)
         )
 
