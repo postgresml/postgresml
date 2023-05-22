@@ -72,10 +72,10 @@ class Collection:
             "CREATE TABLE IF NOT EXISTS %s (\
                                 id          serial8 PRIMARY KEY,\
                                 created_at  timestamptz NOT NULL DEFAULT now(),\
-                                document    uuid NOT NULL,\
+                                source_uuid uuid NOT NULL,\
                                 metadata    jsonb NOT NULL DEFAULT '{}',\
                                 text        text NOT NULL,\
-                                UNIQUE (document)\
+                                UNIQUE (source_uuid)\
                                 );"
             % self.documents_table
         )
@@ -85,13 +85,6 @@ class Collection:
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS \
                                     created_at_index ON %s \
                             (created_at);"
-            % (self.documents_table)
-        )
-        run_create_or_insert_statement(conn, create_index_statement, autocommit=True)
-
-        create_index_statement = (
-            "CREATE INDEX CONCURRENTLY IF NOT EXISTS \
-                document_index ON %s (document);"
             % (self.documents_table)
         )
         run_create_or_insert_statement(conn, create_index_statement, autocommit=True)
@@ -191,9 +184,10 @@ class Collection:
         """
         conn = self.pool.getconn()
         self.transforms_table = self.name + ".transforms"
+        # oid --> table_name
         create_statement = (
             "CREATE TABLE IF NOT EXISTS %s (\
-                            oid         regclass PRIMARY KEY,\
+                            table_name  text PRIMARY KEY,\
                             created_at  timestamptz NOT NULL DEFAULT now(), \
                             task        text NOT NULL, \
                             splitter    int8 NOT NULL REFERENCES %s\
@@ -216,24 +210,6 @@ class Collection:
         )
         run_create_or_insert_statement(conn, index_statement, autocommit=True)
 
-        index_statement = (
-            "CREATE INDEX CONCURRENTLY IF NOT EXISTS task_index ON %s (task);"
-            % (self.transforms_table)
-        )
-        run_create_or_insert_statement(conn, index_statement, autocommit=True)
-
-        index_statement = (
-            "CREATE INDEX CONCURRENTLY IF NOT EXISTS splitter_index ON %s (splitter);"
-            % (self.transforms_table)
-        )
-        run_create_or_insert_statement(conn, index_statement, autocommit=True)
-
-        index_statement = (
-            "CREATE INDEX CONCURRENTLY IF NOT EXISTS model_index ON %s (model);"
-            % (self.transforms_table)
-        )
-        run_create_or_insert_statement(conn, index_statement, autocommit=True)
-
         self.pool.putconn(conn)
 
     def _create_chunks_table(self):
@@ -244,19 +220,20 @@ class Collection:
         conn = self.pool.getconn()
         self.chunks_table = self.name + ".chunks"
 
+        # document --> document_id, chunk_id --> chunk_index
         create_statement = (
             "CREATE TABLE IF NOT EXISTS %s ( \
                             id          serial8 PRIMARY KEY,\
                             created_at  timestamptz NOT NULL DEFAULT now(),\
-                            document    int8 NOT NULL REFERENCES %s\
+                            document_id    int8 NOT NULL REFERENCES %s\
                               ON DELETE CASCADE\
                               ON UPDATE CASCADE\
                               DEFERRABLE INITIALLY DEFERRED,\
-                            splitter    int8 NOT NULL REFERENCES %s\
+                            splitter_id    int8 NOT NULL REFERENCES %s\
                               ON DELETE CASCADE\
                               ON UPDATE CASCADE\
                               DEFERRABLE INITIALLY DEFERRED,\
-                            chunk_id    int8 NOT NULL,\
+                            chunk_index    int8 NOT NULL,\
                             chunk     text NOT NULL);"
             % (self.chunks_table, self.documents_table, self.splitters_table)
         )
@@ -269,13 +246,13 @@ class Collection:
         run_create_or_insert_statement(conn, index_statement, autocommit=True)
 
         index_statement = (
-            "CREATE INDEX CONCURRENTLY IF NOT EXISTS document_index ON %s (document);"
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS document_id_index ON %s (document_id);"
             % self.chunks_table
         )
         run_create_or_insert_statement(conn, index_statement, autocommit=True)
 
         index_statement = (
-            "CREATE INDEX CONCURRENTLY IF NOT EXISTS splitter_index ON %s (splitter);"
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS splitter_id_index ON %s (splitter_id);"
             % self.chunks_table
         )
         run_create_or_insert_statement(conn, index_statement, autocommit=True)
@@ -320,23 +297,23 @@ class Collection:
                 )
                 continue
             if id_key in list(document.keys()):
-                document_id = document.pop(id_key)
+                source_uuid = document.pop(id_key)
             else:
                 log.info("id key is not present.. hashing")
-                document_id = hashlib.md5(text.encode("utf-8")).hexdigest()
+                source_uuid = hashlib.md5(text.encode("utf-8")).hexdigest()
             metadata = document
-            delete_statement = "DELETE FROM %s WHERE document = %s" % (
+            delete_statement = "DELETE FROM %s WHERE source_uuid = %s" % (
                 self.documents_table,
-                sql.Literal(document_id).as_string(conn),
+                sql.Literal(source_uuid).as_string(conn),
             )
 
             run_drop_or_delete_statement(conn, delete_statement)
             insert_statement = (
-                "INSERT INTO %s (text, document, metadata) VALUES (%s, %s, %s)"
+                "INSERT INTO %s (text, source_uuid, metadata) VALUES (%s, %s, %s)"
                 % (
                     self.documents_table,
                     sql.Literal(text).as_string(conn),
-                    sql.Literal(document_id).as_string(conn),
+                    sql.Literal(source_uuid).as_string(conn),
                     sql.Literal(json.dumps(metadata)).as_string(conn),
                 )
             )
@@ -425,7 +402,7 @@ class Collection:
             raise ValueError("%s is not supported" % splitter_name)
 
         select_statement = (
-            "SELECT id, text FROM %s WHERE id NOT IN (SELECT document FROM %s WHERE splitter = %d);"
+            "SELECT id, text FROM %s WHERE id NOT IN (SELECT document_id FROM %s WHERE splitter_id = %d);"
             % (self.documents_table, self.chunks_table, splitter_id)
         )
 
@@ -435,14 +412,14 @@ class Collection:
             document = result["id"]
             text = result["text"]
             chunks = text_splitter.create_documents([text])
-            for chunk_id, chunk in enumerate(chunks):
+            for chunk_index, chunk in enumerate(chunks):
                 insert_statement = (
-                    "INSERT INTO %s (document,splitter,chunk_id, chunk) VALUES (%s, %s, %s, %s);"
+                    "INSERT INTO %s (document_id,splitter_id,chunk_index, chunk) VALUES (%s, %s, %s, %s);"
                     % (
                         self.chunks_table,
                         sql.Literal(document).as_string(conn),
                         sql.Literal(splitter_id).as_string(conn),
-                        sql.Literal(chunk_id).as_string(conn),
+                        sql.Literal(chunk_index).as_string(conn),
                         sql.Literal(chunk.page_content).as_string(conn),
                     )
                 )
@@ -579,7 +556,7 @@ class Collection:
         database.
         """
         select_statement = (
-            "SELECT oid FROM %s WHERE task='embedding' AND model = %d AND splitter = %d"
+            "SELECT table_name FROM %s WHERE task='embedding' AND model = %d AND splitter = %d"
             % (self.transforms_table, model_id, splitter_id)
         )
         results = run_select_statement(conn, select_statement)
@@ -592,7 +569,7 @@ class Collection:
         model_parameters = model_results[0]["parameters"]
 
         if len(results) > 0:
-            table_name = results[0]["oid"]
+            table_name = results[0]["table_name"]
         else:
             table_name = self.name + ".embeddings_" + str(uuid.uuid4())[:6]
             embeddings_size = len(
@@ -600,11 +577,12 @@ class Collection:
                     conn=conn, model_name=model_name, parameters=model_parameters
                 )
             )
+            # chunk --> chunk_id
             create_statement = (
                 "CREATE TABLE IF NOT EXISTS %s ( \
                                 id          serial8 PRIMARY KEY,\
                                 created_at  timestamptz NOT NULL DEFAULT now(),\
-                                chunk       int8 NOT NULL REFERENCES %s\
+                                chunk_id    int8 NOT NULL REFERENCES %s\
                                           ON DELETE CASCADE\
                                           ON UPDATE CASCADE\
                                           DEFERRABLE INITIALLY DEFERRED,\
@@ -615,13 +593,9 @@ class Collection:
             run_create_or_insert_statement(conn, create_statement)
 
             # Insert this name in transforms table
-            oid_select_statement = "SELECT '%s'::regclass::oid;" % table_name
-            results = run_select_statement(conn, oid_select_statement)
-            oid = results[0]["oid"]
-
             insert_statement = (
-                "INSERT INTO %s (oid, task, model, splitter) VALUES (%d, 'embedding', %d, %d)"
-                % (self.transforms_table, oid, model_id, splitter_id)
+                "INSERT INTO %s (table_name, task, model, splitter) VALUES (%s, 'embedding', %d, %d)"
+                % (self.transforms_table, sql.Literal(table_name).as_string(conn), model_id, splitter_id)
             )
             run_create_or_insert_statement(conn, insert_statement)
 
@@ -632,7 +606,7 @@ class Collection:
             run_create_or_insert_statement(conn, index_statement, autocommit=True)
 
             index_statement = (
-                "CREATE INDEX CONCURRENTLY IF NOT EXISTS chunk_index ON %s (chunk);"
+                "CREATE INDEX CONCURRENTLY IF NOT EXISTS chunk_id_index ON %s (chunk_id);"
                 % table_name
             )
             run_create_or_insert_statement(conn, index_statement, autocommit=True)
@@ -674,7 +648,7 @@ class Collection:
         embeddings_statement = (
             "SELECT id, chunk, \
                 pgml.embed(text => chunk, transformer => %s, kwargs => %s) FROM %s \
-                WHERE splitter = %d AND id NOT IN (SELECT chunk FROM %s);"
+                WHERE splitter_id = %d AND id NOT IN (SELECT chunk_id FROM %s);"
             % (
                 sql.Literal(model).as_string(conn),
                 sql.Literal(json.dumps(model_params)).as_string(conn),
@@ -687,7 +661,7 @@ class Collection:
         rprint("Generating embeddings using %s ... " % model)
         results = run_select_statement(conn, embeddings_statement)
         for result in track(results, description="Inserting embeddings"):
-            insert_statement = "INSERT INTO %s (chunk, embedding) VALUES (%d, %s);" % (
+            insert_statement = "INSERT INTO %s (chunk_id, embedding) VALUES (%d, %s);" % (
                 embeddings_table,
                 result["id"],
                 sql.Literal(result["embed"]).as_string(conn),
@@ -737,13 +711,13 @@ class Collection:
         model = results[0]["name"]
 
         embeddings_table_statement = (
-            "SELECT oid FROM %s WHERE model = %d AND splitter = %d"
+            "SELECT table_name FROM %s WHERE model = %d AND splitter = %d"
             % (self.transforms_table, model_id, splitter_id)
         )
 
         embedding_table_results = run_select_statement(conn, embeddings_table_statement)
         if embedding_table_results:
-            embeddings_table = embedding_table_results[0]["oid"]
+            embeddings_table = embedding_table_results[0]["table_name"]
         else:
             rprint(
                 "Embeddings for model id %d and splitter id %d do not exist.\nPlease run collection.generate_embeddings(model_id = %d, splitter_id = %d)"
@@ -756,7 +730,7 @@ class Collection:
         )
 
         select_statement = (
-            "SELECT chunk, 1 - (%s.embedding <=> %s::float8[]::vector) AS score FROM %s ORDER BY score DESC LIMIT %d;"
+            "SELECT chunk_id, 1 - (%s.embedding <=> %s::float8[]::vector) AS score FROM %s ORDER BY score DESC LIMIT %d;"
             % (
                 embeddings_table,
                 sql.Literal(query_embeddings).as_string(conn),
@@ -770,15 +744,15 @@ class Collection:
         for result in results:
             _out = {}
             _out["score"] = result["score"]
-            select_statement = "SELECT chunk, document FROM %s WHERE id = %d" % (
+            select_statement = "SELECT chunk, document_id FROM %s WHERE id = %d" % (
                 self.chunks_table,
-                result["chunk"],
+                result["chunk_id"],
             )
             chunk_result = run_select_statement(conn, select_statement)
             _out["text"] = chunk_result[0]["chunk"]
-            select_statement = "SELECT text, metadata FROM %s WHERE id = %d" % (
+            select_statement = "SELECT metadata FROM %s WHERE id = %d" % (
                 self.documents_table,
-                chunk_result[0]["document"],
+                chunk_result[0]["document_id"],
             )
             document_result = run_select_statement(conn, select_statement)
             _out["metadata"] = document_result[0]["metadata"]
