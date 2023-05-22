@@ -75,7 +75,8 @@
       <div class="notebook-duration">
         <div class="markdown-body">
           <div class="flex flex-row-reverse">
-            <code>TODO</code>
+            <code>Time: <%- (cell.execution_time.unwrap().microseconds as f64) / 1000.0 %>ms</code>
+            <!-- <code>Time: <%- 1 / 1000%>ms</code> -->
           </div>
         </div>
       </div>

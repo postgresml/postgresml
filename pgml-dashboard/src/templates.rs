@@ -1,5 +1,5 @@
 use sailfish::TemplateOnce;
-use sqlx::postgres::types::PgMoney;
+use sqlx::postgres::types::{PgMoney, PgInterval};
 use sqlx::types::time::PrimitiveDateTime;
 use sqlx::{Column, Executor, PgPool, Row, Statement, TypeInfo, ValueRef};
 
@@ -55,6 +55,7 @@ pub struct Undo {
 pub struct Sql {
     pub columns: Vec<String>,
     pub rows: Vec<Vec<String>>,
+    pub execution_duration: std::time::Duration,
 }
 
 impl Sql {
@@ -67,7 +68,9 @@ impl Sql {
 
         cols.iter().for_each(|c| columns.push(c.name().to_string()));
 
+        let now = std::time::Instant::now();
         let result = prepared_stmt.query().fetch_all(pool).await?;
+        let execution_duration = now.elapsed();
 
         for row in result.iter() {
             let mut values = Vec::new();
@@ -199,7 +202,7 @@ impl Sql {
             rows.push(values);
         }
 
-        Ok(Sql { columns, rows })
+        Ok(Sql { columns, rows, execution_duration })
     }
 }
 
