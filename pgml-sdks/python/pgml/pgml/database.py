@@ -15,6 +15,7 @@ from .dbutils import (
     run_drop_or_delete_statement,
 )
 import os
+import datetime
 
 FORMAT = "%(message)s"
 logging.basicConfig(
@@ -47,7 +48,10 @@ class Database:
         create_statement = "CREATE TABLE IF NOT EXISTS pgml.collections \
                             (id  serial8 PRIMARY KEY,\
                             created_at  timestamptz NOT NULL DEFAULT now(),\
-                            name  text NOT NULL)"
+                            name  text NOT NULL,\
+                            active BOOLEAN DEFAULT TRUE,\
+                            UNIQUE (name)\
+                            )"
         conn = self.pool.getconn()
         run_create_or_insert_statement(conn, create_statement)
         self.pool.putconn(conn)
@@ -63,9 +67,14 @@ class Database:
         """
         # Get collection names
         conn = self.pool.getconn()
-        results = run_select_statement(conn, "SELECT name FROM pgml.collections")
+        results = run_select_statement(
+            conn, "SELECT name FROM pgml.collections WHERE active = TRUE"
+        )
         name = name.lower()
-        names = [res["name"] for res in results]
+        names = []
+    
+        if results:
+            names = [res["name"] for res in results]
 
         if name in names:
             log.info("Collection with name %s already exists.." % name)
@@ -74,7 +83,7 @@ class Database:
                 name
             )
             run_create_or_insert_statement(conn, insert_statement)
-            # Create collection object
+
         self.pool.putconn(conn)
         return Collection(self.pool, name)
 
@@ -87,11 +96,28 @@ class Database:
         """
         conn = self.pool.getconn()
         results = run_select_statement(
-            conn, "SELECT nspname FROM pg_catalog.pg_namespace;"
+            conn, "SELECT name FROM pgml.collections WHERE active = TRUE;"
         )
-        names = [res["nspname"] for res in results]
+        names = [res["name"] for res in results]
+        
         if name in names:
-            drop_statement = "DROP SCHEMA IF EXISTS %s CASCADE" % name
-            run_drop_or_delete_statement(conn, drop_statement)
+            cur = conn.cursor()
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            archive_table_name = name + "_archive_" + timestamp
+            alter_schema_statement = "ALTER SCHEMA %s RENAME TO %s;"%(sql.Literal(name).as_string(conn),sql.Literal(archive_table_name).as_string(conn))
+            cur.execute(alter_schema_statement)
+
+            update_statement = (
+                "UPDATE pgml.collections SET name = %s, active = FALSE WHERE name = %s"
+                % (
+                    sql.Literal(archive_table_name).as_string(conn),
+                    sql.Literal(name).as_string(conn),
+                )
+            )
+            #drop_statement = "DROP SCHEMA IF EXISTS %s CASCADE" % name
+            
+            cur.execute(update_statement)
+            conn.commit()
+            cur.close()
 
         self.pool.putconn(conn)

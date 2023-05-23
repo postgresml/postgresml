@@ -67,21 +67,25 @@ def run_select_statement(conn: Connection, statement: str) -> List[Any]:
     of each dictionary are the column names of the result set, and the values are the corresponding
     values of the row.
     """
-    log.info("Running %s .. " % statement)
+
+    statement = statement.strip().rstrip(";")
     cur = conn.cursor()
-    cur.execute(statement)
-    qresults = cur.fetchall()
-    colnames = [desc[0] for desc in cur.description]
-    results = []
-    for result in qresults:
-        _dict = {}
-        for _id, col in enumerate(colnames):
-            _dict[col] = result[_id]
-        results.append(_dict)
+    json_conversion_statement = """
+            SELECT array_to_json(array_agg(row_to_json(t)))
+            FROM ({select_statement}) t;
+            """.format(
+        select_statement=statement
+    )
+    log.info("Running %s .. " % json_conversion_statement)
+    cur.execute(json_conversion_statement)
+    results = cur.fetchall()
     conn.commit()
     cur.close()
 
-    return results
+    if results:
+        return results[0][0]
+    else:
+        return []
 
 
 def run_drop_or_delete_statement(conn: Connection, statement: str) -> None:

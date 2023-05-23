@@ -31,6 +31,7 @@ logging.basicConfig(
 )
 log = logging.getLogger("rich")
 
+
 """
 Collection class to store tables for documents, chunks, models, splitters, and embeddings
 """
@@ -58,6 +59,8 @@ class Collection:
         self._create_transforms_table()
         self.register_text_splitter()
         self.register_model()
+        self._cache_embeddings_table_names = {}
+        self._cache_model_names = {}
 
     def _create_documents_table(self) -> None:
         """
@@ -348,7 +351,7 @@ class Collection:
             sql.Literal(json.dumps(splitter_params)).as_string(conn),
         )
         results = run_select_statement(conn, select_statement)
-        if len(results) > 0:
+        if results:
             log.info(
                 "Splitter %s with parameters %s already exists in %s"
                 % (splitter_name, splitter_params, self.splitters_table)
@@ -457,7 +460,7 @@ class Collection:
             )
         )
         results = run_select_statement(conn, select_statement)
-        if len(results) > 0:
+        if results:
             log.info(
                 "Model %s for %s task with parameters %s already exists in %s"
                 % (model_name, task, model_params, self.models_table)
@@ -568,7 +571,7 @@ class Collection:
         model_name = model_results[0]["name"]
         model_parameters = model_results[0]["parameters"]
 
-        if len(results) > 0:
+        if results:
             table_name = results[0]["table_name"]
         else:
             table_name = self.name + ".embeddings_" + str(uuid.uuid4())[:6]
@@ -595,7 +598,12 @@ class Collection:
             # Insert this name in transforms table
             insert_statement = (
                 "INSERT INTO %s (table_name, task, model_id, splitter_id) VALUES (%s, 'embedding', %d, %d)"
-                % (self.transforms_table, sql.Literal(table_name).as_string(conn), model_id, splitter_id)
+                % (
+                    self.transforms_table,
+                    sql.Literal(table_name).as_string(conn),
+                    model_id,
+                    splitter_id,
+                )
             )
             run_create_or_insert_statement(conn, insert_statement)
 
@@ -645,28 +653,23 @@ class Collection:
         model_params = results[0]["parameters"]
 
         # get all chunks that don't have embeddings
-        embeddings_statement = (
-            "SELECT id, chunk, \
-                pgml.embed(text => chunk, transformer => %s, kwargs => %s) FROM %s \
-                WHERE splitter_id = %d AND id NOT IN (SELECT chunk_id FROM %s);"
-            % (
-                sql.Literal(model).as_string(conn),
-                sql.Literal(json.dumps(model_params)).as_string(conn),
-                self.chunks_table,
-                splitter_id,
-                embeddings_table,
-            )
+        insert_select_statement = """
+            INSERT INTO {embeddings_table} (chunk_id, embedding)
+            SELECT id, pgml.embed(text => chunk, transformer => {model}, kwargs => {model_params})
+            FROM {chunks_table}
+            WHERE splitter_id = {splitter_id}
+                AND id NOT IN (SELECT chunk_id FROM {embeddings_table});
+            """.format(
+            embeddings_table=embeddings_table,
+            model=sql.Literal(model).as_string(conn),
+            model_params=sql.Literal(json.dumps(model_params)).as_string(conn),
+            chunks_table=self.chunks_table,
+            splitter_id=splitter_id,
         )
 
         rprint("Generating embeddings using %s ... " % model)
-        results = run_select_statement(conn, embeddings_statement)
-        for result in track(results, description="Inserting embeddings"):
-            insert_statement = "INSERT INTO %s (chunk_id, embedding) VALUES (%d, %s);" % (
-                embeddings_table,
-                result["id"],
-                sql.Literal(result["embed"]).as_string(conn),
-            )
-            run_create_or_insert_statement(conn, insert_statement)
+        run_create_or_insert_statement(conn, insert_select_statement)
+
         self.pool.putconn(conn)
 
     def vector_search(
@@ -702,62 +705,73 @@ class Collection:
         with the search result
         """
         conn = self.pool.getconn()
-        select_statement = "SELECT name FROM %s WHERE id = %d;" % (
-            self.models_table,
-            model_id,
-        )
-        results = run_select_statement(conn, select_statement)
 
-        model = results[0]["name"]
-
-        embeddings_table_statement = (
-            "SELECT table_name FROM %s WHERE model_id = %d AND splitter_id = %d"
-            % (self.transforms_table, model_id, splitter_id)
-        )
-
-        embedding_table_results = run_select_statement(conn, embeddings_table_statement)
-        if embedding_table_results:
-            embeddings_table = embedding_table_results[0]["table_name"]
+        if model_id in self._cache_model_names.keys():
+            model = self._cache_model_names[model_id]
         else:
+            select_statement = "SELECT name FROM %s WHERE id = %d;" % (
+                self.models_table,
+                model_id,
+            )
+            results = run_select_statement(conn, select_statement)
+
+            model = results[0]["name"]
+            self._cache_model_names[model_id] = model
+
+        embeddings_table = ""
+        if model_id in self._cache_embeddings_table_names.keys():
+            if splitter_id in self._cache_embeddings_table_names[model_id].keys():
+                embeddings_table = self._cache_embeddings_table_names[model_id][
+                    splitter_id
+                ]
+
+        if not embeddings_table:
+            embeddings_table_statement = (
+                "SELECT table_name FROM %s WHERE model_id = %d AND splitter_id = %d"
+                % (self.transforms_table, model_id, splitter_id)
+            )
+
+            embedding_table_results = run_select_statement(
+                conn, embeddings_table_statement
+            )
+            embeddings_table = embedding_table_results[0]["table_name"]
+            self._cache_embeddings_table_names[model_id] = {
+                splitter_id: embeddings_table
+            }
+
+        if not embeddings_table:
             rprint(
                 "Embeddings for model id %d and splitter id %d do not exist.\nPlease run collection.generate_embeddings(model_id = %d, splitter_id = %d)"
                 % (model_id, splitter_id, model_id, splitter_id)
             )
             return []
 
-        query_embeddings = self._get_embeddings(
-            conn, query, model_name=model, parameters=query_parameters
+        cte_select_statement = """
+        WITH query_cte AS (
+            SELECT pgml.embed(transformer => {model}, text => '{query_text}', kwargs => {model_params}) AS query_embedding
+        ),
+        cte AS (
+            SELECT chunk_id, 1 - ({embeddings_table}.embedding <=> query_cte.query_embedding::float8[]::vector) AS score
+            FROM {embeddings_table}
+            CROSS JOIN query_cte
+            ORDER BY score DESC
+            LIMIT {top_k}
+        )
+        SELECT cte.score, chunks.chunk, documents.metadata
+        FROM cte
+        INNER JOIN {chunks_table} chunks ON chunks.id = cte.chunk_id
+        INNER JOIN {documents_table} documents ON documents.id = chunks.document_id;
+        """.format(
+            model=sql.Literal(model).as_string(conn),
+            query_text=query,
+            model_params=sql.Literal(json.dumps(query_parameters)).as_string(conn),
+            embeddings_table=embeddings_table,
+            top_k=top_k,
+            chunks_table=self.chunks_table,
+            documents_table=self.documents_table,
         )
 
-        select_statement = (
-            "SELECT chunk_id, 1 - (%s.embedding <=> %s::float8[]::vector) AS score FROM %s ORDER BY score DESC LIMIT %d;"
-            % (
-                embeddings_table,
-                sql.Literal(query_embeddings).as_string(conn),
-                embeddings_table,
-                top_k,
-            )
-        )
-        results = run_select_statement(conn, select_statement)
-        search_results = []
-
-        for result in results:
-            _out = {}
-            _out["score"] = result["score"]
-            select_statement = "SELECT chunk, document_id FROM %s WHERE id = %d" % (
-                self.chunks_table,
-                result["chunk_id"],
-            )
-            chunk_result = run_select_statement(conn, select_statement)
-            _out["text"] = chunk_result[0]["chunk"]
-            select_statement = "SELECT metadata FROM %s WHERE id = %d" % (
-                self.documents_table,
-                chunk_result[0]["document_id"],
-            )
-            document_result = run_select_statement(conn, select_statement)
-            _out["metadata"] = document_result[0]["metadata"]
-            search_results.append(_out)
-
+        search_results = run_select_statement(conn, cte_select_statement)
         self.pool.putconn(conn)
 
         return search_results
