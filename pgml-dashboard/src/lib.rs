@@ -19,6 +19,7 @@ pub mod guards;
 pub mod models;
 mod responses;
 mod templates;
+mod utils;
 
 use guards::Cluster;
 use responses::{BadRequest, ResponseOk};
@@ -558,6 +559,7 @@ pub async fn uploaded_index(cluster: Cluster, table_name: &str) -> ResponseOk {
     let sql = templates::Sql::new(
         cluster.pool(),
         &format!("SELECT * FROM {} LIMIT 10", table_name),
+        true, 
     )
     .await
     .unwrap();
