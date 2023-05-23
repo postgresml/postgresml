@@ -1,18 +1,16 @@
 use log::{error, info, warn};
 use rocket::{
-    catch, catchers,
-    fs::FileServer,
-    get,
-    http::Status,
-    request::Request,
-    response::Redirect,
+    catch, catchers, fs::FileServer, get, http::Status, request::Request, response::Redirect,
 };
 
-use pgml_dashboard::{responses::{self, BadRequest, Response}, utils::{config, markdown}};
+use pgml_dashboard::{
+    responses::{self, BadRequest, Response},
+    utils::{config, markdown},
+};
 
 #[rocket::get("/")]
 async fn index() -> Redirect {
-    Redirect::to("/dashboard/notebooks")
+    Redirect::to("/dashboard")
 }
 
 #[get("/error")]
@@ -35,8 +33,16 @@ async fn not_found_handler(_status: Status, _request: &Request<'_>) -> Response 
 }
 
 #[catch(default)]
-async fn error_catcher(status: Status, request: &Request<'_>) -> Result<BadRequest, responses::Error>  {
-    Err(responses::Error(anyhow::anyhow!("{} {}\n{:?}", status.code, status.reason().unwrap(), request)))
+async fn error_catcher(
+    status: Status,
+    request: &Request<'_>,
+) -> Result<BadRequest, responses::Error> {
+    Err(responses::Error(anyhow::anyhow!(
+        "{} {}\n{:?}",
+        status.code,
+        status.reason().unwrap(),
+        request
+    )))
 }
 
 async fn configure_reporting() -> Option<sentry::ClientInitGuard> {
@@ -142,8 +148,9 @@ async fn main() {
 
 #[cfg(test)]
 mod test {
+    use crate::{error, index};
+    use pgml_dashboard::utils::{config, markdown};
     use pgml_dashboard::Clusters;
-    use pgml_dashboard::{index, migrate, paths};
     use rocket::fs::FileServer;
     use rocket::local::asynchronous::Client;
     use rocket::{Build, Rocket};
@@ -151,18 +158,24 @@ mod test {
     use std::vec::Vec;
 
     async fn rocket() -> Rocket<Build> {
+        dotenv::dotenv().ok();
+
         let clusters = Clusters::new();
         clusters
             .add(-1, &pgml_dashboard::guards::default_database_url())
             .unwrap();
 
-        migrate(&clusters.get(-1).unwrap()).await.unwrap();
+        pgml_dashboard::migrate(&clusters.get(-1).unwrap())
+            .await
+            .unwrap();
 
         rocket::build()
             .manage(clusters)
-            .mount("/dashboard", paths())
-            .mount("/static", FileServer::from("static"))
-            .mount("/docs", pgml_dashboard::api::docs::routes())
+            .manage(markdown::SearchIndex::open().unwrap())
+            .mount("/", rocket::routes![index, error])
+            .mount("/dashboard/static", FileServer::from(&config::static_dir()))
+            .mount("/dashboard", pgml_dashboard::routes())
+            .mount("/", pgml_dashboard::api::docs::routes())
     }
 
     fn get_href_links(body: &str, pattern: &str) -> Vec<String> {
@@ -293,5 +306,22 @@ mod test {
             let response = client.get(link.as_str()).dispatch().await;
             assert_eq!(response.status().code, 200);
         }
+    }
+
+    #[rocket::async_test]
+    async fn test_docs() {
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let response = client
+            .get("/docs/guides/setup/quick_start_with_docker/")
+            .dispatch()
+            .await;
+        assert_eq!(response.status().code, 200);
+    }
+
+    #[rocket::async_test]
+    async fn test_blogs() {
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let response = client.get("/blog/postgresml-raises-4.7M-to-launch-serverless-ai-application-databases-based-on-postgres/").dispatch().await;
+        assert_eq!(response.status().code, 200);
     }
 }

@@ -6,10 +6,11 @@ use sqlx::types::time::PrimitiveDateTime;
 use sqlx::{Column, Executor, PgPool, Row, Statement, TypeInfo, ValueRef};
 
 use crate::models;
+use crate::utils::tabs;
 
+pub mod components;
 pub mod docs;
 pub mod head;
-pub mod components;
 
 pub use head::*;
 
@@ -78,14 +79,15 @@ impl Layout {
     }
 
     pub fn render<T>(&mut self, template: T) -> String
-    where T : sailfish::TemplateOnce {
+    where
+        T: sailfish::TemplateOnce,
+    {
         self.content = Some(template.render_once().unwrap());
         (*self).clone().into()
     }
 }
 
-impl From<Layout> for String
-{
+impl From<Layout> for String {
     fn from(layout: Layout) -> String {
         layout.render_once().unwrap()
     }
@@ -98,26 +100,26 @@ pub struct Article {
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/projects.html")]
+#[template(path = "content/dashboard/panels/projects.html")]
 pub struct Projects {
     pub projects: Vec<models::Project>,
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/notebooks.html")]
+#[template(path = "content/dashboard/panels/notebooks.html")]
 pub struct Notebooks {
     pub notebooks: Vec<models::Notebook>,
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/notebook.html")]
+#[template(path = "content/dashboard/panels/notebook.html")]
 pub struct Notebook {
     pub notebook: models::Notebook,
     pub cells: Vec<models::Cell>,
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/cell.html")]
+#[template(path = "content/dashboard/panels/cell.html")]
 pub struct Cell {
     pub notebook: models::Notebook,
     pub cell: models::Cell,
@@ -289,7 +291,7 @@ pub struct SqlError {
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/models.html")]
+#[template(path = "content/dashboard/panels/models.html")]
 pub struct Models {
     pub projects: Vec<models::Project>,
     pub models: HashMap<i64, Vec<models::Model>>,
@@ -298,7 +300,7 @@ pub struct Models {
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/model.html")]
+#[template(path = "content/dashboard/panels/model.html")]
 pub struct Model {
     pub model: models::Model,
     pub project: models::Project,
@@ -307,13 +309,13 @@ pub struct Model {
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/snapshots.html")]
+#[template(path = "content/dashboard/panels/snapshots.html")]
 pub struct Snapshots {
     pub snapshots: Vec<models::Snapshot>,
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/snapshot.html")]
+#[template(path = "content/dashboard/panels/snapshot.html")]
 pub struct Snapshot {
     pub snapshot: models::Snapshot,
     pub models: Vec<models::Model>,
@@ -322,14 +324,14 @@ pub struct Snapshot {
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/deployments.html")]
+#[template(path = "content/dashboard/panels/deployments.html")]
 pub struct Deployments {
     pub projects: Vec<models::Project>,
     pub deployments: HashMap<i64, Vec<models::Deployment>>,
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/deployment.html")]
+#[template(path = "content/dashboard/panels/deployment.html")]
 pub struct Deployment {
     pub project: models::Project,
     pub model: models::Model,
@@ -337,7 +339,7 @@ pub struct Deployment {
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/project.html")]
+#[template(path = "content/dashboard/panels/project.html")]
 pub struct Project {
     pub project: models::Project,
     pub models: Vec<models::Model>,
@@ -356,3 +358,35 @@ pub struct Uploaded {
     pub columns: Vec<String>,
     pub table_name: String,
 }
+
+#[derive(TemplateOnce)]
+#[template(path = "layout/nav/top.html")]
+pub struct Navbar {
+    pub current_user: Option<models::User>,
+    pub standalone_dashboard: bool,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/dashboard.html")]
+pub struct Dashboard<'a> {
+    pub tabs: tabs::Tabs<'a>,
+}
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/notebooks_tab.html")]
+pub struct NotebooksTab {}
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/projects_tab.html")]
+pub struct ProjectsTab {}
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/deployments_tab.html")]
+pub struct DeploymentsTab {}
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/models_tab.html")]
+pub struct ModelsTab {}
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/snapshots_tab.html")]
+pub struct SnapshotsTab {}

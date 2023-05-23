@@ -12,21 +12,11 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav flex-grow-1 justify-content-center me-auto mb-2 mb-lg-0">
+        <% if standalone_dashboard || (current_user.as_ref().is_some() && current_user.as_ref().unwrap().id != -1 ) { %>
         <li class="nav-item d-flex align-items-center">
-          <a class="nav-link" href="/dashboard/notebooks">Notebooks</a>
+          <a class="nav-link" href="/dashboard">Dashboard</a>
         </li>
-        <li class="nav-item d-flex align-items-center">
-          <a class="nav-link" href="/dashboard/projects">Projects</a>
-        </li>
-        <li class="nav-item d-flex align-items-center">
-          <a class="nav-link" href="/dashboard/models">Models</a>
-        </li>
-        <li class="nav-item d-flex align-items-center">
-          <a class="nav-link" href="/dashboard/deployments">Deployments</a>
-        </li>
-        <li class="nav-item d-flex align-items-center">
-          <a class="nav-link" href="/dashboard/snapshots">Snapshots</a>
-        </li>
+        <% } %>
         <li class="nav-item d-flex align-items-center">
           <a class="nav-link" href="/docs/guides/setup/quick_start_with_docker/">Docs</a>
         </li>
@@ -36,11 +26,6 @@
         <li class="nav-item d-flex align-items-center">
           <a class="nav-link" href="https://github.com/postgresml/postgresml" target="_blank">Open Source</a>
         </li>
-        <!--
-        <li class="nav-item d-flex align-items-center">
-          <a class="nav-link" href="/team/">Team</a>
-        </li>
-        -->
       </ul>
 
 
@@ -49,11 +34,11 @@
           <img loading="lazy" src="/dashboard/static/images/icons/search.svg" width="24" height="24" alt="search" />
           <span>search</span>
         </button>
-    <!--
+        <% if !standalone_dashboard { %>
         <div class="d-flex gap-2 justify-content-end align-items-center">
-          <% if user.as_ref().is_none() { %>
+          <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
           <a class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/login">Sign In</a>
-          <a class="btn btn-primary" href="<%- crate::utils::config::signup_url() %>">Get Started</a>
+          <a class="btn btn-primary" href="/signup">Get Started</a>
           <% } else { %>
           <a class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/clusters">Console</a>
           <a href="/support" class="btn btn-tertiary p-0 ps-2">
@@ -61,7 +46,8 @@
           </a>
           <% } %>
         </div>
-    -->
+   
+        <% } %>
       </div>
     </div>
   </div>

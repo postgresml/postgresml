@@ -5,8 +5,7 @@ pub struct Head {
     pub image: Option<String>,
 }
 
-impl Head
-{
+impl Head {
     pub fn new() -> Head {
         Head::default()
     }

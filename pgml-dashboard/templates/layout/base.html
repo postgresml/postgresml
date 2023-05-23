@@ -11,7 +11,8 @@
         </div>
 
         <div class="container mb-4 mb-xxl-5">
-          <% include!("nav/top.html"); %>
+
+        <%- Navbar{current_user: user, standalone_dashboard: crate::utils::config::standalone_dashboard()}.render_once().unwrap() %>
         </div>
 
         <div class="container mb-4 mb-xxl-5">

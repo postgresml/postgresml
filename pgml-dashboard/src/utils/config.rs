@@ -107,3 +107,7 @@ pub fn signup_url() -> String {
         "https://postgresml.org/signup".to_string()
     }
 }
+
+pub fn standalone_dashboard() -> bool {
+    !env!("CARGO_MANIFEST_DIR").contains("deps") && !env!("CARGO_MANIFEST_DIR").contains("cloud2")
+}

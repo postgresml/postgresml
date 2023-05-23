@@ -1,0 +1,26 @@
+<turbo-frame id="deployments">
+  <section>
+    <h1><span class="material-symbols-outlined">inventory</span>Deployments</h1> 
+  
+  <% for project in projects.iter() {
+    let deps = &deployments[&project.id];
+  %>
+    <h2><%= project.name %></h2>
+    <ol class="object_list deployment_list">
+      <% for deployment in deps.iter() { %>
+      <li>
+        <a href="/dashboard/deployments/<%= deployment.id %>" data-turbo-frame="deployment">
+          <% if deployment.active.unwrap() { %>
+          <span class="material-symbols-outlined success">star</span>
+          <% } else { %>
+          <span class="material-symbols-outlined">cancel</span>
+          <% } %>
+          <span><%= deployment.human_readable_strategy() %></span>
+          <span><time datetime="<% deployment.created_at; %>"><% deployment.created_at; %></time></span>
+        </a>
+      </li>
+      <% } %>
+    </ol>
+  <% } %>
+  </section>
+</turbo-frame>

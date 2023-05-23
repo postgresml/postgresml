@@ -1,6 +1,6 @@
 use std::env::var;
 
-use rocket::http::{CookieJar};
+use rocket::http::CookieJar;
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket::State;
 use sqlx::PgPool;
@@ -53,9 +53,12 @@ impl<'r> FromRequest<'r> for Cluster {
 
         let pool = shared_state.get(cluster_id);
 
-        Outcome::Success(Cluster {
-            pool,
-            context: shared_state.get_context(cluster_id),
-        })
+        let context = Context {
+            user: shared_state.get_context(cluster_id).user,
+            cluster: shared_state.get_context(cluster_id).cluster,
+            visible_clusters: shared_state.get_context(cluster_id).visible_clusters,
+        };
+
+        Outcome::Success(Cluster { pool, context })
     }
 }

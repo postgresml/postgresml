@@ -1,7 +1,7 @@
 use std::cell::RefCell;
-use std::hash::{Hash, Hasher};
-use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::DefaultHasher;
+use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -954,7 +954,7 @@ impl SearchIndex {
             let path_field = schema.get_field("path").unwrap();
             let title_regex_field = schema.get_field("title_regex").unwrap();
 
-            info!("found path: {path}", path=path.display());
+            info!("found path: {path}", path = path.display());
             let path = path
                 .to_str()
                 .unwrap()

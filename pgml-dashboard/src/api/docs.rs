@@ -1,8 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use comrak::{
-    format_html_with_plugins, parse_document, Arena, ComrakPlugins,
-};
+use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
 use rocket::{http::Status, route::Route, State};
 use yaml_rust::YamlLoader;
 
@@ -12,7 +10,6 @@ use crate::{
     templates::docs::*,
     utils::{config, markdown},
 };
-
 
 #[get("/docs/search?<query>", rank = 1)]
 async fn search(query: &str, index: &State<markdown::SearchIndex>) -> ResponseOk {
@@ -219,7 +216,7 @@ async fn render<'a>(
         .toc_links(&toc_links);
 
     Ok(ResponseOk(
-        layout.render(crate::templates::Article { content: html })
+        layout.render(crate::templates::Article { content: html }),
     ))
 }
 
