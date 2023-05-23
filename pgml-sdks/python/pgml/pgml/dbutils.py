@@ -82,10 +82,12 @@ def run_select_statement(conn: Connection, statement: str) -> List[Any]:
     conn.commit()
     cur.close()
 
+    output = []
     if results:
-        return results[0][0]
-    else:
-        return []
+        if results[0][0]:
+            output = results[0][0]
+
+    return output
 
 
 def run_drop_or_delete_statement(conn: Connection, statement: str) -> None:

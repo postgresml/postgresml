@@ -313,22 +313,15 @@ class Collection:
 
             metadata = document
 
-            delete_statement = "DELETE FROM %s WHERE source_uuid = %s" % (
-                self.documents_table,
-                sql.Literal(source_uuid).as_string(conn),
+            upsert_statement = "INSERT INTO {documents_table} (text, source_uuid, metadata) VALUES ({text}, {source_uuid}, {metadata}) \
+                ON CONFLICT (source_uuid) \
+                DO UPDATE SET text = {text}, metadata = {metadata}".format(
+                documents_table=self.documents_table,
+                text=sql.Literal(text).as_string(conn),
+                metadata=sql.Literal(json.dumps(metadata)).as_string(conn),
+                source_uuid=sql.Literal(source_uuid).as_string(conn),
             )
-
-            run_drop_or_delete_statement(conn, delete_statement)
-            insert_statement = (
-                "INSERT INTO %s (text, source_uuid, metadata) VALUES (%s, %s, %s)"
-                % (
-                    self.documents_table,
-                    sql.Literal(text).as_string(conn),
-                    sql.Literal(source_uuid).as_string(conn),
-                    sql.Literal(json.dumps(metadata)).as_string(conn),
-                )
-            )
-            run_create_or_insert_statement(conn, insert_statement, verbose)
+            run_create_or_insert_statement(conn, upsert_statement)
 
             # put the text and id back in document
             document[text_key] = text
