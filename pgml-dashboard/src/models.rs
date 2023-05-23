@@ -298,16 +298,13 @@ impl Cell {
 
         let (rendering, execution_time) = match cell_type {
             CellType::Sql => {
-                let queries = self.contents.split(";");
+                let queries: Vec<&str> = self.contents.split(';').filter(|q| !q.trim().is_empty()).collect();
                 let mut rendering = String::new();
                 let mut total_execution_duration = std::time::Duration::default(); 
+                let render_individual_execution_duration = queries.len() > 1;
 
                 for query in queries {
-                    if query.trim().is_empty() {
-                        continue;
-                    }
-
-                    let result = match templates::Sql::new(pool, query).await {
+                    let result = match templates::Sql::new(pool, query, render_individual_execution_duration).await {
                         Ok(sql) => {
                             total_execution_duration += sql.execution_duration;
                             sql.render_once()?
