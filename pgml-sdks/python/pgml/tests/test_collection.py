@@ -86,7 +86,7 @@ class TestCollection(unittest.TestCase):
         assert results[0]["score"] == 1.0
     
     # def tearDown(self) -> None:
-    #     self.db.delete_collection(self.collection_name)
+    #     self.db.archive_collection(self.collection_name)
 
 
     

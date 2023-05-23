@@ -72,7 +72,7 @@ class Database:
         )
         name = name.lower()
         names = []
-    
+
         if results:
             names = [res["name"] for res in results]
 
@@ -87,7 +87,7 @@ class Database:
         self.pool.putconn(conn)
         return Collection(self.pool, name)
 
-    def delete_collection(self, name: str) -> None:
+    def archive_collection(self, name: str) -> None:
         """
         This function deletes a PostgreSQL schema if it exists.
 
@@ -95,29 +95,27 @@ class Database:
         :type name: str
         """
         conn = self.pool.getconn()
-        results = run_select_statement(
-            conn, "SELECT name FROM pgml.collections WHERE active = TRUE;"
-        )
-        names = [res["name"] for res in results]
-        
-        if name in names:
-            cur = conn.cursor()
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            archive_table_name = name + "_archive_" + timestamp
-            alter_schema_statement = "ALTER SCHEMA %s RENAME TO %s;"%(sql.Literal(name).as_string(conn),sql.Literal(archive_table_name).as_string(conn))
+        cur = conn.cursor()
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        archive_table_name = name + "_archive_" + timestamp
+
+        results = run_select_statement(conn, "SELECT nspname FROM pg_namespace")
+        name_spaces = [res["nspname"] for res in results]
+
+        if name in name_spaces:
+            alter_schema_statement = (
+                f"ALTER SCHEMA {name} RENAME TO {archive_table_name};"
+            )
             cur.execute(alter_schema_statement)
 
-            update_statement = (
-                "UPDATE pgml.collections SET name = %s, active = FALSE WHERE name = %s"
-                % (
-                    sql.Literal(archive_table_name).as_string(conn),
-                    sql.Literal(name).as_string(conn),
-                )
-            )
-            #drop_statement = "DROP SCHEMA IF EXISTS %s CASCADE" % name
-            
+        results = run_select_statement(conn, "SELECT name FROM pgml.collections")
+        names = [res["name"] for res in results]
+
+        if name in names:
+            update_statement = f"UPDATE pgml.collections SET name = '{archive_table_name}', active = FALSE WHERE name = '{name}'"
             cur.execute(update_statement)
-            conn.commit()
-            cur.close()
+
+        conn.commit()
+        cur.close()
 
         self.pool.putconn(conn)
