@@ -11,8 +11,18 @@ async fn main() {
     dotenv::dotenv().ok();
 
     let clusters = pgml_dashboard::Clusters::new();
+    let settings = pgml_dashboard::ClustersSettings {
+        min_connections: 0,
+        max_connections: 5,
+        idle_timeout: 15_000,
+    };
+
     clusters
-        .add(-1, &pgml_dashboard::guards::default_database_url())
+        .add(
+            -1,
+            &pgml_dashboard::guards::default_database_url(),
+            settings,
+        )
         .unwrap();
 
     pgml_dashboard::migrate(&clusters.get(-1).unwrap())
@@ -43,6 +53,10 @@ mod test {
     use std::vec::Vec;
 
     async fn rocket() -> Rocket<Build> {
+        let max_connections = 5;
+        let min_connections = 1;
+        let idle_timeout = 15_000;
+
         let clusters = Clusters::new();
         clusters
             .add(-1, &pgml_dashboard::guards::default_database_url())
