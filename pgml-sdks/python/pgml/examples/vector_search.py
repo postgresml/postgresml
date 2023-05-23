@@ -19,7 +19,7 @@ data = data.to_pandas()
 data = data.drop_duplicates(subset=["context"])
 
 documents = [
-    {"text": r["context"], "metadata": {"title": r["title"]}}
+    {'id': r['id'], "text": r["context"], "title": r["title"]}
     for r in data.to_dict(orient="records")
 ]
 

@@ -299,12 +299,20 @@ class Collection:
                     "%s in not present, skipping this document..." % text_key
                 )
                 continue
-            if id_key in list(document.keys()):
-                source_uuid = document.pop(id_key)
-            else:
+
+            _uuid = ""
+            if id_key not in list(document.keys()):
                 log.info("id key is not present.. hashing")
                 source_uuid = hashlib.md5(text.encode("utf-8")).hexdigest()
+            else:
+                _uuid = document.pop(id_key)
+                try:
+                    source_uuid = str(uuid.UUID(_uuid))
+                except Exception:
+                    source_uuid = hashlib.md5(text.encode("utf-8")).hexdigest()
+
             metadata = document
+
             delete_statement = "DELETE FROM %s WHERE source_uuid = %s" % (
                 self.documents_table,
                 sql.Literal(source_uuid).as_string(conn),
@@ -321,6 +329,11 @@ class Collection:
                 )
             )
             run_create_or_insert_statement(conn, insert_statement, verbose)
+
+            # put the text and id back in document
+            document[text_key] = text
+            if _uuid:
+                document[id_key] = source_uuid
 
         self.pool.putconn(conn)
 
