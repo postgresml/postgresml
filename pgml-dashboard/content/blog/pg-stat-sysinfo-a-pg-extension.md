@@ -1,7 +1,7 @@
 ---
 author: Jason Dusek
 description: Introduces a Postgres extension which collects system statistics
-image: https://postgresml.org/static/images/blog/cluster_navigation.jpg
+image: https://postgresml.org/dashboard/static/images/blog/cluster_navigation.jpg
 image_alt: Navigating a cluster of servers, laptop in hand
 ---
 

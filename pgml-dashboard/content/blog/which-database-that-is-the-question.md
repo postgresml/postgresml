@@ -1,7 +1,7 @@
 ---
 author: Lev Kokotov
 description: Choosing a database for your product sounds like a hard problem. These days, we engineers have an abundance of choice, which makes this decision harder than it should be. Let's look at a few options.
-image: https://postgresml.org/static/images/blog/postgres-is-the-way.jpg
+image: https://postgresml.org/dashboard/static/images/blog/postgres-is-the-way.jpg
 image_alt: Okay, that was a bit of a spoiler
 ---
 

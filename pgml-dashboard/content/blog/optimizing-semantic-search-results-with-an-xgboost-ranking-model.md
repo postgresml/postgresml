@@ -1,7 +1,7 @@
 ---
 author: Montana Low
 description: How to personalize results from a vector database generated with open source HuggingFace models using pgvector and PostgresML.
-image: https://postgresml.org/static/images/blog/models_1.jpg
+image: https://postgresml.org/dashboard/static/images/blog/models_1.jpg
 image_alt: Embeddings can be combined into personalized perspectives when stored as vectors in the database.
 ---
 

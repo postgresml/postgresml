@@ -1,7 +1,7 @@
 ---
 author: Montana Low
 description: With PostgresML, developers can prototype and deploy AI applications quickly and at scale in a matter of minutes — a task that would otherwise have taken weeks. By streamlining the infrastructure requirements, PostgresML allows developers to concentrate on creating intelligent and engaging applications.
-image: https://postgresml.org/static/images/blog/cloud.jpg
+image: https://postgresml.org/dashboard/static/images/blog/cloud.jpg
 image_alt: PostgresML launches a serverless AI application database in the cloud.
 ---
 

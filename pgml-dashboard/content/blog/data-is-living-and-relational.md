@@ -1,7 +1,7 @@
 ---
 author: Montana Low
 description: A common problem with data science and machine learning tutorials is the published and studied datasets are often nothing like what you’ll find in industry.
-image: https://postgresml.org/static/images/illustrations/uml.png
+image: https://postgresml.org/dashboard/static/images/illustrations/uml.png
 image_alt: Data is relational and growing in multiple dimensions
 ---
 <!-- 

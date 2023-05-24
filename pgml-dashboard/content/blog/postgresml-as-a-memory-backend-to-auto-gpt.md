@@ -2,7 +2,7 @@
 author: Santi Adavani
 title: postgresml-as-a-memory-backend-to-auto-gpt
 description: Auto-GPT is an open-source autonomous AI tool that can use PostgresML as memory backend to store and access data from previous queries or private data.
-image: https://postgresml.org/static/images/blog/AutoGPT_PGML.svg
+image: https://postgresml.org/dashboard/static/images/blog/AutoGPT_PGML.svg
 image_alt: postgresml-as-a-memory-backend-to-auto-gpt
 ---
 # PostgresML as a memory backend to Auto-GPT

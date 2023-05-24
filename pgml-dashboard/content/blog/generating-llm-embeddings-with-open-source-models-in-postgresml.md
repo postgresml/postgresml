@@ -1,7 +1,7 @@
 ---
 author: Montana Low
 description: How to use the pgml.embed(...) function to generate embeddings with free and open source models in your own database.
-image: https://postgresml.org/static/images/blog/embeddings_1.jpg
+image: https://postgresml.org/dashboard/static/images/blog/embeddings_1.jpg
 image_alt: Embeddings show us the relationships between rows in the database
 ---
 

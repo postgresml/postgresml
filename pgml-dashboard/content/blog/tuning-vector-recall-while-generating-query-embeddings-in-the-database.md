@@ -1,7 +1,7 @@
 ---
 author: Montana Low
 description: How to effectively write and tune queries against large embedding collections with significant speed and quality advantages compared to OpenAI + Pinecone.
-image: https://postgresml.org/static/images/blog/embeddings_2.jpg
+image: https://postgresml.org/dashboard/static/images/blog/embeddings_2.jpg
 image_alt: Embeddings represent high level information like text, images and audio as numeric vectors in the database.
 ---
 
