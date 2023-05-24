@@ -13,6 +13,8 @@ pub mod sklearn;
 pub mod transformers;
 #[cfg(feature = "python")]
 pub mod venv;
+#[cfg(feature = "python")]
+pub mod chunking;
 pub mod xgboost;
 
 pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings>;

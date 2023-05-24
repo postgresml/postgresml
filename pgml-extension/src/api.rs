@@ -565,7 +565,12 @@ fn load_dataset(
 
 #[pg_extern(immutable, parallel_safe)]
 pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
-    crate::bindings::transformers::embed(transformer, &text, &kwargs.0)
+    crate::bindings::transformers::embed(transformer, text, &kwargs.0)
+}
+
+#[pg_extern(immutable, parallel_safe)]
+pub fn chunk(splitter: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<String> {
+    crate::bindings::chunking::chunk(splitter, text, &kwargs.0)
 }
 
 #[cfg(feature = "python")]
