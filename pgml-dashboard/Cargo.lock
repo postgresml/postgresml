@@ -1648,7 +1648,7 @@ checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
 
 [[package]]
 name = "pgml-dashboard"
-version = "2.4.6"
+version = "2.4.7"
 dependencies = [
  "anyhow",
  "bigdecimal",
