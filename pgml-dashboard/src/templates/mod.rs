@@ -404,5 +404,5 @@ pub struct SnapshotsTab {
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/uploader_tab.html")]
 pub struct UploaderTab {
-    pub table_name: Option<String>, 
+    pub table_name: Option<String>,
 }

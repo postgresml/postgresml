@@ -21,7 +21,7 @@ pub mod templates;
 pub mod utils;
 
 use crate::templates::{
-    DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab, SnapshotsTab, UploaderTab
+    DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab, SnapshotsTab, UploaderTab,
 };
 use crate::utils::tabs;
 use guards::Cluster;
@@ -527,8 +527,8 @@ pub async fn uploaded_index(cluster: Cluster, table_name: &str) -> ResponseOk {
 
 #[get("/?<tab>&<notebook_id>&<model_id>&<project_id>&<snapshot_id>&<deployment_id>&<table_name>")]
 pub async fn dashboard(
-    cluster: Cluster, 
-    tab: Option<&str>, 
+    cluster: Cluster,
+    tab: Option<&str>,
     notebook_id: Option<i64>,
     model_id: Option<i64>,
     project_id: Option<i64>,
@@ -542,8 +542,6 @@ pub async fn dashboard(
         Some(cluster.context.user.clone())
     };
 
-    println!("table name: {:?}", table_name);
-
     let mut layout = crate::templates::Layout::new("Dashboard");
 
     if user.is_some() {
@@ -553,28 +551,28 @@ pub async fn dashboard(
     let all_tabs = vec![
         tabs::Tab {
             name: "Notebooks",
-            content: NotebooksTab {notebook_id}.render_once().unwrap(),
+            content: NotebooksTab { notebook_id }.render_once().unwrap(),
         },
         tabs::Tab {
             name: "Projects",
-            content: ProjectsTab {project_id}.render_once().unwrap(),
+            content: ProjectsTab { project_id }.render_once().unwrap(),
         },
         tabs::Tab {
             name: "Models",
-            content: ModelsTab {model_id}.render_once().unwrap(),
+            content: ModelsTab { model_id }.render_once().unwrap(),
         },
         tabs::Tab {
             name: "Deployments",
-            content: DeploymentsTab {deployment_id}.render_once().unwrap(),
+            content: DeploymentsTab { deployment_id }.render_once().unwrap(),
         },
         tabs::Tab {
             name: "Snapshots",
-            content: SnapshotsTab {snapshot_id}.render_once().unwrap(),
+            content: SnapshotsTab { snapshot_id }.render_once().unwrap(),
         },
         tabs::Tab {
-            name: "Upload_Data", 
-            content: UploaderTab{table_name}.render_once().unwrap(),
-        }
+            name: "Upload_Data",
+            content: UploaderTab { table_name }.render_once().unwrap(),
+        },
     ];
 
     let nav_tabs = tabs::Tabs::new(all_tabs, Some("Notebooks"), tab)?;
