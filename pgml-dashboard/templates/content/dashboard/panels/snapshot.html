@@ -35,7 +35,7 @@
       </li>
       <% for model in models.iter() { %>
       <li>
-        <a href="/dashboard/models/<%= model.id %>">
+        <a href="/dashboard/?tab=Models&model_id=<%= model.id %>" data-turbo="false">
           <span class="material-symbols-outlined">
             <% if model.search.is_some() { %>
               <% if model.search.as_ref().unwrap().as_str() == "grid" { %>

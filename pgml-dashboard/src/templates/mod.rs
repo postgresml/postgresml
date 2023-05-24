@@ -346,13 +346,13 @@ pub struct Project {
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/uploader.html")]
+#[template(path = "content/dashboard/panels/uploader.html")]
 pub struct Uploader {
     pub error: Option<String>,
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "content/uploaded.html")]
+#[template(path = "content/dashboard/panels/uploaded.html")]
 pub struct Uploaded {
     pub sql: Sql,
     pub columns: Vec<String>,
@@ -373,20 +373,36 @@ pub struct Dashboard<'a> {
 }
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/notebooks_tab.html")]
-pub struct NotebooksTab {}
+pub struct NotebooksTab {
+    pub notebook_id: Option<i64>,
+}
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/projects_tab.html")]
-pub struct ProjectsTab {}
+pub struct ProjectsTab {
+    pub project_id: Option<i64>,
+}
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/deployments_tab.html")]
-pub struct DeploymentsTab {}
+pub struct DeploymentsTab {
+    pub deployment_id: Option<i64>,
+}
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/models_tab.html")]
-pub struct ModelsTab {}
+pub struct ModelsTab {
+    pub model_id: Option<i64>,
+}
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/snapshots_tab.html")]
-pub struct SnapshotsTab {}
+pub struct SnapshotsTab {
+    pub snapshot_id: Option<i64>,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/uploader_tab.html")]
+pub struct UploaderTab {
+    pub table_name: Option<String>, 
+}

@@ -14,7 +14,7 @@
           </form>
           <form action="/dashboard/notebooks/<%= notebook.id %>/reset" method="post">
             <button type="submit" title="Reset all executable cells">
-              <span class="material-symbols-outlined">replay</span>
+              <span class="material-symbols-outlined" data-turbo-frame="notebook">replay</span>
             </button>
           </form>
         </div>

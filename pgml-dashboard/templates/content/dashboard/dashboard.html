@@ -14,7 +14,7 @@
     <% for (i, tab) in tabs.tabs.iter().enumerate() { %>
     <li class="nav-item" role="presentation">
       <a class="nav-link <%- test_active(tabs.active, tab.name) %>" href="/dashboard/?tab=<%- tab.name %>" type="button" role="tab" aria-controls="tab-<%- tab.name %>" aria-selected="<%= i %>" data-turbo-action="advance" >
-        <%- tab.name %>
+        <%- tab.name.replace("_", " ") %>
       </a>
     </li>
     <% } %>
