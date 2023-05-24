@@ -1,13 +1,13 @@
 <%
-  let source = match project_id {
-    Some(id) => format!("dashboard/projects/{}", id), 
-    None => "".to_string()
-  };
+    let source = match project_id {
+        Some(id) => format!("dashboard/projects/{}", id), 
+        None => "".to_string()
+    };
 %>
 
 
 <turbo-frame id="projects" src="/dashboard/projects" data-turbo-permanent>
-  <div class="d-flex justify-content-center align-items-center py-5">Loading projects, one moment...</div>
+    <div class="d-flex justify-content-center align-items-center py-5">Loading projects, one moment...</div>
 </turbo-frame>      
 <turbo-frame id="project" src="<%= source %>">
 </turbo-frame>
