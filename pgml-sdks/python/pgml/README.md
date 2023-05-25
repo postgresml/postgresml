@@ -120,7 +120,7 @@ db.archive_collection(collection_name)
 **Explanation:**
 
 - The code initializes a timer using `time()` to measure the query time.
-- The `vector_search` method is called to perform a vector-based search on the collection. The query string is "Who won 20 grammy awards?", and the top 2 results are requested.
+- The `vector_search` method is called to perform a vector-based search on the collection. The query string is `Who won 20 grammy awards?`, and the top 2 results are requested.
 - The search results are printed using `rprint` and formatted as JSON with indentation.
 - The query time is calculated by subtracting the start time from the current time.
 - Finally, the `archive_collection` method is called to archive the collection and free up resources in the PostgresML database.
@@ -136,7 +136,7 @@ python vector_search.py
 ```
 You should see the search results and the query time printed in the terminal. As you can see, our vector search engine found the right text chunk with the answer we are looking for.
 
-```json
+```
 [
   {
     "score": 0.8423336843624225,
