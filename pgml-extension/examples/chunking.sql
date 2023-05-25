@@ -58,3 +58,5 @@ FROM
 		(SELECT document FROM document),
 		'{"chunk_size": 2, "chunk_overlap": 2}'
 	);
+
+SELECT * FROM document_chunks LIMIT 5;
