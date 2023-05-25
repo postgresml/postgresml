@@ -1,16 +1,13 @@
-
 # Table of Contents
 
 - [Overview](#overview)
 - [Quickstart](#quickstart)
 - [Usage](#usage)
-- [Examples](#examples)
-- [Concepts](#concepts)
 - [Developer setup](#developer-setup)
 - [API Reference](#api-reference)
 
 ## Overview
-The Python SDK is designed to facilitate the development of scalable vector search applications on PostgreSQL databases. With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
+Python SDK is designed to facilitate the development of scalable vector search applications on PostgreSQL databases. With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
 ### Key Features
 
@@ -165,23 +162,84 @@ influential people in the world in 2013 and 2014. Forbes magazine also listed he
   }
 ]
 ```
-### Usage
+## Usage
 
-### Examples
+### High-level Description
+The Python SDK provides a set of functionalities to build scalable vector search applications on PostgresQL databases. It enables users to create a collection, which represents a schema in the database, to store tables for documents, chunks, models, splitters, and embeddings. The Collection class in the SDK handles all operations related to these tables, allowing users to interact with the collection and perform various tasks.
 
-### Concepts
+**Connect to Database**
 
-### Developer setup
-1. Install Python 3.11. SDK should work for Python >=3.8. However, at this time, we have only tested Python 3.11.
-2. Clone the repository and checkout the SDK branch (before PR)
+```python
+local_pgml = "postgres://postgres@127.0.0.1:5433/pgml_development"
+
+conninfo = os.environ.get("PGML_CONNECTION", local_pgml)
+db = Database(conninfo)
 ```
-git clone https://github.com/postgresml/postgresml
-cd postgresml
-git checkout santi-pgml-memory-sdk-python
-cd pgml-sdks/python/pgml
+
+This initializes a connection pool to the DB and creates a table named `pgml.collections` if it does not already exist. By default it connects to local PostgresML database and at one connection maintained in the connection pool.
+
+**Create or Get a Collection**
+
+```python
+collection_name = "test_pgml_sdk_1"
+collection = db.create_or_get_collection(collection_name)
 ```
-3. Install poetry `pip install poetry`
-4. Initialize Python environment
+
+This creates a new schema in a PostgreSQL database if it does not already exist and creates tables and indices for documents, chunks, models, splitters, and embeddings.
+
+**Upsert Documents**
+
+```python
+collection.upsert_documents(documents)
+```
+
+The method is used to insert or update documents in a database table based on their ID, text, and metadata.
+
+**Generate Chunks**
+
+```python
+collection.generate_chunks(splitter_id = 1)
+```
+
+This method is used to generate chunks of text from unchunked documents using a specified text splitter. By default it uses `RecursiveCharacterTextSplitter` with default parameters. `splitter_id` is optional. You can pass a `splitter_id` corresponding to a new splitter that is registered. See below for `register_text_splitter`.
+
+**Generate Embeddings**
+
+```python
+collection.generate_embeddings(model_id = 1, splitter_id = 1)
+```
+
+This methods generates embeddings uing the chunks from the text. By default it uses `intfloat/e5-small` embeddings model. `model_id` is optional. You can pass a `model_id` corresponding to a new model that is registered and `splitter_id`. See below for `register_model`.
+
+
+**Query Embeddings**
+
+```python
+results = collection.vector_search("Who won 20 grammy awards?", top_k=2, model_id = 1, splitter_id = 1)
+```
+
+This method converts the input query into embeddings and searches embeddings table for nearest match. You can change the number of results using `top_k`. You can also pass specific `splitter_id` and `model_id` that were used for chunking and generating embeddings.
+
+**Register Model**
+
+```python
+collection.register_model(model_name="hkunlp/instructor-xl", model_params={"instruction": "Represent the Wikipedia document for retrieval: "})
+```
+
+This function allows for the registration of a model in a database, creating a record if it does not already exist. `model_name` is the name of the open source HuggingFace model being registered and `model_params` is a dictionary containing parameters for configuring the model. It can be empty if no parameters are needed.
+
+**Register Text Splitter**
+```python
+collection.register_text_splitter(splitter_name="RecursiveCharacterTextSplitter",splitter_params={"chunk_size": 100,"chunk_overlap": 20})
+```
+
+This function allows for the registration of a text spliter in a database, creating a record if it doesn't already exist. `splitter_name` is the name of the splitter from [LangChain](https://python.langchain.com/en/latest/reference/modules/text_splitter.html) and `splitter_params` are chunking parameters that the splitter supports.
+
+
+### Developer Setup
+1. Install Python 3.11. SDK should work for Python >=3.8.
+2. Install poetry `pip install poetry`
+3. Initialize Python environment
 
 ```
 poetry env use python3.11
@@ -189,7 +247,7 @@ poetry shell
 poetry install
 poetry build
 ```
-5. SDK uses your local PostgresML database by default 
+4. SDK uses your local PostgresML database by default 
 `postgres://postgres@127.0.0.1:5433/pgml_development`
 
 If it is not up to date with `pgml.embed` please [signup for a free database](https://postgresml.org/signup) and set `PGML_CONNECTION` environment variable with serverless hosted database.
@@ -197,9 +255,14 @@ If it is not up to date with `pgml.embed` please [signup for a free database](ht
 ```
 export PGML_CONNECTION="postgres://<username>:<password>@<hostname>:<port>/pgm<database>"
 ```
-6. Run a **vector search** example
+
+5. Run tests
+
 ```
-python examples/vector_search.py
+LOGLEVEL=INFO python -m unittest tests/test_collection.py
 ```
 
-### API Reference
+### API Reference 
+
+- [Database](./docs/pgml/database.md)
+- [Collection](./docs/pgml/collection.md)
