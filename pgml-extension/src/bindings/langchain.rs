@@ -7,7 +7,7 @@ static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
         let src = include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/bindings/chunking.py"
+            "/src/bindings/langchain.py"
         ));
 
         PyModule::from_code(py, src, "", "").unwrap().into()

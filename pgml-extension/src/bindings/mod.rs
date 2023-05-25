@@ -6,7 +6,7 @@ use pgrx::*;
 use crate::orm::*;
 
 #[cfg(feature = "python")]
-pub mod chunking;
+pub mod langchain;
 pub mod lightgbm;
 pub mod linfa;
 #[cfg(feature = "python")]

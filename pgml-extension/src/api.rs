@@ -574,7 +574,7 @@ pub fn chunk(
     text: &str,
     kwargs: default!(JsonB, "'{}'"),
 ) -> TableIterator<'static, (name!(chunk_index, i64), name!(chunk, String))> {
-    let chunks = crate::bindings::chunking::chunk(splitter, text, &kwargs.0);
+    let chunks = crate::bindings::langchain::chunk(splitter, text, &kwargs.0);
     let chunks = chunks
         .into_iter()
         .enumerate()
