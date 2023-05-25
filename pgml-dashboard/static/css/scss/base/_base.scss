@@ -1,0 +1,207 @@
+
+/**
+ * Code with a copy button.
+ *
+ * Used not only in docs but also in clusters UI.
+ * */
+ pre:hover {
+    .btn-copy {
+        opacity: 1;
+    }
+}
+  
+pre {
+    position: relative;
+    overflow-x: hidden;
+    padding: 12px;
+    border-radius: #{$border-radius};
+
+    &:hover {
+        .code-toolbar {
+            background-color: $gray-600;
+            color: #{$slate-tint-500};
+        }
+    }
+
+    code {
+        overflow-x: auto;
+        display: block;
+        border: none;
+    }
+
+    .code-toolbar {
+        display: flex;
+        gap: 4px;
+        position: absolute; 
+        top: 4px;
+        right: 4px;
+        background: transparent;
+        padding: 4px;
+        color: #{$slate-shade-700};
+    }
+}
+
+// Gradient link.
+a:not(.btn, .nav .nav-link, .breadcrumb-item a, .list-group-item, .a-reset, .navbar .nav-link, .navbar .navbar-brand) {
+    text-decoration: none;
+    color: var(--bs-link-color);
+    background-color: transparent;
+}
+
+a.a-reset {
+    text-decoration: none;
+}
+
+
+input {
+    &.form-check-input {
+        &[type=radio]:checked {
+            border-width: 5px;
+        }
+
+        &:hover {
+            cursor: pointer;
+        }
+    }
+
+    &.form-range[type=range] {
+        cursor: pointer;
+    }
+
+    // Firefox
+    &.form-range[type="range"]::-moz-range-progress {
+        background-color: #{$purple};
+        height: 4px;
+        border: 0;
+    }
+
+    // IE
+    &.form-range[type="range"]::-ms-fill-lower {
+        background-color: #{$purple};
+    }
+
+    // Chrome (doesn't really work as designed)
+    &.form-range[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 24px;
+        width: 24px;
+        position: relative;
+        bottom: 4px;
+        border-radius: 50%;
+        border: #{$form-range-thumb-border};
+        background: #{$form-range-thumb-bg};
+    }
+
+    &.form-range[type=range]::-webkit-slider-runnable-track {
+      height: #{$form-range-track-height};
+      border: 0;
+    }
+
+    &.form-range[type=range]:focus::-webkit-slider-runnable-track {
+        background: #{$purple};
+    }
+    // End of Chrome
+}
+
+table {
+    @extend .table;
+    @extend .table-bordered;
+    @extend .table-hover;
+}
+
+html, body, main {
+    height: 100%;
+}
+
+article {
+    font-family: "Roboto", Helvetica;
+
+    p {
+        line-height: 1.6rem;
+        print-color-adjust: exact;
+    }
+}
+
+
+.form-control {
+    border-radius: var(--bs-border-radius-pill);
+}
+
+// Override white overrides.
+.text-white {
+    color: #{$gray-100} !important;
+}
+
+.bg-white {
+    background-color: #{$bg-white} !important;
+}
+
+.bg-white-2 {
+    background-color: #EAEAEA !important;
+}
+
+// Our flagship gradient.
+.party-time {
+    background: linear-gradient(270deg, #26CBFF 0%, #808CFF 50%, #C92FFF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+// Remove padding from large screens.
+@include media-breakpoint-up(lg) {
+    body {
+        padding: 0;
+    }
+}
+
+.min-vh-lg-100 {
+    @include media-breakpoint-up(lg) {
+        min-height: 100vh !important;
+    }
+}
+
+// Override text-bg-dark colors.
+.text-bg-dark {
+    color: rgba(219, 219, 220, 1);
+    background-color: rgba(38, 38, 38, 1) !important;
+}
+
+.list-group {
+    --bs-list-group-bg: transparent;
+    --bs-list-group-border-width: 0;
+    --bs-list-group-border-color: transparent;
+    --bs-list-group-color: #{$primary};
+}
+
+// scrollbar customization for Chrome, Edge, Opera, Safari, all browsers on iOS
+// TODO: Fix firefox scrollbar design.
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: #{$gray-800};
+}
+
+::-webkit-scrollbar-thumb {
+    width: 8px;
+    background: #{$purple};
+}
+
+.syntax-highlight {
+    background: linear-gradient(225deg, #3EDCFF 0%, #3E9AFF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+  }

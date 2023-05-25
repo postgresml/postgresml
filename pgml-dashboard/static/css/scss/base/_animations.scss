@@ -1,0 +1,26 @@
+
+.animate-rotate {
+    animation: rotation 60s infinite linear;
+}
+
+.animate-scale {
+    animation: scaling 30s infinite linear;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes scaling {
+  0% {
+    transform: scale(1.0, 1.0);
+  }
+  100% {
+    transform: scale(0.5, 0.5);
+  }
+}

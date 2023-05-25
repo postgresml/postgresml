@@ -1,0 +1,19 @@
+
+.alert {
+    &> div> span.material-symbols-outlined {
+        color: #{$purple};
+        font-weight: 600;
+    }
+    pre {
+        @extend .py-3;
+        @extend .px-3;
+    }
+}
+
+.alert-warning {
+    .material-symbols-outlined {
+        color: #{$yellow};
+        font-weight: 500;
+    }
+    --bs-alert-border-color: #{$yellow};
+}
