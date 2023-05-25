@@ -569,8 +569,19 @@ pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> 
 }
 
 #[pg_extern(immutable, parallel_safe)]
-pub fn chunk(splitter: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<String> {
-    crate::bindings::chunking::chunk(splitter, text, &kwargs.0)
+pub fn chunk(
+    splitter: &str,
+    text: &str,
+    kwargs: default!(JsonB, "'{}'"),
+) -> TableIterator<'static, (name!(chunk_index, i64), name!(chunk, String))> {
+    let chunks = crate::bindings::chunking::chunk(splitter, text, &kwargs.0);
+    let chunks = chunks
+        .into_iter()
+        .enumerate()
+        .map(|(i, chunk)| (i as i64 + 1, chunk))
+        .collect::<Vec<(i64, String)>>();
+
+    TableIterator::new(chunks.into_iter())
 }
 
 #[cfg(feature = "python")]
@@ -580,7 +591,7 @@ pub fn transform_json(
     task: JsonB,
     args: default!(JsonB, "'{}'"),
     inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
-    cache: default!(bool, false)
+    cache: default!(bool, false),
 ) -> JsonB {
     JsonB(crate::bindings::transformers::transform(
         &task.0, &args.0, &inputs,
@@ -594,7 +605,7 @@ pub fn transform_string(
     task: String,
     args: default!(JsonB, "'{}'"),
     inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
-    cache: default!(bool, false)
+    cache: default!(bool, false),
 ) -> JsonB {
     let mut task_map = HashMap::new();
     task_map.insert("task", task);

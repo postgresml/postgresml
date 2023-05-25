@@ -1,4 +1,3 @@
-
 use once_cell::sync::Lazy;
 use pgrx::*;
 use pyo3::prelude::*;
@@ -15,11 +14,7 @@ static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     })
 });
 
-pub fn chunk(
-    splitter: &str,
-    text: &str,
-    kwargs: &serde_json::Value,
-) -> Vec<String> {
+pub fn chunk(splitter: &str, text: &str, kwargs: &serde_json::Value) -> Vec<String> {
     crate::bindings::venv::activate();
 
     let kwargs = serde_json::to_string(kwargs).unwrap();
@@ -32,11 +27,7 @@ pub fn chunk(
                 py,
                 PyTuple::new(
                     py,
-                    &[
-                        splitter.into_py(py),
-                        text.into_py(py),
-                        kwargs.into_py(py),
-                    ],
+                    &[splitter.into_py(py), text.into_py(py), kwargs.into_py(py)],
                 ),
             )
             .unwrap()

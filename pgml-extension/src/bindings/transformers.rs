@@ -40,11 +40,7 @@ pub fn transform(
                 py,
                 PyTuple::new(
                     py,
-                    &[
-                        task.into_py(py),
-                        args.into_py(py),
-                        inputs.into_py(py),
-                    ],
+                    &[task.into_py(py), args.into_py(py), inputs.into_py(py)],
                 ),
             )
             .unwrap()
