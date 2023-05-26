@@ -49,9 +49,14 @@ Follow the steps below to quickly get started with the Python SDK for building s
 ### Prerequisites
 Before you begin, make sure you have the following:
 
-- **PostgresML Database**: Ensure you have a PostgresML database version >`2.3.1`. You can spin up a database using [Docker](https://github.com/postgresml/postgresml#installation) or [sign up for a free GPU-powered database](https://postgresml.org/signup). Set the `PGML_CONNECTION` environment variable to the connection string of your PostgresML database. If not set, the SDK will use the default connection string for your local installation `postgres://postgres@127.0.0.1:5433/pgml_development`.
+- PostgresML Database: Ensure you have a PostgresML database version >`2.3.1`. You can spin up a database using [Docker](https://github.com/postgresml/postgresml#installation) or [sign up for a free GPU-powered database](https://postgresml.org/signup). Set the `PGML_CONNECTION` environment variable to the connection string of your PostgresML database. If not set, the SDK will use the default connection string for your local installation `postgres://postgres@127.0.0.1:5433/pgml_development`.
 
 - Python version >=3.8.1
+
+- `postgresql` command line utility
+  - Ubuntu: `sudo apt install libpq-dev`
+  - Centos/Fedora/Cygwin/Babun: `sudo yum install libpq-devel`
+  - Mac: `brew install postgresql`
 
 ### Installation
 
@@ -87,6 +92,7 @@ collection = db.create_or_get_collection(collection_name)
 - The code imports the necessary modules and packages, including pgml.Database, os, json, datasets, time, and rich.print.
 - It defines the local_pgml variable with the default local connection string, and retrieves the connection information from the PGML_CONNECTION environment variable or uses the default if not set.
 - An instance of the Database class is created by passing the connection information.
+- The method [`create_or_get_collection`](#create-or-get-a-collection) collection with the name `test_pgml_sdk_1` is retrieved if it exists or a new collection is created.
 
 ```python
 data = load_dataset("squad", split="train")
@@ -107,9 +113,9 @@ collection.generate_embeddings()
 
 - The code loads the "squad" dataset, converts it to a pandas DataFrame, and drops any duplicate context values.
 - It creates a list of dictionaries representing the documents to be indexed, with each dictionary containing the document's ID, text, and title.
-- The `upsert_documents` method is called to insert or update the first 200 documents in the collection.
-- The `generate_chunks` method splits the documents into smaller text chunks for efficient indexing and search.
-- The `generate_embeddings` method generates embeddings for the documents in the collection.
+- The [`upsert_documents`](#upsert-documents) method is called to insert or update the first 200 documents in the collection.
+- The [`generate_chunks`](#generate-chunks) method splits the documents into smaller text chunks for efficient indexing and search.
+- The [`generate_embeddings`](#generate-embeddings) method generates embeddings for the documents in the collection.
 
 ```python
 start = time()
@@ -122,7 +128,7 @@ db.archive_collection(collection_name)
 **Explanation:**
 
 - The code initializes a timer using `time()` to measure the query time.
-- The `vector_search` method is called to perform a vector-based search on the collection. The query string is `Who won 20 grammy awards?`, and the top 2 results are requested.
+- The [`vector_search`](#vector-search) method is called to perform a vector-based search on the collection. The query string is `Who won 20 grammy awards?`, and the top 2 results are requested.
 - The search results are printed using `rprint` and formatted as JSON with indentation.
 - The query time is calculated by subtracting the start time from the current time.
 - Finally, the `archive_collection` method is called to archive the collection and free up resources in the PostgresML database.
@@ -169,7 +175,7 @@ influential people in the world in 2013 and 2014. Forbes magazine also listed he
 ### High-level Description
 The Python SDK provides a set of functionalities to build scalable vector search applications on PostgresQL databases. It enables users to create a collection, which represents a schema in the database, to store tables for documents, chunks, models, splitters, and embeddings. The Collection class in the SDK handles all operations related to these tables, allowing users to interact with the collection and perform various tasks.
 
-**Connect to Database**
+#### Connect to Database
 
 ```python
 local_pgml = "postgres://postgres@127.0.0.1:5433/pgml_development"
@@ -180,7 +186,7 @@ db = Database(conninfo)
 
 This initializes a connection pool to the DB and creates a table named `pgml.collections` if it does not already exist. By default it connects to local PostgresML database and at one connection maintained in the connection pool.
 
-**Create or Get a Collection**
+#### Create or Get a Collection
 
 ```python
 collection_name = "test_pgml_sdk_1"
@@ -189,7 +195,7 @@ collection = db.create_or_get_collection(collection_name)
 
 This creates a new schema in a PostgreSQL database if it does not already exist and creates tables and indices for documents, chunks, models, splitters, and embeddings.
 
-**Upsert Documents**
+#### Upsert Documents
 
 ```python
 collection.upsert_documents(documents)
@@ -197,7 +203,7 @@ collection.upsert_documents(documents)
 
 The method is used to insert or update documents in a database table based on their ID, text, and metadata.
 
-**Generate Chunks**
+#### Generate Chunks
 
 ```python
 collection.generate_chunks(splitter_id = 1)
@@ -205,7 +211,7 @@ collection.generate_chunks(splitter_id = 1)
 
 This method is used to generate chunks of text from unchunked documents using a specified text splitter. By default it uses `RecursiveCharacterTextSplitter` with default parameters. `splitter_id` is optional. You can pass a `splitter_id` corresponding to a new splitter that is registered. See below for `register_text_splitter`.
 
-**Generate Embeddings**
+#### Generate Embeddings
 
 ```python
 collection.generate_embeddings(model_id = 1, splitter_id = 1)
@@ -214,7 +220,7 @@ collection.generate_embeddings(model_id = 1, splitter_id = 1)
 This methods generates embeddings uing the chunks from the text. By default it uses `intfloat/e5-small` embeddings model. `model_id` is optional. You can pass a `model_id` corresponding to a new model that is registered and `splitter_id`. See below for `register_model`.
 
 
-**Query Embeddings**
+#### Vector Search
 
 ```python
 results = collection.vector_search("Who won 20 grammy awards?", top_k=2, model_id = 1, splitter_id = 1)
@@ -222,7 +228,7 @@ results = collection.vector_search("Who won 20 grammy awards?", top_k=2, model_i
 
 This method converts the input query into embeddings and searches embeddings table for nearest match. You can change the number of results using `top_k`. You can also pass specific `splitter_id` and `model_id` that were used for chunking and generating embeddings.
 
-**Register Model**
+#### Register Model
 
 ```python
 collection.register_model(model_name="hkunlp/instructor-xl", model_params={"instruction": "Represent the Wikipedia document for retrieval: "})
@@ -230,7 +236,8 @@ collection.register_model(model_name="hkunlp/instructor-xl", model_params={"inst
 
 This function allows for the registration of a model in a database, creating a record if it does not already exist. `model_name` is the name of the open source HuggingFace model being registered and `model_params` is a dictionary containing parameters for configuring the model. It can be empty if no parameters are needed.
 
-**Register Text Splitter**
+#### Register Text Splitter
+
 ```python
 collection.register_text_splitter(splitter_name="RecursiveCharacterTextSplitter",splitter_params={"chunk_size": 100,"chunk_overlap": 20})
 ```
