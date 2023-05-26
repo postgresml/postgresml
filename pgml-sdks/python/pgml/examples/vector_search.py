@@ -29,6 +29,6 @@ collection.generate_embeddings()
 
 start = time()
 results = collection.vector_search("Who won 20 grammy awards?", top_k=2)
-rprint(json.dumps(results, indent=2))
 rprint("Query time %0.3f"%(time()-start))
+rprint(json.dumps(results, indent=2))
 db.archive_collection(collection_name)

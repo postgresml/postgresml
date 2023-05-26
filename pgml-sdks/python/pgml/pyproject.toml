@@ -1,10 +1,14 @@
 [tool.poetry]
 name = "pgml"
-version = "0.1.0"
-description = ""
-authors = ["Santi Adavani <santi@hyperparam.ai>"]
+version = "0.6.0"
+description = "Python SDK is designed to facilitate the development of scalable vector search applications on PostgreSQL databases."
+authors = ["PostgresML <team@postgresml.org>"]
+homepage = "https://postgresml.org"
+repository = "https://github.com/postgresml/postgresml"
+documentation = "https://github.com/postgresml/postgresml/tree/master/pgml-sdks/python/pgml"
 readme = "README.md"
 packages = [{include = "pgml"}]
+keywords = ["postgres","machine learning","vector databases","embeddings"]
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4.0"
