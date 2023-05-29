@@ -129,6 +129,7 @@ fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
             "max_bin" => params.max_bin(value.as_u64().unwrap() as u32),
             "booster" | "n_estimators" | "boost_rounds" => &mut params, // Valid but not relevant to this section
             "nthread" => &mut params,
+            "random_state" => &mut params,
             _ => panic!("Unknown hyperparameter {:?}: {:?}", key, value),
         };
     }
@@ -161,8 +162,13 @@ fn fit(
     // specify datasets to evaluate against during training
     let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
 
+    let seed = match hyperparams.get("random_state") {
+        Some(value) => value.as_u64().unwrap(),
+        None => 0
+    };
     let learning_params = learning::LearningTaskParametersBuilder::default()
         .objective(objective)
+        .seed(seed)
         .build()
         .unwrap();
 
