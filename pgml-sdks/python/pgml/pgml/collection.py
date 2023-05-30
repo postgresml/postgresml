@@ -438,7 +438,7 @@ class Collection:
         task: Optional[str] = "embedding",
         model_name: Optional[str] = "intfloat/e5-small",
         model_params: Optional[Dict[str, Any]] = {},
-    ) -> None:
+    ) -> int:
         """
         This function registers a model in a database if it does not already exist.
 
@@ -777,5 +777,8 @@ class Collection:
 
         search_results = run_select_statement(conn, cte_select_statement)
         self.pool.putconn(conn)
+    
+        # Sort the list of dictionaries based on the 'score' key in descending order
+        search_results = sorted(search_results, key=lambda x: x['score'], reverse=True)
 
         return search_results
