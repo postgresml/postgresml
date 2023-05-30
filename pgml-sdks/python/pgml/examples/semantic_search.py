@@ -9,12 +9,13 @@ from rich.console import Console
 load_dotenv()
 console = Console()
 
-dataset = load_dataset('quora', split='train')
+# Prepare Data
+dataset = load_dataset("quora", split="train")
 questions = []
 
-for record in dataset['questions']:
-    questions.extend(record['text'])
-  
+for record in dataset["questions"]:
+    questions.extend(record["text"])
+
 # remove duplicates
 documents = []
 for question in list(set(questions)):
@@ -22,23 +23,28 @@ for question in list(set(questions)):
         documents.append({"text": question})
 
 
+# Get Database connection
 local_pgml = "postgres://postgres@127.0.0.1:5433/pgml_development"
+conninfo = os.environ.get("PGML_CONNECTION", local_pgml)
+db = Database(conninfo, min_connections=4)
 
-conninfo = os.environ.get("PGML_CONNECTION",local_pgml)
-db = Database(conninfo,min_connections=4)
-
+# Create or get collection
 collection_name = "quora_collection"
 collection = db.create_or_get_collection(collection_name)
 
-collection.upsert_documents(documents[:20])
+# Upsert documents, chunk text, and generate embeddings
+collection.upsert_documents(documents[:200])
 collection.generate_chunks()
 collection.generate_embeddings()
 
+# Query vector embeddings
 start = time()
-query = "which city has the highest population in the world?"
+query = "What is a good mobile os?"
 result = collection.vector_search(query)
-_end  = time()
+_end = time()
 
-console.print("\nResults for '%s'"%(query),style="bold")
+console.print("\nResults for '%s'" % (query), style="bold")
 console.print(result)
-console.print("Query time = %0.3f"%(_end-start))
+console.print("Query time = %0.3f" % (_end - start))
+
+db.archive_collection(collection_name)
