@@ -29,7 +29,14 @@ documents = []
 for doc in track(data):
     table = pd.DataFrame(doc["data"], columns=doc["header"])
     processed_table = "\n".join([table.to_csv(index=False)])
-    documents.append({"text": processed_table, "title": doc["title"], "url": doc["url"], "uid": doc["uid"]})
+    documents.append(
+        {
+            "text": processed_table,
+            "title": doc["title"],
+            "url": doc["url"],
+            "uid": doc["uid"],
+        }
+    )
 
 collection.upsert_documents(documents)
 collection.generate_chunks()

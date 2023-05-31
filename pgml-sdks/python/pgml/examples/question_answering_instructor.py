@@ -30,13 +30,23 @@ documents = [
 collection.upsert_documents(documents[:200])
 collection.generate_chunks()
 
-#register instructor model
-model_id = collection.register_model(model_name="hkunlp/instructor-base", model_params={"instruction": "Represent the Wikipedia document for retrieval: "})
+# register instructor model
+model_id = collection.register_model(
+    model_name="hkunlp/instructor-base",
+    model_params={"instruction": "Represent the Wikipedia document for retrieval: "},
+)
 collection.generate_embeddings(model_id=model_id)
 
 start = time()
 query = "Who won 20 grammy awards?"
-results = collection.vector_search(query, top_k=5, model_id = model_id, query_parameters={"instruction": "Represent the Wikipedia question for retrieving supporting documents: "})
+results = collection.vector_search(
+    query,
+    top_k=5,
+    model_id=model_id,
+    query_parameters={
+        "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+    },
+)
 _end = time()
 console.print("\nResults for '%s'" % (query), style="bold")
 console.print(results)
