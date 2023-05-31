@@ -1,4 +1,7 @@
 use sailfish::TemplateOnce;
+use crate::templates::models;
+use crate::utils::config;
+
 
 #[derive(TemplateOnce)]
 #[template(path = "components/box.html")]
@@ -70,4 +73,17 @@ pub struct Breadcrumbs<'a> {
 #[template(path = "components/boxes.html")]
 pub struct Boxes<'a> {
     pub boxes: Vec<Box<'a>>,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "layout/nav/top.html")]
+pub struct Navbar {
+    pub current_user: Option<models::User>,
+    pub standalone_dashboard: bool,
+}
+
+impl Navbar {
+    pub fn render(user: Option<models::User>) -> String {
+        Navbar{current_user: user, standalone_dashboard: config::standalone_dashboard()}.render_once().unwrap()
+    } 
 }
