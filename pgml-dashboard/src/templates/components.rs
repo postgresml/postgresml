@@ -1,7 +1,6 @@
-use sailfish::TemplateOnce;
 use crate::templates::models;
 use crate::utils::config;
-
+use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce)]
 #[template(path = "components/box.html")]
@@ -84,6 +83,11 @@ pub struct Navbar {
 
 impl Navbar {
     pub fn render(user: Option<models::User>) -> String {
-        Navbar{current_user: user, standalone_dashboard: config::standalone_dashboard()}.render_once().unwrap()
-    } 
+        Navbar {
+            current_user: user,
+            standalone_dashboard: config::standalone_dashboard(),
+        }
+        .render_once()
+        .unwrap()
+    }
 }
