@@ -18,3 +18,4 @@ torchvision==0.15.2
 tqdm==4.65.0
 transformers==4.29.2
 xgboost==1.7.5
+langchain==0.0.180
