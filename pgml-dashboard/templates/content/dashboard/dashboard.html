@@ -21,7 +21,7 @@
   </ul>
   <div class="tab-content mt-4">
     <% for (i, tab) in tabs.tabs.into_iter().enumerate() { %>
-    <div class="tab-pane  <%- test_active(tabs.active, tab.name) %>" id="tab-<%- tab.name %>" role="tabpanel" aria-labelledby="tab-<%- tab.name %>" tabindex="<%- i %>">
+    <div class="tab-pane notebook <%- test_active(tabs.active, tab.name) %>" id="tab-<%- tab.name %>" role="tabpanel" aria-labelledby="tab-<%- tab.name %>" tabindex="<%- i %>">
       <%- tab.content %>
     </div>
     <% } %>
