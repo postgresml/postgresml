@@ -16,9 +16,9 @@ pub mod fairings;
 pub mod forms;
 pub mod guards;
 pub mod models;
-mod responses;
-mod templates;
-mod utils;
+pub mod responses;
+pub mod templates;
+pub mod utils;
 
 use crate::templates::{
     DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab, SnapshotsTab, UploaderTab,

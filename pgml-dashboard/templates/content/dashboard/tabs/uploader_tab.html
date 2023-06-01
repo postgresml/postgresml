@@ -1,6 +1,6 @@
 <%
     let source = match table_name {
-        Some(name) => format!("dashboard/uploader/done?table_name={}", name), 
+        Some(name) => format!("/dashboard/uploader/done?table_name={}", name), 
         None => "".to_string(),
     };
 %>

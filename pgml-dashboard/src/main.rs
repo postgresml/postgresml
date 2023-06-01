@@ -175,7 +175,11 @@ mod test {
 
         let clusters = Clusters::new();
         clusters
-            .add(-1, &pgml_dashboard::guards::default_database_url())
+            .add(
+                -1, 
+                &pgml_dashboard::guards::default_database_url(), 
+                pgml_dashboard::ClustersSettings {max_connections, idle_timeout, min_connections}
+            )
             .unwrap();
 
         pgml_dashboard::migrate(&clusters.get(-1).unwrap())

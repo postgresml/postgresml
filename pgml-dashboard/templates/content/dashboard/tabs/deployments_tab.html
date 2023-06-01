@@ -1,6 +1,6 @@
 <%
     let source = match deployment_id {
-        Some(id) => format!("dashboard/deployments/{}", id).to_string(),
+        Some(id) => format!("/dashboard/deployments/{}", id).to_string(),
         None => "".to_string()
     };
 %>
