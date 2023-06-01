@@ -264,9 +264,10 @@ class Collection:
 
     def upsert_documents(
         self,
-        documents: List[Dict[str, Any]],
+        documents: List[Dict[str, str]],
         text_key: Optional[str] = "text",
         id_key: Optional[str] = "id",
+        verbose: bool = False,
     ) -> None:
         """
         The function `upsert_documents` inserts or updates documents in a database table based on their ID,
@@ -275,7 +276,7 @@ class Collection:
         :param documents: A list of dictionaries, where each dictionary represents a document to be upserted
         into a database table. Each dictionary should contain metadata about the document, as well as the
         actual text of the document
-        :type documents: List[Dict[str, Any]]
+        :type documents: List[Dict[str, str]]
         :param text_key: The key in the dictionary that corresponds to the text of the document, defaults to
         text
         :type text_key: Optional[str] (optional)
@@ -287,6 +288,7 @@ class Collection:
         :param verbose: A boolean parameter that determines whether or not to print verbose output during
         the upsert process. If set to True, additional information will be printed to the console during the
         upsert process. If set to False, only essential information will be printed, defaults to False
+        :type verbose: bool (optional)
         """
         conn = self.pool.getconn()
         for document in track(documents, description="Upserting documents"):
