@@ -1,10 +1,22 @@
-FROM ubuntu:jammy
-MAINTAINER team@postgresml.com
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
+LABEL maintainer="team@postgresml.com"
 
 RUN apt-get update
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-RUN apt-get update && apt-get install -y curl lsb-release python3 python3-pip tzdata sudo cmake libpq-dev libclang-dev wget postgresql-plpython3-14 postgresql-14 git
+ENV PATH="/usr/local/cuda/bin:${PATH}"
+
+
+RUN apt-get update && apt-get install -y curl lsb-release python3 python3-pip tzdata sudo cmake libpq-dev libclang-dev wget git
+
+RUN apt-get update && \
+    apt-get install -y wget gnupg lsb-release && \
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
+    echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
+    apt-get update && \
+    apt-get install -y postgresql-14 && \
+    apt-get install -y postgresql-plpython3-14
+
 
 RUN echo "deb [trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" >> /etc/apt/sources.list
 RUN cat /etc/apt/sources.list
@@ -25,6 +37,6 @@ RUN cd /tmp && \
     cd pgvector && \
     make && \
     make install
-    
+
 WORKDIR /app
 ENTRYPOINT ["/bin/bash", "/app/docker/entrypoint.sh"]
