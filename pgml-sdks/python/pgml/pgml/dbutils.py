@@ -52,7 +52,9 @@ def run_create_or_insert_statement(
     cur.close()
 
 
-def run_select_statement(conn: Connection, statement: str) -> List[Any]:
+def run_select_statement(
+    conn: Connection, statement: str, order_by: str = "", ascending: bool = True
+) -> List[Any]:
     """
     The function runs a select statement on a database connection and returns the results as a list of
     dictionaries.
@@ -70,12 +72,29 @@ def run_select_statement(conn: Connection, statement: str) -> List[Any]:
 
     statement = statement.strip().rstrip(";")
     cur = conn.cursor()
-    json_conversion_statement = """
-            SELECT array_to_json(array_agg(row_to_json(t)))
+    order_statement = ""
+    if order_by:
+        order_statement = "ORDER BY t.%s" % order_by
+        if ascending:
+            order_statement += " ASC"
+        else:
+            order_statement += " DESC"
+
+    if order_statement:
+        json_conversion_statement = """
+            SELECT array_to_json(array_agg(row_to_json(t) {order_statement}))
             FROM ({select_statement}) t;
             """.format(
-        select_statement=statement
-    )
+            select_statement=statement,
+            order_statement=order_statement,
+        )
+    else:
+        json_conversion_statement = """
+                SELECT array_to_json(array_agg(row_to_json(t)))
+                FROM ({select_statement}) t;
+                """.format(
+            select_statement=statement
+        )
     log.info("Running %s .. " % json_conversion_statement)
     cur.execute(json_conversion_statement)
     results = cur.fetchall()

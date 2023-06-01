@@ -775,10 +775,9 @@ class Collection:
             documents_table=self.documents_table,
         )
 
-        search_results = run_select_statement(conn, cte_select_statement)
+        search_results = run_select_statement(
+            conn, cte_select_statement, order_by="score", ascending=False
+        )
         self.pool.putconn(conn)
-    
-        # Sort the list of dictionaries based on the 'score' key in descending order
-        search_results = sorted(search_results, key=lambda x: x['score'], reverse=True)
 
         return search_results
