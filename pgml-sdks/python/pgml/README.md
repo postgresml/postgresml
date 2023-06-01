@@ -1,10 +1,14 @@
-# Table of Contents
+# Open Source Alternative for Building End-to-End Vector Search Applications without OpenAI & Pinecone
+
+## Table of Contents
 
 - [Overview](#overview)
 - [Quickstart](#quickstart)
 - [Usage](#usage)
+- [Examples](./examples/README.md)
 - [Developer setup](#developer-setup)
 - [API Reference](#api-reference)
+- [Roadmap](#roadmap)
 
 ## Overview
 Python SDK is designed to facilitate the development of scalable vector search applications on PostgreSQL databases. With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
@@ -275,3 +279,12 @@ LOGLEVEL=INFO python -m unittest tests/test_collection.py
 
 - [Database](./docs/pgml/database.md)
 - [Collection](./docs/pgml/collection.md)
+
+### Roadmap
+
+- Enable filters on document metadata in `vector_search`. [Issue](https://github.com/postgresml/postgresml/issues/663)
+- `text_search` functionality on documents using Postgres text search. [Issue](https://github.com/postgresml/postgresml/issues/664)
+- `hybrid_search` functionality that does a combination of `vector_search` and `text_search` in an order specified by the user. [Issue](https://github.com/postgresml/postgresml/issues/665)
+- Ability to call and manage OpenAI embeddings for comparison purposes. [Issue](https://github.com/postgresml/postgresml/issues/666)
+- Save `vector_search` history for downstream monitoring of model performance. [Issue](https://github.com/postgresml/postgresml/issues/667)
+- Perform chunking on the DB with multiple langchain splitters. [Issue](https://github.com/postgresml/postgresml/issues/668)
