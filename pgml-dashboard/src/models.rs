@@ -288,18 +288,19 @@ impl Cell {
     pub async fn render(&mut self, pool: &PgPool) -> anyhow::Result<()> {
         let cell_type: CellType = self.cell_type.into();
 
-        let rendering = match cell_type {
+        let (rendering, execution_time) = match cell_type {
             CellType::Sql => {
-                let queries = self.contents.split(";");
+                let queries: Vec<&str> = self.contents.split(';').filter(|q| !q.trim().is_empty()).collect();
                 let mut rendering = String::new();
+                let mut total_execution_duration = std::time::Duration::default(); 
+                let render_individual_execution_duration = queries.len() > 1;
 
                 for query in queries {
-                    if query.trim().is_empty() {
-                        continue;
-                    }
-
-                    let result = match templates::Sql::new(pool, query).await {
-                        Ok(sql) => sql.render_once()?,
+                    let result = match templates::Sql::new(pool, query, render_individual_execution_duration).await {
+                        Ok(sql) => {
+                            total_execution_duration += sql.execution_duration;
+                            sql.render_once()?
+                        },
                         Err(err) => templates::SqlError {
                             error: format!("{:?}", err),
                         }
@@ -309,7 +310,12 @@ impl Cell {
                     rendering.push_str(&result);
                 }
 
-                rendering
+                let execution_time = PgInterval{
+                    months: 0,
+                    days: 0,
+                    microseconds: total_execution_duration.as_micros().try_into().unwrap_or(0)
+                };
+                (rendering, Some(execution_time))
             }
 
             CellType::Markdown => {
@@ -327,21 +333,23 @@ impl Cell {
                     front_matter_delimiter: None,
                 };
 
-                format!(
+                (format!(
                     "<div class=\"markdown-body\">{}</div>",
                     markdown_to_html(&self.contents, &options)
-                )
+                ), None)
             }
         };
 
         sqlx::query!(
-            "UPDATE pgml.notebook_cells SET rendering = $1 WHERE id = $2",
+            "UPDATE pgml.notebook_cells SET rendering = $1, execution_time = $2 WHERE id = $3",
             rendering,
+            execution_time,
             self.id
         )
         .execute(pool)
         .await?;
 
+        self.execution_time = execution_time;
         self.rendering = Some(rendering);
 
         Ok(())

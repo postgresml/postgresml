@@ -565,11 +565,28 @@ fn load_dataset(
 
 #[pg_extern(immutable, parallel_safe)]
 pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
-    crate::bindings::transformers::embed(transformer, &text, &kwargs.0)
+    crate::bindings::transformers::embed(transformer, text, &kwargs.0)
+}
+
+#[pg_extern(immutable, parallel_safe)]
+pub fn chunk(
+    splitter: &str,
+    text: &str,
+    kwargs: default!(JsonB, "'{}'"),
+) -> TableIterator<'static, (name!(chunk_index, i64), name!(chunk, String))> {
+    let chunks = crate::bindings::langchain::chunk(splitter, text, &kwargs.0);
+    let chunks = chunks
+        .into_iter()
+        .enumerate()
+        .map(|(i, chunk)| (i as i64 + 1, chunk))
+        .collect::<Vec<(i64, String)>>();
+
+    TableIterator::new(chunks.into_iter())
 }
 
 #[cfg(feature = "python")]
 #[pg_extern(immutable, parallel_safe, name = "transform")]
+#[allow(unused_variables)] // cache is maintained for api compatibility
 pub fn transform_json(
     task: JsonB,
     args: default!(JsonB, "'{}'"),
@@ -577,12 +594,13 @@ pub fn transform_json(
     cache: default!(bool, false),
 ) -> JsonB {
     JsonB(crate::bindings::transformers::transform(
-        &task.0, &args.0, &inputs, cache,
+        &task.0, &args.0, &inputs,
     ))
 }
 
 #[cfg(feature = "python")]
 #[pg_extern(immutable, parallel_safe, name = "transform")]
+#[allow(unused_variables)] // cache is maintained for api compatibility
 pub fn transform_string(
     task: String,
     args: default!(JsonB, "'{}'"),
@@ -593,7 +611,7 @@ pub fn transform_string(
     task_map.insert("task", task);
     let task_json = json!(task_map);
     JsonB(crate::bindings::transformers::transform(
-        &task_json, &args.0, &inputs, cache,
+        &task_json, &args.0, &inputs,
     ))
 }
 

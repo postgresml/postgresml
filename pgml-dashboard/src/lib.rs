@@ -16,9 +16,9 @@ pub mod fairings;
 pub mod forms;
 pub mod guards;
 pub mod models;
-pub mod responses;
-pub mod templates;
-pub mod utils;
+mod responses;
+mod templates;
+mod utils;
 
 use crate::templates::{
     DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab, SnapshotsTab, UploaderTab,
@@ -27,6 +27,13 @@ use crate::utils::tabs;
 use guards::Cluster;
 use responses::{BadRequest, Error, ResponseOk};
 use sqlx::Executor;
+
+#[derive(Debug, Default, Clone)]
+pub struct ClustersSettings {
+    pub max_connections: u32,
+    pub idle_timeout: u64,
+    pub min_connections: u32,
+}
 
 /// This struct contains information specific to the cluster being displayed in the dashboard.
 ///
@@ -49,13 +56,18 @@ pub struct Clusters {
 }
 
 impl Clusters {
-    pub fn add(&self, cluster_id: i64, database_url: &str) -> anyhow::Result<PgPool> {
+    pub fn add(
+        &self,
+        cluster_id: i64,
+        database_url: &str,
+        settings: ClustersSettings,
+    ) -> anyhow::Result<PgPool> {
         let mut pools = self.pools.lock();
 
         let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .idle_timeout(std::time::Duration::from_millis(15_000))
-            .min_connections(0)
+            .max_connections(settings.max_connections)
+            .idle_timeout(std::time::Duration::from_millis(settings.idle_timeout))
+            .min_connections(settings.min_connections)
             .after_connect(|conn, _meta| {
                 Box::pin(async move {
                     conn.execute("SET application_name = 'pgml_dashboard';")
@@ -511,6 +523,7 @@ pub async fn uploaded_index(cluster: Cluster, table_name: &str) -> ResponseOk {
     let sql = templates::Sql::new(
         cluster.pool(),
         &format!("SELECT * FROM {} LIMIT 10", table_name),
+        true, 
     )
     .await
     .unwrap();

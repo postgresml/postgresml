@@ -43,6 +43,44 @@ __cache_sentence_transformer_by_name = {}
 __cache_transform_pipeline_by_task = {}
 
 
+DTYPE_MAP = {
+    "uint8": torch.uint8,
+    "int8": torch.int8,
+    "int16": torch.int16,
+    "int32": torch.int32,
+    "int64": torch.int64,
+    "bfloat16": torch.bfloat16,
+    "float16": torch.float16,
+    "float32": torch.float32,
+    "float64": torch.float64,
+    "complex64": torch.complex64,
+    "complex128": torch.complex128,
+    "bool": torch.bool,
+}
+
+
+def convert_dtype(kwargs):
+    if "torch_dtype" in kwargs:
+        kwargs["torch_dtype"] = DTYPE_MAP[kwargs["torch_dtype"]]
+
+
+def convert_eos_token(tokenizer, args):
+    if "eos_token" in args:
+        args["eos_token_id"] = tokenizer.convert_tokens_to_ids(args.pop("eos_token"))
+    else:
+        args["eos_token_id"] = tokenizer.eos_token_id
+
+
+def ensure_device(kwargs):
+    device = kwargs.get("device")
+    device_map = kwargs.get("device_map")
+    if device is None and device_map is None:
+        if torch.cuda.is_available():
+            kwargs["device"] = "cuda:" + str(os.getpid() % torch.cuda.device_count())
+        else:
+            kwargs["device"] = "cpu"
+
+
 class NumpyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.float32):
@@ -50,30 +88,30 @@ class NumpyJSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def transform(task, args, inputs, cache):
+def transform(task, args, inputs):
     task = json.loads(task)
     args = json.loads(args)
     inputs = json.loads(inputs)
 
-    task["device"] = assign_device(task.get("device"))
+    key = ",".join([f"{key}:{val}" for (key, val) in sorted(task.items())])
+    ensure_device(task)
+    convert_dtype(task)
 
-    if cache:
-        key = ",".join([f"{key}:{val}" for (key, val) in sorted(task.items())])
-        if key not in __cache_transform_pipeline_by_task:
-            __cache_transform_pipeline_by_task[key] = transformers.pipeline(**task)
-        pipe = __cache_transform_pipeline_by_task[key]
-    else:
-        pipe = transformers.pipeline(**task)
+    if key not in __cache_transform_pipeline_by_task:
+        __cache_transform_pipeline_by_task[key] = transformers.pipeline(**task)
+    pipe = __cache_transform_pipeline_by_task[key]
 
     if pipe.task == "question-answering":
         inputs = [json.loads(input) for input in inputs]
+
+    convert_eos_token(pipe.tokenizer, args)
 
     return json.dumps(pipe(inputs, **args), cls=NumpyJSONEncoder)
 
 
 def embed(transformer, text, kwargs):
     kwargs = json.loads(kwargs)
-    kwargs["device"] = assign_device(kwargs.get("device"))
+    ensure_device(kwargs)
     instructor = transformer.startswith("hkunlp/instructor")
     if instructor:
         klass = INSTRUCTOR
@@ -543,16 +581,3 @@ def generate(model_id, data, config):
     return all_preds
 
 
-def assign_device(device=None):
-    if device is not None:
-        if device == "cpu" or "cuda:" in device:
-            return device
-        if "cuda" in device and not torch.cuda.is_available():
-            raise Exception("CUDA is not available")
-
-    if torch.cuda.is_available():
-        device = "cuda:" + str(os.getpid() % torch.cuda.device_count())
-    else:
-        device = "cpu"
-
-    return device

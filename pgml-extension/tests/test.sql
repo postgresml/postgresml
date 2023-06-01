@@ -27,5 +27,6 @@ SELECT pgml.load_dataset('wine');
 \i examples/multi_classification.sql
 \i examples/regression.sql
 \i examples/vectors.sql
+\i examples/chunking.sql
 -- transformers are generally too slow to run in the test suite
 --\i examples/transformers.sql

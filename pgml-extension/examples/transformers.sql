@@ -2,8 +2,9 @@
 \set ON_ERROR_STOP true
 \timing on
 
+SELECT pgml.embed('intfloat/e5-small', 'hi mom');
 SELECT pgml.embed('intfloat/e5-small', 'hi mom', '{"device": "cuda"}');
-
+SELECT pgml.embed('intfloat/e5-small', 'hi mom', '{"device": "cpu"}');
 
 SELECT pgml.transform(
     'translation_en_to_fr',
@@ -16,7 +17,7 @@ SELECT pgml.transform(
 SELECT pgml.transform(
     '{"model": "roberta-large-mnli"}'::JSONB,
     inputs => ARRAY[
-        'I love how amazingly simple ML has become!', 
+        'I love how amazingly simple ML has become!',
         'Some models are painfully slow and expensive ☹️'
     ]
 ) AS result;
@@ -35,13 +36,13 @@ SELECT pgml.transform(
     ]
 );
 SELECT pgml.transform(
+    task => '{"task": "text-classification",
+              "model": "finiteautomata/bertweet-base-sentiment-analysis"
+             }'::JSONB,
     inputs => ARRAY[
         'I love how amazingly simple ML has become!', 
         'I hate doing mundane and thankless tasks. ☹️'
     ],
-    task => '{"task": "text-classification", 
-              "model": "finiteautomata/bertweet-base-sentiment-analysis"
-             }'::JSONB
 ) AS positivity;
 
 SELECT pgml.transform(

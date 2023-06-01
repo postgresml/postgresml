@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       packageVersion:
-        default: "2.4.4"
+        default: "2.4.8"
 
 jobs:
   build:
     strategy:
       matrix:
-        os: ["ubuntu-22.04"]
+        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm"]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -130,14 +130,19 @@ jobs:
         for pg in {11..15}; do
           export PACKAGE_VERSION=${{ inputs.packageVersion }}
           export PGVERSION=${pg}
-          export ARCH=amd64
+
+          if [[ $(arch) == "x86_64" ]]; then
+            export ARCH=amd64
+          else
+            export ARCH=arm64
+          fi
 
           mkdir -p target/release/pgml-pg${pg}/DEBIAN
           (cat control | envsubst) > target/release/pgml-pg${pg}/DEBIAN/control
-          dpkg-deb --root-owner-group --build target/release/pgml-pg${pg} postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu22.04-amd64.deb
+          dpkg-deb --root-owner-group --build target/release/pgml-pg${pg} postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu22.04-${ARCH}.deb
 
           deb-s3 upload \
             --bucket apt.postgresml.org \
-            postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu22.04-amd64.deb \
+            postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu22.04-${ARCH}.deb \
             --codename $(lsb_release -cs)
         done
