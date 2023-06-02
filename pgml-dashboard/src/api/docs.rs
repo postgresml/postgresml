@@ -227,7 +227,7 @@ pub fn routes() -> Vec<Route> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::utils::markdown::{MarkdownHeadings, SyntaxHighlighter, options};
+    use crate::utils::markdown::{options, MarkdownHeadings, SyntaxHighlighter};
 
     #[test]
     fn test_syntax_highlighting() {

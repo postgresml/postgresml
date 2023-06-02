@@ -146,7 +146,11 @@ pub struct Sql {
 }
 
 impl Sql {
-    pub async fn new(pool: &PgPool, query: &str, render_execution_duration: bool) -> anyhow::Result<Sql> {
+    pub async fn new(
+        pool: &PgPool,
+        query: &str,
+        render_execution_duration: bool,
+    ) -> anyhow::Result<Sql> {
         let prepared_stmt = pool.prepare(query).await?;
         let cols = prepared_stmt.columns();
 
@@ -289,7 +293,12 @@ impl Sql {
             rows.push(values);
         }
 
-        Ok(Sql { columns, rows, execution_duration, render_execution_duration })
+        Ok(Sql {
+            columns,
+            rows,
+            execution_duration,
+            render_execution_duration,
+        })
     }
 }
 

@@ -290,17 +290,27 @@ impl Cell {
 
         let (rendering, execution_time) = match cell_type {
             CellType::Sql => {
-                let queries: Vec<&str> = self.contents.split(';').filter(|q| !q.trim().is_empty()).collect();
+                let queries: Vec<&str> = self
+                    .contents
+                    .split(';')
+                    .filter(|q| !q.trim().is_empty())
+                    .collect();
                 let mut rendering = String::new();
-                let mut total_execution_duration = std::time::Duration::default(); 
+                let mut total_execution_duration = std::time::Duration::default();
                 let render_individual_execution_duration = queries.len() > 1;
 
                 for query in queries {
-                    let result = match templates::Sql::new(pool, query, render_individual_execution_duration).await {
+                    let result = match templates::Sql::new(
+                        pool,
+                        query,
+                        render_individual_execution_duration,
+                    )
+                    .await
+                    {
                         Ok(sql) => {
                             total_execution_duration += sql.execution_duration;
                             sql.render_once()?
-                        },
+                        }
                         Err(err) => templates::SqlError {
                             error: format!("{:?}", err),
                         }
@@ -310,10 +320,10 @@ impl Cell {
                     rendering.push_str(&result);
                 }
 
-                let execution_time = PgInterval{
+                let execution_time = PgInterval {
                     months: 0,
                     days: 0,
-                    microseconds: total_execution_duration.as_micros().try_into().unwrap_or(0)
+                    microseconds: total_execution_duration.as_micros().try_into().unwrap_or(0),
                 };
                 (rendering, Some(execution_time))
             }
@@ -333,10 +343,13 @@ impl Cell {
                     front_matter_delimiter: None,
                 };
 
-                (format!(
-                    "<div class=\"markdown-body\">{}</div>",
-                    markdown_to_html(&self.contents, &options)
-                ), None)
+                (
+                    format!(
+                        "<div class=\"markdown-body\">{}</div>",
+                        markdown_to_html(&self.contents, &options)
+                    ),
+                    None,
+                )
             }
         };
 
