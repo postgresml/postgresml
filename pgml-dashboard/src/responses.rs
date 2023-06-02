@@ -37,18 +37,6 @@ impl Response {
         }
     }
 
-    /// Set response body.
-    pub fn body(mut self, body: String) -> Response {
-        self.body = Some(body);
-        self
-    }
-
-    /// Set response location.
-    fn location(mut self, location: String) -> Response {
-        self.location = Some(location);
-        self
-    }
-
     /// Create a 303.
     pub fn redirect(to: String) -> Response {
         Self::new(Status::SeeOther).location(to)
@@ -67,6 +55,18 @@ impl Response {
     /// Create a 404.
     pub fn not_found() -> Response {
         Self::new(Status::NotFound)
+    }
+
+    /// Set response body.
+    pub fn body(mut self, body: String) -> Response {
+        self.body = Some(body);
+        self
+    }
+
+    /// Set response location.
+    fn location(mut self, location: String) -> Response {
+        self.location = Some(location);
+        self
     }
 
     /// Set the user on the response, if any.

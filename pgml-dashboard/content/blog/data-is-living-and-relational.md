@@ -4,23 +4,6 @@ description: A common problem with data science and machine learning tutorials i
 image: https://postgresml.org/dashboard/static/images/illustrations/uml.png
 image_alt: Data is relational and growing in multiple dimensions
 ---
-<!-- 
-<style>
-img.float-right {
-  margin: 0 16px !important;
-  max-width: 50%  !important;
-  float: right;
-}
-img.float-left {
-  margin: 0 16px !important;
-  max-width: 60%  !important;
-  float: left;
-}
-img.center {
-  margin: 16px 12.5%;
-  max-width: 75%;
-}
-</style> -->
 
 Data is Living and Relational
 ================================

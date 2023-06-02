@@ -6,18 +6,6 @@ use sailfish::TemplateOnce;
 
 use crate::utils::markdown::SearchResult;
 
-/// The documentation & blog template that renders markdown.
-// #[derive(TemplateOnce)]
-// #[template(path = "docs/dynamic.html")]
-// pub struct Dynamic {
-//     pub head: Head,
-//     pub nav_title: String,
-//     pub contents: String,
-//     pub doc_links: Vec<DocLink>,
-//     pub user: Option<User>,
-//     pub toc: Toc,
-// }
-
 /// Documentation and blog link used in the left nav.
 #[derive(TemplateOnce, Debug, Clone)]
 #[template(path = "components/link.html")]
