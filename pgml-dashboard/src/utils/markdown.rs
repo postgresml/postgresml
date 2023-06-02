@@ -1,3 +1,10 @@
+use crate::{templates::docs::TocLink, utils::config};
+use comrak::{
+    adapters::{HeadingAdapter, HeadingMeta, SyntaxHighlighterAdapter},
+    arena_tree::Node,
+    nodes::{Ast, AstNode, NodeValue},
+    parse_document, Arena, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions,
+};
 use std::cell::RefCell;
 use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};
@@ -6,12 +13,6 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
-use comrak::{
-    adapters::{HeadingAdapter, HeadingMeta, SyntaxHighlighterAdapter},
-    arena_tree::Node,
-    nodes::{Ast, AstNode, NodeValue},
-    parse_document, Arena, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions,
-};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use tantivy::collector::TopDocs;
@@ -20,7 +21,7 @@ use tantivy::schema::*;
 use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
 
-use crate::{templates::docs::TocLink, utils::config};
+use std::fmt;
 
 pub struct MarkdownHeadings {}
 impl HeadingAdapter for MarkdownHeadings {
@@ -59,14 +60,156 @@ impl HeadingAdapter for MarkdownHeadings {
     }
 }
 
-pub struct SyntaxHighlighter {}
-impl SyntaxHighlighterAdapter for SyntaxHighlighter {
-    fn highlight(&self, lang: Option<&str>, code: &str) -> String {
-        let code = if lang.is_some() {
-            let code = code.to_string();
-            let lang = lang.unwrap();
+fn parser(utf8: &str, item: &str) -> Option<String> {
+    let title_index = utf8.find(item);
+    let (start, end) = match title_index {
+        Some(index) => {
+            let start = index + item.len();
+            let title_length = utf8.to_string()[start..].find("\"");
+            match title_length {
+                Some(title_length) => (start, start + title_length),
+                None => (0, 0),
+            }
+        }
+        None => (0, 0),
+    };
 
-            match lang {
+    if end - start > 0 {
+        Some(format!("{}", &utf8[start..end]))
+    } else {
+        None
+    }
+}
+
+enum HighlightColors {
+    Green,
+    GreenSoft,
+    Red,
+    RedSoft,
+    Teal,
+    TealSoft,
+    Blue,
+    BlueSoft,
+    Yellow,
+    YellowSoft,
+    Orange,
+    OrangeSoft,
+}
+
+impl HighlightColors {
+    fn all() -> [HighlightColors; 12] {
+        [
+            HighlightColors::Green,
+            HighlightColors::GreenSoft,
+            HighlightColors::Red,
+            HighlightColors::RedSoft,
+            HighlightColors::Teal,
+            HighlightColors::TealSoft,
+            HighlightColors::Blue,
+            HighlightColors::BlueSoft,
+            HighlightColors::Yellow,
+            HighlightColors::YellowSoft,
+            HighlightColors::Orange,
+            HighlightColors::OrangeSoft,
+        ]
+    }
+}
+
+impl fmt::Display for HighlightColors {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            HighlightColors::Green => write!(f, "green"),
+            HighlightColors::GreenSoft => write!(f, "green-soft"),
+            HighlightColors::Red => write!(f, "red"),
+            HighlightColors::RedSoft => write!(f, "red-soft"),
+            HighlightColors::Teal => write!(f, "teal"),
+            HighlightColors::TealSoft => write!(f, "teal-soft"),
+            HighlightColors::Blue => write!(f, "blue"),
+            HighlightColors::BlueSoft => write!(f, "blue-soft"),
+            HighlightColors::Yellow => write!(f, "yellow"),
+            HighlightColors::YellowSoft => write!(f, "yellow-soft"),
+            HighlightColors::Orange => write!(f, "orange"),
+            HighlightColors::OrangeSoft => write!(f, "orange-soft"),
+        }
+    }
+}
+
+struct HighlightLines {}
+
+impl HighlightLines {
+    fn get_color(options: &str, color: HighlightColors, hash: &mut HashMap<String, String>) {
+        let parse_string = match color {
+            HighlightColors::Green => "highlightGreen=\"",
+            HighlightColors::GreenSoft => "highlightGreenSoft=\"",
+            HighlightColors::Red => "highlightRed=\"",
+            HighlightColors::RedSoft => "highlightRedSoft=\"",
+            HighlightColors::Teal => "highlightTeal=\"",
+            HighlightColors::TealSoft => "highlightTealSoft=\"",
+            HighlightColors::Blue => "highlightBlue=\"",
+            HighlightColors::BlueSoft => "highlightBlueSoft=\"",
+            HighlightColors::Yellow => "highlightYellow=\"",
+            HighlightColors::YellowSoft => "highlightYellowSoft=\"",
+            HighlightColors::Orange => "highlightOrange=\"",
+            HighlightColors::OrangeSoft => "highlightOrangeSoft=\"",
+        };
+
+        match parser(options, parse_string) {
+            Some(lines) => {
+                let parts = lines.split(",").map(|s| s.to_string());
+                for line in parts {
+                    hash.insert(line, format!("{}", color));
+                }
+            }
+            None => (),
+        };
+    }
+}
+
+#[derive(Debug)]
+struct CodeFence<'a> {
+    lang: &'a str,
+    highlight: HashMap<String, String>,
+    enumerate: bool,
+}
+
+impl<'a> From<&str> for CodeFence<'a> {
+    fn from(options: &str) -> CodeFence<'a> {
+        let lang = if options.starts_with("sql") {
+            "sql"
+        } else if options.starts_with("bash") {
+            "bash"
+        } else if options.starts_with("python") {
+            "python"
+        } else if options.starts_with("postgresql") {
+            "postgresql"
+        } else if options.starts_with("postgresql-line-nums") {
+            "postgresql-line-nums"
+        } else {
+            "code"
+        };
+
+        let mut highlight = HashMap::new();
+        for color in HighlightColors::all() {
+            HighlightLines::get_color(options, color, &mut highlight);
+        }
+
+        CodeFence {
+            lang,
+            highlight,
+            enumerate: options.contains("enumerate"),
+        }
+    }
+}
+
+pub struct SyntaxHighlighter {}
+
+impl SyntaxHighlighterAdapter for SyntaxHighlighter {
+    fn highlight(&self, options: Option<&str>, code: &str) -> String {
+        let code = if options.is_some() {
+            let code = code.to_string();
+            let options = CodeFence::from(options.unwrap());
+
+            let code = match options.lang {
                 "postgresql" | "sql" | "postgresql-line-nums" => {
                     lazy_static! {
                         static ref SQL_KEYS: [&'static str; 57] = [
@@ -191,24 +334,10 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             .match_kind(MatchKind::LeftmostLongest)
                             .build(SQL_KEYS.iter());
                     }
-                    let code = if lang == "postgresql-line-nums" {
-                        let mut code = code.split("\n")
-                            .into_iter()
-                            .enumerate()
-                            .map(|(index, code)| format!("<span style=\"user-select: none; {}\" class=\"text-muted\">{}.</span><span class=\"code-content\">{}</span>",  if index < 9 { "padding-right: .75rem" } else { "padding-right: .50rem" }, index+1, code))
-                            .collect::<Vec<String>>();
-                        code.pop();
-                        code.into_iter().join("\n")
-                    } else {
-                        code.split("\n")
-                            .map(|code| format!("<span class=\"code-content\">{}</span>", code))
-                            .join("\n")
-                    };
 
-                    let code = AHO_SQL
+                    AHO_SQL
                         .replace_all(&code, &SQL_KEYS_REPLACEMENTS[..])
-                        .to_string();
-                    code
+                        .to_string()
                 }
 
                 "bash" => {
@@ -233,14 +362,53 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                 }
 
                 _ => code,
-            }
+            };
+
+            // Add line numbers
+            let code = if options.enumerate {
+                let mut code = code.split("\n")
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, code)| {
+                        format!(r#"<span class="code-line-numbers">{}</span><span class="code-enumerate-divider"></span><span class="code-content">{}</span>"#,
+                                if index < 9 {format!(" {}", index+1)} else { format!("{}", index+1)},
+                                code)
+                    })
+                    .collect::<Vec<String>>();
+                code.pop();
+                code.into_iter().join("\n")
+            } else {
+                let mut code = code
+                    .split("\n")
+                    .map(|code| format!("<span class=\"code-content\">{}</span>", code))
+                    .collect::<Vec<String>>();
+                code.pop();
+                code.into_iter().join("\n")
+            };
+
+            // Add line highlighting
+            let code = code
+                .split("\n")
+                .enumerate()
+                .map(|(index, code)| {
+                    format!(
+                        r#"<div class="code-line-highlight-{}">{}</div>"#,
+                        match options.highlight.get(&(index + 1).to_string()) {
+                            Some(color) => color,
+                            _ => "none",
+                        },
+                        code
+                    )
+                })
+                .join("\n");
+
+            code
         } else {
             code.to_string()
         };
 
         String::from(format!(
-            "<span class=\"lang-{}\">{}</span>",
-            lang.unwrap(),
+            "<div><div  style=\"display: inline-block; min-width: 100%\">{}</div></div>",
             code
         ))
     }
@@ -569,27 +737,6 @@ impl CodeBlock {
             _ => None,
         }
     }
-
-    fn parser(utf8: &str, item: &str) -> Option<String> {
-        let title_index = utf8.find(item);
-        let (start, end) = match title_index {
-            Some(index) => {
-                let start = index + item.len();
-                let title_length = utf8.to_string()[start..].find("\"");
-                match title_length {
-                    Some(title_length) => (start, start + title_length),
-                    None => (0, 0),
-                }
-            }
-            None => (0, 0),
-        };
-
-        if end - start > 0 {
-            Some(format!("{}", &utf8[start..end]))
-        } else {
-            None
-        }
-    }
 }
 
 /// Convert MkDocs to Bootstrap.
@@ -748,8 +895,8 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                 } else if text.starts_with("!!! code_block") {
                     let parent = node.parent().unwrap();
 
-                    let title = CodeBlock::parser(text.as_ref(), r#"title=""#);
-                    let time = CodeBlock::parser(text.as_ref(), r#"time=""#);
+                    let title = parser(text.as_ref(), r#"title=""#);
+                    let time = parser(text.as_ref(), r#"time=""#);
                     let code_block = CodeBlock { time, title };
 
                     match code_block.html("code") {
@@ -768,7 +915,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                 } else if text.starts_with("!!! results") {
                     let parent = node.parent().unwrap();
 
-                    let title = CodeBlock::parser(text.as_ref(), r#"title=""#);
+                    let title = parser(text.as_ref(), r#"title=""#);
                     let code_block = CodeBlock { time: None, title };
 
                     match code_block.html("results") {
@@ -1099,5 +1246,38 @@ impl SearchIndex {
         }
 
         Ok(results)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::utils::markdown::parser;
+
+    #[test]
+    fn parser_title() {
+        let to_parse = r#"!!! code_block title="Your Title""#;
+        let result = parser(to_parse, r#"title=""#);
+        assert_eq!(result, Some("Your Title".to_string()));
+    }
+
+    #[test]
+    fn parser_time() {
+        let to_parse = r#"!!! code_block time="23ms (123.123)""#;
+        let result = parser(to_parse, r#"time=""#);
+        assert_eq!(result, Some("23ms (123.123)".to_string()));
+    }
+
+    #[test]
+    fn parser_multiple_flags() {
+        let to_parse = r#"!!! code_block title="Your Title" not_real_item="Should not find" time="23ms (123.123)""#;
+        let result = parser(to_parse, r#"time=""#);
+        assert_eq!(result, Some("23ms (123.123)".to_string()));
+    }
+
+    #[test]
+    fn parser_none() {
+        let to_parse = "!!! code_block";
+        let result = parser(to_parse, r#"time=""#);
+        assert_eq!(result, None);
     }
 }

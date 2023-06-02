@@ -16,10 +16,10 @@
               <option value="3" <% if cell.cell_type == 3 { %>selected<% } %>>SQL</option>
               <option value="1" <% if cell.cell_type == 1 { %>selected<% } %>>Markdown</option>
             </select>
-            <button type="submit" title="Execute cell" data-notebook-cell-target="play">
+            <button class="btn btn-tertiary" type="submit" title="Execute cell" data-notebook-cell-target="play">
               <span class="material-symbols-outlined">play_arrow</span>
             </button>
-             <button title="Cancel edit" data-action="notebook-cell#cancelEdit">
+             <button class="btn btn-tertiary" title="Cancel edit" data-action="notebook-cell#cancelEdit">
               <span class="material-symbols-outlined">cancel</span>
             </button>
           </div>
@@ -52,7 +52,7 @@
         <div class="notebook-buttons">
           <% if cell.code() && !edit { %>
           <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/play" method="post" data-action="notebook-cell#play">
-            <button type="submit" title="Execute cell" data-notebook-cell-target="play">
+            <button class="btn btn-tertiary" type="submit" title="Execute cell" data-notebook-cell-target="play">
               <span class="material-symbols-outlined">
                 play_arrow
               </span>
@@ -60,12 +60,12 @@
           </form>
           <% } %>
           <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/remove" method="post">
-            <button type="submit" title="Delete cell">
+            <button class="btn btn-tertiary" type="submit" title="Delete cell">
               <span class="material-symbols-outlined">delete_forever</span>
             </button>
           </form>
           <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit?bust_cache=<%= bust_cache %>" method="get">
-            <button type="submit" title="Edit cell">
+            <button class="btn btn-tertiary" type="submit" title="Edit cell">
               <span class="material-symbols-outlined">edit</span>
             </button>
           </form>

@@ -6,19 +6,25 @@
         border-radius: 10px;
         box-shadow: 0 1px 2px var(--shadow-2);
         overflow: auto;
+        margin: 1rem auto;
+        padding: 3rem;
     }
 
     section > h1 {
-    padding: 1em 1em 0.5em;
+        padding-bottom: 0.5em;
+        display: flex;
+        align-items: center;
     }
     section > h1 > span.material-symbols-outlined {
-    margin-right: 0.5em;
+        margin-right: 0.5em;
+        font-size: inherit;
+        margin-bottom: 5px;
     }
     section > h2 {
-    padding: 1em 1em 0.5em;
+        padding: 1em 0em 0.5em;
     }
     section > form {
-    padding: 1em 25px 0.5em;
+        padding: 1em 0px 0.5em;
     }
     /* Tables, sticky headers, overflow scroll, rounded corners, stripes and highlights */
     table {
@@ -140,7 +146,7 @@
         height: 2em;
         position: relative;
         margin: 0 -30px;
-        padding: 0 30px;
+        padding: 0;
     }
     ol.object_list li a:hover {
         height: 2em;
@@ -240,7 +246,7 @@
     }
 
     .notebook-title {
-        padding: 1rem;
+        padding: 1rem 3rem;
         margin: 20px auto 20px auto;
     }
 
@@ -263,21 +269,14 @@
     }
 
     .notebook-cell {
-    margin: 0 auto;
-    border-radius: 0;
-    padding: 1rem;
+    margin: .5rem auto;
+    border-radius: 8px;
+    padding: 1rem 3rem;
     border: 1px solid rgba(255,255,255,0);
     }
 
     .notebook-last-cell {
         border-radius: 0px 0px 10px 10px;
-    }
-
-    .notebook-cell article.markdown-body {
-
-    }
-
-    .notebook-cell .markdown-body pre {
     }
 
     .notebook-cell:hover {
@@ -389,7 +388,7 @@
     .CodeMirror {
     font-size: 1rem;
     border: 1px solid var(--gray-8);
-    border-radius: 10px;
+    border-radius: 8px;
     }
 
     /*
@@ -434,47 +433,52 @@
     * Checkbox
     */
     input[type=checkbox] {
-    /* Reset style */
-    appearance: none;
+        /* Reset style */
+        appearance: none;
 
-    background: transparent;
-    border: 1px solid var(--gray-5);
+        background: transparent;
+        border: 1px solid var(--gray-5);
 
-    height: 1.6em;
-    width: 1.6em;
+        height: 1.6em;
+        width: 1.6em;
 
-    border-radius: 3px;
+        border-radius: 3px;
 
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
 
-    cursor: pointer;
+        cursor: pointer;
+
+        color: #{$gray-100};
+        border: 1px solid $gray-100;
+        border-radius: 4px;
+        padding: 10px;
     }
 
     input[type=checkbox]:checked:after {
-    content: '\2714';
-    font-size: 1em;
-    position: absolute;
-    color: var(--highlite-green);
-    filter:  brightness(0.75);
+        content: '\2714';
+        font-size: 1em;
+        position: absolute;
+        color: var(--highlite-green);
+        filter:  brightness(0.75);
     }
 
     .nav {
-    display: flex;
-    justify-content: space-between;
+        display: flex;
+        justify-content: space-between;
     }
 
     .li {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .ul {
-    display: flex;
-    align-items: center;
+        display: flex;
+        align-items: center;
     }
 
 
@@ -500,7 +504,7 @@
             text-align: center;
         }
         header nav a span.material-symbols-outlined {
-            font-size: 3rem;
+            font-size: inherit;
         }
         dl {
             max-height: 6em;

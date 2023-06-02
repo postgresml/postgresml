@@ -34,7 +34,7 @@
   <section>
     <form action="/dashboard/uploader" method="post" enctype="multipart/form-data">
       <div class="flex flex-center">
-        <input id="file" type="file" name="file" accept="text/csv,application/json" required="true" />
+        <input class="form-control" id="file" type="file" name="file" accept="text/csv,application/json" required="true" />
         <div class="flex flex-center" style="margin-left: 2rem;">
           <input type="checkbox" name="has_header" checked id="has_header" style="margin-right: 0.5rem;" checked />
           <label for="has_header">My CSV has a header</label>
@@ -42,7 +42,7 @@
       </div>
   
       <div class="button-container">
-        <button type="submit" data-turbo="false">Upload</button>
+        <button class="btn btn-tertiary" type="submit" data-turbo="false">Upload</button>
       </div>
     </form>
   </section>

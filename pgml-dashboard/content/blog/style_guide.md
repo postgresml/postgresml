@@ -101,7 +101,62 @@ In a sentence you may want to add some code commands `This is some inline code`
 Rendered output of normal markdown fenced code.
 
 ```
-This is normal markdown fenced code. 
+This is normal markdown fenced code.
+```
+
+
+##### Highlighting 
+
+Bellow are all the available colors for highlighting code. 
+
+```sql-highlightGreen="2"-highlightRed="3"-highlightTeal="4"-highlightBlue="5"-highlightYellow="6"-highlightOrange="7"-highlightGreenSoft="8"-highlightRedSoft="9"-highlightTealSoft="10"-highlightBlueSoft="11"-highlightYellowSoft="12"-highlightOrangeSoft="13"
+line of code no color  
+line of code green
+line of code red
+line of code teal
+line of code blue
+line of code yellow
+line of code orange
+line of code soft green
+line of code soft red
+line of code soft teal
+line of code soft blue
+line of code soft yellow
+line of code soft orange
+line of code no color bit this line is really really really really really really really really really long to show overflow
+line of code no color
+line of code no color 
+```
+
+##### Line Numbers
+
+just line numbers 
+
+``` enumerate
+line
+line
+line
+line
+line
+line
+line
+line
+line
+line
+line
+line
+line
+line
+line
+```
+
+line numbers with highlight
+
+``` enumerate-highlightBlue="2,3"
+line
+line
+line
+line
 ```
 
 #### Code Block 
@@ -130,7 +185,6 @@ LIMIT 100;
 ```
 
 !!!
-
 
 #### Results 
 
@@ -239,3 +293,4 @@ LIMIT 100;
 !!!
 
 !!!
+

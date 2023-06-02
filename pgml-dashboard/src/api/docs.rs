@@ -223,3 +223,34 @@ async fn render<'a>(
 pub fn routes() -> Vec<Route> {
     routes![doc_handler, blog_handler, search]
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::utils::markdown::{MarkdownHeadings, SyntaxHighlighter, options};
+
+    #[test]
+    fn test_syntax_highlighting() {
+        let code = r#"
+# Hello
+
+```postgresql
+SELECT * FROM test;
+```
+        "#;
+
+        let arena = Arena::new();
+        let root = parse_document(&arena, &code, &options());
+
+        // Style headings like we like them
+        let mut plugins = ComrakPlugins::default();
+        plugins.render.heading_adapter = Some(&MarkdownHeadings {});
+        plugins.render.codefence_syntax_highlighter = Some(&SyntaxHighlighter {});
+
+        let mut html = vec![];
+        format_html_with_plugins(root, &options(), &mut html, &plugins).unwrap();
+        let html = String::from_utf8(html).unwrap();
+
+        assert!(html.contains("<span class=\"syntax-highlight\">SELECT</span>"));
+    }
+}

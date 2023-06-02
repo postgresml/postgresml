@@ -26,13 +26,12 @@
     <% let project = &projects[&models.iter().next().unwrap().project_id]; %>
     <ol class="object_list model_list">
       <li>
-        <a href="/dashboard/projects/<%= project.id %>">
-          <span></span>
-          <span><h3><%= project.name %></h3></span>
-          <span><b><%- project.key_metric_display_name().unwrap() %></b></span>    
+        <a href="/dashboard/?tab=Projects&project_id=<%= project.id %>" data-turbo="false">
+          <h3 style="padding-right: 20%"><%= project.name %></h3>
+          <b><%- project.key_metric_display_name().unwrap() %></b>
           <figure id="project_<%= project.id %>"></figure>
         </a>
-      </li>
+    </li>
       <% for model in models.iter() { %>
       <li>
         <a href="/dashboard/?tab=Models&model_id=<%= model.id %>" data-turbo="false">

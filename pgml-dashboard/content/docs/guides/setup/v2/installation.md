@@ -92,7 +92,7 @@ version accordingly if yours is different. Other flavors of Linux should work, b
     ```
 
 5. Install [pgrx](https://github.com/tcdi/pgrx) and build the extension (this will take a few minutes):
-    
+
     <strong>With Python Support:</strong>
 
     ```
@@ -176,11 +176,11 @@ If you already have a v1.0 installation, see [Upgrading to v2.0](/docs/guides/se
 
 Now that the extension is installed on your system, add it into the database where you'd like to use it:
 
-!!! generic 
+!!! generic
 
 !!! code_block title="SQL"
 
-```sql 
+```sql
 CREATE EXTENSION pgml;
 ```
 
@@ -217,7 +217,7 @@ SELECT pgml.version();
 postgres=# select pgml.version();
       version
 -------------------
- 2.4.4
+ 2.4.8
 (1 row)
 ```
 

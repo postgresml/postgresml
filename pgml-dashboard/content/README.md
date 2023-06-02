@@ -1,4 +1,4 @@
-## Syntax Documentation for Content
+## Documentation Syntax for Docs and Blog
 
 PostgresML documentation is written in markdown and uses [Comrak](https://github.com/kivikakk/comrak) for parsing.  This provides the author with all standard markdown styling. In addition, we add richness to our documentation with custom widgets.
 
@@ -68,7 +68,48 @@ Use standard markdown syntax for inline code.
 
 #### Fenced Code
 
-Use standard markdown syntax for fenced code.  All fenced code will have a toolbar attached to the upper right hand corner.  It contains a copy feature, other features will be added in the future. 
+Use standard markdown syntax for fenced code.  All fenced code will have a toolbar attached to the upper right hand corner.  It contains a copy feature, other features will be added in the future.
+
+The author can add line highlights and line numbers to all fenced code. 
+
+##### Highlighting 
+
+
+You can bring attention to specific lines of code by highlighting those lines using the highlight flag.  The available colors are: 
+ - green
+ - soft green 
+ - red 
+ - soft red 
+ - teal 
+ - soft teal 
+ - blue 
+ - soft blue 
+ - yellow 
+ - soft yellow 
+ - orange 
+ - soft orange
+
+use the following syntax
+
+```` markdown 
+```sql-highlightGreenSoft="2,3"
+line one
+line two, this will be soft green
+line three, this will be soft green
+```
+````
+
+##### Line Numbers 
+
+You can add line numbers to your code using the enumerate flag: 
+
+```` markdown 
+``` enumerate
+some code 
+more code 
+more code
+```
+````
 
 #### Code Block
 

@@ -123,13 +123,15 @@ SELECT pgml.version();
 
 === "Output"
 
-	```
-	postgres=# select pgml.version();
-	      version      
-	-------------------
-	 2.4.8
-	(1 row)
-	```
+```
+postgres=# select pgml.version();
+      version
+-------------------
+ 2.4.8
+(1 row)
+```
+
+===
 
 Basic extension usage:
 
