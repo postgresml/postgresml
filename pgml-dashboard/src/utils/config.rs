@@ -26,18 +26,20 @@ pub fn sentry_dsn() -> Option<String> {
 }
 
 pub fn static_dir() -> String {
-    match var("STATIC_DIRECTORY") {
+    match var("DASHBOARD_STATIC_DIRECTORY") {
         Ok(dir) => dir,
         Err(_) => "static".to_string(),
     }
 }
 
-pub fn content_dir() -> String {
-    match var("CONTENT_DIRECTORY") {
-        Ok(dir) => dir,
-        Err(_) => "content".to_string(),
-    }
-}
+// pub fn content_dir() -> String {
+//     match var("CONTENT_DIRECTORY") {
+//         Ok(dir) => dir,
+//         Err(_) => "content".to_string(),
+//     }
+// }
+
+
 
 pub fn search_index_dir() -> String {
     match var("SEARCH_INDEX_DIRECTORY") {
