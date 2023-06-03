@@ -35,17 +35,24 @@ pub fn transform(
     let results = Python::with_gil(|py| -> String {
         let transform: Py<PyAny> = PY_MODULE.getattr(py, "transform").unwrap().into();
 
-        transform
+        let result = transform
             .call1(
                 py,
                 PyTuple::new(
                     py,
                     &[task.into_py(py), args.into_py(py), inputs.into_py(py)],
                 ),
-            )
-            .unwrap()
-            .extract(py)
-            .unwrap()
+            );
+
+        let result = match result {
+            Err(e) => {
+                let traceback = e.traceback(py).unwrap().format().unwrap();
+                error!("{traceback} {e}")
+            }
+            Ok(o) => o.extract(py).unwrap(),
+        };
+
+        result
     });
     serde_json::from_str(&results).unwrap()
 }
