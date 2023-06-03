@@ -97,6 +97,10 @@ def transform(task, args, inputs):
     ensure_device(task)
     convert_dtype(task)
 
+    model = task.get("model", None)
+    if model and "tokenizer" not in task:
+        task["tokenizer"] = AutoTokenizer.from_pretrained(model)
+
     if key not in __cache_transform_pipeline_by_task:
         __cache_transform_pipeline_by_task[key] = transformers.pipeline(**task)
     pipe = __cache_transform_pipeline_by_task[key]
