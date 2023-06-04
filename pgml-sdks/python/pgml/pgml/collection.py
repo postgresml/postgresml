@@ -810,7 +810,7 @@ class Collection:
     def text_search(
         self,
         query: str,
-        regconfig: str = "english",
+        # regconfig: str = "english",
         top_k: int = 5,
         **kwargs: Any, 
     ) -> List[Dict[str, Any]]:
@@ -833,11 +833,11 @@ class Collection:
         """
         conn = self.pool.getconn()
         
-        regconfig_statement = f"SELECT * FROM pg_catalog.pg_ts_config WHERE cfgname = '{regconfig}'"
-        results = run_select_statement(conn, regconfig_statement)
+        # regconfig_statement = f"SELECT * FROM pg_catalog.pg_ts_config WHERE cfgname = '{regconfig}'"
+        # results = run_select_statement(conn, regconfig_statement)
         
-        if not results:
-            raise ValueError(f"regconfig {regconfig} is not valid")
+        # if not results:
+        #     raise ValueError(f"regconfig {regconfig} is not valid")
 
         if kwargs:
             metadata_filter = [f"documents.metadata->>'{k}' = '{v}'" if isinstance(v, str) else f"documents.metadata->>'{k}' = {v}" for k, v in kwargs.items()]
