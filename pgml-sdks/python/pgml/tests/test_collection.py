@@ -10,19 +10,19 @@ class TestCollection(unittest.TestCase):
         local_pgml = "postgres://postgres@127.0.0.1:5433/pgml_development"
         conninfo = os.environ.get("PGML_CONNECTION",local_pgml)
         self.db = Database(conninfo)
-        self.collection_name = "test_collection_1"
+        self.collection_name = "test_collection"
         self.documents = [
             {
             "id": hashlib.md5(f"abcded-{i}".encode('utf-8')).hexdigest(),
             "text":f"Lorem ipsum {i}",
-            "metadata": {"source": "test_suite"}
+            "source": "test_suite"
             }
             for i in range(4, 7)
         ]
         self.documents_no_ids = [
             {
             "text":f"Lorem ipsum {i}",
-            "metadata": {"source": "test_suite_no_ids"}
+            "source": "test_suite_no_ids"
             }
             for i in range(1, 4)
         ]
@@ -84,6 +84,25 @@ class TestCollection(unittest.TestCase):
         self.collection.generate_embeddings()
         results = self.collection.vector_search("Lorem ipsum 1", top_k=2)
         assert results[0]["score"] == 1.0
+        
+    def test_vector_search_metadata_filter(self):
+        self.collection.upsert_documents(self.documents)
+        self.collection.upsert_documents(self.documents_no_ids)
+        splitter_id = self.collection.register_text_splitter()
+        self.collection.generate_chunks(splitter_id=splitter_id)
+        self.collection.generate_embeddings()
+        results = self.collection.vector_search("Lorem ipsum 1", top_k=2, source="test_suite_no_ids")
+        assert results[0]["score"] == 1.0
+        
+        
+    def test_text_search(self):
+        self.collection.upsert_documents(self.documents)
+        self.collection.upsert_documents(self.documents_no_ids)
+        splitter_id = self.collection.register_text_splitter()
+        self.collection.generate_chunks(splitter_id=splitter_id)
+        self.collection.generate_embeddings()
+        results = self.collection.text_search("Lorem ipsum 1", top_k=2)
+        assert results[0]["score"] > 0.1
     
     # def tearDown(self) -> None:
     #     self.db.archive_collection(self.collection_name)

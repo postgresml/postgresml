@@ -43,8 +43,20 @@ query = "What is a good mobile os?"
 result = collection.vector_search(query)
 _end = time()
 
-console.print("\nResults for '%s'" % (query), style="bold")
+console.print("\nVector Results for '%s'" % (query), style="bold")
 console.print(result)
-console.print("Query time = %0.3f" % (_end - start))
+console.print("Vector Query time = %0.3f" % (_end - start))
+
+
+# Query vector embeddings
+start = time()
+query = "What is a good mobile os?"
+result = collection.text_search(query, top_k=5)
+_end = time()
+
+console.print("\nText Results for '%s'" % (query), style="bold")
+console.print(result)
+console.print("Text Query time = %0.3f" % (_end - start))
+
 
 db.archive_collection(collection_name)
