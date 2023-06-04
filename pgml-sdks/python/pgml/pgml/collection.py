@@ -683,6 +683,7 @@ class Collection:
         top_k: int = 5,
         model_id: int = 1,
         splitter_id: int = 1,
+        **kwargs: Any, 
     ) -> List[Dict[str, Any]]:
         """
         This function performs a vector search on a database using a query and returns the top matching
@@ -702,6 +703,9 @@ class Collection:
         splitter used to split the documents into chunks. It is used to retrieve the embeddings table
         associated with the specified splitter, defaults to 1
         :type splitter_id: int (optional)
+        :param kwargs: Additional filtering parameters to be used in the search query. These parameters
+        are from the metadata of the documents and can be used to filter the search results based on
+        metadata values.
         :return: a list of dictionaries containing search results for a given query. Each dictionary
         contains the following keys: "score", "text", and "metadata". The "score" key contains a float
         value representing the similarity score between the query and the search result. The "text" key
@@ -749,6 +753,13 @@ class Collection:
                 % (model_id, splitter_id, model_id, splitter_id)
             )
             return []
+        
+        if kwargs:
+            metadata_filter = [f"documents.metadata->>'{k}' = '{v}'" if isinstance(v, str) else f"documents.metadata->>'{k}' = {v}" for k, v in kwargs.items()]
+            metadata_filter = " AND ".join(metadata_filter)
+            metadata_filter = f"AND {metadata_filter}"
+        else:
+            metadata_filter = ""
 
         cte_select_statement = """
         WITH query_cte AS (
@@ -764,7 +775,7 @@ class Collection:
         SELECT cte.score, chunks.chunk, documents.metadata
         FROM cte
         INNER JOIN {chunks_table} chunks ON chunks.id = cte.chunk_id
-        INNER JOIN {documents_table} documents ON documents.id = chunks.document_id;
+        INNER JOIN {documents_table} documents ON documents.id = chunks.document_id {metadata_filter}
         """.format(
             model=sql.Literal(model).as_string(conn),
             query_text=query,
@@ -773,6 +784,7 @@ class Collection:
             top_k=top_k,
             chunks_table=self.chunks_table,
             documents_table=self.documents_table,
+            metadata_filter=metadata_filter,
         )
 
         search_results = run_select_statement(
