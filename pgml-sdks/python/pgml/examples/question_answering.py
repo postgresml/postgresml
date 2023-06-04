@@ -33,7 +33,7 @@ collection.generate_embeddings()
 
 start = time()
 query = "Who won 20 grammy awards?"
-results = collection.vector_search(query, top_k=5)
+results = collection.vector_search(query, top_k=5, title="Beyoncé")
 _end = time()
 console.print("\nResults for '%s'" % (query), style="bold")
 console.print(results)
