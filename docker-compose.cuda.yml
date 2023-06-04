@@ -1,6 +1,13 @@
 version: "3"
 services:
   postgres:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready" ]
       interval: 1s
