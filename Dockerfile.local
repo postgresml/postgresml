@@ -1,3 +1,4 @@
+
 FROM ubuntu:jammy
 LABEL maintainer="team@postgresml.com"
 
@@ -29,8 +30,8 @@ RUN apt-get update && apt-fast install -y \
 	wget \
 	postgresql-plpython3-$PG_MAJOR_VER \
 	postgresql-$PG_MAJOR_VER \
-	postgresql-server-dev-$PG_MAJOR_VER
-
+	postgresql-server-dev-$PG_MAJOR_VER \
+	git
 
 RUN add-apt-repository ppa:deadsnakes/ppa --yes
 RUN apt update && apt-fast install -y \
@@ -42,10 +43,8 @@ RUN apt update && apt-fast install -y \
 
 RUN echo 'postgres ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
-# COPY --chown=postgres:postgres ./pgml-extension /app
-# WORKDIR /app
 
-COPY requirements.txt /app/requirements.txt
+COPY ./pgml-extension/requirements.txt /app/requirements.txt
 
 
 RUN pip3 install -r /app/requirements.txt
@@ -54,49 +53,49 @@ RUN pip3 install -r /app/requirements.txt
 # Running pgrx and tests require a non-root user
 WORKDIR /app
 
+RUN chmod a+rwx `$(which pg_config) --pkglibdir` \
+	`$(which pg_config) --sharedir`/extension \
+	/var/run/postgresql/
 
-# Running pgrx and tests require a non-root user
-RUN useradd --create-home --shell /bin/bash rust
+RUN useradd postgresml -m -s /bin/bash -G sudo
+RUN echo 'postgresml ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
-USER rust 
-ENV USER=rust
+USER postgresml
+
 
 # Install cargo and Rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/home/rust/.cargo/bin:${PATH}"
-
-# RUN curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
-# RUN sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+ENV PATH="/home/postgresml/.cargo/bin:${PATH}"
 
 
 # Install pgrx
 RUN cargo install cargo-pgrx --version "0.8.2" --locked
-# RUN $HOME/.cargo/bin/cargo install pgrx --version "0.8.2" --locked
+
+
+COPY --chown=postgresml:postgresml ./ /app
+RUN sudo chown -R postgresml:postgresml /app
+RUN git submodule update --init --recursive
 
 
 
-COPY --chown=postgres:postgres ./ /app
 
-USER postgres
-
-RUN sudo cp /app/docker/postgresql.conf /etc/postgresql/$PG_MAJOR_VER/main/postgresql.conf
-RUN sudo cp /app/docker/pg_hba.conf /etc/postgresql/$PG_MAJOR_VER/main/pg_hba.conf
+RUN sudo cp /app/pgml-extension/docker/postgresql.conf /etc/postgresql/$PG_MAJOR_VER/main/postgresql.conf
+RUN sudo cp /app/pgml-extension/docker/pg_hba.conf /etc/postgresql/$PG_MAJOR_VER/main/pg_hba.conf
 
 
 # RUN sudo chown -R rust:rust /usr/share/postgresql/$PG_MAJOR_VER/extension
-RUN sudo chown -R postgres:postgres /usr/share/postgresql/$PG_MAJOR_VER/extension
+RUN sudo chown -R postgresml:postgresml /usr/share/postgresql/$PG_MAJOR_VER/
+RUN sudo chown -R postgresml:postgresml /usr/share/postgresql/$PG_MAJOR_VER/extension
 
 # commenting this three make things work
 # USER rust
 
-RUN cargo pgrx init --pg$PG_MAJOR_VER=$(which pg_config)
-RUN cargo pgrx install --pg-config $(which pg_config) 
+RUN cd /app/pgml-extension && cargo pgrx init --pg$PG_MAJOR_VER=$(which pg_config)
+RUN cd /app/pgml-extension && cargo pgrx install --pg-config $(which pg_config) 
 
 EXPOSE 5432
 
 USER postgres
 
-
-# ENTRYPOINT ["/bin/bash", "/app/docker/entrypoint.sh"]
 CMD ["/usr/lib/postgresql/14/bin/postgres", "-c", "config_file=/etc/postgresql/14/main/postgresql.conf"]
 
