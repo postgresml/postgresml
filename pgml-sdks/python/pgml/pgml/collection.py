@@ -22,6 +22,8 @@ from .dbutils import (
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
+
+
 FORMAT = "%(message)s"
 logging.basicConfig(
     level=os.environ.get("LOGLEVEL", "ERROR"),
@@ -52,6 +54,7 @@ class Collection:
         """
         self.pool = pool
         self.name = name
+        self._create_pg_trim_function()
         self._create_documents_table()
         self._create_splitter_table()
         self._create_models_table()
@@ -61,6 +64,16 @@ class Collection:
         self.register_model()
         self._cache_embeddings_table_names = {}
         self._cache_model_names = {}
+        
+    def _create_pg_trim_function(self):
+        """
+        This function creates a trim function in a PostgreSQL database.
+        """
+        conn = self.pool.getconn()
+        create_statement = "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+        run_create_or_insert_statement(conn, create_statement)
+        
+        self.pool.putconn(conn)
 
     def _create_documents_table(self) -> None:
         """
@@ -786,6 +799,72 @@ class Collection:
             documents_table=self.documents_table,
             metadata_filter=metadata_filter,
         )
+
+        search_results = run_select_statement(
+            conn, cte_select_statement, order_by="score", ascending=False
+        )
+        self.pool.putconn(conn)
+
+        return search_results
+    
+    def text_search(
+        self,
+        query: str,
+        # regconfig: str = "english",
+        top_k: int = 5,
+        **kwargs: Any, 
+    ) -> List[Dict[str, Any]]:
+        """
+        This function performs a vector search on a database using a query and returns the top matching
+        results.
+
+        :param query: The search query string
+        :type query: str
+        :param top_k: The number of search results to return, sorted by relevance score, defaults to 5
+        :type top_k: int (optional)
+        :param kwargs: Additional filtering parameters to be used in the search query. These parameters
+        are from the metadata of the documents and can be used to filter the search results based on
+        metadata values.
+        :return: a list of dictionaries containing search results for a given query. Each dictionary
+        contains the following keys: "score", "text", and "metadata". The "score" key contains a float
+        value representing the similarity score between the query and the search result. The "text" key
+        contains the text of the search result, and the "metadata" key contains any metadata associated
+        with the search result
+        """
+        conn = self.pool.getconn()
+        
+        # regconfig_statement = f"SELECT * FROM pg_catalog.pg_ts_config WHERE cfgname = '{regconfig}'"
+        # results = run_select_statement(conn, regconfig_statement)
+        
+        # if not results:
+        #     raise ValueError(f"regconfig {regconfig} is not valid")
+
+        if kwargs:
+            metadata_filter = [f"documents.metadata->>'{k}' = '{v}'" if isinstance(v, str) else f"documents.metadata->>'{k}' = {v}" for k, v in kwargs.items()]
+            metadata_filter = " AND ".join(metadata_filter)
+            metadata_filter = f"AND {metadata_filter}"
+        else:
+            metadata_filter = ""
+        
+        
+        # cte_select_statement = f"""
+        # SELECT 
+        #     *, ts_rank_cd(to_tsvector('{regconfig}', documents.text), plainto_tsquery('{regconfig}', '{query}')) AS score
+        # FROM 
+        #     {self.documents_table} documents 
+        # WHERE 
+        #     to_tsvector('{regconfig}', documents.text) @@ plainto_tsquery('{regconfig}', '{query}') {metadata_filter}
+        # LIMIT {top_k}
+        # """
+        cte_select_statement = f"""
+        SELECT 
+            *, similarity(documents.text, '{query}') AS score
+        FROM 
+            {self.documents_table} documents 
+        WHERE 
+            documents.text % '{query}' {metadata_filter}
+        LIMIT {top_k}
+        """
 
         search_results = run_select_statement(
             conn, cte_select_statement, order_by="score", ascending=False

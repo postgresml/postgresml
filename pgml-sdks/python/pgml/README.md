@@ -282,8 +282,8 @@ LOGLEVEL=INFO python -m unittest tests/test_collection.py
 
 ### Roadmap
 
-- Enable filters on document metadata in `vector_search`. [Issue](https://github.com/postgresml/postgresml/issues/663)
-- `text_search` functionality on documents using Postgres text search. [Issue](https://github.com/postgresml/postgresml/issues/664)
+- ~~Enable filters on document metadata in `vector_search`. [Issue](https://github.com/postgresml/postgresml/issues/663)~~
+- ~~`text_search` functionality on documents using Postgres text search. [Issue](https://github.com/postgresml/postgresml/issues/664)~~
 - `hybrid_search` functionality that does a combination of `vector_search` and `text_search` in an order specified by the user. [Issue](https://github.com/postgresml/postgresml/issues/665)
 - Ability to call and manage OpenAI embeddings for comparison purposes. [Issue](https://github.com/postgresml/postgresml/issues/666)
 - Save `vector_search` history for downstream monitoring of model performance. [Issue](https://github.com/postgresml/postgresml/issues/667)
