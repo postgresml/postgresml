@@ -298,18 +298,23 @@ class Collection:
                 )
                 continue
 
+            metadata = document
+
             _uuid = ""
             if id_key not in list(document.keys()):
                 log.info("id key is not present.. hashing")
-                source_uuid = hashlib.md5(text.encode("utf-8")).hexdigest()
+                source_uuid = hashlib.md5(
+                    (text + " " + json.dumps(document)).encode("utf-8")
+                ).hexdigest()
             else:
                 _uuid = document.pop(id_key)
                 try:
                     source_uuid = str(uuid.UUID(_uuid))
                 except Exception:
-                    source_uuid = hashlib.md5(text.encode("utf-8")).hexdigest()
+                    source_uuid = hashlib.md5(str(_uuid).encode("utf-8")).hexdigest()
 
-            metadata = document
+            if _uuid:
+                document[id_key] = source_uuid
 
             upsert_statement = "INSERT INTO {documents_table} (text, source_uuid, metadata) VALUES ({text}, {source_uuid}, {metadata}) \
                 ON CONFLICT (source_uuid) \
@@ -323,9 +328,6 @@ class Collection:
 
             # put the text and id back in document
             document[text_key] = text
-            if _uuid:
-                document[id_key] = source_uuid
-
         self.pool.putconn(conn)
 
     def register_text_splitter(
@@ -683,7 +685,8 @@ class Collection:
         top_k: int = 5,
         model_id: int = 1,
         splitter_id: int = 1,
-        **kwargs: Any, 
+        metadata_filter: Optional[Dict[str, Any]] = {},
+        generic_filter: Optional[str] = "",
     ) -> List[Dict[str, Any]]:
         """
         This function performs a vector search on a database using a query and returns the top matching
@@ -753,13 +756,6 @@ class Collection:
                 % (model_id, splitter_id, model_id, splitter_id)
             )
             return []
-        
-        if kwargs:
-            metadata_filter = [f"documents.metadata->>'{k}' = '{v}'" if isinstance(v, str) else f"documents.metadata->>'{k}' = {v}" for k, v in kwargs.items()]
-            metadata_filter = " AND ".join(metadata_filter)
-            metadata_filter = f"AND {metadata_filter}"
-        else:
-            metadata_filter = ""
 
         cte_select_statement = """
         WITH query_cte AS (
@@ -775,7 +771,7 @@ class Collection:
         SELECT cte.score, chunks.chunk, documents.metadata
         FROM cte
         INNER JOIN {chunks_table} chunks ON chunks.id = cte.chunk_id
-        INNER JOIN {documents_table} documents ON documents.id = chunks.document_id {metadata_filter}
+        INNER JOIN {documents_table} documents ON documents.id = chunks.document_id
         """.format(
             model=sql.Literal(model).as_string(conn),
             query_text=query,
@@ -784,8 +780,19 @@ class Collection:
             top_k=top_k,
             chunks_table=self.chunks_table,
             documents_table=self.documents_table,
-            metadata_filter=metadata_filter,
         )
+
+        if metadata_filter:
+            cte_select_statement += (
+                " AND documents.metadata @> {metadata_filter}".format(
+                    metadata_filter=sql.Literal(json.dumps(metadata_filter)).as_string(
+                        conn
+                    )
+                )
+            )
+
+        if generic_filter:
+            cte_select_statement += " AND " + generic_filter
 
         search_results = run_select_statement(
             conn, cte_select_statement, order_by="score", ascending=False
