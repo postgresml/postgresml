@@ -56,7 +56,7 @@ pub fn transform(
     serde_json::from_str(&results).unwrap()
 }
 
-pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -> Vec<f32> {
+pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -> Vec<Vec<f32>> {
     crate::bindings::venv::activate();
 
     let kwargs = serde_json::to_string(kwargs).unwrap();
