@@ -13,6 +13,3 @@ services:
       dockerfile: Dockerfile.local
     ports:
       - "5433:5432"
-    command:
-      - sleep
-      - infinity
