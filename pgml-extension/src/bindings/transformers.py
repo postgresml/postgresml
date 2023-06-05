@@ -112,8 +112,10 @@ def transform(task, args, inputs):
 
 def embed(transformer, inputs, kwargs):
     
-    if not isinstance(inputs, str):
+    try:
         inputs = json.loads(inputs)
+    except json.decoder.JSONDecodeError:
+        pass      
         
     kwargs = json.loads(kwargs)
     ensure_device(kwargs)
