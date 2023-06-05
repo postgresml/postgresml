@@ -80,7 +80,7 @@ pub fn embed(transformer: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f
     })
 }
 
-pub fn embed_array(
+pub fn embed_batch(
     transformer: &str,
     inputs: &Vec<String>,
     kwargs: &serde_json::Value,
