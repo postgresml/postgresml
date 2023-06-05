@@ -113,7 +113,7 @@ def transform(task, args, inputs):
 def embed(transformer, inputs, kwargs):
     
     if not isinstance(inputs, str):
-        inputs = json.dumps(inputs)
+        inputs = json.loads(inputs)
         
     kwargs = json.loads(kwargs)
     ensure_device(kwargs)
