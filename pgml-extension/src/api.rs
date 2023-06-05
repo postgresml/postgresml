@@ -569,6 +569,11 @@ pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> 
 }
 
 #[pg_extern(immutable, parallel_safe)]
+pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
+    crate::bindings::transformers::embed(transformer, &inputs, &kwargs.0)
+}
+
+#[pg_extern(immutable, parallel_safe)]
 pub fn chunk(
     splitter: &str,
     text: &str,
