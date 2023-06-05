@@ -565,7 +565,7 @@ fn load_dataset(
 
 #[pg_extern(immutable, parallel_safe, name = "embed")]
 pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
-    embed_batch(transformer, Vec::from([text]), &kwargs.0)
+    embed_batch(transformer, Vec::from([text]), kwargs)
         .first()
         .unwrap()
         .to_vec()
@@ -574,7 +574,7 @@ pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> 
 #[pg_extern(immutable, parallel_safe, name = "embed")]
 pub fn embed_batch(
     transformer: &str,
-    inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
+    inputs: Vec<&str>,
     kwargs: default!(JsonB, "'{}'"),
 ) -> Vec<Vec<f32>> {
     crate::bindings::transformers::embed(transformer, &inputs, &kwargs.0)
