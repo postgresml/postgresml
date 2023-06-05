@@ -573,7 +573,7 @@ pub fn embed_array(
     transformer: &str,
     inputs: Vec<&str>,
     kwargs: default!(JsonB, "'{}'"),
-) -> Vec<f32> {
+) -> Vec<Vec<f32>> {
     crate::bindings::transformers::embed_array(transformer, &inputs, &kwargs.0)
 }
 

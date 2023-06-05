@@ -89,7 +89,7 @@ pub fn embed_array(
 
     let kwargs = serde_json::to_string(kwargs).unwrap();
     let inputs = serde_json::to_string(inputs).unwrap();
-    Python::with_gil(|py| -> Vec<f32> {
+    Python::with_gil(|py| -> Vec<Vec<f32>> {
         let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed").unwrap().into();
         embed
             .call1(
