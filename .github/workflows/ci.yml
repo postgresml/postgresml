@@ -1,11 +1,7 @@
 name: tests
 on:
   push:
-    branches:
-      - master
   workflow_dispatch:
-  workflow_run:
-    workflows: ["tests"]
 jobs:
   tests:
     runs-on: ubuntu-22.04
