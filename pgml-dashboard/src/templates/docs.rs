@@ -21,7 +21,7 @@ impl NavLink {
     /// Create a new documentation link.
     pub fn new(title: &str) -> NavLink {
         NavLink {
-            id: crate::utils::secure::random_string(25),
+            id: crate::utils::random_string(25),
             title: title.to_string(),
             href: "#".to_string(),
             children: vec![],

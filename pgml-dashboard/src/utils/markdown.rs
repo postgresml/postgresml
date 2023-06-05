@@ -586,7 +586,7 @@ impl<'a> Tab<'a> {
         Tab {
             children: vec![],
             name,
-            id: crate::utils::secure::random_string(10),
+            id: crate::utils::random_string(10),
             active: false,
         }
     }
