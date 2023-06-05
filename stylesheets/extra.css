@@ -1,0 +1,86 @@
+:root {
+    --shadow-2: rgba(0,0,0,0.25);
+}
+  
+[data-md-color-scheme="postgresml"] {
+    --md-primary-fg-color: rgb(20, 30, 80);
+    --md-primary-fg-color--light: rgb(100, 180, 255);
+    --md-primary-fg-color--dark: rgb(18, 26, 70);
+}
+  
+[data-md-color-scheme="slate"] {
+    --md-hue: 200; 
+}
+
+.float-right {
+    float: right;
+}
+.md-typeset h1 {
+    color: var(--md-default-fg-color);
+}
+.md-typeset .md-button {
+    font-size: 1.5em;
+    padding: 0.25em 1em;
+}
+
+.md-nav__source, .md-nav__title, .md-header, .md-tabs {
+    --md-primary-fg-color: rgb(20, 30, 80);
+    --md-primary-fg-color--dark: rgb(18, 26, 70);
+}
+
+.md-search__form {
+    background-color: rgba(200,255,255,0.3);
+}
+
+.grid {
+    display: flex !important;
+    gap: 5%;
+    flex-direction: row;
+    max-width: 100%;
+    flex-wrap: wrap;
+}
+.grid .card img {
+    margin: 0;
+    max-width: 100%;
+    box-shadow: 0 1px 2px var(--shadow-2);
+}
+.grid .card {
+    width: 47%;
+    padding: 1em 2em;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px var(--shadow-2);
+    overflow: auto;
+    margin: 0 0 2em !important;
+    transition: transform .2s;
+}
+.grid .card:hover {
+    transform: scale(1.025);
+    box-shadow: 1px 2px 4px var(--shadow-2);
+}
+.bare .card {
+    padding: 0;
+    border-radius: 0px;
+    box-shadow: initial;
+}
+.bare .card:hover {
+    box-shadow: initial;
+}
+@media only screen and (max-width: 690px) {
+    .grid .card { width: 100%; }
+    .bare .card:nth-child(3) { order: 4; }
+    .bare .card:nth-child(4) { order: 3; }
+}
+
+p.author {
+    font-size: 0.7rem;
+    margin-bottom: 2em;
+}
+p.author img {
+    border-radius: 50%;
+    float: left;
+    margin-right: 16px;
+}
+
+.md-button--primary {
+  margin-bottom: 1rem;
+}

@@ -1,0 +1,7 @@
+pandas
+numpy
+xgboost
+Flask
+gunicorn
+scikit-learn
+redis
