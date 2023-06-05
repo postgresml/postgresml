@@ -61,7 +61,7 @@
     var best_index = 0;
   
     <% for (name, series) in model.search_results().unwrap().iter() { %>
-    var <%= name %> = <%= series.to_string() %>;
+    var <%= name %> = <%- series.to_string() %>;
     <% } %>
   
     <% for (param, _) in model.search_params().iter() { %>
