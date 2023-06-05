@@ -568,7 +568,7 @@ pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> 
     crate::bindings::transformers::embed(transformer, text, &kwargs.0)
 }
 
-#[pg_extern(immutable, parallel_safe)]
+#[pg_extern(immutable, parallel_safe, name = "embed")]
 pub fn embed_array(
     transformer: &str,
     inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
