@@ -10,7 +10,6 @@ repository = "https://github.com/postgremsl/postgresml"
 include = ["src/", "sqlx-data.json", "templates/", "migrations/", "static/"]
 
 [dependencies]
-aes-gcm = "0.10"
 anyhow = "1"
 aho-corasick = "0.7"
 base64 = "0.21"
