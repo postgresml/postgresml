@@ -1,0 +1,59 @@
+
+// We inject the light theme inside the body all over the home page.
+body {
+    [data-bs-theme="light"] {
+        --bs-body-bg: #{$gray-100};
+        --bs-body-color: #111213;
+        --bs-body-color-rgb: rgb(17, 18, 19);
+        color: var(--bs-body-color);
+    }
+}
+
+[data-bs-theme="light"] {
+
+    --bs-heading-color: #111213;
+
+    --bs-link-color: #{$purple};
+
+    body {
+        --bs-body-bg: #{$gray-100};
+        --bs-body-color: #111213;
+        --bs-body-color-rgb: rgb(17, 18, 19);
+        color: var(--bs-body-color);
+    }
+
+    .list-group-item {
+        --bs-list-group-item-color: #111213;
+        --bs-list-group-color: #111213;
+    }
+
+    .btn {
+        &.btn-primary {
+            --bs-btn-bg: #111213;
+            --bs-btn-border-color: #{$gray-100};
+            --bs-btn-color: #{$gray-100};
+        }
+
+        &.btn-secondary {
+            --bs-btn-color: #111213;
+            --bs-btn-hover-color: #111213;
+            --bs-btn-active-color: #111213;
+        }
+    }
+
+    .navbar {
+        background: #{$hp-white};
+        .nav-link {
+            --bs-nav-link-color: #{$gray-700};
+            --bs-nav-link-hover-color: #{$gray-900};
+
+        &:hover {
+            text-shadow: 0 0 .65px black, 0 0 .65px black; //change font weight without element resizing
+        }
+
+            &:active {
+                color: #{$gray-800};
+            }
+        }
+    }
+}

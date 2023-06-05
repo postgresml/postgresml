@@ -1,0 +1,32 @@
+<% if columns.is_empty() { %>
+<div class="markdown-body">
+  <pre><code>OK</code></pre>
+</div>
+
+<% } else { %>
+
+<div class="markdown-body">
+  <table>
+    <thead>
+      <tr>
+        <% for column in columns { %>
+        <td><strong><%= column %></strong></td>
+        <% } %>
+      </tr>
+    </thead>
+    <tbody>
+      <% for row in rows { %>
+      <tr>
+        <% for column in row { %>
+        <td><%= column %></td>
+        <% } %>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  <% if render_execution_duration { %>
+    <code>Time: <%= crate::utils::time::format_microseconds(execution_duration.as_micros() as f64) %></code>
+  <% } %>
+</div>
+
+<% } %>

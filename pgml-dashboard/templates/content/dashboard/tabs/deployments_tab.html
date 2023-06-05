@@ -1,0 +1,12 @@
+<%
+    let source = match deployment_id {
+        Some(id) => format!("/dashboard/deployments/{}", id).to_string(),
+        None => "".to_string()
+    };
+%>
+
+<turbo-frame id="deployments" src="/dashboard/deployments">
+    <div class="d-flex justify-content-center align-items-center py-5">Loading deployments, one moment...</div>
+</turbo-frame>      
+<turbo-frame id="deployment" src="<%= source %>">
+</turbo-frame>

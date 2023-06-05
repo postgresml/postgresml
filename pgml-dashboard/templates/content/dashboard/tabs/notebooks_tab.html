@@ -1,0 +1,13 @@
+<%
+    let notebook_id = match notebook_id {
+        Some(id) => id, 
+        None => 0
+    };
+%>
+
+<turbo-frame id="notebooks" src="/dashboard/notebooks">
+    <div class="d-flex justify-content-center align-items-center py-5">Loading notebooks, one moment...</div>
+</turbo-frame>
+<turbo-frame id="notebook" src="/dashboard/notebooks/<%= notebook_id %>">
+    <div class="d-flex justify-content-center align-items-center py-5">Loading notebook, one moment...</div>
+</turbo-frame>

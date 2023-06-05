@@ -1,0 +1,86 @@
+<turbo-frame id="cell_<%= cell.id %>">
+  <% if cell.deleted_at.is_some()  { %>
+  <% } else { %>
+  <section data-controller="notebook-cell" class="notebook-cell <%= cell.cell_type_display() %><% if selected { %> selected <% } %>" data-action="click->notebook#selectCell" data-notebook-target="cell">
+
+    <% if edit { %>
+    <!-- Edit -->
+    <div class="notebook-cell-edit">
+      <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit" method="post" data-notebook-cell-target="form" data-action="notebook-cell#play">
+        <div class="flex">
+          <div class="flex-grow margin-right-1">
+            <textarea name="contents" data-notebook-cell-target="editor"><%= cell.contents %></textarea>
+          </div>
+          <div class="notebook-buttons flex-end">
+            <select name="cell_type" data-action="notebook-cell#selectCellType" title="Select cell type" data-notebook-cell-target="type">
+              <option value="3" <% if cell.cell_type == 3 { %>selected<% } %>>SQL</option>
+              <option value="1" <% if cell.cell_type == 1 { %>selected<% } %>>Markdown</option>
+            </select>
+            <button class="btn btn-tertiary" type="submit" title="Execute cell" data-notebook-cell-target="play">
+              <span class="material-symbols-outlined">play_arrow</span>
+            </button>
+             <button class="btn btn-tertiary" title="Cancel edit" data-action="notebook-cell#cancelEdit">
+              <span class="material-symbols-outlined">cancel</span>
+            </button>
+          </div>
+        </div>
+      </form>
+      <!-- Cancel edit and refetch the cell -->
+      <form class="hidden" action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>?bust_cache=<%= bust_cache %>" method="get" data-notebook-cell-target="cancelEdit">
+      </form>
+    </div>
+    <% } %>
+
+    <!-- Display -->
+    <div>
+      <div class="flex">
+        <div class="cell-number"><%= cell.cell_number %></div>
+        <div class="notebook-render-container">
+          <% if cell.code() { %>
+          <div class="markdown-body notebook-contents">
+            <pre><code class="language-sql"><%- cell.contents %></code></pre>
+          </div>
+          <% } %>
+
+          <% if cell.html().is_some() { %>
+          <div class="notebook-rendering" data-turbo="false">
+            <%- cell.html().unwrap() %>
+          </div>
+          <% } %>
+        </div>
+        
+        <div class="notebook-buttons">
+          <% if cell.code() && !edit { %>
+          <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/play" method="post" data-action="notebook-cell#play">
+            <button class="btn btn-tertiary" type="submit" title="Execute cell" data-notebook-cell-target="play">
+              <span class="material-symbols-outlined">
+                play_arrow
+              </span>
+            </button>
+          </form>
+          <% } %>
+          <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/remove" method="post">
+            <button class="btn btn-tertiary" type="submit" title="Delete cell">
+              <span class="material-symbols-outlined">delete_forever</span>
+            </button>
+          </form>
+          <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit?bust_cache=<%= bust_cache %>" method="get">
+            <button class="btn btn-tertiary" type="submit" title="Edit cell">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+          </form>
+        </div>
+      </div>
+      <% if cell.execution_time.is_some() { %>
+      <div class="notebook-duration">
+        <div class="markdown-body">
+          <div class="flex flex-row-reverse">
+            <code>Time: <%= crate::utils::time::format_microseconds(cell.execution_time.unwrap().microseconds as f64) %></code>
+          </div>
+        </div>
+      </div>
+      <% } %>
+    </div>
+  </section>
+  <% } %>
+</turbo-frame>

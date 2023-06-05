@@ -1,0 +1,22 @@
+<turbo-frame id="search-results">
+  <div class="list-group">
+    <% if query.len() < 1 { %>
+    <p class="mb-0">Type to start searching</p>
+    <% } else if !results.is_empty() {
+      for result in results.iter() {
+    %>
+    <a class="list-group-item" href="<%- result.path %>" data-turbo-frame="_top">
+      <div class="text-white">
+        <h5 class="h5 mb-1"><%= result.title %></h5>
+        <% if !result.snippet.is_empty() { %>
+          <p class="text-muted">
+            <%- result.snippet %>
+          </p>
+        <% } %>
+      </div>
+    </a>
+    <% } } else { %>
+    <p class="mb-0">No results found</p>
+    <% } %>
+  </div>
+</turbo-frame>

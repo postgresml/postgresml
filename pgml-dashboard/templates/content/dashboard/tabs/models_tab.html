@@ -1,0 +1,12 @@
+<%
+    let source = match model_id {
+        Some(id) => format!("/dashboard/models/{}", id).to_string(),
+        None => "".to_string()
+    };
+%>
+
+<turbo-frame id="models" src="/dashboard/models">
+    <div class="d-flex justify-content-center align-items-center py-5">Loading models, one moment...</div>
+</turbo-frame>
+<turbo-frame id="model" src="<%= source %>">
+</turbo-frame>
