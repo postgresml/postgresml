@@ -80,7 +80,11 @@ pub fn embed(transformer: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f
     })
 }
 
-pub fn embed(transformer: &str, inputs: &Vec<&str>, kwargs: &serde_json::Value) -> Vec<Vec<f32>> {
+pub fn embed_array(
+    transformer: &str,
+    inputs: &Vec<&str>,
+    kwargs: &serde_json::Value,
+) -> Vec<Vec<f32>> {
     crate::bindings::venv::activate();
 
     let kwargs = serde_json::to_string(kwargs).unwrap();
