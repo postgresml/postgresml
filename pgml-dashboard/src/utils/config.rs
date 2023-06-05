@@ -39,8 +39,6 @@ pub fn static_dir() -> String {
 //     }
 // }
 
-
-
 pub fn search_index_dir() -> String {
     match var("SEARCH_INDEX_DIRECTORY") {
         Ok(path) => path,
