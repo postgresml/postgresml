@@ -563,9 +563,21 @@ fn load_dataset(
     TableIterator::new(vec![(name, rows)].into_iter())
 }
 
-#[pg_extern(immutable, parallel_safe)]
+#[pg_extern(immutable, parallel_safe, name = "embed")]
 pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
-    crate::bindings::transformers::embed(transformer, text, &kwargs.0)
+    embed_batch(transformer, Vec::from([text]), kwargs)
+        .first()
+        .unwrap()
+        .to_vec()
+}
+
+#[pg_extern(immutable, parallel_safe, name = "embed")]
+pub fn embed_batch(
+    transformer: &str,
+    inputs: Vec<&str>,
+    kwargs: default!(JsonB, "'{}'"),
+) -> Vec<Vec<f32>> {
+    crate::bindings::transformers::embed(transformer, &inputs, &kwargs.0)
 }
 
 #[pg_extern(immutable, parallel_safe)]

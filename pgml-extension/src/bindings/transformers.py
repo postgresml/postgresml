@@ -110,13 +110,22 @@ def transform(task, args, inputs):
     return json.dumps(pipe(inputs, **args), cls=NumpyJSONEncoder)
 
 
-def embed(transformer, text, kwargs):
+def embed(transformer, inputs, kwargs):
+    
+    inputs = json.loads(inputs)
     kwargs = json.loads(kwargs)
     ensure_device(kwargs)
     instructor = transformer.startswith("hkunlp/instructor")
+    
     if instructor:
         klass = INSTRUCTOR
-        text = [[kwargs.pop("instruction"), text]]
+        
+        texts_with_instructions = []
+        instruction = kwargs.pop("instruction")
+        for text in inputs:
+            texts_with_instructions.append([instruction, text])
+            
+        inputs = texts_with_instructions
     else:
         klass = SentenceTransformer
 
@@ -124,11 +133,7 @@ def embed(transformer, text, kwargs):
         __cache_sentence_transformer_by_name[transformer] = klass(transformer)
     model = __cache_sentence_transformer_by_name[transformer]
 
-    result = model.encode(text, **kwargs)
-    if instructor:
-        result = result[0]
-
-    return result
+    return model.encode(inputs, **kwargs)
 
 
 def load_dataset(name, subset, limit: None, kwargs: "{}"):
