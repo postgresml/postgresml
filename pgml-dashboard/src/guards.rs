@@ -5,6 +5,7 @@ use rocket::request::{FromRequest, Outcome, Request};
 use rocket::State;
 use sqlx::PgPool;
 
+use crate::models::User;
 use crate::{Clusters, Context};
 
 pub fn default_database_url() -> String {
@@ -46,17 +47,31 @@ impl<'r> FromRequest<'r> for Cluster {
             None => -1,
         };
 
-        let shared_state = match request.guard::<&State<Clusters>>().await {
+        let user_id: i64 = match cookies.get_private("user_id") {
+            Some(user_id) => match user_id.value().parse::<i64>() {
+                Ok(user_id) => user_id,
+                Err(_) => -1,
+            },
+
+            None => -1,
+        };
+
+        let clusters_shared_state = match request.guard::<&State<Clusters>>().await {
             Outcome::Success(pool) => pool,
             _ => return Outcome::Forward(()),
         };
 
-        let pool = shared_state.get(cluster_id);
+        let pool = clusters_shared_state.get(cluster_id);
 
         let context = Context {
-            user: shared_state.get_context(cluster_id).user,
-            cluster: shared_state.get_context(cluster_id).cluster,
-            visible_clusters: shared_state.get_context(cluster_id).visible_clusters,
+            user: User {
+                id: user_id,
+                email: "".to_string(),
+            },
+            cluster: clusters_shared_state.get_context(cluster_id).cluster,
+            visible_clusters: clusters_shared_state
+                .get_context(cluster_id)
+                .visible_clusters,
         };
 
         Outcome::Success(Cluster { pool, context })
