@@ -73,7 +73,7 @@ pub fn css_url() -> String {
     let path = format!("/dashboard/static/css/{filename}");
 
     match var("ASSETS_DOMAIN") {
-        Ok(domain) => format!("https://{domain}/{path}"),
+        Ok(domain) => format!("https://{domain}{path}"),
         Err(_) => path,
     }
 }
@@ -95,7 +95,7 @@ pub fn js_url(name: &str) -> String {
     let path = format!("/dashboard/static/js/{name}");
 
     match var("ASSETS_DOMAIN") {
-        Ok(domain) => format!("https://{domain}/{path}"),
+        Ok(domain) => format!("https://{domain}{path}"),
         Err(_) => path,
     }
 }
