@@ -80,6 +80,8 @@ async fn blog_handler<'a>(path: PathBuf, cluster: Cluster) -> Result<ResponseOk,
         cluster,
         &path,
         vec![
+            NavLink::new("Introducing PostgresML Python SDK: Build End-to-End Vector Search Applications without OpenAI and Pinecone")
+                .href("/blog/introducing-postgresml-python-sdk-build-end-to-end-vector-search-applications-without-openai-and-pinecone"),
             NavLink::new("PostgresML raises $4.7M to launch serverless AI application databases based on Postgres")
                 .href("/blog/postgresml-raises-4.7M-to-launch-serverless-ai-application-databases-based-on-postgres"),
             NavLink::new("PG Stat Sysinfo, a Postgres Extension for Querying System Statistics")
