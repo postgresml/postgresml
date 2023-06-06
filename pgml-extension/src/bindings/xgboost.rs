@@ -164,7 +164,7 @@ fn fit(
 
     let seed = match hyperparams.get("random_state") {
         Some(value) => value.as_u64().unwrap(),
-        None => 0
+        None => 0,
     };
     let learning_params = learning::LearningTaskParametersBuilder::default()
         .objective(objective)
