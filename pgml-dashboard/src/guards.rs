@@ -5,8 +5,8 @@ use rocket::request::{FromRequest, Outcome, Request};
 use rocket::State;
 use sqlx::PgPool;
 
-use crate::{Clusters, Context};
 use crate::models::User;
+use crate::{Clusters, Context};
 
 pub fn default_database_url() -> String {
     match var("DATABASE_URL") {
@@ -65,11 +65,13 @@ impl<'r> FromRequest<'r> for Cluster {
 
         let context = Context {
             user: User {
-                id: user_id, 
+                id: user_id,
                 email: "".to_string(),
             },
             cluster: clusters_shared_state.get_context(cluster_id).cluster,
-            visible_clusters: clusters_shared_state.get_context(cluster_id).visible_clusters,
+            visible_clusters: clusters_shared_state
+                .get_context(cluster_id)
+                .visible_clusters,
         };
 
         Outcome::Success(Cluster { pool, context })
