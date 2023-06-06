@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       packageVersion:
-        default: "2.4.8"
+        default: "2.5.0"
 
 jobs:
   build:
