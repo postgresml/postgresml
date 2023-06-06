@@ -1818,6 +1818,17 @@ files = [
 plugins = ["importlib-metadata"]
 
 [[package]]
+name = "pypika"
+version = "0.48.9"
+description = "A SQL query builder API for Python"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "PyPika-0.48.9.tar.gz", hash = "sha256:838836a61747e7c8380cd1b7ff638694b7a7335345d0f559b04b2cd832ad5378"},
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -2576,4 +2587,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "7d20ef57aee0494f39dfbd3250c2654112393c9c8e0ef9257bce5d72506f0378"
+content-hash = "e0b6beb561da6bc493551fe920bbe3781a5b96484cf5afef0600ceb3c60561c0"

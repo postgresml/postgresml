@@ -766,7 +766,6 @@ class Collection:
             FROM {embeddings_table}
             CROSS JOIN query_cte
             ORDER BY score DESC
-            LIMIT {top_k}
         )
         SELECT cte.score, chunks.chunk, documents.metadata
         FROM cte
@@ -777,7 +776,6 @@ class Collection:
             query_text=query,
             model_params=sql.Literal(json.dumps(query_parameters)).as_string(conn),
             embeddings_table=embeddings_table,
-            top_k=top_k,
             chunks_table=self.chunks_table,
             documents_table=self.documents_table,
         )
@@ -793,6 +791,8 @@ class Collection:
 
         if generic_filter:
             cte_select_statement += " AND " + generic_filter
+
+        cte_select_statement += " LIMIT {top_k}".format(top_k=top_k)
 
         search_results = run_select_statement(
             conn, cte_select_statement, order_by="score", ascending=False
