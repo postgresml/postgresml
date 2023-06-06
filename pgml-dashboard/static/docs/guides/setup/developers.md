@@ -127,7 +127,7 @@ SELECT pgml.version();
 postgres=# select pgml.version();
       version
 -------------------
- 2.4.8
+ 2.5.0
 (1 row)
 ```
 
