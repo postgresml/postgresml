@@ -805,23 +805,23 @@ class Collection:
 
     def execute(self, sql_statement: QueryBuilder) -> List[Dict[str, Any]]:
         conn = self.pool.getconn()
-        results = run_select_statement(conn,sql_statement.get_sql().replace("\"",""))
+        results = run_select_statement(conn, sql_statement.get_sql().replace('"', ""))
         self.pool.putconn(conn)
         return results
 
-    def vector_recall(self,        
+    def vector_recall(
+        self,
         query: str,
         query_parameters: Optional[Dict[str, Any]] = {},
         top_k: int = 5,
         model_id: int = 1,
-        splitter_id: int = 1) -> List[Dict[str, Any]]:
-        
-
+        splitter_id: int = 1,
+    ) -> List[Dict[str, Any]]:
         if model_id in self._cache_model_names.keys():
             model = self._cache_model_names[model_id]
         else:
             models = Table(self.models_table)
-            q = Query.from_(models).select('name').where(models.id == model_id)
+            q = Query.from_(models).select("name").where(models.id == model_id)
             results = self.execute(q)
             model = results[0]["name"]
             self._cache_model_names[model_id] = model
@@ -835,7 +835,12 @@ class Collection:
 
         if not embeddings_table:
             transforms_table = Table(self.transforms_table)
-            q = Query.from_(transforms_table).select('table_name').where(transforms_table.model_id == model_id).where(transforms_table.splitter_id == splitter_id)
+            q = (
+                Query.from_(transforms_table)
+                .select("table_name")
+                .where(transforms_table.model_id == model_id)
+                .where(transforms_table.splitter_id == splitter_id)
+            )
             embedding_table_results = self.execute(q)
             if embedding_table_results:
                 embeddings_table = embedding_table_results[0]["table_name"]
@@ -851,8 +856,17 @@ class Collection:
 
         conn = self.pool.getconn()
 
-        cte_query = Query.select(Embed(transformer=model,text=query,parameters=query_parameters)).with_()
-        table_embedding = Query.from_(embeddings_table).select('chunk_id',CosineDistance(embeddings_table.embedding,query_embedding.cosine)).cross_join(query_embedding)
+        cte_query = Query.select(
+            Embed(transformer=model, text=query, parameters=query_parameters)
+        ).with_()
+        table_embedding = (
+            Query.from_(embeddings_table)
+            .select(
+                "chunk_id",
+                CosineDistance(embeddings_table.embedding, query_embedding.cosine),
+            )
+            .cross_join(query_embedding)
+        )
         cte_select_statement = """
         WITH query_cte AS (
             SELECT pgml.embed(transformer => {model}, text => '{query_text}', kwargs => {model_params}) AS query_embedding
