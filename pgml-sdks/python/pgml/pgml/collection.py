@@ -21,6 +21,7 @@ from .dbutils import (
 )
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from pypika.queries import Schema, Table, Query, QueryBuilder
 
 FORMAT = "%(message)s"
 logging.basicConfig(
@@ -791,6 +792,85 @@ class Collection:
 
         if generic_filter:
             cte_select_statement += " AND " + generic_filter
+
+        cte_select_statement += " LIMIT {top_k}".format(top_k=top_k)
+
+        search_results = run_select_statement(
+            conn, cte_select_statement, order_by="score", ascending=False
+        )
+        self.pool.putconn(conn)
+
+        return search_results
+
+    def execute(self, sql_statement: QueryBuilder) -> List[Dict[str, Any]]:
+        conn = self.pool.getconn()
+        results = run_select_statement(conn,sql_statement.get_sql().replace("\"",""))
+        self.pool.putconn(conn)
+        return results
+
+    def vector_recall(self,        
+        query: str,
+        query_parameters: Optional[Dict[str, Any]] = {},
+        top_k: int = 5,
+        model_id: int = 1,
+        splitter_id: int = 1) -> List[Dict[str, Any]]:
+        
+
+        if model_id in self._cache_model_names.keys():
+            model = self._cache_model_names[model_id]
+        else:
+            models = Table(self.models_table)
+            q = Query.from_(models).select('name').where(models.id == model_id)
+            results = self.execute(q)
+            model = results[0]["name"]
+            self._cache_model_names[model_id] = model
+
+        embeddings_table = ""
+        if model_id in self._cache_embeddings_table_names.keys():
+            if splitter_id in self._cache_embeddings_table_names[model_id].keys():
+                embeddings_table = self._cache_embeddings_table_names[model_id][
+                    splitter_id
+                ]
+
+        if not embeddings_table:
+            transforms_table = Table(self.transforms_table)
+            q = Query.from_(transforms_table).select('table_name').where(transforms_table.model_id == model_id).where(transforms_table.splitter_id == splitter_id)
+            embedding_table_results = self.execute(q)
+            if embedding_table_results:
+                embeddings_table = embedding_table_results[0]["table_name"]
+                self._cache_embeddings_table_names[model_id] = {
+                    splitter_id: embeddings_table
+                }
+            else:
+                rprint(
+                    "Embeddings for model id %d and splitter id %d do not exist.\nPlease run collection.generate_embeddings(model_id = %d, splitter_id = %d)"
+                    % (model_id, splitter_id, model_id, splitter_id)
+                )
+                return []
+
+        conn = self.pool.getconn()
+        cte_select_statement = """
+        WITH query_cte AS (
+            SELECT pgml.embed(transformer => {model}, text => '{query_text}', kwargs => {model_params}) AS query_embedding
+        ),
+        cte AS (
+            SELECT chunk_id, 1 - ({embeddings_table}.embedding <=> query_cte.query_embedding::float8[]::vector) AS score
+            FROM {embeddings_table}
+            CROSS JOIN query_cte
+            ORDER BY score DESC
+        )
+        SELECT cte.score, chunks.chunk, documents.metadata
+        FROM cte
+        INNER JOIN {chunks_table} chunks ON chunks.id = cte.chunk_id
+        INNER JOIN {documents_table} documents ON documents.id = chunks.document_id
+        """.format(
+            model=sql.Literal(model).as_string(conn),
+            query_text=query,
+            model_params=sql.Literal(json.dumps(query_parameters)).as_string(conn),
+            embeddings_table=embeddings_table,
+            chunks_table=self.chunks_table,
+            documents_table=self.documents_table,
+        )
 
         cte_select_statement += " LIMIT {top_k}".format(top_k=top_k)
 

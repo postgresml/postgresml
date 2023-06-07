@@ -164,5 +164,12 @@ class TestCollection(unittest.TestCase):
         )
         assert results[0]["metadata"]["user"] == "John Doe"
 
+    def test_vector_recall(self):
+        self.collection.upsert_documents(self.documents_with_reviews_metadata)
+        self.collection.generate_chunks()
+        self.collection.generate_embeddings()
+        results = self.collection.vector_recall("product is abc")
+        print(results)
+        
     # def tearDown(self) -> None:
     #     self.db.archive_collection(self.collection_name)
