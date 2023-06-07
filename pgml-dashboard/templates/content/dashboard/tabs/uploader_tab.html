@@ -1,0 +1,12 @@
+<%
+    let source = match table_name {
+        Some(name) => format!("/dashboard/uploader/done?table_name={}", name), 
+        None => "".to_string(),
+    };
+%>
+
+<turbo-frame id="upload" src="/dashboard/uploader">
+    <div class="d-flex justify-content-center align-items-center py-5">Loading snapshots, one moment...</div>
+</turbo-frame>
+<turbo-frame id="uploaded" src="<%= source %>">
+</turbo-frame>

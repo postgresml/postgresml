@@ -1,0 +1,34 @@
+<turbo-frame id="notebooks">
+  <section>
+     <h1 class="d-flex align-items-center">
+      <span class="material-symbols-outlined mb-1">newspaper</span>Notebooks
+    </h1> 
+    
+    <% if !notebooks.is_empty() { %>
+    <ol class="object_list">
+      <% for notebook in notebooks { %>
+      <li>
+        <a href="/dashboard/notebooks/<%= notebook.id %>/" data-turbo-frame="notebook">
+          <span>
+            <%= notebook.name %>
+          </span>
+        </a>
+      </li>
+      <% } %>
+    </ol>
+    <% } %>
+  
+    <h2>New notebook</h2>
+  
+    <form action="/dashboard/notebooks" method="post">
+        <div class="d-flex flex-row gap-3">
+            <div class="mb-3">
+              <input class="form-control" type="text" name="name" required placeholder="New unique notebook name" size="50" />
+            </div>
+            <div class="mb-3">
+              <button class="btn btn-secondary h-100" class="next" type="submit" data-turbo="false" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary">Create notebook</button>
+            </div>
+        </div>
+    </form>
+  </section>
+</turbo-frame>

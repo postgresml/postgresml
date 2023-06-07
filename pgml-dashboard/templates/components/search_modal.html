@@ -1,0 +1,16 @@
+<div class="modal modal-xl" tabindex="-1" data-search-target="searchModal" id="search">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="input-group">
+          <span class="material-symbols-outlined input-group-text">search</span>
+          <input type="text" class="form-control" placeholder="Search documentation" name="search" id="search-input" autocomplete="off" data-search-target="searchInput" data-action="search#search">
+        </div>
+      </div>
+      <div class="modal-body">
+        <turbo-frame id="search-results" src="/docs/search?query=" data-search-target="searchFrame">
+        </turbo-frame>
+      </div>
+    </div>
+  </div>
+</div>

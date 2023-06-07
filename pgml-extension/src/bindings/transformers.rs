@@ -35,14 +35,13 @@ pub fn transform(
     let results = Python::with_gil(|py| -> String {
         let transform: Py<PyAny> = PY_MODULE.getattr(py, "transform").unwrap().into();
 
-        let result = transform
-            .call1(
+        let result = transform.call1(
+            py,
+            PyTuple::new(
                 py,
-                PyTuple::new(
-                    py,
-                    &[task.into_py(py), args.into_py(py), inputs.into_py(py)],
-                ),
-            );
+                &[task.into_py(py), args.into_py(py), inputs.into_py(py)],
+            ),
+        );
 
         let result = match result {
             Err(e) => {
@@ -57,11 +56,12 @@ pub fn transform(
     serde_json::from_str(&results).unwrap()
 }
 
-pub fn embed(transformer: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f32> {
+pub fn embed(transformer: &str, inputs: &[&str], kwargs: &serde_json::Value) -> Vec<Vec<f32>> {
     crate::bindings::venv::activate();
 
     let kwargs = serde_json::to_string(kwargs).unwrap();
-    Python::with_gil(|py| -> Vec<f32> {
+    let inputs = serde_json::to_string(&inputs).unwrap();
+    Python::with_gil(|py| -> Vec<Vec<f32>> {
         let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed").unwrap().into();
         embed
             .call1(
@@ -70,7 +70,7 @@ pub fn embed(transformer: &str, text: &str, kwargs: &serde_json::Value) -> Vec<f
                     py,
                     &[
                         transformer.to_string().into_py(py),
-                        text.to_string().into_py(py),
+                        inputs.into_py(py),
                         kwargs.into_py(py),
                     ],
                 ),

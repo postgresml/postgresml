@@ -1,0 +1,79 @@
+.admonition {
+    @extend .alert; 
+    @extend .my-4;
+    padding: 24px 32px;
+    color: #{$gray-100};
+    border-color: var(--admonition-color);
+
+    .admonition-title {
+        @extend .gap-2;
+
+        display: flex;
+        align-items: center;
+        border-radius: 8px 8px 0px 0px;
+        padding: 24px 32px 24px 32px;
+        background-color: #{$gray-700};
+        font-size: 24px;
+        margin: -24px -32px 24px -32px;
+    }
+
+    .admonition-img {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        border-radius: var(--bs-border-radius-pill);
+        background-color: var(--admonition-color);
+    }
+}
+
+.admonition-note, .admonition-abstract, .admonition-info {
+    @extend .admonition;
+    --admonition-color: #{$neon-tint-200};
+}
+
+.admonition-tip, .admonition-example, .admonition-question {
+    @extend .admonition;
+    --admonition-color: #{$violet-shade-100};
+}
+
+.admonition-success, .admonition-quote {
+    @extend .admonition; 
+    --admonition-color: #{$teal-tint-100};
+}
+
+.admonition-bug, .admonition-warning, .admonition-fail, .admonition-danger {
+    @extend .admonition; 
+    --admonition-color: #{$peach-tint-100};
+}
+
+.admonition-generic {
+    @extend .admonition; 
+    --admonition-color: #{$slate-tint-1000};
+    padding: 0px;
+
+    .admonition-title {
+        display: none;
+    }
+
+    pre {
+        margin: 0px;
+    }
+
+    div.code-block {
+        border: none !important;
+        border-radius: 8px 8px 0px 0px !important;
+        margin: 0px 0px !important;
+        pre {
+            border-radius: inherit;
+        }
+    }
+
+    .execution-time {
+        border-top: 2px solid #{$gray-100};
+        border-bottom: 2px solid #{$gray-100};
+        background-color: #{$gray-600};
+        padding: 12px 12px;
+        margin: 0px !important;
+    }
+}

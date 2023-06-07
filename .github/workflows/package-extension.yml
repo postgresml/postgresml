@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       packageVersion:
-        default: "2.4.8"
+        default: "2.5.1"
 
 jobs:
   build:
@@ -84,7 +84,7 @@ jobs:
       with:
         working-directory: pgml-extension
         command: install
-        args: cargo-pgrx --version "0.8.2" --locked
+        args: cargo-pgrx --version "0.9.2" --locked
     - name: pgrx init
       uses: postgresml/gh-actions-cargo@master
       with:

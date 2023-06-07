@@ -1,0 +1,105 @@
+
+[data-bs-theme="dark"] {
+    --bs-heading-color: #{$gray-100};
+    --bs-tertiary-bg: #2F3033;
+    --bs-tertiary-color: #{$hp-white};
+    --bs-body-bg: #17181A;
+    --bs-body-color: #DEE0E7;
+    --bs-body-secondary-color: #BEBEC1;
+
+    --bs-info-bg-subtle: transparent;
+    --bs-info-border-subtle: #{$purple};
+    --bs-info-text: #{$gray-100};
+
+    --bs-success-bg-subtle: transparent;
+    --bs-success-border-subtle: #{$purple};
+    --bs-success-text: #{$gray-100};
+
+    --bs-link-color: #{$purple};
+    --bs-link-hover-color:#{$purple};
+
+    .list-group-item {
+        --bs-list-group-color: #{$hp-white};
+    }
+
+    .form-control {
+        --bs-form-control-bg: #212224;
+        --bs-body-color: #DEE0E7;
+        --bs-border-color: #212224;
+
+        &:disabled {
+            --bs-form-control-disabled-bg: #212224;
+        }
+
+        &:focus {
+            border-color: var(--bs-form-control-bg);
+        }
+    }
+
+    .form-label {
+        color: #{$gray-100};
+    }
+
+    .input-group-text {
+        --bs-border-color: #212224;
+
+        background-color: #212224;
+        color: #DEE0E7;
+    }
+
+    body {
+        --bs-body-color: #ABADB4;
+        --bs-danger-text: rgba(240, 76, 64, 1);
+        --bs-secondary-color: rgba(145, 145, 150, 1);
+    }
+
+    .btn {
+        &.btn-primary {
+            --bs-btn-bg: #{$gray-100};
+            --bs-btn-color: #2D2D2F;
+        }
+
+        &.btn-secondary {
+            --bs-btn-color: #{$hp-white};
+            --bs-btn-hover-color: #{$hp-white};
+            --bs-btn-active-color: #{$hp-white};
+        }
+    }
+
+    .text-black {
+        color: #111213 !important;
+    }
+
+    .text-white {
+        color: #{$gray-100} !important;
+    }
+
+    .navbar {
+        background: #151516;
+
+        .nav-link {
+            --bs-nav-link-color: #{$gray-300};
+            --bs-nav-link-hover-color: #{$gray-100};
+
+        &:hover {
+            text-shadow: 0 0 .65px white, 0 0 .65px white; //change font weight without element resizing
+        }
+
+            &:active {
+                color: #{$gray-200};
+            }
+        }
+    }
+
+    .bg-body-tertiary {
+        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.245) 15.62%, rgba(53, 51, 56, 0.28) 67.01%);
+
+        p, ol, ul, li, table {
+            color: #{$gray-100};
+        }
+    }
+
+    code {
+        --bs-code-color: #{$gray-100};
+    }
+}

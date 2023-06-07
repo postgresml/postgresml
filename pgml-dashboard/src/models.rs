@@ -1,22 +1,14 @@
-// Markdown
+use std::collections::HashMap;
+
 use comrak::{markdown_to_html, ComrakExtensionOptions, ComrakOptions};
-
-// Templates
+use csv_async::AsyncReaderBuilder;
 use sailfish::TemplateOnce;
-
-// Database
 use sqlx::postgres::types::PgInterval;
 use sqlx::types::time::PrimitiveDateTime;
 use sqlx::{FromRow, PgPool, Row};
-
-// CSV parser
-use csv_async::AsyncReaderBuilder;
-
-// Files
 use tokio::io::{AsyncBufReadExt, AsyncSeekExt};
 
 use crate::templates;
-use std::collections::HashMap;
 
 #[derive(FromRow, Debug, Clone)]
 pub struct Project {
@@ -298,17 +290,27 @@ impl Cell {
 
         let (rendering, execution_time) = match cell_type {
             CellType::Sql => {
-                let queries: Vec<&str> = self.contents.split(';').filter(|q| !q.trim().is_empty()).collect();
+                let queries: Vec<&str> = self
+                    .contents
+                    .split(';')
+                    .filter(|q| !q.trim().is_empty())
+                    .collect();
                 let mut rendering = String::new();
-                let mut total_execution_duration = std::time::Duration::default(); 
+                let mut total_execution_duration = std::time::Duration::default();
                 let render_individual_execution_duration = queries.len() > 1;
 
                 for query in queries {
-                    let result = match templates::Sql::new(pool, query, render_individual_execution_duration).await {
+                    let result = match templates::Sql::new(
+                        pool,
+                        query,
+                        render_individual_execution_duration,
+                    )
+                    .await
+                    {
                         Ok(sql) => {
                             total_execution_duration += sql.execution_duration;
                             sql.render_once()?
-                        },
+                        }
                         Err(err) => templates::SqlError {
                             error: format!("{:?}", err),
                         }
@@ -318,10 +320,10 @@ impl Cell {
                     rendering.push_str(&result);
                 }
 
-                let execution_time = PgInterval{
+                let execution_time = PgInterval {
                     months: 0,
                     days: 0,
-                    microseconds: total_execution_duration.as_micros().try_into().unwrap_or(0)
+                    microseconds: total_execution_duration.as_micros().try_into().unwrap_or(0),
                 };
                 (rendering, Some(execution_time))
             }
@@ -341,10 +343,13 @@ impl Cell {
                     front_matter_delimiter: None,
                 };
 
-                (format!(
-                    "<div class=\"markdown-body\">{}</div>",
-                    markdown_to_html(&self.contents, &options)
-                ), None)
+                (
+                    format!(
+                        "<div class=\"markdown-body\">{}</div>",
+                        markdown_to_html(&self.contents, &options)
+                    ),
+                    None,
+                )
             }
         };
 
@@ -932,6 +937,12 @@ impl UploadedFile {
 pub struct User {
     pub id: i64,
     pub email: String,
+}
+
+impl User {
+    pub fn is_anonymous(&self) -> bool {
+        self.id == 0
+    }
 }
 
 #[derive(Debug, Clone)]

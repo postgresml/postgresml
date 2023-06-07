@@ -1,0 +1,20 @@
+
+.breadcrumb {
+    .breadcrumb-item {
+        display: flex; 
+        align-items: center;
+        text-align: center;
+        border: none;
+
+        a {
+            padding: 0px;
+        }
+
+        &.active {
+            a {
+                text-shadow: 0 0 0.65px white, 0 0 0.65px white;
+                color: #{$hp-white};
+            }
+        }
+    }
+}

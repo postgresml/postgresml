@@ -33,10 +33,10 @@ collection.generate_embeddings()
 
 start = time()
 query = "Who won 20 grammy awards?"
-results = collection.vector_search(query, top_k=5, title="Beyoncé")
+results = collection.vector_search(query, top_k=5, metadata_filter={"title" : "Beyoncé"})
 _end = time()
 console.print("\nResults for '%s'" % (query), style="bold")
 console.print(results)
 console.print("Query time = %0.3f" % (_end - start))
 
-db.archive_collection(collection_name)
+# db.archive_collection(collection_name)

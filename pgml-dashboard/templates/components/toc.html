@@ -1,0 +1,16 @@
+<% if !links.is_empty() { %>
+<h6 class="h6 mb-2 pb-2 d-none d-xxl-block">Table of Contents</h6>
+<a class="h6 px-0 my-1 d-flex justify-content-between align-items-center d-xxl-none text-white" role="button" data-bs-toggle="collapse" href="#toc-nav" aria-expanded="false" aria-congrols="tox-nav">
+  <span>Table of Contents</span><span class="material-symbols-outlined" >expand_more</span>
+</a>
+
+<div id="toc-nav" class="d-xxl-flex pt-2 flex-column collapse border-top" aria-orientation="vertical" data-controller="docs-toc">
+  <% for link in links.iter() { %>
+    <div style="padding-left: <%= link.level as f32 * 0.7 - 1.4 %>rem;">
+      <a  class="nav-link px-0 text-break" href="#<%= link.id %>" role="button" data-action="docs-toc#scrollSpyAppend" >
+        <%= link.title %>
+      </a>
+    </div>
+  <% } %>
+</div>
+<% } %>

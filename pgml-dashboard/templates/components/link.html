@@ -1,0 +1,34 @@
+<div class="nav flex-column" role="tablist" aria-orientation="vertical">
+  <% if !children.is_empty() {
+    let aria = if open {
+      "true"
+    } else {
+      "false"
+    };
+
+    let show = if open {
+      "show"
+    } else {
+      "false"
+    };
+  %>
+  <a class="nav-link px-0 d-flex justify-content-between align-items-center text-break" data-bs-toggle="collapse" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>">
+    <span><%= title %></span><span class="material-symbols-outlined">expand_more</span>
+  </a>
+  <div class="collapse <%- show %> ps-3" id="doc-<%= id %>">
+    <div class="nav flex-column" role="tablist" aria-orentation="vertical">
+      <% for child in children.into_iter() { %>
+        <%- child.render_once().unwrap() %>
+      <% } %>
+    </div>
+  </div>
+  <% } else {
+    let color = if open {
+      "purple"
+    } else {
+      ""
+    };
+  %>
+    <a class="nav-link px-0 text-break <%- color %>" href="<%- href %>"><%- title %></a>
+  <% } %>
+</div>

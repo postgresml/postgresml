@@ -1,0 +1,12 @@
+// Center badge content
+.badge {
+    text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.beta-badge {
+    @extend .badge;
+    color: #{$pink};
+}
