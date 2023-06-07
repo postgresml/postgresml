@@ -20,6 +20,7 @@ from .dbutils import (
     run_select_statement,
 )
 
+from .queries import Embed, CosineDistance
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pypika.queries import Schema, Table, Query, QueryBuilder
 
@@ -849,6 +850,9 @@ class Collection:
                 return []
 
         conn = self.pool.getconn()
+
+        cte_query = Query.select(Embed(transformer=model,text=query,parameters=query_parameters)).with_()
+        table_embedding = Query.from_(embeddings_table).select('chunk_id',CosineDistance(embeddings_table.embedding,query_embedding.cosine)).cross_join(query_embedding)
         cte_select_statement = """
         WITH query_cte AS (
             SELECT pgml.embed(transformer => {model}, text => '{query_text}', kwargs => {model_params}) AS query_embedding
