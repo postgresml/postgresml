@@ -1,6 +1,6 @@
 ---
 author: Montana Low
-description: PostgresML is 5-20x faster than MindsDB.
+description: PostgresML is more opinionated, scalable, and several times faster than MindsDB.
 image: https://postgresml.org/static/images/blog/embeddings_1.jpg
 image_alt: Embeddings show us the relationships between rows in the database
 ---
@@ -11,16 +11,17 @@ image_alt: Embeddings show us the relationships between rows in the database
   <img width="54px" height="54px" src="/dashboard/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Montana Low</p>
-    <p class="m-0">June 1, 2023</p>
+    <p class="m-0">June 8, 2023</p>
   </div>
 </div>
 
 ## Introduction
+There are a many ways to do machine learning with data in a SQL database. In this article, we'll compare 2 projects that both aim to provide a SQL interface to machine learning algorithms and the data they require: MindsDB and PostgresML. We'll look at how they work, what they can do, and how they compare to each other. The TLDR is that PostgresML is more opinionated, scalable, and several times faster than MindsDB. 
 
-There are a many ways to do machine learning with data in a SQL database. In this article, we'll compare 2 projects that both aim to provide a SQL interface to machine learning algorithms and the data they require: MindsDB and PostgresML. We'll look at how they work, what they can do, and how they compare to each other. The TLDR is that PostgresML is more opinionated, scalable, and 10x faster than MindsDB.
+We're frequently asked how PostgresML is different from MindsDB, so we'd like to lay out why we think another open source solution is worth investing in, and let you decide if the comparisons are fair.
 
 #### At a glance
-Both projects are Open Source, although PostgresML allows for more permissive use with the MIT license, compared to the GPL-3.0 license used by MindsDB. PostgresML is also a significantly newer project, with the first commit in 2022, compared to MindsDB which has been around since 2017, but one of the first hints at the real implementation differences between the two projects is the choice of programming languages. MindsDB is implemented in Python, while PostgresML is implemented with Rust. I say _in_ Python, because it's a language with a runtime, and _with_ Rust, because it's a language with a compiler that does not require a Runtime. We'll see how this difference in implementation languages leads to different outcomes.
+Both projects are Open Source, although PostgresML allows for more permissive use with the MIT license, compared to the GPL-3.0 license used by MindsDB. PostgresML is also a significantly newer project, with the first commit in 2022, compared to MindsDB which has been around since 2017, but one of the first hints at the real differences between the two projects is the choice of programming languages. MindsDB is implemented in Python, while PostgresML is implemented with Rust. I say _in_ Python, because it's a language with a runtime, and _with_ Rust, because it's a language with a compiler that does not require a Runtime. We'll see how this difference in implementation languages leads to different outcomes.
 
 |                  | MindsDB | PostgresML |
 |------------------|---------|------------|
@@ -30,7 +31,7 @@ Both projects are Open Source, although PostgresML allows for more permissive us
 
 
 #### Algorithms 
-Both Projects integrate several dozens of machine learning algorithms, including the latest LLMs from Hugging Face. 
+Both Projects integrate several dozen machine learning algorithms, including the latest LLMs from Hugging Face. 
 
 |                   | MindsDB | PostgresML |
 |-------------------|---------|------------|
@@ -43,15 +44,9 @@ Both Projects integrate several dozens of machine learning algorithms, including
 | Full Text Search  | -       | ✅          |
 | Geospatial Search | -       | ✅          |
 
-Both MindsDB and PostgresML support many classical machine learning algorithms to do classification and regression, as well as loading the latest LLMs from Hugging Face, supported by underlying implementations in libtorch. New algorithms and models are constantly released and being added to both projects, so it's worth checking the documentation for the latest list.
+Both MindsDB and PostgresML support many classical machine learning algorithms to do classification and regression. They are both able to load the latest LLMs from Hugging Face, supported by underlying implementations in libtorch. New algorithms, tasks and models are constantly released and being added to both projects, so it's worth checking the documentation for the latest list. One difference is that PostgresML also supports embedding models, and closely integrates them with vector search inside the database.
 
-PostgresML also has direct access to all the functionality provided by other Postgres extensions, like vector indexes from [pgvector](https://github.com/pgvector/pgvector) to perform efficient KNN & ANN vector recall, or [PostGIS](http://postgis.net/) for geospatial information. Multiple algorithms and extensions can be combined in compound queries to build state-of-the-art systems, like search and recommendations or fraud detection that generate an end to end result with a single query, something that might take a dozen different machine learning models and microservices in a more traditional Python based architecture.
-
-#### Data Integrations
-
-MindsDB has created a ton of data store integrations, including Postgres, MySQL, MongoDB, and many others, because it's not a database. It requires the data to live somewhere else, and fetches it over the wire as necessary. Luckily as a Python project, there are many connectors available for many different storage systems, so we can continue to expect good interoperability. 
-
-On the other hand, PostgresML requires a Postgres database, and runs directly inside the Postgres process as an extension that shares CPU and RAM. However, because PostgresML is "just Postgres" there are similarlyl a large number of services and  integrations with other data systems. If you'd like to use PostgresML without relocating your data, you could set up a Postgres foreign data wrapper or streaming replication to turn Postgres into a read-only cache for your ML data.  
+PostgresML also has direct access to all the functionality provided by other Postgres extensions, like vector indexes from [pgvector](https://github.com/pgvector/pgvector) to perform efficient KNN & ANN vector recall, or [PostGIS](http://postgis.net/) for geospatial information as well as built in full text search. Multiple algorithms and extensions can be combined in compound queries to build state-of-the-art systems, like search and recommendations or fraud detection that generate an end to end result with a single query, something that might take a dozen different machine learning models and microservices in a more traditional architecture.
 
 #### Architecture
 The architectural implementations for these projects is significantly different. PostgresML takes a data centric approach with Postgres as the provider for both storage _and_ compute. To provide horizontal scalability for inference, the PostgresML team has also created [PgCat](https://github.com/postgresml/pgcat) to distribute workloads across many Postgres databases. On the other hand, MindsDB takes a service oriented approach that connects to various databases over the network. 
@@ -67,14 +62,13 @@ The architectural implementations for these projects is significantly different.
 | On Premise    | ✅             | ✅          |
 | Web UI        | ✅             | ✅          |
 
-The difference in architecture leads to different tradeoffs and challenges. There are already hundreds of ways to get data into and out of a Postgres database, from just about every other service, language and platform that makes PostgresML highly compatible with other application workflows. On the other hand, the MindsDB Python service has a web interface, as well as accepts connections from specifically supported SQL clients like `psql` and provides a pseudo-SQL interface. The service will parse incoming MindsDB commands that look similar to SQL (but are not), for tasks like configuring database connections, or doing actual machine learning. These commands typically have what looks like a sub-select, that will actually fetch data over the wire from configured databases for Machine Learning training and inference.
+The difference in architecture leads to different tradeoffs and challenges. There are already hundreds of ways to get data into and out of a Postgres database, from just about every other service, language and platform that makes PostgresML highly compatible with other application workflows. On the other hand, the MindsDB Python service accepts connections from specifically supported clients like `psql` and provides a pseudo-SQL interface to the functionality. The service will parse incoming MindsDB commands that look similar to SQL (but are not), for tasks like configuring database connections, or doing actual machine learning. These commands typically have what looks like a sub-select, that will actually fetch data over the wire from configured databases for Machine Learning training and inference.
 
-MindsDB is actually a pretty standard Python microservice based architecture that separates data from compute over the wire, just with an SQL like API, instead of gRPC or REST. MindsDB isn't actually a DB at all, but rather an ML service with adapters for just about every database that Python can connect to. On the other hand, PostgresML runs ML algorithms inside the database process. It shares memory with the database, and can access data directly, using pointers to avoid the serialization and networking overhead that frequently dominates data hungry machine learning applications. Rust is an important language choice for PostgresML because its memory safety simplifies the effort required to achieve stability along with performance in a large and complex memory space. The tradeoff, is that it requires a Postgres database to actually host the data it operates on. 
+MindsDB is actually a pretty standard Python microservice based architecture that separates data from compute over the wire, just with an SQL like API, instead of gRPC or REST. MindsDB isn't actually a DB at all, but rather an ML service with adapters for just about every database that Python can connect to. On the other hand, PostgresML runs ML algorithms inside the database itself. It shares memory with the database, and can access data directly, using pointers to avoid the serialization and networking overhead that frequently dominates data hungry machine learning applications. Rust is an important language choice for PostgresML because its memory safety simplifies the effort required to achieve stability along with performance in a large and complex memory space. The tradeoff, is that it requires a Postgres database to actually host the data it operates on. 
 
 In addition to the extension, PostgresML relies on PgCat to scale PostgresML clusters horizontally using both sharding and replication strategies to provide both scalable compute and storage. Scaling a low latency and high availability feature store is often the most difficult operational challenge for Machine Learning applications, and it's the primary driver of PostgresML's architectural choices. MindsDB leaves those issues as an exercise for the adopter, while also introducing a new single service bottleneck for ML compute implemented in Python.
 
 ## Benchmarks
-
 If you missed our previous article benchmarking [PostgresML vs Python Microservices](postgresml-is-8x-faster-than-python-http-microservices), spoiler alert, PostgresML is between 8-40x faster than Python microservice architectures that do the same thing, even if they use "specialized" in memory databases like Redis. The network transit cost as well as data serialization is a major cost for data hungry machine learning algorithms. Since MindsDB doesn't actually provide a DB, we'll create a synthetic benchmark that doesn't use stored data in a database (even though that's the whole point of SQL ML, right?). This will negate the network serialization and transit costs a MindsDB service would typically occur, and highlight the performance differences between Python and Rust implementations. 
 
 
@@ -250,15 +244,20 @@ The other thing I learned trying to get this working is that MindsDB isn't just 
 
 #### Results
 
-PostgresML is the clear winner in terms of performance.
+PostgresML is the clear winner in terms of performance. It seems to me that it currently also support more models with a looser function API than the pseudo SQL required to create a MindsDB model. You'll notice the output structure for models on HuggingFace can very widely. I tried several not listed in the MindsDB documentation, but received errors on creation. PostgresML just returns the models output without restructuring, so it's able to handle more discrepancies, although that does leave it up to the end user to sort out how to use models.
 
-| task                | MindsDB | PostgresML CPU | PostgresML GPU |
-|---------------------|---------|----------------|----------------|
-| text-classification | 741ms   | 165ms          | 45ms           |
+| task                 | model                                     | MindsDB | PostgresML CPU | PostgresML GPU  |
+|----------------------|-------------------------------------------|---------|----------------|-----------------|
+| text-classification  | cardiffnlp/twitter-roberta-base-sentiment | 741     | 165            | 45              |
+| translation_en_to_es | t5-base                                   | 1573    | 1148           | 294             |
+| summarization        | sshleifer/distilbart-cnn-12-6             | 4289    | 3450           | 479             |
+
+There is a general trend, the larger and slower the model is, the more work is spent inside libtorch, the less the performance of the rest matters, but for interactive models and use cases there is a significant difference. We've tried to cover the most generous use case we could between these two. If we were to compare XGBoost or other classical algorithms, that can have sub millisecond prediction times in PostgresML, the 20ms Python service overhead of MindsDB just to parse the incoming query would be hundreds of times slower.
+
 
 ## Clouds
 
-Setting these services up is a fair bit of work, and managing machine learning and databases can require a significant time investment. Both services are available in the cloud, so let's see how they compare. MindsDB is available on the AWS marketplace on top of your own hardware instances, you can scale it out and configure your datasources through their Web UI, very similar to the local installation. PostgresML is available as a fully managed database service, that includes the storage, backups, metrics, and scalability through PgCat that large ML deployments need. End-to-end machine learning is rarely just about running the models, and often more about scaling the data pipelines and managing the data infrastructure around them, so in this case PostgresML also provides a large service advantage.
+Setting these services up is a fair bit of work, and managing machine learning and databases can require a significant time investment. Both services are available in the cloud, so let's see how they compare on that front as well. MindsDB is available on the AWS marketplace on top of your own hardware instances, you can scale it out and configure your data sources through their Web UI, very similar to the local installation. PostgresML is available as a fully managed database service, that includes the storage, backups, metrics, and scalability through PgCat that large ML deployments need. End-to-end machine learning is rarely just about running the models, and often more about scaling the data pipelines and managing the data infrastructure around them, so in this case PostgresML also provides a large service advantage, whereas with MindsDB, you'll still need to figure out your cloud datastorage solution independently.
 
 
 
