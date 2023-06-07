@@ -57,6 +57,10 @@ DTYPE_MAP = {
     "bool": torch.bool,
 }
 
+def orjson_default(obj):
+    if isinstance(obj, numpy.float32):
+        return float(obj)
+    raise TypeError
 
 def convert_dtype(kwargs):
     if "torch_dtype" in kwargs:
@@ -100,7 +104,7 @@ def transform(task, args, inputs):
 
     results = pipe(inputs, **args)
 
-    return orjson.dumps(results).decode()
+    return orjson.dumps(results, default=orjson_default).decode()
 
 
 def embed(transformer, inputs, kwargs):
