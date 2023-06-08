@@ -1,6 +1,5 @@
 from pgml import Database
 import os
-from datasets import load_dataset
 from time import time
 from dotenv import load_dotenv
 from rich.console import Console
@@ -23,7 +22,9 @@ reader = PdfReader("lincoln.pdf")
 number_of_pages = len(reader.pages)
 documents = []
 for page_number, page in enumerate(reader.pages):
-    documents.append({"text": page.extract_text(),"page": page_number, "source": filename})
+    documents.append(
+        {"text": page.extract_text(), "page": page_number, "source": filename}
+    )
 
 collection.upsert_documents(documents)
 collection.generate_chunks()
