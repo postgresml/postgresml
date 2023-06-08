@@ -5,6 +5,7 @@ from datasets import load_dataset
 from time import time
 from dotenv import load_dotenv
 from rich.console import Console
+from pypika import Table
 
 load_dotenv()
 console = Console()
@@ -33,7 +34,13 @@ collection.generate_embeddings()
 
 start = time()
 query = "Who won 20 grammy awards?"
-results = collection.vector_search(query, top_k=5, metadata_filter={"title": "Beyoncé"})
+documents_table = Table("documents", schema=collection_name)
+sql_query = (
+    collection.vector_recall(query)
+    .where(documents_table.metadata.contains({"title": "Beyoncé"}))
+    .limit(5)
+)
+results = collection.execute(sql_query)
 _end = time()
 console.print("\nResults for '%s'" % (query), style="bold")
 console.print(results)

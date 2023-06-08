@@ -174,8 +174,10 @@ class TestCollection(unittest.TestCase):
         query = (
             self.collection.vector_recall("product is abc")
             .where(documents_table.metadata.contains({"source": "amazon"}))
-            .where(Cast(documents_table.metadata.get_json_value("reviews"),'INTEGER') < 45)
-            .limit(10)
+            .where(
+                Cast(documents_table.metadata.get_json_value("reviews"), "INTEGER") < 45
+            )
+            .limit(2)
         )
         results = self.collection.execute(query)
         assert results[0]["metadata"]["user"] == "John Doe"

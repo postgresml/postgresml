@@ -876,11 +876,14 @@ class Collection:
             .from_(embeddings_table)
             .select(
                 "chunk_id",
-                CosineDistance(
-                    embeddings_table.embedding, Cast(query_cte.embedding, "vector")
+                (
+                    1.0
+                    - CosineDistance(
+                        embeddings_table.embedding, Cast(query_cte.embedding, "vector")
+                    )
                 ).as_("score"),
             )
-            .inner_join(AliasedQuery("query_cte"))
+            .join(AliasedQuery("query_cte"))
             .cross()
         )
 
