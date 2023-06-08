@@ -1,6 +1,6 @@
 ---
 author: Montana Low
-description: PostgresML is more opinionated, scalable, and several times faster than MindsDB.
+description: PostgresML is more opinionated, more scalable, more functional and several times faster than MindsDB.
 image: https://postgresml.org/static/images/blog/elephant_book.jpg
 image_alt: We read to learn
 ---
@@ -19,7 +19,7 @@ image_alt: We read to learn
 There are a many ways to do machine learning with data in a SQL database. In this article, we'll compare 2 projects that both aim to provide a SQL interface to machine learning algorithms and the data they require: **MindsDB** and **PostgresML**. We'll look at how they work, what they can do, and how they compare to each other. The TLDR is that PostgresML is more opinionated, more scalable, more functional and several times faster than MindsDB.
 
 ![elephants](/dashboard/static/images/blog/elephant_book.webp)
-<center><i>We're frequently asked how PostgresML is different from MindsDB, so we'd like to lay out why we think another open source solution is worth investing in, and let you decide if the comparisons are fair.</i></center>
+<center><i>We're occasionally asked how PostgresML is different from MindsDB. We'd like to answer that question, and let you decide if the reasoning is fair.</i></center>
 
 ### At a glance
 Both projects are Open Source, although PostgresML allows for more permissive use with the MIT license, compared to the GPL-3.0 license used by MindsDB. PostgresML is also a significantly newer project, with the first commit in 2022, compared to MindsDB which has been around since 2017, but one of the first hints at the real differences between the two projects is the choice of programming languages. MindsDB is implemented in Python, while PostgresML is implemented with Rust. I say _in_ Python, because it's a language with a runtime, and _with_ Rust, because it's a language with a compiler that does not require a Runtime. We'll see how this difference in implementation languages leads to different outcomes.
