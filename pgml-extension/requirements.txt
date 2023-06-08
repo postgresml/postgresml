@@ -4,6 +4,7 @@ deepspeed==0.9.2
 huggingface-hub==0.14.1
 InstructorEmbedding==1.0.0
 lightgbm==3.3.5
+orjson==3.9.0
 pandas==2.0.1
 rich==13.3.5
 rouge==1.0.1
@@ -17,6 +18,7 @@ torchaudio==2.0.2
 torchvision==0.15.2
 tqdm==4.65.0
 transformers==4.29.2
+xformers==0.0.20
 xgboost==1.7.5
 langchain==0.0.180
 einops==0.6.1

@@ -24,13 +24,13 @@ static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
 pub fn transform(
     task: &serde_json::Value,
     args: &serde_json::Value,
-    inputs: &Vec<String>,
+    inputs: Vec<&str>,
 ) -> serde_json::Value {
     crate::bindings::venv::activate();
 
     let task = serde_json::to_string(task).unwrap();
     let args = serde_json::to_string(args).unwrap();
-    let inputs = serde_json::to_string(inputs).unwrap();
+    let inputs = serde_json::to_string(&inputs).unwrap();
 
     let results = Python::with_gil(|py| -> String {
         let transform: Py<PyAny> = PY_MODULE.getattr(py, "transform").unwrap().into();
@@ -56,11 +56,10 @@ pub fn transform(
     serde_json::from_str(&results).unwrap()
 }
 
-pub fn embed(transformer: &str, inputs: &[&str], kwargs: &serde_json::Value) -> Vec<Vec<f32>> {
+pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -> Vec<Vec<f32>> {
     crate::bindings::venv::activate();
 
     let kwargs = serde_json::to_string(kwargs).unwrap();
-    let inputs = serde_json::to_string(&inputs).unwrap();
     Python::with_gil(|py| -> Vec<Vec<f32>> {
         let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed").unwrap().into();
         embed

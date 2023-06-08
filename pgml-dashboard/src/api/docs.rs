@@ -97,6 +97,8 @@ async fn blog_handler<'a>(
         current_user,
         &path,
         vec![
+            NavLink::new("MindsDB vs PostgresML")
+                .href("/blog/mindsdb-vs-postgresml"),
             NavLink::new("Introducing PostgresML Python SDK: Build End-to-End Vector Search Applications without OpenAI and Pinecone")
                 .href("/blog/introducing-postgresml-python-sdk-build-end-to-end-vector-search-applications-without-openai-and-pinecone"),
             NavLink::new("PostgresML raises $4.7M to launch serverless AI application databases based on Postgres")
