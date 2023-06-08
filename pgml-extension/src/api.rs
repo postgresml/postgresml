@@ -71,20 +71,13 @@ pub fn python_package_version(name: &str) {
 
 #[pg_extern]
 pub fn validate_shared_library() {
-    let shared_preload_libraries: String = match Spi::get_one(
+    let shared_preload_libraries: String = Spi::get_one(
         "SELECT setting
          FROM pg_settings
          WHERE name = 'shared_preload_libraries'
          LIMIT 1",
-    ) {
-        Ok(value) => value,
-        Err(_) => {
-            warning!("`shared_preload_libraries` setting could not be checked, can't validate that `pgml` is configured correctly. \
-                Make sure that `pgml` is added to `shared_preload_libraries` before using the extension. \
-                Must be superuser or a member of pg_read_all_settings to examine `shared_preload_libraries`.");
-            return;
-        }
-    }
+    )
+    .unwrap()
     .unwrap();
 
     if !shared_preload_libraries.contains("pgml") {
