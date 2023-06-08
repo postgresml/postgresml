@@ -141,7 +141,13 @@ impl CurrentUser {
     }
 
     pub fn new() -> CurrentUser {
-        CurrentUser::default()
+        CurrentUser {
+            user: Arc::new(Mutex::new( models::User {
+                id: -1, 
+                email: "".to_string()
+            })), 
+            visible_clusters: Arc::new(Mutex::new(HashMap::new())),
+        }
     }
 }
 
