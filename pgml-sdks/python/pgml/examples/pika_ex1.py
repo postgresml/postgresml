@@ -1,10 +1,15 @@
 from pypika import Query, Table, AliasedQuery, Order, Field
 from pypika.functions import Cast
+from pypika.enums import SqlTypes
 from pgml.queries import Embed, CosineDistance
+from pypika.utils import format_quotes
+from psycopg import sql
 
-embeddings_table = Table("test_collection_1.embeddings_d2beb7")
-chunks_table = Table("test_collection_1.chunks")
-documents_table = Table("test_collection_1.documents")
+
+
+embeddings_table = Table("embeddings_d2beb7",schema="test_collection_1")
+chunks_table = Table("chunks",schema="test_collection_1")
+documents_table = Table("documents", schema="test_collection_1")
 
 model = "intfloat/e5-small"
 text = "hello world"
@@ -21,7 +26,7 @@ table_embed = (
         ).as_("score"),
     )
     .inner_join(AliasedQuery("query_cte"))
-    .on(Field(1) == Field(1))
+    .cross()
 )
 
 query_cte = (
@@ -35,5 +40,6 @@ query_cte = (
     .inner_join(documents_table)
     .on(documents_table.id == chunks_table.document_id)
 )
-print(query_cte.get_sql().replace('"', ""))
 
+final_query = query_cte.where(documents_table.metadata.contains({"reviews" : 42})).limit(5)
+print(final_query)

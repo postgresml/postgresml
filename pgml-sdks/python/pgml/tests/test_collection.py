@@ -3,6 +3,8 @@ from pgml import Database, Collection
 from pgml.dbutils import *
 import hashlib
 import os
+from pypika import Table
+from pypika.functions import Cast
 
 
 class TestCollection(unittest.TestCase):
@@ -168,8 +170,15 @@ class TestCollection(unittest.TestCase):
         self.collection.upsert_documents(self.documents_with_reviews_metadata)
         self.collection.generate_chunks()
         self.collection.generate_embeddings()
-        results = self.collection.vector_recall("product is abc")
-        print(results)
-        
+        documents_table = Table("documents", schema=self.collection.name)
+        query = (
+            self.collection.vector_recall("product is abc")
+            .where(documents_table.metadata.contains({"source": "amazon"}))
+            .where(Cast(documents_table.metadata.get_json_value("reviews"),'INTEGER') < 45)
+            .limit(10)
+        )
+        results = self.collection.execute(query)
+        assert results[0]["metadata"]["user"] == "John Doe"
+
     # def tearDown(self) -> None:
     #     self.db.archive_collection(self.collection_name)

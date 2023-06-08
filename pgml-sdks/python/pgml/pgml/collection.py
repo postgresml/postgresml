@@ -20,9 +20,12 @@ from .dbutils import (
     run_select_statement,
 )
 
-from .queries import Embed, CosineDistance
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from pypika.queries import Schema, Table, Query, QueryBuilder
+from pypika import Query, Table, AliasedQuery, Order, Field
+from pypika.queries import QueryBuilder
+from pypika.functions import Cast
+from .queries import Embed, CosineDistance
+
 
 FORMAT = "%(message)s"
 logging.basicConfig(
@@ -805,7 +808,7 @@ class Collection:
 
     def execute(self, sql_statement: QueryBuilder) -> List[Dict[str, Any]]:
         conn = self.pool.getconn()
-        results = run_select_statement(conn, sql_statement.get_sql().replace('"', ""))
+        results = run_select_statement(conn, sql_statement.get_sql())
         self.pool.putconn(conn)
         return results
 
@@ -813,14 +816,13 @@ class Collection:
         self,
         query: str,
         query_parameters: Optional[Dict[str, Any]] = {},
-        top_k: int = 5,
         model_id: int = 1,
         splitter_id: int = 1,
     ) -> List[Dict[str, Any]]:
         if model_id in self._cache_model_names.keys():
             model = self._cache_model_names[model_id]
         else:
-            models = Table(self.models_table)
+            models = Table(self.models_table.split(".")[1], schema=self.name)
             q = Query.from_(models).select("name").where(models.id == model_id)
             results = self.execute(q)
             model = results[0]["name"]
@@ -834,7 +836,9 @@ class Collection:
                 ]
 
         if not embeddings_table:
-            transforms_table = Table(self.transforms_table)
+            transforms_table = Table(
+                self.transforms_table.split(".")[1], schema=self.name
+            )
             q = (
                 Query.from_(transforms_table)
                 .select("table_name")
@@ -854,47 +858,43 @@ class Collection:
                 )
                 return []
 
-        conn = self.pool.getconn()
+        embeddings_table = embeddings_table.split(".")[1]
+        chunks_table = self.chunks_table.split(".")[1]
+        documents_table = self.documents_table.split(".")[1]
 
-        cte_query = Query.select(
+        embeddings_table = Table(embeddings_table, schema=self.name)
+        chunks_table = Table(chunks_table, schema=self.name)
+        documents_table = Table(documents_table, schema=self.name)
+
+        query_embed = Query().select(
             Embed(transformer=model, text=query, parameters=query_parameters)
-        ).with_()
-        table_embedding = (
-            Query.from_(embeddings_table)
+        )
+        query_cte = AliasedQuery("query_cte")
+        cte = AliasedQuery("cte")
+        table_embed = (
+            Query()
+            .from_(embeddings_table)
             .select(
                 "chunk_id",
-                CosineDistance(embeddings_table.embedding, query_embedding.cosine),
+                CosineDistance(
+                    embeddings_table.embedding, Cast(query_cte.embedding, "vector")
+                ).as_("score"),
             )
-            .cross_join(query_embedding)
-        )
-        cte_select_statement = """
-        WITH query_cte AS (
-            SELECT pgml.embed(transformer => {model}, text => '{query_text}', kwargs => {model_params}) AS query_embedding
-        ),
-        cte AS (
-            SELECT chunk_id, 1 - ({embeddings_table}.embedding <=> query_cte.query_embedding::float8[]::vector) AS score
-            FROM {embeddings_table}
-            CROSS JOIN query_cte
-            ORDER BY score DESC
-        )
-        SELECT cte.score, chunks.chunk, documents.metadata
-        FROM cte
-        INNER JOIN {chunks_table} chunks ON chunks.id = cte.chunk_id
-        INNER JOIN {documents_table} documents ON documents.id = chunks.document_id
-        """.format(
-            model=sql.Literal(model).as_string(conn),
-            query_text=query,
-            model_params=sql.Literal(json.dumps(query_parameters)).as_string(conn),
-            embeddings_table=embeddings_table,
-            chunks_table=self.chunks_table,
-            documents_table=self.documents_table,
+            .inner_join(AliasedQuery("query_cte"))
+            .cross()
         )
 
-        cte_select_statement += " LIMIT {top_k}".format(top_k=top_k)
-
-        search_results = run_select_statement(
-            conn, cte_select_statement, order_by="score", ascending=False
+        query_cte = (
+            Query()
+            .with_(query_embed, "query_cte")
+            .with_(table_embed, "cte")
+            .from_("cte")
+            .select(cte.score, chunks_table.chunk, documents_table.metadata)
+            .orderby(cte.score, order=Order.desc)
+            .inner_join(chunks_table)
+            .on(chunks_table.id == cte.chunk_id)
+            .inner_join(documents_table)
+            .on(documents_table.id == chunks_table.document_id)
         )
-        self.pool.putconn(conn)
 
-        return search_results
+        return query_cte
