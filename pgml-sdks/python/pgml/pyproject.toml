@@ -21,6 +21,7 @@ ipywidgets = "^8.0.6"
 datasets = "^2.12.0"
 python-dotenv = "^1.0.0"
 pypika = "^0.48.9"
+pypdf = "^3.9.1"
 
 
 [tool.poetry.group.dev.dependencies]
