@@ -16,9 +16,7 @@ image_alt: We read to learn
 </div>
 
 ## Introduction
-There are a many ways to do machine learning with data in a SQL database. In this article, we'll compare 2 projects that both aim to provide a SQL interface to machine learning algorithms and the data they require: **MindsDB** and **PostgresML**. We'll look at how they work, what they can do, and how they compare to each other. The TLDR is that PostgresML is more opinionated, more scalable, more functional and several times faster than MindsDB. 
-
-On the other hand, MindsDB is 5 times "more mature" than PostgresML according to age and GitHub Stars. What are the important factors?
+There are a many ways to do machine learning with data in a SQL database. In this article, we'll compare 2 projects that both aim to provide a SQL interface to machine learning algorithms and the data they require: **MindsDB** and **PostgresML**. We'll look at how they work, what they can do, and how they compare to each other. The **TLDR** is that PostgresML is more opinionated, more scalable, more functional and several times faster than MindsDB. On the other hand, MindsDB is 5 times "more mature" than PostgresML according to age and GitHub Stars. What are the important factors?
 
 ![elephants](/dashboard/static/images/blog/elephant_book.webp)
 <center><i>We're occasionally asked what the difference is between PostgresML and MindsDB. We'd like to answer that question at length, and let you decide if the reasoning is fair.</i></center>
