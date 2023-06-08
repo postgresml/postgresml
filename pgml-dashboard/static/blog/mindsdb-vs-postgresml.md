@@ -297,7 +297,11 @@ There is a general trend, the larger and slower the model is, the more work is s
 
 ## Clouds
 
-Setting these services up is a bit of work, even for someone heavily involved in the day-to-day machine learning mayhem. Managing machine learning services and databases at scale require a significant investment over time. Both services are available in the cloud, so let's see how they compare on that front as well. MindsDB is available on the AWS marketplace on top of your own hardware instances, you can scale it out and configure your data sources through their Web UI, very similar to the local installation. PostgresML is available as a fully managed database service, that includes the storage, backups, metrics, and scalability through PgCat that large ML deployments need. End-to-end machine learning is rarely just about running the models, and often more about scaling the data pipelines and managing the data infrastructure around them, so in this case PostgresML also provides a large service advantage, whereas with MindsDB, you'll still need to figure out your cloud data storage solution independently.
+Setting these services up is a bit of work, even for someone heavily involved in the day-to-day machine learning mayhem. Managing machine learning services and databases at scale requires a significant investment over time. Both services are available in the cloud, so let's see how they compare on that front as well. 
+
+MindsDB is available on the AWS marketplace on top of your own hardware instances, you can scale it out and configure your data sources through their Web UI, very similar to the local installation, but you'll also need to figure out your data sources and how to scale them. 
+
+PostgresML is available as a fully managed database service, that includes the storage, backups, metrics, and scalability through PgCat that large ML deployments need. End-to-end machine learning is rarely just about running the models, and often more about scaling the data pipelines and managing the data infrastructure around them, so in this case PostgresML also provides a large service advantage, whereas with MindsDB, you'll still need to figure out your cloud data storage solution independently.
 
 
 
