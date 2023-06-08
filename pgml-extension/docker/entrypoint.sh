@@ -15,6 +15,15 @@ echo "Creating user and database..."
 echo "Installing pgml extension..."
 psql -U postgres -h 127.0.0.1 pgml_development -f sql/setup_examples.sql -P pager
 
+
+if [ -d "/docker-entrypoint-initdb.d" ]; then
+echo "Running custom scripts..."
+for f in /docker-entrypoint-initdb.d/*.sql; do
+	echo "Running custom script ${f}"
+	psql -U postgres -h 127.0.0.1 pgml_development -f "${f}"
+done
+fi
+
 echo "Installing pgvector.. "
 psql -U postgres -h 127.0.0.1 pgml_development -c 'CREATE EXTENSION vector'
 
