@@ -19,7 +19,7 @@ image_alt: We read to learn
 There are a many ways to do machine learning with data in a SQL database. In this article, we'll compare 2 projects that both aim to provide a SQL interface to machine learning algorithms and the data they require: **MindsDB** and **PostgresML**. We'll look at how they work, what they can do, and how they compare to each other. The TLDR is that PostgresML is more opinionated, more scalable, more functional and several times faster than MindsDB.
 
 ![elephants](/dashboard/static/images/blog/elephant_book.webp)
-<center><i>We're occasionally asked how PostgresML is different from MindsDB. We'd like to answer that question, and let you decide if the reasoning is fair.</i></center>
+<center><i>We're occasionally asked what the difference is between PostgresML and MindsDB. We'd like to answer that question at length, and let you decide if the reasoning is fair.</i></center>
 
 ### At a glance
 Both projects are Open Source, although PostgresML allows for more permissive use with the MIT license, compared to the GPL-3.0 license used by MindsDB. PostgresML is also a significantly newer project, with the first commit in 2022, compared to MindsDB which has been around since 2017, but one of the first hints at the real differences between the two projects is the choice of programming languages. MindsDB is implemented in Python, while PostgresML is implemented with Rust. I say _in_ Python, because it's a language with a runtime, and _with_ Rust, because it's a language with a compiler that does not require a Runtime. We'll see how this difference in implementation languages leads to different outcomes.
@@ -55,6 +55,7 @@ Another difference is that PostgresML also supports embedding models, and closel
 The architectural implementations for these projects is significantly different. PostgresML takes a data centric approach with Postgres as the provider for both storage _and_ compute. To provide horizontal scalability for inference, the PostgresML team has also created [PgCat](https://github.com/postgresml/pgcat) to distribute workloads across many Postgres databases. On the other hand, MindsDB takes a service oriented approach that connects to various databases over the network. 
 
 ![Architecture Diagram](/dashboard/static/images/blog/mindsdb.png)
+<br/><br/>
 
 |               | MindsDB       | PostgresML |
 |---------------|---------------|------------|
@@ -67,6 +68,7 @@ The architectural implementations for these projects is significantly different.
 | On Premise    | ✅             | ✅          |
 | Web UI        | ✅             | ✅          |
 
+<br/>
 
 The difference in architecture leads to different tradeoffs and challenges. There are already hundreds of ways to get data into and out of a Postgres database, from just about every other service, language and platform that makes PostgresML highly compatible with other application workflows. On the other hand, the MindsDB Python service accepts connections from specifically supported clients like `psql` and provides a pseudo-SQL interface to the functionality. The service will parse incoming MindsDB commands that look similar to SQL (but are not), for tasks like configuring database connections, or doing actual machine learning. These commands typically have what looks like a sub-select, that will actually fetch data over the wire from configured databases for Machine Learning training and inference.
 
@@ -299,7 +301,7 @@ There is a general trend, the larger and slower the model is, the more work is s
 
 Setting these services up is a bit of work, even for someone heavily involved in the day-to-day machine learning mayhem. Managing machine learning services and databases at scale requires a significant investment over time. Both services are available in the cloud, so let's see how they compare on that front as well. 
 
-MindsDB is available on the AWS marketplace on top of your own hardware instances, you can scale it out and configure your data sources through their Web UI, very similar to the local installation, but you'll also need to figure out your data sources and how to scale them. 
+MindsDB is available on the AWS marketplace on top of your own hardware instances. You can scale it out and configure your data sources through their Web UI, very similar to the local installation, but you'll also need to figure out your data sources and how to scale them for machine learning workloads. Good luck!
 
 PostgresML is available as a fully managed database service, that includes the storage, backups, metrics, and scalability through PgCat that large ML deployments need. End-to-end machine learning is rarely just about running the models, and often more about scaling the data pipelines and managing the data infrastructure around them, so in this case PostgresML also provides a large service advantage, whereas with MindsDB, you'll still need to figure out your cloud data storage solution independently.
 
