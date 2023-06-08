@@ -5,7 +5,7 @@ use rocket::{http::Status, route::Route, State};
 use yaml_rust::YamlLoader;
 
 use crate::{
-    guards::Cluster,
+    guards::{Cluster, CurrentUserState},
     responses::{ResponseOk, Template},
     templates::docs::*,
     utils::{config, markdown},
@@ -25,7 +25,11 @@ async fn search(query: &str, index: &State<markdown::SearchIndex>) -> ResponseOk
 }
 
 #[get("/docs/<path..>", rank = 10)]
-async fn doc_handler<'a>(path: PathBuf, cluster: Cluster) -> Result<ResponseOk, Status> {
+async fn doc_handler<'a>(
+    path: PathBuf,
+    cluster: Cluster,
+    current_user: CurrentUserState,
+) -> Result<ResponseOk, Status> {
     let guides = vec![
         NavLink::new("Setup").children(vec![
             NavLink::new("Installation").children(vec![
@@ -71,13 +75,26 @@ async fn doc_handler<'a>(path: PathBuf, cluster: Cluster) -> Result<ResponseOk, 
         ]),
     ];
 
-    render(cluster, &path, guides, "Guides", &Path::new("docs")).await
+    render(
+        cluster,
+        current_user,
+        &path,
+        guides,
+        "Guides",
+        &Path::new("docs"),
+    )
+    .await
 }
 
 #[get("/blog/<path..>", rank = 10)]
-async fn blog_handler<'a>(path: PathBuf, cluster: Cluster) -> Result<ResponseOk, Status> {
+async fn blog_handler<'a>(
+    path: PathBuf,
+    cluster: Cluster,
+    current_user: CurrentUserState,
+) -> Result<ResponseOk, Status> {
     render(
         cluster,
+        current_user,
         &path,
         vec![
             NavLink::new("Introducing PostgresML Python SDK: Build End-to-End Vector Search Applications without OpenAI and Pinecone")
@@ -122,6 +139,7 @@ async fn blog_handler<'a>(path: PathBuf, cluster: Cluster) -> Result<ResponseOk,
 
 async fn render<'a>(
     cluster: Cluster,
+    current_user: CurrentUserState,
     path: &'a PathBuf,
     mut nav_links: Vec<NavLink>,
     nav_title: &'a str,
@@ -196,12 +214,6 @@ async fn render<'a>(
         nav_link.should_open(&url.to_str().unwrap().to_string());
     }
 
-    let user = if cluster.context.user.is_anonymous() {
-        None
-    } else {
-        Some(cluster.context.user)
-    };
-
     let mut layout = crate::templates::Layout::new(&title);
     if image.is_some() {
         layout.image(&image.unwrap());
@@ -209,10 +221,10 @@ async fn render<'a>(
     if description.is_some() {
         layout.description(&description.unwrap());
     }
-    if user.is_some() {
-        layout.user(&user.unwrap());
-    }
+
     let layout = layout
+        .user(&current_user.user)
+        .cluster(&cluster.context.cluster)
         .nav_title(nav_title)
         .nav_links(&nav_links)
         .toc_links(&toc_links);

@@ -24,7 +24,7 @@ use crate::templates::{
     DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab, SnapshotsTab, UploaderTab,
 };
 use crate::utils::tabs;
-use guards::Cluster;
+use guards::{Cluster, CurrentUserState};
 use responses::{BadRequest, Error, ResponseOk};
 use sqlx::Executor;
 
@@ -41,9 +41,7 @@ pub struct ClustersSettings {
 /// This gives it a bit of shared state that allows the dashboard to display cluster-specific information.
 #[derive(Debug, Default, Clone)]
 pub struct Context {
-    pub user: models::User,
     pub cluster: models::Cluster,
-    pub visible_clusters: HashMap<String, String>,
 }
 
 /// Globally shared state, saved in memory.
@@ -116,6 +114,34 @@ impl Clusters {
             pools: Arc::new(Mutex::new(HashMap::new())),
             contexts: Arc::new(Mutex::new(HashMap::new())),
         }
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct CurrentUser {
+    pub user: Arc<Mutex<models::User>>,
+    pub visible_clusters: Arc<Mutex<HashMap<String, String>>>,
+}
+
+impl CurrentUser {
+    pub fn user(&self, user: models::User) {
+        *self.user.lock() = user;
+    }
+
+    pub fn get_user(&self) -> models::User {
+        self.user.lock().clone()
+    }
+
+    pub fn visible_clusters(&self, visible_clusters: HashMap<String, String>) {
+        *self.visible_clusters.lock() = visible_clusters;
+    }
+
+    pub fn get_visible_clusters(&self) -> HashMap<String, String> {
+        self.visible_clusters.lock().clone()
+    }
+
+    pub fn new() -> CurrentUser {
+        CurrentUser::default()
     }
 }
 
@@ -541,6 +567,7 @@ pub async fn uploaded_index(cluster: Cluster, table_name: &str) -> ResponseOk {
 #[get("/?<tab>&<notebook_id>&<model_id>&<project_id>&<snapshot_id>&<deployment_id>&<table_name>")]
 pub async fn dashboard(
     cluster: Cluster,
+    current_user: CurrentUserState,
     tab: Option<&str>,
     notebook_id: Option<i64>,
     model_id: Option<i64>,
@@ -549,17 +576,10 @@ pub async fn dashboard(
     deployment_id: Option<i64>,
     table_name: Option<String>,
 ) -> Result<ResponseOk, Error> {
-    let user = if cluster.context.user.is_anonymous() {
-        None
-    } else {
-        Some(cluster.context.user.clone())
-    };
-
     let mut layout = crate::templates::Layout::new("Dashboard");
-
-    if user.is_some() {
-        layout.user(&user.clone().unwrap());
-    }
+    layout
+        .user(&current_user.user)
+        .cluster(&cluster.context.cluster);
 
     let all_tabs = vec![
         tabs::Tab {

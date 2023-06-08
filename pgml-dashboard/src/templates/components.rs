@@ -77,13 +77,15 @@ pub struct Boxes<'a> {
 #[derive(TemplateOnce)]
 #[template(path = "layout/nav/top.html")]
 pub struct Navbar {
+    pub current_cluster: Option<models::Cluster>,
     pub current_user: Option<models::User>,
     pub standalone_dashboard: bool,
 }
 
 impl Navbar {
-    pub fn render(user: Option<models::User>) -> String {
+    pub fn render(user: Option<models::User>, cluster: Option<models::Cluster>) -> String {
         Navbar {
+            current_cluster: cluster,
             current_user: user,
             standalone_dashboard: config::standalone_dashboard(),
         }

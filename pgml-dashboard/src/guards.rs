@@ -5,8 +5,10 @@ use rocket::request::{FromRequest, Outcome, Request};
 use rocket::State;
 use sqlx::PgPool;
 
+use std::collections::HashMap;
+
 use crate::models::User;
-use crate::{Clusters, Context};
+use crate::{Clusters, Context, CurrentUser};
 
 pub fn default_database_url() -> String {
     match var("DATABASE_URL") {
@@ -47,33 +49,42 @@ impl<'r> FromRequest<'r> for Cluster {
             None => -1,
         };
 
-        let user_id: i64 = match cookies.get_private("user_id") {
-            Some(user_id) => match user_id.value().parse::<i64>() {
-                Ok(user_id) => user_id,
-                Err(_) => -1,
-            },
-
-            None => -1,
-        };
-
-        let clusters_shared_state = match request.guard::<&State<Clusters>>().await {
+        let clusters = match request.guard::<&State<Clusters>>().await {
             Outcome::Success(pool) => pool,
             _ => return Outcome::Forward(()),
         };
 
-        let pool = clusters_shared_state.get(cluster_id);
+        let pool = clusters.get(cluster_id);
 
         let context = Context {
-            user: User {
-                id: user_id,
-                email: "".to_string(),
-            },
-            cluster: clusters_shared_state.get_context(cluster_id).cluster,
-            visible_clusters: clusters_shared_state
-                .get_context(cluster_id)
-                .visible_clusters,
+            cluster: clusters.get_context(cluster_id).cluster,
         };
 
         Outcome::Success(Cluster { pool, context })
+    }
+}
+
+#[derive(Debug)]
+pub struct CurrentUserState {
+    pub user: User,
+    pub visible_clusters: HashMap<String, String>,
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for CurrentUserState {
+    type Error = ();
+
+    async fn from_request(request: &'r Request<'_>) -> Outcome<CurrentUserState, ()> {
+        let user_data = match request.guard::<&State<CurrentUser>>().await {
+            Outcome::Success(user) => user,
+            _ => return Outcome::Forward(()),
+        };
+
+        let current_user_state = CurrentUserState {
+            user: user_data.get_user(),
+            visible_clusters: user_data.get_visible_clusters(),
+        };
+
+        Outcome::Success(current_user_state)
     }
 }

@@ -30,6 +30,7 @@ pub struct Layout {
     pub head: Head,
     pub content: Option<String>,
     pub user: Option<models::User>,
+    pub cluster: Option<models::Cluster>,
     pub nav_title: Option<String>,
     pub nav_links: Vec<docs::NavLink>,
     pub toc_links: Vec<docs::TocLink>,
@@ -41,6 +42,11 @@ impl Layout {
             head: Head::new().title(title),
             ..Default::default()
         }
+    }
+
+    pub fn cluster(&mut self, cluster: &models::Cluster) -> &mut Self {
+        self.cluster = Some(cluster.to_owned());
+        self
     }
 
     pub fn description(&mut self, description: &str) -> &mut Self {
@@ -375,13 +381,6 @@ pub struct Uploaded {
     pub sql: Sql,
     pub columns: Vec<String>,
     pub table_name: String,
-}
-
-#[derive(TemplateOnce)]
-#[template(path = "layout/nav/top.html")]
-pub struct Navbar {
-    pub current_user: Option<models::User>,
-    pub standalone_dashboard: bool,
 }
 
 #[derive(TemplateOnce)]
