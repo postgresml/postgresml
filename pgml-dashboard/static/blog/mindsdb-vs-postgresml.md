@@ -310,4 +310,4 @@ PostgresML is available as a fully managed database service, that includes the s
 
 Marketing and Communications is important for technology adoption. MindsDB has a significantly better Marketing and Communications website than PostgresML, with significantly more funding behind it. They have a beautiful homepage, and a lot of documentation that we can only aspire to match. Their very name and domain, MindsDB, is excellent at conveying our mutual aspiration.
 
-Our documentation, blogs and the code that serves them are open source. We're working on improving them, but I'm an engineer more interested in ML than docs and that's where I'm heads down. If you see something that could be better, ML or Marcomm, we'll always appreciate your PRs.
+Our documentation, blogs as well as the code that serves it and everything else PostgresML is open source. We're always working to improve the status quo, but I'm an engineer more interested in ML than docs and that's where I'm heads down. If you see something that could be better, ML or Marcomm, we'll always appreciate your PRs.
