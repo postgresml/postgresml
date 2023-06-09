@@ -5,7 +5,7 @@ use rocket::{http::Status, route::Route, State};
 use yaml_rust::YamlLoader;
 
 use crate::{
-    guards::{Cluster, CurrentUserState},
+    guards::Cluster,
     responses::{ResponseOk, Template},
     templates::docs::*,
     utils::{config, markdown},
@@ -28,7 +28,7 @@ async fn search(query: &str, index: &State<markdown::SearchIndex>) -> ResponseOk
 async fn doc_handler<'a>(
     path: PathBuf,
     cluster: Cluster,
-    current_user: CurrentUserState,
+    current_user: &State<crate::CurrentUser>,
 ) -> Result<ResponseOk, Status> {
     let guides = vec![
         NavLink::new("Setup").children(vec![
@@ -90,7 +90,7 @@ async fn doc_handler<'a>(
 async fn blog_handler<'a>(
     path: PathBuf,
     cluster: Cluster,
-    current_user: CurrentUserState,
+    current_user: &State<crate::CurrentUser>,
 ) -> Result<ResponseOk, Status> {
     render(
         cluster,
@@ -141,7 +141,7 @@ async fn blog_handler<'a>(
 
 async fn render<'a>(
     cluster: Cluster,
-    current_user: CurrentUserState,
+    current_user: &State<crate::CurrentUser>,
     path: &'a PathBuf,
     mut nav_links: Vec<NavLink>,
     nav_title: &'a str,
@@ -225,7 +225,7 @@ async fn render<'a>(
     }
 
     let layout = layout
-        .user(&current_user.user)
+        .user(&current_user.get_user())
         .cluster(&cluster.context.cluster)
         .nav_title(nav_title)
         .nav_links(&nav_links)

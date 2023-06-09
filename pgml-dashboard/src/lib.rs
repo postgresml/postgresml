@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use parking_lot::Mutex;
 use rocket::form::Form;
+use rocket::State;
 use rocket::response::Redirect;
 use rocket::route::Route;
 use sailfish::TemplateOnce;
@@ -24,7 +25,7 @@ use crate::templates::{
     DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab, SnapshotsTab, UploaderTab,
 };
 use crate::utils::tabs;
-use guards::{Cluster, CurrentUserState};
+use guards::Cluster;
 use responses::{BadRequest, Error, ResponseOk};
 use sqlx::Executor;
 
@@ -41,7 +42,7 @@ pub struct ClustersSettings {
 /// This gives it a bit of shared state that allows the dashboard to display cluster-specific information.
 #[derive(Debug, Default, Clone)]
 pub struct Context {
-    pub cluster: models::Cluster,
+    pub cluster: Option<models::Cluster>,
 }
 
 /// Globally shared state, saved in memory.
@@ -117,36 +118,41 @@ impl Clusters {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+
+// Globally shared state in memory.  
+
+#[derive(Debug, Clone)]
 pub struct CurrentUser {
-    pub user: Arc<Mutex<models::User>>,
-    pub visible_clusters: Arc<Mutex<HashMap<String, String>>>,
+    pub user: Arc<Mutex<Option<models::User>>>,
+    pub visible_clusters: Arc<Mutex<Option<HashMap<String, String>>>>,
 }
 
 impl CurrentUser {
-    pub fn user(&self, user: models::User) {
-        *self.user.lock() = user;
+    pub fn set_user(&self, user: models::User) {
+        *self.user.lock() = Some(user);
     }
 
-    pub fn get_user(&self) -> models::User {
+    pub fn get_user(&self) -> Option<models::User> {
         self.user.lock().clone()
     }
 
-    pub fn visible_clusters(&self, visible_clusters: HashMap<String, String>) {
-        *self.visible_clusters.lock() = visible_clusters;
+    pub fn set_visible_clusters(&self, visible_clusters: HashMap<String, String>) {
+        *self.visible_clusters.lock() = Some(visible_clusters);
     }
 
-    pub fn get_visible_clusters(&self) -> HashMap<String, String> {
+    pub fn get_visible_clusters(&self) -> Option<HashMap<String, String>> {
         self.visible_clusters.lock().clone()
+    }
+
+    pub fn set_to_default(&self) {
+        *self.user.lock() = None;
+        *self.visible_clusters.lock() = None;
     }
 
     pub fn new() -> CurrentUser {
         CurrentUser {
-            user: Arc::new(Mutex::new( models::User {
-                id: -1, 
-                email: "".to_string()
-            })), 
-            visible_clusters: Arc::new(Mutex::new(HashMap::new())),
+            user: Arc::new(Mutex::new( None )), 
+            visible_clusters: Arc::new(Mutex::new(None )),
         }
     }
 }
@@ -573,7 +579,7 @@ pub async fn uploaded_index(cluster: Cluster, table_name: &str) -> ResponseOk {
 #[get("/?<tab>&<notebook_id>&<model_id>&<project_id>&<snapshot_id>&<deployment_id>&<table_name>")]
 pub async fn dashboard(
     cluster: Cluster,
-    current_user: CurrentUserState,
+    current_user: &State<CurrentUser>,
     tab: Option<&str>,
     notebook_id: Option<i64>,
     model_id: Option<i64>,
@@ -582,9 +588,12 @@ pub async fn dashboard(
     deployment_id: Option<i64>,
     table_name: Option<String>,
 ) -> Result<ResponseOk, Error> {
+    // 500 error if there is no cluster in global state.
+    let _ = cluster.context.cluster.as_ref().unwrap();
+
     let mut layout = crate::templates::Layout::new("Dashboard");
     layout
-        .user(&current_user.user)
+        .user(&current_user.get_user())
         .cluster(&cluster.context.cluster);
 
     let all_tabs = vec![

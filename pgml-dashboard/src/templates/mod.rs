@@ -44,8 +44,8 @@ impl Layout {
         }
     }
 
-    pub fn cluster(&mut self, cluster: &models::Cluster) -> &mut Self {
-        self.cluster = Some(cluster.to_owned());
+    pub fn cluster(&mut self, cluster: &Option<models::Cluster>) -> &mut Self {
+        self.cluster = cluster.to_owned();
         self
     }
 
@@ -64,8 +64,8 @@ impl Layout {
         self
     }
 
-    pub fn user(&mut self, user: &models::User) -> &mut Self {
-        self.user = Some(user.to_owned());
+    pub fn user(&mut self, user: &Option<models::User>) -> &mut Self {
+        self.user = user.to_owned();
         self
     }
 

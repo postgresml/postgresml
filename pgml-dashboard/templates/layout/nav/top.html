@@ -12,7 +12,7 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav flex-grow-1 justify-content-center me-auto mb-2 mb-lg-0">
-        <% if standalone_dashboard || (current_cluster.is_some() && current_cluster.unwrap().id != -1) { %>
+        <% if current_cluster.is_some() { %>
         <li class="nav-item d-flex align-items-center">
           <a class="nav-link" href="/dashboard">Dashboard</a>
         </li>
@@ -36,14 +36,14 @@
         </button>
         <% if !standalone_dashboard { %>
         <div class="d-flex gap-2 justify-content-end align-items-center">
-          <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
-          <a class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/login">Sign In</a>
-          <a class="btn btn-primary" href="/signup">Get Started</a>
-          <% } else { %>
+          <% if current_user.is_some() { %>
           <a class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/clusters">Console</a>
           <a href="/support" class="btn btn-tertiary p-0 ps-2">
-            <img loading="lazy" src="/dashboard/static/images/icons/help.svg" width="30" height="30" alt="help" />
+              <img loading="lazy" src="/dashboard/static/images/icons/help.svg" width="30" height="30" alt="help" />
           </a>
+          <% } else { %>
+          <a class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/login">Sign In</a>
+          <a class="btn btn-primary" href="/signup">Get Started</a>
           <% } %>
         </div>
    
