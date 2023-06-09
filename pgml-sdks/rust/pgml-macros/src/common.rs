@@ -65,7 +65,7 @@ impl<'ast> Visit<'ast> for GetImplMethod {
             ReturnType::Default => OutputType::Default,
             ReturnType::Type(_ra, ty) => {
                 let mut get_output_type = GetOutputType::default();
-                get_output_type.visit_type(&ty);
+                get_output_type.visit_type(ty);
                 get_output_type.output
             }
         };

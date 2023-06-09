@@ -106,7 +106,7 @@ pub fn generate_python_methods(
         };
 
         // The new function for pyO3 requires some unique syntax
-        let (signature, middle) = if method_ident.to_string() == "new" {
+        let (signature, middle) = if method_ident == "new" {
             let signature = quote! {
                 #[new]
                 pub fn new<'a>(#(#method_arguments),*) -> #output_type
@@ -213,7 +213,7 @@ pub fn get_method_wrapper_arguments_python(
     let extra_arg = quote! {
         py: Python<'a>
     };
-    if method_arguments.len() > 0 {
+    if !method_arguments.is_empty() {
         method_arguments.insert(1, extra_arg);
     } else {
         method_arguments.push(extra_arg);
@@ -257,7 +257,7 @@ pub fn convert_output_type_convert_from_python(
             Some(quote! {PyResult<&'a PyAny>}),
             Some(format_ident!("{}Python", t.to_string()).into_token_stream()),
         ),
-        t @ _ => {
+        t => {
             let ty = t
                 .to_type()
                 .expect("Error converting to type in convert_output_type_convert_from_python");
@@ -265,7 +265,7 @@ pub fn convert_output_type_convert_from_python(
         }
     };
 
-    if method.is_async && method.method_ident.to_string() != "new" {
+    if method.is_async && method.method_ident != "new" {
         (Some(quote! {PyResult<&'a PyAny>}), convert_from)
     } else {
         (output_type, convert_from)

@@ -71,44 +71,44 @@ pub struct GetSupportedType {
 }
 
 impl GetSupportedType {
-    pub fn get_type<'ast>(i: &'ast syn::Type) -> SupportedType {
+    pub fn get_type(i: &syn::Type) -> SupportedType {
         let mut s = Self::default();
         s.visit_type(i);
         s.ty.expect("Error getting type from Type")
     }
 
-    pub fn get_type_from_path<'ast>(i: &'ast syn::TypePath) -> SupportedType {
+    pub fn get_type_from_path(i: &syn::TypePath) -> SupportedType {
         let mut s = Self::default();
         // println!("THE PATH {:?}", i);
         s.visit_path(&i.path);
         s.ty.expect("Error getting type from TypePath")
     }
 
-    pub fn get_type_from_path_argument<'ast>(i: &'ast syn::PathArguments) -> SupportedType {
+    pub fn get_type_from_path_argument(i: &syn::PathArguments) -> SupportedType {
         let mut s = Self::default();
-        s.visit_path_arguments(&i);
+        s.visit_path_arguments(i);
         s.ty.expect("Error getting type from PathArguments")
     }
 
-    pub fn get_type_from_generic_argument<'ast>(i: &'ast syn::GenericArgument) -> SupportedType {
+    pub fn get_type_from_generic_argument(i: &syn::GenericArgument) -> SupportedType {
         let mut s = Self::default();
-        s.visit_generic_argument(&i);
+        s.visit_generic_argument(i);
         s.ty.expect("Error gettingtype from GenericArgument")
     }
 
-    pub fn get_type_from_angle_bracketed_generic_arguments<'ast>(
-        i: &'ast syn::AngleBracketedGenericArguments,
+    pub fn get_type_from_angle_bracketed_generic_arguments(
+        i: &syn::AngleBracketedGenericArguments,
     ) -> SupportedType {
         let mut s = Self::default();
-        s.visit_angle_bracketed_generic_arguments(&i);
+        s.visit_angle_bracketed_generic_arguments(i);
         s.ty.expect("Error getting type from AngleBracketedGenericArguments")
     }
 }
 
 impl<'ast> Visit<'ast> for GetSupportedType {
-    fn visit_type(&mut self, i: &'ast syn::Type) {
+    fn visit_type(&mut self, i: &syn::Type) {
         self.ty = Some(match i {
-            syn::Type::Reference(r) => SupportedType::Reference(Box::new(Self::get_type(&*r.elem))),
+            syn::Type::Reference(r) => SupportedType::Reference(Box::new(Self::get_type(&r.elem))),
             syn::Type::Path(p) => Self::get_type_from_path(p),
             syn::Type::Tuple(t) => {
                 let values: Vec<SupportedType> = t
@@ -128,7 +128,7 @@ impl<'ast> Visit<'ast> for GetSupportedType {
         });
     }
 
-    fn visit_path_segment(&mut self, i: &'ast syn::PathSegment) {
+    fn visit_path_segment(&mut self, i: &syn::PathSegment) {
         let segment_name = i.ident.to_string();
         self.ty = match segment_name.as_str() {
             "str" => Some(SupportedType::str),
@@ -172,7 +172,7 @@ impl<'ast> Visit<'ast> for GetSupportedType {
             _ => None,
         };
 
-        if let None = self.ty {
+        if self.ty.is_none() {
             visit::visit_path_segment(self, i);
         }
     }
@@ -197,11 +197,11 @@ pub struct GetOutputType {
 }
 
 impl<'ast> Visit<'ast> for GetOutputType {
-    fn visit_type(&mut self, i: &'ast syn::Type) {
+    fn visit_type(&mut self, i: &syn::Type) {
         visit::visit_type(self, i);
     }
 
-    fn visit_path_segment(&mut self, i: &'ast syn::PathSegment) {
+    fn visit_path_segment(&mut self, i: &syn::PathSegment) {
         let segment_name = i.ident.to_string();
         if segment_name == "Result" {
             if let syn::PathArguments::AngleBracketed(args) = &i.arguments {

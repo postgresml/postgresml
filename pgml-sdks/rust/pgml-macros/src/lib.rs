@@ -9,7 +9,7 @@ pub fn custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let mut output = proc_macro::TokenStream::new();
 
     let parsed = parse_macro_input!(input as DeriveInput);
-    let python_tokens = python::generate_python_derive(parsed.clone());
+    let python_tokens = python::generate_python_derive(parsed);
 
     output.extend(python_tokens);
     output
@@ -25,7 +25,7 @@ pub fn custom_methods(
     let mut output = input.clone();
 
     let parsed: ItemImpl = syn::parse(input).unwrap();
-    let python_tokens = python::generate_python_methods(parsed.clone(), &attribute_args);
+    let python_tokens = python::generate_python_methods(parsed, &attribute_args);
 
     output.extend(python_tokens);
     output
