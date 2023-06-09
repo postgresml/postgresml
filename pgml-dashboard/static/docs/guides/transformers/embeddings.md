@@ -84,7 +84,7 @@ insert into items select text, embedding from tweet_embeddings_2;
 WITH query AS (
     SELECT pgml.embed('sentence-transformers/all-MiniLM-L6-v2', 'Star Wars christmas special is on Disney')::vector AS embedding
 )
-SELECT * FROM items, query ORDER BY items.embedding <-> query.embedding LIMIT 10;
+SELECT * FROM items, query ORDER BY items.embedding <=> query.embedding LIMIT 10;
 
 CREATE INDEX ON tweet_embeddings_2 USING ivfflat (embedding vector_cosine_ops);
 ```
