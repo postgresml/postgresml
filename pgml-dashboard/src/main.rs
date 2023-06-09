@@ -132,9 +132,12 @@ async fn main() {
         )
         .unwrap();
 
-    clusters.set_context(-1, pgml_dashboard::Context {
-        cluster: Some(pgml_dashboard::models::Cluster::default())
-    });
+    clusters.set_context(
+        -1,
+        pgml_dashboard::Context {
+            cluster: Some(pgml_dashboard::models::Cluster::default()),
+        },
+    );
 
     pgml_dashboard::migrate(&clusters.get(-1).unwrap())
         .await

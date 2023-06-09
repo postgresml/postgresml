@@ -6,9 +6,9 @@ use std::sync::Arc;
 
 use parking_lot::Mutex;
 use rocket::form::Form;
-use rocket::State;
 use rocket::response::Redirect;
 use rocket::route::Route;
+use rocket::State;
 use sailfish::TemplateOnce;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
@@ -118,8 +118,7 @@ impl Clusters {
     }
 }
 
-
-// Globally shared state in memory.  
+// Globally shared state in memory.
 
 #[derive(Debug, Clone)]
 pub struct CurrentUser {
@@ -151,8 +150,8 @@ impl CurrentUser {
 
     pub fn new() -> CurrentUser {
         CurrentUser {
-            user: Arc::new(Mutex::new( None )), 
-            visible_clusters: Arc::new(Mutex::new(None )),
+            user: Arc::new(Mutex::new(None)),
+            visible_clusters: Arc::new(Mutex::new(None)),
         }
     }
 }

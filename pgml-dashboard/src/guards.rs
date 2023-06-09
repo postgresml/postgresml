@@ -5,7 +5,7 @@ use rocket::request::{FromRequest, Outcome, Request};
 use rocket::State;
 use sqlx::PgPool;
 
-use crate::{Clusters, Context, models};
+use crate::{models, Clusters, Context};
 
 pub fn default_database_url() -> String {
     match var("DATABASE_URL") {
