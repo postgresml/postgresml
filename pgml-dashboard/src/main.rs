@@ -200,6 +200,7 @@ mod test {
 
         rocket::build()
             .manage(clusters)
+            .manage(pgml_dashboard::CurrentUser::new())
             .manage(markdown::SearchIndex::open().unwrap())
             .mount("/", rocket::routes![index, error])
             .mount("/dashboard/static", FileServer::from(&config::static_dir()))
