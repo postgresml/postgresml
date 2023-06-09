@@ -132,7 +132,7 @@ async fn render<'a>(
     let url = path.clone();
 
     // Get the document content
-    let path = Path::new(&config::static_dir())
+    let path = Path::new(&config::content_dir())
         .join(folder)
         .join(&(path.to_str().unwrap().to_string() + ".md"));
 
