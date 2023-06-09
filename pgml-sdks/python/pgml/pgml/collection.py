@@ -821,17 +821,23 @@ class Collection:
         return PGMLQuery(self)
 
 
-class PGMLQuery(QueryBuilder):
+class PGMLQuery:
     def __init__(self, collection: Collection) -> None:
+        self.query = Query()
         self.collection = collection
 
     def __str__(self) -> str:
-        return self.get_sql()
+        return self.query.get_sql()
 
     def limit(self, _limit: int):
-        self = self.limit(_limit)
+        self.query = self.query.limit(_limit)
         return self
-    
+
+    def filter(self, criteria: Dict[str, Any]):
+        documents_table = Table("documents", schema=self.collection.name)
+        self.query = self.query.where(documents_table.metadata.contains(criteria))
+        return self
+
     def vector_recall(
         self,
         query: str,
@@ -839,7 +845,7 @@ class PGMLQuery(QueryBuilder):
         top_k: int = 5,
         model_id: int = 1,
         splitter_id: int = 1,
-        ):
+    ):
         if model_id in _cache_model_names.keys():
             model = _cache_model_names[model_id]
         else:
@@ -909,9 +915,8 @@ class PGMLQuery(QueryBuilder):
             .cross()
         )
 
-        self = (
-            Query()
-            .with_(query_embed, "query_cte")
+        self.query = (
+            self.query.with_(query_embed, "query_cte")
             .with_(table_embed, "cte")
             .from_("cte")
             .select(cte.score, chunks_table.chunk, documents_table.metadata)
@@ -919,7 +924,8 @@ class PGMLQuery(QueryBuilder):
             .inner_join(chunks_table)
             .on(chunks_table.id == cte.chunk_id)
             .inner_join(documents_table)
-            .on(documents_table.id == chunks_table.document_id).limit(top_k)
+            .on(documents_table.id == chunks_table.document_id)
+            .limit(top_k)
         )
 
         return self

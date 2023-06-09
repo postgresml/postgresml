@@ -171,8 +171,12 @@ class TestCollection(unittest.TestCase):
         self.collection.generate_chunks()
         self.collection.generate_embeddings()
         query = (
-            self.collection.query().vector_recall("product is abc").limit(2).limit(1)
+            self.collection.query()
+            .vector_recall("product is abc")
+            .filter({"source": "amazon"})
+            .limit(2)
         )
+        print(query)
         results = self.collection.execute(query)
         print(results)
         assert results[0]["metadata"]["user"] == "John Doe"

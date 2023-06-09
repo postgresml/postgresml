@@ -34,12 +34,10 @@ collection.generate_embeddings()
 
 start = time()
 query = "Who won 20 grammy awards?"
-documents_table = Table("documents", schema=collection_name)
 sql_query = (
-    collection.vector_recall(query)
-    .where(documents_table.metadata.contains({"title": "Beyoncé"}))
-    .limit(5)
+    collection.query().vector_recall(query).filter({"title": "Beyoncé"}).limit(5)
 )
+
 results = collection.execute(sql_query)
 _end = time()
 console.print("\nResults for '%s'" % (query), style="bold")
