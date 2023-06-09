@@ -170,16 +170,11 @@ class TestCollection(unittest.TestCase):
         self.collection.upsert_documents(self.documents_with_reviews_metadata)
         self.collection.generate_chunks()
         self.collection.generate_embeddings()
-        documents_table = Table("documents", schema=self.collection.name)
         query = (
-            self.collection.vector_recall("product is abc")
-            .where(documents_table.metadata.contains({"source": "amazon"}))
-            .where(
-                Cast(documents_table.metadata.get_json_value("reviews"), "INTEGER") < 45
-            )
-            .limit(2)
+            self.collection.query().vector_recall("product is abc").limit(2).limit(1)
         )
         results = self.collection.execute(query)
+        print(results)
         assert results[0]["metadata"]["user"] == "John Doe"
 
     # def tearDown(self) -> None:

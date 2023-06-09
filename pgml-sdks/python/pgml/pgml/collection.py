@@ -21,10 +21,15 @@ from .dbutils import (
 )
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from pypika import Query, Table, AliasedQuery, Order, Field
+from pypika import JSON, Array, Table, AliasedQuery, Order
+from pypika import Query
+
 from pypika.queries import QueryBuilder
 from pypika.functions import Cast
 from .queries import Embed, CosineDistance
+
+_cache_model_names = {}
+_cache_embeddings_table_names = {}
 
 
 FORMAT = "%(message)s"
@@ -808,36 +813,53 @@ class Collection:
 
     def execute(self, sql_statement: QueryBuilder) -> List[Dict[str, Any]]:
         conn = self.pool.getconn()
-        results = run_select_statement(conn, sql_statement.get_sql())
+        results = run_select_statement(conn, str(sql_statement))
         self.pool.putconn(conn)
         return results
 
+    def query(self):
+        return PGMLQuery(self)
+
+
+class PGMLQuery(QueryBuilder):
+    def __init__(self, collection: Collection) -> None:
+        self.collection = collection
+
+    def __str__(self) -> str:
+        return self.get_sql()
+
+    def limit(self, _limit: int):
+        self = self.limit(_limit)
+        return self
+    
     def vector_recall(
         self,
         query: str,
         query_parameters: Optional[Dict[str, Any]] = {},
+        top_k: int = 5,
         model_id: int = 1,
         splitter_id: int = 1,
-    ) -> List[Dict[str, Any]]:
-        if model_id in self._cache_model_names.keys():
-            model = self._cache_model_names[model_id]
+        ):
+        if model_id in _cache_model_names.keys():
+            model = _cache_model_names[model_id]
         else:
-            models = Table(self.models_table.split(".")[1], schema=self.name)
+            models = Table(
+                self.collection.models_table.split(".")[1], schema=self.collection.name
+            )
             q = Query.from_(models).select("name").where(models.id == model_id)
-            results = self.execute(q)
+            results = self.collection.execute(q)
             model = results[0]["name"]
-            self._cache_model_names[model_id] = model
+            _cache_model_names[model_id] = model
 
         embeddings_table = ""
-        if model_id in self._cache_embeddings_table_names.keys():
-            if splitter_id in self._cache_embeddings_table_names[model_id].keys():
-                embeddings_table = self._cache_embeddings_table_names[model_id][
-                    splitter_id
-                ]
+        if model_id in _cache_embeddings_table_names.keys():
+            if splitter_id in _cache_embeddings_table_names[model_id].keys():
+                embeddings_table = _cache_embeddings_table_names[model_id][splitter_id]
 
         if not embeddings_table:
             transforms_table = Table(
-                self.transforms_table.split(".")[1], schema=self.name
+                self.collection.transforms_table.split(".")[1],
+                schema=self.collection.name,
             )
             q = (
                 Query.from_(transforms_table)
@@ -845,10 +867,10 @@ class Collection:
                 .where(transforms_table.model_id == model_id)
                 .where(transforms_table.splitter_id == splitter_id)
             )
-            embedding_table_results = self.execute(q)
+            embedding_table_results = self.collection.execute(q)
             if embedding_table_results:
                 embeddings_table = embedding_table_results[0]["table_name"]
-                self._cache_embeddings_table_names[model_id] = {
+                _cache_embeddings_table_names[model_id] = {
                     splitter_id: embeddings_table
                 }
             else:
@@ -859,12 +881,12 @@ class Collection:
                 return []
 
         embeddings_table = embeddings_table.split(".")[1]
-        chunks_table = self.chunks_table.split(".")[1]
-        documents_table = self.documents_table.split(".")[1]
+        chunks_table = self.collection.chunks_table.split(".")[1]
+        documents_table = self.collection.documents_table.split(".")[1]
 
-        embeddings_table = Table(embeddings_table, schema=self.name)
-        chunks_table = Table(chunks_table, schema=self.name)
-        documents_table = Table(documents_table, schema=self.name)
+        embeddings_table = Table(embeddings_table, schema=self.collection.name)
+        chunks_table = Table(chunks_table, schema=self.collection.name)
+        documents_table = Table(documents_table, schema=self.collection.name)
 
         query_embed = Query().select(
             Embed(transformer=model, text=query, parameters=query_parameters)
@@ -887,7 +909,7 @@ class Collection:
             .cross()
         )
 
-        query_cte = (
+        self = (
             Query()
             .with_(query_embed, "query_cte")
             .with_(table_embed, "cte")
@@ -897,7 +919,7 @@ class Collection:
             .inner_join(chunks_table)
             .on(chunks_table.id == cte.chunk_id)
             .inner_join(documents_table)
-            .on(documents_table.id == chunks_table.document_id)
+            .on(documents_table.id == chunks_table.document_id).limit(top_k)
         )
 
-        return query_cte
+        return self
