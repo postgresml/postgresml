@@ -506,8 +506,6 @@ impl Collection {
         let model_id = model_id.unwrap_or(1);
         let splitter_id = splitter_id.unwrap_or(1);
 
-        // TODO: Talk with lev about turning this into some kind of CTE and merging with the query
-        // below
         let embeddings_table_name: Option<(String,)> = sqlx::query_as(&query_builder!(
                 "SELECT table_name from %s WHERE task = 'embedding' AND model_id = $1 and splitter_id = $2", 
                 self.transforms_table_name
