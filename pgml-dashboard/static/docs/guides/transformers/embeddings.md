@@ -63,15 +63,6 @@ ORDER BY similarity DESC
 LIMIT 50;
 ```
 
-```
-WITH query AS (
-    SELECT pgml.embed('sentence-transformers/all-MiniLM-L6-v2', 'Star Wars christmas special is on Disney') AS embedding
-)
-SELECT text, pgml.cosine_similarity(tweet_embeddings_2.embedding, query.embedding) AS similarity
-FROM tweet_embeddings_2, query
-ORDER BY similarity DESC
-LIMIT 50;
-```
 On small datasets (<100k rows), a linear search that compares every row to the query will give sub-second results, which may be fast enough for your use case. For larger datasets, you may want to consider various indexing strategies offered by additional extensions.
 
 - [Cube](https://www.postgresql.org/docs/current/cube.html) is a built-in extension that provides a fast indexing strategy for finding similar vectors. By default it has an arbitrary limit of 100 dimensions, unless Postgres is compiled with a larger size.
@@ -79,12 +70,11 @@ On small datasets (<100k rows), a linear search that compares every row to the q
 
 ```
 CREATE EXTENSION vector;
-CREATE TABLE items (text text, embedding vector(384));
-insert into items select text, embedding from tweet_embeddings_2;
+CREATE TABLE items (text TEXT, embedding VECTOR(768));
+INSERT INTO items SELECT text, embedding FROM tweet_embeddings;
+CREATE INDEX ON items USING ivfflat (embedding vector_cosine_ops);
 WITH query AS (
-    SELECT pgml.embed('sentence-transformers/all-MiniLM-L6-v2', 'Star Wars christmas special is on Disney')::vector AS embedding
+    SELECT pgml.embed('distilbert-base-uncased', 'Star Wars christmas special is on Disney')::vector AS embedding
 )
-SELECT * FROM items, query ORDER BY items.embedding <-> query.embedding LIMIT 10;
-
-CREATE INDEX ON tweet_embeddings_2 USING ivfflat (embedding vector_cosine_ops);
+SELECT * FROM items, query ORDER BY items.embedding <=> query.embedding LIMIT 10;
 ```
