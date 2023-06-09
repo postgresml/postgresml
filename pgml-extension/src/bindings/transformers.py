@@ -1,12 +1,12 @@
-import os
-import json
 import math
+import os
 import shutil
 import time
-import numpy as np
 
 import datasets
 from InstructorEmbedding import INSTRUCTOR
+import numpy
+import orjson
 from rouge import Rouge
 from sacrebleu.metrics import BLEU
 from sentence_transformers import SentenceTransformer
@@ -42,7 +42,6 @@ __cache_transformer_by_model_id = {}
 __cache_sentence_transformer_by_name = {}
 __cache_transform_pipeline_by_task = {}
 
-
 DTYPE_MAP = {
     "uint8": torch.uint8,
     "int8": torch.int8,
@@ -58,6 +57,10 @@ DTYPE_MAP = {
     "bool": torch.bool,
 }
 
+def orjson_default(obj):
+    if isinstance(obj, numpy.float32):
+        return float(obj)
+    raise TypeError
 
 def convert_dtype(kwargs):
     if "torch_dtype" in kwargs:
@@ -78,18 +81,10 @@ def ensure_device(kwargs):
         else:
             kwargs["device"] = "cpu"
 
-
-class NumpyJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.float32):
-            return float(obj)
-        return super().default(obj)
-
-
 def transform(task, args, inputs):
-    task = json.loads(task)
-    args = json.loads(args)
-    inputs = json.loads(inputs)
+    task = orjson.loads(task)
+    args = orjson.loads(args)
+    inputs = orjson.loads(inputs)
 
     key = ",".join([f"{key}:{val}" for (key, val) in sorted(task.items())])
     if key not in __cache_transform_pipeline_by_task:
@@ -103,17 +98,18 @@ def transform(task, args, inputs):
     pipe = __cache_transform_pipeline_by_task[key]
 
     if pipe.task == "question-answering":
-        inputs = [json.loads(input) for input in inputs]
+        inputs = [orjson.loads(input) for input in inputs]
 
     convert_eos_token(pipe.tokenizer, args)
 
-    return json.dumps(pipe(inputs, **args), cls=NumpyJSONEncoder)
+    results = pipe(inputs, **args)
+
+    return orjson.dumps(results, default=orjson_default).decode()
 
 
 def embed(transformer, inputs, kwargs):
-    
-    inputs = json.loads(inputs)
-    kwargs = json.loads(kwargs)
+    kwargs = orjson.loads(kwargs)
+
     ensure_device(kwargs)
     instructor = transformer.startswith("hkunlp/instructor")
     
@@ -137,7 +133,7 @@ def embed(transformer, inputs, kwargs):
 
 
 def load_dataset(name, subset, limit: None, kwargs: "{}"):
-    kwargs = json.loads(kwargs)
+    kwargs = orjson.loads(kwargs)
 
     if limit:
         dataset = datasets.load_dataset(
@@ -164,7 +160,7 @@ def load_dataset(name, subset, limit: None, kwargs: "{}"):
     else:
         raise PgMLException(f"Unhandled dataset type: {type(dataset)}")
 
-    return json.dumps({"data": data, "types": types})
+    return orjson.dumps({"data": data, "types": types}).decode()
 
 
 def tokenize_text_classification(tokenizer, max_length, x, y):
@@ -421,7 +417,7 @@ def compute_metrics_text_generation(model, tokenizer, hyperparams, y):
 
 
 def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
-    hyperparams = json.loads(hyperparams)
+    hyperparams = orjson.loads(hyperparams)
     model_name = hyperparams.pop("model_name")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -562,7 +558,7 @@ def generate(model_id, data, config):
     result = get_transformer_by_model_id(model_id)
     tokenizer = result["tokenizer"]
     model = result["model"]
-    config = json.loads(config)
+    config = orjson.loads(config)
     all_preds = []
 
     batch_size = 1  # TODO hyperparams

@@ -577,7 +577,7 @@ pub fn embed_batch(
     inputs: Vec<&str>,
     kwargs: default!(JsonB, "'{}'"),
 ) -> Vec<Vec<f32>> {
-    crate::bindings::transformers::embed(transformer, &inputs, &kwargs.0)
+    crate::bindings::transformers::embed(transformer, inputs, &kwargs.0)
 }
 
 #[pg_extern(immutable, parallel_safe)]
@@ -602,11 +602,11 @@ pub fn chunk(
 pub fn transform_json(
     task: JsonB,
     args: default!(JsonB, "'{}'"),
-    inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
+    inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
     cache: default!(bool, false),
 ) -> JsonB {
     JsonB(crate::bindings::transformers::transform(
-        &task.0, &args.0, &inputs,
+        &task.0, &args.0, inputs,
     ))
 }
 
@@ -616,14 +616,14 @@ pub fn transform_json(
 pub fn transform_string(
     task: String,
     args: default!(JsonB, "'{}'"),
-    inputs: default!(Vec<String>, "ARRAY[]::TEXT[]"),
+    inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
     cache: default!(bool, false),
 ) -> JsonB {
     let mut task_map = HashMap::new();
     task_map.insert("task", task);
     let task_json = json!(task_map);
     JsonB(crate::bindings::transformers::transform(
-        &task_json, &args.0, &inputs,
+        &task_json, &args.0, inputs,
     ))
 }
 
