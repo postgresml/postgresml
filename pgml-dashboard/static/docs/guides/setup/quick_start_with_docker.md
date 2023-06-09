@@ -92,7 +92,7 @@ INFO:  num_features: 64, num_samples: 1797, feature_names: ["sepal length (cm)",
 
 ===
 
-#### Trainig a model
+#### Training a model
 
 Now that we have a dataset, we can train a model on it. Let's train a simple XGBoost model:
 
