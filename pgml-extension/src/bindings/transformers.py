@@ -131,6 +131,17 @@ def embed(transformer, inputs, kwargs):
 
     return model.encode(inputs, **kwargs)
 
+def clear_gpu_cache(memory_usage: None):
+    if not torch.cuda.is_available():
+        raise PgMLException(f"No GPU availables")
+
+
+    mem_used = torch.cuda.memory_usage()
+    if not memory_usage or mem_used >= int(memory_usage * 100.0):
+        torch.cuda.empty_cache()
+        return True
+    return False
+
 
 def load_dataset(name, subset, limit: None, kwargs: "{}"):
     kwargs = orjson.loads(kwargs)
