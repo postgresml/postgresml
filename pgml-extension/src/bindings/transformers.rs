@@ -311,3 +311,26 @@ pub fn load_dataset(
 
     num_rows
 }
+
+pub fn clear_gpu_cache(
+    memory_usage: Option<i32>
+) -> bool {
+
+    Python::with_gil(|py| -> bool {
+        let clear_gpu_cache: Py<PyAny> = PY_MODULE.getattr(py, "clear_gpu_cache").unwrap().into();
+        clear_gpu_cache
+            .call1(
+                py,
+                PyTuple::new(
+                    py,
+                    &[
+                        memory_usage.into_py(py),
+                    ],
+                ),
+            )
+            .unwrap()
+            .extract(py)
+            .unwrap()
+    })
+}
+

@@ -580,6 +580,15 @@ pub fn embed_batch(
     crate::bindings::transformers::embed(transformer, inputs, &kwargs.0)
 }
 
+
+#[pg_extern(immutable, parallel_safe, name = "clear_gpu_cache")]
+pub fn clear_gpu_cache(
+    memory_usage: default!(Option<i32>, "NULL")
+) -> bool {
+    let memory_usage: Option<i32> = memory_usage.map(|memory_usage| memory_usage.try_into().unwrap());
+    crate::bindings::transformers::clear_gpu_cache(memory_usage)
+}
+
 #[pg_extern(immutable, parallel_safe)]
 pub fn chunk(
     splitter: &str,
