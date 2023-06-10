@@ -32,6 +32,13 @@ pub fn static_dir() -> String {
     }
 }
 
+pub fn content_dir() -> String {
+    match var("DASHBOARD_CONTENT_DIRECTORY") {
+        Ok(dir) => dir,
+        Err(_) => "content".to_string(),
+    }
+}
+
 pub fn search_index_dir() -> String {
     match var("SEARCH_INDEX_DIRECTORY") {
         Ok(path) => path,
