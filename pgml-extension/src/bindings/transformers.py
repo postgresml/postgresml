@@ -137,7 +137,7 @@ def clear_gpu_cache(memory_usage: None):
 
 
     mem_used = torch.cuda.memory_usage()
-    if not memory_usage or mem_used >= memory_usage:
+    if not memory_usage or mem_used >= int(memory_usage * 100.0):
         torch.cuda.empty_cache()
         return True
     return False

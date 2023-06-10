@@ -581,11 +581,25 @@ pub fn embed_batch(
 }
 
 
+/// Clears the GPU cache.
+///
+/// # Arguments
+///
+/// * `memory_usage` - Optional parameter indicating the memory usage percentage (0.0 -> 1.0)
+///
+/// # Returns
+///
+/// Returns `true` if the GPU cache was successfully cleared, `false` otherwise.
+/// # Example
+///
+/// ```sql
+/// SELECT pgml.clear_gpu_cache(memory_usage => 0.5);
+/// ```
 #[pg_extern(immutable, parallel_safe, name = "clear_gpu_cache")]
 pub fn clear_gpu_cache(
-    memory_usage: default!(Option<i32>, "NULL")
+    memory_usage: default!(Option<f32>, "NULL")
 ) -> bool {
-    let memory_usage: Option<i32> = memory_usage.map(|memory_usage| memory_usage.try_into().unwrap());
+    let memory_usage: Option<f32> = memory_usage.map(|memory_usage| memory_usage.try_into().unwrap());
     crate::bindings::transformers::clear_gpu_cache(memory_usage)
 }
 

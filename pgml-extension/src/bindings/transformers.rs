@@ -313,7 +313,7 @@ pub fn load_dataset(
 }
 
 pub fn clear_gpu_cache(
-    memory_usage: Option<i32>
+    memory_usage: Option<f32>
 ) -> bool {
 
     Python::with_gil(|py| -> bool {
