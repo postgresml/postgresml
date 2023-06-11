@@ -21,6 +21,9 @@ services:
     command:
       - sleep
       - infinity
+    volumes:
+      - postgres-data:/var/lib/postgresql/14/main/
+
   dashboard:
     depends_on:
        postgres:
@@ -44,3 +47,5 @@ services:
       - mkdocs
       - serve
       - -a 0.0.0.0:8001
+volumes:
+  postgres-data:
