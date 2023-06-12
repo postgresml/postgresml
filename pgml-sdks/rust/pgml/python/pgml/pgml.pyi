@@ -1,6 +1,6 @@
 
 # Top of file key: A12BECOD!
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Self, Any
 
 
 class Collection:

@@ -8,7 +8,7 @@ use crate::types::{GetSupportedType, OutputType, SupportedType};
 
 const STUB_TOP: &str = r#"
 # Top of file key: A12BECOD!
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Self, Any
 
 "#;
 
