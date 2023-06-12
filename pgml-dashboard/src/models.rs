@@ -933,10 +933,19 @@ impl UploadedFile {
 }
 
 // Shared context models.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct User {
     pub id: i64,
     pub email: String,
+}
+
+impl Default for User {
+    fn default() -> User {
+        User {
+            id: -1,
+            email: "".to_string(),
+        }
+    }
 }
 
 impl User {

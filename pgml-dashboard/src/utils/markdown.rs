@@ -1043,8 +1043,8 @@ impl SearchIndex {
 
     pub fn documents() -> Vec<PathBuf> {
         let guides =
-            glob::glob(&(config::static_dir() + "/docs/guides/**/*.md")).expect("glob failed");
-        let blogs = glob::glob(&(config::static_dir() + "/blog/**/*.md")).expect("glob failed");
+            glob::glob(&(config::content_dir() + "/docs/guides/**/*.md")).expect("glob failed");
+        let blogs = glob::glob(&(config::content_dir() + "/blog/**/*.md")).expect("glob failed");
         guides
             .chain(blogs)
             .map(|path| path.expect("glob path failed"))
