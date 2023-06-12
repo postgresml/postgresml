@@ -1,3 +1,5 @@
+from contextlib import AbstractContextManager
+from typing import Any
 import unittest
 from pgml import Database, Collection
 from pgml.dbutils import *
@@ -165,17 +167,15 @@ class TestCollection(unittest.TestCase):
             metadata_filter={"source": "amazon"},
         )
         assert results[0]["metadata"]["user"] == "John Doe"
-
+    
     def test_vector_recall(self):
         self.collection.upsert_documents(self.documents_with_reviews_metadata)
         self.collection.generate_chunks()
         self.collection.generate_embeddings()
-        query = (
-            self.collection.query()
-            .vector_recall("product is abc")
-            .filter({"source": "amazon"})
-            .limit(2)
-        )
+        query = self.collection.query()
+        query = query.vector_recall("product is abc")
+        query = query.filter({"source": "amazon"})
+        query = query.limit(2)
         print(query)
         results = self.collection.execute(query)
         print(results)
