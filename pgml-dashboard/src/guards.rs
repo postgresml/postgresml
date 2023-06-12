@@ -16,7 +16,7 @@ pub fn default_database_url() -> String {
 
 #[derive(Debug)]
 pub struct Cluster {
-    pub pool: PgPool,
+    pub pool: Option<PgPool>,
     pub context: Context,
 }
 
@@ -33,19 +33,21 @@ impl Default for Cluster {
         };
 
         Cluster {
-            pool: PgPoolOptions::new()
-                .max_connections(settings.max_connections)
-                .idle_timeout(std::time::Duration::from_millis(settings.idle_timeout))
-                .min_connections(settings.min_connections)
-                .after_connect(|conn, _meta| {
-                    Box::pin(async move {
-                        conn.execute("SET application_name = 'pgml_dashboard';")
-                            .await?;
-                        Ok(())
+            pool: Some(
+                PgPoolOptions::new()
+                    .max_connections(settings.max_connections)
+                    .idle_timeout(std::time::Duration::from_millis(settings.idle_timeout))
+                    .min_connections(settings.min_connections)
+                    .after_connect(|conn, _meta| {
+                        Box::pin(async move {
+                            conn.execute("SET application_name = 'pgml_dashboard';")
+                                .await?;
+                            Ok(())
+                        })
                     })
-                })
-                .connect_lazy(&default_database_url())
-                .expect("Default database URL is malformed"),
+                    .connect_lazy(&default_database_url())
+                    .expect("Default database URL is alformed"),
+            ),
             context: Context {
                 user: models::User::default(),
                 cluster: models::Cluster::default(),
@@ -66,6 +68,6 @@ impl<'r> FromRequest<'r> for &'r Cluster {
 
 impl<'a> Cluster {
     pub fn pool(&'a self) -> &'a PgPool {
-        &self.pool
+        self.pool.as_ref().unwrap()
     }
 }
