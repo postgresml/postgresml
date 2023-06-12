@@ -663,8 +663,8 @@ pub async fn migrate(pool: &PgPool) -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod test_current_user {
-    use crate::CurrentUser;
     use crate::models::User;
+    use crate::CurrentUser;
     use std::collections::HashMap;
 
     // New current user should set user and visible clusters to none.
@@ -674,27 +674,43 @@ mod test_current_user {
         assert!(test_user.get_user().is_none() && test_user.get_visible_clusters().is_none());
     }
 
-    // It should be possible to set and get current user. 
-    #[test]
-    fn test_set_get_current_user() {
+    // It should be possible to set and get current user.
+    #[tokio::test]
+    async fn test_set_get_current_user() {
         let test_user = CurrentUser::new();
-        let new_user_data = User {
-            id: 1, 
-            email: "test@email.com".to_string(),
-        };
+        let mut tests = Vec::new();
 
-        test_user.set_user(new_user_data.clone());
-        assert_eq!(
-        (
-            test_user.get_user().unwrap().id, 
-            test_user.get_user().unwrap().email,
-        ), (
-            new_user_data.id,
-            new_user_data.email,
-        ));
+        for id in 0..2500 {
+            let test_user_clone = test_user.clone();
+
+            let handle = tokio::task::spawn(async move {
+                let new_user_data = User {
+                    id,
+                    email: format!("test_{}@test.com", id),
+                };
+
+                test_user_clone.set_user(new_user_data.clone());
+
+                tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+
+                assert_eq!(
+                    (
+                        test_user_clone.get_user().unwrap().id,
+                        test_user_clone.get_user().unwrap().email,
+                    ),
+                    (new_user_data.id, new_user_data.email,)
+                );
+            });
+
+            tests.push(handle);
+        }
+
+        for test in tests {
+            test.await.unwrap();
+        }
     }
 
-    // It should be possible to set and get visible clusters. 
+    // It should be possible to set and get visible clusters.
     #[test]
     fn test_set_get_visible_clusters() {
         let test_user = CurrentUser::new();
@@ -705,37 +721,35 @@ mod test_current_user {
         test_user.set_visible_clusters(new_visible_clusters.clone());
         assert_eq!(
             (
-                test_user.get_visible_clusters().unwrap().get("1"), 
+                test_user.get_visible_clusters().unwrap().get("1"),
                 test_user.get_visible_clusters().unwrap().get("2"),
-            ), (
-                new_visible_clusters.get("1"), 
-                new_visible_clusters.get("2")
-            )
+            ),
+            (new_visible_clusters.get("1"), new_visible_clusters.get("2"))
         )
     }
 
-    // It should reset current user and visible clusters to none. 
+    // It should reset current user and visible clusters to none.
     #[test]
     fn test_reset_user_to_default() {
         let test_user = CurrentUser::new();
         let new_user_data = User {
-            id: 1, 
+            id: 1,
             email: "test@email.com".to_string(),
         };
-        let new_visible_clusters: HashMap<String, String> = HashMap::from([("1".to_string(), "123456789".to_string())]);
+        let new_visible_clusters: HashMap<String, String> =
+            HashMap::from([("1".to_string(), "123456789".to_string())]);
         test_user.set_user(new_user_data);
         test_user.set_visible_clusters(new_visible_clusters);
         test_user.set_to_default();
         assert!(test_user.get_user().is_none() && test_user.get_visible_clusters().is_none())
-
     }
 }
 
 #[cfg(test)]
 mod test_clusters {
-    use crate::Clusters; 
+    use crate::Clusters;
 
-    // It should initiate with context and pool being empty hashmaps. 
+    // It should initiate with context and pool being empty hashmaps.
     #[test]
     fn test_new_clusters() {
         let test_clusters = Clusters::new();
@@ -743,10 +757,8 @@ mod test_clusters {
             (
                 test_clusters.pools.lock().len(),
                 test_clusters.contexts.lock().len(),
-            ), (  
-                0,
-                0,
-            ));
+            ),
+            (0, 0,)
+        );
     }
-
 }
