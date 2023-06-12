@@ -1,3 +1,4 @@
+/// A more type flexible version of format!
 #[macro_export]
 macro_rules! query_builder {
     ($left:expr, $( $x:expr ),* ) => ({
