@@ -4,6 +4,7 @@ use rocket::{
 };
 
 use pgml_dashboard::{
+    guards,
     responses::{self, BadRequest, Response},
     utils::{config, markdown},
 };
@@ -117,27 +118,11 @@ async fn main() {
 
     markdown::SearchIndex::build().await.unwrap();
 
-    let clusters = pgml_dashboard::Clusters::new();
-    let settings = pgml_dashboard::ClustersSettings {
-        min_connections: 0,
-        max_connections: 5,
-        idle_timeout: 15_000,
-    };
-
-    clusters
-        .add(
-            -1,
-            &pgml_dashboard::guards::default_database_url(),
-            settings,
-        )
-        .unwrap();
-
-    pgml_dashboard::migrate(&clusters.get(-1).unwrap())
+    pgml_dashboard::migrate(&guards::Cluster::default().pool())
         .await
         .unwrap();
 
     let _ = rocket::build()
-        .manage(clusters)
         .manage(markdown::SearchIndex::open().unwrap())
         .mount("/", rocket::routes![index, error])
         .mount("/dashboard/static", FileServer::from(&config::static_dir()))
@@ -159,8 +144,8 @@ async fn main() {
 #[cfg(test)]
 mod test {
     use crate::{error, index};
+    use pgml_dashboard::guards::Cluster;
     use pgml_dashboard::utils::{config, markdown};
-    use pgml_dashboard::Clusters;
     use rocket::fs::FileServer;
     use rocket::local::asynchronous::Client;
     use rocket::{Build, Rocket};
@@ -169,29 +154,12 @@ mod test {
 
     async fn rocket() -> Rocket<Build> {
         dotenv::dotenv().ok();
-        let max_connections = 5;
-        let min_connections = 1;
-        let idle_timeout = 15_000;
 
-        let clusters = Clusters::new();
-        clusters
-            .add(
-                -1,
-                &pgml_dashboard::guards::default_database_url(),
-                pgml_dashboard::ClustersSettings {
-                    max_connections,
-                    idle_timeout,
-                    min_connections,
-                },
-            )
-            .unwrap();
-
-        pgml_dashboard::migrate(&clusters.get(-1).unwrap())
+        pgml_dashboard::migrate(Cluster::default().pool())
             .await
             .unwrap();
 
         rocket::build()
-            .manage(clusters)
             .manage(markdown::SearchIndex::open().unwrap())
             .mount("/", rocket::routes![index, error])
             .mount("/dashboard/static", FileServer::from(&config::static_dir()))

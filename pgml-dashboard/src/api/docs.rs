@@ -25,7 +25,7 @@ async fn search(query: &str, index: &State<markdown::SearchIndex>) -> ResponseOk
 }
 
 #[get("/docs/<path..>", rank = 10)]
-async fn doc_handler<'a>(path: PathBuf, cluster: Cluster) -> Result<ResponseOk, Status> {
+async fn doc_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
     let guides = vec![
         NavLink::new("Setup").children(vec![
             NavLink::new("Installation").children(vec![
@@ -75,7 +75,7 @@ async fn doc_handler<'a>(path: PathBuf, cluster: Cluster) -> Result<ResponseOk, 
 }
 
 #[get("/blog/<path..>", rank = 10)]
-async fn blog_handler<'a>(path: PathBuf, cluster: Cluster) -> Result<ResponseOk, Status> {
+async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
     render(
         cluster,
         &path,
@@ -123,7 +123,7 @@ async fn blog_handler<'a>(path: PathBuf, cluster: Cluster) -> Result<ResponseOk,
 }
 
 async fn render<'a>(
-    cluster: Cluster,
+    cluster: &Cluster,
     path: &'a PathBuf,
     mut nav_links: Vec<NavLink>,
     nav_title: &'a str,
@@ -201,7 +201,7 @@ async fn render<'a>(
     let user = if cluster.context.user.is_anonymous() {
         None
     } else {
-        Some(cluster.context.user)
+        Some(cluster.context.user.clone())
     };
 
     let mut layout = crate::templates::Layout::new(&title);
