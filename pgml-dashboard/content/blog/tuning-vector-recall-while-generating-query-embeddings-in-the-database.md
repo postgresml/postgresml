@@ -129,7 +129,7 @@ We'll start with semantic search. Given a user query, e.g. "Best 1980's scifi mo
 WITH request AS (
   SELECT pgml.embed(
     'intfloat/e5-large',
-    'Best 1980''s scifi movie'
+    'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 )
 
@@ -142,9 +142,9 @@ SELECT
     review_embedding_e5_large <=> (
       SELECT embedding FROM request
     )
-  ) AS cosine_similiarity
+  ) AS cosine_similarity
 FROM pgml.amazon_us_reviews
-ORDER BY review_embedding_e5_large <=> (SELECT embedding FROM request)
+ORDER BY cosine_similarity
 LIMIT 5;
 ```
 
@@ -152,7 +152,7 @@ LIMIT 5;
 
 !!! results
 
-| review_body                                         | product_title                                                 | star_rating | total_votes | cosine_similiarity |
+| review_body                                         | product_title                                                 | star_rating | total_votes | cosine_similarity |
 |-----------------------------------------------------|---------------------------------------------------------------|-------------|-------------|--------------------|
 | best 80s SciFi movie ever                           | The Adventures of Buckaroo Banzai Across the Eighth Dimension | 5           | 1           | 0.956207707312679  |
 | One of the best 80's sci-fi movies, beyond a doubt! | Close Encounters of the Third Kind [Blu-ray]                  | 5           | 1           | 0.9298004258989776 |
@@ -270,7 +270,7 @@ SELECT
   title,
   1 - (
     review_embedding_e5_large <=> (SELECT embedding FROM request)
-  ) AS cosine_similiarity
+  ) AS cosine_similarity
 FROM movies
 ORDER BY review_embedding_e5_large <=> (SELECT embedding FROM request)
 LIMIT 10;
@@ -280,7 +280,7 @@ LIMIT 10;
 
 !!! results
 
-| title                                                              | cosine_similiarity |
+| title                                                              | cosine_similarity |
 |--------------------------------------------------------------------|--------------------|
 | THX 1138 (The George Lucas Director's Cut Special Edition/ 2-Disc) | 0.8652007733744973 |
 | 2010: The Year We Make Contact                                     | 0.8621574666546908 |
@@ -328,7 +328,7 @@ SELECT
   title,
   1 - (
     review_embedding_e5_large <=> (SELECT embedding FROM request)
-  ) AS cosine_similiarity
+  ) AS cosine_similarity
 FROM movies
 ORDER BY review_embedding_e5_large <=> (SELECT embedding FROM request)
 LIMIT 10;
@@ -338,7 +338,7 @@ LIMIT 10;
 
 !!! results
 
-| title                                                              | cosine_similiarity |
+| title                                                              | cosine_similarity |
 |--------------------------------------------------------------------|--------------------|
 | THX 1138 (The George Lucas Director's Cut Special Edition/ 2-Disc) | 0.8652007733744973 |
 | Big Trouble in Little China [UMD for PSP]                          | 0.8649691870870362 |
@@ -411,7 +411,7 @@ SET ivfflat.probes = 1;
 WITH request AS (
   SELECT pgml.embed(
     'intfloat/e5-large',
-    'Best 1980''s scifi movie'
+    'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 )
 
@@ -420,7 +420,7 @@ SELECT
   total_reviews,
   1 - (
     review_embedding_e5_large <=> (SELECT embedding FROM request)
-  ) AS cosine_similiarity
+  ) AS cosine_similarity
 FROM movies
 WHERE <strong>total_reviews > 10</strong>
 ORDER BY review_embedding_e5_large <=> (SELECT embedding FROM request)
@@ -431,7 +431,7 @@ LIMIT 10;
 
 !!! results
 
-| title                                                | total_reviews | cosine_similiarity |
+| title                                                | total_reviews | cosine_similarity |
 |------------------------------------------------------|---------------|--------------------|
 | 2010: The Year We Make Contact                       | 29            | 0.8621574666546908 |
 | Forbidden Planet                                     | 202           | 0.861032948199611  |
@@ -467,7 +467,7 @@ SQL is a very expressive language that can handle a lot of complexity. To keep t
 WITH request AS (
   SELECT pgml.embed(
     'intfloat/e5-large',
-    'Best 1980''s scifi movie'
+    'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 ),
 
@@ -479,7 +479,7 @@ first_pass AS (
       star_rating_avg,
       1 - (
         review_embedding_e5_large <=> (SELECT embedding FROM request)
-      ) AS cosine_similiarity,
+      ) AS cosine_similarity,
       star_rating_avg / 5 AS star_rating_score
     FROM movies
     WHERE total_reviews > 10
@@ -493,8 +493,8 @@ SELECT
   total_reviews,
   round(star_rating_avg, 2) as star_rating_avg,
   star_rating_score,
-  cosine_similiarity,
-  cosine_similiarity + star_rating_score AS final_score
+  cosine_similarity,
+  cosine_similarity + star_rating_score AS final_score
 FROM first_pass
 ORDER BY final_score DESC
 LIMIT 10;
@@ -504,7 +504,7 @@ LIMIT 10;
 
 !!! results
 
-| title                                                | total_reviews | star_rating_avg |        final_score |      star_rating_score | cosine_similiarity |
+| title                                                | total_reviews | star_rating_avg |        final_score |      star_rating_score | cosine_similarity |
 |:-----------------------------------------------------|--------------:|----------------:|-------------------:|-----------------------:|-------------------:|
 | Forbidden Planet (Two-Disc 50th Anniversary Edition) |           255 |            4.82 | 1.8216832158805154 | 0.96392156862745098000 | 0.8577616472530644 |
 | Back to the Future                                   |            31 |            4.94 |   1.82090702765472 | 0.98709677419354838000 | 0.8338102534611714 |
