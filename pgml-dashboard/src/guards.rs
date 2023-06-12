@@ -16,7 +16,7 @@ pub fn default_database_url() -> String {
 
 #[derive(Debug)]
 pub struct Cluster {
-    pool: PgPool,
+    pub pool: PgPool,
     pub context: Context,
 }
 
