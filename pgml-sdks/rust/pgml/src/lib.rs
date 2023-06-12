@@ -1,14 +1,23 @@
+//! # pgml
+//!
+//! pgml is an open source alternative for building end-to-end vector search applications without OpenAI and Pinecone
+//!
+//! With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
+
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 use pyo3::prelude::*;
 use tokio::runtime::{Builder, Runtime};
 
 mod collection;
 mod database;
-mod models;
+pub mod models;
 mod queries;
 mod utils;
 
+// Pub re-export the Database and Collection structs for use in the rust library
+pub use collection::Collection;
 pub use database::Database;
+
 use database::DatabasePython;
 
 // Normally libraries leave it up to up to the rust executable using the library to init the
@@ -82,13 +91,14 @@ mod tests {
     #[tokio::test]
     async fn can_create_collection_and_vector_search() {
         init_logger(LevelFilter::Info).unwrap();
-        let collection_name = "test10";
+        let collection_name = "test11";
 
         let db = Database::new(CONNECTION_STRING).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
-        let mut document: HashMap<String, String> = HashMap::new();
-        document.insert("text".to_string(), "test this is cool".to_string());
-        let documents = vec![document];
+        let documents = vec![HashMap::from([
+            ("id".to_string(), "1".to_string()),
+            ("text".to_string(), "This is a document".to_string()),
+        ])];
         collection
             .upsert_documents(documents, None, None)
             .await

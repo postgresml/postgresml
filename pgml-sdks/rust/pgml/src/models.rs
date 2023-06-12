@@ -7,6 +7,7 @@ use sqlx::types::Uuid;
 use sqlx::FromRow;
 use std::collections::HashMap;
 
+/// A document
 #[derive(FromRow, Debug, Clone)]
 pub struct Document {
     pub id: i64,
@@ -16,6 +17,7 @@ pub struct Document {
     pub text: String,
 }
 
+/// A collection of documents
 #[derive(FromRow, Debug, Clone)]
 pub struct Collection {
     pub id: i64,
@@ -24,6 +26,7 @@ pub struct Collection {
     pub active: bool,
 }
 
+/// A text splitter
 #[derive(custom_into_py, FromRow, Debug, Clone)]
 pub struct Splitter {
     pub id: i64,
@@ -32,6 +35,7 @@ pub struct Splitter {
     pub parameters: Json<HashMap<String, String>>,
 }
 
+/// A model used to perform some task
 #[derive(custom_into_py, FromRow, Debug, Clone)]
 pub struct Model {
     pub id: i64,

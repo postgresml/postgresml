@@ -14,6 +14,7 @@ use crate::queries;
 use crate::query_builder;
 
 #[derive(custom_derive, Debug, Clone)]
+/// A collection of documents
 pub struct Collection {
     name: String,
     pool: Arc<PgPool>,
@@ -40,6 +41,11 @@ pub struct Collection {
     get_name
 )]
 impl Collection {
+    /// Creates a new collection
+    ///
+    /// This should not be called directly. Use [crate::Database::create_or_get_collection] instead.
+    ///
+    /// Note that a default text splitter and model are created automatically.
     pub async fn new(name: String, pool: Arc<PgPool>) -> anyhow::Result<Self> {
         let (
             documents_table_name,
@@ -229,6 +235,35 @@ impl Collection {
         Ok(())
     }
 
+    /// Upserts documents into the database
+    ///
+    /// # Arguments
+    ///
+    /// * `documents` - A vector of documents to upsert.
+    /// * `text_key` - The key in the document that contains the text.
+    /// * `id_key` - The key in the document that contains the id.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::collections::HashMap;
+    /// use pgml::Database;
+    ///
+    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///    let db = Database::new(CONNECTION_STRING).await?;
+    ///    let collection = db.create_or_get_collection("collection number 1").await?;
+    ///    let documents = vec![HashMap::from([
+    ///        ("id".to_string(), "1".to_string()),
+    ///        ("text".to_string(), "This is a document".to_string()),
+    ///    ])];
+    ///    collection
+    ///        .upsert_documents(documents, None, None)
+    ///        .await?;
+    ///    Ok(())
+    /// }
+    /// ```
     pub async fn upsert_documents(
         &self,
         documents: Vec<HashMap<String, String>>,
@@ -269,6 +304,27 @@ impl Collection {
         Ok(())
     }
 
+    /// Registers new text splitters
+    ///
+    /// # Arguments
+    ///
+    /// * `splitter_name` - The name of the text splitter.
+    /// * `splitter_params` - A [std::collections::HashMap] of parameters.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pgml::Database;
+    ///
+    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///    let db = Database::new(CONNECTION_STRING).await?;
+    ///    let collection = db.create_or_get_collection("collection number 1").await?;
+    ///    collection.register_text_splitter(None, None).await?;
+    ///    Ok(())
+    /// }
+    /// ```
     pub async fn register_text_splitter(
         &self,
         splitter_name: Option<String>,
@@ -311,6 +367,7 @@ impl Collection {
         Ok(())
     }
 
+    /// Gets all registered text [models::Splitter]s
     pub async fn get_text_splitters(&self) -> anyhow::Result<Vec<models::Splitter>> {
         Ok(sqlx::query_as(&query_builder!(
             "SELECT * from %s",
@@ -320,6 +377,34 @@ impl Collection {
         .await?)
     }
 
+    /// Generates chunks for the collection
+    ///
+    /// # Arguments
+    ///
+    /// * `splitter_id` - The id of the splitter to chunk with.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::collections::HashMap;
+    /// use pgml::Database;
+    ///
+    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///    let db = Database::new(CONNECTION_STRING).await?;
+    ///    let collection = db.create_or_get_collection("collection number 1").await?;
+    ///    let documents = vec![HashMap::from([
+    ///        ("id".to_string(), "1".to_string()),
+    ///        ("text".to_string(), "This is a document".to_string()),
+    ///    ])];
+    ///    collection
+    ///        .upsert_documents(documents, None, None)
+    ///        .await?;
+    ///    collection.generate_chunks(None).await?;
+    ///    Ok(())
+    /// }
+    /// ```
     pub async fn generate_chunks(&self, splitter_id: Option<i64>) -> anyhow::Result<()> {
         let splitter_id = splitter_id.unwrap_or(1);
         sqlx::query(&query_builder!(
@@ -335,6 +420,28 @@ impl Collection {
         Ok(())
     }
 
+    /// Registers new models for specific tasks
+    ///
+    /// # Arguments
+    ///
+    /// * `task` - The name of the task.
+    /// * `model_name` - The name of the [models::Model].
+    /// * `model_params` - A [std::collections::HashMap] of parameters.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pgml::Database;
+    ///
+    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///    let db = Database::new(CONNECTION_STRING).await?;
+    ///    let collection = db.create_or_get_collection("collection number 1").await?;
+    ///    collection.register_model(None, None, None).await?;
+    ///    Ok(())
+    /// }
+    /// ```
     pub async fn register_model(
         &self,
         task: Option<String>,
@@ -381,6 +488,7 @@ impl Collection {
         Ok(())
     }
 
+    /// Gets all registered [models::Model]s
     pub async fn get_models(&self) -> anyhow::Result<Vec<models::Model>> {
         Ok(
             sqlx::query_as(&query_builder!("SELECT * from %s", self.models_table_name))
@@ -460,6 +568,36 @@ impl Collection {
         }
     }
 
+    /// Generates embeddings for the collection
+    ///
+    /// # Arguments
+    ///
+    /// * `model_id` - The id of the model.
+    /// * `splitter_id` - The id of the splitter.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::collections::HashMap;
+    /// use pgml::Database;
+    ///
+    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///    let db = Database::new(CONNECTION_STRING).await?;
+    ///    let collection = db.create_or_get_collection("collection number 1").await?;
+    ///    let documents = vec![HashMap::from([
+    ///        ("id".to_string(), "1".to_string()),
+    ///        ("text".to_string(), "This is a document".to_string()),
+    ///    ])];
+    ///    collection
+    ///        .upsert_documents(documents, None, None)
+    ///        .await?;
+    ///    collection.generate_chunks(None).await?;
+    ///    collection.generate_embeddings(None, None).await?;
+    ///    Ok(())
+    /// }
+    /// ```
     pub async fn generate_embeddings(
         &self,
         model_id: Option<i64>,
@@ -487,17 +625,56 @@ impl Collection {
         Ok(())
     }
 
+    /// Performs vector search on the [Collection]
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - The query to search for.
+    /// * `query_params` - A [std::collections::HashMap] of parameters for the model used in the
+    /// query.
+    /// * `top_k` - How many results to limit on.
+    /// * `model_id` - The id of the [models::Model] to use.
+    /// * `splitter_id` - The id of the [models::Splitter] to use.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::collections::HashMap;
+    /// use pgml::Database;
+    ///
+    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///    let db = Database::new(CONNECTION_STRING).await?;
+    ///    let collection = db.create_or_get_collection("collection number 1").await?;
+    ///    let documents = vec![HashMap::from([
+    ///        ("id".to_string(), "1".to_string()),
+    ///        ("text".to_string(), "This is a document".to_string()),
+    ///    ])];
+    ///    collection
+    ///        .upsert_documents(documents, None, None)
+    ///        .await?;
+    ///    collection.generate_chunks(None).await?;
+    ///    collection.generate_embeddings(None, None).await?;
+    ///    let results = collection
+    ///        .vector_search("Here is a test", None, None, None, None)
+    ///        .await
+    ///        .unwrap();
+    ///    println!("The results are: {:?}", results);
+    ///    Ok(())
+    /// }
+    /// ```
     #[allow(clippy::type_complexity)]
     pub async fn vector_search(
         &self,
         query: &str,
-        query_parameters: Option<HashMap<String, String>>,
+        query_params: Option<HashMap<String, String>>,
         top_k: Option<i64>,
         model_id: Option<i64>,
         splitter_id: Option<i64>,
     ) -> anyhow::Result<Vec<(f64, String, HashMap<String, String>)>> {
         //embedding_table_name as (SELECT table_name from %s WHERE task = 'embedding' AND model_id = %s and splitter_id = %s) \
-        let query_parameters = match query_parameters {
+        let query_params = match query_params {
             Some(params) => serde_json::to_value(params)?,
             None => serde_json::json!({}),
         };
@@ -532,7 +709,7 @@ impl Collection {
             ))
             .bind(model_id)
             .bind(query)
-            .bind(query_parameters)
+            .bind(query_params)
             .bind(top_k)
             .fetch_all(self.pool.borrow())
             .await?;
@@ -541,6 +718,7 @@ impl Collection {
         Ok(results)
     }
 
+    /// Creates a new Collection from a [models::Collection] and a [`Arc<PgPool>`];
     pub fn from_model_and_pool(collection_model: models::Collection, pool: Arc<PgPool>) -> Self {
         let (
             documents_table_name,
