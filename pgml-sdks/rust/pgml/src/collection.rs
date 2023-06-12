@@ -7,7 +7,6 @@ use sqlx::postgres::PgPool;
 use sqlx::types::Json;
 use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::sync::Arc;
 
 use crate::models;
 use crate::queries;
@@ -17,7 +16,7 @@ use crate::query_builder;
 /// A collection of documents
 pub struct Collection {
     name: String,
-    pool: Arc<PgPool>,
+    pool: PgPool,
     documents_table_name: String,
     splitters_table_name: String,
     models_table_name: String,
@@ -46,7 +45,7 @@ impl Collection {
     /// This should not be called directly. Use [crate::Database::create_or_get_collection] instead.
     ///
     /// Note that a default text splitter and model are created automatically.
-    pub async fn new(name: String, pool: Arc<PgPool>) -> anyhow::Result<Self> {
+    pub async fn new(name: String, pool: PgPool) -> anyhow::Result<Self> {
         let (
             documents_table_name,
             splitters_table_name,
@@ -718,8 +717,8 @@ impl Collection {
         Ok(results)
     }
 
-    /// Creates a new Collection from a [models::Collection] and a [`Arc<PgPool>`];
-    pub fn from_model_and_pool(collection_model: models::Collection, pool: Arc<PgPool>) -> Self {
+    /// Creates a new Collection from a [models::Collection] and a [`PgPool`];
+    pub fn from_model_and_pool(collection_model: models::Collection, pool: PgPool) -> Self {
         let (
             documents_table_name,
             splitters_table_name,

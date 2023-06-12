@@ -2,7 +2,6 @@ use pgml_macros::{custom_derive, custom_methods};
 use pyo3::prelude::*;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::borrow::Borrow;
-use std::sync::Arc;
 use std::time::SystemTime;
 
 use crate::collection::*;
@@ -14,7 +13,7 @@ use crate::query_builder;
 /// A connection to a postgres database
 #[derive(custom_derive, Clone, Debug)]
 pub struct Database {
-    pub pool: Arc<PgPool>,
+    pub pool: PgPool,
 }
 
 #[custom_methods(new, create_or_get_collection, archive_collection)]
@@ -45,7 +44,7 @@ impl Database {
         sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
             .execute(&pool)
             .await?;
-        let pool = Arc::new(pool);
+        let pool = pool;
         Ok(Self { pool })
     }
 
