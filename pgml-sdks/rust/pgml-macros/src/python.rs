@@ -179,7 +179,7 @@ pub fn generate_python_methods(
                 }
             } else {
                 quote! {
-                    let x = middle;
+                    let x = #middle;
                 }
             };
             let middle = quote! {
@@ -209,7 +209,7 @@ pub fn generate_python_methods(
                 }
             } else {
                 quote! {
-                    let x = middle;
+                    let x = #middle;
                 }
             };
             let middle = if let Some(convert) = convert_from {
