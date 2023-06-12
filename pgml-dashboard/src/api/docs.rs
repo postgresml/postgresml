@@ -131,6 +131,8 @@ async fn render<'a>(
 ) -> Result<ResponseOk, Status> {
     let url = path.clone();
 
+    println!("Path: {:?}", url);
+
     // Get the document content
     let path = Path::new(&config::content_dir())
         .join(folder)
