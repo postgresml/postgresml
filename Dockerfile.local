@@ -46,7 +46,6 @@ RUN echo 'postgres ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
 COPY ./pgml-extension/requirements.txt /app/requirements.txt
 
-
 RUN pip3 install -r /app/requirements.txt
 
 
@@ -59,6 +58,12 @@ RUN chmod a+rwx `$(which pg_config) --pkglibdir` \
 
 RUN useradd postgresml -m -s /bin/bash -G sudo
 RUN echo 'postgresml ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+RUN cd /tmp && \
+	git clone --branch v0.4.1 https://github.com/pgvector/pgvector.git && \
+	cd pgvector && \
+	make && \
+	make install
 
 USER postgresml
 
