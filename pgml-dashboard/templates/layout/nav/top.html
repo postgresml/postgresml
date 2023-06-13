@@ -1,5 +1,5 @@
 <nav class="navbar horizontal navbar-expand-lg" data-controller="search">
-  <div class="container-fluid">
+  <div class="container">
     <a class="navbar-brand d-flex align-items-center gap-2" href="/">
       <img src="/dashboard/static/images/owl_gradient.svg" alt="PostgresML Logo" height="30" width="21">
       <span class="fw-normal position-relative overflow-visible">Postgres
@@ -37,12 +37,11 @@
         <% if !standalone_dashboard { %>
         <div class="d-flex gap-2 justify-content-end align-items-center">
           <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
-          <a class="btn btn-primary" href="/signup">Get Started</a>
+          <a class="btn btn-primary" href="/signup">Sign Up</a>
           <% } else { %>
           <a class="btn btn-primary" href="/clusters">Console</a>
           <% } %>
         </div>
-   
         <% } %>
       </div>
     </div>

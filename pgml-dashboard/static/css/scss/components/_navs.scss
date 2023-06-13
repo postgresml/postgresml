@@ -1,13 +1,12 @@
 .navbar {
-    --bs-navbar-padding-y: 0;
+    --bs-navbar-padding-y: 24px;
     --bs-navbar-padding-x: 24px;
-    border: 1px solid rgba(33, 33, 35, 0.5);
 
     &.horizontal {
         --bs-navbar-padding-x: 1.25rem;
-        --bs-navbar-padding-y: 1.25rem;
-        @include media-breakpoint-down(lg) {
-            border-radius: 12px;
+        min-height: $navbar-height;
+        @include media-breakpoint-up(lg) {
+            height: $navbar-height;
         }
     }
 
@@ -134,5 +133,8 @@
         span.material-symbols-outlined {
             transform: rotate(-90deg);
         }
+    }
+    @include media-breakpoint-down(xxl) {
+        border-radius: 0px;
     }
 }
