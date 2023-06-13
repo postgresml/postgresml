@@ -124,3 +124,13 @@
     font-weight: 700;
     line-height: 80px;
 }
+
+.sticky-top-nav{
+    position: sticky; 
+    top: 0px; 
+    margin-bottom: ($spacer * 1.5);
+
+    @include media_breakpoint_up(xxl) {
+        margin-bottom: ($spacer * 3);
+    }
+}

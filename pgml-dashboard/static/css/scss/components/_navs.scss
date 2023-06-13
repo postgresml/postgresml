@@ -6,7 +6,6 @@
     &.horizontal {
         --bs-navbar-padding-x: 1.25rem;
         --bs-navbar-padding-y: 1.25rem;
-        border-radius: var(--bs-border-radius-pill);
         @include media-breakpoint-down(lg) {
             border-radius: 12px;
         }

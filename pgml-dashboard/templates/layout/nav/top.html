@@ -11,7 +11,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav flex-grow-1 justify-content-center me-auto mb-2 mb-lg-0">
+      <ul class="navbar-nav flex-grow-1 me-auto mb-2 mb-lg-0">
         <% if standalone_dashboard { %>
         <li class="nav-item d-flex align-items-center">
           <a class="nav-link" href="/dashboard">Dashboard</a>
@@ -37,13 +37,9 @@
         <% if !standalone_dashboard { %>
         <div class="d-flex gap-2 justify-content-end align-items-center">
           <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
-          <a class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/login">Sign In</a>
           <a class="btn btn-primary" href="/signup">Get Started</a>
           <% } else { %>
-          <a class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/clusters">Console</a>
-          <a href="/support" class="btn btn-tertiary p-0 ps-2">
-            <img loading="lazy" src="/dashboard/static/images/icons/help.svg" width="30" height="30" alt="help" />
-          </a>
+          <a class="btn btn-primary" href="/clusters">Console</a>
           <% } %>
         </div>
    
