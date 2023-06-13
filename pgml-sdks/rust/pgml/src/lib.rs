@@ -90,7 +90,7 @@ mod tests {
 
     #[tokio::test]
     async fn can_create_collection_and_vector_search() {
-        init_logger(LevelFilter::Info).unwrap();
+        init_logger(LevelFilter::Warn).unwrap();
         let collection_name = "test11";
 
         let db = Database::new(CONNECTION_STRING).await.unwrap();

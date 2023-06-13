@@ -36,12 +36,12 @@ impl ToString for SupportedType {
             SupportedType::HashMap((k, v)) => {
                 format!("HashMap<{},{}>", k.to_string(), v.to_string())
             }
-            SupportedType::Tuple(v) => {
-                let mut output = String::new();
-                v.iter().for_each(|ty| {
-                    output.push_str(&format!("{},", ty.to_string()));
-                });
-                format!("({})", output)
+            SupportedType::Tuple(t) => {
+                let mut types = Vec::new();
+                for ty in t {
+                    types.push(ty.to_string());
+                }
+                format!("({})", types.join(","))
             }
             SupportedType::S => "Self".to_string(),
             SupportedType::Option(v) => format!("Option<{}>", v.to_string()),

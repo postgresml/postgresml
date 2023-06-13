@@ -3,7 +3,6 @@ import pgml
 
 async def main():
     collection_name = "ptest20"
-    # db = pgml_sdk.DatabasePython("postgres://localhost:28815/pgml")
     db = pgml.Database("postgres://postgres@127.0.0.1:5433/pgml_development")
     collection = await db.create_or_get_collection(collection_name)
     print(collection)

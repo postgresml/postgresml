@@ -3,9 +3,9 @@ requires = ["maturin>=1.0,<2.0", "patchelf"]
 build-backend = "maturin"
 
 [project]
-name = "pgml"
+name = "pgml-async"
 requires-python = ">=3.7"
-version = "0.1.1"
+version = "0.1.4"
 description = "Python SDK is designed to facilitate the development of scalable vector search applications on PostgreSQL databases."
 authors = [
   {name = "PostgresML",  email = "team@postgresml.org"},
@@ -13,7 +13,7 @@ authors = [
 homepage = "https://postgresml.org"
 repository = "https://github.com/postgresml/postgresml"
 documentation = "https://github.com/postgresml/postgresml/tree/master/pgml-sdks/python/pgml"
-readme = "../../python/pgml/README.md"
+#readme = "../../python/pgml/README.md"
 keywords = ["postgres","machine learning","vector databases","embeddings"]
 classifiers = [
     "Programming Language :: Rust",
