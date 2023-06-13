@@ -197,5 +197,4 @@ class TestCollection(unittest.IsolatedAsyncioTestCase):
         await self.collection.generate_chunks()
         await self.collection.generate_embeddings()
         results = await self.collection.vector_search("Lorem ipsum 1", top_k=2)
-        print(results)
         assert results[0][0] == 1.0
