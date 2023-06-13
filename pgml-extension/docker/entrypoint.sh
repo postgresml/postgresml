@@ -25,7 +25,7 @@ done
 fi
 
 echo "Installing pgvector.. "
-psql -U postgres -h 127.0.0.1 pgml_development -c 'CREATE EXTENSION vector'
+psql -U postgres -h 127.0.0.1 pgml_development -c 'CREATE EXTENSION IF NOT EXISTS vector'
 
 echo "Ready!"
 if [[ ! -z $@ ]]; then
