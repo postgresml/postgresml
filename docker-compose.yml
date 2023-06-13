@@ -28,6 +28,7 @@ services:
     environment:
       ROCKET_ADDRESS: 0.0.0.0
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/pgml_development
+      RUST_LOG: info
     command: bash -c "sqlx migrate run && cargo run"
 
 volumes:

@@ -10,7 +10,7 @@
 -- solutions can solve problems these days.
 
 -- Exit on error (psql)
-\set ON_ERROR_STOP true
+-- \set ON_ERROR_STOP true
 \timing on
 
 SELECT pgml.load_dataset('digits');
