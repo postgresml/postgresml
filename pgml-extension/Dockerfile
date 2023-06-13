@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y postgresql-pgml-14
 COPY --chown=postgres:postgres . /app
 WORKDIR /app
 RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements-xformers.txt --no-dependencies
+
 # Listen on 0.0.0.0 and allow 'root' to connect without a password.
 # Please modify for production deployments accordingly.
 RUN cp /app/docker/postgresql.conf /etc/postgresql/14/main/postgresql.conf
