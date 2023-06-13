@@ -359,7 +359,11 @@ fn get_python_type(ty: &SupportedType) -> String {
         SupportedType::Reference(r) => get_python_type(r),
         SupportedType::S => "Self".to_string(),
         SupportedType::str | SupportedType::String => "str".to_string(),
-        SupportedType::Option(o) => format!("Optional[{}] = {}", get_python_type(o), get_type_for_optional(o)),
+        SupportedType::Option(o) => format!(
+            "Optional[{}] = {}",
+            get_python_type(o),
+            get_type_for_optional(o)
+        ),
         SupportedType::Vec(v) => format!("List[{}]", get_python_type(v)),
         SupportedType::HashMap((k, v)) => {
             format!("Dict[{}, {}]", get_python_type(k), get_python_type(v))
@@ -390,7 +394,9 @@ fn get_python_type(ty: &SupportedType) -> String {
 fn get_type_for_optional(ty: &SupportedType) -> String {
     match ty {
         SupportedType::Reference(r) => get_type_for_optional(r),
-        SupportedType::str | SupportedType::String => "\"Default set in Rust. Please check the documentation.\"".to_string(),
+        SupportedType::str | SupportedType::String => {
+            "\"Default set in Rust. Please check the documentation.\"".to_string()
+        }
         SupportedType::HashMap(_) => "{}".to_string(),
         SupportedType::Vec(_) => "[]".to_string(),
         SupportedType::i64 => 1.to_string(),

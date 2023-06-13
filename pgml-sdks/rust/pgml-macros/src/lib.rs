@@ -1,8 +1,8 @@
 use syn::{parse_macro_input, DeriveInput, ItemImpl};
 
 mod common;
-mod types;
 mod python;
+mod types;
 
 #[proc_macro_derive(custom_derive)]
 pub fn custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
