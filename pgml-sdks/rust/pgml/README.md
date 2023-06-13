@@ -8,7 +8,7 @@ There are three main macros to know about:
 - `custom_methods`
 - `custom_into_py`
 
-## Custom Derive
+## custom_derive 
 `custom_derive` is used when defining a new struct that you want to be available as a Python class. This macro automatically creates a wrapper for the struct postfixing the name with `Python`. For example, the following code:
 ```
 #[derive(custom_derive, Debug, Clone)]
@@ -31,7 +31,7 @@ pub struct TestStructPython {
 
 You must currently implement `Debug` and `Clone` on the structs you use `custom_derive` on.
 
-## Custom Methods
+## custom_methods 
 `custom_methods` is used on the impl block for a struct you want to be available as a Python class. This macro automatically creates methods that work seamlessly with pyO3. For example, the following code:
 ```
 #[custom_methods(new, get_name)]
@@ -70,7 +70,7 @@ impl TestStructPython {
 
 Note that the macro only works on methods marked with `pub`;
 
-## Custom Into PY
+## custom_into_py 
 `custom_into_py` is used when we want to seamlessly return Rust structs as Python dictionaries. For example, let's say we have the following code:
 ```
 #[derive(custom_into_py, FromRow, Debug, Clone)]
@@ -114,7 +114,7 @@ Implementing `IntoPy` allows pyo3 to seamlessly convert between Rust and python.
 
 ## Other Noteworthy Things
 
-Be aware that the only pyo3 specific code in this crate is the `pymodule` invocation in `lib.rs`. Everything else is handled by `pgml-macros`. If you want to expose a Python Class directly on the Python module you have to add in the `pymodule` invocation. For example, if you wanted to expose `TestStruct` so Python module users could access it directly on `pgml`, you could do the following:
+Be aware that the only pyo3 specific code in this crate is the `pymodule` invocation in `lib.rs`. Everything else is handled by `pgml-macros`. If you want to expose a Python Class directly on the Python module you have to add it in the `pymodule` invocation. For example, if you wanted to expose `TestStruct` so Python module users could access it directly on `pgml`, you could do the following:
 ```
 #[pymodule]
 fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
@@ -123,9 +123,17 @@ fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 ```
-Note that even though it is called `TestStructPython` here, Python module users can access it as `pgml.TestStruct`.
 
-For local development, install maturin and run:
+Now Python users can access it like so:
+```
+import pgml
+
+t = pgml.TestStruct("test")
+print(t.get_name())
+
+```
+
+For local development, install [maturin](https://github.com/PyO3/maturin) and run:
 ```
 maturin develop
 ```
