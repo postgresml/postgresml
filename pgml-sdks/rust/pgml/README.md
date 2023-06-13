@@ -17,13 +17,9 @@ pub struct TestStruct {
 }
 ```
 
-Produces similar code to the following:
+Creates another struct:
 
 ```
-pub struct TestStruct {
-    pub name: String
-}
-
 pub struct TestStructPython {
     pub wrapped: TestStruct
 }
@@ -118,7 +114,6 @@ Be aware that the only pyo3 specific code in this crate is the `pymodule` invoca
 ```
 #[pymodule]
 fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<DatabasePython>()?;
     m.add_class::<TestStructPython>()?;
     Ok(())
 }
