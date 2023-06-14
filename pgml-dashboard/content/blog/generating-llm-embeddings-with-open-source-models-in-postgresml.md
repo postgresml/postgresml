@@ -127,8 +127,10 @@ Since our corpus of documents (movie reviews) are all relatively short and simil
 
 It takes a couple of minutes to download and cache the `intfloat/e5-small` model to generate the first embedding. After that, it's pretty fast.
 
+Note how we prefix the text we want to embed with either `passage: ` or `query: `, the e5 model requires us to prefix our data with `passage: ` if we're generating embeddings for our corpus and `query: ` if we want to find semantically similar content.
+
 ```postgresql
-SELECT pgml.embed('intfloat/e5-small', 'hi mom');
+SELECT pgml.embed('intfloat/e5-small', 'passage: hi mom');
 ```
 
 This is a pretty powerful function, because we can pass any arbitrary text to any open source model, and it will generate an embedding for us. We can benchmark how long it takes to generate an embedding for a single review, using client-side timings in Postgres:
@@ -147,7 +149,7 @@ Aside from using this function with strings passed from a client, we can use it 
 ```postgresql
 SELECT
     review_body,
-    pgml.embed('intfloat/e5-small', review_body)
+    pgml.embed('intfloat/e5-small', 'passage: ' || review_body)
 FROM pgml.amazon_us_reviews
 LIMIT 1;
 ```
@@ -171,7 +173,7 @@ Time to generate an embedding increases with the length of the input text, and v
 ```postgresql
 SELECT
     review_body,
-    pgml.embed('intfloat/e5-small', review_body) AS embedding
+    pgml.embed('intfloat/e5-small', 'passage: ' || review_body) AS embedding
 FROM pgml.amazon_us_reviews
 LIMIT 1000;
 ```
@@ -191,7 +193,7 @@ SELECT
     reviqew_body,
     pgml.embed(
         'intfloat/e5-small',
-        review_body,
+        'passage: ' || review_body,
         '{"device": "cpu"}'
     ) AS embedding
 FROM pgml.amazon_us_reviews
@@ -328,7 +330,7 @@ BEGIN
         UPDATE pgml.amazon_us_reviews
         SET review_embedding_e5_large = pgml.embed(
                 'intfloat/e5-large',
-                review_body
+                'passage: ' || review_body
             )
         WHERE id BETWEEN i AND i + 10
             AND review_embedding_e5_large IS NULL;

@@ -137,7 +137,7 @@ We can find a customer that our embeddings model feels is close to the sentiment
 WITH request AS (
   SELECT pgml.embed(
     'intfloat/e5-large',
-    'I love all Star Wars, but Empire Strikes Back is particularly amazing'
+    'query: I love all Star Wars, but Empire Strikes Back is particularly amazing'
   )::vector(1024) AS embedding
 )
 
@@ -147,9 +147,9 @@ SELECT
   star_rating_avg,
   1 - (
     movie_embedding_e5_large <=> (SELECT embedding FROM request)
-  ) AS cosine_similiarity
+  ) AS cosine_similarity
 FROM customers
-ORDER BY cosine_similiarity DESC
+ORDER BY cosine_similarity DESC
 LIMIT 1;
 ```
 
@@ -157,7 +157,7 @@ LIMIT 1;
 
 !!! results
 
-| id       | total_reviews | star_rating_avg    | cosine_similiarity |
+| id       | total_reviews | star_rating_avg    | cosine_similarity |
 |----------|---------------|--------------------|--------------------|
 | 44366773 | 1             | 2.0000000000000000 | 0.8831349398621555 |
 
@@ -215,7 +215,7 @@ Now we can write our personalized SQL query. It's nearly the same as our query f
 WITH request AS (
   SELECT pgml.embed(
     'intfloat/e5-large',
-    'Best 1980''s scifi movie'
+    'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 ),
 
@@ -226,7 +226,7 @@ customer AS (
   WHERE id = '44366773'
 ),
 
--- vector similarity search for movies and calculate a customer_cosine_similiarity at the same time
+-- vector similarity search for movies and calculate a customer_cosine_similarity at the same time
 first_pass AS (
   SELECT
     title,
@@ -234,10 +234,10 @@ first_pass AS (
     star_rating_avg,
     1 - (
       review_embedding_e5_large <=> (SELECT embedding FROM request)
-    ) AS request_cosine_similiarity,
+    ) AS request_cosine_similarity,
     (1 - (
       review_embedding_e5_large <=> (SELECT embedding FROM customer)
-    ) - 0.9) * 10 AS  customer_cosine_similiarity,
+    ) - 0.9) * 10 AS  customer_cosine_similarity,
     star_rating_avg / 5 AS star_rating_score
   FROM movies
   WHERE total_reviews > 10
@@ -251,9 +251,9 @@ SELECT
   total_reviews,
   round(star_rating_avg, 2) as star_rating_avg,
   star_rating_score,
-  request_cosine_similiarity,
-  customer_cosine_similiarity,
-  request_cosine_similiarity + customer_cosine_similiarity + star_rating_score AS final_score
+  request_cosine_similarity,
+  customer_cosine_similarity,
+  request_cosine_similarity + customer_cosine_similarity + star_rating_score AS final_score
 FROM first_pass
 ORDER BY final_score DESC
 LIMIT 10;
@@ -263,7 +263,7 @@ LIMIT 10;
 
 !!! results
 
-| title                                                                | total_reviews | star_rating_avg | star_rating_score      | request_cosine_similiarity | customer_cosine_similiarity | final_score        |
+| title                                                                | total_reviews | star_rating_avg | star_rating_score      | request_cosine_similarity | customer_cosine_similarity | final_score        |
 |----------------------------------------------------------------------|---------------|-----------------|------------------------|----------------------------|-----------------------------|--------------------|
 | Star Wars, Episode V: The Empire Strikes Back (Widescreen Edition)   | 78            | 4.44            | 0.88717948717948718000 | 0.8295302273865711         | 0.9999999999999998          | 2.716709714566058  |
 | Star Wars, Episode IV: A New Hope (Widescreen Edition)               | 80            | 4.36            | 0.87250000000000000000 | 0.8339361274771777         | 0.9336656923446551          | 2.640101819821833  |
@@ -280,7 +280,7 @@ LIMIT 10;
 
 !!!
 
-Bingo. Now we're boosting movies by `(customer_cosine_similiarity - 0.9) * 10`, and we've kept our previous boost for movies with a high average star rating. Not only does Episode V top the list as expected, Episode IV is a close second. This query has gotten fairly complex! But the results are perfect for me, I mean our hypothetical customer who is searching for "Best 1980's scifi movie" but has already revealed to us with their one movie review that they think like the comment "I love all Star Wars, but Empire Strikes Back is particularly amazing". I promise I'm not just doing all of this to find a new movie to watch tonight.
+Bingo. Now we're boosting movies by `(customer_cosine_similarity - 0.9) * 10`, and we've kept our previous boost for movies with a high average star rating. Not only does Episode V top the list as expected, Episode IV is a close second. This query has gotten fairly complex! But the results are perfect for me, I mean our hypothetical customer who is searching for "Best 1980's scifi movie" but has already revealed to us with their one movie review that they think like the comment "I love all Star Wars, but Empire Strikes Back is particularly amazing". I promise I'm not just doing all of this to find a new movie to watch tonight.
 
 You can compare this to our non-personalized results from the previous article for reference Forbidden Planet used to be the top result, but now it's #3.
 
@@ -288,7 +288,7 @@ You can compare this to our non-personalized results from the previous article f
 
 !!! results
 
-| title                                                | total_reviews | star_rating_avg |        final_score |      star_rating_score | cosine_similiarity |
+| title                                                | total_reviews | star_rating_avg |        final_score |      star_rating_score | cosine_similarity |
 |:-----------------------------------------------------|--------------:|----------------:|-------------------:|-----------------------:|-------------------:|
 | Forbidden Planet (Two-Disc 50th Anniversary Edition) |           255 |            4.82 | 1.8216832158805154 | 0.96392156862745098000 | 0.8577616472530644 |
 | Back to the Future                                   |            31 |            4.94 |   1.82090702765472 | 0.98709677419354838000 | 0.8338102534611714 |

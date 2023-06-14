@@ -1,6 +1,7 @@
 # Cargo
 Cargo.lock
-/target
+target/
+venv/
 **/*.rs.bk
 
 # PyCharm

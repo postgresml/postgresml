@@ -1,12 +1,11 @@
+use std::collections::HashMap;
 use std::env::var;
 
-use rocket::http::CookieJar;
-use rocket::request::{FromRequest, Outcome, Request};
-use rocket::State;
-use sqlx::PgPool;
+use rocket::request::{self, FromRequest, Request};
+use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 
-use crate::models::User;
-use crate::{Clusters, Context};
+use crate::models;
+use crate::{ClustersSettings, Context};
 
 pub fn default_database_url() -> String {
     match var("DATABASE_URL") {
@@ -17,63 +16,58 @@ pub fn default_database_url() -> String {
 
 #[derive(Debug)]
 pub struct Cluster {
-    pool: Option<PgPool>,
+    pub pool: Option<PgPool>,
     pub context: Context,
+}
+
+impl Default for Cluster {
+    fn default() -> Self {
+        let max_connections = 5;
+        let min_connections = 1;
+        let idle_timeout = 15_000;
+
+        let settings = ClustersSettings {
+            max_connections,
+            idle_timeout,
+            min_connections,
+        };
+
+        Cluster {
+            pool: Some(
+                PgPoolOptions::new()
+                    .max_connections(settings.max_connections)
+                    .idle_timeout(std::time::Duration::from_millis(settings.idle_timeout))
+                    .min_connections(settings.min_connections)
+                    .after_connect(|conn, _meta| {
+                        Box::pin(async move {
+                            conn.execute("SET application_name = 'pgml_dashboard';")
+                                .await?;
+                            Ok(())
+                        })
+                    })
+                    .connect_lazy(&default_database_url())
+                    .expect("Default database URL is alformed"),
+            ),
+            context: Context {
+                user: models::User::default(),
+                cluster: models::Cluster::default(),
+                visible_clusters: HashMap::default(),
+            },
+        }
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for &'r Cluster {
+    type Error = ();
+
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+        request::Outcome::Success(request.local_cache(|| Cluster::default()))
+    }
 }
 
 impl<'a> Cluster {
     pub fn pool(&'a self) -> &'a PgPool {
         self.pool.as_ref().unwrap()
-    }
-}
-
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for Cluster {
-    type Error = ();
-
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Cluster, ()> {
-        // Using `State` as a request guard. Use `inner()` to get an `'r`.
-        let cookies = match request.guard::<&CookieJar<'r>>().await {
-            Outcome::Success(cookies) => cookies,
-            _ => return Outcome::Forward(()),
-        };
-
-        let cluster_id = match cookies.get_private("cluster_id") {
-            Some(cluster_id) => match cluster_id.value().parse::<i64>() {
-                Ok(cluster_id) => cluster_id,
-                Err(_) => -1,
-            },
-
-            None => -1,
-        };
-
-        let user_id: i64 = match cookies.get_private("user_id") {
-            Some(user_id) => match user_id.value().parse::<i64>() {
-                Ok(user_id) => user_id,
-                Err(_) => -1,
-            },
-
-            None => -1,
-        };
-
-        let clusters_shared_state = match request.guard::<&State<Clusters>>().await {
-            Outcome::Success(pool) => pool,
-            _ => return Outcome::Forward(()),
-        };
-
-        let pool = clusters_shared_state.get(cluster_id);
-
-        let context = Context {
-            user: User {
-                id: user_id,
-                email: "".to_string(),
-            },
-            cluster: clusters_shared_state.get_context(cluster_id).cluster,
-            visible_clusters: clusters_shared_state
-                .get_context(cluster_id)
-                .visible_clusters,
-        };
-
-        Outcome::Success(Cluster { pool, context })
     }
 }

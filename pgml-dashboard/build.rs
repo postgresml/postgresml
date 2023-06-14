@@ -18,10 +18,10 @@ fn main() {
         .arg("static/css/bootstrap-theme.scss")
         .arg("static/css/style.css")
         .status()
-        .unwrap();
+        .expect("`npm exec sass` failed");
 
     if !status.success() {
-        println!("SCSS compilation failed");
+        println!("SCSS compilation failed to run");
     }
 
     // Bundle CSS to bust cache.
@@ -38,7 +38,7 @@ fn main() {
         .arg("static/css/style.css")
         .arg(format!("static/css/style.{}.css", css_version))
         .status()
-        .unwrap()
+        .expect("cp static/css/style.css failed to run")
         .success()
     {
         println!("Bundling CSS failed");
@@ -54,7 +54,7 @@ fn main() {
     // Build JS to bust cache
     for file in glob::glob("static/js/*.js").expect("failed to glob") {
         let file = file.expect("failed to glob path");
-        let contents = read_to_string(file).unwrap().as_bytes().to_vec();
+        let contents = read_to_string(file).expect("failed to read js file").as_bytes().to_vec();
 
         js_version.push(format!("{:x}", md5::compute(contents)));
     }
@@ -73,7 +73,7 @@ fn main() {
             .arg(&filename)
             .arg(format!("{}.{}.js", name, js_version))
             .status()
-            .unwrap()
+            .expect("failed to cp js file")
             .success()
         {
             println!("Bundling JS failed");

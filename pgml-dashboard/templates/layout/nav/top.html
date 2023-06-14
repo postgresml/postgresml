@@ -12,7 +12,7 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav flex-grow-1 justify-content-center me-auto mb-2 mb-lg-0">
-        <% if standalone_dashboard || (current_user.as_ref().is_some() && current_user.as_ref().unwrap().id != -1 ) { %>
+        <% if standalone_dashboard { %>
         <li class="nav-item d-flex align-items-center">
           <a class="nav-link" href="/dashboard">Dashboard</a>
         </li>
@@ -51,6 +51,6 @@
       </div>
     </div>
   </div>
-  <% include!("../../components/search_modal.html");%>
+  <% include!("../../components/search_modal.html"); %>
 </nav>
 
