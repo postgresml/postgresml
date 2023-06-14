@@ -1,5 +1,6 @@
 name: deploy python sdk
-on: [push]
+on:
+  workflow_dispatch:
 jobs:
   deploy-python-sdk:
     strategy:
