@@ -1,0 +1,48 @@
+name: deploy python sdk
+on: [push]
+jobs:
+  deploy-python-sdk:
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: pgml-sdks/rust/pgml
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Validate cargo is working
+        uses: postgresml/gh-actions-cargo@master
+        with:
+          command: version
+      - name: Install dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+          TZ: Etc/UTC
+        run: |
+            sudo apt update
+            sudo apt-get -y install software-properties-common
+            sudo add-apt-repository -y ppa:deadsnakes/ppa
+            sudo add-apt-repository -y ppa:apt-fast/stable
+            sudo apt update
+            sudo apt-get -y install apt-fast 
+            sudo apt-fast -y install \
+              python3.8 python3.8-dev \
+              python3.9 python3.9-dev \
+              python3.10 python3.10-dev \
+              python3.11 python3.11-dev \
+              python3-pip \
+              git
+
+            pip install maturin
+            pip install patchelf
+      - name: Create dist directory
+        run: mkdir ../../python/dist
+      - name: Build wheels
+        run: maturin build -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist 
+      - name: Deploy wheels
+        working-directory: pgml-sdks/python/pgml
+        run: ls
