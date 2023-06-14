@@ -5,3 +5,4 @@ from .dbutils import (
     run_select_statement,
     run_drop_or_delete_statement,
 )
+from .queries import Embed, CosineDistance, Transform

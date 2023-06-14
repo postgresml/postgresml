@@ -1,8 +1,12 @@
+from contextlib import AbstractContextManager
+from typing import Any
 import unittest
 from pgml import Database, Collection
 from pgml.dbutils import *
 import hashlib
 import os
+from pypika import Table
+from pypika.functions import Cast
 
 
 class TestCollection(unittest.TestCase):
@@ -162,6 +166,19 @@ class TestCollection(unittest.TestCase):
             generic_filter="(documents.metadata->>'reviews')::int < 45",
             metadata_filter={"source": "amazon"},
         )
+        assert results[0]["metadata"]["user"] == "John Doe"
+    
+    def test_vector_recall(self):
+        self.collection.upsert_documents(self.documents_with_reviews_metadata)
+        self.collection.generate_chunks()
+        self.collection.generate_embeddings()
+        query = self.collection.query()
+        query = query.vector_recall("product is abc")
+        query = query.filter({"source": "amazon"})
+        query = query.limit(2)
+        print(query)
+        results = self.collection.execute(query)
+        print(results)
         assert results[0]["metadata"]["user"] == "John Doe"
 
     # def tearDown(self) -> None:
