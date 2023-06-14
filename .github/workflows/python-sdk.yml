@@ -45,5 +45,7 @@ jobs:
       - name: Build wheels
         run: maturin build -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist 
       - name: Deploy wheels
+        env:
+          MATURIN_PYPI_TOKEN: ${{ vars.TEST_PYPI_API_TOKEN }}
         working-directory: pgml-sdks/python/pgml
-        run: ls
+        run: maturin upload --repository testpypi --skip-existing dist/* 
