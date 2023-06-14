@@ -126,19 +126,12 @@
     line-height: 80px;
 }
 
-.sticky-top-nav{
-    height: $navbar-height;
-    position: sticky; 
-    top: 0px; 
-    margin-bottom: ($spacer * 1.5);
-    z-index: $zindex-sticky;
-
-    @include media_breakpoint_up(xxl) {
-        margin-bottom: ($spacer * 3);
-    }
-}
-
 .container>.sticky-top-nav, .container-fluid>.sticky-top-nav {
     margin-left: calc(var(--bs-gutter-x) * -0.5);
     margin-right: calc(var(--bs-gutter-x) * -0.5);
+}
+
+.tuck-under-navbar {
+    margin-top: -$navbar-height;
+    padding-top: $navbar-height;
 }

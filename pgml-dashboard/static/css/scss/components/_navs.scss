@@ -1,3 +1,10 @@
+.sticky-top-nav{
+    height: $navbar-height;
+    position: sticky; 
+    top: 0px; 
+    z-index: $zindex-sticky;
+}
+
 .navbar {
     --bs-navbar-padding-y: 24px;
     --bs-navbar-padding-x: 24px;
@@ -5,9 +12,16 @@
     &.horizontal {
         --bs-navbar-padding-x: 1.25rem;
         min-height: $navbar-height;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.64) -55.68%, rgba(0, 0, 0, 0) 100%);
+
         @include media-breakpoint-up(lg) {
             height: $navbar-height;
         }
+
+        &.pinned {
+            background: #{$gray-900};
+        }
+
     }
 
     .nav-link {
