@@ -23,11 +23,13 @@
             <li class="nav-item d-flex align-items-center">
               <a class="nav-link p-0" href="/docs/guides/setup/quick_start_with_docker/">Docs</a>
             </li>
+            <% if !standalone_dashboard { %>
+            <!-- <li class="nav-item d-flex align-items-center">
+              <a class="nav-link p-0" href="/plan_comparison">Pricing</a>
+            </li> -->
+            <% } %>
             <li class="nav-item d-flex align-items-center">
               <a class="nav-link p-0" href="/blog/mindsdb-vs-postgresml">Blog</a>
-            </li>
-            <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-0" href="https://github.com/postgresml/postgresml" target="_blank">Open Source</a>
             </li>
           </ul>
   
@@ -41,8 +43,8 @@
               </button>
             </li>
             <% if !standalone_dashboard { %>
-              <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
             <div class="vr my-2 opacity-100 d-lg-block d-none" style="width: 2px"></div>
+              <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
             <li class="nav-item d-flex align-items-center">
               <a class="nav-link p-0" href="/login">Sign In</a>
             </li>
@@ -50,6 +52,9 @@
               <a class="btn btn-primary py-2 px-3" href="/signup">Sign Up</a>
             </li>
               <% } else { %>
+            <li class="nav-item d-flex align-items-center">
+              <a class="nav-link p-0" href="/logout">Sign Out</a>
+            </li>
             <li class="d-flex align-items-center">
               <a class="btn btn-primary py-2 px-3" href="/clusters">Console</a>
             </li>
