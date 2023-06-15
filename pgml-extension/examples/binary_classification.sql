@@ -1,5 +1,5 @@
 -- Exit on error (psql)
-\set ON_ERROR_STOP true
+-- \set ON_ERROR_STOP true
 \timing on
 
 SELECT pgml.load_dataset('breast_cancer');

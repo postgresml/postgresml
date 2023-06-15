@@ -6,13 +6,13 @@
 ---   $ cargo pgrx run --release
 ---   $ psql -P pager-off -h localhost -p 28813 -d pgml -f sql/setup_examples.sql
 ---
-\set ON_ERROR_STOP true
+-- \set ON_ERROR_STOP true
 \timing on
 
 -- The intention is to only allow setup_examples.sql to run on a database that
 -- has not had example data installed before, e.g. docker run. This should
 -- error and stop the process if the extension is already present.
-CREATE EXTENSION pgml;
+CREATE EXTENSION IF NOT EXISTS pgml;
 
 SELECT pgml.load_dataset('breast_cancer');
 SELECT pgml.load_dataset('diabetes');
