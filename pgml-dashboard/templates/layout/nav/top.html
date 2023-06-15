@@ -37,21 +37,20 @@
             </li>
             <li class="nav-item d-flex align-items-center">
               <button type="text" class="btn-search nav-link p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
-                <span>search</span>
+                Search
               </button>
             </li>
-
             <% if !standalone_dashboard { %>
               <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
-            <div class="vr my-2 text-white d-lg-block d-none" style="width: 2px"></div>
+            <div class="vr my-2 opacity-100 d-lg-block d-none" style="width: 2px"></div>
             <li class="nav-item d-flex align-items-center">
               <a class="nav-link p-0" href="/login">Sign In</a>
             </li>
-            <li class="nav-item d-flex align-items-center">
+            <li class="d-flex align-items-center">
               <a class="btn btn-primary py-2 px-3" href="/signup">Sign Up</a>
             </li>
               <% } else { %>
-            <li class="nav-item d-flex align-items-center">
+            <li class="d-flex align-items-center">
               <a class="btn btn-primary py-2 px-3" href="/clusters">Console</a>
             </li>
               <% } %>

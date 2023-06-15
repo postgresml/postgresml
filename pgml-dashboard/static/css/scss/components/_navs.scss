@@ -26,11 +26,9 @@
         .nav-link {
             --bs-nav-link-padding-y: 0px;
             --bs-nav-link-padding-x: 0px;
-        }
-
-        .nav-item {
+            
             border-bottom: 1px solid transparent;
-
+    
             &:active {
                 border-bottom: 1px solid #{$slate-tint-500};
             }

@@ -110,12 +110,4 @@
 .btn-search {
     background-color: transparent;
     border: none;
-
-    &:hover {
-        cursor: text;
-    }
-
-    @include media-breakpoint-down(lg) {
-        width: 100%;
-    }
 }
