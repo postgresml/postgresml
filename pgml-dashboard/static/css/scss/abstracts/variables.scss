@@ -113,6 +113,7 @@ $nav-tabs-border-radius: 0px;
 $nav-underline-border-width: 2px;
 $nav-tabs-link-active-color: #{$gray-100};
 $nav-tabs-link-active-bg: transparent;
+$nav-pills-border-radius: calc(#{$border-radius} / 2);
 
 //Grid
 $enable-cssgrid: true;

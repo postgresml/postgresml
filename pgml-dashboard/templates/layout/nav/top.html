@@ -2,7 +2,7 @@
 
   <div class="sticky-top-nav">
     <nav class="navbar horizontal navbar-expand-lg" data-controller="search topnav-styling">
-      <div class="container">
+      <div class="container gap-4">
         <a class="navbar-brand d-flex align-items-center gap-2" href="/">
           <img src="/dashboard/static/images/owl_gradient.svg" alt="PostgresML Logo" height="30" width="21">
           <span class="fw-normal position-relative overflow-visible">Postgres
@@ -14,45 +14,49 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav flex-grow-1 me-auto mb-2 mb-lg-0">
+          <ul class="navbar-nav flex-grow-1 gap-4 me-auto mb-2 mb-lg-0">
             <% if standalone_dashboard { %>
             <li class="nav-item d-flex align-items-center">
-              <a class="nav-link" href="/dashboard">Dashboard</a>
+              <a class="nav-link p-0" href="/dashboard">Dashboard</a>
             </li>
             <% } %>
             <li class="nav-item d-flex align-items-center">
-              <a class="nav-link" href="/docs/guides/setup/quick_start_with_docker/">Docs</a>
+              <a class="nav-link p-0" href="/docs/guides/setup/quick_start_with_docker/">Docs</a>
             </li>
             <li class="nav-item d-flex align-items-center">
-              <a class="nav-link" href="/blog/mindsdb-vs-postgresml">Blog</a>
+              <a class="nav-link p-0" href="/blog/mindsdb-vs-postgresml">Blog</a>
             </li>
             <li class="nav-item d-flex align-items-center">
-              <a class="nav-link" href="https://github.com/postgresml/postgresml" target="_blank">Open Source</a>
+              <a class="nav-link p-0" href="https://github.com/postgresml/postgresml" target="_blank">Open Source</a>
             </li>
           </ul>
   
-  
-          <div class="d-flex gap-3 flex-wrap flex-lg-nowrap">
-            <a class="d-flex align-items-center nav-link p-0" href="https://github.com/postgresml/postgresml">
-              <span class="badge github-badge"><p>Stars | 3.3K</p></span>
-              <img load="lazy" src="/dashboard/static/images/brands/github-sign-on-light.svg" width="35" height="35" alt="github icon"/>
-            </a>
-            <button type="text" class="btn-search d-flex align-items-center gap-2 nav-link" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
-              <img loading="lazy" src="/dashboard/static/images/icons/search.svg" width="24" height="24" alt="search" />
-              <span>search</span>
-            </button>
+          <ul class="navbar-nav gap-3 mb-2 mb-lg-0">
+            <li class="d-flex align-items-center">
+              <% include!("../../components/github_icon.html"); %>
+            </li>
+            <li class="nav-item d-flex align-items-center">
+              <button type="text" class="btn-search nav-link p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+                <span>search</span>
+              </button>
+            </li>
+
             <% if !standalone_dashboard { %>
-            <div class="d-flex gap-3 justify-content-end align-items-center p-0">
               <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
-              <div class="vr my-2 text-white" style="width: 2px"></div>
+            <div class="vr my-2 text-white d-lg-block d-none" style="width: 2px"></div>
+            <li class="nav-item d-flex align-items-center">
               <a class="nav-link p-0" href="/login">Sign In</a>
+            </li>
+            <li class="nav-item d-flex align-items-center">
               <a class="btn btn-primary py-2 px-3" href="/signup">Sign Up</a>
+            </li>
               <% } else { %>
-              <a class="btn btn-primary" href="/clusters">Console</a>
+            <li class="nav-item d-flex align-items-center">
+              <a class="btn btn-primary py-2 px-3" href="/clusters">Console</a>
+            </li>
               <% } %>
-            </div>
             <% } %>
-          </div>
+          </ul>
         </div>
       </div>
     </nav>
