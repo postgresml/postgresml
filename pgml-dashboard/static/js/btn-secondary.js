@@ -47,8 +47,10 @@ export default class extends Controller {
     drawBorder(btn, canvas) {
         let btnMarginX = 22
         let btnMarginY = 12
+        let borderRadius = 8;
         let width = btn.offsetWidth
         let height = btn.offsetHeight
+
     
         canvas.width = width
         canvas.height = height
@@ -59,13 +61,13 @@ export default class extends Controller {
         
         // Draw border compensating for border thickenss
         var ctx = canvas.getContext("2d")
-        ctx.moveTo(height/2-1, 1)
-        ctx.lineTo(width-height/2-1, 1)
-        ctx.arcTo(width-1, 1, width-1, height/2-1, height/2-1)
-        ctx.arcTo(width-1, height-1, width-height/2-1, height-1, height/2-1)
-        ctx.lineTo(height/2-1, height-1)
-        ctx.arcTo(1, height-1, 1, height/2-1, height/2-1)
-        ctx.arcTo(1, 1, height/2-1, 1, height/2-1)
+        ctx.moveTo(borderRadius, 1)
+        ctx.lineTo(width-borderRadius-1, 1)
+        ctx.arcTo(width-1, 1, width-1, borderRadius-1, borderRadius-1)
+        ctx.arcTo(width-1, height-1, width-borderRadius-1, height-1, borderRadius-1)
+        ctx.lineTo(borderRadius-1, height-1)
+        ctx.arcTo(1, height-1, 1, borderRadius-1, borderRadius-1)
+        ctx.arcTo(1, 1, borderRadius-1, 1, borderRadius-1)
     
         var gradient = ctx.createLinearGradient(0, canvas.height, canvas.width, 0)
         gradient.addColorStop(0, "rgb(217, 64, 255)");
