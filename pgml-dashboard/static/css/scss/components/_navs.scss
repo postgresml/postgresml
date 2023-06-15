@@ -25,10 +25,15 @@
     }
 
     .nav-link {
-        --bs-nav-link-padding-y: 16px;
+        --bs-nav-link-padding-y: 0px;
         --bs-nav-link-font-weight: 500;
-        --bs-nav-link-padding-x: 24px;
-        --bs-nav-pills-border-radius: 4px;
+        --bs-nav-link-padding-x: 0px;
+    }
+
+    .nav-link:hover {
+        img {
+            filter: invert(48%) sepia(50%) saturate(1294%) hue-rotate(214deg) brightness(105%) contrast(101%);
+        }
     }
 
     .nav {
@@ -71,6 +76,10 @@
             box-shadow: 0 0 0;
         }
     }
+}
+
+.navbar-expanded {
+    background-color: #{$gray-900} !important;
 }
 
 .offcanvas-body {

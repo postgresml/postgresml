@@ -1,6 +1,7 @@
 
+
   <div class="sticky-top-nav">
-    <nav class="navbar horizontal navbar-expand-lg" data-controller="search append-class-on-scroll">
+    <nav class="navbar horizontal navbar-expand-lg" data-controller="search topnav-styling">
       <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2" href="/">
           <img src="/dashboard/static/images/owl_gradient.svg" alt="PostgresML Logo" height="30" width="21">
@@ -32,18 +33,20 @@
   
   
           <div class="d-flex gap-3 flex-wrap flex-lg-nowrap">
-            <a class="d-flex gap-2 align-items-center" href="https://github.com/postgresml/postgresml">
+            <a class="d-flex align-items-center nav-link p-0" href="https://github.com/postgresml/postgresml">
               <span class="badge github-badge"><p>Stars | 3.3K</p></span>
               <img load="lazy" src="/dashboard/static/images/brands/github-sign-on-light.svg" width="35" height="35" alt="github icon"/>
             </a>
-            <button type="text" class="btn-search d-flex gap-2" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+            <button type="text" class="btn-search d-flex align-items-center gap-2 nav-link" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
               <img loading="lazy" src="/dashboard/static/images/icons/search.svg" width="24" height="24" alt="search" />
               <span>search</span>
             </button>
-            <% if !standalone_dashboard { %>
-            <div class="d-flex gap-2 justify-content-end align-items-center">
+            <% if !standalone_dashboard || true { %>
+            <div class="d-flex gap-3 justify-content-end align-items-center p-0">
               <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
-              <a class="btn btn-primary" href="/signup">Sign Up</a>
+              <div class="vr my-2 text-white" style="width: 2px"></div>
+              <a class="nav-link p-0" href="/login">Sign In</a>
+              <a class="btn btn-primary py-2 px-3" href="/signup">Sign Up</a>
               <% } else { %>
               <a class="btn btn-primary" href="/clusters">Console</a>
               <% } %>
@@ -56,5 +59,3 @@
   </div>
 
   <% include!("../../components/search_modal.html");%>
-
-

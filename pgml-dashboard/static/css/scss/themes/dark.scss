@@ -78,11 +78,11 @@
         background: #151516;
 
         .nav-link {
-            --bs-nav-link-color: #{$gray-300};
-            --bs-nav-link-hover-color: #{$gray-100};
+            --bs-nav-link-color: #{$gray-100};
+            --bs-nav-link-hover-color: #{$purple};
 
         &:hover {
-            text-shadow: 0 0 .65px white, 0 0 .65px white; //change font weight without element resizing
+            text-shadow: 0 0 .65px #{$purple}, 0 0 .65px #{$purple}; //change font weight without element resizing
         }
 
             &:active {

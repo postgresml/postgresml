@@ -108,16 +108,11 @@
 }
 
 .btn-search {
-    padding: 10px 14px;
-    min-width: 10rem;
-    color: #{$hp-white};
     background-color: transparent;
-    border-radius: var(--bs-border-radius-pill);
-    border: 2px solid #{$gray-600};
+    border: none;
 
     &:hover {
         cursor: text;
-        border: 2px solid #{$gray-400};
     }
 
     @include media-breakpoint-down(lg) {
