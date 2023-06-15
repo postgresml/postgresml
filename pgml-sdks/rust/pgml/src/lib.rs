@@ -18,8 +18,6 @@ mod utils;
 pub use collection::Collection;
 pub use database::Database;
 
-use database::DatabasePython;
-
 // Normally libraries leave it up to up to the rust executable using the library to init the
 // logger, but because we are used by programs in Python and other languages that do
 // not have the ability to do that, we init it for those languages, but leave it uninitialized when
@@ -72,7 +70,7 @@ fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
     // We may want to move this into the new function in the DatabasePython struct and give the
     // user the oppertunity to pass in the log level filter
     init_logger(LevelFilter::Error).unwrap();
-    m.add_class::<DatabasePython>()?;
+    m.add_class::<database::DatabasePython>()?;
     Ok(())
 }
 
@@ -90,8 +88,8 @@ mod tests {
 
     #[tokio::test]
     async fn can_create_collection_and_vector_search() {
-        init_logger(LevelFilter::Warn).unwrap();
-        let collection_name = "test11";
+        init_logger(LevelFilter::Info).unwrap();
+        let collection_name = "test22";
 
         let db = Database::new(CONNECTION_STRING).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();

@@ -5,15 +5,16 @@ use pgml_macros::{custom_derive, custom_methods};
 use pyo3::prelude::*;
 use sqlx::postgres::PgPool;
 use sqlx::types::Json;
+use sqlx::Executor;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 
 use crate::models;
 use crate::queries;
-use crate::query_builder;
+use crate::{query_builder, transaction_wrapper};
 
-#[derive(custom_derive, Debug, Clone)]
 /// A collection of documents
+#[derive(custom_derive, Debug, Clone)]
 pub struct Collection {
     name: String,
     pool: PgPool,
@@ -74,162 +75,188 @@ impl Collection {
     }
 
     async fn create_documents_table(&self) -> anyhow::Result<()> {
-        sqlx::query(&query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name))
-            .execute(self.pool.borrow())
+        let pool = self.pool.borrow();
+        pool.execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name).as_str())
             .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_DOCUMENTS_TABLE,
-            self.documents_table_name
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(queries::CREATE_DOCUMENTS_TABLE, self.documents_table_name).as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX,
-            "created_at_index",
-            self.documents_table_name,
-            "created_at"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "created_at_index",
+                self.documents_table_name,
+                "created_at"
+            )
+            .as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX_USING_GIN,
-            "metadata_index",
-            self.documents_table_name,
-            "metadata jsonb_path_ops"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX_USING_GIN,
+                "metadata_index",
+                self.documents_table_name,
+                "metadata jsonb_path_ops"
+            )
+            .as_str(),
+        )
         .await?;
         Ok(())
     }
 
     async fn create_splitter_table(&self) -> anyhow::Result<()> {
-        sqlx::query(&query_builder!(
-            queries::CREATE_SPLITTERS_TABLE,
-            self.splitters_table_name
-        ))
-        .execute(self.pool.borrow())
+        let pool = self.pool.borrow();
+        pool.execute(
+            query_builder!(queries::CREATE_SPLITTERS_TABLE, self.splitters_table_name).as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX,
-            "created_at_index",
-            self.splitters_table_name,
-            "created_at"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "created_at_index",
+                self.splitters_table_name,
+                "created_at"
+            )
+            .as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX,
-            "name_index",
-            self.splitters_table_name,
-            "name"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "name_index",
+                self.splitters_table_name,
+                "name"
+            )
+            .as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX_USING_GIN,
-            "parameters_index",
-            self.splitters_table_name,
-            "parameters jsonb_path_ops"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX_USING_GIN,
+                "parameters_index",
+                self.splitters_table_name,
+                "parameters jsonb_path_ops"
+            )
+            .as_str(),
+        )
         .await?;
         Ok(())
     }
 
     async fn create_models_table(&self) -> anyhow::Result<()> {
-        sqlx::query(&query_builder!(
-            queries::CREATE_MODELS_TABLE,
-            self.models_table_name
-        ))
-        .execute(self.pool.borrow())
+        let pool = self.pool.borrow();
+        pool.execute(query_builder!(queries::CREATE_MODELS_TABLE, self.models_table_name).as_str())
+            .await?;
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "created_at_index",
+                self.models_table_name,
+                "created_at"
+            )
+            .as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX,
-            "created_at_index",
-            self.models_table_name,
-            "created_at"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "task_index",
+                self.models_table_name,
+                "task"
+            )
+            .as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX,
-            "task_index",
-            self.models_table_name,
-            "task"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "name_index",
+                self.models_table_name,
+                "name"
+            )
+            .as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX,
-            "name_index",
-            self.models_table_name,
-            "name"
-        ))
-        .execute(self.pool.borrow())
-        .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX_USING_GIN,
-            "parameters_index",
-            self.models_table_name,
-            "parameters jsonb_path_ops"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX_USING_GIN,
+                "parameters_index",
+                self.models_table_name,
+                "parameters jsonb_path_ops"
+            )
+            .as_str(),
+        )
         .await?;
         Ok(())
     }
 
     async fn create_transforms_table(&self) -> anyhow::Result<()> {
-        sqlx::query(&query_builder!(
-            queries::CREATE_TRANSFORMS_TABLE,
-            self.transforms_table_name,
-            self.splitters_table_name,
-            self.models_table_name
-        ))
-        .execute(self.pool.borrow())
+        let pool = self.pool.borrow();
+        pool.execute(
+            query_builder!(
+                queries::CREATE_TRANSFORMS_TABLE,
+                self.transforms_table_name,
+                self.splitters_table_name,
+                self.models_table_name
+            )
+            .as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX,
-            "created_at_index",
-            self.transforms_table_name,
-            "created_at"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "created_at_index",
+                self.transforms_table_name,
+                "created_at"
+            )
+            .as_str(),
+        )
         .await?;
         Ok(())
     }
 
     async fn create_chunks_table(&self) -> anyhow::Result<()> {
-        sqlx::query(&query_builder!(
-            queries::CREATE_CHUNKS_TABLE,
-            self.chunks_table_name,
-            self.documents_table_name,
-            self.splitters_table_name
-        ))
-        .execute(self.pool.borrow())
+        let pool = self.pool.borrow();
+        pool.execute(
+            query_builder!(
+                queries::CREATE_CHUNKS_TABLE,
+                self.chunks_table_name,
+                self.documents_table_name,
+                self.splitters_table_name
+            )
+            .as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX,
-            "created_at_index",
-            self.chunks_table_name,
-            "created_at"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "created_at_index",
+                self.chunks_table_name,
+                "created_at"
+            )
+            .as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX,
-            "document_id_index",
-            self.chunks_table_name,
-            "document_id"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "document_id_index",
+                self.chunks_table_name,
+                "document_id"
+            )
+            .as_str(),
+        )
         .await?;
-        sqlx::query(&query_builder!(
-            queries::CREATE_INDEX,
-            "splitter_id_index",
-            self.chunks_table_name,
-            "splitter_id"
-        ))
-        .execute(self.pool.borrow())
+        pool.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "splitter_id_index",
+                self.chunks_table_name,
+                "splitter_id"
+            )
+            .as_str(),
+        )
         .await?;
         Ok(())
     }
@@ -288,17 +315,18 @@ impl Collection {
             };
             let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-            sqlx::query(&query_builder!(
-                    "INSERT INTO %s (text, source_uuid, metadata) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET text = $4, metadata = $5",
-                    self.documents_table_name
-                ))
-                .bind(&text)
-                .bind(source_uuid)
-                .bind(&document_json)
-                .bind(&text)
-                .bind(&document_json)
-            .execute(self.pool.borrow())
-            .await?;
+            transaction_wrapper!(
+                sqlx::query(&query_builder!(
+                        "INSERT INTO %s (text, source_uuid, metadata) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET text = $4, metadata = $5",
+                        self.documents_table_name
+                    ))
+                    .bind(&text)
+                    .bind(source_uuid)
+                    .bind(&document_json)
+                    .bind(&text)
+                    .bind(&document_json),
+                self.pool.borrow()
+            );
         }
         Ok(())
     }
@@ -336,14 +364,18 @@ impl Collection {
             None => serde_json::json!({}),
         };
 
-        let current_splitter: Option<models::Splitter> = sqlx::query_as(&query_builder!(
-            "SELECT * from %s where name = $1 and parameters = $2;",
-            self.splitters_table_name
-        ))
-        .bind(&splitter_name)
-        .bind(&splitter_params)
-        .fetch_optional(self.pool.borrow())
-        .await?;
+        let current_splitter;
+        transaction_wrapper!(
+            current_splitter,
+            sqlx::query_as::<_, models::Splitter>(&query_builder!(
+                "SELECT * from %s where name = $1 and parameters = $2;",
+                self.splitters_table_name
+            ))
+            .bind(&splitter_name)
+            .bind(&splitter_params),
+            self.pool.borrow(),
+            fetch_optional
+        );
 
         match current_splitter {
             Some(_splitter) => {
@@ -353,14 +385,15 @@ impl Collection {
                 );
             }
             None => {
-                sqlx::query(&query_builder!(
-                    "INSERT INTO %s (name, parameters) VALUES ($1, $2)",
-                    self.splitters_table_name
-                ))
-                .bind(splitter_name)
-                .bind(splitter_params)
-                .execute(self.pool.borrow())
-                .await?;
+                transaction_wrapper!(
+                    sqlx::query(&query_builder!(
+                        "INSERT INTO %s (name, parameters) VALUES ($1, $2)",
+                        self.splitters_table_name
+                    ))
+                    .bind(splitter_name)
+                    .bind(splitter_params),
+                    self.pool.borrow()
+                );
             }
         }
         Ok(())
@@ -368,12 +401,17 @@ impl Collection {
 
     /// Gets all registered text [models::Splitter]s
     pub async fn get_text_splitters(&self) -> anyhow::Result<Vec<models::Splitter>> {
-        Ok(sqlx::query_as(&query_builder!(
-            "SELECT * from %s",
-            self.splitters_table_name
-        ))
-        .fetch_all(self.pool.borrow())
-        .await?)
+        let splitters;
+        transaction_wrapper!(
+            splitters,
+            sqlx::query_as::<_, models::Splitter>(&query_builder!(
+                "SELECT * from %s",
+                self.splitters_table_name
+            )),
+            self.pool.borrow(),
+            fetch_all
+        );
+        Ok(splitters)
     }
 
     /// Generates chunks for the collection
@@ -406,16 +444,17 @@ impl Collection {
     /// ```
     pub async fn generate_chunks(&self, splitter_id: Option<i64>) -> anyhow::Result<()> {
         let splitter_id = splitter_id.unwrap_or(1);
-        sqlx::query(&query_builder!(
-            queries::GENERATE_CHUNKS,
-            self.splitters_table_name,
-            self.chunks_table_name,
-            self.documents_table_name,
-            self.chunks_table_name
-        ))
-        .bind(splitter_id)
-        .execute(self.pool.borrow())
-        .await?;
+        transaction_wrapper!(
+            sqlx::query(&query_builder!(
+                queries::GENERATE_CHUNKS,
+                self.splitters_table_name,
+                self.chunks_table_name,
+                self.documents_table_name,
+                self.chunks_table_name
+            ))
+            .bind(splitter_id),
+            self.pool.borrow()
+        );
         Ok(())
     }
 
@@ -454,15 +493,19 @@ impl Collection {
             None => serde_json::json!({}),
         };
 
-        let current_model: Option<models::Model> = sqlx::query_as(&query_builder!(
-            "SELECT * from %s where task = $1 and name = $2 and parameters = $3;",
-            self.models_table_name
-        ))
-        .bind(&task)
-        .bind(&model_name)
-        .bind(&model_params)
-        .fetch_optional(self.pool.borrow())
-        .await?;
+        let current_model;
+        transaction_wrapper!(
+            current_model,
+            sqlx::query_as::<_, models::Model>(&query_builder!(
+                "SELECT * from %s where task = $1 and name = $2 and parameters = $3;",
+                self.models_table_name
+            ))
+            .bind(&task)
+            .bind(&model_name)
+            .bind(&model_params),
+            self.pool.borrow(),
+            fetch_optional
+        );
 
         match current_model {
             Some(_model) => {
@@ -472,15 +515,16 @@ impl Collection {
                 );
             }
             None => {
-                sqlx::query(&query_builder!(
-                    "INSERT INTO %s (task, name, parameters) VALUES ($1, $2, $3)",
-                    self.models_table_name
-                ))
-                .bind(task)
-                .bind(model_name)
-                .bind(model_params)
-                .execute(self.pool.borrow())
-                .await?;
+                transaction_wrapper!(
+                    sqlx::query(&query_builder!(
+                        "INSERT INTO %s (task, name, parameters) VALUES ($1, $2, $3)",
+                        self.models_table_name
+                    ))
+                    .bind(task)
+                    .bind(model_name)
+                    .bind(model_params),
+                    self.pool.borrow()
+                );
             }
         }
 
@@ -489,11 +533,17 @@ impl Collection {
 
     /// Gets all registered [models::Model]s
     pub async fn get_models(&self) -> anyhow::Result<Vec<models::Model>> {
-        Ok(
-            sqlx::query_as(&query_builder!("SELECT * from %s", self.models_table_name))
-                .fetch_all(self.pool.borrow())
-                .await?,
-        )
+        let models;
+        transaction_wrapper!(
+            models,
+            sqlx::query_as::<_, models::Model>(&query_builder!(
+                "SELECT * from %s",
+                self.models_table_name
+            )),
+            self.pool.borrow(),
+            fetch_all
+        );
+        Ok(models)
     }
 
     async fn create_or_get_embeddings_table(
@@ -501,12 +551,18 @@ impl Collection {
         model_id: i64,
         splitter_id: i64,
     ) -> anyhow::Result<String> {
-        let table_name: Option<(String,)> = sqlx::query_as(&query_builder!(
+        let pool = self.pool.borrow();
+        let table_name;
+        transaction_wrapper!(
+            table_name,
+            sqlx::query_as::<_, (String,)>(&query_builder!(
                 "SELECT table_name from %s WHERE task = 'embedding' AND model_id = $1 and splitter_id = $2", 
                 self.transforms_table_name))
             .bind(model_id)
-            .bind(splitter_id)
-            .fetch_optional(self.pool.borrow()).await?;
+            .bind(splitter_id),
+            pool,
+            fetch_optional
+        );
         match table_name {
             Some((name,)) => Ok(name),
             None => {
@@ -515,52 +571,62 @@ impl Collection {
                     self.name,
                     &uuid::Uuid::new_v4().to_string()[0..6]
                 );
-                let (embedding,): (Vec<f32>,) = sqlx::query_as(&query_builder!(
+                let embedding;
+                transaction_wrapper!(embedding, sqlx::query_as::<_, (Vec<f32>,)>(&query_builder!(
                     "SELECT embedding from pgml.embed(transformer => (SELECT name from %s where id = $1), text => 'Hello, World!', kwargs => '{}') as embedding", 
                     self.models_table_name))
-                    .bind(model_id)
-                .fetch_one(self.pool.borrow())
-                .await?;
+                    .bind(model_id),
+                    pool, fetch_one);
+                let embedding = embedding.0;
                 let embedding_length = embedding.len() as i64;
-                sqlx::query(&query_builder!(
-                    queries::CREATE_EMBEDDINGS_TABLE,
-                    table_name,
-                    self.chunks_table_name,
-                    embedding_length.to_string()
-                ))
-                .execute(self.pool.borrow())
+                pool.execute(
+                    query_builder!(
+                        queries::CREATE_EMBEDDINGS_TABLE,
+                        table_name,
+                        self.chunks_table_name,
+                        embedding_length.to_string()
+                    )
+                    .as_str(),
+                )
                 .await?;
-                sqlx::query(&query_builder!(
-                    "INSERT INTO %s (table_name, task, model_id, splitter_id) VALUES ($1, 'embedding', $2, $3)",
-                    self.transforms_table_name))
-                    .bind(&table_name)
-                    .bind(model_id)
-                    .bind(splitter_id)
-                .execute(self.pool.borrow())
+                transaction_wrapper!(
+                    sqlx::query(&query_builder!(
+                        "INSERT INTO %s (table_name, task, model_id, splitter_id) VALUES ($1, 'embedding', $2, $3)",
+                        self.transforms_table_name))
+                        .bind(&table_name)
+                        .bind(model_id)
+                        .bind(splitter_id),
+                    pool
+                );
+                pool.execute(
+                    query_builder!(
+                        queries::CREATE_INDEX,
+                        "created_at_index",
+                        table_name,
+                        "created_at"
+                    )
+                    .as_str(),
+                )
                 .await?;
-                sqlx::query(&query_builder!(
-                    queries::CREATE_INDEX,
-                    "created_at_index",
-                    table_name,
-                    "created_at"
-                ))
-                .execute(self.pool.borrow())
+                pool.execute(
+                    query_builder!(
+                        queries::CREATE_INDEX,
+                        "chunk_id_index",
+                        table_name,
+                        "chunk_id"
+                    )
+                    .as_str(),
+                )
                 .await?;
-                sqlx::query(&query_builder!(
-                    queries::CREATE_INDEX,
-                    "chunk_id_index",
-                    table_name,
-                    "chunk_id"
-                ))
-                .execute(self.pool.borrow())
-                .await?;
-                sqlx::query(&query_builder!(
-                    queries::CREATE_INDEX_USING_IVFFLAT,
-                    "vector_index",
-                    table_name,
-                    "embedding vector_cosine_ops"
-                ))
-                .execute(self.pool.borrow())
+                pool.execute(
+                    query_builder!(
+                        queries::CREATE_INDEX_USING_IVFFLAT,
+                        "vector_index",
+                        table_name,
+                        "embedding vector_cosine_ops"
+                    )
+                    .as_str(),
+                )
                 .await?;
                 Ok(table_name)
             }
@@ -609,17 +675,18 @@ impl Collection {
             .create_or_get_embeddings_table(model_id, splitter_id)
             .await?;
 
-        sqlx::query(&query_builder!(
-            queries::GENERATE_EMBEDDINGS,
-            self.models_table_name,
-            embeddings_table_name,
-            self.chunks_table_name,
-            embeddings_table_name
-        ))
-        .bind(model_id)
-        .bind(splitter_id)
-        .execute(self.pool.borrow())
-        .await?;
+        transaction_wrapper!(
+            sqlx::query(&query_builder!(
+                queries::GENERATE_EMBEDDINGS,
+                self.models_table_name,
+                embeddings_table_name,
+                self.chunks_table_name,
+                embeddings_table_name
+            ))
+            .bind(model_id)
+            .bind(splitter_id),
+            self.pool.borrow()
+        );
 
         Ok(())
     }
@@ -682,14 +749,18 @@ impl Collection {
         let model_id = model_id.unwrap_or(1);
         let splitter_id = splitter_id.unwrap_or(1);
 
-        let embeddings_table_name: Option<(String,)> = sqlx::query_as(&query_builder!(
+        let embeddings_table_name;
+        transaction_wrapper!(
+            embeddings_table_name,
+            sqlx::query_as::<_, (String,)>(&query_builder!(
                 "SELECT table_name from %s WHERE task = 'embedding' AND model_id = $1 and splitter_id = $2", 
-                self.transforms_table_name
-            ))
+                self.transforms_table_name))
             .bind(model_id)
-            .bind(splitter_id)
-        .fetch_optional(self.pool.borrow())
-        .await?;
+            .bind(splitter_id),
+            self.pool.borrow(),
+            fetch_optional
+        );
+
         let embeddings_table_name = match embeddings_table_name {
             Some((table_name,)) => table_name,
             None => {
@@ -697,8 +768,10 @@ impl Collection {
             }
         };
 
-        let results: Vec<(f64, String, Json<HashMap<String, String>>)> =
-            sqlx::query_as(&query_builder!(
+        let results;
+        transaction_wrapper!(
+            results,
+            sqlx::query_as::<_, (f64, String, Json<HashMap<String, String>>)>(&query_builder!(
                 queries::VECTOR_SEARCH,
                 self.models_table_name,
                 embeddings_table_name,
@@ -709,9 +782,10 @@ impl Collection {
             .bind(model_id)
             .bind(query)
             .bind(query_params)
-            .bind(top_k)
-            .fetch_all(self.pool.borrow())
-            .await?;
+            .bind(top_k),
+            self.pool.borrow(),
+            fetch_all
+        );
         let results: Vec<(f64, String, HashMap<String, String>)> =
             results.into_iter().map(|r| (r.0, r.1, r.2 .0)).collect();
         Ok(results)
