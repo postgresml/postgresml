@@ -41,7 +41,7 @@
               <img loading="lazy" src="/dashboard/static/images/icons/search.svg" width="24" height="24" alt="search" />
               <span>search</span>
             </button>
-            <% if !standalone_dashboard || true { %>
+            <% if !standalone_dashboard { %>
             <div class="d-flex gap-3 justify-content-end align-items-center p-0">
               <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
               <div class="vr my-2 text-white" style="width: 2px"></div>
