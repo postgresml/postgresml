@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use itertools::Itertools;
 use log::warn;
+use neon::prelude::*;
 use pgml_macros::{custom_derive, custom_methods};
 use pyo3::prelude::*;
 use sqlx::postgres::PgPool;
@@ -9,6 +10,7 @@ use sqlx::Executor;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 
+use crate::languages::javascript::*;
 use crate::models;
 use crate::queries;
 use crate::{query_builder, transaction_wrapper};
@@ -28,8 +30,6 @@ pub struct Collection {
 }
 
 #[custom_methods(
-    get_name,
-    get_name_result,
     upsert_documents,
     register_text_splitter,
     get_text_splitters,
@@ -37,8 +37,7 @@ pub struct Collection {
     register_model,
     get_models,
     generate_embeddings,
-    vector_search,
-    get_name
+    vector_search
 )]
 impl Collection {
     /// Creates a new collection

@@ -12,12 +12,12 @@ pub enum SupportedType {
     Vec(Box<SupportedType>),
     HashMap((Box<SupportedType>, Box<SupportedType>)),
     Option(Box<SupportedType>),
-    Json(Box<SupportedType>),
-    DateTime(Box<SupportedType>),
+    JsonHashMap,
+    DateTime,
     Tuple(Vec<SupportedType>),
     S, // Self for return types only
-    Utc,
     i64,
+    i32,
     f64,
     // Our own types
     Database,
@@ -46,10 +46,10 @@ impl ToString for SupportedType {
             SupportedType::S => "Self".to_string(),
             SupportedType::Option(v) => format!("Option<{}>", v.to_string()),
             SupportedType::i64 => "i64".to_string(),
+            SupportedType::i32 => "i32".to_string(),
             SupportedType::f64 => "f64".to_string(),
-            SupportedType::Json(v) => format!("Json<{}>", v.to_string()),
-            SupportedType::DateTime(v) => format!("DateTime<{}>", v.to_string()),
-            SupportedType::Utc => "Utc".to_string(),
+            SupportedType::JsonHashMap => "JsonHashMap".to_string(),
+            SupportedType::DateTime => "DateTime".to_string(),
             // Our own types
             SupportedType::Database => "Database".to_string(),
             SupportedType::Collection => "Collection".to_string(),
@@ -154,15 +154,11 @@ impl<'ast> Visit<'ast> for GetSupportedType {
                     i.to_token_stream().to_string()
                 ),
             },
-            "Json" => Some(SupportedType::Json(Box::new(
-                Self::get_type_from_path_argument(&i.arguments),
-            ))),
-            "DateTime" => Some(SupportedType::DateTime(Box::new(
-                Self::get_type_from_path_argument(&i.arguments),
-            ))),
+            "JsonHashMap" => Some(SupportedType::JsonHashMap),
+            "DateTime" => Some(SupportedType::DateTime),
             "Self" => Some(SupportedType::S),
-            "Utc" => Some(SupportedType::Utc),
             "i64" => Some(SupportedType::i64),
+            "i32" => Some(SupportedType::i32),
             "f64" => Some(SupportedType::f64),
             // Our own types
             "Database" => Some(SupportedType::Database),
