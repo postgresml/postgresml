@@ -137,8 +137,9 @@ inputs:
 
 ### Step 3: Work within the environment
 
-- Start `devenv` from the terminal (assuming `sh` compatible shell): `CARGO_HOME=$(pwd)/.cargo_home devenv shell`.
-  Exiting the enviroment is the same as exiting any shell (e.g. `ctrl-D`)
+- Start `devenv` from the terminal (assuming `sh` compatible shell): `NIXPKGS_ALLOW_UNFREE=1 CARGO_HOME=$(pwd)/.cargo_home devenv shell`.
+  Exiting the enviroment is the same as exiting any shell (e.g. `ctrl-D`). Note `NIXPKGS_ALLOW_UNFREE=1` is required for the installation
+  of the NVidia compiler `nvcc`.
 
   This will take a few minutes the first time, after which everything will be cached for faster start.
 
