@@ -94,7 +94,9 @@ class Bot:
             print(f'We have logged in as {self.discord_client.user}')
 
         @self.discord_client.event
-        async def on_message(message):            
+        async def on_message(message):
+            print(f"Message from {message.author}: {message.content}")            
+            
             if message.author != self.discord_client.user and message.channel.name == channel_name:
                 await self.handle_message(collection_name, message)
 
@@ -107,13 +109,16 @@ class Bot:
         res = await self.query_collection(collection_name, message.content)
         print(f"Found {len(res)} results")
         context = self.build_context(res)
+        print("Running Completion query")
         completion = await self.run_transform_sql(context, message.content)
+        print("Preparing response")
         response = self.prepare_response(completion, context, message.content)
+        print("Sending response")
         await message.channel.send(response)
 
     # Build the context for the message from search results
     def build_context(self, res):
-        return '\n'.join([f'***{r["chunk"]}***' for r in res])
+        return '\n'.join([f'{r["chunk"]}' for r in res])
 
     # Run a SQL function 'pgml.transform' to get a generated answer for the message
     async def run_transform_sql(self, context, message_content):
@@ -126,7 +131,7 @@ class Bot:
                                 "trust_remote_code": true
                             }'::JSONB,
                             args => '{
-                                "max_new_tokens": 100
+                                "max_new_tokens": 200
                             }'::JSONB,
                             inputs => ARRAY[%s]
                         ) AS result"""
@@ -135,7 +140,12 @@ class Bot:
 
     # Prepare the prompt to be used in the SQL function
     def prepare_prompt(self, context, message_content):
-        return f"""Use the context, which is delimited by three *'s, below to help answer the question.\ncontext: {context}\n{message_content}"""
+        return f"""Answer the question as truthfully as possible using the provided text, and if the answer is not contained within the text below, say "I don't know my lord!"
+
+Context:
+{context}
+QUESTION<<{message_content}
+ANSWER<<"""
 
     # Prepare the bot's response by removing the original prompt from the generated text
     def prepare_response(self, completion, context, message_content):
