@@ -81,14 +81,16 @@ import json
 from datasets import load_dataset
 from time import time
 from rich import print as rprint
+import asyncio
 
-local_pgml = "postgres://postgres@127.0.0.1:5433/pgml_development"
+async def main():
+    local_pgml = "postgres://postgres@127.0.0.1:5433/pgml_development"
+    conninfo = os.environ.get("PGML_CONNECTION", local_pgml)
 
-conninfo = os.environ.get("PGML_CONNECTION", local_pgml)
-db = Database(conninfo)
+    db = Database(conninfo)
 
-collection_name = "test_pgml_sdk_1"
-collection = db.create_or_get_collection(collection_name)
+    collection_name = "test_collection"
+    collection = await db.create_or_get_collection(collection_name)
 ```
 
 **Explanation:**
@@ -98,19 +100,21 @@ collection = db.create_or_get_collection(collection_name)
 - An instance of the Database class is created by passing the connection information.
 - The method [`create_or_get_collection`](#create-or-get-a-collection) collection with the name `test_pgml_sdk_1` is retrieved if it exists or a new collection is created.
 
+Continuing within `async def main():`
+
 ```python
-data = load_dataset("squad", split="train")
-data = data.to_pandas()
-data = data.drop_duplicates(subset=["context"])
+    data = load_dataset("squad", split="train")
+    data = data.to_pandas()
+    data = data.drop_duplicates(subset=["context"])
 
-documents = [
-    {'id': r['id'], "text": r["context"], "title": r["title"]}
-    for r in data.to_dict(orient="records")
-]
+    documents = [
+        {'id': r['id'], "text": r["context"], "title": r["title"]}
+        for r in data.to_dict(orient="records")
+    ]
 
-collection.upsert_documents(documents[:200])
-collection.generate_chunks()
-collection.generate_embeddings()
+    await collection.upsert_documents(documents[:200])
+    await collection.generate_chunks()
+    await collection.generate_embeddings()
 ```
 
 **Explanation:**
@@ -121,12 +125,13 @@ collection.generate_embeddings()
 - The [`generate_chunks`](#generate-chunks) method splits the documents into smaller text chunks for efficient indexing and search.
 - The [`generate_embeddings`](#generate-embeddings) method generates embeddings for the documents in the collection.
 
+Continuing within `async def main():`
 ```python
-start = time()
-results = collection.vector_search("Who won 20 grammy awards?", top_k=2)
-rprint(json.dumps(results, indent=2))
-rprint("Query time: %0.3f seconds" % (time() - start))
-db.archive_collection(collection_name)
+    start = time()
+    results = await collection.vector_search("Who won 20 grammy awards?", top_k=2)
+    rprint(json.dumps(results, indent=2))
+    rprint("Query time: %0.3f seconds" % (time() - start))
+    await db.archive_collection(collection_name)
 ```
 
 **Explanation:**
@@ -137,6 +142,12 @@ db.archive_collection(collection_name)
 - The query time is calculated by subtracting the start time from the current time.
 - Finally, the `archive_collection` method is called to archive the collection and free up resources in the PostgresML database.
 
+Call `main` function in an async loop.
+
+```python
+if __name__ == "__main__":
+    asyncio.run(main())    
+```
 **Running the Code**
 
 Open a terminal or command prompt and navigate to the directory where the file is saved.
@@ -193,8 +204,8 @@ This initializes a connection pool to the DB and creates a table named `pgml.col
 #### Create or Get a Collection
 
 ```python
-collection_name = "test_pgml_sdk_1"
-collection = db.create_or_get_collection(collection_name)
+collection_name = "test_collection"
+collection = await db.create_or_get_collection(collection_name)
 ```
 
 This creates a new schema in a PostgreSQL database if it does not already exist and creates tables and indices for documents, chunks, models, splitters, and embeddings.
@@ -202,7 +213,7 @@ This creates a new schema in a PostgreSQL database if it does not already exist 
 #### Upsert Documents
 
 ```python
-collection.upsert_documents(documents)
+await collection.upsert_documents(documents)
 ```
 
 The method is used to insert or update documents in a database table based on their ID, text, and metadata.
@@ -210,7 +221,7 @@ The method is used to insert or update documents in a database table based on th
 #### Generate Chunks
 
 ```python
-collection.generate_chunks(splitter_id = 1)
+await collection.generate_chunks(splitter_id = 1)
 ```
 
 This method is used to generate chunks of text from unchunked documents using a specified text splitter. By default it uses `RecursiveCharacterTextSplitter` with default parameters. `splitter_id` is optional. You can pass a `splitter_id` corresponding to a new splitter that is registered. See below for `register_text_splitter`.
@@ -218,7 +229,7 @@ This method is used to generate chunks of text from unchunked documents using a 
 #### Generate Embeddings
 
 ```python
-collection.generate_embeddings(model_id = 1, splitter_id = 1)
+await collection.generate_embeddings(model_id = 1, splitter_id = 1)
 ```
 
 This methods generates embeddings uing the chunks from the text. By default it uses `intfloat/e5-small` embeddings model. `model_id` is optional. You can pass a `model_id` corresponding to a new model that is registered and `splitter_id`. See below for `register_model`.
@@ -227,7 +238,7 @@ This methods generates embeddings uing the chunks from the text. By default it u
 #### Vector Search
 
 ```python
-results = collection.vector_search("Who won 20 grammy awards?", top_k=2, model_id = 1, splitter_id = 1)
+results = await collection.vector_search("Who won 20 grammy awards?", top_k=2, model_id = 1, splitter_id = 1)
 ```
 
 This method converts the input query into embeddings and searches embeddings table for nearest match. You can change the number of results using `top_k`. You can also pass specific `splitter_id` and `model_id` that were used for chunking and generating embeddings.
@@ -235,7 +246,7 @@ This method converts the input query into embeddings and searches embeddings tab
 #### Register Model
 
 ```python
-collection.register_model(model_name="hkunlp/instructor-xl", model_params={"instruction": "Represent the Wikipedia document for retrieval: "})
+await collection.register_model(model_name="hkunlp/instructor-xl", model_params={"instruction": "Represent the Wikipedia document for retrieval: "})
 ```
 
 This function allows for the registration of a model in a database, creating a record if it does not already exist. `model_name` is the name of the open source HuggingFace model being registered and `model_params` is a dictionary containing parameters for configuring the model. It can be empty if no parameters are needed.
@@ -243,37 +254,26 @@ This function allows for the registration of a model in a database, creating a r
 #### Register Text Splitter
 
 ```python
-collection.register_text_splitter(splitter_name="RecursiveCharacterTextSplitter",splitter_params={"chunk_size": 100,"chunk_overlap": 20})
+await collection.register_text_splitter(splitter_name="recursive_character",splitter_params={"chunk_size": 100,"chunk_overlap": 20})
 ```
 
-This function allows for the registration of a text spliter in a database, creating a record if it doesn't already exist. `splitter_name` is the name of the splitter from [LangChain](https://python.langchain.com/en/latest/reference/modules/text_splitter.html) and `splitter_params` are chunking parameters that the splitter supports.
+This function allows for the registration of a text spliter in a database, creating a record if it doesn't already exist. Following [LangChain](https://python.langchain.com/en/latest/reference/modules/text_splitter.html) splitters are supported.
+
+```
+SPLITTERS = {
+    "character": CharacterTextSplitter,
+    "latex": LatexTextSplitter,
+    "markdown": MarkdownTextSplitter,
+    "nltk": NLTKTextSplitter,
+    "python": PythonCodeTextSplitter,
+    "recursive_character": RecursiveCharacterTextSplitter,
+    "spacy": SpacyTextSplitter,
+}
+```
 
 
 ### Developer Setup
-1. Install Python 3.11. SDK should work for Python >=3.8.
-2. Install poetry `pip install poetry`
-3. Initialize Python environment
-
-```
-poetry env use python3.11
-poetry shell
-poetry install
-poetry build
-```
-4. SDK uses your local PostgresML database by default 
-`postgres://postgres@127.0.0.1:5433/pgml_development`
-
-If it is not up to date with `pgml.embed` please [signup for a free database](https://postgresml.org/signup) and set `PGML_CONNECTION` environment variable with serverless hosted database.
-
-```
-export PGML_CONNECTION="postgres://<username>:<password>@<hostname>:<port>/pgm<database>"
-```
-
-5. Run tests
-
-```
-LOGLEVEL=INFO python -m unittest tests/test_collection.py
-```
+This Python library is generated from our core rust-sdk. Please check [rust-sdk documentation](../../rust/pgml/README.md) for developer setup.
 
 ### API Reference 
 

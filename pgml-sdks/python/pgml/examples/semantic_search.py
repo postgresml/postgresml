@@ -8,16 +8,6 @@ from rich.console import Console
 from psycopg import Connection
 from psycopg_pool import ConnectionPool
 
-async def discard_all(conninfo: str):
-    pool = ConnectionPool(conninfo)
-    conn = pool.getconn()
-    conn.autocommit = True
-    cursor = conn.cursor()
-    cursor.execute("DISCARD ALL;")
-    cursor.close()
-    pool.putconn(conn)
-    pool.close()
-
 async def main():
     load_dotenv()
     console = Console()
