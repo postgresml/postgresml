@@ -45,6 +45,14 @@
 
         venv.enable = true;
         venv.requirements = ''
+
+	# Add modules for Jupyter notebooks and examples. Does not modify requirements.txt
+	ipykernel
+        python-dotenv
+	psycopg
+	psycopg-pool
+	tqdm
+
 accelerate==0.19.0
 datasets==2.12.0
 deepspeed==0.9.2

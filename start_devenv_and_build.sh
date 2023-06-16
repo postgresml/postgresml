@@ -56,6 +56,15 @@ cat <<PROLOGUE_EOF > devenv.nix
 
         venv.enable = true;
         venv.requirements = ''
+
+	# Add modules for Jupyter notebooks and examples. Does not modify requirements.txt
+	ipykernel
+	IProgress
+        python-dotenv
+	psycopg
+	psycopg-pool
+	tqdm
+
 PROLOGUE_EOF
 
 
