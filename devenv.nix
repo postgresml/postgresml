@@ -18,6 +18,7 @@
     pkgs.bison
     pkgs.flex
     pkgs.cmake
+    pkgs.binutils-unwrapped
     pkgs.gcc-unwrapped
 
     pkgs.openssl
