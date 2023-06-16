@@ -47,18 +47,6 @@ class Database:
 	async def archive_collection(self, name: str) -> None
 		...
 
-class Database:
-	async def __init__(self, connection_string: str) -> Self
-		...
-	async def create_or_get_collection(self, name: str) -> Collection
-		...
-	async def archive_collection(self, name: str) -> None
-		...
-
 Splitter = dict[str, Any]
-
-Splitter = dict[str, Any]
-
-Model = dict[str, Any]
 
 Model = dict[str, Any]

@@ -572,7 +572,7 @@ impl Collection {
                 );
                 let embedding;
                 transaction_wrapper!(embedding, sqlx::query_as::<_, (Vec<f32>,)>(&query_builder!(
-                    "SELECT embedding from pgml.embed(transformer => (SELECT name from %s where id = $1), text => 'Hello, World!', kwargs => '{}') as embedding", 
+                    "WITH model as (SELECT name, parameters from %s where id = $1) SELECT embedding from pgml.embed(transformer => (SELECT name FROM model), text => 'Hello, World!', kwargs => (SELECT parameters FROM model)) as embedding", 
                     self.models_table_name))
                     .bind(model_id),
                     pool, fetch_one);

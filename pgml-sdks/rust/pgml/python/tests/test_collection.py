@@ -164,7 +164,7 @@ class TestCollection(unittest.IsolatedAsyncioTestCase):
     async def test_default_text_splitter(self):
         await self.collection.register_text_splitter()
         splitters = await self.collection.get_text_splitters()
-
+        print(splitters)
         assert splitters[0]["name"] == "recursive_character"
 
     async def test_default_embeddings_model(self):
