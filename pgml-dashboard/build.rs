@@ -54,7 +54,10 @@ fn main() {
     // Build JS to bust cache
     for file in glob::glob("static/js/*.js").expect("failed to glob") {
         let file = file.expect("failed to glob path");
-        let contents = read_to_string(file).expect("failed to read js file").as_bytes().to_vec();
+        let contents = read_to_string(file)
+            .expect("failed to read js file")
+            .as_bytes()
+            .to_vec();
 
         js_version.push(format!("{:x}", md5::compute(contents)));
     }

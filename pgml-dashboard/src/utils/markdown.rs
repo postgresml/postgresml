@@ -504,12 +504,12 @@ pub fn wrap_tables<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> 
     let _ = iter_nodes(root, &mut |node| {
         match &node.data.borrow().value {
             &NodeValue::Table(ref _table) => {
-                let open_tag = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
-                    r#"<div class="overflow-auto w-100">"#.to_string(),
-                )))));
-                let close_tag = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
-                    "</div>".to_string(),
-                )))));
+                let open_tag = arena.alloc(Node::new(RefCell::new(Ast::new(
+                    NodeValue::HtmlInline(r#"<div class="overflow-auto w-100">"#.to_string()),
+                ))));
+                let close_tag = arena.alloc(Node::new(RefCell::new(Ast::new(
+                    NodeValue::HtmlInline("</div>".to_string()),
+                ))));
                 node.insert_before(open_tag);
                 node.insert_after(close_tag);
             }

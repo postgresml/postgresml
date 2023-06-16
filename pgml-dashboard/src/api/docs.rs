@@ -285,15 +285,16 @@ This is the end of the markdown
         let html = String::from_utf8(html).unwrap();
 
         assert!(
-            html.contains(r#"
+            html.contains(
+                r#"
 <div class="overflow-auto w-100">
-<table>"#)
-            &&
-            html.contains(r#"
+<table>"#
+            ) && html.contains(
+                r#"
 </table>
-</div>"#)
+</div>"#
+            )
         );
-
     }
 
     #[test]
@@ -316,10 +317,7 @@ This is the end of the markdown
         let html = String::from_utf8(html).unwrap();
 
         assert!(
-            !html.contains(r#"<div class="overflow-auto w-100">"#)
-            ||
-            !html.contains(r#"</div>"#)
+            !html.contains(r#"<div class="overflow-auto w-100">"#) || !html.contains(r#"</div>"#)
         );
-
     }
 }
