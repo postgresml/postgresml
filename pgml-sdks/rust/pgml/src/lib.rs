@@ -5,11 +5,13 @@
 //! With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
+use neon::prelude::*;
 use pyo3::prelude::*;
 use tokio::runtime::{Builder, Runtime};
 
 mod collection;
 mod database;
+mod languages;
 pub mod models;
 mod queries;
 mod utils;
@@ -64,7 +66,6 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
     }
 }
 
-// This is the only piece for the python library still done by hand and not in the proc macros
 #[pymodule]
 fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
     // We may want to move this into the new function in the DatabasePython struct and give the
@@ -74,24 +75,35 @@ fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
+#[neon::main]
+fn main(mut cx: ModuleContext) -> NeonResult<()> {
+    // We may want to move this into the new function in the DatabaseJavascript struct and give the
+    // user the oppertunity to pass in the log level filter
+    init_logger(LevelFilter::Error).unwrap();
+    cx.export_function("newDatabase", database::DatabaseJavascript::new)?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::collections::HashMap;
-
-    const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
+    use std::env;
 
     #[tokio::test]
     async fn can_connect_to_database() {
-        Database::new(CONNECTION_STRING).await.unwrap();
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        Database::new(&connection_string).await.unwrap();
     }
 
     #[tokio::test]
     async fn can_create_collection_and_vector_search() {
-        init_logger(LevelFilter::Info).unwrap();
-        let collection_name = "test22";
+        let connection_string = env::var("DATABASE_URL").unwrap();
 
-        let db = Database::new(CONNECTION_STRING).await.unwrap();
+        init_logger(LevelFilter::Info).unwrap();
+        let collection_name = "test25";
+
+        let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
         let documents = vec![HashMap::from([
             ("id".to_string(), "1".to_string()),

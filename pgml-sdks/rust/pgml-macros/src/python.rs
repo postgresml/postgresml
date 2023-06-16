@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use syn::{visit::Visit, DeriveInput, ItemImpl, Type};
 
 use crate::common::{AttributeArgs, GetImplMethod};
-use crate::types::{GetSupportedType, OutputType, SupportedType};
+use crate::types::{OutputType, SupportedType};
 
 const STUB_TOP: &str = r#"
 # Top of file key: A12BECOD!
@@ -26,14 +26,8 @@ pub fn generate_into_py(parsed: DeriveInput) -> proc_macro::TokenStream {
         let v = p.into_value();
         let name = v.ident.to_token_stream().to_string();
         let name_ident = v.ident;
-        let ty = GetSupportedType::get_type(&v.ty);
-        let adjusted = match ty {
-            SupportedType::Json(_j) => quote! { self.#name_ident.0},
-            SupportedType::DateTime(_d) => quote! { self.#name_ident.timestamp()},
-            _ => quote! {self.#name_ident}
-        };
         quote! {
-            dict.set_item(#name, #adjusted).expect("Error setting python value in custom_into_py proc_macro");
+            dict.set_item(#name, self.#name_ident).expect("Error setting python value in custom_into_py proc_macro");
         }
     }).collect();
 
@@ -55,9 +49,9 @@ pub fn generate_into_py(parsed: DeriveInput) -> proc_macro::TokenStream {
     }
 
     let expanded = quote! {
-        impl IntoPy<PyObject> for #name {
-            fn into_py(self, py: Python<'_>) -> PyObject {
-                let dict = PyDict::new(py);
+        impl pyo3::conversion::IntoPy<pyo3::PyObject> for #name {
+            fn into_py(self, py: pyo3::marker::Python<'_>) -> pyo3::PyObject {
+                let dict = pyo3::types::PyDict::new(py);
                 #(#sets)*
                 dict.into()
             }
@@ -163,7 +157,7 @@ pub fn generate_python_methods(
             };
             let middle = if method.is_async {
                 quote! {
-                    get_or_set_runtime().block_on(#wrapped_type_ident::new(#(#wrapper_arguments),*))
+                    crate::get_or_set_runtime().block_on(#wrapped_type_ident::new(#(#wrapper_arguments),*))
                 }
             } else {
                 quote! {
