@@ -1,3 +1,14 @@
+#!/bin/env /bin/bash
+
+# Ensures there is a local Cargo crates repo
+mkdir .cargo_home
+export CARGO_HOME=$(pwd)/.cargo_home
+
+# In case some packages are not free (e.g. Nvidia nvcc)
+export NIXPKGS_ALLOW_UNFREE=1
+
+# Create a devenv.nix with up-to-date Python requirements.txt
+cat <<PROLOGUE_EOF > devenv.nix
 #
 # WARNING:
 # DO NOT EDIT devenv.nix. THIS FILE IS AUTOMATICALLY by the startup script.
@@ -44,29 +55,14 @@
 
         venv.enable = true;
         venv.requirements = ''
-accelerate==0.19.0
-datasets==2.12.0
-deepspeed==0.9.2
-huggingface-hub==0.14.1
-InstructorEmbedding==1.0.0
-lightgbm==3.3.5
-orjson==3.9.0
-pandas==2.0.1
-rich==13.3.5
-rouge==1.0.1
-sacrebleu==2.3.1
-sacremoses==0.0.53
-scikit-learn==1.2.2
-sentencepiece==0.1.99
-sentence-transformers==2.2.2
-torch==2.0.1
-torchaudio==2.0.2
-torchvision==0.15.2
-tqdm==4.65.0
-transformers==4.29.2
-xgboost==1.7.5
-langchain==0.0.180
-einops==0.6.1
+PROLOGUE_EOF
+
+
+# Insert up-to-date requirements
+cat pgml-extension/requirements.txt >> devenv.nix
+
+# Insert epilogue of devenv.nix
+cat <<EPILOGUE_EOF >> devenv.nix
         '';
         };
 
@@ -83,3 +79,21 @@ einops==0.6.1
 
     # See full reference at https://devenv.sh/reference/options/
 }
+EPILOGUE_EOF
+
+# Enter devenv environment
+devenv shell
+
+# Post activation script
+export PATH=${DEVENV_ROOT}/.cargo_home/bin:${PATH}
+
+# Load and compile cargo pgrx
+cd pgml-extension
+nice -n 19 cargo install cargo-pgrx --version "0.9.2" --locked
+
+# Build extension
+git submodule update --init --recursive
+nice -n 19 cargo pgrx init --pg15=$(which pg_config)
+nice -n 19 cargo pgrx install --pg-config $(which pg_config)
+
+cd ..
