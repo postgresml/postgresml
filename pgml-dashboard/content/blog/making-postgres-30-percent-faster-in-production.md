@@ -1,4 +1,4 @@
-# Postgres is Now 30 Percent Faster in Production
+# Making Postgres 30 Percent Faster in Production
 
 <div class="d-flex align-items-center mb-4">
   <img width="54px" height="54px" src="/dashboard/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
@@ -31,7 +31,7 @@ This is not only a performance benefit, but also a usability improvement for cli
 
 The benchmark was conducted using `pgbench` with 1, 10, 100 and 1000 clients sending millions of queries to PgCat, which itself was running on a different EC2 machine alongside the database. This is a simple setup often used in production. Another configuration sees a pooler use its own machine, which of course increases latency but improves on availability. The clients were on another EC2 machine to simulate the latency experienced in typical web apps deployed in Kubernetes, ECS, EC2 and others.
 
-Benchmark ran in transaction mode. Session mode is faster with fewer clients, but does not scale in production with more than a few hundred clients.
+Benchmark ran in transaction mode. Session mode is faster with fewer clients, but does not scale in production with more than a few hundred clients. Only `SELECT` statements (`-S` option) were used, since the typical `pgbench` benchmark uses a similar number of writes to reads, which is an atypical production workload. Most apps read 90% of the time, and write 10% of the time. Reads are where prepared statements truly shine.
 
 ## Implementation
 
