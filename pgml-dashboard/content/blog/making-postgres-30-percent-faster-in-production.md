@@ -10,7 +10,7 @@
 
 Anyone who runs Postgres at scale knows that performance comes with trade offs. The typical playbook is to place a pooler like PgBouncer in front of your database and turn on transaction mode. This makes multiple clients reuse the same server connection, which allows thousands of clients to connect to your database without causing a fork bomb.
 
-Unfortunately, this comes with a trade off. Since multiple clients use the same server, they couldn't take advantage of prepared statements. Prepared statements are a way for Postgres to cache a query plan and execute it multiple times with different parameters. If you have never tried this before, you can run `pgbench` against your local DB and you'll see that `--protocol prepared` outperforms all others by at least 30 percent. Giving up this feature has been a given for production deployments for as long as I can remember, but not anymore.
+Unfortunately, this comes with a trade off. Since multiple clients use the same server, they couldn't take advantage of prepared statements. Prepared statements are a way for Postgres to cache a query plan and execute it multiple times with different parameters. If you have never tried this before, you can run `pgbench` against your local DB and you'll see that `--protocol prepared` outperforms `simple` and `extended` by at least 30 percent. Giving up this feature has been a given for production deployments for as long as I can remember, but not anymore.
 
 ## PgCat Prepared Statements
 
@@ -35,9 +35,9 @@ Benchmark ran in transaction mode. Session mode is faster with fewer clients, bu
 
 ## Implementation
 
-PgCat implements an internal cache & mapping between clients' prepared statements and servers that may or may not have them. If a server has the prepared statement, nothing happens and PgCat forwards the `Bind (F)`, `Execute (F)` and `Describe (F)` messages. If the server doesn't have the prepared statement, PgCat fetches it from the client cache & prepares it using the `Parse (F)` message. You can refer to [Postgres docs](https://www.postgresql.org/docs/current/protocol-flow.html) for a more detailed explanation of how the extended protocol works.
+PgCat implements an internal cache & mapping between clients' prepared statements and servers that may or may not have them. If a server has the prepared statement, PgCat just forwards the `Bind (F)`, `Execute (F)` and `Describe (F)` messages. If the server doesn't have the prepared statement, PgCat fetches it from the client cache & prepares it using the `Parse (F)` message. You can refer to [Postgres docs](https://www.postgresql.org/docs/current/protocol-flow.html) for a more detailed explanation of how the extended protocol works.
 
-An important feature of PgCat's implementation is that all prepared statements are renamed and assigned globally unique names. This means that clients that don't randomize their prepared statement names and expect it to be gone after they disconnect from the "Postgres server", work as expected (I put "Postgres server" in quotes because they are actually talking to a proxy that pretends to be a Postgres database). Typical errors from such clients when using a pooler like PgBouncer is `prepared statement "sqlx_s_2" already exists`, which is pretty confusing when you see it for the first time.
+An important feature of PgCat's implementation is that all prepared statements are renamed and assigned globally unique names. This means that clients that don't randomize their prepared statement names and expect it to be gone after they disconnect from the "Postgres server", work as expected (I put "Postgres server" in quotes because they are actually talking to a proxy that pretends to be a Postgres database). Typical error when using such clients with PgBouncer is `prepared statement "sqlx_s_2" already exists`, which is pretty confusing when you see it for the first time.
 
 ## Metrics
 
