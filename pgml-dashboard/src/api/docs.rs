@@ -80,6 +80,8 @@ async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk
         cluster,
         &path,
         vec![
+            NavLink::new("Making Postgres 30 Percent Faster in Production")
+                .href("/blog/making-postgres-30-percent-faster-in-production"),
             NavLink::new("MindsDB vs PostgresML")
                 .href("/blog/mindsdb-vs-postgresml"),
             NavLink::new("Introducing PostgresML Python SDK: Build End-to-End Vector Search Applications without OpenAI and Pinecone")
