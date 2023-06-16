@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 
+import ctransformers
 import datasets
 from InstructorEmbedding import INSTRUCTOR
 import numpy
@@ -90,20 +91,25 @@ def transform(task, args, inputs):
     if key not in __cache_transform_pipeline_by_task:
         ensure_device(task)
         convert_dtype(task)
-        pipe = transformers.pipeline(**task)
-        if pipe.tokenizer is None:
+        model_name = task.get("model", None)
+        if model_name and model_name.endswith("ggml"):
+            pipe = ctransformers.AutoModelForCausalLM.from_pretrained(model_name)
+        else:
+            pipe = transformers.pipeline(**task)
+
+        if hasattr(pipe, "tokenizer") and pipe.tokenizer is None:
             pipe.tokenizer = AutoTokenizer.from_pretrained(pipe.model.name_or_path)
         __cache_transform_pipeline_by_task[key] = pipe
 
     pipe = __cache_transform_pipeline_by_task[key]
 
-    if pipe.task == "question-answering":
-        inputs = [orjson.loads(input) for input in inputs]
-
-    convert_eos_token(pipe.tokenizer, args)
-
-    results = pipe(inputs, **args)
-
+    if type(pipe) is ctransformers.llm.LLM:
+        results = pipe(inputs[0])
+    else:
+        if pipe.task == "question-answering":
+            inputs = [orjson.loads(input) for input in inputs]
+        convert_eos_token(pipe.tokenizer, args)
+        results = pipe(inputs, **args)
     return orjson.dumps(results, default=orjson_default).decode()
 
 
@@ -465,7 +471,10 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
     elif task == "text-generation":
         max_length = hyperparams.pop("max_length", None)
         tokenizer.pad_token = tokenizer.eos_token
-        model = AutoModelForCausalLM.from_pretrained(model_name)
+        if model_name.endswith("ggml"):
+            model = ctransformers.AutoModelForCausalLM.from_pretrained(model_name)
+        else:
+            model = AutoModelForCausalLM.from_pretrained(model_name)
         model.resize_token_embeddings(len(tokenizer))
         train = tokenize_text_generation(tokenizer, max_length, y_train)
         test = tokenize_text_generation(tokenizer, max_length, y_test)
