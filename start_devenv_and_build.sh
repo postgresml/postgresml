@@ -29,6 +29,7 @@ cat <<PROLOGUE_EOF > devenv.nix
     pkgs.bison
     pkgs.flex
     pkgs.cmake
+    pkgs.binutils-unwrapped
     pkgs.gcc-unwrapped
 
     pkgs.openssl
@@ -81,7 +82,7 @@ cat <<EPILOGUE_EOF >> devenv.nix
 }
 EPILOGUE_EOF
 
-# Enter devenv environment
+# Enter devenv environment.
 devenv shell
 
 # Post activation script
@@ -94,6 +95,6 @@ nice -n 19 cargo install cargo-pgrx --version "0.9.2" --locked
 # Build extension
 git submodule update --init --recursive
 nice -n 19 cargo pgrx init --pg15=$(which pg_config)
-nice -n 19 cargo pgrx install --pg-config $(which pg_config)
+nice -n 19 cargo build
 
 cd ..
