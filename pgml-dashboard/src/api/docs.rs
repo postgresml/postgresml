@@ -80,7 +80,7 @@ async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk
         cluster,
         &path,
         vec![
-            NavLink::new("Postgres is Now 30% Faster")
+            NavLink::new("Postgres is Now 30% Faster in Production")
                 .href("/blog/postgres-is-now-30-percent-faster-in-production"),
             NavLink::new("MindsDB vs PostgresML")
                 .href("/blog/mindsdb-vs-postgresml"),
