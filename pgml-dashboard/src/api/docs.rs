@@ -182,6 +182,8 @@ async fn render<'a>(
     let title = markdown::get_title(&root).unwrap();
     let toc_links = markdown::get_toc(&root).unwrap();
 
+    markdown::wrap_tables(&root, &arena).unwrap();
+
     // MkDocs syntax support, e.g. tabs, notes, alerts, etc.
     markdown::mkdocs(&root, &arena).unwrap();
 
@@ -258,5 +260,66 @@ SELECT * FROM test;
         let html = String::from_utf8(html).unwrap();
 
         assert!(html.contains("<span class=\"syntax-highlight\">SELECT</span>"));
+    }
+
+    #[test]
+    fn test_wrapping_tables() {
+        let markdown = r#"
+This is some markdown with a table
+
+| Syntax      | Description |
+| ----------- | ----------- |
+| Header      | Title       |
+| Paragraph   | Text        |
+
+This is the end of the markdown
+        "#;
+
+        let arena = Arena::new();
+        let root = parse_document(&arena, &markdown, &options());
+
+        let plugins = ComrakPlugins::default();
+
+        markdown::wrap_tables(&root, &arena).unwrap();
+
+        let mut html = vec![];
+        format_html_with_plugins(root, &options(), &mut html, &plugins).unwrap();
+        let html = String::from_utf8(html).unwrap();
+
+        assert!(
+            html.contains(
+                r#"
+<div class="overflow-auto w-100">
+<table>"#
+            ) && html.contains(
+                r#"
+</table>
+</div>"#
+            )
+        );
+    }
+
+    #[test]
+    fn test_wrapping_tables_no_table() {
+        let markdown = r#"
+This is some markdown with no table
+
+This is the end of the markdown
+        "#;
+
+        let arena = Arena::new();
+        let root = parse_document(&arena, &markdown, &options());
+
+        let plugins = ComrakPlugins::default();
+
+        markdown::wrap_tables(&root, &arena).unwrap();
+
+        let mut html = vec![];
+        format_html_with_plugins(root, &options(), &mut html, &plugins).unwrap();
+        let html = String::from_utf8(html).unwrap();
+
+        assert!(
+            !html.contains(r#"<div class="overflow-auto w-100">"#) || !html.contains(r#"</div>"#)
+        );
     }
 }
