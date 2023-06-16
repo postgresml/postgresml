@@ -5,65 +5,74 @@ from datasets import load_dataset
 from time import time
 from dotenv import load_dotenv
 from rich.console import Console
-from psycopg import sql
-from pgml.dbutils import run_select_statement
+from psycopg_pool import ConnectionPool
+import asyncio
 
-load_dotenv()
-console = Console()
+async def main():
+    load_dotenv()
+    console = Console()
+    local_pgml = "postgres://postgres@127.0.0.1:5433/pgml_development"
+    conninfo = os.environ.get("PGML_CONNECTION", local_pgml)
+    db = Database(conninfo)
 
-local_pgml = "postgres://postgres@127.0.0.1:5433/pgml_development"
-
-conninfo = os.environ.get("PGML_CONNECTION", local_pgml)
-db = Database(conninfo)
-
-collection_name = "squad_collection"
-collection = db.create_or_get_collection(collection_name)
-
-
-data = load_dataset("squad", split="train")
-data = data.to_pandas()
-data = data.drop_duplicates(subset=["context"])
-
-documents = [
-    {"id": r["id"], "text": r["context"], "title": r["title"]}
-    for r in data.to_dict(orient="records")
-]
-
-collection.upsert_documents(documents[:200])
-collection.generate_chunks()
-collection.generate_embeddings()
-
-start = time()
-query = "Who won more than 20 grammy awards?"
-results = collection.vector_search(query, top_k=5)
-_end = time()
-console.print("\nResults for '%s'" % (query), style="bold")
-console.print(results)
-console.print("Query time = %0.3f" % (_end - start))
-
-# Get the context passage and use pgml.transform to get short answer to the question
+    collection_name = "squad_collection"
+    collection = await db.create_or_get_collection(collection_name)
 
 
-conn = db.pool.getconn()
-context = " ".join(results[0]["chunk"].strip().split())
-context = context.replace('"', '\\"').replace("'", "''")
+    data = load_dataset("squad", split="train")
+    data = data.to_pandas()
+    data = data.drop_duplicates(subset=["context"])
 
-select_statement = """SELECT pgml.transform(
-    'question-answering',
-    inputs => ARRAY[
-        '{
-            \"question\": \"%s\",
-            \"context\": \"%s\"
-        }'
+    documents = [
+        {"id": r["id"], "text": r["context"], "title": r["title"]}
+        for r in data.to_dict(orient="records")
     ]
-) AS answer;""" % (
-    query,
-    context,
-)
 
-results = run_select_statement(conn, select_statement)
-db.pool.putconn(conn)
+    console.print("Upserting documents ..")
+    await collection.upsert_documents(documents[:200])
+    console.print("Generating chunks ..")
+    await collection.generate_chunks()
+    console.print("Generating embeddings ..")
+    await collection.generate_embeddings()
 
-console.print("\nResults for query '%s'" % query)
-console.print(results)
-db.archive_collection(collection_name)
+    console.print("Querying ..")
+    start = time()
+    query = "Who won more than 20 grammy awards?"
+    results = await collection.vector_search(query, top_k=5)
+    _end = time()
+    console.print("\nResults for '%s'" % (query), style="bold")
+    console.print(results)
+    console.print("Query time = %0.3f" % (_end - start))
+
+    # Get the context passage and use pgml.transform to get short answer to the question
+
+    console.print("Getting context passage ..")
+    context = " ".join(results[0][1].strip().split())
+    context = context.replace('"', '\\"').replace("'", "''")
+
+    select_statement = """SELECT pgml.transform(
+        'question-answering',
+        inputs => ARRAY[
+            '{
+                \"question\": \"%s\",
+                \"context\": \"%s\"
+            }'
+        ]
+    ) AS answer;""" % (
+        query,
+        context,
+    )
+
+    pool = ConnectionPool(conninfo)
+    conn = pool.getconn()
+    cursor = conn.cursor()
+    cursor.execute(select_statement)
+    results = cursor.fetchall()
+    pool.putconn(conn)
+
+    console.print("\nResults for query '%s'" % query)
+    console.print(results)
+    await db.archive_collection(collection_name)
+
+if __name__ == "__main__":
+    asyncio.run(main())

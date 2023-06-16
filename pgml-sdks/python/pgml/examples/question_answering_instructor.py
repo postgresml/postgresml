@@ -71,7 +71,7 @@ async def main():
     console.print(results)
     console.print("Query time = %0.3f" % (_end - start))
 
-    # await db.archive_collection(collection_name)
+    await db.archive_collection(collection_name)
 
 if __name__ == "__main__":
     asyncio.run(main())
