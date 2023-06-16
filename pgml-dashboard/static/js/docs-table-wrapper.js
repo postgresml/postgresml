@@ -7,19 +7,19 @@ export default class extends Controller {
         const tables = this.getTables();
 
         Array.from(tables).forEach((table) => {
-            let wrapper = this.makeWrapper()
-            this.wrapElement(table, wrapper)
-        })
+            let wrapper = this.makeWrapper();
+            this.wrapElement(table, wrapper);
+        });
     }
 
     getTables() {
-        return this.element.getElementsByTagName("table")
+        return this.element.getElementsByTagName("table");
     }
 
     makeWrapper() {
-        let wrapper = document.createElement('div')
-        wrapper.classList.add("table-wrapper")
-        return wrapper
+        let wrapper = document.createElement('div');
+        wrapper.classList.add("overflow-auto", "w-100");
+        return wrapper;
     }
 
     wrapElement(element, wrapper) {
