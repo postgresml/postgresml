@@ -499,6 +499,29 @@ pub fn get_title<'a>(root: &'a AstNode<'a>) -> anyhow::Result<String> {
     Ok(title)
 }
 
+/// Wrap tables in container to allow for x-scroll on overflow.
+pub fn wrap_tables<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyhow::Result<()> {
+    let _ = iter_nodes(root, &mut |node| {
+        match &node.data.borrow().value {
+            &NodeValue::Table(ref _table) => {
+                let open_tag = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                    r#"<div class="overflow-auto w-100">"#.to_string(),
+                )))));
+                let close_tag = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                    "</div>".to_string(),
+                )))));
+                node.insert_before(open_tag);
+                node.insert_after(close_tag);
+            }
+            _ => (),
+        };
+
+        Ok(true)
+    })?;
+
+    Ok(())
+}
+
 /// Generate the table of contents for the article.
 ///
 /// # Arguments
