@@ -57,7 +57,7 @@ collection.generate_embeddings()
 
 Now that our data is properly indexed, we can start our bot server to handle incoming requests, using the data we just ingested to help answer questions.
 
-## Run Your Bot
+## Step 3: Run Your Bot
 
 For our bot server, we are using the popular library [discord.py](https://discordpy.readthedocs.io/en/stable/).
 
