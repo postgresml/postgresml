@@ -1,4 +1,4 @@
-# Discord Bot using pgml Python SDK, Langchain, Instructor-xl, and Falcon 7B
+# Discord Bot using pgml, Langchain, Instructor-xl, and Falcon 7B
 
 In this tutorial, we will build a Discord bot that can use markdown files to help answer user inquiries. We will ingest the files, convert their contents into vector embeddings, and save them to Postgres. After indexing the data, the bot will query the collection to retrieve the documents that are most likely to answer the user's question. Then, we will use a simple SQL query utilizing PostgresML to retrieve a completion from the open source Falcon-7B-Instruct text generation model. Finally, we will return this completion to the user in the Discord channel. We will be using the [pgml python SDK](https://pypi.org/project/pgml/) to simplify the process.
 
