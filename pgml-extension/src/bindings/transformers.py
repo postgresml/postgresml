@@ -104,7 +104,7 @@ def transform(task, args, inputs):
 
     if type(pipe) is ctransformers.llm.LLM:
         # ctransformers don't support batch inference
-        results = pipe(inputs[0], **args)
+        results = [pipe(inputs[0], **args)]
     else:
         if pipe.task == "question-answering":
             inputs = [orjson.loads(input) for input in inputs]
