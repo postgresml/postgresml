@@ -18,7 +18,7 @@ Since [#474](https://github.com/postgresml/pgcat/pull/474), PgCat supports prepa
 
 In Rails apps, it's as simple as setting `prepared_statements: true`.
 
-This is not only a performance benefit, but also a usability improvement for client libraries that don't, or can't, use prepared statements, like the popular Rust crate [SQLx](https://github.com/launchbadge/sqlx). Until now, the typical recommendation was to just not use a pooler.
+This is not only a performance benefit, but also a usability improvement for client libraries that have to use prepared statements, like the popular Rust crate [SQLx](https://github.com/launchbadge/sqlx). Until now, the typical recommendation was to just not use a pooler.
 
 
 ## Benchmark
