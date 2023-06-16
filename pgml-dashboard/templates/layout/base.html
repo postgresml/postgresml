@@ -6,17 +6,14 @@
 
   <body>
     <main>
-      <div class="container-fluid bg-primary py-4 min-vh-100">
+      <div class="container-fluid bg-primary pb-4 min-vh-100">
         <div class="ellipse-container position-absolute" style="margin: -2rem; height: 100vh; width: 100vw;">
           <div class="ellipse-21" style="width: 35vw; height: 35vh; top: 0vh; left: -7vw"></div>
         </div>
 
-        <div class="container mb-4 mb-xxl-5">
-
         <%- Navbar::render( user ) %>
-        </div>
 
-        <div class="container mb-4 mb-xxl-5">
+        <div class="container my-4 my-xxl-5">
           <div class="row position-relative">
             <% include!("nav/side.html"); %>
 

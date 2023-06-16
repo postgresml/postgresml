@@ -86,7 +86,7 @@
     @extend .z-1; 
 
     position: sticky; 
-    top: 0;
+    top: $navbar-height;
     height: 2.5rem;
     overflow: visible;
 
@@ -110,6 +110,7 @@
     @include media-breakpoint-up(xxl) {
         height: 100%;
         max-height: 80vh;
+        top: calc($navbar-height + $spacer);
 
         .collapse {
             height: 100%;
@@ -123,4 +124,14 @@
     font-size: 4rem;
     font-weight: 700;
     line-height: 80px;
+}
+
+.container>.sticky-top-nav, .container-fluid>.sticky-top-nav {
+    margin-left: calc(var(--bs-gutter-x) * -0.5);
+    margin-right: calc(var(--bs-gutter-x) * -0.5);
+}
+
+.tuck-under-navbar {
+    margin-top: -$navbar-height;
+    padding-top: $navbar-height;
 }

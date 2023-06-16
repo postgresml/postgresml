@@ -1,7 +1,6 @@
 .btn {
-    --bs-btn-border-radius: var(--bs-border-radius-pill);
     --bs-btn-padding-x: 22px;
-    --bs-btn-padding-y: 12px; // Need to decrease from style because border radius gets in the way.
+    --bs-btn-padding-y: 12px;
 
     display: flex;
     justify-content: center;
@@ -108,19 +107,6 @@
 }
 
 .btn-search {
-    padding: 10px 14px;
-    min-width: 10rem;
-    color: #{$hp-white};
     background-color: transparent;
-    border-radius: var(--bs-border-radius-pill);
-    border: 2px solid #{$gray-600};
-
-    &:hover {
-        cursor: text;
-        border: 2px solid #{$gray-400};
-    }
-
-    @include media-breakpoint-down(lg) {
-        width: 100%;
-    }
+    border: none;
 }

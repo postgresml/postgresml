@@ -1,14 +1,16 @@
 use pgml_macros::{custom_derive, custom_methods};
 use pyo3::prelude::*;
+use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::borrow::Borrow;
+use std::str::FromStr;
 use std::time::SystemTime;
 
 use crate::collection::*;
 use crate::get_or_set_runtime;
 use crate::models;
 use crate::queries;
-use crate::query_builder;
+use crate::{query_builder, transaction_wrapper};
 
 /// A connection to a postgres database
 #[derive(custom_derive, Clone, Debug)]
@@ -37,13 +39,16 @@ impl Database {
     ///  }
     ///  ```
     pub async fn new(connection_string: &str) -> anyhow::Result<Self> {
+        let connection_options = PgConnectOptions::from_str(connection_string)?;
+        let connection_options = connection_options.statement_cache_capacity(0);
         let pool = PgPoolOptions::new()
             .max_connections(5)
-            .connect(connection_string)
+            .connect_with(connection_options)
             .await?;
-        sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
-            .execute(&pool)
-            .await?;
+        transaction_wrapper!(
+            sqlx::query(queries::CREATE_COLLECTIONS_TABLE),
+            pool.borrow()
+        );
         let pool = pool;
         Ok(Self { pool })
     }
@@ -68,18 +73,23 @@ impl Database {
     /// }
     /// ```
     pub async fn create_or_get_collection(&self, name: &str) -> anyhow::Result<Collection> {
-        let collection: Option<models::Collection> =
-            sqlx::query_as("SELECT * from pgml.collections where name = $1;")
-                .bind(name)
-                .fetch_optional(self.pool.borrow())
-                .await?;
+        let collection;
+        transaction_wrapper!(
+            collection,
+            sqlx::query_as::<_, models::Collection>(
+                "SELECT * from pgml.collections where name = $1;"
+            )
+            .bind(name),
+            self.pool.borrow(),
+            fetch_optional
+        );
         match collection {
             Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
             None => {
-                sqlx::query("INSERT INTO pgml.collections (name) VALUES ($1)")
-                    .bind(name)
-                    .execute(self.pool.borrow())
-                    .await?;
+                transaction_wrapper!(
+                    sqlx::query("INSERT INTO pgml.collections (name) VALUES ($1)").bind(name),
+                    self.pool.borrow()
+                );
                 Ok(Collection::new(name.to_string(), self.pool.clone()).await?)
             }
         }
@@ -109,18 +119,20 @@ impl Database {
             .expect("Error getting system time")
             .as_secs();
         let archive_table_name = format!("{}_archive_{}", name, timestamp);
-        sqlx::query(&query_builder!(
-            "ALTER SCHEMA %s RENAME TO %s",
-            name,
-            archive_table_name
-        ))
-        .execute(self.pool.borrow())
-        .await?;
-        sqlx::query("UPDATE pgml.collections SET name = $1, active = FALSE where name = $2")
-            .bind(archive_table_name)
-            .bind(name)
-            .execute(self.pool.borrow())
-            .await?;
+        transaction_wrapper!(
+            sqlx::query(&query_builder!(
+                "ALTER SCHEMA %s RENAME TO %s",
+                name,
+                archive_table_name
+            )),
+            self.pool.borrow()
+        );
+        transaction_wrapper!(
+            sqlx::query("UPDATE pgml.collections SET name = $1, active = FALSE where name = $2")
+                .bind(archive_table_name)
+                .bind(name),
+            self.pool.borrow()
+        );
         Ok(())
     }
 }

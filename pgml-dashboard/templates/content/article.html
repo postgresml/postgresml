@@ -1,3 +1,5 @@
+<% use crate::utils::config::standalone_dashboard; %>
+
 <article class="docs col-12 col-xxl-8 col-xl-9 overflow-x-auto py-4 px-xl-5 order-3 order-xxl-2">
   <%- content %>
 
@@ -6,6 +8,7 @@
     <p><a href="https://discord.gg/DmyJP3qJ7U">Join our Discord</a> and ask us anything! We're friendly and would love to talk about PostgresML.</p>
   </div>
 
+  <% if !standalone_dashboard() { %>
   <div class="mt-5 pb-3">
     <h2 class="h2 mb-3">Try It Out</h2>
     <p>Try PostresML using our <strong>free</strong> serverless cloud. It comes with GPUs, 5 GiB of space and plenty of datasets to get you started.</p>
@@ -13,4 +16,5 @@
       <a class="btn btn-primary" href="<%- crate::utils::config::signup_url() %>">Get Started</a>
     </div>
   </div>
+  <% } %>
 </article>

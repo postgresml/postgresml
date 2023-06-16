@@ -28,6 +28,11 @@ $violet-shade-100: #A105FF;
 // Neon Scale 
 $neon-tint-100: #5162FF;
 $neon-tint-200: #6271FF;
+$neon-tint-300: #7381FF;
+
+$neon-shade-100: #5162FF;
+$neon-shade-200: #4858E5;
+$neon-shade-300: #404ECC;
 
 // Teal Scale
 $teal-tint-100: #00E0FF;
@@ -99,6 +104,7 @@ $badge-font-size: 0.65em;
 
 // Navbar
 $navbar-nav-link-padding-x: 1rem;
+$navbar-height: 88px;
 
 // Nav Tabs
 $nav-link-transition: none;
@@ -107,6 +113,7 @@ $nav-tabs-border-radius: 0px;
 $nav-underline-border-width: 2px;
 $nav-tabs-link-active-color: #{$gray-100};
 $nav-tabs-link-active-bg: transparent;
+$nav-pills-border-radius: calc(#{$border-radius} / 2);
 
 //Grid
 $enable-cssgrid: true;

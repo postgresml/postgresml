@@ -4,34 +4,36 @@ import {
 
 export default class extends Controller {
     static targets = [
-        'searchInput',
-        'searchModal',
         'searchTrigger',
-        'searchFrame',
     ]
 
     connect() {
-        this.searchModalTarget.addEventListener('shown.bs.modal', this.focusSearchInput)
-        this.searchModalTarget.addEventListener('hidden.bs.modal', this.updateSearch)
+        this.target = document.getElementById("search");
+        this.searchInput = document.getElementById("search-input");
+        this.searchFrame = document.getElementById("search-results")
+
+        this.target.addEventListener('shown.bs.modal', this.focusSearchInput)
+        this.target.addEventListener('hidden.bs.modal', this.updateSearch)
+        this.searchInput.addEventListener('input', (e) => this.search(e))
     }
 
     search(e) {
         const query = e.currentTarget.value
-        this.searchFrameTarget.src = `/docs/search?query=${query}`
+        this.searchFrame.src = `/docs/search?query=${query}`
     }
 
     focusSearchInput = (e) => {
-        this.searchInputTarget.focus()
+        this.searchInput.focus()
         this.searchTriggerTarget.blur()
     }
 
     updateSearch = () => {
-      this.searchTriggerTarget.value = this.searchInputTarget.value
+      this.searchTriggerTarget.value = this.searchInput.value
     }
 
     openSearch = (e) => {
-      new bootstrap.Modal(this.searchModalTarget).show()
-      this.searchInputTarget.value = e.currentTarget.value
+      new bootstrap.Modal(this.target).show()
+      this.searchInput.value = e.currentTarget.value
     }
 
     disconnect() {
