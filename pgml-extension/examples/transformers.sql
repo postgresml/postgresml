@@ -6,6 +6,32 @@ SELECT pgml.embed('intfloat/e5-small', 'hi mom');
 SELECT pgml.embed('intfloat/e5-small', 'hi mom', '{"device": "cuda"}');
 SELECT pgml.embed('intfloat/e5-small', 'hi mom', '{"device": "cpu"}');
 
+SELECT pgml.embed('hkunlp/instructor-xl', 'hi mom', '{"instruction": "Encode it with love"}');
+
+-- GGML model support
+SELECT pgml.transform(
+    task => '{
+      "task": "text-generation",
+      "model": "marella/gpt-2-ggml"
+    }'::JSONB,
+    inputs => ARRAY[
+        'Once upon a time,'
+    ],
+    args => '{"max_new_tokens": 32}'::JSONB
+);
+
+-- GPTQ model support
+SELECT pgml.transform(
+    task => '{
+      "task": "text-generation",
+      "model": "mlabonne/gpt2-GPTQ-4bit"
+    }'::JSONB,
+    inputs => ARRAY[
+        'Once upon a time,'
+    ],
+    args => '{"max_new_tokens": 32}'::JSONB
+);
+
 SELECT pgml.transform(
     'translation_en_to_fr',
     inputs => ARRAY[
