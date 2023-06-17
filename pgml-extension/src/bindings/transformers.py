@@ -3,7 +3,6 @@ import os
 import shutil
 import time
 
-import ctransformers
 import datasets
 from InstructorEmbedding import INSTRUCTOR
 import numpy
@@ -82,6 +81,47 @@ def ensure_device(kwargs):
         else:
             kwargs["device"] = "cpu"
 
+
+class GPTQPipeline(object):
+    def __init__(self, model_name, **task):
+        import auto_gptq
+        from huggingface_hub import snapshot_download
+        model_path = snapshot_download(model_name)
+
+        self.model = auto_gptq.AutoGPTQForCausalLM.from_quantized(model_path, **task)
+        if "use_fast_tokenizer" in task:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=task.pop("use_fast_tokenizer"))
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.task = "text-generation"
+
+    def __call__(self, inputs, **kwargs):
+        outputs = []
+        for input in inputs:
+            tokens = self.tokenizer(input, return_tensors="pt").to(self.model.device).input_ids
+            token_ids = self.model.generate(input_ids=tokens, **kwargs)[0]
+            outputs.append(self.tokenizer.decode(token_ids))
+        return outputs
+
+
+class GGMLPipeline(object):
+    def __init__(self, model_name, **task):
+        import ctransformers
+
+        task.pop("model")
+        task.pop("task")
+        task.pop("device")
+        self.model = ctransformers.AutoModelForCausalLM.from_pretrained(model_name, **task)
+        self.tokenizer = None
+        self.task = "text-generation"
+
+    def __call__(self, inputs, **kwargs):
+        outputs = []
+        for input in inputs:
+            outputs.append(self.model(input, **kwargs))
+        return outputs
+
+
 def transform(task, args, inputs):
     task = orjson.loads(task)
     args = orjson.loads(args)
@@ -92,8 +132,11 @@ def transform(task, args, inputs):
         ensure_device(task)
         convert_dtype(task)
         model_name = task.get("model", None)
-        if model_name and model_name.endswith("-ggml"):
-            pipe = ctransformers.AutoModelForCausalLM.from_pretrained(model_name)
+        model_name = model_name.lower() if model_name else None
+        if model_name and "-ggml" in model_name:
+            pipe = GGMLPipeline(model_name, **task)
+        elif model_name and "-gptq" in model_name:
+            pipe = GPTQPipeline(model_name, **task)
         else:
             pipe = transformers.pipeline(**task)
             if pipe.tokenizer is None:
@@ -102,15 +145,11 @@ def transform(task, args, inputs):
 
     pipe = __cache_transform_pipeline_by_task[key]
 
-    if type(pipe) is ctransformers.llm.LLM:
-        # ctransformers don't support batch inference
-        results = [pipe(inputs[0], **args)]
-    else:
-        if pipe.task == "question-answering":
-            inputs = [orjson.loads(input) for input in inputs]
-        convert_eos_token(pipe.tokenizer, args)
-        results = pipe(inputs, **args)
-    return orjson.dumps(results, default=orjson_default).decode()
+    if pipe.task == "question-answering":
+        inputs = [orjson.loads(input) for input in inputs]
+    convert_eos_token(pipe.tokenizer, args)
+
+    return orjson.dumps(pipe(inputs, **args), default=orjson_default).decode()
 
 
 def embed(transformer, inputs, kwargs):
