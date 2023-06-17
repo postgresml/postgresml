@@ -1,56 +1,66 @@
-.admonition {
+@mixin admonition($primary-color) {
     @extend .alert; 
     @extend .my-4;
-    padding: 24px 32px;
+
+    $sm-space: calc($spacer * 0.75);
+    $md-space: calc($spacer * 1.50);
+    $lg-space: calc($spacer * 1.75);
+
+    display: flex;
+    flex-direction: column;
+    gap: $md-space;
+
+    padding: 0 $lg-space $md-space $lg-space;
     color: #{$gray-100};
-    border-color: var(--admonition-color);
+    border-color: $primary-color;
 
     .admonition-title {
         @extend .gap-2;
 
         display: flex;
         align-items: center;
-        border-radius: 8px 8px 0px 0px;
-        padding: 24px 32px 24px 32px;
+        border-radius: $border-radius $border-radius 0px 0px;
+        padding: $sm-space $lg-space;
         background-color: #{$gray-700};
         font-size: 24px;
-        margin: -24px -32px 24px -32px;
+        margin: 0 -#{$lg-space};
     }
 
+    // This is for icon containers, mostly used in admonition-title. 
     .admonition-img {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 8px;
+        padding: calc($spacer * 0.5);
         border-radius: var(--bs-border-radius-pill);
-        background-color: var(--admonition-color);
+        background-color: $primary-color;
+    }
+
+    pre {
+        margin: 0px;
     }
 }
 
 .admonition-note, .admonition-abstract, .admonition-info {
-    @extend .admonition;
-    --admonition-color: #{$neon-tint-200};
+    @include admonition($neon-tint-200);
 }
 
 .admonition-tip, .admonition-example, .admonition-question {
-    @extend .admonition;
-    --admonition-color: #{$violet-shade-100};
+    @include admonition($violet-shade-100);
 }
 
 .admonition-success, .admonition-quote {
-    @extend .admonition; 
-    --admonition-color: #{$teal-tint-100};
+    @include admonition($teal-tint-100);
 }
 
 .admonition-bug, .admonition-warning, .admonition-fail, .admonition-danger {
-    @extend .admonition; 
-    --admonition-color: #{$peach-tint-100};
+    @include admonition($peach-tint-100);
 }
 
 .admonition-generic {
-    @extend .admonition; 
-    --admonition-color: #{$slate-tint-1000};
+    @include admonition($slate-tint-1000);
     padding: 0px;
+    gap: 0;
 
     .admonition-title {
         display: none;
@@ -62,7 +72,7 @@
 
     div.code-block {
         border: none !important;
-        border-radius: 8px 8px 0px 0px !important;
+        border-radius: $border-radius $border-radius 0px 0px !important;
         margin: 0px 0px !important;
         pre {
             border-radius: inherit;

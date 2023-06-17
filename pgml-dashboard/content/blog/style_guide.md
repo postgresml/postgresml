@@ -90,6 +90,35 @@ This is a Danger admonition.
 
 !!!
 
+#### Example 
+
+Here is an admonition with many elemnets inside. 
+
+!!! info 
+
+Explination about your information 
+
+``` sql
+SELECT pgml.train(
+	'Orders Likely To Be Returned', -- name of your model
+	'regression', -- objective (regression or classification)
+	'public.orders', -- table
+	'refunded', -- label (what are we predicting)
+	'xgboost' -- algorithm
+);
+
+SELECT
+	pgml.predict(
+		'Orders Likely To Be Returned',
+		ARRAY[orders.*]) AS refund_likelihood,
+		orders.*
+FROM orders
+ORDER BY refund_likelyhood DESC
+LIMIT 100;
+```
+
+!!!
+
 ### Code 
 
 #### Inline Code 
@@ -293,4 +322,14 @@ LIMIT 100;
 !!!
 
 !!!
+
+### Tables 
+
+Tables are implemented using normal markdown.  However, unlike normal markdownm, any table that overflows the article area will x-scroll by default. 
+
+| Column 1    | Column 2 | Column 3 | Column 4 | Column 5 | Column 6 | Column 7 | Column 8 | Column 9 | Column 10 | 
+|-------------|----------|----------|----------|----------|----------|----------|----------|----------|-----------|
+| row 1       | text     | text     | text     | text     | text     | text     | text     | text     | text      |
+| row 2       | text     | text     | text     | text     | text     | text     | text     | text     | text      |
+| row 3       | text     | text     | text     | text     | text     | text     | text     | text     | text      |
 
