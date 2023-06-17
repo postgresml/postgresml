@@ -133,6 +133,7 @@ venv.bak/
 .cargo_home
 .devenv
 .devenv.flake.nix
+devenv.nix
 devenv.lock
 
 # Spyder project settings
