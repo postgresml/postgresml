@@ -1,7 +1,7 @@
 #!/bin/env /bin/bash
 
 # Ensures there is a local Cargo crates repo
-mkdir .cargo_home
+[[ ! -d .cargo_home ]] && mkdir .cargo_home
 export CARGO_HOME=$(pwd)/.cargo_home
 
 # In case some packages are not free (e.g. Nvidia nvcc)
@@ -44,7 +44,28 @@ cat <<PROLOGUE_EOF > devenv.nix
     ];
 
     # https://devenv.sh/scripts/
+    # This shell will be executed _after_ the environment is activated.
     enterShell = ''
+        # Post activation script
+        export PATH=${DEVENV_ROOT}/.cargo_home/bin:${PATH}
+
+        # Load and compile cargo pgrx
+        cd pgml-extension
+        echo ""
+        echo "---- Installing cargo-pgrx..."
+        nice -n 19 cargo install cargo-pgrx --version "0.9.2" --locked
+
+        # Build extension for PSQL 15. 
+        echo ""
+        echo "---- Initialising cargo-pgrx..."
+        nice -n 19 cargo pgrx init --pg15=$(which pg_config)
+
+        echo ""
+        echo "---- Building extension..."
+        git submodule update --init --recursive
+        nice -n 19 cargo build
+
+        cd ..
     '';
 
     # https://devenv.sh/languages/
@@ -57,14 +78,14 @@ cat <<PROLOGUE_EOF > devenv.nix
         venv.enable = true;
         venv.requirements = ''
 
-	# Add modules for Jupyter notebooks and examples. Does not modify requirements.txt
-	ipykernel
-	IProgress
-        python-dotenv
-	psycopg
-	psycopg-pool
-	tqdm
-
+    # Add modules for Jupyter notebooks and examples. Does not modify requirements.txt
+    ipykernel
+    IProgress
+    python-dotenv
+    psycopg
+    psycopg-pool
+    tqdm
+    
 PROLOGUE_EOF
 
 
@@ -94,16 +115,3 @@ EPILOGUE_EOF
 # Enter devenv environment.
 devenv shell
 
-# Post activation script
-export PATH=${DEVENV_ROOT}/.cargo_home/bin:${PATH}
-
-# Load and compile cargo pgrx
-cd pgml-extension
-nice -n 19 cargo install cargo-pgrx --version "0.9.2" --locked
-
-# Build extension
-git submodule update --init --recursive
-nice -n 19 cargo pgrx init --pg15=$(which pg_config)
-nice -n 19 cargo build
-
-cd ..
