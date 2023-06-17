@@ -4,7 +4,7 @@
   <img width="54px" height="54px" src="/dashboard/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
   	<p class="m-0">Lev Kokotov</p>
-  	<p class="m-0">June 16, 2022</p>
+  	<p class="m-0">June 16, 2023</p>
   </div>
 </div>
 
@@ -24,7 +24,9 @@ This is not only a performance benefit, but also a usability improvement for cli
 ## Benchmark
 
 <center>
-  <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRsMGFjJB8X_sqwnnw7KrmN5BXgaRbMtL9OKqChlxVBUKmahKougo10hkWsvFTAZsPHPknZUtvaCXtB/pubchart?oid=1110711956&amp;format=interactive"></iframe>
+
+![PgCat Prepared Statements](/dashboard/static/images/illustrations/pgcat_prepared.svg)
+
 </center>
 
 <br>
