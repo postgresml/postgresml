@@ -484,7 +484,7 @@ impl Collection {
         task: Option<String>,
         model_name: Option<String>,
         model_params: Option<HashMap<String, String>>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<i64> {
         let task = task.unwrap_or("embedding".to_string());
         let model_name = model_name.unwrap_or("intfloat/e5-small".to_string());
         let model_params = match model_params {
@@ -507,27 +507,30 @@ impl Collection {
         );
 
         match current_model {
-            Some(_model) => {
+            Some(model) => {
                 warn!(
                     "Model with name: {} and parameters: {:?} already exists",
                     model_name, model_params
                 );
+                Ok(model.id)
             }
             None => {
+                let id;
                 transaction_wrapper!(
-                    sqlx::query(&query_builder!(
-                        "INSERT INTO %s (task, name, parameters) VALUES ($1, $2, $3)",
+                    id,
+                    sqlx::query_as::<_, (i64,)>(&query_builder!(
+                        "INSERT INTO %s (task, name, parameters) VALUES ($1, $2, $3) RETURNING id",
                         self.models_table_name
                     ))
                     .bind(task)
                     .bind(model_name)
                     .bind(model_params),
-                    self.pool.borrow()
+                    self.pool.borrow(),
+                    fetch_one
                 );
+                Ok(id.0)
             }
         }
-
-        Ok(())
     }
 
     /// Gets all registered [models::Model]s
