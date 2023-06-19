@@ -269,7 +269,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "pgml.sum",
                             "pgml.norm_l2",
                             "CONCURRENTLY",
-                            "ON",
+                            "ON\n",
                         ];
                         static ref SQL_KEYS_REPLACEMENTS: [&'static str; 57] = [
                             "<span class=\"syntax-highlight\">CASCADE</span>",
@@ -328,7 +328,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "<strong>pgml.sum</strong>",
                             "<strong>pgml.norm_l2</strong>",
                             "<span class=\"syntax-highlight\">CONCURRENTLY</span>",
-                            "<span class=\"syntax-highlight\">ON</span>",
+                            "<span class=\"syntax-highlight\">ON</span>\n",
                         ];
                         static ref AHO_SQL: AhoCorasick = AhoCorasickBuilder::new()
                             .match_kind(MatchKind::LeftmostLongest)
