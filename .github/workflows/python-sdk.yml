@@ -2,11 +2,14 @@ name: deploy python sdk
 on:
   workflow_dispatch:
 jobs:
-  deploy-python-sdk-mac:
-    runs-on: macos-latest
+  deploy-python-sdk-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
     defaults:
       run:
-        working-directory: pgml-sdks/rust/pgml
+        working-directory: pgml-sdks\rust\pgml
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -16,20 +19,20 @@ jobs:
         uses: postgresml/gh-actions-cargo@master
         with:
           command: version
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }} 
       - name: Install dependencies
         run: |
-          brew update
-          brew install python@3.8
-          brew install python@3.9
-          brew install python@3.10
-          brew install python@3.11
+          python -m pip install --upgrade pip
           pip3 install maturin
       - name: Create dist directory
-        run: mkdir ../../python/dist
+        run: mkdir ..\..\python\dist
       - name: Build wheels
-        run: maturin build -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist
+        run: maturin build --release --no-sdist --strip -o ..\..\python\pgml\dist
       - name: Deploy wheels
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        working-directory: pgml-sdks/python/pgml
-        run: maturin upload --repository testpypi --skip-existing dist/*
+        working-directory: pgml-sdks\python\pgml
+        run: maturin upload --repository testpypi --skip-existing dist\*
