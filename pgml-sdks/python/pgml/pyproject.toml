@@ -23,7 +23,7 @@ python-dotenv = "^1.0.0"
 fastapi = "^0.96.1"
 uvicorn = "^0.22.0"
 unstructured = {extras = ["local-inference"], version = "^0.7.3"}
-layoutparser = {extras = ["layoutmodels", "tesseract"], version = "^0.3.4"}
+# layoutparser = {extras = ["layoutmodels", "tesseract"], version = "^0.3.4"}
 
 
 [tool.poetry.group.dev.dependencies]
