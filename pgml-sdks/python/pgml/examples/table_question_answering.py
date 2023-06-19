@@ -46,7 +46,6 @@ async def main():
     # SentenceTransformer model trained specifically for embedding tabular data for retrieval tasks
     model_name = "deepset/all-mpnet-base-v2-table"
     model_id = await collection.register_model(model_name=model_name)
-
     console.print("Generating embeddings .. for model %s" % (model_id), style="bold")
     await collection.generate_embeddings(model_id=model_id)
 

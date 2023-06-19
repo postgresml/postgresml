@@ -38,10 +38,12 @@ async def main():
     console.print("Registering instructor model ..")
     instructor_model = "hkunlp/instructor-base" 
     instructor_model_params = {"instruction": "Represent the Wikipedia document for retrieval: "}
+
     model_id = await collection.register_model(
         model_name=instructor_model,
         model_params=instructor_model_params,
     )
+
 
     console.print("Generating embeddings .. for model %s" % (model_id), style="bold")
     await collection.generate_embeddings(model_id=model_id)
