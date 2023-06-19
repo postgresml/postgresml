@@ -23,7 +23,7 @@ jobs:
           brew install python@3.9
           brew install python@3.10
           brew install python@3.11
-          pip install maturin
+          pip3 install maturin
       - name: Create dist directory
         run: mkdir ../../python/dist
       - name: Build wheels
