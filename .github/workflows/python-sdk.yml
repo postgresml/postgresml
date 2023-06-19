@@ -45,9 +45,9 @@ jobs:
         run: maturin build --release --strip -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist
       - name: Deploy wheels
         env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         working-directory: pgml-sdks/python/pgml
-        run: maturin upload --repository testpypi --skip-existing dist/*
+        run: maturin upload --skip-existing dist/*
   deploy-python-sdk-mac:
     runs-on: macos-latest
     defaults:
@@ -76,9 +76,9 @@ jobs:
         run: maturin build --release --strip -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist
       - name: Deploy wheels
         env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         working-directory: pgml-sdks/python/pgml
-        run: maturin upload --repository testpypi --skip-existing dist/*
+        run: maturin upload --skip-existing dist/*
   deploy-python-sdk-windows:
     runs-on: windows-latest
     strategy:
@@ -110,6 +110,6 @@ jobs:
         run: maturin build --release --strip -o ..\..\python\pgml\dist
       - name: Deploy wheels
         env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         working-directory: pgml-sdks\python\pgml
-        run: maturin upload --repository testpypi --skip-existing dist\*
+        run: maturin upload --skip-existing dist\*
