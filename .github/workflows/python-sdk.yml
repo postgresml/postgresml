@@ -3,8 +3,7 @@ on:
   workflow_dispatch:
 jobs:
   deploy-python-sdk-mac:
-    strategy:
-      runs-on: macos-latest
+    runs-on: macos-latest
     defaults:
       run:
         working-directory: pgml-sdks/rust/pgml
