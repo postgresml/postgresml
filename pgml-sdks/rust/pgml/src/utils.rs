@@ -7,23 +7,3 @@ macro_rules! query_builder {
         query
     }};
 }
-
-#[macro_export]
-macro_rules! transaction_wrapper {
-    ($e:expr, $a:expr) => {
-        let mut transaction = $a.begin().await?;
-        $e.execute(&mut transaction).await?;
-        sqlx::query("DEALLOCATE ALL")
-            .execute(&mut transaction)
-            .await?;
-        transaction.commit().await?;
-    };
-    ($n:ident, $e:expr, $a:expr, $i:ident) => {
-        let mut transaction = $a.begin().await?;
-        $n = $e.$i(&mut transaction).await?;
-        sqlx::query("DEALLOCATE ALL")
-            .execute(&mut transaction)
-            .await?;
-        transaction.commit().await?;
-    };
-}
