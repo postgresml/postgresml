@@ -1,8 +1,8 @@
 ---
 author: Montana Low
-description: GPTQ & GGML allow PostgresML to fit larger models in less RAM, and perform inference significantly faster on NVIDIA, Apple and Intel hardware. Half precision floating point, and quantization optimizations are now available for your favorite LLMs on Huggingface.
+description: GPTQ & GGML allow PostgresML to fit larger models in less RAM. These algorithms perform inference significantly faster on NVIDIA, Apple and Intel hardware. Half precision floating point, and quantization optimizations are now available for your favorite LLMs downloaded from Huggingface.
 image: https://postgresml.org/dashboard/static/images/blog/discrete_quantization.jpg
-image_alt: We read to learn
+image_alt: Discrete quantization is not a new idea. It's been used by both algorithms and artists for more than a hundred years.
 ---
 
 # Announcing GPTQ & GGML Quantized LLM support for Huggingface Transformers 
@@ -14,6 +14,8 @@ image_alt: We read to learn
     <p class="m-0">June 20, 2023</p>
   </div>
 </div>
+
+Quantization allows PostgresML to fit larger models in less RAM. These algorithms perform inference significantly faster on NVIDIA, Apple and Intel hardware. Half-precision floating point and quantized optimizations are now available for your favorite LLMs downloaded from Huggingface.
 
 ## Introduction
 
@@ -63,6 +65,8 @@ SELECT pgml.transform(
 
 !!!
 
+4.5 seconds is slow for an interactive response. If we're building dynamic user experiences, it's worth digging deeper into optimizations. 
+
 
 ## Quantization
 
@@ -73,13 +77,13 @@ Going beyond 16-bit down to 8 or 4 bits is possible, but not with hardware accel
 
 [GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers](https://arxiv.org/abs/2210.17323) is a research paper that outlines the details for quantizing LLMs after they have already been trained on full float32 precision, and the tradeoffs involved. Their work is implemented as an [open source library](https://github.com/IST-DASLab/gptq), which has been adapted to work with Huggingface Transformers by [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ). PostgresML will automatically use AutoGPTQ when a HuggingFace model with GPTQ in the name is used.
 
-[GGML](https://github.com/ggerganov/ggml) is another quantization implementation focused more on CPU optimization, particularly for Apple M1 & M2 silicon. It relies on the same principles, but is a different underlying implementation. As a general rule of thumb, if you're using NVIDIA hardware and your entire model will fit in VRAM, GPTQ will be faster. If you're using Apple or Intel hardware, GGML will likely be faster.
+[GGML](https://github.com/ggerganov/ggml) is another quantization implementation focused on CPU optimization, particularly for Apple M1 & M2 silicon. It relies on the same principles, but is a different underlying implementation. As a general rule of thumb, if you're using NVIDIA hardware and your entire model will fit in VRAM, GPTQ will be faster. If you're using Apple or Intel hardware, GGML will likely be faster.
 
-The community (particular shoutout to [TheBloke](https://huggingface.co/TheBloke)), has been applying these quantization methods to the LLMs in the Huggingface Transformers library. Many versions of your favorite LLMs are now available in more efficient formats. This might allow you to move up to a larger model size, or fit more models in the same amount of RAM.
+The community (shoutout to [TheBloke](https://huggingface.co/TheBloke)), has been applying these quantization methods to LLMs in the Huggingface Transformers library. Many versions of your favorite LLMs are now available in more efficient formats. This might allow you to move up to a larger model size, or fit more models in the same amount of RAM.
 
 ## Using GPTQ & GGML in PostgresML
 
-You'll need to update to PostgresML 2.6.0 or later to use GPTQ or GGML. AutoGPTQ also provides prebuilt wheels for Python if you're having trouble installing the pip package which builds it from source. They maintain a list of wheels [available for download](https://github.com/PanQiWei/AutoGPTQ/releases) on GitHub. You can update your Python dependencies for PostgresML to take advantage of these new capabilities:
+You'll need to update to PostgresML 2.6.0 or later to use GPTQ or GGML. You will need to update your Python dependencies for PostgresML to take advantage of these new capabilities. AutoGPTQ also provides prebuilt wheels for Python if you're having trouble installing the pip package which builds it from source. They maintain a list of wheels [available for download](https://github.com/PanQiWei/AutoGPTQ/releases) on GitHub. 
 
 ```commandline
 pip install -r requirements.txt
@@ -384,10 +388,59 @@ SELECT pgml.transform(
 !!!
 
 !!!
+
+### The whole shebang
+
+PostgresML aims to provide a flexible API to the underlying libraries. This means that you should be able to pass in any valid arguments to [`AutoModel.from_pretrained(...)`](https://huggingface.co/docs/transformers/v4.30.0/en/model_doc/auto#transformers.FlaxAutoModelForVision2Seq.from_pretrained) via the `task`, and additional arguments to call on the resulting pipeline during inference for `args`. PostgresML caches each model based on the `task` arguments, so calls to an identical task will be as fast as possible. The arguments that are valid for any model depend on the inference implementation it uses. You'll need to check the model card and underlying library for details.
+
+ Getting GPU acceleration to work may also depend on compiling dependencies or downloading Python wheels as well as passing in the correct arguments if your implementing library does not run on a GPU by default like huggingface transformers. PostgresML will cache your model on the GPU, and it will be visible in the process list if it is being used, for as long as your database connection is open. You can always check `nvidia-smi` to see if the GPU is being used as expected. We understand this isn't ideal, but we believe the bleeding edge should be accessible to those that dare. We test many models and configurations to make sure our cloud offering has broad support, but always appreciate GitHub issues when something is missing.
+
+Shoutout to [Tostino](https://github.com/Tostino/) for the extended example below.
+
+!!! generic 
+
+!!! code_block time="3784.565"
+
+```sql
+SELECT pgml.transform(
+    task => '{
+      "task": "text-generation",
+      "model": "TheBloke/vicuna-7B-v1.3-GGML",
+      "model_type": "llama",
+      "model_file": "vicuna-7b-v1.3.ggmlv3.q5_K_M.bin",
+      "gpu_layers": 256
+    }'::JSONB,
+    inputs => ARRAY[
+        $$A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.
+
+USER: Please write an intro to a story about a woman living in New York.
+ASSISTANT:$$
+    ],
+    args => '{
+      "max_new_tokens": 512,
+          "threads": 16,
+      "stop": ["USER:","USER"]
+    }'::JSONB
+);
+```
+!!!
+
+!!! results
+
+| transform                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [" Meet Sarah, a strong-willed woman who has always had a passion for adventure. Born and raised in the bustling city of New York, she was no stranger to the hustle and bustle of life in the big apple. However, Sarah longed for something more than the monotonous routine that had become her daily life.\n\nOne day, while browsing through a travel magazine, Sarah stumbled upon an ad for a wildlife conservation program in Africa. Intrigued by the opportunity to make a difference in the world and expand her horizons, she decided to take the leap and apply for the position.\n\nTo her surprise, Sarah was accepted into the program and found herself on a plane bound for the African continent. She spent the next several months living and working among some of the most incredible wildlife she had ever seen. It was during this time that Sarah discovered a love for exploration and a desire to see more of the world.\n\nAfter completing her program, Sarah returned to New York with a newfound sense of purpose and ambition. She was determined to use her experiences to fuel her love for adventure and make the most out of every opportunity that came her way. Whether it was traveling to new destinations or taking on new challenges in her daily life, Sarah was not afraid to step outside of her comfort zone and embrace the unknown.\n\nAnd so, Sarah's journey continued as she made New York her home base for all of her future adventures. She became a role model for others who longed for something more out of life, inspiring them to chase their dreams and embrace the exciting possibilities that lay ahead."] |
+
+
+!!!
+
+!!!
+
+
 ### Conclusion
 
-There are a ton of great open source LLMs. If you're looking for a list to try, check out [the leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard). You can also [search for GPTQ](https://huggingface.co/models?search=gptq) and [GGML](https://huggingface.co/models?search=ggml) versions of those models on the hub to see what is popular in the community. If you're looking for a model that is not available in a quantized format, you can always quantize it yourself. If you're successful, please consider sharing your quantized model with the community! 
+There are many open source LLMs. If you're looking for a list to try, check out [the leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard). You can also [search for GPTQ](https://huggingface.co/models?search=gptq) and [GGML](https://huggingface.co/models?search=ggml) versions of those models on the hub to see what is popular in the community. If you're looking for a model that is not available in a quantized format, you can always quantize it yourself. If you're successful, please consider sharing your quantized model with the community! 
 
-To dive deeper, you may also want to consult the docs for [ctransformers](https://github.com/marella/ctransformers) if you're using a GGML model, and [auto_gptq](https://github.com/PanQiWei/AutoGPTQ) for GPTQ models. 
+To dive deeper, you may also want to consult the docs for [ctransformers](https://github.com/marella/ctransformers) if you're using a GGML model, and [auto_gptq](https://github.com/PanQiWei/AutoGPTQ) for GPTQ models. While Python dependencies are fantastic to let us all iterate quickly, and rapidly adopt the latest innovations, they are not as performant or resilient as native code. There is good progress being made to move a lot of this functionality into [rustformers](https://github.com/rustformers/llm) which we intend to adopt on our quest to remove Python completely on the road to PostgresML 3.0, but we're not going to slow down the pace of innovation while we build more stable and performant APIs. 
 
-
+GPTQ & GGML are a huge win for performance and memory usage, and we're excited to see what you can do with them.
