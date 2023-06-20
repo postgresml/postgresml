@@ -80,6 +80,8 @@ async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk
         cluster,
         &path,
         vec![
+            NavLink::new("Announcing GPTQ & GGML Quantized LLM support for Huggingface Transformers")
+                .href("/blog/announcing-gptq-and-ggml-quantized-llm-support-for-huggingface-transformers"),
             NavLink::new("Making Postgres 30 Percent Faster in Production")
                 .href("/blog/making-postgres-30-percent-faster-in-production"),
             NavLink::new("MindsDB vs PostgresML")
