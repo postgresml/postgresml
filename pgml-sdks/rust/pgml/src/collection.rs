@@ -751,27 +751,6 @@ impl Collection {
         Ok(results)
     }
 
-    /// Creates a new Collection from a [models::Collection] and a [`PgPool`];
-    pub fn from_model_and_pool(collection_model: models::Collection, pool: PgPool) -> Self {
-        let (
-            documents_table_name,
-            splitters_table_name,
-            models_table_name,
-            transforms_table_name,
-            chunks_table_name,
-        ) = Self::generate_table_names(&collection_model.name);
-        Self {
-            name: collection_model.name,
-            pool,
-            documents_table_name,
-            splitters_table_name,
-            models_table_name,
-            transforms_table_name,
-            chunks_table_name,
-            active: collection_model.active,
-        }
-    }
-
     fn generate_table_names(name: &str) -> (String, String, String, String, String) {
         [
             ".documents",

@@ -80,7 +80,7 @@ impl Database {
         .fetch_optional(self.pool.borrow())
         .await?;
         match collection {
-            Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
+            Some(c) => Ok(Collection::new(c.name, self.pool.clone()).await?),
             None => {
                 sqlx::query("INSERT INTO pgml.collections (name) VALUES ($1)")
                     .bind(name)

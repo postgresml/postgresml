@@ -101,7 +101,7 @@ mod tests {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
         init_logger(LevelFilter::Info).unwrap();
-        let collection_name = "test26";
+        let collection_name = "test27";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
