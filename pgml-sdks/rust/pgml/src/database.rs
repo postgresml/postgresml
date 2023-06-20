@@ -1,3 +1,4 @@
+use neon::prelude::*;
 use pgml_macros::{custom_derive, custom_methods};
 use pyo3::prelude::*;
 use sqlx::postgres::PgConnectOptions;
@@ -7,7 +8,7 @@ use std::str::FromStr;
 use std::time::SystemTime;
 
 use crate::collection::*;
-use crate::get_or_set_runtime;
+use crate::languages::javascript::*;
 use crate::models;
 use crate::queries;
 use crate::{query_builder, transaction_wrapper};

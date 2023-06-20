@@ -152,10 +152,6 @@ cte AS (
   FROM 
     %s CROSS 
     JOIN query_cte 
-  ORDER BY 
-    score DESC 
-  LIMIT 
-    $4
 ) 
 SELECT 
   cte.score, 
@@ -164,7 +160,11 @@ SELECT
 FROM 
   cte 
   INNER JOIN %s chunks ON chunks.id = cte.chunk_id 
-  INNER JOIN %s documents ON documents.id = chunks.document_id;
+  INNER JOIN %s documents ON documents.id = chunks.document_id 
+  ORDER BY 
+  cte.score DESC 
+  LIMIT 
+  $4;
 "#;
 
 pub const GENERATE_CHUNKS: &str = r#"

@@ -65,10 +65,7 @@ pub fn css_url() -> String {
         return "/dashboard/static/css/style.css".to_string();
     }
 
-    let filename = match var("CSS_VERSION") {
-        Ok(version) => format!("style.{version}.css"),
-        Err(_) => "style.css".to_string(),
-    };
+    let filename = format!("style.{}.css", env!("CSS_VERSION"));
 
     let path = format!("/dashboard/static/css/{filename}");
 
@@ -82,14 +79,9 @@ pub fn js_url(name: &str) -> String {
     let name = if dev_mode() {
         name.to_string()
     } else {
-        match var("JS_VERSION") {
-            Ok(version) => {
-                let name = name.split(".").collect::<Vec<&str>>();
-                let name = name[0..name.len() - 1].join(".");
-                format!("{name}.{version}.js")
-            }
-            Err(_) => name.to_string(),
-        }
+        let name = name.split(".").collect::<Vec<&str>>();
+        let name = name[0..name.len() - 1].join(".");
+        format!("{name}.{}.js", env!("JS_VERSION"))
     };
 
     let path = format!("/dashboard/static/js/{name}");

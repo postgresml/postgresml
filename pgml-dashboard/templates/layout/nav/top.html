@@ -14,7 +14,7 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav flex-grow-1 gap-4 me-auto mb-2 mb-lg-0">
+          <ul class="navbar-nav flex-grow-1 gap-4 me-auto mb-4 mb-lg-0">
             <% if standalone_dashboard { %>
             <li class="nav-item d-flex align-items-center">
               <a class="nav-link p-0" href="/dashboard">Dashboard</a>
@@ -29,13 +29,16 @@
             </li> -->
             <% } %>
             <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-0" href="/blog/mindsdb-vs-postgresml">Blog</a>
+              <a class="nav-link p-0" href="/blog/making-postgres-30-percent-faster-in-production">Blog</a>
             </li>
           </ul>
   
-          <ul class="navbar-nav gap-3 mb-2 mb-lg-0">
-            <li class="d-flex align-items-center">
+          <ul class="navbar-nav gap-4 gap-lg-3 mb-2 mb-lg-0">
+            <li class="d-flex align-items-center d-none d-lg-block">
               <% include!("../../components/github_icon.html"); %>
+            </li>
+            <li class="d-flex align-items-center d-block d-lg-none">
+              <a class="nav-link p-0" href="https://github.com/postgresml/postgresml">Open Source</a>
             </li>
             <li class="nav-item d-flex align-items-center">
               <button type="text" class="btn-search nav-link p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">

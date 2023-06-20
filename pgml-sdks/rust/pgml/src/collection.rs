@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use itertools::Itertools;
 use log::warn;
+use neon::prelude::*;
 use pgml_macros::{custom_derive, custom_methods};
 use pyo3::prelude::*;
 use sqlx::postgres::PgPool;
@@ -9,6 +10,7 @@ use sqlx::Executor;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 
+use crate::languages::javascript::*;
 use crate::models;
 use crate::queries;
 use crate::{query_builder, transaction_wrapper};
@@ -28,8 +30,6 @@ pub struct Collection {
 }
 
 #[custom_methods(
-    get_name,
-    get_name_result,
     upsert_documents,
     register_text_splitter,
     get_text_splitters,
@@ -37,8 +37,7 @@ pub struct Collection {
     register_model,
     get_models,
     generate_embeddings,
-    vector_search,
-    get_name
+    vector_search
 )]
 impl Collection {
     /// Creates a new collection
@@ -485,7 +484,7 @@ impl Collection {
         task: Option<String>,
         model_name: Option<String>,
         model_params: Option<HashMap<String, String>>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<i64> {
         let task = task.unwrap_or("embedding".to_string());
         let model_name = model_name.unwrap_or("intfloat/e5-small".to_string());
         let model_params = match model_params {
@@ -508,27 +507,30 @@ impl Collection {
         );
 
         match current_model {
-            Some(_model) => {
+            Some(model) => {
                 warn!(
                     "Model with name: {} and parameters: {:?} already exists",
                     model_name, model_params
                 );
+                Ok(model.id)
             }
             None => {
+                let id;
                 transaction_wrapper!(
-                    sqlx::query(&query_builder!(
-                        "INSERT INTO %s (task, name, parameters) VALUES ($1, $2, $3)",
+                    id,
+                    sqlx::query_as::<_, (i64,)>(&query_builder!(
+                        "INSERT INTO %s (task, name, parameters) VALUES ($1, $2, $3) RETURNING id",
                         self.models_table_name
                     ))
                     .bind(task)
                     .bind(model_name)
                     .bind(model_params),
-                    self.pool.borrow()
+                    self.pool.borrow(),
+                    fetch_one
                 );
+                Ok(id.0)
             }
         }
-
-        Ok(())
     }
 
     /// Gets all registered [models::Model]s
@@ -573,7 +575,7 @@ impl Collection {
                 );
                 let embedding;
                 transaction_wrapper!(embedding, sqlx::query_as::<_, (Vec<f32>,)>(&query_builder!(
-                    "SELECT embedding from pgml.embed(transformer => (SELECT name from %s where id = $1), text => 'Hello, World!', kwargs => '{}') as embedding", 
+                    "WITH model as (SELECT name, parameters from %s where id = $1) SELECT embedding from pgml.embed(transformer => (SELECT name FROM model), text => 'Hello, World!', kwargs => (SELECT parameters FROM model)) as embedding", 
                     self.models_table_name))
                     .bind(model_id),
                     pool, fetch_one);
