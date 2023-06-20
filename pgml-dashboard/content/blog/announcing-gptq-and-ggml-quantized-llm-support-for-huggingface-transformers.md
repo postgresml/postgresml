@@ -15,6 +15,7 @@ image_alt: Discrete quantization is not a new idea. It's been used by both algor
   </div>
 </div>
 
+Quantization allows PostgresML to fit larger models in less RAM. These algorithms perform inference significantly faster on NVIDIA, Apple and Intel hardware. Half-precision floating point and quantized optimizations are now available for your favorite LLMs downloaded from Huggingface.
 
 ## Introduction
 
