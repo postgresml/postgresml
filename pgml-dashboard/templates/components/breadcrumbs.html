@@ -24,17 +24,31 @@
     </ol>
   </nav>
 
-  <nav class="d-flex gap-3 align-items-center">
-    <button type="text" class="btn-search d-flex gap-2" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
-      <span class="material-symbols-outlined">
-        search
-      </span>
-      <span>search</span>
-    </button>
-    <a href="/logout" class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary">Logout</a>
-    <a href="/support" class="btn btn-tertiary p-0 pe-2">
-      <img loading="lazy" src="/dashboard/static/images/icons/help.svg" width="30" height="30" alt="help" />
-    </a>
+  <nav class="horizontal">
+    <ul class="navbar-nav flex-row gap-3 mb-2 mb-lg-0">
+
+      <li class="nav-item d-flex align-items-center">
+        <button type="text" class="btn-search nav-link p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+          Search
+        </button>
+      </li>
+      <li class="nav-item d-flex align-items-center">
+        <a class="nav-link p-0" href="/docs/guides/setup/quick_start_with_docker/">Docs</a>
+      </li>
+      <li class="nav-item d-flex align-items-center">
+        <a class="nav-link p-0" href="/blog/mindsdb-vs-postgresml">Blog</a>
+      </li>
+      <li class="nav-item d-flex align-items-center">
+        <a href="/logout" class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary">Logout</a>
+      </li>
+      <li class="nav-item d-flex align-items-center">
+        <a href="/support" class="btn btn-tertiary p-0 pe-2">
+          <span class="material-symbols-outlined">
+            help
+          </span>
+        </a>
+      </li>
+    </ul>
   </nav>
   <% include!("search_modal.html"); %>
 </nav>

@@ -62,10 +62,22 @@ pub struct Nav<'a> {
     pub links: Vec<NavLink<'a>>,
 }
 
+impl<'a> Nav<'a> {
+    pub fn render(links: Vec<NavLink<'a>>) -> String {
+        Nav { links }.render_once().unwrap()
+    }
+}
+
 #[derive(TemplateOnce)]
 #[template(path = "components/breadcrumbs.html")]
 pub struct Breadcrumbs<'a> {
     pub links: Vec<NavLink<'a>>,
+}
+
+impl<'a> Breadcrumbs<'a> {
+    pub fn render(links: Vec<NavLink<'a>>) -> String {
+        Breadcrumbs { links }.render_once().unwrap()
+    }
 }
 
 #[derive(TemplateOnce)]
