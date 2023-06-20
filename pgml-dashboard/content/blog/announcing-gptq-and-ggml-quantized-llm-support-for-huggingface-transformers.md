@@ -15,13 +15,12 @@ image_alt: Discrete quantization is not a new idea. It's been used by both algor
   </div>
 </div>
 
-Quantization allows PostgresML to fit larger models in less RAM. These algorithms perform inference significantly faster on NVIDIA, Apple and Intel hardware. Half-precision floating point and quantized optimizations are now available for your favorite LLMs downloaded from Huggingface.
 
 ## Introduction
 
 Large Language Models (LLMs) are... large. They have a lot of parameters, which make up the weights and biases of the layers inside deep neural networks. Typically, these parameters are represented by individual 32-bit floating point numbers, so a model like GPT-2 that has 1.5B parameters would need `4 bytes * 1,500,000,000 = 6GB RAM`. The Leading Open Source models like LLaMA, Alpaca, and Guanaco, currently have 65B parameters, which requires about 260GB RAM. This is a lot of RAM, and it's not even counting what's needed to store the input and output data.
 
-Bandwidth between RAM and CPU often becomes a bottleneck for performing inference with these models, rather than the number of processing cores or their speed, because the processors become starved for data. One way to reduce the amount of RAM and memory bandwidth needed is to use a smaller datatype, like 16-bit floating point numbers, which would  reduce the model size in RAM by half. There are a couple competing 16-bit standards, but NVIDIA has introduced support for bfloat16 in their latest hardware generation, which keeps the full exponential range of float32, but gives up a 2/3rs of the precision. Most research has shown this is a good quality/performance tradeoff, and that model outputs are not terribly sensitive when truncating the least significant bits.
+Bandwidth between RAM and CPU often becomes a bottleneck for performing inference with these models, rather than the number of processing cores or their speed, because the processors become starved for data. One way to reduce the amount of RAM and memory bandwidth needed is to use a smaller datatype, like 16-bit floating point numbers, which would reduce the model size in RAM by half. There are a couple competing 16-bit standards, but NVIDIA has introduced support for bfloat16 in their latest hardware generation, which keeps the full exponential range of float32, but gives up a 2/3rs of the precision. Most research has shown this is a good quality/performance tradeoff, and that model outputs are not terribly sensitive when truncating the least significant bits.
 
 | Format   | Significand | Exponent |
 |----------|-------------|----------|
@@ -120,7 +119,6 @@ SELECT pgml.transform(
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ["Once upon a time, the world was a place of great beauty and great danger. The world was a place of great danger. The world was a place of great danger. The world"] |
 
-
 !!!
 
 !!!
@@ -173,10 +171,11 @@ SELECT pgml.transform(
     args => '{"max_new_tokens": 32}'::JSONB
 );
 ```
+
 !!!
 
-!!! results 
- 
+!!! results
+
 | transform                                                                                                                                                            |
 |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [[{"Once upon a time, I'd get angry over the fact that my house was going to have some very dangerous things from outside. To be honest, I know it's going to be"}]] |
@@ -210,6 +209,7 @@ SELECT pgml.transform(
     args => '{"max_new_tokens": 32}'::JSONB
 );
 ```
+
 !!!
 
 !!! results
@@ -248,7 +248,7 @@ SELECT pgml.transform(
 
 | transform                                                                                                                                                                                                    |
 |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
- | [[{"generated_text": "Once upon a time, we were able, due to our experience at home, to put forward the thesis that we're essentially living life as a laboratory creature with the help of other humans"}]] |
+| [[{"generated_text": "Once upon a time, we were able, due to our experience at home, to put forward the thesis that we're essentially living life as a laboratory creature with the help of other humans"}]] |
 
 !!!
 
@@ -431,11 +431,9 @@ ASSISTANT:$$
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [" Meet Sarah, a strong-willed woman who has always had a passion for adventure. Born and raised in the bustling city of New York, she was no stranger to the hustle and bustle of life in the big apple. However, Sarah longed for something more than the monotonous routine that had become her daily life.\n\nOne day, while browsing through a travel magazine, Sarah stumbled upon an ad for a wildlife conservation program in Africa. Intrigued by the opportunity to make a difference in the world and expand her horizons, she decided to take the leap and apply for the position.\n\nTo her surprise, Sarah was accepted into the program and found herself on a plane bound for the African continent. She spent the next several months living and working among some of the most incredible wildlife she had ever seen. It was during this time that Sarah discovered a love for exploration and a desire to see more of the world.\n\nAfter completing her program, Sarah returned to New York with a newfound sense of purpose and ambition. She was determined to use her experiences to fuel her love for adventure and make the most out of every opportunity that came her way. Whether it was traveling to new destinations or taking on new challenges in her daily life, Sarah was not afraid to step outside of her comfort zone and embrace the unknown.\n\nAnd so, Sarah's journey continued as she made New York her home base for all of her future adventures. She became a role model for others who longed for something more out of life, inspiring them to chase their dreams and embrace the exciting possibilities that lay ahead."] |
 
-
 !!!
 
 !!!
-
 
 ### Conclusion
 
