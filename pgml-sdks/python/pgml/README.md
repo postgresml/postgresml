@@ -254,7 +254,7 @@ This function allows for the registration of a model in a database, creating a r
 #### Register Text Splitter
 
 ```python
-await collection.register_text_splitter(splitter_name="recursive_character",splitter_params={"chunk_size": 100,"chunk_overlap": 20})
+await collection.register_text_splitter(splitter_name="recursive_character",splitter_params={"chunk_size": "100","chunk_overlap": "20"})
 ```
 
 This function allows for the registration of a text spliter in a database, creating a record if it doesn't already exist. Following [LangChain](https://python.langchain.com/en/latest/reference/modules/text_splitter.html) splitters are supported.
