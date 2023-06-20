@@ -601,6 +601,45 @@ pub fn clear_gpu_cache(memory_usage: default!(Option<f32>, "NULL")) -> bool {
     crate::bindings::transformers::clear_gpu_cache(memory_usage)
 }
 
+/// Lists all the Huggingface models saved in .cache.
+///
+/// # Returns
+///
+/// Returns the `repo_id`, `repo_type`, and the `size_on_disk` in bytes.
+/// # Example
+///
+/// ```sql
+///  SELECT * from pgml.list_cached_models();
+/// ```
+#[pg_extern(immutable, parallel_safe, name = "list_cached_models")]
+pub fn huggingface_models_table_iterator() ->
+    TableIterator<'static, (
+    name!(repo_id, String),
+    name!(repo_type, String),
+    name!(commit_hash, String),
+    name!(size_on_disk, i64),
+    name!(last_accessed, String),
+    name!(last_modified, String)
+    )> {
+    let models_list = crate::bindings::transformers::huggingface_cached_models_list();
+
+    let mut repos: Vec<(String, String, String, i64, String, String )> = vec![];
+    for dict in models_list {
+        let repo = (
+            dict.get("repo_id").unwrap().clone(),
+            dict.get("repo_type").unwrap().clone(),
+            dict.get("commit_hash").unwrap().clone(),
+            i64::from_str(dict.get("size_on_disk").unwrap()).unwrap_or(0),
+            dict.get("last_accessed").unwrap().clone(),
+            dict.get("last_modified").unwrap().clone(),
+        );
+        repos.push(repo);
+    }
+
+    TableIterator::new(repos.into_iter())
+}
+
+
 #[pg_extern(immutable, parallel_safe)]
 pub fn chunk(
     splitter: &str,

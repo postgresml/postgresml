@@ -37,6 +37,9 @@ from transformers import (
     TrainingArguments,
     Trainer,
 )
+import datetime
+import humanize
+from huggingface_hub import scan_cache_dir
 
 __cache_transformer_by_model_id = {}
 __cache_sentence_transformer_by_name = {}
@@ -638,4 +641,31 @@ def generate(model_id, data, config):
             all_preds.extend(decoded_preds)
     return all_preds
 
+def huggingface_cached_models_list():
+    cache_info = scan_cache_dir()
+    repos = list(cache_info.repos)
+    results = []
 
+    for repo in repos:
+        repo_id = repo.repo_id
+        repo_type = repo.repo_type
+        revisions = list(repo.revisions)
+        last_accessed = repo.last_accessed
+
+        for revision in revisions:
+
+            # Calculate the difference
+            last_accessed_dt = datetime.datetime.now() - datetime.datetime.fromtimestamp(last_accessed)
+            last_modified_dt = datetime.datetime.now() - datetime.datetime.fromtimestamp(revision.last_modified)
+
+
+            results.append({
+                "repo_id": repo_id,
+                "repo_type": repo_type,
+                "commit_hash": revision.commit_hash,
+                "size_on_disk": str(revision.size_on_disk),
+                "last_accessed": humanize.naturaltime(last_accessed_dt),
+                "last_modified": humanize.naturaltime(last_modified_dt)
+            })
+
+    return results
