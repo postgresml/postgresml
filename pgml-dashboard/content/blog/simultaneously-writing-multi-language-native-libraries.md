@@ -1,6 +1,6 @@
 ---
 author: Silas Marvin 
-description: A story and example of simultaneously writing multi-language native libraries in multiple languages using Rust
+description: A story and example of simultaneously writing multi-language native libraries using Rust
 ---
 
 # Simultaneously Writing Multi-Language Native Libraries
