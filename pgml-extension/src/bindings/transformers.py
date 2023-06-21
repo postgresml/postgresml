@@ -36,6 +36,7 @@ from transformers import (
     GenerationConfig,
     TrainingArguments,
     Trainer,
+    pipeline
 )
 
 __cache_transformer_by_model_id = {}
@@ -82,6 +83,27 @@ def ensure_device(kwargs):
             kwargs["device"] = "cpu"
 
 
+class StandardPipeline(object):
+    def __init__(self, model_name, **task):
+        task.pop("model")
+        self.task = task.pop("task")
+        task.pop("device")
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, **task)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    def __call__(self, inputs, **kwargs):
+        outputs = []
+        pipe = pipeline(
+            self.task,
+            model=self.model,
+            tokenizer=self.tokenizer,
+            **kwargs
+        )
+        for input in inputs:
+            outputs.append(pipe(input)[0]['generated_text'])
+        return outputs
+
+
 class GPTQPipeline(object):
     def __init__(self, model_name, **task):
         import auto_gptq
@@ -97,10 +119,14 @@ class GPTQPipeline(object):
 
     def __call__(self, inputs, **kwargs):
         outputs = []
+        pipe = pipeline(
+            self.task,
+            model=self.model,
+            tokenizer=self.tokenizer,
+            **kwargs
+        )
         for input in inputs:
-            tokens = self.tokenizer(input, return_tensors="pt").to(self.model.device).input_ids
-            token_ids = self.model.generate(input_ids=tokens, **kwargs)[0]
-            outputs.append(self.tokenizer.decode(token_ids))
+            outputs.append(pipe(input)[0]['generated_text'])
         return outputs
 
 
@@ -138,9 +164,8 @@ def transform(task, args, inputs):
         elif model_name and "-gptq" in model_name:
             pipe = GPTQPipeline(model_name, **task)
         else:
-            pipe = transformers.pipeline(**task)
-            if pipe.tokenizer is None:
-                pipe.tokenizer = AutoTokenizer.from_pretrained(pipe.model.name_or_path)
+            pipe = StandardPipeline(model_name, **task)
+
         __cache_transform_pipeline_by_task[key] = pipe
 
     pipe = __cache_transform_pipeline_by_task[key]
