@@ -300,15 +300,14 @@ fn do_custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	let parsed_methods = parse_methods(input);
 	let mut methods = Vec::new();
 	for method in parsed_methods {
-	// Destructure Method
-	let destructured = destructure(method);
-	// Translate Signature
-	let signature = convert_signature(&destructured);
-	// Restructure Method 
-	let method = create_method(&destructured, &signature);
+		// Destructure Method
+		let destructured = destructure(method);
+		// Translate Signature
+		let signature = convert_signature(&destructured);
+		// Restructure Method 
+		let method = create_method(&destructured, &signature);
 		methods.push(method);
 	}
-
 	// This is the actual Rust impl block we are generating
 	proc_macro::TokenStream::from(quote! {
         #[pymethods]
