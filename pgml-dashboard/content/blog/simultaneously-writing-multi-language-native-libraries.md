@@ -114,8 +114,8 @@ impl Database {
 /// A Python module implemented in Rust.
 #[pymodule]
 fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<Database>()?;
-    Ok(())
+	m.add_class::<Database>()?;
+	Ok(())
 }
 ```
 
@@ -190,16 +190,16 @@ Notice it automatically creates a new struct `DatabasePython` and applies the `p
 ```
 #[proc_macro_derive(custom_derive)]
 pub fn custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let parsed = parse_macro_input!(input as DeriveInput);
-    let name_ident = format_ident!("{}Python", parsed.ident);
-    let wrapped_type_ident = parsed.ident;
-    let expanded = quote! {
-        #[pyclass]
-        pub struct #name_ident {
-            wrapped: #wrapped_type_ident
-        }
-    };
-    proc_macro::TokenStream::from(expanded)
+	let parsed = parse_macro_input!(input as DeriveInput);
+	let name_ident = format_ident!("{}Python", parsed.ident);
+	let wrapped_type_ident = parsed.ident;
+	let expanded = quote! {
+		#[pyclass]
+		pub struct #name_ident {
+			wrapped: #wrapped_type_ident
+		}
+	};
+	proc_macro::TokenStream::from(expanded)
 }
 
 ```
@@ -236,36 +236,36 @@ How does the macro actually work? We can break the `custom_derive_methods` macro
 Utilizing the [syn crate](https://crates.io/crates/syn) we parse the `impl` block of the `Database` struct and iterate over the individual methods parsing them into our own type:
 ```
 pub struct GetImplMethod {
-    pub exists: bool,
-    pub method_ident: Ident,
-    pub is_async: bool,
-    pub method_arguments: Vec<(String, SupportedType)>,
-    pub receiver: Option<proc_macro2::TokenStream>,
-    pub output_type: OutputType,
+	pub exists: bool,
+	pub method_ident: Ident,
+	pub is_async: bool,
+	pub method_arguments: Vec<(String, SupportedType)>,
+	pub receiver: Option<proc_macro2::TokenStream>,
+	pub output_type: OutputType,
 }
 ```
 
 Here `SupportType` and `OutputType` are our custom enums of types we support, looking something like:
 ```
 pub enum SupportedType {
-    Reference(Box<SupportedType>),
-    str,
-    String,
-    Vec(Box<SupportedType>),
-    HashMap((Box<SupportedType>, Box<SupportedType>)),
-    Option(Box<SupportedType>),
-    Tuple(Vec<SupportedType>),
-    S, // Self
-    i64,
-    i32,
-    f64,
+	Reference(Box<SupportedType>),
+	str,
+	String,
+	Vec(Box<SupportedType>),
+	HashMap((Box<SupportedType>, Box<SupportedType>)),
+	Option(Box<SupportedType>),
+	Tuple(Vec<SupportedType>),
+	S, // Self
+	i64,
+	i32,
+	f64,
 	// Other omitted types
 }
 
 pub enum OutputType {
-    Result(SupportedType),
-    Default,
-    Other(SupportedType),
+	Result(SupportedType),
+	Default,
+	Other(SupportedType),
 }
 ```
 
@@ -273,14 +273,14 @@ pub enum OutputType {
 We must translate the signature into the Rust code [pyo3](https://github.com/PyO3/pyo3) expects. This means adjusting the arguments, async declaration, and output type. This is actually extraordinarily simple now that we have destructed the method. For instance, here is a simple example of translating the output type:
 ```
 fn convert_output_type(
-    ty: &SupportedType,
-    method: &GetImplMethod,
+	ty: &SupportedType,
+	method: &GetImplMethod,
 ) -> (
-    Option<proc_macro2::TokenStream>
+	Option<proc_macro2::TokenStream>
 ) {
 	if method.is_async {
-        Some(quote! {PyResult<&'a PyAny>})
-    } else {
+		Some(quote! {PyResult<&'a PyAny>})
+	} else {
 		let ty = t
 			.to_type()
 			.unwrap();
@@ -300,20 +300,20 @@ fn do_custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	let parsed_methods = parse_methods(input);
 	let mut methods = Vec::new();
 	for method in parsed_methods {
-		// Destructure Method
-		let destructured = destructure(method);
-	    // Translate Signature
-		let signature = convert_signature(&destructured);
-		// Restructure Method 
-	    let method = create_method(&destructured, &signature);
+	// Destructure Method
+	let destructured = destructure(method);
+	// Translate Signature
+	let signature = convert_signature(&destructured);
+	// Restructure Method 
+	let method = create_method(&destructured, &signature);
 		methods.push(method);
 	}
 
-    // This is the actual Rust impl block we are generating
+	// This is the actual Rust impl block we are generating
 	proc_macro::TokenStream::from(quote! {
         #[pymethods]
         impl DatabasePython {
-            #(#methods)*
+		#(#methods)*
         }
     })
 }
