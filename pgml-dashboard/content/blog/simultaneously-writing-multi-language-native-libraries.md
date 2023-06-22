@@ -14,7 +14,7 @@ description: A story and example of simultaneously writing multi-language native
 </div>
 
 
-Many of the tools we have created at PostgresML can be overwhelming for new users. They require domain specific knowledge with postgres, vector embeddings and other topics related to natural language processing. Like many companies before us, we want our users to have the benefits of our tools without the drawbacks of reading through expansive documentation, so we built an SDK.
+Many of the tools we have created at PostgresML are powerful and flexible. There are almost an infinite number of ways our tools can be utilized to power vector search, model inference, and much more. Like many companies before us, we want our users to have the benefits of our tools without the drawbacks of reading through expansive documentation, so we built an SDK.
 
 We are huge fans of Rust, but we are also advocates of other languages that are either more amenable to new programmers or better suited for specific use cases. Our goal with our SDK was to build it once in Rust, and make it a pleasurable experience to use in any number of different languages. This is typically done using FFIs ([foreign function interfaces](https://en.wikipedia.org/wiki/Foreign_function_interface)) but the method we use creates native modules in the specific language we target. For the rest of this post we will be looking at creating both a Rust and Python native library simultaneously, but rest assured we used this same technique to generate our Javascript native library.
 
