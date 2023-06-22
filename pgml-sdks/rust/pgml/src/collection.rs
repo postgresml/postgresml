@@ -353,7 +353,7 @@ impl Collection {
         &self,
         splitter_name: Option<String>,
         splitter_params: Option<HashMap<String, String>>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<i64> {
         let splitter_name = splitter_name.unwrap_or("recursive_character".to_string());
 
         let splitter_params = match splitter_params {
@@ -370,25 +370,26 @@ impl Collection {
         .fetch_optional(self.pool.borrow())
         .await?;
 
-        match current_splitter {
-            Some(_splitter) => {
+	match current_splitter {
+            Some(splitter) => {
                 warn!(
                     "Text splitter with name: {} and parameters: {:?} already exists",
                     splitter_name, splitter_params
                 );
+		Ok(splitter.id)
             }
             None => {
-                sqlx::query(&query_builder!(
-                    "INSERT INTO %s (name, parameters) VALUES ($1, $2)",
+                let splitter_id: (i64,) = sqlx::query_as(&query_builder!(
+                    "INSERT INTO %s (name, parameters) VALUES ($1, $2) RETURNING id",
                     self.splitters_table_name
                 ))
                 .bind(splitter_name)
                 .bind(splitter_params)
-                .execute(self.pool.borrow())
+                .fetch_one(self.pool.borrow())
                 .await?;
+		Ok(splitter_id.0)
             }
         }
-        Ok(())
     }
 
     /// Gets all registered text [models::Splitter]s
