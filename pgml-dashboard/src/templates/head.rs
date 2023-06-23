@@ -13,6 +13,11 @@ impl Head {
         Head::default()
     }
 
+    pub fn add_preload(&mut self, preload: &str) -> &mut Self {
+        self.preloads.push(preload.to_owned());
+        self
+    }
+
     pub fn title(mut self, title: &str) -> Head {
         self.title = title.to_owned();
         self

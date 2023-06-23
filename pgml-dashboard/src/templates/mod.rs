@@ -117,8 +117,7 @@ impl<'a> WebAppBase<'a> {
                 },
             ))
             .render_once()
-            .unwrap()
-            .to_owned(),
+            .unwrap(),
             ..Default::default()
         }
     }
