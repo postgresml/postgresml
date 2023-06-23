@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use components::{Nav, NavLink};
+
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
 use sqlx::types::time::PrimitiveDateTime;
@@ -89,6 +91,136 @@ impl Layout {
 
 impl From<Layout> for String {
     fn from(layout: Layout) -> String {
+        layout.render_once().unwrap()
+    }
+}
+
+#[derive(TemplateOnce, Clone, Default)]
+#[template(path = "layout/web_app_base.html")]
+pub struct WebAppBase<'a> {
+    pub content: Option<String>,
+    pub visible_clusters: HashMap<String, String>,
+    pub breadcrumbs: Vec<NavLink<'a>>,
+    pub nav: Vec<NavLink<'a>>,
+    pub head: String,
+}
+
+impl<'a> WebAppBase<'a> {
+    pub fn new(title: &str) -> Self {
+        WebAppBase {
+            head: crate::templates::head::DefaultHeadTemplate::new(Some(
+                crate::templates::head::Head {
+                    title: title.to_owned(),
+                    description: None,
+                    image: None,
+                    preloads: vec![],
+                },
+            ))
+            .render_once()
+            .unwrap(),
+            ..Default::default()
+        }
+    }
+
+    pub fn head(&mut self, head: String) -> &mut Self {
+        self.head = head.to_owned();
+        self
+    }
+
+    pub fn clusters(&mut self, clusters: HashMap<String, String>) -> &mut Self {
+        self.visible_clusters = clusters.to_owned();
+        self
+    }
+
+    pub fn breadcrumbs(&mut self, breadcrumbs: Vec<NavLink<'a>>) -> &mut Self {
+        self.breadcrumbs = breadcrumbs.to_owned();
+        self
+    }
+
+    pub fn nav(&mut self, active: &str) -> &mut Self {
+        let mut nav_links = vec![NavLink::new("Create new cluster", "/clusters/new").icon("add")];
+
+        // Adds the spesific cluster to a sublist.
+        if self.visible_clusters.len() > 0 {
+            let mut sorted_clusters: Vec<(String, String)> = self
+                .visible_clusters
+                .iter()
+                .map(|(name, id)| (name.to_string(), id.to_string()))
+                .collect();
+            sorted_clusters.sort_by_key(|k| k.1.to_owned());
+
+            let cluster_links = sorted_clusters
+                .iter()
+                .map(|(name, id)| {
+                    NavLink::new(name, &format!("/clusters/{}", id)).icon("developer_board")
+                })
+                .collect();
+
+            let cluster_nav = Nav {
+                links: cluster_links,
+            };
+
+            nav_links.push(
+                NavLink::new("Clusters", "/clusters")
+                    .icon("lan")
+                    .nav(cluster_nav),
+            )
+        } else {
+            nav_links.push(NavLink::new("Clusters", "/clusters").icon("lan"))
+        }
+
+        nav_links.push(NavLink::new("Payments", "/payments").icon("payments"));
+
+        // Sets the active left nav item.
+        let nav_with_active: Vec<NavLink> = nav_links
+            .into_iter()
+            .map(|item| {
+                if item.name.eq(active) {
+                    return item.active();
+                }
+                match item.nav {
+                    Some(sub_nav) => {
+                        let sub_links: Vec<NavLink> = sub_nav
+                            .links
+                            .into_iter()
+                            .map(|sub_item| {
+                                if sub_item.name.eq(active) {
+                                    sub_item.active()
+                                } else {
+                                    sub_item
+                                }
+                            })
+                            .collect();
+                        NavLink {
+                            nav: Some(Nav { links: sub_links }),
+                            ..item
+                        }
+                    }
+                    None => item,
+                }
+            })
+            .collect();
+
+        self.nav = nav_with_active;
+        self
+    }
+
+    pub fn content(&mut self, content: &str) -> &mut Self {
+        self.content = Some(content.to_owned());
+        self
+    }
+
+    pub fn render<T>(&mut self, template: T) -> String
+    where
+        T: sailfish::TemplateOnce,
+    {
+        self.content = Some(template.render_once().unwrap());
+        (*self).clone().into()
+    }
+}
+
+impl<'a> From<WebAppBase<'a>> for String {
+    fn from(layout: WebAppBase) -> String {
         layout.render_once().unwrap()
     }
 }

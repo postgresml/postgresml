@@ -1,0 +1,29 @@
+<% use crate::templates::components::{Nav, Breadcrumbs}; %>
+
+<!DOCTYPE html>
+<html lang="en-US" data-bs-theme="dark">
+    <%- head %>
+    <body>
+        <main>
+            <div class="container-fluid p-lg-0 min-vh-lg-100">
+                <div class="row gx-0 min-vh-lg-100">
+                    <div class="sidenav-container col-12 col-lg-3 col-xxl-2 pt-3 pt-lg-0" >
+                        <%- Nav::render( nav ) %>
+                    </div>
+
+                    <div class="col-12 col-lg-9 col-xxl-10">
+                        <div>
+                            <%- Breadcrumbs::render( breadcrumbs ) %>
+                        </div>
+    
+                        <div>
+                            <%- content.unwrap_or_default() %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+    </body>
+</html>
