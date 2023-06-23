@@ -1,8 +1,11 @@
+use sailfish::TemplateOnce;
+
 #[derive(Clone, Default)]
 pub struct Head {
     pub title: String,
     pub description: Option<String>,
     pub image: Option<String>,
+    pub preloads: Vec<String>,
 }
 
 impl Head {
@@ -27,5 +30,28 @@ impl Head {
 
     pub fn not_found() -> Head {
         Head::new().title("404 - Not Found")
+    }
+}
+
+#[derive(TemplateOnce, Default, Clone)]
+#[template(path = "layout/head.html")]
+pub struct DefaultHeadTemplate {
+    pub head: Head,
+}
+
+impl DefaultHeadTemplate {
+    pub fn new(head: Option<Head>) -> DefaultHeadTemplate {
+        let head = match head {
+            Some(head) => head,
+            None => Head::new(),
+        };
+
+        DefaultHeadTemplate { head }
+    }
+}
+
+impl From<DefaultHeadTemplate> for String {
+    fn from(layout: DefaultHeadTemplate) -> String {
+        layout.render_once().unwrap()
     }
 }

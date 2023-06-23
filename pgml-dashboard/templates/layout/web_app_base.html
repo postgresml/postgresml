@@ -2,7 +2,7 @@
 
 <!DOCTYPE html>
 <html lang="en-US" data-bs-theme="dark">
-    <% include!("head.html"); %>
+    <%- head %>
     <body>
         <main>
             <div class="container-fluid p-lg-0 min-vh-lg-100">
@@ -13,7 +13,7 @@
 
                     <div class="col-12 col-lg-9 col-xxl-10">
                         <div>
-                        <%- Breadcrumbs::render( breadcrumbs ) %>
+                            <%- Breadcrumbs::render( breadcrumbs ) %>
                         </div>
     
                         <div>

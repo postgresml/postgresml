@@ -98,20 +98,34 @@ impl From<Layout> for String {
 #[derive(TemplateOnce, Clone, Default)]
 #[template(path = "layout/web_app_base.html")]
 pub struct WebAppBase<'a> {
-    pub head: Head,
-    pub preloads: Vec<String>,
     pub content: Option<String>,
     pub visible_clusters: HashMap<String, String>,
     pub breadcrumbs: Vec<NavLink<'a>>,
     pub nav: Vec<NavLink<'a>>,
+    pub head: String,
 }
 
 impl<'a> WebAppBase<'a> {
     pub fn new(title: &str) -> Self {
         WebAppBase {
-            head: Head::new().title(title),
+            head: crate::templates::head::DefaultHeadTemplate::new(Some(
+                crate::templates::head::Head {
+                    title: title.to_owned(),
+                    description: None,
+                    image: None,
+                    preloads: vec![],
+                },
+            ))
+            .render_once()
+            .unwrap()
+            .to_owned(),
             ..Default::default()
         }
+    }
+
+    pub fn head(&mut self, head: String) -> &mut Self {
+        self.head = head.to_owned();
+        self
     }
 
     pub fn clusters(&mut self, clusters: HashMap<String, String>) -> &mut Self {
@@ -124,20 +138,19 @@ impl<'a> WebAppBase<'a> {
         self
     }
 
-    pub fn description(&mut self, description: &str) -> &mut Self {
-        self.head.description = Some(description.to_owned());
-        self
-    }
-
     pub fn nav(&mut self, active: &str) -> &mut Self {
         let mut nav_links = vec![NavLink::new("Create new cluster", "/clusters/new").icon("add")];
 
-        println!("{:?}", self.visible_clusters);
-
         // Adds the spesific cluster to a sublist.
         if self.visible_clusters.len() > 0 {
-            let cluster_links = self
+            let mut sorted_clusters: Vec<(String, String)> = self
                 .visible_clusters
+                .iter()
+                .map(|(name, id)| (name.to_string(), id.to_string()))
+                .collect();
+            sorted_clusters.sort_by_key(|k| k.1.to_owned());
+
+            let cluster_links = sorted_clusters
                 .iter()
                 .map(|(name, id)| {
                     NavLink::new(name, &format!("/clusters/{}", id)).icon("developer_board")
