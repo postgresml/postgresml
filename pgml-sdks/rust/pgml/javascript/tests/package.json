@@ -2,5 +2,8 @@
   "name": "pgml-tests",
   "version": "0.1.0",
   "description": "",
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "typescript": "^5.1.3"
+  }
 }

@@ -1,4 +1,4 @@
-import pgml from '../index.js'
+import pgml from '../../index.js'
 
 const CONNECTION_STRING = process.env.DATABASE_URL;
 

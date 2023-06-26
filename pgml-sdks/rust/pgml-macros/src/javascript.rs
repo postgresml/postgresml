@@ -1,8 +1,10 @@
 use quote::{format_ident, quote, ToTokens};
 use syn::{visit::Visit, DeriveInput, ItemImpl, Type};
+use std::fs::OpenOptions;
+use std::io::{Read, Write};
 
 use crate::common::{AttributeArgs, GetImplMethod};
-use crate::types::{OutputType, SupportedType};
+use crate::types::{OutputType, SupportedType, GetSupportedType};
 
 pub fn generate_custom_into_js_result(parsed: DeriveInput) -> proc_macro::TokenStream {
     let name = parsed.ident;
@@ -14,19 +16,43 @@ pub fn generate_custom_into_js_result(parsed: DeriveInput) -> proc_macro::TokenS
         _ => panic!("custom_into_js proc_macro should only be used on structs"),
     };
 
-    let sets: Vec<proc_macro2::TokenStream> = fields_named
+    let mut sets = Vec::new();
+    let mut interface = format!("\ninterface {} {{\n", name);
+
+    fields_named
         .named
         .into_pairs()
-        .map(|p| {
+        .for_each(|p| {
             let v = p.into_value();
             let name = v.ident.to_token_stream().to_string();
             let name_ident = v.ident;
-            quote! {
+            sets.push(quote! {
                 let js_item = self.#name_ident.into_js_result(cx)?;
                 js_object.set(cx, #name, js_item)?;
-            }
-        })
-        .collect();
+            });
+            let ty = GetSupportedType::get_type(&v.ty);
+            let decleration = match &ty {
+                SupportedType::Option(o) => format!("{}?", get_typescript_type(o)),
+                _ => get_typescript_type(&ty)
+            };
+            interface.push_str(&format!("\t{}: {},\n", name, decleration));
+        });
+
+    interface.push('}');
+    let mut file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .append(true)
+        .read(true)
+        .open("javascript/index.d.ts")
+        .unwrap();
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)
+        .expect("Unable to read typescript decleration file");
+    if !contents.contains(&interface) {
+        file.write_all(interface.as_bytes())
+            .expect("Unable to write typescript decleration file");
+    }
 
     let out = quote! {
         impl IntoJsResult for #name {
@@ -77,6 +103,9 @@ pub fn generate_javascript_methods(
     };
     let name_ident = format_ident!("{}Javascript", wrapped_type_ident);
 
+    let javascript_class_name = wrapped_type_ident.to_string();
+    let mut typescript_declarations = format!("\ndeclare class {} {{\n", javascript_class_name);
+
     // Iterate over the items - see: https://docs.rs/syn/latest/syn/enum.ImplItem.html
     for item in parsed.items {
         // We only create methods for functions listed in the attribute args
@@ -105,6 +134,34 @@ pub fn generate_javascript_methods(
             }
             OutputType::Default => (None, None),
         };
+
+        let p1 = method_ident.to_string();
+        let p2 = method
+            .method_arguments
+            .iter()
+            .filter(|a| !matches!(a.1, SupportedType::S))
+            .map(|a| {
+                match &a.1 {
+                    SupportedType::Option(o) => format!("{}?: {}", a.0, get_typescript_type(o)),
+                    _ => format!("{}: {}", a.0, get_typescript_type(&a.1))
+                }
+            })
+            .collect::<Vec<String>>()
+            .join(", ");
+        let p3 = match &method.output_type {
+            OutputType::Result(v) | OutputType::Other(v) => {
+                match v {
+                    SupportedType::S => wrapped_type_ident.to_string(),
+                    _ => get_typescript_type(v),
+                }
+            },
+            OutputType::Default => "void".to_string(),
+        };
+        if method.is_async {
+            typescript_declarations.push_str(&format!("\n\t{}({}): Promise<{}>;\n", p1, p2, p3));
+        } else {
+            typescript_declarations.push_str(&format!("\n\t{}({}): {};\n", p1, p2, p3));
+        }
 
         let method_name_string = method_ident.to_string();
         object_sets.push(quote! {
@@ -193,6 +250,23 @@ pub fn generate_javascript_methods(
         methods.push(mq);
     }
 
+    typescript_declarations.push('}');
+
+    let mut file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .append(true)
+        .read(true)
+        .open("javascript/index.d.ts")
+        .unwrap();
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)
+        .expect("Unable to read typescript declaration file for python");
+    if !contents.contains(&format!("declare class {}", javascript_class_name)) {
+        file.write_all(typescript_declarations.as_bytes())
+            .expect("Unable to write typescript declaration file for python");
+    }
+
     proc_macro::TokenStream::from(quote! {
         impl #name_ident {
             #(#methods)*
@@ -230,7 +304,7 @@ fn get_method_wrapper_arguments_javascript(
                 argument_ident.clone(),
                 argument_type,
             ); 
-            let argument_type_js = get_javascript_type(argument_type);
+            let argument_type_js = get_neon_type(argument_type);
             let method_argument = match argument_type {
                 SupportedType::Option(_o) => quote! {
                     let #argument_ident = cx.argument_opt(#i as i32);
@@ -267,9 +341,9 @@ fn convert_method_wrapper_arguments(
     }
 }
 
-fn get_javascript_type(ty: &SupportedType) -> syn::Type {
+fn get_neon_type(ty: &SupportedType) -> syn::Type {
     match ty {
-        SupportedType::Reference(r) => get_javascript_type(r),
+        SupportedType::Reference(r) => get_neon_type(r),
         SupportedType::str | SupportedType::String => syn::parse_str("JsString").unwrap(),
         SupportedType::Vec(_v) => syn::parse_str("JsArray").unwrap(),
         SupportedType::S => syn::parse_str("JsObject").unwrap(),
@@ -285,7 +359,7 @@ fn get_javascript_type(ty: &SupportedType) -> syn::Type {
     }
 }
 
-pub fn convert_output_type_convert_from_javascript(
+fn convert_output_type_convert_from_javascript(
     ty: &SupportedType,
     method: &GetImplMethod,
 ) -> (
@@ -302,7 +376,7 @@ pub fn convert_output_type_convert_from_javascript(
             Some(format_ident!("{}Javascript", t.to_string()).into_token_stream()),
         ),
         t => {
-            let ty = get_javascript_type(t);
+            let ty = get_neon_type(t);
             (Some(quote! {JsResult<'a, #ty>}), None)
         }
     };
@@ -311,5 +385,39 @@ pub fn convert_output_type_convert_from_javascript(
         (Some(quote! {JsResult<'a, JsPromise>}), convert_from)
     } else {
         (output_type, convert_from)
+    }
+}
+
+fn get_typescript_type(ty: &SupportedType) -> String {
+    match ty {
+        SupportedType::Reference(r) => get_typescript_type(r),
+        SupportedType::str | SupportedType::String => "string".to_string(),
+        SupportedType::Option(o) => get_typescript_type(o),
+        SupportedType::Vec(v) => format!("{}[]", get_typescript_type(v)),
+        SupportedType::HashMap((k, v)) => {
+            format!("Map<{}, {}>", get_typescript_type(k), get_typescript_type(v))
+        },
+        SupportedType::JsonHashMap => "Map<string, string>".to_string(),
+        SupportedType::DateTime => "Date".to_string(), 
+        SupportedType::Tuple(t) => {
+            let mut types = Vec::new();
+            for ty in t {
+                types.push(get_typescript_type(ty));
+            }
+            // Rust's unit type is represented as an empty tuple
+            if types.is_empty() {
+                "void".to_string()
+            } else {
+                format!("[{}]", types.join(", "))
+            }
+        }
+        SupportedType::i64 | SupportedType::f64 => "number".to_string(),
+        // Our own types
+        t @ SupportedType::Database
+        | t @ SupportedType::Collection
+        | t @ SupportedType::Splitter => t.to_string(),
+        | t @ SupportedType::Model => t.to_string(),
+        // Add more types as required
+        _ => "any".to_string(),
     }
 }
