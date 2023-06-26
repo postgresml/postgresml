@@ -1,3 +1,11 @@
-const pgml = require("./index.node")
+const os = require("os")
 
-module.exports = pgml
+const type = os.type()
+const arch = os.arch()
+
+if (type == "Darwin" && arch == "arm64") {
+	const pgml = require("./index.node")
+	module.exports = pgml
+} else {
+	console.log("UNSUPPORTED TYPE OR ARCH:", type, arch)
+}
