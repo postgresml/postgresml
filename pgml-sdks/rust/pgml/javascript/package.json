@@ -7,11 +7,10 @@
     "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics",
     "build-debug": "npm run build --",
     "build-release": "npm run build -- --release",
-    "install": "npm run build-release",
-    "test": "cargo test"
+    "build-named": "cargo-cp-artifact -nc $NEON_OUT_NAME -- cargo build --message-format=json-render-diagnostics --release"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "PostgresML",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.3.1",
     "cargo-cp-artifact": "^0.1"
