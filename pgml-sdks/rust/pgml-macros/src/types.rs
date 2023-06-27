@@ -13,6 +13,7 @@ pub enum SupportedType {
     HashMap((Box<SupportedType>, Box<SupportedType>)),
     Option(Box<SupportedType>),
     JsonHashMap,
+    Json,
     DateTime,
     Tuple(Vec<SupportedType>),
     S, // Self for return types only
@@ -31,6 +32,7 @@ impl ToString for SupportedType {
         match self {
             SupportedType::Reference(t) => format!("&{}", t.to_string()),
             SupportedType::str => "str".to_string(),
+            SupportedType::Json => "Json".to_string(),
             SupportedType::String => "String".to_string(),
             SupportedType::Vec(v) => format!("Vec<{}>", v.to_string()),
             SupportedType::HashMap((k, v)) => {
@@ -160,6 +162,7 @@ impl<'ast> Visit<'ast> for GetSupportedType {
             "i64" => Some(SupportedType::i64),
             "i32" => Some(SupportedType::i32),
             "f64" => Some(SupportedType::f64),
+            "Json" => Some(SupportedType::Json),
             // Our own types
             "Database" => Some(SupportedType::Database),
             "Collection" => Some(SupportedType::Collection),

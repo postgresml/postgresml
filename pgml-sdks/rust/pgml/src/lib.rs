@@ -14,6 +14,7 @@ mod database;
 mod languages;
 pub mod models;
 mod queries;
+mod types;
 mod utils;
 
 // Pub re-export the Database and Collection structs for use in the rust library
@@ -70,7 +71,7 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
 fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
     // We may want to move this into the new function in the DatabasePython struct and give the
     // user the oppertunity to pass in the log level filter
-    init_logger(LevelFilter::Error).unwrap();
+    init_logger(LevelFilter::Info).unwrap();
     m.add_class::<database::DatabasePython>()?;
     Ok(())
 }
@@ -90,6 +91,8 @@ mod tests {
     use std::collections::HashMap;
     use std::env;
 
+    use crate::types::Json;
+
     #[tokio::test]
     async fn can_connect_to_database() {
         let connection_string = env::var("DATABASE_URL").unwrap();
@@ -101,7 +104,7 @@ mod tests {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
         init_logger(LevelFilter::Info).unwrap();
-        let collection_name = "test27";
+        let collection_name = "test29";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
@@ -113,7 +116,14 @@ mod tests {
             .upsert_documents(documents, None, None)
             .await
             .unwrap();
-        collection.register_text_splitter(None, None).await.unwrap();
+        let parameters = Json::from(serde_json::json!({
+            "chunk_size": 1500,
+            "chunk_overlap": 40,
+        }));
+        collection
+            .register_text_splitter(None, Some(parameters))
+            .await
+            .unwrap();
         collection.generate_chunks(None).await.unwrap();
         collection.register_model(None, None, None).await.unwrap();
         collection.generate_embeddings(None, None).await.unwrap();
