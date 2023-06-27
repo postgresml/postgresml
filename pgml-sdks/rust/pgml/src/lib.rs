@@ -71,7 +71,7 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
 fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
     // We may want to move this into the new function in the DatabasePython struct and give the
     // user the oppertunity to pass in the log level filter
-    init_logger(LevelFilter::Info).unwrap();
+    init_logger(LevelFilter::Error).unwrap();
     m.add_class::<database::DatabasePython>()?;
     Ok(())
 }
