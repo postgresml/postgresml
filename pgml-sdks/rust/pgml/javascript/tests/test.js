@@ -4,7 +4,7 @@ const CONNECTION_STRING = process.env.DATABASE_URL;
 
 async function test() {
   let db = await pgml.newDatabase(CONNECTION_STRING);
-  let collection_name = "jtest2"
+  let collection_name = "jtest3"
   let collection = await db.create_or_get_collection(collection_name);
   console.log("The Collection:")
   console.log(collection)
