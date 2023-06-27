@@ -134,14 +134,16 @@ impl IntoJsResult for Json {
             match v {
                 // TODO: Support more types like nested objects
                 serde_json::Value::Number(x) => {
-                    let js_value = x.as_f64().expect("Error converting to f64 in impl IntoJsResult for Json");
+                    let js_value = x
+                        .as_f64()
+                        .expect("Error converting to f64 in impl IntoJsResult for Json");
                     let js_value = JsNumber::new(cx, js_value);
                     js_object.set(cx, js_key, js_value)?;
-                },
+                }
                 serde_json::Value::Bool(x) => {
                     let js_value = JsBoolean::new(cx, *x);
                     js_object.set(cx, js_key, js_value)?;
-                },
+                }
                 serde_json::Value::String(x) => {
                     let js_value = cx.string(x);
                     js_object.set(cx, js_key, js_value)?;
@@ -309,7 +311,7 @@ impl FromJsType for Json {
             let key: Handle<JsString> = key.downcast(cx).or_throw(cx)?;
             let key: String = String::from_js_type(cx, key)?;
             let value: Handle<JsValue> = arg.get(cx, key.as_str())?;
-            // TODO: Support for more types 
+            // TODO: Support for more types
             if value.is_a::<JsString, _>(cx) {
                 let value: Handle<JsString> = value.downcast(cx).or_throw(cx)?;
                 let value: String = String::from_js_type(cx, value)?;
@@ -318,7 +320,8 @@ impl FromJsType for Json {
             } else if value.is_a::<JsNumber, _>(cx) {
                 let value: Handle<JsNumber> = value.downcast(cx).or_throw(cx)?;
                 let value: f64 = f64::from_js_type(cx, value)?;
-                let value = serde_json::value::Number::from_f64(value).expect("Could not convert f64 to serde_json::Number");
+                let value = serde_json::value::Number::from_f64(value)
+                    .expect("Could not convert f64 to serde_json::Number");
                 let value = serde_json::value::Value::Number(value);
                 json.insert(key, value);
             } else if value.is_a::<JsBoolean, _>(cx) {

@@ -9,11 +9,11 @@ use sqlx::Executor;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 
-use crate::types::Json;
 use crate::languages::javascript::*;
 use crate::models;
 use crate::queries;
 use crate::query_builder;
+use crate::types::Json;
 
 /// A collection of documents
 #[derive(custom_derive, Debug, Clone)]
@@ -369,13 +369,13 @@ impl Collection {
         .fetch_optional(self.pool.borrow())
         .await?;
 
-	match current_splitter {
+        match current_splitter {
             Some(splitter) => {
                 warn!(
                     "Text splitter with name: {} and parameters: {:?} already exists",
                     splitter_name, splitter_params
                 );
-		Ok(splitter.id)
+                Ok(splitter.id)
             }
             None => {
                 let splitter_id: (i64,) = sqlx::query_as(&query_builder!(
@@ -386,7 +386,7 @@ impl Collection {
                 .bind(splitter_params)
                 .fetch_one(self.pool.borrow())
                 .await?;
-		Ok(splitter_id.0)
+                Ok(splitter_id.0)
             }
         }
     }

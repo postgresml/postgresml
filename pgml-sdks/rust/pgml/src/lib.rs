@@ -9,12 +9,12 @@ use neon::prelude::*;
 use pyo3::prelude::*;
 use tokio::runtime::{Builder, Runtime};
 
-mod types;
 mod collection;
 mod database;
 mod languages;
 pub mod models;
 mod queries;
+mod types;
 mod utils;
 
 // Pub re-export the Database and Collection structs for use in the rust library
@@ -120,7 +120,10 @@ mod tests {
             "chunk_size": 1500,
             "chunk_overlap": 40,
         }));
-        collection.register_text_splitter(None, Some(parameters)).await.unwrap();
+        collection
+            .register_text_splitter(None, Some(parameters))
+            .await
+            .unwrap();
         collection.generate_chunks(None).await.unwrap();
         collection.register_model(None, None, None).await.unwrap();
         collection.generate_embeddings(None, None).await.unwrap();

@@ -9,7 +9,6 @@ impl From<serde_json::Value> for Json {
     }
 }
 
-
 /// A wrapper around sqlx::types::chrono::DateTime<sqlx::types::chrono::Utc>
 #[derive(sqlx::Type)]
 #[sqlx(transparent)]

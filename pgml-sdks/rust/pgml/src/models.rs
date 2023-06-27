@@ -3,7 +3,7 @@ use sqlx::types::Uuid;
 use sqlx::FromRow;
 
 use crate::languages::javascript::*;
-use crate::types::{Json, DateTime};
+use crate::types::{DateTime, Json};
 
 /// A document
 #[derive(FromRow)]

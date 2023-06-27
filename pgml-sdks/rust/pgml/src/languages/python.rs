@@ -1,7 +1,7 @@
+use pyo3::types::{PyDict, PyFloat, PyInt, PyString};
 use pyo3::{prelude::*, types::PyBool};
-use pyo3::types::{PyDict, PyInt, PyString, PyFloat};
 
-use crate::types::{Json, DateTime};
+use crate::types::{DateTime, Json};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rust to PY //////////////////////////////////////////////////////////////////
@@ -47,13 +47,16 @@ impl FromPyObject<'_> for Json {
                 json.insert(String::extract(key)?, serde_json::Value::Bool(value));
             } else if value.is_instance_of::<PyInt>()? {
                 let value = i64::extract(value)?;
-                json.insert(String::extract(key)?, serde_json::Value::Number(value.into()));
+                json.insert(
+                    String::extract(key)?,
+                    serde_json::Value::Number(value.into()),
+                );
             } else if value.is_instance_of::<PyFloat>()? {
                 let value = f64::extract(value)?;
-                let value = serde_json::value::Number::from_f64(value).expect("Could not convert f64 to serde_json::Number");
+                let value = serde_json::value::Number::from_f64(value)
+                    .expect("Could not convert f64 to serde_json::Number");
                 json.insert(String::extract(key)?, serde_json::Value::Number(value));
-            }
-            else if value.is_instance_of::<PyString>()? {
+            } else if value.is_instance_of::<PyString>()? {
                 let value = String::extract(value)?;
                 json.insert(String::extract(key)?, serde_json::Value::String(value));
             } else {
