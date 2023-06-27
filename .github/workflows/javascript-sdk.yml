@@ -1,7 +1,6 @@
 name: deploy javascript sdk
 on:
   workflow_dispatch:
-
 jobs:
   build-javascript-sdk-linux:
     strategy:
@@ -38,5 +37,20 @@ jobs:
       - name: Upload built .node file
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.neon-out-name }}
+          name: node-artifacts 
           path: ${{ matrix.neon-out-name }}
+          retention-days: 1
+  publish-javascript-sdk:
+    runs-on: "ubuntu-22.04"
+    defaults:
+      run:
+        working-directory: pgml-sdks/rust/pgml/javascript
+    steps:
+      - name: Create artifact directory
+        run: mkdir dist
+      - uses: actions/download-artifact@v3
+        with:
+          name: node-artifacts
+          path: dist
+      - name: Display structure of download-artifacts
+        run: ls -R dist
