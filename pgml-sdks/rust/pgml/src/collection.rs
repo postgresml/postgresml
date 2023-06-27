@@ -5,11 +5,11 @@ use neon::prelude::*;
 use pgml_macros::{custom_derive, custom_methods};
 use pyo3::prelude::*;
 use sqlx::postgres::PgPool;
-use sqlx::types::Json;
 use sqlx::Executor;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 
+use crate::types::Json;
 use crate::languages::javascript::*;
 use crate::models;
 use crate::queries;
@@ -352,12 +352,11 @@ impl Collection {
     pub async fn register_text_splitter(
         &self,
         splitter_name: Option<String>,
-        splitter_params: Option<HashMap<String, String>>,
+        splitter_params: Option<Json>,
     ) -> anyhow::Result<i64> {
         let splitter_name = splitter_name.unwrap_or("recursive_character".to_string());
-
         let splitter_params = match splitter_params {
-            Some(params) => serde_json::to_value(params)?,
+            Some(params) => params.0,
             None => serde_json::json!({}),
         };
 
@@ -472,12 +471,12 @@ impl Collection {
         &self,
         task: Option<String>,
         model_name: Option<String>,
-        model_params: Option<HashMap<String, String>>,
+        model_params: Option<Json>,
     ) -> anyhow::Result<i64> {
         let task = task.unwrap_or("embedding".to_string());
         let model_name = model_name.unwrap_or("intfloat/e5-small".to_string());
         let model_params = match model_params {
-            Some(params) => serde_json::to_value(params)?,
+            Some(params) => params.0,
             None => serde_json::json!({}),
         };
 
@@ -703,14 +702,14 @@ impl Collection {
     pub async fn vector_search(
         &self,
         query: &str,
-        query_params: Option<HashMap<String, String>>,
+        query_params: Option<Json>,
         top_k: Option<i64>,
         model_id: Option<i64>,
         splitter_id: Option<i64>,
     ) -> anyhow::Result<Vec<(f64, String, HashMap<String, String>)>> {
         //embedding_table_name as (SELECT table_name from %s WHERE task = 'embedding' AND model_id = %s and splitter_id = %s) \
         let query_params = match query_params {
-            Some(params) => serde_json::to_value(params)?,
+            Some(params) => params.0,
             None => serde_json::json!({}),
         };
 
@@ -732,7 +731,7 @@ impl Collection {
             }
         };
 
-        let results: Vec<(f64, String, Json<HashMap<String, String>>)> =
+        let results: Vec<(f64, String, sqlx::types::Json<HashMap<String, String>>)> =
             sqlx::query_as(&query_builder!(
                 queries::VECTOR_SEARCH,
                 self.models_table_name,

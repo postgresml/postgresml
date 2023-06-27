@@ -13,13 +13,13 @@ async function test() {
     "text": "Hello, World! - From Javascript",
   }
   await collection.upsert_documents([doc]);
-  await collection.register_text_splitter()
+  await collection.register_text_splitter("recursive_character", {chunk_size: 1500, chunk_overlap: 4})
   let splitters = await collection.get_text_splitters();
   console.log("The Splitters:")
   splitters.forEach((splitter) => {
     console.log(splitter);
   })
-  await collection.generate_chunks();
+  await collection.generate_chunks(2);
   await collection.register_model("embedding", "intfloat/e5-small");
   let models = await collection.get_models();
   console.log("The Models:")

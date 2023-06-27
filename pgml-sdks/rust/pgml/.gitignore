@@ -9,6 +9,7 @@ __pycache__/
 # Javascript modules
 node_modules/
 *.node
+*.d.ts
 
 # Distribution / packaging
 .Python
