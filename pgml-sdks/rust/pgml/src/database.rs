@@ -1,4 +1,3 @@
-use neon::prelude::*;
 use pgml_macros::{custom_derive, custom_methods};
 use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::{PgPool, PgPoolOptions};
@@ -7,10 +6,12 @@ use std::str::FromStr;
 use std::time::SystemTime;
 
 use crate::collection::*;
-use crate::languages::javascript::*;
 use crate::models;
 use crate::queries;
 use crate::query_builder;
+
+#[cfg(feature = "javascript")]
+use crate::languages::javascript::*;
 
 /// A connection to a postgres database
 #[derive(custom_derive, Clone, Debug)]

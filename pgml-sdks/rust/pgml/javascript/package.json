@@ -1,11 +1,11 @@
 {
   "name": "pgml",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Open Source Alternative for Building End-to-End Vector Search Applications without OpenAI & Pinecone",
   "keywords": ["postgres", "machine learning", "vector databases", "embeddings"],
   "main": "index.js",
   "scripts": {
-    "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics",
+    "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics -F javascript",
     "build-debug": "npm run build --",
     "build-release": "npm run build -- --release"
   },

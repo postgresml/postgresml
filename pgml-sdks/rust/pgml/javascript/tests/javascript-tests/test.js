@@ -32,7 +32,7 @@ async function test() {
   results.forEach((result) => {
     console.log(result);
   })
-  // await db.archive_collection(collection_name);
+  await db.archive_collection(collection_name);
 }
 
 test().then(() => console.log("\nTests Done!")).catch((err) => console.log(err));

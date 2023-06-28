@@ -24,15 +24,15 @@ impl ToPyObject for Json {
                     list.append(Json(v.clone()).to_object(py)).unwrap();
                 }
                 list.to_object(py)
-            },
+            }
             serde_json::Value::Object(x) => {
                 let dict = PyDict::new(py);
                 for (k, v) in x.iter() {
                     dict.set_item(k, Json(v.clone()).to_object(py)).unwrap();
                 }
                 dict.to_object(py)
-            },
-            _ => panic!("Unsupported type for JSON conversion")
+            }
+            _ => panic!("Unsupported type for JSON conversion"),
         }
     }
 }

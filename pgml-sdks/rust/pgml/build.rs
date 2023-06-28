@@ -15,6 +15,8 @@ fn main() {
         .open("./javascript/index.d.ts")
         .unwrap();
     // Add our opening function declaration here
-    file.write_all(b"\nexport function newDatabase(connection_string: string): Promise<Database>;\n")
-        .unwrap();
+    file.write_all(
+        b"\nexport function newDatabase(connection_string: string): Promise<Database>;\n",
+    )
+    .unwrap();
 }

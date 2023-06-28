@@ -1,3 +1,4 @@
+#[cfg(feature = "javascript")]
 pub mod javascript;
 
 #[cfg(feature = "python")]

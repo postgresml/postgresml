@@ -1,18 +1,19 @@
 use anyhow::anyhow;
 use itertools::Itertools;
 use log::warn;
-use neon::prelude::*;
 use pgml_macros::{custom_derive, custom_methods};
 use sqlx::postgres::PgPool;
 use sqlx::Executor;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 
-use crate::languages::javascript::*;
 use crate::models;
 use crate::queries;
 use crate::query_builder;
 use crate::types::Json;
+
+#[cfg(feature = "javascript")]
+use crate::languages::javascript::*;
 
 /// A collection of documents
 #[derive(custom_derive, Debug, Clone)]

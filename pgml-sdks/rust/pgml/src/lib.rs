@@ -5,7 +5,6 @@
 //! With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
-use neon::prelude::*;
 use tokio::runtime::{Builder, Runtime};
 
 mod collection;
@@ -66,10 +65,9 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
     }
 }
 
-
 #[cfg(feature = "python")]
 #[pyo3::pymodule]
-fn pgml(_py: pyo3::Python, m: & pyo3::types::PyModule) -> pyo3::PyResult<()> {
+fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     // We may want to move this into the new function in the DatabasePython struct and give the
     // user the oppertunity to pass in the log level filter
     init_logger(LevelFilter::Error).unwrap();
@@ -77,8 +75,9 @@ fn pgml(_py: pyo3::Python, m: & pyo3::types::PyModule) -> pyo3::PyResult<()> {
     Ok(())
 }
 
+#[cfg(feature = "javascript")]
 #[neon::main]
-fn main(mut cx: ModuleContext) -> NeonResult<()> {
+fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
     // We may want to move this into the new function in the DatabaseJavascript struct and give the
     // user the oppertunity to pass in the log level filter
     init_logger(LevelFilter::Error).unwrap();
