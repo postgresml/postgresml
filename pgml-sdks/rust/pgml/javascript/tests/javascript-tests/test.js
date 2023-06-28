@@ -4,7 +4,7 @@ const CONNECTION_STRING = process.env.DATABASE_URL;
 
 async function test() {
   let db = await pgml.newDatabase(CONNECTION_STRING);
-  let collection_name = "jtest3"
+  let collection_name = "jtest7"
   let collection = await db.create_or_get_collection(collection_name);
   console.log("The Collection:")
   console.log(collection)
@@ -26,13 +26,13 @@ async function test() {
   models.forEach((model) => {
     console.log(model);
   })
-  await collection.generate_embeddings();
-  let results = await collection.vector_search("small", {}, 2);
+  await collection.generate_embeddings(1, 2);
+  let results = await collection.vector_search("small", {}, 2, 1, 2);
   console.log("The Results:")
   results.forEach((result) => {
     console.log(result);
   })
-  await db.archive_collection(collection_name);
+  // await db.archive_collection(collection_name);
 }
 
 test().then(() => console.log("\nTests Done!")).catch((err) => console.log(err));

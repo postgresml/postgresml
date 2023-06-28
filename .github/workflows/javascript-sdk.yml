@@ -13,7 +13,7 @@ jobs:
             os: "buildjet-4vcpu-ubuntu-2204-arm"
           - neon-out-name: "x86_64-apple-darwin-index.node"
             os: "macos-latest"
-          - neon-out-name: "x86_64-pc-windows-gnu.node"
+          - neon-out-name: "x86_64-pc-windows-gnu-index.node"
             os: "windows-latest"
     runs-on: ${{ matrix.os }}
     defaults:
