@@ -51,7 +51,8 @@ jobs:
     steps:
       - name: Create artifact directory
         run: mkdir dist
-      - uses: actions/download-artifact@v3
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
         with:
           name: node-artifacts
           path: dist
