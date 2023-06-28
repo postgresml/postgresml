@@ -1,8 +1,8 @@
 use syn::{parse_macro_input, DeriveInput, ItemImpl};
 
 mod common;
-mod python;
 mod javascript;
+mod python;
 mod types;
 
 #[proc_macro_derive(custom_derive)]

@@ -1,10 +1,10 @@
 use quote::{format_ident, quote, ToTokens};
-use syn::{visit::Visit, DeriveInput, ItemImpl, Type};
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
+use syn::{visit::Visit, DeriveInput, ItemImpl, Type};
 
 use crate::common::{AttributeArgs, GetImplMethod};
-use crate::types::{OutputType, SupportedType, GetSupportedType};
+use crate::types::{GetSupportedType, OutputType, SupportedType};
 
 pub fn generate_custom_into_js_result(parsed: DeriveInput) -> proc_macro::TokenStream {
     let name = parsed.ident;
@@ -19,24 +19,21 @@ pub fn generate_custom_into_js_result(parsed: DeriveInput) -> proc_macro::TokenS
     let mut sets = Vec::new();
     let mut interface = format!("\ninterface {} {{\n", name);
 
-    fields_named
-        .named
-        .into_pairs()
-        .for_each(|p| {
-            let v = p.into_value();
-            let name = v.ident.to_token_stream().to_string();
-            let name_ident = v.ident;
-            sets.push(quote! {
-                let js_item = self.#name_ident.into_js_result(cx)?;
-                js_object.set(cx, #name, js_item)?;
-            });
-            let ty = GetSupportedType::get_type(&v.ty);
-            let decleration = match &ty {
-                SupportedType::Option(o) => format!("{}?", get_typescript_type(o)),
-                _ => get_typescript_type(&ty)
-            };
-            interface.push_str(&format!("\t{}: {},\n", name, decleration));
+    fields_named.named.into_pairs().for_each(|p| {
+        let v = p.into_value();
+        let name = v.ident.to_token_stream().to_string();
+        let name_ident = v.ident;
+        sets.push(quote! {
+            let js_item = self.#name_ident.into_js_result(cx)?;
+            js_object.set(cx, #name, js_item)?;
         });
+        let ty = GetSupportedType::get_type(&v.ty);
+        let decleration = match &ty {
+            SupportedType::Option(o) => format!("{}?", get_typescript_type(o)),
+            _ => get_typescript_type(&ty),
+        };
+        interface.push_str(&format!("\t{}: {},\n", name, decleration));
+    });
 
     interface.push('}');
     let mut file = OpenOptions::new()
@@ -55,14 +52,13 @@ pub fn generate_custom_into_js_result(parsed: DeriveInput) -> proc_macro::TokenS
     }
 
     let out = quote! {
+        #[cfg(feature = "javascript")]
         impl IntoJsResult for #name {
             type Output = neon::types::JsObject;
             fn into_js_result<'a, 'b, 'c: 'b, C: neon::context::Context<'c>>(self, cx: &mut C) -> neon::result::JsResult<'b, Self::Output> {
+                use neon::object::Object;
                 let js_object = cx.empty_object();
-                {
-                    use neon::object::Object;
-                    #(#sets)*
-                }
+                #(#sets)*
                 Ok(js_object)
             }
         }
@@ -75,10 +71,12 @@ pub fn generate_javascript_derive(parsed: DeriveInput) -> proc_macro::TokenStrea
     let wrapped_type_ident = format_ident!("{}", parsed.ident);
 
     let expanded = quote! {
+        #[cfg(feature = "javascript")]
         pub struct #name_ident {
             wrapped: #wrapped_type_ident
         }
 
+        #[cfg(feature = "javascript")]
         impl From<#wrapped_type_ident> for #name_ident {
             fn from(w: #wrapped_type_ident) -> Self {
                 Self {
@@ -140,20 +138,16 @@ pub fn generate_javascript_methods(
             .method_arguments
             .iter()
             .filter(|a| !matches!(a.1, SupportedType::S))
-            .map(|a| {
-                match &a.1 {
-                    SupportedType::Option(o) => format!("{}?: {}", a.0, get_typescript_type(o)),
-                    _ => format!("{}: {}", a.0, get_typescript_type(&a.1))
-                }
+            .map(|a| match &a.1 {
+                SupportedType::Option(o) => format!("{}?: {}", a.0, get_typescript_type(o)),
+                _ => format!("{}: {}", a.0, get_typescript_type(&a.1)),
             })
             .collect::<Vec<String>>()
             .join(", ");
         let p3 = match &method.output_type {
-            OutputType::Result(v) | OutputType::Other(v) => {
-                match v {
-                    SupportedType::S => wrapped_type_ident.to_string(),
-                    _ => get_typescript_type(v),
-                }
+            OutputType::Result(v) | OutputType::Other(v) => match v {
+                SupportedType::S => wrapped_type_ident.to_string(),
+                _ => get_typescript_type(v),
             },
             OutputType::Default => "void".to_string(),
         };
@@ -165,19 +159,18 @@ pub fn generate_javascript_methods(
 
         let method_name_string = method_ident.to_string();
         object_sets.push(quote! {
-            let f: Handle<JsFunction> = JsFunction::new(cx, #name_ident::#method_ident)?;
+            let f: neon::handle::Handle<neon::types::JsFunction> = neon::types::JsFunction::new(cx, #name_ident::#method_ident)?;
             obj.set(cx, #method_name_string, f)?;
         });
 
-
         let signature = quote! {
-            pub fn #method_ident<'a>(mut cx: FunctionContext<'a>) -> #output_type
+            pub fn #method_ident<'a>(mut cx: neon::context::FunctionContext<'a>) -> #output_type
         };
         let prep_arguments = if let Some(_r) = &method.receiver {
             quote! {
                 use core::ops::Deref;
                 let this = cx.this();
-                let s: Handle<JsBox<std::cell::RefCell<#name_ident>>> = this.get(&mut cx, "s")?;
+                let s: neon::handle::Handle<neon::types::JsBox<std::cell::RefCell<#name_ident>>> = this.get(&mut cx, "s")?;
                 let wrapped = (*s).deref().borrow();
                 let wrapped = wrapped.wrapped.clone();
                 #(#method_arguments)*
@@ -206,7 +199,7 @@ pub fn generate_javascript_methods(
             }
         } else {
             quote! {
-                let x = #wrapped_call; 
+                let x = #wrapped_call;
             }
         };
         let middle = if let OutputType::Result(_) = method.output_type {
@@ -228,19 +221,21 @@ pub fn generate_javascript_methods(
         let mq = if method.is_async {
             quote! {
                 #signature {
+                    use neon::prelude::*;
                     #prep_arguments
                     let channel = cx.channel();
                     let (deferred, promise) = cx.promise();
                     deferred.try_settle_with(&channel, move |mut cx| {
                         #middle
                         x.into_js_result(&mut cx)
-                    }).expect("Error sending js");  
+                    }).expect("Error sending js");
                     Ok(promise)
                 }
             }
         } else {
             quote! {
                 #signature {
+                    use neon::prelude::*;
                     #prep_arguments
                     #middle
                     x.into_js_result(&mut cx)
@@ -268,13 +263,16 @@ pub fn generate_javascript_methods(
     }
 
     proc_macro::TokenStream::from(quote! {
+        #[cfg(feature = "javascript")]
         impl #name_ident {
             #(#methods)*
         }
 
+        #[cfg(feature = "javascript")]
         impl IntoJsResult for #name_ident {
             type Output = neon::types::JsObject;
-            fn into_js_result<'a, 'b, 'c: 'b, C: Context<'c>>(self, cx: &mut C) -> neon::result::JsResult<'b, Self::Output> {
+            fn into_js_result<'a, 'b, 'c: 'b, C: neon::context::Context<'c>>(self, cx: &mut C) -> neon::result::JsResult<'b, Self::Output> {
+                use neon::object::Object;
                 let obj = cx.empty_object();
                 let s = cx.boxed(std::cell::RefCell::new(self));
                 obj.set(cx, "s", s)?;
@@ -282,7 +280,9 @@ pub fn generate_javascript_methods(
                 Ok(obj)
             }
         }
-        impl Finalize for #name_ident {}
+
+        #[cfg(feature = "javascript")]
+        impl neon::types::Finalize for #name_ident {}
     })
 
     // proc_macro::TokenStream::from(quote! {})
@@ -303,7 +303,7 @@ fn get_method_wrapper_arguments_javascript(
             let (argument_type_tokens, wrapper_argument_tokens) = convert_method_wrapper_arguments(
                 argument_ident.clone(),
                 argument_type,
-            ); 
+            );
             let argument_type_js = get_neon_type(argument_type);
             let method_argument = match argument_type {
                 SupportedType::Option(_o) => quote! {
@@ -331,11 +331,16 @@ fn convert_method_wrapper_arguments(
             let (d, w) = convert_method_wrapper_arguments(name_ident, r);
             (d, quote! { & #w})
         }
-        SupportedType::str => (syn::parse_str::<syn::Type>("String").unwrap().into_token_stream(), quote! { #name_ident}),
+        SupportedType::str => (
+            syn::parse_str::<syn::Type>("String")
+                .unwrap()
+                .into_token_stream(),
+            quote! { #name_ident},
+        ),
         _ => {
-            let t = ty
-                .to_type()
-                .expect("Could not parse type in convert_method_wrapper_arguments in javascript.rs");
+            let t = ty.to_type().expect(
+                "Could not parse type in convert_method_wrapper_arguments in javascript.rs",
+            );
             (t.into_token_stream(), quote! {#name_ident})
         }
     }
@@ -344,18 +349,20 @@ fn convert_method_wrapper_arguments(
 fn get_neon_type(ty: &SupportedType) -> syn::Type {
     match ty {
         SupportedType::Reference(r) => get_neon_type(r),
-        SupportedType::str | SupportedType::String => syn::parse_str("JsString").unwrap(),
-        SupportedType::Vec(_v) => syn::parse_str("JsArray").unwrap(),
-        SupportedType::S => syn::parse_str("JsObject").unwrap(),
-        SupportedType::Tuple(_t) => syn::parse_str("JsObject").unwrap(),
-        SupportedType::HashMap((_k, _v)) => syn::parse_str("JsObject").unwrap(),
-        SupportedType::i64 | SupportedType::f64 => syn::parse_str("JsNumber").unwrap(),
+        SupportedType::str | SupportedType::String => {
+            syn::parse_str("neon::types::JsString").unwrap()
+        }
+        SupportedType::Vec(_v) => syn::parse_str("neon::types::JsArray").unwrap(),
+        SupportedType::S => syn::parse_str("neon::types::JsObject").unwrap(),
+        SupportedType::Tuple(_t) => syn::parse_str("neon::types::JsObject").unwrap(),
+        SupportedType::HashMap((_k, _v)) => syn::parse_str("neon::types::JsObject").unwrap(),
+        SupportedType::i64 | SupportedType::f64 => syn::parse_str("neon::types::JsNumber").unwrap(),
         // Our own types
         SupportedType::Database | SupportedType::Collection | SupportedType::Splitter => {
-            syn::parse_str("JsObject").unwrap()
+            syn::parse_str("neon::types::JsObject").unwrap()
         }
         // Add more types as required
-        _ => syn::parse_str("JsValue").unwrap(),
+        _ => syn::parse_str("neon::types::JsValue").unwrap(),
     }
 }
 
@@ -368,21 +375,24 @@ fn convert_output_type_convert_from_javascript(
 ) {
     let (output_type, convert_from) = match ty {
         SupportedType::S => (
-            Some(quote! {JsResult<'a, JsObject>}),
+            Some(quote! {neon::result::JsResult<'a, neon::types::JsObject>}),
             Some(format_ident!("Self").into_token_stream()),
         ),
         t @ SupportedType::Database | t @ SupportedType::Collection => (
-            Some(quote! {PyResult<&'a PyAny>}),
+            Some(quote! {neon::result::JsResult<'a, neon::types::JsObject>}),
             Some(format_ident!("{}Javascript", t.to_string()).into_token_stream()),
         ),
         t => {
             let ty = get_neon_type(t);
-            (Some(quote! {JsResult<'a, #ty>}), None)
+            (Some(quote! {neon::result::JsResult<'a, #ty>}), None)
         }
     };
 
     if method.is_async {
-        (Some(quote! {JsResult<'a, JsPromise>}), convert_from)
+        (
+            Some(quote! {neon::result::JsResult<'a, neon::types::JsPromise>}),
+            convert_from,
+        )
     } else {
         (output_type, convert_from)
     }
@@ -395,10 +405,14 @@ fn get_typescript_type(ty: &SupportedType) -> String {
         SupportedType::Option(o) => get_typescript_type(o),
         SupportedType::Vec(v) => format!("{}[]", get_typescript_type(v)),
         SupportedType::HashMap((k, v)) => {
-            format!("Map<{}, {}>", get_typescript_type(k), get_typescript_type(v))
-        },
+            format!(
+                "Map<{}, {}>",
+                get_typescript_type(k),
+                get_typescript_type(v)
+            )
+        }
         SupportedType::JsonHashMap => "Map<string, string>".to_string(),
-        SupportedType::DateTime => "Date".to_string(), 
+        SupportedType::DateTime => "Date".to_string(),
         SupportedType::Tuple(t) => {
             let mut types = Vec::new();
             for ty in t {
@@ -416,7 +430,7 @@ fn get_typescript_type(ty: &SupportedType) -> String {
         t @ SupportedType::Database
         | t @ SupportedType::Collection
         | t @ SupportedType::Splitter => t.to_string(),
-        | t @ SupportedType::Model => t.to_string(),
+        t @ SupportedType::Model => t.to_string(),
         // Add more types as required
         _ => "any".to_string(),
     }

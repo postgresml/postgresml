@@ -2,8 +2,10 @@ use pgml_macros::{custom_into_js_result, custom_into_py};
 use sqlx::types::Uuid;
 use sqlx::FromRow;
 
-use crate::languages::javascript::*;
 use crate::types::{DateTime, Json};
+
+#[cfg(feature = "javascript")]
+use crate::languages::javascript::*;
 
 /// A document
 #[derive(FromRow)]
