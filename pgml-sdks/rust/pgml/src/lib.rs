@@ -6,7 +6,6 @@
 
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 use neon::prelude::*;
-use pyo3::prelude::*;
 use tokio::runtime::{Builder, Runtime};
 
 mod collection;
@@ -67,8 +66,10 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
     }
 }
 
+
+#[cfg(feature = "python")]
 #[pymodule]
-fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
+fn pgml(_py: Python, m: & pyo3::types::PyModule) -> pyo3::PyResult<()> {
     // We may want to move this into the new function in the DatabasePython struct and give the
     // user the oppertunity to pass in the log level filter
     init_logger(LevelFilter::Error).unwrap();

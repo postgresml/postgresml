@@ -3,7 +3,6 @@ use itertools::Itertools;
 use log::warn;
 use neon::prelude::*;
 use pgml_macros::{custom_derive, custom_methods};
-use pyo3::prelude::*;
 use sqlx::postgres::PgPool;
 use sqlx::Executor;
 use std::borrow::Borrow;

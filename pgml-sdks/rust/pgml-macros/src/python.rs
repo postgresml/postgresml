@@ -49,6 +49,7 @@ pub fn generate_into_py(parsed: DeriveInput) -> proc_macro::TokenStream {
     }
 
     let expanded = quote! {
+        #[cfg(feature = "python")]
         impl pyo3::conversion::IntoPy<pyo3::PyObject> for #name {
             fn into_py(self, py: pyo3::marker::Python<'_>) -> pyo3::PyObject {
                 let dict = pyo3::types::PyDict::new(py);
@@ -66,12 +67,14 @@ pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
     let wrapped_type_name = wrapped_type_ident.to_string();
     // May also want to put a __print__ method here (if that works) automatically for every CustomDerive struct
     let expanded = quote! {
+        #[cfg(feature = "python")]
         #[pyclass(name = #wrapped_type_name)]
         #[derive(Debug)]
         pub struct #name_ident {
             wrapped: #wrapped_type_ident
         }
 
+        #[cfg(feature = "python")]
         impl From<#wrapped_type_ident> for #name_ident {
             fn from(w: #wrapped_type_ident) -> Self {
                 Self {
@@ -258,6 +261,7 @@ pub fn generate_python_methods(
     }
 
     proc_macro::TokenStream::from(quote! {
+        #[cfg(feature = "python")]
         #[pymethods]
         impl #name_ident {
             #(#methods)*

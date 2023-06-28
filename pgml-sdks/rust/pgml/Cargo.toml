@@ -15,12 +15,15 @@ serde_json = "1.0.9"
 anyhow = "1.0.9"
 tokio = { version = "1.28.2", features = [ "macros" ] }
 chrono = "0.4.9"
-pyo3 = "0.18.3"
-pyo3-asyncio = { version = "0.18", features = ["attributes", "tokio-runtime"] }
+pyo3 = { version = "0.18.3", optional = true }
+pyo3-asyncio = { version = "0.18", features = ["attributes", "tokio-runtime"], optional = true }
 itertools = "0.10.5"
 uuid = {version = "1.3.3", features = ["v4"] }
 md5 = "0.7.0"
 log = "0.4.18"
+
+[features]
+python = ["dep:pyo3", "dep:pyo3-asyncio"]
 
 [dependencies.neon]
 version = "0.10"

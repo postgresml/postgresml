@@ -1,6 +1,5 @@
 use neon::prelude::*;
 use pgml_macros::{custom_derive, custom_methods};
-use pyo3::prelude::*;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::borrow::Borrow;
