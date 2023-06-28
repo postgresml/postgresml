@@ -34,11 +34,13 @@ jobs:
         run: |
           npm i 
           npm run build-named
+      - name: Display output files 
+        run: ls -R
       - name: Upload built .node file
         uses: actions/upload-artifact@v3
         with:
           name: node-artifacts 
-          path: /pgml-sdks/rust/pgml/javascript/${{ matrix.neon-out-name }}
+          path: pgml-sdks/rust/pgml/javascript/${{ matrix.neon-out-name }}
           retention-days: 1
   publish-javascript-sdk:
     needs: build-javascript-sdk
