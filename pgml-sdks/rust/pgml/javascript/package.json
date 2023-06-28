@@ -1,6 +1,6 @@
 {
   "name": "pgml",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Open Source Alternative for Building End-to-End Vector Search Applications without OpenAI & Pinecone",
   "main": "index.js",
   "scripts": {
