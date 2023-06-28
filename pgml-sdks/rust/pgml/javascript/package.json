@@ -6,8 +6,7 @@
   "scripts": {
     "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics",
     "build-debug": "npm run build --",
-    "build-release": "npm run build -- --release",
-    "build-named": "cargo-cp-artifact -nc $NEON_OUT_NAME -- cargo build --message-format=json-render-diagnostics --release"
+    "build-release": "npm run build -- --release"
   },
   "author": "PostgresML",
   "license": "MIT",

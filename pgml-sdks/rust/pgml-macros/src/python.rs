@@ -68,7 +68,7 @@ pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
     // May also want to put a __print__ method here (if that works) automatically for every CustomDerive struct
     let expanded = quote! {
         #[cfg(feature = "python")]
-        #[pyclass(name = #wrapped_type_name)]
+        #[pyo3::pyclass(name = #wrapped_type_name)]
         #[derive(Debug)]
         pub struct #name_ident {
             wrapped: #wrapped_type_ident
@@ -171,7 +171,7 @@ pub fn generate_python_methods(
                 quote! {
                     let x = match #middle {
                         Ok(m) => m,
-                        Err(e) => return Err(PyErr::new::<pyo3::exceptions::PyException, _>(e.to_string()))
+                        Err(e) => return Err(pyo3::PyErr::new::<pyo3::exceptions::PyException, _>(e.to_string()))
                     };
                 }
             } else {
@@ -201,7 +201,7 @@ pub fn generate_python_methods(
                 quote! {
                     let x = match #middle {
                         Ok(m) => m,
-                        Err(e) => return Err(PyErr::new::<pyo3::exceptions::PyException, _>(e.to_string()))
+                        Err(e) => return Err(pyo3::PyErr::new::<pyo3::exceptions::PyException, _>(e.to_string()))
                     };
                 }
             } else {
@@ -262,7 +262,7 @@ pub fn generate_python_methods(
 
     proc_macro::TokenStream::from(quote! {
         #[cfg(feature = "python")]
-        #[pymethods]
+        #[pyo3::pymethods]
         impl #name_ident {
             #(#methods)*
         }
@@ -291,7 +291,7 @@ pub fn get_method_wrapper_arguments_python(
         });
 
     let extra_arg = quote! {
-        py: Python<'a>
+        py: pyo3::Python<'a>
     };
     if !method_arguments.is_empty() {
         method_arguments.insert(1, extra_arg);
@@ -330,23 +330,23 @@ fn convert_output_type_convert_from_python(
 ) {
     let (output_type, convert_from) = match ty {
         SupportedType::S => (
-            Some(quote! {PyResult<Self>}),
+            Some(quote! {pyo3::PyResult<Self>}),
             Some(format_ident!("Self").into_token_stream()),
         ),
         t @ SupportedType::Database | t @ SupportedType::Collection => (
-            Some(quote! {PyResult<&'a PyAny>}),
+            Some(quote! {pyo3::PyResult<&'a pyo3::PyAny>}),
             Some(format_ident!("{}Python", t.to_string()).into_token_stream()),
         ),
         t => {
             let ty = t
                 .to_type()
                 .expect("Error converting to type in convert_output_type_convert_from_python");
-            (Some(quote! {PyResult<#ty>}), None)
+            (Some(quote! {pyo3::PyResult<#ty>}), None)
         }
     };
 
     if method.is_async && method.method_ident != "new" {
-        (Some(quote! {PyResult<&'a PyAny>}), convert_from)
+        (Some(quote! {pyo3::PyResult<&'a pyo3::PyAny>}), convert_from)
     } else {
         (output_type, convert_from)
     }

@@ -68,8 +68,8 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
 
 
 #[cfg(feature = "python")]
-#[pymodule]
-fn pgml(_py: Python, m: & pyo3::types::PyModule) -> pyo3::PyResult<()> {
+#[pyo3::pymodule]
+fn pgml(_py: pyo3::Python, m: & pyo3::types::PyModule) -> pyo3::PyResult<()> {
     // We may want to move this into the new function in the DatabasePython struct and give the
     // user the oppertunity to pass in the log level filter
     init_logger(LevelFilter::Error).unwrap();
