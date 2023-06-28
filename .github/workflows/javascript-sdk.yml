@@ -20,8 +20,6 @@ jobs:
       run:
         working-directory: pgml-sdks/rust/pgml/javascript
     steps:
-      - name: Debug print working directory
-        run: pwd
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
@@ -51,6 +49,7 @@ jobs:
       run:
         working-directory: pgml-sdks/rust/pgml/javascript
     steps:
+      - uses: actions/checkout@v3
       - name: Create artifact directory
         run: mkdir dist
       - name: Download artifacts
