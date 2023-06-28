@@ -2,7 +2,7 @@ name: deploy javascript sdk
 on:
   workflow_dispatch:
 jobs:
-  build-javascript-sdk-linux:
+  build-javascript-sdk:
     strategy:
       matrix:
         os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm", "macos-latest", "windows-latest"]
@@ -38,9 +38,10 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: node-artifacts 
-          path: ${{ matrix.neon-out-name }}
+          path: /pgml-sdks/rust/pgml/javascript/${{ matrix.neon-out-name }}
           retention-days: 1
   publish-javascript-sdk:
+    needs: build-javascript-sdk
     runs-on: "ubuntu-22.04"
     defaults:
       run:
