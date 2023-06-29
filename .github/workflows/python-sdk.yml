@@ -64,8 +64,8 @@ jobs:
           command: version
       - name: Install dependencies
         run: |
-          brew upgrade
-          brew update
+          # brew upgrade
+          # brew update
           brew install python@3.8
           brew install python@3.9
           brew install python@3.10
