@@ -14,12 +14,12 @@ async def main():
     await collection.register_text_splitter("recursive_character", {"chunk_size": 1500, "chunk_overlap": 40})
     splitters = await collection.get_text_splitters()
     print(splitters)
-    await collection.generate_chunks(2)
+    await collection.generate_chunks()
     await collection.register_model("embedding", "intfloat/e5-small")
     models = await collection.get_models()
     print(models)
     await collection.generate_embeddings()
-    results = await collection.vector_search("small", {}, 2);
+    results = await collection.vector_search("small")
     print(results)
     await db.archive_collection(collection_name)
 

@@ -122,22 +122,11 @@ WHERE
 "#;
 
 pub const VECTOR_SEARCH: &str = r#"
-WITH model AS (
-  SELECT 
-    name 
-  FROM 
-    %s 
-  WHERE 
-    id = $1 
-), 
-query_cte AS (
+WITH query_cte AS (
   SELECT 
     pgml.embed(
       transformer => (
-        SELECT 
-          name 
-        from 
-          model
+        $1
       ), 
       text => $2, 
       kwargs => $3 
