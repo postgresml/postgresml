@@ -82,6 +82,14 @@ pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
                 }
             }
         }
+
+        #[cfg(feature = "python")]
+        impl pyo3::IntoPy<pyo3::PyObject> for #wrapped_type_ident {
+            fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+                use pyo3::conversion::IntoPy;
+                #name_ident::from(self.clone()).into_py(py)
+            }
+        }
     };
     proc_macro::TokenStream::from(expanded)
 }
@@ -194,7 +202,7 @@ pub fn generate_python_methods(
                 }
             } else {
                 quote! {
-                    self.wrapped.#middle
+                    wrapped.#middle
                 }
             };
             let middle = if let OutputType::Result(_r) = method.output_type {
@@ -227,6 +235,7 @@ pub fn generate_python_methods(
                 }
             } else {
                 quote! {
+                    let wrapped = self.wrapped.clone();
                     #middle
                     Ok(x)
                 }
@@ -275,8 +284,8 @@ pub fn get_method_wrapper_arguments_python(
     let mut method_arguments = Vec::new();
     let mut wrapper_arguments = Vec::new();
 
-    if let Some(receiver) = &method.receiver {
-        method_arguments.push(receiver.clone());
+    if let Some(_receiver) = &method.receiver {
+        method_arguments.push(quote! { &self });
     }
 
     method
@@ -383,6 +392,8 @@ fn get_python_type(ty: &SupportedType) -> String {
         // Our own types
         t @ SupportedType::Database
         | t @ SupportedType::Collection
+        | t @ SupportedType::Model
+        | t @ SupportedType::QueryBuilder
         | t @ SupportedType::Splitter => t.to_string(),
         // Add more types as required
         _ => "Any".to_string(),

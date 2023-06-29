@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use itertools::Itertools;
 use log::warn;
 use pgml_macros::{custom_derive, custom_methods};
@@ -10,6 +9,7 @@ use std::collections::HashMap;
 use crate::models;
 use crate::queries;
 use crate::query_builder;
+use crate::query_builder::QueryBuilder;
 use crate::types::Json;
 
 #[cfg(feature = "javascript")]
@@ -18,13 +18,13 @@ use crate::languages::javascript::*;
 /// A collection of documents
 #[derive(custom_derive, Debug, Clone)]
 pub struct Collection {
-    name: String,
+    pub name: String,
     pool: PgPool,
-    documents_table_name: String,
-    splitters_table_name: String,
-    models_table_name: String,
-    transforms_table_name: String,
-    chunks_table_name: String,
+    pub documents_table_name: String,
+    pub splitters_table_name: String,
+    pub models_table_name: String,
+    pub transforms_table_name: String,
+    pub chunks_table_name: String,
     #[allow(unused)]
     active: bool,
 }
@@ -37,7 +37,8 @@ pub struct Collection {
     register_model,
     get_models,
     generate_embeddings,
-    vector_search
+    vector_search,
+    query
 )]
 impl Collection {
     /// Creates a new collection
@@ -707,41 +708,44 @@ impl Collection {
         model_id: Option<i64>,
         splitter_id: Option<i64>,
     ) -> anyhow::Result<Vec<(f64, String, HashMap<String, String>)>> {
-        //embedding_table_name as (SELECT table_name from %s WHERE task = 'embedding' AND model_id = %s and splitter_id = %s) \
         let query_params = match query_params {
             Some(params) => params.0,
             None => serde_json::json!({}),
         };
-
         let top_k = top_k.unwrap_or(5);
         let model_id = model_id.unwrap_or(1);
         let splitter_id = splitter_id.unwrap_or(1);
 
-        let embeddings_table_name: Option<(String,)> = sqlx::query_as(&query_builder!(
-                "SELECT table_name from %s WHERE task = 'embedding' AND model_id = $1 and splitter_id = $2", 
-                self.transforms_table_name))
-            .bind(model_id)
-            .bind(splitter_id)
-            .fetch_optional(self.pool.borrow()).await?;
+        let embeddings_table_name = self
+            .get_embeddings_table_name(model_id, splitter_id)
+            .await?;
+        let embeddings_table_name = embeddings_table_name.expect(&format!(
+            "Embeddings table does not exist for task: embedding model_id: {} and splitter_id: {}",
+            model_id, splitter_id
+        ));
 
-        let embeddings_table_name = match embeddings_table_name {
-            Some((table_name,)) => table_name,
-            None => {
-                return Err(anyhow!(format!("Embeddings table does not exist for task: embedding model_id: {} and splitter_id: {}", model_id, splitter_id)))
-            }
-        };
+        let model_name = self.get_model_name(model_id).await?;
+        let model_name = model_name.expect(&format!("Model with id: {} does not exist", model_id));
 
         let model_name = self.get_model_name(model_id).await?.expect("Model with id: {} does not exist");
 
         let results: Vec<(f64, String, sqlx::types::Json<HashMap<String, String>>)> =
             sqlx::query_as(&query_builder!(
                 queries::VECTOR_SEARCH,
+<<<<<<< HEAD
+=======
+                model_name,
+                self.models_table_name,
+>>>>>>> 26fef6b (Almost working query builder)
                 embeddings_table_name,
                 embeddings_table_name,
                 self.chunks_table_name,
                 self.documents_table_name
             ))
+<<<<<<< HEAD
             .bind(model_name)
+=======
+>>>>>>> 26fef6b (Almost working query builder)
             .bind(query)
             .bind(query_params)
             .bind(top_k)
@@ -752,6 +756,7 @@ impl Collection {
         Ok(results)
     }
 
+<<<<<<< HEAD
     async fn get_model_name(&self, model_id: i64) -> anyhow::Result<Option<String>> {
         let model: Option<models::Model> = sqlx::query_as(&query_builder!(
             "SELECT * from %s WHERE id = $1",
@@ -762,10 +767,45 @@ impl Collection {
         .await?;
         match model {
             Some(m) => Ok(Some(m.name)),
+=======
+    pub fn query(&self) -> QueryBuilder {
+        QueryBuilder::new(self.clone())
+    }
+
+    pub async fn get_embeddings_table_name(
+        &self,
+        model_id: i64,
+        splitter_id: i64,
+    ) -> anyhow::Result<Option<String>> {
+        let embeddings_table_name: Option<(String,)> = sqlx::query_as(&query_builder!(
+                "SELECT table_name from %s WHERE task = 'embedding' AND model_id = $1 and splitter_id = $2", 
+                self.transforms_table_name))
+            .bind(model_id)
+            .bind(splitter_id)
+            .fetch_optional(self.pool.borrow()).await?;
+        match embeddings_table_name {
+            Some((table_name,)) => Ok(Some(table_name)),
+>>>>>>> 26fef6b (Almost working query builder)
             None => Ok(None),
         }
     }
 
+<<<<<<< HEAD
+=======
+    pub async fn get_model_name(&self, model_id: i64) -> anyhow::Result<Option<String>> {
+        let model: Option<models::Model> = sqlx::query_as(&query_builder!(
+                "SELECT * from %s WHERE id = $1", 
+                self.models_table_name))
+            .bind(model_id)
+            .fetch_optional(self.pool.borrow()).await?;
+        match model {
+            Some(model) => Ok(Some(model.name)),
+            None => Ok(None),
+        }
+
+    }
+
+>>>>>>> 26fef6b (Almost working query builder)
     fn generate_table_names(name: &str) -> (String, String, String, String, String) {
         [
             ".documents",

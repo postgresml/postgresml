@@ -122,11 +122,19 @@ WHERE
 "#;
 
 pub const VECTOR_SEARCH: &str = r#"
+<<<<<<< HEAD
 WITH query_cte AS (
   SELECT 
     pgml.embed(
       transformer => (
         $1
+=======
+query_cte AS (
+  SELECT 
+    pgml.embed(
+      transformer => (
+        %s
+>>>>>>> 26fef6b (Almost working query builder)
       ), 
       text => $2, 
       kwargs => $3 
