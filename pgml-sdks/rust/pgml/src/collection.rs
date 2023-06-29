@@ -731,16 +731,17 @@ impl Collection {
             }
         };
 
+        let model_name = self.get_model_name(model_id).await?.expect("Model with id: {} does not exist");
+
         let results: Vec<(f64, String, sqlx::types::Json<HashMap<String, String>>)> =
             sqlx::query_as(&query_builder!(
                 queries::VECTOR_SEARCH,
-                self.models_table_name,
                 embeddings_table_name,
                 embeddings_table_name,
                 self.chunks_table_name,
                 self.documents_table_name
             ))
-            .bind(model_id)
+            .bind(model_name)
             .bind(query)
             .bind(query_params)
             .bind(top_k)
@@ -749,6 +750,20 @@ impl Collection {
         let results: Vec<(f64, String, HashMap<String, String>)> =
             results.into_iter().map(|r| (r.0, r.1, r.2 .0)).collect();
         Ok(results)
+    }
+
+    async fn get_model_name(&self, model_id: i64) -> anyhow::Result<Option<String>> {
+        let model: Option<models::Model> = sqlx::query_as(&query_builder!(
+            "SELECT * from %s WHERE id = $1",
+            self.models_table_name 
+        ))
+        .bind(model_id)
+        .fetch_optional(self.pool.borrow())
+        .await?;
+        match model {
+            Some(m) => Ok(Some(m.name)),
+            None => Ok(None),
+        }
     }
 
     fn generate_table_names(name: &str) -> (String, String, String, String, String) {
