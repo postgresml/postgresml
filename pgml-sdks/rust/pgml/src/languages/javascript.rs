@@ -173,18 +173,18 @@ impl<T: IntoJsResult> IntoJsResult for Vec<T> {
 }
 
 // Our own types
-gen_into!(
-    crate::database::Database,
-    JsBox<RefCell<crate::database::Database>>,
-    RefCell<crate::database::Database>
-);
-impl Finalize for crate::database::Database {}
-gen_into!(
-    crate::collection::Collection,
-    JsBox<RefCell<crate::collection::Collection>>,
-    RefCell<crate::collection::Collection>
-);
-impl Finalize for crate::collection::Collection {}
+// gen_into!(
+//     crate::database::Database,
+//     JsBox<RefCell<crate::database::Database>>,
+//     RefCell<crate::database::Database>
+// );
+// impl Finalize for crate::database::Database {}
+// gen_into!(
+//     crate::collection::Collection,
+//     JsBox<RefCell<crate::collection::Collection>>,
+//     RefCell<crate::collection::Collection>
+// );
+// impl Finalize for crate::collection::Collection {}
 
 ////////////////////////////////////////////////////////////////////////////////
 // JS To Rust //////////////////////////////////////////////////////////////////
@@ -237,6 +237,7 @@ gen_from!(i64, JsNumber, i64); // i32
 gen_from!(u8, JsNumber, u8); // u8
 gen_from!(u16, JsNumber, u16); // u16
 gen_from!(u32, JsNumber, u32); // u32
+gen_from!(u64, JsNumber, u64); // u64
 gen_from!(f32, JsNumber, f32); // f32
 gen_from!(f64, JsNumber); // f64
 

@@ -12,7 +12,8 @@ mod database;
 mod languages;
 pub mod models;
 mod queries;
-mod types;
+mod query_builder;
+pub mod types;
 mod utils;
 
 // Pub re-export the Database and Collection structs for use in the rust library
@@ -88,7 +89,6 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
     use std::env;
 
     use crate::types::Json;
@@ -103,15 +103,26 @@ mod tests {
     async fn can_create_collection_and_vector_search() {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
-        init_logger(LevelFilter::Info).unwrap();
-        let collection_name = "test29";
+        init_logger(LevelFilter::Error).ok();
+
+        let collection_name = "test34";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
-        let documents = vec![HashMap::from([
-            ("id".to_string(), "1".to_string()),
-            ("text".to_string(), "This is a document".to_string()),
-        ])];
+
+        let documents: Vec<Json> = vec![
+            serde_json::json!( {
+                "id": 1,
+                "text": "This is a document"
+            })
+            .into(),
+            serde_json::json!( {
+                "id": 2,
+                "text": "This is a second document"
+            })
+            .into(),
+        ];
+
         collection
             .upsert_documents(documents, None, None)
             .await
@@ -132,5 +143,56 @@ mod tests {
             .await
             .unwrap();
         db.archive_collection(&collection_name).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn query_builder() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+
+        init_logger(LevelFilter::Error).ok();
+
+        let collection_name = "rqtest5";
+
+        let db = Database::new(&connection_string).await.unwrap();
+        let collection = db.create_or_get_collection(collection_name).await.unwrap();
+
+        let mut documents: Vec<Json> = Vec::new();
+        for i in 0..2 {
+            documents.push(serde_json::json!({
+                "id": i,
+                "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
+            }).into());
+        }
+
+        collection
+            .upsert_documents(documents, None, None)
+            .await
+            .unwrap();
+        let parameters = Json::from(serde_json::json!({
+            "chunk_size": 1500,
+            "chunk_overlap": 40,
+        }));
+        collection
+            .register_text_splitter(None, Some(parameters))
+            .await
+            .unwrap();
+        collection.generate_chunks(None).await.unwrap();
+        collection.register_model(None, None, None).await.unwrap();
+        collection.generate_embeddings(None, None).await.unwrap();
+
+        let filter = serde_json::json! ({
+            "id": 1
+        });
+
+        let query = collection
+            .query()
+            .vector_recall("test query".to_string(), None, None, None)
+            .await
+            .unwrap()
+            .limit(10);
+            // .filter(filter.into());
+        query.debug();
+        let results = query.run().await.unwrap();
+        println!("{:?}", results);
     }
 }

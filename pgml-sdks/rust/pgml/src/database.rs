@@ -74,20 +74,14 @@ impl Database {
     /// ```
     pub async fn create_or_get_collection(&self, name: &str) -> anyhow::Result<Collection> {
         let collection: Option<models::Collection> = sqlx::query_as::<_, models::Collection>(
-            "SELECT * from pgml.collections where name = $1;",
+            "SELECT * FROM pgml.collections WHERE name = $1 AND active = TRUE;",
         )
         .bind(name)
         .fetch_optional(self.pool.borrow())
         .await?;
         match collection {
-            Some(c) => Ok(Collection::new(c.name, self.pool.clone()).await?),
-            None => {
-                sqlx::query("INSERT INTO pgml.collections (name) VALUES ($1)")
-                    .bind(name)
-                    .execute(self.pool.borrow())
-                    .await?;
-                Ok(Collection::new(name.to_string(), self.pool.clone()).await?)
-            }
+            Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
+            None => Ok(Collection::new(name.to_string(), self.pool.clone()).await?),
         }
     }
 
@@ -115,6 +109,11 @@ impl Database {
             .expect("Error getting system time")
             .as_secs();
         let archive_table_name = format!("{}_archive_{}", name, timestamp);
+        sqlx::query("UPDATE pgml.collections SET name = $1, active = FALSE where name = $2")
+            .bind(&archive_table_name)
+            .bind(name)
+            .execute(self.pool.borrow())
+            .await?;
         sqlx::query(&query_builder!(
             "ALTER SCHEMA %s RENAME TO %s",
             name,
@@ -122,11 +121,6 @@ impl Database {
         ))
         .execute(self.pool.borrow())
         .await?;
-        sqlx::query("UPDATE pgml.collections SET name = $1, active = FALSE where name = $2")
-            .bind(archive_table_name)
-            .bind(name)
-            .execute(self.pool.borrow())
-            .await?;
         Ok(())
     }
 }
