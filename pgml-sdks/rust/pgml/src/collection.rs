@@ -278,16 +278,20 @@ impl Collection {
     /// ```
     /// use std::collections::HashMap;
     /// use pgml::Database;
+    /// use pgml::types::Json;
     ///
     /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
     ///
     /// async fn example() -> anyhow::Result<()> {
     ///    let db = Database::new(CONNECTION_STRING).await?;
     ///    let collection = db.create_or_get_collection("collection number 1").await?;
-    ///    let documents = vec![HashMap::from([
-    ///        ("id".to_string(), "1".to_string()),
-    ///        ("text".to_string(), "This is a document".to_string()),
-    ///    ])];
+    ///    let documents: Vec<Json> = vec![
+    ///        serde_json::json!( {
+    ///            "id": 1,
+    ///            "text": "This is a document"
+    ///        })
+    ///        .into()
+    ///    ];
     ///    collection
     ///        .upsert_documents(documents, None, None)
     ///        .await?;
@@ -424,16 +428,20 @@ impl Collection {
     /// ```
     /// use std::collections::HashMap;
     /// use pgml::Database;
+    /// use pgml::types::Json;
     ///
     /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
     ///
     /// async fn example() -> anyhow::Result<()> {
     ///    let db = Database::new(CONNECTION_STRING).await?;
     ///    let collection = db.create_or_get_collection("collection number 1").await?;
-    ///    let documents = vec![HashMap::from([
-    ///        ("id".to_string(), "1".to_string()),
-    ///        ("text".to_string(), "This is a document".to_string()),
-    ///    ])];
+    ///    let documents: Vec<Json> = vec![
+    ///        serde_json::json!( {
+    ///            "id": 1,
+    ///            "text": "This is a document"
+    ///        })
+    ///        .into()
+    ///    ];
     ///    collection
     ///        .upsert_documents(documents, None, None)
     ///        .await?;
@@ -539,15 +547,19 @@ impl Collection {
         splitter_id: i64,
     ) -> anyhow::Result<String> {
         let pool = self.pool.borrow();
-        let table_name = self.get_embeddings_table_name(model_id, splitter_id).await?;
-        match table_name {
-            Some(name) => Ok(name),
+
+        let table_name = self.get_embeddings_table_name(model_id, splitter_id)?;
+        let exists: Option<(String,)> = sqlx::query_as(&query_builder!(
+            "SELECT table_name from %s WHERE table_name = $1",
+            self.transforms_table_name
+        ))
+        .bind(&table_name)
+        .fetch_optional(self.pool.borrow())
+        .await?;
+
+        match exists {
+            Some(_e) => Ok(table_name),
             None => {
-                let table_name = format!(
-                    "{}.embeddings_{}",
-                    self.name,
-                    &uuid::Uuid::new_v4().to_string()[0..6]
-                );
                 let embedding: (Vec<f32>,) = sqlx::query_as(&query_builder!(
                     "WITH model as (SELECT name, parameters from %s where id = $1) SELECT embedding from pgml.embed(transformer => (SELECT name FROM model), text => 'Hello, World!', kwargs => (SELECT parameters FROM model)) as embedding", 
                     self.models_table_name))
@@ -560,7 +572,7 @@ impl Collection {
                         queries::CREATE_EMBEDDINGS_TABLE,
                         table_name,
                         self.chunks_table_name,
-                        embedding_length.to_string()
+                        embedding_length
                     )
                     .as_str(),
                 )
@@ -619,16 +631,20 @@ impl Collection {
     /// ```
     /// use std::collections::HashMap;
     /// use pgml::Database;
+    /// use pgml::types::Json;
     ///
     /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
     ///
     /// async fn example() -> anyhow::Result<()> {
     ///    let db = Database::new(CONNECTION_STRING).await?;
     ///    let collection = db.create_or_get_collection("collection number 1").await?;
-    ///    let documents = vec![HashMap::from([
-    ///        ("id".to_string(), "1".to_string()),
-    ///        ("text".to_string(), "This is a document".to_string()),
-    ///    ])];
+    ///    let documents: Vec<Json> = vec![
+    ///        serde_json::json!( {
+    ///            "id": 1,
+    ///            "text": "This is a document"
+    ///        })
+    ///        .into()
+    ///    ];
     ///    collection
     ///        .upsert_documents(documents, None, None)
     ///        .await?;
@@ -680,16 +696,20 @@ impl Collection {
     /// ```
     /// use std::collections::HashMap;
     /// use pgml::Database;
+    /// use pgml::types::Json;
     ///
     /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
     ///
     /// async fn example() -> anyhow::Result<()> {
     ///    let db = Database::new(CONNECTION_STRING).await?;
     ///    let collection = db.create_or_get_collection("collection number 1").await?;
-    ///    let documents = vec![HashMap::from([
-    ///        ("id".to_string(), "1".to_string()),
-    ///        ("text".to_string(), "This is a document".to_string()),
-    ///    ])];
+    ///    let documents: Vec<Json> = vec![
+    ///        serde_json::json!( {
+    ///            "id": 1,
+    ///            "text": "This is a document"
+    ///        })
+    ///        .into()
+    ///    ];
     ///    collection
     ///        .upsert_documents(documents, None, None)
     ///        .await?;
@@ -720,12 +740,7 @@ impl Collection {
         let model_id = model_id.unwrap_or(1);
         let splitter_id = splitter_id.unwrap_or(1);
 
-        let embeddings_table_name = self
-            .get_embeddings_table_name(model_id, splitter_id)
-            .await?;
-        let embeddings_table_name = embeddings_table_name.unwrap_or_else(||
-            panic!("Embeddings table does not exist for task: embedding model_id: {} and splitter_id: {}",
-            model_id, splitter_id));
+        let embeddings_table_name = self.get_embeddings_table_name(model_id, splitter_id)?;
         let model_name = self
             .get_model_name(model_id)
             .await?
@@ -751,21 +766,18 @@ impl Collection {
         QueryBuilder::new(self.clone())
     }
 
-    pub async fn get_embeddings_table_name(
+    // We will probably want to add a task parameter to this function
+    pub fn get_embeddings_table_name(
         &self,
         model_id: i64,
         splitter_id: i64,
-    ) -> anyhow::Result<Option<String>> {
-        let embeddings_table_name: Option<(String,)> = sqlx::query_as(&query_builder!(
-                "SELECT table_name from %s WHERE task = 'embedding' AND model_id = $1 and splitter_id = $2", 
-                self.transforms_table_name))
-            .bind(model_id)
-            .bind(splitter_id)
-            .fetch_optional(self.pool.borrow()).await?;
-        match embeddings_table_name {
-            Some((table_name,)) => Ok(Some(table_name)),
-            None => Ok(None),
-        }
+    ) -> anyhow::Result<String> {
+        let model_splitter_hash = md5::compute(format!("{}_{}", model_id, splitter_id).as_bytes());
+        Ok(format!(
+            "{}.embeddings_{}",
+            self.name,
+            &uuid::Uuid::from_slice(&model_splitter_hash.0)?
+        ))
     }
 
     pub async fn get_model_name(&self, model_id: i64) -> anyhow::Result<Option<String>> {

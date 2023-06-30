@@ -32,11 +32,11 @@ impl Iden for SIden<'_> {
 }
 
 trait IntoTableNameAndSchema {
-    fn to_table_tuple<'b>(& self) -> (SIden<'b>, SIden<'b>);
+    fn to_table_tuple<'b>(&self) -> (SIden<'b>, SIden<'b>);
 }
 
 impl IntoTableNameAndSchema for String {
-    fn to_table_tuple<'b>(& self) -> (SIden<'b>, SIden<'b>) {
+    fn to_table_tuple<'b>(&self) -> (SIden<'b>, SIden<'b>) {
         self.split('.')
             .map(|s| SIden::String(s.to_string()))
             .collect_tuple()
@@ -89,11 +89,7 @@ impl QueryBuilder {
 
         let embeddings_table_name = self
             .collection
-            .get_embeddings_table_name(model_id, splitter_id)
-            .await?
-            .unwrap_or_else(|| 
-                panic!("Embeddings table does not exist for task: embedding model_id: {} and splitter_id: {}",
-                model_id, splitter_id));
+            .get_embeddings_table_name(model_id, splitter_id)?;
 
         let model_name = self
             .collection

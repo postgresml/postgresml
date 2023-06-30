@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
   created_at timestamptz NOT NULL DEFAULT now(), 
   chunk_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  embedding vector(%s) NOT NULL
+  embedding vector(%d) NOT NULL
 );
 "#;
 
@@ -68,15 +68,15 @@ CREATE TABLE IF NOT EXISTS %s (
 // CREATE INDICES ///////////
 /////////////////////////////
 pub const CREATE_INDEX: &str = r#"
-CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%d);
 "#;
 
 pub const CREATE_INDEX_USING_GIN: &str = r#"
-CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING GIN (%s);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING GIN (%d);
 "#;
 
 pub const CREATE_INDEX_USING_IVFFLAT: &str = r#"
-CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING ivfflat (%s);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING ivfflat (%d);
 "#;
 
 /////////////////////////////

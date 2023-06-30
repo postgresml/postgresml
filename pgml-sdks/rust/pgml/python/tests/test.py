@@ -5,7 +5,7 @@ import pgml
 CONNECTION_STRING = os.environ.get("DATABASE_URL")
 
 async def main():
-    collection_name = "ptest21"
+    collection_name = "ptest22"
     db = pgml.Database(CONNECTION_STRING)
     collection = await db.create_or_get_collection(collection_name)
     print(collection)
@@ -24,7 +24,7 @@ async def main():
     await db.archive_collection(collection_name)
 
 async def query_builder():
-    collection_name = "pqtest0"
+    collection_name = "pqtest1"
     db = pgml.Database(CONNECTION_STRING)
     collection = await db.create_or_get_collection(collection_name)
     print("The collection:")
@@ -44,7 +44,7 @@ async def query_builder():
     await collection.generate_embeddings()
 
     query = await collection.query().vector_recall("test")
-    results = await query.filter({"id": 2}).limit(10).run()
+    results = await query.filter({"id": 1}).limit(10).run()
     print("The results:")
     print(results)
 

@@ -13,7 +13,7 @@ mod languages;
 pub mod models;
 mod queries;
 mod query_builder;
-mod types;
+pub mod types;
 mod utils;
 
 // Pub re-export the Database and Collection structs for use in the rust library
@@ -89,7 +89,6 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
     use std::env;
 
     use crate::types::Json;
@@ -104,8 +103,9 @@ mod tests {
     async fn can_create_collection_and_vector_search() {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
-        init_logger(LevelFilter::Info).unwrap();
-        let collection_name = "test31";
+        init_logger(LevelFilter::Error).ok();
+
+        let collection_name = "test33";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
@@ -149,8 +149,9 @@ mod tests {
     async fn query_builder() {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
-        init_logger(LevelFilter::Error).unwrap();
-        let collection_name = "rqtest1";
+        init_logger(LevelFilter::Error).ok();
+
+        let collection_name = "rqtest4";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
