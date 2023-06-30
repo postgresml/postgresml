@@ -109,6 +109,11 @@ impl Database {
             .expect("Error getting system time")
             .as_secs();
         let archive_table_name = format!("{}_archive_{}", name, timestamp);
+        sqlx::query("UPDATE pgml.collections SET name = $1, active = FALSE where name = $2")
+            .bind(&archive_table_name)
+            .bind(name)
+            .execute(self.pool.borrow())
+            .await?;
         sqlx::query(&query_builder!(
             "ALTER SCHEMA %s RENAME TO %s",
             name,
@@ -116,11 +121,6 @@ impl Database {
         ))
         .execute(self.pool.borrow())
         .await?;
-        sqlx::query("UPDATE pgml.collections SET name = $1, active = FALSE where name = $2")
-            .bind(archive_table_name)
-            .bind(name)
-            .execute(self.pool.borrow())
-            .await?;
         Ok(())
     }
 }

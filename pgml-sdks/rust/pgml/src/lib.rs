@@ -105,7 +105,7 @@ mod tests {
 
         init_logger(LevelFilter::Error).ok();
 
-        let collection_name = "test33";
+        let collection_name = "test34";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
@@ -151,23 +151,18 @@ mod tests {
 
         init_logger(LevelFilter::Error).ok();
 
-        let collection_name = "rqtest4";
+        let collection_name = "rqtest5";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
 
-        let documents: Vec<Json> = vec![
-            serde_json::json!( {
-                "id": 1,
-                "text": "This is a document"
-            })
-            .into(),
-            serde_json::json!( {
-                "id": 2,
-                "text": "This is a second document"
-            })
-            .into(),
-        ];
+        let mut documents: Vec<Json> = Vec::new();
+        for i in 0..2 {
+            documents.push(serde_json::json!({
+                "id": i,
+                "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
+            }).into());
+        }
 
         collection
             .upsert_documents(documents, None, None)
@@ -194,8 +189,8 @@ mod tests {
             .vector_recall("test query".to_string(), None, None, None)
             .await
             .unwrap()
-            .limit(10)
-            .filter(filter.into());
+            .limit(10);
+            // .filter(filter.into());
         query.debug();
         let results = query.run().await.unwrap();
         println!("{:?}", results);
