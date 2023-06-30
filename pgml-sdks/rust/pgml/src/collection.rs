@@ -741,21 +741,18 @@ impl Collection {
         let splitter_id = splitter_id.unwrap_or(1);
 
         let embeddings_table_name = self.get_embeddings_table_name(model_id, splitter_id)?;
-        let model_name = self
-            .get_model_name(model_id)
-            .await?
-            .unwrap_or_else(|| panic!("Model with id: {} does not exist", model_id));
 
         let results: Vec<(f64, String, Json)> = sqlx::query_as(&query_builder!(
             queries::VECTOR_SEARCH,
+            self.models_table_name,
             embeddings_table_name,
             embeddings_table_name,
             self.chunks_table_name,
             self.documents_table_name
         ))
-        .bind(model_name)
         .bind(query)
         .bind(query_params)
+        .bind(model_id)
         .bind(top_k)
         .fetch_all(self.pool.borrow())
         .await?;
@@ -778,20 +775,6 @@ impl Collection {
             self.name,
             &uuid::Uuid::from_slice(&model_splitter_hash.0)?
         ))
-    }
-
-    pub async fn get_model_name(&self, model_id: i64) -> anyhow::Result<Option<String>> {
-        let model: Option<models::Model> = sqlx::query_as(&query_builder!(
-            "SELECT * from %s WHERE id = $1",
-            self.models_table_name
-        ))
-        .bind(model_id)
-        .fetch_optional(self.pool.borrow())
-        .await?;
-        match model {
-            Some(model) => Ok(Some(model.name)),
-            None => Ok(None),
-        }
     }
 
     pub fn from_model_and_pool(model: models::Collection, pool: PgPool) -> Self {

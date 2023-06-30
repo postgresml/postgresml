@@ -157,7 +157,7 @@ mod tests {
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
 
         let mut documents: Vec<Json> = Vec::new();
-        for i in 0..2 {
+        for i in 0..200 {
             documents.push(serde_json::json!({
                 "id": i,
                 "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
@@ -187,10 +187,8 @@ mod tests {
         let query = collection
             .query()
             .vector_recall("test query".to_string(), None, None, None)
-            .await
-            .unwrap()
-            .limit(10);
-            // .filter(filter.into());
+            .limit(10)
+            .filter(filter.into());
         query.debug();
         let results = query.run().await.unwrap();
         println!("{:?}", results);

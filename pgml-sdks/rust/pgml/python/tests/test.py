@@ -43,8 +43,7 @@ async def query_builder():
     await collection.generate_chunks()
     await collection.generate_embeddings()
 
-    query = await collection.query().vector_recall("test")
-    results = await query.filter({"id": 1}).limit(10).run()
+    results = await collection.query().vector_recall("test").filter({"id": 1}).limit(10).run()
     print("The results:")
     print(results)
 
@@ -53,3 +52,4 @@ async def query_builder():
 
 if __name__ == "__main__":
     asyncio.run(query_builder())    
+    # asyncio.run(main())    
