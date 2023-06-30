@@ -411,6 +411,9 @@ impl Model {
                     Algorithm::svm => linfa::Svm::fit,
                     _ => todo!(),
                 },
+                Task::cluster => match self.algorithm {
+                    _ => todo!(),
+                },
                 _ => error!("use pgml.tune for transformers tasks"),
             },
 
@@ -490,6 +493,14 @@ impl Model {
                     Algorithm::lightgbm => sklearn::lightgbm_classification,
                     _ => panic!("{:?} does not support classification", self.algorithm),
                 },
+                Task::cluster => match self.algorithm {
+                    Algorithm::affinity_propagation => sklearn::affinity_propagation,
+                    Algorithm::birch => sklearn::birch,
+                    Algorithm::kmeans => sklearn::kmeans,
+                    Algorithm::mini_batch_kmeans => sklearn::mini_batch_kmeans,
+                    Algorithm::mean_shift => sklearn::mean_shift,
+                    _ => panic!("{:?} does not support clustering", self.algorithm),
+                },
                 _ => error!("use pgml.tune for transformers tasks"),
             },
         }
@@ -553,6 +564,7 @@ impl Model {
     // The box is borrowed so that it may be reused by the caller
     #[allow(clippy::borrowed_box)]
     fn test(&self, dataset: &Dataset) -> IndexMap<String, f32> {
+        info!("Testing {:?} estimator {:?}", self.project.task, self);
         // Test the estimator on the data
         let y_hat = self.predict_batch(&dataset.x_test);
         let y_test = &dataset.y_test;
@@ -655,7 +667,18 @@ impl Model {
                 // This one is inaccurate, I have it in my TODO to reimplement.
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
             }
-            _ => error!("no tests for huggingface"),
+            Task::cluster => {
+                #[cfg(all(feature = "python"))]
+                {
+                    let sklearn_metrics = crate::bindings::sklearn::cluster_metrics(
+                        dataset.num_features,
+                        &dataset.x_test,
+                        &y_hat,
+                    );
+                    metrics.insert("silhouette".to_string(), sklearn_metrics["silhouette"]);
+                }
+            }
+            task => error!("No test metrics available for task: {:?}", task),
         }
 
         metrics
@@ -801,16 +824,7 @@ impl Model {
             search_results.insert("n_splits".to_string(), json!(cv));
 
             // Find the best estimator, hyperparams and metrics
-            let target_metric = match self.project.task {
-                Task::regression => "r2",
-                Task::classification => "f1",
-                Task::question_answering => "f1",
-                Task::translation => "blue",
-                Task::summarization => "rouge_ngram_f1",
-                Task::text_classification => "f1",
-                Task::text_generation => "perplexity",
-                Task::text2text => "perplexity",
-            };
+            let target_metric = self.project.task.default_target_metric();
             let mut i = 0;
             let mut best_index = 0;
             let mut best_metric = f32::NEG_INFINITY;
@@ -826,7 +840,7 @@ impl Model {
                 let fold_i = i / all_hyperparams.len();
                 let hyperparams_i = i % all_hyperparams.len();
                 let hyperparams = &all_hyperparams[hyperparams_i];
-                let metric = *metrics.get(target_metric).unwrap();
+                let metric = *metrics.get(&target_metric).unwrap();
                 fit_times[hyperparams_i][fold_i] = *metrics.get("fit_time").unwrap();
                 score_times[hyperparams_i][fold_i] = *metrics.get("score_time").unwrap();
                 test_scores[hyperparams_i][fold_i] = metric;

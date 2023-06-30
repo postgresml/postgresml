@@ -2,7 +2,7 @@
 
 We currently support regression and classification algorithms from [scikit-learn](https://scikit-learn.org/), [XGBoost](https://xgboost.readthedocs.io/), and [LightGBM](https://lightgbm.readthedocs.io/).
 
-## Algorithms
+## Supervised Algorithms
 
 ### Gradient Boosting
 Algorithm | Regression | Classification
@@ -53,6 +53,18 @@ Algorithm | Regression | Classification
 --- | --- | ---
 `kernel_ridge` | [KernelRidge](https://scikit-learn.org/stable/modules/generated/sklearn.kernel_ridge.KernelRidge.html) | -
 `gaussian_process` | [GaussianProcessRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html) | [GaussianProcessClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessClassifier.html)
+
+## Unsupervised Algorithms
+
+### Clustering
+
+|Algorithm | Reference                                                                                                         | 
+|---|-------------------------------------------------------------------------------------------------------------------|
+`affinity_propagation` | [AffinityPropagation](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AffinityPropagation.html) 
+`birch` | [Birch](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.Birch.html)
+`kmeans` | [K-Means](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html)
+`mini_batch_kmeans` | [MiniBatchKMeans](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.MiniBatchKMeans.html)
+
 
 ## Comparing Algorithms
 

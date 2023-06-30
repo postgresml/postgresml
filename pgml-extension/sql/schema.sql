@@ -63,7 +63,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS projects_name_idx ON pgml.projects(name);
 CREATE TABLE IF NOT EXISTS pgml.snapshots(
 	id BIGSERIAL PRIMARY KEY,
 	relation_name TEXT NOT NULL,
-	y_column_name TEXT[] NOT NULL,
+	y_column_name TEXT[],
 	test_size FLOAT4 NOT NULL,
 	test_sampling pgml.sampling NOT NULL,
 	status TEXT NOT NULL,

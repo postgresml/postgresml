@@ -1,3 +1,4 @@
+use pgrx::*;
 /// Scikit-Learn implementation.
 ///
 /// Scikit needs no introduction. It implements dozens of industry-standard
@@ -297,6 +298,54 @@ pub fn lightgbm_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> 
     fit(dataset, hyperparams, "lightgbm_classification")
 }
 
+pub fn affinity_propagation(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "affinity_propagation_clustering")
+}
+
+pub fn agglomerative(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "agglomerative_clustering")
+}
+
+pub fn birch(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "birch_clustering")
+}
+
+pub fn dbscan(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "dbscan_clustering")
+}
+
+pub fn feature_agglomeration(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "feature_agglomeration_clustering")
+}
+
+pub fn kmeans(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "kmeans_clustering")
+}
+
+pub fn mini_batch_kmeans(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "mini_batch_kmeans_clustering")
+}
+
+pub fn mean_shift(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "mean_shift_clustering")
+}
+
+pub fn optics(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "optics_clustering")
+}
+
+pub fn spectral(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "spectral_clustering")
+}
+
+pub fn spectral_bi(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "spectral_biclustering")
+}
+
+pub fn spectral_co(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    fit(dataset, hyperparams, "spectral_coclustering")
+}
+
 fn fit(
     dataset: &Dataset,
     hyperparams: &Hyperparams,
@@ -531,6 +580,24 @@ pub fn classification_metrics(
     }
 
     scores
+}
+
+pub fn cluster_metrics(
+    num_features: usize,
+    inputs: &[f32],
+    labels: &[f32],
+) -> HashMap<String, f32> {
+    Python::with_gil(|py| -> HashMap<String, f32> {
+        let calculate_metric = PY_MODULE.getattr(py, "cluster_metrics").unwrap();
+
+        let scores: HashMap<String, f32> = calculate_metric
+            .call1(py, (num_features, PyTuple::new(py, &[inputs, labels])))
+            .unwrap()
+            .extract(py)
+            .unwrap();
+
+        scores
+    })
 }
 
 pub fn package_version(name: &str) -> String {

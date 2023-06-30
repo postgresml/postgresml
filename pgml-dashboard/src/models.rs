@@ -57,6 +57,7 @@ impl Project {
             "summarization" => Ok("rouge_ngram_f1"),
             "translation" => Ok("bleu"),
             "text_generation" | "text2text" => Ok("perplexity"),
+            "cluster" => Ok("silhouette"),
             task => Err(anyhow::anyhow!("Unhandled task: {}", task)),
         }
     }
@@ -68,6 +69,7 @@ impl Project {
             "summarization" => Ok("Rouge Ngram F<sup>1</sup>"),
             "translation" => Ok("Bleu"),
             "text_generation" | "text2text" => Ok("Perplexity"),
+            "cluster" => Ok("silhouette"),
             task => Err(anyhow::anyhow!("Unhandled task: {}", task)),
         }
     }
@@ -544,7 +546,7 @@ impl Model {
 pub struct Snapshot {
     pub id: i64,
     pub relation_name: String,
-    pub y_column_name: Vec<String>,
+    pub y_column_name: Option<Vec<String>>,
     pub test_size: f32,
     pub test_sampling: Option<String>,
     pub status: String,
@@ -686,28 +688,42 @@ impl Snapshot {
         }
     }
 
-    pub fn features<'a>(&'a self) -> Option<Vec<&'a serde_json::Map<String, serde_json::Value>>> {
+    pub fn features(&self) -> Option<Vec<&serde_json::Map<String, serde_json::Value>>> {
         match self.columns() {
-            Some(columns) => Some(
-                columns
-                    .into_iter()
-                    .filter(|column| {
-                        !self
-                            .y_column_name
-                            .contains(&column["name"].as_str().unwrap().to_string())
-                    })
-                    .collect(),
-            ),
+            Some(columns) => {
+                if self.y_column_name.is_none() {
+                    return Some(columns.into_iter().collect());
+                }
+
+                Some(
+                    columns
+                        .into_iter()
+                        .filter(|column| {
+                            !self
+                                .y_column_name
+                                .as_ref()
+                                .unwrap()
+                                .contains(&column["name"].as_str().unwrap().to_string())
+                        })
+                        .collect(),
+                )
+            }
             None => None,
         }
     }
 
-    pub fn labels<'a>(&'a self) -> Option<Vec<&'a serde_json::Map<String, serde_json::Value>>> {
+    pub fn labels(&self) -> Option<Vec<&serde_json::Map<String, serde_json::Value>>> {
+        if self.y_column_name.is_none() {
+            return Some(Vec::new());
+        }
+
         self.columns().map(|columns| {
             columns
                 .into_iter()
                 .filter(|column| {
                     self.y_column_name
+                        .as_ref()
+                        .unwrap()
                         .contains(&column["name"].as_str().unwrap().to_string())
                 })
                 .collect()

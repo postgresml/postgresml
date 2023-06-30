@@ -52,7 +52,7 @@ mod tests {
         let regression = Project::create("regression", Task::regression);
         let mut diabetes = Snapshot::create(
             "pgml.diabetes",
-            vec!["target".to_string()],
+            Some(vec!["target".to_string()]),
             0.5,
             Sampling::last,
             false,
@@ -61,7 +61,7 @@ mod tests {
         let classification = Project::create("classification", Task::classification);
         let mut breast_cancer = Snapshot::create(
             "pgml.breast_cancer",
-            vec!["malignant".to_string()],
+            Some(vec!["malignant".to_string()]),
             0.5,
             Sampling::last,
             false,
