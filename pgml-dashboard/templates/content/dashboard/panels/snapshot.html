@@ -73,8 +73,10 @@
     %>
       <h3><%= name %>&nbsp;<code><%= feature["pg_type"].as_str().unwrap() | upper %></code></h3>
       <figure id="<%= name_machine %>_distribution"></figure>
-      <% for y_column_name in snapshot.y_column_name.iter() { %>
+      <% if snapshot.y_column_name.as_ref().is_some() { %>
+      <% for y_column_name in snapshot.y_column_name.as_ref().unwrap().iter() { %>
       <figure id="<%= name_machine %>_correlation_<%= y_column_name %>"></figure>
+      <% } %>
       <% } %>
     <% } %>
   </section>
@@ -102,11 +104,13 @@
       renderModel(<%= model.id %>, <%= model.key_metric(project).unwrap() %>, [0, 1]);
     <% } %>
   
-    <% for y_column_name in snapshot.y_column_name.iter() { %>
+    <% if snapshot.y_column_name.as_ref().is_some() { %>
+    <% for y_column_name in snapshot.y_column_name.as_ref().unwrap().iter() { %>
       setTimeout(renderDistribution, delay, "<%= y_column_name %>", <%= y_column_name %>_samples, NaN);
       setTimeout(renderOutliers, delay, "<%= y_column_name %>", <%= y_column_name %>_samples, <%= snapshot.target_stddev(y_column_name) %>)
     <% } %>
-  
+    <% } %>
+
       var delay = 600;
   
     <% for feature in snapshot.features().unwrap().iter() {
@@ -116,8 +120,10 @@
       delay += 200;
     
       setTimeout(renderDistribution, delay, "<%= name_machine %>", <%= name_machine %>_samples, NaN);
-      <% for y_column_name in snapshot.y_column_name.iter() { %>
+      <% if snapshot.y_column_name.as_ref().is_some() { %>
+      <% for y_column_name in snapshot.y_column_name.as_ref().unwrap().iter() { %>
       setTimeout(renderCorrelation, delay, "<%= name_machine %>", "<%= y_column_name %>", <%= name_machine %>_samples, <%= y_column_name %>_samples);
+      <% } %>
       <% } %>
     <% } %>
     }

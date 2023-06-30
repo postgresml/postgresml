@@ -188,7 +188,7 @@ fn train_joint(
         Some(project) => project,
         None => Project::create(project_name, match task {
             Some(task) => task,
-            None => error!("Project `{}` does not exist. To create a new project, provide the task (regression or classification).", project_name),
+            None => error!("Project `{}` does not exist. To create a new project, you must specify a `task`.", project_name),
         }),
     };
 
@@ -213,10 +213,13 @@ fn train_joint(
                 relation_name
             );
 
+            if project.task.is_supervised() && y_column_name.is_none() {
+                error!("You must pass a `y_column_name` when you pass a `relation_name` for a supervised task.");
+            }
+
             let snapshot = Snapshot::create(
                 relation_name,
-                y_column_name
-                    .expect("You must pass a `y_column_name` when you pass a `relation_name`"),
+                y_column_name,
                 test_size,
                 test_sampling,
                 materialize_snapshot,
@@ -233,6 +236,13 @@ fn train_joint(
 
             snapshot
         }
+    };
+
+    // fix up default algorithm for clustering
+    let algorithm = if algorithm == Algorithm::linear && project.task == Task::cluster {
+        Algorithm::kmeans
+    } else {
+        algorithm
     };
 
     // # Default repeatable random state when possible
@@ -273,24 +283,25 @@ fn train_joint(
         Some(true) | None => {
             if let Ok(Some(deployed_metrics)) = deployed_metrics {
                 let deployed_metrics = deployed_metrics.0.as_object().unwrap();
-                match project.task {
-                    Task::classification => {
-                        if deployed_metrics.get("f1").unwrap().as_f64()
-                            > new_metrics.get("f1").unwrap().as_f64()
-                        {
-                            deploy = false;
-                        }
-                    }
-                    Task::regression => {
-                        if deployed_metrics.get("r2").unwrap().as_f64()
-                            > new_metrics.get("r2").unwrap().as_f64()
-                        {
-                            deploy = false;
-                        }
-                    }
-                    _ => error!(
-                        "Training only supports `classification` and `regression` task types."
-                    ),
+                let deployed_metric = deployed_metrics
+                    .get(&project.task.default_target_metric())
+                    .unwrap()
+                    .as_f64()
+                    .unwrap();
+                info!(
+                    "Comparing to deployed model {}: {:?}",
+                    project.task.default_target_metric(),
+                    deployed_metric
+                );
+                if project.task.value_is_better(
+                    deployed_metric,
+                    new_metrics
+                        .get(&project.task.default_target_metric())
+                        .unwrap()
+                        .as_f64()
+                        .unwrap(),
+                ) {
+                    deploy = false;
                 }
             }
         }
@@ -300,6 +311,8 @@ fn train_joint(
 
     if deploy {
         project.deploy(model.id);
+    } else {
+        warning!("Not deploying newly trained model.");
     }
 
     TableIterator::new(
@@ -347,38 +360,13 @@ fn deploy(
         );
     }
     match strategy {
-        Strategy::best_score => match task {
-            Task::classification | Task::question_answering | Task::text_classification => {
-                let _ = write!(
-                    sql,
-                    "{predicate}\nORDER BY models.metrics->>'f1' DESC NULLS LAST"
-                );
-            }
-            Task::regression => {
-                let _ = write!(
-                    sql,
-                    "{predicate}\nORDER BY models.metrics->>'r2' DESC NULLS LAST"
-                );
-            }
-            Task::summarization => {
-                let _ = write!(
-                    sql,
-                    "{predicate}\nORDER BY models.metrics->>'rouge_ngram_f1' DESC NULLS LAST"
-                );
-            }
-            Task::text_generation | Task::text2text => {
-                let _ = write!(
-                    sql,
-                    "{predicate}\nORDER BY models.metrics->>'perplexity' ASC NULLS LAST"
-                );
-            }
-            Task::translation => {
-                let _ = write!(
-                    sql,
-                    "{predicate}\nORDER BY models.metrics->>'bleu' DESC NULLS LAST"
-                );
-            }
-        },
+        Strategy::best_score => {
+            let _ = write!(
+                sql,
+                "{predicate}\n{}",
+                task.default_target_metric_sql_order()
+            );
+        }
 
         Strategy::most_recent => {
             let _ = write!(sql, "{predicate}\nORDER by models.created_at DESC");
@@ -528,7 +516,7 @@ fn snapshot(
 ) -> TableIterator<'static, (name!(relation, String), name!(y_column_name, String))> {
     Snapshot::create(
         relation_name,
-        vec![y_column_name.to_string()],
+        Some(vec![y_column_name.to_string()]),
         test_size,
         test_sampling,
         true,
@@ -733,9 +721,9 @@ fn tune(
 
             let snapshot = Snapshot::create(
                 relation_name,
-                vec![y_column_name
+                Some(vec![y_column_name
                     .expect("You must pass a `y_column_name` when you pass a `relation_name`")
-                    .to_string()],
+                    .to_string()]),
                 test_size,
                 test_sampling,
                 materialize_snapshot,
@@ -787,42 +775,19 @@ fn tune(
         Some(true) | None => {
             if let Ok(Some(deployed_metrics)) = deployed_metrics {
                 let deployed_metrics = deployed_metrics.0.as_object().unwrap();
-                match project.task {
-                    Task::classification | Task::question_answering | Task::text_classification => {
-                        if deployed_metrics.get("f1").unwrap().as_f64()
-                            > new_metrics.get("f1").unwrap().as_f64()
-                        {
-                            deploy = false;
-                        }
-                    }
-                    Task::regression => {
-                        if deployed_metrics.get("r2").unwrap().as_f64()
-                            > new_metrics.get("r2").unwrap().as_f64()
-                        {
-                            deploy = false;
-                        }
-                    }
-                    Task::translation => {
-                        if deployed_metrics.get("bleu").unwrap().as_f64()
-                            > new_metrics.get("bleu").unwrap().as_f64()
-                        {
-                            deploy = false;
-                        }
-                    }
-                    Task::summarization => {
-                        if deployed_metrics.get("rouge_ngram_f1").unwrap().as_f64()
-                            > new_metrics.get("rouge_ngram_f1").unwrap().as_f64()
-                        {
-                            deploy = false;
-                        }
-                    }
-                    Task::text_generation | Task::text2text => {
-                        if deployed_metrics.get("perplexity").unwrap().as_f64()
-                            < new_metrics.get("perplexity").unwrap().as_f64()
-                        {
-                            deploy = false;
-                        }
-                    }
+                if project.task.value_is_better(
+                    deployed_metrics
+                        .get(&project.task.default_target_metric())
+                        .unwrap()
+                        .as_f64()
+                        .unwrap(),
+                    new_metrics
+                        .get(&project.task.default_target_metric())
+                        .unwrap()
+                        .as_f64()
+                        .unwrap(),
+                ) {
+                    deploy = false;
                 }
             }
         }
@@ -991,7 +956,7 @@ mod tests {
 
         let snapshot = Snapshot::create(
             "pgml.diabetes",
-            vec!["target".to_string()],
+            Some(vec!["target".to_string()]),
             0.5,
             Sampling::last,
             true,
@@ -1007,7 +972,7 @@ mod tests {
         let result = std::panic::catch_unwind(|| {
             let _snapshot = Snapshot::create(
                 "diabetes",
-                vec!["target".to_string()],
+                Some(vec!["target".to_string()]),
                 0.5,
                 Sampling::last,
                 true,

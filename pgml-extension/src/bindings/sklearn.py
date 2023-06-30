@@ -3,6 +3,7 @@
 # Wrapper around Scikit-Learn loaded by PyO3
 # in our Rust crate::engines::sklearn module.
 #
+import sklearn.cluster
 import sklearn.linear_model
 import sklearn.kernel_ridge
 import sklearn.svm
@@ -27,6 +28,9 @@ from sklearn.metrics import (
     mean_squared_error,
     mean_absolute_error,
     confusion_matrix,
+    silhouette_score,
+    calinski_harabasz_score,
+    fowlkes_mallows_score,
 )
 
 _ALGORITHM_MAP = {
@@ -77,6 +81,17 @@ _ALGORITHM_MAP = {
     "xgboost_random_forest_classification": xgb.XGBRFClassifier,
     "lightgbm_regression": lightgbm.LGBMRegressor,
     "lightgbm_classification": lightgbm.LGBMClassifier,
+    "affinity_propagation_clustering": sklearn.cluster.AffinityPropagation,
+    "birch_clustering": sklearn.cluster.Birch,
+    "dbscan_clustering": sklearn.cluster.DBSCAN,
+    "feature_agglomeration_clustering": sklearn.cluster.FeatureAgglomeration,
+    "kmeans_clustering": sklearn.cluster.KMeans,
+    "mini_batch_kmeans_clustering": sklearn.cluster.MiniBatchKMeans,
+    "mean_shift_clustering": sklearn.cluster.MeanShift,
+    "optics_clustering": sklearn.cluster.OPTICS,
+    "spectral_clustering": sklearn.cluster.SpectralClustering,
+    "spectral_biclustering": sklearn.cluster.SpectralBiclustering,
+    "spectral_coclustering": sklearn.cluster.SpectralCoclustering,
 }
 
 
@@ -95,7 +110,6 @@ def estimator(algorithm, num_features, num_targets, hyperparams):
         hyperparams = {}
     else:
         hyperparams = json.loads(hyperparams)
-
     def train(X_train, y_train):
         instance = _ALGORITHM_MAP[algorithm](**hyperparams)
         if num_targets > 1 and algorithm in [
@@ -117,8 +131,9 @@ def estimator(algorithm, num_features, num_targets, hyperparams):
 
         X_train = np.asarray(X_train).reshape((-1, num_features))
 
-        # Only support single value models for just now.
-        y_train = np.asarray(y_train).reshape((-1, num_targets))
+        if num_targets > 0:
+            # Only support single value models for just now.
+            y_train = np.asarray(y_train).reshape((-1, num_targets))
 
         instance.fit(X_train, y_train)
         return instance
@@ -279,4 +294,13 @@ def classification_metrics(y_true, y_hat):
         "recall": recall,
         "accuracy": accuracy,
         "mcc": mcc,
+    }
+
+
+def cluster_metrics(num_features, inputs_labels):
+    inputs = np.asarray(inputs_labels[0]).reshape((-1, num_features))
+    labels = np.asarray(inputs_labels[1]).reshape((-1, 1))
+
+    return {
+        "silhouette": silhouette_score(inputs, labels),
     }
