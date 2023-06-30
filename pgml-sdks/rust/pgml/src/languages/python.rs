@@ -18,7 +18,13 @@ impl ToPyObject for Json {
     fn to_object(&self, py: Python) -> PyObject {
         match &self.0 {
             serde_json::Value::Bool(x) => x.to_object(py),
-            serde_json::Value::Number(x) => x.as_f64().to_object(py),
+            serde_json::Value::Number(x) => {
+                if x.is_f64() {
+                    x.as_f64().expect("Error converting to f64 in impl ToPyObject for Json").to_object(py)
+                } else {
+                    x.as_i64().expect("Error converting to i64 in impl ToPyObject for Json").to_object(py)
+                }
+            }
             serde_json::Value::String(x) => x.to_object(py),
             serde_json::Value::Array(x) => {
                 let list = PyList::empty(py);
