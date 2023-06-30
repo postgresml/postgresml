@@ -801,6 +801,7 @@ dependencies = [
  "pyo3",
  "pyo3-asyncio",
  "sea-query",
+ "sea-query-binder",
  "serde_json",
  "sqlx",
  "tokio",
@@ -1063,6 +1064,7 @@ checksum = "bbab99b8cd878ab7786157b7eb8df96333a6807cc6e45e8888c85b51534b401a"
 dependencies = [
  "sea-query-attr",
  "sea-query-derive",
+ "serde_json",
 ]
 
 [[package]]
@@ -1075,6 +1077,17 @@ dependencies = [
  "heck",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "sea-query-binder"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cea85029985b40dfbf18318d85fe985c04db7c1b4e5e8e0a0a0cdff5f1e30f9"
+dependencies = [
+ "sea-query",
+ "serde_json",
+ "sqlx",
 ]
 
 [[package]]

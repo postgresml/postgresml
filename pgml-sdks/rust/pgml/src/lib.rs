@@ -104,15 +104,25 @@ mod tests {
     async fn can_create_collection_and_vector_search() {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
-        init_logger(LevelFilter::Warn).unwrap();
-        let collection_name = "test29";
+        init_logger(LevelFilter::Info).unwrap();
+        let collection_name = "test31";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
-        let documents = vec![HashMap::from([
-            ("id".to_string(), "1".to_string()),
-            ("text".to_string(), "This is a document".to_string()),
-        ])];
+
+        let documents: Vec<Json> = vec![
+            serde_json::json!( {
+                "id": 1,
+                "text": "This is a document"
+            })
+            .into(),
+            serde_json::json!( {
+                "id": 2,
+                "text": "This is a second document"
+            })
+            .into(),
+        ];
+
         collection
             .upsert_documents(documents, None, None)
             .await
@@ -139,36 +149,54 @@ mod tests {
     async fn query_builder() {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
-        init_logger(LevelFilter::Warn).unwrap();
-        let collection_name = "test30";
+        init_logger(LevelFilter::Error).unwrap();
+        let collection_name = "rqtest1";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
 
-        // let documents = vec![HashMap::from([
-        //     ("id".to_string(), "1".to_string()),
-        //     ("text".to_string(), "This is a document".to_string()),
-        // ])];
-        // collection
-        //     .upsert_documents(documents, None, None)
-        //     .await
-        //     .unwrap();
-        // let parameters = Json::from(serde_json::json!({
-        //     "chunk_size": 1500,
-        //     "chunk_overlap": 40,
-        // }));
-        // collection
-        //     .register_text_splitter(None, Some(parameters))
-        //     .await
-        //     .unwrap();
-        // collection.generate_chunks(None).await.unwrap();
-        // collection.register_model(None, None, None).await.unwrap();
-        // collection.generate_embeddings(None, None).await.unwrap();
+        let documents: Vec<Json> = vec![
+            serde_json::json!( {
+                "id": 1,
+                "text": "This is a document"
+            })
+            .into(),
+            serde_json::json!( {
+                "id": 2,
+                "text": "This is a second document"
+            })
+            .into(),
+        ];
+
+        collection
+            .upsert_documents(documents, None, None)
+            .await
+            .unwrap();
+        let parameters = Json::from(serde_json::json!({
+            "chunk_size": 1500,
+            "chunk_overlap": 40,
+        }));
+        collection
+            .register_text_splitter(None, Some(parameters))
+            .await
+            .unwrap();
+        collection.generate_chunks(None).await.unwrap();
+        collection.register_model(None, None, None).await.unwrap();
+        collection.generate_embeddings(None, None).await.unwrap();
+
+        let filter = serde_json::json! ({
+            "id": 1
+        });
 
         let query = collection
             .query()
-            .vector_recall("test query".to_string(), None, None, None, None)
+            .vector_recall("test query".to_string(), None, None, None)
             .await
-            .unwrap();
+            .unwrap()
+            .limit(10)
+            .filter(filter.into());
+        query.debug();
+        let results = query.run().await.unwrap();
+        println!("{:?}", results);
     }
 }

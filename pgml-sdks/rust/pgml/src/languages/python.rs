@@ -1,4 +1,5 @@
 use pyo3::types::{PyDict, PyFloat, PyInt, PyList, PyString};
+use pyo3::conversion::IntoPy;
 use pyo3::{prelude::*, types::PyBool};
 
 use crate::types::{DateTime, Json};
@@ -11,6 +12,7 @@ impl ToPyObject for DateTime {
         self.0.timestamp().to_object(py)
     }
 }
+
 
 impl ToPyObject for Json {
     fn to_object(&self, py: Python) -> PyObject {
@@ -34,6 +36,12 @@ impl ToPyObject for Json {
             }
             _ => panic!("Unsupported type for JSON conversion"),
         }
+    }
+}
+
+impl IntoPy<PyObject> for Json {
+    fn into_py(self, py: Python) -> PyObject {
+        self.to_object(py)
     }
 }
 

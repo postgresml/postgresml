@@ -4,7 +4,6 @@ use pgml_macros::{custom_derive, custom_methods};
 use sqlx::postgres::PgPool;
 use sqlx::Executor;
 use std::borrow::Borrow;
-use std::collections::HashMap;
 
 use crate::models;
 use crate::queries;
@@ -19,14 +18,12 @@ use crate::languages::javascript::*;
 #[derive(custom_derive, Debug, Clone)]
 pub struct Collection {
     pub name: String,
-    pool: PgPool,
+    pub pool: PgPool,
     pub documents_table_name: String,
     pub splitters_table_name: String,
     pub models_table_name: String,
     pub transforms_table_name: String,
     pub chunks_table_name: String,
-    #[allow(unused)]
-    active: bool,
 }
 
 #[custom_methods(
@@ -62,8 +59,11 @@ impl Collection {
             models_table_name,
             transforms_table_name,
             chunks_table_name,
-            active: true,
         };
+        sqlx::query("INSERT INTO pgml.collections (name, active) VALUES ($1, FALSE) ON CONFLICT (name) DO NOTHING")
+            .bind(&collection.name)
+            .execute(&collection.pool)
+            .await?;
         collection.create_documents_table().await?;
         collection.create_splitter_table().await?;
         collection.create_models_table().await?;
@@ -71,6 +71,10 @@ impl Collection {
         collection.create_chunks_table().await?;
         collection.register_text_splitter(None, None).await?;
         collection.register_model(None, None, None).await?;
+        sqlx::query("UPDATE pgml.collections SET active = TRUE WHERE name = $1")
+            .bind(&collection.name)
+            .execute(&collection.pool)
+            .await?;
         Ok(collection)
     }
 
@@ -292,13 +296,19 @@ impl Collection {
     /// ```
     pub async fn upsert_documents(
         &self,
-        documents: Vec<HashMap<String, String>>,
+        documents: Vec<Json>,
         text_key: Option<String>,
         id_key: Option<String>,
     ) -> anyhow::Result<()> {
         let text_key = text_key.unwrap_or("text".to_string());
         let id_key = id_key.unwrap_or("id".to_string());
+
         for mut document in documents {
+            let document = document
+                .0
+                .as_object_mut()
+                .expect("Documents must be a vector of objects");
+
             let text = match document.remove(&text_key) {
                 Some(t) => t,
                 None => {
@@ -310,7 +320,7 @@ impl Collection {
             let document_json = serde_json::to_value(&document)?;
 
             let md5_digest = match document.get(&id_key) {
-                Some(k) => md5::compute(k.as_bytes()),
+                Some(k) => md5::compute(k.to_string().as_bytes()),
                 None => md5::compute(format!("{}{}", text, document_json).as_bytes()),
             };
             let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
@@ -529,15 +539,9 @@ impl Collection {
         splitter_id: i64,
     ) -> anyhow::Result<String> {
         let pool = self.pool.borrow();
-        let table_name: Option<(String,)> =
-            sqlx::query_as(&query_builder!(
-                "SELECT table_name from %s WHERE task = 'embedding' AND model_id = $1 and splitter_id = $2", 
-                self.transforms_table_name))
-            .bind(model_id)
-            .bind(splitter_id)
-            .fetch_optional(pool).await?;
+        let table_name = self.get_embeddings_table_name(model_id, splitter_id).await?;
         match table_name {
-            Some((name,)) => Ok(name),
+            Some(name) => Ok(name),
             None => {
                 let table_name = format!(
                     "{}.embeddings_{}",
@@ -707,7 +711,7 @@ impl Collection {
         top_k: Option<i64>,
         model_id: Option<i64>,
         splitter_id: Option<i64>,
-    ) -> anyhow::Result<Vec<(f64, String, HashMap<String, String>)>> {
+    ) -> anyhow::Result<Vec<(f64, String, Json)>> {
         let query_params = match query_params {
             Some(params) => params.0,
             None => serde_json::json!({}),
@@ -719,55 +723,30 @@ impl Collection {
         let embeddings_table_name = self
             .get_embeddings_table_name(model_id, splitter_id)
             .await?;
-        let embeddings_table_name = embeddings_table_name.expect(&format!(
-            "Embeddings table does not exist for task: embedding model_id: {} and splitter_id: {}",
-            model_id, splitter_id
-        ));
+        let embeddings_table_name = embeddings_table_name.unwrap_or_else(||
+            panic!("Embeddings table does not exist for task: embedding model_id: {} and splitter_id: {}",
+            model_id, splitter_id));
+        let model_name = self
+            .get_model_name(model_id)
+            .await?
+            .unwrap_or_else(|| panic!("Model with id: {} does not exist", model_id));
 
-        let model_name = self.get_model_name(model_id).await?;
-        let model_name = model_name.expect(&format!("Model with id: {} does not exist", model_id));
-
-        let model_name = self.get_model_name(model_id).await?.expect("Model with id: {} does not exist");
-
-        let results: Vec<(f64, String, sqlx::types::Json<HashMap<String, String>>)> =
-            sqlx::query_as(&query_builder!(
-                queries::VECTOR_SEARCH,
-<<<<<<< HEAD
-=======
-                model_name,
-                self.models_table_name,
->>>>>>> 26fef6b (Almost working query builder)
-                embeddings_table_name,
-                embeddings_table_name,
-                self.chunks_table_name,
-                self.documents_table_name
-            ))
-<<<<<<< HEAD
-            .bind(model_name)
-=======
->>>>>>> 26fef6b (Almost working query builder)
-            .bind(query)
-            .bind(query_params)
-            .bind(top_k)
-            .fetch_all(self.pool.borrow())
-            .await?;
-        let results: Vec<(f64, String, HashMap<String, String>)> =
-            results.into_iter().map(|r| (r.0, r.1, r.2 .0)).collect();
+        let results: Vec<(f64, String, Json)> = sqlx::query_as(&query_builder!(
+            queries::VECTOR_SEARCH,
+            embeddings_table_name,
+            embeddings_table_name,
+            self.chunks_table_name,
+            self.documents_table_name
+        ))
+        .bind(model_name)
+        .bind(query)
+        .bind(query_params)
+        .bind(top_k)
+        .fetch_all(self.pool.borrow())
+        .await?;
         Ok(results)
     }
 
-<<<<<<< HEAD
-    async fn get_model_name(&self, model_id: i64) -> anyhow::Result<Option<String>> {
-        let model: Option<models::Model> = sqlx::query_as(&query_builder!(
-            "SELECT * from %s WHERE id = $1",
-            self.models_table_name 
-        ))
-        .bind(model_id)
-        .fetch_optional(self.pool.borrow())
-        .await?;
-        match model {
-            Some(m) => Ok(Some(m.name)),
-=======
     pub fn query(&self) -> QueryBuilder {
         QueryBuilder::new(self.clone())
     }
@@ -785,27 +764,43 @@ impl Collection {
             .fetch_optional(self.pool.borrow()).await?;
         match embeddings_table_name {
             Some((table_name,)) => Ok(Some(table_name)),
->>>>>>> 26fef6b (Almost working query builder)
             None => Ok(None),
         }
     }
 
-<<<<<<< HEAD
-=======
     pub async fn get_model_name(&self, model_id: i64) -> anyhow::Result<Option<String>> {
         let model: Option<models::Model> = sqlx::query_as(&query_builder!(
-                "SELECT * from %s WHERE id = $1", 
-                self.models_table_name))
-            .bind(model_id)
-            .fetch_optional(self.pool.borrow()).await?;
+            "SELECT * from %s WHERE id = $1",
+            self.models_table_name
+        ))
+        .bind(model_id)
+        .fetch_optional(self.pool.borrow())
+        .await?;
         match model {
             Some(model) => Ok(Some(model.name)),
             None => Ok(None),
         }
-
     }
 
->>>>>>> 26fef6b (Almost working query builder)
+    pub fn from_model_and_pool(model: models::Collection, pool: PgPool) -> Self {
+        let (
+            documents_table_name,
+            splitters_table_name,
+            models_table_name,
+            transforms_table_name,
+            chunks_table_name,
+        ) = Self::generate_table_names(&model.name);
+        Self {
+            name: model.name,
+            documents_table_name,
+            splitters_table_name,
+            models_table_name,
+            transforms_table_name,
+            chunks_table_name,
+            pool,
+        }
+    }
+
     fn generate_table_names(name: &str) -> (String, String, String, String, String) {
         [
             ".documents",

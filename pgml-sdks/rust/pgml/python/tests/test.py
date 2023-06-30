@@ -23,5 +23,33 @@ async def main():
     print(results)
     await db.archive_collection(collection_name)
 
+async def query_builder():
+    collection_name = "pqtest0"
+    db = pgml.Database(CONNECTION_STRING)
+    collection = await db.create_or_get_collection(collection_name)
+    print("The collection:")
+    print(collection)
+    documents = [
+        {
+            "id": 1,
+            "text": "This is a test document",
+        },
+        {
+            "id": 2,
+            "text": "This is another test document",
+        }
+    ]
+    await collection.upsert_documents(documents)
+    await collection.generate_chunks()
+    await collection.generate_embeddings()
+
+    query = await collection.query().vector_recall("test")
+    results = await query.filter({"id": 2}).limit(10).run()
+    print("The results:")
+    print(results)
+
+    await db.archive_collection(collection_name)
+
+
 if __name__ == "__main__":
-    asyncio.run(main())    
+    asyncio.run(query_builder())    

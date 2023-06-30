@@ -74,20 +74,14 @@ impl Database {
     /// ```
     pub async fn create_or_get_collection(&self, name: &str) -> anyhow::Result<Collection> {
         let collection: Option<models::Collection> = sqlx::query_as::<_, models::Collection>(
-            "SELECT * from pgml.collections where name = $1;",
+            "SELECT * FROM pgml.collections WHERE name = $1 AND active = TRUE;",
         )
         .bind(name)
         .fetch_optional(self.pool.borrow())
         .await?;
         match collection {
-            Some(c) => Ok(Collection::new(c.name, self.pool.clone()).await?),
-            None => {
-                sqlx::query("INSERT INTO pgml.collections (name) VALUES ($1)")
-                    .bind(name)
-                    .execute(self.pool.borrow())
-                    .await?;
-                Ok(Collection::new(name.to_string(), self.pool.clone()).await?)
-            }
+            Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
+            None => Ok(Collection::new(name.to_string(), self.pool.clone()).await?),
         }
     }
 

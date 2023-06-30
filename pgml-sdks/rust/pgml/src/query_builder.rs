@@ -1,9 +1,10 @@
 use itertools::Itertools;
 use pgml_macros::{custom_derive, custom_methods};
 use sea_query::{
-    extension::postgres::PgExpr, query::SelectStatement, Alias, CommonTableExpression, Expr, Func,
-    Iden, Query, QueryStatementWriter, WithClause, all
+    all, extension::postgres::PgExpr, query::SelectStatement, Alias, CommonTableExpression, Expr,
+    Func, Iden, JoinType, Order, PostgresQueryBuilder, Query, QueryStatementWriter, WithClause,
 };
+use sea_query_binder::SqlxBinder;
 
 use crate::{models, types::Json, Collection};
 
@@ -30,17 +31,32 @@ impl Iden for SIden<'_> {
     }
 }
 
+trait IntoTableNameAndSchema {
+    fn to_table_tuple<'b>(& self) -> (SIden<'b>, SIden<'b>);
+}
+
+impl IntoTableNameAndSchema for String {
+    fn to_table_tuple<'b>(& self) -> (SIden<'b>, SIden<'b>) {
+        self.split('.')
+            .map(|s| SIden::String(s.to_string()))
+            .collect_tuple()
+            .expect("Malformed table name in IntoTableNameAndSchema")
+    }
+}
+
 #[derive(custom_derive, Clone, Debug)]
 pub struct QueryBuilder {
     query: SelectStatement,
+    with: WithClause,
     collection: Collection,
 }
 
-#[custom_methods(limit)]
+#[custom_methods(limit, filter, vector_recall, run)]
 impl QueryBuilder {
     pub fn new(collection: Collection) -> Self {
         Self {
             query: SelectStatement::new(),
+            with: WithClause::new(),
             collection,
         }
     }
@@ -51,15 +67,9 @@ impl QueryBuilder {
     }
 
     pub fn filter(mut self, filter: Json) -> Self {
-        let documents_table_name = self.collection.documents_table_name.clone();
-        let documents_table_parts: (SIden, SIden) = documents_table_name
-            .split(".")
-            .map(|s| SIden::String(s.to_string()))
-            .collect_tuple()
-            .expect("Malformed documents table name in vector_recall");
-        self.query.from(documents_table_parts);
-        self.query
-            .and_where(Expr::col(models::DocumentIden::Metadata).contains(filter.0.to_string()));
+        self.query.and_where(
+            Expr::col((SIden::Str("documents"), SIden::Str("metadata"))).contains(filter.0),
+        );
         self
     }
 
@@ -67,7 +77,6 @@ impl QueryBuilder {
         mut self,
         query: String,
         query_params: Option<Json>,
-        top_k: Option<i64>,
         model_id: Option<i64>,
         splitter_id: Option<i64>,
     ) -> anyhow::Result<Self> {
@@ -75,70 +84,84 @@ impl QueryBuilder {
             Some(params) => params.0,
             None => serde_json::json!({}),
         };
-        let top_k = top_k.unwrap_or(5);
         let model_id = model_id.unwrap_or(1);
         let splitter_id = splitter_id.unwrap_or(1);
 
         let embeddings_table_name = self
             .collection
             .get_embeddings_table_name(model_id, splitter_id)
-            .await?;
-        let embeddings_table_name = embeddings_table_name.expect(&format!(
-            "Embeddings table does not exist for task: embedding model_id: {} and splitter_id: {}",
-            model_id, splitter_id
-        ));
-        let embeddings_table_parts: (SIden, SIden) = embeddings_table_name
-            .split(".")
-            .map(|s| SIden::String(s.to_string()))
-            .collect_tuple()
-            .expect("Malformed embeddings table name in vector_recall");
+            .await?
+            .unwrap_or_else(|| 
+                panic!("Embeddings table does not exist for task: embedding model_id: {} and splitter_id: {}",
+                model_id, splitter_id));
 
-        let model_name = self.collection.get_model_name(model_id).await?;
-        let model_name = model_name.expect(&format!("Model with id: {} does not exist", model_id));
+        let model_name = self
+            .collection
+            .get_model_name(model_id)
+            .await?
+            .unwrap_or_else(|| panic!("Model with id: {} does not exist", model_id));
 
         let mut query_cte = Query::select();
-        query_cte
-            .from(embeddings_table_parts.clone())
-            .expr(Func::cust(SIden::Str("Embed")).arg(Expr::cust_with_values(
-                "transformer=$1, text=$2, parameters=$3",
-                [model_name, query, query_params.to_string()],
-            )));
+        query_cte.expr_as(
+            Func::cust(SIden::Str("pgml.embed")).args([
+                Expr::cust_with_values("transformer => ($1)", [model_name]),
+                Expr::cust_with_values("text => $1", [query]),
+                Expr::cust_with_values("kwargs => $1", [query_params]),
+            ]),
+            Alias::new("query_embedding"),
+        );
         let mut query_cte = CommonTableExpression::from_select(query_cte);
         query_cte.table_name(Alias::new("query_cte"));
 
         let mut cte = Query::select();
-        cte.from_as(embeddings_table_parts, SIden::Str("embedding"))
-            .cross_join(Alias::new("query_cte"), all![])
+        cte.from_as(embeddings_table_name.to_table_tuple(), SIden::Str("embedding"))
+            .inner_join(Alias::new("query_cte"), all![]) // NOTE: This is a hack to make the query work - sea_query does not support postgres cross join correctly
             .columns([models::EmbeddingIden::ChunkId])
-            .expr(Func::cust(SIden::Str("1 - CosineDistance")).arg(Expr::cust("embedding.embedding, Cast(query_cte.embedding, \"vector\")")));
+            .expr(Expr::cust(
+                "1 - (embedding.embedding <=> query_cte.query_embedding :: float8[] :: vector) as score",
+            ));
         let mut cte = CommonTableExpression::from_select(cte);
         cte.table_name(Alias::new("cte"));
 
-
         let mut with_clause = WithClause::new();
-        let with_clause = with_clause.cte(query_cte).cte(cte).to_owned();
+        self.with = with_clause.cte(query_cte).cte(cte).to_owned();
 
-        let mut query = Query::select();
-        query.columns([(SIden::Str("cte"), SIden::Str("score"))]);
-        let query = query.with(with_clause.to_owned());
-        // .from_as(embeddings_table_parts, SIden::Str("embedding"))
-        // .columns([models::EmbeddingIden::ChunkId])
-        // .expr(Func::cust(SIden::Str("CosineDistance")).arg(Expr::cust("embedding.embedding")))
-        // .order_by(models::EmbeddingIden::ChunkId, false)
-        // .limit(top_k);
-
-        println!(
-            "query: {}",
-            query.to_string(sea_query::PostgresQueryBuilder)
-        );
-
-        // let mut cte = Query::select();
-        // cte.from_as(embeddings_table_parts, SIden::Str("embedding"))
-        //     .columns([models::EmbeddingIden::ChunkId])
-        //     .expr(Func::cust(SIden::Str("CosineDistance")).arg(Expr::cust("embedding.embedding")));
-        // println!("cte: {}", cte.to_string(sea_query::PostgresQueryBuilder));
-        // let common_table_expression = CommonTableExpression::new().query(query)
+        self.query
+            .columns([
+                (SIden::Str("cte"), SIden::Str("score")),
+                (SIden::Str("chunks"), SIden::Str("chunk")),
+                (SIden::Str("documents"), SIden::Str("metadata")),
+            ])
+            .from(SIden::Str("cte"))
+            .join_as(
+                JoinType::InnerJoin,
+                self.collection.chunks_table_name.to_table_tuple(),
+                Alias::new("chunks"),
+                Expr::col((SIden::Str("chunks"), SIden::Str("id")))
+                    .equals((SIden::Str("cte"), SIden::Str("chunk_id"))),
+            )
+            .join_as(
+                JoinType::InnerJoin,
+                self.collection.documents_table_name.to_table_tuple(),
+                Alias::new("documents"),
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+            )
+            .order_by((SIden::Str("cte"), SIden::Str("score")), Order::Desc);
 
         Ok(self)
+    }
+
+    pub async fn run(self) -> anyhow::Result<Vec<(f64, String, Json)>> {
+        let (sql, values) = self.query.with(self.with).build_sqlx(PostgresQueryBuilder);
+        let results: Vec<(f64, String, Json)> = sqlx::query_as_with(&sql, values)
+            .fetch_all(&self.collection.pool)
+            .await?;
+        Ok(results)
+    }
+
+    pub fn debug(&self) {
+        let query = self.query.clone().with(self.with.clone());
+        println!("{}", query.to_string(PostgresQueryBuilder));
     }
 }
