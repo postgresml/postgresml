@@ -3,12 +3,6 @@ author: Silas Marvin
 description: A story and example of simultaneously writing multi-language native libraries using Rust
 ---
 
-# Outline
-- Overview
-- A quick Aside, What is Wrong with Vanilla FFIs
-- py03 and neon
-- Our macros
-
 # Simultaneously Writing Multi-Language Native Libraries
 
 <div class="d-flex align-items-center mb-4">
@@ -55,7 +49,7 @@ We could write our own Python wrapper around our FFI, but that would go against 
 
 [pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) are Rust crates that help with building native modules for Python and JavaScript. They provide systems that allow us to seamlessly interact with async code and native classes.
 
-Let's take a look at what Rust code that creates a Python and Javascript class looks like. For ease of use, let's say we have the following struct in Rust:
+Let's take a look at what Rust code that creates a Python class with [pyo3](https://github.com/PyO3/pyo3) and a JavaScript class with [neon](https://neon-bindings.com/) looks like. For ease of use, let's say we have the following struct in Rust:
 
 ```
 struct Database{
@@ -151,12 +145,8 @@ impl Database {
             .try_settle_with(
                 &channel,
                 move |mut cx| {
-                    // We need to get a tokio runtime 
-                    let runtime = create_or_get_runtime();
                     // Do some async vector search
-                    let x = runtime.block_on(wrapped.vector_search(arg0, arg1, arg2));
-                    let x = x.unwrap();
-                    x.into_js_result(&mut cx)
+                    result.into_js_result(&mut cx)
                 },
             )
             .expect("Error sending js");
@@ -179,6 +169,8 @@ impl Database {
         Ok(obj)
     }
 }
+
+impl neon::types::Finalize for Database {}
 
 /// A JavaScript module implemented in Rust.
 #[main]
