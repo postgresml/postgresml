@@ -130,9 +130,9 @@ impl Database {
             connection_string: arg0
         };
         x.into_js_result(&mut cx)
-	}
+    }
 
-	pub fn vector_search<'a>(mut cx: FunctionContext<'a>) -> JsResult<'a, JsPromise> {
+    pub fn vector_search<'a>(mut cx: FunctionContext<'a>) -> JsResult<'a, JsPromise> {
         let this = cx.this();
         let s: neon::handle::Handle<
             neon::types::JsBox<std::cell::RefCell<DatabaseJavascript>>,
@@ -161,7 +161,7 @@ impl Database {
             )
             .expect("Error sending js");
         Ok(promise)
-	}
+    }
 
     fn into_js_result<'a, 'b, 'c: 'b, C: Context<'c>>(self, cx: &mut C) -> JsResult<'b, Self::Output> {
         let obj = cx.empty_object();
