@@ -190,9 +190,9 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
 
 ## Automatically Converting Vanilla Rust to py03 and neon compatible Rust
 
-Together we have successfully written a native Python and JavaScript module in Rust. However, our goal is far from complete. Our desire is to write our SDK once in Rust, and make it available in any language we target. While the above made it available in Python and JavaScript, it is both no longer a valid Rust library, and required a bunch of manual edits to make available in both languages. 
+We have successfully written a native Python and JavaScript module in Rust. However, our goal is far from complete. Our desire is to write our SDK once in Rust, and make it available in any language we target. While the above made it available in Python and JavaScript, it is both no longer a valid Rust library, and required a bunch of manual edits to make available in both languages. 
 
-Really what we want is to write our Rust library without worrying about any translation, and apply some macros that auto convert into what [pyo3](https://github.com/PyO3/pyo3) [neon](https://neon-bindings.com/). This sounds like a perfect use for [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html). If you are unfamiliar with macros I really recommend reading [The Little Book of Rust Macros](https://danielkeep.github.io/tlborm/book/README.html) it is free, a quick read, and provides an awesome introduction to macros.
+Really what we want is to write our Rust library without worrying about any translation, and apply some macros that auto convert into what [pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) need. This sounds like a perfect use for [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html). If you are unfamiliar with macros I really recommend reading [The Little Book of Rust Macros](https://danielkeep.github.io/tlborm/book/README.html) it is free, a quick read, and provides an awesome introduction to macros.
 
 Let's slightly edit the struct we defined previously:
 
@@ -257,7 +257,7 @@ impl IntoJsResult for Database {
 There are a couple important things happening here:
 1. Our `custom_derive_class` macro creates a new struct for each language we target. 
 2. The derived Python struct automatically implements `pyclass`
-3. Because [neon](https://neon-bindings.com/) does not have a version of the `pyclass` macro, we implement `From<Database>` and our own trait `IntoJsResult` to do some conversions automatically between vanilla Rust types and [neon](https://neon-bindings.com/) Rust
+3. Because [neon](https://neon-bindings.com/) does not have a version of the `pyclass` macro, we implement our own trait `IntoJsResult` to do some conversions between vanilla Rust types and [neon](https://neon-bindings.com/) Rust
 
 Creating a macro like the above is actually incredibly simple. The code below shows how it is done for the Python variant.
 
@@ -370,7 +370,6 @@ impl IntoJsResult for DatabaseJavascript {
 }
 
 impl neon::types::Finalize for DatabaseJavascript {}
-}
 ```
 
 You will notice this is very similar to code we have showed already except the `DatabaseJavascript` and `DatabasePython` structs just call their respective methods on the `Database` struct.
@@ -418,7 +417,7 @@ pub enum OutputType {
 ```
 
 ### Signature Translation
-We must translate the signature into the Rust code [pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) expects. This means adjusting the arguments, async declaration, and output type. This is actually extraordinarily simple now that we have destructed the method. For instance, here is a simple example of translating the output type:
+We must translate the signature into the Rust code [pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) expects. This means adjusting the arguments, async declaration, and output type. This is actually extraordinarily simple now that we have destructed the method. For instance, here is a simple example of translating the output type for Python:
 ```
 fn convert_output_type(
 	ty: &SupportedType,
@@ -438,11 +437,11 @@ fn convert_output_type(
 ```
 
 ### Method Reconstruction
-Now we have all the information we need to reconstruct the methods in the format [pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) need to create a native modules. 
+Now we have all the information we need to reconstruct the methods in the format [pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) need to create native modules. 
 
 The actual reconstruction is quite boring, mostly filled with a bunch of `if else` statements writing and combining token streams using the [quote crate](https://crates.io/crates/quote), so we will omit it for brevity's sake. For the curious, here is a link to our actual implementation: [github](https://github.com/postgresml/postgresml/blob/545ccb613413eab4751bf03ea4c020c09b20af3c/pgml-sdks/rust/pgml-macros/src/python.rs#L152C1-L238).
 
-The entirety of the above three phases can be summed up with this extraordinarily abstract function:
+The entirety of the above three phases can be summed up with this extraordinarily abstract function (Python specific though it is almost identical for JavaScript):
 ```
 fn do_custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	let parsed_methods = parse_methods(input);
@@ -457,10 +456,10 @@ fn do_custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 		methods.push(method);
 	}
 	// This is the actual Rust impl block we are generating
-	proc_macro::TokenStream::from(quote! {
+    proc_macro::TokenStream::from(quote! {
         #[pymethods]
         impl DatabasePython {
-		#(#methods)*
+            #(#methods)*
         }
     })
 }
