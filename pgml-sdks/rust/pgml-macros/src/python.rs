@@ -366,6 +366,7 @@ fn get_python_type(ty: &SupportedType) -> String {
         SupportedType::Reference(r) => get_python_type(r),
         SupportedType::S => "Self".to_string(),
         SupportedType::str | SupportedType::String => "str".to_string(),
+        SupportedType::bool => "bool".to_string(),
         SupportedType::Option(o) => format!(
             "Optional[{}] = {}",
             get_python_type(o),
