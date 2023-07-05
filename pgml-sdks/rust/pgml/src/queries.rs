@@ -125,22 +125,19 @@ pub const VECTOR_SEARCH: &str = r#"
 WITH query_cte AS (
   SELECT 
     pgml.embed(
-      transformer => (
-        $1
-      ), 
-      text => $2, 
-      kwargs => $3 
-    ) AS query_embedding
+      transformer => models.name, 
+      text => $1, 
+      kwargs => $2 
+    )::vector AS query_embedding from %s models where models.id = $3
 ), 
 cte AS (
   SELECT 
     chunk_id, 
     1 - (
-      %s.embedding <=> query_cte.query_embedding :: float8[] :: vector
+      %s.embedding <=> (SELECT query_embedding FROM query_cte)
     ) AS score 
   FROM 
-    %s CROSS 
-    JOIN query_cte 
+    %s 
 ) 
 SELECT 
   cte.score, 
