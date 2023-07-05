@@ -62,16 +62,7 @@ Follow the steps below to quickly get started with the Javascript SDK for buildi
 
 Before you begin, make sure you have the following:
 
-- PostgresML Database: You can [sign up for a free GPU-powered database](https://postgresml.org/signup) or [spin up a database using Docker](https://github.com/postgresml/postgresml#installation). Ensure you have a PostgresML database version >`2.3.1`. Set the `PGML_CONNECTION` environment variable to the connection string of your PostgresML database. If not set, the SDK will use the default connection string for your local installation `postgres://postgres@127.0.0.1:5433/pgml_development`. If you are running Postgres locally then make sure:
-
-  - Python version >=3.8.1
-
-  - `postgresql` command line utility
-    - Ubuntu: `sudo apt install libpq-dev`
-    - Centos/Fedora/Cygwin/Babun: `sudo yum install libpq-devel`
-    - Mac: `brew install postgresql`
-
-### Installation
+- PostgresML Database: You can [sign up for a free GPU-powered database](https://postgresml.org/signup) or [spin up a database using Docker](https://github.com/postgresml/postgresml#installation). Ensure you have a PostgresML database version >`2.3.1`. Set the `PGML_CONNECTION` environment variable to the connection string of your PostgresML database. If not set, the SDK will use the default connection string for your local installation `postgres://postgres@127.0.0.1:5433/pgml_development`.
 
 To install the Javascript SDK:
 
