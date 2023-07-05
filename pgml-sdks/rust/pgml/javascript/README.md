@@ -402,14 +402,14 @@ In this case, the splitter with ID `2` is used. Ensure that this ID corresponds 
 
 ### Generate Embeddings
 
-`.generate_embeddings(splitter_id, model_id)`
+`.generate_embeddings(model_id, splitter_id)`
 
 This method generates embeddings from the chunks of text.
 
 #### Parameters:
 
-- `splitter_id` (optional): The ID of the splitter used for segmenting the text into chunks. This parameter is optional. If not specified, it defaults to `1`.
 - `model_id` (optional): The ID of the model used to generate embeddings. This parameter is optional. If not specified, it defaults to `1`, corresponding to the `intfloat/e5-small` embeddings model.
+- `splitter_id` (optional): The ID of the splitter used for segmenting the text into chunks. This parameter is optional. If not specified, it defaults to `1`.
 
 Both `splitter_id` and `model_id` should correspond to a splitter and model that are already registered.
 
@@ -427,11 +427,11 @@ To use a different splitter or model, you need to pass their corresponding IDs. 
 await collection.generate_embeddings(2, 3);
 ```
 
-In this case, the splitter with ID `2` and the model with ID `3` are used. Ensure that these IDs correspond to a registered splitter and model.
+In this case, the splitter with ID `3` and the model with ID `2` are used. Ensure that these IDs correspond to a registered splitter and model.
 
 ### Vector Search
 
-`.vector_search(query, top_k, splitter_id, model_id)`
+`.vector_search(query, top_k, model_id, splitter_id)`
 
 This method converts the input query into embeddings and searches the embeddings table for the nearest matches.
 
@@ -439,8 +439,8 @@ This method converts the input query into embeddings and searches the embeddings
 
 - `query` (required): The query text that needs to be converted into embeddings for vector search.
 - `top_k` (optional): The number of top matches that should be returned. This parameter is optional. If not specified, it defaults to `10`.
-- `splitter_id` (optional): The ID of the splitter used for segmenting the query text into chunks. This parameter is optional. If not specified, it defaults to `1`.
 - `model_id` (optional): The ID of the model used to convert query into embeddings. This parameter is optional. If not specified, it defaults to `1`, corresponding to the `intfloat/e5-small` embeddings model.
+- `splitter_id` (optional): The ID of the splitter used for segmenting the query text into chunks. This parameter is optional. If not specified, it defaults to `1`.
 
 Both `splitter_id` and `model_id` should correspond to a splitter and model that are already registered.
 
@@ -450,8 +450,8 @@ Both `splitter_id` and `model_id` should correspond to a splitter and model that
 const results = await collection.vector_search(
   "Who won 20 grammy awards?",
   2, // top_k
-  1, // splitter_id
   1 // model_id
+  1, // splitter_id
 );
 ```
 
