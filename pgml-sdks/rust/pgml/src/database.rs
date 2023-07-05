@@ -19,7 +19,7 @@ pub struct Database {
     pub pool: PgPool,
 }
 
-#[custom_methods(new, create_or_get_collection, archive_collection)]
+#[custom_methods(new, create_or_get_collection, does_collection_exist, archive_collection)]
 impl Database {
     /// Create a new [Database]
     ///
@@ -83,6 +83,35 @@ impl Database {
             Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
             None => Ok(Collection::new(name.to_string(), self.pool.clone()).await?),
         }
+    }
+
+    /// Check if a [Collection] exists
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the [Collection]
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Database;
+    ///
+    /// const CONNECTION_STRING: &str = "postgres://postgres@localhost:5432/pgml_development";
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///   let db = Database::new(CONNECTION_STRING).await?;
+    ///   let collection_exists = db.does_collection_exist("collection number 1").await?;
+    ///   // Do stuff with your new found information
+    ///   Ok(())
+    /// }
+    /// ```
+    pub async fn does_collection_exist(&self, name: &str) -> anyhow::Result<bool> {
+        let collection: Option<models::Collection> = sqlx::query_as::<_, models::Collection>(
+            "SELECT * FROM pgml.collections WHERE name = $1 AND active = TRUE;",
+        )
+        .bind(name)
+        .fetch_optional(self.pool.borrow())
+        .await?;
+        Ok(collection.is_some())
     }
 
     /// Archive a [Collection]

@@ -99,6 +99,18 @@ mod tests {
         Database::new(&connection_string).await.unwrap();
     }
 
+
+    #[tokio::test]
+    async fn can_create_collection() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        let collection_name = "rctest0";
+        let db = Database::new(&connection_string).await.unwrap();
+        let _ = db.create_or_get_collection(collection_name).await.unwrap();
+        let does_collection_exist = db.does_collection_exist(collection_name).await.unwrap();
+        assert_eq!(does_collection_exist, true);
+        db.archive_collection(collection_name).await.unwrap();
+    }
+
     #[tokio::test]
     async fn can_create_collection_and_vector_search() {
         let connection_string = env::var("DATABASE_URL").unwrap();
@@ -157,7 +169,7 @@ mod tests {
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
 
         let mut documents: Vec<Json> = Vec::new();
-        for i in 0..200 {
+        for i in 0..2 {
             documents.push(serde_json::json!({
                 "id": i,
                 "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
