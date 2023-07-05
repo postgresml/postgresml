@@ -7,7 +7,7 @@ const CONNECTION_STRING =
 
 const main = async () => {
   const db = await pgml.newDatabase(CONNECTION_STRING);
-  const collection_name = "hello_world_2";
+  const collection_name = "hello_world";
   const collection = await db.create_or_get_collection(collection_name);
   const documents = [
     {
