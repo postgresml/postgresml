@@ -1,5 +1,7 @@
 use std::env::var;
 
+use anyhow::anyhow;
+
 pub fn dev_mode() -> bool {
     match var("DEV_MODE") {
         Ok(_) => true,
@@ -102,4 +104,14 @@ pub fn signup_url() -> String {
 
 pub fn standalone_dashboard() -> bool {
     !env!("CARGO_MANIFEST_DIR").contains("deps") && !env!("CARGO_MANIFEST_DIR").contains("cloud2")
+}
+
+pub fn github_stars() -> anyhow::Result<String> {
+    match var("GITHUB_STARS") {
+        Ok(stars) => match stars.parse::<f32>() {
+            Ok(stars) => Ok(format!("{:.1}K", (stars / 1000.0))),
+            _ => Err(anyhow!("Could not parse GITHUB_STARS: {}", stars)),
+        },
+        _ => Err(anyhow!("No GITHUB_STARS env var set")),
+    }
 }
