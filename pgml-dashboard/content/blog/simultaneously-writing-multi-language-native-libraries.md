@@ -122,8 +122,8 @@ struct Database{
 }
 
 impl Database {
-    pub fn new<'a>(mut cx: FunctionContext<'a>) -> JsResult<'a, JsObject>
-		// The actual connection process has been removed
+    pub fn new<'a>(mut cx: FunctionContext<'a>) -> JsResult<'a, JsObject> {
+        // The actual connection process has been removed
         pub fn new<'a>(
             mut cx: neon::context::FunctionContext<'a>,
         ) -> neon::result::JsResult<'a, JsObject> {
