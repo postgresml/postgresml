@@ -124,16 +124,12 @@ struct Database{
 impl Database {
     pub fn new<'a>(mut cx: FunctionContext<'a>) -> JsResult<'a, JsObject> {
         // The actual connection process has been removed
-        pub fn new<'a>(
-            mut cx: neon::context::FunctionContext<'a>,
-        ) -> neon::result::JsResult<'a, JsObject> {
-            let arg0 = cx.argument::<JsString>(0usize as i32)?;
-            let arg0 = <String>::from_js_type(&mut cx, arg0)?;
-            let x = Self {
-                connection_string: arg0
-            };
-            x.into_js_result(&mut cx)
-        }
+        let arg0 = cx.argument::<JsString>(0usize as i32)?;
+        let arg0 = <String>::from_js_type(&mut cx, arg0)?;
+        let x = Self {
+            connection_string: arg0
+        };
+        x.into_js_result(&mut cx)
 	}
 
 	pub fn vector_search<'a>(mut cx: FunctionContext<'a>) -> JsResult<'a, JsPromise> {
