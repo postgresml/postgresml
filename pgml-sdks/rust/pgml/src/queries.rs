@@ -51,7 +51,8 @@ pub const CREATE_CHUNKS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, created_at timestamptz NOT NULL DEFAULT now(), 
   document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   splitter_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  chunk_index int8 NOT NULL, chunk text NOT NULL
+  chunk_index int8 NOT NULL, 
+  chunk text NOT NULL
 );
 "#;
 
@@ -61,6 +62,17 @@ CREATE TABLE IF NOT EXISTS %s (
   created_at timestamptz NOT NULL DEFAULT now(), 
   chunk_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   embedding vector(%d) NOT NULL
+);
+"#;
+
+pub const CREATE_DOCUMENTS_TSVECTORS_TABLE: &str = r#"
+CREATE TABLE IF NOT EXISTS %s (
+  id serial8 PRIMARY KEY, 
+  created_at timestamptz NOT NULL DEFAULT now(), 
+  document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
+  configuration text NOT NULL, 
+  ts tsvector,
+  UNIQUE (configuration, document_id)
 );
 "#;
 
@@ -82,6 +94,17 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING ivfflat (%d);
 /////////////////////////////
 // Other Big Queries ////////
 /////////////////////////////
+pub const GENERATE_TSVECTORS: &str = r#"
+INSERT INTO %s (document_id, configuration, ts) 
+SELECT 
+  id, 
+  '%d' configuration, 
+  to_tsvector('%d', text) ts 
+FROM 
+  %s
+ON CONFLICT (document_id, configuration) DO UPDATE SET ts = EXCLUDED.ts;
+"#;
+
 pub const GENERATE_EMBEDDINGS: &str = r#"
 WITH model as (
   SELECT 

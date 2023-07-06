@@ -24,6 +24,7 @@ pub struct Collection {
     pub models_table_name: String,
     pub transforms_table_name: String,
     pub chunks_table_name: String,
+    pub documents_tsvectors_table_name: String,
 }
 
 #[custom_methods(
@@ -34,6 +35,7 @@ pub struct Collection {
     register_model,
     get_models,
     generate_embeddings,
+    generate_tsvectors,
     vector_search,
     query
 )]
@@ -50,6 +52,7 @@ impl Collection {
             models_table_name,
             transforms_table_name,
             chunks_table_name,
+            documents_tsvectors_table_name,
         ) = Self::generate_table_names(&name);
         let collection = Self {
             name,
@@ -59,6 +62,7 @@ impl Collection {
             models_table_name,
             transforms_table_name,
             chunks_table_name,
+            documents_tsvectors_table_name,
         };
         sqlx::query("INSERT INTO pgml.collections (name, active) VALUES ($1, FALSE) ON CONFLICT (name) DO NOTHING")
             .bind(&collection.name)
@@ -69,6 +73,7 @@ impl Collection {
         collection.create_models_table().await?;
         collection.create_transforms_table().await?;
         collection.create_chunks_table().await?;
+        collection.create_documents_tsvectors_table().await?;
         collection.register_text_splitter(None, None).await?;
         collection.register_model(None, None, None).await?;
         sqlx::query("UPDATE pgml.collections SET active = TRUE WHERE name = $1")
@@ -79,189 +84,239 @@ impl Collection {
     }
 
     async fn create_documents_table(&self) -> anyhow::Result<()> {
-        let pool = self.pool.borrow();
-        pool.execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name).as_str())
+        self.pool
+            .execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name).as_str())
             .await?;
-        pool.execute(
-            query_builder!(queries::CREATE_DOCUMENTS_TABLE, self.documents_table_name).as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "created_at_index",
-                self.documents_table_name,
-                "created_at"
+        self.pool
+            .execute(
+                query_builder!(queries::CREATE_DOCUMENTS_TABLE, self.documents_table_name).as_str(),
             )
-            .as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX_USING_GIN,
-                "metadata_index",
-                self.documents_table_name,
-                "metadata jsonb_path_ops"
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "created_at_index",
+                    self.documents_table_name,
+                    "created_at"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX_USING_GIN,
+                    "metadata_index",
+                    self.documents_table_name,
+                    "metadata jsonb_path_ops"
+                )
+                .as_str(),
+            )
+            .await?;
         Ok(())
     }
 
     async fn create_splitter_table(&self) -> anyhow::Result<()> {
-        let pool = self.pool.borrow();
-        pool.execute(
-            query_builder!(queries::CREATE_SPLITTERS_TABLE, self.splitters_table_name).as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "created_at_index",
-                self.splitters_table_name,
-                "created_at"
+        self.pool
+            .execute(
+                query_builder!(queries::CREATE_SPLITTERS_TABLE, self.splitters_table_name).as_str(),
             )
-            .as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "name_index",
-                self.splitters_table_name,
-                "name"
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "created_at_index",
+                    self.splitters_table_name,
+                    "created_at"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX_USING_GIN,
-                "parameters_index",
-                self.splitters_table_name,
-                "parameters jsonb_path_ops"
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "name_index",
+                    self.splitters_table_name,
+                    "name"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX_USING_GIN,
+                    "parameters_index",
+                    self.splitters_table_name,
+                    "parameters jsonb_path_ops"
+                )
+                .as_str(),
+            )
+            .await?;
         Ok(())
     }
 
     async fn create_models_table(&self) -> anyhow::Result<()> {
-        let pool = self.pool.borrow();
-        pool.execute(query_builder!(queries::CREATE_MODELS_TABLE, self.models_table_name).as_str())
+        self.pool
+            .execute(query_builder!(queries::CREATE_MODELS_TABLE, self.models_table_name).as_str())
             .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "created_at_index",
-                self.models_table_name,
-                "created_at"
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "created_at_index",
+                    self.models_table_name,
+                    "created_at"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "task_index",
-                self.models_table_name,
-                "task"
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "task_index",
+                    self.models_table_name,
+                    "task"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "name_index",
-                self.models_table_name,
-                "name"
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "name_index",
+                    self.models_table_name,
+                    "name"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX_USING_GIN,
-                "parameters_index",
-                self.models_table_name,
-                "parameters jsonb_path_ops"
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX_USING_GIN,
+                    "parameters_index",
+                    self.models_table_name,
+                    "parameters jsonb_path_ops"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
+            .await?;
         Ok(())
     }
 
     async fn create_transforms_table(&self) -> anyhow::Result<()> {
-        let pool = self.pool.borrow();
-        pool.execute(
-            query_builder!(
-                queries::CREATE_TRANSFORMS_TABLE,
-                self.transforms_table_name,
-                self.splitters_table_name,
-                self.models_table_name
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_TRANSFORMS_TABLE,
+                    self.transforms_table_name,
+                    self.splitters_table_name,
+                    self.models_table_name
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "created_at_index",
-                self.transforms_table_name,
-                "created_at"
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "created_at_index",
+                    self.transforms_table_name,
+                    "created_at"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
+            .await?;
         Ok(())
     }
 
     async fn create_chunks_table(&self) -> anyhow::Result<()> {
-        let pool = self.pool.borrow();
-        pool.execute(
-            query_builder!(
-                queries::CREATE_CHUNKS_TABLE,
-                self.chunks_table_name,
-                self.documents_table_name,
-                self.splitters_table_name
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_CHUNKS_TABLE,
+                    self.chunks_table_name,
+                    self.documents_table_name,
+                    self.splitters_table_name
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "created_at_index",
-                self.chunks_table_name,
-                "created_at"
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "created_at_index",
+                    self.chunks_table_name,
+                    "created_at"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "document_id_index",
-                self.chunks_table_name,
-                "document_id"
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "document_id_index",
+                    self.chunks_table_name,
+                    "document_id"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
-        pool.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "splitter_id_index",
-                self.chunks_table_name,
-                "splitter_id"
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "splitter_id_index",
+                    self.chunks_table_name,
+                    "splitter_id"
+                )
+                .as_str(),
             )
-            .as_str(),
-        )
-        .await?;
+            .await?;
+        Ok(())
+    }
+
+    async fn create_documents_tsvectors_table(&self) -> anyhow::Result<()> {
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_DOCUMENTS_TSVECTORS_TABLE,
+                    self.documents_tsvectors_table_name,
+                    self.documents_table_name
+                )
+                .as_str(),
+            )
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "configuration_index",
+                    self.documents_tsvectors_table_name,
+                    "configuration"
+                )
+                .as_str(),
+            )
+            .await?;
+        self.pool
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX_USING_GIN,
+                    "tsvector_index",
+                    self.documents_tsvectors_table_name,
+                    "ts"
+                )
+                .as_str(),
+            )
+            .await?;
         Ok(())
     }
 
@@ -340,6 +395,19 @@ impl Collection {
                 .bind(&document_json)
                 .execute(self.pool.borrow()).await?;
         }
+        Ok(())
+    }
+
+    pub async fn generate_tsvectors(&self, configuration: &str) -> anyhow::Result<()> {
+        sqlx::query(&query_builder!(
+            queries::GENERATE_TSVECTORS,
+            self.documents_tsvectors_table_name,
+            configuration,
+            configuration,
+            self.documents_table_name
+        ))
+        .execute(&self.pool)
+        .await?;
         Ok(())
     }
 
@@ -784,6 +852,7 @@ impl Collection {
             models_table_name,
             transforms_table_name,
             chunks_table_name,
+            documents_tsvectors_table_name,
         ) = Self::generate_table_names(&model.name);
         Self {
             name: model.name,
@@ -792,17 +861,19 @@ impl Collection {
             models_table_name,
             transforms_table_name,
             chunks_table_name,
+            documents_tsvectors_table_name,
             pool,
         }
     }
 
-    fn generate_table_names(name: &str) -> (String, String, String, String, String) {
+    fn generate_table_names(name: &str) -> (String, String, String, String, String, String) {
         [
             ".documents",
             ".splitters",
             ".models",
             ".transforms",
             ".chunks",
+            ".documents_tsvectors",
         ]
         .into_iter()
         .map(|s| format!("{}{}", name, s))

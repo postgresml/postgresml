@@ -51,7 +51,7 @@ pub struct QueryBuilder {
     collection: Collection,
 }
 
-#[custom_methods(limit, filter, vector_recall, run)]
+#[custom_methods(limit, filter_metadata, filter_full_text, vector_recall, run)]
 impl QueryBuilder {
     pub fn new(collection: Collection) -> Self {
         Self {
@@ -66,10 +66,35 @@ impl QueryBuilder {
         self
     }
 
-    pub fn filter(mut self, filter: Json) -> Self {
+    pub fn filter_metadata(mut self, filter: Json) -> Self {
         self.query.and_where(
             Expr::col((SIden::Str("documents"), SIden::Str("metadata"))).contains(filter.0),
         );
+        self
+    }
+
+    pub fn filter_full_text(mut self, filter: &str, configuration: &str) -> Self {
+        self.query
+            .join_as(
+                JoinType::InnerJoin,
+                self.collection
+                    .documents_tsvectors_table_name
+                    .to_table_tuple(),
+                Alias::new("documents_tsvectors"),
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .equals((SIden::Str("documents_tsvectors"), SIden::Str("document_id"))),
+            )
+            .and_where(
+                Expr::col((
+                    SIden::Str("documents_tsvectors"),
+                    SIden::Str("configuration"),
+                ))
+                .eq(configuration)
+            )
+            .and_where(Expr::cust_with_values(
+                &format!("documents_tsvectors.ts @@ to_tsquery('{}', $1)", configuration),
+                [filter],
+            ));
         self
     }
 

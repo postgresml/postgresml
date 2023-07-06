@@ -31,7 +31,7 @@ async def main():
     await db.archive_collection(collection_name)
 
 async def query_builder():
-    collection_name = "pqtest1"
+    collection_name = "pqtest2"
     db = pgml.Database(CONNECTION_STRING)
     collection = await db.create_or_get_collection(collection_name)
     print("The collection:")
@@ -44,13 +44,20 @@ async def query_builder():
         {
             "id": 2,
             "text": "This is another test document",
+        },
+        {
+            "id": 3,
+            "text": "PostgresML",
         }
+
     ]
     await collection.upsert_documents(documents)
+    await collection.generate_tsvectors('english')
     await collection.generate_chunks()
     await collection.generate_embeddings()
 
-    results = await collection.query().vector_recall("test").filter({"id": 1}).limit(10).run()
+    results = await collection.query().vector_recall("test").filter_metadata({"id": 1}).limit(10).run()
+    # results = await collection.query().vector_recall("test").filter_full_text('PostgresML', 'english').limit(10).run()
     print("The results:")
     print(results)
 
