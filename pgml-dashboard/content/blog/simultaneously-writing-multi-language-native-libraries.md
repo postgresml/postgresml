@@ -14,13 +14,19 @@ description: A story and example of simultaneously writing multi-language native
 </div>
 
 
+## Introduction
 The tools we have created at PostgresML are powerful and flexible. There are almost an infinite number of ways our tools can be utilized to power vector search, model inference, and much more. Like many companies before us, we want our users to have the benefits of our tools without the drawbacks of reading through expansive documentation, so we built an SDK.
 
-We are huge fans of Rust, but we are also advocates of other languages that are either more amenable to new programmers or better suited for specific use cases. Our goal with our SDK was to build it once in Rust, and make it a pleasurable experience to use in any number of different languages. This is typically done using FFIs ([foreign function interfaces](https://en.wikipedia.org/wiki/Foreign_function_interface)) but the method we use creates native modules in the specific language we target.
+
+We are huge fans of Rust. Almost our entire codebase is written in Rust, and we find that using it as our primary language allows us to write safer code and iterate
+through our development cycles faster. However, the majority of our users currently work in languages like Python and JavaScript. There would be no point making
+an SDK for Rust, when no one would use it. After much deliberation, we finalized the following requirements for our SDK:
+1. It must be available natively in multiple languages
+2. It must be written in Rust
+3. Adding new languages should only include minimal overhead (bonus requirement)
 
 ## What is Wrong With FFIs 
-
-FFIs are the standard way for programs written in one language to call functions written in another. In terms of our SDK, we could utilize FFIs by writing the core logic of our SDK in Rust, and calling our Rust functions through FFIs from Python. This unfortunately does not provide the utility we desire. Take for example the following Python code:
+FFIs are the standard way for programs written in one language to call functions written in another. In terms of our SDK, we could utilize FFIs by writing the core logic of our SDK in Rust, and calling our Rust functions through FFIs from the language of our choice. This unfortunately does not provide the utility we desire. Take for example the following Python code:
 ```
 class Database:
 	def __init__(self, connection_string: str):
@@ -39,15 +45,15 @@ async def main():
 		print("The model is ready to go!")
 ```
 
-As mentioned before, we only want to write our SDK once in Rust, and then use it in any language we target. Specifically, the `class Database` and its methods should be written in the Rust SDK. How can we translate the `Database` class and utilize it in Python through FFIs? Simply put, we cannot. There are two limitations we cannot surpass in the above code:
+One of the requirement of our SDK is that we write it in Rust. Specifically, in this instance, the `class Database` and its methods should be written in Rust and utilized in Python through FFIs. Unfortunately, doing this in Rust alone is not possible. There are two limitations we cannot surpass in the above code:
 - FFI's have no concept of Python classes
 - FFI's have no concept of Python async
 
-We could write our own Python wrapper around our FFI, but that would go against the core idea of our SDK: writing it once in Rust, and making it seamlessly available in many languages.
+We could write our own Python wrapper around our FFI, but that would go against bonus requirement 3: Adding new languages should only include minimal overhead.
+Translating every update from our Rust SDK into a wrapper for each language we add is not minimal overhead.
 
 ## Enter pyO3 and neon
-
-[pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) are Rust crates that help with building native modules for Python and JavaScript. They provide systems that allow us to seamlessly interact with async code and native classes.
+[pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) are Rust crates that help with building native modules for Python and JavaScript. They provide systems that allow us to seamlessly interact with async code and native classes, bypassing the limitations that vanilla FFIs imposed.
 
 Let's take a look at what Rust code that creates a Python class with [pyo3](https://github.com/PyO3/pyo3) and a JavaScript class with [neon](https://neon-bindings.com/) looks like. For ease of use, let's say we have the following struct in Rust:
 
@@ -181,7 +187,6 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
 ```
 
 ## Automatically Converting Vanilla Rust to py03 and neon compatible Rust
-
 We have successfully written a native Python and JavaScript module in Rust. However, our goal is far from complete. Our desire is to write our SDK once in Rust, and make it available in any language we target. While the above made it available in Python and JavaScript, it is both no longer a valid Rust library, and required a bunch of manual edits to make available in both languages. 
 
 Really what we want is to write our Rust library without worrying about any translation, and apply some macros that auto convert into what [pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) need. This sounds like a perfect use for [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html). If you are unfamiliar with macros I really recommend reading [The Little Book of Rust Macros](https://danielkeep.github.io/tlborm/book/README.html) it is free, a quick read, and provides an awesome introduction to macros.
