@@ -9,6 +9,7 @@ pub enum SupportedType {
     Reference(Box<SupportedType>),
     str,
     String,
+    bool,
     Vec(Box<SupportedType>),
     HashMap((Box<SupportedType>, Box<SupportedType>)),
     Option(Box<SupportedType>),
@@ -34,8 +35,9 @@ impl ToString for SupportedType {
         match self {
             SupportedType::Reference(t) => format!("&{}", t.to_string()),
             SupportedType::str => "str".to_string(),
-            SupportedType::Json => "Json".to_string(),
             SupportedType::String => "String".to_string(),
+            SupportedType::bool => "bool".to_string(),
+            SupportedType::Json => "Json".to_string(),
             SupportedType::Vec(v) => format!("Vec<{}>", v.to_string()),
             SupportedType::HashMap((k, v)) => {
                 format!("HashMap<{},{}>", k.to_string(), v.to_string())
@@ -138,6 +140,7 @@ impl<'ast> Visit<'ast> for GetSupportedType {
         self.ty = match segment_name.as_str() {
             "str" => Some(SupportedType::str),
             "String" => Some(SupportedType::String),
+            "bool" => Some(SupportedType::bool),
             "Vec" => Some(SupportedType::Vec(Box::new(
                 Self::get_type_from_path_argument(&i.arguments),
             ))),

@@ -360,6 +360,7 @@ fn get_neon_type(ty: &SupportedType) -> syn::Type {
         SupportedType::str | SupportedType::String => {
             syn::parse_str("neon::types::JsString").unwrap()
         }
+        SupportedType::bool => syn::parse_str("neon::types::JsBoolean").unwrap(),
         SupportedType::Vec(_v) => syn::parse_str("neon::types::JsArray").unwrap(),
         SupportedType::S => syn::parse_str("neon::types::JsObject").unwrap(),
         SupportedType::Tuple(_t) => syn::parse_str("neon::types::JsObject").unwrap(),
@@ -410,6 +411,7 @@ fn get_typescript_type(ty: &SupportedType) -> String {
     match ty {
         SupportedType::Reference(r) => get_typescript_type(r),
         SupportedType::str | SupportedType::String => "string".to_string(),
+        SupportedType::bool => "boolean".to_string(),
         SupportedType::Option(o) => get_typescript_type(o),
         SupportedType::Vec(v) => format!("{}[]", get_typescript_type(v)),
         SupportedType::HashMap((k, v)) => {

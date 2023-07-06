@@ -99,6 +99,18 @@ mod tests {
         Database::new(&connection_string).await.unwrap();
     }
 
+
+    #[tokio::test]
+    async fn can_create_collection() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        let collection_name = "rctest0";
+        let db = Database::new(&connection_string).await.unwrap();
+        let _ = db.create_or_get_collection(collection_name).await.unwrap();
+        let does_collection_exist = db.does_collection_exist(collection_name).await.unwrap();
+        assert_eq!(does_collection_exist, true);
+        db.archive_collection(collection_name).await.unwrap();
+    }
+
     #[tokio::test]
     async fn can_create_collection_and_vector_search() {
         let connection_string = env::var("DATABASE_URL").unwrap();
@@ -187,10 +199,8 @@ mod tests {
         let query = collection
             .query()
             .vector_recall("test query".to_string(), None, None, None)
-            .await
-            .unwrap()
-            .limit(10);
-            // .filter(filter.into());
+            .limit(10)
+            .filter(filter.into());
         query.debug();
         let results = query.run().await.unwrap();
         println!("{:?}", results);

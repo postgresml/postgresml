@@ -1,5 +1,4 @@
 use neon::prelude::*;
-use std::cell::RefCell;
 
 use crate::types::{DateTime, Json};
 

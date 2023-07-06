@@ -1,8 +1,8 @@
 use itertools::Itertools;
 use pgml_macros::{custom_derive, custom_methods};
 use sea_query::{
-    all, extension::postgres::PgExpr, query::SelectStatement, Alias, CommonTableExpression, Expr,
-    Func, Iden, JoinType, Order, PostgresQueryBuilder, Query, QueryStatementWriter, WithClause,
+    extension::postgres::PgExpr, query::SelectStatement, Alias, CommonTableExpression, Expr, Func,
+    Iden, JoinType, Order, PostgresQueryBuilder, Query, QueryStatementWriter, WithClause,
 };
 use sea_query_binder::SqlxBinder;
 
@@ -73,13 +73,13 @@ impl QueryBuilder {
         self
     }
 
-    pub async fn vector_recall(
+    pub fn vector_recall(
         mut self,
         query: String,
         query_params: Option<Json>,
         model_id: Option<i64>,
         splitter_id: Option<i64>,
-    ) -> anyhow::Result<Self> {
+    ) -> Self {
         let query_params = match query_params {
             Some(params) => params.0,
             None => serde_json::json!({}),
@@ -89,33 +89,39 @@ impl QueryBuilder {
 
         let embeddings_table_name = self
             .collection
-            .get_embeddings_table_name(model_id, splitter_id)?;
-
-        let model_name = self
-            .collection
-            .get_model_name(model_id)
-            .await?
-            .unwrap_or_else(|| panic!("Model with id: {} does not exist", model_id));
+            .get_embeddings_table_name(model_id, splitter_id)
+            .expect("Error getting embeddings table name in vector_recall");
 
         let mut query_cte = Query::select();
-        query_cte.expr_as(
-            Func::cust(SIden::Str("pgml.embed")).args([
-                Expr::cust_with_values("transformer => ($1)", [model_name]),
-                Expr::cust_with_values("text => $1", [query]),
-                Expr::cust_with_values("kwargs => $1", [query_params]),
-            ]),
-            Alias::new("query_embedding"),
-        );
+        query_cte
+            .expr_as(
+                Func::cast_as(
+                    Func::cust(SIden::Str("pgml.embed")).args([
+                        Expr::cust("transformer => models.name"),
+                        Expr::cust_with_values("text => $1", [query]),
+                        Expr::cust_with_values("kwargs => $1", [query_params]),
+                    ]),
+                    Alias::new("vector"),
+                ),
+                Alias::new("query_embedding"),
+            )
+            .from_as(
+                self.collection.models_table_name.to_table_tuple(),
+                SIden::Str("models"),
+            )
+            .and_where(Expr::col((SIden::Str("models"), SIden::Str("id"))).eq(model_id));
         let mut query_cte = CommonTableExpression::from_select(query_cte);
         query_cte.table_name(Alias::new("query_cte"));
 
         let mut cte = Query::select();
-        cte.from_as(embeddings_table_name.to_table_tuple(), SIden::Str("embedding"))
-            .inner_join(Alias::new("query_cte"), all![]) // NOTE: This is a hack to make the query work - sea_query does not support postgres cross join correctly
-            .columns([models::EmbeddingIden::ChunkId])
-            .expr(Expr::cust(
-                "1 - (embedding.embedding <=> query_cte.query_embedding :: float8[] :: vector) as score",
-            ));
+        cte.from_as(
+            embeddings_table_name.to_table_tuple(),
+            SIden::Str("embedding"),
+        )
+        .columns([models::EmbeddingIden::ChunkId])
+        .expr(Expr::cust(
+            "1 - (embedding.embedding <=> (select query_embedding from query_cte)) as score",
+        ));
         let mut cte = CommonTableExpression::from_select(cte);
         cte.table_name(Alias::new("cte"));
 
@@ -145,7 +151,7 @@ impl QueryBuilder {
             )
             .order_by((SIden::Str("cte"), SIden::Str("score")), Order::Desc);
 
-        Ok(self)
+        self
     }
 
     pub async fn run(self) -> anyhow::Result<Vec<(f64, String, Json)>> {
