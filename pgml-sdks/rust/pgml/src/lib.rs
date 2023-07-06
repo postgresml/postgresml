@@ -15,6 +15,7 @@ mod queries;
 mod query_builder;
 pub mod types;
 mod utils;
+mod query_runner;
 
 // Pub re-export the Database and Collection structs for use in the rust library
 pub use collection::Collection;
