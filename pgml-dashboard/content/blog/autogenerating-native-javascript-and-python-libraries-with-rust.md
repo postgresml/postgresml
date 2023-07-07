@@ -9,7 +9,7 @@ description: A story and example of simultaneously writing multi-language native
   <img width="54px" height="54px" src="/dashboard/static/images/team/silas.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
   	<p class="m-0">Silas Marvin</p>
-  	<p class="m-0">June 21, 2023</p>
+  	<p class="m-0">July 7, 2023</p>
   </div>
 </div>
 
@@ -17,17 +17,21 @@ description: A story and example of simultaneously writing multi-language native
 ## Introduction
 The tools we have created at PostgresML are powerful and flexible. There are almost an infinite number of ways our tools can be utilized to power vector search, model inference, and much more. Like many companies before us, we want our users to have the benefits of our tools without the drawbacks of reading through expansive documentation, so we built an SDK.
 
-
-We are huge fans of Rust. Almost our entire codebase is written in Rust, and we find that using it as our primary language allows us to write safer code and iterate
+We are huge fans of Rust (almost our entire codebase is written in it), and we find that using it as our primary language allows us to write safer code and iterate
 through our development cycles faster. However, the majority of our users currently work in languages like Python and JavaScript. There would be no point making
 an SDK for Rust, when no one would use it. After much deliberation, we finalized the following requirements for our SDK:
 1. It must be available natively in multiple languages
 2. It must be written in Rust
-3. Adding new languages should only include minimal overhead (bonus requirement)
+3. Adding new languages should only include minimal overhead
 
 ## What is Wrong With FFIs 
-FFIs are the standard way for programs written in one language to call functions written in another. In terms of our SDK, we could utilize FFIs by writing the core logic of our SDK in Rust, and calling our Rust functions through FFIs from the language of our choice. This unfortunately does not provide the utility we desire. Take for example the following Python code:
-```
+
+The first requirement of our SDK is that is available natively in multiple languages, and the second is that it is written in Rust. At first glance, this seems
+like a contradiction, but there is a very well known system for writing functions in one language and using them in another known as FFIs (foreign function
+interfaces). In terms of our SDK, we could utilize FFIs by writing the core logic of our SDK in Rust, and calling our Rust functions through FFIs from the
+language of our choice. This unfortunately does not provide the utility we desire. Take for example the following Python code:
+
+```python
 class Database:
 	def __init__(self, connection_string: str):
 		# Create some connection
@@ -49,15 +53,15 @@ One of the requirement of our SDK is that we write it in Rust. Specifically, in 
 - FFI's have no concept of Python classes
 - FFI's have no concept of Python async
 
-We could write our own Python wrapper around our FFI, but that would go against bonus requirement 3: Adding new languages should only include minimal overhead.
+We could write our own Python wrapper around our FFI, but that would go against requirement 3: Adding new languages should only include minimal overhead.
 Translating every update from our Rust SDK into a wrapper for each language we add is not minimal overhead.
 
-## Enter pyO3 and neon
-[pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) are Rust crates that help with building native modules for Python and JavaScript. They provide systems that allow us to seamlessly interact with async code and native classes, bypassing the limitations that vanilla FFIs imposed.
+## Enter pyO3 and Neon
+[Pyo3](https://github.com/PyO3/pyo3) and [Neon](https://neon-bindings.com/) are Rust crates that help with building native modules for Python and JavaScript. They provide systems that allow us to write Rust code that can seamlessly interact with async code and native classes in Python and JavaScript, bypassing the limitations that vanilla FFIs imposed.
 
-Let's take a look at what Rust code that creates a Python class with [pyo3](https://github.com/PyO3/pyo3) and a JavaScript class with [neon](https://neon-bindings.com/) looks like. For ease of use, let's say we have the following struct in Rust:
+Let's take a look at some Rust code that creates a Python class with [Pyo3](https://github.com/PyO3/pyo3) and a JavaScript class with [Neon](https://neon-bindings.com/). For ease of use, let's say we have the following struct in Rust:
 
-```
+```python
 struct Database{
 	connection_string: String
 }
@@ -77,9 +81,11 @@ impl Database {
 }
 ```
 
-Here is the code augmented to work with [pyo3](https://github.com/PyO3/pyo3).
+Here is the code augmented to work with [Pyo3](https://github.com/PyO3/pyo3) and [Neon](https://neon-bindings.com/):
 
-```
+=== "Pyo3"
+
+```rust
 use pyo3::prelude::*;
 
 struct Database{
@@ -112,9 +118,9 @@ fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
 }
 ```
 
-Here is the code augmented to work with [neon](https://neon-bindings.com/)
+=== "Neon"
 
-```
+```rust
 use neon::prelude::*;
 
 struct Database{
@@ -186,14 +192,16 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
 }
 ```
 
-## Automatically Converting Vanilla Rust to py03 and neon compatible Rust
+===
+
+## Automatically Converting Vanilla Rust to py03 and Neon compatible Rust
 We have successfully written a native Python and JavaScript module in Rust. However, our goal is far from complete. Our desire is to write our SDK once in Rust, and make it available in any language we target. While the above made it available in Python and JavaScript, it is both no longer a valid Rust library, and required a bunch of manual edits to make available in both languages. 
 
-Really what we want is to write our Rust library without worrying about any translation, and apply some macros that auto convert into what [pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) need. This sounds like a perfect use for [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html). If you are unfamiliar with macros I really recommend reading [The Little Book of Rust Macros](https://danielkeep.github.io/tlborm/book/README.html) it is free, a quick read, and provides an awesome introduction to macros.
+Really what we want is to write our Rust library without worrying about any translation, and apply some macros that auto convert into what [Pyo3](https://github.com/PyO3/pyo3) and [Neon](https://neon-bindings.com/) need. This sounds like a perfect use for [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html). If you are unfamiliar with macros I really recommend reading [The Little Book of Rust Macros](https://danielkeep.github.io/tlborm/book/README.html) it is free, a quick read, and provides an awesome introduction to macros.
 
 Let's slightly edit the struct we defined previously:
 
-```
+```rust
 #[custom_derive_class]
 struct Database{
 	connection_string: String
@@ -218,7 +226,7 @@ impl Database {
 Notice that there are two new macros we have not seen before: `custom_derive_class` and `custom_derive_methods`. Both of these are macros we have written.
 
 `custom_derive_class` creates wrappers for our `Database` struct. Let's show the expanded code our `custom_derive_class` generates:
-```
+```rust
 #[pyclass]
 struct DatabasePython {
 	wrapped: Database
@@ -254,11 +262,11 @@ impl IntoJsResult for Database {
 There are a couple important things happening here:
 1. Our `custom_derive_class` macro creates a new struct for each language we target. 
 2. The derived Python struct automatically implements `pyclass`
-3. Because [neon](https://neon-bindings.com/) does not have a version of the `pyclass` macro, we implement our own trait `IntoJsResult` to do some conversions between vanilla Rust types and [neon](https://neon-bindings.com/) Rust
+3. Because [Neon](https://neon-bindings.com/) does not have a version of the `pyclass` macro, we implement our own trait `IntoJsResult` to do some conversions between vanilla Rust types and [Neon](https://neon-bindings.com/) Rust
 
 Creating a macro like the above is actually incredibly simple. The code below shows how it is done for the Python variant.
 
-```
+```rust
 #[proc_macro_derive(custom_derive)]
 pub fn custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	let parsed = parse_macro_input!(input as DeriveInput);
@@ -277,7 +285,7 @@ pub fn custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
 Let's look at the expanded code our `custom_derive_methods` macro produces when used on the `Database` struct:
 
-```
+```rust
 #[pymethods]
 impl DatabasePython {
 	#[new]
@@ -378,7 +386,7 @@ How does the macro actually work? We can break the `custom_derive_methods` macro
 
 ### Method Destruction
 Utilizing the [syn crate](https://crates.io/crates/syn) we parse the `impl` block of the `Database` struct and iterate over the individual methods parsing them into our own type:
-```
+```rust
 pub struct GetImplMethod {
 	pub exists: bool,
 	pub method_ident: Ident,
@@ -390,7 +398,7 @@ pub struct GetImplMethod {
 ```
 
 Here `SupportType` and `OutputType` are our custom enums of types we support, looking something like:
-```
+```rust
 pub enum SupportedType {
 	Reference(Box<SupportedType>),
 	str,
@@ -414,8 +422,8 @@ pub enum OutputType {
 ```
 
 ### Signature Translation
-We must translate the signature into the Rust code [pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) expects. This means adjusting the arguments, async declaration, and output type. This is actually extraordinarily simple now that we have destructed the method. For instance, here is a simple example of translating the output type for Python:
-```
+We must translate the signature into the Rust code [Pyo3](https://github.com/PyO3/pyo3) and [Neon](https://neon-bindings.com/) expects. This means adjusting the arguments, async declaration, and output type. This is actually extraordinarily simple now that we have destructed the method. For instance, here is a simple example of translating the output type for Python:
+```rust
 fn convert_output_type(
 	ty: &SupportedType,
 	method: &GetImplMethod,
@@ -434,7 +442,7 @@ fn convert_output_type(
 ```
 
 ### Method Reconstruction
-Now we have all the information we need to reconstruct the methods in the format [pyo3](https://github.com/PyO3/pyo3) and [neon](https://neon-bindings.com/) need to create native modules. 
+Now we have all the information we need to reconstruct the methods in the format [Pyo3](https://github.com/PyO3/pyo3) and [Neon](https://neon-bindings.com/) need to create native modules. 
 
 The actual reconstruction is quite boring, mostly filled with a bunch of `if else` statements writing and combining token streams using the [quote crate](https://crates.io/crates/quote), so we will omit it for brevity's sake. For the curious, here is a link to our actual implementation: [github](https://github.com/postgresml/postgresml/blob/545ccb613413eab4751bf03ea4c020c09b20af3c/pgml-sdks/rust/pgml-macros/src/python.rs#L152C1-L238).
 
