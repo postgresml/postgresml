@@ -12,9 +12,13 @@ vars:
   task: "embedding"
   model_name: "intfloat/e5-base"
 <<<<<<< HEAD
+<<<<<<< HEAD
   #embeddings_table_name: "embeddings_intfloat_e5_small"
 =======
 >>>>>>> dbt tutorial first draft
+=======
+  embeddings_table_name: "embeddings_intfloat_e5_small"
+>>>>>>> dbt example working version
   query_string: 'Lorem ipsum 3'
   limit: 2
 
