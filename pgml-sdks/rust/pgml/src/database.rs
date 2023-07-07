@@ -1,6 +1,6 @@
 use pgml_macros::{custom_derive, custom_methods};
-use sqlx::postgres::PgConnectOptions;
-use sqlx::postgres::{PgPool, PgPoolOptions};
+use sqlx::postgres::{PgConnectOptions, PgPool, PgPoolOptions};
+use sqlx::Row;
 use std::borrow::Borrow;
 use std::str::FromStr;
 use std::time::SystemTime;
@@ -13,6 +13,7 @@ use crate::query_runner::QueryRunner;
 
 #[cfg(feature = "javascript")]
 use crate::languages::javascript::*;
+use crate::types::Json;
 
 /// A connection to a postgres database
 #[derive(custom_derive, Clone, Debug)]
@@ -25,7 +26,8 @@ pub struct Database {
     create_or_get_collection,
     does_collection_exist,
     archive_collection,
-    query
+    query,
+    transform
 )]
 impl Database {
     /// Create a new [Database]
@@ -181,5 +183,31 @@ impl Database {
     ///```
     pub fn query(&self, query: &str) -> QueryRunner {
         QueryRunner::new(query, self.pool.clone())
+    }
+
+    // pub async fn transform(&self, task: Json, inputs: Vec<String>, args: Option<Json>) -> anyhow::Result<Json> {
+    pub async fn transform(
+        &self,
+        task: Json,
+        inputs: Vec<String>,
+        args: Option<Json>,
+    ) -> anyhow::Result<Json> {
+        let args = match args {
+            Some(a) => a.0,
+            None => serde_json::json!({}),
+        };
+        let query = sqlx::query("SELECT pgml.transform(task => $1, inputs => $2, args => $3)");
+        let query = if task.0.is_string() {
+            query.bind(task.0.as_str())
+        } else {
+            query.bind(task.0)
+        };
+        let results = query
+            .bind(inputs)
+            .bind(args)
+            .fetch_all(self.pool.borrow())
+            .await?;
+        let results = results.get(0).unwrap().get::<serde_json::Value, _>(0);
+        Ok(Json(results))
     }
 }

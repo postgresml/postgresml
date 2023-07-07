@@ -45,9 +45,9 @@ impl QueryRunner {
     pub async fn fetch_all(mut self) -> anyhow::Result<Json> {
         self.query = format!("SELECT json_agg(j) FROM ({}) j", self.query);
         let query = self.build_query();
-        let values = query.fetch_all(&self.pool).await?;
-        let values = values.get(0).unwrap().get::<serde_json::Value, _>(0); 
-        Ok(Json(values))
+        let results = query.fetch_all(&self.pool).await?;
+        let results = results.get(0).unwrap().get::<serde_json::Value, _>(0); 
+        Ok(Json(results))
     }
 
     pub async fn execute(self) -> anyhow::Result<()> {
