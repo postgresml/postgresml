@@ -216,4 +216,20 @@ mod tests {
         let results = query.fetch_all().await.unwrap();
         println!("{:?}", results);
     }
+
+    #[tokio::test]
+    async fn transform() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        init_logger(LevelFilter::Info).ok();
+
+        let db = Database::new(&connection_string).await.unwrap();
+        // let task = Json::from(serde_json::json!("text-classification"));
+        let task = Json::from(serde_json::json!("translation_en_to_fr"));
+        let inputs = vec![
+            "test1".to_string(),
+            "test2".to_string(),
+        ];
+        let results = db.transform(task, inputs, None).await.unwrap();
+        println!("{:?}", results);
+    }
 }

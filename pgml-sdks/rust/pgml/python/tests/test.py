@@ -72,8 +72,15 @@ async def query_runner():
     results = await db.query("SELECT * from pgml.collections").fetch_all()
     print(results)
 
+async def transform():
+    db = pgml.Database(CONNECTION_STRING)
+    # results = await db.query("SELECT * from pgml.collections WHERE id = $1").bind_int(1).fetch_all()
+    results = await db.transform("translation_en_to_fr", ["This is a test", "This is a test 2"])
+    print(results)
+
 
 if __name__ == "__main__":
-    asyncio.run(query_builder())    
+    # asyncio.run(query_builder())    
     # asyncio.run(main())    
     # asyncio.run(query_runner())
+    asyncio.run(transform())
