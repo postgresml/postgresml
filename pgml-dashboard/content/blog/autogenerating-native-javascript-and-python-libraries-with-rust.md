@@ -1,9 +1,9 @@
 ---
 author: Silas Marvin 
-description: A story and example of simultaneously writing multi-language native libraries using Rust
+description: Our story of simultaneously writing multi-language native libraries using Rust
 ---
 
-# Simultaneously Writing Multi-Language Native Libraries
+# Autogenerating Native JavaScript and Python Libraries with Rust
 
 <div class="d-flex align-items-center mb-4">
   <img width="54px" height="54px" src="/dashboard/static/images/team/silas.jpg" style="border-radius: 50%;" alt="Author" />
