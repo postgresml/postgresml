@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "pgml-dbt-embeddings"
+version = "0.1.0"
+description = ""
+authors = ["Santi Adavani <santis@gmail.com>"]
+readme = "README.md"
+packages = [{include = "pgml_dbt"}]
+
+[tool.poetry.dependencies]
+python = ">=3.7.2,<4.0"
+dbt-postgres = "^1.5.2"
+dbt-core = "^1.5.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
