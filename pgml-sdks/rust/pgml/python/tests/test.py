@@ -56,8 +56,11 @@ async def query_builder():
     await collection.generate_chunks()
     await collection.generate_embeddings()
 
-    results = await collection.query().vector_recall("test").filter_metadata({"id": 1}).limit(10).run()
-    # results = await collection.query().vector_recall("test").filter_full_text('PostgresML', 'english').limit(10).run()
+    query = collection.query().vector_recall("test").filter_full_text('PostgresML', 'english').limit(10)
+    # query = collection.query().vector_recall("test").filter_metadata({"id": 1}).limit(10)
+    print("Running query:")
+    print(query.to_string())
+    results = await query.run()
     print("The results:")
     print(results)
 
@@ -71,6 +74,6 @@ async def query_runner():
 
 
 if __name__ == "__main__":
-    # asyncio.run(query_builder())    
+    asyncio.run(query_builder())    
     # asyncio.run(main())    
-    asyncio.run(query_runner())
+    # asyncio.run(query_runner())

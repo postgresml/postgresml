@@ -190,7 +190,7 @@ mod tests {
         collection.generate_chunks(None).await.unwrap();
         collection.register_model(None, None, None).await.unwrap();
         collection.generate_embeddings(None, None).await.unwrap();
-        collection.generate_tsvectors("english").await.unwrap();
+        collection.generate_tsvectors(None).await.unwrap();
         
         let filter = serde_json::json! ({
             "id": 1
@@ -199,10 +199,9 @@ mod tests {
         let query = collection
             .query()
             .vector_recall("test query".to_string(), None, None, None)
-            .filter_full_text("10", "english")
+            .filter_full_text("10", None)
             .limit(10);
             // .filter_metadata(filter.into());
-        query.debug();
         let results = query.run().await.unwrap();
         println!("{:?}", results);
     }

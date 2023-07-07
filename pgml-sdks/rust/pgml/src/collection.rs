@@ -398,7 +398,8 @@ impl Collection {
         Ok(())
     }
 
-    pub async fn generate_tsvectors(&self, configuration: &str) -> anyhow::Result<()> {
+    pub async fn generate_tsvectors(&self, configuration: Option<String>) -> anyhow::Result<()> {
+        let configuration = configuration.unwrap_or("english".to_string());
         sqlx::query(&query_builder!(
             queries::GENERATE_TSVECTORS,
             self.documents_tsvectors_table_name,
