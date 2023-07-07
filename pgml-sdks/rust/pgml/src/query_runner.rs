@@ -25,7 +25,7 @@ pub struct QueryRunner {
 }
 
 #[custom_methods(
-    fetch_as_json,
+    fetch_all,
     execute,
     bind_string,
     bind_int,
@@ -42,18 +42,11 @@ impl QueryRunner {
         }
     }
 
-    pub async fn fetch_as_json(mut self) -> anyhow::Result<Json> {
+    pub async fn fetch_all(mut self) -> anyhow::Result<Json> {
         self.query = format!("SELECT json_agg(j) FROM ({}) j", self.query);
         let query = self.build_query();
         let values = query.fetch_all(&self.pool).await?;
-        let values = values
-            .into_iter()
-            .map(|v| {
-                v.try_get::<serde_json::Value, _>(0)
-                    .expect("Error converting to Json in execute for QueryRunner")
-            })
-            .collect::<Vec<_>>();
-        let values = serde_json::Value::Array(values);
+        let values = values.get(0).unwrap().get::<serde_json::Value, _>(0); 
         Ok(Json(values))
     }
 

@@ -160,6 +160,24 @@ impl Database {
         Ok(())
     }
 
+    /// Run an arbitrary query
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - The query to run
+    ///
+    /// # Example
+    ///```
+    /// use pgml::Database;
+    ///
+    /// const CONNECTION_STRING: &str = "postgres://postgres@localhost:5432/pgml_development";
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///   let db = Database::new(CONNECTION_STRING).await?;
+    ///   let query = "SELECT * FROM pgml.collections";
+    ///   let results = db.query(query).fetch_all().await?;
+    /// }
+    ///```
     pub fn query(&self, query: &str) -> QueryRunner {
         QueryRunner::new(query, self.pool.clone())
     }

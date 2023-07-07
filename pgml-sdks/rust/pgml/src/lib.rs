@@ -212,7 +212,7 @@ mod tests {
 
         let db = Database::new(&connection_string).await.unwrap();
         let query = db.query("SELECT * from pgml.collections");
-        let results = query.fetch_as_json().await.unwrap();
+        let results = query.fetch_all().await.unwrap();
         println!("{:?}", results);
     }
 }

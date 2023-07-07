@@ -58,7 +58,8 @@ async def query_builder():
 
 async def query_runner():
     db = pgml.Database(CONNECTION_STRING)
-    results = await db.query("SELECT * from pgml.collections WHERE id = $1").bind_int(1).fetch_as_json()
+    # results = await db.query("SELECT * from pgml.collections WHERE id = $1").bind_int(1).fetch_all()
+    results = await db.query("SELECT * from pgml.collections").fetch_all()
     print(results)
 
 
