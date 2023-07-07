@@ -103,21 +103,21 @@ mod tests {
     #[tokio::test]
     async fn can_create_collection() {
         let connection_string = env::var("DATABASE_URL").unwrap();
-        let collection_name = "rctest0";
+        let collection_name = "rctest2";
         let db = Database::new(&connection_string).await.unwrap();
         let _ = db.create_or_get_collection(collection_name).await.unwrap();
         let does_collection_exist = db.does_collection_exist(collection_name).await.unwrap();
         assert_eq!(does_collection_exist, true);
-        db.archive_collection(collection_name).await.unwrap();
+        // db.archive_collection(collection_name).await.unwrap();
     }
 
     #[tokio::test]
-    async fn can_create_collection_and_vector_search() {
+    async fn can_vector_search() {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
         init_logger(LevelFilter::Error).ok();
 
-        let collection_name = "test34";
+        let collection_name = "rctest0";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
@@ -162,7 +162,7 @@ mod tests {
         let connection_string = env::var("DATABASE_URL").unwrap();
         init_logger(LevelFilter::Error).ok();
 
-        let collection_name = "rqtest5";
+        let collection_name = "rqtest8";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
@@ -174,7 +174,7 @@ mod tests {
                 "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
             }).into());
         }
-
+        
         collection
             .upsert_documents(documents, None, None)
             .await
@@ -190,17 +190,18 @@ mod tests {
         collection.generate_chunks(None).await.unwrap();
         collection.register_model(None, None, None).await.unwrap();
         collection.generate_embeddings(None, None).await.unwrap();
-
+        collection.generate_tsvectors(None).await.unwrap();
+        
         let filter = serde_json::json! ({
             "id": 1
         });
-
+        
         let query = collection
             .query()
             .vector_recall("test query".to_string(), None, None, None)
-            .limit(10)
-            .filter(filter.into());
-        query.debug();
+            .filter_full_text("10", None)
+            .limit(10);
+            // .filter_metadata(filter.into());
         let results = query.run().await.unwrap();
         println!("{:?}", results);
     }
