@@ -42,7 +42,7 @@ jobs:
       - name: Create dist directory
         run: mkdir ../../python/dist
       - name: Build wheels
-        run: maturin build --release --strip -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist
+        run: maturin build --release --strip -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist -F python
       - name: Deploy wheels
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
@@ -64,7 +64,8 @@ jobs:
           command: version
       - name: Install dependencies
         run: |
-          brew update
+          # brew upgrade
+          # brew update
           brew install python@3.8
           brew install python@3.9
           brew install python@3.10
@@ -73,7 +74,7 @@ jobs:
       - name: Create dist directory
         run: mkdir ../../python/dist
       - name: Build wheels
-        run: maturin build --release --strip -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist
+        run: maturin build --release --strip -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist -F python
       - name: Deploy wheels
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
@@ -107,7 +108,7 @@ jobs:
       - name: Create dist directory
         run: mkdir ..\..\python\dist
       - name: Build wheels
-        run: maturin build --release --strip -o ..\..\python\pgml\dist
+        run: maturin build --release --strip -o ..\..\python\pgml\dist -F python
       - name: Deploy wheels
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

@@ -9,14 +9,17 @@ pub enum SupportedType {
     Reference(Box<SupportedType>),
     str,
     String,
+    bool,
     Vec(Box<SupportedType>),
     HashMap((Box<SupportedType>, Box<SupportedType>)),
     Option(Box<SupportedType>),
     JsonHashMap,
+    Json,
     DateTime,
     Tuple(Vec<SupportedType>),
     S, // Self for return types only
     i64,
+    u64,
     i32,
     f64,
     // Our own types
@@ -24,6 +27,7 @@ pub enum SupportedType {
     Collection,
     Splitter,
     Model,
+    QueryBuilder
 }
 
 impl ToString for SupportedType {
@@ -32,6 +36,8 @@ impl ToString for SupportedType {
             SupportedType::Reference(t) => format!("&{}", t.to_string()),
             SupportedType::str => "str".to_string(),
             SupportedType::String => "String".to_string(),
+            SupportedType::bool => "bool".to_string(),
+            SupportedType::Json => "Json".to_string(),
             SupportedType::Vec(v) => format!("Vec<{}>", v.to_string()),
             SupportedType::HashMap((k, v)) => {
                 format!("HashMap<{},{}>", k.to_string(), v.to_string())
@@ -46,6 +52,7 @@ impl ToString for SupportedType {
             SupportedType::S => "Self".to_string(),
             SupportedType::Option(v) => format!("Option<{}>", v.to_string()),
             SupportedType::i64 => "i64".to_string(),
+            SupportedType::u64 => "u64".to_string(),
             SupportedType::i32 => "i32".to_string(),
             SupportedType::f64 => "f64".to_string(),
             SupportedType::JsonHashMap => "JsonHashMap".to_string(),
@@ -55,6 +62,7 @@ impl ToString for SupportedType {
             SupportedType::Collection => "Collection".to_string(),
             SupportedType::Splitter => "Splitter".to_string(),
             SupportedType::Model => "Model".to_string(),
+            SupportedType::QueryBuilder => "QueryBuilder".to_string(),
         }
     }
 }
@@ -79,7 +87,6 @@ impl GetSupportedType {
 
     pub fn get_type_from_path(i: &syn::TypePath) -> SupportedType {
         let mut s = Self::default();
-        // println!("THE PATH {:?}", i);
         s.visit_path(&i.path);
         s.ty.expect("Error getting type from TypePath")
     }
@@ -133,6 +140,7 @@ impl<'ast> Visit<'ast> for GetSupportedType {
         self.ty = match segment_name.as_str() {
             "str" => Some(SupportedType::str),
             "String" => Some(SupportedType::String),
+            "bool" => Some(SupportedType::bool),
             "Vec" => Some(SupportedType::Vec(Box::new(
                 Self::get_type_from_path_argument(&i.arguments),
             ))),
@@ -158,13 +166,16 @@ impl<'ast> Visit<'ast> for GetSupportedType {
             "DateTime" => Some(SupportedType::DateTime),
             "Self" => Some(SupportedType::S),
             "i64" => Some(SupportedType::i64),
+            "u64" => Some(SupportedType::u64),
             "i32" => Some(SupportedType::i32),
             "f64" => Some(SupportedType::f64),
+            "Json" => Some(SupportedType::Json),
             // Our own types
             "Database" => Some(SupportedType::Database),
             "Collection" => Some(SupportedType::Collection),
             "Splitter" => Some(SupportedType::Splitter),
             "Model" => Some(SupportedType::Model),
+            "QueryBuilder" => Some(SupportedType::QueryBuilder),
             _ => None,
         };
 

@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
   created_at timestamptz NOT NULL DEFAULT now(), 
   chunk_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  embedding vector(%s) NOT NULL
+  embedding vector(%d) NOT NULL
 );
 "#;
 
@@ -68,15 +68,15 @@ CREATE TABLE IF NOT EXISTS %s (
 // CREATE INDICES ///////////
 /////////////////////////////
 pub const CREATE_INDEX: &str = r#"
-CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%d);
 "#;
 
 pub const CREATE_INDEX_USING_GIN: &str = r#"
-CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING GIN (%s);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING GIN (%d);
 "#;
 
 pub const CREATE_INDEX_USING_IVFFLAT: &str = r#"
-CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING ivfflat (%s);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING ivfflat (%d);
 "#;
 
 /////////////////////////////
@@ -122,36 +122,22 @@ WHERE
 "#;
 
 pub const VECTOR_SEARCH: &str = r#"
-WITH model AS (
-  SELECT 
-    name 
-  FROM 
-    %s 
-  WHERE 
-    id = $1 
-), 
-query_cte AS (
+WITH query_cte AS (
   SELECT 
     pgml.embed(
-      transformer => (
-        SELECT 
-          name 
-        from 
-          model
-      ), 
-      text => $2, 
-      kwargs => $3 
-    ) AS query_embedding
+      transformer => models.name, 
+      text => $1, 
+      kwargs => $2 
+    )::vector AS query_embedding from %s models where models.id = $3
 ), 
 cte AS (
   SELECT 
     chunk_id, 
     1 - (
-      %s.embedding <=> query_cte.query_embedding :: float8[] :: vector
+      %s.embedding <=> (SELECT query_embedding FROM query_cte)
     ) AS score 
   FROM 
-    %s CROSS 
-    JOIN query_cte 
+    %s 
 ) 
 SELECT 
   cte.score, 

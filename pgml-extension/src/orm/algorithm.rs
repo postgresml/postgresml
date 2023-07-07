@@ -38,6 +38,15 @@ pub enum Algorithm {
     linear_svm,
     lightgbm,
     transformers,
+    affinity_propagation,
+    birch,
+    feature_agglomeration,
+    mini_batch_kmeans,
+    mean_shift,
+    optics,
+    spectral,
+    spectral_bi,
+    spectral_co,
 }
 
 impl std::str::FromStr for Algorithm {
@@ -79,6 +88,15 @@ impl std::str::FromStr for Algorithm {
             "linear_svm" => Ok(Algorithm::linear_svm),
             "lightgbm" => Ok(Algorithm::lightgbm),
             "transformers" => Ok(Algorithm::transformers),
+            "affinity_propagation" => Ok(Algorithm::affinity_propagation),
+            "birch" => Ok(Algorithm::birch),
+            "feature_agglomeration" => Ok(Algorithm::feature_agglomeration),
+            "mini_batch_kmeans" => Ok(Algorithm::mini_batch_kmeans),
+            "mean_shift" => Ok(Algorithm::mean_shift),
+            "optics" => Ok(Algorithm::optics),
+            "spectral" => Ok(Algorithm::spectral),
+            "spectral_bi" => Ok(Algorithm::spectral_bi),
+            "spectral_co" => Ok(Algorithm::spectral_co),
             _ => Err(()),
         }
     }
@@ -123,6 +141,15 @@ impl std::string::ToString for Algorithm {
             Algorithm::linear_svm => "linear_svm".to_string(),
             Algorithm::lightgbm => "lightgbm".to_string(),
             Algorithm::transformers => "transformers".to_string(),
+            Algorithm::affinity_propagation => "transformers".to_string(),
+            Algorithm::birch => "birch".to_string(),
+            Algorithm::feature_agglomeration => "feature_agglomeration".to_string(),
+            Algorithm::mini_batch_kmeans => "mini_batch_kmeans".to_string(),
+            Algorithm::mean_shift => "mean_shift".to_string(),
+            Algorithm::optics => "optics".to_string(),
+            Algorithm::spectral => "spectral".to_string(),
+            Algorithm::spectral_bi => "spectral_bi".to_string(),
+            Algorithm::spectral_co => "spectral_co".to_string(),
         }
     }
 }

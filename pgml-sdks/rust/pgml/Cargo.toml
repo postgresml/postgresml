@@ -1,6 +1,6 @@
 [package]
 name = "pgml"
-version = "0.7.0"
+version = "0.7.2"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,14 +15,17 @@ serde_json = "1.0.9"
 anyhow = "1.0.9"
 tokio = { version = "1.28.2", features = [ "macros" ] }
 chrono = "0.4.9"
-pyo3 = "0.18.3"
-pyo3-asyncio = { version = "0.18", features = ["attributes", "tokio-runtime"] }
+pyo3 = { version = "0.18.3", optional = true, features = ["extension-module"] }
+pyo3-asyncio = { version = "0.18", features = ["attributes", "tokio-runtime"], optional = true }
+neon = { version = "0.10", optional = true, default-features = false, features = ["napi-6", "promise-api", "channel-api"] }
 itertools = "0.10.5"
 uuid = {version = "1.3.3", features = ["v4"] }
 md5 = "0.7.0"
 log = "0.4.18"
+sea-query = { version = "0.28.5", features = ["attr", "thread-safe", "with-json"] }
+sea-query-binder = { version = "0.3.1", features = ["sqlx-postgres", "with-json"] }
+regex = "1.8.4"
 
-[dependencies.neon]
-version = "0.10"
-default-features = false
-features = ["napi-6", "promise-api", "channel-api"]
+[features]
+python = ["dep:pyo3", "dep:pyo3-asyncio"]
+javascript = ["dep:neon"]

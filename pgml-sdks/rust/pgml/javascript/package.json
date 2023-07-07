@@ -1,19 +1,26 @@
 {
   "name": "pgml",
-  "version": "0.1.0",
-  "description": "",
-  "main": "index.node",
-  "type": "module",
+  "version": "0.1.6",
+  "description": "Open Source Alternative for Building End-to-End Vector Search Applications without OpenAI & Pinecone",
+  "keywords": ["postgres", "machine learning", "vector databases", "embeddings"],
+  "main": "index.js",
   "scripts": {
-    "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics",
+    "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics -F javascript",
     "build-debug": "npm run build --",
-    "build-release": "npm run build -- --release",
-    "install": "npm run build-release",
-    "test": "cargo test"
+    "build-release": "npm run build -- --release"
   },
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "name": "PostgresML",
+    "email": "team@postgresml.org",
+    "url": "https://postgresml.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/postgresml/postgresml"
+  },
+  "license": "MIT",
   "devDependencies": {
+    "@types/node": "^20.3.1",
     "cargo-cp-artifact": "^0.1"
   }
 }

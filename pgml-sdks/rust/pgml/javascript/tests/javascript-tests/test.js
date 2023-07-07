@@ -1,10 +1,10 @@
-const pgml = require('../index.node');
+import pgml from '../../index.js'
 
 const CONNECTION_STRING = process.env.DATABASE_URL;
 
 async function test() {
   let db = await pgml.newDatabase(CONNECTION_STRING);
-  let collection_name = "jtest2"
+  let collection_name = "jtest7"
   let collection = await db.create_or_get_collection(collection_name);
   console.log("The Collection:")
   console.log(collection)
@@ -13,21 +13,21 @@ async function test() {
     "text": "Hello, World! - From Javascript",
   }
   await collection.upsert_documents([doc]);
-  await collection.register_text_splitter()
+  await collection.register_text_splitter("recursive_character", {chunk_size: 1500, chunk_overlap: 4})
   let splitters = await collection.get_text_splitters();
   console.log("The Splitters:")
   splitters.forEach((splitter) => {
     console.log(splitter);
   })
-  await collection.generate_chunks();
+  await collection.generate_chunks(2);
   await collection.register_model("embedding", "intfloat/e5-small");
   let models = await collection.get_models();
   console.log("The Models:")
   models.forEach((model) => {
     console.log(model);
   })
-  await collection.generate_embeddings();
-  let results = await collection.vector_search("small", {}, 2);
+  await collection.generate_embeddings(1, 2);
+  let results = await collection.vector_search("small", {}, 2, 1, 2);
   console.log("The Results:")
   results.forEach((result) => {
     console.log(result);

@@ -1,0 +1,78 @@
+name: deploy javascript sdk
+on:
+  workflow_dispatch:
+jobs:
+  build-javascript-sdk:
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm", "macos-latest", "windows-latest"]
+        include:
+          - neon-out-name: "x86_64-unknown-linux-gnu-index.node"
+            os: "ubuntu-22.04"
+          - neon-out-name: "aarch64-unknown-linux-gnu-index.node"
+            os: "buildjet-4vcpu-ubuntu-2204-arm"
+          - neon-out-name: "x86_64-apple-darwin-index.node"
+            os: "macos-latest"
+          - neon-out-name: "x86_64-pc-windows-gnu-index.node"
+            os: "windows-latest"
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: pgml-sdks/rust/pgml/javascript
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Validate cargo is working
+        uses: postgresml/gh-actions-cargo@master
+        with:
+          command: version
+      - name: Do build
+        run: |
+          npm i 
+          npm run build-release
+          mv index.node ${{ matrix.neon-out-name }}
+      - name: Display output files 
+        run: ls -R
+      - name: Upload built .node file
+        uses: actions/upload-artifact@v3
+        with:
+          name: node-artifacts 
+          path: pgml-sdks/rust/pgml/javascript/${{ matrix.neon-out-name }}
+          retention-days: 1
+  # publish-javascript-sdk:
+  #   needs: build-javascript-sdk
+  #   runs-on: "ubuntu-22.04"
+  #   defaults:
+  #     run:
+  #       working-directory: pgml-sdks/rust/pgml/javascript
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #     - name: Validate cargo is working
+  #       uses: postgresml/gh-actions-cargo@master
+  #       with:
+  #         command: version
+  #     - name: Create artifact directory
+  #       run: mkdir dist
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: node-artifacts
+  #         path: pgml-sdks/rust/pgml/javascript/dist
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '20.x'
+  #         registry-url: 'https://registry.npmjs.org'
+  #     - name: Generate types declaration
+  #       run: |
+  #         npm i
+  #         npm run build 
+  #         rm index.node
+  #     - run: npm ci
+  #     - run: npm publish
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

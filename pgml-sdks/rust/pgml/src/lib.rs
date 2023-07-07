@@ -5,8 +5,6 @@
 //! With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
-use neon::prelude::*;
-use pyo3::prelude::*;
 use tokio::runtime::{Builder, Runtime};
 
 mod collection;
@@ -14,6 +12,8 @@ mod database;
 mod languages;
 pub mod models;
 mod queries;
+mod query_builder;
+pub mod types;
 mod utils;
 
 // Pub re-export the Database and Collection structs for use in the rust library
@@ -66,8 +66,9 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
     }
 }
 
-#[pymodule]
-fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
+#[cfg(feature = "python")]
+#[pyo3::pymodule]
+fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     // We may want to move this into the new function in the DatabasePython struct and give the
     // user the oppertunity to pass in the log level filter
     init_logger(LevelFilter::Error).unwrap();
@@ -75,8 +76,9 @@ fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
+#[cfg(feature = "javascript")]
 #[neon::main]
-fn main(mut cx: ModuleContext) -> NeonResult<()> {
+fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
     // We may want to move this into the new function in the DatabaseJavascript struct and give the
     // user the oppertunity to pass in the log level filter
     init_logger(LevelFilter::Error).unwrap();
@@ -87,8 +89,9 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
     use std::env;
+
+    use crate::types::Json;
 
     #[tokio::test]
     async fn can_connect_to_database() {
@@ -96,24 +99,54 @@ mod tests {
         Database::new(&connection_string).await.unwrap();
     }
 
+
+    #[tokio::test]
+    async fn can_create_collection() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        let collection_name = "rctest0";
+        let db = Database::new(&connection_string).await.unwrap();
+        let _ = db.create_or_get_collection(collection_name).await.unwrap();
+        let does_collection_exist = db.does_collection_exist(collection_name).await.unwrap();
+        assert_eq!(does_collection_exist, true);
+        db.archive_collection(collection_name).await.unwrap();
+    }
+
     #[tokio::test]
     async fn can_create_collection_and_vector_search() {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
-        init_logger(LevelFilter::Info).unwrap();
-        let collection_name = "test27";
+        init_logger(LevelFilter::Error).ok();
+
+        let collection_name = "test34";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
-        let documents = vec![HashMap::from([
-            ("id".to_string(), "1".to_string()),
-            ("text".to_string(), "This is a document".to_string()),
-        ])];
+
+        let documents: Vec<Json> = vec![
+            serde_json::json!( {
+                "id": 1,
+                "text": "This is a document"
+            })
+            .into(),
+            serde_json::json!( {
+                "id": 2,
+                "text": "This is a second document"
+            })
+            .into(),
+        ];
+
         collection
             .upsert_documents(documents, None, None)
             .await
             .unwrap();
-        collection.register_text_splitter(None, None).await.unwrap();
+        let parameters = Json::from(serde_json::json!({
+            "chunk_size": 1500,
+            "chunk_overlap": 40,
+        }));
+        collection
+            .register_text_splitter(None, Some(parameters))
+            .await
+            .unwrap();
         collection.generate_chunks(None).await.unwrap();
         collection.register_model(None, None, None).await.unwrap();
         collection.generate_embeddings(None, None).await.unwrap();
@@ -122,5 +155,54 @@ mod tests {
             .await
             .unwrap();
         db.archive_collection(&collection_name).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn query_builder() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+
+        init_logger(LevelFilter::Error).ok();
+
+        let collection_name = "rqtest5";
+
+        let db = Database::new(&connection_string).await.unwrap();
+        let collection = db.create_or_get_collection(collection_name).await.unwrap();
+
+        let mut documents: Vec<Json> = Vec::new();
+        for i in 0..2 {
+            documents.push(serde_json::json!({
+                "id": i,
+                "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
+            }).into());
+        }
+
+        collection
+            .upsert_documents(documents, None, None)
+            .await
+            .unwrap();
+        let parameters = Json::from(serde_json::json!({
+            "chunk_size": 1500,
+            "chunk_overlap": 40,
+        }));
+        collection
+            .register_text_splitter(None, Some(parameters))
+            .await
+            .unwrap();
+        collection.generate_chunks(None).await.unwrap();
+        collection.register_model(None, None, None).await.unwrap();
+        collection.generate_embeddings(None, None).await.unwrap();
+
+        let filter = serde_json::json! ({
+            "id": 1
+        });
+
+        let query = collection
+            .query()
+            .vector_recall("test query".to_string(), None, None, None)
+            .limit(10)
+            .filter(filter.into());
+        query.debug();
+        let results = query.run().await.unwrap();
+        println!("{:?}", results);
     }
 }

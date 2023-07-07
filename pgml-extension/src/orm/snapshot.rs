@@ -413,7 +413,7 @@ impl Snapshot {
                 let mut s = Snapshot {
                     id: result.get(1).unwrap().unwrap(),
                     relation_name: result.get(2).unwrap().unwrap(),
-                    y_column_name: result.get(3).unwrap().unwrap(),
+                    y_column_name: result.get(3).unwrap().unwrap_or_default(),
                     test_size: result.get(4).unwrap().unwrap(),
                     test_sampling: Sampling::from_str(result.get(5).unwrap().unwrap()).unwrap(),
                     status: Status::from_str(result.get(6).unwrap().unwrap()).unwrap(),
@@ -474,7 +474,7 @@ impl Snapshot {
                 let mut s = Snapshot {
                     id: result.get(1).unwrap().unwrap(),
                     relation_name: result.get(2).unwrap().unwrap(),
-                    y_column_name: result.get(3).unwrap().unwrap(),
+                    y_column_name: result.get(3).unwrap().unwrap_or_default(),
                     test_size: result.get(4).unwrap().unwrap(),
                     test_sampling: Sampling::from_str(result.get(5).unwrap().unwrap()).unwrap(),
                     status: Status::from_str(result.get(6).unwrap().unwrap()).unwrap(),
@@ -495,7 +495,7 @@ impl Snapshot {
 
     pub fn create(
         relation_name: &str,
-        y_column_name: Vec<String>,
+        y_column_name: Option<Vec<String>>,
         test_size: f32,
         test_sampling: Sampling,
         materialized: bool,
@@ -531,7 +531,10 @@ impl Snapshot {
                 }
                 let nullable = row[3].value::<bool>().unwrap().unwrap();
                 let position = row[4].value::<i32>().unwrap().unwrap() as usize;
-                let label = y_column_name.contains(&name);
+                let label = match y_column_name {
+                    Some(ref y_column_name) => y_column_name.contains(&name),
+                    None => false,
+                };
                 let mut statistics = Statistics::default();
                 let preprocessor = match preprocessors.get(&name) {
                     Some(preprocessor) => {
@@ -576,12 +579,15 @@ impl Snapshot {
                     }
                 );
             });
-            for column in &y_column_name {
-                if !columns.iter().any(|c| c.label && &c.name == column) {
-                    error!(
-                        "Column `{}` not found. Did you pass the correct `y_column_name`?",
-                        column
-                    )
+
+            if y_column_name.is_some() {
+                for column in y_column_name.as_ref().unwrap() {
+                    if !columns.iter().any(|c| c.label && &c.name == column) {
+                        error!(
+                            "Column `{}` not found. Did you pass the correct `y_column_name`?",
+                            column
+                        )
+                    }
                 }
             }
 
@@ -601,7 +607,7 @@ impl Snapshot {
             let s = Snapshot {
                 id: result.get(1).unwrap().unwrap(),
                 relation_name: result.get(2).unwrap().unwrap(),
-                y_column_name: result.get(3).unwrap().unwrap(),
+                y_column_name: result.get(3).unwrap().unwrap_or_default(),
                 test_size: result.get(4).unwrap().unwrap(),
                 test_sampling: Sampling::from_str(result.get(5).unwrap().unwrap()).unwrap(),
                 status,         // 6
@@ -680,9 +686,12 @@ impl Snapshot {
     }
 
     pub(crate) fn num_classes(&self) -> usize {
-        match &self.first_label().statistics.categories {
-            Some(categories) => categories.len(),
-            None => self.first_label().statistics.distinct,
+        match &self.y_column_name.len() {
+            0 => 0,
+            _ => match &self.first_label().statistics.categories {
+                Some(categories) => categories.len(),
+                None => self.first_label().statistics.distinct,
+            },
         }
     }
 
@@ -854,7 +863,6 @@ impl Snapshot {
     pub fn tabular_dataset(&mut self) -> Dataset {
         let numeric_encoded_dataset = self.numeric_encoded_dataset();
 
-        // Analyze labels
         let label_data = ndarray::ArrayView2::from_shape(
             (
                 numeric_encoded_dataset.num_train_rows,
@@ -863,17 +871,7 @@ impl Snapshot {
             &numeric_encoded_dataset.y_train,
         )
         .unwrap();
-        // The data for the first label
-        let target_data = label_data.columns().into_iter().next().unwrap();
 
-        Zip::from(label_data.columns())
-            .and(&self.label_positions())
-            .for_each(|data, position| {
-                let column = &mut self.columns[position.column_position - 1]; // lookup the mutable one
-                column.analyze(&data, &target_data);
-            });
-
-        // Analyze features
         let feature_data = ndarray::ArrayView2::from_shape(
             (
                 numeric_encoded_dataset.num_train_rows,
@@ -882,12 +880,36 @@ impl Snapshot {
             &numeric_encoded_dataset.x_train,
         )
         .unwrap();
-        Zip::from(feature_data.columns())
-            .and(&self.feature_positions())
-            .for_each(|data, position| {
-                let column = &mut self.columns[position.column_position - 1]; // lookup the mutable one
-                column.analyze(&data, &target_data);
-            });
+
+        // We only analyze supervised training sets that have labels for now.
+        if numeric_encoded_dataset.num_labels > 0 {
+            // We only analyze features against the first label in joint regression.
+            let target_data = label_data.columns().into_iter().next().unwrap();
+
+            // Analyze labels
+            Zip::from(label_data.columns())
+                .and(&self.label_positions())
+                .for_each(|data, position| {
+                    let column = &mut self.columns[position.column_position - 1]; // lookup the mutable one
+                    column.analyze(&data, &target_data);
+                });
+
+            // Analyze features
+            Zip::from(feature_data.columns())
+                .and(&self.feature_positions())
+                .for_each(|data, position| {
+                    let column = &mut self.columns[position.column_position - 1]; // lookup the mutable one
+                    column.analyze(&data, &target_data);
+                });
+        } else {
+            // Analyze features for unsupervised learning
+            Zip::from(feature_data.columns())
+                .and(&self.feature_positions())
+                .for_each(|data, position| {
+                    let column = &mut self.columns[position.column_position - 1]; // lookup the mutable one
+                    column.analyze(&data, &data);
+                });
+        }
 
         let mut analysis = IndexMap::new();
         analysis.insert(

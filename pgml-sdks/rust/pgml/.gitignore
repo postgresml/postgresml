@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyi
 
 # C extensions
 *.so
@@ -9,9 +10,11 @@ __pycache__/
 # Javascript modules
 node_modules/
 *.node
+*.d.ts
 
 # Distribution / packaging
 .Python
+*.pyi
 build/
 develop-eggs/
 dist/
