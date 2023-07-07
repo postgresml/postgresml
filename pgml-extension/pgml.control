@@ -4,4 +4,4 @@ module_pathname = '$libdir/pgml'
 relocatable = false
 superuser = true
 schema = 'pgml'
-trusted = true
+
