@@ -13,6 +13,7 @@ mod languages;
 pub mod models;
 mod queries;
 mod query_builder;
+mod query_runner;
 pub mod types;
 mod utils;
 
@@ -99,7 +100,6 @@ mod tests {
         Database::new(&connection_string).await.unwrap();
     }
 
-
     #[tokio::test]
     async fn can_create_collection() {
         let connection_string = env::var("DATABASE_URL").unwrap();
@@ -160,7 +160,6 @@ mod tests {
     #[tokio::test]
     async fn query_builder() {
         let connection_string = env::var("DATABASE_URL").unwrap();
-
         init_logger(LevelFilter::Error).ok();
 
         let collection_name = "rqtest5";
@@ -203,6 +202,17 @@ mod tests {
             .filter(filter.into());
         query.debug();
         let results = query.run().await.unwrap();
+        println!("{:?}", results);
+    }
+
+    #[tokio::test]
+    async fn query_runner() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        init_logger(LevelFilter::Info).ok();
+
+        let db = Database::new(&connection_string).await.unwrap();
+        let query = db.query("SELECT * from pgml.collections");
+        let results = query.fetch_all().await.unwrap();
         println!("{:?}", results);
     }
 }

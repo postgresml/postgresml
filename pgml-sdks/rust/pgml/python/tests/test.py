@@ -56,7 +56,14 @@ async def query_builder():
 
     await db.archive_collection(collection_name)
 
+async def query_runner():
+    db = pgml.Database(CONNECTION_STRING)
+    # results = await db.query("SELECT * from pgml.collections WHERE id = $1").bind_int(1).fetch_all()
+    results = await db.query("SELECT * from pgml.collections").fetch_all()
+    print(results)
+
 
 if __name__ == "__main__":
     # asyncio.run(query_builder())    
-    asyncio.run(main())    
+    # asyncio.run(main())    
+    asyncio.run(query_runner())

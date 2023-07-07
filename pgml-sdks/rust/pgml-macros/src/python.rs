@@ -342,10 +342,6 @@ fn convert_output_type_convert_from_python(
             Some(quote! {pyo3::PyResult<Self>}),
             Some(format_ident!("Self").into_token_stream()),
         ),
-        t @ SupportedType::Database | t @ SupportedType::Collection => (
-            Some(quote! {pyo3::PyResult<&'a pyo3::PyAny>}),
-            Some(format_ident!("{}Python", t.to_string()).into_token_stream()),
-        ),
         t => {
             let ty = t
                 .to_type()
@@ -395,6 +391,7 @@ fn get_python_type(ty: &SupportedType) -> String {
         | t @ SupportedType::Collection
         | t @ SupportedType::Model
         | t @ SupportedType::QueryBuilder
+        | t @ SupportedType::QueryRunner
         | t @ SupportedType::Splitter => t.to_string(),
         // Add more types as required
         _ => "Any".to_string(),

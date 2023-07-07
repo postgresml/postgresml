@@ -1,5 +1,6 @@
 /// A wrapper around serde_json::Value
-#[derive(sqlx::Type, Debug)]
+// #[derive(sqlx::Type, sqlx::FromRow, Debug)]
+#[derive(sqlx::Type, Debug, Clone)]
 #[sqlx(transparent)]
 pub struct Json(pub serde_json::Value);
 

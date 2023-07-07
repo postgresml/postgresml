@@ -9,6 +9,7 @@ use crate::collection::*;
 use crate::models;
 use crate::queries;
 use crate::query_builder;
+use crate::query_runner::QueryRunner;
 
 #[cfg(feature = "javascript")]
 use crate::languages::javascript::*;
@@ -19,7 +20,13 @@ pub struct Database {
     pub pool: PgPool,
 }
 
-#[custom_methods(new, create_or_get_collection, does_collection_exist, archive_collection)]
+#[custom_methods(
+    new,
+    create_or_get_collection,
+    does_collection_exist,
+    archive_collection,
+    query
+)]
 impl Database {
     /// Create a new [Database]
     ///
@@ -151,5 +158,28 @@ impl Database {
         .execute(self.pool.borrow())
         .await?;
         Ok(())
+    }
+
+    /// Run an arbitrary query
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - The query to run
+    ///
+    /// # Example
+    ///```
+    /// use pgml::Database;
+    ///
+    /// const CONNECTION_STRING: &str = "postgres://postgres@localhost:5432/pgml_development";
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///   let db = Database::new(CONNECTION_STRING).await?;
+    ///   let query = "SELECT * FROM pgml.collections";
+    ///   let results = db.query(query).fetch_all().await?;
+    ///   Ok(())
+    /// }
+    ///```
+    pub fn query(&self, query: &str) -> QueryRunner {
+        QueryRunner::new(query, self.pool.clone())
     }
 }
