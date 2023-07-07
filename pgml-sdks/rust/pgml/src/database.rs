@@ -9,6 +9,7 @@ use crate::collection::*;
 use crate::models;
 use crate::queries;
 use crate::query_builder;
+use crate::query_runner::QueryRunner;
 
 #[cfg(feature = "javascript")]
 use crate::languages::javascript::*;
@@ -19,7 +20,13 @@ pub struct Database {
     pub pool: PgPool,
 }
 
-#[custom_methods(new, create_or_get_collection, does_collection_exist, archive_collection)]
+#[custom_methods(
+    new,
+    create_or_get_collection,
+    does_collection_exist,
+    archive_collection,
+    query
+)]
 impl Database {
     /// Create a new [Database]
     ///
@@ -151,5 +158,9 @@ impl Database {
         .execute(self.pool.borrow())
         .await?;
         Ok(())
+    }
+
+    pub fn query(&self, query: &str) -> QueryRunner {
+        QueryRunner::new(query, self.pool.clone())
     }
 }

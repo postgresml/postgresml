@@ -1,10 +1,12 @@
 use pgml_macros::{custom_derive, custom_methods};
 use sqlx::postgres::{PgArguments, PgPool};
 use sqlx::query::Query;
-use sqlx::{FromRow, Postgres};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Row};
 
 use crate::types::Json;
+
+#[cfg(feature = "javascript")]
+use crate::languages::javascript::*;
 
 #[derive(Clone, Debug)]
 enum BindValue {
@@ -22,9 +24,17 @@ pub struct QueryRunner {
     bind_values: Vec<BindValue>,
 }
 
-#[custom_methods(execute, bind_string)]
+#[custom_methods(
+    fetch_as_json,
+    execute,
+    bind_string,
+    bind_int,
+    bind_float,
+    bind_bool,
+    bind_json
+)]
 impl QueryRunner {
-    pub fn new(pool: PgPool, query: &str) -> Self {
+    pub fn new(query: &str, pool: PgPool) -> Self {
         Self {
             pool,
             query: query.to_string(),
@@ -32,24 +42,25 @@ impl QueryRunner {
         }
     }
 
-    pub async fn execute(self) -> anyhow::Result<Json> {
-        let mut query = sqlx::query(&self.query);
-        for bind_value in self.bind_values.into_iter() {
-            query = match bind_value {
-                BindValue::String(v) => query.bind(v),
-                BindValue::Int(v) => query.bind(v),
-                BindValue::Float(v) => query.bind(v),
-                BindValue::Bool(v) => query.bind(v),
-                BindValue::Json(v) => query.bind(v.0),
-            };
-        }
+    pub async fn fetch_as_json(mut self) -> anyhow::Result<Json> {
+        self.query = format!("SELECT json_agg(j) FROM ({}) j", self.query);
+        let query = self.build_query();
         let values = query.fetch_all(&self.pool).await?;
         let values = values
             .into_iter()
-            .map(|v| Json::from_row(&v).expect("Error parsing row to Json").0)
+            .map(|v| {
+                v.try_get::<serde_json::Value, _>(0)
+                    .expect("Error converting to Json in execute for QueryRunner")
+            })
             .collect::<Vec<_>>();
         let values = serde_json::Value::Array(values);
         Ok(Json(values))
+    }
+
+    pub async fn execute(self) -> anyhow::Result<()> {
+        let query = self.build_query();
+        query.execute(&self.pool).await?;
+        Ok(())
     }
 
     pub fn bind_string(mut self, bind_value: String) -> Self {
@@ -75,5 +86,19 @@ impl QueryRunner {
     pub fn bind_json(mut self, bind_value: Json) -> Self {
         self.bind_values.push(BindValue::Json(bind_value));
         self
+    }
+
+    fn build_query(&self) -> Query<Postgres, PgArguments> {
+        let mut query = sqlx::query(&self.query);
+        for bind_value in self.bind_values.iter() {
+            query = match bind_value {
+                BindValue::String(v) => query.bind(v),
+                BindValue::Int(v) => query.bind(v),
+                BindValue::Float(v) => query.bind(v),
+                BindValue::Bool(v) => query.bind(v),
+                BindValue::Json(v) => query.bind(&v.0),
+            };
+        }
+        query
     }
 }
