@@ -1,0 +1,43 @@
+@mixin dropdown-menu-creator($primary-color: null) {
+    border-radius: calc($border-radius / 2);
+    padding: 20px 0px 40px 0px;
+    gap: $spacer;
+    @if ($primary-color) {
+        background-color: #{$primary-color};
+    }
+}
+
+.dropdown-item {
+    padding: 0px;
+    text-decoration: none;
+
+    & button, & a {
+        padding: 8px 24px 8px 24px;
+        color: #{$gray-100};
+        width: 100%;
+    }
+
+    &:hover {
+        background-color: #{$gray-700};
+        color: #{$gray-100};
+    }
+    
+    &:active, :focus, :target, .active {
+        background-color: #{$neon-tint-100};
+        color: #{$gray-100};
+    }
+
+    &.disabled>a {
+        color: #{$gray-500};
+    }
+    
+}
+
+.dropdown-menu {
+    @include dropdown-menu-creator($gray-600);
+}
+
+.sub-menu-dropdown {
+    @include dropdown-menu-creator();
+    border-radius: 0px;
+}

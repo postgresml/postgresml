@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::templates::models;
 use crate::utils::config;
 use sailfish::TemplateOnce;
@@ -18,7 +20,7 @@ impl<'a> Box<'a> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NavLink<'a> {
     pub href: String,
     pub name: String,
@@ -26,6 +28,7 @@ pub struct NavLink<'a> {
     pub active: bool,
     pub nav: Option<Nav<'a>>,
     pub icon: Option<&'a str>,
+    pub disabled: bool,
 }
 
 impl<'a> NavLink<'a> {
@@ -37,11 +40,17 @@ impl<'a> NavLink<'a> {
             active: false,
             nav: None,
             icon: None,
+            disabled: false,
         }
     }
 
     pub fn active(mut self) -> NavLink<'a> {
         self.active = true;
+        self
+    }
+
+    pub fn disable(mut self, disabled: bool) -> NavLink<'a> {
+        self.disabled = disabled;
         self
     }
 
@@ -56,7 +65,7 @@ impl<'a> NavLink<'a> {
     }
 }
 
-#[derive(TemplateOnce, Clone)]
+#[derive(TemplateOnce, Clone, Default, Debug)]
 #[template(path = "components/nav.html")]
 pub struct Nav<'a> {
     pub links: Vec<NavLink<'a>>,
@@ -65,6 +74,38 @@ pub struct Nav<'a> {
 impl<'a> Nav<'a> {
     pub fn render(links: Vec<NavLink<'a>>) -> String {
         Nav { links }.render_once().unwrap()
+    }
+
+    pub fn add_link(&mut self, link: NavLink<'a>) -> &mut Self {
+        self.links.push(link);
+        self
+    }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "layout/nav/left_web_app.html")]
+pub struct LeftNavWebApp<'a> {
+    pub visible_dbs: HashMap<String, String>,
+    pub upper_nav: Nav<'a>,
+    pub lower_nav: Nav<'a>,
+    pub current_db: (String, String),
+}
+
+impl<'a> LeftNavWebApp<'a> {
+    pub fn render(
+        upper_nav: Nav,
+        lower_nav: Nav,
+        visible_dbs: HashMap<String, String>,
+        current_db: (String, String),
+    ) -> String {
+        LeftNavWebApp {
+            upper_nav,
+            lower_nav,
+            visible_dbs,
+            current_db,
+        }
+        .render_once()
+        .unwrap()
     }
 }
 
@@ -102,4 +143,36 @@ impl Navbar {
         .render_once()
         .unwrap()
     }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "layout/nav/top_web_app.html")]
+pub struct NavbarWebApp<'a> {
+    pub current_user: Option<models::User>,
+    pub standalone_dashboard: bool,
+    pub links: Vec<NavLink<'a>>,
+}
+
+impl<'a> NavbarWebApp<'a> {
+    pub fn render(user: Option<models::User>, links: Vec<NavLink<'a>>) -> String {
+        NavbarWebApp {
+            current_user: user,
+            standalone_dashboard: config::standalone_dashboard(),
+            links,
+        }
+        .render_once()
+        .unwrap()
+    }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "components/github_icon.html")]
+pub struct GithubIcon {
+    pub show_stars: bool,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "components/postgres_logo.html")]
+pub struct PostgresLogo {
+    link: String,
 }

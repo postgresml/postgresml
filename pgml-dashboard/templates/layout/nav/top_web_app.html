@@ -1,0 +1,171 @@
+<% use crate::templates::components::GithubIcon; %>
+<% use crate::templates::components::PostgresLogo; %>
+<% 
+  let account_management_options = vec![
+      ("Profile".to_string(), "/profile".to_string(), true),
+      ("Billing".to_string(), "/billing".to_string(), true),
+      ("Settings".to_string(), "/settings".to_string(), true), 
+      ("Payment Methods".to_string(), "/payments".to_string(), false),
+      ("Notifications".to_string(), "/notifications".to_string(),true),
+      ("Sign Out".to_string(), "/logout".to_string(),false),
+  ];
+%>
+
+  <div class="fixed-top-nav">
+    <nav class="navbar-web-app horizontal navbar-expand-lg" data-controller="search topnav-web-app">
+      
+      <div class="controls">
+        <!-- Toggles items the come from left nav -->
+        <button class="navbar-toggler collapsed topnav-controlls" type="button" data-bs-toggle="collapse" data-bs-target="#leftNavItems" aria-controls="LeftNavItems" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="material-symbols-outlined" style="font-size: 44px">
+            menu
+          </span>
+        </button>
+
+        <div class="web-app-left-nav-sized-container">
+          <%- PostgresLogo{link: "/".to_string()}.render_once().unwrap() %>
+        </div>
+  
+        <!-- Button to toggle collapsed menu for less than lg screens -->
+        <button class="navbar-toggler collapsed topnav-controlls" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <% include!("../../components/profile_icon.html"); %>
+        </button>
+      </div>
+
+      <!-- Top Nav menu items for all sized screens -->
+      <div class="collapse navbar-collapse drawer-submenu-container" id="navbarSupportedContent">
+        <!-- Main Menu -->
+        <div class="nav-item w-100 d-flex flex-column flex-lg-row collapse collapse-horizontal horizontal-collapse show drawer-submenu">
+          <ul class="navbar-nav flex-grow-1 ps-4 p-lg-0 d-none d-lg-block">
+            <li class="nav-item d-flex align-items-center">
+              <button type="text" class="btn-search d-flex justify-content-between" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+                Search
+                <span class="material-symbols-outlined">
+                  search
+                </span>
+              </button>
+            </li>
+
+            <!-- <% if standalone_dashboard { %>
+            <li class="nav-item d-flex align-items-center">
+              <a class="nav-link p-0" href="/dashboard">Dashboard</a>
+            </li>
+            <% } %> -->
+          </ul>
+          
+          <!-- Main nav links for lg screens -->
+          <ul class="navbar-nav gap-3 mb-2 mb-0 d-none d-lg-flex">
+            <li class="align-items-center d-none d-lg-flex">
+              <%- GithubIcon{show_stars: false}.render_once().unwrap() %>
+            </li>
+            <li class="align-items-center d-flex d-lg-none">
+              <a class="nav-link p-lg-0" href="https://github.com/postgresml/postgresml">Open Source</a>
+            </li>
+  
+            <li class="nav-item d-flex align-items-center">
+              <a class="nav-link p-lg-0" href="/docs/guides/setup/quick_start_with_docker/">Docs</a>
+            </li>
+
+            <div class="vr my-2 opacity-100 d-lg-block d-none" style="width: 2px"></div>
+
+            <li class="nav-item d-flex align-items-center">
+              <a class="nav-link p-lg-0" href="/blog/announcing-gptq-and-ggml-quantized-llm-support-for-huggingface-transformers">Blog</a>
+            </li>
+  
+            <% if !standalone_dashboard { %>
+            <li class="d-none d-lg-flex nav-item align-items-center dropdown">
+              <a class="dropdown-toggle topnav-controlls" href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="10, 15" aria-expanded="false">
+                <% include!("../../components/profile_icon.html"); %>
+              </a>
+              <!-- Account management for lg and up screens -->
+              <ul class="dropdown-menu dropdown-menu-end">
+                <% for (name, link, disabled) in account_management_options.clone() { %>
+                  <li class="dropdown-item d-flex align-items-center <% if disabled { %>disabled<% } %>">
+                    <a <% if disabled { %>
+                      href="" disabled <% } else { %>
+                      href="<%- link %>"<% } %>>
+                      <%- name %>
+                    </a>
+                  </li>
+                <% } %>
+              </ul>
+            </li>
+            <li class="nav-item d-flex d-lg-none align-items-center">
+              <a class="nav-link p-lg-0" data-bs-toggle="collapse" data-bs-target=".horizontal-collapse">Account Management</a>
+            </li>
+            <% } %>
+          </ul>
+
+          <!-- Main nav links for less than lg screens -->
+          <ul class="sub-menu-dropdown mb-2 d-lg-none">
+            <li class="dropdown-item d-flex align-items-center">
+              <a href="https://github.com/postgresml/postgresml">Open Source</a>
+            </li>
+  
+            <li class="dropdown-item d-flex align-items-center">
+              <a href="/docs/guides/setup/quick_start_with_docker/">Docs</a>
+            </li>
+
+            <li class="dropdown-item d-flex align-items-center">
+              <a href="/blog/announcing-gptq-and-ggml-quantized-llm-support-for-huggingface-transformers">Blog</a>
+            </li>
+  
+            <% if !standalone_dashboard { %>
+            <li class="dropdown-item d-flex align-items-center">
+              <a href="#" data-bs-toggle="collapse" data-bs-target=".horizontal-collapse">Account Management</a>
+            </li>
+            <% } %>
+          </ul>
+        </div>
+
+        <!-- Account management for less than lg screens -->
+        <div class="nav-item collapse-horizontal horizontal-collapse collapse drawer-submenu">
+          <ul class="sub-menu-dropdown mb-2">
+            <a class="btn btn-tertiary-web-app ms-4" data-bs-toggle="collapse" data-bs-target=".horizontal-collapse">
+              <span class="material-symbols-outlined icon-back-btn">
+                chevron_left
+              </span>
+              Back
+            </a>
+            <% for (name, link, disabled) in account_management_options.clone() { %>
+              <li class="dropdown-item d-flex align-items-center <% if disabled { %>disabled<% } %>">
+                <a <% if disabled { %>
+                  href="" disabled <% } else { %>
+                  href="<%- link %>"<% } %>>
+                  <%- name %>
+                </a>
+              </li>
+            <% } %>
+          </ul>
+        </div>
+      </div>
+      
+
+      <!-- Left Nav menu for small screens -->
+      <div class="d-lg-none">
+        <div class="collapse navbar-collapse" id="leftNavItems">
+          <div class="nav-item w-100 d-flex flex-column flex-lg-row collapse show drawer-submenu">
+            <ul class="sub-menu-dropdown mb-2 d-lg-none">
+              <% for link in links { %>
+              <li class="dropdown-item d-flex align-items-center">
+                <a
+                class="<% if link.disabled  { %> disabled <% } %> <% if link.active { %> active <% } %>"
+                href="<%= link.href %>">
+                <% if link.icon.as_ref().is_some() { %>
+                <span class="material-symbols-outlined %>"><%- link.icon.unwrap() %></span>
+                <% } %>
+                <span><%= link.name %></span>
+              </a>
+              </li>
+              <% } %>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </nav>
+  </div>
+
+  <% include!("../../components/search_modal.html");%>
+
+    

@@ -85,6 +85,7 @@
     import NotebookCell from '<%= config::js_url("notebook-cell.js") %>'
     import QuickPrediction from '<%= config::js_url("quick-prediction.js") %>'
     import TopnavStyling from '<%= config::js_url("topnav-styling.js") %>'
+    import TopnavWebApp from '<%= config::js_url("topnav-web-app.js") %>'
 
     const application = Application.start()
     application.register('click-replace', ClickReplace)
@@ -101,6 +102,7 @@
     application.register('notebook-cell', NotebookCell)
     application.register('quick-prediction', QuickPrediction)
     application.register('topnav-styling', TopnavStyling)
+    application.register('topnav-web-app', TopnavWebApp)
   </script>
 
   <% if config::dev_mode() { %>

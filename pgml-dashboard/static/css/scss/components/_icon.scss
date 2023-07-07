@@ -88,3 +88,35 @@
 .icon-alt-shadow {
     box-shadow: 8px 8px 24px rgba(163, 116, 253, 0.32);
 }
+
+.topnav-controlls {
+    &:hover, &.show, &[aria-expanded="true"] {
+        &>span {
+            color: #{$neon-tint-100};
+        }
+
+        svg {
+            border-color: #{$neon-tint-100};
+        }
+
+    }
+
+    svg {
+        border: 2px solid #{$gray-700};
+        background-color: #{$gray-500};
+    }
+
+    path {
+        stroke: #{$gray-700};
+    }
+    &::after {
+        display: none;
+    }
+}
+
+.icon-back-btn {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    width: 13px;
+}

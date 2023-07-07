@@ -1,22 +1,36 @@
-<% use crate::templates::components::{Nav, Breadcrumbs}; %>
+<% 
+    use crate::templates::components::{
+        NavbarWebApp,
+        LeftNavWebApp, 
+        Breadcrumbs, 
+        NavLink
+    }; 
+%>
+
+<%
+    let mut left_nav_links: Vec<NavLink> = Vec::new();
+    left_nav_links.append(& mut upper_nav.links.clone());
+    left_nav_links.append(& mut lower_nav.links.clone());
+%>
 
 <!DOCTYPE html>
 <html lang="en-US" data-bs-theme="dark">
     <%- head %>
     <body>
         <main>
-            <div class="container-fluid p-lg-0 min-vh-lg-100">
+            <div class="container-fluid p-0 min-vh-lg-100">
                 <div class="row gx-0 min-vh-lg-100">
+                    <%- NavbarWebApp::render( None, left_nav_links ) %>
                     <div class="sidenav-container col-12 col-lg-3 col-xxl-2 pt-3 pt-lg-0" >
-                        <%- Nav::render( nav ) %>
+                        <%- LeftNavWebApp::render( upper_nav, lower_nav, visible_clusters, current_db ) %>
                     </div>
 
-                    <div class="col-12 col-lg-9 col-xxl-10">
-                        <div>
+                    <div class="clear-from-under-navbar col-12 col-lg-9 col-xxl-10">
+                        <div class="px-5 py-3">
                             <%- Breadcrumbs::render( breadcrumbs ) %>
                         </div>
     
-                        <div>
+                        <div class="p-5">
                             <%- content.unwrap_or_default() %>
                         </div>
                     </div>

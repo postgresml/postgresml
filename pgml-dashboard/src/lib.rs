@@ -472,17 +472,18 @@ pub async fn dashboard(
     deployment_id: Option<i64>,
     table_name: Option<String>,
 ) -> Result<ResponseOk, Error> {
-    let user = if cluster.context.user.is_anonymous() {
-        None
-    } else {
-        Some(cluster.context.user.clone())
-    };
-
-    let mut layout = crate::templates::Layout::new("Dashboard");
-
-    if user.is_some() {
-        layout.user(&user.clone().unwrap());
-    }
+    let mut layout = crate::templates::WebAppBase::new("Dashboard");
+    layout
+        .clusters(cluster.context.visible_clusters.clone())
+        .nav("Dashboard")
+        .current_db(
+            cluster.context.cluster.name.to_string(),
+            cluster.context.cluster.id.to_string(),
+        )
+        .breadcrumbs(vec![
+            crate::templates::components::NavLink::new("Clusters", "/clusters"),
+            crate::templates::components::NavLink::new("Dashboard", "/dashboard").active(),
+        ]);
 
     let all_tabs = vec![
         tabs::Tab {

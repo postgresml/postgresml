@@ -1,0 +1,35 @@
+<%
+  let mut dropdown_options = vec!{
+    ("Dashboard".to_string(), "/clusters".to_string())
+  };
+
+  for (name, id) in visible_dbs {
+    dropdown_options.push((name, format!("/clusters/switch/{}", id)))
+  }
+
+  let current_db_name = current_db.0;
+%>
+
+<nav class="navbar sidenav nav-pills navbar-expand-lg py-2 h-100">
+  <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="d-flex flex-column justify-content-between h-100">
+    <div class="d-flex flex-column">
+      <div class="nav-item d-flex align-items-center dropdown">
+        <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="10, 15" aria-expanded="false">
+          <%- current_db_name %>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <% for (name, link) in dropdown_options { %>
+            <li class="dropdown-item d-flex align-items-center">
+              <a href="<%- link %>"><%- name %></a>
+            </li>
+          <% } %>
+        </ul>
+      </div>
+      <%- upper_nav.render_once().unwrap() %>
+    </div>
+    <%- lower_nav.render_once().unwrap() %>
+  </div>
+</nav>

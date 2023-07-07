@@ -79,6 +79,55 @@
     }
 }
 
+.btn-primary-web-app {
+    @extend .btn; 
+    border: 0px;
+    background-color: #{$neon-shade-100};
+    color: #{$gray-100};
+
+    &:hover {
+        background-color: #{$neon-shade-300};
+    }
+
+    &:active {
+        background-color: #{$neon-tint-200};
+    }
+
+    &:disabled {
+        background-color: #{$gray-500};
+    }
+}
+
+.btn-tertiary-web-app {
+    color: #{$slate-tint-100};
+    border-bottom: 2px solid transparent;
+    border-radius: 0px;
+    width: fit-content;
+    padding: 0px;
+    gap: 8px;
+
+    span {
+        font-size: 2rem;
+    }
+
+    &:hover {
+        color: #{$slate-tint-400};
+        border-bottom-color: #{$slate-tint-400};
+    }
+    &:active {
+        color: #{$slate-tint-700};
+        font-weight: 500;
+        --bs-btn-active-border-color: transparent;
+        border-bottom-color: #{$slate-tint-700};
+    }
+
+    &.with-icon {
+        &::after {
+            content: ">"
+        }
+    }
+}
+
 .btn-code-toolbar {
     @extend .btn; 
     @extend .btn-tertiary; 
@@ -109,4 +158,28 @@
 .btn-search {
     background-color: transparent;
     border: none;
+    width: 15rem;
+    border-bottom: 2px solid #{$gray-300};
+    color: #{$gray-100};
+    padding: 0 0 calc($spacer / 2) 0;
+    
+    &:hover {
+        border-bottom-color: #{$neon-shade-100};
+    }
+
+    &:disabled {
+        color: #{$gray-500};
+        border-bottom: #{$gray-500};
+    }
+
+    &> span {
+        color: #{$neon-shade-100};
+    }
+}
+
+.postgres-logo {
+    display: flex; 
+    align-items: center;
+    gap: calc($spacer / 2);
+    font-size: 24px;
 }

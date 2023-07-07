@@ -8,7 +8,7 @@ use sqlx::types::time::PrimitiveDateTime;
 use sqlx::{Column, Executor, PgPool, Row, Statement, TypeInfo, ValueRef};
 
 use crate::models;
-use crate::utils::tabs;
+use crate::utils::{config, tabs};
 
 pub mod components;
 pub mod docs;
@@ -101,8 +101,10 @@ pub struct WebAppBase<'a> {
     pub content: Option<String>,
     pub visible_clusters: HashMap<String, String>,
     pub breadcrumbs: Vec<NavLink<'a>>,
-    pub nav: Vec<NavLink<'a>>,
+    pub upper_nav: Nav<'a>,
+    pub lower_nav: Nav<'a>,
     pub head: String,
+    pub current_db: (String, String),
 }
 
 impl<'a> WebAppBase<'a> {
@@ -122,6 +124,11 @@ impl<'a> WebAppBase<'a> {
         }
     }
 
+    pub fn current_db(&mut self, name: String, id: String) -> &mut Self {
+        self.current_db = (name, id);
+        self
+    }
+
     pub fn head(&mut self, head: String) -> &mut Self {
         self.head = head.to_owned();
         self
@@ -138,70 +145,62 @@ impl<'a> WebAppBase<'a> {
     }
 
     pub fn nav(&mut self, active: &str) -> &mut Self {
-        let mut nav_links = vec![NavLink::new("Create new cluster", "/clusters/new").icon("add")];
+        let (upper_nav_links, lower_nav_links) = match !config::standalone_dashboard() {
+            true => (
+                vec![
+                    NavLink::new("Notebooks", "/notebooks")
+                        .icon("description")
+                        .disable(true),
+                    NavLink::new("Explore", "/explore")
+                        .icon("thumbnail_bar")
+                        .disable(true),
+                    NavLink::new("Projects", "/projects")
+                        .icon("library_add")
+                        .disable(true),
+                    NavLink::new("Status", "/status")
+                        .icon("update")
+                        .disable(true),
+                    NavLink::new("Dashboard", "/dashboard").icon("dashboard"),
+                    NavLink::new("Clusters", "/clusters").icon("lan"),
+                ],
+                vec![NavLink::new("New Database", "/clusters/new").icon("add")],
+            ),
+            false => (
+                vec![
+                    NavLink::new("Notebooks", "/notebooks")
+                        .icon("description")
+                        .disable(true),
+                    NavLink::new("Explore", "/explore")
+                        .icon("thumbnail_bar")
+                        .disable(true),
+                    NavLink::new("Projects", "/projects")
+                        .icon("library_add")
+                        .disable(true),
+                    NavLink::new("Status", "/status")
+                        .icon("update")
+                        .disable(true),
+                    NavLink::new("Dashboard", "/dashboard").icon("dashboard"),
+                ],
+                vec![],
+            ),
+        };
 
-        // Adds the spesific cluster to a sublist.
-        if self.visible_clusters.len() > 0 {
-            let mut sorted_clusters: Vec<(String, String)> = self
-                .visible_clusters
-                .iter()
-                .map(|(name, id)| (name.to_string(), id.to_string()))
-                .collect();
-            sorted_clusters.sort_by_key(|k| k.1.to_owned());
-
-            let cluster_links = sorted_clusters
-                .iter()
-                .map(|(name, id)| {
-                    NavLink::new(name, &format!("/clusters/{}", id)).icon("developer_board")
-                })
-                .collect();
-
-            let cluster_nav = Nav {
-                links: cluster_links,
-            };
-
-            nav_links.push(
-                NavLink::new("Clusters", "/clusters")
-                    .icon("lan")
-                    .nav(cluster_nav),
-            )
-        } else {
-            nav_links.push(NavLink::new("Clusters", "/clusters").icon("lan"))
+        for link in upper_nav_links {
+            self.upper_nav.add_link(if link.name.clone().eq(active) {
+                link.active()
+            } else {
+                link
+            });
         }
 
-        nav_links.push(NavLink::new("Payments", "/payments").icon("payments"));
+        for link in lower_nav_links {
+            self.lower_nav.add_link(if link.name.eq(active) {
+                link.active()
+            } else {
+                link
+            });
+        }
 
-        // Sets the active left nav item.
-        let nav_with_active: Vec<NavLink> = nav_links
-            .into_iter()
-            .map(|item| {
-                if item.name.eq(active) {
-                    return item.active();
-                }
-                match item.nav {
-                    Some(sub_nav) => {
-                        let sub_links: Vec<NavLink> = sub_nav
-                            .links
-                            .into_iter()
-                            .map(|sub_item| {
-                                if sub_item.name.eq(active) {
-                                    sub_item.active()
-                                } else {
-                                    sub_item
-                                }
-                            })
-                            .collect();
-                        NavLink {
-                            nav: Some(Nav { links: sub_links }),
-                            ..item
-                        }
-                    }
-                    None => item,
-                }
-            })
-            .collect();
-
-        self.nav = nav_with_active;
         self
     }
 
@@ -507,13 +506,6 @@ pub struct Uploaded {
     pub sql: Sql,
     pub columns: Vec<String>,
     pub table_name: String,
-}
-
-#[derive(TemplateOnce)]
-#[template(path = "layout/nav/top.html")]
-pub struct Navbar {
-    pub current_user: Option<models::User>,
-    pub standalone_dashboard: bool,
 }
 
 #[derive(TemplateOnce)]
