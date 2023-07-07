@@ -176,6 +176,7 @@ impl Database {
     ///   let db = Database::new(CONNECTION_STRING).await?;
     ///   let query = "SELECT * FROM pgml.collections";
     ///   let results = db.query(query).fetch_all().await?;
+    ///   Ok(())
     /// }
     ///```
     pub fn query(&self, query: &str) -> QueryRunner {
