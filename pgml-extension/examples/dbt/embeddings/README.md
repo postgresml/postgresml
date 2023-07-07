@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 In this tutorial, we will show how to build a text processing pipeline using `PostgresML` and `dbt` (data build tool). We will use `PostgresML` to chunk documents and compute embeddings and `dbt` to execute different steps in a specific order (figure below).
 
 ![dbt-flow](./images/dbt-pgml.png)
@@ -155,20 +154,3 @@ By configuring certain models with incremental materialization, dbt intelligentl
 
 # Conclusions
 In conclusion, these data pipelines built using dbt provide a solid foundation for data transformation and analysis. However, the capabilities of the pipeline can be extended further by leveraging the advanced features of PostgresML. With functionalities like `pgml.transform`, the pipeline can be enhanced to support a wide range of natural language processing (NLP) tasks, including sentiment analysis, named entity recognition, and question answering. Additionally, by using `pgml.train` and `pgml.predict` we can incorporate traditional machine learning algorithms like regression and classification using algorithms such as XGBoost and LightGBM, the pipeline can enable powerful predictive modeling and analytics. The seamless integration of dbt and PostgresML opens up a vast array of possibilities, allowing you to unlock the full potential of your data and drive more sophisticated insights and decision-making processes.
-=======
-Welcome to your new dbt project!
-
-### Using the starter project
-
-Try running the following commands:
-- dbt run
-- dbt test
-
-
-### Resources:
-- Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
-- Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
-- Join the [chat](https://community.getdbt.com/) on Slack for live discussions and support
-- Find [dbt events](https://events.getdbt.com) near you
-- Check out [the blog](https://blog.getdbt.com/) for the latest news on dbt's development and best practices
->>>>>>> dbt example working version
