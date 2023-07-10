@@ -11,7 +11,10 @@ vars:
   splitter_parameters: {"chunk_size": 100, "chunk_overlap": 20}
   task: "embedding"
   model_name: "intfloat/e5-base"
+<<<<<<< HEAD
   #embeddings_table_name: "embeddings_intfloat_e5_small"
+=======
+>>>>>>> dbt tutorial first draft
   query_string: 'Lorem ipsum 3'
   limit: 2
 
