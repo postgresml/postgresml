@@ -185,7 +185,31 @@ impl Database {
         QueryRunner::new(query, self.pool.clone())
     }
 
-    // pub async fn transform(&self, task: Json, inputs: Vec<String>, args: Option<Json>) -> anyhow::Result<Json> {
+    // Run the builtin transform function
+    //
+    // # Arguments
+    //
+    // * `task` - The task to run
+    // * `inputs` - The inputs to the task
+    // * `args` - The arguments to the model
+    //
+    // # Example
+    // ```
+    // use pgml::Database;
+    //
+    // const CONNECTION_STRING: &str = "postgres://postgres@localhost:5432/pgml_development";
+    //
+    // async fn example() -> anyhow::Result<()> {
+    //  let db = Database::new(CONNECTION_STRING).await?;
+    //  let task = Json::from(serde_json::json!("translation_en_to_fr"));
+    //  let inputs = vec![
+    //    "test1".to_string(),
+    //    "test2".to_string(),
+    //  ];
+    //  let results = db.transform(task, inputs, None).await?;
+    //  Ok(())
+    //}
+    // ```
     pub async fn transform(
         &self,
         task: Json,
