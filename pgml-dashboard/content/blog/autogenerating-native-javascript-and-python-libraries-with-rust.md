@@ -8,8 +8,8 @@ description: Our story of simultaneously writing multi-language native libraries
 <div class="d-flex align-items-center mb-4">
   <img width="54px" height="54px" src="/dashboard/static/images/team/silas.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
-  	<p class="m-0">Silas Marvin</p>
-  	<p class="m-0">July 7, 2023</p>
+       <p class="m-0">Silas Marvin</p>
+       <p class="m-0">July 7, 2023</p>
   </div>
 </div>
 
@@ -24,6 +24,9 @@ an SDK for Rust, when no one would use it. After much deliberation, we finalized
 2. It must be written in Rust
 3. Adding new languages should only include minimal overhead
 
+![rust-macros-flow-chart.jpg](/dashboard/static/images/blog/rust-macros-flow-chart.webp)
+<center><i>TLDR we are building macros that convert vanilla Rust to compatible Pyo3 and Neon Rust, which is then further converted to native Python and JavaScript modules.</i></center><br/>
+
 ## What is Wrong With FFIs 
 
 The first requirement of our SDK is that is available natively in multiple languages, and the second is that it is written in Rust. At first glance, this seems
@@ -33,20 +36,20 @@ language of our choice. This unfortunately does not provide the utility we desir
 
 ```python
 class Database:
-	def __init__(self, connection_string: str):
-		# Create some connection
+     def __init__(self, connection_string: str):
+          # Create some connection
 
-	async def vector_search(self, query: str, model_id: int, splitter_id: int) -> str:
-		# Do some async search here
-		return result
+     async def vector_search(self, query: str, model_id: int, splitter_id: int) -> str:
+          # Do some async search here
+          return result
 
 async def main():
-	db = Database(CONNECTION_STRING)
-	result = await db.vector_search("What is the best way to do machine learning", 1, 1)
-	if result != "PostgresML":
-		print("The model still needs more training")
-	else:
-		print("The model is ready to go!")
+     db = Database(CONNECTION_STRING)
+     result = await db.vector_search("What is the best way to do machine learning", 1, 1)
+     if result != "PostgresML":
+          print("The model still needs more training")
+     else:
+          print("The model is ready to go!")
 ```
 
 One of the requirement of our SDK is that we write it in Rust. Specifically, in this instance, the `class Database` and its methods should be written in Rust and utilized in Python through FFIs. Unfortunately, doing this in Rust alone is not possible. There are two limitations we cannot surpass in the above code:
@@ -61,23 +64,23 @@ Translating every update from our Rust SDK into a wrapper for each language we a
 
 Let's take a look at some Rust code that creates a Python class with [Pyo3](https://github.com/PyO3/pyo3) and a JavaScript class with [Neon](https://neon-bindings.com/). For ease of use, let's say we have the following struct in Rust:
 
-```python
+```rust
 struct Database{
-	connection_string: String
+    connection_string: String
 }
 
 impl Database {
-	pub fn new(connection_string: String) -> Self {
-		// The actual connection process has been removed 
-		Self {
-			connection_string
-		}
-	}
+     pub fn new(connection_string: String) -> Self {
+          // The actual connection process has been removed 
+          Self {
+               connection_string
+          }
+     }
 
-	pub async fn vector_search(&self, query: String, model_id: i64, splitter_id: i64) -> String {
-		// Do some async vector search
-		result
-	}
+     pub async fn vector_search(&self, query: String, model_id: i64, splitter_id: i64) -> String {
+          // Do some async vector search
+          result
+     }
 }
 ```
 
@@ -89,32 +92,32 @@ Here is the code augmented to work with [Pyo3](https://github.com/PyO3/pyo3) and
 use pyo3::prelude::*;
 
 struct Database{
-	connection_string: String
+     connection_string: String
 }
 
 #[pymethods]
 impl Database {
-	#[new]
-	pub fn new(connection_string: String) -> Self {
-		// The actual connection process has been removed
-		Self {
-			connection_string
-		}
-	}
+     #[new]
+     pub fn new(connection_string: String) -> Self {
+          // The actual connection process has been removed
+          Self {
+               connection_string
+          }
+     }
 
-	pub fn vector_search<'a>(&self, py: Python<'a>, query: String, model_id: i64, splitter_id: i64) -> PyResult<&'a PyAny> {
-		pyo3_asyncio::tokio::future_into_py(py, async move {
-			// Do some async vector search
-			Ok(result)
-		})
-	}
+     pub fn vector_search<'a>(&self, py: Python<'a>, query: String, model_id: i64, splitter_id: i64) -> PyResult<&'a PyAny> {
+          pyo3_asyncio::tokio::future_into_py(py, async move {
+               // Do some async vector search
+               Ok(result)
+          })
+     }
 }
 
 /// A Python module implemented in Rust.
 #[pymodule]
 fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
-	m.add_class::<Database>()?;
-	Ok(())
+     m.add_class::<Database>()?;
+     Ok(())
 }
 ```
 
@@ -124,7 +127,7 @@ fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
 use neon::prelude::*;
 
 struct Database{
-	connection_string: String
+     connection_string: String
 }
 
 impl Database {
@@ -200,32 +203,29 @@ We have successfully written a native Python and JavaScript module in Rust. Howe
 Really what we want is to write our Rust library without worrying about any translation, and apply some macros that auto convert into what [Pyo3](https://github.com/PyO3/pyo3) and [Neon](https://neon-bindings.com/) need. This sounds like a perfect use for [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html). If you are unfamiliar with macros I really recommend reading [The Little Book of Rust Macros](https://danielkeep.github.io/tlborm/book/README.html) it is free, a quick read, and provides an awesome introduction to macros.
 
 We are creating a flow that looks like the following:
-
-![autogenerating-native-javascript-and-python-libraries-with-rust-outline.jpg](/dashboard/static/images/blog/autogenerating-native-javascript-and-python-libraries-with-rust-outline.webp)
-<center><i>Our base is pure vanilla Rust that is then transformed by macros to compatible Pyo3 and Neon Rust, which is then converted to native Python and JavaScript modules.</i></center><br/>
-
+![rust-macros-flow-chart.jpg](/dashboard/static/images/blog/rust-macros-flow-chart.webp)
 
 Let's slightly edit the struct we defined previously:
 
 ```rust
 #[custom_derive_class]
 struct Database{
-	connection_string: String
+     connection_string: String
 }
 
 #[custom_derive_methods]
 impl Database {
-	pub fn new(connection_string: String) -> Self {
-		// The actual connection process has been removed 
-		Self {
-			connection_string
-		}
-	}
+     pub fn new(connection_string: String) -> Self {
+          // The actual connection process has been removed 
+          Self {
+               connection_string
+          }
+     }
 
-	pub async fn vector_search(&self, query: String, model_id: i64, splitter_id: i64) -> String {
-		// Do some async vector search
-		result
-	}
+     pub async fn vector_search(&self, query: String, model_id: i64, splitter_id: i64) -> String {
+          // Do some async vector search
+          result
+     }
 }
 ```
 
@@ -235,7 +235,7 @@ Notice that there are two new macros we have not seen before: `custom_derive_cla
 ```rust
 #[pyclass]
 struct DatabasePython {
-	wrapped: Database
+     wrapped: Database
 }
 
 impl From<Database> for DatabasePython {
@@ -275,16 +275,16 @@ Creating a macro like the above is actually incredibly simple. The code below sh
 ```rust
 #[proc_macro_derive(custom_derive)]
 pub fn custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-	let parsed = parse_macro_input!(input as DeriveInput);
-	let name_ident = format_ident!("{}Python", parsed.ident);
-	let wrapped_type_ident = parsed.ident;
-	let expanded = quote! {
-		#[pyclass]
-		pub struct #name_ident {
-			wrapped: #wrapped_type_ident
-		}
-	};
-	proc_macro::TokenStream::from(expanded)
+     let parsed = parse_macro_input!(input as DeriveInput);
+     let name_ident = format_ident!("{}Python", parsed.ident);
+     let wrapped_type_ident = parsed.ident;
+     let expanded = quote! {
+          #[pyclass]
+          pub struct #name_ident {
+               wrapped: #wrapped_type_ident
+          }
+     };
+     proc_macro::TokenStream::from(expanded)
 }
 
 ```
@@ -294,20 +294,20 @@ Let's look at the expanded code our `custom_derive_methods` macro produces when 
 ```rust
 #[pymethods]
 impl DatabasePython {
-	#[new]
-	pub fn new(connection_string: String) -> Self {
-		// The actual connection process has been removed
-		Self::from(Database::new(connection_string))
-	}
+     #[new]
+     pub fn new(connection_string: String) -> Self {
+          // The actual connection process has been removed
+          Self::from(Database::new(connection_string))
+     }
 
-	pub fn vector_search<'a>(&self, py: Python<'a>, query: String, model_id: i64, splitter_id: i64) -> PyResult<&'a PyAny> {
-		let wrapped = self.wrapped.clone();
-		pyo3_asyncio::tokio::future_into_py(py, async move {
-			// Do some async vector search
-			let x = wrapped.vector_search(query, model_id, splitter_id).await;
-			Ok(x)
-		})
-	}
+     pub fn vector_search<'a>(&self, py: Python<'a>, query: String, model_id: i64, splitter_id: i64) -> PyResult<&'a PyAny> {
+          let wrapped = self.wrapped.clone();
+          pyo3_asyncio::tokio::future_into_py(py, async move {
+               // Do some async vector search
+               let x = wrapped.vector_search(query, model_id, splitter_id).await;
+               Ok(x)
+          })
+     }
 }
 
 impl DatabaseJavascript {
@@ -394,36 +394,36 @@ How does the macro actually work? We can break the `custom_derive_methods` macro
 Utilizing the [syn crate](https://crates.io/crates/syn) we parse the `impl` block of the `Database` struct and iterate over the individual methods parsing them into our own type:
 ```rust
 pub struct GetImplMethod {
-	pub exists: bool,
-	pub method_ident: Ident,
-	pub is_async: bool,
-	pub method_arguments: Vec<(String, SupportedType)>,
-	pub receiver: Option<proc_macro2::TokenStream>,
-	pub output_type: OutputType,
+     pub exists: bool,
+     pub method_ident: Ident,
+     pub is_async: bool,
+     pub method_arguments: Vec<(String, SupportedType)>,
+     pub receiver: Option<proc_macro2::TokenStream>,
+     pub output_type: OutputType,
 }
 ```
 
 Here `SupportType` and `OutputType` are our custom enums of types we support, looking something like:
 ```rust
 pub enum SupportedType {
-	Reference(Box<SupportedType>),
-	str,
-	String,
-	Vec(Box<SupportedType>),
-	HashMap((Box<SupportedType>, Box<SupportedType>)),
-	Option(Box<SupportedType>),
-	Tuple(Vec<SupportedType>),
-	S, // Self
-	i64,
-	i32,
-	f64,
-	// Other omitted types
+     Reference(Box<SupportedType>),
+     str,
+     String,
+     Vec(Box<SupportedType>),
+     HashMap((Box<SupportedType>, Box<SupportedType>)),
+     Option(Box<SupportedType>),
+     Tuple(Vec<SupportedType>),
+     S, // Self
+     i64,
+     i32,
+     f64,
+     // Other omitted types
 }
 
 pub enum OutputType {
-	Result(SupportedType),
-	Default,
-	Other(SupportedType),
+     Result(SupportedType),
+     Default,
+     Other(SupportedType),
 }
 ```
 
@@ -431,18 +431,18 @@ pub enum OutputType {
 We must translate the signature into the Rust code [Pyo3](https://github.com/PyO3/pyo3) and [Neon](https://neon-bindings.com/) expects. This means adjusting the arguments, async declaration, and output type. This is actually extraordinarily simple now that we have destructed the method. For instance, here is a simple example of translating the output type for Python:
 ```rust
 fn convert_output_type(
-	ty: &SupportedType,
-	method: &GetImplMethod,
+     ty: &SupportedType,
+     method: &GetImplMethod,
 ) -> (
-	Option<proc_macro2::TokenStream>
+     Option<proc_macro2::TokenStream>
 ) {
-	if method.is_async {
-		Some(quote! {PyResult<&'a PyAny>})
-	} else {
-		let ty = t
-			.to_type()
-			.unwrap();
-		Some(quote! {PyResult<#ty>})
+     if method.is_async {
+          Some(quote! {PyResult<&'a PyAny>})
+     } else {
+          let ty = t
+               .to_type()
+               .unwrap();
+          Some(quote! {PyResult<#ty>})
     }
 }
 ```
@@ -453,20 +453,20 @@ Now we have all the information we need to reconstruct the methods in the format
 The actual reconstruction is quite boring, mostly filled with a bunch of `if else` statements writing and combining token streams using the [quote crate](https://crates.io/crates/quote), so we will omit it for brevity's sake. For the curious, here is a link to our actual implementation: [github](https://github.com/postgresml/postgresml/blob/545ccb613413eab4751bf03ea4c020c09b20af3c/pgml-sdks/rust/pgml-macros/src/python.rs#L152C1-L238).
 
 The entirety of the above three phases can be summed up with this extraordinarily abstract function (Python specific though it is almost identical for JavaScript):
-```
+```rust
 fn do_custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-	let parsed_methods = parse_methods(input);
-	let mut methods = Vec::new();
-	for method in parsed_methods {
-		// Destructure Method
-		let destructured = destructure(method);
-		// Translate Signature
-		let signature = convert_signature(&destructured);
-		// Restructure Method 
-		let method = create_method(&destructured, &signature);
-		methods.push(method);
-	}
-	// This is the actual Rust impl block we are generating
+     let parsed_methods = parse_methods(input);
+     let mut methods = Vec::new();
+     for method in parsed_methods {
+          // Destructure Method
+          let destructured = destructure(method);
+          // Translate Signature
+          let signature = convert_signature(&destructured);
+          // Restructure Method 
+          let method = create_method(&destructured, &signature);
+          methods.push(method);
+     }
+     // This is the actual Rust impl block we are generating
     proc_macro::TokenStream::from(quote! {
         #[pymethods]
         impl DatabasePython {

@@ -353,6 +353,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                 }
 
                 "python" => {
+                    println!("WE ARE IN HERE: {:?}", code);
                     lazy_static! {
                         static ref RE_PYTHON: regex::Regex = regex::Regex::new(
                             r"(import |def |return |if |else|class |async |await )"
