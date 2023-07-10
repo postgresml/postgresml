@@ -33,7 +33,7 @@ The integration of PostgresML and dbt offers an exceptional advantage for data e
 - Scalable and Secure Pipelines: PostgresML's integration with PostgreSQL ensures scalability and security, allowing organizations to process and analyze large volumes of text data with confidence. Data governance, access controls, and compliance frameworks are seamlessly extended to the text processing pipeline.
 
 # Tutorial
-By following this [technical tutorial](../../../pgml-extension/examples/dbt/embeddings/), you will gain hands-on experience in setting up a dbt project, defining models, and executing an LLM-based text processing pipeline. We will guide you through the process of incorporating LLM-based text processing into your data workflows using PostgresML and dbt. Here's a high-level summary of the tutorial:
+By following this tutorial, you will gain hands-on experience in setting up a dbt project, defining models, and executing an LLM-based text processing pipeline. We will guide you through the process of incorporating LLM-based text processing into your data workflows using PostgresML and dbt. Here's a high-level summary of the tutorial:
 
 ## Prerequisites
 
