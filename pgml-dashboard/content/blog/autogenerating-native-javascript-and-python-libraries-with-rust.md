@@ -201,7 +201,7 @@ Really what we want is to write our Rust library without worrying about any tran
 
 We are creating a flow that looks like the following:
 
-![autogenerating-native-javascript-and-python-libraries-with-rust-outline.jpg](/dashboard/static/images/blog/autogenerating-native-javascript-and-python-libraries-with-rust-oDiscrete quantization is not a new idea. It's been used by both algorithms and artists for more than a hundred years.utline.webp)
+![autogenerating-native-javascript-and-python-libraries-with-rust-outline.jpg](/dashboard/static/images/blog/autogenerating-native-javascript-and-python-libraries-with-rust-outline.webp)
 <center><i>Our base is pure vanilla Rust that is then transformed by macros to compatible Pyo3 and Neon Rust, which is then converted to native Python and JavaScript modules.</i></center><br/>
 
 
