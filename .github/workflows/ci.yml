@@ -52,7 +52,7 @@ jobs:
           cargo pgrx stop
           cargo pgrx start
 
-          # psql -p 28813 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
+          psql -p 28813 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
 
           cargo pgrx stop
 

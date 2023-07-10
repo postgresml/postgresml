@@ -27,7 +27,7 @@ SELECT target, pgml.predict('Handwritten Digit Clusters', image) AS prediction
 FROM pgml.digits
 LIMIT 10;
 
-SELECT * FROM pgml.train('Handwritten Digit Clusters', algorithm => 'affinity_propagation', hyperparams => '{"n_clusters": 10}');
+SELECT * FROM pgml.train('Handwritten Digit Clusters', algorithm => 'affinity_propagation');
 SELECT * FROM pgml.train('Handwritten Digit Clusters', algorithm => 'birch', hyperparams => '{"n_clusters": 10}');
 SELECT * FROM pgml.train('Handwritten Digit Clusters', algorithm => 'kmeans', hyperparams => '{"n_clusters": 10}');
 SELECT * FROM pgml.train('Handwritten Digit Clusters', algorithm => 'mini_batch_kmeans', hyperparams => '{"n_clusters": 10}');
