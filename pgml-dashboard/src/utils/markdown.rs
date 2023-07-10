@@ -184,6 +184,8 @@ impl<'a> From<&str> for CodeFence<'a> {
             "postgresql"
         } else if options.starts_with("postgresql-line-nums") {
             "postgresql-line-nums"
+        } else if options.starts_with("rust") {
+            "rust"
         } else {
             "code"
         };
@@ -351,12 +353,28 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                 }
 
                 "python" => {
+                    println!("WE ARE IN HERE: {:?}", code);
                     lazy_static! {
-                        static ref RE_PYTHON: regex::Regex =
-                            regex::Regex::new(r"(import |def |return )").unwrap();
+                        static ref RE_PYTHON: regex::Regex = regex::Regex::new(
+                            r"(import |def |return |if |else|class |async |await)"
+                        )
+                        .unwrap();
                     }
 
                     RE_PYTHON
+                        .replace_all(&code, r#"<span class="syntax-highlight">$1</span>"#)
+                        .to_string()
+                }
+
+                "rust" => {
+                    lazy_static! {
+                        static ref RE_RUST: regex::Regex = regex::Regex::new(
+                            r"(struct |let |pub |fn |await |impl |const |use |type |move |if |else| |match |for |enum)"
+                        )
+                        .unwrap();
+                    }
+
+                    RE_RUST
                         .replace_all(&code, r#"<span class="syntax-highlight">$1</span>"#)
                         .to_string()
                 }
