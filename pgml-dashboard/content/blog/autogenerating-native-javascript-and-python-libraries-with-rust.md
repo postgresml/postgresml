@@ -199,6 +199,12 @@ We have successfully written a native Python and JavaScript module in Rust. Howe
 
 Really what we want is to write our Rust library without worrying about any translation, and apply some macros that auto convert into what [Pyo3](https://github.com/PyO3/pyo3) and [Neon](https://neon-bindings.com/) need. This sounds like a perfect use for [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html). If you are unfamiliar with macros I really recommend reading [The Little Book of Rust Macros](https://danielkeep.github.io/tlborm/book/README.html) it is free, a quick read, and provides an awesome introduction to macros.
 
+We are creating a flow that looks like the following:
+
+![autogenerating-native-javascript-and-python-libraries-with-rust-outline.jpg](/dashboard/static/images/blog/autogenerating-native-javascript-and-python-libraries-with-rust-oDiscrete quantization is not a new idea. It's been used by both algorithms and artists for more than a hundred years.utline.webp)
+<center><i>Our base is pure vanilla Rust that is then transformed by macros to compatible Pyo3 and Neon Rust, which is then converted to native Python and JavaScript modules.</i></center><br/>
+
+
 Let's slightly edit the struct we defined previously:
 
 ```rust
