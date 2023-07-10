@@ -190,7 +190,7 @@ impl Database {
     // # Arguments
     //
     // * `task` - The task to run
-    // * `inputs` - The inputs to the task
+    // * `inputs` - The inputs to the model 
     // * `args` - The arguments to the model
     //
     // # Example
