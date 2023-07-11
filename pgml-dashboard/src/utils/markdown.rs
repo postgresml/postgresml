@@ -355,7 +355,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                 "python" => {
                     lazy_static! {
                         static ref RE_PYTHON: regex::Regex = regex::Regex::new(
-                            r"(import |def |return |if |else|class |async |await)"
+                            r"(import |def |return |if |else|class |async |await )"
                         )
                         .unwrap();
                     }
