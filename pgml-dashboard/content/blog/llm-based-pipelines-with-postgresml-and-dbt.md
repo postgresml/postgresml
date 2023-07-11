@@ -185,5 +185,29 @@ As part of the pipeline execution, some models in the workflow utilize increment
 
 By configuring certain models with incremental materialization, dbt intelligently determines the changes in the source data and applies only the necessary updates to the target tables. This allows for faster iteration cycles, particularly when working with large datasets, as dbt can efficiently handle incremental updates instead of reprocessing the entire dataset.
 
+## Prerequisites:
+- Install PostgresML using Docker or sign up for a [free trial](https://postgresml.org/signup).
+- Ensure you have dbt installed on your system.
+
+
+## Setting up the dbt Project:
+
+- Initialize a new dbt project or use an existing one.
+- Configure your project settings, including database connection details and data source configurations.
+
+## Defining Models:
+
+- Define models in dbt to represent the desired data transformations like chunking and embeddings. 
+- Leverage the power of PostgresML to incorporate langchain based text splitters and open-source HuggingFace models for embeddings.
+
+## Building the Pipeline:
+
+- Define the necessary transformations and pipelines in dbt to orchestrate the LLM-based text processing workflow.
+- Specify incremental materialization and unique key configurations for efficient pipeline execution.
+
+## Executing the Pipeline:
+- Run the dbt commands to execute the LLM-based text processing pipeline.
+- Monitor the command outputs for any errors or issues encountered during pipeline execution.
+
 # Conclusions
 With PostgresML and dbt, organizations can leverage the full potential of LLMs, transforming raw textual data into valuable knowledge, and staying at the forefront of data-driven innovation. By seamlessly integrating LLM-based transformations, data engineers can unlock deeper insights, perform advanced analytics, and drive informed decision-making. Data governance, access controls, and compliance frameworks seamlessly extend to the text processing pipeline, ensuring data integrity and security throughout the LLM-based workflow.
