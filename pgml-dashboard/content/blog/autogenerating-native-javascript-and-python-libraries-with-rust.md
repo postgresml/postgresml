@@ -29,7 +29,7 @@ an SDK for Rust, when no one would use it. After much deliberation, we finalized
 
 ## What is Wrong With FFIs 
 
-The first requirement of our SDK is that is available natively in multiple languages, and the second is that it is written in Rust. At first glance, this seems
+The first requirement of our SDK is that it is available natively in multiple languages, and the second is that it is written in Rust. At first glance, this seems
 like a contradiction, but there is a very well known system for writing functions in one language and using them in another known as FFIs (foreign function
 interfaces). In terms of our SDK, we could utilize FFIs by writing the core logic of our SDK in Rust, and calling our Rust functions through FFIs from the
 language of our choice. This unfortunately does not provide the utility we desire. Take for example the following Python code:
