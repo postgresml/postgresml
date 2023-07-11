@@ -93,7 +93,7 @@ impl QueryBuilder {
                 .eq(&configuration)
             )
             .and_where(Expr::cust_with_values(
-                &format!("documents_tsvectors.ts @@ to_tsquery('{}', $1)", configuration),
+                &format!("documents_tsvectors.ts @@ plainto_tsquery('{}', $1)", configuration),
                 [filter],
             ));
         self
