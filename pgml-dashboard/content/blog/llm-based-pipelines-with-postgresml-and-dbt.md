@@ -1,7 +1,7 @@
 ---
 author: Santi Adavani
 description: Unlock the Power of Large Language Models (LLM) in Data Pipelines with PostgresML and dbt. Streamline your text processing workflows and leverage the advanced capabilities of LLMs for efficient data transformation and analysis. Discover how PostgresML and dbt combine to deliver scalable and secure pipelines, enabling you to extract valuable insights from textual data. Supercharge your data-driven decision-making with LLM-based pipelines using PostgresML and dbt.
-image: https://postgresml.org/dashboard/static/images/blog/dbt-pgml.png
+image: https://postgresml.org/dashboard/static/images/blog/llm_based_pipeline_hero.gif
 image_alt: "LLM based pipelines with PostgresML and dbt (data build tool)"
 ---
 # LLM based pipelines with PostgresML and dbt (data build tool)
@@ -15,7 +15,7 @@ image_alt: "LLM based pipelines with PostgresML and dbt (data build tool)"
 
 In the realm of data analytics and machine learning, text processing and large language models (LLMs) have become pivotal in deriving insights from textual data. Efficient data pipelines play a crucial role in enabling streamlined workflows for processing and analyzing text. This blog explores the synergy between PostgresML and dbt, showcasing how they empower organizations to build efficient data pipelines that leverage large language models for text processing, unlocking valuable insights and driving data-driven decision-making.
 
-<img src="/dashboard/static/images/blog/dbt-pgml.png" alt="pgml and dbt llm pipeline">
+<img src="/dashboard/static/images/blog/llm_based_pipeline_hero.gif" alt="pgml and dbt llm pipeline">
 
 # PostgresML
 PostgresML, an open-source machine learning extension for PostgreSQL, is designed to handle text processing tasks using large language models. Its motivation lies in harnessing the power of LLMs within the familiar PostgreSQL ecosystem. By integrating LLMs directly into the database, PostgresML eliminates the need for data movement and offers scalable and secure text processing capabilities. This native integration enhances data governance, security, and ensures the integrity of text data throughout the pipeline.
@@ -33,6 +33,7 @@ The integration of PostgresML and dbt offers an exceptional advantage for data e
 - Scalable and Secure Pipelines: PostgresML's integration with PostgreSQL ensures scalability and security, allowing organizations to process and analyze large volumes of text data with confidence. Data governance, access controls, and compliance frameworks are seamlessly extended to the text processing pipeline.
 
 # Tutorial
+
 By following this tutorial, you will gain hands-on experience in setting up a dbt project, defining models, and executing an LLM-based text processing pipeline. We will guide you through the process of incorporating LLM-based text processing into your data workflows using PostgresML and dbt. Here's a high-level summary of the tutorial:
 
 ## Prerequisites
@@ -135,7 +136,6 @@ Chunks build upon splitters and process documents, generating individual chunks.
 
 ### Models
 Models serve as a repository for storing information about different embeddings models and their associated hyperparameters. This model allows you to keep track of the various embedding techniques used in your data pipeline and their specific configuration settings.
-
 
 ### Embeddings
 Embeddings focus on generating feature embeddings from chunks using an embedding model in models table. These embeddings capture the semantic representation of textual data, facilitating more effective machine learning models. 
