@@ -3,7 +3,7 @@ author: Silas Marvin
 description: Our story of simultaneously writing multi-language native libraries using Rust
 ---
 
-# Autogenerating Native JavaScript and Python Libraries with Rust
+# How we generate JavaScript and Python SDKs from our canonical Rust SDK
 
 <div class="d-flex align-items-center mb-4">
   <img width="54px" height="54px" src="/dashboard/static/images/team/silas.jpg" style="border-radius: 50%;" alt="Author" />
