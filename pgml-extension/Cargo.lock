@@ -1775,7 +1775,7 @@ dependencies = [
 
 [[package]]
 name = "pgml"
-version = "2.7.0"
+version = "2.7.1"
 dependencies = [
  "anyhow",
  "blas",
