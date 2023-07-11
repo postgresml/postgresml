@@ -1,9 +1,11 @@
 ---
 author: Silas Marvin 
 description: Our story of simultaneously writing multi-language native libraries using Rust
+image: https://postgresml.org/dashboard/static/images/blog/rust-macros-flow-chart.jpg
+image_alt: We are building macros that convert vanilla Rust to compatible Pyo3 and Neon Rust, which is then further converted to native Python and JavaScript modules.
 ---
 
-# How we generate JavaScript and Python SDKs from our canonical Rust SDK
+# How We Generate JavaScript and Python SDKs From Our Canonical Rust SDK
 
 <div class="d-flex align-items-center mb-4">
   <img width="54px" height="54px" src="/dashboard/static/images/team/silas.jpg" style="border-radius: 50%;" alt="Author" />

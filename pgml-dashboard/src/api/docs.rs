@@ -80,8 +80,8 @@ async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk
         cluster,
         &path,
         vec![
-            NavLink::new("Autogenerating Native JavaScript and Python Libraries with Rust")
-                .href("/blog/autogenerating-native-javascript-and-python-libraries-with-rust"),
+            NavLink::new("How we generate JavaScript and Python SDKs from our canonical Rust SDK")
+                .href("/blog/how-we-generate-javascript-and-python-sdks-from-our-canonical-rust-sdk"),
             NavLink::new("Announcing GPTQ & GGML Quantized LLM support for Huggingface Transformers")
                 .href("/blog/announcing-gptq-and-ggml-quantized-llm-support-for-huggingface-transformers"),
             NavLink::new("Making Postgres 30 Percent Faster in Production")
