@@ -21,7 +21,7 @@ We are huge fans of Rust (almost our entire codebase is written in it), and we f
 through our development cycles faster. However, the majority of our users currently work in languages like Python and JavaScript. There would be no point making
 an SDK for Rust, when no one would use it. After much deliberation, we finalized the following requirements for our SDK:
 1. It must be available natively in multiple languages
-2. It must be written in Rust
+2. All languages must have identical behavior to the canonical Rust implementation
 3. Adding new languages should only include minimal overhead
 
 ![rust-macros-flow-chart.jpg](/dashboard/static/images/blog/rust-macros-flow-chart.webp)
