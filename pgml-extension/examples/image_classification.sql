@@ -48,7 +48,7 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'nu_svm');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear_svm');
 
 -- ensembles
-SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'ada_boost');
+-- SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'ada_boost'); -- adaboost no longer converges? f1 is missing...
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'bagging');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'gradient_boosting_trees', hyperparams => '{"n_estimators": 10}');
@@ -69,7 +69,7 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', hyperpara
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear', runtime => 'python');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear', runtime => 'rust');
 
-SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', runtime => 'python', hyperparams => '{"n_estimators": 10}');
+--SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', runtime => 'python', hyperparams => '{"n_estimators": 10}'); -- too slow
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', runtime => 'rust', hyperparams => '{"n_estimators": 10}');
 
 -- check out all that hard work

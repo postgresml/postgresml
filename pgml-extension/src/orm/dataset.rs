@@ -98,7 +98,7 @@ fn drop_table_if_exists(table_name: &str) {
         (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
     ]).unwrap().unwrap();
     match table_count {
-        1 => Spi::run(&format!(r#"DROP TABLE pgml.{table_name}"#)).unwrap(),
+        1 => Spi::run(&format!(r#"DROP TABLE pgml.{table_name} CASCADE"#)).unwrap(),
         _ => (),
     }
 }

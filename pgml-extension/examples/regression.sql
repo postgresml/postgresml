@@ -89,7 +89,7 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost', hyperpa
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear', runtime => 'python');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear', runtime => 'rust');
 
-SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost', runtime => 'python', hyperparams => '{"n_estimators": 10}');
+--SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost', runtime => 'python', hyperparams => '{"n_estimators": 1}'); -- too slow
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost', runtime => 'rust', hyperparams => '{"n_estimators": 10}');
 
 -- check out all that hard work

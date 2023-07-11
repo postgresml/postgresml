@@ -1,19 +1,19 @@
 --- Chunk text for  LLM embeddings and vectorization.
 
-DROP TABLE documents CASCADE;
+DROP TABLE IF EXISTS documents CASCADE;
 CREATE TABLE documents (
 	id BIGSERIAL PRIMARY KEY,
 	document TEXT NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-DROP TABLE splitters CASCADE;
+DROP TABLE IF EXISTS splitters CASCADE;
 CREATE TABLE splitters (
 	id BIGSERIAL PRIMARY KEY,
 	splitter VARCHAR NOT NULL DEFAULT 'recursive_character'
 );
 
-DROP TABLE document_chunks CASCADE;
+DROP TABLE IF EXISTS document_chunks CASCADE;
 CREATE TABLE document_chunks(
 	id BIGSERIAL PRIMARY KEY,
 	document_id BIGINT NOT NULL REFERENCES documents(id),
