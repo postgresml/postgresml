@@ -479,6 +479,6 @@ fn do_custom_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 ## Closing and Future Endeavors
 All of the above to show how we are simultaneously creating a native Rust, Python, and JavaScript library. There are quirks to the above methods, but we are still actively developing and improving on our designs.
 
-While our macros are currently specialized for the specific use cases we have, we are exploring the idea of generalizing and pushing them out as their own crate to help everyone write native libraries in Rust and the languages of their choosing.
+While our macros are currently specialized for the specific use cases we have, we are exploring the idea of generalizing and pushing them out as their own crate to help everyone write native libraries in Rust and the languages of their choosing. We're also planning to add support for more languages, and we'd love to hear feedback on your language of choice.
 
 Thanks for reading!
