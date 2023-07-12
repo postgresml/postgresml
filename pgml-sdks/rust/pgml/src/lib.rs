@@ -9,6 +9,7 @@ use tokio::runtime::{Builder, Runtime};
 
 mod collection;
 mod database;
+mod filter_builder;
 mod languages;
 pub mod models;
 mod queries;
@@ -174,7 +175,7 @@ mod tests {
                 "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
             }).into());
         }
-        
+
         collection
             .upsert_documents(documents, None, None)
             .await
@@ -191,17 +192,17 @@ mod tests {
         collection.register_model(None, None, None).await.unwrap();
         collection.generate_embeddings(None, None).await.unwrap();
         collection.generate_tsvectors(None).await.unwrap();
-        
+
         let filter = serde_json::json! ({
             "id": 1
         });
-        
+
         let query = collection
             .query()
             .vector_recall("test query".to_string(), None, None, None)
             .filter_full_text("10", None)
             .limit(10);
-            // .filter_metadata(filter.into());
+        // .filter_metadata(filter.into());
         let results = query.run().await.unwrap();
         println!("{:?}", results);
     }
@@ -225,11 +226,63 @@ mod tests {
         let db = Database::new(&connection_string).await.unwrap();
         // let task = Json::from(serde_json::json!("text-classification"));
         let task = Json::from(serde_json::json!("translation_en_to_fr"));
-        let inputs = vec![
-            "test1".to_string(),
-            "test2".to_string(),
-        ];
+        let inputs = vec!["test1".to_string(), "test2".to_string()];
         let results = db.transform(task, inputs, None).await.unwrap();
+        println!("{:?}", results);
+    }
+
+    #[tokio::test]
+    async fn query_builder_metadata_filter() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        init_logger(LevelFilter::Error).ok();
+
+        let collection_name = "rqbmftest9";
+
+        let db = Database::new(&connection_string).await.unwrap();
+        let collection = db.create_or_get_collection(collection_name).await.unwrap();
+
+        let mut documents: Vec<Json> = Vec::new();
+        for i in 0..5 {
+            documents.push(serde_json::json!({
+                "id": i,
+                "metadata": {
+                    "uuid": i
+                },
+                "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
+            }).into());
+        }
+
+        collection
+            .upsert_documents(documents, None, None)
+            .await
+            .unwrap();
+        let parameters = Json::from(serde_json::json!({
+            "chunk_size": 1500,
+            "chunk_overlap": 40,
+        }));
+        collection
+            .register_text_splitter(None, Some(parameters))
+            .await
+            .unwrap();
+        collection.generate_chunks(None).await.unwrap();
+        collection.register_model(None, None, None).await.unwrap();
+        collection.generate_embeddings(None, None).await.unwrap();
+        collection.generate_tsvectors(None).await.unwrap();
+
+        let filter = serde_json::json! ({
+            "$or": [
+                {"metadata": {"uuid": {"$eq": 1 }}},
+                {"metadata": {"uuid": {"$eq": 2 }}},
+            ]
+        });
+
+        let query = collection
+            .query()
+            .vector_recall("test query".to_string(), None, None, None)
+            .filter_metadata(filter.into())
+            .limit(10);
+        println!("\n{}\n", query.to_string());
+        let results = query.run().await.unwrap();
         println!("{:?}", results);
     }
 }
