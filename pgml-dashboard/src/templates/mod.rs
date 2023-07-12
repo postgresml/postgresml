@@ -145,8 +145,26 @@ impl<'a> WebAppBase<'a> {
     }
 
     pub fn nav(&mut self, active: &str) -> &mut Self {
-        let (upper_nav_links, lower_nav_links) = match !config::standalone_dashboard() {
+        let (upper_nav_links, lower_nav_links) = match config::standalone_dashboard() {
             true => (
+                vec![
+                    NavLink::new("Notebooks", "/notebooks")
+                        .icon("description")
+                        .disable(true),
+                    NavLink::new("Explore", "/explore")
+                        .icon("thumbnail_bar")
+                        .disable(true),
+                    NavLink::new("Projects", "/projects")
+                        .icon("library_add")
+                        .disable(true),
+                    NavLink::new("Status", "/status")
+                        .icon("update")
+                        .disable(true),
+                    NavLink::new("Dashboard", "/dashboard").icon("dashboard"),
+                ],
+                vec![],
+            ),
+            false => (
                 vec![
                     NavLink::new("Notebooks", "/notebooks")
                         .icon("description")
@@ -164,24 +182,6 @@ impl<'a> WebAppBase<'a> {
                     NavLink::new("Clusters", "/clusters").icon("lan"),
                 ],
                 vec![NavLink::new("New Database", "/clusters/new").icon("add")],
-            ),
-            false => (
-                vec![
-                    NavLink::new("Notebooks", "/notebooks")
-                        .icon("description")
-                        .disable(true),
-                    NavLink::new("Explore", "/explore")
-                        .icon("thumbnail_bar")
-                        .disable(true),
-                    NavLink::new("Projects", "/projects")
-                        .icon("library_add")
-                        .disable(true),
-                    NavLink::new("Status", "/status")
-                        .icon("update")
-                        .disable(true),
-                    NavLink::new("Dashboard", "/dashboard").icon("dashboard"),
-                ],
-                vec![],
             ),
         };
 

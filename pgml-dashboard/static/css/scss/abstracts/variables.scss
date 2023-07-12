@@ -12,15 +12,15 @@ $bg-white: #F8FAFC;
 $bg-black: #0D0D0E;
 
 // Neutral Scale
-$gray-100: #FAFAFA;
-$gray-200: #DBDBDC;
+$gray-100: #FFFFFF;
+$gray-200: #DEE0E7;
 $gray-300: #ABACB0;
-$gray-400: #919196;
-$gray-500: #4A4A4B;
-$gray-600: #2d2d2d;
+$gray-400: #777A81;
+$gray-500: #51545B;
+$gray-600: #2F3033;
 $gray-700: #262626;
-$gray-800: #212123;
-$gray-900: #0A0A0B;
+$gray-800: #17181A;
+$gray-900: #000000;
 
 // Violet Scale
 $violet-shade-100: #A105FF;
@@ -144,6 +144,7 @@ $nav-pills-border-radius: calc(#{$border-radius} / 2);
 
 // WebApp Left Nav
 $left-nav-w: 17rem;
+$left-nav-w-collapsed: 88px;
 
 //Grid
 $enable-cssgrid: true;
@@ -155,7 +156,9 @@ $card-border-radius: 20px;
 $enable-negative-margins: true;
 
 // Dropdown
-$dropdown-border-radius: 2px;
+$dropdown-border-radius: calc($border-radius / 2);
+$dropdown-spacer: 4px;
+$dropdown-menu-height: 20rem;
 
 // Modal
 $modal-backdrop-opacity: 0.70;
@@ -172,3 +175,7 @@ $breadcrumb-padding-x:              4px;
 $breadcrumb-item-padding-x:         4px;
 $breadcrumb-margin-bottom:          0px;
 $breadcrumb-divider:                quote("");
+
+// animations
+$animation-timer: 0.35s;
+$transition-collapse-width:   width 0.35s ease;

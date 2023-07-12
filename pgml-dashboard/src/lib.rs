@@ -481,7 +481,6 @@ pub async fn dashboard(
             cluster.context.cluster.id.to_string(),
         )
         .breadcrumbs(vec![
-            crate::templates::components::NavLink::new("Clusters", "/clusters"),
             crate::templates::components::NavLink::new("Dashboard", "/dashboard").active(),
         ]);
 

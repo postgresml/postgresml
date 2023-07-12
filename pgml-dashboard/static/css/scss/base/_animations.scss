@@ -24,3 +24,28 @@
     transform: scale(0.5, 0.5);
   }
 }
+
+.horizontal-hide {
+  transition-property: width, margin, padding, flex;
+  transition-duration: $animation-timer;
+  display: flex; 
+  justify-content: space-between;
+  overflow: hidden;
+  flex: 1;
+
+  &.collapsed, &.collapsing {
+      height: auto !important;
+      width: 0px;
+      padding-left: 0px;
+      padding-right: 0px;
+      flex: 0;
+      border-left: 0px;
+      border-right: 0px;
+      &* {
+          border-left: 0px;
+          border-right: 0px;
+          padding-left: 0px;
+          padding-right: 0px;
+      }
+  }
+}

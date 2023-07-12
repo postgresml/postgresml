@@ -141,7 +141,6 @@
 .navbar-web-app {
     @extend .navbar;
 
-    background-color: var(--bs-body-bg) !important;
     border-bottom: 1px solid #{$gray-500};
     border-radius: 0px;
     gap: 12px;
@@ -152,34 +151,34 @@
             top: $navbar-height;
             left: 0px;
             width: 100vw;
-            margin-top: 1px;
         }
+    }
+    
+    &.horizontal {
+        height: $navbar-height;
     }
 }
 
 .sidenav-container {
-    @extend .z-1;
     position: sticky; 
     top: $navbar-height; 
     height: calc( 100vh - $navbar-height );
     background-color: var(--bs-body-bg);
     border-right: 1px solid #{$gray-500};
     max-width: $left-nav-w;
-
-    @include media-breakpoint-down(lg) {
-        height: 100%;
-        border: none;
-    }
-}
-
-.sidenav {
-    border: none;
-    align-items: start;
-    background-color: var(--bs-body-bg) !important;
+    padding-top: 0px;
 
     @include media-breakpoint-down(lg) {
         display: none;
     }
+}
+
+.sidenav {
+    @extend .navbar;
+
+    border: none;
+    align-items: start;
+    background-color: var(--bs-body-bg) !important;
 }
 
 .toc, .guides {
@@ -218,11 +217,67 @@
 
 .drawer-submenu {
     white-space: nowrap;
-    background-color: #17181a;
+    background-color: #{gray-800};
+    @include media-breakpoint-down(lg) {
+        background-color: #{$gray-900};
+    }
 
     &.collapsing.collapse-horizontal {
         width: 0;
         height: auto;
         transition: none;
       }
+}
+
+.menu-item {
+    padding: 0px;
+    text-decoration: none;
+    border-radius: calc($border-radius / 2);
+    white-space: nowrap;
+
+    .material-symbols-outlined {
+        color: #{$neon-shade-300};
+    }
+
+    & button, & a {
+        padding: 8px 24px 8px 24px;
+        color: #{$gray-100};
+        width: 100%;
+        transition: padding $animation-timer;
+    }
+
+    &:hover {
+        background-color: #{$gray-700};
+        color: #{$gray-100};
+    }
+    
+    &:active, :focus, :target, .active {
+        background-color: #{$neon-tint-100};
+        color: #{$gray-100};
+
+        span {
+            color: #{$gray-100};
+        }
+    }
+
+    .disabled {
+        a, .material-symbols-outline, span {
+            color: #{$gray-500};
+        }
+        pointer-events: none;
+    }
+
+    &.collapsed {
+        & button, & a {
+            padding: 8px 12px;
+        }
+    }
+
+    &.collapsing {
+        height: auto;
+        & button, & a {
+            padding: 8px 12px;
+        }
+    }
+
 }

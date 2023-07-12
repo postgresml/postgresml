@@ -45,7 +45,7 @@ pre {
 a {
     text-decoration: none; 
 
-    &:not(.btn, .nav .nav-link, .breadcrumb-item a, .list-group-item, .a-reset, .navbar .nav-link, .navbar .navbar-brand, .dropdown-item > a) {
+    &:not(.btn, .nav .nav-link, .breadcrumb-item a, .list-group-item, .a-reset, .navbar .nav-link, .navbar .navbar-brand, .menu-item a) {
         color: var(--bs-link-color);
         background-color: transparent;
     }

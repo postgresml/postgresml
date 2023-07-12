@@ -21,17 +21,20 @@
             <div class="container-fluid p-0 min-vh-lg-100">
                 <div class="row gx-0 min-vh-lg-100">
                     <%- NavbarWebApp::render( None, left_nav_links ) %>
-                    <div class="sidenav-container col-12 col-lg-3 col-xxl-2 pt-3 pt-lg-0" >
-                        <%- LeftNavWebApp::render( upper_nav, lower_nav, visible_clusters, current_db ) %>
-                    </div>
 
-                    <div class="clear-from-under-navbar col-12 col-lg-9 col-xxl-10">
-                        <div class="px-5 py-3">
-                            <%- Breadcrumbs::render( breadcrumbs ) %>
+                    <div class="d-flex">
+                        <div class="sidenav-container py-3 z-1" >
+                            <%- LeftNavWebApp::render( upper_nav, lower_nav, visible_clusters, current_db ) %>
                         </div>
     
-                        <div class="p-5">
-                            <%- content.unwrap_or_default() %>
+                        <div class="clear-from-under-navbar flex-grow-1">
+                            <div class="px-5 py-3">
+                                <%- Breadcrumbs::render( breadcrumbs ) %>
+                            </div>
+
+                            <div class="p-5">
+                                <%- content.unwrap_or_default() %>
+                            </div>
                         </div>
                     </div>
                 </div>

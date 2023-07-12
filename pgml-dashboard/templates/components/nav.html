@@ -12,15 +12,15 @@
       ""
     };
   %>
-  <li class="nav-item <%= active %>" <%- aria %>>
+  <li class="menu-item <%= active %> side-menu-affect expanded" <%- aria %>>
     <a
-      class="nav-link d-flex align-items-center justify-content-start gap-2 <% if link.disabled  { %> disabled <% } %>>"
-      href="<%= link.href %>"
+      class="d-flex align-items-center justify-content-start gap-2 <% if link.disabled  { %> disabled <% } %>"
+      href="<% if active == "active" { %> <%= link.href %> <% } %>"
     >
       <% if link.icon.as_ref().is_some() { %>
-      <span class="material-symbols-outlined %>"><%- link.icon.unwrap() %></span>
+      <span class="material-symbols-outlined"><%- link.icon.unwrap() %></span>
       <% } %>
-      <span><%= link.name %></span>
+      <span class="side-menu-collapse collapse collapse-horizontal show"><%= link.name %></span>
     </a>
 
     <% if link.nav.is_some() { %>
@@ -43,8 +43,8 @@
         <a class="nav-link d-flex justify-content-start align-items-center gap-2" href="<%= link.href %>">
           <% if link.icon.as_ref().is_some() { %>
             <span class="material-symbols-outlined %>"><%- link.icon.unwrap() %></span>
-            <% } %>
-          <span><%= link.name %></span>
+          <% } %>
+          <span class="nav-link-name"><%= link.name %></span>
         </a>
       </li>
 

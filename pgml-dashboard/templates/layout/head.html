@@ -86,6 +86,7 @@
     import QuickPrediction from '<%= config::js_url("quick-prediction.js") %>'
     import TopnavStyling from '<%= config::js_url("topnav-styling.js") %>'
     import TopnavWebApp from '<%= config::js_url("topnav-web-app.js") %>'
+    import SidenavWebApp from '<%= config::js_url("sidenav-web-app.js") %>'
 
     const application = Application.start()
     application.register('click-replace', ClickReplace)
@@ -103,6 +104,7 @@
     application.register('quick-prediction', QuickPrediction)
     application.register('topnav-styling', TopnavStyling)
     application.register('topnav-web-app', TopnavWebApp)
+    application.register('sidenav-web-app', SidenavWebApp)
   </script>
 
   <% if config::dev_mode() { %>

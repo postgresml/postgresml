@@ -1,6 +1,11 @@
 <%
-  let mut dropdown_options = vec!{
-    ("Dashboard".to_string(), "/clusters".to_string())
+  let mut dropdown_options = match crate::utils::config::standalone_dashboard() {
+    true => vec![],
+    false => {
+      vec!{
+        ("Dashboard".to_string(), "/clusters".to_string())
+      }
+    }
   };
 
   for (name, id) in visible_dbs {
@@ -10,19 +15,35 @@
   let current_db_name = current_db.0;
 %>
 
-<nav class="navbar sidenav nav-pills navbar-expand-lg py-2 h-100">
-  <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="d-flex flex-column justify-content-between h-100">
+<nav class="sidenav nav-pills h-100" data-controller="sidenav-web-app">
+  <div class="d-flex flex-column justify-content-between h-100 w-100">
     <div class="d-flex flex-column">
-      <div class="nav-item d-flex align-items-center dropdown">
-        <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="10, 15" aria-expanded="false">
-          <%- current_db_name %>
+      <button class="btn-side-menu-toggle mb-5" type="button" data-bs-toggle="collapse" data-bs-target=".side-menu-collapse" aria-expanded="true">
+        <span class="collapse collapse-horizontal side-menu-collapse show" data-sidenav-web-app-target="toggler">
+          Menu
+        </span>
+        <span class="side-menu-toggle-icon material-symbols-outlined side-menu-affect expanded">
+          keyboard_double_arrow_left
+        </span>
+      </button>
+
+      <div class="dropdown nav-item d-flex w-100 mb-4 show">
+        <button class="horizontal-hide btn-dropdown dropdown-toggle side-menu-affect expanded" href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="0, 10" aria-expanded="false">
+          <%- current_db_name.clone() %>
+          <span class="material-symbols-outlined">
+            expand_more
+          </span>
+        </button>
+
+        <a class="horizontal-hide btn-dropdown-menu-item dropdown-toggle side-menu-affect collapsed" href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="68, -44" aria-expanded="false">
+          <span class="material-symbols-outlined" style="margin: auto" >
+            grid_view
+          </span>
         </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <% for (name, link) in dropdown_options { %>
-            <li class="dropdown-item d-flex align-items-center">
+
+        <ul class="dropdown-menu w-100">
+          <% for (name, link) in dropdown_options.clone() { %>
+            <li class="menu-item d-flex align-items-center">
               <a href="<%- link %>"><%- name %></a>
             </li>
           <% } %>
