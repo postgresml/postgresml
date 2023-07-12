@@ -5,8 +5,6 @@ import asyncio
 from dotenv import load_dotenv
 from time import time
 from rich.console import Console
-from psycopg import Connection
-from psycopg_pool import ConnectionPool
 
 async def main():
     load_dotenv()
@@ -47,6 +45,15 @@ async def main():
     console.print("Querying ..")
     query = "What is a good mobile os?"
     result = await collection.vector_search(query)
+    _end = time()
+
+    console.print("\nResults for '%s'" % (query), style="bold")
+    console.print(result)
+    console.print("Query time = %0.3f" % (_end - start))
+    start = time()
+    console.print("Query using query builder ..")
+    query = "What is a good mobile os?"
+    result = await collection.query().vector_recall(query).limit(5).run()
     _end = time()
 
     console.print("\nResults for '%s'" % (query), style="bold")
