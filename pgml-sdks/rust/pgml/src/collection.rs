@@ -399,6 +399,17 @@ impl Collection {
     }
 
     pub async fn generate_tsvectors(&self, configuration: Option<String>) -> anyhow::Result<()> {
+        let (count,): (i64,) = sqlx::query_as(&query_builder!(
+            "SELECT count(*) FROM (SELECT 1 FROM %s LIMIT 1) AS t",
+            self.documents_table_name
+        ))
+        .fetch_one(&self.pool)
+        .await?;
+
+        if count == 0 {
+            anyhow::bail!("No documents in the documents table. Make sure to upsert documents before generating tsvectors")
+        }
+
         let configuration = configuration.unwrap_or("english".to_string());
         sqlx::query(&query_builder!(
             queries::GENERATE_TSVECTORS,
@@ -519,6 +530,17 @@ impl Collection {
     /// }
     /// ```
     pub async fn generate_chunks(&self, splitter_id: Option<i64>) -> anyhow::Result<()> {
+        let (count,): (i64,) = sqlx::query_as(&query_builder!(
+            "SELECT count(*) FROM (SELECT 1 FROM %s LIMIT 1) AS t",
+            self.documents_table_name
+        ))
+        .fetch_one(&self.pool)
+        .await?;
+
+        if count == 0 {
+            anyhow::bail!("No documents in the documents table. Make sure to upsert documents before generating chunks")
+        }
+
         let splitter_id = splitter_id.unwrap_or(1);
         sqlx::query(&query_builder!(
             queries::GENERATE_CHUNKS,
@@ -729,6 +751,18 @@ impl Collection {
     ) -> anyhow::Result<()> {
         let model_id = model_id.unwrap_or(1);
         let splitter_id = splitter_id.unwrap_or(1);
+
+        let (count,): (i64,) = sqlx::query_as(&query_builder!(
+            "SELECT count(*) FROM (SELECT 1 FROM %s WHERE splitter_id = $1 LIMIT 1) AS t",
+            self.chunks_table_name
+        ))
+        .bind(splitter_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        if count == 0 {
+            anyhow::bail!("No chunks in the chunks table with the associated splitter_id. Make sure to generate chunks with the correct splitter_id before generating embeddings")
+        }
 
         let embeddings_table_name = self
             .create_or_get_embeddings_table(model_id, splitter_id)
