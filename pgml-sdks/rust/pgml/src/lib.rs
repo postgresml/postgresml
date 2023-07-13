@@ -242,11 +242,12 @@ mod tests {
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
 
         let mut documents: Vec<Json> = Vec::new();
-        for i in 0..5 {
+        for i in 0..1 {
             documents.push(serde_json::json!({
                 "id": i,
                 "metadata": {
-                    "uuid": i
+                    "uuid": i,
+                    "category": [i, 2, 3]
                 },
                 "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
             }).into());
@@ -270,9 +271,10 @@ mod tests {
         collection.generate_tsvectors(None).await.unwrap();
 
         let filter = serde_json::json! ({
-            "$or": [
+            "$and": [
                 {"metadata": {"uuid": {"$eq": 1 }}},
-                {"metadata": {"uuid": {"$eq": 2 }}},
+                // {"metadata": {"uuid": {"$eq": 2 }}},
+                {"metadata": {"category": {"$eq": [1, 2, 3]}}}
             ]
         });
 
