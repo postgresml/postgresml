@@ -1,12 +1,12 @@
 use itertools::Itertools;
 use pgml_macros::{custom_derive, custom_methods};
 use sea_query::{
-    extension::postgres::PgExpr, query::SelectStatement, Alias, CommonTableExpression, Expr, Func,
-    Iden, JoinType, Order, PostgresQueryBuilder, Query, QueryStatementWriter, WithClause,
+    query::SelectStatement, Alias, CommonTableExpression, Expr, Func, Iden, JoinType, Order,
+    PostgresQueryBuilder, Query, QueryStatementWriter, WithClause,
 };
 use sea_query_binder::SqlxBinder;
 
-use crate::{models, types::Json, Collection};
+use crate::{filter_builder, models, types::Json, Collection};
 
 #[cfg(feature = "javascript")]
 use crate::languages::javascript::*;
@@ -51,7 +51,14 @@ pub struct QueryBuilder {
     collection: Collection,
 }
 
-#[custom_methods(limit, filter_metadata, filter_full_text, vector_recall, to_string, run)]
+#[custom_methods(
+    limit,
+    filter_metadata,
+    filter_full_text,
+    vector_recall,
+    to_string,
+    run
+)]
 impl QueryBuilder {
     pub fn new(collection: Collection) -> Self {
         Self {
@@ -67,9 +74,11 @@ impl QueryBuilder {
     }
 
     pub fn filter_metadata(mut self, filter: Json) -> Self {
-        self.query.and_where(
-            Expr::col((SIden::Str("documents"), SIden::Str("metadata"))).contains(filter.0),
-        );
+        let filter = filter_builder::FilterBuilder::new(filter, "documents", "metadata").build();
+        self.query.cond_where(filter);
+        // self.query.and_where(
+        //     Expr::col((SIden::Str("documents"), SIden::Str("metadata"))).contains(filter.0),
+        // );
         self
     }
 
@@ -90,7 +99,7 @@ impl QueryBuilder {
                     SIden::Str("documents_tsvectors"),
                     SIden::Str("configuration"),
                 ))
-                .eq(&configuration)
+                .eq(&configuration),
             )
             .and_where(Expr::cust_with_values(
                 &format!("documents_tsvectors.ts @@ plainto_tsquery('{}', $1)", configuration),
@@ -187,9 +196,11 @@ impl QueryBuilder {
             .await?;
         Ok(results)
     }
+}
 
-    pub fn to_string(&self) -> String {
+impl std::fmt::Display for QueryBuilder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let query = self.query.clone().with(self.with.clone());
-        query.to_string(PostgresQueryBuilder)
+        write!(f, "{}", query.to_string(PostgresQueryBuilder))
     }
 }
