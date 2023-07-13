@@ -246,4 +246,21 @@ mod tests {
         let results = db.transform(task, inputs, None).await.unwrap();
         println!("{:?}", results);
     }
+
+    #[tokio::test]
+    async fn collection_errors() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        init_logger(LevelFilter::Info).ok();
+
+        let db = Database::new(&connection_string).await.unwrap();
+        let collection_name = "cetest0";
+        let collection = db.create_or_get_collection(collection_name).await.unwrap();
+
+        // Test that we cannot generate tsvectors without upserting documents first
+        assert!(collection.generate_tsvectors(None).await.is_err());
+        // Test that we cannot generate chunks without upserting documents first
+        assert!(collection.generate_chunks(None).await.is_err());
+        // Test that we cannot generate embeddings without generating chunks first 
+        assert!(collection.generate_embeddings(None, None).await.is_err());
+    }
 }
