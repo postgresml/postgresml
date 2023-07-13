@@ -14,7 +14,7 @@
     };
 
     for (name, id) in visible_clusters {
-        if (name.clone(), id.clone()) == current_db.clone() {
+        if (name.clone(), id.clone()) == current_cluster.clone() {
             dropdown_nav.add_link(
                 NavLink::new(&name, &format!("/clusters/switch/{}", id)).active()
             );

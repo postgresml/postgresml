@@ -476,7 +476,7 @@ pub async fn dashboard(
     layout
         .clusters(cluster.context.visible_clusters.clone())
         .nav("Dashboard")
-        .current_db(
+        .current_cluster(
             cluster.context.cluster.name.to_string(),
             cluster.context.cluster.id.to_string(),
         )

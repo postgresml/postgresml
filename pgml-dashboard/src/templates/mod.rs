@@ -104,7 +104,7 @@ pub struct WebAppBase<'a> {
     pub upper_nav: Nav<'a>,
     pub lower_nav: Nav<'a>,
     pub head: String,
-    pub current_db: (String, String),
+    pub current_cluster: (String, String),
 }
 
 impl<'a> WebAppBase<'a> {
@@ -124,8 +124,8 @@ impl<'a> WebAppBase<'a> {
         }
     }
 
-    pub fn current_db(&mut self, name: String, id: String) -> &mut Self {
-        self.current_db = (name, id);
+    pub fn current_cluster(&mut self, name: String, id: String) -> &mut Self {
+        self.current_cluster = (name, id);
         self
     }
 
