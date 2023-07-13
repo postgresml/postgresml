@@ -256,11 +256,11 @@ mod tests {
         let collection_name = "cetest0";
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
 
-        // Test that we cannot generate tsvectors with upserting documents first
+        // Test that we cannot generate tsvectors without upserting documents first
         assert!(collection.generate_tsvectors(None).await.is_err());
-        // Test that we cannot generate chunks with upserting documents first
+        // Test that we cannot generate chunks without upserting documents first
         assert!(collection.generate_chunks(None).await.is_err());
-        // Test that we cannot generate embeddings with generating chunks first 
+        // Test that we cannot generate embeddings without generating chunks first 
         assert!(collection.generate_embeddings(None, None).await.is_err());
     }
 }
