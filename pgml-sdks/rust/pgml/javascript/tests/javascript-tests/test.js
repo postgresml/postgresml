@@ -45,14 +45,18 @@ async function query_builder() {
       "text": "Hello, World! - From Javascript",
     },
     {
-      "name": "Test2",
+      "name": "Test",
       "text": "Hello, World2! - From Javascript",
     }
   ]
   await collection.upsert_documents(docs);
   await collection.generate_chunks();
   await collection.generate_embeddings();
-  let results = await collection.query().vector_recall("Hello").limit(5).run();
+  let results = await collection.query().filter({
+    metadata: {
+      name: {"$eq": "Test"}
+    }
+  }).vector_recall("Hello").limit(5).run();
   console.log("The Results:")
   results.forEach((result) => {
     console.log(result);

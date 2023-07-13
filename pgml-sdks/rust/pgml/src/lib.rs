@@ -163,79 +163,6 @@ mod tests {
         let connection_string = env::var("DATABASE_URL").unwrap();
         init_logger(LevelFilter::Error).ok();
 
-        let collection_name = "rqtest8";
-
-        let db = Database::new(&connection_string).await.unwrap();
-        let collection = db.create_or_get_collection(collection_name).await.unwrap();
-
-        let mut documents: Vec<Json> = Vec::new();
-        for i in 0..2 {
-            documents.push(serde_json::json!({
-                "id": i,
-                "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
-            }).into());
-        }
-
-        collection
-            .upsert_documents(documents, None, None)
-            .await
-            .unwrap();
-        let parameters = Json::from(serde_json::json!({
-            "chunk_size": 1500,
-            "chunk_overlap": 40,
-        }));
-        collection
-            .register_text_splitter(None, Some(parameters))
-            .await
-            .unwrap();
-        collection.generate_chunks(None).await.unwrap();
-        collection.register_model(None, None, None).await.unwrap();
-        collection.generate_embeddings(None, None).await.unwrap();
-        collection.generate_tsvectors(None).await.unwrap();
-
-        let filter = serde_json::json! ({
-            "id": 1
-        });
-
-        let query = collection
-            .query()
-            .vector_recall("test query".to_string(), None, None, None)
-            .filter_full_text("10", None)
-            .limit(10);
-        // .filter_metadata(filter.into());
-        let results = query.run().await.unwrap();
-        println!("{:?}", results);
-    }
-
-    #[tokio::test]
-    async fn query_runner() {
-        let connection_string = env::var("DATABASE_URL").unwrap();
-        init_logger(LevelFilter::Info).ok();
-
-        let db = Database::new(&connection_string).await.unwrap();
-        let query = db.query("SELECT * from pgml.collections");
-        let results = query.fetch_all().await.unwrap();
-        println!("{:?}", results);
-    }
-
-    #[tokio::test]
-    async fn transform() {
-        let connection_string = env::var("DATABASE_URL").unwrap();
-        init_logger(LevelFilter::Info).ok();
-
-        let db = Database::new(&connection_string).await.unwrap();
-        // let task = Json::from(serde_json::json!("text-classification"));
-        let task = Json::from(serde_json::json!("translation_en_to_fr"));
-        let inputs = vec!["test1".to_string(), "test2".to_string()];
-        let results = db.transform(task, inputs, None).await.unwrap();
-        println!("{:?}", results);
-    }
-
-    #[tokio::test]
-    async fn query_builder_metadata_filter() {
-        let connection_string = env::var("DATABASE_URL").unwrap();
-        init_logger(LevelFilter::Error).ok();
-
         let collection_name = "rqbmftest9";
 
         let db = Database::new(&connection_string).await.unwrap();
@@ -271,20 +198,52 @@ mod tests {
         collection.generate_tsvectors(None).await.unwrap();
 
         let filter = serde_json::json! ({
-            "$and": [
-                {"metadata": {"uuid": {"$eq": 1 }}},
-                // {"metadata": {"uuid": {"$eq": 2 }}},
-                {"metadata": {"category": {"$eq": [1, 2, 3]}}}
-            ]
+            "metadata": {
+                "metadata": {
+                    "$or": [
+                        {"uuid": {"$eq": 1 }},
+                        {"uuid": {"$eq": 2 }},
+                        {"category": {"$eq": [1, 2, 3]}}
+                    ]
+
+                }
+            },
+            "full_text": {
+                "text": "filler text"
+            }
         });
 
         let query = collection
             .query()
             .vector_recall("test query".to_string(), None, None, None)
-            .filter_metadata(filter.into())
+            .filter(filter.into())
             .limit(10);
         println!("\n{}\n", query.to_string());
         let results = query.run().await.unwrap();
+        println!("{:?}", results);
+    }
+
+    #[tokio::test]
+    async fn query_runner() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        init_logger(LevelFilter::Info).ok();
+
+        let db = Database::new(&connection_string).await.unwrap();
+        let query = db.query("SELECT * from pgml.collections");
+        let results = query.fetch_all().await.unwrap();
+        println!("{:?}", results);
+    }
+
+    #[tokio::test]
+    async fn transform() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        init_logger(LevelFilter::Info).ok();
+
+        let db = Database::new(&connection_string).await.unwrap();
+        // let task = Json::from(serde_json::json!("text-classification"));
+        let task = Json::from(serde_json::json!("translation_en_to_fr"));
+        let inputs = vec!["test1".to_string(), "test2".to_string()];
+        let results = db.transform(task, inputs, None).await.unwrap();
         println!("{:?}", results);
     }
 }

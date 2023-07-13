@@ -2,8 +2,6 @@ use sea_query::{
     extension::postgres::PgExpr, value::ArrayType, Condition, Expr, IntoCondition, SimpleExpr,
 };
 
-use crate::types::Json;
-
 fn get_sea_query_array_type(value: &serde_json::Value) -> ArrayType {
     if value.is_null() {
         panic!("Invalid metadata filter configuration")
@@ -147,21 +145,21 @@ fn build_recursive<'a>(
                 "$and" => build_recursive(
                     table_name,
                     column_name,
-                    path.clone(),
+                    local_path,
                     value.clone(),
                     Some(Condition::all()),
                 ),
                 "$or" => build_recursive(
                     table_name,
                     column_name,
-                    path.clone(),
+                    local_path,
                     value.clone(),
                     Some(Condition::any()),
                 ),
                 "$not" => build_recursive(
                     table_name,
                     column_name,
-                    path.clone(),
+                    local_path,
                     value.clone(),
                     Some(Condition::all().not()),
                 ),
@@ -226,13 +224,13 @@ fn build_recursive<'a>(
 }
 
 pub struct FilterBuilder<'a> {
-    filter: Json,
+    filter: serde_json::Value,
     table_name: &'a str,
     column_name: &'a str,
 }
 
 impl<'a> FilterBuilder<'a> {
-    pub fn new(filter: Json, table_name: &'a str, column_name: &'a str) -> Self {
+    pub fn new(filter: serde_json::Value, table_name: &'a str, column_name: &'a str) -> Self {
         Self {
             filter,
             table_name,
@@ -245,7 +243,7 @@ impl<'a> FilterBuilder<'a> {
             self.table_name,
             self.column_name,
             Vec::new(),
-            self.filter.0,
+            self.filter,
             None,
         )
     }
@@ -279,7 +277,7 @@ mod tests {
     }
 
     fn construct_filter_builder_with_json(json: serde_json::Value) -> FilterBuilder<'static> {
-        FilterBuilder::new(json.into(), "test_table", "metadata")
+        FilterBuilder::new(json, "test_table", "metadata")
     }
 
     #[test]

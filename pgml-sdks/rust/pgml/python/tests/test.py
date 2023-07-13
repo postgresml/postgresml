@@ -39,14 +39,23 @@ async def query_builder():
     documents = [
         {
             "id": 1,
+            "metadata": {
+                "uuid": 1
+            },
             "text": "This is a test document",
         },
         {
             "id": 2,
+            "metadata": {
+                "uuid": 2
+            },
             "text": "This is another test document",
         },
         {
             "id": 3,
+            "metadata": {
+                "uuid": 3
+            },
             "text": "PostgresML",
         }
 
@@ -56,15 +65,26 @@ async def query_builder():
     await collection.generate_chunks()
     await collection.generate_embeddings()
 
-    query = collection.query().vector_recall("test").filter_full_text('PostgresML', 'english').limit(10)
-    # query = collection.query().vector_recall("test").filter_metadata({"id": 1}).limit(10)
+    query = collection.query().vector_recall("test").filter({
+        "metadata": {
+            "metadata": {
+                "$or": [
+                    {"uuid": {"$eq": 1}},
+                    {"uuid": {"$lt": 4}}
+                ]
+            }
+        },
+        "full_text": {
+            "text": "postgresml"
+        }
+    }).limit(10)
     print("Running query:")
-    print(query.to_string())
+    print(query.to_full_string())
     results = await query.run()
     print("The results:")
     print(results)
 
-    await db.archive_collection(collection_name)
+    # await db.archive_collection(collection_name)
 
 async def query_runner():
     db = pgml.Database(CONNECTION_STRING)
@@ -80,7 +100,7 @@ async def transform():
 
 
 if __name__ == "__main__":
-    # asyncio.run(query_builder())    
+    asyncio.run(query_builder())    
     # asyncio.run(main())    
     # asyncio.run(query_runner())
-    asyncio.run(transform())
+    # asyncio.run(transform())
