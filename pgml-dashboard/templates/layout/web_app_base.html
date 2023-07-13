@@ -16,7 +16,10 @@
     for (name, id) in visible_clusters {
         if (name.clone(), id.clone()) == current_cluster.clone() {
             dropdown_nav.add_link(
-                NavLink::new(&name, &format!("/clusters/switch/{}", id)).active()
+                match crate::utils::config::standalone_dashboard() {
+                    true => NavLink::new(&name, "/dashboard").active(),
+                    false => NavLink::new(&name, &format!("/clusters/switch/{}", id)).active()
+                }
             );
         } else {
             dropdown_nav.add_link(
@@ -34,6 +37,7 @@
         }
     }
 
+    // collect left nav links for for top nav in mobile view
     let mut left_nav_links: Vec<NavLink> = Vec::new();
     left_nav_links.append(& mut upper_nav.links.clone());
     left_nav_links.append(& mut lower_nav.links.clone());
@@ -49,7 +53,7 @@
                     <%- NavbarWebApp::render( None, left_nav_links ) %>
 
                     <div class="d-flex">
-                        <div class="sidenav-container py-3 z-1" >
+                        <div class="leftnav-container py-3 z-1" >
                             <%- LeftNavWebApp::render( upper_nav, lower_nav, dropdown_nav ) %>
                         </div>
     

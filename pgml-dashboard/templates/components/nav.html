@@ -1,57 +1,59 @@
-<ul class="nav flex-column justify-content-end">
-  <% for link in links {
-    let active = if link.active {
-      "active"
-    } else {
-      ""
-    };
-
-    let aria = if link.active {
-      r#"area-current="page""#
-    } else {
-      ""
-    };
-  %>
-  <li class="menu-item <%= active %> side-menu-affect expanded" <%- aria %>>
-    <a
-      class="d-flex align-items-center justify-content-start gap-2 <% if link.disabled  { %> disabled <% } %>"
-      href="<%= link.href %>"
-    >
-      <% if link.icon.as_ref().is_some() { %>
-      <span class="material-symbols-outlined"><%- link.icon.unwrap() %></span>
+<nav>
+  <ul class="nav flex-column justify-content-end">
+    <% for link in links {
+      let active = if link.active {
+        "active"
+      } else {
+        ""
+      };
+  
+      let aria = if link.active {
+        r#"area-current="page""#
+      } else {
+        ""
+      };
+    %>
+    <li class="menu-item <%= active %> leftnav-collapse-affect expanded" <%- aria %>>
+      <a
+        class="d-flex align-items-center justify-content-start gap-2 <% if link.disabled  { %> disabled <% } %>"
+        href="<%= link.href %>"
+      >
+        <% if link.icon.as_ref().is_some() { %>
+        <span class="material-symbols-outlined"><%- link.icon.unwrap() %></span>
+        <% } %>
+        <span class="collapse collapse-horizontal leftnav-collapse show"><%= link.name %></span>
+      </a>
+  
+      <% if link.nav.is_some() { %>
+      <ul class="nav flex-column justify-content-end flex-grow-1 ps-5">
+  
+        <% for link in link.nav.unwrap().links.iter() {
+          let active = if link.active {
+            "active"
+          } else {
+            ""
+          };
+  
+          let aria = if link.active {
+            r#"area-current="page""#
+          } else {
+            ""
+          };
+        %>
+        <li class="nav-item <%= active %>" <%- aria %>>
+          <a class="nav-link d-flex justify-content-start align-items-center gap-2" href="<%= link.href %>">
+            <% if link.icon.as_ref().is_some() { %>
+              <span class="material-symbols-outlined %>"><%- link.icon.unwrap() %></span>
+            <% } %>
+            <span class="nav-link-name"><%= link.name %></span>
+          </a>
+        </li>
+  
+        <% } %>
+      </ul>
+  
       <% } %>
-      <span class="side-menu-collapse collapse collapse-horizontal show"><%= link.name %></span>
-    </a>
-
-    <% if link.nav.is_some() { %>
-    <ul class="nav flex-column justify-content-end flex-grow-1 ps-5">
-
-      <% for link in link.nav.unwrap().links.iter() {
-        let active = if link.active {
-          "active"
-        } else {
-          ""
-        };
-
-        let aria = if link.active {
-          r#"area-current="page""#
-        } else {
-          ""
-        };
-      %>
-      <li class="nav-item <%= active %>" <%- aria %>>
-        <a class="nav-link d-flex justify-content-start align-items-center gap-2" href="<%= link.href %>">
-          <% if link.icon.as_ref().is_some() { %>
-            <span class="material-symbols-outlined %>"><%- link.icon.unwrap() %></span>
-          <% } %>
-          <span class="nav-link-name"><%= link.name %></span>
-        </a>
-      </li>
-
-      <% } %>
-    </ul>
-
+    </li>
     <% } %>
-  </li>
-  <% } %>
-</ul>
+  </ul>
+</nav>

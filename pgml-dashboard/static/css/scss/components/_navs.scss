@@ -159,7 +159,7 @@
     }
 }
 
-.sidenav-container {
+.leftnav-container {
     position: sticky; 
     top: $navbar-height; 
     height: calc( 100vh - $navbar-height );
@@ -173,7 +173,7 @@
     }
 }
 
-.sidenav {
+.leftnav {
     @extend .navbar;
 
     border: none;

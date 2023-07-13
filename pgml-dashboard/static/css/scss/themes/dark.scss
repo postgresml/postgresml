@@ -23,12 +23,12 @@
     }
 
     .form-control {
-        --bs-form-control-bg: #212224;
+        --bs-form-control-bg: #{$gray-700};
         --bs-body-color: #{$gray-200};
-        --bs-border-color: #212224;
+        --bs-border-color: #{$gray-700};
 
         &:disabled {
-            --bs-form-control-disabled-bg: #212224;
+            --bs-form-control-disabled-bg: #{$gray-700};
         }
 
         &:focus {
@@ -41,16 +41,16 @@
     }
 
     .input-group-text {
-        --bs-border-color: #212224;
+        --bs-border-color: #{$gray-700};
 
-        background-color: #212224;
+        background-color: #{$gray-700};
         color: #{$gray-200};
     }
 
     body {
         --bs-body-color: #{$gray-300};
         --bs-danger-text: rgba(240, 76, 64, 1);
-        --bs-secondary-color: rgba(145, 145, 150, 1);
+        --bs-secondary-color: #919196;
     }
 
     .btn {
@@ -98,7 +98,7 @@
         }
     }
 
-    .navbar-web-app, .sidenav, .drawer-submenu {
+    .navbar-web-app, .leftnav, .drawer-submenu {
         background-color: #{$gray-800};
 
         @include media-breakpoint-down(lg) {

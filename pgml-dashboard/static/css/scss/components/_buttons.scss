@@ -226,7 +226,7 @@
     }
 }
 
-.btn-side-menu-toggle {
+.btn-left-nav-toggle {
     @extend .btn;
     --bs-btn-padding-x: 0px;
     display: flex;
@@ -245,7 +245,7 @@
     --bs-btn-hover-color: #{$gray-100};
 }
 
-.side-menu-toggle-icon {
+.left-nav-toggle-icon {
     margin-left: calc($left-nav-w - 9rem);
     margin-right: 0px;
     
