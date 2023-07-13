@@ -480,9 +480,11 @@ pub async fn dashboard(
             cluster.context.cluster.name.to_string(),
             cluster.context.cluster.id.to_string(),
         )
-        .breadcrumbs(vec![
-            crate::templates::components::NavLink::new("Dashboard", "/dashboard").active(),
-        ]);
+        .breadcrumbs(vec![crate::templates::components::NavLink::new(
+            "Dashboard",
+            "/dashboard",
+        )
+        .active()]);
 
     let all_tabs = vec![
         tabs::Tab {
