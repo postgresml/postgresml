@@ -85,24 +85,17 @@ impl<'a> Nav<'a> {
 #[derive(TemplateOnce)]
 #[template(path = "layout/nav/left_web_app.html")]
 pub struct LeftNavWebApp<'a> {
-    pub visible_dbs: HashMap<String, String>,
     pub upper_nav: Nav<'a>,
     pub lower_nav: Nav<'a>,
-    pub current_db: (String, String),
+    pub dropdown_nav: Nav<'a>,
 }
 
 impl<'a> LeftNavWebApp<'a> {
-    pub fn render(
-        upper_nav: Nav,
-        lower_nav: Nav,
-        visible_dbs: HashMap<String, String>,
-        current_db: (String, String),
-    ) -> String {
+    pub fn render(upper_nav: Nav, lower_nav: Nav, dropdown_nav: Nav) -> String {
         LeftNavWebApp {
             upper_nav,
             lower_nav,
-            visible_dbs,
-            current_db,
+            dropdown_nav,
         }
         .render_once()
         .unwrap()

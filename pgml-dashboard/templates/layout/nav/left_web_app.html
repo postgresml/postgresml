@@ -1,18 +1,8 @@
 <%
-  let mut dropdown_options = match crate::utils::config::standalone_dashboard() {
-    true => vec![],
-    false => {
-      vec!{
-        ("Dashboard".to_string(), "/clusters".to_string())
-      }
-    }
-  };
-
-  for (name, id) in visible_dbs {
-    dropdown_options.push((name, format!("/clusters/switch/{}", id)))
-  }
-
-  let current_db_name = current_db.0;
+  let active_dropdown_item = dropdown_nav
+    .clone()
+    .links.into_iter()
+    .find(|link| link.active );
 %>
 
 <nav class="sidenav nav-pills h-100" data-controller="sidenav-web-app">
@@ -29,7 +19,12 @@
 
       <div class="dropdown nav-item d-flex w-100 mb-4 show">
         <button class="horizontal-hide btn-dropdown dropdown-toggle side-menu-affect expanded" href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="0, 10" aria-expanded="false">
-          <%- current_db_name.clone() %>
+          <%- 
+            match active_dropdown_item {
+              Some(item) => item.name,
+              None => "".to_string()
+            }
+          %>
           <span class="material-symbols-outlined">
             expand_more
           </span>
@@ -42,13 +37,14 @@
         </a>
 
         <ul class="dropdown-menu w-100">
-          <% for (name, link) in dropdown_options.clone() { %>
+          <% for link in dropdown_nav.links { %>
             <li class="menu-item d-flex align-items-center">
-              <a href="<%- link %>"><%- name %></a>
+              <a href="<%- link.href %>"><%- link.name %></a>
             </li>
           <% } %>
         </ul>
       </div>
+
       <%- upper_nav.render_once().unwrap() %>
     </div>
     <%- lower_nav.render_once().unwrap() %>

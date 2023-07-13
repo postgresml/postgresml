@@ -51,7 +51,10 @@ impl Default for Cluster {
             context: Context {
                 user: models::User::default(),
                 cluster: models::Cluster::default(),
-                visible_clusters: HashMap::default(),
+                visible_clusters: HashMap::from([(
+                    models::Cluster::default().name,
+                    models::Cluster::default().id.to_string(),
+                )]),
             },
         }
     }

@@ -3,11 +3,37 @@
         NavbarWebApp,
         LeftNavWebApp, 
         Breadcrumbs, 
-        NavLink
+        NavLink,
+        Nav
     }; 
 %>
 
 <%
+    let mut dropdown_nav: Nav = Nav { 
+        links: vec![]
+    };
+
+    for (name, id) in visible_clusters {
+        if (name.clone(), id.clone()) == current_db.clone() {
+            dropdown_nav.add_link(
+                NavLink::new(&name, &format!("/clusters/switch/{}", id)).active()
+            );
+        } else {
+            dropdown_nav.add_link(
+                NavLink::new(&name, &format!("/clusters/switch/{}", id))
+            );
+        }
+      }
+    
+    match crate::utils::config::standalone_dashboard() {
+        true => (),
+        false => {
+            dropdown_nav.add_link(
+                NavLink::new("Dashboard", "/clusters"),
+            );
+        }
+    }
+
     let mut left_nav_links: Vec<NavLink> = Vec::new();
     left_nav_links.append(& mut upper_nav.links.clone());
     left_nav_links.append(& mut lower_nav.links.clone());
@@ -24,7 +50,7 @@
 
                     <div class="d-flex">
                         <div class="sidenav-container py-3 z-1" >
-                            <%- LeftNavWebApp::render( upper_nav, lower_nav, visible_clusters, current_db ) %>
+                            <%- LeftNavWebApp::render( upper_nav, lower_nav, dropdown_nav ) %>
                         </div>
     
                         <div class="clear-from-under-navbar flex-grow-1">
