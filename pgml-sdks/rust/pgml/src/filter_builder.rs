@@ -5,14 +5,9 @@ use sea_query::{
 use crate::types::Json;
 
 fn get_sea_query_array_type(value: &serde_json::Value) -> ArrayType {
-    println!("value: {:?}", value);
-    println!("{} {} {}", value.is_u64(), value.is_i64(), value.is_f64());
-
     if value.is_null() {
         panic!("Invalid metadata filter configuration")
-    }
-
-    if value.is_string() {
+    } else if value.is_string() {
         ArrayType::String
     } else if value.is_i64() || value.is_u64() {
         ArrayType::BigInt
