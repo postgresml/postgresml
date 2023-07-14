@@ -80,6 +80,8 @@ async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk
         cluster,
         &path,
         vec![
+            NavLink::new("LLM based pipelines with PostgresML and dbt (data build tool)")
+                .href("/blog/llm-based-pipelines-with-postgresml-and-dbt"),
             NavLink::new("How we generate JavaScript and Python SDKs from our canonical Rust SDK")
                 .href("/blog/how-we-generate-javascript-and-python-sdks-from-our-canonical-rust-sdk"),
             NavLink::new("Announcing GPTQ & GGML Quantized LLM support for Huggingface Transformers")
