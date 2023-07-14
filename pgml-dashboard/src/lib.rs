@@ -475,11 +475,11 @@ pub async fn dashboard(
     let mut layout = crate::templates::WebAppBase::new("Dashboard");
     layout
         .clusters(cluster.context.visible_clusters.clone())
-        .nav("Dashboard")
         .current_cluster(
             cluster.context.cluster.name.to_string(),
-            cluster.context.cluster.id.to_string(),
+            cluster.context.cluster.id,
         )
+        .nav("Dashboard")
         .breadcrumbs(vec![crate::templates::components::NavLink::new(
             "Dashboard",
             "/dashboard",

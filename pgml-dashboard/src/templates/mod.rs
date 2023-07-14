@@ -104,7 +104,7 @@ pub struct WebAppBase<'a> {
     pub upper_nav: Nav<'a>,
     pub lower_nav: Nav<'a>,
     pub head: String,
-    pub current_cluster: (String, String),
+    pub current_cluster: models::Cluster,
 }
 
 impl<'a> WebAppBase<'a> {
@@ -124,8 +124,8 @@ impl<'a> WebAppBase<'a> {
         }
     }
 
-    pub fn current_cluster(&mut self, name: String, id: String) -> &mut Self {
-        self.current_cluster = (name, id);
+    pub fn current_cluster(&mut self, name: String, id: i64) -> &mut Self {
+        self.current_cluster = models::Cluster {name, id};
         self
     }
 
@@ -157,9 +157,6 @@ impl<'a> WebAppBase<'a> {
                     NavLink::new("Projects", "/projects")
                         .icon("library_add")
                         .disable(true),
-                    NavLink::new("Status", "/status")
-                        .icon("update")
-                        .disable(true),
                     NavLink::new("Dashboard", "/dashboard").icon("dashboard"),
                 ],
                 vec![],
@@ -175,11 +172,16 @@ impl<'a> WebAppBase<'a> {
                     NavLink::new("Projects", "/projects")
                         .icon("library_add")
                         .disable(true),
-                    NavLink::new("Status", "/status")
+                    NavLink::new("Status", &format!("/clusters/{}", self.current_cluster.id))
                         .icon("update")
-                        .disable(true),
-                    NavLink::new("Dashboard", "/dashboard").icon("dashboard"),
-                    NavLink::new("Clusters", "/clusters").icon("lan"),
+                        .disable(
+                            self.current_cluster.id == models::Cluster::default().id
+                        ),
+                    NavLink::new("Dashboard", "/dashboard")
+                        .icon("dashboard")
+                        .disable(
+                            self.current_cluster.id == models::Cluster::default().id
+                        ),
                 ],
                 vec![NavLink::new("New Database", "/clusters/new").icon("add")],
             ),
