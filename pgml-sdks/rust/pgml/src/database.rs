@@ -55,10 +55,6 @@ impl Database {
             .max_connections(5)
             .connect_with(connection_options)
             .await?;
-        sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
-            .execute(pool.borrow())
-            .await?;
-        let pool = pool;
         Ok(Self { pool })
     }
 
@@ -82,15 +78,23 @@ impl Database {
     /// }
     /// ```
     pub async fn create_or_get_collection(&self, name: &str) -> anyhow::Result<Collection> {
-        let collection: Option<models::Collection> = sqlx::query_as::<_, models::Collection>(
+        let result = sqlx::query_as::<_, models::Collection>(
             "SELECT * FROM pgml.collections WHERE name = $1 AND active = TRUE;",
         )
         .bind(name)
         .fetch_optional(self.pool.borrow())
-        .await?;
-        match collection {
-            Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
-            None => Ok(Collection::new(name.to_string(), self.pool.clone()).await?),
+        .await;
+        match result {
+            Ok(collection) => match collection {
+                Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
+                None => Ok(Collection::new(name.to_string(), self.pool.clone()).await.unwrap()),
+            },
+            Err(_) => {
+                sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
+                    .execute(&self.pool.clone())
+                    .await?;
+                Ok(Collection::new(name.to_string(), self.pool.clone()).await.unwrap())
+            }
         }
     }
 
