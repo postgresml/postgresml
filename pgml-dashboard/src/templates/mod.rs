@@ -125,7 +125,7 @@ impl<'a> WebAppBase<'a> {
     }
 
     pub fn current_cluster(&mut self, name: String, id: i64) -> &mut Self {
-        self.current_cluster = models::Cluster {name, id};
+        self.current_cluster = models::Cluster { name, id };
         self
     }
 
@@ -174,14 +174,10 @@ impl<'a> WebAppBase<'a> {
                         .disable(true),
                     NavLink::new("Status", &format!("/clusters/{}", self.current_cluster.id))
                         .icon("update")
-                        .disable(
-                            self.current_cluster.id == models::Cluster::default().id
-                        ),
+                        .disable(self.current_cluster.id == models::Cluster::default().id),
                     NavLink::new("Dashboard", "/dashboard")
                         .icon("dashboard")
-                        .disable(
-                            self.current_cluster.id == models::Cluster::default().id
-                        ),
+                        .disable(self.current_cluster.id == models::Cluster::default().id),
                 ],
                 vec![NavLink::new("New Database", "/clusters/new").icon("add")],
             ),
