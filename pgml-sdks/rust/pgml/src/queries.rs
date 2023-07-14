@@ -24,15 +24,20 @@ CREATE TABLE IF NOT EXISTS %s (
 
 pub const CREATE_SPLITTERS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
-  id serial8 PRIMARY KEY, created_at timestamptz NOT NULL DEFAULT now(), 
-  name text NOT NULL, parameters jsonb NOT NULL DEFAULT '{}'
+  id serial8 PRIMARY KEY, 
+  created_at timestamptz NOT NULL DEFAULT now(), 
+  name text NOT NULL, 
+  parameters jsonb NOT NULL DEFAULT '{}'
 );
 "#;
 
 pub const CREATE_MODELS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
-  id serial8 PRIMARY KEY, created_at timestamptz NOT NULL DEFAULT now(), 
-  task text NOT NULL, name text NOT NULL, 
+  id serial8 PRIMARY KEY, 
+  created_at timestamptz NOT NULL DEFAULT now(), 
+  task text NOT NULL, 
+  name text NOT NULL, 
+  source text NOT NULL,
   parameters jsonb NOT NULL DEFAULT '{}'
 );
 "#;
@@ -106,36 +111,18 @@ ON CONFLICT (document_id, configuration) DO UPDATE SET ts = EXCLUDED.ts;
 "#;
 
 pub const GENERATE_EMBEDDINGS: &str = r#"
-WITH model as (
-  SELECT 
-    name, 
-    parameters 
-  from 
-    %s 
-  where 
-    id = $1 
-) INSERT INTO %s (chunk_id, embedding) 
+INSERT INTO %s (chunk_id, embedding) 
 SELECT 
   id, 
   pgml.embed(
     text => chunk, 
-    transformer => (
-      SELECT 
-        name 
-      FROM 
-        model
-    ), 
-    kwargs => (
-      SELECT 
-        parameters 
-      FROM 
-        model
-    )
+    transformer => $1, 
+    kwargs => $2 
   ) 
 FROM 
   %s 
 WHERE 
-  splitter_id = $2 
+  splitter_id = $3 
   AND id NOT IN (
     SELECT 
       chunk_id 

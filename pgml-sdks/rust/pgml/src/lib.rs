@@ -15,6 +15,7 @@ pub mod models;
 mod queries;
 mod query_builder;
 mod query_runner;
+mod remote_embeddings;
 pub mod types;
 mod utils;
 
@@ -116,7 +117,7 @@ mod tests {
     async fn can_vector_search() {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
-        init_logger(LevelFilter::Error).ok();
+        init_logger(LevelFilter::Info).ok();
 
         let collection_name = "rctest0";
 
@@ -149,7 +150,10 @@ mod tests {
             .await
             .unwrap();
         collection.generate_chunks(None).await.unwrap();
-        collection.register_model(None, None, None).await.unwrap();
+        collection
+            .register_model(None, None, None, None)
+            .await
+            .unwrap();
         collection.generate_embeddings(None, None).await.unwrap();
         collection
             .vector_search("Here is a test", None, None, None, None)
@@ -163,7 +167,7 @@ mod tests {
         let connection_string = env::var("DATABASE_URL").unwrap();
         init_logger(LevelFilter::Error).ok();
 
-        let collection_name = "rqbmftest9";
+        let collection_name = "rqbmftest11";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
@@ -193,7 +197,10 @@ mod tests {
             .await
             .unwrap();
         collection.generate_chunks(None).await.unwrap();
-        collection.register_model(None, None, None).await.unwrap();
+        collection
+            .register_model(None, None, None, None)
+            .await
+            .unwrap();
         collection.generate_embeddings(None, None).await.unwrap();
         collection.generate_tsvectors(None).await.unwrap();
 
@@ -261,7 +268,7 @@ mod tests {
         assert!(collection.generate_tsvectors(None).await.is_err());
         // Test that we cannot generate chunks without upserting documents first
         assert!(collection.generate_chunks(None).await.is_err());
-        // Test that we cannot generate embeddings without generating chunks first 
+        // Test that we cannot generate embeddings without generating chunks first
         assert!(collection.generate_embeddings(None, None).await.is_err());
     }
 }

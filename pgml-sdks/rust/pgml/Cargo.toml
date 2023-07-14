@@ -25,6 +25,8 @@ log = "0.4.18"
 sea-query = { version = "0.28.5", features = ["attr", "thread-safe", "with-json", "postgres-array"] }
 sea-query-binder = { version = "0.3.1", features = ["sqlx-postgres", "with-json", "postgres-array"] }
 regex = "1.8.4"
+reqwest = { version = "0.11", features = ["json"] }
+async-trait = "0.1.71"
 
 [features]
 python = ["dep:pyo3", "dep:pyo3-asyncio"]

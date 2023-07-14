@@ -75,7 +75,7 @@ impl Collection {
         collection.create_chunks_table().await?;
         collection.create_documents_tsvectors_table().await?;
         collection.register_text_splitter(None, None).await?;
-        collection.register_model(None, None, None).await?;
+        collection.register_model(None, None, None, None).await?;
         sqlx::query("UPDATE pgml.collections SET active = TRUE WHERE name = $1")
             .bind(&collection.name)
             .execute(&collection.pool)
@@ -582,6 +582,7 @@ impl Collection {
         task: Option<String>,
         model_name: Option<String>,
         model_params: Option<Json>,
+        model_source: Option<String>,
     ) -> anyhow::Result<i64> {
         let task = task.unwrap_or("embedding".to_string());
         let model_name = model_name.unwrap_or("intfloat/e5-small".to_string());
@@ -589,14 +590,16 @@ impl Collection {
             Some(params) => params.0,
             None => serde_json::json!({}),
         };
+        let model_source = model_source.unwrap_or("huggingface".to_string());
 
         let current_model: Option<models::Model> = sqlx::query_as(&query_builder!(
-            "SELECT * from %s where task = $1 and name = $2 and parameters = $3;",
+            "SELECT * FROM %s WHERE task = $1 AND name = $2 AND parameters = $3 AND source = $4;",
             self.models_table_name
         ))
         .bind(&task)
         .bind(&model_name)
         .bind(&model_params)
+        .bind(&model_source)
         .fetch_optional(self.pool.borrow())
         .await?;
 
@@ -610,12 +613,13 @@ impl Collection {
             }
             None => {
                 let id: (i64,) = sqlx::query_as(&query_builder!(
-                    "INSERT INTO %s (task, name, parameters) VALUES ($1, $2, $3) RETURNING id",
+                    "INSERT INTO %s (task, name, parameters, source) VALUES ($1, $2, $3, $4) RETURNING id",
                     self.models_table_name
                 ))
                 .bind(task)
                 .bind(model_name)
                 .bind(model_params)
+                .bind(model_source)
                 .fetch_one(self.pool.borrow())
                 .await?;
                 Ok(id.0)
@@ -768,17 +772,36 @@ impl Collection {
             .create_or_get_embeddings_table(model_id, splitter_id)
             .await?;
 
-        sqlx::query(&query_builder!(
-            queries::GENERATE_EMBEDDINGS,
-            self.models_table_name,
-            embeddings_table_name,
-            self.chunks_table_name,
-            embeddings_table_name
+        let model: models::Model = sqlx::query_as(&query_builder!(
+            "SELECT * from %s where id = $1",
+            self.models_table_name
         ))
         .bind(model_id)
-        .bind(splitter_id)
-        .execute(self.pool.borrow())
-        .await?;
+        .fetch_optional(&self.pool)
+        .await?
+        .expect("Model not found. Please double check your model_id is correct");
+
+        match model.source.as_str() {
+            "huggingface" => {
+                sqlx::query(&query_builder!(
+                    queries::GENERATE_EMBEDDINGS,
+                    embeddings_table_name,
+                    self.chunks_table_name,
+                    embeddings_table_name
+                ))
+                .bind(model.name)
+                .bind(model.parameters)
+                .bind(splitter_id)
+                .execute(self.pool.borrow())
+                .await?;
+            },
+            "openai" => {
+                println!("Doing some openai stuff")
+            },
+            _ => {
+                anyhow::bail!("Model source not yet supported")
+            }
+        }
 
         Ok(())
     }

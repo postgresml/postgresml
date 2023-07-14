@@ -47,6 +47,7 @@ pub struct Model {
     pub created_at: DateTime,
     pub task: String,
     pub name: String,
+    pub source: String,
     pub parameters: Json,
 }
 
@@ -58,4 +59,14 @@ pub struct Embedding {
     pub created_at: DateTime,
     pub chunk_id: i64,
     pub embedding: Vec<f32>,
+}
+
+#[derive(FromRow)]
+pub struct Chunk {
+    pub id: i64,
+    pub created_at: DateTime,
+    pub document_id: i64,
+    pub splitter_id: i64,
+    pub chunk_index: i64,
+    pub chunk: String
 }
