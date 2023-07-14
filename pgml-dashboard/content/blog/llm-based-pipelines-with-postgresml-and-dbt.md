@@ -46,6 +46,7 @@ By following this [tutorial](https://github.com/postgresml/postgresml/tree/maste
 - Documents in a table
 
 ### dbt Project Setup
+
 Once you have the pre-requisites satisfied, update `dbt` project configuration files.
 
 ### Project name
@@ -102,6 +103,7 @@ Update `models/schema.yml` with schema and table where documents are ingested.
 ```
 
 ### Variables
+>>>>>>> 5bcad681b31a427c025b70e0dcddfd581930a31b
 The provided YAML configuration includes various parameters that define the setup for a specific task involving embeddings and models. 
 ```yaml
 vars:

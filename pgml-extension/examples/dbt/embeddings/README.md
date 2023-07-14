@@ -11,7 +11,6 @@ In this tutorial, we will show how to build a text processing pipeline using `Po
   - `poetry shell`
   - `poetry install`
 - Documents in a table
-<<<<<<< HEAD
 
 # dbt Project Setup
 Once you have the pre-requisites satisfied, update `dbt` project configuration files.
@@ -154,6 +153,5 @@ As part of the pipeline execution, some models in the workflow utilize increment
 By configuring certain models with incremental materialization, dbt intelligently determines the changes in the source data and applies only the necessary updates to the target tables. This allows for faster iteration cycles, particularly when working with large datasets, as dbt can efficiently handle incremental updates instead of reprocessing the entire dataset.
 
 # Conclusions
+<<<<<<< HEAD
 In conclusion, these data pipelines built using dbt provide a solid foundation for data transformation and analysis. However, the capabilities of the pipeline can be extended further by leveraging the advanced features of PostgresML. With functionalities like `pgml.transform`, the pipeline can be enhanced to support a wide range of natural language processing (NLP) tasks, including sentiment analysis, named entity recognition, and question answering. Additionally, by using `pgml.train` and `pgml.predict` we can incorporate traditional machine learning algorithms like regression and classification using algorithms such as XGBoost and LightGBM, the pipeline can enable powerful predictive modeling and analytics. The seamless integration of dbt and PostgresML opens up a vast array of possibilities, allowing you to unlock the full potential of your data and drive more sophisticated insights and decision-making processes.
-
-
