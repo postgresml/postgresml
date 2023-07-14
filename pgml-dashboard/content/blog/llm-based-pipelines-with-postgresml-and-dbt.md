@@ -17,13 +17,13 @@ In the realm of data analytics and machine learning, text processing and large l
 
 <img src="/dashboard/static/images/blog/llm_based_pipeline_hero.gif" alt="pgml and dbt llm pipeline">
 
-# PostgresML
+## PostgresML
 PostgresML, an open-source machine learning extension for PostgreSQL, is designed to handle text processing tasks using large language models. Its motivation lies in harnessing the power of LLMs within the familiar PostgreSQL ecosystem. By integrating LLMs directly into the database, PostgresML eliminates the need for data movement and offers scalable and secure text processing capabilities. This native integration enhances data governance, security, and ensures the integrity of text data throughout the pipeline.
 
-# dbt (data build tool)
+## dbt (data build tool)
 dbt is an open-source command-line tool that streamlines the process of building, testing, and maintaining data infrastructure. Specifically designed for data analysts and engineers, dbt offers a consistent and standardized approach to data transformation and analysis. By providing an intuitive and efficient workflow, dbt simplifies working with data, empowering organizations to seamlessly transform and analyze their data.
 
-# PostgresML and dbt
+## PostgresML and dbt
 The integration of PostgresML and dbt offers an exceptional advantage for data engineers seeking to swiftly incorporate text processing into their workflows. With PostgresML's advanced machine learning capabilities and dbt's streamlined data transformation framework, data engineers can seamlessly integrate text processing tasks into their existing pipelines. This powerful combination empowers data engineers to efficiently leverage PostgresML's text processing capabilities, accelerating the incorporation of sophisticated NLP techniques and large language models into their data workflows. By bridging the gap between machine learning and data engineering, PostgresML and dbt enable data engineers to unlock the full potential of text processing with ease and efficiency.
 
 - Streamlined Text Processing: PostgresML seamlessly integrates large language models into the data pipeline, enabling efficient and scalable text processing. It leverages the power of the familiar PostgreSQL environment, ensuring data integrity and simplifying the overall workflow.
@@ -32,11 +32,10 @@ The integration of PostgresML and dbt offers an exceptional advantage for data e
 
 - Scalable and Secure Pipelines: PostgresML's integration with PostgreSQL ensures scalability and security, allowing organizations to process and analyze large volumes of text data with confidence. Data governance, access controls, and compliance frameworks are seamlessly extended to the text processing pipeline.
 
-# Tutorial
+## Tutorial
+By following this [tutorial](https://github.com/postgresml/postgresml/tree/master/pgml-extension/examples/dbt/embeddings), you will gain hands-on experience in setting up a dbt project, defining models, and executing an LLM-based text processing pipeline. We will guide you through the process of incorporating LLM-based text processing into your data workflows using PostgresML and dbt. Here's a high-level summary of the tutorial:
 
-By following this tutorial, you will gain hands-on experience in setting up a dbt project, defining models, and executing an LLM-based text processing pipeline. We will guide you through the process of incorporating LLM-based text processing into your data workflows using PostgresML and dbt. Here's a high-level summary of the tutorial:
-
-## Prerequisites
+### Prerequisites
 
 - [PostgresML DB](https://github.com/postgresml/postgresml#installation)
 - `Python >=3.7.2,<4.0`
@@ -46,7 +45,7 @@ By following this tutorial, you will gain hands-on experience in setting up a db
   - `poetry install`
 - Documents in a table
 
-## dbt Project Setup
+### dbt Project Setup
 Once you have the pre-requisites satisfied, update `dbt` project configuration files.
 
 ### Project name
@@ -102,7 +101,7 @@ Update `models/schema.yml` with schema and table where documents are ingested.
       - name: <documents table>
 ```
 
-## Variables
+### Variables
 The provided YAML configuration includes various parameters that define the setup for a specific task involving embeddings and models. 
 ```yaml
 vars:
@@ -185,5 +184,5 @@ As part of the pipeline execution, some models in the workflow utilize increment
 
 By configuring certain models with incremental materialization, dbt intelligently determines the changes in the source data and applies only the necessary updates to the target tables. This allows for faster iteration cycles, particularly when working with large datasets, as dbt can efficiently handle incremental updates instead of reprocessing the entire dataset.
 
-# Conclusions
+## Conclusions
 With PostgresML and dbt, organizations can leverage the full potential of LLMs, transforming raw textual data into valuable knowledge, and staying at the forefront of data-driven innovation. By seamlessly integrating LLM-based transformations, data engineers can unlock deeper insights, perform advanced analytics, and drive informed decision-making. Data governance, access controls, and compliance frameworks seamlessly extend to the text processing pipeline, ensuring data integrity and security throughout the LLM-based workflow.
