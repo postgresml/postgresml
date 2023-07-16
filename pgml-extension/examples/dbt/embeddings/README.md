@@ -1,6 +1,6 @@
 In this tutorial, we will show how to build a text processing pipeline using `PostgresML` and `dbt` (data build tool). We will use `PostgresML` to chunk documents and compute embeddings and `dbt` to execute different steps in a specific order (figure below).
 
-![dbt-flow](./images/llm_based_pipeline_hero.gif)
+![dbt-flow](./images/llm_based_pipeline_hero.png)
 
 # Prerequisites
 
