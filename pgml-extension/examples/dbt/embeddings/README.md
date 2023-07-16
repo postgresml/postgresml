@@ -5,7 +5,7 @@ In this tutorial, we will show how to build a text processing pipeline using `Po
 # Prerequisites
 
 - [PostgresML DB](https://github.com/postgresml/postgresml#installation)
-- `Python >=3.7.2,<4.0`
+- Python >=3.7.2,<4.0
 - [Poetry](https://python-poetry.org/)
 - Install `dbt` using the following commands
   - `poetry shell`
@@ -56,7 +56,7 @@ pgml_flow:
   target: dev  
 ```
 
-Run `dbt debug` at the command line where the project's Python environemnt is activated to make sure the DB credentials are correct.
+Run `dbt debug` at the command line where the project's Python environment is activated to make sure the DB credentials are correct.
 
 ## Source
 Update `models/schema.yml` with schema and table where documents are ingested.
@@ -81,12 +81,12 @@ vars:
 ```
 Here's a summary of the key parameters:
 
-- `splitter_name:` Specifies the name of the splitter, set as "recursive_character".
-- `splitter_parameters:` Defines the parameters for the splitter, such as a chunk size of 100 and a chunk overlap of 20.
-- `task:` Indicates the task being performed, specified as "embedding".
-- `model_name:` Specifies the name of the model to be used, set as "intfloat/e5-base".
-- `query_string:` Provides a query string, set as 'Lorem ipsum 3'.
-- `limit:` Specifies a limit of 2, indicating the maximum number of results to be processed.
+- `splitter_name`: Specifies the name of the splitter, set as "recursive_character".
+- `splitter_parameters`: Defines the parameters for the splitter, such as a chunk size of 100 and a chunk overlap of 20.
+- `task`: Indicates the task being performed, specified as "embedding".
+- `model_name`: Specifies the name of the model to be used, set as "intfloat/e5-base".
+- `query_stringd`: Provides a query string, set as 'Lorem ipsum 3'.
+- `limit`: Specifies a limit of 2, indicating the maximum number of results to be processed.
 
 These configuration parameters offer a specific setup for the task, allowing for customization and flexibility in performing embeddings with the chosen splitter, model, table, query, and result limit.
 
