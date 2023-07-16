@@ -4,6 +4,7 @@ ctransformers==0.2.8
 datasets==2.13.0
 deepspeed==0.9.4
 huggingface-hub==0.15.1
+humanize==4.6.0
 InstructorEmbedding==1.0.1
 lightgbm==3.3.5
 orjson==3.9.1

@@ -328,3 +328,15 @@ pub fn clear_gpu_cache(memory_usage: Option<f32>) -> bool {
             .unwrap()
     })
 }
+
+pub fn huggingface_cached_models_list() -> Vec<HashMap<String, String>> {
+
+    Python::with_gil(|py| -> Vec<HashMap<String, String>> {
+        let huggingface_cached_models_list: Py<PyAny> = PY_MODULE.getattr(py, "huggingface_cached_models_list").unwrap().into();
+        huggingface_cached_models_list
+            .call0(py)
+            .unwrap()
+            .extract(py)
+            .unwrap()
+    })
+}
