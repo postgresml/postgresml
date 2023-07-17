@@ -1,0 +1,51 @@
+
+version: 2
+
+models:
+  - name: characters
+    description: "Number of characters in the document"
+    columns:
+      - name: document_id
+        description: "Document ID"
+        tests:
+          - unique
+          - not_null
+      - name: character_count
+        description: "Number of characters in the document"
+        tests:
+          - not_null
+  - name: splitters
+    description: "Splitters used to split the document"
+    columns:
+      - name: id
+        description: "Splitter ID"
+        tests:
+          - unique
+          - not_null
+      - name: name
+        description: "Splitter name"
+        tests:
+          - not_null
+      - name: parameters
+        description: "Splitter parameters"
+        tests:
+          - not_null
+  - name: chunks
+    description: "Chunks of the document"
+    columns:
+      - name: document_id
+        description: "Document ID"
+        tests:
+          - not_null
+      - name: splitter_id
+        description: "Splitter ID"
+        tests:
+          - not_null
+      - name: chunk
+        description: "Chunk text"
+        tests:
+          - not_null
+sources:
+  - name: test_collection_1
+    tables:
+      - name: documents

@@ -1,12 +1,12 @@
 use itertools::Itertools;
 use pgml_macros::{custom_derive, custom_methods};
 use sea_query::{
-    extension::postgres::PgExpr, query::SelectStatement, Alias, CommonTableExpression, Expr, Func,
-    Iden, JoinType, Order, PostgresQueryBuilder, Query, QueryStatementWriter, WithClause,
+    query::SelectStatement, Alias, CommonTableExpression, Expr, Func, Iden, JoinType, Order,
+    PostgresQueryBuilder, Query, QueryStatementWriter, WithClause,
 };
 use sea_query_binder::SqlxBinder;
 
-use crate::{models, types::Json, Collection};
+use crate::{filter_builder, models, types::Json, Collection};
 
 #[cfg(feature = "javascript")]
 use crate::languages::javascript::*;
@@ -51,7 +51,7 @@ pub struct QueryBuilder {
     collection: Collection,
 }
 
-#[custom_methods(limit, filter, vector_recall, run)]
+#[custom_methods(limit, filter, vector_recall, to_full_string, run)]
 impl QueryBuilder {
     pub fn new(collection: Collection) -> Self {
         Self {
@@ -66,10 +66,63 @@ impl QueryBuilder {
         self
     }
 
-    pub fn filter(mut self, filter: Json) -> Self {
-        self.query.and_where(
-            Expr::col((SIden::Str("documents"), SIden::Str("metadata"))).contains(filter.0),
-        );
+    pub fn filter(mut self, mut filter: Json) -> Self {
+        let filter = filter
+            .0
+            .as_object_mut()
+            .expect("Filter must be a Json object");
+        if let Some(f) = filter.remove("metadata") {
+            self = self.filter_metadata(f);
+        }
+        if let Some(f) = filter.remove("full_text") {
+            self = self.filter_full_text(f);
+        }
+        self
+    }
+
+    fn filter_metadata(mut self, filter: serde_json::Value) -> Self {
+        let filter = filter_builder::FilterBuilder::new(filter, "documents", "metadata").build();
+        self.query.cond_where(filter);
+        self
+    }
+
+    fn filter_full_text(mut self, mut filter: serde_json::Value) -> Self {
+        let filter = filter
+            .as_object_mut()
+            .expect("Full text filter must be a Json object");
+        let configuration = match filter.get("configuration") {
+            Some(config) => config.as_str().expect("Configuration must be a string"),
+            None => "english",
+        };
+        let filter_text = filter
+            .get("text")
+            .expect("Filter must contain a text field")
+            .as_str()
+            .expect("Text must be a string");
+        self.query
+            .join_as(
+                JoinType::InnerJoin,
+                self.collection
+                    .documents_tsvectors_table_name
+                    .to_table_tuple(),
+                Alias::new("documents_tsvectors"),
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .equals((SIden::Str("documents_tsvectors"), SIden::Str("document_id"))),
+            )
+            .and_where(
+                Expr::col((
+                    SIden::Str("documents_tsvectors"),
+                    SIden::Str("configuration"),
+                ))
+                .eq(configuration),
+            )
+            .and_where(Expr::cust_with_values(
+                &format!(
+                    "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
+                    configuration
+                ),
+                [filter_text],
+            ));
         self
     }
 
@@ -161,9 +214,16 @@ impl QueryBuilder {
             .await?;
         Ok(results)
     }
+    
+    // This is mostly so our SDKs in other languages have some way to debug
+    pub fn to_full_string(&self) -> String {
+        self.to_string()
+    }
+}
 
-    pub fn debug(&self) {
+impl std::fmt::Display for QueryBuilder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let query = self.query.clone().with(self.with.clone());
-        println!("{}", query.to_string(PostgresQueryBuilder));
+        write!(f, "{}", query.to_string(PostgresQueryBuilder))
     }
 }

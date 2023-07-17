@@ -31,7 +31,7 @@ async def main():
     await db.archive_collection(collection_name)
 
 async def query_builder():
-    collection_name = "pqtest1"
+    collection_name = "pqtest2"
     db = pgml.Database(CONNECTION_STRING)
     collection = await db.create_or_get_collection(collection_name)
     print("The collection:")
@@ -39,24 +39,68 @@ async def query_builder():
     documents = [
         {
             "id": 1,
+            "metadata": {
+                "uuid": 1
+            },
             "text": "This is a test document",
         },
         {
             "id": 2,
+            "metadata": {
+                "uuid": 2
+            },
             "text": "This is another test document",
+        },
+        {
+            "id": 3,
+            "metadata": {
+                "uuid": 3
+            },
+            "text": "PostgresML",
         }
+
     ]
     await collection.upsert_documents(documents)
+    await collection.generate_tsvectors('english')
     await collection.generate_chunks()
     await collection.generate_embeddings()
 
-    results = await collection.query().vector_recall("test").filter({"id": 1}).limit(10).run()
+    query = collection.query().vector_recall("test").filter({
+        "metadata": {
+            "metadata": {
+                "$or": [
+                    {"uuid": {"$eq": 1}},
+                    {"uuid": {"$lt": 4}}
+                ]
+            }
+        },
+        "full_text": {
+            "text": "postgresml"
+        }
+    }).limit(10)
+    print("Running query:")
+    print(query.to_full_string())
+    results = await query.run()
     print("The results:")
     print(results)
 
-    await db.archive_collection(collection_name)
+    # await db.archive_collection(collection_name)
+
+async def query_runner():
+    db = pgml.Database(CONNECTION_STRING)
+    # results = await db.query("SELECT * from pgml.collections WHERE id = $1").bind_int(1).fetch_all()
+    results = await db.query("SELECT * from pgml.collections").fetch_all()
+    print(results)
+
+async def transform():
+    db = pgml.Database(CONNECTION_STRING)
+    # results = await db.query("SELECT * from pgml.collections WHERE id = $1").bind_int(1).fetch_all()
+    results = await db.transform("translation_en_to_fr", ["This is a test", "This is a test 2"])
+    print(results)
 
 
 if __name__ == "__main__":
-    # asyncio.run(query_builder())    
-    asyncio.run(main())    
+    asyncio.run(query_builder())    
+    # asyncio.run(main())    
+    # asyncio.run(query_runner())
+    # asyncio.run(transform())

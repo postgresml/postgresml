@@ -9,10 +9,12 @@ use tokio::runtime::{Builder, Runtime};
 
 mod collection;
 mod database;
+mod filter_builder;
 mod languages;
 pub mod models;
 mod queries;
 mod query_builder;
+mod query_runner;
 pub mod types;
 mod utils;
 
@@ -99,25 +101,24 @@ mod tests {
         Database::new(&connection_string).await.unwrap();
     }
 
-
     #[tokio::test]
     async fn can_create_collection() {
         let connection_string = env::var("DATABASE_URL").unwrap();
-        let collection_name = "rctest0";
+        let collection_name = "rctest2";
         let db = Database::new(&connection_string).await.unwrap();
         let _ = db.create_or_get_collection(collection_name).await.unwrap();
         let does_collection_exist = db.does_collection_exist(collection_name).await.unwrap();
         assert_eq!(does_collection_exist, true);
-        db.archive_collection(collection_name).await.unwrap();
+        // db.archive_collection(collection_name).await.unwrap();
     }
 
     #[tokio::test]
-    async fn can_create_collection_and_vector_search() {
+    async fn can_vector_search() {
         let connection_string = env::var("DATABASE_URL").unwrap();
 
         init_logger(LevelFilter::Error).ok();
 
-        let collection_name = "test34";
+        let collection_name = "rctest0";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
@@ -160,18 +161,21 @@ mod tests {
     #[tokio::test]
     async fn query_builder() {
         let connection_string = env::var("DATABASE_URL").unwrap();
-
         init_logger(LevelFilter::Error).ok();
 
-        let collection_name = "rqtest5";
+        let collection_name = "rqbmftest9";
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
 
         let mut documents: Vec<Json> = Vec::new();
-        for i in 0..2 {
+        for i in 0..1 {
             documents.push(serde_json::json!({
                 "id": i,
+                "metadata": {
+                    "uuid": i,
+                    "category": [i, 2, 3]
+                },
                 "text": format!("{} This is some document with some filler text filler filler filler filler filler filler filler filler filler", i)
             }).into());
         }
@@ -191,18 +195,72 @@ mod tests {
         collection.generate_chunks(None).await.unwrap();
         collection.register_model(None, None, None).await.unwrap();
         collection.generate_embeddings(None, None).await.unwrap();
+        collection.generate_tsvectors(None).await.unwrap();
 
         let filter = serde_json::json! ({
-            "id": 1
+            "metadata": {
+                "metadata": {
+                    "$or": [
+                        {"uuid": {"$eq": 1 }},
+                        {"uuid": {"$eq": 2 }},
+                        {"category": {"$eq": [1, 2, 3]}}
+                    ]
+
+                }
+            },
+            "full_text": {
+                "text": "filler text"
+            }
         });
 
         let query = collection
             .query()
             .vector_recall("test query".to_string(), None, None, None)
-            .limit(10)
-            .filter(filter.into());
-        query.debug();
+            .filter(filter.into())
+            .limit(10);
+        println!("\n{}\n", query.to_string());
         let results = query.run().await.unwrap();
         println!("{:?}", results);
+    }
+
+    #[tokio::test]
+    async fn query_runner() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        init_logger(LevelFilter::Info).ok();
+
+        let db = Database::new(&connection_string).await.unwrap();
+        let query = db.query("SELECT * from pgml.collections");
+        let results = query.fetch_all().await.unwrap();
+        println!("{:?}", results);
+    }
+
+    #[tokio::test]
+    async fn transform() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        init_logger(LevelFilter::Info).ok();
+
+        let db = Database::new(&connection_string).await.unwrap();
+        // let task = Json::from(serde_json::json!("text-classification"));
+        let task = Json::from(serde_json::json!("translation_en_to_fr"));
+        let inputs = vec!["test1".to_string(), "test2".to_string()];
+        let results = db.transform(task, inputs, None).await.unwrap();
+        println!("{:?}", results);
+    }
+
+    #[tokio::test]
+    async fn collection_errors() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+        init_logger(LevelFilter::Info).ok();
+
+        let db = Database::new(&connection_string).await.unwrap();
+        let collection_name = "cetest0";
+        let collection = db.create_or_get_collection(collection_name).await.unwrap();
+
+        // Test that we cannot generate tsvectors without upserting documents first
+        assert!(collection.generate_tsvectors(None).await.is_err());
+        // Test that we cannot generate chunks without upserting documents first
+        assert!(collection.generate_chunks(None).await.is_err());
+        // Test that we cannot generate embeddings without generating chunks first 
+        assert!(collection.generate_embeddings(None, None).await.is_err());
     }
 }

@@ -81,7 +81,7 @@ impl Task {
             "ASC"
         };
         format!(
-            "ORDER BY models.metrics->>'{}' {} NULL LAST",
+            "ORDER BY models.metrics->>'{}' {} NULLS LAST",
             self.default_target_metric(),
             direction
         )

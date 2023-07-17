@@ -1,6 +1,6 @@
 [package]
 name = "pgml"
-version = "0.7.2"
+version = "0.8.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -22,8 +22,8 @@ itertools = "0.10.5"
 uuid = {version = "1.3.3", features = ["v4"] }
 md5 = "0.7.0"
 log = "0.4.18"
-sea-query = { version = "0.28.5", features = ["attr", "thread-safe", "with-json"] }
-sea-query-binder = { version = "0.3.1", features = ["sqlx-postgres", "with-json"] }
+sea-query = { version = "0.28.5", features = ["attr", "thread-safe", "with-json", "postgres-array"] }
+sea-query-binder = { version = "0.3.1", features = ["sqlx-postgres", "with-json", "postgres-array"] }
 regex = "1.8.4"
 
 [features]

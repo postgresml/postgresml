@@ -365,11 +365,16 @@ fn get_neon_type(ty: &SupportedType) -> syn::Type {
         SupportedType::S => syn::parse_str("neon::types::JsObject").unwrap(),
         SupportedType::Tuple(_t) => syn::parse_str("neon::types::JsObject").unwrap(),
         SupportedType::HashMap((_k, _v)) => syn::parse_str("neon::types::JsObject").unwrap(),
-        SupportedType::i64 | SupportedType::f64 | SupportedType::u64 => syn::parse_str("neon::types::JsNumber").unwrap(),
-        // Our own types
-        SupportedType::Database | SupportedType::Collection | SupportedType::Splitter | SupportedType::QueryBuilder => {
-            syn::parse_str("neon::types::JsObject").unwrap()
+        SupportedType::i64 | SupportedType::f64 | SupportedType::u64 => {
+            syn::parse_str("neon::types::JsNumber").unwrap()
         }
+        // Our own types
+        SupportedType::Database
+        | SupportedType::Collection
+        | SupportedType::Splitter
+        | SupportedType::QueryBuilder
+        | SupportedType::QueryRunner
+        | SupportedType::Model => syn::parse_str("neon::types::JsObject").unwrap(),
         // Add more types as required
         _ => syn::parse_str("neon::types::JsValue").unwrap(),
     }
@@ -439,9 +444,10 @@ fn get_typescript_type(ty: &SupportedType) -> String {
         // Our own types
         t @ SupportedType::Database
         | t @ SupportedType::Collection
-        | t @ SupportedType::Splitter => t.to_string(),
-        t @ SupportedType::QueryBuilder => t.to_string(),
-        t @ SupportedType::Model => t.to_string(),
+        | t @ SupportedType::Splitter
+        | t @ SupportedType::QueryBuilder
+        | t @ SupportedType::QueryRunner
+        | t @ SupportedType::Model => t.to_string(),
         // Add more types as required
         _ => "any".to_string(),
     }

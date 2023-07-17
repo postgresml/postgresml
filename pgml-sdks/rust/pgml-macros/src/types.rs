@@ -27,7 +27,8 @@ pub enum SupportedType {
     Collection,
     Splitter,
     Model,
-    QueryBuilder
+    QueryBuilder,
+    QueryRunner
 }
 
 impl ToString for SupportedType {
@@ -63,6 +64,7 @@ impl ToString for SupportedType {
             SupportedType::Splitter => "Splitter".to_string(),
             SupportedType::Model => "Model".to_string(),
             SupportedType::QueryBuilder => "QueryBuilder".to_string(),
+            SupportedType::QueryRunner => "QueryRunner".to_string(),
         }
     }
 }
@@ -176,6 +178,7 @@ impl<'ast> Visit<'ast> for GetSupportedType {
             "Splitter" => Some(SupportedType::Splitter),
             "Model" => Some(SupportedType::Model),
             "QueryBuilder" => Some(SupportedType::QueryBuilder),
+            "QueryRunner" => Some(SupportedType::QueryRunner),
             _ => None,
         };
 
