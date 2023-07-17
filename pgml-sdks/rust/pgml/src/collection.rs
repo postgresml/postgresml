@@ -9,6 +9,7 @@ use crate::models;
 use crate::queries;
 use crate::query_builder;
 use crate::query_builder::QueryBuilder;
+use crate::remote_embeddings::build_remote_embeddings;
 use crate::types::Json;
 
 #[cfg(feature = "javascript")]
@@ -638,12 +639,10 @@ impl Collection {
 
     async fn create_or_get_embeddings_table(
         &self,
-        model_id: i64,
+        model: &models::Model,
         splitter_id: i64,
     ) -> anyhow::Result<String> {
-        let pool = self.pool.borrow();
-
-        let table_name = self.get_embeddings_table_name(model_id, splitter_id)?;
+        let table_name = self.get_embeddings_table_name(model.id, splitter_id)?;
         let exists: Option<(String,)> = sqlx::query_as(&query_builder!(
             "SELECT table_name from %s WHERE table_name = $1",
             self.transforms_table_name
@@ -655,60 +654,71 @@ impl Collection {
         match exists {
             Some(_e) => Ok(table_name),
             None => {
-                let embedding: (Vec<f32>,) = sqlx::query_as(&query_builder!(
-                    "WITH model as (SELECT name, parameters from %s where id = $1) SELECT embedding from pgml.embed(transformer => (SELECT name FROM model), text => 'Hello, World!', kwargs => (SELECT parameters FROM model)) as embedding", 
-                    self.models_table_name))
-                    .bind(model_id)
-                    .fetch_one(pool).await?;
-                let embedding = embedding.0;
-                let embedding_length = embedding.len() as i64;
-                pool.execute(
-                    query_builder!(
-                        queries::CREATE_EMBEDDINGS_TABLE,
-                        table_name,
-                        self.chunks_table_name,
-                        embedding_length
+                let embedding_length = match model.source.as_str() {
+                    "huggingface" => {
+                        let embedding: (Vec<f32>,) = sqlx::query_as(&query_builder!(
+                        "WITH model as (SELECT name, parameters from %s where id = $1) SELECT embedding from pgml.embed(transformer => (SELECT name FROM model), text => 'Hello, World!', kwargs => (SELECT parameters FROM model)) as embedding", 
+                        self.models_table_name))
+                        .bind(model.id)
+                        .fetch_one(&self.pool).await?;
+                        embedding.0.len() as i64
+                    }
+                    t @ _ => {
+                        let remote_embeddings = build_remote_embeddings(t, &model.name)?;
+                        remote_embeddings.get_embedding_size().await?
+                    }
+                };
+                self.pool
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_EMBEDDINGS_TABLE,
+                            table_name,
+                            self.chunks_table_name,
+                            embedding_length
+                        )
+                        .as_str(),
                     )
-                    .as_str(),
-                )
-                .await?;
+                    .await?;
                 sqlx::query(&query_builder!(
                     "INSERT INTO %s (table_name, task, model_id, splitter_id) VALUES ($1, 'embedding', $2, $3)",
                     self.transforms_table_name))
                     .bind(&table_name)
-                    .bind(model_id)
+                    .bind(model.id)
                     .bind(splitter_id)
-                    .execute(pool).await?;
-                pool.execute(
-                    query_builder!(
-                        queries::CREATE_INDEX,
-                        "created_at_index",
-                        table_name,
-                        "created_at"
+                    .execute(&self.pool).await?;
+                self.pool
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_INDEX,
+                            "created_at_index",
+                            table_name,
+                            "created_at"
+                        )
+                        .as_str(),
                     )
-                    .as_str(),
-                )
-                .await?;
-                pool.execute(
-                    query_builder!(
-                        queries::CREATE_INDEX,
-                        "chunk_id_index",
-                        table_name,
-                        "chunk_id"
+                    .await?;
+                self.pool
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_INDEX,
+                            "chunk_id_index",
+                            table_name,
+                            "chunk_id"
+                        )
+                        .as_str(),
                     )
-                    .as_str(),
-                )
-                .await?;
-                pool.execute(
-                    query_builder!(
-                        queries::CREATE_INDEX_USING_IVFFLAT,
-                        "vector_index",
-                        table_name,
-                        "embedding vector_cosine_ops"
+                    .await?;
+                self.pool
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_INDEX_USING_IVFFLAT,
+                            "vector_index",
+                            table_name,
+                            "embedding vector_cosine_ops"
+                        )
+                        .as_str(),
                     )
-                    .as_str(),
-                )
-                .await?;
+                    .await?;
                 Ok(table_name)
             }
         }
@@ -768,10 +778,6 @@ impl Collection {
             anyhow::bail!("No chunks in the chunks table with the associated splitter_id. Make sure to generate chunks with the correct splitter_id before generating embeddings")
         }
 
-        let embeddings_table_name = self
-            .create_or_get_embeddings_table(model_id, splitter_id)
-            .await?;
-
         let model: models::Model = sqlx::query_as(&query_builder!(
             "SELECT * from %s where id = $1",
             self.models_table_name
@@ -780,6 +786,10 @@ impl Collection {
         .fetch_optional(&self.pool)
         .await?
         .expect("Model not found. Please double check your model_id is correct");
+
+        let embeddings_table_name = self
+            .create_or_get_embeddings_table(&model, splitter_id)
+            .await?;
 
         match model.source.as_str() {
             "huggingface" => {
@@ -794,12 +804,17 @@ impl Collection {
                 .bind(splitter_id)
                 .execute(self.pool.borrow())
                 .await?;
-            },
-            "openai" => {
-                println!("Doing some openai stuff")
-            },
-            _ => {
-                anyhow::bail!("Model source not yet supported")
+            }
+            t @ _ => {
+                let remote_embeddings = build_remote_embeddings(t, &model.name)?;
+                remote_embeddings
+                    .generate_embeddings(
+                        &embeddings_table_name,
+                        &self.chunks_table_name,
+                        splitter_id,
+                        &self.pool
+                    )
+                    .await?;
             }
         }
 

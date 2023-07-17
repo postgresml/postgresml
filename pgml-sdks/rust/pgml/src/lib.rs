@@ -163,6 +163,52 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn can_vector_search_with_remote_embeddings() {
+        let connection_string = env::var("DATABASE_URL").unwrap();
+
+        init_logger(LevelFilter::Info).ok();
+
+        let collection_name = "cvswre_test_0";
+
+        let db = Database::new(&connection_string).await.unwrap();
+        let collection = db.create_or_get_collection(collection_name).await.unwrap();
+
+        let documents: Vec<Json> = vec![
+            serde_json::json!( {
+                "id": 1,
+                "text": "This is a document"
+            })
+            .into(),
+            serde_json::json!( {
+                "id": 2,
+                "text": "This is a second document"
+            })
+            .into(),
+        ];
+
+        collection
+            .upsert_documents(documents, None, None)
+            .await
+            .unwrap();
+        collection.generate_chunks(None).await.unwrap();
+        collection
+            .register_model(
+                None,
+                Some("text-embedding-ada-002".to_string()),
+                None,
+                Some("openai".to_string()),
+            )
+            .await
+            .unwrap();
+        collection.generate_embeddings(Some(2), None).await.unwrap();
+        collection
+            .vector_search("Here is a test", None, None, Some(2), None)
+            .await
+            .unwrap();
+        // db.archive_collection(&collection_name).await.unwrap();
+    }
+
+    #[tokio::test]
     async fn query_builder() {
         let connection_string = env::var("DATABASE_URL").unwrap();
         init_logger(LevelFilter::Error).ok();
