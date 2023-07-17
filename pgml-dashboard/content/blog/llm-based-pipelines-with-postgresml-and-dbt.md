@@ -1,7 +1,7 @@
 ---
 author: Santi Adavani
 description: Unlock the Power of Large Language Models (LLM) in Data Pipelines with PostgresML and dbt. Streamline your text processing workflows and leverage the advanced capabilities of LLMs for efficient data transformation and analysis. Discover how PostgresML and dbt combine to deliver scalable and secure pipelines, enabling you to extract valuable insights from textual data. Supercharge your data-driven decision-making with LLM-based pipelines using PostgresML and dbt.
-image: https://postgresml.org/dashboard/static/images/blog/llm_based_pipeline_hero.gif
+image: https://postgresml.org/dashboard/static/images/blog/llm_based_pipeline_hero.png
 image_alt: "LLM based pipelines with PostgresML and dbt (data build tool)"
 ---
 # LLM based pipelines with PostgresML and dbt (data build tool)
@@ -15,7 +15,7 @@ image_alt: "LLM based pipelines with PostgresML and dbt (data build tool)"
 
 In the realm of data analytics and machine learning, text processing and large language models (LLMs) have become pivotal in deriving insights from textual data. Efficient data pipelines play a crucial role in enabling streamlined workflows for processing and analyzing text. This blog explores the synergy between PostgresML and dbt, showcasing how they empower organizations to build efficient data pipelines that leverage large language models for text processing, unlocking valuable insights and driving data-driven decision-making.
 
-<img src="/dashboard/static/images/blog/llm_based_pipeline_hero.gif" alt="pgml and dbt llm pipeline">
+<img src="/dashboard/static/images/blog/llm_based_pipeline_hero.png" alt="pgml and dbt llm pipeline">
 
 ## PostgresML
 PostgresML, an open-source machine learning extension for PostgreSQL, is designed to handle text processing tasks using large language models. Its motivation lies in harnessing the power of LLMs within the familiar PostgreSQL ecosystem. By integrating LLMs directly into the database, PostgresML eliminates the need for data movement and offers scalable and secure text processing capabilities. This native integration enhances data governance, security, and ensures the integrity of text data throughout the pipeline.
@@ -38,7 +38,7 @@ By following this [tutorial](https://github.com/postgresml/postgresml/tree/maste
 ### Prerequisites
 
 - [PostgresML DB](https://github.com/postgresml/postgresml#installation)
-- `Python >=3.7.2,<4.0`
+- Python >=3.7.2,<4.0
 - [Poetry](https://python-poetry.org/)
 - Install `dbt` using the following commands
   - `poetry shell`
@@ -90,7 +90,7 @@ pgml_flow:
   target: dev  
 ```
 
-Run `dbt debug` at the command line where the project's Python environemnt is activated to make sure the DB credentials are correct.
+Run `dbt debug` at the command line where the project's Python environment is activated to make sure the DB credentials are correct.
 
 ### Source
 Update `models/schema.yml` with schema and table where documents are ingested.
@@ -103,8 +103,8 @@ Update `models/schema.yml` with schema and table where documents are ingested.
 ```
 
 ### Variables
->>>>>>> 5bcad681b31a427c025b70e0dcddfd581930a31b
 The provided YAML configuration includes various parameters that define the setup for a specific task involving embeddings and models. 
+
 ```yaml
 vars:
   splitter_name: "recursive_character"
@@ -116,12 +116,12 @@ vars:
 ```
 Here's a summary of the key parameters:
 
-- `splitter_name:` Specifies the name of the splitter, set as "recursive_character".
-- `splitter_parameters:` Defines the parameters for the splitter, such as a chunk size of 100 and a chunk overlap of 20.
-- `task:` Indicates the task being performed, specified as "embedding".
-- `model_name:` Specifies the name of the model to be used, set as "intfloat/e5-base".
-- `query_string:` Provides a query string, set as 'Lorem ipsum 3'.
-- `limit:` Specifies a limit of 2, indicating the maximum number of results to be processed.
+- `splitter_name`: Specifies the name of the splitter, set as "recursive_character".
+- `splitter_parameters`: Defines the parameters for the splitter, such as a chunk size of 100 and a chunk overlap of 20.
+- `task`: Indicates the task being performed, specified as "embedding".
+- `model_name`: Specifies the name of the model to be used, set as "intfloat/e5-base".
+- `query_string`: Provides a query string, set as 'Lorem ipsum 3'.
+- `limit`: Specifies a limit of 2, indicating the maximum number of results to be processed.
 
 These configuration parameters offer a specific setup for the task, allowing for customization and flexibility in performing embeddings with the chosen splitter, model, table, query, and result limit.
 
