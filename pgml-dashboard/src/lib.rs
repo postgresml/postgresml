@@ -20,7 +20,8 @@ pub mod utils;
 use guards::Cluster;
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
-    DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab, SnapshotsTab, UploaderTab,
+    components::DropdownMenu, DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab,
+    SnapshotsTab, UploaderTab,
 };
 use utils::tabs;
 
@@ -39,7 +40,7 @@ pub struct ClustersSettings {
 pub struct Context {
     pub user: models::User,
     pub cluster: models::Cluster,
-    pub visible_clusters: HashMap<String, String>,
+    pub dropdown_nav: DropdownMenu,
 }
 
 #[get("/projects")]
@@ -474,12 +475,12 @@ pub async fn dashboard(
 ) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard");
     layout
-        .clusters(cluster.context.visible_clusters.clone())
         .current_cluster(
             cluster.context.cluster.name.to_string(),
             cluster.context.cluster.id,
         )
         .nav("Dashboard")
+        .dropdown_nav(cluster.context.dropdown_nav.clone())
         .breadcrumbs(vec![crate::templates::components::NavLink::new(
             "Dashboard",
             "/dashboard",

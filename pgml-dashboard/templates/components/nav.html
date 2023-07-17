@@ -13,7 +13,7 @@
         ""
       };
     %>
-    <li class="menu-item <%= active %> leftnav-collapse-affect expanded" <%- aria %>>
+    <li class="menu-item <%= active %> leftnav-collapse-affect expanded <% if link.disabled { %>disabled<% } %>" <%- aria %>>
       <a
         class="d-flex align-items-center justify-content-start gap-2 <% if link.disabled  { %> disabled <% } %>"
         href="<%= link.href %>"

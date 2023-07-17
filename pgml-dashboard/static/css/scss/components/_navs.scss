@@ -260,10 +260,8 @@
         }
     }
 
-    .disabled {
-        a, .material-symbols-outline, span {
-            color: #{$gray-500};
-        }
+    & a.disabled, .disabled>span, &.disabled {
+        color: #{$gray-500};
         pointer-events: none;
     }
 

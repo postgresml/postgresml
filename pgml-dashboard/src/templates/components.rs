@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::templates::models;
 use crate::utils::config;
 use sailfish::TemplateOnce;
@@ -87,11 +85,11 @@ impl<'a> Nav<'a> {
 pub struct LeftNavWebApp<'a> {
     pub upper_nav: Nav<'a>,
     pub lower_nav: Nav<'a>,
-    pub dropdown_nav: Nav<'a>,
+    pub dropdown_nav: DropdownMenu,
 }
 
 impl<'a> LeftNavWebApp<'a> {
-    pub fn render(upper_nav: Nav, lower_nav: Nav, dropdown_nav: Nav) -> String {
+    pub fn render(upper_nav: Nav, lower_nav: Nav, dropdown_nav: DropdownMenu) -> String {
         LeftNavWebApp {
             upper_nav,
             lower_nav,
@@ -168,4 +166,64 @@ pub struct GithubIcon {
 #[template(path = "components/postgres_logo.html")]
 pub struct PostgresLogo {
     link: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct DropdownMenu {
+    pub links: Vec<DropdownItem>,
+}
+
+impl DropdownMenu {
+    pub fn get_active(self) -> DropdownItem {
+        match self.links.iter().find(|item| item.clone().active) {
+            Some(item) => item.clone(),
+            None => DropdownItem {
+                ..Default::default()
+            },
+        }
+    }
+
+    pub fn add_link(&mut self, link: DropdownItem) {
+        self.links.push(link);
+    }
+}
+
+impl Default for DropdownMenu {
+    fn default() -> DropdownMenu {
+        DropdownMenu {
+            links: vec![DropdownItem::default()],
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DropdownItem {
+    pub name: String,
+    pub href: String,
+    pub active: bool,
+}
+
+impl DropdownItem {
+    pub fn new(name: String, href: String) -> DropdownItem {
+        DropdownItem {
+            name,
+            href,
+            active: false,
+        }
+    }
+
+    pub fn active(mut self, active: bool) -> Self {
+        self.active = active;
+        self
+    }
+}
+
+impl Default for DropdownItem {
+    fn default() -> DropdownItem {
+        DropdownItem {
+            name: "Local".to_string(),
+            href: "/dashboard".to_string(),
+            active: true,
+        }
+    }
 }

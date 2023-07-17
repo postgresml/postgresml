@@ -45,12 +45,6 @@
                 </span>
               </button>
             </li>
-
-            <!-- <% if standalone_dashboard { %>
-            <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-0" href="/dashboard">Dashboard</a>
-            </li>
-            <% } %> -->
           </ul>
           
           <!-- Main nav links for lg screens -->
@@ -81,7 +75,7 @@
               <ul class="dropdown-menu dropdown-menu-end">
                 <% for (name, link, disabled) in account_management_options.clone() { %>
                   <li class="menu-item rounded-0 d-flex align-items-center <% if disabled { %>disabled<% } %>">
-                    <a <% if disabled { %>
+                    <a class="<% if disabled { %>disabled<% } %>" <% if disabled { %>
                       href="" disabled <% } else { %>
                       href="<%- link %>"<% } %>>
                       <%- name %>
@@ -128,8 +122,8 @@
               Back
             </a>
             <% for (name, link, disabled) in account_management_options.clone() { %>
-              <li class="menu-item rounded-0 d-flex align-items-center <% if disabled { %>disabled<% } %>">
-                <a <% if disabled { %>
+              <li class="menu-item rounded-0 d-flex align-items-center">
+                <a class="<% if disabled { %>disabled<% } %>" <% if disabled { %>
                   href="" disabled <% } else { %>
                   href="<%- link %>"<% } %>>
                   <%- name %>

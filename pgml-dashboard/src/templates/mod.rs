@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use components::{Nav, NavLink};
 
+use crate::templates::components::DropdownMenu;
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
 use sqlx::types::time::PrimitiveDateTime;
@@ -99,12 +100,12 @@ impl From<Layout> for String {
 #[template(path = "layout/web_app_base.html")]
 pub struct WebAppBase<'a> {
     pub content: Option<String>,
-    pub visible_clusters: HashMap<String, String>,
     pub breadcrumbs: Vec<NavLink<'a>>,
     pub upper_nav: Nav<'a>,
     pub lower_nav: Nav<'a>,
     pub head: String,
     pub current_cluster: models::Cluster,
+    pub dropdown_nav: DropdownMenu,
 }
 
 impl<'a> WebAppBase<'a> {
@@ -134,11 +135,6 @@ impl<'a> WebAppBase<'a> {
         self
     }
 
-    pub fn clusters(&mut self, clusters: HashMap<String, String>) -> &mut Self {
-        self.visible_clusters = clusters.to_owned();
-        self
-    }
-
     pub fn breadcrumbs(&mut self, breadcrumbs: Vec<NavLink<'a>>) -> &mut Self {
         self.breadcrumbs = breadcrumbs.to_owned();
         self
@@ -148,36 +144,37 @@ impl<'a> WebAppBase<'a> {
         let (upper_nav_links, lower_nav_links) = match config::standalone_dashboard() {
             true => (
                 vec![
-                    NavLink::new("Notebooks", "/notebooks")
-                        .icon("description")
-                        .disable(true),
-                    NavLink::new("Explore", "/explore")
-                        .icon("thumbnail_bar")
-                        .disable(true),
-                    NavLink::new("Projects", "/projects")
-                        .icon("library_add")
-                        .disable(true),
+                    // NavLink::new("Notebooks", "/notebooks")
+                    //     .icon("description")
+                    //     .disable(true),
+                    // NavLink::new("Explore", "/explore")
+                    //     .icon("thumbnail_bar")
+                    //     .disable(true),
+                    // NavLink::new("Projects", "/projects")
+                    //     .icon("library_add")
+                    //     .disable(true),
                     NavLink::new("Dashboard", "/dashboard").icon("dashboard"),
                 ],
                 vec![],
             ),
             false => (
                 vec![
-                    NavLink::new("Notebooks", "/notebooks")
-                        .icon("description")
-                        .disable(true),
-                    NavLink::new("Explore", "/explore")
-                        .icon("thumbnail_bar")
-                        .disable(true),
-                    NavLink::new("Projects", "/projects")
-                        .icon("library_add")
-                        .disable(true),
+                    // NavLink::new("Notebooks", "/notebooks")
+                    //     .icon("description")
+                    //     .disable(true),
+                    // NavLink::new("Explore", "/explore")
+                    //     .icon("thumbnail_bar")
+                    //     .disable(true),
+                    // NavLink::new("Projects", "/projects")
+                    //     .icon("library_add")
+                    //     .disable(true),
                     NavLink::new("Status", &format!("/clusters/{}", self.current_cluster.id))
                         .icon("update")
                         .disable(self.current_cluster.id == models::Cluster::default().id),
                     NavLink::new("Dashboard", "/dashboard")
                         .icon("dashboard")
                         .disable(self.current_cluster.id == models::Cluster::default().id),
+                    NavLink::new("Databases", "/clusters").icon("lan"),
                 ],
                 vec![NavLink::new("New Database", "/clusters/new").icon("add")],
             ),
@@ -199,6 +196,11 @@ impl<'a> WebAppBase<'a> {
             });
         }
 
+        self
+    }
+
+    pub fn dropdown_nav(&mut self, dropdown: DropdownMenu) -> &mut Self {
+        self.dropdown_nav = dropdown;
         self
     }
 

@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use std::env::var;
 
+use crate::templates::components::DropdownMenu;
 use rocket::request::{self, FromRequest, Request};
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 
@@ -51,10 +51,7 @@ impl Default for Cluster {
             context: Context {
                 user: models::User::default(),
                 cluster: models::Cluster::default(),
-                visible_clusters: HashMap::from([(
-                    models::Cluster::default().name,
-                    models::Cluster::default().id.to_string(),
-                )]),
+                dropdown_nav: DropdownMenu::default(),
             },
         }
     }

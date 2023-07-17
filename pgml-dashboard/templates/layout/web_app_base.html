@@ -2,50 +2,11 @@
     use crate::templates::components::{
         NavbarWebApp,
         LeftNavWebApp,
-        Breadcrumbs,
-        NavLink,
-        Nav
+        Breadcrumbs
     }; 
 %>
 
 <%
-pub fn dropdown<'a>(links: HashMap<String, String>, active: models::Cluster) -> Nav<'a> {
-    let mut dropdown_nav: Nav = Nav { 
-        links: vec![]
-    };
-
-    let names: Vec<String> = links.clone().into_keys().collect();
-
-    if crate::utils::config::standalone_dashboard() {
-        dropdown_nav.add_link(NavLink::new(&names[0], "/dashboard").active());
-        return dropdown_nav
-    }
-
-    let new_link = NavLink::new("Dashboard", "/clusters");
-    
-    if names.contains(&active.name) {
-        dropdown_nav.add_link(new_link);
-    } else {
-        dropdown_nav.add_link(new_link.active());
-    }
-    
-    for (name, id) in links {
-        let new_link = NavLink::new(&name, &format!("/clusters/switch/{}", id));
-        
-        if name.clone() == active.name {
-            dropdown_nav.add_link(new_link.active());
-        } else {
-        dropdown_nav.add_link(new_link);
-        }
-    }
-
-    dropdown_nav
-}
-%>
-
-<%
-    let dropdown_nav = dropdown(visible_clusters.clone(), current_cluster.clone());
-
     // collect left nav links for for top nav in mobile view
     let mut left_nav_links: Vec<NavLink> = Vec::new();
     left_nav_links.append(& mut upper_nav.links.clone());

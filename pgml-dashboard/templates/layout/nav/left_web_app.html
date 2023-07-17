@@ -1,14 +1,3 @@
-<%
-  let active_dropdown_item_name = match dropdown_nav
-    .clone()
-    .links
-    .into_iter()
-    .find(|link| link.active ) {
-      Some(item) => item.name,
-      None => "".to_string()
-    };
-%>
-
 <nav class="leftnav nav-pills h-100" data-controller="extend-bs-collapse" data-extend-bs-collapse-affected-value=".leftnav-collapse-affect">
   <div class="d-flex flex-column justify-content-between h-100 w-100">
     <div class="d-flex flex-column">
@@ -23,7 +12,7 @@
 
       <div class="dropdown nav-item d-flex w-100 mb-4 show">
         <button class="horizontal-hide btn-dropdown dropdown-toggle leftnav-collapse-affect expanded" href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="0, 10" aria-expanded="false">
-          <%- active_dropdown_item_name %>
+          <%- dropdown_nav.clone().get_active().name %>
           <span class="material-symbols-outlined">
             expand_more
           </span>
