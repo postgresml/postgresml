@@ -153,7 +153,7 @@ impl<'a> WebAppBase<'a> {
                     // NavLink::new("Projects", "/projects")
                     //     .icon("library_add")
                     //     .disable(true),
-                    NavLink::new("Dashboard", "/dashboard").icon("dashboard"),
+                    NavLink::new("Dashboard", "/dashboard").icon("thumbnail_bar"),
                 ],
                 vec![],
             ),
@@ -172,7 +172,7 @@ impl<'a> WebAppBase<'a> {
                         .icon("update")
                         .disable(self.current_cluster.id == models::Cluster::default().id),
                     NavLink::new("Dashboard", "/dashboard")
-                        .icon("dashboard")
+                        .icon("thumbnail_bar")
                         .disable(self.current_cluster.id == models::Cluster::default().id),
                     NavLink::new("Databases", "/clusters").icon("lan"),
                 ],

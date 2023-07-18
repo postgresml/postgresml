@@ -221,6 +221,14 @@
 
 .btn-dropdown-menu-item {
     @extend .menu-item;
+    a {
+        padding: 8px 12px;
+    }
+
+    &:hover {
+        cursor: pointer;
+    }
+
     &:after {
         content: None;
     }
