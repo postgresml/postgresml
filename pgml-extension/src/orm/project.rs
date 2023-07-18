@@ -124,7 +124,6 @@ impl Project {
                     updated_at: result.get(5).unwrap().unwrap(),
                 });
             }
-            result
         });
 
         project
@@ -149,7 +148,6 @@ impl Project {
                     updated_at: result.get(5).unwrap().unwrap(),
                 });
             }
-            result
         });
 
         project
@@ -175,7 +173,6 @@ impl Project {
                     updated_at: result.get(5).unwrap().unwrap(),
                 });
             }
-            result
         });
         project.unwrap()
     }
