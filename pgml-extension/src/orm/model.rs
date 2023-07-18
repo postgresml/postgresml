@@ -138,8 +138,6 @@ impl Model {
                     num_features: snapshot.num_features(),
                 });
             }
-
-            result
         });
 
         let mut model = model.unwrap();
@@ -212,8 +210,6 @@ impl Model {
                     num_features: snapshot.num_features(),
                 });
             }
-
-            result
         });
 
         let mut model = model.unwrap();
@@ -367,8 +363,6 @@ impl Model {
                     num_features,
                 });
             }
-
-            result
         });
 
         model.unwrap_or_else(|| {
