@@ -411,9 +411,7 @@ impl Model {
                     Algorithm::svm => linfa::Svm::fit,
                     _ => todo!(),
                 },
-                Task::cluster => match self.algorithm {
-                    _ => todo!(),
-                },
+                Task::cluster => todo!(),
                 _ => error!("use pgml.tune for transformers tasks"),
             },
 
@@ -576,7 +574,7 @@ impl Model {
                 #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
                 {
                     let sklearn_metrics =
-                        crate::bindings::sklearn::regression_metrics(&y_test, &y_hat);
+                        crate::bindings::sklearn::regression_metrics(y_test, &y_hat);
                     metrics.insert("sklearn_r2".to_string(), sklearn_metrics["r2"]);
                     metrics.insert(
                         "sklearn_mean_absolute_error".to_string(),
@@ -605,7 +603,7 @@ impl Model {
                 #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
                 {
                     let sklearn_metrics = crate::bindings::sklearn::classification_metrics(
-                        &y_test,
+                        y_test,
                         &y_hat,
                         dataset.num_distinct_labels,
                     );
@@ -668,7 +666,7 @@ impl Model {
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
             }
             Task::cluster => {
-                #[cfg(all(feature = "python"))]
+                #[cfg(feature = "python")]
                 {
                     let sklearn_metrics = crate::bindings::sklearn::cluster_metrics(
                         dataset.num_features,
@@ -1110,7 +1108,7 @@ impl Model {
                                         let element: Result<Option<Vec<f32>>, TryFromDatumError> =
                                             tuple.get_by_index(index.try_into().unwrap());
                                         for j in element.as_ref().unwrap().as_ref().unwrap() {
-                                            features.push(*j as f32);
+                                            features.push(*j);
                                         }
                                     }
                                     pgrx_pg_sys::FLOAT8ARRAYOID => {

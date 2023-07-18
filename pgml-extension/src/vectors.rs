@@ -380,7 +380,7 @@ impl Aggregate for SumS {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
+        let inner = current.get_or_insert_with(Vec::new);
 
         inner.clone()
     }
@@ -443,7 +443,7 @@ impl Aggregate for SumD {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
+        let inner = current.get_or_insert_with(Vec::new);
 
         inner.clone()
     }
@@ -510,7 +510,7 @@ impl Aggregate for MaxAbsS {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
+        let inner = current.get_or_insert_with(Vec::new);
 
         inner.clone()
     }
@@ -577,7 +577,7 @@ impl Aggregate for MaxAbsD {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
+        let inner = current.get_or_insert_with(Vec::new);
 
         inner.clone()
     }
@@ -644,7 +644,7 @@ impl Aggregate for MaxS {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
+        let inner = current.get_or_insert_with(Vec::new);
 
         inner.clone()
     }
@@ -711,7 +711,7 @@ impl Aggregate for MaxD {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
+        let inner = current.get_or_insert_with(Vec::new);
 
         inner.clone()
     }
@@ -778,7 +778,7 @@ impl Aggregate for MinS {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
+        let inner = current.get_or_insert_with(Vec::new);
 
         inner.clone()
     }
@@ -845,7 +845,7 @@ impl Aggregate for MinD {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
+        let inner = current.get_or_insert_with(Vec::new);
 
         inner.clone()
     }
@@ -912,7 +912,7 @@ impl Aggregate for MinAbsS {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
+        let inner = current.get_or_insert_with(Vec::new);
 
         inner.clone()
     }
@@ -979,7 +979,7 @@ impl Aggregate for MinAbsD {
         _direct_arg: Self::OrderedSetArgs,
         _fcinfo: pg_sys::FunctionCallInfo,
     ) -> Self::Finalize {
-        let inner = current.get_or_insert_with(|| Vec::new());
+        let inner = current.get_or_insert_with(Vec::new);
 
         inner.clone()
     }

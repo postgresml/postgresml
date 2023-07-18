@@ -97,9 +97,8 @@ fn drop_table_if_exists(table_name: &str) {
     let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'", vec![
         (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
     ]).unwrap().unwrap();
-    match table_count {
-        1 => Spi::run(&format!(r#"DROP TABLE pgml.{table_name} CASCADE"#)).unwrap(),
-        _ => (),
+    if table_count == 1 {
+        Spi::run(&format!(r#"DROP TABLE pgml.{table_name} CASCADE"#)).unwrap();
     }
 }
 

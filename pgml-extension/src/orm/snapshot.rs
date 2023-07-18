@@ -141,10 +141,10 @@ impl Column {
     }
 
     fn nominal_type(pg_type: &str) -> bool {
-        match pg_type {
-            "bpchar" | "text" | "varchar" | "bpchar[]" | "text[]" | "varchar[]" => true,
-            _ => false,
-        }
+        matches!(
+            pg_type,
+            "bpchar" | "text" | "varchar" | "bpchar[]" | "text[]" | "varchar[]"
+        )
     }
 
     fn quoted_name(&self) -> String {
@@ -206,7 +206,7 @@ impl Column {
     pub(crate) fn preprocess(
         &self,
         data: &ndarray::ArrayView<f32, ndarray::Ix1>,
-        processed_data: &mut Vec<f32>,
+        processed_data: &mut [f32],
         features_width: usize,
         position: usize,
     ) {
@@ -230,19 +230,16 @@ impl Column {
         target: &ndarray::ArrayView<f32, ndarray::Ix1>,
     ) {
         // target encode if necessary before analyzing
-        match &self.preprocessor.encode {
-            Encode::target_mean => {
-                let categories = self.statistics.categories.as_mut().unwrap();
-                let mut sums = vec![0_f32; categories.len() + 1];
-                Zip::from(array).and(target).for_each(|&value, &target| {
-                    sums[value as usize] += target;
-                });
-                for mut category in categories.values_mut() {
-                    let sum = sums[category.value as usize];
-                    category.value = sum / category.members as f32;
-                }
+        if self.preprocessor.encode == Encode::target_mean {
+            let categories = self.statistics.categories.as_mut().unwrap();
+            let mut sums = vec![0_f32; categories.len() + 1];
+            Zip::from(array).and(target).for_each(|&value, &target| {
+                sums[value as usize] += target;
+            });
+            for category in categories.values_mut() {
+                let sum = sums[category.value as usize];
+                category.value = sum / category.members as f32;
             }
-            _ => {}
         }
 
         // Data is filtered for NaN because it is not well defined statistically, and they are counted as separate stat
@@ -250,10 +247,10 @@ impl Column {
             .iter()
             .filter_map(|n| if n.is_nan() { None } else { Some(*n) })
             .collect::<Vec<f32>>();
-        data.sort_by(|a, b| a.total_cmp(&b));
+        data.sort_by(|a, b| a.total_cmp(b));
 
         // FixMe: Arrays are analyzed many times, clobbering/appending to the same stats, columns are also re-analyzed in memory during tests, which can cause unnexpected failures
-        let mut statistics = &mut self.statistics;
+        let statistics = &mut self.statistics;
         statistics.min = *data.first().unwrap();
         statistics.max = *data.last().unwrap();
         statistics.max_abs = if statistics.min.abs() > statistics.max.abs() {
@@ -273,7 +270,6 @@ impl Column {
             .sum::<f32>()
             / data.len() as f32;
         statistics.std_dev = statistics.variance.sqrt();
-        let mut i = 0;
         let histogram_boundaries = ndarray::Array::linspace(statistics.min, statistics.max, 21);
         let mut h = 0;
         let ventile_size = data.len() as f32 / 20.;
@@ -283,16 +279,18 @@ impl Column {
 
         let mut modes = Vec::new();
         statistics.distinct = 0; // necessary reset before array columns clobber
-        for &value in &data {
+        for (i, &value) in data.iter().enumerate() {
             // mode candidates form streaks
             if value == previous {
                 streak += 1;
             } else if !previous.is_nan() {
-                if streak > max_streak {
-                    modes = vec![previous];
-                    max_streak = streak;
-                } else if streak == max_streak {
-                    modes.push(previous);
+                match streak.cmp(&max_streak) {
+                    Ordering::Greater => {
+                        modes = vec![previous];
+                        max_streak = streak;
+                    }
+                    Ordering::Equal => modes.push(previous),
+                    Ordering::Less => {}
                 }
                 streak = 1;
                 statistics.distinct += 1;
@@ -310,7 +308,6 @@ impl Column {
             if v < 19 {
                 statistics.ventiles[v] = value;
             }
-            i += 1;
         }
         // Pick the mode in the middle of all the candidates with the longest streaks
         if !previous.is_nan() {
@@ -543,10 +540,8 @@ impl Snapshot {
                             if preprocessor.impute == Impute::mean && preprocessor.encode != Encode::target_mean {
                                 error!("Error initializing preprocessor for column: {:?}.\n\n  You can not specify {{\"impute: mean\"}} for a categorical variable unless it is also encoded using `target_mean`, because there is no \"average\" category. `{{\"impute: mode\"}}` is valid alternative, since there is a most common category. Another option would be to encode using target_mean, and then the target mean will be imputed for missing categoricals.", name);
                             }
-                        } else {
-                            if preprocessor.encode != Encode::native {
-                                error!("Error initializing preprocessor for column: {:?}.\n\n  It does not make sense to {{\"encode: {:?}}} a continuous variable. Please use the default `native`.", name, preprocessor.scale);
-                            }
+                        } else if preprocessor.encode != Encode::native {
+                            error!("Error initializing preprocessor for column: {:?}.\n\n  It does not make sense to {{\"encode: {:?}}} a continuous variable. Please use the default `native`.", name, preprocessor.scale);
                         }
                         preprocessor
                     },
@@ -680,8 +675,7 @@ impl Snapshot {
 
     pub(crate) fn first_label(&self) -> &Column {
         self.labels()
-            .filter(|l| l.name == self.y_column_name[0])
-            .next()
+            .find(|l| l.name == self.y_column_name[0])
             .unwrap()
     }
 
@@ -1083,7 +1077,7 @@ impl Snapshot {
                                         check_column_size(column, vec.len());
 
                                         for j in vec {
-                                            vector.push(j as f32)
+                                            vector.push(j)
                                         }
                                     }
                                     "float8[]" => {

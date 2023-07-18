@@ -118,7 +118,7 @@ impl Bindings for Estimator {
     {
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
-        std::fs::write(&path, &bytes).unwrap();
+        std::fs::write(&path, bytes).unwrap();
         let mut estimator = lightgbm::Booster::from_file(&path);
         if estimator.is_err() {
             // backward compatibility w/ 2.0.0
