@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use components::{NavLink, StaticNav};
+use components::{NavLink, StaticNav, StaticNavLink};
 
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
@@ -139,6 +139,13 @@ impl<'a> WebAppBase<'a> {
     }
 
     pub fn disable_upper_nav(&mut self) -> &mut Self {
+        let links: Vec<StaticNavLink> = self
+            .upper_left_nav
+            .links
+            .iter()
+            .map(|item| item.to_owned().disabled(true))
+            .collect();
+        self.upper_left_nav = StaticNav { links };
         self
     }
 

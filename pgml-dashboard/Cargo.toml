@@ -43,6 +43,7 @@ tokio = { version = "1", features = ["full"] }
 yaml-rust = "0.4"
 zoomies = { git="https://github.com/HyperparamAI/zoomies.git", branch="master" }
 pgvector = { version = "0.2.0", features = [ "sqlx", "postgres" ] }
+url = "2.4"
 
 [build-dependencies]
 md5 = "0.7"

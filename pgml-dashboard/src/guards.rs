@@ -63,7 +63,7 @@ impl Default for Cluster {
                         "Dashboard".to_string(),
                         "/dashboard".to_string(),
                     )
-                    .icon("thumbnail_bar".to_string())],
+                    .icon("thumbnail_bar")],
                 },
                 lower_left_nav: StaticNav::default(),
             },

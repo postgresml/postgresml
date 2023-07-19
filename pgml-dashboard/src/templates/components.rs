@@ -220,8 +220,8 @@ impl StaticNavLink {
         self
     }
 
-    pub fn icon(mut self, icon: String) -> Self {
-        self.icon = Some(icon);
+    pub fn icon(mut self, icon: &str) -> Self {
+        self.icon = Some(icon.to_string());
         self
     }
 

@@ -1,10 +1,10 @@
 use lazy_static::lazy_static;
 use regex::Regex;
+use url::Url;
 
 lazy_static! {
-    static ref DOMAIN_REGEX: Regex =
-        Regex::new(r"^https?://((localhost:8000)|(.*\.?postgresml\.org))").unwrap();
-    static ref UUID_REGEX: Regex = Regex::new(".{8}-.{4}-.{4}-.{4}-.{12}").unwrap();
+    static ref UUID_REGEX: Regex =
+        Regex::new("[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}").unwrap();
 }
 
 pub struct ClusterUrlParser;
@@ -12,19 +12,32 @@ pub struct ClusterUrlParser;
 impl ClusterUrlParser {
     // Returns option containing path. If regex does not match, returns None.
     pub fn get_path(url: &str) -> Option<String> {
-        let path = DOMAIN_REGEX.replace(url.clone(), "").to_string();
-        match url.eq(&path) {
-            true => None,
-            _ => Some(path),
-        }
-    }
+        let url = Url::parse(&url);
+        let mut path = String::new();
 
-    // Finds the uuid in a url.
-    pub fn get_uuid(uri: String) -> Option<String> {
-        let uuid = UUID_REGEX.find(&uri);
-        match uuid {
-            Some(uuid) => Some(uri.to_string()[uuid.start()..uuid.end()].to_string()),
-            None => None,
+        match url {
+            Ok(url) => {
+                path.push_str(url.path());
+
+                match url.query() {
+                    Some(query) => {
+                        path.push_str("?");
+                        path.push_str(query)
+                    }
+                    None => (),
+                }
+
+                match url.fragment() {
+                    Some(fragment) => {
+                        path.push_str("#");
+                        path.push_str(fragment)
+                    }
+                    None => (),
+                }
+
+                Some(path)
+            }
+            Err(_) => None,
         }
     }
 
@@ -56,8 +69,26 @@ mod test {
     }
 
     #[test]
+    fn parse_local_url_2() {
+        let url = "http://127.0.0.1/clusters/database1/notebooks";
+        assert_eq!(
+            ClusterUrlParser::get_path(url),
+            Some("/clusters/database1/notebooks".to_string())
+        )
+    }
+
+    #[test]
     fn parse_postgres_url() {
         let url = "https://postgresml.org/clusters/database1/notebooks";
+        assert_eq!(
+            ClusterUrlParser::get_path(url),
+            Some("/clusters/database1/notebooks".to_string())
+        )
+    }
+
+    #[test]
+    fn parse_non_postgres_url() {
+        let url = "https://example.com/clusters/database1/notebooks";
         assert_eq!(
             ClusterUrlParser::get_path(url),
             Some("/clusters/database1/notebooks".to_string())
@@ -84,7 +115,7 @@ mod test {
 
     #[test]
     fn bad_url() {
-        let url = "https://test.org/clusters/database1/notebooks";
+        let url = "qeywroqyfrebptdgqiuyhracpvbfij";
         assert_eq!(ClusterUrlParser::get_path(url), None)
     }
 
@@ -94,6 +125,15 @@ mod test {
         assert_eq!(
             ClusterUrlParser::get_path(url),
             Some("/clusters/database1/notebooks?tag=notebook".to_string())
+        )
+    }
+
+    #[test]
+    fn parse_with_fragment() {
+        let url = "https://prefix.postgresml.org/clusters/database1/notebooks?tag=notebook#row=4";
+        assert_eq!(
+            ClusterUrlParser::get_path(url),
+            Some("/clusters/database1/notebooks?tag=notebook#row=4".to_string())
         )
     }
 
