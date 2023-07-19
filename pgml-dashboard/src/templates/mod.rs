@@ -324,7 +324,7 @@ impl Sql {
                     }
 
                     "NUMERIC" => {
-                        let value: bigdecimal::BigDecimal = row.try_get(i)?;
+                        let value: sqlx::types::BigDecimal = row.try_get(i)?;
                         value.to_string()
                     }
 

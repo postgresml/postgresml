@@ -97,7 +97,7 @@ version accordingly if yours is different. Other flavors of Linux should work, b
 
     ```
     export POSTGRES_VERSION=15
-    cargo install cargo-pgrx --version "0.9.7" --locked && \
+    cargo install cargo-pgrx --version "0.9.8" --locked && \
     cargo pgrx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
     cargo pgrx package
     ```
@@ -106,7 +106,7 @@ version accordingly if yours is different. Other flavors of Linux should work, b
     ```
     export POSTGRES_VERSION=15
     cp docker/Cargo.toml.no-python Cargo.toml && \
-    cargo install cargo-pgrx --version "0.9.7" --locked && \
+    cargo install cargo-pgrx --version "0.9.8" --locked && \
     cargo pgrx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
     cargo pgrx package
     ```

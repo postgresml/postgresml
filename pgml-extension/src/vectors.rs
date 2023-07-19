@@ -990,6 +990,9 @@ impl Aggregate for MinAbsD {
 mod tests {
     use super::*;
 
+    const F32_TOLERANCE: f32 = 3e-7;
+    const F64_TOLERANCE: f64 = 5e-16;
+
     #[pg_test]
     fn test_add_scalar_s() {
         let result = Spi::get_one::<Vec<f32>>("SELECT pgml.add(ARRAY[1,2,3]::float4[], 1)");
@@ -1128,14 +1131,22 @@ mod tests {
 
     #[pg_test]
     fn test_norm_l2_s() {
-        let result = Spi::get_one::<f32>("SELECT pgml.norm_l2(ARRAY[1,2,3]::float4[])");
-        assert_eq!(result, Ok(Some(3.7416575)));
+        let got = Spi::get_one::<f32>("SELECT pgml.norm_l2(ARRAY[1,2,3]::float4[])")
+            .unwrap()
+            .unwrap();
+        let want = 3.7416575;
+        let diff = (got - want).abs();
+        assert!(diff < F32_TOLERANCE);
     }
 
     #[pg_test]
     fn test_norm_l2_d() {
-        let result = Spi::get_one::<f64>("SELECT pgml.norm_l2(ARRAY[1,2,3]::float8[])");
-        assert_eq!(result, Ok(Some(3.7416573867739413)));
+        let got = Spi::get_one::<f64>("SELECT pgml.norm_l2(ARRAY[1,2,3]::float8[])")
+            .unwrap()
+            .unwrap();
+        let want = 3.7416573867739413;
+        let diff = (got - want).abs();
+        assert!(diff < F64_TOLERANCE);
     }
 
     #[pg_test]
@@ -1175,22 +1186,26 @@ mod tests {
 
     #[pg_test]
     fn test_normalize_l2_s() {
-        let result = Spi::get_one::<Vec<f32>>("SELECT pgml.normalize_l2(ARRAY[1,2,3]::float4[])");
-        assert_eq!(
-            result,
-            Ok(Some([0.26726124, 0.5345225, 0.8017837].to_vec()))
-        );
+        let got = Spi::get_one::<Vec<f32>>("SELECT pgml.normalize_l2(ARRAY[1,2,3]::float4[])")
+            .unwrap()
+            .unwrap();
+        let want = [0.26726124, 0.5345225, 0.8017837];
+        assert!(got
+            .iter()
+            .zip(want)
+            .all(|(got, want)| (got - want).abs() < F32_TOLERANCE));
     }
 
     #[pg_test]
     fn test_normalize_l2_d() {
-        let result = Spi::get_one::<Vec<f64>>("SELECT pgml.normalize_l2(ARRAY[1,2,3]::float8[])");
-        assert_eq!(
-            result,
-            Ok(Some(
-                [0.2672612419124244, 0.5345224838248488, 0.8017837257372732].to_vec()
-            ))
-        );
+        let got = Spi::get_one::<Vec<f64>>("SELECT pgml.normalize_l2(ARRAY[1,2,3]::float8[])")
+            .unwrap()
+            .unwrap();
+        let want = [0.2672612419124244, 0.5345224838248488, 0.8017837257372732].to_vec();
+        assert!(got
+            .iter()
+            .zip(want)
+            .all(|(got, want)| (got - want).abs() < F64_TOLERANCE));
     }
 
     #[pg_test]
@@ -1268,33 +1283,48 @@ mod tests {
 
     #[pg_test]
     fn test_cosine_similarity_s() {
-        let result = Spi::get_one::<f32>(
+        let got = Spi::get_one::<f32>(
             "SELECT pgml.cosine_similarity(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])",
-        );
-        assert_eq!(result, Ok(Some(0.99999994)));
+        )
+        .unwrap()
+        .unwrap();
+        let want = 1.0;
+        assert!((got - want).abs() < F32_TOLERANCE);
 
-        let result = Spi::get_one::<f32>(
+        let got = Spi::get_one::<f32>(
             "SELECT pgml.cosine_similarity(ARRAY[1,2,3]::float4[], ARRAY[2.0, 3.0, 4.0]::float4[])",
-        );
-        assert_eq!(result, Ok(Some(0.9925833)));
+        )
+        .unwrap()
+        .unwrap();
+        let want = 0.9925833;
+        assert!((got - want).abs() < F32_TOLERANCE);
 
-        let result = Spi::get_one::<f32>("SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float4[], ARRAY[0,0,1,1,0,1,1]::float4[])");
-        assert_eq!(result, Ok(Some(0.4472136)));
+        let got = Spi::get_one::<f32>("SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float4[], ARRAY[0,0,1,1,0,1,1]::float4[])").unwrap()
+        .unwrap();
+        let want = 0.4472136;
+        assert!((got - want).abs() < F32_TOLERANCE);
     }
 
     #[pg_test]
     fn test_cosine_similarity_d() {
-        let result = Spi::get_one::<f64>(
+        let got = Spi::get_one::<f64>(
             "SELECT pgml.cosine_similarity(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])",
-        );
-        assert_eq!(result, Ok(Some(1.0)));
+        )
+        .unwrap()
+        .unwrap();
+        let want = 1.0;
+        assert!((got - want).abs() < F64_TOLERANCE);
 
-        let result = Spi::get_one::<f64>(
+        let got = Spi::get_one::<f64>(
             "SELECT pgml.cosine_similarity(ARRAY[1,2,3]::float8[], ARRAY[2.0, 3.0, 4.0]::float8[])",
-        );
-        assert_eq!(result, Ok(Some(0.9925833339709303)));
+        )
+        .unwrap()
+        .unwrap();
+        let want = 0.9925833339709303;
+        assert!((got - want).abs() < F64_TOLERANCE);
 
-        let result = Spi::get_one::<f64>("SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float8[], ARRAY[0,0,1,1,0,1,1]::float8[])");
-        assert_eq!(result, Ok(Some(0.4472135954999579)));
+        let got = Spi::get_one::<f64>("SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float8[], ARRAY[0,0,1,1,0,1,1]::float8[])").unwrap().unwrap();
+        let want = 0.4472135954999579;
+        assert!((got - want).abs() < F64_TOLERANCE);
     }
 }

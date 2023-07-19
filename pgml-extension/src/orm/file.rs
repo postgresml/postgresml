@@ -66,8 +66,6 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
             algorithm = result.get(3).expect("Algorithm for model is corrupted.");
             task = result.get(4).expect("Task for project is corrupted.");
         }
-
-        result
     });
 
     let (data, runtime, algorithm) = Spi::get_three_with_args::<Vec<u8>, String, String>(
