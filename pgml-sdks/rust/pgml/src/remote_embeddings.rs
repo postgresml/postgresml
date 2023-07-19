@@ -2,14 +2,18 @@ use reqwest::{Client, RequestBuilder};
 use sqlx::postgres::PgPool;
 use std::env;
 
-use crate::{models, query_builder};
+use crate::{models, query_builder, types::Json};
 
 pub fn build_remote_embeddings<'a>(
     source: &'a str,
     model_name: &'a str,
+    _model_parameters: &'a Json,
 ) -> anyhow::Result<Box<dyn RemoteEmbeddings<'a> + Sync + Send + 'a>> {
     match source {
-        "openai" => Ok(Box::new(OpenAIRemoteEmbeddings::new(model_name))),
+        // OpenAI endpoint for embedddings does not take any model parameters
+        "openai" => Ok(Box::new(OpenAIRemoteEmbeddings::new(
+            model_name,
+        ))),
         _ => Err(anyhow::anyhow!("Unknown remote embeddings source")),
     }
 }
@@ -35,7 +39,7 @@ pub trait RemoteEmbeddings<'a> {
         Ok(embedding_size)
     }
 
-     async fn embed(&self, text: Vec<String>) -> anyhow::Result<Vec<Vec<f64>>> {
+    async fn embed(&self, text: Vec<String>) -> anyhow::Result<Vec<Vec<f64>>> {
         let response = self
             .build_request()
             .json(&self.generate_body(text))
@@ -105,7 +109,7 @@ pub trait RemoteEmbeddings<'a> {
                     chunks_table_name,
                     splitter_id,
                     pool,
-                    None
+                    None,
                 )
                 .await?;
             if chunks.is_empty() {
@@ -145,7 +149,9 @@ pub struct OpenAIRemoteEmbeddings<'a> {
 
 impl<'a> OpenAIRemoteEmbeddings<'a> {
     fn new(model_name: &'a str) -> Self {
-        OpenAIRemoteEmbeddings { model_name }
+        OpenAIRemoteEmbeddings {
+            model_name,
+        }
     }
 }
 
@@ -171,7 +177,12 @@ mod tests {
 
     #[tokio::test]
     async fn openai_remote_embeddings() -> anyhow::Result<()> {
-        let openai_remote_embeddings = build_remote_embeddings("openai", "text-embedding-ada-002")?;
+        let params = serde_json::json!({}).into();
+        let openai_remote_embeddings = build_remote_embeddings(
+            "openai",
+            "text-embedding-ada-002",
+            &params,
+        )?;
         let embedding_size = openai_remote_embeddings.get_embedding_size().await?;
         assert!(embedding_size > 0);
         Ok(())

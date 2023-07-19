@@ -98,127 +98,118 @@ mod tests {
 
     use crate::types::Json;
 
+    async fn create_db_connection_from_env() -> anyhow::Result<Database> {
+        let connection_string =
+            env::var("DATABASE_URL").expect("Please set DATABASE_URL environment variable");
+        Database::new(&connection_string).await
+    }
+
+    fn generate_dummy_documents(count: usize) -> Vec<Json> {
+        let mut documents = Vec::new();
+        for i in 0..count {
+            let document = serde_json::json!(
+            {
+                "id": i,
+                "text": format!("This is a test document: {}", i),
+                "metadata": {
+                    "uuid": i * 10,
+                    "name": format!("Test Document {}", i)
+                }
+            });
+            documents.push(document.into());
+        }
+        documents
+    }
+
     #[tokio::test]
     async fn can_connect_to_database() {
-        let connection_string = env::var("DATABASE_URL").expect("Please set DATABASE_URL environment variable");
-        Database::new(&connection_string).await.unwrap();
+        let _ = create_db_connection_from_env().await.unwrap();
     }
 
     #[tokio::test]
     async fn can_create_collection() {
-        let connection_string = env::var("DATABASE_URL").expect("Please set DATABASE_URL environment variable");
-        let collection_name = "r_ccc_test_2";
-        let db = Database::new(&connection_string).await.unwrap();
+        let collection_name = "r_ccc_test_0";
+        let db = create_db_connection_from_env().await.unwrap();
         let _ = db.create_or_get_collection(collection_name).await.unwrap();
         let does_collection_exist = db.does_collection_exist(collection_name).await.unwrap();
-        assert_eq!(does_collection_exist, true);
         db.archive_collection(collection_name).await.unwrap();
+        assert_eq!(does_collection_exist, true);
     }
 
     #[tokio::test]
     async fn can_register_and_get_model() {
-        let connection_string = env::var("DATABASE_URL").expect("Please set DATABASE_URL environment variable");
-        let db = Database::new(&connection_string).await.unwrap();
+        let db = create_db_connection_from_env().await.unwrap();
         let model = db.register_model(None, None, None, None).await.unwrap();
         let model_from_database = db.get_model(model.id).await.unwrap();
         assert_eq!(model.id, model_from_database.id);
     }
 
-    // #[tokio::test]
-    // async fn can_vector_search() {
-    //     let connection_string = env::var("DATABASE_URL").unwrap();
-    //
-    //     init_logger(LevelFilter::Info).ok();
-    //
-    //     let collection_name = "rctest0";
-    //
-    //     let db = Database::new(&connection_string).await.unwrap();
-    //     let collection = db.create_or_get_collection(collection_name).await.unwrap();
-    //
-    //     let documents: Vec<Json> = vec![
-    //         serde_json::json!( {
-    //             "id": 1,
-    //             "text": "This is a document"
-    //         })
-    //         .into(),
-    //         serde_json::json!( {
-    //             "id": 2,
-    //             "text": "This is a second document"
-    //         })
-    //         .into(),
-    //     ];
-    //
-    //     collection
-    //         .upsert_documents(documents, None, None)
-    //         .await
-    //         .unwrap();
-    //     let parameters = Json::from(serde_json::json!({
-    //         "chunk_size": 1500,
-    //         "chunk_overlap": 40,
-    //     }));
-    //     collection
-    //         .register_text_splitter(None, Some(parameters))
-    //         .await
-    //         .unwrap();
-    //     collection.generate_chunks(None).await.unwrap();
-    //     collection
-    //         .register_model(None, None, None, None)
-    //         .await
-    //         .unwrap();
-    //     collection.generate_embeddings(None, None).await.unwrap();
-    //     collection
-    //         .vector_search("Here is a test", None, None, None, None)
-    //         .await
-    //         .unwrap();
-    //     db.archive_collection(&collection_name).await.unwrap();
-    // }
-    //
-    // #[tokio::test]
-    // async fn can_vector_search_with_remote_embeddings() {
-    //     let connection_string = env::var("DATABASE_URL").unwrap();
-    //
-    //     init_logger(LevelFilter::Info).ok();
-    //
-    //     let collection_name = "cvswre_test_0";
-    //
-    //     let db = Database::new(&connection_string).await.unwrap();
-    //     let collection = db.create_or_get_collection(collection_name).await.unwrap();
-    //
-    //     let documents: Vec<Json> = vec![
-    //         serde_json::json!( {
-    //             "id": 1,
-    //             "text": "This is a document"
-    //         })
-    //         .into(),
-    //         serde_json::json!( {
-    //             "id": 2,
-    //             "text": "This is a second document"
-    //         })
-    //         .into(),
-    //     ];
-    //
-    //     collection
-    //         .upsert_documents(documents, None, None)
-    //         .await
-    //         .unwrap();
-    //     collection.generate_chunks(None).await.unwrap();
-    //     collection
-    //         .register_model(
-    //             None,
-    //             Some("text-embedding-ada-002".to_string()),
-    //             None,
-    //             Some("openai".to_string()),
-    //         )
-    //         .await
-    //         .unwrap();
-    //     collection.generate_embeddings(Some(2), None).await.unwrap();
-    //     collection
-    //         .vector_search("Here is a test", None, None, Some(2), None)
-    //         .await
-    //         .unwrap();
-    //     // db.archive_collection(&collection_name).await.unwrap();
-    // }
-    //
+    #[tokio::test]
+    async fn can_register_and_get_text_splitter() {
+        let db = create_db_connection_from_env().await.unwrap();
+        let text_splitter = db.register_text_splitter(None, None).await.unwrap();
+        let text_splitter_from_database = db.get_text_splitter(text_splitter.id).await.unwrap();
+        assert_eq!(text_splitter.id, text_splitter_from_database.id);
+    }
+
+    #[tokio::test]
+    async fn can_vector_search() {
+        let collection_name = "r_cvs_test_1";
+        let db = create_db_connection_from_env().await.unwrap();
+        let collection = db.create_or_get_collection(collection_name).await.unwrap();
+        let documents = generate_dummy_documents(2);
+        collection
+            .upsert_documents(documents, None, None)
+            .await
+            .unwrap();
+        let text_splitter = db.register_text_splitter(None, None).await.unwrap();
+        let model = db.register_model(None, None, None, None).await.unwrap();
+        collection.generate_chunks(&text_splitter).await.unwrap();
+        collection
+            .generate_embeddings(&model, &text_splitter)
+            .await
+            .unwrap();
+        let results = collection
+            .vector_search("Here is some query", &model, &text_splitter, None, None)
+            .await
+            .unwrap();
+        db.archive_collection(collection_name).await.unwrap();
+        assert!(results.len() > 0);
+    }
+
+    #[tokio::test]
+    async fn can_vector_search_with_remote_embeddings() {
+        let collection_name = "r_cvswre_test_0";
+        let db = create_db_connection_from_env().await.unwrap();
+        let collection = db.create_or_get_collection(collection_name).await.unwrap();
+        let documents = generate_dummy_documents(2);
+        collection
+            .upsert_documents(documents, None, None)
+            .await
+            .unwrap();
+        let text_splitter = db.register_text_splitter(None, None).await.unwrap();
+        let model = db
+            .register_model(
+                Some("text-embedding-ada-002".to_string()),
+                None,
+                None,
+                Some("openai".to_string()),
+            )
+            .await
+            .unwrap();
+        collection.generate_chunks(&text_splitter).await.unwrap();
+        collection
+            .generate_embeddings(&model, &text_splitter)
+            .await
+            .unwrap();
+        let results = collection
+            .vector_search("Here is some query", &model, &text_splitter, None, None)
+            .await
+            .unwrap();
+        db.archive_collection(collection_name).await.unwrap();
+        assert!(results.len() > 0);
+    }
+
     // #[tokio::test]
     // async fn query_builder() {
     //     let connection_string = env::var("DATABASE_URL").unwrap();

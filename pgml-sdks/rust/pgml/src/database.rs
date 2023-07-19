@@ -61,16 +61,17 @@ impl Database {
     ///  }
     ///  ```
     pub async fn new(connection_string: &str) -> anyhow::Result<Self> {
+        println!("Connecting to: {:?}", connection_string);
         let connection_options = PgConnectOptions::from_str(connection_string)?;
         let connection_options = connection_options.statement_cache_capacity(0);
         let pool = PgPoolOptions::new()
+            .min_connections(1)
             .max_connections(5)
             .connect_with(connection_options)
             .await?;
-        sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
-            .execute(pool.borrow())
-            .await?;
-        let pool = pool;
+        // let _test = sqlx::query("SELECT * FROM pgml.collections")
+        //     .fetch_all(&pool)
+        //     .await?;
         Ok(Self { pool })
     }
 
@@ -94,15 +95,38 @@ impl Database {
     /// }
     /// ```
     pub async fn create_or_get_collection(&self, name: &str) -> anyhow::Result<Collection> {
-        let collection: Option<models::Collection> = sqlx::query_as::<_, models::Collection>(
-            "SELECT * FROM pgml.collections WHERE name = $1 AND active = TRUE;",
-        )
-        .bind(name)
-        .fetch_optional(self.pool.borrow())
-        .await?;
+        println!("Yo 1");
+        let collection: Result<Option<models::Collection>, _> =
+            sqlx::query_as::<_, models::Collection>(
+                "SELECT * FROM pgml.collections WHERE name = $1 AND active = TRUE;",
+            )
+            .bind(name)
+            .fetch_optional(&self.pool)
+            .await;
+
+        println!("Yo 2");
         match collection {
-            Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
-            None => Ok(Collection::new(name.to_string(), self.pool.clone()).await?),
+            Ok(result) => match result {
+                Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
+                None => Ok(Collection::new(name.to_string(), self.pool.clone()).await?),
+            },
+            Err(e) => {
+                println!("Yo 4");
+                match e.as_database_error() {
+                    Some(db_e) => {
+                        // Error 42P01 is "undefined_table"
+                        if db_e.code() == Some(std::borrow::Cow::from("42P01")) {
+                            sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
+                                .execute(&self.pool)
+                                .await?;
+                            Ok(Collection::new(name.to_string(), self.pool.clone()).await?)
+                        } else {
+                            return Err(e.into());
+                        }
+                    }
+                    None => return Err(e.into()),
+                }
+            }
         }
     }
 
@@ -270,13 +294,13 @@ impl Database {
     /// ```
     pub async fn register_model(
         &self,
-        model_task: Option<String>,
         model_name: Option<String>,
+        model_task: Option<String>,
         model_params: Option<Json>,
         model_source: Option<String>,
     ) -> anyhow::Result<Model> {
-        let model_task = model_task.unwrap_or("embedding".to_string());
         let model_name = model_name.unwrap_or("intfloat/e5-small".to_string());
+        let model_task = model_task.unwrap_or("embedding".to_string());
         let model_params = match model_params {
             Some(params) => params.0,
             None => serde_json::json!({}),

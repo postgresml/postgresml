@@ -46,8 +46,8 @@ pub const CREATE_TRANSFORMS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
   table_name text PRIMARY KEY, 
   created_at timestamptz NOT NULL DEFAULT now(), 
   task text NOT NULL, 
-  splitter_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  model_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
+  splitter_id int8 NOT NULL REFERENCES pgml.sdk_splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
+  model_id int8 NOT NULL REFERENCES pgml.sdk_models ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   UNIQUE (task, splitter_id, model_id)
 );
 "#;
@@ -55,7 +55,7 @@ pub const CREATE_TRANSFORMS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
 pub const CREATE_CHUNKS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, created_at timestamptz NOT NULL DEFAULT now(), 
   document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  splitter_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
+  splitter_id int8 NOT NULL REFERENCES pgml.sdk_splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   chunk_index int8 NOT NULL, 
   chunk text NOT NULL
 );
@@ -131,14 +131,14 @@ WHERE
   );
 "#;
 
-pub const VECTOR_SEARCH: &str = r#"
+pub const EMBED_AND_VECTOR_SEARCH: &str = r#"
 WITH query_cte AS (
   SELECT 
     pgml.embed(
-      transformer => models.name, 
-      text => $1, 
-      kwargs => $2 
-    )::vector AS query_embedding from %s models where models.id = $3
+      transformer => $1, 
+      text => $2, 
+      kwargs => $3 
+    )::vector AS query_embedding
 ), 
 cte AS (
   SELECT 
@@ -163,28 +163,38 @@ FROM
   $4;
 "#;
 
-pub const GENERATE_CHUNKS: &str = r#"
-WITH splitter as (
+pub const VECTOR_SEARCH: &str = r#"
+WITH cte AS (
   SELECT 
-    id, 
-    name, 
-    parameters 
+    chunk_id, 
+    1 - (
+      %s.embedding <=> $1::vector 
+    ) AS score 
   FROM 
     %s 
-  WHERE 
-    id = $1 
-) INSERT INTO %s(
+) 
+SELECT 
+  cte.score, 
+  chunks.chunk, 
+  documents.metadata 
+FROM 
+  cte 
+  INNER JOIN %s chunks ON chunks.id = cte.chunk_id 
+  INNER JOIN %s documents ON documents.id = chunks.document_id 
+  ORDER BY 
+  cte.score DESC 
+  LIMIT 
+  $2;
+"#;
+
+pub const GENERATE_CHUNKS: &str = r#"
+INSERT INTO %s(
   document_id, splitter_id, chunk_index, 
   chunk
 ) 
 SELECT 
   document_id, 
-  (
-    SELECT 
-      id 
-    FROM 
-      splitter
-  ), 
+  $1, 
   (chunk).chunk_index, 
   (chunk).chunk 
 FROM 
@@ -192,19 +202,9 @@ FROM
     select 
       id AS document_id, 
       pgml.chunk(
-        (
-          SELECT 
-            name 
-          FROM 
-            splitter
-        ), 
+        $2, 
         text, 
-        (
-          SELECT 
-            parameters 
-          FROM 
-            splitter
-        )
+        $3 
       ) AS chunk 
     FROM 
       (
@@ -220,12 +220,7 @@ FROM
             from 
               %s 
             where 
-              splitter_id = (
-                select 
-                  id 
-                from 
-                  splitter
-              )
+              splitter_id = $1 
           )
       ) as documents
   ) chunks

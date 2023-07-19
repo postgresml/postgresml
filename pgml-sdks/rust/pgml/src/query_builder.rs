@@ -6,10 +6,13 @@ use sea_query::{
 };
 use sea_query_binder::SqlxBinder;
 
-use crate::{filter_builder, models, types::Json, Collection};
+use crate::{filter_builder, model::Model, models, splitter::Splitter, types::Json, Collection};
 
 #[cfg(feature = "javascript")]
-use crate::languages::javascript::*;
+use crate::{languages::javascript::*, model::ModelJavascript, splitter::SplitterJavascript};
+
+#[cfg(feature = "python")]
+use crate::{model::ModelPython, splitter::SplitterPython};
 
 #[derive(Clone)]
 enum SIden<'a> {
@@ -129,20 +132,18 @@ impl QueryBuilder {
     pub fn vector_recall(
         mut self,
         query: String,
+        model: &Model,
+        splitter: &Splitter,
         query_params: Option<Json>,
-        model_id: Option<i64>,
-        splitter_id: Option<i64>,
     ) -> Self {
         let query_params = match query_params {
             Some(params) => params.0,
             None => serde_json::json!({}),
         };
-        let model_id = model_id.unwrap_or(1);
-        let splitter_id = splitter_id.unwrap_or(1);
 
         let embeddings_table_name = self
             .collection
-            .get_embeddings_table_name(model_id, splitter_id)
+            .get_embeddings_table_name(model.id, splitter.id)
             .expect("Error getting embeddings table name in vector_recall");
 
         let mut query_cte = Query::select();
@@ -159,10 +160,10 @@ impl QueryBuilder {
                 Alias::new("query_embedding"),
             )
             .from_as(
-                self.collection.models_table_name.to_table_tuple(),
+                (SIden::Str("pgml"), SIden::Str("models")),
                 SIden::Str("models"),
             )
-            .and_where(Expr::col((SIden::Str("models"), SIden::Str("id"))).eq(model_id));
+            .and_where(Expr::col((SIden::Str("models"), SIden::Str("id"))).eq(model.id));
         let mut query_cte = CommonTableExpression::from_select(query_cte);
         query_cte.table_name(Alias::new("query_cte"));
 
@@ -214,7 +215,7 @@ impl QueryBuilder {
             .await?;
         Ok(results)
     }
-    
+
     // This is mostly so our SDKs in other languages have some way to debug
     pub fn to_full_string(&self) -> String {
         self.to_string()
