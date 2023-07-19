@@ -11,6 +11,6 @@ impl From<serde_json::Value> for Json {
 }
 
 /// A wrapper around sqlx::types::chrono::DateTime<sqlx::types::chrono::Utc>
-#[derive(sqlx::Type)]
+#[derive(sqlx::Type, Debug, Clone)]
 #[sqlx(transparent)]
 pub struct DateTime(pub sqlx::types::chrono::DateTime<sqlx::types::chrono::Utc>);

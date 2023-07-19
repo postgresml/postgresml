@@ -13,6 +13,12 @@ impl ToPyObject for DateTime {
     }
 }
 
+impl IntoPy<PyObject> for DateTime {
+    fn into_py(self, py: Python) -> PyObject {
+        self.to_object(py)
+    }
+}
+
 impl ToPyObject for Json {
     fn to_object(&self, py: Python) -> PyObject {
         match &self.0 {

@@ -69,7 +69,7 @@ pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
     let expanded = quote! {
         #[cfg(feature = "python")]
         #[pyo3::pyclass(name = #wrapped_type_name)]
-        #[derive(Debug)]
+        #[derive(Debug, Clone)]
         pub struct #name_ident {
             wrapped: #wrapped_type_ident
         }
@@ -80,6 +80,13 @@ pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
                 Self {
                     wrapped: w,
                 }
+            }
+        }
+
+        #[cfg(feature = "python")]
+        impl From<#name_ident> for #wrapped_type_ident {
+            fn from(w: #name_ident) -> Self {
+                w.wrapped
             }
         }
 
@@ -220,7 +227,7 @@ pub fn generate_python_methods(
             let middle = if let Some(convert) = convert_from {
                 quote! {
                     #middle
-                    let x = #convert::from(x);
+                    let x = <#convert>::from(x);
                 }
             } else {
                 middle
@@ -323,9 +330,9 @@ fn convert_method_wrapper_arguments(
         SupportedType::str => (quote! {#name_ident: String}, quote! { #name_ident}),
         _ => {
             let t = ty
-                .to_type()
+                .to_type(Some("Python"))
                 .expect("Could not parse type in convert_method_type in python.rs");
-            (quote! { #name_ident : #t}, quote! {#name_ident})
+            (quote! { #name_ident : #t}, quote! {#name_ident.into()})
         }
     }
 }
@@ -344,9 +351,9 @@ fn convert_output_type_convert_from_python(
         ),
         t => {
             let ty = t
-                .to_type()
+                .to_type(Some("Python"))
                 .expect("Error converting to type in convert_output_type_convert_from_python");
-            (Some(quote! {pyo3::PyResult<#ty>}), None)
+            (Some(quote! {pyo3::PyResult<#ty>}), Some(quote! {#ty}))
         }
     };
 

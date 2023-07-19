@@ -28,11 +28,21 @@ pub enum SupportedType {
     Splitter,
     Model,
     QueryBuilder,
-    QueryRunner
+    QueryRunner,
 }
 
 impl ToString for SupportedType {
     fn to_string(&self) -> String {
+        self.to_language_string(&None)
+    }
+}
+
+impl SupportedType {
+    pub fn to_type(&self, language: Option<&str>) -> syn::Result<syn::Type> {
+        syn::parse_str(&self.to_language_string(&language))
+    }
+
+    pub fn to_language_string(&self, language: &Option<&str>) -> String {
         match self {
             SupportedType::Reference(t) => format!("&{}", t.to_string()),
             SupportedType::str => "str".to_string(),
@@ -41,17 +51,17 @@ impl ToString for SupportedType {
             SupportedType::Json => "Json".to_string(),
             SupportedType::Vec(v) => format!("Vec<{}>", v.to_string()),
             SupportedType::HashMap((k, v)) => {
-                format!("HashMap<{},{}>", k.to_string(), v.to_string())
+                format!("HashMap<{},{}>", k.to_language_string(language), v.to_language_string(language))
             }
             SupportedType::Tuple(t) => {
                 let mut types = Vec::new();
                 for ty in t {
-                    types.push(ty.to_string());
+                    types.push(ty.to_language_string(language));
                 }
                 format!("({})", types.join(","))
             }
             SupportedType::S => "Self".to_string(),
-            SupportedType::Option(v) => format!("Option<{}>", v.to_string()),
+            SupportedType::Option(v) => format!("Option<{}>", v.to_language_string(language)),
             SupportedType::i64 => "i64".to_string(),
             SupportedType::u64 => "u64".to_string(),
             SupportedType::i32 => "i32".to_string(),
@@ -59,19 +69,13 @@ impl ToString for SupportedType {
             SupportedType::JsonHashMap => "JsonHashMap".to_string(),
             SupportedType::DateTime => "DateTime".to_string(),
             // Our own types
-            SupportedType::Database => "Database".to_string(),
-            SupportedType::Collection => "Collection".to_string(),
-            SupportedType::Splitter => "Splitter".to_string(),
-            SupportedType::Model => "Model".to_string(),
-            SupportedType::QueryBuilder => "QueryBuilder".to_string(),
-            SupportedType::QueryRunner => "QueryRunner".to_string(),
+            SupportedType::Database => format!("Database{}", language.unwrap_or("")),
+            SupportedType::Collection => format!("Collection{}", language.unwrap_or("")),
+            SupportedType::Splitter => format!("Splitter{}", language.unwrap_or("")),
+            SupportedType::Model => format!("Model{}", language.unwrap_or("")),
+            SupportedType::QueryBuilder => format!("QueryBuilder{}", language.unwrap_or("")),
+            SupportedType::QueryRunner => format!("QueryRunner{}", language.unwrap_or("")),
         }
-    }
-}
-
-impl SupportedType {
-    pub fn to_type(&self) -> syn::Result<syn::Type> {
-        syn::parse_str(&self.to_string())
     }
 }
 

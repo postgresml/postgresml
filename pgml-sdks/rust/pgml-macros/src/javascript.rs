@@ -86,6 +86,27 @@ pub fn generate_javascript_derive(parsed: DeriveInput) -> proc_macro::TokenStrea
         }
 
         #[cfg(feature = "javascript")]
+        impl From<#name_ident> for #wrapped_type_ident {
+            fn from(w: #name_ident) -> Self {
+                w.wrapped
+            }
+        }
+
+        #[cfg(feature = "javascript")]
+        impl FromJsType for #name_ident {
+            type From = neon::types::JsObject;
+            fn from_js_type<'a, C: neon::context::Context<'a>>(cx: &mut C, arg: neon::handle::Handle<Self::From>) -> neon::result::NeonResult<Self> {
+                use neon::prelude::*;
+                use core::ops::Deref;
+                let s: neon::handle::Handle<neon::types::JsBox<std::cell::RefCell<#name_ident>>> = arg.get(cx, "s")?;
+                let wrapped = (*s).deref().borrow().wrapped.clone();
+                Ok(Self {
+                    wrapped
+                })
+            }
+        }
+
+        #[cfg(feature = "javascript")]
         impl IntoJsResult for #wrapped_type_ident {
             type Output = neon::types::JsObject;
             fn into_js_result<'a, 'b, 'c: 'b, C: neon::context::Context<'c>>(self, cx: &mut C) -> neon::result::JsResult<'b, Self::Output> {
@@ -346,10 +367,10 @@ fn convert_method_wrapper_arguments(
             quote! { #name_ident},
         ),
         _ => {
-            let t = ty.to_type().expect(
+            let t = ty.to_type(Some("Javascript")).expect(
                 "Could not parse type in convert_method_wrapper_arguments in javascript.rs",
             );
-            (t.into_token_stream(), quote! {#name_ident})
+            (t.into_token_stream(), quote! {#name_ident.into()})
         }
     }
 }
@@ -363,6 +384,7 @@ fn get_neon_type(ty: &SupportedType) -> syn::Type {
         SupportedType::bool => syn::parse_str("neon::types::JsBoolean").unwrap(),
         SupportedType::Vec(_v) => syn::parse_str("neon::types::JsArray").unwrap(),
         SupportedType::S => syn::parse_str("neon::types::JsObject").unwrap(),
+        SupportedType::DateTime => syn::parse_str("neon::types::JsDate").unwrap(),
         SupportedType::Tuple(_t) => syn::parse_str("neon::types::JsObject").unwrap(),
         SupportedType::HashMap((_k, _v)) => syn::parse_str("neon::types::JsObject").unwrap(),
         SupportedType::i64 | SupportedType::f64 | SupportedType::u64 => {
@@ -392,7 +414,10 @@ fn convert_output_type_convert_from_javascript(
             Some(quote! {neon::result::JsResult<'a, neon::types::JsObject>}),
             Some(format_ident!("Self").into_token_stream()),
         ),
-        t @ SupportedType::Database | t @ SupportedType::Collection => (
+        t @ SupportedType::Database
+        | t @ SupportedType::Model
+        | t @ SupportedType::Splitter
+        | t @ SupportedType::Collection => (
             Some(quote! {neon::result::JsResult<'a, neon::types::JsObject>}),
             Some(format_ident!("{}Javascript", t.to_string()).into_token_stream()),
         ),

@@ -10,10 +10,14 @@ use crate::queries;
 use crate::query_builder;
 use crate::query_builder::QueryBuilder;
 use crate::remote_embeddings::build_remote_embeddings;
+use crate::splitter::Splitter;
 use crate::types::Json;
 
 #[cfg(feature = "javascript")]
-use crate::languages::javascript::*;
+use crate::{languages::javascript::*, splitter::SplitterJavascript};
+
+#[cfg(feature = "python")]
+use crate::{query_builder::QueryBuilderPython, splitter::SplitterPython};
 
 /// A collection of documents
 #[derive(custom_derive, Debug, Clone)]
@@ -30,10 +34,8 @@ pub struct Collection {
 
 #[custom_methods(
     upsert_documents,
-    register_text_splitter,
     get_text_splitters,
     generate_chunks,
-    register_model,
     get_models,
     generate_embeddings,
     generate_tsvectors,
@@ -70,13 +72,11 @@ impl Collection {
             .execute(&collection.pool)
             .await?;
         collection.create_documents_table().await?;
-        collection.create_splitter_table().await?;
-        collection.create_models_table().await?;
+        // collection.create_splitter_table().await?;
+        // collection.create_models_table().await?;
         collection.create_transforms_table().await?;
         collection.create_chunks_table().await?;
         collection.create_documents_tsvectors_table().await?;
-        collection.register_text_splitter(None, None).await?;
-        collection.register_model(None, None, None, None).await?;
         sqlx::query("UPDATE pgml.collections SET active = TRUE WHERE name = $1")
             .bind(&collection.name)
             .execute(&collection.pool)
@@ -424,80 +424,6 @@ impl Collection {
         Ok(())
     }
 
-    /// Registers new text splitters
-    ///
-    /// # Arguments
-    ///
-    /// * `splitter_name` - The name of the text splitter.
-    /// * `splitter_params` - A [std::collections::HashMap] of parameters.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Database;
-    ///
-    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let db = Database::new(CONNECTION_STRING).await?;
-    ///    let collection = db.create_or_get_collection("collection number 1").await?;
-    ///    collection.register_text_splitter(None, None).await?;
-    ///    Ok(())
-    /// }
-    /// ```
-    pub async fn register_text_splitter(
-        &self,
-        splitter_name: Option<String>,
-        splitter_params: Option<Json>,
-    ) -> anyhow::Result<i64> {
-        let splitter_name = splitter_name.unwrap_or("recursive_character".to_string());
-        let splitter_params = match splitter_params {
-            Some(params) => params.0,
-            None => serde_json::json!({}),
-        };
-
-        let current_splitter: Option<models::Splitter> = sqlx::query_as(&query_builder!(
-            "SELECT * from %s where name = $1 and parameters = $2;",
-            self.splitters_table_name
-        ))
-        .bind(&splitter_name)
-        .bind(&splitter_params)
-        .fetch_optional(self.pool.borrow())
-        .await?;
-
-        match current_splitter {
-            Some(splitter) => {
-                warn!(
-                    "Text splitter with name: {} and parameters: {:?} already exists",
-                    splitter_name, splitter_params
-                );
-                Ok(splitter.id)
-            }
-            None => {
-                let splitter_id: (i64,) = sqlx::query_as(&query_builder!(
-                    "INSERT INTO %s (name, parameters) VALUES ($1, $2) RETURNING id",
-                    self.splitters_table_name
-                ))
-                .bind(splitter_name)
-                .bind(splitter_params)
-                .fetch_one(self.pool.borrow())
-                .await?;
-                Ok(splitter_id.0)
-            }
-        }
-    }
-
-    /// Gets all registered text [models::Splitter]s
-    pub async fn get_text_splitters(&self) -> anyhow::Result<Vec<models::Splitter>> {
-        let splitters: Vec<models::Splitter> = sqlx::query_as(&query_builder!(
-            "SELECT * from %s",
-            self.splitters_table_name
-        ))
-        .fetch_all(self.pool.borrow())
-        .await?;
-        Ok(splitters)
-    }
-
     /// Generates chunks for the collection
     ///
     /// # Arguments
@@ -530,7 +456,7 @@ impl Collection {
     ///    Ok(())
     /// }
     /// ```
-    pub async fn generate_chunks(&self, splitter_id: Option<i64>) -> anyhow::Result<()> {
+    pub async fn generate_chunks(&self, splitter: Splitter) -> anyhow::Result<()> {
         let (count,): (i64,) = sqlx::query_as(&query_builder!(
             "SELECT count(*) FROM (SELECT 1 FROM %s LIMIT 1) AS t",
             self.documents_table_name
@@ -542,7 +468,7 @@ impl Collection {
             anyhow::bail!("No documents in the documents table. Make sure to upsert documents before generating chunks")
         }
 
-        let splitter_id = splitter_id.unwrap_or(1);
+        let splitter_id = splitter.id;
         sqlx::query(&query_builder!(
             queries::GENERATE_CHUNKS,
             self.splitters_table_name,
@@ -554,87 +480,6 @@ impl Collection {
         .execute(self.pool.borrow())
         .await?;
         Ok(())
-    }
-
-    /// Registers new models for specific tasks
-    ///
-    /// # Arguments
-    ///
-    /// * `task` - The name of the task.
-    /// * `model_name` - The name of the [models::Model].
-    /// * `model_params` - A [std::collections::HashMap] of parameters.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Database;
-    ///
-    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let db = Database::new(CONNECTION_STRING).await?;
-    ///    let collection = db.create_or_get_collection("collection number 1").await?;
-    ///    collection.register_model(None, None, None).await?;
-    ///    Ok(())
-    /// }
-    /// ```
-    pub async fn register_model(
-        &self,
-        task: Option<String>,
-        model_name: Option<String>,
-        model_params: Option<Json>,
-        model_source: Option<String>,
-    ) -> anyhow::Result<i64> {
-        let task = task.unwrap_or("embedding".to_string());
-        let model_name = model_name.unwrap_or("intfloat/e5-small".to_string());
-        let model_params = match model_params {
-            Some(params) => params.0,
-            None => serde_json::json!({}),
-        };
-        let model_source = model_source.unwrap_or("huggingface".to_string());
-
-        let current_model: Option<models::Model> = sqlx::query_as(&query_builder!(
-            "SELECT * FROM %s WHERE task = $1 AND name = $2 AND parameters = $3 AND source = $4;",
-            self.models_table_name
-        ))
-        .bind(&task)
-        .bind(&model_name)
-        .bind(&model_params)
-        .bind(&model_source)
-        .fetch_optional(self.pool.borrow())
-        .await?;
-
-        match current_model {
-            Some(model) => {
-                warn!(
-                    "Model with name: {} and parameters: {:?} already exists",
-                    model_name, model_params
-                );
-                Ok(model.id)
-            }
-            None => {
-                let id: (i64,) = sqlx::query_as(&query_builder!(
-                    "INSERT INTO %s (task, name, parameters, source) VALUES ($1, $2, $3, $4) RETURNING id",
-                    self.models_table_name
-                ))
-                .bind(task)
-                .bind(model_name)
-                .bind(model_params)
-                .bind(model_source)
-                .fetch_one(self.pool.borrow())
-                .await?;
-                Ok(id.0)
-            }
-        }
-    }
-
-    /// Gets all registered [models::Model]s
-    pub async fn get_models(&self) -> anyhow::Result<Vec<models::Model>> {
-        Ok(
-            sqlx::query_as(&query_builder!("SELECT * from %s", self.models_table_name))
-                .fetch_all(self.pool.borrow())
-                .await?,
-        )
     }
 
     async fn create_or_get_embeddings_table(
@@ -812,7 +657,7 @@ impl Collection {
                         &embeddings_table_name,
                         &self.chunks_table_name,
                         splitter_id,
-                        &self.pool
+                        &self.pool,
                     )
                     .await?;
             }
