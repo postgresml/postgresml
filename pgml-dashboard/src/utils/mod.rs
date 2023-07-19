@@ -3,7 +3,6 @@ pub mod datadog;
 pub mod markdown;
 pub mod tabs;
 pub mod time;
-pub mod url_parser;
 
 use rand::{distributions::Alphanumeric, Rng};
 
