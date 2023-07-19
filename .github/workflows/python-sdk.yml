@@ -43,7 +43,7 @@ jobs:
       - name: Create dist directory
         run: mkdir ../../python/dist
       - name: Build wheels
-        run: maturin build --release --strip -i python3.7 python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist -F python
+        run: maturin build --release --strip -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist -F python
       - name: Deploy wheels
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
@@ -76,7 +76,7 @@ jobs:
       - name: Create dist directory
         run: mkdir ../../python/dist
       - name: Build wheels
-        run: maturin build --release --strip -i python3.7 python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist -F python
+        run: maturin build --release --strip -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist -F python
       - name: Deploy wheels
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
