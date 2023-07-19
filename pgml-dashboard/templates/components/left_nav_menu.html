@@ -1,0 +1,19 @@
+<nav>
+    <ul class="nav flex-column justify-content-end">
+        <% for link in nav.links { %>
+        <% if !link.hide_for_lg_screens { %>
+        <li class="menu-item leftnav-collapse-affect expanded <% if link.disabled { %>disabled<% } %>" >
+            <a
+            class="d-flex align-items-center justify-content-start gap-2 <% if link.disabled  { %> disabled <% } %>"
+            href="<%= link.href %>"
+            >
+            <% if link.icon.as_ref().is_some() { %>
+            <span class="material-symbols-outlined"><%- link.icon.unwrap() %></span>
+            <% } %>
+            <span class="collapse collapse-horizontal leftnav-collapse show"><%= link.name %></span>
+            </a>
+        </li>
+        <% } %>
+        <% } %>
+    </ul>
+</nav>

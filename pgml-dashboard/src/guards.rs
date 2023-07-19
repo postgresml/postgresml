@@ -1,6 +1,6 @@
 use std::env::var;
 
-use crate::templates::components::DropdownMenu;
+use crate::templates::components::{StaticNav, StaticNavLink};
 use rocket::request::{self, FromRequest, Request};
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 
@@ -51,7 +51,21 @@ impl Default for Cluster {
             context: Context {
                 user: models::User::default(),
                 cluster: models::Cluster::default(),
-                dropdown_nav: DropdownMenu::default(),
+                dropdown_nav: StaticNav {
+                    links: vec![
+                        StaticNavLink::new("Local".to_string(), "/dashboard".to_string())
+                            .active(true),
+                    ],
+                },
+                account_management_nav: StaticNav::default(),
+                upper_left_nav: StaticNav {
+                    links: vec![StaticNavLink::new(
+                        "Dashboard".to_string(),
+                        "/dashboard".to_string(),
+                    )
+                    .icon("thumbnail_bar".to_string())],
+                },
+                lower_left_nav: StaticNav::default(),
             },
         }
     }

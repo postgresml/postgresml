@@ -82,14 +82,14 @@ impl<'a> Nav<'a> {
 
 #[derive(TemplateOnce)]
 #[template(path = "layout/nav/left_web_app.html")]
-pub struct LeftNavWebApp<'a> {
-    pub upper_nav: Nav<'a>,
-    pub lower_nav: Nav<'a>,
-    pub dropdown_nav: DropdownMenu,
+pub struct LeftNavWebApp {
+    pub upper_nav: StaticNav,
+    pub lower_nav: StaticNav,
+    pub dropdown_nav: StaticNav,
 }
 
-impl<'a> LeftNavWebApp<'a> {
-    pub fn render(upper_nav: Nav, lower_nav: Nav, dropdown_nav: DropdownMenu) -> String {
+impl LeftNavWebApp {
+    pub fn render(upper_nav: StaticNav, lower_nav: StaticNav, dropdown_nav: StaticNav) -> String {
         LeftNavWebApp {
             upper_nav,
             lower_nav,
@@ -138,18 +138,18 @@ impl Navbar {
 
 #[derive(TemplateOnce)]
 #[template(path = "layout/nav/top_web_app.html")]
-pub struct NavbarWebApp<'a> {
-    pub current_user: Option<models::User>,
+pub struct NavbarWebApp {
     pub standalone_dashboard: bool,
-    pub links: Vec<NavLink<'a>>,
+    pub links: Vec<StaticNavLink>,
+    pub account_management_nav: StaticNav,
 }
 
-impl<'a> NavbarWebApp<'a> {
-    pub fn render(user: Option<models::User>, links: Vec<NavLink<'a>>) -> String {
+impl NavbarWebApp {
+    pub fn render(links: Vec<StaticNavLink>, account_management_nav: StaticNav) -> String {
         NavbarWebApp {
-            current_user: user,
             standalone_dashboard: config::standalone_dashboard(),
             links,
+            account_management_nav,
         }
         .render_once()
         .unwrap()
@@ -168,47 +168,45 @@ pub struct PostgresLogo {
     link: String,
 }
 
-#[derive(Debug, Clone)]
-pub struct DropdownMenu {
-    pub links: Vec<DropdownItem>,
+#[derive(Debug, Clone, Default)]
+pub struct StaticNav {
+    pub links: Vec<StaticNavLink>,
 }
 
-impl DropdownMenu {
-    pub fn get_active(self) -> DropdownItem {
+impl StaticNav {
+    pub fn add_link(&mut self, link: StaticNavLink) {
+        self.links.push(link);
+    }
+
+    pub fn get_active(self) -> StaticNavLink {
         match self.links.iter().find(|item| item.clone().active) {
             Some(item) => item.clone(),
-            None => DropdownItem {
+            None => StaticNavLink {
                 ..Default::default()
             },
         }
     }
-
-    pub fn add_link(&mut self, link: DropdownItem) {
-        self.links.push(link);
-    }
 }
 
-impl Default for DropdownMenu {
-    fn default() -> DropdownMenu {
-        DropdownMenu {
-            links: vec![DropdownItem::default()],
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct DropdownItem {
+#[derive(Debug, Clone, Default)]
+pub struct StaticNavLink {
     pub name: String,
     pub href: String,
     pub active: bool,
+    pub disabled: bool,
+    pub icon: Option<String>,
+    pub hide_for_lg_screens: bool,
 }
 
-impl DropdownItem {
-    pub fn new(name: String, href: String) -> DropdownItem {
-        DropdownItem {
+impl StaticNavLink {
+    pub fn new(name: String, href: String) -> StaticNavLink {
+        StaticNavLink {
             name,
             href,
             active: false,
+            disabled: false,
+            icon: None,
+            hide_for_lg_screens: false,
         }
     }
 
@@ -216,14 +214,25 @@ impl DropdownItem {
         self.active = active;
         self
     }
+
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
+    pub fn icon(mut self, icon: String) -> Self {
+        self.icon = Some(icon);
+        self
+    }
+
+    pub fn hide_for_lg_screens(mut self, hide: bool) -> Self {
+        self.hide_for_lg_screens = hide;
+        self
+    }
 }
 
-impl Default for DropdownItem {
-    fn default() -> DropdownItem {
-        DropdownItem {
-            name: "Local".to_string(),
-            href: "/dashboard".to_string(),
-            active: true,
-        }
-    }
+#[derive(TemplateOnce)]
+#[template(path = "components/left_nav_menu.html")]
+pub struct LeftNavMenu {
+    pub nav: StaticNav,
 }

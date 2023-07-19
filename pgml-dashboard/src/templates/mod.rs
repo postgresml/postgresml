@@ -1,15 +1,14 @@
 use std::collections::HashMap;
 
-use components::{Nav, NavLink};
+use components::{NavLink, StaticNav};
 
-use crate::templates::components::DropdownMenu;
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
 use sqlx::types::time::PrimitiveDateTime;
 use sqlx::{Column, Executor, PgPool, Row, Statement, TypeInfo, ValueRef};
 
 use crate::models;
-use crate::utils::{config, tabs};
+use crate::utils::tabs;
 
 pub mod components;
 pub mod docs;
@@ -101,15 +100,15 @@ impl From<Layout> for String {
 pub struct WebAppBase<'a> {
     pub content: Option<String>,
     pub breadcrumbs: Vec<NavLink<'a>>,
-    pub upper_nav: Nav<'a>,
-    pub lower_nav: Nav<'a>,
     pub head: String,
-    pub current_cluster: models::Cluster,
-    pub dropdown_nav: DropdownMenu,
+    pub dropdown_nav: StaticNav,
+    pub account_management_nav: StaticNav,
+    pub upper_left_nav: StaticNav,
+    pub lower_left_nav: StaticNav,
 }
 
 impl<'a> WebAppBase<'a> {
-    pub fn new(title: &str) -> Self {
+    pub fn new(title: &str, context: &crate::Context) -> Self {
         WebAppBase {
             head: crate::templates::head::DefaultHeadTemplate::new(Some(
                 crate::templates::head::Head {
@@ -121,13 +120,12 @@ impl<'a> WebAppBase<'a> {
             ))
             .render_once()
             .unwrap(),
+            dropdown_nav: context.dropdown_nav.clone(),
+            account_management_nav: context.account_management_nav.clone(),
+            upper_left_nav: context.upper_left_nav.clone(),
+            lower_left_nav: context.lower_left_nav.clone(),
             ..Default::default()
         }
-    }
-
-    pub fn current_cluster(&mut self, name: String, id: i64) -> &mut Self {
-        self.current_cluster = models::Cluster { name, id };
-        self
     }
 
     pub fn head(&mut self, head: String) -> &mut Self {
@@ -140,67 +138,7 @@ impl<'a> WebAppBase<'a> {
         self
     }
 
-    pub fn nav(&mut self, active: &str) -> &mut Self {
-        let (upper_nav_links, lower_nav_links) = match config::standalone_dashboard() {
-            true => (
-                vec![
-                    // NavLink::new("Notebooks", "/notebooks")
-                    //     .icon("description")
-                    //     .disable(true),
-                    // NavLink::new("Explore", "/explore")
-                    //     .icon("thumbnail_bar")
-                    //     .disable(true),
-                    // NavLink::new("Projects", "/projects")
-                    //     .icon("library_add")
-                    //     .disable(true),
-                    NavLink::new("Dashboard", "/dashboard").icon("thumbnail_bar"),
-                ],
-                vec![],
-            ),
-            false => (
-                vec![
-                    // NavLink::new("Notebooks", "/notebooks")
-                    //     .icon("description")
-                    //     .disable(true),
-                    // NavLink::new("Explore", "/explore")
-                    //     .icon("thumbnail_bar")
-                    //     .disable(true),
-                    // NavLink::new("Projects", "/projects")
-                    //     .icon("library_add")
-                    //     .disable(true),
-                    NavLink::new("Status", &format!("/clusters/{}", self.current_cluster.id))
-                        .icon("update")
-                        .disable(self.current_cluster.id == models::Cluster::default().id),
-                    NavLink::new("Dashboard", "/dashboard")
-                        .icon("thumbnail_bar")
-                        .disable(self.current_cluster.id == models::Cluster::default().id),
-                    NavLink::new("Databases", "/clusters").icon("lan"),
-                ],
-                vec![NavLink::new("New Database", "/clusters/new").icon("add")],
-            ),
-        };
-
-        for link in upper_nav_links {
-            self.upper_nav.add_link(if link.name.clone().eq(active) {
-                link.active()
-            } else {
-                link
-            });
-        }
-
-        for link in lower_nav_links {
-            self.lower_nav.add_link(if link.name.eq(active) {
-                link.active()
-            } else {
-                link
-            });
-        }
-
-        self
-    }
-
-    pub fn dropdown_nav(&mut self, dropdown: DropdownMenu) -> &mut Self {
-        self.dropdown_nav = dropdown;
+    pub fn disable_upper_nav(&mut self) -> &mut Self {
         self
     }
 

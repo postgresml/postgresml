@@ -32,8 +32,8 @@
           <% } %>
         </ul>
       </div>
-      <%- upper_nav.render_once().unwrap() %>
+        <%- LeftNavMenu{nav: upper_nav}.render_once().unwrap() %>
     </div>
-    <%- lower_nav.render_once().unwrap() %>
+    <%- LeftNavMenu{nav: lower_nav}.render_once().unwrap() %>
   </div>
 </nav>

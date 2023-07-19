@@ -20,7 +20,7 @@ pub mod utils;
 use guards::Cluster;
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
-    components::DropdownMenu, DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab,
+    components::StaticNav, DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab,
     SnapshotsTab, UploaderTab,
 };
 use utils::tabs;
@@ -40,7 +40,10 @@ pub struct ClustersSettings {
 pub struct Context {
     pub user: models::User,
     pub cluster: models::Cluster,
-    pub dropdown_nav: DropdownMenu,
+    pub dropdown_nav: StaticNav,
+    pub account_management_nav: StaticNav,
+    pub upper_left_nav: StaticNav,
+    pub lower_left_nav: StaticNav,
 }
 
 #[get("/projects")]
@@ -473,19 +476,12 @@ pub async fn dashboard(
     deployment_id: Option<i64>,
     table_name: Option<String>,
 ) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard");
-    layout
-        .current_cluster(
-            cluster.context.cluster.name.to_string(),
-            cluster.context.cluster.id,
-        )
-        .nav("Dashboard")
-        .dropdown_nav(cluster.context.dropdown_nav.clone())
-        .breadcrumbs(vec![crate::templates::components::NavLink::new(
-            "Dashboard",
-            "/dashboard",
-        )
-        .active()]);
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.context);
+    layout.breadcrumbs(vec![crate::templates::components::NavLink::new(
+        "Dashboard",
+        "/dashboard",
+    )
+    .active()]);
 
     let all_tabs = vec![
         tabs::Tab {
