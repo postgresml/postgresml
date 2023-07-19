@@ -424,7 +424,6 @@ impl Snapshot {
                 s.feature_positions = s.feature_positions();
                 snapshot = Some(s)
             }
-            result
         });
         snapshot
     }
@@ -485,7 +484,6 @@ impl Snapshot {
                 s.feature_positions = s.feature_positions();
                 snapshot = Some(s)
             }
-            result
         });
         snapshot
     }
@@ -625,7 +623,6 @@ impl Snapshot {
                 client.select(&sql, None, None).unwrap();
             }
             snapshot = Some(s);
-            result
         });
 
         snapshot.unwrap()

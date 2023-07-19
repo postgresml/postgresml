@@ -84,7 +84,7 @@ jobs:
       with:
         working-directory: pgml-extension
         command: install
-        args: cargo-pgrx --version "0.9.7" --locked
+        args: cargo-pgrx --version "0.9.8" --locked
     - name: pgrx init
       uses: postgresml/gh-actions-cargo@master
       with:

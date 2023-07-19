@@ -31,6 +31,7 @@ jobs:
             sudo apt update
             sudo apt-get -y install apt-fast
             sudo apt-fast -y install \
+              python3.7 python3.7-dev \
               python3.8 python3.8-dev \
               python3.9 python3.9-dev \
               python3.10 python3.10-dev \
@@ -42,7 +43,7 @@ jobs:
       - name: Create dist directory
         run: mkdir ../../python/dist
       - name: Build wheels
-        run: maturin build --release --strip -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist -F python
+        run: maturin build --release --strip -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist -F python
       - name: Deploy wheels
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
