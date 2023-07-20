@@ -21,7 +21,7 @@ sudo apt install python3 python3-virtualenv python3-dev
 === "macOS"
 
 ```
-brew install python@3.11
+brew install python@3.11 virtualenv
 ```
 
 ===
