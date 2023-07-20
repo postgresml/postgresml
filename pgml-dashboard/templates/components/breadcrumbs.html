@@ -1,4 +1,4 @@
-<nav class="navbar-console" data-controller="search">
+<nav>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
       <% for link in links {
@@ -16,39 +16,14 @@
   
       %>
         <li class="breadcrumb-item <%= active %> fs-6" <%- area %>>
-          <a class="btn btn-tertiary" href="<%= link.href %>">
-            <%= link.name %>  
+          <a class="" href="<%= link.href %>">
+            <%= link.name %>
           </a>
+          <% if active.is_empty() { %>
+          <div class="vr my-1 ms-2 opacity-100" style="width: 2px"></div>
+          <% } %>
         </li>
       <% } %>
     </ol>
   </nav>
-
-  <nav class="horizontal">
-    <ul class="navbar-nav flex-row gap-3 mb-2 mb-lg-0">
-
-      <li class="nav-item d-flex align-items-center">
-        <button type="text" class="btn-search nav-link p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
-          Search
-        </button>
-      </li>
-      <li class="nav-item d-flex align-items-center">
-        <a class="nav-link p-0" href="/docs/guides/setup/quick_start_with_docker/">Docs</a>
-      </li>
-      <li class="nav-item d-flex align-items-center">
-        <a class="nav-link p-0" href="/blog/mindsdb-vs-postgresml">Blog</a>
-      </li>
-      <li class="nav-item d-flex align-items-center">
-        <a href="/logout" class="btn btn-secondary" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary">Logout</a>
-      </li>
-      <li class="nav-item d-flex align-items-center">
-        <a href="/support" class="btn btn-tertiary p-0 pe-2">
-          <span class="material-symbols-outlined">
-            help
-          </span>
-        </a>
-      </li>
-    </ul>
-  </nav>
-  <% include!("search_modal.html"); %>
 </nav>

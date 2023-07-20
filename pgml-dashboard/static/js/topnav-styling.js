@@ -34,11 +34,15 @@ export default class extends Controller {
 
     // Applies a class when navbar is expanded, used in mobile view for adding background contrast.
     act_when_expanded() {
-        addEventListener('show.bs.collapse', () => {
-            this.element.classList.add('navbar-expanded');
+        addEventListener('show.bs.collapse', (e) => {
+            if (e.target.id === 'navbarSupportedContent') {
+                this.element.classList.add('navbar-expanded');
+            }
         })
-        addEventListener('hidden.bs.collapse', () => {
-            this.element.classList.remove('navbar-expanded');
+        addEventListener('hidden.bs.collapse', (e) => {
+            if (e.target.id === 'navbarSupportedContent') {
+                this.element.classList.remove('navbar-expanded');
+            }
         })
     }
     

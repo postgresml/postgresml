@@ -131,7 +131,24 @@
     margin-right: calc(var(--bs-gutter-x) * -0.5);
 }
 
+// Moves item content out from under navbar but container stays under navbar to provide background. 
+// This is used for transparent sticky or fixed navbars.
 .tuck-under-navbar {
     margin-top: -$navbar-height;
     padding-top: $navbar-height;
+}
+
+// Prevents navbar from hidding under navbar. 
+// This is used for fully opaque sticky or fixed navbars.
+.clear-from-under-navbar {
+    margin-top: calc($navbar-height + 1px );
+}
+
+.web-app-left-nav-sized-container {
+    padding: 0px;
+    margin: 0px;
+
+    @include media-breakpoint-up(lg) {
+        width: $left-nav-w;
+    }
 }

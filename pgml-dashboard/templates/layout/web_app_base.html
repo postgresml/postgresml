@@ -1,23 +1,41 @@
-<% use crate::templates::components::{Nav, Breadcrumbs}; %>
+<% 
+    use crate::templates::components::{
+        NavbarWebApp,
+        LeftNavWebApp,
+        Breadcrumbs,
+        StaticNavLink
+    }; 
+%>
+
+<%
+    // collect left nav links for for top nav in mobile view
+    let mut left_nav_links: Vec<StaticNavLink> = Vec::new();
+    left_nav_links.append(& mut upper_left_nav.links.clone());
+    left_nav_links.append(& mut lower_left_nav.links.clone());
+%>
 
 <!DOCTYPE html>
 <html lang="en-US" data-bs-theme="dark">
     <%- head %>
     <body>
         <main>
-            <div class="container-fluid p-lg-0 min-vh-lg-100">
+            <div class="container-fluid p-0 min-vh-lg-100">
                 <div class="row gx-0 min-vh-lg-100">
-                    <div class="sidenav-container col-12 col-lg-3 col-xxl-2 pt-3 pt-lg-0" >
-                        <%- Nav::render( nav ) %>
-                    </div>
+                    <%- NavbarWebApp::render(left_nav_links, account_management_nav ) %>
 
-                    <div class="col-12 col-lg-9 col-xxl-10">
-                        <div>
-                            <%- Breadcrumbs::render( breadcrumbs ) %>
+                    <div class="d-flex">
+                        <div class="leftnav-container py-3 z-1" >
+                            <%- LeftNavWebApp::render( upper_left_nav, lower_left_nav, dropdown_nav ) %>
                         </div>
     
-                        <div>
-                            <%- content.unwrap_or_default() %>
+                        <div class="clear-from-under-navbar flex-grow-1">
+                            <div class="px-5 py-3">
+                                <%- Breadcrumbs::render( breadcrumbs ) %>
+                            </div>
+
+                            <div class="p-5">
+                                <%- content.unwrap_or_default() %>
+                            </div>
                         </div>
                     </div>
                 </div>

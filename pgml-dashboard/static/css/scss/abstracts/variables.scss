@@ -12,15 +12,15 @@ $bg-white: #F8FAFC;
 $bg-black: #0D0D0E;
 
 // Neutral Scale
-$gray-100: #FAFAFA;
-$gray-200: #DBDBDC;
+$gray-100: #FFFFFF;
+$gray-200: #DEE0E7;
 $gray-300: #ABACB0;
-$gray-400: #919196;
-$gray-500: #4A4A4B;
-$gray-600: #2d2d2d;
-$gray-700: #262626;
-$gray-800: #212123;
-$gray-900: #0A0A0B;
+$gray-400: #777A81;
+$gray-500: #51545B;
+$gray-600: #2F3033;
+$gray-700: #212224;
+$gray-800: #17181A;
+$gray-900: #000000;
 
 // Violet Scale
 $violet-shade-100: #A105FF;
@@ -29,10 +29,24 @@ $violet-shade-100: #A105FF;
 $neon-tint-100: #5162FF;
 $neon-tint-200: #6271FF;
 $neon-tint-300: #7381FF;
+$neon-tint-400: #8591FF;
+$neon-tint-500: #96A0FF;
+$neon-tint-600: #A8B0FF;
+$neon-tint-700: #B9C0FF;
+$neon-tint-800: #CACFFF;
+$neon-tint-900: #DCDFFF;
+$neon-tint-1000: #EDEFFF;
 
 $neon-shade-100: #5162FF;
 $neon-shade-200: #4858E5;
 $neon-shade-300: #404ECC;
+$neon-shade-400: #3844B2;
+$neon-shade-500: #303A99;
+$neon-shade-600: #28317F;
+$neon-shade-700: #202766;
+$neon-shade-800: #181D4C;
+$neon-shade-900: #101333;
+$neon-shade-1000: #080919;
 
 // Teal Scale
 $teal-tint-100: #00E0FF;
@@ -50,14 +64,27 @@ $teal-tint-1000: #001619;
 $peach-tint-100: #E9467A;
 
 // Slate Scale 
-$slate-tint-1000: #F4F2FF;
-$slate-tint-800: #DEDAFF;
-$slate-tint-700: #D3CEFF;
-$slate-tint-600: #C8C2FF;
-$slate-tint-500: #BDB5FF;
 $slate-tint-100: #9185FF;
+$slate-tint-200: #9C91FF;
+$slate-tint-300: #A79DFF;
+$slate-tint-400: #B2A9FF;
+$slate-tint-500: #BDB5FF;
+$slate-tint-600: #C8C2FF;
+$slate-tint-700: #D3CEFF;
+$slate-tint-800: #DEDAFF;
+$slate-tint-900: #E9E6FF;
+$slate-tint-1000: #F4F2FF;
 
+$slate-shade-100: #9185FF;
+$slate-shade-200: #8277E5;
+$slate-shade-300: #746ACC;
+$slate-shade-400: #655DB2;
+$slate-shade-500: #574F99;
+$slate-shade-600: #48427F;
 $slate-shade-700: #3A3566;
+$slate-shade-800: #2B274C;
+$slate-shade-900: #1D1A33;
+$slate-shade-1000: #0E0D19;
 
 // Colors
 $purple: $slate-tint-100;
@@ -115,6 +142,10 @@ $nav-tabs-link-active-color: #{$gray-100};
 $nav-tabs-link-active-bg: transparent;
 $nav-pills-border-radius: calc(#{$border-radius} / 2);
 
+// WebApp Left Nav
+$left-nav-w: 17rem;
+$left-nav-w-collapsed: 88px;
+
 //Grid
 $enable-cssgrid: true;
 $enable-shadows: true;
@@ -125,7 +156,9 @@ $card-border-radius: 20px;
 $enable-negative-margins: true;
 
 // Dropdown
-$dropdown-border-radius: 2px;
+$dropdown-border-radius: calc($border-radius / 2);
+$dropdown-spacer: 4px;
+$dropdown-menu-height: 20rem;
 
 // Modal
 $modal-backdrop-opacity: 0.70;
@@ -138,7 +171,11 @@ $toast-box-shadow: none;
 $alert-border-width: 2px;
 
 // breadcrumb
-$breadcrumb-padding-x:              1rem;
-$breadcrumb-item-padding-x:         1rem;
+$breadcrumb-padding-x:              4px;
+$breadcrumb-item-padding-x:         4px;
 $breadcrumb-margin-bottom:          0px;
-$breadcrumb-divider:                quote("<");
+$breadcrumb-divider:                quote("");
+
+// animations
+$animation-timer: 0.35s;
+$transition-collapse-width:   width 0.35s ease;

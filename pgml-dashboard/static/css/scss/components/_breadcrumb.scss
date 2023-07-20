@@ -5,15 +5,25 @@
         align-items: center;
         text-align: center;
         border: none;
-
-        a {
+        
+        &:not(.active) a {
+            @extend .btn-tertiary-web-app;
             padding: 0px;
         }
 
         &.active {
             a {
-                text-shadow: 0 0 0.65px white, 0 0 0.65px white;
-                color: #{$hp-white};
+                color: #{$gray-100};
+                border-bottom: none;
+                
+                &:hover {
+                    text-shadow: 0 0 0.45px #{$gray-100}, 0 0 0.45px #{$gray-100};
+                }
+
+                &:active {
+                    text-shadow: 0 0 0.65px #{$gray-100}, 0 0 0.65px #{$gray-100};
+                }
+
             }
         }
     }

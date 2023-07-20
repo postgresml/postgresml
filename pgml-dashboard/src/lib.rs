@@ -20,7 +20,8 @@ pub mod utils;
 use guards::Cluster;
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
-    DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab, SnapshotsTab, UploaderTab,
+    components::StaticNav, DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab,
+    SnapshotsTab, UploaderTab,
 };
 use utils::tabs;
 
@@ -39,7 +40,10 @@ pub struct ClustersSettings {
 pub struct Context {
     pub user: models::User,
     pub cluster: models::Cluster,
-    pub visible_clusters: HashMap<String, String>,
+    pub dropdown_nav: StaticNav,
+    pub account_management_nav: StaticNav,
+    pub upper_left_nav: StaticNav,
+    pub lower_left_nav: StaticNav,
 }
 
 #[get("/projects")]
@@ -472,17 +476,12 @@ pub async fn dashboard(
     deployment_id: Option<i64>,
     table_name: Option<String>,
 ) -> Result<ResponseOk, Error> {
-    let user = if cluster.context.user.is_anonymous() {
-        None
-    } else {
-        Some(cluster.context.user.clone())
-    };
-
-    let mut layout = crate::templates::Layout::new("Dashboard");
-
-    if user.is_some() {
-        layout.user(&user.clone().unwrap());
-    }
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.context);
+    layout.breadcrumbs(vec![crate::templates::components::NavLink::new(
+        "Dashboard",
+        "/dashboard",
+    )
+    .active()]);
 
     let all_tabs = vec![
         tabs::Tab {

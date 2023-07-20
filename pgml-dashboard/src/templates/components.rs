@@ -18,7 +18,7 @@ impl<'a> Box<'a> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NavLink<'a> {
     pub href: String,
     pub name: String,
@@ -26,6 +26,7 @@ pub struct NavLink<'a> {
     pub active: bool,
     pub nav: Option<Nav<'a>>,
     pub icon: Option<&'a str>,
+    pub disabled: bool,
 }
 
 impl<'a> NavLink<'a> {
@@ -37,11 +38,17 @@ impl<'a> NavLink<'a> {
             active: false,
             nav: None,
             icon: None,
+            disabled: false,
         }
     }
 
     pub fn active(mut self) -> NavLink<'a> {
         self.active = true;
+        self
+    }
+
+    pub fn disable(mut self, disabled: bool) -> NavLink<'a> {
+        self.disabled = disabled;
         self
     }
 
@@ -56,7 +63,7 @@ impl<'a> NavLink<'a> {
     }
 }
 
-#[derive(TemplateOnce, Clone)]
+#[derive(TemplateOnce, Clone, Default, Debug)]
 #[template(path = "components/nav.html")]
 pub struct Nav<'a> {
     pub links: Vec<NavLink<'a>>,
@@ -65,6 +72,31 @@ pub struct Nav<'a> {
 impl<'a> Nav<'a> {
     pub fn render(links: Vec<NavLink<'a>>) -> String {
         Nav { links }.render_once().unwrap()
+    }
+
+    pub fn add_link(&mut self, link: NavLink<'a>) -> &mut Self {
+        self.links.push(link);
+        self
+    }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "layout/nav/left_web_app.html")]
+pub struct LeftNavWebApp {
+    pub upper_nav: StaticNav,
+    pub lower_nav: StaticNav,
+    pub dropdown_nav: StaticNav,
+}
+
+impl LeftNavWebApp {
+    pub fn render(upper_nav: StaticNav, lower_nav: StaticNav, dropdown_nav: StaticNav) -> String {
+        LeftNavWebApp {
+            upper_nav,
+            lower_nav,
+            dropdown_nav,
+        }
+        .render_once()
+        .unwrap()
     }
 }
 
@@ -102,4 +134,105 @@ impl Navbar {
         .render_once()
         .unwrap()
     }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "layout/nav/top_web_app.html")]
+pub struct NavbarWebApp {
+    pub standalone_dashboard: bool,
+    pub links: Vec<StaticNavLink>,
+    pub account_management_nav: StaticNav,
+}
+
+impl NavbarWebApp {
+    pub fn render(links: Vec<StaticNavLink>, account_management_nav: StaticNav) -> String {
+        NavbarWebApp {
+            standalone_dashboard: config::standalone_dashboard(),
+            links,
+            account_management_nav,
+        }
+        .render_once()
+        .unwrap()
+    }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "components/github_icon.html")]
+pub struct GithubIcon {
+    pub show_stars: bool,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "components/postgres_logo.html")]
+pub struct PostgresLogo {
+    link: String,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct StaticNav {
+    pub links: Vec<StaticNavLink>,
+}
+
+impl StaticNav {
+    pub fn add_link(&mut self, link: StaticNavLink) {
+        self.links.push(link);
+    }
+
+    pub fn get_active(self) -> StaticNavLink {
+        match self.links.iter().find(|item| item.clone().active) {
+            Some(item) => item.clone(),
+            None => StaticNavLink {
+                ..Default::default()
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct StaticNavLink {
+    pub name: String,
+    pub href: String,
+    pub active: bool,
+    pub disabled: bool,
+    pub icon: Option<String>,
+    pub hide_for_lg_screens: bool,
+}
+
+impl StaticNavLink {
+    pub fn new(name: String, href: String) -> StaticNavLink {
+        StaticNavLink {
+            name,
+            href,
+            active: false,
+            disabled: false,
+            icon: None,
+            hide_for_lg_screens: false,
+        }
+    }
+
+    pub fn active(mut self, active: bool) -> Self {
+        self.active = active;
+        self
+    }
+
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
+    pub fn icon(mut self, icon: &str) -> Self {
+        self.icon = Some(icon.to_string());
+        self
+    }
+
+    pub fn hide_for_lg_screens(mut self, hide: bool) -> Self {
+        self.hide_for_lg_screens = hide;
+        self
+    }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "components/left_nav_menu.html")]
+pub struct LeftNavMenu {
+    pub nav: StaticNav,
 }

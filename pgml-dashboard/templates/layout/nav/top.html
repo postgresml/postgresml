@@ -1,25 +1,19 @@
-
+<% use crate::templates::components::GithubIcon; %>
+<% use crate::templates::components::PostgresLogo; %>
 
   <div class="sticky-top-nav">
-    <nav class="navbar horizontal navbar-expand-lg" data-controller="search topnav-styling">
+    <nav class="navbar-marketing-site horizontal navbar-expand-lg" data-controller="search topnav-styling">
       <div class="container gap-4">
-        <a class="navbar-brand d-flex align-items-center gap-2" href="/">
-          <img src="/dashboard/static/images/owl_gradient.svg" alt="PostgresML Logo" height="30" width="21">
-          <span class="fw-normal position-relative overflow-visible">Postgres
-            <span class="fw-semibold">ML</span>
-            <span class="beta-badge position-absolute bottom-0 end-0 pe-0 mb-n3">Beta</span>
-          </span>
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+        <div class="controls">
+          <%- PostgresLogo{link: "/".to_string()}.render_once().unwrap() %>
+          
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </div>
+
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav flex-grow-1 gap-4 me-auto mb-4 mb-lg-0">
-            <% if standalone_dashboard { %>
-            <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-0" href="/dashboard">Dashboard</a>
-            </li>
-            <% } %>
             <li class="nav-item d-flex align-items-center">
               <a class="nav-link p-0" href="/docs/guides/setup/quick_start_with_docker/">Docs</a>
             </li>
@@ -34,14 +28,14 @@
           </ul>
   
           <ul class="navbar-nav gap-4 gap-lg-3 mb-2 mb-lg-0">
-            <li class="d-flex align-items-center d-none d-lg-block">
-              <% include!("../../components/github_icon.html"); %>
+            <li class="align-items-center d-none d-lg-flex">
+              <%- GithubIcon{show_stars: true}.render_once().unwrap() %>
             </li>
             <li class="d-flex align-items-center d-block d-lg-none">
               <a class="nav-link p-0" href="https://github.com/postgresml/postgresml">Open Source</a>
             </li>
             <li class="nav-item d-flex align-items-center">
-              <button type="text" class="btn-search nav-link p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+              <button type="text" class="btn nav-link p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
                 Search
               </button>
             </li>
@@ -62,6 +56,12 @@
               <a class="btn btn-primary py-2 px-3" href="/clusters">Console</a>
             </li>
               <% } %>
+            <% } %>
+
+            <% if standalone_dashboard { %>
+            <li class="nav-item d-flex align-items-center">
+              <a class="btn btn-primary py-2 px-3" href="/dashboard">Dashboard</a>
+            </li>
             <% } %>
           </ul>
         </div>

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use components::{Nav, NavLink};
+use components::{NavLink, StaticNav, StaticNavLink};
 
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
@@ -99,14 +99,16 @@ impl From<Layout> for String {
 #[template(path = "layout/web_app_base.html")]
 pub struct WebAppBase<'a> {
     pub content: Option<String>,
-    pub visible_clusters: HashMap<String, String>,
     pub breadcrumbs: Vec<NavLink<'a>>,
-    pub nav: Vec<NavLink<'a>>,
     pub head: String,
+    pub dropdown_nav: StaticNav,
+    pub account_management_nav: StaticNav,
+    pub upper_left_nav: StaticNav,
+    pub lower_left_nav: StaticNav,
 }
 
 impl<'a> WebAppBase<'a> {
-    pub fn new(title: &str) -> Self {
+    pub fn new(title: &str, context: &crate::Context) -> Self {
         WebAppBase {
             head: crate::templates::head::DefaultHeadTemplate::new(Some(
                 crate::templates::head::Head {
@@ -118,6 +120,10 @@ impl<'a> WebAppBase<'a> {
             ))
             .render_once()
             .unwrap(),
+            dropdown_nav: context.dropdown_nav.clone(),
+            account_management_nav: context.account_management_nav.clone(),
+            upper_left_nav: context.upper_left_nav.clone(),
+            lower_left_nav: context.lower_left_nav.clone(),
             ..Default::default()
         }
     }
@@ -127,81 +133,19 @@ impl<'a> WebAppBase<'a> {
         self
     }
 
-    pub fn clusters(&mut self, clusters: HashMap<String, String>) -> &mut Self {
-        self.visible_clusters = clusters.to_owned();
-        self
-    }
-
     pub fn breadcrumbs(&mut self, breadcrumbs: Vec<NavLink<'a>>) -> &mut Self {
         self.breadcrumbs = breadcrumbs.to_owned();
         self
     }
 
-    pub fn nav(&mut self, active: &str) -> &mut Self {
-        let mut nav_links = vec![NavLink::new("Create new cluster", "/clusters/new").icon("add")];
-
-        // Adds the spesific cluster to a sublist.
-        if self.visible_clusters.len() > 0 {
-            let mut sorted_clusters: Vec<(String, String)> = self
-                .visible_clusters
-                .iter()
-                .map(|(name, id)| (name.to_string(), id.to_string()))
-                .collect();
-            sorted_clusters.sort_by_key(|k| k.1.to_owned());
-
-            let cluster_links = sorted_clusters
-                .iter()
-                .map(|(name, id)| {
-                    NavLink::new(name, &format!("/clusters/{}", id)).icon("developer_board")
-                })
-                .collect();
-
-            let cluster_nav = Nav {
-                links: cluster_links,
-            };
-
-            nav_links.push(
-                NavLink::new("Clusters", "/clusters")
-                    .icon("lan")
-                    .nav(cluster_nav),
-            )
-        } else {
-            nav_links.push(NavLink::new("Clusters", "/clusters").icon("lan"))
-        }
-
-        nav_links.push(NavLink::new("Payments", "/payments").icon("payments"));
-
-        // Sets the active left nav item.
-        let nav_with_active: Vec<NavLink> = nav_links
-            .into_iter()
-            .map(|item| {
-                if item.name.eq(active) {
-                    return item.active();
-                }
-                match item.nav {
-                    Some(sub_nav) => {
-                        let sub_links: Vec<NavLink> = sub_nav
-                            .links
-                            .into_iter()
-                            .map(|sub_item| {
-                                if sub_item.name.eq(active) {
-                                    sub_item.active()
-                                } else {
-                                    sub_item
-                                }
-                            })
-                            .collect();
-                        NavLink {
-                            nav: Some(Nav { links: sub_links }),
-                            ..item
-                        }
-                    }
-                    None => item,
-                }
-            })
+    pub fn disable_upper_nav(&mut self) -> &mut Self {
+        let links: Vec<StaticNavLink> = self
+            .upper_left_nav
+            .links
+            .iter()
+            .map(|item| item.to_owned().disabled(true))
             .collect();
-
-        self.nav = nav_with_active;
+        self.upper_left_nav = StaticNav { links };
         self
     }
 
@@ -507,13 +451,6 @@ pub struct Uploaded {
     pub sql: Sql,
     pub columns: Vec<String>,
     pub table_name: String,
-}
-
-#[derive(TemplateOnce)]
-#[template(path = "layout/nav/top.html")]
-pub struct Navbar {
-    pub current_user: Option<models::User>,
-    pub standalone_dashboard: bool,
 }
 
 #[derive(TemplateOnce)]

@@ -41,17 +41,15 @@ pre {
     }
 }
 
-// Gradient link.
-a:not(.btn, .nav .nav-link, .breadcrumb-item a, .list-group-item, .a-reset, .navbar .nav-link, .navbar .navbar-brand) {
-    text-decoration: none;
-    color: var(--bs-link-color);
-    background-color: transparent;
-}
+// links
+a {
+    text-decoration: none; 
 
-a.a-reset {
-    text-decoration: none;
+    &:not(.btn, .nav .nav-link, .breadcrumb-item a, .list-group-item, .a-reset, .navbar .nav-link, .navbar .navbar-brand, .menu-item a) {
+        color: var(--bs-link-color);
+        background-color: transparent;
+    }
 }
-
 
 input {
     &.form-check-input {

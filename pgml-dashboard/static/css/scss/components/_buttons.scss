@@ -79,6 +79,55 @@
     }
 }
 
+.btn-primary-web-app {
+    @extend .btn; 
+    border: 0px;
+    background-color: #{$neon-shade-100};
+    color: #{$gray-100};
+
+    &:hover {
+        background-color: #{$neon-shade-300};
+    }
+
+    &:active {
+        background-color: #{$neon-tint-200};
+    }
+
+    &:disabled {
+        background-color: #{$gray-500};
+    }
+}
+
+.btn-tertiary-web-app {
+    color: #{$slate-tint-100};
+    border-bottom: 2px solid transparent;
+    border-radius: 0px;
+    width: fit-content;
+    padding: 0px;
+    gap: 8px;
+
+    span {
+        font-size: 2rem;
+    }
+
+    &:hover {
+        color: #{$slate-tint-400};
+        border-bottom-color: #{$slate-tint-400};
+    }
+    &:active {
+        color: #{$slate-tint-700};
+        font-weight: 500;
+        --bs-btn-active-border-color: transparent;
+        border-bottom-color: #{$slate-tint-700};
+    }
+
+    &.with-icon {
+        &::after {
+            content: ">"
+        }
+    }
+}
+
 .btn-code-toolbar {
     @extend .btn; 
     @extend .btn-tertiary; 
@@ -109,4 +158,149 @@
 .btn-search {
     background-color: transparent;
     border: none;
+    width: 15rem;
+    border-bottom: 2px solid #{$gray-300};
+    color: #{$gray-100};
+    padding: 0 0 calc($spacer / 2) 0;
+    
+    &:hover {
+        border-bottom-color: #{$neon-shade-100};
+    }
+
+    &:disabled {
+        color: #{$gray-500};
+        border-bottom: #{$gray-500};
+    }
+
+    &> span {
+        color: #{$neon-shade-100};
+    }
+}
+
+.postgres-logo {
+    display: flex; 
+    align-items: center;
+    gap: calc($spacer / 2);
+    font-size: 24px;
+}
+
+.btn-dropdown {
+    @extend .btn;
+    border-radius: $border-radius;
+    background: #{$gray-700};
+    color: #{$gray-100};
+    display: flex;
+    justify-content: space-between;
+
+    --bs-btn-border-color: transparent;
+    --bs-btn-border-width: 1px;
+    --bs-btn-hover-border-color: #{$neon-shade-100};
+    --bs-btn-active-border-color: #{$neon-shade-100};
+    --bs-btn-active-bg: #{$gray-700};
+    --bs-btn-active-color: #{$gray-100};
+    --bs-btn-hover-color: #{$gray-100};
+
+    .material-symbols-outlined {
+        color: #{$neon-shade-100};
+    }
+
+    &:after {
+        content: None;
+    }
+
+    &.show {
+        .material-symbols-outlined {
+            transform: rotate(-180deg);
+        }
+    }
+
+    .collapase {
+        width: 100%;
+    }
+}
+
+.btn-dropdown-menu-item {
+    @extend .menu-item;
+    a {
+        padding: 8px 12px;
+    }
+
+    &:hover {
+        cursor: pointer;
+    }
+
+    &:after {
+        content: None;
+    }
+}
+
+.btn-left-nav-toggle {
+    @extend .btn;
+    --bs-btn-padding-x: 0px;
+    display: flex;
+    font-weight: 700;
+
+    color: #{$gray-100};
+
+    border-radius: 0px;
+    --bs-btn-border-color: transparent;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 1px solid #{$gray-100} !important;
+    
+    --bs-btn-active-color: #{$gray-100};
+    --bs-btn-hover-color: #{$gray-100};
+}
+
+.left-nav-toggle-icon {
+    margin-left: calc($left-nav-w - 9rem);
+    margin-right: 0px;
+    
+    &.expanding {
+        animation-name: expand-margin;
+        animation-duration: $animation-timer;
+    }
+
+    &.collapsing {
+        animation-name: collapse-margin;
+        animation-duration: $animation-timer;
+        transform: rotate(-180deg);
+    }
+
+    &.expanded {
+        margin-left: calc($left-nav-w - 9rem); 
+        margin-right: 0px;
+    }
+
+    &.collapsed {
+        margin-left: calc($left-nav-w-collapsed/2 - 32px);
+        margin-right: calc($left-nav-w-collapsed/2 - 32px);
+        transform: rotate(-180deg);
+    }
+
+    &.collapsing {
+        height: auto !important;
+    }
+}
+
+@keyframes collapse-margin {
+    from {
+        margin-left: calc($left-nav-w - 9rem); 
+        margin-right: 0px;
+    }
+    to {
+        margin-left: calc($left-nav-w-collapsed/2 - 32px); 
+        margin-right: calc($left-nav-w-collapsed/2 - 32px); 
+    }
+}
+@keyframes expand-margin {
+    from {
+        margin-left: calc($left-nav-w-collapsed/2 - 32px); 
+        margin-right: calc($left-nav-w-collapsed/2 - 32px);
+    }
+    to {
+        margin-left: calc($left-nav-w - 9rem); 
+        margin-right: 0px;
+    }
 }
