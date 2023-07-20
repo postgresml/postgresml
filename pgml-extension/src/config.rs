@@ -4,7 +4,7 @@ use std::ffi::CStr;
 use pgrx::{pg_schema, pg_test};
 use pgrx_pg_sys::AsPgCStr;
 
-pub fn read_config(name: &str) -> Option<String> {
+pub fn get_config(name: &str) -> Option<String> {
     // SAFETY: name is not null because it is a Rust reference.
     let ptr = unsafe { pgrx_pg_sys::GetConfigOption(name.as_pg_cstr(), true, false) };
     (!ptr.is_null()).then(move || {
@@ -18,9 +18,24 @@ pub fn read_config(name: &str) -> Option<String> {
 mod tests {
     use super::*;
 
+    fn set_config(name: &str, value: &str) -> Result<(), pgrx::spi::Error> {
+        // using Spi::run instead of pgrx_pg_sys interface because it seems much easier,
+        // especially since this is just for testing
+        let query = format!("SELECT set_config('{name}', '{value}', false);");
+        pgrx::Spi::run(&query)
+    }
+
     #[pg_test]
     fn read_config_max_connections() {
         let name = "max_connections";
-        assert_eq!(read_config(name), Some("100".into()));
+        assert_eq!(get_config(name), Some("100".into()));
+    }
+
+    #[pg_test]
+    fn read_pgml_huggingface_whitelist() {
+        let name = "pgml.huggingface_whitelist";
+        let value = "meta-llama/Llama-2-7b";
+        set_config(name, value).unwrap();
+        assert_eq!(get_config(name), Some(value.into()));
     }
 }

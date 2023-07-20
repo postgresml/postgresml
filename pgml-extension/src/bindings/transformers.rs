@@ -1,7 +1,8 @@
-use std::collections::HashMap;
+use std::fmt;
 use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::{collections::HashMap, error::Error};
 
 use once_cell::sync::Lazy;
 use pgrx::*;
@@ -21,12 +22,37 @@ static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     })
 });
 
+#[derive(Debug)]
+pub enum ModelError {
+    NotInWhitelist,
+    RemoteCodeNotTrusted,
+}
+
+impl fmt::Display for ModelError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ModelError::NotInWhitelist => writeln!(f, "model not in whitelist"),
+            ModelError::RemoteCodeNotTrusted => writeln!(f, "model remote code not trusted"),
+        }
+    }
+}
+
+impl Error for ModelError {}
+
+fn verify_task_against_whitelist(task: &serde_json::Value) -> Result<(), ModelError> {
+    todo!()
+}
+
 pub fn transform(
     task: &serde_json::Value,
     args: &serde_json::Value,
     inputs: Vec<&str>,
 ) -> serde_json::Value {
     crate::bindings::venv::activate();
+
+    if let Err(e) = verify_task_against_whitelist(task) {
+        return serde_json::from_str(&e.to_string()).unwrap();
+    }
 
     let task = serde_json::to_string(task).unwrap();
     let args = serde_json::to_string(args).unwrap();
