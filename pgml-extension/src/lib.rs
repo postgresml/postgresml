@@ -10,6 +10,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod api;
 pub mod bindings;
+pub mod config;
 pub mod metrics;
 pub mod orm;
 pub mod vectors;
