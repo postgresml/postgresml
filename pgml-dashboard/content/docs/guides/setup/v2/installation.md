@@ -144,11 +144,23 @@ PostgresML needs to be preloaded at server startup, so you need to add it into `
 shared_preload_libraries = 'pgml,pg_stat_statements'
 ```
 
+On Ubuntu, this can be configured by changing `/etc/postgresql/15/main/postgresql.conf`. On Mac, the config file is located in `/opt/homebrew/var/postgresql@15/postgresql.conf`.
+
 This setting change requires PostgreSQL to be restarted:
+
+=== "Ubuntu"
 
 ```bash
 sudo service postgresql restart
 ```
+
+=== "Mac"
+
+```bash
+brew services restart postgresql@15
+```
+
+===
 
 #### Install into database
 
