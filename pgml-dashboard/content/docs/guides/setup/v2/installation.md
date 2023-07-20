@@ -93,38 +93,23 @@ version accordingly if yours is different. Other flavors of Linux should work, b
 
 5. Install [pgrx](https://github.com/tcdi/pgrx) and build the extension (this will take a few minutes):
 
-    <strong>With Python Support:</strong>
+    <strong>With Python:</strong>
 
     ```
     export POSTGRES_VERSION=15
     cargo install cargo-pgrx --version "0.9.8" --locked && \
-    cargo pgrx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
-    cargo pgrx package
+    cargo pgrx install --pg-config /usr/bin/pg_config
     ```
 
-    <strong>Without Python Support:</strong>
+    <strong>Without Python:</strong>
     ```
     export POSTGRES_VERSION=15
     cp docker/Cargo.toml.no-python Cargo.toml && \
     cargo install cargo-pgrx --version "0.9.8" --locked && \
-    cargo pgrx init --pg${POSTGRES_VERSION} /usr/bin/pg_config && \
-    cargo pgrx package
-    ```
-
-6. Copy the extension binaries into Postgres system folders:
-    ```
-    export POSTGRES_VERSION=15
-    # Copy the extension .so
-    sudo cp target/release/pgml-pg${POSTGRES_VERSION}/usr/lib/postgresql/${POSTGRES_VERSION}/lib/* \
-    /usr/lib/postgresql/${POSTGRES_VERSION}/lib
-    # Copy the control & SQL files
-    sudo cp target/release/pgml-pg${POSTGRES_VERSION}/usr/share/postgresql/${POSTGRES_VERSION}/extension/* \
-    /usr/share/postgresql/${POSTGRES_VERSION}/extension
+    cargo pgrx install --pg-config /usr/bin/pg_config
     ```
 
 === "From Source (Mac)"
-
-<i>N.B:</i> Apple M1s have an issue with `openmp` which XGBoost and LightGBM depend on; some additional steps are required. See this [issue](https://github.com/postgresml/postgresml/issues/364) for more details.
 
 1. Install the latest Rust compiler from [rust-lang.org](https://www.rust-lang.org/learn/get-started).
 
@@ -138,14 +123,13 @@ version accordingly if yours is different. Other flavors of Linux should work, b
 
 3. Install PostgreSQL and other dependencies:
     ```
-    brew install llvm postgresql cmake openssl pkg-config
+    brew install llvm postgresql@15 cmake openssl pkg-config openblas libomp
     ```
 
 4. Install [pgrx](https://github.com/tcdi/pgrx) and build the extension (this will take a few minutes):
     ```
     cargo install cargo-pgrx && \
-    cargo pgrx init --pg15 /usr/bin/pg_config && \
-    cargo pgrx install
+    cargo pgrx install --pg-config /opt/homebrew/opt/postgresql@15/bin/pg_config
     ```
 
 ===
