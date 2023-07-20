@@ -420,9 +420,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.3.15"
+version = "4.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f644d0dac522c8b05ddc39aaaccc5b136d5dc4ff216610c5641e3be5becf56c"
+checksum = "5b0827b011f6f8ab38590295339817b0d26f344aa4932c3ced71b45b0c54b4a9"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -435,15 +435,15 @@ version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eca953650a7350560b61db95a0ab1d9c6f7b74d146a9e08fb258b834f3cf7e2c"
 dependencies = [
- "clap 4.3.15",
+ "clap 4.3.17",
  "doc-comment",
 ]
 
 [[package]]
 name = "clap_builder"
-version = "4.3.15"
+version = "4.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af410122b9778e024f9e0fb35682cc09cc3f85cad5e8d3ba8f47a9702df6e73d"
+checksum = "9441b403be87be858db6a23edb493e7f694761acdc3343d5a0fcaafd304cbc9e"
 dependencies = [
  "anstyle",
  "clap_lex",
@@ -1237,7 +1237,7 @@ checksum = "f7012b1bbb0719e1097c47611d3898568c546d597c2e74d66f6087edd5233ff4"
 [[package]]
 name = "lightgbm"
 version = "0.2.3"
-source = "git+https://github.com/postgresml/lightgbm-rs?branch=main#edf6e75b5e7b0fdd6949875f4dae598fbac4da6b"
+source = "git+https://github.com/postgresml/lightgbm-rs?branch=main#262dc88a3a08258fe6f8dcacaf2ee68101f80173"
 dependencies = [
  "derive_builder 0.5.1",
  "libc",
@@ -1248,7 +1248,7 @@ dependencies = [
 [[package]]
 name = "lightgbm-sys"
 version = "0.3.0"
-source = "git+https://github.com/postgresml/lightgbm-rs?branch=main#edf6e75b5e7b0fdd6949875f4dae598fbac4da6b"
+source = "git+https://github.com/postgresml/lightgbm-rs?branch=main#262dc88a3a08258fe6f8dcacaf2ee68101f80173"
 dependencies = [
  "bindgen 0.56.0",
  "cmake",
@@ -2462,9 +2462,9 @@ checksum = "a3f0bf26fd526d2a95683cd0f87bf103b8539e2ca1ef48ce002d67aad59aa0b4"
 
 [[package]]
 name = "serde"
-version = "1.0.171"
+version = "1.0.173"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30e27d1e4fd7659406c492fd6cfaf2066ba8773de45ca75e855590f856dc34a9"
+checksum = "e91f70896d6720bc714a4a57d22fc91f1db634680e65c8efe13323f1fa38d53f"
 dependencies = [
  "serde_derive",
 ]
@@ -2481,9 +2481,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.171"
+version = "1.0.173"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "389894603bd18c46fa56231694f8d827779c0951a667087194cf9de94ed24682"
+checksum = "a6250dde8342e0232232be9ca3db7aa40aceb5a3e5dd9bddbc00d99a007cde49"
 dependencies = [
  "proc-macro2",
  "quote 1.0.31",
@@ -3313,7 +3313,7 @@ dependencies = [
 [[package]]
 name = "xgboost"
 version = "0.2.0"
-source = "git+https://github.com/postgresml/rust-xgboost.git?branch=master#9370bf86034023b82590d8fd08f43d4c4926d89d"
+source = "git+https://github.com/postgresml/rust-xgboost.git?branch=master#bb367c7d1b913eab7fcba042c985f3d93ba1c420"
 dependencies = [
  "derive_builder 0.11.2",
  "indexmap 1.9.3",
@@ -3326,7 +3326,7 @@ dependencies = [
 [[package]]
 name = "xgboost-sys"
 version = "0.2.0"
-source = "git+https://github.com/postgresml/rust-xgboost.git?branch=master#9370bf86034023b82590d8fd08f43d4c4926d89d"
+source = "git+https://github.com/postgresml/rust-xgboost.git?branch=master#bb367c7d1b913eab7fcba042c985f3d93ba1c420"
 dependencies = [
  "bindgen 0.61.0",
  "cmake",
