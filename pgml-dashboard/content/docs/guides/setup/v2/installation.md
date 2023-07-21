@@ -140,6 +140,7 @@ We like and use pgvector a lot, as documented in our blog posts and examples, to
 ```bash
 git clone https://github.com/pgvector/pgvector && \
 cd pgvector && \
+echo "trusted = true" >> vector.control && \
 make install
 ```
 
@@ -217,6 +218,7 @@ To install pgvector from source, you can simply:
 ```bash
 git clone https://github.com/pgvector/pgvector && \
 cd pgvector && \
+echo "trusted = true" >> vector.control && \
 make install
 ```
 
@@ -333,6 +335,16 @@ To setup the database, you'll need to install `sqlx-cli` and run the migrations:
 ```bash
 cargo install sqlx-cli --version 0.6.3
 cargo sqlx database setup
+```
+
+### Frontend dependencies
+
+The dashboard frontend is using Sass which requires Node & the Sass compiler. You can install Node from Brew or by using [Node Version Manager](https://github.com/nvm-sh/nvm).
+
+Once you have Node installed, you can install the Sass compiler globally:
+
+```bash
+npm install -g sass
 ```
 
 ### Compile and run
