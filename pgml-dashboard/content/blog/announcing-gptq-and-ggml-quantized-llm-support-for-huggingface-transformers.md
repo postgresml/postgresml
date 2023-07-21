@@ -41,7 +41,8 @@ SELECT pgml.transform(
     task => '{
         "model": "tiiuae/falcon-7b-instruct",
         "device_map": "auto",
-        "torch_dtype": "bfloat16"
+        "torch_dtype": "bfloat16",
+        "trust_remote_code": true
      }'::JSONB,
      args => '{
         "max_new_tokens": 100
