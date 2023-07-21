@@ -22,6 +22,18 @@ SELECT pgml.transform(
     args => '{"max_new_tokens": 32}'::JSONB
 );
 
+SELECT pgml.transform(
+    task => '{
+       "task": "text-generation",
+       "model": "TheBloke/MPT-7B-Storywriter-GGML",
+       "model_file": "mpt-7b-storywriter.ggmlv3.q8_0.bin"
+     }'::JSONB,
+     inputs => ARRAY[
+    'Once upon a time,'
+     ],
+     args => '{"max_new_tokens": 32}'::JSONB
+);
+
 -- GGML model support
 SELECT pgml.transform(
     task => '{
