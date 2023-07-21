@@ -210,7 +210,7 @@ sudo apt install postgresql-pgml-${POSTGRES_VERSION}
 
 #### Optimized pgvector
 
-pgvector, the extension we use for storing and searching embeddings, needs to be installed separately for optimal performance. Your hardware can include additional instruction sets which it can take advantage of to perform calculations faster.
+pgvector, the extension we use for storing and searching embeddings, needs to be installed separately for optimal performance. Your hardware can include additional instructions which it can take advantage of to perform calculations faster.
 
 To install pgvector from source, you can simply:
 
@@ -271,18 +271,18 @@ PostgresML is written in Rust, so you'll need to install the latest compiler fro
 We use the `pgrx` Postgres Rust extension framework, which comes with its own installation and configuration steps:
 
 ```bash
-export POSTGRES_VERSION=15
-
+cd pgml-extension && \
 cargo install cargo-pgrx --version 0.9.8 && \
-cargo pgrx init --pg{$POSTGRES_VERSION} pg_config
+cargo pgrx init
 ```
+
+This step will take a few minutes since it has to download and compile multiple PostgreSQL versions used by `pgrx` for development.
 
 #### Compile and install
 
 Finally, you can compile and install the extension:
 
 ```bash
-cd pgml-extension && \
 cargo pgrx install
 ```
 
@@ -326,7 +326,7 @@ DATABASE_URL=postgres:///pgml_dashboard
 
 The dashboard is written in Rust and uses the SQLx crate for interacting with Postgres. Make sure to install the latest Rust compiler from [rust-lang.org](https://rust-lang.org).
 
-#### Database setup
+### Database setup
 
 To setup the database, you'll need to install `sqlx-cli` and run the migrations:
 
