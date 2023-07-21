@@ -1,7 +1,4 @@
 //! Documentation and blog templates.
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-
 use sailfish::TemplateOnce;
 
 use crate::utils::markdown::SearchResult;
@@ -85,10 +82,8 @@ impl TocLink {
     ///
     /// * `title` - The title of the link.
     ///
-    pub fn new(title: &str) -> TocLink {
-        let mut s = DefaultHasher::new();
-        title.to_lowercase().replace(" ", "-").hash(&mut s);
-        let id = "header-".to_string() + &s.finish().to_string();
+    pub fn new(title: &str, counter: usize) -> TocLink {
+        let id = format!("header-{}", counter);
 
         TocLink {
             title: title.to_string(),

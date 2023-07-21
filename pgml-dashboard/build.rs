@@ -71,10 +71,11 @@ fn main() {
         let filename = file.expect("failed to glob path").display().to_string();
         let name = filename.split(".").collect::<Vec<&str>>();
         let name = name[0..name.len() - 1].join(".");
+        let output_name = format!("{}.{}.js", name, js_version);
 
         if !Command::new("cp")
             .arg(&filename)
-            .arg(format!("{}.{}.js", name, js_version))
+            .arg(&output_name)
             .status()
             .expect("failed to cp js file")
             .success()
