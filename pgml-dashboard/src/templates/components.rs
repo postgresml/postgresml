@@ -179,7 +179,7 @@ impl StaticNav {
     }
 
     pub fn get_active(self) -> StaticNavLink {
-        match self.links.iter().find(|item| item.clone().active) {
+        match self.links.iter().find(|item| item.active) {
             Some(item) => item.clone(),
             None => StaticNavLink {
                 ..Default::default()
