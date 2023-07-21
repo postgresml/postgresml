@@ -220,7 +220,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
             let code = match options.lang {
                 "postgresql" | "sql" | "postgresql-line-nums" => {
                     lazy_static! {
-                        static ref SQL_KEYS: [&'static str; 57] = [
+                        static ref SQL_KEYS: [&'static str; 61] = [
                             "CASCADE",
                             "INNER ",
                             "ON ",
@@ -278,8 +278,12 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "pgml.norm_l2",
                             "CONCURRENTLY",
                             "ON\n",
+                            "IF NOT EXISTS",
+                            "pgml.train",
+                            "pgml.predict",
+                            "pgml.transform",
                         ];
-                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 57] = [
+                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 61] = [
                             "<span class=\"syntax-highlight\">CASCADE</span>",
                             "<span class=\"syntax-highlight\">INNER </span>",
                             "<span class=\"syntax-highlight\">ON </span>",
@@ -337,6 +341,10 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "<strong>pgml.norm_l2</strong>",
                             "<span class=\"syntax-highlight\">CONCURRENTLY</span>",
                             "<span class=\"syntax-highlight\">ON</span>\n",
+                            "<span class=\"syntax-highlight\">IF NOT EXISTS</span>",
+                            "<strong>pgml.train</strong>",
+                            "<strong>pgml.predict</strong>",
+                            "<strong>pgml.transform</strong>",
                         ];
                         static ref AHO_SQL: AhoCorasick = AhoCorasickBuilder::new()
                             .match_kind(MatchKind::LeftmostLongest)

@@ -26,7 +26,7 @@ jobs:
           if [[ $(arch) == "x86_64" ]]; then
             export ARCH=amd64
           else
-            export ARCH=arm64
+            export ARCH="arm64/v8"
           fi
           docker build --tag ghcr.io/postgresml/postgresml:${{ inputs.version }} --platform linux/${ARCH} .
           docker push ghcr.io/postgresml/postgresml:${{ inputs.version }}
