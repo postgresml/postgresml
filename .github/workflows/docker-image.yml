@@ -1,0 +1,32 @@
+name: push docker images
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        default: "2.7.1"
+jobs:
+  publish-extension-docker-image:
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: pgml-extension/docker/postgresml
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        run: |
+          if [[ $(arch) == "x86_64" ]]; then
+            export ARCH=amd64
+          else
+            export ARCH=arm64
+          fi
+          docker build --tag ghcr.io/postgresml/postgresml:${{ inputs.version }} --platform linux/${ARCH} .
+          docker push ghcr.io/postgresml/postgresml:${{ inputs.version }}
