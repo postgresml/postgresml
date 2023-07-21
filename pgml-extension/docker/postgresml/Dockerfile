@@ -14,7 +14,12 @@ RUN curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | te
 
 ENV TZ=UTC
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update -y && apt install postgresml-15=${POSTGRESML_VERSION} -y
+RUN apt update -y && apt install git postgresml-15=${POSTGRESML_VERSION} -y
+RUN git clone --branch v0.4.4 https://github.com/pgvector/pgvector && \
+cd pgvector && \
+echo "trusted = true" >> vector.control && \
+	make && \
+	make install
 
 COPY entrypoint.sh /app/entrypoint.sh
 COPY --chown=postgres:postgres local_dev.conf /etc/postgresql/15/main/conf.d/01-local_dev.conf
