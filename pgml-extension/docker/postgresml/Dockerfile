@@ -1,4 +1,5 @@
-FROM ubuntu:jammy
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
+ENV PATH="/usr/local/cuda/bin:${PATH}"
 ARG POSTGRESML_VERSION=2.7.1-2
 RUN apt update && \
 	apt install -y \
