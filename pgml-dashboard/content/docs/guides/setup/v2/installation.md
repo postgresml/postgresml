@@ -133,6 +133,45 @@ pgml_test=# SELECT pgml.version();
 
 !!!
 
+### pgvector
+
+We like and use pgvector a lot, as documented in our blog posts and examples, to store and search embeddings. You can install pgvector from source pretty easily:
+
+```bash
+git clone https://github.com/pgvector/pgvector && \
+cd pgvector && \
+make install
+```
+
+##### Test pgvector installation
+
+You can create the `vector` extension in any database:
+
+!!! generic 
+
+!!! code_block time="21.075ms"
+
+```postgresql
+CREATE EXTENSION vector;
+```
+
+!!!
+
+!!! results
+
+```
+psql (15.3 (Homebrew))
+Type "help" for help.
+
+pgml_test=# CREATE EXTENSION vector;
+CREATE EXTENSION
+``` 
+
+!!!
+
+!!!
+
+
 ### Ubuntu
 
 For Ubuntu, we compile and ship Debian packages that include everything needed to install and run the extension. The package is created on Ubuntu 22.04, so only Ubuntu 22.04 (Jammy) is supported using this installation method.
@@ -167,6 +206,18 @@ If you prefer to manage your own Python environment and dependencies, you can in
 ```bash
 export POSTGRES_VERSION=15
 sudo apt install postgresql-pgml-${POSTGRES_VERSION}
+```
+
+#### Optimized pgvector
+
+pgvector, the extension we use for storing and searching embeddings, needs to be installed separately for optimal performance. Your hardware can include additional instruction sets which it can take advantage of to perform calculations faster.
+
+To install pgvector from source, you can simply:
+
+```bash
+git clone https://github.com/pgvector/pgvector && \
+cd pgvector && \
+make install
 ```
 
 
@@ -271,7 +322,7 @@ Create a `.env` file with the necessary `DATABASE_URL`:
 DATABASE_URL=postgres:///pgml_dashboard
 ```
 
-### Compile and run
+### Get Rust
 
 The dashboard is written in Rust and uses the SQLx crate for interacting with Postgres. Make sure to install the latest Rust compiler from [rust-lang.org](https://rust-lang.org).
 
