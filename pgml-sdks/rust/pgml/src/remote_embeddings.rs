@@ -1,3 +1,4 @@
+use log::info;
 use reqwest::{Client, RequestBuilder};
 use sqlx::postgres::PgPool;
 use std::env;
@@ -11,9 +12,7 @@ pub fn build_remote_embeddings<'a>(
 ) -> anyhow::Result<Box<dyn RemoteEmbeddings<'a> + Sync + Send + 'a>> {
     match source {
         // OpenAI endpoint for embedddings does not take any model parameters
-        "openai" => Ok(Box::new(OpenAIRemoteEmbeddings::new(
-            model_name,
-        ))),
+        "openai" => Ok(Box::new(OpenAIRemoteEmbeddings::new(model_name))),
         _ => Err(anyhow::anyhow!("Unknown remote embeddings source")),
     }
 }
@@ -24,14 +23,7 @@ pub trait RemoteEmbeddings<'a> {
     fn generate_body(&self, text: Vec<String>) -> serde_json::Value;
 
     async fn get_embedding_size(&self) -> anyhow::Result<i64> {
-        let response = self
-            .build_request()
-            .json(&self.generate_body(vec!["PostgresML call to get embeddings size".to_string()]))
-            .send()
-            .await?;
-
-        let response = response.json::<serde_json::Value>().await?;
-        let response = self.parse_response(response)?;
+        let response = self.embed(vec!["Hello, World!".to_string()]).await?;
         if response.is_empty() {
             anyhow::bail!("API call to get embedding size returned empty response")
         }
@@ -40,11 +32,9 @@ pub trait RemoteEmbeddings<'a> {
     }
 
     async fn embed(&self, text: Vec<String>) -> anyhow::Result<Vec<Vec<f64>>> {
-        let response = self
-            .build_request()
-            .json(&self.generate_body(text))
-            .send()
-            .await?;
+        let request = self.build_request().json(&self.generate_body(text));
+        info!("Sending reqwest: {:?}", request);
+        let response = request.send().await?;
 
         let response = response.json::<serde_json::Value>().await?;
         self.parse_response(response)
@@ -149,9 +139,7 @@ pub struct OpenAIRemoteEmbeddings<'a> {
 
 impl<'a> OpenAIRemoteEmbeddings<'a> {
     fn new(model_name: &'a str) -> Self {
-        OpenAIRemoteEmbeddings {
-            model_name,
-        }
+        OpenAIRemoteEmbeddings { model_name }
     }
 }
 
@@ -178,11 +166,8 @@ mod tests {
     #[tokio::test]
     async fn openai_remote_embeddings() -> anyhow::Result<()> {
         let params = serde_json::json!({}).into();
-        let openai_remote_embeddings = build_remote_embeddings(
-            "openai",
-            "text-embedding-ada-002",
-            &params,
-        )?;
+        let openai_remote_embeddings =
+            build_remote_embeddings("openai", "text-embedding-ada-002", &params)?;
         let embedding_size = openai_remote_embeddings.get_embedding_size().await?;
         assert!(embedding_size > 0);
         Ok(())

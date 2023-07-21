@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 /// A wrapper around serde_json::Value
 // #[derive(sqlx::Type, sqlx::FromRow, Debug)]
 #[derive(sqlx::Type, Debug, Clone)]
@@ -7,6 +9,13 @@ pub struct Json(pub serde_json::Value);
 impl From<serde_json::Value> for Json {
     fn from(v: serde_json::Value) -> Self {
         Self(v)
+    }
+}
+
+impl Deref for Json {
+    type Target = serde_json::Value;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

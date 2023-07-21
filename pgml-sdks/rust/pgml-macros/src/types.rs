@@ -3,10 +3,25 @@ use std::boxed::Box;
 use std::string::ToString;
 use syn::visit::{self, Visit};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub struct ReferenceType {
+    pub ty: Box<SupportedType>,
+    pub mutable: bool
+}
+
+impl ReferenceType {
+    pub fn new(ty: SupportedType, mutable: bool) -> Self {
+        Self {
+            ty: Box::new(ty),
+            mutable
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 #[allow(non_camel_case_types)]
 pub enum SupportedType {
-    Reference(Box<SupportedType>),
+    Reference(ReferenceType),
     str,
     String,
     bool,
@@ -44,7 +59,7 @@ impl SupportedType {
 
     pub fn to_language_string(&self, language: &Option<&str>) -> String {
         match self {
-            SupportedType::Reference(t) => format!("&{}", t.to_string()),
+            SupportedType::Reference(t) => format!("&{}", t.ty.to_string()),
             SupportedType::str => "str".to_string(),
             SupportedType::String => "String".to_string(),
             SupportedType::bool => "bool".to_string(),
@@ -121,7 +136,7 @@ impl GetSupportedType {
 impl<'ast> Visit<'ast> for GetSupportedType {
     fn visit_type(&mut self, i: &syn::Type) {
         self.ty = Some(match i {
-            syn::Type::Reference(r) => SupportedType::Reference(Box::new(Self::get_type(&r.elem))),
+            syn::Type::Reference(r) => SupportedType::Reference(ReferenceType::new(Self::get_type(&r.elem), r.mutability.is_some())),
             syn::Type::Path(p) => Self::get_type_from_path(p),
             syn::Type::Tuple(t) => {
                 let values: Vec<SupportedType> = t

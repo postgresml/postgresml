@@ -61,7 +61,6 @@ impl Database {
     ///  }
     ///  ```
     pub async fn new(connection_string: &str) -> anyhow::Result<Self> {
-        println!("Connecting to: {:?}", connection_string);
         let connection_options = PgConnectOptions::from_str(connection_string)?;
         let connection_options = connection_options.statement_cache_capacity(0);
         let pool = PgPoolOptions::new()
@@ -69,9 +68,6 @@ impl Database {
             .max_connections(5)
             .connect_with(connection_options)
             .await?;
-        // let _test = sqlx::query("SELECT * FROM pgml.collections")
-        //     .fetch_all(&pool)
-        //     .await?;
         Ok(Self { pool })
     }
 
@@ -94,41 +90,38 @@ impl Database {
     ///    Ok(())
     /// }
     /// ```
-    pub async fn create_or_get_collection(&self, name: &str) -> anyhow::Result<Collection> {
-        println!("Yo 1");
-        let collection: Result<Option<models::Collection>, _> =
-            sqlx::query_as::<_, models::Collection>(
-                "SELECT * FROM pgml.collections WHERE name = $1 AND active = TRUE;",
-            )
-            .bind(name)
-            .fetch_optional(&self.pool)
-            .await;
-
-        println!("Yo 2");
-        match collection {
-            Ok(result) => match result {
-                Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
-                None => Ok(Collection::new(name.to_string(), self.pool.clone()).await?),
-            },
-            Err(e) => {
-                println!("Yo 4");
-                match e.as_database_error() {
-                    Some(db_e) => {
-                        // Error 42P01 is "undefined_table"
-                        if db_e.code() == Some(std::borrow::Cow::from("42P01")) {
-                            sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
-                                .execute(&self.pool)
-                                .await?;
-                            Ok(Collection::new(name.to_string(), self.pool.clone()).await?)
-                        } else {
-                            return Err(e.into());
-                        }
-                    }
-                    None => return Err(e.into()),
-                }
-            }
-        }
-    }
+    // pub async fn create_or_get_collection(&self, name: &str) -> anyhow::Result<Collection> {
+    //     let collection: Result<Option<models::Collection>, _> =
+    //         sqlx::query_as::<_, models::Collection>(
+    //             "SELECT * FROM pgml.collections WHERE name = $1 AND active = TRUE;",
+    //         )
+    //         .bind(name)
+    //         .fetch_optional(&self.pool)
+    //         .await;
+    //
+    //     match collection {
+    //         Ok(result) => match result {
+    //             Some(c) => Ok(Collection::from_model_and_pool(c, self.pool.clone())),
+    //             None => Ok(Collection::new(name.to_string(), self.pool.clone()).await?),
+    //         },
+    //         Err(e) => {
+    //             match e.as_database_error() {
+    //                 Some(db_e) => {
+    //                     // Error 42P01 is "undefined_table"
+    //                     if db_e.code() == Some(std::borrow::Cow::from("42P01")) {
+    //                         sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
+    //                             .execute(&self.pool)
+    //                             .await?;
+    //                         Ok(Collection::new(name.to_string(), self.pool.clone()).await?)
+    //                     } else {
+    //                         return Err(e.into());
+    //                     }
+    //                 }
+    //                 None => return Err(e.into()),
+    //             }
+    //         }
+    //     }
+    // }
 
     /// Check if a [Collection] exists
     ///
@@ -271,173 +264,173 @@ impl Database {
         Ok(Json(results))
     }
 
-    /// Registers new models for specific tasks
-    ///
-    /// # Arguments
-    ///
-    /// * `task` - The name of the task.
-    /// * `model_name` - The name of the [models::Model].
-    /// * `model_params` - A [std::collections::HashMap] of parameters.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Database;
-    ///
-    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let db = Database::new(CONNECTION_STRING).await?;
-    ///    db.register_model(None, None, None).await?;
-    ///    Ok(())
-    /// }
-    /// ```
-    pub async fn register_model(
-        &self,
-        model_name: Option<String>,
-        model_task: Option<String>,
-        model_params: Option<Json>,
-        model_source: Option<String>,
-    ) -> anyhow::Result<Model> {
-        let model_name = model_name.unwrap_or("intfloat/e5-small".to_string());
-        let model_task = model_task.unwrap_or("embedding".to_string());
-        let model_params = match model_params {
-            Some(params) => params.0,
-            None => serde_json::json!({}),
-        };
-        let model_source = model_source.unwrap_or("pgml".to_string());
+    // /// Registers new models for specific tasks
+    // ///
+    // /// # Arguments
+    // ///
+    // /// * `task` - The name of the task.
+    // /// * `model_name` - The name of the [models::Model].
+    // /// * `model_params` - A [std::collections::HashMap] of parameters.
+    // ///
+    // /// # Example
+    // ///
+    // /// ```
+    // /// use pgml::Database;
+    // ///
+    // /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
+    // ///
+    // /// async fn example() -> anyhow::Result<()> {
+    // ///    let db = Database::new(CONNECTION_STRING).await?;
+    // ///    db.register_model(None, None, None).await?;
+    // ///    Ok(())
+    // /// }
+    // /// ```
+    // pub async fn register_model(
+    //     &self,
+    //     model_name: Option<String>,
+    //     model_task: Option<String>,
+    //     model_params: Option<Json>,
+    //     model_source: Option<String>,
+    // ) -> anyhow::Result<Model> {
+    //     let model_name = model_name.unwrap_or("intfloat/e5-small".to_string());
+    //     let model_task = model_task.unwrap_or("embedding".to_string());
+    //     let model_params = match model_params {
+    //         Some(params) => params.0,
+    //         None => serde_json::json!({}),
+    //     };
+    //     let model_source = model_source.unwrap_or("pgml".to_string());
+    //
+    //     let current_model: Option<models::Model> = sqlx::query_as(
+    //         "SELECT * FROM pgml.sdk_models WHERE task = $1 AND name = $2 AND parameters = $3 AND source = $4;",
+    //     )
+    //     .bind(&model_task)
+    //     .bind(&model_name)
+    //     .bind(&model_params)
+    //     .bind(&model_source)
+    //     .fetch_optional(&self.pool)
+    //     .await?;
+    //
+    //     match current_model {
+    //         Some(model) => {
+    //             warn!(
+    //                 "Model with task: {} - name: {} - parameters: {:?} already exists",
+    //                 model_task, model_name, model_params
+    //             );
+    //             Ok(model.into())
+    //         }
+    //         None => {
+    //             let model: models::Model = sqlx::query_as(
+    //                 "INSERT INTO pgml.sdk_models (task, name, parameters, source) VALUES ($1, $2, $3, $4) RETURNING *",
+    //             )
+    //             .bind(model_task)
+    //             .bind(model_name)
+    //             .bind(model_params)
+    //             .bind(model_source)
+    //             .fetch_one(&self.pool)
+    //             .await?;
+    //             Ok(model.into())
+    //         }
+    //     }
+    // }
 
-        let current_model: Option<models::Model> = sqlx::query_as(
-            "SELECT * FROM pgml.sdk_models WHERE task = $1 AND name = $2 AND parameters = $3 AND source = $4;",
-        )
-        .bind(&model_task)
-        .bind(&model_name)
-        .bind(&model_params)
-        .bind(&model_source)
-        .fetch_optional(&self.pool)
-        .await?;
+    // /// Gets all registered [models::Model]s
+    // pub async fn get_models(&self) -> anyhow::Result<Vec<Model>> {
+    //     Ok(sqlx::query_as("SELECT * from pgml.sdk_models")
+    //         .fetch_all(self.pool.borrow())
+    //         .await?
+    //         .into_iter()
+    //         .map(|m: models::Model| m.into())
+    //         .collect())
+    // }
 
-        match current_model {
-            Some(model) => {
-                warn!(
-                    "Model with task: {} - name: {} - parameters: {:?} already exists",
-                    model_task, model_name, model_params
-                );
-                Ok(model.into())
-            }
-            None => {
-                let model: models::Model = sqlx::query_as(
-                    "INSERT INTO pgml.sdk_models (task, name, parameters, source) VALUES ($1, $2, $3, $4) RETURNING *",
-                )
-                .bind(model_task)
-                .bind(model_name)
-                .bind(model_params)
-                .bind(model_source)
-                .fetch_one(&self.pool)
-                .await?;
-                Ok(model.into())
-            }
-        }
-    }
+    // /// Gets a specific [Model] by id
+    // pub async fn get_model(&self, id: i64) -> anyhow::Result<Model> {
+    //     Ok(
+    //         sqlx::query_as::<_, models::Model>("SELECT * from pgml.sdk_models WHERE id = $1")
+    //             .bind(id)
+    //             .fetch_one(self.pool.borrow())
+    //             .await?
+    //             .into(),
+    //     )
+    // }
 
-    /// Gets all registered [models::Model]s
-    pub async fn get_models(&self) -> anyhow::Result<Vec<Model>> {
-        Ok(sqlx::query_as("SELECT * from pgml.sdk_models")
-            .fetch_all(self.pool.borrow())
-            .await?
-            .into_iter()
-            .map(|m: models::Model| m.into())
-            .collect())
-    }
-
-    /// Gets a specific [Model] by id
-    pub async fn get_model(&self, id: i64) -> anyhow::Result<Model> {
-        Ok(
-            sqlx::query_as::<_, models::Model>("SELECT * from pgml.sdk_models WHERE id = $1")
-                .bind(id)
-                .fetch_one(self.pool.borrow())
-                .await?
-                .into(),
-        )
-    }
-
-    /// Registers new text splitters
-    ///
-    /// # Arguments
-    ///
-    /// * `splitter_name` - The name of the text splitter.
-    /// * `splitter_params` - A [std::collections::HashMap] of parameters.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Database;
-    ///
-    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let db = Database::new(CONNECTION_STRING).await?;
-    ///    db.register_text_splitter(None, None).await?;
-    ///    Ok(())
-    /// }
-    /// ```
-    pub async fn register_text_splitter(
-        &self,
-        splitter_name: Option<String>,
-        splitter_params: Option<Json>,
-    ) -> anyhow::Result<Splitter> {
-        let splitter_name = splitter_name.unwrap_or("recursive_character".to_string());
-        let splitter_params = match splitter_params {
-            Some(params) => params.0,
-            None => serde_json::json!({}),
-        };
-
-        let current_splitter: Option<models::Splitter> =
-            sqlx::query_as("SELECT * from pgml.sdk_splitters where name = $1 and parameters = $2;")
-                .bind(&splitter_name)
-                .bind(&splitter_params)
-                .fetch_optional(self.pool.borrow())
-                .await?;
-
-        match current_splitter {
-            Some(splitter) => {
-                warn!(
-                    "Text splitter with name: {} and parameters: {:?} already exists",
-                    splitter_name, splitter_params
-                );
-                Ok(splitter.into())
-            }
-            None => {
-                let splitter: models::Splitter = sqlx::query_as(
-                    "INSERT INTO pgml.sdk_splitters (name, parameters) VALUES ($1, $2) RETURNING *",
-                )
-                .bind(splitter_name)
-                .bind(splitter_params)
-                .fetch_one(self.pool.borrow())
-                .await?;
-                Ok(splitter.into())
-            }
-        }
-    }
-
-    /// Gets all registered text [models::Splitter]s
-    pub async fn get_text_splitters(&self) -> anyhow::Result<Vec<Splitter>> {
-        Ok(sqlx::query_as("SELECT * from pgml.sdk_splitters")
-            .fetch_all(self.pool.borrow())
-            .await?
-            .into_iter()
-            .map(|s: models::Splitter| s.into())
-            .collect())
-    }
-
-    /// Gets a specific [Splitter] by id
-    pub async fn get_text_splitter(&self, id: i64) -> anyhow::Result<Splitter> {
-        Ok(
-            sqlx::query_as::<_, models::Splitter>("SELECT * from pgml.sdk_splitters WHERE id = $1")
-                .bind(id)
-                .fetch_one(self.pool.borrow())
-                .await?
-                .into(),
-        )
-    }
+    // /// Registers new text splitters
+    // ///
+    // /// # Arguments
+    // ///
+    // /// * `splitter_name` - The name of the text splitter.
+    // /// * `splitter_params` - A [std::collections::HashMap] of parameters.
+    // ///
+    // /// # Example
+    // ///
+    // /// ```
+    // /// use pgml::Database;
+    // ///
+    // /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
+    // ///
+    // /// async fn example() -> anyhow::Result<()> {
+    // ///    let db = Database::new(CONNECTION_STRING).await?;
+    // ///    db.register_text_splitter(None, None).await?;
+    // ///    Ok(())
+    // /// }
+    // /// ```
+    // pub async fn register_text_splitter(
+    //     &self,
+    //     splitter_name: Option<String>,
+    //     splitter_params: Option<Json>,
+    // ) -> anyhow::Result<Splitter> {
+    //     let splitter_name = splitter_name.unwrap_or("recursive_character".to_string());
+    //     let splitter_params = match splitter_params {
+    //         Some(params) => params.0,
+    //         None => serde_json::json!({}),
+    //     };
+    //
+    //     let current_splitter: Option<models::Splitter> =
+    //         sqlx::query_as("SELECT * from pgml.sdk_splitters where name = $1 and parameters = $2;")
+    //             .bind(&splitter_name)
+    //             .bind(&splitter_params)
+    //             .fetch_optional(self.pool.borrow())
+    //             .await?;
+    //
+    //     match current_splitter {
+    //         Some(splitter) => {
+    //             warn!(
+    //                 "Text splitter with name: {} and parameters: {:?} already exists",
+    //                 splitter_name, splitter_params
+    //             );
+    //             Ok(splitter.into())
+    //         }
+    //         None => {
+    //             let splitter: models::Splitter = sqlx::query_as(
+    //                 "INSERT INTO pgml.sdk_splitters (name, parameters) VALUES ($1, $2) RETURNING *",
+    //             )
+    //             .bind(splitter_name)
+    //             .bind(splitter_params)
+    //             .fetch_one(self.pool.borrow())
+    //             .await?;
+    //             Ok(splitter.into())
+    //         }
+    //     }
+    // }
+    //
+    // /// Gets all registered text [models::Splitter]s
+    // pub async fn get_text_splitters(&self) -> anyhow::Result<Vec<Splitter>> {
+    //     Ok(sqlx::query_as("SELECT * from pgml.sdk_splitters")
+    //         .fetch_all(self.pool.borrow())
+    //         .await?
+    //         .into_iter()
+    //         .map(|s: models::Splitter| s.into())
+    //         .collect())
+    // }
+    //
+    // /// Gets a specific [Splitter] by id
+    // pub async fn get_text_splitter(&self, id: i64) -> anyhow::Result<Splitter> {
+    //     Ok(
+    //         sqlx::query_as::<_, models::Splitter>("SELECT * from pgml.sdk_splitters WHERE id = $1")
+    //             .bind(id)
+    //             .fetch_one(self.pool.borrow())
+    //             .await?
+    //             .into(),
+    //     )
+    // }
 }

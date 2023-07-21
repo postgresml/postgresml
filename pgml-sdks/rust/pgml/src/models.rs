@@ -31,7 +31,7 @@ pub struct Collection {
 
 /// A text splitter
 #[enum_def]
-#[derive(custom_into_js_result, custom_into_py, FromRow)]
+#[derive(FromRow)]
 pub struct Splitter {
     pub id: i64,
     pub created_at: DateTime,
@@ -41,7 +41,7 @@ pub struct Splitter {
 
 /// A model used to perform some task
 #[enum_def]
-#[derive(custom_into_js_result, custom_into_py, FromRow)]
+#[derive(FromRow)]
 pub struct Model {
     pub id: i64,
     pub created_at: DateTime,
@@ -68,5 +68,5 @@ pub struct Chunk {
     pub document_id: i64,
     pub splitter_id: i64,
     pub chunk_index: i64,
-    pub chunk: String
+    pub chunk: String,
 }

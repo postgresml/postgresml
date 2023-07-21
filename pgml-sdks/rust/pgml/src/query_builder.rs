@@ -6,7 +6,10 @@ use sea_query::{
 };
 use sea_query_binder::SqlxBinder;
 
-use crate::{filter_builder, model::Model, models, splitter::Splitter, types::Json, Collection};
+use crate::{
+    filter_builder, get_or_initialize_pool, model::Model, models, splitter::Splitter, types::Json,
+    Collection,
+};
 
 #[cfg(feature = "javascript")]
 use crate::{languages::javascript::*, model::ModelJavascript, splitter::SplitterJavascript};
@@ -143,27 +146,21 @@ impl QueryBuilder {
 
         let embeddings_table_name = self
             .collection
-            .get_embeddings_table_name(model.id, splitter.id)
+            .get_embeddings_table_name(model, splitter)
             .expect("Error getting embeddings table name in vector_recall");
 
         let mut query_cte = Query::select();
-        query_cte
-            .expr_as(
-                Func::cast_as(
-                    Func::cust(SIden::Str("pgml.embed")).args([
-                        Expr::cust("transformer => models.name"),
-                        Expr::cust_with_values("text => $1", [query]),
-                        Expr::cust_with_values("kwargs => $1", [query_params]),
-                    ]),
-                    Alias::new("vector"),
-                ),
-                Alias::new("query_embedding"),
-            )
-            .from_as(
-                (SIden::Str("pgml"), SIden::Str("models")),
-                SIden::Str("models"),
-            )
-            .and_where(Expr::col((SIden::Str("models"), SIden::Str("id"))).eq(model.id));
+        query_cte.expr_as(
+            Func::cast_as(
+                Func::cust(SIden::Str("pgml.embed")).args([
+                    Expr::cust_with_values("transformer => $1", [&model.name]),
+                    Expr::cust_with_values("text => $1", [query]),
+                    Expr::cust_with_values("kwargs => $1", [query_params]),
+                ]),
+                Alias::new("vector"),
+            ),
+            Alias::new("query_embedding"),
+        );
         let mut query_cte = CommonTableExpression::from_select(query_cte);
         query_cte.table_name(Alias::new("query_cte"));
 
@@ -209,10 +206,10 @@ impl QueryBuilder {
     }
 
     pub async fn run(self) -> anyhow::Result<Vec<(f64, String, Json)>> {
+        let pool = get_or_initialize_pool(&self.collection.database_url).await?;
         let (sql, values) = self.query.with(self.with).build_sqlx(PostgresQueryBuilder);
-        let results: Vec<(f64, String, Json)> = sqlx::query_as_with(&sql, values)
-            .fetch_all(&self.collection.pool)
-            .await?;
+        let results: Vec<(f64, String, Json)> =
+            sqlx::query_as_with(&sql, values).fetch_all(&pool).await?;
         Ok(results)
     }
 

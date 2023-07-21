@@ -223,5 +223,5 @@ FROM
               splitter_id = $1 
           )
       ) as documents
-  ) chunks
+  ) chunks;
 "#;

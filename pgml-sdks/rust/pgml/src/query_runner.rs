@@ -46,7 +46,7 @@ impl QueryRunner {
         self.query = format!("SELECT json_agg(j) FROM ({}) j", self.query);
         let query = self.build_query();
         let results = query.fetch_all(&self.pool).await?;
-        let results = results.get(0).unwrap().get::<serde_json::Value, _>(0); 
+        let results = results.get(0).unwrap().get::<serde_json::Value, _>(0);
         Ok(Json(results))
     }
 

@@ -313,8 +313,6 @@ pub fn generate_javascript_methods(
         #[cfg(feature = "javascript")]
         impl neon::types::Finalize for #name_ident {}
     })
-
-    // proc_macro::TokenStream::from(quote! {})
 }
 
 fn get_method_wrapper_arguments_javascript(
@@ -357,7 +355,7 @@ fn convert_method_wrapper_arguments(
 ) -> (proc_macro2::TokenStream, proc_macro2::TokenStream) {
     match ty {
         SupportedType::Reference(r) => {
-            let (d, w) = convert_method_wrapper_arguments(name_ident, r);
+            let (d, w) = convert_method_wrapper_arguments(name_ident, &r.ty);
             (d, quote! { & #w})
         }
         SupportedType::str => (
@@ -377,7 +375,7 @@ fn convert_method_wrapper_arguments(
 
 fn get_neon_type(ty: &SupportedType) -> syn::Type {
     match ty {
-        SupportedType::Reference(r) => get_neon_type(r),
+        SupportedType::Reference(r) => get_neon_type(&r.ty),
         SupportedType::str | SupportedType::String => {
             syn::parse_str("neon::types::JsString").unwrap()
         }
@@ -439,7 +437,7 @@ fn convert_output_type_convert_from_javascript(
 
 fn get_typescript_type(ty: &SupportedType) -> String {
     match ty {
-        SupportedType::Reference(r) => get_typescript_type(r),
+        SupportedType::Reference(r) => get_typescript_type(&r.ty),
         SupportedType::str | SupportedType::String => "string".to_string(),
         SupportedType::bool => "boolean".to_string(),
         SupportedType::Option(o) => get_typescript_type(o),
