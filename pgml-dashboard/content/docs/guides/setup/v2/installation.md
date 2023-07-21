@@ -1,6 +1,6 @@
 # Installation
 
-The PostgresML deployment consists of two parts: the PostgreSLQ extension, and the dashboard app. The extension provides all the machine learning functionality and can be used independently. The dashboard app provides a system overview for easier management and notebooks for writing experiments.
+The PostgresML deployment consists of two parts: the PostgreSQL extension, and the dashboard app. The extension provides all the machine learning functionality and can be used independently. The dashboard app provides a system overview for easier management and notebooks for writing experiments.
 
 ## Extension
 
