@@ -113,8 +113,6 @@ fn setup_logger(level: &str) -> pyo3::PyResult<()> {
 #[cfg(feature = "python")]
 #[pyo3::pymodule]
 fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
-    // We may want to move this into the new function in the DatabasePython struct and give the
-    // user the oppertunity to pass in the log level filter
     m.add_function(pyo3::wrap_pyfunction!(setup_logger, m)?)?;
     m.add_class::<collection::CollectionPython>()?;
     m.add_class::<model::ModelPython>()?;
@@ -126,10 +124,7 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
 #[cfg(feature = "javascript")]
 #[neon::main]
 fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
-    // We may want to move this into the new function in the DatabaseJavascript struct and give the
-    // user the oppertunity to pass in the log level filter
-    init_logger(LevelFilter::Error).unwrap();
-    cx.export_function("newCollection", database::CollectionJavascript::new)?;
+    cx.export_function("newCollection", collection::CollectionJavascript::new)?;
     Ok(())
 }
 

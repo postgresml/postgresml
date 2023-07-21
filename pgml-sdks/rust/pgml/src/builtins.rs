@@ -7,10 +7,10 @@ pub struct Builtins {
 
 use crate::{get_or_initialize_pool, models};
 
-#[custom_methods(
-    new,
-    does_collection_exist
-)]
+#[cfg(feature = "javascript")]
+use crate::languages::javascript::*;
+
+#[custom_methods(new, does_collection_exist)]
 impl Builtins {
     pub fn new(database_url: Option<String>) -> Self {
         Self { database_url }

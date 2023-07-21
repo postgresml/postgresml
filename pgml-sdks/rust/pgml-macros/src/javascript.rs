@@ -195,13 +195,13 @@ pub fn generate_javascript_methods(
         let signature = quote! {
             pub fn #method_ident<'a>(mut cx: neon::context::FunctionContext<'a>) -> #output_type
         };
+
         let prep_arguments = if let Some(_r) = &method.receiver {
             quote! {
                 use core::ops::Deref;
                 let this = cx.this();
                 let s: neon::handle::Handle<neon::types::JsBox<std::cell::RefCell<#name_ident>>> = this.get(&mut cx, "s")?;
-                let wrapped = (*s).deref().borrow();
-                let wrapped = wrapped.wrapped.clone();
+                let wrapped = &mut (*s).deref().borrow().wrapped;
                 #(#method_arguments)*
             }
         } else {
@@ -356,7 +356,11 @@ fn convert_method_wrapper_arguments(
     match ty {
         SupportedType::Reference(r) => {
             let (d, w) = convert_method_wrapper_arguments(name_ident, &r.ty);
-            (d, quote! { & #w})
+            if r.mutable {
+                (d, quote! { &mut #w})
+            } else {
+                (d, quote! { & #w})
+            }
         }
         SupportedType::str => (
             syn::parse_str::<syn::Type>("String")
