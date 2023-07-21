@@ -57,6 +57,9 @@ DTYPE_MAP = {
     "bool": torch.bool,
 }
 
+class PgMLException(Exception):
+    pass
+
 def orjson_default(obj):
     if isinstance(obj, numpy.float32):
         return float(obj)
@@ -122,6 +125,49 @@ class GGMLPipeline(object):
         return outputs
 
 
+class StandardPipeline(object):
+    def __init__(self, model_name, **kwargs):
+        # the default pipeline constructor doesn't pass all the kwargs (particularly load_in_4bit)
+        # to the model constructor, so we construct the model/tokenizer manually if possible,
+        # but that is only possible when the task is passed in, since if you pass the model
+        # to the pipeline constructor, the task will no longer be inferred from the default...
+        if "task" in kwargs and model_name is not None and kwargs["task"] in [
+            "text-classification",
+            "question-answering",
+            "summarization",
+            "translation",
+            "text-generation"
+        ]:
+            self.task = kwargs.pop("task")
+            kwargs.pop("model", None)
+            if self.task == "text-classification":
+                self.model = AutoModelForSequenceClassification.from_pretrained(model_name, **kwargs)
+            elif self.task == "question-answering":
+                self.model = AutoModelForQuestionAnswering.from_pretrained(model_name, **kwargs)
+            elif self.task == "summarization" or self.task == "translation":
+                self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **kwargs)
+            elif self.task == "text-generation":
+                self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
+            else:
+                raise PgMLException(f"Unhandled task: {self.task}")
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.pipe = transformers.pipeline(
+                self.task,
+                model=self.model,
+                tokenizer=self.tokenizer,
+            )
+        else:
+            self.pipe = transformers.pipeline(**kwargs)
+            self.task = self.pipe.task
+            self.model = self.pipe.model
+            if self.pipe.tokenizer is None:
+                self.pipe.tokenizer = AutoTokenizer.from_pretrained(self.model.name_or_path)
+            self.tokenizer = self.pipe.tokenizer
+
+    def __call__(self, inputs, **kwargs):
+        return self.pipe(inputs, **kwargs)
+
+
 def transform(task, args, inputs):
     task = orjson.loads(task)
     args = orjson.loads(args)
@@ -138,9 +184,7 @@ def transform(task, args, inputs):
         elif model_name and "-gptq" in model_name:
             pipe = GPTQPipeline(model_name, **task)
         else:
-            pipe = transformers.pipeline(**task)
-            if pipe.tokenizer is None:
-                pipe.tokenizer = AutoTokenizer.from_pretrained(pipe.model.name_or_path)
+            pipe = StandardPipeline(model_name, **task)
         __cache_transform_pipeline_by_task[key] = pipe
 
     pipe = __cache_transform_pipeline_by_task[key]
@@ -176,11 +220,10 @@ def embed(transformer, inputs, kwargs):
 
     return model.encode(inputs, **kwargs)
 
+
 def clear_gpu_cache(memory_usage: None):
     if not torch.cuda.is_available():
-        raise PgMLException(f"No GPU availables")
-
-
+        raise PgMLException(f"No GPU available")
     mem_used = torch.cuda.memory_usage()
     if not memory_usage or mem_used >= int(memory_usage * 100.0):
         torch.cuda.empty_cache()

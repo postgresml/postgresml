@@ -8,6 +8,20 @@ SELECT pgml.embed('intfloat/e5-small', 'hi mom', '{"device": "cpu"}');
 
 SELECT pgml.embed('hkunlp/instructor-xl', 'hi mom', '{"instruction": "Encode it with love"}');
 
+-- BitsAndBytes support
+SELECT pgml.transform(
+    task => '{
+      "task": "text-generation",
+      "model": "bigscience/bloom-1b7",
+      "device_map": "auto",
+      "load_in_4bit": true
+    }'::JSONB,
+    inputs => ARRAY[
+        'Once upon a time,'
+    ],
+    args => '{"max_new_tokens": 32}'::JSONB
+);
+
 -- GGML model support
 SELECT pgml.transform(
     task => '{
@@ -15,7 +29,8 @@ SELECT pgml.transform(
       "model": "marella/gpt-2-ggml"
     }'::JSONB,
     inputs => ARRAY[
-        'Once upon a time,'
+        'Once upon a time,',
+        'This is the beginning'
     ],
     args => '{"max_new_tokens": 32}'::JSONB
 );
@@ -24,10 +39,12 @@ SELECT pgml.transform(
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
-      "model": "mlabonne/gpt2-GPTQ-4bit"
+      "model": "mlabonne/gpt2-GPTQ-4bit",
+      "use_triton": true
     }'::JSONB,
     inputs => ARRAY[
-        'Once upon a time,'
+        'Once upon a time,',
+        'This is the beginning'
     ],
     args => '{"max_new_tokens": 32}'::JSONB
 );
