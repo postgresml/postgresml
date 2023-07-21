@@ -33,7 +33,7 @@ pub fn transform(
     crate::bindings::venv::activate();
 
     if let Err(e) = verify_task_against_whitelist(task) {
-        return serde_json::from_str(&e.to_string()).unwrap();
+        error!("{e}");
     }
 
     let task = serde_json::to_string(task).unwrap();
