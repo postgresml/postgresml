@@ -1,8 +1,7 @@
-use std::fmt;
+use std::collections::HashMap;
 use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
-use std::{collections::HashMap, error::Error};
 
 use once_cell::sync::Lazy;
 use pgrx::*;
@@ -11,37 +10,20 @@ use pyo3::types::PyTuple;
 
 use crate::orm::{Task, TextDataset};
 
+use self::whitelist::verify_task_against_whitelist;
+
+pub mod whitelist;
+
 static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
         let src = include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/bindings/transformers.py"
+            "/src/bindings/transformers/transformers.py"
         ));
 
         PyModule::from_code(py, src, "", "").unwrap().into()
     })
 });
-
-#[derive(Debug)]
-pub enum ModelError {
-    NotInWhitelist,
-    RemoteCodeNotTrusted,
-}
-
-impl fmt::Display for ModelError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ModelError::NotInWhitelist => writeln!(f, "model not in whitelist"),
-            ModelError::RemoteCodeNotTrusted => writeln!(f, "model remote code not trusted"),
-        }
-    }
-}
-
-impl Error for ModelError {}
-
-fn verify_task_against_whitelist(task: &serde_json::Value) -> Result<(), ModelError> {
-    todo!()
-}
 
 pub fn transform(
     task: &serde_json::Value,

@@ -14,16 +14,17 @@ pub fn get_config(name: &str) -> Option<String> {
 }
 
 #[cfg(any(test, feature = "pg_test"))]
+pub fn set_config(name: &str, value: &str) -> Result<(), pgrx::spi::Error> {
+    // using Spi::run instead of pgrx_pg_sys interface because it seems much easier,
+    // especially since this is just for testing
+    let query = format!("SELECT set_config('{name}', '{value}', false);");
+    pgrx::Spi::run(&query)
+}
+
+#[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
     use super::*;
-
-    fn set_config(name: &str, value: &str) -> Result<(), pgrx::spi::Error> {
-        // using Spi::run instead of pgrx_pg_sys interface because it seems much easier,
-        // especially since this is just for testing
-        let query = format!("SELECT set_config('{name}', '{value}', false);");
-        pgrx::Spi::run(&query)
-    }
 
     #[pg_test]
     fn read_config_max_connections() {
