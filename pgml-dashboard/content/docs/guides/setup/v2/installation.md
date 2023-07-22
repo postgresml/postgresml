@@ -10,6 +10,12 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 
 To install PostgresML on macOS, you'll need to compile it from source. No worries, we do this every day and it works well.
 
+!!! note
+
+If you're just looking to try PostgresML without installing it on your system, take a look at our [Quick Start with Docker](/docs/guides/setup/quick_start_with_docker) guide.
+
+!!!
+
 #### Get the source code
 
 To get the source code for PostgresML, you can clone our Github repo:
@@ -65,7 +71,7 @@ pip install -r requirements.txt
 
 === "Globally"
 
-Installing Python packages globally can cause issues with your system. If you wish to proceed nonetheless, you can do so
+Installing Python packages globally can cause issues with your system. If you wish to proceed nonetheless, you can do so:
 
 ```bash
 pip3 install -r requirements.txt
@@ -73,7 +79,7 @@ pip3 install -r requirements.txt
 
 ===
 
-### Final steps
+### Configuration
 
 We have one last step remaining to get PostgresML running on your system: configuration. PostgresML needs to be loaded into shared memory by Postgres to perform efficiently and to do so, you need to place it into `preload_shared_libraries`. Additionally, if you've chosen to use a virtual environment for the Python packages, we need to tell PostgresML where to find it.
 
@@ -314,15 +320,15 @@ createdb pgml_dashboard
 
 and create the extension:
 
-```postgresql
-CREATE EXTENSION pgml;
+```bash
+psql -d pgml_dashboard -c 'CREATE EXTENSION pgml;'
 ```
 
 ### Configure the environment
 
-Create a `.env` file with the necessary `DATABASE_URL`:
+Create a `.env` file with the necessary `DATABASE_URL`, for example:
 
-```
+```bash
 DATABASE_URL=postgres:///pgml_dashboard
 ```
 
@@ -335,13 +341,19 @@ The dashboard is written in Rust and uses the SQLx crate for interacting with Po
 To setup the database, you'll need to install `sqlx-cli` and run the migrations:
 
 ```bash
-cargo install sqlx-cli --version 0.6.3
+cargo install sqlx-cli --version 0.6.3 && \
 cargo sqlx database setup
 ```
 
 ### Frontend dependencies
 
-The dashboard frontend is using Sass which requires Node & the Sass compiler. You can install Node from Brew or by using [Node Version Manager](https://github.com/nvm-sh/nvm).
+The dashboard frontend is using Sass which requires Node & the Sass compiler. You can install Node from Brew, your package repository, or by using [Node Version Manager](https://github.com/nvm-sh/nvm).
+
+If using nvm, you can install the latest stable Node version with:
+
+```bash
+nvm install stable
+```
 
 Once you have Node installed, you can install the Sass compiler globally:
 
