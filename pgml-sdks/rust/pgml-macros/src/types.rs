@@ -6,14 +6,14 @@ use syn::visit::{self, Visit};
 #[derive(Debug, Clone)]
 pub struct ReferenceType {
     pub ty: Box<SupportedType>,
-    pub mutable: bool
+    pub mutable: bool,
 }
 
 impl ReferenceType {
     pub fn new(ty: SupportedType, mutable: bool) -> Self {
         Self {
             ty: Box::new(ty),
-            mutable
+            mutable,
         }
     }
 }
@@ -59,14 +59,18 @@ impl SupportedType {
 
     pub fn to_language_string(&self, language: &Option<&str>) -> String {
         match self {
-            SupportedType::Reference(t) => format!("&{}", t.ty.to_string()),
+            SupportedType::Reference(t) => format!("&{}", t.ty.to_language_string(language)),
             SupportedType::str => "str".to_string(),
             SupportedType::String => "String".to_string(),
             SupportedType::bool => "bool".to_string(),
             SupportedType::Json => "Json".to_string(),
-            SupportedType::Vec(v) => format!("Vec<{}>", v.to_string()),
+            SupportedType::Vec(v) => format!("Vec<{}>", v.to_language_string(language)),
             SupportedType::HashMap((k, v)) => {
-                format!("HashMap<{},{}>", k.to_language_string(language), v.to_language_string(language))
+                format!(
+                    "HashMap<{},{}>",
+                    k.to_language_string(language),
+                    v.to_language_string(language)
+                )
             }
             SupportedType::Tuple(t) => {
                 let mut types = Vec::new();
@@ -136,7 +140,10 @@ impl GetSupportedType {
 impl<'ast> Visit<'ast> for GetSupportedType {
     fn visit_type(&mut self, i: &syn::Type) {
         self.ty = Some(match i {
-            syn::Type::Reference(r) => SupportedType::Reference(ReferenceType::new(Self::get_type(&r.elem), r.mutability.is_some())),
+            syn::Type::Reference(r) => SupportedType::Reference(ReferenceType::new(
+                Self::get_type(&r.elem),
+                r.mutability.is_some(),
+            )),
             syn::Type::Path(p) => Self::get_type_from_path(p),
             syn::Type::Tuple(t) => {
                 let values: Vec<SupportedType> = t

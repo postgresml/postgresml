@@ -41,7 +41,7 @@ async def test_can_lazily_create_collection():
     does_collection_exist = await builtins.does_collection_exist(collection_name)
     assert not does_collection_exist
     # Do something that requires the collection to be created
-    await collection.upsert_documents(generate_dummy_documents(2))
+    await collection.upsert_documents(generate_dummy_documents(1))
     does_collection_exist = await builtins.does_collection_exist(collection_name)
     # Now the collection will exist because it had to be created to upsert documents
     await collection.archive()
@@ -65,7 +65,7 @@ async def test_can_lazily_create_splitter():
 
 @pytest.mark.asyncio
 async def test_can_vector_search():
-    collection_name = "p_ccc_test_5"
+    collection_name = "p_cvs_test_0"
     collection = pgml.Collection(name=collection_name)
     model = pgml.Model()
     splitter = pgml.Splitter()
@@ -86,7 +86,7 @@ async def test_can_vector_search():
 
 @pytest.mark.asyncio
 async def test_can_vector_search_with_remote_embeddings():
-    collection_name = "p_ccc_test_4"
+    collection_name = "p_cvswre_test_0"
     collection = pgml.Collection(name=collection_name)
     model = pgml.Model(name="text-embedding-ada-002", source="openai")
     splitter = pgml.Splitter()

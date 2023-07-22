@@ -125,6 +125,9 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
 #[neon::main]
 fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
     cx.export_function("newCollection", collection::CollectionJavascript::new)?;
+    cx.export_function("newModel", model::ModelJavascript::new)?;
+    cx.export_function("newSplitter", splitter::SplitterJavascript::new)?;
+    cx.export_function("newBuiltins", builtins::BuiltinsJavascript::new)?;
     Ok(())
 }
 

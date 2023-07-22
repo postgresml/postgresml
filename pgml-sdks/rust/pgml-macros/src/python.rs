@@ -178,6 +178,7 @@ pub fn generate_python_methods(
 
         let does_take_ownership_of_self = method
             .receiver
+            .as_ref()
             .is_some_and(|r| r.to_string().replace("mut", "").trim() == "self");
 
         let signature = quote! {
@@ -244,18 +245,6 @@ pub fn generate_python_methods(
             let middle = quote! {
                 #method_ident(#(#wrapper_arguments),*)
             };
-
-            // let middle = {
-            //     if method.is_async {
-            //         quote! {
-            //             wrapped.#middle.await
-            //         }
-            //     } else {
-            //         quote! {
-            //             wrapped.#middle
-            //         }
-            //     }
-            // };
 
             let middle = if does_take_ownership_of_self {
                 if method.is_async {

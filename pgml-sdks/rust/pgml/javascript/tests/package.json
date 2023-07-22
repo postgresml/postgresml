@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "description": "",
   "type": "module",
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+  },
   "devDependencies": {
+    "jest": "^29.6.1",
     "typescript": "^5.1.3"
   }
 }
