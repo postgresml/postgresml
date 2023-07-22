@@ -35,7 +35,7 @@ docker run \
     sudo -u postgres psql
 ```
 
-## Validate
+## Setup
 
 !!! generic 
 
@@ -68,7 +68,7 @@ postgres=# SELECT pgml.version();
 
 !!!
 
-Once running, you can connect to the container using any of the commonly used PostgreSQL tools like `psql`, pgAdmin, DBeaver, and others:
+Once running, you can continue using the command line, or connect to the container using any of the commonly used PostgreSQL tools like `psql`, pgAdmin, DBeaver, and others:
 
 ```bash
 psql -h 127.0.0.1 -p 5433 -U postgres

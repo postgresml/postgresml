@@ -10,6 +10,12 @@ The extension can be installed from our Ubuntu `apt` repository or, if you're us
 
 To install PostgresML on macOS, you'll need to compile it from source. No worries, we do this every day and it works well.
 
+!!! note
+
+If you're just looking to try PostgresML without installing it on your system, take a look at our [Quick Start with Docker](/docs/guides/setup/quick_start_with_docker) guide.
+
+!!!
+
 #### Get the source code
 
 To get the source code for PostgresML, you can clone our Github repo:
