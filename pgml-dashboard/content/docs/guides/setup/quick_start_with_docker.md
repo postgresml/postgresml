@@ -1,6 +1,6 @@
 # Quick Start with Docker
 
-If you're just looking to try out PostgresML for the first time, [Docker](https://docs.docker.com/engine/install/) is a great tool to get you started quicky. We've prepared a Docker image that will be able to take advantage of Nvidia GPUs, if you have any, on your machine and comes with the latest version of PostgresML and all its dependencies.
+If you're just looking to try out PostgresML for the first time, [Docker](https://docs.docker.com/engine/install/) is a great tool to get you started quicky. We've prepared a Docker image that will be able to take advantage of Nvidia GPUs, if you have any on your machine, and comes with the latest version of PostgresML and all of its dependencies.
 
 ## macOS
 
@@ -8,6 +8,7 @@ If you're just looking to try out PostgresML for the first time, [Docker](https:
 docker run \
     -it \
     -v postgresml_data:/var/lib/postgresql \
+    -p 5433:5432 \
     ghcr.io/postgresml/postgresml:2.7.1 \
     sudo -u postgres psql
 ```
@@ -29,6 +30,7 @@ docker run \
     -it \
     -v postgresml_data:/var/lib/postgresql \
     --gpus all \
+    -p 5433:5432 \
     ghcr.io/postgresml/postgresml:2.7.1 \
     sudo -u postgres psql
 ```
@@ -66,14 +68,20 @@ postgres=# SELECT pgml.version();
 
 !!!
 
+Once running, you can connect to the container using any of the commonly used PostgreSQL tools like `psql`, pgAdmin, DBeaver, and others:
+
+```bash
+psql -h 127.0.0.1 -p 5433 -U postgres
+```
+
 
 ## Workflows
 
-PostgresML allows you to compute embeddings using open source models from Hugging Face, use LLMs for various tasks like transaction and text completion, and train classical machine learning models on tabular data.
+PostgresML allows you to generate embeddings using open source models from Hugging Face, use LLMs for various tasks like translation and text generation, and train classical machine learning models on tabular data.
 
 ### Embeddings
 
-To generate an embedding, all you have to do is using the `pgml.embed(model_name, text)` function with any open source model available on Hugging Face.
+To generate an embedding, all you have to do is use the `pgml.embed(model_name, text)` function with any open source model available on Hugging Face.
 
 !!! example 
 
@@ -104,13 +112,11 @@ postgres=# SELECT pgml.embed('intfloat/e5-small', 'passage: PostgresML is so eas
 
 !!!
 
-Here is a simple PostgresML example to get you started. We'll import a Scikit dataset, train a couple models on it and make real time predictions, all of it using only SQL.
-
 ### Training an XGBoost model
 
-#### Importing a Dataset
+#### Importing a dataset
 
-PostgresML comes with a few built-in datasets. You can also import your own CSV files or other data sources like BigQuery, S3, and other databases and flat files. For our example, let's import the `digits` dataset from Scikit:
+PostgresML comes with a few built-in datasets. You can also import your own CSV files or from other data sources like BigQuery, S3, and other databases and flat files. For our example, let's import the `digits` dataset from Scikit:
 
 !!! generic 
 
