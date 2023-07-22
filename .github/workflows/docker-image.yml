@@ -8,7 +8,7 @@ jobs:
   publish-extension-docker-image:
     strategy:
       matrix:
-        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm"]
+        os: ["buildjet-4vcpu-ubuntu-2204"]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -28,5 +28,9 @@ jobs:
           else
             export ARCH="arm64/v8"
           fi
-          docker build --tag ghcr.io/postgresml/postgresml:${{ inputs.version }} --platform linux/${ARCH} .
-          docker push ghcr.io/postgresml/postgresml:${{ inputs.version }}
+          docker run --privileged --rm tonistiigi/binfmt --install all
+          docker buildx create --use --name mybuilder
+          docker buildx build  \
+            --platform linux/amd64,linux/arm64 \
+            --tag ghcr.io/postgresml/postgresml:${{ inputs.version }} \
+            --push .
