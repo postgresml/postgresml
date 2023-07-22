@@ -15,7 +15,7 @@ docker run \
 
 ## Linux
 
-Make sure you have Cuda, the Cuda container toolkit, and matching graphics drivers installed. You can install everything from [Nvidia](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+Make sure you have Cuda, the Cuda container toolkit, and matching graphics drivers installed. You can install everything from [Nvidia](https://developer.nvidia.com/cuda-downloads).
 
 ```bash
 sudo apt install -y \
@@ -34,6 +34,8 @@ docker run \
     ghcr.io/postgresml/postgresml:2.7.1 \
     sudo -u postgres psql
 ```
+
+If your machine doesn't have a GPU, just omit the `--gpus all` option, and the container will start and use the CPU instead.
 
 ## Setup
 
@@ -243,6 +245,6 @@ Check out our [Training](/docs/guides/training/overview/) and [Predictions](/doc
 
 ## Dashboard
 
-The Dashboard app is available at <a href="http://localhost:8000/" target="_blank">localhost:8000</a>. You can use it to write experiments in Jupyter-style notebooks, manage projects, and visualize datasets used by PostgresML.
+The Dashboard app is running on <a href="http://localhost:8000/" target="_blank">localhost:8000</a>. You can use it to write experiments in Jupyter-style notebooks, manage projects, and visualize datasets used by PostgresML.
 
 ![Dashboard](/dashboard/static/images/dashboard/notebooks.png)
