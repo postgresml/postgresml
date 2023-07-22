@@ -23,11 +23,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push Docker image
         run: |
-          if [[ $(arch) == "x86_64" ]]; then
-            export ARCH=amd64
-          else
-            export ARCH="arm64/v8"
-          fi
           docker run --privileged --rm tonistiigi/binfmt --install all
           docker buildx create --use --name mybuilder
           docker buildx build  \
