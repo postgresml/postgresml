@@ -29,7 +29,7 @@ jobs:
             export ARCH=arm64
           fi
           docker run --privileged --rm tonistiigi/binfmt --install all
-          docker buildx ls
+          docker buildx create --use --name mybuilder
           docker buildx build  \
             --platform linux/amd64,linux/arm64 \
             --tag ghcr.io/postgresml/postgresml:${{ inputs.version }} \
