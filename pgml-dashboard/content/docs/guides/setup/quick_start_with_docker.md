@@ -39,7 +39,7 @@ docker run \
 
 !!! generic 
 
-!!! code_block time="4772.291ms"
+!!! code_block time="41.520ms"
 
 ```postgresql
 CREATE EXTENSION IF NOT EXISTS pgml;
@@ -55,7 +55,7 @@ postgres=# CREATE EXTENSION IF NOT EXISTS pgml;
 INFO:  Python version: 3.10.6 (main, May 29 2023, 11:10:38) [GCC 11.3.0]
 INFO:  Scikit-learn 1.2.2, XGBoost 1.7.5, LightGBM 3.3.5, NumPy 1.25.1
 CREATE EXTENSION
-Time: 4772.291 ms (00:04.772)
+Time: 41.520 ms
 
 postgres=# SELECT pgml.version();
  version 
@@ -85,7 +85,7 @@ To generate an embedding, all you have to do is use the `pgml.embed(model_name, 
 
 !!! example 
 
-!!! code_block time="360.519ms"
+!!! code_block time="51.907ms"
 
 ```postgresql
 SELECT pgml.embed(
@@ -120,7 +120,7 @@ PostgresML comes with a few built-in datasets. You can also import your own CSV 
 
 !!! generic 
 
-!!! code_block time="405.611ms"
+!!! code_block time="47.532ms"
 
 ```postgresql
 SELECT * FROM pgml.load_dataset('digits');
@@ -149,7 +149,7 @@ The heart of PostgresML is its `pgml.train()` function. Using only that function
 
 !!! generic 
 
-!!! code_block time="9755.556ms"
+!!! code_block time="222.206ms"
 
 ```postgresql
 SELECT * FROM pgml.train(
