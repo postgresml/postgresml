@@ -8,7 +8,7 @@ jobs:
   publish-extension-docker-image:
     strategy:
       matrix:
-        os: ["buildjet-4vcpu-ubuntu-2204"]
+        os: ["ubuntu-22.04"]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
