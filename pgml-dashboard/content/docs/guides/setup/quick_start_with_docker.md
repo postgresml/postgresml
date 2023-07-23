@@ -13,7 +13,7 @@ docker run \
     -p 5433:5432 \
     -p 8000:8000 \
     ghcr.io/postgresml/postgresml:2.7.1 \
-    sudo -u postgres psql
+    sudo -u postgresml psql -d postgresml
 ```
 
 === "Linux with GPUs"
@@ -39,7 +39,7 @@ docker run \
     -p 5433:5432 \
     -p 8000:8000 \
     ghcr.io/postgresml/postgresml:2.7.1 \
-    sudo -u postgres psql
+    sudo -u postgresml psql -d postgresml
 ```
 
 If your machine doesn't have a GPU, just omit the `--gpus all` option, and the container will start and use the CPU instead.
@@ -63,13 +63,13 @@ SELECT pgml.version();
 !!! results
 
 ```
-postgres=# CREATE EXTENSION IF NOT EXISTS pgml;
+postgresml=# CREATE EXTENSION IF NOT EXISTS pgml;
 INFO:  Python version: 3.10.6 (main, May 29 2023, 11:10:38) [GCC 11.3.0]
 INFO:  Scikit-learn 1.2.2, XGBoost 1.7.5, LightGBM 3.3.5, NumPy 1.25.1
 CREATE EXTENSION
 Time: 41.520 ms
 
-postgres=# SELECT pgml.version();
+postgresml=# SELECT pgml.version();
  version 
 ---------
  2.7.1
@@ -83,7 +83,7 @@ postgres=# SELECT pgml.version();
 You can continue using the command line, or connect to the container using any of the commonly used PostgreSQL tools like `psql`, pgAdmin, DBeaver, and others:
 
 ```bash
-psql -h 127.0.0.1 -p 5433 -U postgres
+psql -h 127.0.0.1 -p 5433 -U postgresml
 ```
 
 
