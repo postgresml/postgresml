@@ -2,8 +2,9 @@
 #
 # Start local dev
 #
-echo "Starting PostgresML, one moment"
+echo "Starting PostgresML"
 service postgresql start
-echo "Ready"
+echo "Starting dashboard"
+bash /app/dashboard.sh &
 
 exec "$@"

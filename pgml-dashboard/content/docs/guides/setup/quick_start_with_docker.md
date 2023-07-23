@@ -1,21 +1,27 @@
 # Quick Start with Docker
 
-If you're just looking to try out PostgresML for the first time, [Docker](https://docs.docker.com/engine/install/) is a great tool to get you started quicky. We've prepared a Docker image that will be able to take advantage of Nvidia GPUs, if you have any on your machine, and comes with the latest version of PostgresML and all of its dependencies.
+If you're just looking to try out PostgresML for the first time, [Docker](https://docs.docker.com/engine/install/) is a great tool to get you started quicky. We've prepared a Docker image that comes with the latest version of PostgresML and all of its dependencies, and which will be able to take advantage of GPUs, if you have any on your machine.
 
-## macOS
+## Setup
+
+=== "macOS"
 
 ```bash
 docker run \
     -it \
     -v postgresml_data:/var/lib/postgresql \
     -p 5433:5432 \
+    -p 8000:8000 \
     ghcr.io/postgresml/postgresml:2.7.1 \
     sudo -u postgres psql
 ```
 
-## Linux
+=== "Linux with GPUs"
 
 Make sure you have Cuda, the Cuda container toolkit, and matching graphics drivers installed. You can install everything from [Nvidia](https://developer.nvidia.com/cuda-downloads).
+
+On Ubuntu, you can install everything with:
+
 
 ```bash
 sudo apt install -y \
@@ -31,13 +37,17 @@ docker run \
     -v postgresml_data:/var/lib/postgresql \
     --gpus all \
     -p 5433:5432 \
+    -p 8000:8000 \
     ghcr.io/postgresml/postgresml:2.7.1 \
     sudo -u postgres psql
 ```
 
 If your machine doesn't have a GPU, just omit the `--gpus all` option, and the container will start and use the CPU instead.
 
-## Setup
+===
+
+Once the container is running, setting up PostgresML is as simple as creating the extension and running a few queries to make sure everything is working correctly.
+
 
 !!! generic 
 
@@ -70,7 +80,7 @@ postgres=# SELECT pgml.version();
 
 !!!
 
-Once running, you can continue using the command line, or connect to the container using any of the commonly used PostgreSQL tools like `psql`, pgAdmin, DBeaver, and others:
+You can continue using the command line, or connect to the container using any of the commonly used PostgreSQL tools like `psql`, pgAdmin, DBeaver, and others:
 
 ```bash
 psql -h 127.0.0.1 -p 5433 -U postgres
@@ -79,7 +89,7 @@ psql -h 127.0.0.1 -p 5433 -U postgres
 
 ## Workflows
 
-PostgresML allows you to generate embeddings using open source models from Hugging Face, use LLMs for various tasks like translation and text generation, and train classical machine learning models on tabular data.
+PostgresML allows you to generate embeddings with open source models from Hugging Face, easily prompt LLMs with tasks like translation and text generation, and train classical machine learning models on tabular data.
 
 ### Embeddings
 
@@ -127,7 +137,7 @@ postgres=# SELECT pgml.embed(
 
 #### Importing a dataset
 
-PostgresML comes with a few built-in datasets. You can also import your own CSV files or from other data sources like BigQuery, S3, and other databases and flat files. For our example, let's import the `digits` dataset from Scikit:
+PostgresML comes with a few built-in datasets. You can also import your own CSV files or data from other sources like BigQuery, S3, and other databases or files. For our example, let's import the `digits` dataset from Scikit:
 
 !!! generic 
 
@@ -193,7 +203,7 @@ postgres=# SELECT * FROM pgml.train(
 
 [...]
 
-INFO:  Metrics: {
+INFO:  Metrics: {x
     "f1": 0.88244045,
     "precision": 0.8835865,
     "recall": 0.88687027,
@@ -216,7 +226,7 @@ INFO:  Deploying model id: 1
 
 #### Making predictions
 
-After training a model, you can use it to make predictions. PostgresML provides a `pgml.predict(project_name, features)` function which makes real time predictions on the best deployed model for the project:
+After training a model, you can use it to make predictions. PostgresML provides a `pgml.predict(project_name, features)` function which makes real time predictions using the best deployed model for the given project:
 
 !!! generic 
 
