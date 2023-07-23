@@ -5,6 +5,6 @@
 echo "Starting PostgresML"
 service postgresql start
 echo "Starting dashboard"
-bash /app/dashboard.sh &
+sudo -u postgres bash /app/dashboard.sh &
 
 exec "$@"
