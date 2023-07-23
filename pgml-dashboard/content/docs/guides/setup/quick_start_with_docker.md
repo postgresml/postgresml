@@ -203,7 +203,7 @@ postgres=# SELECT * FROM pgml.train(
 
 [...]
 
-INFO:  Metrics: {x
+INFO:  Metrics: {
     "f1": 0.88244045,
     "precision": 0.8835865,
     "recall": 0.88687027,
