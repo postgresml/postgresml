@@ -312,15 +312,10 @@ cd pgml-dashboard
 
 ### Configure your database
 
-Create or use an existing database which has the `pgml` extension installed:
+Use an existing database which has the `pgml` extension installed, or create a new one:
 
 ```bash
-createdb pgml_dashboard
-```
-
-and create the extension:
-
-```bash
+createdb pgml_dashboard && \
 psql -d pgml_dashboard -c 'CREATE EXTENSION pgml;'
 ```
 
@@ -366,7 +361,7 @@ npm install -g sass
 Finally, you can compile and run the dashboard:
 
 ```
-cargo run --release
+cargo run
 ```
 
 Once compiled, the dashboard will be available on [localhost:8000](http://localhost:8000).
