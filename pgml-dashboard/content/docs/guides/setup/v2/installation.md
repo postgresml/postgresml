@@ -89,14 +89,14 @@ Both steps can be done by editing the PostgreSQL configuration file `postgresql.
 vim /opt/homebrew/var/postgresql@15/postgresql.conf
 ```
 
-Both settings can appended to the file, like so:
+Both settings can be added to the config, like so:
 
 ```
 shared_preload_libraries = 'pgml,pg_stat_statements'
 pgml.venv = '/absolute/path/to/your/pgml-venv'
 ```
 
-Don't forget to restart the database server when finished:
+Don't forget to restart the database server:
 
 ```bash
 brew services restart postgresql@15
@@ -182,7 +182,7 @@ CREATE EXTENSION
 
 ### Ubuntu
 
-For Ubuntu, we compile and ship Debian packages that include everything needed to install and run the extension. The package is created on Ubuntu 22.04, so only Ubuntu 22.04 (Jammy) is supported using this installation method.
+For Ubuntu, we compile and ship packages that include everything needed to install and run the extension. At the moment, only Ubuntu 22.04 (Jammy) is supported.
 
 #### Add our sources
 
@@ -203,7 +203,7 @@ sudo apt update && \
 sudo apt install postgresml-${POSTGRES_VERSION}
 ```
 
-The `postgresml-15` package includes all the necessary dependencies including Python packages shipped inside a virtual environment. Your PostgreSQL server is configured automatically.
+The `postgresml-15` package includes all the necessary dependencies, including Python packages shipped inside a virtual environment. Your PostgreSQL server is configured automatically.
 
 We support PostgreSQL versions 11 through 15, so you can install the one matching your currently installed PostgreSQL version.
 
@@ -218,7 +218,7 @@ sudo apt install postgresql-pgml-${POSTGRES_VERSION}
 
 #### Optimized pgvector
 
-pgvector, the extension we use for storing and searching embeddings, needs to be installed separately for optimal performance. Your hardware can include additional instructions which it can take advantage of to perform calculations faster.
+pgvector, the extension we use for storing and searching embeddings, needs to be installed separately for optimal performance. Your hardware may support vectorized operation instructions (like AVX-512), which pgvector can take advantage of to run faster.
 
 To install pgvector from source, you can simply:
 
@@ -299,11 +299,11 @@ cargo pgrx install
 
 ## Dashboard
 
-The dashboard is a web app that can be run against any Postgres database which has the extension installed. There is a Dockerfile included with the source code if you wish to run it as a container.
+The dashboard is a web app that can be run against any Postgres database which has the extension installed. There is a [Dockerfile](https://github.com/postgresml/postgresml/blob/master/pgml-dashboard/Dockerfile) included with the source code if you wish to run it as a container.
 
 ### Get the source code
 
-To get the source code for the dashboard, you can clone our Github repo:
+To get our source code, you can clone our Github repo (if you haven't already):
 
 ```bash
 git clone clone https://github.com/postgresml/postgresml && \
@@ -329,7 +329,7 @@ DATABASE_URL=postgres:///pgml_dashboard
 
 ### Get Rust
 
-The dashboard is written in Rust and uses the SQLx crate for interacting with Postgres. Make sure to install the latest Rust compiler from [rust-lang.org](https://rust-lang.org).
+The dashboard is written in Rust and uses the SQLx crate to interact with Postgres. Make sure to install the latest Rust compiler from [rust-lang.org](https://rust-lang.org).
 
 ### Database setup
 
