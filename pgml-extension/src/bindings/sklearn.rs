@@ -29,322 +29,109 @@ static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     })
 });
 
-pub fn linear_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "linear_regression")
+macro_rules! wrap_fit {
+    ($fn_name:tt, $task:literal) => {
+        pub fn $fn_name(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+            fit(dataset, hyperparams, $task)
+        }
+    };
 }
 
-pub fn lasso_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "lasso_regression")
-}
-
-pub fn svm_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "svm_regression")
-}
-
-pub fn elastic_net_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "elastic_net_regression")
-}
-
-pub fn ridge_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "ridge_regression")
-}
-
-pub fn random_forest_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "random_forest_regression")
-}
-
-pub fn xgboost_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "xgboost_regression")
-}
-
-pub fn xgboost_random_forest_regression(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "xgboost_random_forest_regression")
-}
-
-pub fn orthogonal_matching_persuit_regression(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(
-        dataset,
-        hyperparams,
-        "orthogonal_matching_persuit_regression",
-    )
-}
-
-pub fn bayesian_ridge_regression(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "bayesian_ridge_regression")
-}
-
-pub fn automatic_relevance_determination_regression(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(
-        dataset,
-        hyperparams,
-        "automatic_relevance_determination_regression",
-    )
-}
-
-pub fn stochastic_gradient_descent_regression(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(
-        dataset,
-        hyperparams,
-        "stochastic_gradient_descent_regression",
-    )
-}
-
-pub fn passive_aggressive_regression(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "passive_aggressive_regression")
-}
-
-pub fn ransac_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "ransac_regression")
-}
-
-pub fn theil_sen_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "theil_sen_regression")
-}
-
-pub fn huber_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "huber_regression")
-}
-
-pub fn quantile_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "quantile_regression")
-}
-
-pub fn kernel_ridge_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "kernel_ridge_regression")
-}
-
-pub fn gaussian_process_regression(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "gaussian_process_regression")
-}
-
-pub fn nu_svm_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "nu_svm_regression")
-}
-
-pub fn ada_boost_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "ada_boost_regression")
-}
-
-pub fn bagging_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "bagging_regression")
-}
-
-pub fn extra_trees_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "extra_trees_regression")
-}
-
-pub fn gradient_boosting_trees_regression(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "gradient_boosting_trees_regression")
-}
-
-pub fn hist_gradient_boosting_regression(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "hist_gradient_boosting_regression")
-}
-
-pub fn least_angle_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "least_angle_regression")
-}
-
-pub fn lasso_least_angle_regression(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "lasso_least_angle_regression")
-}
-
-pub fn linear_svm_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "linear_svm_regression")
-}
-
-pub fn lightgbm_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "lightgbm_regression")
-}
-
-pub fn linear_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "linear_classification")
-}
-
-pub fn svm_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "svm_classification")
-}
-
-pub fn ridge_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "ridge_classification")
-}
-
-pub fn random_forest_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "random_forest_classification")
-}
-
-pub fn xgboost_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "xgboost_classification")
-}
-
-pub fn xgboost_random_forest_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "xgboost_random_forest_classification")
-}
-
-pub fn stochastic_gradient_descent_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(
-        dataset,
-        hyperparams,
-        "stochastic_gradient_descent_classification",
-    )
-}
-
-pub fn perceptron_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "perceptron_classification")
-}
-
-pub fn passive_aggressive_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "passive_aggressive_classification")
-}
-
-pub fn gaussian_process(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "gaussian_process")
-}
-
-pub fn nu_svm_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "nu_svm_classification")
-}
-
-pub fn ada_boost_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "ada_boost_classification")
-}
-
-pub fn bagging_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "bagging_classification")
-}
-
-pub fn extra_trees_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "extra_trees_classification")
-}
-
-pub fn gradient_boosting_trees_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(
-        dataset,
-        hyperparams,
-        "gradient_boosting_trees_classification",
-    )
-}
-
-pub fn hist_gradient_boosting_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(
-        dataset,
-        hyperparams,
-        "hist_gradient_boosting_classification",
-    )
-}
-
-pub fn linear_svm_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "linear_svm_classification")
-}
-
-pub fn lightgbm_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "lightgbm_classification")
-}
-
-pub fn affinity_propagation(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "affinity_propagation_clustering")
-}
-
-pub fn agglomerative(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "agglomerative_clustering")
-}
-
-pub fn birch(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "birch_clustering")
-}
-
-pub fn dbscan(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "dbscan_clustering")
-}
-
-pub fn feature_agglomeration(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "feature_agglomeration_clustering")
-}
-
-pub fn kmeans(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "kmeans_clustering")
-}
-
-pub fn mini_batch_kmeans(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "mini_batch_kmeans_clustering")
-}
-
-pub fn mean_shift(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "mean_shift_clustering")
-}
-
-pub fn optics(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "optics_clustering")
-}
-
-pub fn spectral(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "spectral_clustering")
-}
-
-pub fn spectral_bi(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "spectral_biclustering")
-}
-
-pub fn spectral_co(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
-    fit(dataset, hyperparams, "spectral_coclustering")
-}
+wrap_fit!(linear_regression, "linear_regression");
+wrap_fit!(lasso_regression, "lasso_regression");
+wrap_fit!(svm_regression, "svm_regression");
+wrap_fit!(elastic_net_regression, "elastic_net_regression");
+wrap_fit!(ridge_regression, "ridge_regression");
+wrap_fit!(random_forest_regression, "random_forest_regression");
+wrap_fit!(xgboost_regression, "xgboost_regression");
+wrap_fit!(
+    xgboost_random_forest_regression,
+    "xgboost_random_forest_regression"
+);
+wrap_fit!(
+    orthogonal_matching_persuit_regression,
+    "orthogonal_matching_persuit_regression"
+);
+wrap_fit!(bayesian_ridge_regression, "bayesian_ridge_regression");
+wrap_fit!(
+    automatic_relevance_determination_regression,
+    "automatic_relevance_determination_regression"
+);
+wrap_fit!(
+    stochastic_gradient_descent_regression,
+    "stochastic_gradient_descent_regression"
+);
+wrap_fit!(
+    passive_aggressive_regression,
+    "passive_aggressive_regression"
+);
+wrap_fit!(ransac_regression, "ransac_regression");
+wrap_fit!(theil_sen_regression, "theil_sen_regression");
+wrap_fit!(huber_regression, "huber_regression");
+wrap_fit!(quantile_regression, "quantile_regression");
+wrap_fit!(kernel_ridge_regression, "kernel_ridge_regression");
+wrap_fit!(gaussian_process_regression, "gaussian_process_regression");
+wrap_fit!(nu_svm_regression, "nu_svm_regression");
+wrap_fit!(ada_boost_regression, "ada_boost_regression");
+wrap_fit!(bagging_regression, "bagging_regression");
+wrap_fit!(extra_trees_regression, "extra_trees_regression");
+wrap_fit!(
+    gradient_boosting_trees_regression,
+    "gradient_boosting_trees_regression"
+);
+wrap_fit!(
+    hist_gradient_boosting_regression,
+    "hist_gradient_boosting_regression"
+);
+wrap_fit!(least_angle_regression, "least_angle_regression");
+wrap_fit!(lasso_least_angle_regression, "lasso_least_angle_regression");
+wrap_fit!(linear_svm_regression, "linear_svm_regression");
+wrap_fit!(lightgbm_regression, "lightgbm_regression");
+wrap_fit!(linear_classification, "linear_classification");
+wrap_fit!(svm_classification, "svm_classification");
+wrap_fit!(ridge_classification, "ridge_classification");
+wrap_fit!(random_forest_classification, "random_forest_classification");
+wrap_fit!(xgboost_classification, "xgboost_classification");
+wrap_fit!(
+    xgboost_random_forest_classification,
+    "xgboost_random_forest_classification"
+);
+wrap_fit!(
+    stochastic_gradient_descent_classification,
+    "stochastic_gradient_descent_classification"
+);
+wrap_fit!(perceptron_classification, "perceptron_classification");
+wrap_fit!(
+    passive_aggressive_classification,
+    "passive_aggressive_classification"
+);
+wrap_fit!(gaussian_process, "gaussian_process");
+wrap_fit!(nu_svm_classification, "nu_svm_classification");
+wrap_fit!(ada_boost_classification, "ada_boost_classification");
+wrap_fit!(bagging_classification, "bagging_classification");
+wrap_fit!(extra_trees_classification, "extra_trees_classification");
+wrap_fit!(
+    gradient_boosting_trees_classification,
+    "gradient_boosting_trees_classification"
+);
+wrap_fit!(
+    hist_gradient_boosting_classification,
+    "hist_gradient_boosting_classification"
+);
+wrap_fit!(linear_svm_classification, "linear_svm_classification");
+wrap_fit!(lightgbm_classification, "lightgbm_classification");
+wrap_fit!(affinity_propagation, "affinity_propagation_clustering");
+wrap_fit!(agglomerative, "agglomerative_clustering");
+wrap_fit!(birch, "birch_clustering");
+wrap_fit!(dbscan, "dbscan_clustering");
+wrap_fit!(feature_agglomeration, "feature_agglomeration_clustering");
+wrap_fit!(kmeans, "kmeans_clustering");
+wrap_fit!(mini_batch_kmeans, "mini_batch_kmeans_clustering");
+wrap_fit!(mean_shift, "mean_shift_clustering");
+wrap_fit!(optics, "optics_clustering");
+wrap_fit!(spectral, "spectral_clustering");
+wrap_fit!(spectral_bi, "spectral_biclustering");
+wrap_fit!(spectral_co, "spectral_coclustering");
 
 fn fit(
     dataset: &Dataset,
