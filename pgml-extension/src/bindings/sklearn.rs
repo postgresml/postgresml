@@ -355,7 +355,7 @@ fn fit(
 
     let (estimator, predict, predict_proba) =
         Python::with_gil(|py| -> (Py<PyAny>, Py<PyAny>, Py<PyAny>) {
-            let estimator: Py<PyAny> = PY_MODULE.getattr(py, "estimator").unwrap().into();
+            let estimator: Py<PyAny> = PY_MODULE.getattr(py, "estimator").unwrap();
 
             let train: Py<PyAny> = estimator
                 .call1(
@@ -373,13 +373,13 @@ fn fit(
                 .unwrap();
 
             let estimator: Py<PyAny> = train
-                .call1(py, PyTuple::new(py, &[&dataset.x_train, &dataset.y_train]))
+                .call1(py, PyTuple::new(py, [&dataset.x_train, &dataset.y_train]))
                 .unwrap();
 
             let predict: Py<PyAny> = PY_MODULE
                 .getattr(py, "predictor")
                 .unwrap()
-                .call1(py, PyTuple::new(py, &[&estimator]))
+                .call1(py, PyTuple::new(py, [&estimator]))
                 .unwrap()
                 .extract(py)
                 .unwrap();
@@ -387,7 +387,7 @@ fn fit(
             let predict_proba: Py<PyAny> = PY_MODULE
                 .getattr(py, "predictor_proba")
                 .unwrap()
-                .call1(py, PyTuple::new(py, &[&estimator]))
+                .call1(py, PyTuple::new(py, [&estimator]))
                 .unwrap()
                 .extract(py)
                 .unwrap();
@@ -425,7 +425,7 @@ impl Bindings for Estimator {
     fn predict(&self, features: &[f32], _num_features: usize, _num_classes: usize) -> Vec<f32> {
         Python::with_gil(|py| -> Vec<f32> {
             self.predict
-                .call1(py, PyTuple::new(py, &[features]))
+                .call1(py, PyTuple::new(py, [features]))
                 .unwrap()
                 .extract(py)
                 .unwrap()
@@ -435,7 +435,7 @@ impl Bindings for Estimator {
     fn predict_proba(&self, features: &[f32], _num_features: usize) -> Vec<f32> {
         Python::with_gil(|py| -> Vec<f32> {
             self.predict_proba
-                .call1(py, PyTuple::new(py, &[features]))
+                .call1(py, PyTuple::new(py, [features]))
                 .unwrap()
                 .extract(py)
                 .unwrap()
@@ -446,7 +446,7 @@ impl Bindings for Estimator {
     fn to_bytes(&self) -> Vec<u8> {
         Python::with_gil(|py| -> Vec<u8> {
             let save = PY_MODULE.getattr(py, "save").unwrap();
-            save.call1(py, PyTuple::new(py, &[&self.estimator]))
+            save.call1(py, PyTuple::new(py, [&self.estimator]))
                 .unwrap()
                 .extract(py)
                 .unwrap()
@@ -461,7 +461,7 @@ impl Bindings for Estimator {
         Python::with_gil(|py| -> Box<dyn Bindings> {
             let load = PY_MODULE.getattr(py, "load").unwrap();
             let estimator: Py<PyAny> = load
-                .call1(py, PyTuple::new(py, &[bytes]))
+                .call1(py, PyTuple::new(py, [bytes]))
                 .unwrap()
                 .extract(py)
                 .unwrap();
@@ -469,7 +469,7 @@ impl Bindings for Estimator {
             let predict: Py<PyAny> = PY_MODULE
                 .getattr(py, "predictor")
                 .unwrap()
-                .call1(py, PyTuple::new(py, &[&estimator]))
+                .call1(py, PyTuple::new(py, [&estimator]))
                 .unwrap()
                 .extract(py)
                 .unwrap();
@@ -477,7 +477,7 @@ impl Bindings for Estimator {
             let predict_proba: Py<PyAny> = PY_MODULE
                 .getattr(py, "predictor_proba")
                 .unwrap()
-                .call1(py, PyTuple::new(py, &[&estimator]))
+                .call1(py, PyTuple::new(py, [&estimator]))
                 .unwrap()
                 .extract(py)
                 .unwrap();
@@ -495,13 +495,13 @@ fn sklearn_metric(name: &str, ground_truth: &[f32], y_hat: &[f32]) -> f32 {
     Python::with_gil(|py| -> f32 {
         let calculate_metric = PY_MODULE.getattr(py, "calculate_metric").unwrap();
         let wrapper: Py<PyAny> = calculate_metric
-            .call1(py, PyTuple::new(py, &[name]))
+            .call1(py, PyTuple::new(py, [name]))
             .unwrap()
             .extract(py)
             .unwrap();
 
         let score: f32 = wrapper
-            .call1(py, PyTuple::new(py, &[ground_truth, y_hat]))
+            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))
             .unwrap()
             .extract(py)
             .unwrap();
@@ -530,13 +530,13 @@ pub fn confusion_matrix(ground_truth: &[f32], y_hat: &[f32]) -> Vec<Vec<f32>> {
     Python::with_gil(|py| -> Vec<Vec<f32>> {
         let calculate_metric = PY_MODULE.getattr(py, "calculate_metric").unwrap();
         let wrapper: Py<PyAny> = calculate_metric
-            .call1(py, PyTuple::new(py, &["confusion_matrix"]))
+            .call1(py, PyTuple::new(py, ["confusion_matrix"]))
             .unwrap()
             .extract(py)
             .unwrap();
 
         let matrix: Vec<Vec<f32>> = wrapper
-            .call1(py, PyTuple::new(py, &[ground_truth, y_hat]))
+            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))
             .unwrap()
             .extract(py)
             .unwrap();
@@ -549,7 +549,7 @@ pub fn regression_metrics(ground_truth: &[f32], y_hat: &[f32]) -> HashMap<String
     Python::with_gil(|py| -> HashMap<String, f32> {
         let calculate_metric = PY_MODULE.getattr(py, "regression_metrics").unwrap();
         let scores: HashMap<String, f32> = calculate_metric
-            .call1(py, PyTuple::new(py, &[ground_truth, y_hat]))
+            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))
             .unwrap()
             .extract(py)
             .unwrap();
@@ -566,7 +566,7 @@ pub fn classification_metrics(
     let mut scores = Python::with_gil(|py| -> HashMap<String, f32> {
         let calculate_metric = PY_MODULE.getattr(py, "classification_metrics").unwrap();
         let scores: HashMap<String, f32> = calculate_metric
-            .call1(py, PyTuple::new(py, &[ground_truth, y_hat]))
+            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))
             .unwrap()
             .extract(py)
             .unwrap();
@@ -591,7 +591,7 @@ pub fn cluster_metrics(
         let calculate_metric = PY_MODULE.getattr(py, "cluster_metrics").unwrap();
 
         let scores: HashMap<String, f32> = calculate_metric
-            .call1(py, (num_features, PyTuple::new(py, &[inputs, labels])))
+            .call1(py, (num_features, PyTuple::new(py, [inputs, labels])))
             .unwrap()
             .extract(py)
             .unwrap();

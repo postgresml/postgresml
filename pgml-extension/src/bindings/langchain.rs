@@ -20,7 +20,7 @@ pub fn chunk(splitter: &str, text: &str, kwargs: &serde_json::Value) -> Vec<Stri
     let kwargs = serde_json::to_string(kwargs).unwrap();
 
     Python::with_gil(|py| -> Vec<String> {
-        let chunk: Py<PyAny> = PY_MODULE.getattr(py, "chunk").unwrap().into();
+        let chunk: Py<PyAny> = PY_MODULE.getattr(py, "chunk").unwrap();
 
         chunk
             .call1(

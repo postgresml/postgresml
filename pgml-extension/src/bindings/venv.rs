@@ -7,7 +7,7 @@ use pyo3::types::PyTuple;
 
 use crate::config::get_config;
 
-static CONFIG_NAME: &'static str = "pgml.venv";
+static CONFIG_NAME: &str = "pgml.venv";
 
 static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
@@ -19,7 +19,7 @@ static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
 
 pub fn activate_venv(venv: &str) -> bool {
     Python::with_gil(|py| -> bool {
-        let activate_venv: Py<PyAny> = PY_MODULE.getattr(py, "activate_venv").unwrap().into();
+        let activate_venv: Py<PyAny> = PY_MODULE.getattr(py, "activate_venv").unwrap();
         let result: Py<PyAny> = activate_venv
             .call1(py, PyTuple::new(py, &[venv.to_string().into_py(py)]))
             .unwrap();

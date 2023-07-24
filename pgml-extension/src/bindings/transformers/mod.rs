@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::{collections::HashMap, path::Path};
 
 use once_cell::sync::Lazy;
 use pgrx::*;
@@ -41,7 +41,7 @@ pub fn transform(
     let inputs = serde_json::to_string(&inputs).unwrap();
 
     let results = Python::with_gil(|py| -> String {
-        let transform: Py<PyAny> = PY_MODULE.getattr(py, "transform").unwrap().into();
+        let transform: Py<PyAny> = PY_MODULE.getattr(py, "transform").unwrap();
 
         let result = transform.call1(
             py,
@@ -69,7 +69,7 @@ pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -
 
     let kwargs = serde_json::to_string(kwargs).unwrap();
     Python::with_gil(|py| -> Vec<Vec<f32>> {
-        let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed").unwrap().into();
+        let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed").unwrap();
         let result = embed.call1(
             py,
             PyTuple::new(
@@ -98,14 +98,14 @@ pub fn tune(
     task: &Task,
     dataset: TextDataset,
     hyperparams: &JsonB,
-    path: &std::path::PathBuf,
+    path: &Path,
 ) -> HashMap<String, f64> {
     crate::bindings::venv::activate();
 
     let task = task.to_string();
     let hyperparams = serde_json::to_string(&hyperparams.0).unwrap();
 
-    let metrics = Python::with_gil(|py| -> HashMap<String, f64> {
+    Python::with_gil(|py| -> HashMap<String, f64> {
         let tune = PY_MODULE.getattr(py, "tune").unwrap();
         let result = tune.call1(
             py,
@@ -127,8 +127,7 @@ pub fn tune(
             Ok(o) => o,
         };
         result.extract(py).unwrap()
-    });
-    metrics
+    })
 }
 
 pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Vec<String> {
@@ -198,7 +197,7 @@ fn dump_model(model_id: i64, dir: PathBuf) {
                 .append(true)
                 .open(path)
                 .unwrap();
-            file.write(&data).unwrap();
+            let _num_bytes = file.write(&data).unwrap();
             file.flush().unwrap();
         }
     });
@@ -215,7 +214,7 @@ pub fn load_dataset(
     let kwargs = serde_json::to_string(kwargs).unwrap();
 
     let dataset = Python::with_gil(|py| -> String {
-        let load_dataset: Py<PyAny> = PY_MODULE.getattr(py, "load_dataset").unwrap().into();
+        let load_dataset: Py<PyAny> = PY_MODULE.getattr(py, "load_dataset").unwrap();
         load_dataset
             .call1(
                 py,
@@ -281,9 +280,8 @@ pub fn load_dataset(
     let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'", vec![
         (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
     ]).unwrap().unwrap();
-    match table_count {
-        1 => Spi::run(&format!(r#"DROP TABLE IF EXISTS {table_name}"#)).unwrap(),
-        _ => (),
+    if table_count == 1 {
+        Spi::run(&format!(r#"DROP TABLE IF EXISTS {table_name}"#)).unwrap()
     }
 
     Spi::run(&format!(r#"CREATE TABLE {table_name} ({column_types})"#)).unwrap();
@@ -328,7 +326,7 @@ pub fn load_dataset(
 
 pub fn clear_gpu_cache(memory_usage: Option<f32>) -> bool {
     Python::with_gil(|py| -> bool {
-        let clear_gpu_cache: Py<PyAny> = PY_MODULE.getattr(py, "clear_gpu_cache").unwrap().into();
+        let clear_gpu_cache: Py<PyAny> = PY_MODULE.getattr(py, "clear_gpu_cache").unwrap();
         clear_gpu_cache
             .call1(py, PyTuple::new(py, &[memory_usage.into_py(py)]))
             .unwrap()

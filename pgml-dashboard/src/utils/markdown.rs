@@ -6,9 +6,7 @@ use comrak::{
     parse_document, Arena, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions,
 };
 use std::cell::RefCell;
-use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};
-use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -22,18 +20,26 @@ use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
 
 use std::fmt;
+use std::sync::atomic::AtomicUsize;
 
-pub struct MarkdownHeadings {}
+pub struct MarkdownHeadings {
+    header_counter: AtomicUsize,
+}
+
+impl MarkdownHeadings {
+    pub fn new() -> Self {
+        Self {
+            header_counter: AtomicUsize::new(0),
+        }
+    }
+}
+
 impl HeadingAdapter for MarkdownHeadings {
     fn enter(&self, meta: &HeadingMeta) -> String {
-        let mut s = DefaultHasher::new();
-
-        meta.content
-            .to_string()
-            .to_lowercase()
-            .replace(" ", "-")
-            .hash(&mut s);
-        let id = "header-".to_string() + &s.finish().to_string();
+        let id = self
+            .header_counter
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let id = format!("header-{}", id);
 
         match meta.level {
             1 => format!(r#"<h1 class="h1 mb-5" id="{id}">"#),
@@ -214,7 +220,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
             let code = match options.lang {
                 "postgresql" | "sql" | "postgresql-line-nums" => {
                     lazy_static! {
-                        static ref SQL_KEYS: [&'static str; 57] = [
+                        static ref SQL_KEYS: [&'static str; 61] = [
                             "CASCADE",
                             "INNER ",
                             "ON ",
@@ -272,8 +278,12 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "pgml.norm_l2",
                             "CONCURRENTLY",
                             "ON\n",
+                            "IF NOT EXISTS",
+                            "pgml.train",
+                            "pgml.predict",
+                            "pgml.transform",
                         ];
-                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 57] = [
+                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 61] = [
                             "<span class=\"syntax-highlight\">CASCADE</span>",
                             "<span class=\"syntax-highlight\">INNER </span>",
                             "<span class=\"syntax-highlight\">ON </span>",
@@ -331,6 +341,10 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "<strong>pgml.norm_l2</strong>",
                             "<span class=\"syntax-highlight\">CONCURRENTLY</span>",
                             "<span class=\"syntax-highlight\">ON</span>\n",
+                            "<span class=\"syntax-highlight\">IF NOT EXISTS</span>",
+                            "<strong>pgml.train</strong>",
+                            "<strong>pgml.predict</strong>",
+                            "<strong>pgml.transform</strong>",
                         ];
                         static ref AHO_SQL: AhoCorasick = AhoCorasickBuilder::new()
                             .match_kind(MatchKind::LeftmostLongest)
@@ -547,17 +561,19 @@ pub fn wrap_tables<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> 
 ///
 pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
     let mut links = Vec::new();
+    let mut header_counter = 0;
 
     iter_nodes(root, &mut |node| {
         match &node.data.borrow().value {
             &NodeValue::Heading(ref header) => {
+                header_counter += 1;
                 if header.level != 1 {
                     let sibling = node
                         .first_child()
                         .ok_or(anyhow::anyhow!("markdown heading has no child"))?;
                     match &sibling.data.borrow().value {
                         &NodeValue::Text(ref text) => {
-                            links.push(TocLink::new(text).level(header.level));
+                            links.push(TocLink::new(text, header_counter - 1).level(header.level));
                             return Ok(false);
                         }
                         _ => (),

@@ -32,11 +32,9 @@ impl Task {
     }
 
     pub fn is_supervised(&self) -> bool {
-        match self {
-            Task::regression | Task::classification => true,
-            _ => false,
-        }
+        matches!(self, Task::regression | Task::classification)
     }
+
     pub fn default_target_metric(&self) -> String {
         match self {
             Task::regression => "r2",

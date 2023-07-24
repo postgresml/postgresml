@@ -195,7 +195,8 @@ async fn render<'a>(
 
     // Style headings like we like them
     let mut plugins = ComrakPlugins::default();
-    plugins.render.heading_adapter = Some(&markdown::MarkdownHeadings {});
+    let headings = markdown::MarkdownHeadings::new();
+    plugins.render.heading_adapter = Some(&headings);
     plugins.render.codefence_syntax_highlighter = Some(&markdown::SyntaxHighlighter {});
 
     // Render
