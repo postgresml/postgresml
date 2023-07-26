@@ -21,7 +21,22 @@ extension_sql_file!("../sql/schema.sql", name = "schema");
 
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
-mod tests {}
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_migration_file_exists() {
+        let paths = std::fs::read_dir("./sql").unwrap();
+        for path in paths {
+            let path = path.unwrap().path().display().to_string();
+            if path.contains(VERSION) {
+                return;
+            }
+        }
+
+        panic!("Migration file for version {} not found", VERSION);
+    }
+}
 
 #[cfg(test)]
 pub mod pg_test {

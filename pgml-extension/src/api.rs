@@ -69,6 +69,16 @@ pub fn python_package_version(name: &str) {
     error!("Python is not installed, recompile with `--features python`");
 }
 
+#[cfg(feature = "python")]
+#[pg_extern]
+pub fn python_pip_freeze() -> TableIterator<'static, (name!(package, String),)> {
+    let packages = crate::bindings::venv::freeze()
+        .into_iter()
+        .map(|package| (package,));
+
+    TableIterator::new(packages)
+}
+
 #[pg_extern]
 pub fn validate_shared_library() {
     let shared_preload_libraries: String = Spi::get_one(

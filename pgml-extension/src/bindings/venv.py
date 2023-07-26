@@ -23,3 +23,16 @@ def activate_venv(venv):
     else:
         print("Virtualenv not found: %s" % venv)
         return False
+
+
+def freeze(*args, **kwargs):
+    packages = []
+    try:
+        from pip._internal.operations import freeze
+    except ImportError: # pip < 10.0
+        from pip.operations import freeze
+
+    pkgs = freeze.freeze()
+    for pkg in pkgs:
+        packages.append(pkg)
+    return packages
