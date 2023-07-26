@@ -25,7 +25,7 @@ def activate_venv(venv):
         return False
 
 
-def freeze(*args, **kwargs):
+def freeze():
     packages = []
     try:
         from pip._internal.operations import freeze

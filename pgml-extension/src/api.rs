@@ -72,6 +72,8 @@ pub fn python_package_version(name: &str) {
 #[cfg(feature = "python")]
 #[pg_extern]
 pub fn python_pip_freeze() -> TableIterator<'static, (name!(package, String),)> {
+    crate::bindings::venv::activate();
+
     let packages = crate::bindings::venv::freeze()
         .into_iter()
         .map(|package| (package,));
