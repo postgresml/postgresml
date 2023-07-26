@@ -36,14 +36,14 @@ pub fn custom_methods(
     output
 }
 
-#[proc_macro_derive(custom_into_py)]
-pub fn custom_into_py(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let parsed = parse_macro_input!(input as DeriveInput);
-    python::generate_into_py(parsed)
-}
+// #[proc_macro_derive(custom_into_py)]
+// pub fn custom_into_py(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+//     let parsed = parse_macro_input!(input as DeriveInput);
+//     python::generate_into_py(parsed)
+// }
 
-#[proc_macro_derive(custom_into_js_result)]
-pub fn custom_into_js_result(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let parsed = parse_macro_input!(input as DeriveInput);
-    javascript::generate_custom_into_js_result(parsed)
-}
+// #[proc_macro_derive(custom_into_js_result)]
+// pub fn custom_into_js_result(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+//     let parsed = parse_macro_input!(input as DeriveInput);
+//     javascript::generate_custom_into_js_result(parsed)
+// }

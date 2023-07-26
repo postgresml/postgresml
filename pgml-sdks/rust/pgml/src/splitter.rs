@@ -19,7 +19,14 @@ pub struct Splitter {
     pub verified_in_database: bool,
 }
 
-#[custom_methods(new, get_id, get_created_at, get_name, get_parameters, get_verified_in_database)]
+#[custom_methods(
+    new,
+    get_id,
+    get_created_at,
+    get_name,
+    get_parameters,
+    get_verified_in_database
+)]
 impl Splitter {
     pub fn new(
         name: Option<String>,
@@ -92,17 +99,4 @@ impl Splitter {
     pub fn get_verified_in_database(&self) -> bool {
         self.verified_in_database
     }
-
-    // pub async fn delete(&mut self) -> anyhow::Result<()> {
-    //     let pool = get_or_initialize_pool(&self.database_url).await?;
-    //     self.verify_in_database(&pool).await?;
-    //     sqlx::query("DELETE FROM pgml.sdk_splitters WHERE id = $1")
-    //         .bind(&self.id)
-    //         .execute(&pool)
-    //         .await?;
-    //     self.id = None;
-    //     self.created_at = None;
-    //     self.verified_in_database = false;
-    //     Ok(())
-    // }
 }

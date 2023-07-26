@@ -21,7 +21,16 @@ pub struct Model {
     pub verified_in_database: bool,
 }
 
-#[custom_methods(new, get_id, get_created_at, get_task, get_name, get_source, get_parameters, get_verified_in_database)]
+#[custom_methods(
+    new,
+    get_id,
+    get_created_at,
+    get_task,
+    get_name,
+    get_source,
+    get_parameters,
+    get_verified_in_database
+)]
 impl Model {
     pub fn new(
         name: Option<String>,
@@ -115,19 +124,6 @@ impl Model {
         self.verify_in_database(&pool).await?;
         Ok(())
     }
-
-    // pub async fn delete(&mut self) -> anyhow::Result<()> {
-    //     let pool = get_or_initialize_pool(&self.database_url).await?;
-    //     self.verify_in_database(&pool).await?;
-    //     sqlx::query("DELETE FROM pgml.sdk_models WHERE id = $1")
-    //         .bind(&self.id)
-    //         .execute(&pool)
-    //         .await?;
-    //     self.id = None;
-    //     self.created_at = None;
-    //     self.verified_in_database = false;
-    //     Ok(())
-    // }
 
     pub fn from_model_and_database_url(m: models::Model, database_url: Option<String>) -> Self {
         Self {

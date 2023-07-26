@@ -4,7 +4,7 @@
 //!
 //! With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
-use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
+use log::{LevelFilter, Metadata, Record, SetLoggerError};
 use sqlx::PgPool;
 use std::collections::HashMap;
 use std::sync::RwLock;
@@ -25,17 +25,23 @@ pub mod types;
 mod utils;
 
 // Pub re-export the Database and Collection structs for use in the rust library
+pub use builtins::Builtins;
 pub use collection::Collection;
+pub use model::Model;
+pub use splitter::Splitter;
 
 // Store the database(s) in a global variable so that we can access them from anywhere
 // This is not necessarily idiomatic Rust, but it is a good way to acomplish what we need
 static DATABASE_POOLS: RwLock<Option<HashMap<String, PgPool>>> = RwLock::new(None);
 
+// Even though this function does not use async anywhere, for whatever reason it must be async or
+// sqlx's connect_lazy will throw an error
 async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result<PgPool> {
+    println!("Getting or initializing pool");
     let mut pools = DATABASE_POOLS
         .write()
         .expect("Error getting DATABASE_POOLS for writing");
-    let pools = pools.get_or_insert_with(|| HashMap::new());
+    let pools = pools.get_or_insert_with(HashMap::new);
     let environment_url = std::env::var("DATABASE_URL");
     let environment_url = environment_url.as_deref();
     let url = database_url
@@ -48,6 +54,25 @@ async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result
         pools.insert(url.to_string(), pool.clone());
         Ok(pool)
     }
+}
+
+async fn connect(database_url: &Option<String>) -> anyhow::Result<()> {
+    get_or_initialize_pool(database_url).await?;
+    Ok(())
+}
+
+async fn reconnect() -> anyhow::Result<()> {
+    let mut pools = DATABASE_POOLS
+        .write()
+        .expect("Error getting DATABASE_POOLS for writing");
+    let pools = pools.get_or_insert_with(HashMap::new);
+    let keys = pools.keys().map(|k| k.to_owned()).collect::<Vec<_>>();
+    pools.clear();
+    for url in keys {
+        let pool = PgPool::connect_lazy(&url)?;
+        pools.insert(url.to_string(), pool.clone());
+    }
+    Ok(())
 }
 
 // Normally libraries leave it up to up to the rust executable using the library to init the
@@ -111,6 +136,22 @@ fn setup_logger(level: &str) -> pyo3::PyResult<()> {
 }
 
 #[cfg(feature = "python")]
+#[pyo3::prelude::pyfunction]
+fn connect_python(database_url: Option<String>) -> pyo3::PyResult<()> {
+    let runtime = get_or_set_runtime();
+    runtime.block_on(connect(&database_url))
+        .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))
+}
+
+#[cfg(feature = "python")]
+#[pyo3::prelude::pyfunction]
+fn reconnect_python() -> pyo3::PyResult<()> {
+    let runtime = get_or_set_runtime();
+    runtime.block_on(reconnect())
+        .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))
+}
+
+#[cfg(feature = "python")]
 #[pyo3::pymodule]
 fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(setup_logger, m)?)?;
@@ -118,6 +159,8 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_class::<model::ModelPython>()?;
     m.add_class::<splitter::SplitterPython>()?;
     m.add_class::<builtins::BuiltinsPython>()?;
+    m.add_function(pyo3::wrap_pyfunction!(connect_python, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(reconnect_python, m)?)?;
     Ok(())
 }
 
@@ -167,7 +210,7 @@ mod tests {
         documents
     }
 
-    #[tokio::test]
+    #[sqlx::test]
     async fn can_lazily_create_collection() {
         setup_logger();
         let collection_name = "r_ccc_test_4";
@@ -193,7 +236,7 @@ mod tests {
         assert!(does_collection_exist);
     }
 
-    #[tokio::test]
+    #[sqlx::test]
     async fn can_lazily_create_model() {
         setup_logger();
         let mut model = Model::new(None, None, None, None, None);
@@ -202,7 +245,7 @@ mod tests {
         assert_eq!(id, model.id.unwrap());
     }
 
-    #[tokio::test]
+    #[sqlx::test]
     async fn can_lazily_create_splitter() {
         setup_logger();
         let mut splitter = Splitter::new(None, None, None);
@@ -211,7 +254,7 @@ mod tests {
         assert_eq!(id, splitter.id.unwrap());
     }
 
-    #[tokio::test]
+    #[sqlx::test]
     async fn can_vector_search() {
         setup_logger();
         let collection_name = "r_cvs_test_5";
@@ -243,7 +286,7 @@ mod tests {
         assert!(results.len() > 0);
     }
 
-    #[tokio::test]
+    #[sqlx::test]
     async fn can_vector_search_with_remote_embeddings() {
         setup_logger();
         let collection_name = "r_cvswre_test_1";
@@ -273,13 +316,13 @@ mod tests {
         assert!(results.len() > 0);
     }
 
-    #[tokio::test]
+    #[sqlx::test]
     async fn can_vector_search_with_query_builder() {
         setup_logger();
         let collection_name = "r_cvswqb_test_2";
+        let mut collection = Collection::new(collection_name, None);
         let mut model = Model::new(None, None, None, None, None);
         let mut splitter = Splitter::new(None, None, None);
-        let mut collection = Collection::new(collection_name, None);
         collection
             .upsert_documents(generate_dummy_documents(2), None, None)
             .await
@@ -315,6 +358,42 @@ mod tests {
             .unwrap();
         collection.archive().await.unwrap();
         assert!(results.len() > 0);
+    }
+
+    #[sqlx::test]
+    async fn collection_errors() {
+        setup_logger();
+        let collection_name = "r_ce_test_0";
+        let mut collection = Collection::new(collection_name, None);
+        let mut model = Model::new(None, None, None, None, None);
+        let mut splitter = Splitter::new(None, None, None);
+        // Test that we cannot generate tsvectors without upserting documents first
+        assert!(collection.generate_tsvectors(None).await.is_err());
+        // Test that we cannot generate chunks without upserting documents first
+        assert!(collection.generate_chunks(&mut splitter).await.is_err());
+        // Test that we cannot generate embeddings without generating chunks first
+        assert!(collection
+            .generate_embeddings(&mut model, &mut splitter)
+            .await
+            .is_err());
+    }
+
+    #[sqlx::test]
+    async fn query_runner() {
+        setup_logger();
+        let builtins = Builtins::new(None);
+        let query = builtins.query("SELECT * from pgml.collections");
+        let _ = query.fetch_all().await.unwrap();
+    }
+
+    #[sqlx::test]
+    async fn transform() {
+        setup_logger();
+        let builtins = Builtins::new(None);
+        // let task = Json::from(serde_json::json!("text-classification"));
+        let task = serde_json::json!("translation_en_to_fr");
+        let inputs = vec!["test1".to_string(), "test2".to_string()];
+        let _ = builtins.transform(task.into(), inputs, None).await.unwrap();
     }
 
     // #[tokio::test]

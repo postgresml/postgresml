@@ -1,4 +1,3 @@
-use pgml_macros::{custom_into_js_result, custom_into_py};
 use sea_query::enum_def;
 use sqlx::types::Uuid;
 use sqlx::FromRow;

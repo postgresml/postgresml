@@ -9,9 +9,7 @@ import pgml from '../../index.js'
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-const CONNECTION_STRING = process.env.DATABASE_URL;
-
-const generate_documents = (count) => {
+const generate_documents = (count: number) => {
   let docs = [];
   for (let i = 0; i < count; i++) {
     docs.push({
@@ -73,6 +71,47 @@ it("can vector search", async () => {
   // Now model should be verified in the database
   expect(model.get_verified_in_database()).toBe(true);
   let results = await collection.vector_search("Here is some query", model, splitter);
+  await collection.archive();
+  expect(results.length).toBe(2);
+})
+
+it("can vector search with remote embeddings", async () => {
+  let collection_name = "j_cvswre_test_0";
+  let collection = pgml.newCollection(collection_name);
+  let model = pgml.newModel("text-embedding-ada-002", "embeddings", "openai");
+  let splitter = pgml.newSplitter();
+  await collection.upsert_documents(generate_documents(2));
+  await collection.generate_chunks(splitter);
+  await collection.generate_embeddings(model, splitter);
+  let results = await collection.vector_search("Here is some query", model, splitter);
+  await collection.archive();
+  expect(results.length).toBe(2);
+})
+
+it("can vector search with query builder", async () => {
+  let collection_name = "j_cvswqb_test_0";
+  let collection = pgml.newCollection(collection_name);
+  let model = pgml.newModel();
+  let splitter = pgml.newSplitter();
+  await collection.upsert_documents(generate_documents(2));
+  await collection.generate_chunks(splitter);
+  await collection.generate_embeddings(model, splitter);
+  await collection.generate_tsvectors();
+  let results = await collection.query().vector_recall("Here is some query", model, splitter).filter({
+        "metadata": {
+            "metadata": {
+                "$or": [
+                    {"uuid": {"$eq": 0 }},
+                    {"uuid": {"$eq": 10 }},
+                    {"category": {"$eq": [1, 2, 3]}}
+                ]
+
+            }
+        },
+        "full_text": {
+            "text": "Test document"
+        }
+    }).run()
   await collection.archive();
   expect(results.length).toBe(2);
 })

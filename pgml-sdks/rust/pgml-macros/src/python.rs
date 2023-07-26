@@ -12,54 +12,54 @@ from typing import List, Dict, Optional, Self, Any
 
 "#;
 
-pub fn generate_into_py(parsed: DeriveInput) -> proc_macro::TokenStream {
-    let name = parsed.ident;
-    let fields_named = match parsed.data {
-        syn::Data::Struct(s) => match s.fields {
-            syn::Fields::Named(n) => n,
-            _ => panic!("custom_into_py proc_macro structs should only have named fields"),
-        },
-        _ => panic!("custom_into_py proc_macro should only be used on structs"),
-    };
-
-    let sets: Vec<proc_macro2::TokenStream> = fields_named.named.into_pairs().map(|p| {
-        let v = p.into_value();
-        let name = v.ident.to_token_stream().to_string();
-        let name_ident = v.ident;
-        quote! {
-            dict.set_item(#name, self.#name_ident).expect("Error setting python value in custom_into_py proc_macro");
-        }
-    }).collect();
-
-    let stub = format!("\n{} = dict[str, Any]\n", name);
-
-    let mut file = OpenOptions::new()
-        .create(true)
-        .write(true)
-        .append(true)
-        .read(true)
-        .open("python/pgml/pgml.pyi")
-        .unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)
-        .expect("Unable to read stubs file for python");
-    if !contents.contains(&stub) {
-        file.write_all(stub.as_bytes())
-            .expect("Unable to write stubs file for python");
-    }
-
-    let expanded = quote! {
-        #[cfg(feature = "python")]
-        impl pyo3::conversion::IntoPy<pyo3::PyObject> for #name {
-            fn into_py(self, py: pyo3::marker::Python<'_>) -> pyo3::PyObject {
-                let dict = pyo3::types::PyDict::new(py);
-                #(#sets)*
-                dict.into()
-            }
-        }
-    };
-    proc_macro::TokenStream::from(expanded)
-}
+// pub fn generate_into_py(parsed: DeriveInput) -> proc_macro::TokenStream {
+//     let name = parsed.ident;
+//     let fields_named = match parsed.data {
+//         syn::Data::Struct(s) => match s.fields {
+//             syn::Fields::Named(n) => n,
+//             _ => panic!("custom_into_py proc_macro structs should only have named fields"),
+//         },
+//         _ => panic!("custom_into_py proc_macro should only be used on structs"),
+//     };
+//
+//     let sets: Vec<proc_macro2::TokenStream> = fields_named.named.into_pairs().map(|p| {
+//         let v = p.into_value();
+//         let name = v.ident.to_token_stream().to_string();
+//         let name_ident = v.ident;
+//         quote! {
+//             dict.set_item(#name, self.#name_ident).expect("Error setting python value in custom_into_py proc_macro");
+//         }
+//     }).collect();
+//
+//     let stub = format!("\n{} = dict[str, Any]\n", name);
+//
+//     let mut file = OpenOptions::new()
+//         .create(true)
+//         .write(true)
+//         .append(true)
+//         .read(true)
+//         .open("python/pgml/pgml.pyi")
+//         .unwrap();
+//     let mut contents = String::new();
+//     file.read_to_string(&mut contents)
+//         .expect("Unable to read stubs file for python");
+//     if !contents.contains(&stub) {
+//         file.write_all(stub.as_bytes())
+//             .expect("Unable to write stubs file for python");
+//     }
+//
+//     let expanded = quote! {
+//         #[cfg(feature = "python")]
+//         impl pyo3::conversion::IntoPy<pyo3::PyObject> for #name {
+//             fn into_py(self, py: pyo3::marker::Python<'_>) -> pyo3::PyObject {
+//                 let dict = pyo3::types::PyDict::new(py);
+//                 #(#sets)*
+//                 dict.into()
+//             }
+//         }
+//     };
+//     proc_macro::TokenStream::from(expanded)
+// }
 
 pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
     let name_ident = format_ident!("{}Python", parsed.ident);
@@ -70,25 +70,6 @@ pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
         #[cfg(feature = "python")]
         #[pyo3::pyclass(name = #wrapped_type_name)]
         #[derive(Debug, Clone)]
-        // pub struct #name_ident {
-        //     wrapped: std::boxed::Box<#wrapped_type_ident>
-        // }
-        //
-        // #[cfg(feature = "python")]
-        // impl From<#wrapped_type_ident> for #name_ident {
-        //     fn from(w: #wrapped_type_ident) -> Self {
-        //         Self {
-        //             wrapped: std::boxed::Box::new(w),
-        //         }
-        //     }
-        // }
-        //
-        // #[cfg(feature = "python")]
-        // impl From<#name_ident> for #wrapped_type_ident {
-        //     fn from(w: #name_ident) -> Self {
-        //         *w.wrapped
-        //     }
-        // }
         pub struct #name_ident {
             pub wrapped: std::sync::Arc<tokio::sync::Mutex<#wrapped_type_ident>>
         }
@@ -190,17 +171,18 @@ pub fn generate_python_methods(
             "new" => "__init__".to_string(),
             _ => method_ident.to_string(),
         };
-        let p3 = method
+        let mut p3 = method
             .method_arguments
             .iter()
-            .map(|a| format!("{}: {}", a.0, get_python_type(&a.1)))
-            .collect::<Vec<String>>()
-            .join(", ");
+            .map(|a| format!("{}: {}", a.0.replace("mut", "").trim(), get_python_type(&a.1)))
+            .collect::<Vec<String>>();
+        p3.insert(0, "self".to_string());
+        let p3 = p3.join(", ");
         let p4 = match &method.output_type {
             OutputType::Result(v) | OutputType::Other(v) => get_python_type(v),
             OutputType::Default => "None".to_string(),
         };
-        stubs.push_str(&format!("\t{} {}(self, {}) -> {}", p1, p2, p3, p4));
+        stubs.push_str(&format!("\t{} {}({}) -> {}", p1, p2, p3, p4));
         stubs.push_str("\n\t\t...\n");
 
         let prepared_wrapper_arguments = quote! {
@@ -532,10 +514,12 @@ fn get_python_type(ty: &SupportedType) -> String {
                 format!("tuple[{}]", types.join(", "))
             }
         }
-        SupportedType::i64 => "int".to_string(),
+        SupportedType::i64 | SupportedType::u64 => "int".to_string(),
         SupportedType::f64 => "float".to_string(),
         // Our own types
         t @ SupportedType::Database
+        | t @ SupportedType::Json
+        | t @ SupportedType::DateTime
         | t @ SupportedType::Collection
         | t @ SupportedType::Model
         | t @ SupportedType::QueryBuilder
@@ -554,7 +538,7 @@ fn get_type_for_optional(ty: &SupportedType) -> String {
         }
         SupportedType::HashMap(_) => "{}".to_string(),
         SupportedType::Vec(_) => "[]".to_string(),
-        SupportedType::i64 => 1.to_string(),
+        SupportedType::i64 | SupportedType::u64 => 1.to_string(),
         SupportedType::f64 => 1.0.to_string(),
         SupportedType::Json => "{}".to_string(),
         _ => panic!("Type not yet supported for optional python stub: {:?}", ty),

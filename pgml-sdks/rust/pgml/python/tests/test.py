@@ -1,7 +1,10 @@
 import os
 import pgml
 import pytest
+import asyncio
+import time
 from typing import List, Dict, Any
+import os
 
 ####################################################################################
 ####################################################################################
@@ -12,13 +15,13 @@ from typing import List, Dict, Any
 ####################################################################################
 ####################################################################################
 
-CONNECTION_STRING = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-if CONNECTION_STRING is None:
+if DATABASE_URL is None:
     print("No DATABASE_URL environment variable found")
     exit(1)
 
-# pgml.setup_logger("DEBUG")
+pgml.setup_logger("DEBUG")
 
 def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
     dummy_documents = []
@@ -123,3 +126,47 @@ async def test_can_vector_search_with_query_builder():
     }).run()
     await collection.archive()
     assert len(results) > 0
+
+@pytest.mark.asyncio
+async def test_query_runner():
+    builtins = pgml.Builtins()
+    _ = await builtins.query("SELECT * from pgml.collections").fetch_all()
+
+@pytest.mark.asyncio
+async def test_transform():
+    builtins = pgml.Builtins()
+    _ = await builtins.transform("translation_en_to_fr", ["test 1", "test 2"])
+
+
+# @pytest.mark.asyncio
+# def test_fork():
+#     # pgml.connect_python(DATABASE_URL)
+#
+#     count = 1 
+#     processes = []
+#    
+#     builtins = pgml.Builtins()
+#     async def test_query():
+#         return await builtins.query("SELECT * from pgml.collections").fetch_all()
+#    
+#     for _ in range(count):
+#         pid = os.fork()
+#         if pid == 0:
+#             # pgml.reconnect_python()
+#             print("Child running")
+#             asyncio.run(test_query())
+#             os._exit(0)
+#         else:
+#             # pgml.reconnect_python()
+#             print("Parent running")
+#             asyncio.run(test_query())
+#             processes.append(pid)
+#    
+#     while processes:
+#         pid, exit_code = os.wait()
+#         # pid, exit_code = os.waitpid(-1, os.WNOHANG)
+#         if pid == 0:
+#             time.sleep(1)
+#         else:
+#             print(pid, exit_code//256)
+#             processes.remove(pid)

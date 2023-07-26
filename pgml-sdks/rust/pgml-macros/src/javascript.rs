@@ -4,67 +4,67 @@ use std::io::{Read, Write};
 use syn::{visit::Visit, DeriveInput, ItemImpl, Type};
 
 use crate::common::{AttributeArgs, GetImplMethod};
-use crate::types::{GetSupportedType, OutputType, SupportedType};
+use crate::types::{OutputType, SupportedType};
 
-pub fn generate_custom_into_js_result(parsed: DeriveInput) -> proc_macro::TokenStream {
-    let name = parsed.ident;
-    let fields_named = match parsed.data {
-        syn::Data::Struct(s) => match s.fields {
-            syn::Fields::Named(n) => n,
-            _ => panic!("custom_into_js proc_macro structs should only have named fields"),
-        },
-        _ => panic!("custom_into_js proc_macro should only be used on structs"),
-    };
-
-    let mut sets = Vec::new();
-    let mut interface = format!("\ninterface {} {{\n", name);
-
-    fields_named.named.into_pairs().for_each(|p| {
-        let v = p.into_value();
-        let name = v.ident.to_token_stream().to_string();
-        let name_ident = v.ident;
-        sets.push(quote! {
-            let js_item = self.#name_ident.into_js_result(cx)?;
-            js_object.set(cx, #name, js_item)?;
-        });
-        let ty = GetSupportedType::get_type(&v.ty);
-        let decleration = match &ty {
-            SupportedType::Option(o) => format!("{}?", get_typescript_type(o)),
-            _ => get_typescript_type(&ty),
-        };
-        interface.push_str(&format!("\t{}: {},\n", name, decleration));
-    });
-
-    interface.push('}');
-    let mut file = OpenOptions::new()
-        .create(true)
-        .write(true)
-        .append(true)
-        .read(true)
-        .open("javascript/index.d.ts")
-        .unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)
-        .expect("Unable to read typescript decleration file");
-    if !contents.contains(&interface) {
-        file.write_all(interface.as_bytes())
-            .expect("Unable to write typescript decleration file");
-    }
-
-    let out = quote! {
-        #[cfg(feature = "javascript")]
-        impl IntoJsResult for #name {
-            type Output = neon::types::JsObject;
-            fn into_js_result<'a, 'b, 'c: 'b, C: neon::context::Context<'c>>(self, cx: &mut C) -> neon::result::JsResult<'b, Self::Output> {
-                use neon::object::Object;
-                let js_object = cx.empty_object();
-                #(#sets)*
-                Ok(js_object)
-            }
-        }
-    };
-    proc_macro::TokenStream::from(out)
-}
+// pub fn generate_custom_into_js_result(parsed: DeriveInput) -> proc_macro::TokenStream {
+//     let name = parsed.ident;
+//     let fields_named = match parsed.data {
+//         syn::Data::Struct(s) => match s.fields {
+//             syn::Fields::Named(n) => n,
+//             _ => panic!("custom_into_js proc_macro structs should only have named fields"),
+//         },
+//         _ => panic!("custom_into_js proc_macro should only be used on structs"),
+//     };
+//
+//     let mut sets = Vec::new();
+//     let mut interface = format!("\ninterface {} {{\n", name);
+//
+//     fields_named.named.into_pairs().for_each(|p| {
+//         let v = p.into_value();
+//         let name = v.ident.to_token_stream().to_string();
+//         let name_ident = v.ident;
+//         sets.push(quote! {
+//             let js_item = self.#name_ident.into_js_result(cx)?;
+//             js_object.set(cx, #name, js_item)?;NODE_OPTIONS=--experimental-vm-modules
+//         });
+//         let ty = GetSupportedType::get_type(&v.ty);
+//         let decleration = match &ty {
+//             SupportedType::Option(o) => format!("{}?", get_typescript_type(o)),
+//             _ => get_typescript_type(&ty),
+//         };
+//         interface.push_str(&format!("\t{}: {},\n", name, decleration));
+//     });
+//
+//     interface.push('}');
+//     let mut file = OpenOptions::new()
+//         .create(true)
+//         .write(true)
+//         .append(true)
+//         .read(true)
+//         .open("javascript/index.d.ts")
+//         .unwrap();
+//     let mut contents = String::new();
+//     file.read_to_string(&mut contents)
+//         .expect("Unable to read typescript decleration file");
+//     if !contents.contains(&interface) {
+//         file.write_all(interface.as_bytes())
+//             .expect("Unable to write typescript decleration file");
+//     }
+//
+//     let out = quote! {
+//         #[cfg(feature = "javascript")]
+//         impl IntoJsResult for #name {
+//             type Output = neon::types::JsObject;
+//             fn into_js_result<'a, 'b, 'c: 'b, C: neon::context::Context<'c>>(self, cx: &mut C) -> neon::result::JsResult<'b, Self::Output> {
+//                 use neon::object::Object;
+//                 let js_object = cx.empty_object();
+//                 #(#sets)*
+//                 Ok(js_object)
+//             }
+//         }
+//     };
+//     proc_macro::TokenStream::from(out)
+// }
 
 pub fn generate_javascript_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
     let name_ident = format_ident!("{}Javascript", parsed.ident);
@@ -175,8 +175,16 @@ pub fn generate_javascript_methods(
             .iter()
             .filter(|a| !matches!(a.1, SupportedType::S))
             .map(|a| match &a.1 {
-                SupportedType::Option(o) => format!("{}?: {}", a.0, get_typescript_type(o)),
-                _ => format!("{}: {}", a.0, get_typescript_type(&a.1)),
+                SupportedType::Option(o) => format!(
+                    "{}?: {}",
+                    a.0.replace("mut", "").trim(),
+                    get_typescript_type(o)
+                ),
+                _ => format!(
+                    "{}: {}",
+                    a.0.replace("mut", "").trim(),
+                    get_typescript_type(&a.1)
+                ),
             })
             .collect::<Vec<String>>()
             .join(", ");
@@ -384,19 +392,6 @@ fn convert_method_wrapper_arguments(
             let (o, i, m) = convert_method_wrapper_arguments(name_ident.clone(), &r.ty, index);
 
             match *r.ty.clone() {
-                // SupportedType::Option(_o) => (quote! {
-                //     let #argument_ident = cx.argument_opt(#i as i32);
-                //     // let #argument_ident = <#argument_type_tokens>::from_option_js_type(&mut cx, #argument_ident)?;
-                //     let #argument_ident = match #argument_ident {
-                //         Some(v) => Some(v.root(&mut cx))
-                //     };
-                // }, quote! {
-                //     let #argument_ident = match #argument_ident {
-                //         Some(v) => v.into_inner(&mut cx),
-                //         None => None
-                //     };
-                //     let #argument_ident = <#argument_type_tokens>::from_option_js_type(&mut cx, #argument_ident)?;
-                // }),
                 SupportedType::Option(_o) => panic!("We do not support references to options yet"),
 
                 SupportedType::Database
@@ -419,11 +414,6 @@ fn convert_method_wrapper_arguments(
                         m,
                     )
                 }
-
-                // _ => (quote! {
-                //     let #argument_ident = cx.argument::<#argument_type_js>(#i as i32)?;
-                //     let #argument_ident = <#argument_type_tokens>::from_js_type(&mut cx, #argument_ident)?;
-                // }, quote!{})
                 _ => {
                     if r.mutable {
                         (o, i, quote! { &mut #m})
@@ -468,7 +458,7 @@ fn convert_method_wrapper_arguments(
                 quote! { #name_ident},
             )
         }
-        SupportedType::Option(o) => {
+        SupportedType::Option(_o) => {
             let t = ty.to_type(Some("Javascript")).expect(
                 "Could not parse type in convert_method_wrapper_arguments in javascript.rs",
             );
@@ -576,7 +566,6 @@ fn get_typescript_type(ty: &SupportedType) -> String {
             )
         }
         SupportedType::JsonHashMap => "Map<string, string>".to_string(),
-        SupportedType::DateTime => "Date".to_string(),
         SupportedType::Tuple(t) => {
             let mut types = Vec::new();
             for ty in t {
@@ -592,6 +581,8 @@ fn get_typescript_type(ty: &SupportedType) -> String {
         SupportedType::i64 | SupportedType::f64 | SupportedType::u64 => "number".to_string(),
         // Our own types
         t @ SupportedType::Database
+        | t @ SupportedType::Json
+        | t @ SupportedType::DateTime
         | t @ SupportedType::Collection
         | t @ SupportedType::Splitter
         | t @ SupportedType::QueryBuilder

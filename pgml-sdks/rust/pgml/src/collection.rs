@@ -29,7 +29,7 @@ pub struct Collection {
     pub transforms_table_name: String,
     pub chunks_table_name: String,
     pub documents_tsvectors_table_name: String,
-    verified_in_database: bool,
+    pub verified_in_database: bool,
 }
 
 #[custom_methods(
@@ -40,7 +40,8 @@ pub struct Collection {
     generate_tsvectors,
     vector_search,
     query,
-    archive
+    archive,
+    get_verified_in_database
 )]
 impl Collection {
     /// Creates a new collection
@@ -54,8 +55,8 @@ impl Collection {
             transforms_table_name,
             chunks_table_name,
             documents_tsvectors_table_name,
-        ) = Self::generate_table_names(&name);
-        let collection = Self {
+        ) = Self::generate_table_names(name);
+        Self {
             name: name.to_string(),
             database_url,
             documents_table_name,
@@ -63,23 +64,61 @@ impl Collection {
             chunks_table_name,
             documents_tsvectors_table_name,
             verified_in_database: false,
-        };
-        collection
+        }
     }
 
+    // Unfortunately the async-recursion macro does not play nice with pyo3 so this function is a
+    // bit more verbose than it otherwise could be
     async fn verify_in_database(&mut self, pool: &PgPool) -> anyhow::Result<()> {
         if !self.verified_in_database {
-            sqlx::query(
+            let result = sqlx::query(
                 "INSERT INTO pgml.collections (name, active) VALUES ($1, TRUE) ON CONFLICT (name) DO NOTHING",
             )
             .bind(&self.name)
             .execute(pool)
-            .await?;
-            pool.execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name).as_str())
-                .await?;
-            self.verified_in_database = true;
+            .await;
+
+            match result {
+                Ok(_r) => {
+                    pool.execute(
+                        query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name).as_str(),
+                    )
+                    .await?;
+                    self.verified_in_database = true;
+                    Ok(())
+                }
+                Err(e) => {
+                    match e.as_database_error() {
+                        Some(db_e) => {
+                            // Error 42P01 is "undefined_table"
+                            if db_e.code() == Some(std::borrow::Cow::from("42P01")) {
+                                sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
+                                    .execute(pool)
+                                    .await?;
+                                sqlx::query(
+                                    "INSERT INTO pgml.collections (name, active) VALUES ($1, TRUE) ON CONFLICT (name) DO NOTHING",
+                                )
+                                .bind(&self.name)
+                                .execute(pool)
+                                .await?;
+                                pool.execute(
+                                    query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name)
+                                        .as_str(),
+                                )
+                                .await?;
+                                self.verified_in_database = true;
+                                Ok(())
+                            } else {
+                                Err(e.into())
+                            }
+                        }
+                        None => Err(e.into())
+                    }
+                }
+            }
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     async fn create_documents_table(&mut self, pool: &PgPool) -> anyhow::Result<()> {
@@ -172,7 +211,6 @@ impl Collection {
     }
 
     async fn create_documents_tsvectors_table(&mut self, pool: &PgPool) -> anyhow::Result<()> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
         pool.execute(
             query_builder!(
                 queries::CREATE_DOCUMENTS_TSVECTORS_TABLE,
@@ -407,7 +445,7 @@ impl Collection {
                         .fetch_one(&pool).await?;
                         embedding.0.len() as i64
                     }
-                    t @ _ => {
+                    t => {
                         let remote_embeddings =
                             build_remote_embeddings(t, &model.name, &model.parameters)?;
                         remote_embeddings.get_embedding_size().await?
@@ -534,7 +572,7 @@ impl Collection {
                 .execute(&pool)
                 .await?;
             }
-            t @ _ => {
+            t => {
                 let remote_embeddings = build_remote_embeddings(t, &model.name, &model.parameters)?;
                 remote_embeddings
                     .generate_embeddings(
@@ -599,11 +637,11 @@ impl Collection {
         query: &str,
         model: &Model,
         splitter: &Splitter,
-        query_params: Option<Json>,
+        query_parameters: Option<Json>,
         top_k: Option<i64>,
     ) -> anyhow::Result<Vec<(f64, String, Json)>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
-        let query_params = match query_params {
+        let query_parameters = match query_parameters {
             Some(params) => params,
             None => Json(serde_json::json!({})),
         };
@@ -621,13 +659,13 @@ impl Collection {
                 ))
                 .bind(&model.name)
                 .bind(query)
-                .bind(query_params)
+                .bind(query_parameters)
                 .bind(top_k)
                 .fetch_all(&pool)
                 .await?
             }
-            t @ _ => {
-                let remote_embeddings = build_remote_embeddings(t, &model.name, &query_params)?;
+            t => {
+                let remote_embeddings = build_remote_embeddings(t, &model.name, &query_parameters)?;
                 let mut embeddings = remote_embeddings.embed(vec![query.to_string()]).await?;
                 let embedding = std::mem::take(&mut embeddings[0]);
                 sqlx::query_as(&query_builder!(
@@ -671,6 +709,10 @@ impl Collection {
         QueryBuilder::new(self.clone())
     }
 
+    pub fn get_verified_in_database(&self) -> bool {
+        self.verified_in_database
+    }
+
     // We will probably want to add a task parameter to this function
     pub fn get_embeddings_table_name(
         &self,
@@ -684,10 +726,10 @@ impl Collection {
                 "{}_{}_{}_{}_{}_{}",
                 model.name,
                 model.task,
-                model.parameters.to_string(),
+                *model.parameters,
                 model.source,
                 splitter.name,
-                splitter.parameters.to_string()
+                *splitter.parameters
             )
             .as_bytes(),
         );

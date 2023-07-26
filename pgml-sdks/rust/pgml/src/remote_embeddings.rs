@@ -69,14 +69,14 @@ pub trait RemoteEmbeddings<'a> {
             .ok_or(anyhow::anyhow!("No data in response"))?;
 
         let embeddings: Vec<Vec<f64>> = data
-            .into_iter()
+            .iter()
             .map(|d| {
                 let embedding = d["embedding"]
                     .as_array()
                     .expect("Malformed response from openai. Found while in parse_response");
 
                 embedding
-                    .into_iter()
+                    .iter()
                     .map(|dd| dd.as_f64().unwrap())
                     .collect::<Vec<f64>>()
             })
