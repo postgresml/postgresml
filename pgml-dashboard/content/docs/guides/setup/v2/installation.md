@@ -187,7 +187,7 @@ CREATE EXTENSION
 
 !!! note
 
-If you're looking to use PostgresML in production, [try our cloud](https://postgresml.org/plans). We support serverless deployments with modern GPUs, for startups of all sizes, and dedicated GPU hardware for larger teams that would like to tweak PostgresML to their needs.
+If you're looking to use PostgresML in production, [try our cloud](https://postgresml.org/plans). We support serverless deployments with modern GPUs for startups of all sizes, and dedicated GPU hardware for larger teams that would like to tweak PostgresML to their needs.
 
 !!!
 
