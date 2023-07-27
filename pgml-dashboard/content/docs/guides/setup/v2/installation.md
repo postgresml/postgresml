@@ -4,7 +4,7 @@ The PostgresML deployment consists of two parts: the PostgreSQL extension, and t
 
 ## Extension
 
-The extension can be installed from our Ubuntu `apt` repository or, if you're using a different distribution or operating system, from source.
+The extension can be installed by compiling it from source, or from our Ubuntu repository, if you're using Ubuntu 22.04.
 
 ### macOS
 
@@ -66,7 +66,8 @@ To install the Python packages into a virtual environment, use the `virtualenv` 
 ```bash
 virtualenv pgml-venv && \
 source pgml-venv/bin/activate && \
-pip install -r requirements.txt
+pip install -r requirements.txt && \
+pip install -r requirements-xformers.txt --no-dependencies
 ```
 
 === "Globally"
