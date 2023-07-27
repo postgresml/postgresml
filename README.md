@@ -152,7 +152,7 @@ docker run \
 
 For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/guides/setup/quick_start_with_docker) documentation.
 
-## Serverless Clooud
+## Serverless Cloud
 
 If you want to check out the functionality without the hassle of Docker, [sign up for a free PostgresML account](https://postgresml.org/signup). You'll get a free database in seconds, with access to GPUs and state of the art LLMs.
 
