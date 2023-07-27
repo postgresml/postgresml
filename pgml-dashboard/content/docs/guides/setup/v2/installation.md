@@ -1,16 +1,14 @@
 # Installation
 
-The PostgresML deployment consists of two parts: the PostgreSQL extension, and the dashboard app. The extension provides all the machine learning functionality and can be used independently. The dashboard app provides a system overview for easier management and notebooks for writing experiments.
+A typical PostgresML deployment consists of two parts: the PostgreSQL extension, and the dashboard web app. The extension provides all the machine learning functionality, and can be used independently. The dashboard provides a system overview for easier management, and notebooks for writing experiments.
 
 ## Extension
 
-The extension can be installed from our Ubuntu `apt` repository or, if you're using a different distribution or operating system, from source.
+The extension can be installed by compiling it from source, or if you're using Ubuntu 22.04, from our package repository.
 
 ### macOS
 
-To install PostgresML on macOS, you'll need to compile it from source. No worries, we do this every day and it works well.
-
-!!! note
+!!! tip
 
 If you're just looking to try PostgresML without installing it on your system, take a look at our [Quick Start with Docker](/docs/guides/setup/quick_start_with_docker) guide.
 
@@ -18,7 +16,7 @@ If you're just looking to try PostgresML without installing it on your system, t
 
 #### Get the source code
 
-To get the source code for PostgresML, you can clone our Github repo:
+To get the source code for PostgresML, you can clone our Github repository:
 
 ```bash
 git clone https://github.com/postgresml/postgresml
@@ -26,7 +24,7 @@ git clone https://github.com/postgresml/postgresml
 
 #### Install dependencies
 
-We provide a `Brewfile` that will install all the necessary dependencies to compile PostgresML from source. You can simply:
+We provide a `Brewfile` that will install all the necessary dependencies for compiling PostgresML from source:
 
 ```bash
 cd pgml-extension && \
@@ -35,7 +33,7 @@ brew bundle
 
 ##### Rust
 
-PostgresML is written in Rust, so you'll need to install the latest compiler from [rust-lang.org](https://rust-lang.org). Additionally, we use the Rust PostgreSQL extension framework `pgrx`, which requires some initialization steps before proceeding:
+PostgresML is written in Rust, so you'll need to install the latest compiler from [rust-lang.org](https://rust-lang.org). Additionally, we use the Rust PostgreSQL extension framework `pgrx`, which requires some initialization steps:
 
 ```bash
 cargo install cargo-pgrx --version 0.9.8 && \
@@ -46,27 +44,28 @@ This step will take a few minutes. Perfect opportunity to get a coffee while you
 
 ### Compile and install
 
-Finally, you can compile and install the extension:
+With all the dependencies installed, you can compile and install the extension:
 
 ```bash
 cargo pgrx install
 ```
 
-This will compile all the necessary dependencies, including Rust bindings to XGBoost and LightGBM, together with Python support for Hugging Face transformers and Scikit-learn. The extension will be automatically installed into `postgresql@15` previously installed by Brew.
+This will compile all the necessary packages, including Rust bindings to XGBoost and LightGBM, together with Python support for Hugging Face transformers and Scikit-learn. The extension will be automatically installed into the PostgreSQL installation created by the `postgresql@15` Homebrew formula.
 
 
 ### Python dependencies
 
-PostgresML uses Python packages extensively to provide support for LLMs and the entirety of the Scikit-learn model suite. To make this work on your system, you have two options: install those packages into a virtual environment (strongly recommended) or install them globally.
+PostgresML uses Python packages to provide support for Hugging Face LLMs and Scikit-learn algorithms and models. To make this work on your system, you have two options: install those packages into a virtual environment (strongly recommended), or install them globally.
 
 === "Virtual environment"
 
-To install the Python packages into a virtual environment, use the `virtualenv` tool installed previously with Brew:
+To install the necessary Python packages into a virtual environment, use the `virtualenv` tool installed previously by Homebrew:
 
 ```bash
 virtualenv pgml-venv && \
 source pgml-venv/bin/activate && \
-pip install -r requirements.txt
+pip install -r requirements.txt && \
+pip install -r requirements-xformers.txt --no-dependencies
 ```
 
 === "Globally"
@@ -81,9 +80,13 @@ pip3 install -r requirements.txt
 
 ### Configuration
 
-We have one last step remaining to get PostgresML running on your system: configuration. PostgresML needs to be loaded into shared memory by Postgres to perform efficiently and to do so, you need to place it into `preload_shared_libraries`. Additionally, if you've chosen to use a virtual environment for the Python packages, we need to tell PostgresML where to find it.
+We have one last step remaining to get PostgresML running on your system: configuration.
 
-Both steps can be done by editing the PostgreSQL configuration file `postgresql.conf` usinig your favorite editor. I prefer `vim` for these kind of tasks:
+PostgresML needs to be loaded into shared memory by PostgreSQL. To do so, you need to add it to `preload_shared_libraries`.
+
+Additionally, if you've chosen to use a virtual environment for the Python packages, we need to tell PostgresML where to find it.
+
+Both steps can be done by editing the PostgreSQL configuration file `postgresql.conf` usinig your favorite editor:
 
 ```bash
 vim /opt/homebrew/var/postgresql@15/postgresql.conf
@@ -96,7 +99,7 @@ shared_preload_libraries = 'pgml,pg_stat_statements'
 pgml.venv = '/absolute/path/to/your/pgml-venv'
 ```
 
-Don't forget to restart the database server:
+Save the configuration file and restart PostgreSQL:
 
 ```bash
 brew services restart postgresql@15
@@ -181,6 +184,12 @@ CREATE EXTENSION
 
 
 ### Ubuntu
+
+!!! note
+
+If you're looking to use PostgresML in production, [try our cloud](https://postgresml.org/plans). We support serverless deployments with modern GPUs for startups of all sizes, and dedicated GPU hardware for larger teams that would like to tweak PostgresML to their needs.
+
+!!!
 
 For Ubuntu, we compile and ship packages that include everything needed to install and run the extension. At the moment, only Ubuntu 22.04 (Jammy) is supported.
 
@@ -273,7 +282,7 @@ libpython3
 
 ##### Rust
 
-PostgresML is written in Rust, so you'll need to install the latest compiler from [rust-lang.org](https://rust-lang.org). 
+PostgresML is written in Rust, so you'll need to install the latest compiler version from [rust-lang.org](https://rust-lang.org). 
 
 
 #### `pgrx`
