@@ -4,11 +4,11 @@ A typical PostgresML deployment consists of two parts: the PostgreSQL extension,
 
 ## Extension
 
-The extension can be installed by compiling it from source, or from our Ubuntu repository, if you're using Ubuntu 22.04.
+The extension can be installed by compiling it from source, or if you're using Ubuntu 22.04, from our package repository.
 
 ### macOS
 
-!!! note
+!!! tip
 
 If you're just looking to try PostgresML without installing it on your system, take a look at our [Quick Start with Docker](/docs/guides/setup/quick_start_with_docker) guide.
 
@@ -184,6 +184,12 @@ CREATE EXTENSION
 
 
 ### Ubuntu
+
+!!! note
+
+If you're looking to use PostgresML in production, [try our cloud](https://postgresml.org/plans). We support serverless deployments with modern GPUs, for startups of all sizes, and dedicated GPU hardware for larger teams that would like to tweak PostgresML to their needs.
+
+!!!
 
 For Ubuntu, we compile and ship packages that include everything needed to install and run the extension. At the moment, only Ubuntu 22.04 (Jammy) is supported.
 

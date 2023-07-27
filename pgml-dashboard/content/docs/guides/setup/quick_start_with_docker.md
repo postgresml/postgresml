@@ -1,8 +1,14 @@
 # Quick Start with Docker
 
-If you're just looking to try out PostgresML for the first time, [Docker](https://docs.docker.com/engine/install/) is a great tool to get you started quicky. We've prepared a Docker image that comes with the latest version of PostgresML and all of its dependencies, and which will be able to take advantage of GPUs, if you have any on your machine.
+To try PostgresML on your system for the first time, [Docker](https://docs.docker.com/engine/install/) is a great tool to get you started quicky. We've prepared a Docker image that comes with the latest version of PostgresML and all of its dependencies. If you have Nvidia GPUs on your machine, you'll also be able to use GPU acceleration.
 
-## Setup
+!!! tip
+
+If you're looking to get started with PostgresML as quickly as possible, [sign up](https://postgresml.org/signup) for your free serverless [cloud](https://postgresml.org/signup). You'll get a database in seconds, and will be able to use all the latest Hugging Face models on modern GPUs.
+
+!!!
+
+## Get Started
 
 === "macOS"
 
@@ -43,6 +49,10 @@ docker run \
 ```
 
 If your machine doesn't have a GPU, just omit the `--gpus all` option, and the container will start and use the CPU instead.
+
+=== "Windows"
+
+Install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) and [Docker Desktop](https://www.docker.com/products/docker-desktop/). You can then use **Linux with GPUs** instructions. GPU support is included, make sure [enable CUDA](https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl).
 
 ===
 
