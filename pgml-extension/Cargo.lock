@@ -1830,6 +1830,7 @@ dependencies = [
  "pgrx",
  "pgrx-pg-sys",
  "pgrx-tests",
+ "proxy-message",
  "pyo3",
  "rand",
  "rmp-serde",
@@ -2047,6 +2048,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18fb31db3f9bddb2ea821cde30a9f70117e3f119938b5ee630b7403aa6e2ead9"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "proxy-message"
+version = "0.1.0"
+dependencies = [
+ "rmp-serde",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

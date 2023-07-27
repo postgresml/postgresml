@@ -13,6 +13,7 @@ pub mod bindings;
 pub mod config;
 pub mod metrics;
 pub mod orm;
+pub mod proxy;
 pub mod vectors;
 
 pg_module_magic!();

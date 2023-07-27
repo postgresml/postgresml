@@ -5,6 +5,9 @@ use std::str::FromStr;
 use ndarray::Zip;
 use pgrx::iter::{SetOfIterator, TableIterator};
 use pgrx::*;
+use proxy_message::{Reply, Request};
+
+use crate::proxy;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
@@ -612,9 +615,7 @@ pub fn transform_json(
     inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
     cache: default!(bool, false),
 ) -> JsonB {
-    JsonB(crate::bindings::transformers::transform(
-        &task.0, &args.0, inputs,
-    ))
+    JsonB(transform(&task.0, &args.0, inputs))
 }
 
 #[cfg(feature = "python")]
@@ -629,9 +630,31 @@ pub fn transform_string(
     let mut task_map = HashMap::new();
     task_map.insert("task", task);
     let task_json = json!(task_map);
-    JsonB(crate::bindings::transformers::transform(
-        &task_json, &args.0, inputs,
-    ))
+    JsonB(transform(&task_json, &args.0, inputs))
+}
+
+fn transform(
+    task: &serde_json::Value,
+    args: &serde_json::Value,
+    inputs: Vec<&str>,
+) -> serde_json::Value {
+    if proxy::enabled() {
+        let inputs = inputs.iter().map(|s| s.to_string()).collect();
+        let request = Request::Transform {
+            task: task.clone(),
+            args: args.clone(),
+            inputs,
+        };
+        match proxy::send_request(request) {
+            Ok(Reply::Transform(reply)) => match reply {
+                Ok(value) => value,
+                Err(e) => error!("proxy error: {e}"),
+            },
+            Err(e) => error!("proxy send request failed: {e}"),
+        }
+    } else {
+        crate::bindings::transformers::transform(task, args, inputs)
+    }
 }
 
 #[cfg(feature = "python")]
