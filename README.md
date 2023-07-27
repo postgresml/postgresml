@@ -50,7 +50,7 @@
 - [Classification](#classification) -->
 
 # Introduction
-PostgresML is a machine learning extension to PostgreSQL that enables you to perform training and inference on text and tabular data using SQL queries. With PostgresML, you can seamlessly integrate machine learning models into your PostgreSQL database and harness the power of cutting-edge algorithms to process data efficiently.
+PostgresML is a machine learning extension for PostgreSQL that enables you to perform training and inference on text and tabular data using SQL queries. With PostgresML, you can seamlessly integrate machine learning models into your PostgreSQL database and harness the power of cutting-edge algorithms to process data efficiently.
 
 ## Text Data
 - Perform natural language processing (NLP) tasks like sentiment analysis, question and answering, translation, summarization and text generation
@@ -140,38 +140,32 @@ PostgresML installation consists of three parts: PostgreSQL database, Postgres e
 
 ## Docker
 
-Step 1: Clone this repository
-
-```bash
-git clone git@github.com:postgresml/postgresml.git
+```
+docker run \
+    -it \
+    -v postgresml_data:/var/lib/postgresql \
+    -p 5433:5432 \
+    -p 8000:8000 \
+    ghcr.io/postgresml/postgresml:2.7.1 \
+    sudo -u postgresml psql -d postgresml
 ```
 
-Step 2: Start dockerized services. PostgresML will run on port 5433, just in case you already have Postgres running. You can find Docker installation instructions [here](https://docs.docker.com/desktop/)
-```bash
-cd postgresml
-docker-compose up
-```
+For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/guides/setup/quick_start_with_docker) documentation.
 
-Step 3: Connect to Postgres using an SQL IDE or <a href="https://www.postgresql.org/docs/current/app-psql.html" target="_blank">psql</a>
-```bash
-postgres://postgres@localhost:5433/pgml_development
-```
+## Serverless Clooud
 
-## Free trial
-If you want to check out the functionality without the hassle of Docker, [sign up for a free PostgresML account](https://postgresml.org/signup). We will provide 5GiB of storage for your data and demo notebooks to help you get started.
+If you want to check out the functionality without the hassle of Docker, [sign up for a free PostgresML account](https://postgresml.org/signup). You'll get a free database in seconds, with access to GPUs and state of the art LLMs.
 
 # Getting Started
 
 ## Option 1
-- On local installation go to dashboard app at `http://localhost:8000/` to use SQL notebooks.
 
-- On the hosted console click on the **Dashboard** button to connect to your instance with SQL notebooks.
-![dashboard](pgml-docs/docs/images/dashboard.png)
+- On local installation, go to dashboard app at `http://localhost:8000/` to use SQL notebooks.
 
-- Try one of the pre-built SQL notebooks
-![notebooks](pgml-docs/docs/images/notebooks.png)
+- On the cloud console click on the **Dashboard** button to connect to your instance with a SQL notebook, or connect directly with tools listed below.
 
 ## Option 2
+
 - Use any of these popular tools to connect to PostgresML and write SQL queries
   - <a href="https://superset.apache.org/" target="_blank">Apache Superset</a>
   - <a href="https://dbeaver.io/" target="_blank">DBeaver</a>
@@ -182,7 +176,9 @@ If you want to check out the functionality without the hassle of Docker, [sign u
   - <a href="https://powerbi.microsoft.com/en-us/" target="_blank">PowerBI</a>
   - <a href="https://jupyter.org/" target="_blank">Jupyter</a>
   - <a href="https://code.visualstudio.com/" target="_blank">VSCode</a>
+
 ## Option 3
+
 - Connect directly to the database with your favorite programming language
   - C++: <a href="https://www.tutorialspoint.com/postgresql/postgresql_c_cpp.htm" target="_blank">libpqxx</a>
   - C#: <a href="https://github.com/npgsql/npgsql" target="_blank">Npgsql</a>,<a href="https://github.com/DapperLib/Dapper" target="_blank">Dapper</a>, or <a href="https://github.com/dotnet/efcore" target="_blank">Entity Framework Core</a>
@@ -201,7 +197,9 @@ If you want to check out the functionality without the hassle of Docker, [sign u
   - Rust: <a href="https://crates.io/crates/postgres" target="_blank">postgres</a>, <a href="https://github.com/launchbadge/sqlx" target="_blank">SQLx</a> or <a href="https://github.com/diesel-rs/diesel" target="_blank">Diesel</a>
   - Swift: <a href="https://github.com/vapor/postgres-nio" target="_blank">PostgresNIO</a> or <a href="https://github.com/codewinsdotcom/PostgresClientKit" target="_blank">PostgresClientKit</a> 
   - ... open a PR to add your favorite language and connector.
+
 # NLP Tasks
+
 PostgresML integrates 🤗 Hugging Face Transformers to bring state-of-the-art NLP models into the data layer. There are tens of thousands of pre-trained models with pipelines to turn raw text in your database into useful results. Many state of the art deep learning architectures have been published and made available from Hugging Face <a href= "https://huggingface.co/models" target="_blank">model hub</a>.
 
 You can call different NLP tasks and customize using them using the following SQL query.
