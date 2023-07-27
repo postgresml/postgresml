@@ -26,13 +26,9 @@ def activate_venv(venv):
 
 
 def freeze():
-    packages = []
     try:
         from pip._internal.operations import freeze
     except ImportError: # pip < 10.0
         from pip.operations import freeze
 
-    pkgs = freeze.freeze()
-    for pkg in pkgs:
-        packages.append(pkg)
-    return packages
+    return list(freeze.freeze())
