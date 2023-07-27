@@ -1,0 +1,21 @@
+[Unit]
+Description=PostgresML Dashboard: inspect models, write notebooks, and more.
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Environment=RUST_LOG=info
+Environment=DASHBOARD_STATIC_DIRECTORY=/usr/share/pgml-dashboard/dashboard-static
+Environment=DASHBOARD_CONTENT_DIRECTORY=/usr/share/pgml-dashboard/dashboard-content
+Environment=ROCKET_ADDRESS=0.0.0.0
+Environment=GITHUB_STARS=${GITHUB_STARS}
+Environment=SEARCH_INDEX_DIRECTORY=/var/lib/pgml-dashboard/search-index
+
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=/usr/bin/pgml-dashboard
+WorkingDirectory=/etc/pgml-dashboard
+
+[Install]
+WantedBy=multi-user.target

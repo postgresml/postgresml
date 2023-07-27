@@ -1,0 +1,4 @@
+#!/bin/bash
+
+systemctl daemon-reload
+rm -f /etc/pgml-dashboard/.env
