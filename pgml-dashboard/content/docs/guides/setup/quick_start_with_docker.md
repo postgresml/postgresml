@@ -52,7 +52,7 @@ If your machine doesn't have a GPU, just omit the `--gpus all` option, and the c
 
 === "Windows"
 
-Install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) and [Docker Desktop](https://www.docker.com/products/docker-desktop/). You can then use **Linux with GPUs** instructions. GPU support is included, make sure [enable CUDA](https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl).
+Install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) and [Docker Desktop](https://www.docker.com/products/docker-desktop/). You can then use **Linux with GPUs** instructions. GPU support is included, make sure to [enable CUDA](https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl).
 
 ===
 
