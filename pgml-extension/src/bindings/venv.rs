@@ -34,3 +34,12 @@ pub fn activate() -> bool {
         None => false,
     }
 }
+
+pub fn freeze() -> Vec<String> {
+    Python::with_gil(|py| -> Vec<String> {
+        let freeze: Py<PyAny> = PY_MODULE.getattr(py, "freeze").unwrap();
+        let result: Py<PyAny> = freeze.call0(py).unwrap();
+
+        result.extract(py).unwrap()
+    })
+}
