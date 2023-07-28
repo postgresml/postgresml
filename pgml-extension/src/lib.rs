@@ -9,11 +9,11 @@ use pgrx::*;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod api;
+pub mod bg_worker;
 pub mod bindings;
 pub mod config;
 pub mod metrics;
 pub mod orm;
-pub mod proxy;
 pub mod vectors;
 
 pg_module_magic!();

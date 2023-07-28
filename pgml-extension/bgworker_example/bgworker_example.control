@@ -1,0 +1,7 @@
+comment = 'bgworker_example:  Created by pgrx'
+default_version = '@CARGO_VERSION@'
+module_pathname = '$libdir/bgworker_example'
+relocatable = false
+superuser = true
+schema = 'pgml'
+trusted = true

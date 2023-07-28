@@ -48,7 +48,7 @@ indexmap = { version = "1.0", features = ["serde"] }
 signal-hook = "0.3"
 flate2 = "1.0"
 csv = "1.2"
-proxy-message = { path = "proxy-message" }
+bgworker-message = { path = "bgworker-message" }
 
 [dev-dependencies]
 pgrx-tests = "=0.9.8"

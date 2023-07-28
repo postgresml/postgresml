@@ -2,12 +2,12 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use bgworker_message::{Reply, Request};
 use ndarray::Zip;
 use pgrx::iter::{SetOfIterator, TableIterator};
 use pgrx::*;
-use proxy_message::{Reply, Request};
 
-use crate::proxy;
+use crate::bg_worker;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
@@ -638,19 +638,19 @@ fn transform(
     args: &serde_json::Value,
     inputs: Vec<&str>,
 ) -> serde_json::Value {
-    if proxy::enabled() {
+    if bg_worker::enabled() {
         let inputs = inputs.iter().map(|s| s.to_string()).collect();
         let request = Request::Transform {
             task: task.clone(),
             args: args.clone(),
             inputs,
         };
-        match proxy::send_request(request) {
+        match bg_worker::send_request(request) {
             Ok(Reply::Transform(reply)) => match reply {
                 Ok(value) => value,
-                Err(e) => error!("proxy error: {e}"),
+                Err(e) => error!("bgworker error: {e}"),
             },
-            Err(e) => error!("proxy send request failed: {e}"),
+            Err(e) => error!("bgworker send request failed: {e}"),
         }
     } else {
         crate::bindings::transformers::transform(task, args, inputs)

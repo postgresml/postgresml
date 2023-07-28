@@ -6,7 +6,7 @@ use std::str::FromStr;
 use once_cell::sync::Lazy;
 use pgrx::*;
 
-use crate::{orm::*, proxy};
+use crate::{bg_worker, orm::*};
 
 static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 1024>> =
     PgLwLock::new();
@@ -16,7 +16,7 @@ static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> =
 #[pg_guard]
 pub extern "C" fn _PG_init() {
     pg_shmem_init!(PROJECT_ID_TO_DEPLOYED_MODEL_ID);
-    proxy::setup();
+    bg_worker::setup();
 }
 
 #[derive(Debug, Clone)]
