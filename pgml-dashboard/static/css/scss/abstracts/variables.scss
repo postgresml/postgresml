@@ -94,6 +94,7 @@ $hp-white: #{$gray-200};
 // Gradient
 $hp-gradient: linear-gradient(48.19deg, #D940FF 0%, #9E02FE 24.43%, #00D1FF 100%);
 $hp-gradient-active: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(48.19deg, #FB40FF 0%, #BB02FE 24.43%, #00D1FF 100%);
+$gradient-main: linear-gradient(45deg, #FB40FF 0%, #BB02FE 25%, #00D1FF 100%);
 
 // Buttons.
 $btn-border-width: 1px;

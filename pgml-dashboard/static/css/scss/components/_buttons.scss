@@ -10,92 +10,125 @@
     &[disabled], &:disabled {
         cursor: not-allowed; 
     }
+}
 
-    &.btn-primary {
-        border: 0;
-        @extend .fw-semibold;
-        
-        &:hover {
-            background: linear-gradient(48.19deg, #D940FF 0%, #8F02FE 24.43%, #5162FF 52.6%, #00D1FF 100%);
-        }
+.btn-primary {
+    @extend .btn;
 
-        &:active {
-            background: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(48.19deg, #FB40FF 0%, #BB02FE 24.43%, #00D1FF 100%);
-        }
+    --bs-btn-bg: #{$gray-100};
+    --bs-btn-color: #2D2D2F;
+
+    border: 0;
+    font-weight: $font-weight-semibold;
+
+    &:hover {
+        background: linear-gradient(48.19deg, #D940FF 0%, #8F02FE 24.43%, #5162FF 52.6%, #00D1FF 100%);
     }
 
-    &.btn-secondary {
-        @extend .fw-semibold;
-        background-color: transparent;
-        --bs-btn-border-color: #{$gray-400};
-        --bs-btn-border-width: 2px;
-        --bs-btn-hover-border-color: transparent;
-        --bs-btn-active-border-color: transparent;
-        --bs-btn-padding-x: 20px;
-        --bs-btn-padding-y: 10px; 
+    &:active {
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(48.19deg, #FB40FF 0%, #BB02FE 24.43%, #00D1FF 100%);
+    }
+}
 
-        // the attached canvas for border in secondary-btn.js
+.btn-secondary {
+    @extend .btn;
+
+    --bs-btn-bg: transparent;
+    --bs-btn-color: #{$hp-white};
+    --bs-btn-border-color: #{$gray-400};
+
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-color: #{$hp-white};
+    --bs-btn-hover-border-color: transparent;
+
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-color: #{$hp-white};
+    --bs-btn-active-border-color: transparent;
+
+    --bs-btn-border-width: 2px;
+    --bs-btn-padding-x: 20px;
+    --bs-btn-padding-y: 10px; 
+
+    font-weight: $font-weight-semibold;
+
+    // the attached canvas for border in secondary-btn.js
+    &> .secondary-btn-canvas {
+        position: absolute;
+        border: None;
+        display: None;
+    }
+    
+    &:hover {
         &> .secondary-btn-canvas {
-            position: absolute;
-            border: None;
-            display: None;
-        }
-        
-        &:hover {
-            background-color: transparent;
-    
-            &> .secondary-btn-canvas {
-                display: block;
-            }
-        }
-    
-        &:active {
-            background-color: transparent;
-    
-            &> .secondary-btn-canvas {
-                filter: brightness(65%);
-                display: block;
-            }
+            display: block;
         }
     }
 
-    &.btn-tertiary {
-        color: #{$gray-300};
-
-        &:hover {
-            color: #{$gray-100};
-            text-shadow: 0 0 0.65px white, 0 0 0.65px white;
-        }
-
-        span {
-            font-size: 2rem;
-        }
-
-        &:active {
-            color: #{$gray-100};
-            font-weight: 500;
-            --bs-btn-active-border-color: transparent;
+    &:active {
+        &> .secondary-btn-canvas {
+            filter: brightness(65%);
+            display: block;
         }
     }
 }
 
-.btn-primary-web-app {
-    @extend .btn; 
-    border: 0px;
-    background-color: #{$neon-shade-100};
-    color: #{$gray-100};
+.btn-tertiary {
+    @extend .btn;
 
-    &:hover {
-        background-color: #{$neon-shade-300};
+    --bs-btn-bg: transparent;
+    --bs-btn-color: #{$gray-300};
+    --bs-btn-border-color: transparent;
+
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-color: #{$gray-100};
+    --bs-btn-hover-border-color: transparent;
+    
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-color: #{$gray-100};
+    --bs-btn-active-border-color: transparent;
+
+    font-weight: $font-weight-semibold;
+
+    span {
+        font-size: inherit;
     }
 
     &:active {
-        background-color: #{$neon-tint-200};
+        font-weight: 500;
+        text-shadow: 0 0 0.65px var(--bs-btn-active-color), 0 0 0.65px var(--bs-btn-active-color);
     }
+}
 
-    &:disabled {
-        background-color: #{$gray-500};
+.btn-primary-web-app {
+    @extend .btn;
+
+    --bs-btn-bg: #{$neon-shade-100};
+    --bs-btn-color: #{$gray-100};
+
+    --bs-btn-hover-bg: #{$neon-tint-300};
+
+    --bs-btn-active-bg: #{$neon-shade-300};
+
+    border: 0px;
+
+    &:disabled, &.disabled {
+        color: #{$neon-shade-400};
+        background-color: #{$neon-shade-700};
     }
+}
+
+.btn-secondary-web-app {
+    @extend .btn;
+
+    --bs-btn-color: #{$neon-tint-500};
+    --bs-btn-border-color: #{$neon-tint-500};
+    --bs-btn-border-width: 2px;
+
+    --bs-btn-hover-color: #{$neon-tint-300};
+    --bs-btn-hover-border-color: #{$neon-tint-300};
+
+    --bs-btn-active-color: #{$neon-tint-200};
+    --bs-btn-active-border-color: #{$neon-tint-200};
 }
 
 .btn-tertiary-web-app {

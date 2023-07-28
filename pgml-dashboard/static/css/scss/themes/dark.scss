@@ -3,6 +3,7 @@
     --bs-heading-color: #{$gray-100};
     --bs-tertiary-bg: #{$gray-600};
     --bs-tertiary-color: #{$hp-white};
+
     --bs-body-bg: #{$gray-800};
     --bs-body-color: #{$gray-200};
     --bs-body-secondary-color: #BEBEC1;
@@ -47,62 +48,10 @@
         color: #{$gray-200};
     }
 
-    body {
-        --bs-body-color: #{$gray-300};
-        --bs-danger-text: rgba(240, 76, 64, 1);
-        --bs-secondary-color: #919196;
-    }
-
-    .btn {
-        &.btn-primary {
-            --bs-btn-bg: #{$gray-100};
-            --bs-btn-color: #2D2D2F;
-        }
-
-        &.btn-secondary {
-            --bs-btn-color: #{$hp-white};
-            --bs-btn-hover-color: #{$hp-white};
-            --bs-btn-active-color: #{$hp-white};
-        }
-    }
-
-    .text-black {
-        color: #111213 !important;
-    }
-
-    .text-white {
-        color: #{$gray-100} !important;
-    }
-
     .navbar {
-        background: #151516;
-
         .nav-link {
             --bs-nav-link-color: #{$gray-100};
             --bs-nav-link-hover-color: #{$purple};
-
-            &:hover {
-                text-shadow: 0 0 .65px #{$purple}, 0 0 .65px #{$purple}; //change font weight without element resizing
-
-                path {
-                    fill: var(--bs-nav-link-hover-color);
-                }
-            }
-
-            &:active {
-                color: #{$slate-tint-500};
-                path {
-                    fill: #{$slate-tint-500};
-                }
-            }
-        }
-    }
-
-    .navbar-web-app, .leftnav, .drawer-submenu {
-        background-color: #{$gray-800};
-
-        @include media-breakpoint-down(lg) {
-            background-color: #{$gray-900}
         }
     }
 
@@ -116,5 +65,26 @@
 
     code {
         --bs-code-color: #{$gray-100};
+    }
+
+    .card {
+        --bs-card-bg: rgba(33, 34, 36, 1);
+        --bs-card-border-color: transparent;
+        --bs-card-color: #DEE0E7;
+    }
+
+    .input-group-text {
+        --bs-border-color: transparent;
+
+        background-color: var(--bs-card-bg);
+        color: var(--bs-card-color);
+    }
+
+    .card-title {
+        --bs-card-title-color: var(--bs-card-color);
+    }
+
+    .card-footer {
+        --bs-card-cap-bg: var(--bs-card-bg);
     }
 }

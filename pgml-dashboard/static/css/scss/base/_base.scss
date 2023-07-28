@@ -125,7 +125,12 @@ article {
     border-radius: var(--bs-border-radius-pill);
 }
 
+.text-black {
+    color: #{$gray-900} !important;
+}
+
 // Override white overrides.
+
 .text-white {
     color: #{$gray-100} !important;
 }

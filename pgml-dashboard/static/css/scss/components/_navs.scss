@@ -16,7 +16,9 @@
     --bs-navbar-padding-y: 24px;
     --bs-navbar-padding-x: 24px;
     --bs-nav-link-font-weight: 500;
+
     padding: 0px 20px;
+    background: #{$gray-800};
 
     &.horizontal {
         --bs-navbar-padding-y: 16px;
@@ -65,6 +67,21 @@
     .nav-link {
         --bs-nav-link-padding-y: 16px;
         --bs-nav-link-padding-x: 24px;
+
+        &:hover {
+            text-shadow: 0 0 .65px #{$purple}, 0 0 .65px #{$purple}; //change font weight without element resizing
+
+            path {
+                fill: var(--bs-nav-link-hover-color);
+            }
+        }
+
+        &:active {
+            color: #{$slate-tint-500};
+            path {
+                fill: #{$slate-tint-500};
+            }
+        }
     }
 
     .nav {
@@ -141,9 +158,15 @@
 .navbar-web-app {
     @extend .navbar;
 
+    background-color: #{$gray-800};
+
     border-bottom: 1px solid #{$gray-500};
     border-radius: 0px;
     gap: 12px;
+
+    @include media-breakpoint-down(lg) {
+        background-color: #{$gray-900};
+    }
 
     .navbar-collapse {
         @include media-breakpoint-down(lg) {
@@ -178,7 +201,11 @@
 
     border: none;
     align-items: start;
-    background-color: var(--bs-body-bg) !important;
+    background-color: var(--bs-body-bg);
+
+    @include media-breakpoint-down(lg) {
+        background-color: #{$gray-900}
+    }
 }
 
 .toc, .guides {
