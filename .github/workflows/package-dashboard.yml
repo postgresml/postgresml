@@ -1,0 +1,57 @@
+name: package dashboard (deb)
+
+on:
+  workflow_dispatch:
+    inputs:
+      packageVersion:
+        default: "2.7.1"
+  release:
+    types:
+      - published
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm"]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+    - name: Get package version
+      run: |
+        RELEASE_VERSION=${GITHUB_REF#refs/*/}
+
+        if [[ "$RELEASE_VERSION" == "v"* ]]; then
+          echo "PACKAGE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
+        else
+          echo "PACKAGE_VERSION=${{ inputs.packageVersion }}" >> $GITHUB_ENV
+        fi
+    - name: Install dependencies
+      env:
+        DEBIAN_FRONTEND: noninteractive
+        TZ: Etc/UTC
+      run: |
+        curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
+        sudo gem install deb-s3-0.11.4.gem
+        dpkg-deb --version
+    - name: Build and release package
+      env:
+        AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+      run: |
+        if [[ $(arch) == "x86_64" ]]; then
+          export ARCH=amd64
+        else
+          export ARCH=arm64
+        fi
+
+        bash pgml-dashboard/deb/build.sh ${PACKAGE_VERSION}
+
+        deb-s3 upload \
+          --lock \
+          --bucket apt.postgresml.org \
+          postgresml-dashboard-${PACKAGE_VERSION}-ubuntu22.04-${ARCH}.deb \
+          --codename $(lsb_release -cs)
