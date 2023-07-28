@@ -20,7 +20,7 @@ def handler(signum, frame):
 
 signal.signal(signal.SIGINT, handler)
 
-parser = argparse.ArgumentParser(description="Process some integers.")
+parser = argparse.ArgumentParser(description="PostgresML Chatbot Builder")
 parser.add_argument(
     "--root_dir",
     dest="root_dir",
@@ -31,7 +31,7 @@ parser.add_argument(
     "--collection_name",
     dest="collection_name",
     type=str,
-    help="Name of the collection to store the data in",
+    help="Name of the collection (schema) to store the data in PostgresML database",
 )
 parser.add_argument(
     "--stage",
