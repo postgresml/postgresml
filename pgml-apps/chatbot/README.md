@@ -10,7 +10,7 @@ This tool automates the above two stages and provides a command line interface t
 ## Prerequisites
 Before you begin, make sure you have the following:
 
-- PostgresML Database: Ensure you have a PostgresML database version >2.3.1. You can spin up a database using Docker or sign up for a free GPU-powered database. 
+- PostgresML Database: You can spin up a database using [Docker](https://github.com/postgresml/postgresml#installation) or [sign-up](https://postgresml.org/signup) for a free GPU-powered database. 
 - Python version >=3.8
 - OpenAI API key
 - Python 3.8+
