@@ -187,7 +187,7 @@ async def main():
     collection_name = args.collection_name
     
     database_url = os.environ.get("DATABASE_URL")
-    log.info("Connecting to database .. " + database_url)
+    log.info("Connecting to database .. ")
     db = Database(database_url)
 
     stage = args.stage
