@@ -8,6 +8,9 @@ use crate::{get_or_initialize_pool, types::Json};
 #[cfg(feature = "javascript")]
 use crate::languages::javascript::*;
 
+#[cfg(feature = "python")]
+use crate::languages::CustomInto;
+
 #[derive(Clone, Debug)]
 enum BindValue {
     String(String),

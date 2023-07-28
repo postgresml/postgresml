@@ -12,7 +12,7 @@ use crate::{get_or_initialize_pool, models, query_runner::QueryRunner, types::Js
 use crate::{languages::javascript::*, query_runner::QueryRunnerJavascript};
 
 #[cfg(feature = "python")]
-use crate::query_runner::QueryRunnerPython;
+use crate::{query_runner::QueryRunnerPython, languages::CustomInto};
 
 #[custom_methods(new, query, transform, does_collection_exist)]
 impl Builtins {

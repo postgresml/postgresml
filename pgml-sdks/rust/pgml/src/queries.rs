@@ -4,9 +4,25 @@
 pub const CREATE_COLLECTIONS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS pgml.collections (
   id serial8 PRIMARY KEY, 
-  created_at timestamptz NOT NULL DEFAULT now(), 
+  created_at timestamp NOT NULL DEFAULT now(), 
   name text NOT NULL, 
   active BOOLEAN DEFAULT TRUE, 
+  project_id int8 NOT NULL REFERENCES pgml.projects ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
+  UNIQUE (name)
+);
+"#;
+
+pub const CREATE_PIPELINES_TABLE: &str = r#"
+CREATE TABLE IF NOT EXISTS %s (
+  id serial8 PRIMARY KEY,
+  name text NOT NULL,
+  created_at timestamp NOT NULL DEFAULT now(), 
+  model_id int8 NOT NULL REFERENCES pgml.models ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
+  splitter_id int8 NOT NULL REFERENCES pgml.sdk_splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  chunks_status text NOT NULL DEFAULT 'na',
+  embeddings_status text NOT NULL DEFAULT 'na',
+  tsvectors_status text NOT NULL DEFAULT 'na',
   UNIQUE (name)
 );
 "#;
@@ -14,7 +30,7 @@ CREATE TABLE IF NOT EXISTS pgml.collections (
 pub const CREATE_DOCUMENTS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
-  created_at timestamptz NOT NULL DEFAULT now(), 
+  created_at timestamp NOT NULL DEFAULT now(), 
   source_uuid uuid NOT NULL, 
   metadata jsonb NOT NULL DEFAULT '{}', 
   text text NOT NULL, 
@@ -23,28 +39,18 @@ CREATE TABLE IF NOT EXISTS %s (
 "#;
 
 pub const CREATE_SPLITTERS_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS %s (
-  id serial8 PRIMARY KEY, 
-  created_at timestamptz NOT NULL DEFAULT now(), 
+CREATE TABLE IF NOT EXISTS pgml.sdk_splitters (
+  id serial8 PRIMARY KEY,
+  created_at timestamp NOT NULL DEFAULT now(),
   name text NOT NULL, 
-  parameters jsonb NOT NULL DEFAULT '{}'
-);
-"#;
-
-pub const CREATE_MODELS_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS %s (
-  id serial8 PRIMARY KEY, 
-  created_at timestamptz NOT NULL DEFAULT now(), 
-  task text NOT NULL, 
-  name text NOT NULL, 
-  source text NOT NULL,
-  parameters jsonb NOT NULL DEFAULT '{}'
+  parameters jsonb NOT NULL DEFAULT '{}',
+  project_id int8 NOT NULL REFERENCES pgml.projects ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED
 );
 "#;
 
 pub const CREATE_TRANSFORMS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
   table_name text PRIMARY KEY, 
-  created_at timestamptz NOT NULL DEFAULT now(), 
+  created_at timestamp NOT NULL DEFAULT now(), 
   task text NOT NULL, 
   splitter_id int8 NOT NULL REFERENCES pgml.sdk_splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   model_id int8 NOT NULL REFERENCES pgml.sdk_models ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
@@ -53,7 +59,7 @@ pub const CREATE_TRANSFORMS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
 "#;
 
 pub const CREATE_CHUNKS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
-  id serial8 PRIMARY KEY, created_at timestamptz NOT NULL DEFAULT now(), 
+  id serial8 PRIMARY KEY, created_at timestamp NOT NULL DEFAULT now(), 
   document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   splitter_id int8 NOT NULL REFERENCES pgml.sdk_splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   chunk_index int8 NOT NULL, 
@@ -64,7 +70,7 @@ pub const CREATE_CHUNKS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
 pub const CREATE_EMBEDDINGS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
-  created_at timestamptz NOT NULL DEFAULT now(), 
+  created_at timestamp NOT NULL DEFAULT now(), 
   chunk_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   embedding vector(%d) NOT NULL
 );
@@ -73,7 +79,7 @@ CREATE TABLE IF NOT EXISTS %s (
 pub const CREATE_DOCUMENTS_TSVECTORS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
-  created_at timestamptz NOT NULL DEFAULT now(), 
+  created_at timestamp NOT NULL DEFAULT now(), 
   document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   configuration text NOT NULL, 
   ts tsvector,
@@ -188,6 +194,15 @@ FROM
 "#;
 
 pub const GENERATE_CHUNKS: &str = r#"
+WITH splitter as (
+    SELECT
+      name,
+      parameters
+    FROM
+      pgml.sdk_splitters 
+    WHERE
+      id = $1
+)
 INSERT INTO %s(
   document_id, splitter_id, chunk_index, 
   chunk
@@ -202,26 +217,26 @@ FROM
     select 
       id AS document_id, 
       pgml.chunk(
-        $2, 
+        (SELECT name FROM splitter), 
         text, 
-        $3 
+        (SELECT parameters FROM splitter)
       ) AS chunk 
     FROM 
       (
-        select 
+        SELECT 
           id, 
           text 
-        from 
+        FROM 
           %s 
         WHERE 
           id NOT IN (
-            select 
+            SELECT 
               document_id 
-            from 
+            FROM 
               %s 
-            where 
+            WHERE 
               splitter_id = $1 
           )
-      ) as documents
+      ) AS documents
   ) chunks;
 "#;

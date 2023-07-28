@@ -2,101 +2,120 @@ use pgml_macros::{custom_derive, custom_methods};
 use sqlx::postgres::PgPool;
 
 use crate::{
-    get_or_initialize_pool, models,
+    collection::ProjectInfo,
+    models, queries,
     types::{DateTime, Json},
 };
 
 #[cfg(feature = "javascript")]
 use crate::languages::javascript::*;
 
-#[derive(custom_derive, Debug, Clone)]
-pub struct Splitter {
-    pub id: Option<i64>,
-    pub created_at: Option<DateTime>,
-    pub name: String,
-    pub parameters: Json,
-    pub database_url: Option<String>,
-    pub verified_in_database: bool,
+#[cfg(feature = "python")]
+use crate::languages::CustomInto;
+
+#[derive(Debug, Clone)]
+pub struct SplitterDatabaseData {
+    pub id: i64,
+    pub created_at: DateTime,
 }
 
-#[custom_methods(
-    new,
-    get_id,
-    get_created_at,
-    get_name,
-    get_parameters,
-    get_verified_in_database
-)]
+#[derive(custom_derive, Debug, Clone)]
+pub struct Splitter {
+    pub name: String,
+    pub parameters: Json,
+    pub project_info: Option<ProjectInfo>,
+    pub database_data: Option<SplitterDatabaseData>,
+}
+
+#[custom_methods(new)]
 impl Splitter {
     pub fn new(
         name: Option<String>,
-        parameters: Option<Json>,
-        database_url: Option<String>,
+        parameters: Option<Json>
     ) -> Self {
         let name = name.unwrap_or("recursive_character".to_string());
         let parameters = parameters.unwrap_or(Json(serde_json::json!({})));
         Self {
-            id: None,
-            created_at: None,
             name,
             parameters,
-            database_url,
-            verified_in_database: false,
+            project_info: None,
+            database_data: None,
         }
     }
 
-    async fn verify_in_database(&mut self, pool: &PgPool) -> anyhow::Result<()> {
-        if !self.verified_in_database {
-            let splitter: Option<models::Splitter> = sqlx::query_as(
-                "SELECT * FROM pgml.sdk_splitters WHERE name = $1 and parameters = $2",
-            )
-            .bind(&self.name)
-            .bind(&self.parameters)
-            .fetch_optional(pool)
-            .await?;
-            let splitter = if let Some(m) = splitter {
-                m
-            } else {
-                let splitter: models::Splitter = sqlx::query_as(
-                    "INSERT INTO pgml.sdk_splitters (name, parameters) VALUES ($1, $2) RETURNING *",
+    pub async fn verify_in_database(
+        &mut self,
+        pool: &PgPool,
+        throw_if_exists: bool,
+    ) -> anyhow::Result<()> {
+        match &self.database_data {
+            Some(_) => Ok(()),
+            None => {
+                let project_info = self
+                    .project_info
+                    .as_ref()
+                    .expect("Cannot verify splitter without project info");
+
+                let result: Result<Option<models::Splitter>, _> = sqlx::query_as(
+                    "SELECT * FROM pgml.sdk_splitters WHERE project_id = $1 AND name = $2 and parameters = $3",
                 )
+                .bind(project_info.id)
                 .bind(&self.name)
                 .bind(&self.parameters)
-                .fetch_one(pool)
-                .await?;
-                splitter
-            };
-            self.id = Some(splitter.id);
-            self.created_at = Some(splitter.created_at);
-            self.verified_in_database = true;
+                .fetch_optional(pool)
+                .await;
+
+                let splitter: Option<models::Splitter> = match result {
+                    Ok(s) => anyhow::Ok(s),
+                    Err(e) => {
+                        match e.as_database_error() {
+                            Some(db_e) => {
+                                // Error 42P01 is "undefined_table"
+                                if db_e.code() == Some(std::borrow::Cow::from("42P01")) {
+                                    Self::create_splitters_table(pool).await?;
+                                    Ok(None)
+                                } else {
+                                    Err(e.into())
+                                }
+                            }
+                            None => Err(e.into()),
+                        }
+                    }
+                }?;
+
+                let splitter = if let Some(s) = splitter {
+                    if throw_if_exists {
+                        anyhow::bail!("Splitter already exists in database")
+                    }
+                    s
+                } else {
+                    sqlx::query_as(
+                        "INSERT INTO pgml.sdk_splitters (project_id, name, parameters) VALUES ($1, $2, $3) RETURNING *",
+                    )
+                    .bind(project_info.id)
+                    .bind(&self.name)
+                    .bind(&self.parameters)
+                    .fetch_one(pool)
+                    .await?
+                };
+
+                self.database_data = Some(SplitterDatabaseData {
+                    id: splitter.id,
+                    created_at: splitter.created_at,
+                });
+                Ok(())
+            }
         }
+    }
+
+    pub async fn create_splitters_table(pool: &PgPool) -> anyhow::Result<()> {
+        sqlx::query(queries::CREATE_SPLITTERS_TABLE)
+            .execute(pool)
+            .await?;
         Ok(())
     }
 
-    pub async fn get_id(&mut self) -> anyhow::Result<i64> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
-        self.verify_in_database(&pool).await?;
-        Ok(self.id.expect("Model id should be set"))
-    }
-
-    pub async fn get_created_at(&mut self) -> anyhow::Result<DateTime> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
-        self.verify_in_database(&pool).await?;
-        Ok(self
-            .created_at
-            .clone()
-            .expect("Model created_at should be set"))
-    }
-
-    pub fn get_name(&self) -> String {
-        self.name.clone()
-    }
-
-    pub fn get_parameters(&self) -> Json {
-        self.parameters.clone()
-    }
-
-    pub fn get_verified_in_database(&self) -> bool {
-        self.verified_in_database
+    pub fn set_project_info(&mut self, project_info: ProjectInfo) {
+        self.project_info = Some(project_info)
     }
 }

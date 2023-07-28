@@ -59,7 +59,13 @@ impl SupportedType {
 
     pub fn to_language_string(&self, language: &Option<&str>) -> String {
         match self {
-            SupportedType::Reference(t) => format!("&{}", t.ty.to_language_string(language)),
+            SupportedType::Reference(t) => {
+                if t.mutable {
+                    format!("&mut {}", t.ty.to_language_string(language))
+                } else {
+                    format!("&{}", t.ty.to_language_string(language))
+                }
+            }
             SupportedType::str => "str".to_string(),
             SupportedType::String => "String".to_string(),
             SupportedType::bool => "bool".to_string(),

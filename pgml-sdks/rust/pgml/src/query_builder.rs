@@ -15,7 +15,7 @@ use crate::{
 use crate::{languages::javascript::*, model::ModelJavascript, splitter::SplitterJavascript};
 
 #[cfg(feature = "python")]
-use crate::{model::ModelPython, splitter::SplitterPython};
+use crate::{model::ModelPython, splitter::SplitterPython, languages::CustomInto};
 
 #[derive(Clone)]
 enum SIden<'a> {
@@ -132,78 +132,78 @@ impl QueryBuilder {
         self
     }
 
-    pub fn vector_recall(
-        mut self,
-        query: String,
-        model: &Model,
-        splitter: &Splitter,
-        query_params: Option<Json>,
-    ) -> Self {
-        let query_params = match query_params {
-            Some(params) => params.0,
-            None => serde_json::json!({}),
-        };
-
-        let embeddings_table_name = self
-            .collection
-            .get_embeddings_table_name(model, splitter)
-            .expect("Error getting embeddings table name in vector_recall");
-
-        let mut query_cte = Query::select();
-        query_cte.expr_as(
-            Func::cast_as(
-                Func::cust(SIden::Str("pgml.embed")).args([
-                    Expr::cust_with_values("transformer => $1", [&model.name]),
-                    Expr::cust_with_values("text => $1", [query]),
-                    Expr::cust_with_values("kwargs => $1", [query_params]),
-                ]),
-                Alias::new("vector"),
-            ),
-            Alias::new("query_embedding"),
-        );
-        let mut query_cte = CommonTableExpression::from_select(query_cte);
-        query_cte.table_name(Alias::new("query_cte"));
-
-        let mut cte = Query::select();
-        cte.from_as(
-            embeddings_table_name.to_table_tuple(),
-            SIden::Str("embedding"),
-        )
-        .columns([models::EmbeddingIden::ChunkId])
-        .expr(Expr::cust(
-            "1 - (embedding.embedding <=> (select query_embedding from query_cte)) as score",
-        ));
-        let mut cte = CommonTableExpression::from_select(cte);
-        cte.table_name(Alias::new("cte"));
-
-        let mut with_clause = WithClause::new();
-        self.with = with_clause.cte(query_cte).cte(cte).to_owned();
-
-        self.query
-            .columns([
-                (SIden::Str("cte"), SIden::Str("score")),
-                (SIden::Str("chunks"), SIden::Str("chunk")),
-                (SIden::Str("documents"), SIden::Str("metadata")),
-            ])
-            .from(SIden::Str("cte"))
-            .join_as(
-                JoinType::InnerJoin,
-                self.collection.chunks_table_name.to_table_tuple(),
-                Alias::new("chunks"),
-                Expr::col((SIden::Str("chunks"), SIden::Str("id")))
-                    .equals((SIden::Str("cte"), SIden::Str("chunk_id"))),
-            )
-            .join_as(
-                JoinType::InnerJoin,
-                self.collection.documents_table_name.to_table_tuple(),
-                Alias::new("documents"),
-                Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
-            )
-            .order_by((SIden::Str("cte"), SIden::Str("score")), Order::Desc);
-
-        self
-    }
+    // pub fn vector_recall(
+    //     mut self,
+    //     query: String,
+    //     model: &Model,
+    //     splitter: &Splitter,
+    //     query_params: Option<Json>,
+    // ) -> Self {
+    //     let query_params = match query_params {
+    //         Some(params) => params.0,
+    //         None => serde_json::json!({}),
+    //     };
+    //
+    //     let embeddings_table_name = self
+    //         .collection
+    //         .get_embeddings_table_name(model, splitter)
+    //         .expect("Error getting embeddings table name in vector_recall");
+    //
+    //     let mut query_cte = Query::select();
+    //     query_cte.expr_as(
+    //         Func::cast_as(
+    //             Func::cust(SIden::Str("pgml.embed")).args([
+    //                 Expr::cust_with_values("transformer => $1", [&model.name]),
+    //                 Expr::cust_with_values("text => $1", [query]),
+    //                 Expr::cust_with_values("kwargs => $1", [query_params]),
+    //             ]),
+    //             Alias::new("vector"),
+    //         ),
+    //         Alias::new("query_embedding"),
+    //     );
+    //     let mut query_cte = CommonTableExpression::from_select(query_cte);
+    //     query_cte.table_name(Alias::new("query_cte"));
+    //
+    //     let mut cte = Query::select();
+    //     cte.from_as(
+    //         embeddings_table_name.to_table_tuple(),
+    //         SIden::Str("embedding"),
+    //     )
+    //     .columns([models::EmbeddingIden::ChunkId])
+    //     .expr(Expr::cust(
+    //         "1 - (embedding.embedding <=> (select query_embedding from query_cte)) as score",
+    //     ));
+    //     let mut cte = CommonTableExpression::from_select(cte);
+    //     cte.table_name(Alias::new("cte"));
+    //
+    //     let mut with_clause = WithClause::new();
+    //     self.with = with_clause.cte(query_cte).cte(cte).to_owned();
+    //
+    //     self.query
+    //         .columns([
+    //             (SIden::Str("cte"), SIden::Str("score")),
+    //             (SIden::Str("chunks"), SIden::Str("chunk")),
+    //             (SIden::Str("documents"), SIden::Str("metadata")),
+    //         ])
+    //         .from(SIden::Str("cte"))
+    //         .join_as(
+    //             JoinType::InnerJoin,
+    //             self.collection.chunks_table_name.to_table_tuple(),
+    //             Alias::new("chunks"),
+    //             Expr::col((SIden::Str("chunks"), SIden::Str("id")))
+    //                 .equals((SIden::Str("cte"), SIden::Str("chunk_id"))),
+    //         )
+    //         .join_as(
+    //             JoinType::InnerJoin,
+    //             self.collection.documents_table_name.to_table_tuple(),
+    //             Alias::new("documents"),
+    //             Expr::col((SIden::Str("documents"), SIden::Str("id")))
+    //                 .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+    //         )
+    //         .order_by((SIden::Str("cte"), SIden::Str("score")), Order::Desc);
+    //
+    //     self
+    // }
 
     pub async fn run(self) -> anyhow::Result<Vec<(f64, String, Json)>> {
         let pool = get_or_initialize_pool(&self.collection.database_url).await?;

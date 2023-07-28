@@ -69,91 +69,37 @@ pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
     let expanded = quote! {
         #[cfg(feature = "python")]
         #[pyo3::pyclass(name = #wrapped_type_name)]
-        #[derive(Clone, Debug)]
+        #[derive(Debug, Clone)]
         pub struct #name_ident {
-            pub wrapped: std::boxed::Box<#wrapped_type_ident>
+            pub wrapped: std::sync::Arc<tokio::sync::Mutex<#wrapped_type_ident>>
         }
 
         #[cfg(feature = "python")]
         impl From<#wrapped_type_ident> for #name_ident {
             fn from(w: #wrapped_type_ident) -> Self {
                 Self {
-                    wrapped: std::boxed::Box::new(w),
+                    wrapped: std::sync::Arc::new(tokio::sync::Mutex::new(w)),
                 }
             }
         }
 
-        #[cfg(feature = "python")]
-        impl CustomInto<#wrapped_type_ident> for #name_ident {
-            fn custom_into(self) -> #wrapped_type_ident {
-                *self.wrapped
-            }
-        }
-
-        #[cfg(feature = "python")]
-        impl CustomInto<&'static mut #wrapped_type_ident> for &mut #name_ident {
-            fn custom_into(self) -> &'static mut #wrapped_type_ident {
-                // This is how we get around the liftime checker
-                unsafe {
-                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
-                    let ptr = ptr as *mut #wrapped_type_ident;
-                    let boxed = Box::from_raw(ptr);
-                    Box::leak(boxed)
-                }
-            }
-        }
-
-        #[cfg(feature = "python")]
-        impl CustomInto<&'static #wrapped_type_ident> for &mut #name_ident {
-            fn custom_into(self) -> &'static #wrapped_type_ident {
-                // This is how we get around the liftime checker
-                unsafe {
-                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
-                    let ptr = ptr as *mut #wrapped_type_ident;
-                    let boxed = Box::from_raw(ptr);
-                    Box::leak(boxed)
-                }
-            }
-        }
-
-        #[cfg(feature = "python")]
-        impl CustomInto<#wrapped_type_ident> for &mut #name_ident {
-            fn custom_into(self) -> #wrapped_type_ident {
-                // This is how we get around the liftime checker
-                unsafe {
-                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
-                    let ptr = ptr as *mut #wrapped_type_ident;
-                    let boxed = Box::from_raw(ptr);
-                    Box::leak(boxed).to_owned()
-                }
-            }
-        }
-
-        #[cfg(feature = "python")]
-        impl CustomInto<&'static #wrapped_type_ident> for &#name_ident {
-            fn custom_into(self) -> &'static #wrapped_type_ident {
-                // This is how we get around the liftime checker
-                unsafe {
-                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
-                    let ptr = ptr as *mut #wrapped_type_ident;
-                    let boxed = Box::from_raw(ptr);
-                    Box::leak(boxed)
-                }
-            }
-        }
-
-        #[cfg(feature = "python")]
-        impl CustomInto<#wrapped_type_ident> for &#name_ident {
-            fn custom_into(self) -> #wrapped_type_ident {
-                // This is how we get around the liftime checker
-                unsafe {
-                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
-                    let ptr = ptr as *mut #wrapped_type_ident;
-                    let boxed = Box::from_raw(ptr);
-                    Box::leak(boxed).to_owned()
-                }
-            }
-        }
+        // #[cfg(feature = "python")]
+        // impl From<#name_ident> for #wrapped_type_ident {
+        //     fn from(w: #name_ident) -> Self {
+        //         // The verbose typing here is necessary
+        //         // let inner: tokio::sync::Mutex<Self> = std::sync::Arc::into_inner(w.wrapped).expect("My guess is this is it");
+        //         // inner.into_inner()
+        //
+        //         use std::ops::DerefMut;
+        //         let mut wrapped = w.wrapped.blocking_lock();
+        //         let wrapped = wrapped.deref_mut();
+        //         let wrapped = wrapped.to_owned();
+        //         wrapped
+        //
+        //         // let wrapped = (*w.wrapped).into_inner();
+        //         // wrapped
+        //     }
+        // }
 
         #[cfg(feature = "python")]
         impl pyo3::IntoPy<pyo3::PyObject> for #wrapped_type_ident {
@@ -215,23 +161,6 @@ pub fn generate_python_methods(
             .receiver
             .as_ref()
             .is_some_and(|r| r.to_string().replace("mut", "").trim() == "self");
-
-        let some_wrapper_type = match method.receiver.as_ref() {
-            Some(r) => {
-                let st = r.to_string();
-                Some(if st.contains("&") {
-                    let st = st.replace("self", &wrapped_type_ident.to_string());
-                    let s = syn::parse_str::<syn::Type>(&st).expect(&format!(
-                        "Error converting self type to necessary syn type: {:?}",
-                        r
-                    ));
-                    s.to_token_stream()
-                } else {
-                    quote! { #wrapped_type_ident }
-                })
-            }
-            None => None,
-        };
 
         let signature = quote! {
             pub fn #method_ident<'a>(#(#method_arguments),*) -> #output_type
@@ -305,15 +234,37 @@ pub fn generate_python_methods(
                 #method_ident(#(#wrapper_arguments),*)
             };
 
-            let middle = if method.is_async {
-                quote! {
-                    {
-                        wrapped.#middle.await
+            let middle = if does_take_ownership_of_self {
+                if method.is_async {
+                    quote! {
+                        {
+                            use std::ops::DerefMut;
+                            let mut wrapped = wrapped.lock().await;
+                            let wrapped = wrapped.deref_mut();
+                            let wrapped = wrapped.to_owned();
+                            wrapped.#middle.await
+                        }
+                    }
+                } else {
+                    quote! {
+                        {
+                            use std::ops::DerefMut;
+                            let mut wrapped = wrapped.blocking_lock();
+                            let wrapped = wrapped.deref_mut();
+                            let wrapped = wrapped.to_owned();
+                            wrapped.#middle
+                        }
                     }
                 }
             } else {
-                quote! {
-                    wrapped.#middle
+                if method.is_async {
+                    quote! {
+                        wrapped.lock().await.#middle.await
+                    }
+                } else {
+                    quote! {
+                        wrapped.blocking_lock().#middle
+                    }
                 }
             };
 
@@ -339,17 +290,17 @@ pub fn generate_python_methods(
             };
             let middle = if method.is_async {
                 quote! {
-                    let mut wrapped: #some_wrapper_type = self.custom_into();
-                    #prepared_wrapper_arguments
+                    let wrapped = self.wrapped.clone();
                     pyo3_asyncio::tokio::future_into_py(py, async move {
                         use std::ops::DerefMut;
+                        #prepared_wrapper_arguments
                         #middle
                         Ok(x)
                     })
                 }
             } else {
                 quote! {
-                    let mut wrapped: #some_wrapper_type = self.custom_into();
+                    let wrapped = self.wrapped.clone();
                     use std::ops::DerefMut;
                     #prepared_wrapper_arguments
                     #middle
@@ -437,29 +388,168 @@ pub fn get_method_wrapper_arguments_python(
     (method_arguments, wrapper_arguments, prep_wrapper_arguments)
 }
 
+// This whole thing needs to be completely rewritten there are better ways to do this I basically
+// need to start from scratch
+
+// fn convert_method_wrapper_arguments(
+//     name_ident: syn::Ident,
+//     ty: &SupportedType,
+//     is_async: bool,
+// ) -> (
+//     proc_macro2::TokenStream,
+//     proc_macro2::TokenStream,
+//     proc_macro2::TokenStream,
+// ) {
+//     match ty {
+//         SupportedType::Reference(r) => {
+//             let (d, w, p) = convert_method_wrapper_arguments(name_ident.clone(), &r.ty, is_async);
+//             if r.mutable {
+//                 (d, quote! { &mut #w}, p)
+//             } else {
+//                 (d, quote! { & #w}, p)
+//             }
+//         }
+//         // SupportedType::Option(o) => {}
+//         SupportedType::Database
+//         | SupportedType::Collection
+//         | SupportedType::Model
+//         | SupportedType::QueryBuilder
+//         | SupportedType::QueryRunner
+//         | SupportedType::Splitter => {
+//             let t = ty
+//                 .to_type(Some("Python"))
+//                 .expect("Could not parse type in convert_method_type in python.rs");
+//             let p = if is_async {
+//                 quote! {
+//                     let mut #name_ident = #name_ident.wrapped.lock().await;
+//                     let #name_ident = #name_ident.deref_mut();
+//                 }
+//             } else {
+//                 quote! {
+//                     let mut #name_ident = #name_ident.wrapped.blocking_lock();
+//                     let #name_ident = #name_ident.deref_mut();
+//                 }
+//             };
+//             (quote! { #name_ident : #t}, quote! {#name_ident}, p)
+//         }
+//         _ => {
+//             let t = ty
+//                 .to_type(Some("Python"))
+//                 .expect("Could not parse type in convert_method_type in python.rs");
+//             (quote! { #name_ident : #t}, quote! {#name_ident}, quote! {})
+//         }
+//     }
+// }
+
 fn convert_method_wrapper_arguments(
     name_ident: syn::Ident,
     ty: &SupportedType,
-    _is_async: bool,
+    is_async: bool,
 ) -> (
     proc_macro2::TokenStream,
     proc_macro2::TokenStream,
     proc_macro2::TokenStream,
 ) {
-    let pyo3_type = ty
-        .to_type(Some("Python"))
-        .expect("Could not parse type in convert_method_wrapper_arguments in python.rs");
-    let normal_type = ty
-        .to_type(None)
-        .expect("Could not parse type in convert_method_wrapper_arguments in python.rs");
-
-    (
-        quote! { #name_ident: #pyo3_type },
-        quote! { #name_ident },
-        quote! {
-            let #name_ident: #normal_type = #name_ident.custom_into();
-        },
-    )
+    match ty {
+        SupportedType::Reference(r) => {
+            let (d, w, p) = convert_method_wrapper_arguments(name_ident.clone(), &r.ty, is_async);
+            match *r.ty.clone() {
+                SupportedType::Database
+                | SupportedType::Collection
+                | SupportedType::Model
+                | SupportedType::QueryBuilder
+                | SupportedType::QueryRunner
+                | SupportedType::Splitter => {
+                    let p = if is_async {
+                        quote! {
+                            let mut #name_ident = #name_ident.wrapped.lock().await;
+                            let #name_ident = #name_ident.deref_mut();
+                        }
+                    } else {
+                        quote! {
+                            let mut #name_ident = #name_ident.wrapped.blocking_lock();
+                            let #name_ident = #name_ident.deref_mut();
+                        }
+                    };
+                    (d, w, p)
+                }
+                _ => {
+                    if r.mutable {
+                        (d, quote! { &mut #w}, p)
+                    } else {
+                        (d, quote! { & #w}, p)
+                    }
+                }
+            }
+        }
+        SupportedType::Option(o) => {
+            let t = ty
+                .to_type(Some("Python"))
+                .expect("Could not parse type in convert_method_type in python.rs");
+            match *o.clone() {
+                SupportedType::Database
+                | SupportedType::Collection
+                | SupportedType::Model
+                | SupportedType::QueryBuilder
+                | SupportedType::QueryRunner
+                | SupportedType::Splitter => {
+                    let p = if is_async {
+                        quote! {
+                            let #name_ident = #name_ident.map(|o| {
+                                let mut o = o.wrapped.lock().await;
+                                let o = o.deref_mut();
+                                o.to_owned()
+                            });
+                        }
+                    } else {
+                        quote! {
+                            let #name_ident = #name_ident.map(|o| {
+                                let mut o = o.wrapped.blocking_lock();
+                                let o = o.deref_mut();
+                                o.to_owned()
+                            });
+                        }
+                    };
+                    (quote! { #name_ident : #t}, quote! {#name_ident}, p)
+                }
+                _ => (quote! { #name_ident : #t}, quote! {#name_ident}, quote! {}),
+            }
+        }
+        SupportedType::str => (
+            quote! {#name_ident: String},
+            quote! { #name_ident},
+            quote! {},
+        ),
+        _ => {
+            let t = ty
+                .to_type(Some("Python"))
+                .expect("Could not parse type in convert_method_type in python.rs");
+            let p = match ty {
+                SupportedType::Database
+                | SupportedType::Collection
+                | SupportedType::Model
+                | SupportedType::QueryBuilder
+                | SupportedType::QueryRunner
+                | SupportedType::Splitter => {
+                    if is_async {
+                        quote! {
+                            let mut #name_ident = #name_ident.wrapped.lock().await;
+                            let #name_ident = #name_ident.deref_mut();
+                            let #name_ident = #name_ident.to_owned();
+                        }
+                    } else {
+                        quote! {
+                            let mut #name_ident = #name_ident.wrapped.blocking_lock();
+                            let #name_ident = #name_ident.deref_mut();
+                            let #name_ident = #name_ident.to_owned();
+                        }
+                    }
+                }
+                _ => quote! {},
+            };
+            (quote! { #name_ident : #t}, quote! {#name_ident}, p)
+        }
+    }
 }
 
 fn convert_output_type_convert_from_python(

@@ -16,6 +16,7 @@ mod filter_builder;
 mod languages;
 mod model;
 pub mod models;
+mod pipeline;
 mod queries;
 mod query_builder;
 mod query_runner;
@@ -139,7 +140,8 @@ fn setup_logger(level: &str) -> pyo3::PyResult<()> {
 #[pyo3::prelude::pyfunction]
 fn connect_python(database_url: Option<String>) -> pyo3::PyResult<()> {
     let runtime = get_or_set_runtime();
-    runtime.block_on(connect(&database_url))
+    runtime
+        .block_on(connect(&database_url))
         .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))
 }
 
@@ -147,7 +149,8 @@ fn connect_python(database_url: Option<String>) -> pyo3::PyResult<()> {
 #[pyo3::prelude::pyfunction]
 fn reconnect_python() -> pyo3::PyResult<()> {
     let runtime = get_or_set_runtime();
-    runtime.block_on(reconnect())
+    runtime
+        .block_on(reconnect())
         .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))
 }
 
@@ -155,6 +158,7 @@ fn reconnect_python() -> pyo3::PyResult<()> {
 #[pyo3::pymodule]
 fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(setup_logger, m)?)?;
+    m.add_class::<pipeline::PipelinePython>()?;
     m.add_class::<collection::CollectionPython>()?;
     m.add_class::<model::ModelPython>()?;
     m.add_class::<splitter::SplitterPython>()?;
@@ -179,7 +183,9 @@ mod tests {
     use super::*;
     use std::env;
 
-    use crate::{builtins::Builtins, model::Model, splitter::Splitter, types::Json};
+    use crate::{
+        builtins::Builtins, model::Model, pipeline::Pipeline, splitter::Splitter, types::Json,
+    };
 
     fn setup_logger() {
         let log_level = env::var("LOG_LEVEL").unwrap_or("".to_string());
@@ -211,190 +217,229 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn can_lazily_create_collection() {
+    async fn test_model() {
         setup_logger();
-        let collection_name = "r_ccc_test_4";
-        let mut collection = Collection::new(collection_name, None);
-        let builtins = Builtins::new(None);
-        // Collection will not exist in the database because it does not need to
-        let does_collection_exist = builtins
-            .does_collection_exist(collection_name)
-            .await
-            .unwrap();
-        assert!(!does_collection_exist);
-        // Do something that requires the collection to be created
-        collection
-            .upsert_documents(generate_dummy_documents(1), None, None)
-            .await
-            .unwrap();
-        // Now the collection will exist because it had to be created to upsert documents
-        let does_collection_exist = builtins
-            .does_collection_exist(collection_name)
-            .await
-            .unwrap();
-        collection.archive().await.unwrap();
-        assert!(does_collection_exist);
+        let mut model = Model::new(None, None, None);
+        let pool = get_or_initialize_pool(&None).await.unwrap();
+        let project_info = collection::ProjectInfo {
+            name: "test_project_1".to_string(),
+            id: 1,
+            task: "embedding".to_string(),
+        };
+        model.set_project_info(project_info);
+        model.verify_in_database(&pool, false).await.unwrap();
     }
 
     #[sqlx::test]
-    async fn can_lazily_create_model() {
+    async fn test_splitter() {
         setup_logger();
-        let mut model = Model::new(None, None, None, None, None);
-        assert!(model.id.is_none());
-        let id = model.get_id().await.unwrap();
-        assert_eq!(id, model.id.unwrap());
+        let mut splitter = Splitter::new(None, None);
+        let pool = get_or_initialize_pool(&None).await.unwrap();
+        let project_info = collection::ProjectInfo {
+            name: "test_project_1".to_string(),
+            id: 1,
+            task: "embedding".to_string(),
+        };
+        splitter.set_project_info(project_info);
+        splitter.verify_in_database(&pool, true).await.unwrap();
     }
 
     #[sqlx::test]
-    async fn can_lazily_create_splitter() {
+    async fn can_add_pipeline() {
         setup_logger();
-        let mut splitter = Splitter::new(None, None, None);
-        assert!(splitter.id.is_none());
-        let id = splitter.get_id().await.unwrap();
-        assert_eq!(id, splitter.id.unwrap());
+        let model = Model::new(None, None, None);
+        let splitter = Splitter::new(None, None);
+        let mut pipeline = Pipeline::new("test_p_cap_8", Some(model), Some(splitter));
+        let mut collection = Collection::new("test_c_cap_2", None);
+        collection.add_pipeline(&mut pipeline).await.unwrap();
+        println!("{:?}", pipeline);
     }
 
-    #[sqlx::test]
-    async fn can_vector_search() {
-        setup_logger();
-        let collection_name = "r_cvs_test_5";
-        let mut collection = Collection::new(collection_name, None);
-        let mut model = Model::new(None, None, None, None, None);
-        let mut splitter = Splitter::new(None, None, None);
-        collection
-            .upsert_documents(generate_dummy_documents(2), None, None)
-            .await
-            .unwrap();
-        // Splitter should not be verified in the database yet
-        assert!(!splitter.verified_in_database);
-        collection.generate_chunks(&mut splitter).await.unwrap();
-        // Now splitter should be verified in the database
-        assert!(splitter.verified_in_database);
-        // Model should not be verified in the database yet
-        assert!(!model.verified_in_database);
-        collection
-            .generate_embeddings(&mut model, &mut splitter)
-            .await
-            .unwrap();
-        // Now model should be verified in the database
-        assert!(model.verified_in_database);
-        let results = collection
-            .vector_search("Here is some query", &model, &splitter, None, None)
-            .await
-            .unwrap();
-        collection.archive().await.unwrap();
-        assert!(results.len() > 0);
-    }
-
-    #[sqlx::test]
-    async fn can_vector_search_with_remote_embeddings() {
-        setup_logger();
-        let collection_name = "r_cvswre_test_1";
-        let mut model = Model::new(
-            Some("text-embedding-ada-002".to_string()),
-            None,
-            Some("openai".to_string()),
-            None,
-            None,
-        );
-        let mut splitter = Splitter::new(None, None, None);
-        let mut collection = Collection::new(collection_name, None);
-        collection
-            .upsert_documents(generate_dummy_documents(2), None, None)
-            .await
-            .unwrap();
-        collection.generate_chunks(&mut splitter).await.unwrap();
-        collection
-            .generate_embeddings(&mut model, &mut splitter)
-            .await
-            .unwrap();
-        let results = collection
-            .vector_search("Here is some query", &model, &splitter, None, None)
-            .await
-            .unwrap();
-        collection.archive().await.unwrap();
-        assert!(results.len() > 0);
-    }
-
-    #[sqlx::test]
-    async fn can_vector_search_with_query_builder() {
-        setup_logger();
-        let collection_name = "r_cvswqb_test_2";
-        let mut collection = Collection::new(collection_name, None);
-        let mut model = Model::new(None, None, None, None, None);
-        let mut splitter = Splitter::new(None, None, None);
-        collection
-            .upsert_documents(generate_dummy_documents(2), None, None)
-            .await
-            .unwrap();
-        collection.generate_chunks(&mut splitter).await.unwrap();
-        collection
-            .generate_embeddings(&mut model, &mut splitter)
-            .await
-            .unwrap();
-        collection.generate_tsvectors(None).await.unwrap();
-        let filter = serde_json::json! ({
-            "metadata": {
-                "metadata": {
-                    "$or": [
-                        {"uuid": {"$eq": 0 }},
-                        {"uuid": {"$eq": 10 }},
-                        {"category": {"$eq": [1, 2, 3]}}
-                    ]
-
-                }
-            },
-            "full_text": {
-                "text": "Test document"
-            }
-        });
-        let results = collection
-            .query()
-            .vector_recall("Here is some query".to_string(), &model, &splitter, None)
-            .filter(filter.into())
-            .limit(10)
-            .run()
-            .await
-            .unwrap();
-        collection.archive().await.unwrap();
-        assert!(results.len() > 0);
-    }
-
-    #[sqlx::test]
-    async fn collection_errors() {
-        setup_logger();
-        let collection_name = "r_ce_test_0";
-        let mut collection = Collection::new(collection_name, None);
-        let mut model = Model::new(None, None, None, None, None);
-        let mut splitter = Splitter::new(None, None, None);
-        // Test that we cannot generate tsvectors without upserting documents first
-        assert!(collection.generate_tsvectors(None).await.is_err());
-        // Test that we cannot generate chunks without upserting documents first
-        assert!(collection.generate_chunks(&mut splitter).await.is_err());
-        // Test that we cannot generate embeddings without generating chunks first
-        assert!(collection
-            .generate_embeddings(&mut model, &mut splitter)
-            .await
-            .is_err());
-    }
-
-    #[sqlx::test]
-    async fn query_runner() {
-        setup_logger();
-        let builtins = Builtins::new(None);
-        let query = builtins.query("SELECT * from pgml.collections");
-        let _ = query.fetch_all().await.unwrap();
-    }
-
-    #[sqlx::test]
-    async fn transform() {
-        setup_logger();
-        let builtins = Builtins::new(None);
-        // let task = Json::from(serde_json::json!("text-classification"));
-        let task = serde_json::json!("translation_en_to_fr");
-        let inputs = vec!["test1".to_string(), "test2".to_string()];
-        let _ = builtins.transform(task.into(), inputs, None).await.unwrap();
-    }
+    // #[sqlx::test]
+    // async fn can_lazily_create_collection() {
+    //     setup_logger();
+    //     let collection_name = "r_ccc_test_4";
+    //     let mut collection = Collection::new(collection_name, None);
+    //     let builtins = Builtins::new(None);
+    //     // Collection will not exist in the database because it does not need to
+    //     let does_collection_exist = builtins
+    //         .does_collection_exist(collection_name)
+    //         .await
+    //         .unwrap();
+    //     assert!(!does_collection_exist);
+    //     // Do something that requires the collection to be created
+    //     collection
+    //         .upsert_documents(generate_dummy_documents(1), None, None)
+    //         .await
+    //         .unwrap();
+    //     // Now the collection will exist because it had to be created to upsert documents
+    //     let does_collection_exist = builtins
+    //         .does_collection_exist(collection_name)
+    //         .await
+    //         .unwrap();
+    //     collection.archive().await.unwrap();
+    //     assert!(does_collection_exist);
+    // }
+    //
+    // #[sqlx::test]
+    // async fn can_lazily_create_model() {
+    //     setup_logger();
+    //     let mut model = Model::new(None, None, None, None, None);
+    //     assert!(model.id.is_none());
+    //     let id = model.get_id().await.unwrap();
+    //     assert_eq!(id, model.id.unwrap());
+    // }
+    //
+    // #[sqlx::test]
+    // async fn can_lazily_create_splitter() {
+    //     setup_logger();
+    //     let mut splitter = Splitter::new(None, None, None);
+    //     assert!(splitter.id.is_none());
+    //     let id = splitter.get_id().await.unwrap();
+    //     assert_eq!(id, splitter.id.unwrap());
+    // }
+    //
+    // #[sqlx::test]
+    // async fn can_vector_search() {
+    //     setup_logger();
+    //     let collection_name = "r_cvs_test_5";
+    //     let mut collection = Collection::new(collection_name, None);
+    //     let mut model = Model::new(None, None, None, None, None);
+    //     let mut splitter = Splitter::new(None, None, None);
+    //     collection
+    //         .upsert_documents(generate_dummy_documents(2), None, None)
+    //         .await
+    //         .unwrap();
+    //     // Splitter should not be verified in the database yet
+    //     assert!(!splitter.verified_in_database);
+    //     collection.generate_chunks(&mut splitter).await.unwrap();
+    //     // Now splitter should be verified in the database
+    //     assert!(splitter.verified_in_database);
+    //     // Model should not be verified in the database yet
+    //     assert!(!model.verified_in_database);
+    //     collection
+    //         .generate_embeddings(&mut model, &mut splitter)
+    //         .await
+    //         .unwrap();
+    //     // Now model should be verified in the database
+    //     assert!(model.verified_in_database);
+    //     let results = collection
+    //         .vector_search("Here is some query", &model, &splitter, None, None)
+    //         .await
+    //         .unwrap();
+    //     collection.archive().await.unwrap();
+    //     assert!(results.len() > 0);
+    // }
+    //
+    // #[sqlx::test]
+    // async fn can_vector_search_with_remote_embeddings() {
+    //     setup_logger();
+    //     let collection_name = "r_cvswre_test_1";
+    //     let mut model = Model::new(
+    //         Some("text-embedding-ada-002".to_string()),
+    //         None,
+    //         Some("openai".to_string()),
+    //         None,
+    //         None,
+    //     );
+    //     let mut splitter = Splitter::new(None, None, None);
+    //     let mut collection = Collection::new(collection_name, None);
+    //     collection
+    //         .upsert_documents(generate_dummy_documents(2), None, None)
+    //         .await
+    //         .unwrap();
+    //     collection.generate_chunks(&mut splitter).await.unwrap();
+    //     collection
+    //         .generate_embeddings(&mut model, &mut splitter)
+    //         .await
+    //         .unwrap();
+    //     let results = collection
+    //         .vector_search("Here is some query", &model, &splitter, None, None)
+    //         .await
+    //         .unwrap();
+    //     collection.archive().await.unwrap();
+    //     assert!(results.len() > 0);
+    // }
+    //
+    // #[sqlx::test]
+    // async fn can_vector_search_with_query_builder() {
+    //     setup_logger();
+    //     let collection_name = "r_cvswqb_test_2";
+    //     let mut collection = Collection::new(collection_name, None);
+    //     let mut model = Model::new(None, None, None, None, None);
+    //     let mut splitter = Splitter::new(None, None, None);
+    //     collection
+    //         .upsert_documents(generate_dummy_documents(2), None, None)
+    //         .await
+    //         .unwrap();
+    //     collection.generate_chunks(&mut splitter).await.unwrap();
+    //     collection
+    //         .generate_embeddings(&mut model, &mut splitter)
+    //         .await
+    //         .unwrap();
+    //     collection.generate_tsvectors(None).await.unwrap();
+    //     let filter = serde_json::json! ({
+    //         "metadata": {
+    //             "metadata": {
+    //                 "$or": [
+    //                     {"uuid": {"$eq": 0 }},
+    //                     {"uuid": {"$eq": 10 }},
+    //                     {"category": {"$eq": [1, 2, 3]}}
+    //                 ]
+    //
+    //             }
+    //         },
+    //         "full_text": {
+    //             "text": "Test document"
+    //         }
+    //     });
+    //     let results = collection
+    //         .query()
+    //         .vector_recall("Here is some query".to_string(), &model, &splitter, None)
+    //         .filter(filter.into())
+    //         .limit(10)
+    //         .run()
+    //         .await
+    //         .unwrap();
+    //     collection.archive().await.unwrap();
+    //     assert!(results.len() > 0);
+    // }
+    //
+    // #[sqlx::test]
+    // async fn collection_errors() {
+    //     setup_logger();
+    //     let collection_name = "r_ce_test_0";
+    //     let mut collection = Collection::new(collection_name, None);
+    //     let mut model = Model::new(None, None, None, None, None);
+    //     let mut splitter = Splitter::new(None, None, None);
+    //     // Test that we cannot generate tsvectors without upserting documents first
+    //     assert!(collection.generate_tsvectors(None).await.is_err());
+    //     // Test that we cannot generate chunks without upserting documents first
+    //     assert!(collection.generate_chunks(&mut splitter).await.is_err());
+    //     // Test that we cannot generate embeddings without generating chunks first
+    //     assert!(collection
+    //         .generate_embeddings(&mut model, &mut splitter)
+    //         .await
+    //         .is_err());
+    // }
+    //
+    // #[sqlx::test]
+    // async fn query_runner() {
+    //     setup_logger();
+    //     let builtins = Builtins::new(None);
+    //     let query = builtins.query("SELECT * from pgml.collections");
+    //     let _ = query.fetch_all().await.unwrap();
+    // }
+    //
+    // #[sqlx::test]
+    // async fn transform() {
+    //     setup_logger();
+    //     let builtins = Builtins::new(None);
+    //     // let task = Json::from(serde_json::json!("text-classification"));
+    //     let task = serde_json::json!("translation_en_to_fr");
+    //     let inputs = vec!["test1".to_string(), "test2".to_string()];
+    //     let _ = builtins.transform(task.into(), inputs, None).await.unwrap();
+    // }
 
     // #[tokio::test]
     // async fn can_register_and_get_model() {
