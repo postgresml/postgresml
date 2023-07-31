@@ -18,7 +18,6 @@
     --bs-nav-link-font-weight: 500;
 
     padding: 0px 20px;
-    background: #{$gray-800};
 
     &.horizontal {
         --bs-navbar-padding-y: 16px;
@@ -158,7 +157,7 @@
 .navbar-web-app {
     @extend .navbar;
 
-    background-color: #{$gray-800};
+    background-color: var(--webapp-nav-bg);
 
     border-bottom: 1px solid #{$gray-500};
     border-radius: 0px;
@@ -186,7 +185,7 @@
     position: sticky; 
     top: $navbar-height; 
     height: calc( 100vh - $navbar-height );
-    background-color: var(--bs-body-bg);
+    background-color: var(--webapp-nav-bg);
     border-right: 1px solid #{$gray-500};
     max-width: $left-nav-w;
     padding-top: 0px;
@@ -201,7 +200,7 @@
 
     border: none;
     align-items: start;
-    background-color: var(--bs-body-bg);
+    background-color: inherit;
 
     @include media-breakpoint-down(lg) {
         background-color: #{$gray-900}

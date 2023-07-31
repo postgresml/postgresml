@@ -4,9 +4,9 @@
     --bs-tertiary-bg: #{$gray-600};
     --bs-tertiary-color: #{$hp-white};
 
-    --bs-body-bg: #{$gray-800};
+    --bs-body-bg: #{$gray-900};
     --bs-body-color: #{$gray-200};
-    --bs-body-secondary-color: #BEBEC1;
+    --bs-body-secondary-color: #{$gray-300};
 
     --bs-info-bg-subtle: transparent;
     --bs-info-border-subtle: #{$purple};
@@ -48,7 +48,9 @@
         color: #{$gray-200};
     }
 
+    --webapp-nav-bg: #{$gray-800};
     .navbar {
+
         .nav-link {
             --bs-nav-link-color: #{$gray-100};
             --bs-nav-link-hover-color: #{$purple};
@@ -56,7 +58,7 @@
     }
 
     .bg-body-tertiary {
-        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.245) 15.62%, rgba(53, 51, 56, 0.28) 67.01%);
+        background: $gradient-dark;
 
         p, ol, ul, li, table {
             color: #{$gray-100};
@@ -68,16 +70,9 @@
     }
 
     .card {
-        --bs-card-bg: rgba(33, 34, 36, 1);
+        --bs-card-bg: #{$gray-800};
         --bs-card-border-color: transparent;
         --bs-card-color: #DEE0E7;
-    }
-
-    .input-group-text {
-        --bs-border-color: transparent;
-
-        background-color: var(--bs-card-bg);
-        color: var(--bs-card-color);
     }
 
     .card-title {

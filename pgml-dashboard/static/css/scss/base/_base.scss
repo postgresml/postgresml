@@ -130,17 +130,12 @@ article {
 }
 
 // Override white overrides.
-
 .text-white {
     color: #{$gray-100} !important;
 }
 
 .bg-white {
     background-color: #{$bg-white} !important;
-}
-
-.bg-white-2 {
-    background-color: #EAEAEA !important;
 }
 
 // Our flagship gradient.

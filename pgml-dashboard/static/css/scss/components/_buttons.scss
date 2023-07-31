@@ -13,26 +13,22 @@
 }
 
 .btn-primary {
-    @extend .btn;
-
     --bs-btn-bg: #{$gray-100};
-    --bs-btn-color: #2D2D2F;
+    --bs-btn-color: #{$gray-900};
 
     border: 0;
     font-weight: $font-weight-semibold;
 
     &:hover {
-        background: linear-gradient(48.19deg, #D940FF 0%, #8F02FE 24.43%, #5162FF 52.6%, #00D1FF 100%);
+        background: $primary-gradient-main;
     }
 
     &:active {
-        background: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(48.19deg, #FB40FF 0%, #BB02FE 24.43%, #00D1FF 100%);
+        background: $hp-gradient-active;
     }
 }
 
 .btn-secondary {
-    @extend .btn;
-
     --bs-btn-bg: transparent;
     --bs-btn-color: #{$hp-white};
     --bs-btn-border-color: #{$gray-400};
@@ -73,8 +69,6 @@
 }
 
 .btn-tertiary {
-    @extend .btn;
-
     --bs-btn-bg: transparent;
     --bs-btn-color: #{$gray-300};
     --bs-btn-border-color: transparent;
@@ -94,14 +88,12 @@
     }
 
     &:active {
-        font-weight: 500;
+        font-weight: $font-weight-medium;
         text-shadow: 0 0 0.65px var(--bs-btn-active-color), 0 0 0.65px var(--bs-btn-active-color);
     }
 }
 
 .btn-primary-web-app {
-    @extend .btn;
-
     --bs-btn-bg: #{$neon-shade-100};
     --bs-btn-color: #{$gray-100};
 
@@ -118,8 +110,6 @@
 }
 
 .btn-secondary-web-app {
-    @extend .btn;
-
     --bs-btn-color: #{$neon-tint-500};
     --bs-btn-border-color: #{$neon-tint-500};
     --bs-btn-border-width: 2px;
@@ -149,7 +139,7 @@
     }
     &:active {
         color: #{$slate-tint-700};
-        font-weight: 500;
+        font-weight: $font-weight-medium;
         --bs-btn-active-border-color: transparent;
         border-bottom-color: #{$slate-tint-700};
     }
@@ -271,7 +261,7 @@
     @extend .btn;
     --bs-btn-padding-x: 0px;
     display: flex;
-    font-weight: 700;
+    font-weight: $font-weight-bold;
 
     color: #{$gray-100};
 

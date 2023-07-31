@@ -20,12 +20,16 @@
     }
     
     &.gradient-purple {
-        background: linear-gradient(48.19deg, #D940FF 0%, #9E02FE 24.43%, #00D1FF 100%) !important;
+        background: $hp-gradient !important;
         border: 0; // This causes breakage.
     }
 
     &.card-dark {
-        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.245) 15.62%, rgba(53, 51, 56, 0.28) 67.01%); 
+        background: $gradient-dark; 
+    }
+
+    &.card-light {
+        background: $gradient-light;
     }
 
     .list-group > .list-group-item {
@@ -34,9 +38,7 @@
 }
 
 .generic-card {
-    @extend .card;
-
-    background: linear-gradient(260.55deg, rgba(255, 255, 255, 0.56) 15.62%, rgba(255, 255, 255, 0.28) 67.01%);
+    @extend .card, .card-light;
 
     &:hover {
         box-shadow: 20px 20px 24px rgba(49, 67, 89, 0.13);
@@ -49,8 +51,8 @@
 
         > .card-title {
             font-size: 2rem;
-            line-height: 150%;
-            font-weight: 700;
+            line-height: $line-height-base;
+            font-weight: $font-weight-bold;
         }
     }
 
@@ -62,7 +64,7 @@
     --bs-card-title-spacer-y: 1rem;
     
     &:hover {
-        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.54) 15.62%, rgba(53, 51, 56, 0.72) 67.01%);
+        background: $gradient-darker;
     }
 
     > .card-body {
@@ -75,8 +77,8 @@
 
         > .card-title {
             font-size: 2rem;
-            line-height: 150%;
-            font-weight: 700;
+            line-height: $line-height-base;
+            font-weight: $font-weight-bold;
         }
 
         > .card-text {
@@ -90,11 +92,9 @@
 }
 
 .testimonial-card {
-    @extend .card;
-    @extend .card-lg;
+    @extend .card, .card-lg, .card-light;
 
     min-width: Min(25rem, 75vw);
-    background: linear-gradient(260.55deg, rgba(255, 255, 255, 0.56) 15.62%, rgba(255, 255, 255, 0.28) 67.01%);
 
     &> .card-body {
         display: flex; 
@@ -104,8 +104,7 @@
 }
 
 .form-card {
-    @extend .card;
-    @extend .card-lg;
+    @extend .card, .card-lg;
 
     min-width: 25vw;
 }

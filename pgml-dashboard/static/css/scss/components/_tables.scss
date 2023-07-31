@@ -10,14 +10,13 @@
     }
 
     .header-alt {
-        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.245) 15.62%, rgba(53, 51, 56, 0.28) 67.01%);
+        background: $gradient-dark;
         backdrop-filter: blur(8px);
     }
 
     &> * {
         border-bottom: 1px solid #{$gray-600};
         background-color: #{$gray-800};
-        background-color: #17181A;
 
         p {
             font-weight: 500;
@@ -26,14 +25,14 @@
     }
 
     &> .row:first-child {
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
+        border-top-left-radius: $border-radius-xl;
+        border-top-right-radius: $border-radius-xl;
         border-bottom: none;
     }
 
     &> .row:last-child {
-        border-bottom-left-radius: 16px;
-        border-bottom-right-radius: 16px;
+        border-bottom-left-radius: $border-radius-xl;
+        border-bottom-right-radius: $border-radius-xl;
         border-bottom: none;
     }
 }
