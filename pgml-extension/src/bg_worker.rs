@@ -3,13 +3,14 @@ use std::{io, os::unix::net::UnixStream, path::PathBuf, time::Duration};
 
 use bgworker_message::{Reply, Request};
 use once_cell::sync::OnceCell;
+use parking_lot::Mutex;
 use pgrx::{bgworkers::BackgroundWorkerBuilder, IntoDatum};
+use pgrx_pg_sys::error;
 
 use crate::config::get_config;
 
 const RESTART_DURATION: Duration = Duration::from_secs(1);
 static NAME: &str = "pgml_bgworker";
-static BG_WORKER_SOCKET_PATH: OnceCell<PathBuf> = OnceCell::new();
 static CONFIG_LIBRARY_KEY: &str = "pgml.bgworker_library";
 static CONFIG_FUNCTION_KEY: &str = "pgml.bgworker_entry_fn";
 static CONFIG_SOCKET_PATH_KEY: &str = "pgml.bgworker_socket_path";
@@ -37,11 +38,12 @@ pub fn enabled() -> bool {
     BG_WORKER_SOCKET_PATH.get().is_some()
 }
 
+static BG_WORKER_SOCKET_PATH: OnceCell<PathBuf> = OnceCell::new();
+static BG_WORKER_SOCKET: OnceCell<Mutex<UnixStream>> = OnceCell::new();
+
 fn load_bg_worker(library: &str, function: &str, socket_path: &str) {
-    // UNWRAP: This should only be called once
-    BG_WORKER_SOCKET_PATH
-        .set(PathBuf::from(socket_path))
-        .unwrap();
+    // UNWRAP: set should only be called once on initialization
+    BG_WORKER_SOCKET_PATH.set(socket_path.into()).unwrap();
 
     BackgroundWorkerBuilder::new(NAME)
         .enable_spi_access()
@@ -56,13 +58,20 @@ fn load_bg_worker(library: &str, function: &str, socket_path: &str) {
 /// Send a `Request` to the bg_worker and wait for a `Reply`.
 pub fn send_request(request: Request) -> io::Result<Reply> {
     /* Connect to socket */
-    // UNWRAP: Should always be set by this time
-    let path = BG_WORKER_SOCKET_PATH.get().unwrap();
-    let mut stream = UnixStream::connect(path)?;
+    let mut stream = BG_WORKER_SOCKET
+        .get_or_init(|| {
+            // UNWRAP: Should always be set by this time
+            let path = BG_WORKER_SOCKET_PATH.get().unwrap();
+            match UnixStream::connect(path) {
+                Ok(stream) => Mutex::new(stream),
+                Err(e) => error!("failed to connect to bg_worker: {e}"),
+            }
+        })
+        .lock();
 
     /* Send request */
-    request.send(&mut stream)?;
+    request.send(&mut *stream)?;
 
     /* Read reply */
-    Reply::recv(&mut stream)
+    Reply::recv(&mut *stream)
 }
