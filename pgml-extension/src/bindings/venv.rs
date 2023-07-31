@@ -2,10 +2,10 @@
 
 use once_cell::sync::Lazy;
 use pgrx::*;
-use pgrx_pg_sys::AsPgCStr;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
-use std::ffi::CStr;
+
+use crate::config::get_config;
 
 static CONFIG_NAME: &str = "pgml.venv";
 
@@ -29,13 +29,17 @@ pub fn activate_venv(venv: &str) -> bool {
 }
 
 pub fn activate() -> bool {
-    unsafe {
-        let option = pgrx_pg_sys::GetConfigOption(CONFIG_NAME.as_pg_cstr(), true, false);
-        if option.is_null() {
-            false
-        } else {
-            let venv = CStr::from_ptr(option).to_str().unwrap();
-            activate_venv(venv)
-        }
+    match get_config(CONFIG_NAME) {
+        Some(venv) => activate_venv(&venv),
+        None => false,
     }
+}
+
+pub fn freeze() -> Vec<String> {
+    Python::with_gil(|py| -> Vec<String> {
+        let freeze: Py<PyAny> = PY_MODULE.getattr(py, "freeze").unwrap();
+        let result: Py<PyAny> = freeze.call0(py).unwrap();
+
+        result.extract(py).unwrap()
+    })
 }

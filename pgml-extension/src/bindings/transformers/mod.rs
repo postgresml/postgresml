@@ -10,11 +10,15 @@ use pyo3::types::PyTuple;
 
 use crate::orm::{Task, TextDataset};
 
+use self::whitelist::verify_task_against_whitelist;
+
+pub mod whitelist;
+
 static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
         let src = include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/bindings/transformers.py"
+            "/src/bindings/transformers/transformers.py"
         ));
 
         PyModule::from_code(py, src, "", "").unwrap().into()
@@ -27,6 +31,10 @@ pub fn transform(
     inputs: Vec<&str>,
 ) -> serde_json::Value {
     crate::bindings::venv::activate();
+
+    if let Err(e) = verify_task_against_whitelist(task) {
+        error!("{e}");
+    }
 
     let task = serde_json::to_string(task).unwrap();
     let args = serde_json::to_string(args).unwrap();

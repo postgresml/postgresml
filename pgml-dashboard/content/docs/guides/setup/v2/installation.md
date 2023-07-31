@@ -1,18 +1,22 @@
 # Installation
 
-The PostgresML deployment consists of two parts: the PostgreSQL extension, and the dashboard app. The extension provides all the machine learning functionality and can be used independently. The dashboard app provides a system overview for easier management and notebooks for writing experiments.
+A typical PostgresML deployment consists of two parts: the PostgreSQL extension, and the dashboard web app. The extension provides all the machine learning functionality, and can be used independently. The dashboard provides a system overview for easier management, and notebooks for writing experiments.
 
 ## Extension
 
-The extension can be installed from our Ubuntu `apt` repository or, if you're using a different distribution or operating system, from source.
+The extension can be installed by compiling it from source, or if you're using Ubuntu 22.04, from our package repository.
 
 ### macOS
 
-To install PostgresML on macOS, you'll need to compile it from source. No worries, we do this every day and it works well.
+!!! tip
+
+If you're just looking to try PostgresML without installing it on your system, take a look at our [Quick Start with Docker](/docs/guides/setup/quick_start_with_docker) guide.
+
+!!!
 
 #### Get the source code
 
-To get the source code for PostgresML, you can clone our Github repo:
+To get the source code for PostgresML, you can clone our Github repository:
 
 ```bash
 git clone https://github.com/postgresml/postgresml
@@ -20,7 +24,7 @@ git clone https://github.com/postgresml/postgresml
 
 #### Install dependencies
 
-We provide a `Brewfile` that will install all the necessary dependencies to compile PostgresML from source. You can simply:
+We provide a `Brewfile` that will install all the necessary dependencies for compiling PostgresML from source:
 
 ```bash
 cd pgml-extension && \
@@ -29,7 +33,7 @@ brew bundle
 
 ##### Rust
 
-PostgresML is written in Rust, so you'll need to install the latest compiler from [rust-lang.org](https://rust-lang.org). Additionally, we use the Rust PostgreSQL extension framework `pgrx`, which requires some initialization steps before proceeding:
+PostgresML is written in Rust, so you'll need to install the latest compiler from [rust-lang.org](https://rust-lang.org). Additionally, we use the Rust PostgreSQL extension framework `pgrx`, which requires some initialization steps:
 
 ```bash
 cargo install cargo-pgrx --version 0.9.8 && \
@@ -40,32 +44,33 @@ This step will take a few minutes. Perfect opportunity to get a coffee while you
 
 ### Compile and install
 
-Finally, you can compile and install the extension:
+With all the dependencies installed, you can compile and install the extension:
 
 ```bash
 cargo pgrx install
 ```
 
-This will compile all the necessary dependencies, including Rust bindings to XGBoost and LightGBM, together with Python support for Hugging Face transformers and Scikit-learn. The extension will be automatically installed into `postgresql@15` previously installed by Brew.
+This will compile all the necessary packages, including Rust bindings to XGBoost and LightGBM, together with Python support for Hugging Face transformers and Scikit-learn. The extension will be automatically installed into the PostgreSQL installation created by the `postgresql@15` Homebrew formula.
 
 
 ### Python dependencies
 
-PostgresML uses Python packages extensively to provide support for LLMs and the entirety of the Scikit-learn model suite. To make this work on your system, you have two options: install those packages into a virtual environment (strongly recommended) or install them globally.
+PostgresML uses Python packages to provide support for Hugging Face LLMs and Scikit-learn algorithms and models. To make this work on your system, you have two options: install those packages into a virtual environment (strongly recommended), or install them globally.
 
 === "Virtual environment"
 
-To install the Python packages into a virtual environment, use the `virtualenv` tool installed previously with Brew:
+To install the necessary Python packages into a virtual environment, use the `virtualenv` tool installed previously by Homebrew:
 
 ```bash
 virtualenv pgml-venv && \
 source pgml-venv/bin/activate && \
-pip install -r requirements.txt
+pip install -r requirements.txt && \
+pip install -r requirements-xformers.txt --no-dependencies
 ```
 
 === "Globally"
 
-Installing Python packages globally can cause issues with your system. If you wish to proceed nonetheless, you can do so
+Installing Python packages globally can cause issues with your system. If you wish to proceed nonetheless, you can do so:
 
 ```bash
 pip3 install -r requirements.txt
@@ -73,24 +78,28 @@ pip3 install -r requirements.txt
 
 ===
 
-### Final steps
+### Configuration
 
-We have one last step remaining to get PostgresML running on your system: configuration. PostgresML needs to be loaded into shared memory by Postgres to perform efficiently and to do so, you need to place it into `preload_shared_libraries`. Additionally, if you've chosen to use a virtual environment for the Python packages, we need to tell PostgresML where to find it.
+We have one last step remaining to get PostgresML running on your system: configuration.
 
-Both steps can be done by editing the PostgreSQL configuration file `postgresql.conf` usinig your favorite editor. I prefer `vim` for these kind of tasks:
+PostgresML needs to be loaded into shared memory by PostgreSQL. To do so, you need to add it to `preload_shared_libraries`.
+
+Additionally, if you've chosen to use a virtual environment for the Python packages, we need to tell PostgresML where to find it.
+
+Both steps can be done by editing the PostgreSQL configuration file `postgresql.conf` usinig your favorite editor:
 
 ```bash
 vim /opt/homebrew/var/postgresql@15/postgresql.conf
 ```
 
-Both settings can appended to the file, like so:
+Both settings can be added to the config, like so:
 
 ```
 shared_preload_libraries = 'pgml,pg_stat_statements'
 pgml.venv = '/absolute/path/to/your/pgml-venv'
 ```
 
-Don't forget to restart the database server when finished:
+Save the configuration file and restart PostgreSQL:
 
 ```bash
 brew services restart postgresql@15
@@ -176,7 +185,13 @@ CREATE EXTENSION
 
 ### Ubuntu
 
-For Ubuntu, we compile and ship Debian packages that include everything needed to install and run the extension. The package is created on Ubuntu 22.04, so only Ubuntu 22.04 (Jammy) is supported using this installation method.
+!!! note
+
+If you're looking to use PostgresML in production, [try our cloud](https://postgresml.org/plans). We support serverless deployments with modern GPUs for startups of all sizes, and dedicated GPU hardware for larger teams that would like to tweak PostgresML to their needs.
+
+!!!
+
+For Ubuntu, we compile and ship packages that include everything needed to install and run the extension. At the moment, only Ubuntu 22.04 (Jammy) is supported.
 
 #### Add our sources
 
@@ -197,7 +212,7 @@ sudo apt update && \
 sudo apt install postgresml-${POSTGRES_VERSION}
 ```
 
-The `postgresml-15` package includes all the necessary dependencies including Python packages shipped inside a virtual environment. Your PostgreSQL server is configured automatically.
+The `postgresml-15` package includes all the necessary dependencies, including Python packages shipped inside a virtual environment. Your PostgreSQL server is configured automatically.
 
 We support PostgreSQL versions 11 through 15, so you can install the one matching your currently installed PostgreSQL version.
 
@@ -212,7 +227,7 @@ sudo apt install postgresql-pgml-${POSTGRES_VERSION}
 
 #### Optimized pgvector
 
-pgvector, the extension we use for storing and searching embeddings, needs to be installed separately for optimal performance. Your hardware can include additional instructions which it can take advantage of to perform calculations faster.
+pgvector, the extension we use for storing and searching embeddings, needs to be installed separately for optimal performance. Your hardware may support vectorized operation instructions (like AVX-512), which pgvector can take advantage of to run faster.
 
 To install pgvector from source, you can simply:
 
@@ -267,7 +282,7 @@ libpython3
 
 ##### Rust
 
-PostgresML is written in Rust, so you'll need to install the latest compiler from [rust-lang.org](https://rust-lang.org). 
+PostgresML is written in Rust, so you'll need to install the latest compiler version from [rust-lang.org](https://rust-lang.org). 
 
 
 #### `pgrx`
@@ -293,11 +308,11 @@ cargo pgrx install
 
 ## Dashboard
 
-The dashboard is a web app that can be run against any Postgres database which has the extension installed. There is a Dockerfile included with the source code if you wish to run it as a container.
+The dashboard is a web app that can be run against any Postgres database which has the extension installed. There is a [Dockerfile](https://github.com/postgresml/postgresml/blob/master/pgml-dashboard/Dockerfile) included with the source code if you wish to run it as a container.
 
 ### Get the source code
 
-To get the source code for the dashboard, you can clone our Github repo:
+To get our source code, you can clone our Github repo (if you haven't already):
 
 ```bash
 git clone clone https://github.com/postgresml/postgresml && \
@@ -306,42 +321,43 @@ cd pgml-dashboard
 
 ### Configure your database
 
-Create or use an existing database which has the `pgml` extension installed:
+Use an existing database which has the `pgml` extension installed, or create a new one:
 
 ```bash
-createdb pgml_dashboard
-```
-
-and create the extension:
-
-```postgresql
-CREATE EXTENSION pgml;
+createdb pgml_dashboard && \
+psql -d pgml_dashboard -c 'CREATE EXTENSION pgml;'
 ```
 
 ### Configure the environment
 
-Create a `.env` file with the necessary `DATABASE_URL`:
+Create a `.env` file with the necessary `DATABASE_URL`, for example:
 
-```
+```bash
 DATABASE_URL=postgres:///pgml_dashboard
 ```
 
 ### Get Rust
 
-The dashboard is written in Rust and uses the SQLx crate for interacting with Postgres. Make sure to install the latest Rust compiler from [rust-lang.org](https://rust-lang.org).
+The dashboard is written in Rust and uses the SQLx crate to interact with Postgres. Make sure to install the latest Rust compiler from [rust-lang.org](https://rust-lang.org).
 
 ### Database setup
 
 To setup the database, you'll need to install `sqlx-cli` and run the migrations:
 
 ```bash
-cargo install sqlx-cli --version 0.6.3
+cargo install sqlx-cli --version 0.6.3 && \
 cargo sqlx database setup
 ```
 
 ### Frontend dependencies
 
-The dashboard frontend is using Sass which requires Node & the Sass compiler. You can install Node from Brew or by using [Node Version Manager](https://github.com/nvm-sh/nvm).
+The dashboard frontend is using Sass which requires Node & the Sass compiler. You can install Node from Brew, your package repository, or by using [Node Version Manager](https://github.com/nvm-sh/nvm).
+
+If using nvm, you can install the latest stable Node version with:
+
+```bash
+nvm install stable
+```
 
 Once you have Node installed, you can install the Sass compiler globally:
 
@@ -354,7 +370,7 @@ npm install -g sass
 Finally, you can compile and run the dashboard:
 
 ```
-cargo run --release
+cargo run
 ```
 
 Once compiled, the dashboard will be available on [localhost:8000](http://localhost:8000).
