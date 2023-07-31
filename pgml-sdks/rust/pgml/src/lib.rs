@@ -169,7 +169,7 @@ mod tests {
         let collection = db.create_or_get_collection(collection_name).await.unwrap();
 
         let mut documents: Vec<Json> = Vec::new();
-        for i in 0..1 {
+        for i in 0..4 {
             documents.push(serde_json::json!({
                 "id": i,
                 "metadata": {
@@ -203,6 +203,7 @@ mod tests {
                     "$or": [
                         {"uuid": {"$eq": 1 }},
                         {"uuid": {"$eq": 2 }},
+                        {"uuid": {"$eq": 3 }},
                         {"category": {"$eq": [1, 2, 3]}}
                     ]
 
@@ -226,7 +227,7 @@ mod tests {
     #[tokio::test]
     async fn query_runner() {
         let connection_string = env::var("DATABASE_URL").unwrap();
-        init_logger(LevelFilter::Info).ok();
+        init_logger(LevelFilter::Error).ok();
 
         let db = Database::new(&connection_string).await.unwrap();
         let query = db.query("SELECT * from pgml.collections");
@@ -237,7 +238,7 @@ mod tests {
     #[tokio::test]
     async fn transform() {
         let connection_string = env::var("DATABASE_URL").unwrap();
-        init_logger(LevelFilter::Info).ok();
+        init_logger(LevelFilter::Error).ok();
 
         let db = Database::new(&connection_string).await.unwrap();
         // let task = Json::from(serde_json::json!("text-classification"));
@@ -250,7 +251,7 @@ mod tests {
     #[tokio::test]
     async fn collection_errors() {
         let connection_string = env::var("DATABASE_URL").unwrap();
-        init_logger(LevelFilter::Info).ok();
+        init_logger(LevelFilter::Error).ok();
 
         let db = Database::new(&connection_string).await.unwrap();
         let collection_name = "cetest0";
