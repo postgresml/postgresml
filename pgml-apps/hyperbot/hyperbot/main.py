@@ -220,6 +220,7 @@ async def main():
             model_params=model_params,
         )
     elif stage == "chat":
+        print("Starting chatbot....")
         system_prompt = os.environ.get("SYSTEM_PROMPT","You are an assistant to answer questions about an open source software named PostgresML. Your name is PgBot. You are based out of San Francisco, California.")
         base_prompt = os.environ.get("BASE_PROMPT","""Given relevant parts of a document and a question, create a final answer. Include a SQL query in the answer wherever possible. If you don't find relevant answer then politely say that you don't know and ask for clarification. Use the following portion of a long document to see if any of the text is relevant to answer the question.
         \nReturn any relevant text verbatim.\n{context}\nQuestion: {question}\n If the context is empty then ask for clarification and suggest user to send an email to team@postgresml.org or join PostgresML [Discord](https://discord.gg/DmyJP3qJ7U).""")
@@ -229,10 +230,10 @@ async def main():
         model_id = await collection.register_model("embedding", model, model_params)
         splitter_id = await collection.register_text_splitter(splitter, splitter_params)
         log.info("Model id: " + str(model_id) + " Splitter id: " + str(splitter_id))
+        user_input = "Who are you?"
         while True:
             try:
                 messages = [{"role": "system", "content": system_prompt}]
-                user_input = input("User (Ctrl-C to exit): ")
                 vector_results = await collection.vector_search(
                     user_input, model_id=model_id, splitter_id=splitter_id, top_k=2, query_params=query_params
                 )
@@ -253,6 +254,7 @@ async def main():
 
                 response = await generate_response(messages, openai_api_key, max_tokens=512, temperature=0.0)
                 print("PgBot: " + response)
+                user_input = input("User (Ctrl-C to exit): ")
             except KeyboardInterrupt:
                 print("Exiting...")
                 break
