@@ -23,6 +23,7 @@ git clone https://github.com/postgresml/postgresml
 cd postgresml/pgml-apps/chatbot
 poetry shell
 poetry install
+pip install .
 ```
 
 2. Update environment variables in `.env` file
@@ -49,10 +50,10 @@ BASE_PROMPT="Given relevant parts of a document and a question, create a final a
 You can get help on the command line interface by running:
 
 ```bash
-(pgml-bot-builder-py3.9) chatbot % python pgml_chatbot/main.py --help
-usage: main.py [-h] [--root_dir ROOT_DIR] [--collection_name COLLECTION_NAME] [--stage {ingest,chat}]
+(pgml-bot-builder-py3.9) chatbot % hyperbot --help
+usage: hyperbot [-h] [--root_dir ROOT_DIR] [--collection_name COLLECTION_NAME] [--stage {ingest,chat}]
 
-Process some integers.
+PostgresML Chatbot Builder
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -93,3 +94,9 @@ You can control the behavior of the chatbot by setting the following environment
 - `SYSTEM_PROMPT`: This is the prompt that is used to initialize the chatbot. You can customize this prompt to change the behavior of the chatbot. For example, you can change the name of the chatbot or the location of the chatbot.
 - `BASE_PROMPT`: This is the prompt that is used to generate responses to user queries. You can customize this prompt to change the behavior of the chatbot. 
 - `MODEL`: This is the open source embedding model used to generate embeddings for the documents. You can change this to use a different model.
+
+## Roadmap
+- Support for multi-turn converstaions using converstaion buffer. Use a collection for chat history that can be retrieved and used to generate responses.
+- `hyerbot --chat_interface {cli, slack, discord, teams}` that supports Slack, Discord and Teams.
+- Support for open source models in addition to OpenAI for chat completion.
+- Support for file formats like rst, html, pdf, docx, etc.

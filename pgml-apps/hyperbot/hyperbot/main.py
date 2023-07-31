@@ -14,24 +14,30 @@ import signal
 import json
 import ast
 
+
 def handler(signum, frame):
-    print('Exiting...')
+    print("Exiting...")
     exit(0)
+
 
 signal.signal(signal.SIGINT, handler)
 
-parser = argparse.ArgumentParser(description="PostgresML Chatbot Builder")
-parser.add_argument(
-    "--root_dir",
-    dest="root_dir",
-    type=str,
-    help="Input folder to scan for markdown files",
+parser = argparse.ArgumentParser(
+    description="PostgresML Chatbot Builder",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 parser.add_argument(
     "--collection_name",
     dest="collection_name",
     type=str,
     help="Name of the collection (schema) to store the data in PostgresML database",
+    required=True,
+)
+parser.add_argument(
+    "--root_dir",
+    dest="root_dir",
+    type=str,
+    help="Input folder to scan for markdown files. Required for ingest stage. Not required for chat stage",
 )
 parser.add_argument(
     "--stage",
@@ -46,7 +52,7 @@ args = parser.parse_args()
 
 FORMAT = "%(message)s"
 logging.basicConfig(
-    level=os.environ.get("LOG_LEVEL", "DEBUG"),
+    level=os.environ.get("LOG_LEVEL", "ERROR"),
     format="%(asctime)s - %(message)s",
     datefmt="[%X]",
     handlers=[RichHandler()],
@@ -61,7 +67,7 @@ async def ingest_documents(db: Database, collection_name: str, folder: str) -> i
     log.info("Scanning " + folder + " for markdown files")
     md_files = []
     # root_dir needs a trailing slash (i.e. /root/dir/)
-    for filename in glob.iglob(folder + "**/*.md", recursive=True):
+    for filename in glob.iglob(folder + "/**/*.md", recursive=True):
         md_files.append(filename)
 
     log.info("Found " + str(len(md_files)) + " markdown files")
@@ -163,7 +169,7 @@ async def generate_embeddings(
 
 
 async def generate_response(
-    messages, openai_api_key, temperature=0.7, max_tokens=256, top_p=1.0
+    messages, openai_api_key, temperature=0.7, max_tokens=256, top_p=0.9
 ):
     openai.api_key = openai_api_key
     response = openai.ChatCompletion.create(
@@ -178,24 +184,26 @@ async def generate_response(
     return response["choices"][0]["message"]["content"]
 
 
-async def main():
+async def run():
     """
     The `main` function connects to a database, ingests documents from a specified folder, generates
     chunks, and logs the total number of documents and chunks.
     """
     log.info("Starting pgml_chatbot")
     collection_name = args.collection_name
-    
+
     database_url = os.environ.get("DATABASE_URL")
     log.info("Connecting to database .. ")
     db = Database(database_url)
 
     stage = args.stage
-    splitter = os.environ.get("SPLITTER","recursive_character")
-    splitter_params =os.environ.get("SPLITTER_PARAMS",{"chunk_size": 1500, "chunk_overlap": 40})
-    model = os.environ.get("MODEL","intfloat/e5-small")
-    model_params = ast.literal_eval(os.environ.get("MODEL_PARAMS",{}))
-    query_params = ast.literal_eval(os.environ.get("QUERY_PARAMS",{}))
+    splitter = os.environ.get("SPLITTER", "recursive_character")
+    splitter_params = os.environ.get(
+        "SPLITTER_PARAMS", {"chunk_size": 1500, "chunk_overlap": 40}
+    )
+    model = os.environ.get("MODEL", "intfloat/e5-small")
+    model_params = ast.literal_eval(os.environ.get("MODEL_PARAMS", {}))
+    query_params = ast.literal_eval(os.environ.get("QUERY_PARAMS", {}))
 
     if stage == "ingest":
         root_dir = args.root_dir
@@ -220,10 +228,18 @@ async def main():
             model_params=model_params,
         )
     elif stage == "chat":
+        
         print("Starting chatbot....")
-        system_prompt = os.environ.get("SYSTEM_PROMPT","You are an assistant to answer questions about an open source software named PostgresML. Your name is PgBot. You are based out of San Francisco, California.")
-        base_prompt = os.environ.get("BASE_PROMPT","""Given relevant parts of a document and a question, create a final answer. Include a SQL query in the answer wherever possible. If you don't find relevant answer then politely say that you don't know and ask for clarification. Use the following portion of a long document to see if any of the text is relevant to answer the question.
-        \nReturn any relevant text verbatim.\n{context}\nQuestion: {question}\n If the context is empty then ask for clarification and suggest user to send an email to team@postgresml.org or join PostgresML [Discord](https://discord.gg/DmyJP3qJ7U).""")
+        system_prompt = os.environ.get(
+            "SYSTEM_PROMPT",
+            "You are an assistant to answer questions about an open source software named PostgresML. Your name is PgBot. You are based out of San Francisco, California.",
+        )
+        base_prompt = os.environ.get(
+            "BASE_PROMPT",
+            """Given relevant parts of a document and a question, create a final answer. Include a SQL query in the answer wherever possible. If you don't find relevant answer then politely say that you don't know and ask for clarification. Use the following portion of a long document to see if any of the text is relevant to answer the question.
+        \nReturn any relevant text verbatim.\n{context}\nQuestion: {question}\n If the context is empty then ask for clarification and suggest user to send an email to team@postgresml.org or join PostgresML [Discord](https://discord.gg/DmyJP3qJ7U).""",
+        )
+        
         openai_api_key = os.environ.get("OPENAI_API_KEY")
 
         collection = await db.create_or_get_collection(collection_name)
@@ -231,17 +247,22 @@ async def main():
         splitter_id = await collection.register_text_splitter(splitter, splitter_params)
         log.info("Model id: " + str(model_id) + " Splitter id: " + str(splitter_id))
         user_input = "Who are you?"
+
         while True:
-            try:
+            try:                
                 messages = [{"role": "system", "content": system_prompt}]
+
                 vector_results = await collection.vector_search(
-                    user_input, model_id=model_id, splitter_id=splitter_id, top_k=2, query_params=query_params
+                    user_input,
+                    model_id=model_id,
+                    splitter_id=splitter_id,
+                    top_k=5,
+                    query_params=query_params,
                 )
                 log.info(vector_results)
                 context = ""
                 for result in vector_results:
-                    if result[0] > 0.7:
-                        context += result[1] + "\n"
+                    context += result[1] + "\n"
                 if context:
                     query = base_prompt.format(context=context, question=user_input)
                 else:
@@ -252,13 +273,18 @@ async def main():
                 if context:
                     print("Found relevant documentation.... ")
 
-                response = await generate_response(messages, openai_api_key, max_tokens=512, temperature=0.0)
+                response = await generate_response(
+                    messages, openai_api_key, max_tokens=512, temperature=0.0
+                )
                 print("PgBot: " + response)
+                
                 user_input = input("User (Ctrl-C to exit): ")
+                
+
             except KeyboardInterrupt:
                 print("Exiting...")
                 break
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+def main():
+    asyncio.run(run())
