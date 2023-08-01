@@ -68,7 +68,7 @@
         --bs-nav-link-padding-x: 24px;
 
         &:hover {
-            text-shadow: 0 0 .65px #{$purple}, 0 0 .65px #{$purple}; //change font weight without element resizing
+            @include bold_by_shadow($purple);
 
             path {
                 fill: var(--bs-nav-link-hover-color);

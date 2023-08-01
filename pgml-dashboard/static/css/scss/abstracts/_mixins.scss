@@ -1,0 +1,8 @@
+//change font weight without element resizing
+@mixin bold_by_shadow($color) {
+    text-shadow: 0 0 0.65px $color, 0 0 0.65px $color;
+}
+
+@mixin semibold_by_shadow($color) {
+    text-shadow: 0 0 0.45px $color, 0 0 0.45px $color;
+}

@@ -1,23 +1,27 @@
 .btn {
-    --bs-btn-padding-x: 22px;
-    --bs-btn-padding-y: 12px;
+    font-weight: $font-weight-semibold;
 
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
+    gap: 8px;
 
     &[disabled], &:disabled {
-        cursor: not-allowed; 
+        cursor: not-allowed;
     }
 }
 
 .btn-primary {
+    --bs-btn-padding-x: 24px;
+    --bs-btn-padding-y: 16px;
+
     --bs-btn-bg: #{$gray-100};
     --bs-btn-color: #{$gray-900};
 
+    --bs-btn-font-size: 18px;
+
     border: 0;
-    font-weight: $font-weight-semibold;
 
     &:hover {
         background: $primary-gradient-main;
@@ -29,6 +33,10 @@
 }
 
 .btn-secondary {
+    --bs-btn-padding-x: 22px;
+    --bs-btn-padding-y: 14px;
+    --bs-btn-border-width: 2px;
+
     --bs-btn-bg: transparent;
     --bs-btn-color: #{$hp-white};
     --bs-btn-border-color: #{$gray-400};
@@ -41,11 +49,7 @@
     --bs-btn-active-color: #{$hp-white};
     --bs-btn-active-border-color: transparent;
 
-    --bs-btn-border-width: 2px;
-    --bs-btn-padding-x: 20px;
-    --bs-btn-padding-y: 10px; 
-
-    font-weight: $font-weight-semibold;
+    --bs-btn-font-size: 18px;
 
     // the attached canvas for border in secondary-btn.js
     &> .secondary-btn-canvas {
@@ -81,25 +85,29 @@
     --bs-btn-active-color: #{$gray-100};
     --bs-btn-active-border-color: transparent;
 
-    font-weight: $font-weight-semibold;
-
     span {
         font-size: inherit;
     }
 
     &:active {
-        font-weight: $font-weight-medium;
-        text-shadow: 0 0 0.65px var(--bs-btn-active-color), 0 0 0.65px var(--bs-btn-active-color);
+        @include bold_by_shadow(var(--bs-btn-active-color));
     }
 }
 
 .btn-primary-web-app {
+    --bs-btn-padding-x: 20px;
+    --bs-btn-padding-y: 30px;
+
     --bs-btn-bg: #{$neon-shade-100};
     --bs-btn-color: #{$gray-100};
 
     --bs-btn-hover-bg: #{$neon-tint-300};
+    --bs-btn-hover-color: #{$gray-100};
 
     --bs-btn-active-bg: #{$neon-shade-300};
+    --bs-btn-active-color: #{$gray-100};
+
+    --bs-btn-line-height: 16px;
 
     border: 0px;
 
@@ -107,9 +115,22 @@
         color: #{$neon-shade-400};
         background-color: #{$neon-shade-700};
     }
+
+    &:hover, &:active, &:focus, &:focus-visible, &:focus-within {
+        @include bold_by_shadow(var(--bs-btn-hover-color));
+    }
+    &:active {
+        @include bold_by_shadow(var(--bs-btn-active-color));
+    }
+    &:focus, &:focus-visible, &:focus-within {
+        @include bold_by_shadow(var(--bs-btn-focus-color));
+    }
 }
 
 .btn-secondary-web-app {
+    --bs-btn-padding-x: 30px;
+    --bs-btn-padding-y: 20px;
+
     --bs-btn-color: #{$neon-tint-500};
     --bs-btn-border-color: #{$neon-tint-500};
     --bs-btn-border-width: 2px;
@@ -119,6 +140,18 @@
 
     --bs-btn-active-color: #{$neon-tint-200};
     --bs-btn-active-border-color: #{$neon-tint-200};
+
+    --bs-btn-line-height: 16px;
+
+    &:hover {
+        @include bold_by_shadow(var(--bs-btn-hover-color));
+    }
+    &:active {
+        @include bold_by_shadow(var(--bs-btn-active-color));
+    }
+    &:focus, &:focus-visible, &:focus-within {
+        @include bold_by_shadow(var(--bs-btn-focus-color));
+    }
 }
 
 .btn-tertiary-web-app {
@@ -127,7 +160,6 @@
     border-radius: 0px;
     width: fit-content;
     padding: 0px;
-    gap: 8px;
 
     span {
         font-size: 2rem;
