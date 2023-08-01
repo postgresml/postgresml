@@ -85,6 +85,7 @@ RUN git submodule update --init --recursive
 
 
 RUN sudo cp /app/pgml-extension/docker/postgresql.conf /etc/postgresql/$PG_MAJOR_VER/main/postgresql.conf
+RUN sudo cp /app/pgml-extension/docker/postgresml.conf /etc/postgresql/$PG_MAJOR_VER/main/postgresml.conf
 RUN sudo cp /app/pgml-extension/docker/pg_hba.conf /etc/postgresql/$PG_MAJOR_VER/main/pg_hba.conf
 
 
