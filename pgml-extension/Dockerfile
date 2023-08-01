@@ -46,6 +46,7 @@ COPY --chown=postgres:postgres . /app
 # Listen on 0.0.0.0 and allow 'root' to connect without a password.
 # Please modify for production deployments accordingly.
 RUN cp /app/docker/postgresql.conf /etc/postgresql/14/main/postgresql.conf
+RUN cp /app/docker/postgresml.conf /etc/postgresql/14/main/postgresml.conf
 RUN cp /app/docker/pg_hba.conf /etc/postgresql/14/main/pg_hba.conf
 RUN cd /tmp && \
     git clone --branch v0.4.1 https://github.com/pgvector/pgvector.git && \
