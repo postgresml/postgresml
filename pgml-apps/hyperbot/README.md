@@ -7,7 +7,7 @@ There are two stages in building a knowledge based chatbot:
 
 This tool automates the above two stages and provides a command line interface to build and deploy a knowledge based chatbot.
 
-## Prerequisites
+# Prerequisites
 Before you begin, make sure you have the following:
 
 - PostgresML Database: Spin up a for a free [GPU-powered database](https://postgresml.org/signup)
@@ -16,7 +16,7 @@ Before you begin, make sure you have the following:
 - Python 3.8+
 - Poetry
 
-## Getting started
+# Getting started
 1. Clone this repository, start a poetry shell and install dependencies
 ```bash
 git clone https://github.com/postgresml/postgresml
@@ -46,38 +46,59 @@ BASE_PROMPT="Given relevant parts of a document and a question, create a final a
                 If the context is empty then ask for clarification and suggest user to send an email to team@postgresml.org or join PostgresML [Discord](https://discord.gg/DmyJP3qJ7U)."
 ```
 
-## Usage
+# Usage
 You can get help on the command line interface by running:
 
 ```bash
 (pgml-bot-builder-py3.9) chatbot % hyperbot --help
-usage: hyperbot [-h] [--root_dir ROOT_DIR] [--collection_name COLLECTION_NAME] [--stage {ingest,chat}]
+usage: hyperbot [-h] --collection_name COLLECTION_NAME [--root_dir ROOT_DIR] [--stage {ingest,chat}] [--chat_interface {cli,slack}]
 
 PostgresML Chatbot Builder
 
 optional arguments:
   -h, --help            show this help message and exit
-  --root_dir ROOT_DIR   Input folder to scan for markdown files
   --collection_name COLLECTION_NAME
-                        Name of the collection to store the data in
+                        Name of the collection (schema) to store the data in PostgresML database (default: None)
+  --root_dir ROOT_DIR   Input folder to scan for markdown files. Required for ingest stage. Not required for chat stage (default: None)
   --stage {ingest,chat}
-                        Stage to run
+                        Stage to run (default: chat)
+  --chat_interface {cli,slack}
+                        Chat interface to use (default: cli)
 ```
-### Ingest
+## Ingest
 In this step, we ingest documents, chunk documents, generate embeddings and index these embeddings for fast query.
 
 ```bash
-python pgml_chatbot/main.py --root_dir <directory> --collection_name <collection_name> --stage ingest
+LOG_LEVEL=DEBUG hyperbot --root_dir <directory> --collection_name <collection_name> --stage ingest
 ```
 
-### Chat
-In this step, we start chatting with the chatbot at the command line. You can increase the log level to ERROR to suppress the logs.
+You will see the following output:
+```bash
+[15:39:12] DEBUG    [15:39:12] - Using selector: KqueueSelector 
+           INFO     [15:39:12] - Starting pgml_chatbot           
+           INFO     [15:39:12] - Scanning <root directory> for markdown files
+[15:39:13] INFO     [15:39:13] - Found 85 markdown files 
+Extracting text from markdown ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+           INFO     [15:39:13] - Upserting documents into database                                      
+[15:39:32] INFO     [15:39:32] - Generating chunks       
+[15:39:33] INFO     [15:39:33] - Starting chunk count: 0            
+[15:39:35] INFO     [15:39:35] - Ending chunk count: 576                                                  
+           INFO     [15:39:35] - Total documents: 85 Total chunks: 576                                                                                            
+           INFO     [15:39:35] - Generating embeddings           
+[15:39:36] INFO     [15:39:36] - Splitter ID: 2                                                                
+[15:40:47] INFO     [15:40:47] - Embeddings generated in 71.073 seconds                
+```
+## Chat
+You can interact with the bot using the command line interface or Slack. 
+
+### Command Line Interface
+In this step, we start chatting with the chatbot at the command line. You can increase the log level to ERROR to suppress the logs. CLI is the default chat interface.
     
 ```bash
-LOG_LEVEL=ERROR python pgml_chatbot/main.py --root_dir <directory> --collection_name <collection_name> --stage chat
+LOG_LEVEL=ERROR hyperbot --collection_name <collection_name> --stage chat --chat_interface cli
 ```
 
-You should be able to interact with the bot as shown below:
+You should be able to interact with the bot as shown below. Control-C to exit.
 ```bash
 User (Ctrl-C to exit): Who are you?
 PgBot: I am PgBot, an AI assistant here to answer your questions about PostgresML, an open source software. How can I assist you today?
@@ -89,6 +110,30 @@ model performance, as well as integrated notebooks for rapid iteration. Postgres
 If you have any further questions or need more information, please feel free to send an email to team@postgresml.org or join the PostgresML Discord community at https://discord.gg/DmyJP3qJ7U.
 ```
 
+
+### Slack
+
+**Setup**
+You need SLACK_BOT_TOKEN and SLACK_APP_TOKEN to run the chatbot on Slack. You can get these tokens by creating a Slack app. Follow the instructions [here](https://slack.dev/bolt-python/tutorial/getting-started) to create a Slack app.Include the following environment variables in your .env file:
+
+```bash
+SLACK_BOT_TOKEN=<SLACK_BOT_TOKEN>
+SLACK_APP_TOKEN=<SLACK_APP_TOKEN>
+```
+In this step, we start chatting with the chatbot on Slack. You can increase the log level to ERROR to suppress the logs. 
+```bash
+LOG_LEVEL=ERROR hyperbot --collection_name <collection_name> --stage chat --chat_interface slack
+```
+If you have set up the Slack app correctly, you should see the following output:
+
+```
+⚡️ Bolt app is running!
+```
+
+Once the slack app is running, you can interact with the chatbot on Slack as shown below. In the example here, name of the bot is `PgBot`. This app responds only to direct messages to the bot.
+
+![Slack Chatbot](./images/slack_screenshot.png)
+
 ## Options
 You can control the behavior of the chatbot by setting the following environment variables:
 - `SYSTEM_PROMPT`: This is the prompt that is used to initialize the chatbot. You can customize this prompt to change the behavior of the chatbot. For example, you can change the name of the chatbot or the location of the chatbot.
@@ -96,7 +141,7 @@ You can control the behavior of the chatbot by setting the following environment
 - `MODEL`: This is the open source embedding model used to generate embeddings for the documents. You can change this to use a different model.
 
 ## Roadmap
-- Support for multi-turn converstaions using converstaion buffer. Use a collection for chat history that can be retrieved and used to generate responses.
 - `hyerbot --chat_interface {cli, slack, discord, teams}` that supports Slack, Discord and Teams.
-- Support for open source models in addition to OpenAI for chat completion.
 - Support for file formats like rst, html, pdf, docx, etc.
+- Support for open source models in addition to OpenAI for chat completion.
+- Support for multi-turn converstaions using converstaion buffer. Use a collection for chat history that can be retrieved and used to generate responses.

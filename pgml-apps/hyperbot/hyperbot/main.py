@@ -294,6 +294,35 @@ async def chat_cli():
             break
 
 
+async def chat_slack():
+    if os.environ.get("SLACK_BOT_TOKEN") and os.environ.get("SLACK_APP_TOKEN"):
+        app = AsyncApp(token=os.environ.get("SLACK_BOT_TOKEN"))
+        response = requests.post(
+            "https://slack.com/api/auth.test",
+            headers={"Authorization": "Bearer " + os.environ.get("SLACK_BOT_TOKEN")},
+        )
+        bot_user_id = response.json()["user_id"]
+        
+        @app.message(f"<@{bot_user_id}>")
+        async def message_hello(message, say):
+            print("Message received... ")
+            messages = [{"role": "system", "content": system_prompt}]
+            user_input = message["text"]
+            if user_input:
+                query = await get_prompt(user_input)
+
+            messages.append({"role": "user", "content": query})
+            response = await generate_response(
+                messages, openai_api_key, max_tokens=512, temperature=0.0
+            )
+            user = message["user"]
+
+            await say(text=f"<@{user}> {response}")
+        
+        socket_handler = AsyncSocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
+        await socket_handler.start_async()
+    else:
+        log.error("SLACK_BOT_TOKEN and SLACK_APP_TOKEN environment variables are not found. Exiting...")
 
 async def run():
     """
@@ -318,34 +347,7 @@ async def run():
         if chat_interface == "cli":
             await chat_cli()
         elif chat_interface == "slack":
-            if os.environ.get("SLACK_BOT_TOKEN") and os.environ.get("SLACK_APP_TOKEN"):
-                app = AsyncApp(token=os.environ.get("SLACK_BOT_TOKEN"))
-                response = requests.post(
-                    "https://slack.com/api/auth.test",
-                    headers={"Authorization": "Bearer " + os.environ.get("SLACK_BOT_TOKEN")},
-                )
-                bot_user_id = response.json()["user_id"]
-                
-                @app.message(f"<@{bot_user_id}>")
-                async def message_hello(message, say):
-                    print("Message received... ")
-                    messages = [{"role": "system", "content": system_prompt}]
-                    user_input = message["text"]
-                    if user_input:
-                        query = await get_prompt(user_input)
-
-                    messages.append({"role": "user", "content": query})
-                    response = await generate_response(
-                        messages, openai_api_key, max_tokens=512, temperature=0.0
-                    )
-                    user = message["user"]
-
-                    await say(text=f"<@{user}> {response}")
-                
-                socket_handler = AsyncSocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
-                await socket_handler.start_async()
-            else:
-                log.warning("No SLACK_APP_TOKEN environment variable found. Exiting...")
+            await chat_slack()
 
 
 def main():
