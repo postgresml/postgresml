@@ -17,11 +17,11 @@
                 border-bottom: none;
                 
                 &:hover {
-                    text-shadow: 0 0 0.45px #{$gray-100}, 0 0 0.45px #{$gray-100};
+                    @include semibold_by_shadow(#{$gray-100});
                 }
 
                 &:active {
-                    text-shadow: 0 0 0.65px #{$gray-100}, 0 0 0.65px #{$gray-100};
+                    @include bold_by_shadow(#{$gray-100});
                 }
 
             }

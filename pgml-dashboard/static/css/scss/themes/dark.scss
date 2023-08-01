@@ -3,9 +3,10 @@
     --bs-heading-color: #{$gray-100};
     --bs-tertiary-bg: #{$gray-600};
     --bs-tertiary-color: #{$hp-white};
-    --bs-body-bg: #{$gray-800};
+
+    --bs-body-bg: #{$gray-900};
     --bs-body-color: #{$gray-200};
-    --bs-body-secondary-color: #BEBEC1;
+    --bs-body-secondary-color: #{$gray-300};
 
     --bs-info-bg-subtle: transparent;
     --bs-info-border-subtle: #{$purple};
@@ -47,67 +48,17 @@
         color: #{$gray-200};
     }
 
-    body {
-        --bs-body-color: #{$gray-300};
-        --bs-danger-text: rgba(240, 76, 64, 1);
-        --bs-secondary-color: #919196;
-    }
-
-    .btn {
-        &.btn-primary {
-            --bs-btn-bg: #{$gray-100};
-            --bs-btn-color: #2D2D2F;
-        }
-
-        &.btn-secondary {
-            --bs-btn-color: #{$hp-white};
-            --bs-btn-hover-color: #{$hp-white};
-            --bs-btn-active-color: #{$hp-white};
-        }
-    }
-
-    .text-black {
-        color: #111213 !important;
-    }
-
-    .text-white {
-        color: #{$gray-100} !important;
-    }
-
+    --webapp-nav-bg: #{$gray-800};
     .navbar {
-        background: #151516;
 
         .nav-link {
             --bs-nav-link-color: #{$gray-100};
             --bs-nav-link-hover-color: #{$purple};
-
-            &:hover {
-                text-shadow: 0 0 .65px #{$purple}, 0 0 .65px #{$purple}; //change font weight without element resizing
-
-                path {
-                    fill: var(--bs-nav-link-hover-color);
-                }
-            }
-
-            &:active {
-                color: #{$slate-tint-500};
-                path {
-                    fill: #{$slate-tint-500};
-                }
-            }
-        }
-    }
-
-    .navbar-web-app, .leftnav, .drawer-submenu {
-        background-color: #{$gray-800};
-
-        @include media-breakpoint-down(lg) {
-            background-color: #{$gray-900}
         }
     }
 
     .bg-body-tertiary {
-        background: linear-gradient(260.55deg, rgba(58, 58, 58, 0.245) 15.62%, rgba(53, 51, 56, 0.28) 67.01%);
+        background: $gradient-dark;
 
         p, ol, ul, li, table {
             color: #{$gray-100};
@@ -116,5 +67,19 @@
 
     code {
         --bs-code-color: #{$gray-100};
+    }
+
+    .card {
+        --bs-card-bg: #{$gray-800};
+        --bs-card-border-color: transparent;
+        --bs-card-color: #DEE0E7;
+    }
+
+    .card-title {
+        --bs-card-title-color: var(--bs-card-color);
+    }
+
+    .card-footer {
+        --bs-card-cap-bg: var(--bs-card-bg);
     }
 }

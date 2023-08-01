@@ -1,15 +1,6 @@
 //
 // Default SASS Variable Overrides
 //
-$primary: #0D0D0E;
-$secondary: #FFF;
-$danger: #ff4136;
-$border-radius: 8px;
-$border-radius-lg: 16px;
-
-// Background Colors
-$bg-white: #F8FAFC;
-$bg-black: #0D0D0E;
 
 // Neutral Scale
 $gray-100: #FFFFFF;
@@ -87,13 +78,37 @@ $slate-shade-900: #1D1A33;
 $slate-shade-1000: #0E0D19;
 
 // Colors
+$primary: #0D0D0E;
+$secondary: $gray-100;
+$danger: #ff4136;
 $purple: $slate-tint-100;
 $pink: #e7477c;
 $hp-white: #{$gray-200};
 
+// Background Colors
+$bg-white: #F8FAFC;
+$bg-black: #0D0D0E;
+
 // Gradient
 $hp-gradient: linear-gradient(48.19deg, #D940FF 0%, #9E02FE 24.43%, #00D1FF 100%);
 $hp-gradient-active: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(48.19deg, #FB40FF 0%, #BB02FE 24.43%, #00D1FF 100%);
+
+$primary-gradient-main: linear-gradient(45deg, #D940FF 0%, #8F02FE 24.43%, #5162FF 52.60%, #00D1FF 100%);
+$gradient-main: linear-gradient(45deg, #FB40FF 0%, #BB02FE 25%, #00D1FF 100%);
+$gradient-light: linear-gradient(260.55deg, rgba(255, 255, 255, 0.56) 15.62%, rgba(255, 255, 255, 0.28) 67.01%);
+$gradient-dark: linear-gradient(260.55deg, rgba(58, 58, 58, 0.245) 15.62%, rgba(53, 51, 56, 0.28) 67.01%);
+$gradient-darker: linear-gradient(260.55deg,rgba(58,58,58,0.54) 15.62%,rgba(53,51,56,0.72) 67.01%);
+
+$gradient-pink: linear-gradient(42.63deg, #C44899 3.81%, #FF4567 100%);
+$gradient-green: linear-gradient(225deg, #44FFDD 0%, #05C168 100%);
+$gradient-gray: linear-gradient(45deg, #A3A3B5 0%, #EEEEEE 100%);
+$gradient-purple: linear-gradient(45deg, #5337FF 0%, #A175FF 100%);
+$gradient-orange: linear-gradient(225deg, #FFB444 22.93%, #FF6644 100%);
+$gradient-blue: linear-gradient(225deg, #3EDCFF 0%, #3E9AFF 100%);
+
+// Borders
+$border-radius: 8px;
+$border-radius-lg: 16px;
 
 // Buttons.
 $btn-border-width: 1px;
