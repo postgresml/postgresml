@@ -232,6 +232,14 @@
     }
 }
 
+.btn-search-alt {
+    border-radius: 0px;
+    border-left: none;
+    border-top: none;
+    border-right: none;
+    font-weight: $font-weight-medium;
+}
+
 .postgres-logo {
     display: flex; 
     align-items: center;
@@ -246,6 +254,7 @@
     color: #{$gray-100};
     display: flex;
     justify-content: space-between;
+    font-weight: $font-weight-normal;
 
     --bs-btn-border-color: transparent;
     --bs-btn-border-width: 1px;
