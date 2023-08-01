@@ -11,8 +11,11 @@ import argparse
 from time import time
 import openai
 import signal
-import json
+
 import ast
+from slack_bolt.async_app import AsyncApp
+from slack_bolt.adapter.socket_mode.aiohttp import AsyncSocketModeHandler
+import requests
 
 
 def handler(signum, frame):
@@ -47,6 +50,14 @@ parser.add_argument(
     default="chat",
     help="Stage to run",
 )
+parser.add_argument(
+    "--chat_interface",
+    dest="chat_interface",
+    choices=["cli", "slack"],
+    type=str,
+    default="cli",
+    help="Chat interface to use",
+)
 
 args = parser.parse_args()
 
@@ -63,7 +74,35 @@ log = logging.getLogger("rich")
 load_dotenv(".env")
 
 
-async def ingest_documents(db: Database, collection_name: str, folder: str) -> int:
+# The code is using the `argparse` module to parse command line arguments.
+collection_name = args.collection_name
+stage = args.stage
+chat_interface = args.chat_interface
+
+# The above code is retrieving environment variables and assigning their values to various variables.
+database_url = os.environ.get("DATABASE_URL")
+db = Database(database_url)
+splitter = os.environ.get("SPLITTER", "recursive_character")
+splitter_params = os.environ.get(
+    "SPLITTER_PARAMS", {"chunk_size": 1500, "chunk_overlap": 40}
+)
+model = os.environ.get("MODEL", "intfloat/e5-small")
+model_params = ast.literal_eval(os.environ.get("MODEL_PARAMS", {}))
+query_params = ast.literal_eval(os.environ.get("QUERY_PARAMS", {}))
+system_prompt = os.environ.get("SYSTEM_PROMPT")
+base_prompt = os.environ.get("BASE_PROMPT")
+openai_api_key = os.environ.get("OPENAI_API_KEY")
+
+# if chat_interface=="slack" and os.environ.get("SLACK_BOT_TOKEN"):
+#     app = AsyncApp(token=os.environ.get("SLACK_BOT_TOKEN"))
+#     response = requests.post(
+#         "https://slack.com/api/auth.test",
+#         headers={"Authorization": "Bearer " + os.environ.get("SLACK_BOT_TOKEN")},
+#     )
+#     bot_user_id = response.json()["user_id"]
+
+
+async def upsert_documents(db: Database, collection_name: str, folder: str) -> int:
     log.info("Scanning " + folder + " for markdown files")
     md_files = []
     # root_dir needs a trailing slash (i.e. /root/dir/)
@@ -184,106 +223,129 @@ async def generate_response(
     return response["choices"][0]["message"]["content"]
 
 
+async def ingest_documents(
+    db: Database,
+    collection_name: str,
+    folder: str,
+    splitter: str,
+    splitter_params: dict,
+    model: str,
+    model_params: dict,
+):
+    total_docs = await upsert_documents(db, collection_name, folder=folder)
+    total_chunks = await generate_chunks(
+        db, collection_name, splitter=splitter, splitter_params=splitter_params
+    )
+    log.info(
+        "Total documents: " + str(total_docs) + " Total chunks: " + str(total_chunks)
+    )
+
+    await generate_embeddings(
+        db,
+        collection_name,
+        splitter=splitter,
+        splitter_params=splitter_params,
+        model=model,
+        model_params=model_params,
+    )
+
+
+async def get_prompt(user_input: str = ""):
+    collection = await db.create_or_get_collection(collection_name)
+    model_id = await collection.register_model("embedding", model, model_params)
+    splitter_id = await collection.register_text_splitter(splitter, splitter_params)
+    log.info("Model id: " + str(model_id) + " Splitter id: " + str(splitter_id))
+    vector_results = await collection.vector_search(
+        user_input,
+        model_id=model_id,
+        splitter_id=splitter_id,
+        top_k=5,
+        query_params=query_params,
+    )
+    log.info(vector_results)
+    context = ""
+    for result in vector_results:
+        context += result[1] + "\n"
+    if context:
+        print("Found relevant documentation.... ")
+        query = base_prompt.format(context=context, question=user_input)
+    else:
+        query = user_input
+
+    return query
+
+
+async def chat_cli():
+    user_input = "Who are you?"
+    while True:
+        try:
+            messages = [{"role": "system", "content": system_prompt}]
+            if user_input:
+                query = await get_prompt(user_input)
+            messages.append({"role": "user", "content": query})
+            response = await generate_response(
+                messages, openai_api_key, max_tokens=512, temperature=0.0
+            )
+            print("PgBot: " + response)
+
+            user_input = input("User (Ctrl-C to exit): ")
+        except KeyboardInterrupt:
+            print("Exiting...")
+            break
+
+
+
 async def run():
     """
     The `main` function connects to a database, ingests documents from a specified folder, generates
     chunks, and logs the total number of documents and chunks.
     """
     log.info("Starting pgml_chatbot")
-    collection_name = args.collection_name
-
-    database_url = os.environ.get("DATABASE_URL")
-    log.info("Connecting to database .. ")
-    db = Database(database_url)
-
-    stage = args.stage
-    splitter = os.environ.get("SPLITTER", "recursive_character")
-    splitter_params = os.environ.get(
-        "SPLITTER_PARAMS", {"chunk_size": 1500, "chunk_overlap": 40}
-    )
-    model = os.environ.get("MODEL", "intfloat/e5-small")
-    model_params = ast.literal_eval(os.environ.get("MODEL_PARAMS", {}))
-    query_params = ast.literal_eval(os.environ.get("QUERY_PARAMS", {}))
 
     if stage == "ingest":
         root_dir = args.root_dir
-
-        total_docs = await ingest_documents(db, collection_name, folder=root_dir)
-        total_chunks = await generate_chunks(
-            db, collection_name, splitter=splitter, splitter_params=splitter_params
-        )
-        log.info(
-            "Total documents: "
-            + str(total_docs)
-            + " Total chunks: "
-            + str(total_chunks)
-        )
-
-        await generate_embeddings(
+        await ingest_documents(
             db,
             collection_name,
-            splitter=splitter,
-            splitter_params=splitter_params,
-            model=model,
-            model_params=model_params,
+            root_dir,
+            splitter,
+            splitter_params,
+            model,
+            model_params,
         )
+
     elif stage == "chat":
-        
-        print("Starting chatbot....")
-        system_prompt = os.environ.get(
-            "SYSTEM_PROMPT",
-            "You are an assistant to answer questions about an open source software named PostgresML. Your name is PgBot. You are based out of San Francisco, California.",
-        )
-        base_prompt = os.environ.get(
-            "BASE_PROMPT",
-            """Given relevant parts of a document and a question, create a final answer. Include a SQL query in the answer wherever possible. If you don't find relevant answer then politely say that you don't know and ask for clarification. Use the following portion of a long document to see if any of the text is relevant to answer the question.
-        \nReturn any relevant text verbatim.\n{context}\nQuestion: {question}\n If the context is empty then ask for clarification and suggest user to send an email to team@postgresml.org or join PostgresML [Discord](https://discord.gg/DmyJP3qJ7U).""",
-        )
-        
-        openai_api_key = os.environ.get("OPENAI_API_KEY")
-
-        collection = await db.create_or_get_collection(collection_name)
-        model_id = await collection.register_model("embedding", model, model_params)
-        splitter_id = await collection.register_text_splitter(splitter, splitter_params)
-        log.info("Model id: " + str(model_id) + " Splitter id: " + str(splitter_id))
-        user_input = "Who are you?"
-
-        while True:
-            try:                
-                messages = [{"role": "system", "content": system_prompt}]
-
-                vector_results = await collection.vector_search(
-                    user_input,
-                    model_id=model_id,
-                    splitter_id=splitter_id,
-                    top_k=5,
-                    query_params=query_params,
+        if chat_interface == "cli":
+            await chat_cli()
+        elif chat_interface == "slack":
+            if os.environ.get("SLACK_BOT_TOKEN") and os.environ.get("SLACK_APP_TOKEN"):
+                app = AsyncApp(token=os.environ.get("SLACK_BOT_TOKEN"))
+                response = requests.post(
+                    "https://slack.com/api/auth.test",
+                    headers={"Authorization": "Bearer " + os.environ.get("SLACK_BOT_TOKEN")},
                 )
-                log.info(vector_results)
-                context = ""
-                for result in vector_results:
-                    context += result[1] + "\n"
-                if context:
-                    query = base_prompt.format(context=context, question=user_input)
-                else:
-                    query = user_input
-                log.info("User: " + query)
-                messages.append({"role": "user", "content": query})
-
-                if context:
-                    print("Found relevant documentation.... ")
-
-                response = await generate_response(
-                    messages, openai_api_key, max_tokens=512, temperature=0.0
-                )
-                print("PgBot: " + response)
+                bot_user_id = response.json()["user_id"]
                 
-                user_input = input("User (Ctrl-C to exit): ")
-                
+                @app.message(f"<@{bot_user_id}>")
+                async def message_hello(message, say):
+                    print("Message received... ")
+                    messages = [{"role": "system", "content": system_prompt}]
+                    user_input = message["text"]
+                    if user_input:
+                        query = await get_prompt(user_input)
 
-            except KeyboardInterrupt:
-                print("Exiting...")
-                break
+                    messages.append({"role": "user", "content": query})
+                    response = await generate_response(
+                        messages, openai_api_key, max_tokens=512, temperature=0.0
+                    )
+                    user = message["user"]
+
+                    await say(text=f"<@{user}> {response}")
+                
+                socket_handler = AsyncSocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
+                await socket_handler.start_async()
+            else:
+                log.warning("No SLACK_APP_TOKEN environment variable found. Exiting...")
 
 
 def main():
