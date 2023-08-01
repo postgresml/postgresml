@@ -116,7 +116,7 @@
         background-color: #{$neon-shade-700};
     }
 
-    &:hover, &:active, &:focus, &:focus-visible, &:focus-within {
+    &:hover, &:active {
         @include bold_by_shadow(var(--bs-btn-hover-color));
     }
     &:active {
