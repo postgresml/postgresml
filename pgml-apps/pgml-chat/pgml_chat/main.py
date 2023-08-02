@@ -331,14 +331,10 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    print(message.mentions)
     bot_mention = f"<@{client.user.id}>"
-    print(bot_mention)
-    print(message.content)
-    print(bot_mention in message.content)
     messages = [{"role": "system", "content": system_prompt}]
     if message.author != client.user and bot_mention in message.content:
-        print("Came into the loop...")
+        print("Discord response in progress ..")
         user_input = message.content
         query = await get_prompt(user_input)
 
