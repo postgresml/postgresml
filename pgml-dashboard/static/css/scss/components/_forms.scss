@@ -1,0 +1,264 @@
+.form-check-input {
+    --bs-form-check-bg: transparent;
+    
+    &[type=radio] {
+        border: 2px solid var(--form-radio-border-color);
+
+        &:hover {
+            cursor: pointer;
+            border: 5px solid  var(--form-radio-hover-border-color);
+        }
+    
+        &:disabled {
+            background-color: transparent;
+            border-color: var(--form-check-disable-color);
+        }
+    }
+
+    &[type=radio]:checked {
+        background-color: var(--form-radio-checked-bg);
+        border: 5px solid var(--form-radio-border-color);
+
+        &:disabled {
+            background-color: transparent;
+            border: 5px solid var(--form-check-disable-color);
+        }
+    }
+}
+
+.form-switch>input {
+    &[type=checkbox] {
+        background-color: var(--form-switch-default);
+        border-color: var(--form-switch-default);
+    
+        &:hover {
+            border-color: var(--form-switch-hover);
+            background-color: var(--form-switch-hover);
+        }
+    
+        &:disabled {
+            border-color: var(--form-check-disable-color);
+            background-color: var(--form-check-disable-color);
+            opacity: 1;
+
+        }
+    }
+
+    &[type=checkbox]:checked {
+        background-color: var(--form-switch-active);
+        border-color: var(--form-switch-active);
+    
+        &:hover {
+            border-color: var(--form-switch-hover);
+            background-color: var(--form-switch-hover);
+        }
+
+        &:disabled {
+            border-color: var(--form-check-disable-color);
+            background-color: var(--form-check-disable-color);
+            opacity: 1;
+        }
+    }
+}
+
+.form-label {
+    color: #{$gray-100};
+}
+
+
+.form-range[type=range] {
+    cursor: pointer;
+}
+
+// Firefox
+.form-range[type="range"]::-moz-range-progress {
+    background-color: #{$neon-tint-100};
+    height: 4px;
+    border: 0;
+}
+
+// IE
+.form-range[type="range"]::-ms-fill-lower {
+    background-color: #{$neon-tint-100};
+}
+
+// Chrome (doesn't really work as designed)
+.form-range[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    position: relative;
+    bottom: 4px;
+    border-radius: 50%;
+    border: #{$form-range-thumb-border};
+    background: #{$form-range-thumb-bg};
+}
+
+.form-range[type=range]::-webkit-slider-runnable-track {
+  height: #{$form-range-track-height};
+  border: 0;
+}
+
+.form-range[type=range]:focus::-webkit-slider-runnable-track {
+    background: #{$neon-tint-100};
+}
+// End of Chrome
+
+.form-range-custome {
+    & {
+        font-size: 1.5rem;
+        width: 100%;
+    }
+
+    & {
+        color: #{$neon-tint-100};
+        --thumb-height: 1.125em;
+        --track-height: 0.125em;
+        --brightness-hover: 110%;
+        --brightness-down: 90%;
+        --clip-edges: 0.125em;
+        --track-color: #{$gray-600};
+        --bg-color: transparent;
+    }
+
+    /* === range commons === */
+    & {
+        position: relative;
+        background: var(--bg-color);
+        overflow: hidden;
+    }
+
+    &:active {
+        cursor: grabbing;
+    }
+
+    &:disabled {
+        filter: grayscale(1);
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    /* === WebKit specific styles === */
+    &,
+    &::-webkit-slider-runnable-track,
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        transition: all ease 100ms;
+        height: var(--thumb-height);
+    }
+
+    &::-webkit-slider-runnable-track,
+    &::-webkit-slider-thumb {
+        position: relative;
+    }
+
+    &::-webkit-slider-thumb {
+        --thumb-radius: calc((var(--thumb-height) * 0.5) - 1px);
+        --clip-top: calc((var(--thumb-height) - var(--track-height)) * 0.5 - 0.5px);
+        --clip-bottom: calc(var(--thumb-height) - var(--clip-top));
+        --clip-further: calc(100% + 1px);
+        --box-fill: calc(-100vmax - var(--thumb-width, var(--thumb-height))) 0 0
+            100vmax currentColor;
+
+        width: var(--thumb-width, var(--thumb-height));
+        background: linear-gradient(currentColor 0 0) scroll no-repeat left center /
+            50% calc(var(--track-height) + 1px);
+        background-color: currentColor;
+        box-shadow: var(--box-fill);
+        border-radius: var(--thumb-width, var(--thumb-height));
+
+        filter: brightness(100%);
+        clip-path: polygon(
+            100% -1px,
+            var(--clip-edges) -1px,
+            0 var(--clip-top),
+            -100vmax var(--clip-top),
+            -100vmax var(--clip-bottom),
+            0 var(--clip-bottom),
+            var(--clip-edges) 100%,
+            var(--clip-further) var(--clip-further)
+        );
+    }
+
+    &:hover::-webkit-slider-thumb {
+        filter: brightness(var(--brightness-hover));
+        cursor: grab;
+    }
+
+    &:active::-webkit-slider-thumb {
+        filter: brightness(var(--brightness-down));
+        cursor: grabbing;
+    }
+
+    &::-webkit-slider-runnable-track {
+        background: linear-gradient(var(--track-color) 0 0) scroll no-repeat center /
+            100% calc(var(--track-height) + 1px);
+    }
+
+    &:disabled::-webkit-slider-thumb {
+        cursor: not-allowed;
+    }
+
+    /* === Firefox specific styles === */
+    &,
+    &::-moz-range-track,
+    &::-moz-range-thumb {
+        appearance: none;
+        transition: all ease 100ms;
+        height: var(--thumb-height);
+    }
+
+    &::-moz-range-track,
+    &::-moz-range-thumb,
+    &::-moz-range-progress {
+        background: var(--bg-color);
+    }
+
+    &::-moz-range-thumb {
+        background: currentColor;
+        border: 0;
+        width: var(--thumb-width, var(--thumb-height));
+        border-radius: var(--thumb-width, var(--thumb-height));
+        cursor: grab;
+    }
+
+    &:active::-moz-range-thumb {
+        cursor: grabbing;
+    }
+
+    &::-moz-range-track {
+        width: 100%;
+        background: var(--track-color);
+    }
+
+    &::-moz-range-progress {
+        appearance: none;
+        background: currentColor;
+        transition-delay: 30ms;
+    }
+
+    &::-moz-range-track,
+    &::-moz-range-progress {
+        height: calc(var(--track-height) + 1px);
+        border-radius: var(--track-height);
+    }
+
+    &::-moz-range-thumb,
+    &::-moz-range-progress {
+        filter: brightness(100%);
+    }
+
+    &:hover::-moz-range-thumb,
+    &:hover::-moz-range-progress {
+        filter: brightness(var(--brightness-hover));
+    }
+
+    &:active::-moz-range-thumb,
+    &:active::-moz-range-progress {
+        filter: brightness(var(--brightness-down));
+    }
+
+    &:disabled::-moz-range-thumb {
+        cursor: not-allowed;
+    }
+}
