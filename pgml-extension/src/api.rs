@@ -615,7 +615,7 @@ pub fn chunk(
     TableIterator::new(chunks.into_iter())
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "transform")]
 #[allow(unused_variables)] // cache is maintained for api compatibility
 pub fn transform_json(
@@ -629,7 +629,7 @@ pub fn transform_json(
     ))
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "transform")]
 #[allow(unused_variables)] // cache is maintained for api compatibility
 pub fn transform_string(
