@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "pgml_bot_builder"
+name = "hyperbot"
 version = "0.1.0"
 description = "PostgresML bot builder for all your documentation"
 authors = ["PostgresML <team@postgresml.org>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "pgml_chatbot"}]
+packages = [{include = "hyperbot"}]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
@@ -22,4 +22,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-pgml_chatbot = "pgml_chatbot.main:main"
+hyperbot = "hyperbot.main:main"
