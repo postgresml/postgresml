@@ -13,6 +13,7 @@ import sklearn.gaussian_process
 import sklearn.model_selection
 import xgboost as xgb
 import lightgbm
+import catboost
 import numpy as np
 import pickle
 import json
@@ -81,6 +82,8 @@ _ALGORITHM_MAP = {
     "xgboost_random_forest_classification": xgb.XGBRFClassifier,
     "lightgbm_regression": lightgbm.LGBMRegressor,
     "lightgbm_classification": lightgbm.LGBMClassifier,
+    "catboost_regression": catboost.CatBoostRegressor,
+    "catboost_classification": catboost.CatBoostClassifier,
     "affinity_propagation_clustering": sklearn.cluster.AffinityPropagation,
     "birch_clustering": sklearn.cluster.Birch,
     "dbscan_clustering": sklearn.cluster.DBSCAN,

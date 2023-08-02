@@ -1,6 +1,6 @@
 [package]
 name = "pgml"
-version = "2.7.2"
+version = "2.7.3"
 edition = "2021"
 
 [lib]

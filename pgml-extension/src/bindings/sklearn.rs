@@ -87,6 +87,7 @@ wrap_fit!(least_angle_regression, "least_angle_regression");
 wrap_fit!(lasso_least_angle_regression, "lasso_least_angle_regression");
 wrap_fit!(linear_svm_regression, "linear_svm_regression");
 wrap_fit!(lightgbm_regression, "lightgbm_regression");
+wrap_fit!(catboost_regression, "catboost_regression");
 wrap_fit!(linear_classification, "linear_classification");
 wrap_fit!(svm_classification, "svm_classification");
 wrap_fit!(ridge_classification, "ridge_classification");
@@ -120,6 +121,7 @@ wrap_fit!(
 );
 wrap_fit!(linear_svm_classification, "linear_svm_classification");
 wrap_fit!(lightgbm_classification, "lightgbm_classification");
+wrap_fit!(catboost_classification, "catboost_classification");
 wrap_fit!(affinity_propagation, "affinity_propagation_clustering");
 wrap_fit!(agglomerative, "agglomerative_clustering");
 wrap_fit!(birch, "birch_clustering");

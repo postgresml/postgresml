@@ -2,7 +2,7 @@ FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
 LABEL maintainer="team@postgresml.com"
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG PGML_VERSION=2.7.1
+ARG PGML_VERSION=2.7.3
 ENV TZ=Etc/UTC
 ENV PATH="/usr/local/cuda/bin:${PATH}"
 

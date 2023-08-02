@@ -454,6 +454,7 @@ impl Model {
                     Algorithm::lasso_least_angle => sklearn::lasso_least_angle_regression,
                     Algorithm::linear_svm => sklearn::linear_svm_regression,
                     Algorithm::lightgbm => sklearn::lightgbm_regression,
+                    Algorithm::catboost => sklearn::catboost_regression,
                     _ => panic!("{:?} does not support regression", self.algorithm),
                 },
                 Task::classification => match self.algorithm {
@@ -483,6 +484,7 @@ impl Model {
                     }
                     Algorithm::linear_svm => sklearn::linear_svm_classification,
                     Algorithm::lightgbm => sklearn::lightgbm_classification,
+                    Algorithm::catboost => sklearn::catboost_classification,
                     _ => panic!("{:?} does not support classification", self.algorithm),
                 },
                 Task::cluster => match self.algorithm {
