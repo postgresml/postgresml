@@ -13,8 +13,10 @@ static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64,
 static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
-#[pg_guard]
-pub extern "C" fn _PG_init() {
+/// Initialize shared memory.
+/// # Note
+/// Only call from `_PG_init`.
+pub fn init() {
     pg_shmem_init!(PROJECT_ID_TO_DEPLOYED_MODEL_ID);
 }
 

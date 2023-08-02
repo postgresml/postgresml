@@ -19,6 +19,12 @@ pg_module_magic!();
 
 extension_sql_file!("../sql/schema.sql", name = "schema");
 
+#[cfg(not(feature = "use_as_lib"))]
+#[pg_guard]
+pub extern "C" fn _PG_init() {
+    orm::project::init();
+}
+
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
