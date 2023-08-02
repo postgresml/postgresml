@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        default: "2.7.1"
+        default: "2.7.3"
 jobs:
   publish-extension-docker-image:
     strategy:
