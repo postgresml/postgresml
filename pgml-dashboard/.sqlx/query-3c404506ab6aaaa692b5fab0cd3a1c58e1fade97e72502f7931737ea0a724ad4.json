@@ -1,0 +1,72 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH\n                lock AS (\n                    SELECT * FROM pgml.notebooks WHERE id = $1 FOR UPDATE\n                ),\n                max_cell AS (\n                    SELECT COALESCE(MAX(cell_number), 0) AS cell_number\n                    FROM pgml.notebook_cells\n                    WHERE notebook_id = $1\n                    AND deleted_at IS NULL\n                )\n            INSERT INTO pgml.notebook_cells\n                (notebook_id, cell_type, contents, cell_number, version)\n            VALUES\n                ($1, $2, $3, (SELECT cell_number + 1 FROM max_cell), 1)\n            RETURNING id,\n                    notebook_id,\n                    cell_type,\n                    contents,\n                    rendering,\n                    execution_time,\n                    cell_number,\n                    version,\n                    deleted_at",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "notebook_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "cell_type",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "contents",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "rendering",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "execution_time",
+        "type_info": "Interval"
+      },
+      {
+        "ordinal": 6,
+        "name": "cell_number",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "version",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "3c404506ab6aaaa692b5fab0cd3a1c58e1fade97e72502f7931737ea0a724ad4"
+}

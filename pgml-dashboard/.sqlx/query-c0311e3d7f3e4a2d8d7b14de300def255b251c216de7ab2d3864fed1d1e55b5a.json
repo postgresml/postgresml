@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE pgml.notebook_cells\n            SET\n                cell_type = $1,\n                contents = $2,\n                version = version + 1\n            WHERE id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c0311e3d7f3e4a2d8d7b14de300def255b251c216de7ab2d3864fed1d1e55b5a"
+}
