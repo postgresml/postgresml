@@ -38,85 +38,85 @@ def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
     return dummy_documents
 
 
-# ###################################################
-# ## Test the API exposed is correct ################
-# ###################################################
-#
-# def test_can_create_collection():
-#     collection = pgml.Collection(name="test_p_c_tscc_0")
-#     assert collection is not None
-#
-# def test_can_create_model():
-#     model = pgml.Model()
-#     assert model is not None
-#
-# def test_can_create_splitter():
-#     splitter = pgml.Splitter()
-#     assert splitter is not None
-#
-# def test_can_create_pipeline():
-#     model = pgml.Model()
-#     splitter = pgml.Splitter()
-#     pipeline = pgml.Pipeline("test_p_p_tccp_0", model, splitter)
-#     assert pipeline is not None
-#
-# def test_can_create_builtins():
-#     builtins = pgml.Builtins()
-#     assert builtins is not None
-#
-#
-# ###################################################
-# ## Test various vector searches ###################
-# ###################################################
-#
-# @pytest.mark.asyncio
-# async def test_can_vector_search():
-#     model = pgml.Model()
-#     splitter = pgml.Splitter()
-#     pipeline = pgml.Pipeline("test_p_p_tcvs_0", model, splitter)
-#     collection = pgml.Collection(name="test_p_c_tcvs_3")
-#     await collection.upsert_documents(generate_dummy_documents(3))
-#     await collection.add_pipeline(pipeline)
-#     results = await collection.vector_search("Here is some query", pipeline)
-#     assert len(results) == 3
-#     await collection.archive()
-#
-# @pytest.mark.asyncio
-# async def test_can_vector_search_with_remote_embeddings():
-#     model = pgml.Model(name="text-embedding-ada-002", source="openai")
-#     splitter = pgml.Splitter()
-#     pipeline = pgml.Pipeline("test_p_p_tcvswre_0", model, splitter)
-#     collection = pgml.Collection(name="test_p_c_tcvswre_2")
-#     await collection.upsert_documents(generate_dummy_documents(3))
-#     await collection.add_pipeline(pipeline)
-#     results = await collection.vector_search("Here is some query", pipeline)
-#     assert len(results) == 3
-#     await collection.archive()
-#
-# @pytest.mark.asyncio
-# async def test_can_vector_search_with_query_builder():
-#     model = pgml.Model()
-#     splitter = pgml.Splitter()
-#     pipeline = pgml.Pipeline("test_p_p_tcvswqb_1", model, splitter)
-#     collection = pgml.Collection(name="test_p_c_tcvswqb_4")
-#     await collection.upsert_documents(generate_dummy_documents(3))
-#     await collection.add_pipeline(pipeline)
-#     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
-#     await collection.archive()
-#     assert len(results) == 3
-#
-# @pytest.mark.asyncio
-# async def test_can_vector_search_with_query_builder_with_remote_embeddings():
-#     model = pgml.Model(name="text-embedding-ada-002", source="openai")
-#     splitter = pgml.Splitter()
-#     pipeline = pgml.Pipeline("test_p_p_tcvswqbwre_1", model, splitter)
-#     collection = pgml.Collection(name="test_p_c_tcvswqbwre_0")
-#     await collection.upsert_documents(generate_dummy_documents(3))
-#     await collection.add_pipeline(pipeline)
-#     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
-#     await collection.archive()
-#     assert len(results) == 3
-#
+###################################################
+## Test the API exposed is correct ################
+###################################################
+
+def test_can_create_collection():
+    collection = pgml.Collection(name="test_p_c_tscc_0")
+    assert collection is not None
+
+def test_can_create_model():
+    model = pgml.Model()
+    assert model is not None
+
+def test_can_create_splitter():
+    splitter = pgml.Splitter()
+    assert splitter is not None
+
+def test_can_create_pipeline():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tccp_0", model, splitter)
+    assert pipeline is not None
+
+def test_can_create_builtins():
+    builtins = pgml.Builtins()
+    assert builtins is not None
+
+
+###################################################
+## Test various vector searches ###################
+###################################################
+
+@pytest.mark.asyncio
+async def test_can_vector_search():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvs_0", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvs_3")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = await collection.vector_search("Here is some query", pipeline)
+    assert len(results) == 3
+    await collection.archive()
+
+@pytest.mark.asyncio
+async def test_can_vector_search_with_remote_embeddings():
+    model = pgml.Model(name="text-embedding-ada-002", source="openai")
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvswre_0", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvswre_2")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = await collection.vector_search("Here is some query", pipeline)
+    assert len(results) == 3
+    await collection.archive()
+
+@pytest.mark.asyncio
+async def test_can_vector_search_with_query_builder():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvswqb_1", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvswqb_4")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
+    await collection.archive()
+    assert len(results) == 3
+
+@pytest.mark.asyncio
+async def test_can_vector_search_with_query_builder_with_remote_embeddings():
+    model = pgml.Model(name="text-embedding-ada-002", source="openai")
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvswqbwre_1", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvswqbwre_0")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
+    await collection.archive()
+    assert len(results) == 3
+
 
 ###################################################
 ## Test with multiprocessing ######################
