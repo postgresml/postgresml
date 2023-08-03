@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 
@@ -555,7 +554,11 @@ fn load_dataset(
         "wine" => dataset::load_wine(limit),
         _ => {
             let rows =
-                crate::bindings::transformers::load_dataset(source, subset, limit, &kwargs.0);
+                match crate::bindings::transformers::load_dataset(source, subset, limit, &kwargs.0)
+                {
+                    Ok(rows) => rows,
+                    Err(e) => error!("{e}"),
+                };
             (source.into(), rows as i64)
         }
     };
@@ -577,7 +580,10 @@ pub fn embed_batch(
     inputs: Vec<&str>,
     kwargs: default!(JsonB, "'{}'"),
 ) -> Vec<Vec<f32>> {
-    crate::bindings::transformers::embed(transformer, inputs, &kwargs.0)
+    match crate::bindings::transformers::embed(transformer, inputs, &kwargs.0) {
+        Ok(output) => output,
+        Err(e) => error!("{e}"),
+    }
 }
 
 /// Clears the GPU cache.
@@ -624,9 +630,10 @@ pub fn transform_json(
     inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
     cache: default!(bool, false),
 ) -> JsonB {
-    JsonB(crate::bindings::transformers::transform(
-        &task.0, &args.0, inputs,
-    ))
+    match crate::bindings::transformers::transform(&task.0, &args.0, inputs) {
+        Ok(output) => JsonB(output),
+        Err(e) => error!("{e}"),
+    }
 }
 
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
@@ -638,12 +645,11 @@ pub fn transform_string(
     inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
     cache: default!(bool, false),
 ) -> JsonB {
-    let mut task_map = HashMap::new();
-    task_map.insert("task", task);
-    let task_json = json!(task_map);
-    JsonB(crate::bindings::transformers::transform(
-        &task_json, &args.0, inputs,
-    ))
+    let task_json = json!({ "task": task });
+    match crate::bindings::transformers::transform(&task_json, &args.0, inputs) {
+        Ok(output) => JsonB(output),
+        Err(e) => error!("{e}"),
+    }
 }
 
 #[cfg(feature = "python")]
@@ -662,11 +668,14 @@ fn generate_batch(
     inputs: Vec<&str>,
     config: default!(JsonB, "'{}'"),
 ) -> Vec<String> {
-    crate::bindings::transformers::generate(
+    match crate::bindings::transformers::generate(
         Project::get_deployed_model_id(project_name),
         inputs,
         config,
-    )
+    ) {
+        Ok(output) => output,
+        Err(e) => error!("{e}"),
+    }
 }
 
 #[cfg(feature = "python")]
