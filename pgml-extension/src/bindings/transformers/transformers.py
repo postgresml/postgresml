@@ -184,7 +184,13 @@ def transform(task, args, inputs):
         elif model_name and "-gptq" in model_name:
             pipe = GPTQPipeline(model_name, **task)
         else:
-            pipe = StandardPipeline(model_name, **task)
+            try:
+                pipe = StandardPipeline(model_name, **task)
+            except TypeError:
+                # some models fail when given "device" kwargs, remove and try again
+                task.pop("device")
+                pipe = StandardPipeline(model_name, **task)
+
         __cache_transform_pipeline_by_task[key] = pipe
 
     pipe = __cache_transform_pipeline_by_task[key]
