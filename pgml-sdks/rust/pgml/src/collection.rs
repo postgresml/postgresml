@@ -432,14 +432,12 @@ impl Collection {
     pub async fn upsert_documents(
         &mut self,
         documents: Vec<Json>,
-        text_key: Option<String>,
-        id_key: Option<String>,
+        strict: Option<bool>,
     ) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(&pool, false).await?;
 
-        let text_key = text_key.unwrap_or("text".to_string());
-        let id_key = id_key.unwrap_or("id".to_string());
+        let strict = strict.unwrap_or(true);
 
         let mut document_ids = Vec::new();
         for mut document in documents {
@@ -448,19 +446,30 @@ impl Collection {
                 .as_object_mut()
                 .expect("Documents must be a vector of objects");
 
-            let text = match document.remove(&text_key) {
+            let text = match document.remove("text") {
                 Some(t) => t,
                 None => {
-                    warn!("{} is not a key in document", text_key);
+                    if strict {
+                        anyhow::bail!("`text` is not a key in document, skipping document. To supress this error, pass strict: false");
+                    } else {
+                        warn!("`text` is not a key in document, skipping document. To supress this error, pass strict: false");
+                    }
                     continue;
                 }
             };
 
             let document_json = serde_json::to_value(&document)?;
 
-            let md5_digest = match document.get(&id_key) {
+            let md5_digest = match document.get("id") {
                 Some(k) => md5::compute(k.to_string().as_bytes()),
-                None => md5::compute(format!("{}{}", text, document_json).as_bytes()),
+                None => {
+                    if strict {
+                        anyhow::bail!("`id` is not a key in document, skipping document. To supress this error, pass strict: false");
+                    } else {
+                        warn!("`id` is not a key in document, skipping document. To supress this error, pass strict: false");
+                    }
+                    continue;
+                }
             };
             let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
 

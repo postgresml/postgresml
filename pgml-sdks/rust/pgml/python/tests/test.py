@@ -119,6 +119,22 @@ async def test_can_vector_search_with_query_builder_with_remote_embeddings():
 
 
 ###################################################
+## Test user output facing functions ##############
+###################################################
+
+@pytest.mark.asyncio
+async def test_pipeline_to_dict():
+    model = pgml.Model(name="text-embedding-ada-002", source="openai")
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tptd_1", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tptd_1")
+    await collection.add_pipeline(pipeline)
+    pipeline_dict = await pipeline.to_dict()
+    assert pipeline_dict["name"] == "test_p_p_tptd_1"
+    await collection.remove_pipeline(pipeline, {"delete": True})
+
+
+###################################################
 ## Test with multiprocessing ######################
 ###################################################
 # async def vector_search(collection, pipeline):

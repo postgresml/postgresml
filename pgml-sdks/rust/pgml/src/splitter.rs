@@ -1,10 +1,13 @@
 use pgml_macros::{custom_derive, custom_methods};
 use sqlx::postgres::{PgConnection, PgPool};
+use anyhow::Context;
+use tracing::instrument;
 
 use crate::{
     collection::ProjectInfo,
     models, queries,
     types::{DateTime, Json},
+    get_or_initialize_pool
 };
 
 #[cfg(feature = "javascript")]
@@ -40,6 +43,7 @@ impl Splitter {
         }
     }
 
+    #[instrument(skip(self, pool))]
     pub async fn verify_in_database(
         &mut self,
         pool: &PgPool,
@@ -93,6 +97,28 @@ impl Splitter {
 
     pub fn set_project_info(&mut self, project_info: ProjectInfo) {
         self.project_info = Some(project_info)
+    }
+
+    #[instrument(skip(self))]
+    pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
+        let database_url = &self
+            .project_info
+            .as_ref()
+            .context("Splitter must have project info to call to_dict")?
+            .database_url;
+        let pool = get_or_initialize_pool(database_url).await?;
+        self.verify_in_database(&pool, false).await?;
+
+        let database_data = self
+            .database_data
+            .as_ref()
+            .context("Splitter must be verified to call to_dict")?;
+
+        Ok(serde_json::json!({
+            "id": database_data.id,
+            "name": self.name,
+            "parameters": *self.parameters,
+        }).into())
     }
 }
 

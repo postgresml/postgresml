@@ -539,6 +539,7 @@ fn get_type_for_optional(ty: &SupportedType) -> String {
         SupportedType::i64 | SupportedType::u64 => 1.to_string(),
         SupportedType::f64 => 1.0.to_string(),
         SupportedType::Json => "{}".to_string(),
+        SupportedType::bool => "True".to_string(),
         SupportedType::Model | SupportedType::Splitter => "None".to_string(),
         _ => panic!("Type not yet supported for optional python stub: {:?}", ty),
     }

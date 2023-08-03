@@ -74,7 +74,7 @@ pub struct Pipeline {
     pub parameters: Option<Json>,
 }
 
-#[custom_methods(new)]
+#[custom_methods(new, to_dict)]
 impl Pipeline {
     pub fn new(
         name: &str,
@@ -241,7 +241,7 @@ impl Pipeline {
     }
 
     #[instrument(skip(self, pool))]
-    pub async fn get_and_set_model(&mut self, pool: &PgPool) -> anyhow::Result<&Model> {
+    pub async fn get_and_set_model(&mut self, pool: &PgPool) -> anyhow::Result<&mut Model> {
         self.verify_in_database(pool, false).await?;
         if self.model.is_none() {
             let model: models::Model = sqlx::query_as(
@@ -255,29 +255,40 @@ impl Pipeline {
             )
             .fetch_one(pool)
             .await?;
-            self.model = Some(model.into());
+            let project_info = self
+                .project_info
+                .as_ref()
+                .expect("Cannot set model without project info");
+            let mut model: Model = model.into();
+            model.set_project_info(project_info.clone());
+            self.model = Some(model);
         }
-        Ok(self.model.as_ref().unwrap())
+        Ok(self.model.as_mut().unwrap())
     }
 
-    // Leave this but probably remove it latter if we don't need it
-    // async fn get_and_set_splitter(&mut self, pool: &PgPool) -> anyhow::Result<()> {
-    //     self.verify_in_database(pool, false).await?;
-    //     if self.splitter.is_none() {
-    //         let splitter: models::Splitter =
-    //             sqlx::query_as("SELECT * FROM pgml.sdk_splitters WHERE id = $1")
-    //                 .bind(
-    //                     self.database_data
-    //                         .as_ref()
-    //                         .context("Pipeline must be verified to set splitter")?
-    //                         .splitter_id,
-    //                 )
-    //                 .fetch_one(pool)
-    //                 .await?;
-    //         self.splitter = Some(splitter.into());
-    //     }
-    //     Ok(())
-    // }
+    async fn get_and_set_splitter(&mut self, pool: &PgPool) -> anyhow::Result<&mut Splitter> {
+        self.verify_in_database(pool, false).await?;
+        if self.splitter.is_none() {
+            let splitter: models::Splitter =
+                sqlx::query_as("SELECT * FROM pgml.sdk_splitters WHERE id = $1")
+                    .bind(
+                        self.database_data
+                            .as_ref()
+                            .context("Pipeline must be verified to set splitter")?
+                            .splitter_id,
+                    )
+                    .fetch_one(pool)
+                    .await?;
+            let project_info = self
+                .project_info
+                .as_ref()
+                .expect("Cannot set model without project info");
+            let mut splitter: Splitter = splitter.into();
+            splitter.set_project_info(project_info.clone());
+            self.splitter = Some(splitter);
+        }
+        Ok(self.splitter.as_mut().unwrap())
+    }
 
     #[instrument(skip(self, pool))]
     pub async fn execute(
@@ -586,6 +597,36 @@ impl Pipeline {
     #[instrument(skip(self))]
     pub fn set_project_info(&mut self, project_info: ProjectInfo) {
         self.project_info = Some(project_info);
+    }
+
+    #[instrument(skip(self))]
+    pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
+        let database_url = &self
+            .project_info
+            .as_ref()
+            .context("Pipeline must have project info to call to_dict. Are you calling to_dict on a pipeline that has not been added to a collection?")?
+            .database_url;
+        let pool = get_or_initialize_pool(database_url).await?;
+        self.verify_in_database(&pool, false).await?;
+
+        let model = self.get_and_set_model(&pool).await?;
+        let model_dict = model.to_dict().await?;
+
+        let splitter = self.get_and_set_splitter(&pool).await?;
+        let splitter_dict = splitter.to_dict().await?;
+
+        let database_data = self
+            .database_data
+            .as_ref()
+            .context("Pipeline must be verified to call to_dict")?;
+
+        Ok(serde_json::json!({
+            "id": database_data.id,
+            "name": self.name,
+            "model": *model_dict,
+            "splitter": *splitter_dict
+        })
+        .into())
     }
 
     // We want to be able to call this function from anywhere

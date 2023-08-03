@@ -290,7 +290,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswle_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3), None, None)
+            .upsert_documents(generate_dummy_documents(3), None)
             .await?;
         let results = collection
             .vector_search("Here is some query", &mut pipeline, None, None)
@@ -329,7 +329,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswre_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3), None, None)
+            .upsert_documents(generate_dummy_documents(3), None)
             .await?;
         let results = collection
             .vector_search("Here is some query", &mut pipeline, None, None)
@@ -364,7 +364,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3), None, None)
+            .upsert_documents(generate_dummy_documents(3), None)
             .await?;
         let results = collection
             .query()
@@ -405,7 +405,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3), None, None)
+            .upsert_documents(generate_dummy_documents(3), None)
             .await?;
         let results = collection
             .query()
