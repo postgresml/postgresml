@@ -51,56 +51,6 @@ a {
     }
 }
 
-input {
-    &.form-check-input {
-        &[type=radio]:checked {
-            border-width: 5px;
-        }
-
-        &:hover {
-            cursor: pointer;
-        }
-    }
-
-    &.form-range[type=range] {
-        cursor: pointer;
-    }
-
-    // Firefox
-    &.form-range[type="range"]::-moz-range-progress {
-        background-color: #{$purple};
-        height: 4px;
-        border: 0;
-    }
-
-    // IE
-    &.form-range[type="range"]::-ms-fill-lower {
-        background-color: #{$purple};
-    }
-
-    // Chrome (doesn't really work as designed)
-    &.form-range[type=range]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        height: 24px;
-        width: 24px;
-        position: relative;
-        bottom: 4px;
-        border-radius: 50%;
-        border: #{$form-range-thumb-border};
-        background: #{$form-range-thumb-bg};
-    }
-
-    &.form-range[type=range]::-webkit-slider-runnable-track {
-      height: #{$form-range-track-height};
-      border: 0;
-    }
-
-    &.form-range[type=range]:focus::-webkit-slider-runnable-track {
-        background: #{$purple};
-    }
-    // End of Chrome
-}
-
 table {
     @extend .table;
     @extend .table-bordered;

@@ -129,6 +129,7 @@ $form-check-input-border: 2px solid var(--bs-border-color);
 $form-check-input-active-filter: none;
 $form-check-label-cursor: pointer;
 $form-check-radio-checked-bg-image: none;
+
 $form-range-track-height: .4rem;
 $form-range-track-box-shadow: none;
 $form-range-thumb-width: 1rem;
@@ -136,9 +137,12 @@ $form-range-thumb-box-shadow: none;
 $form-range-thumb-transition: none;
 $form-range-thumb-active-bg: #{$primary};
 $form-range-thumb-bg: #{$primary};
-$form-range-thumb-border: 4px solid #{$purple};
+$form-range-thumb-border: 4px solid #{$neon-tint-100};
 $form-range-track-bg: #111213;
+
 $input-box-shadow: none;
+$form-switch-checked-color: #{$gray-100};
+$form-switch-focus-color: #{$gray-100};
 
 // Badge
 $badge-font-weight: normal;

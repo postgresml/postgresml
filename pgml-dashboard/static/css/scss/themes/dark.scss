@@ -25,6 +25,17 @@
         --bs-list-group-color: #{$hp-white};
     }
 
+    --form-radio-bg: #{$neon-tint-100};
+    --form-radio-hover-bg: #{$neon-tint-300};
+    --form-radio-border-color: #{$neon-tint-100};
+    --form-radio-hover-border-color: #{$neon-tint-300};
+    --form-check-disable-color: #{$gray-200}; 
+    --form-radio-checked-bg: #{$gray-100};
+
+    --form-switch-default: #{$neon-tint-400};
+    --form-switch-hover: #{$neon-tint-300};
+    --form-switch-active: #{$neon-tint-100};
+
     .form-control {
         --bs-form-control-bg: #{$gray-700};
         --bs-body-color: #{$gray-200};
