@@ -20,9 +20,7 @@ CREATE TABLE IF NOT EXISTS %s (
   model_id int8 NOT NULL REFERENCES pgml.models ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
   splitter_id int8 NOT NULL REFERENCES pgml.sdk_splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
   active BOOLEAN NOT NULL DEFAULT TRUE,
-  chunks_status text NOT NULL DEFAULT 'na',
-  embeddings_status text NOT NULL DEFAULT 'na',
-  tsvectors_status text NOT NULL DEFAULT 'na',
+  parameters jsonb NOT NULL DEFAULT '{}',
   UNIQUE (name)
 );
 "#;
@@ -45,16 +43,6 @@ CREATE TABLE IF NOT EXISTS pgml.sdk_splitters (
   name text NOT NULL, 
   parameters jsonb NOT NULL DEFAULT '{}',
   project_id int8 NOT NULL REFERENCES pgml.projects ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED
-);
-"#;
-
-pub const CREATE_TRANSFORMS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
-  table_name text PRIMARY KEY, 
-  created_at timestamp NOT NULL DEFAULT now(), 
-  task text NOT NULL, 
-  splitter_id int8 NOT NULL REFERENCES pgml.sdk_splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  model_id int8 NOT NULL REFERENCES pgml.sdk_models ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  UNIQUE (task, splitter_id, model_id)
 );
 "#;
 
@@ -91,15 +79,15 @@ CREATE TABLE IF NOT EXISTS %s (
 // CREATE INDICES ///////////
 /////////////////////////////
 pub const CREATE_INDEX: &str = r#"
-CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%d);
+CREATE INDEX %d IF NOT EXISTS %s ON %s (%d);
 "#;
 
 pub const CREATE_INDEX_USING_GIN: &str = r#"
-CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING GIN (%d);
+CREATE INDEX %d IF NOT EXISTS %s ON %s USING GIN (%d);
 "#;
 
 pub const CREATE_INDEX_USING_IVFFLAT: &str = r#"
-CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s USING ivfflat (%d);
+CREATE INDEX %d IF NOT EXISTS %s ON %s USING ivfflat (%d);
 "#;
 
 /////////////////////////////
@@ -114,6 +102,18 @@ SELECT
 FROM 
   %s
 ON CONFLICT (document_id, configuration) DO UPDATE SET ts = EXCLUDED.ts;
+"#;
+
+pub const GENERATE_TSVECTORS_FOR_DOCUMENT_IDS: &str = r#"
+INSERT INTO %s (document_id, configuration, ts) 
+SELECT 
+  id, 
+  '%d' configuration, 
+  to_tsvector('%d', text) ts 
+FROM 
+  %s
+WHERE id = ANY ($1)
+ON CONFLICT (document_id, configuration) DO NOTHING;
 "#;
 
 pub const GENERATE_EMBEDDINGS: &str = r#"
@@ -137,40 +137,78 @@ WHERE
   );
 "#;
 
+pub const GENERATE_EMBEDDINGS_FOR_CHUNK_IDS: &str = r#"
+INSERT INTO %s (chunk_id, embedding) 
+SELECT 
+  id, 
+  pgml.embed(
+    text => chunk, 
+    transformer => $1, 
+    kwargs => $2 
+  ) 
+FROM 
+  %s 
+WHERE 
+  splitter_id = $3 
+  AND id = ANY ($4)
+  AND id NOT IN (
+    SELECT 
+      chunk_id 
+    from 
+      %s
+  );
+"#;
+
 pub const EMBED_AND_VECTOR_SEARCH: &str = r#"
-WITH query_cte AS (
+WITH pipeline AS (
+    SELECT
+      model_id
+    FROM
+      %s
+    WHERE
+      name = $1
+),
+model AS (
+    SELECT
+      hyperparams 
+    FROM
+      pgml.models 
+    WHERE
+      id = (SELECT model_id FROM pipeline)
+),
+embedding AS (
   SELECT 
     pgml.embed(
-      transformer => $1, 
-      text => $2, 
-      kwargs => $3 
-    )::vector AS query_embedding
+      transformer => (SELECT hyperparams->>'name' FROM model),
+      text => $2,
+      kwargs => $3
+    )::vector AS embedding
 ), 
-cte AS (
+comparison AS (
   SELECT 
     chunk_id, 
     1 - (
-      %s.embedding <=> (SELECT query_embedding FROM query_cte)
+      %s.embedding <=> (SELECT embedding FROM embedding)
     ) AS score 
   FROM 
     %s 
 ) 
 SELECT 
-  cte.score, 
+  comparison.score, 
   chunks.chunk, 
   documents.metadata 
 FROM 
-  cte 
-  INNER JOIN %s chunks ON chunks.id = cte.chunk_id 
+  comparison 
+  INNER JOIN %s chunks ON chunks.id = comparison.chunk_id 
   INNER JOIN %s documents ON documents.id = chunks.document_id 
   ORDER BY 
-  cte.score DESC 
+  comparison.score DESC 
   LIMIT 
   $4;
 "#;
 
 pub const VECTOR_SEARCH: &str = r#"
-WITH cte AS (
+WITH comparison AS (
   SELECT 
     chunk_id, 
     1 - (
@@ -180,15 +218,15 @@ WITH cte AS (
     %s 
 ) 
 SELECT 
-  cte.score, 
+  comparison.score, 
   chunks.chunk, 
   documents.metadata 
 FROM 
-  cte 
-  INNER JOIN %s chunks ON chunks.id = cte.chunk_id 
+  comparison 
+  INNER JOIN %s chunks ON chunks.id = comparison.chunk_id 
   INNER JOIN %s documents ON documents.id = chunks.document_id 
   ORDER BY 
-  cte.score DESC 
+  comparison.score DESC 
   LIMIT 
   $2;
 "#;
@@ -238,5 +276,56 @@ FROM
               splitter_id = $1 
           )
       ) AS documents
-  ) chunks;
+  ) chunks
+RETURNING id
+"#;
+
+pub const GENERATE_CHUNKS_FOR_DOCUMENT_IDS: &str = r#"
+WITH splitter as (
+    SELECT
+      name,
+      parameters
+    FROM
+      pgml.sdk_splitters 
+    WHERE
+      id = $1
+)
+INSERT INTO %s(
+  document_id, splitter_id, chunk_index, 
+  chunk
+)
+SELECT 
+  document_id, 
+  $1, 
+  (chunk).chunk_index, 
+  (chunk).chunk 
+FROM 
+  (
+    select 
+      id AS document_id, 
+      pgml.chunk(
+        (SELECT name FROM splitter), 
+        text, 
+        (SELECT parameters FROM splitter)
+      ) AS chunk 
+    FROM 
+      (
+        SELECT 
+          id, 
+          text 
+        FROM 
+          %s 
+        WHERE 
+          id = ANY($2)
+          AND id NOT IN (
+            SELECT 
+              document_id 
+            FROM 
+              %s 
+            WHERE 
+              splitter_id = $1 
+          )
+      ) AS documents
+  ) chunks
+RETURNING id
 "#;

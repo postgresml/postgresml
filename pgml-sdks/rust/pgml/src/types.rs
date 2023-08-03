@@ -6,6 +6,12 @@ use std::ops::{Deref, DerefMut};
 #[sqlx(transparent)]
 pub struct Json(pub serde_json::Value);
 
+impl Default for Json {
+    fn default() -> Self {
+        Self(serde_json::json!({}))
+    }
+}
+
 impl From<serde_json::Value> for Json {
     fn from(v: serde_json::Value) -> Self {
         Self(v)

@@ -1,18 +1,18 @@
-use log::info;
 use reqwest::{Client, RequestBuilder};
 use sqlx::postgres::PgPool;
 use std::env;
+use tracing::instrument;
 
-use crate::{models, query_builder, types::Json};
+use crate::{model::ModelRuntime, models, query_builder, types::Json};
 
 pub fn build_remote_embeddings<'a>(
-    source: &'a str,
+    source: ModelRuntime,
     model_name: &'a str,
     _model_parameters: &'a Json,
 ) -> anyhow::Result<Box<dyn RemoteEmbeddings<'a> + Sync + Send + 'a>> {
     match source {
         // OpenAI endpoint for embedddings does not take any model parameters
-        "openai" => Ok(Box::new(OpenAIRemoteEmbeddings::new(model_name))),
+        ModelRuntime::OpenAI => Ok(Box::new(OpenAIRemoteEmbeddings::new(model_name))),
         _ => Err(anyhow::anyhow!("Unknown remote embeddings source")),
     }
 }
@@ -22,6 +22,7 @@ pub trait RemoteEmbeddings<'a> {
     fn build_request(&self) -> RequestBuilder;
     fn generate_body(&self, text: Vec<String>) -> serde_json::Value;
 
+    #[instrument(skip(self))]
     async fn get_embedding_size(&self) -> anyhow::Result<i64> {
         let response = self.embed(vec!["Hello, World!".to_string()]).await?;
         if response.is_empty() {
@@ -31,38 +32,51 @@ pub trait RemoteEmbeddings<'a> {
         Ok(embedding_size)
     }
 
+    #[instrument(skip(self, text))]
     async fn embed(&self, text: Vec<String>) -> anyhow::Result<Vec<Vec<f64>>> {
         let request = self.build_request().json(&self.generate_body(text));
-        info!("Sending reqwest: {:?}", request);
         let response = request.send().await?;
 
         let response = response.json::<serde_json::Value>().await?;
         self.parse_response(response)
     }
 
+    #[instrument(skip(self, pool))]
     async fn get_chunks(
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
         splitter_id: i64,
+        chunk_ids: &Option<Vec<i64>>,
         pool: &PgPool,
         limit: Option<i64>,
     ) -> anyhow::Result<Vec<models::Chunk>> {
         let limit = limit.unwrap_or(1000);
 
-        let chunks: Vec<models::Chunk> = sqlx::query_as(&query_builder!(
-            "SELECT * FROM %s WHERE splitter_id = $1 AND id NOT IN (SELECT chunk_id FROM %s) LIMIT $2",
-            chunks_table_name,
-            embeddings_table_name
-        ))
-        .bind(splitter_id)
-        .bind(limit)
-        .fetch_all(pool)
-        .await?;
-
-        Ok(chunks)
+        match chunk_ids {
+            Some(cids) => sqlx::query_as(&query_builder!(
+                "SELECT * FROM %s WHERE splitter_id = $1 AND id NOT IN (SELECT chunk_id FROM %s) AND id = ANY ($2) LIMIT $3",
+                chunks_table_name,
+                embeddings_table_name
+            ))
+            .bind(splitter_id)
+            .bind(cids)
+            .bind(limit)
+            .fetch_all(pool)
+            .await,
+            None => sqlx::query_as(&query_builder!(
+                "SELECT * FROM %s WHERE splitter_id = $1 AND id NOT IN (SELECT chunk_id FROM %s) LIMIT $2",
+                chunks_table_name,
+                embeddings_table_name
+            ))
+            .bind(splitter_id)
+            .bind(limit)
+            .fetch_all(pool)
+            .await
+        }.map_err(|e| anyhow::anyhow!(e))
     }
 
+    #[instrument(skip(self, response))]
     fn parse_response(&self, response: serde_json::Value) -> anyhow::Result<Vec<Vec<f64>>> {
         let data = response["data"]
             .as_array()
@@ -85,11 +99,13 @@ pub trait RemoteEmbeddings<'a> {
         Ok(embeddings)
     }
 
+    #[instrument(skip(self, pool))]
     async fn generate_embeddings(
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
         splitter_id: i64,
+        chunk_ids: Option<Vec<i64>>,
         pool: &PgPool,
     ) -> anyhow::Result<()> {
         loop {
@@ -98,6 +114,7 @@ pub trait RemoteEmbeddings<'a> {
                     embeddings_table_name,
                     chunks_table_name,
                     splitter_id,
+                    &chunk_ids,
                     pool,
                     None,
                 )
@@ -167,7 +184,7 @@ mod tests {
     async fn openai_remote_embeddings() -> anyhow::Result<()> {
         let params = serde_json::json!({}).into();
         let openai_remote_embeddings =
-            build_remote_embeddings("openai", "text-embedding-ada-002", &params)?;
+            build_remote_embeddings(ModelRuntime::OpenAI, "text-embedding-ada-002", &params)?;
         let embedding_size = openai_remote_embeddings.get_embedding_size().await?;
         assert!(embedding_size > 0);
         Ok(())

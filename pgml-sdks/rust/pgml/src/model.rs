@@ -21,7 +21,7 @@ use crate::languages::CustomInto;
 /// annoying, but with the traits implimented below is a breeze and can be done just using .into
 
 /// Our model runtimes
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ModelRuntime {
     Python,
     OpenAI,
@@ -130,22 +130,20 @@ impl Model {
         pool: &PgPool,
         throw_if_exists: bool,
     ) -> anyhow::Result<()> {
-        match &self.database_data {
-            Some(_) => Ok(()),
-            None => {
-                let project_info = self
-                    .project_info
-                    .as_ref()
-                    .expect("Cannot verify model without project info");
+        if self.database_data.is_none() {
+            let project_info = self
+                .project_info
+                .as_ref()
+                .expect("Cannot verify model without project info");
 
-                let mut parameters = self.parameters.clone();
-                parameters
-                    .as_object_mut()
-                    .expect("Parameters for model should be an object")
-                    .insert("name".to_string(), serde_json::json!(self.name));
+            let mut parameters = self.parameters.clone();
+            parameters
+                .as_object_mut()
+                .expect("Parameters for model should be an object")
+                .insert("name".to_string(), serde_json::json!(self.name));
 
-                let model: Option<models::Model> = sqlx::query_as(
-                    "SELECT * FROM pgml.models WHERE project_id = $1 AND runtime = $2::pgml.runtime AND hyperparams = $3",
+            let model: Option<models::Model> = sqlx::query_as(
+                    "SELECT id, created_at, runtime::TEXT, hyperparams FROM pgml.models WHERE project_id = $1 AND runtime = $2::pgml.runtime AND hyperparams = $3",
                 )
                 .bind(project_info.id)
                 .bind(Into::<&str>::into(&self.runtime))
@@ -153,13 +151,13 @@ impl Model {
                 .fetch_optional(pool)
                 .await?;
 
-                let model = if let Some(m) = model {
-                    if throw_if_exists {
-                        anyhow::bail!("Model already exists in database")
-                    }
-                    m
-                } else {
-                    let model: models::Model = sqlx::query_as("INSERT INTO pgml.models (project_id, num_features, algorithm, runtime, hyperparams, status, search_params, search_args) VALUES ($1, $2, $3, $4::pgml.runtime, $5, $6, $7, $8) RETURNING *")
+            let model = if let Some(m) = model {
+                if throw_if_exists {
+                    anyhow::bail!("Model already exists in database")
+                }
+                m
+            } else {
+                let model: models::Model = sqlx::query_as("INSERT INTO pgml.models (project_id, num_features, algorithm, runtime, hyperparams, status, search_params, search_args) VALUES ($1, $2, $3, $4::pgml.runtime, $5, $6, $7, $8) RETURNING id, created_at, runtime::TEXT, hyperparams")
                     .bind(project_info.id)
                     .bind(1)
                     .bind("transformers")
@@ -170,19 +168,33 @@ impl Model {
                     .bind(serde_json::json!({}))
                     .fetch_one(pool)
                     .await?;
-                    model
-                };
+                model
+            };
 
-                self.database_data = Some(ModelDatabaseData {
-                    id: model.id,
-                    created_at: model.created_at,
-                });
-                Ok(())
-            }
+            self.database_data = Some(ModelDatabaseData {
+                id: model.id,
+                created_at: model.created_at,
+            });
         }
+        Ok(())
     }
 
     pub fn set_project_info(&mut self, project_info: ProjectInfo) {
         self.project_info = Some(project_info);
+    }
+}
+
+impl From<models::Model> for Model {
+    fn from(m: models::Model) -> Self {
+        Self {
+            name: m.hyperparams["name"].as_str().unwrap().to_string(),
+            runtime: m.runtime.as_str().into(),
+            parameters: m.hyperparams,
+            project_info: None,
+            database_data: Some(ModelDatabaseData {
+                id: m.id,
+                created_at: m.created_at,
+            }),
+        }
     }
 }

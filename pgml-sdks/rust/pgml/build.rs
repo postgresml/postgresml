@@ -3,7 +3,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 
 const ADDITIONAL_DEFAULTS_FOR_PYTHON: &[u8] = br#"
-def setup_logger(log_level: str) -> None
+def py_init_logger(log_level: str) -> None
 
 Json = dict[str, Any]
 DateTime = int

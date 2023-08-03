@@ -1,14 +1,12 @@
 import os
 import pgml
 import pytest
-import asyncio
-import time
+from multiprocessing import Pool
 from typing import List, Dict, Any
-import os
 
 ####################################################################################
 ####################################################################################
-## PLEASE BE AWARE THESE TESTS DO INVOLVE CHECKS ON LAZILY CREATD DATABASE ITEMS. ##
+## PLEASE BE AWARE THESE TESTS DO INVOLVE CHECKS ON LAZILY CREATED DATABASE ITEMS ##
 ## IF ANY OF THE COLLECTION NAMES ALREADY EXIST, SOME TESTS MAY FAIL              ##
 ## THIS DOES NOT MEAN THE SDK IS BROKEN. PLEASE CLEAR YOUR DATABASE INSTANCE      ##
 ## BEFORE RUNNING ANY TESTS                                                       ##
@@ -16,12 +14,15 @@ import os
 ####################################################################################
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-
 if DATABASE_URL is None:
-    print("No DATABASE_URL environment variable found")
+    print("No DATABASE_URL environment variable found. Please set one")
     exit(1)
 
-pgml.setup_logger("DEBUG")
+LOG_LEVEL = os.environ.get("LOG_LEVEL")
+if LOG_LEVEL is None:
+    print("No LOG_LEVEL environment variable found setting to ERROR")
+    LOG_LEVEL = "ERROR"
+pgml.py_init_logger(LOG_LEVEL)
 
 def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
     dummy_documents = []
@@ -36,137 +37,106 @@ def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
         })
     return dummy_documents
 
-# @pytest.mark.asyncio
-# async def test_can_lazily_create_collection():
-#     collection_name = "p_ccc_test_5"
-#     collection = pgml.Collection(name=collection_name)
-#     builtins = pgml.Builtins()
-#     does_collection_exist = await builtins.does_collection_exist(collection_name)
-#     assert not does_collection_exist
-#     # Do something that requires the collection to be created
-#     await collection.upsert_documents(generate_dummy_documents(1))
-#     does_collection_exist = await builtins.does_collection_exist(collection_name)
-#     # Now the collection will exist because it had to be created to upsert documents
-#     await collection.archive()
-#     assert does_collection_exist
+
+# ###################################################
+# ## Test the API exposed is correct ################
+# ###################################################
 #
-# @pytest.mark.asyncio
-# async def test_can_lazily_create_model():
+# def test_can_create_collection():
+#     collection = pgml.Collection(name="test_p_c_tscc_0")
+#     assert collection is not None
+#
+# def test_can_create_model():
 #     model = pgml.Model()
-#     assert not model.get_verified_in_database()
-#     id = await model.get_id()
-#     assert id is not None
-#     assert model.get_verified_in_database()
+#     assert model is not None
 #
-# @pytest.mark.asyncio
-# async def test_can_lazily_create_splitter():
+# def test_can_create_splitter():
 #     splitter = pgml.Splitter()
-#     assert not splitter.get_verified_in_database()
-#     id = await splitter.get_id()
-#     assert id is not None
-#     assert splitter.get_verified_in_database()
+#     assert splitter is not None
+#
+# def test_can_create_pipeline():
+#     model = pgml.Model()
+#     splitter = pgml.Splitter()
+#     pipeline = pgml.Pipeline("test_p_p_tccp_0", model, splitter)
+#     assert pipeline is not None
+#
+# def test_can_create_builtins():
+#     builtins = pgml.Builtins()
+#     assert builtins is not None
+#
+#
+# ###################################################
+# ## Test various vector searches ###################
+# ###################################################
 #
 # @pytest.mark.asyncio
 # async def test_can_vector_search():
-#     collection_name = "p_cvs_test_0"
-#     collection = pgml.Collection(name=collection_name)
 #     model = pgml.Model()
 #     splitter = pgml.Splitter()
-#     await collection.upsert_documents(generate_dummy_documents(2))
-#     # Splitter should not be verified in the database yet
-#     assert not splitter.get_verified_in_database()
-#     await collection.generate_chunks(splitter)
-#     # Now splitter should be verified in the database
-#     assert splitter.get_verified_in_database()
-#     # Model should not be verified in the database yet
-#     assert not model.get_verified_in_database()
-#     await collection.generate_embeddings(model, splitter)
-#     # Now model should be verified in the database
-#     assert model.get_verified_in_database()
-#     results = await collection.vector_search("Here is some query", model, splitter)
+#     pipeline = pgml.Pipeline("test_p_p_tcvs_0", model, splitter)
+#     collection = pgml.Collection(name="test_p_c_tcvs_3")
+#     await collection.upsert_documents(generate_dummy_documents(3))
+#     await collection.add_pipeline(pipeline)
+#     results = await collection.vector_search("Here is some query", pipeline)
+#     assert len(results) == 3
 #     await collection.archive()
-#     assert len(results) > 0
 #
 # @pytest.mark.asyncio
 # async def test_can_vector_search_with_remote_embeddings():
-#     collection_name = "p_cvswre_test_0"
-#     collection = pgml.Collection(name=collection_name)
 #     model = pgml.Model(name="text-embedding-ada-002", source="openai")
 #     splitter = pgml.Splitter()
-#     await collection.upsert_documents(generate_dummy_documents(2))
-#     await collection.generate_chunks(splitter)
-#     await collection.generate_embeddings(model, splitter)
-#     results = await collection.vector_search("Here is some query", model, splitter)
-#     assert len(results) > 0
+#     pipeline = pgml.Pipeline("test_p_p_tcvswre_0", model, splitter)
+#     collection = pgml.Collection(name="test_p_c_tcvswre_2")
+#     await collection.upsert_documents(generate_dummy_documents(3))
+#     await collection.add_pipeline(pipeline)
+#     results = await collection.vector_search("Here is some query", pipeline)
+#     assert len(results) == 3
+#     await collection.archive()
 #
 # @pytest.mark.asyncio
 # async def test_can_vector_search_with_query_builder():
-#     collection_name = "p_cvswqb_test_0"
-#     collection = pgml.Collection(name=collection_name)
 #     model = pgml.Model()
 #     splitter = pgml.Splitter()
-#     await collection.upsert_documents(generate_dummy_documents(2))
-#     await collection.generate_chunks(splitter)
-#     await collection.generate_embeddings(model, splitter)
-#     await collection.generate_tsvectors()
-#     results = await collection.query().vector_recall("Here is some query", model, splitter).filter({
-#         "metadata": {
-#             "metadata": {
-#                 "$or": [
-#                     {"uuid": {"$eq": 0 }},
-#                     {"uuid": {"$eq": 10 }},
-#                     {"category": {"$eq": [1, 2, 3]}}
-#                 ]
-#
-#             }
-#         },
-#         "full_text": {
-#             "text": "Test document"
-#         }
-#     }).run()
+#     pipeline = pgml.Pipeline("test_p_p_tcvswqb_1", model, splitter)
+#     collection = pgml.Collection(name="test_p_c_tcvswqb_4")
+#     await collection.upsert_documents(generate_dummy_documents(3))
+#     await collection.add_pipeline(pipeline)
+#     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
 #     await collection.archive()
-#     assert len(results) > 0
+#     assert len(results) == 3
 #
 # @pytest.mark.asyncio
-# async def test_query_runner():
-#     builtins = pgml.Builtins()
-#     _ = await builtins.query("SELECT * from pgml.collections").fetch_all()
+# async def test_can_vector_search_with_query_builder_with_remote_embeddings():
+#     model = pgml.Model(name="text-embedding-ada-002", source="openai")
+#     splitter = pgml.Splitter()
+#     pipeline = pgml.Pipeline("test_p_p_tcvswqbwre_1", model, splitter)
+#     collection = pgml.Collection(name="test_p_c_tcvswqbwre_0")
+#     await collection.upsert_documents(generate_dummy_documents(3))
+#     await collection.add_pipeline(pipeline)
+#     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
+#     await collection.archive()
+#     assert len(results) == 3
 #
-# @pytest.mark.asyncio
-# async def test_transform():
-#     builtins = pgml.Builtins()
-#     _ = await builtins.transform("translation_en_to_fr", ["test 1", "test 2"])
 
-
-# @pytest.mark.asyncio
-# def test_fork():
-#     # pgml.connect_python(DATABASE_URL)
+###################################################
+## Test with multiprocessing ######################
+###################################################
+# async def vector_search(collection, pipeline):
+#     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
+#     return len(results)
 #
-#     count = 1 
-#     processes = []
-#    
-#     builtins = pgml.Builtins()
-#     async def test_query():
-#         return await builtins.query("SELECT * from pgml.collections").fetch_all()
-#    
-#     for _ in range(count):
-#         pid = os.fork()
-#         if pid == 0:
-#             # pgml.reconnect_python()
-#             print("Child running")
-#             asyncio.run(test_query())
-#             os._exit(0)
-#         else:
-#             # pgml.reconnect_python()
-#             print("Parent running")
-#             asyncio.run(test_query())
-#             processes.append(pid)
-#    
-#     while processes:
-#         pid, exit_code = os.wait()
-         # pid, exit_code = os.waitpid(-1, os.WNOHANG)
-#         if pid == 0:
-#             time.sleep(1)
-#         else:
-#             print(pid, exit_code//256)
-#             processes.remove(pid)
+# @pytest.mark.asyncio
+# async def test_multiprocessing():
+#     model = pgml.Model()
+#     splitter = pgml.Splitter()
+#     pipeline = pgml.Pipeline("test_p_p_tm_1", model, splitter)
+#     collection = pgml.Collection(name="test_p_c_tm_4")
+#     await collection.upsert_documents(generate_dummy_documents(3))
+#     await collection.add_pipeline(pipeline)
+#
+#      with Pool(5) as p:
+#         results = p.map_async(vector_search, [(collection, pipeline), (co)])
+#         for x in results.get():
+#             assert(x == 3)
+#
+#     await collection.archive()

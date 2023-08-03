@@ -8,6 +8,7 @@ use crate::types::{DateTime, Json};
 use crate::languages::javascript::*;
 
 /// A pipeline
+#[enum_def]
 #[derive(FromRow)]
 pub struct Pipeline {
     pub id: i64,
@@ -16,9 +17,7 @@ pub struct Pipeline {
     pub model_id: i64,
     pub splitter_id: i64,
     pub active: bool,
-    pub chunks_status: String,
-    pub embeddings_status: String,
-    pub tsvectors_status: String,
+    pub parameters: Json,
 }
 
 /// A document
@@ -59,6 +58,8 @@ pub struct Splitter {
 pub struct Model {
     pub id: i64,
     pub created_at: DateTime,
+    pub runtime: String,
+    pub hyperparams: Json,
 }
 
 /// An embedding

@@ -211,11 +211,6 @@ pub fn generate_python_methods(
             OutputType::Default => (None, None),
         };
 
-        let does_take_ownership_of_self = method
-            .receiver
-            .as_ref()
-            .is_some_and(|r| r.to_string().replace("mut", "").trim() == "self");
-
         let some_wrapper_type = match method.receiver.as_ref() {
             Some(r) => {
                 let st = r.to_string();
@@ -526,6 +521,7 @@ fn get_python_type(ty: &SupportedType) -> String {
         | t @ SupportedType::Model
         | t @ SupportedType::QueryBuilder
         | t @ SupportedType::QueryRunner
+        | t @ SupportedType::Pipeline
         | t @ SupportedType::Splitter => t.to_string(),
         // Add more types as required
         _ => "Any".to_string(),

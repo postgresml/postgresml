@@ -1,12 +1,15 @@
+use anyhow::Context;
 use itertools::Itertools;
-use log::warn;
 use pgml_macros::{custom_derive, custom_methods};
 use sqlx::postgres::PgPool;
 use sqlx::Executor;
+use sqlx::PgConnection;
+use std::borrow::Cow;
 use std::time::SystemTime;
+use tracing::{instrument, warn};
 
 use crate::get_or_initialize_pool;
-use crate::model::Model;
+use crate::model::ModelRuntime;
 use crate::models;
 use crate::pipeline::Pipeline;
 use crate::queries;
@@ -22,8 +25,8 @@ use crate::{languages::javascript::*, model::ModelJavascript, splitter::Splitter
 
 #[cfg(feature = "python")]
 use crate::{
-    languages::CustomInto, model::ModelPython, query_builder::QueryBuilderPython,
-    splitter::SplitterPython,
+    languages::CustomInto, model::ModelPython, pipeline::PipelinePython,
+    query_builder::QueryBuilderPython, splitter::SplitterPython,
 };
 
 #[derive(Debug, Clone)]
@@ -31,6 +34,7 @@ pub struct ProjectInfo {
     pub id: i64,
     pub name: String,
     pub task: String,
+    pub database_url: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -50,10 +54,19 @@ pub struct Collection {
     pub transforms_table_name: String,
     pub chunks_table_name: String,
     pub documents_tsvectors_table_name: String,
-    database_data: Option<CollectionDatabaseData>,
+    pub database_data: Option<CollectionDatabaseData>,
 }
 
-#[custom_methods(new, upsert_documents, vector_search, query, archive)]
+#[custom_methods(
+    new,
+    upsert_documents,
+    add_pipeline,
+    remove_pipeline,
+    vector_search,
+    query,
+    exists,
+    archive
+)]
 impl Collection {
     /// Creates a new collection
     ///
@@ -80,97 +93,199 @@ impl Collection {
         }
     }
 
-    // Unfortunately the async-recursion macro does not play nice with pyo3 so this function is a
-    // bit more verbose than it otherwise could be
-    async fn verify_in_database(
+    #[instrument(skip(self, pool))]
+    pub async fn verify_in_database(
         &mut self,
         pool: &PgPool,
         throw_if_exists: bool,
     ) -> anyhow::Result<()> {
-        match &self.database_data {
-            Some(_) => Ok(()),
-            None => {
-                let (project_id, project_task): (i64, String) = sqlx::query_as("INSERT INTO pgml.projects (name, task) VALUES ($1, 'embedding'::pgml.task) ON CONFLICT (name) DO UPDATE SET task = EXCLUDED.task RETURNING id, task::TEXT")
+        if self.database_data.is_none() {
+            let result: Result<Option<models::Collection>, _> =
+                sqlx::query_as("SELECT * FROM pgml.collections WHERE name = $1")
                     .bind(&self.name)
-                    .fetch_one(pool)
+                    .fetch_optional(pool)
+                    .await;
+
+            let collection: Option<models::Collection> = match result {
+                Ok(s) => anyhow::Ok(s),
+                Err(e) => match e.as_database_error() {
+                    Some(db_e) => {
+                        // Error 42P01 is "undefined_table"
+                        if db_e.code() == Some(std::borrow::Cow::from("42P01")) {
+                            sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
+                                .execute(pool)
+                                .await?;
+                            Ok(None)
+                        } else {
+                            Err(e.into())
+                        }
+                    }
+                    None => Err(e.into()),
+                },
+            }?;
+
+            self.database_data = if let Some(c) = collection {
+                if throw_if_exists {
+                    anyhow::bail!("Collection {} already exists", self.name);
+                }
+                Some(CollectionDatabaseData {
+                    id: c.id,
+                    created_at: c.created_at,
+                    project_info: ProjectInfo {
+                        id: c.project_id,
+                        name: self.name.clone(),
+                        task: "embedding".to_string(),
+                        database_url: self.database_url.clone(),
+                    },
+                })
+            } else {
+                let mut transaction = pool.begin().await?;
+
+                let project_id: i64 = sqlx::query_scalar("INSERT INTO pgml.projects (name, task) VALUES ($1, 'embedding'::pgml.task) ON CONFLICT (name) DO UPDATE SET task = EXCLUDED.task RETURNING id, task::TEXT")
+                    .bind(&self.name)
+                    .fetch_one(&mut transaction)
                     .await?;
 
-                let result: Result<Option<models::Collection>, _> =
-                    sqlx::query_as("SELECT * FROM pgml.collections WHERE name = $1")
-                        .bind(&self.name)
-                        .fetch_optional(pool)
-                        .await;
+                transaction
+                    .execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name).as_str())
+                    .await?;
 
-                let collection: Option<models::Collection> = match result {
-                    Ok(s) => anyhow::Ok(s),
-                    Err(e) => match e.as_database_error() {
-                        Some(db_e) => {
-                            // Error 42P01 is "undefined_table"
-                            if db_e.code() == Some(std::borrow::Cow::from("42P01")) {
-                                sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
-                                    .execute(pool)
-                                    .await?;
-                                Ok(None)
-                            } else {
-                                Err(e.into())
-                            }
-                        }
-                        None => Err(e.into()),
-                    },
-                }?;
-
-                let collection = if let Some(c) = collection {
-                    if throw_if_exists {
-                        anyhow::bail!("Collection {} already exists", self.name);
-                    }
-                    c
-                } else {
-                    sqlx::query_as("INSERT INTO pgml.collections (name, project_id) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING RETURNING *")
+                let c: models::Collection = sqlx::query_as("INSERT INTO pgml.collections (name, project_id) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING RETURNING *")
                         .bind(&self.name)
                         .bind(project_id)
-                        .fetch_one(pool)
-                        .await?
+                        .fetch_one(&mut transaction)
+                        .await?;
+
+                let collection_database_data = CollectionDatabaseData {
+                    id: c.id,
+                    created_at: c.created_at,
+                    project_info: ProjectInfo {
+                        id: c.project_id,
+                        name: self.name.clone(),
+                        task: "embedding".to_string(),
+                        database_url: self.database_url.clone(),
+                    },
                 };
 
-                self.database_data = Some(CollectionDatabaseData {
-                    id: collection.id,
-                    created_at: collection.created_at,
-                    project_info: ProjectInfo {
-                        id: collection.project_id,
-                        name: self.name.clone(),
-                        task: project_task,
-                    },
-                });
-
-                pool.execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name).as_str())
+                Splitter::create_splitters_table(&mut transaction).await?;
+                Pipeline::create_pipelines_table(
+                    &collection_database_data.project_info,
+                    &mut transaction,
+                )
+                .await?;
+                self.create_documents_table(&mut transaction).await?;
+                self.create_chunks_table(&mut transaction).await?;
+                self.create_documents_tsvectors_table(&mut transaction)
                     .await?;
 
-                self.create_documents_table(pool).await?;
-                self.create_chunks_table(pool).await?;
-                self.create_documents_tsvectors_table(pool).await?;
-
-                Ok(())
-            }
+                transaction.commit().await?;
+                Some(collection_database_data)
+            };
         }
+        Ok(())
     }
 
+    #[instrument(skip(self))]
     pub async fn add_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(&pool, false).await?;
         pipeline.set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
         pipeline.verify_in_database(&pool, true).await?;
-        pipeline.execute(&pool).await?;
+        pipeline.execute(&None, &pool).await?;
         Ok(())
     }
 
-    async fn create_documents_table(&mut self, pool: &PgPool) -> anyhow::Result<()> {
-        pool.execute(
+    #[instrument(skip(self))]
+    pub async fn remove_pipeline(
+        &mut self,
+        pipeline: &mut Pipeline,
+        arguments: Option<Json>,
+    ) -> anyhow::Result<()> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        self.verify_in_database(&pool, false).await?;
+        pipeline.set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
+        pipeline.verify_in_database(&pool, false).await?;
+
+        let database_data = pipeline
+            .database_data
+            .as_ref()
+            .context("Pipeline must be verified to remove it")?;
+
+        if arguments.unwrap_or(Json::default())["delete"]
+            .as_bool()
+            .unwrap_or(false)
+        {
+            let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
+
+            let parameters = pipeline
+                .parameters
+                .as_ref()
+                .context("Pipeline must be verified to remove it")?;
+
+            let mut transaction = pool.begin().await?;
+
+            // Need to delete from chunks table only if no other pipelines use the same splitter
+            sqlx::query(&query_builder!(
+                "DELETE FROM %s WHERE splitter_id = $1 AND NOT EXISTS (SELECT 1 FROM %s WHERE splitter_id = $1 AND id != $2)",
+                self.chunks_table_name,
+                self.pipelines_table_name
+            ))
+            .bind(database_data.splitter_id)
+            .bind(database_data.id)
+            .execute(&pool)
+            .await?;
+
+            // Drop the embeddings table
+            sqlx::query(&query_builder!(
+                "DROP TABLE IF EXISTS %s",
+                embeddings_table_name
+            ))
+            .execute(&mut transaction)
+            .await?;
+
+            // Need to delete from the tsvectors table only if no other pipelines use the
+            // same tsvector configuration
+            sqlx::query(&query_builder!(
+                    "DELETE FROM %s WHERE configuration = $1 AND NOT EXISTS (SELECT 1 FROM %s WHERE parameters->'full_text_search'->>'configuration' = $1 AND id != $2)", 
+                    self.documents_tsvectors_table_name,
+                    self.pipelines_table_name))
+                .bind(parameters["full_text_search"]["configuration"].as_str())
+                .bind(database_data.id)
+                .execute(&mut transaction)
+                .await?;
+
+            sqlx::query(&query_builder!(
+                "DELETE FROM %s WHERE id = $1",
+                self.pipelines_table_name
+            ))
+            .bind(database_data.id)
+            .execute(&mut transaction)
+            .await?;
+
+            transaction.commit().await?;
+        } else {
+            sqlx::query(&query_builder!(
+                "UPDATE %s SET active = FALSE WHERE id = $1",
+                self.pipelines_table_name
+            ))
+            .bind(database_data.id)
+            .execute(&pool)
+            .await?;
+        }
+
+        Ok(())
+    }
+
+    #[instrument(skip(self, conn))]
+    async fn create_documents_table(&mut self, conn: &mut PgConnection) -> anyhow::Result<()> {
+        conn.execute(
             query_builder!(queries::CREATE_DOCUMENTS_TABLE, self.documents_table_name).as_str(),
         )
         .await?;
-        pool.execute(
+        conn.execute(
             query_builder!(
                 queries::CREATE_INDEX,
+                "",
                 "created_at_index",
                 self.documents_table_name,
                 "created_at"
@@ -178,9 +293,10 @@ impl Collection {
             .as_str(),
         )
         .await?;
-        pool.execute(
+        conn.execute(
             query_builder!(
                 queries::CREATE_INDEX_USING_GIN,
+                "",
                 "metadata_index",
                 self.documents_table_name,
                 "metadata jsonb_path_ops"
@@ -191,8 +307,9 @@ impl Collection {
         Ok(())
     }
 
-    async fn create_chunks_table(&mut self, pool: &PgPool) -> anyhow::Result<()> {
-        pool.execute(
+    #[instrument(skip(self, conn))]
+    async fn create_chunks_table(&mut self, conn: &mut PgConnection) -> anyhow::Result<()> {
+        conn.execute(
             query_builder!(
                 queries::CREATE_CHUNKS_TABLE,
                 self.chunks_table_name,
@@ -201,9 +318,10 @@ impl Collection {
             .as_str(),
         )
         .await?;
-        pool.execute(
+        conn.execute(
             query_builder!(
                 queries::CREATE_INDEX,
+                "",
                 "created_at_index",
                 self.chunks_table_name,
                 "created_at"
@@ -211,9 +329,10 @@ impl Collection {
             .as_str(),
         )
         .await?;
-        pool.execute(
+        conn.execute(
             query_builder!(
                 queries::CREATE_INDEX,
+                "",
                 "document_id_index",
                 self.chunks_table_name,
                 "document_id"
@@ -221,9 +340,10 @@ impl Collection {
             .as_str(),
         )
         .await?;
-        pool.execute(
+        conn.execute(
             query_builder!(
                 queries::CREATE_INDEX,
+                "",
                 "splitter_id_index",
                 self.chunks_table_name,
                 "splitter_id"
@@ -234,8 +354,12 @@ impl Collection {
         Ok(())
     }
 
-    async fn create_documents_tsvectors_table(&mut self, pool: &PgPool) -> anyhow::Result<()> {
-        pool.execute(
+    #[instrument(skip(self, conn))]
+    async fn create_documents_tsvectors_table(
+        &mut self,
+        conn: &mut PgConnection,
+    ) -> anyhow::Result<()> {
+        conn.execute(
             query_builder!(
                 queries::CREATE_DOCUMENTS_TSVECTORS_TABLE,
                 self.documents_tsvectors_table_name,
@@ -244,9 +368,10 @@ impl Collection {
             .as_str(),
         )
         .await?;
-        pool.execute(
+        conn.execute(
             query_builder!(
                 queries::CREATE_INDEX,
+                "",
                 "configuration_index",
                 self.documents_tsvectors_table_name,
                 "configuration"
@@ -254,9 +379,10 @@ impl Collection {
             .as_str(),
         )
         .await?;
-        pool.execute(
+        conn.execute(
             query_builder!(
                 queries::CREATE_INDEX_USING_GIN,
+                "",
                 "tsvector_index",
                 self.documents_tsvectors_table_name,
                 "ts"
@@ -300,6 +426,9 @@ impl Collection {
     ///    Ok(())
     /// }
     /// ```
+    ///
+    // We skip documents because it may be very large
+    #[instrument(skip(self, documents))]
     pub async fn upsert_documents(
         &mut self,
         documents: Vec<Json>,
@@ -308,11 +437,11 @@ impl Collection {
     ) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(&pool, false).await?;
-        self.create_documents_table(&pool).await?;
 
         let text_key = text_key.unwrap_or("text".to_string());
         let id_key = id_key.unwrap_or("id".to_string());
 
+        let mut document_ids = Vec::new();
         for mut document in documents {
             let document = document
                 .0
@@ -335,8 +464,8 @@ impl Collection {
             };
             let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-            sqlx::query(&query_builder!(
-                    "INSERT INTO %s (text, source_uuid, metadata) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET text = $4, metadata = $5",
+            let (id,): (i64,) = sqlx::query_as(&query_builder!(
+                    "INSERT INTO %s (text, source_uuid, metadata) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET text = $4, metadata = $5 RETURNING id",
                     self.documents_table_name
                 ))
                 .bind(&text)
@@ -344,273 +473,24 @@ impl Collection {
                 .bind(&document_json)
                 .bind(&text)
                 .bind(&document_json)
-                .execute(&pool).await?;
+                .fetch_one(&pool).await?;
+            document_ids.push(id);
         }
+
+        self.sync_pipelines(Some(document_ids)).await?;
         Ok(())
     }
 
-    pub async fn generate_tsvectors(
-        &mut self,
-        configuration: Option<String>,
-    ) -> anyhow::Result<()> {
+    #[instrument(skip(self))]
+    pub async fn sync_pipelines(&mut self, document_ids: Option<Vec<i64>>) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(&pool, false).await?;
-        self.create_documents_tsvectors_table(&pool).await?;
-        let (count,): (i64,) = sqlx::query_as(&query_builder!(
-            "SELECT count(*) FROM (SELECT 1 FROM %s LIMIT 1) AS t",
-            self.documents_table_name
-        ))
-        .fetch_one(&pool)
-        .await?;
-
-        if count == 0 {
-            anyhow::bail!("No documents in the documents table. Make sure to upsert documents before generating tsvectors")
+        let pipelines = self.get_pipelines().await?;
+        for mut pipeline in pipelines {
+            pipeline.execute(&document_ids, &pool).await?;
         }
-
-        let configuration = configuration.unwrap_or("english".to_string());
-        sqlx::query(&query_builder!(
-            queries::GENERATE_TSVECTORS,
-            self.documents_tsvectors_table_name,
-            configuration,
-            configuration,
-            self.documents_table_name
-        ))
-        .execute(&pool)
-        .await?;
         Ok(())
     }
-
-    /// Generates chunks for the collection
-    ///
-    /// # Arguments
-    ///
-    /// * `splitter_id` - The id of the splitter to chunk with.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use std::collections::HashMap;
-    /// use pgml::Database;
-    /// use pgml::types::Json;
-    ///
-    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let db = Database::new(CONNECTION_STRING).await?;
-    ///    let collection = db.create_or_get_collection("collection number 1").await?;
-    ///    let documents: Vec<Json> = vec![
-    ///        serde_json::json!( {
-    ///            "id": 1,
-    ///            "text": "This is a document"
-    ///        })
-    ///        .into()
-    ///    ];
-    ///    collection
-    ///        .upsert_documents(documents, None, None)
-    ///        .await?;
-    ///    collection.generate_chunks(None).await?;
-    ///    Ok(())
-    /// }
-    /// ```
-    // pub async fn generate_chunks(&mut self, splitter: &mut Splitter) -> anyhow::Result<()> {
-    //     let pool = get_or_initialize_pool(&self.database_url).await?;
-    //     self.verify_in_database(&pool).await?;
-    //     self.create_chunks_table(&pool).await?;
-    //     let (count,): (i64,) = sqlx::query_as(&query_builder!(
-    //         "SELECT count(*) FROM (SELECT 1 FROM %s LIMIT 1) AS t",
-    //         self.documents_table_name
-    //     ))
-    //     .fetch_one(&pool)
-    //     .await?;
-    //
-    //     if count == 0 {
-    //         anyhow::bail!("No documents in the documents table. Make sure to upsert documents before generating chunks")
-    //     }
-    //
-    //     sqlx::query(&query_builder!(
-    //         queries::GENERATE_CHUNKS,
-    //         self.chunks_table_name,
-    //         self.documents_table_name,
-    //         self.chunks_table_name
-    //     ))
-    //     .bind(splitter.get_id().await?)
-    //     .bind(&splitter.name)
-    //     .bind(&splitter.parameters)
-    //     .execute(&pool)
-    //     .await?;
-    //     Ok(())
-    // }
-
-    // async fn create_or_get_embeddings_table(
-    //     &mut self,
-    //     model: &mut Model,
-    //     splitter: &mut Splitter,
-    // ) -> anyhow::Result<String> {
-    //     let pool = get_or_initialize_pool(&self.database_url).await?;
-    //     self.create_transforms_table(&pool).await?;
-    //     let table_name = self.get_embeddings_table_name(model, splitter)?;
-    //     let exists: Option<(String,)> = sqlx::query_as(&query_builder!(
-    //         "SELECT table_name from %s WHERE table_name = $1",
-    //         self.transforms_table_name
-    //     ))
-    //     .bind(&table_name)
-    //     .fetch_optional(&pool)
-    //     .await?;
-    //
-    //     match exists {
-    //         Some(_e) => Ok(table_name),
-    //         None => {
-    //             let embedding_length = match model.runtime.as_str() {
-    //                 "pgml" => {
-    //                     let embedding: (Vec<f32>,) = sqlx::query_as(
-    //                     "SELECT embedding from pgml.embed(transformer => $1, text => 'Hello, World!', kwargs => $2) as embedding")
-    //                     .bind(&model.name)
-    //                     .bind(&model.parameters)
-    //                     .fetch_one(&pool).await?;
-    //                     embedding.0.len() as i64
-    //                 }
-    //                 t => {
-    //                     let remote_embeddings =
-    //                         build_remote_embeddings(t, &model.name, &model.parameters)?;
-    //                     remote_embeddings.get_embedding_size().await?
-    //                 }
-    //             };
-    //             pool.execute(
-    //                 query_builder!(
-    //                     queries::CREATE_EMBEDDINGS_TABLE,
-    //                     table_name,
-    //                     self.chunks_table_name,
-    //                     embedding_length
-    //                 )
-    //                 .as_str(),
-    //             )
-    //             .await?;
-    //             sqlx::query(&query_builder!(
-    //                 "INSERT INTO %s (table_name, task, model_id, splitter_id) VALUES ($1, 'embedding', $2, $3)",
-    //                 self.transforms_table_name))
-    //                 .bind(&table_name)
-    //                 .bind(model.get_id().await?)
-    //                 .bind(splitter.get_id().await?)
-    //                 .execute(&pool).await?;
-    //             pool.execute(
-    //                 query_builder!(
-    //                     queries::CREATE_INDEX,
-    //                     "created_at_index",
-    //                     table_name,
-    //                     "created_at"
-    //                 )
-    //                 .as_str(),
-    //             )
-    //             .await?;
-    //             pool.execute(
-    //                 query_builder!(
-    //                     queries::CREATE_INDEX,
-    //                     "chunk_id_index",
-    //                     table_name,
-    //                     "chunk_id"
-    //                 )
-    //                 .as_str(),
-    //             )
-    //             .await?;
-    //             pool.execute(
-    //                 query_builder!(
-    //                     queries::CREATE_INDEX_USING_IVFFLAT,
-    //                     "vector_index",
-    //                     table_name,
-    //                     "embedding vector_cosine_ops"
-    //                 )
-    //                 .as_str(),
-    //             )
-    //             .await?;
-    //             Ok(table_name)
-    //         }
-    //     }
-    // }
-
-    /// Generates embeddings for the collection
-    ///
-    /// # Arguments
-    ///
-    /// * `model_id` - The id of the model.
-    /// * `splitter_id` - The id of the splitter.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use std::collections::HashMap;
-    /// use pgml::Database;
-    /// use pgml::types::Json;
-    ///
-    /// const CONNECTION_STRING: &str = "postgres://postgres@127.0.0.1:5433/pgml_development";
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let db = Database::new(CONNECTION_STRING).await?;
-    ///    let collection = db.create_or_get_collection("collection number 1").await?;
-    ///    let documents: Vec<Json> = vec![
-    ///        serde_json::json!( {
-    ///            "id": 1,
-    ///            "text": "This is a document"
-    ///        })
-    ///        .into()
-    ///    ];
-    ///    collection
-    ///        .upsert_documents(documents, None, None)
-    ///        .await?;
-    ///    collection.generate_chunks(None).await?;
-    ///    collection.generate_embeddings(None, None).await?;
-    ///    Ok(())
-    /// }
-    /// ```
-    // pub async fn generate_embeddings(
-    //     &mut self,
-    //     model: &mut Model,
-    //     splitter: &mut Splitter,
-    // ) -> anyhow::Result<()> {
-    //     let pool = get_or_initialize_pool(&self.database_url).await?;
-    //     self.verify_in_database(&pool).await?;
-    //     let (count,): (i64,) = sqlx::query_as(&query_builder!(
-    //         "SELECT count(*) FROM (SELECT 1 FROM %s WHERE splitter_id = $1 LIMIT 1) AS t",
-    //         self.chunks_table_name
-    //     ))
-    //     .bind(splitter.id)
-    //     .fetch_one(&pool)
-    //     .await?;
-    //
-    //     if count == 0 {
-    //         anyhow::bail!("No chunks in the chunks table with the associated splitter_id. Make sure to generate chunks with the correct splitter_id before generating embeddings")
-    //     }
-    //
-    //     let embeddings_table_name = self.create_or_get_embeddings_table(model, splitter).await?;
-    //
-    //     match model.runtime.as_str() {
-    //         "pgml" => {
-    //             sqlx::query(&query_builder!(
-    //                 queries::GENERATE_EMBEDDINGS,
-    //                 embeddings_table_name,
-    //                 self.chunks_table_name,
-    //                 embeddings_table_name
-    //             ))
-    //             .bind(&model.name)
-    //             .bind(&model.parameters)
-    //             .bind(splitter.id)
-    //             .execute(&pool)
-    //             .await?;
-    //         }
-    //         t => {
-    //             let remote_embeddings = build_remote_embeddings(t, &model.name, &model.parameters)?;
-    //             remote_embeddings
-    //                 .generate_embeddings(
-    //                     &embeddings_table_name,
-    //                     &self.chunks_table_name,
-    //                     splitter.get_id().await?,
-    //                     &pool,
-    //                 )
-    //                 .await?;
-    //         }
-    //     }
-    //
-    //     Ok(())
-    // }
 
     /// Performs vector search on the [Collection]
     ///
@@ -655,58 +535,127 @@ impl Collection {
     ///    Ok(())
     /// }
     /// ```
-    // #[allow(clippy::type_complexity)]
-    // pub async fn vector_search(
-    //     &self,
-    //     query: &str,
-    //     model: &Model,
-    //     splitter: &Splitter,
-    //     query_parameters: Option<Json>,
-    //     top_k: Option<i64>,
-    // ) -> anyhow::Result<Vec<(f64, String, Json)>> {
-    //     let pool = get_or_initialize_pool(&self.database_url).await?;
-    //     let query_parameters = match query_parameters {
-    //         Some(params) => params,
-    //         None => Json(serde_json::json!({})),
-    //     };
-    //     let top_k = top_k.unwrap_or(5);
-    //     let embeddings_table_name = self.get_embeddings_table_name(model, splitter)?;
-    //
-    //     Ok(match model.runtime.as_str() {
-    //         "pgml" => {
-    //             sqlx::query_as(&query_builder!(
-    //                 queries::EMBED_AND_VECTOR_SEARCH,
-    //                 embeddings_table_name,
-    //                 embeddings_table_name,
-    //                 self.chunks_table_name,
-    //                 self.documents_table_name
-    //             ))
-    //             .bind(&model.name)
-    //             .bind(query)
-    //             .bind(query_parameters)
-    //             .bind(top_k)
-    //             .fetch_all(&pool)
-    //             .await?
-    //         }
-    //         t => {
-    //             let remote_embeddings = build_remote_embeddings(t, &model.name, &query_parameters)?;
-    //             let mut embeddings = remote_embeddings.embed(vec![query.to_string()]).await?;
-    //             let embedding = std::mem::take(&mut embeddings[0]);
-    //             sqlx::query_as(&query_builder!(
-    //                 queries::VECTOR_SEARCH,
-    //                 embeddings_table_name,
-    //                 embeddings_table_name,
-    //                 self.chunks_table_name,
-    //                 self.documents_table_name
-    //             ))
-    //             .bind(embedding)
-    //             .bind(top_k)
-    //             .fetch_all(&pool)
-    //             .await?
-    //         }
-    //     })
-    // }
+    #[instrument(skip(self))]
+    #[allow(clippy::type_complexity)]
+    pub async fn vector_search(
+        &mut self,
+        query: &str,
+        pipeline: &mut Pipeline,
+        query_parameters: Option<Json>,
+        top_k: Option<i64>,
+    ) -> anyhow::Result<Vec<(f64, String, Json)>> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
 
+        let query_parameters = query_parameters.unwrap_or_default();
+        let top_k = top_k.unwrap_or(5);
+
+        // With this system, we only do the wrong type of vector search once
+        let runtime = if pipeline.model.is_some() {
+            pipeline.model.as_ref().unwrap().runtime
+        } else {
+            ModelRuntime::Python
+        };
+        match runtime {
+            ModelRuntime::Python => {
+                let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
+
+                let result = sqlx::query_as(&query_builder!(
+                    queries::EMBED_AND_VECTOR_SEARCH,
+                    self.pipelines_table_name,
+                    embeddings_table_name,
+                    embeddings_table_name,
+                    self.chunks_table_name,
+                    self.documents_table_name
+                ))
+                .bind(&pipeline.name)
+                .bind(query)
+                .bind(&query_parameters)
+                .bind(top_k)
+                .fetch_all(&pool)
+                .await;
+
+                match result {
+                    Ok(r) => Ok(r),
+                    Err(e) => match e.as_database_error() {
+                        Some(d) => {
+                            if d.code() == Some(Cow::from("XX000")) {
+                                self.vector_search_with_remote_embeddings(
+                                    query,
+                                    pipeline,
+                                    query_parameters,
+                                    top_k,
+                                    &pool,
+                                )
+                                .await
+                            } else {
+                                Err(anyhow::anyhow!(e))
+                            }
+                        }
+                        None => Err(anyhow::anyhow!(e)),
+                    },
+                }
+            }
+            _ => {
+                self.vector_search_with_remote_embeddings(
+                    query,
+                    pipeline,
+                    query_parameters,
+                    top_k,
+                    &pool,
+                )
+                .await
+            }
+        }
+    }
+
+    #[instrument(skip(self, pool))]
+    #[allow(clippy::type_complexity)]
+    async fn vector_search_with_remote_embeddings(
+        &mut self,
+        query: &str,
+        pipeline: &mut Pipeline,
+        query_parameters: Json,
+        top_k: i64,
+        pool: &PgPool,
+    ) -> anyhow::Result<Vec<(f64, String, Json)>> {
+        self.verify_in_database(pool, false).await?;
+
+        // Explicitly get and set the model for the pipeline
+        pipeline.set_project_info(
+            self.database_data
+                .as_ref()
+                .context(
+                    "Collection must be verified to perform vector search with remote embeddings",
+                )?
+                .project_info
+                .clone(),
+        );
+        let model = pipeline.get_and_set_model(pool).await?;
+
+        let remote_embeddings =
+            build_remote_embeddings(model.runtime, &model.name, &query_parameters)?;
+        let mut embeddings = remote_embeddings.embed(vec![query.to_string()]).await?;
+        // Taking the embedding is much faster than cloning it
+        let embedding = std::mem::take(&mut embeddings[0]);
+
+        // Explicit drop required here or we can't borrow the pipeline immutably
+        drop(remote_embeddings);
+        let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
+        sqlx::query_as(&query_builder!(
+            queries::VECTOR_SEARCH,
+            embeddings_table_name,
+            embeddings_table_name,
+            self.chunks_table_name,
+            self.documents_table_name
+        ))
+        .bind(embedding)
+        .bind(top_k)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| anyhow::anyhow!(e))
+    }
+
+    #[instrument(skip(self))]
     pub async fn archive(&mut self) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let timestamp = SystemTime::now()
@@ -729,36 +678,66 @@ impl Collection {
         Ok(())
     }
 
+    #[instrument(skip(self))]
     pub fn query(&self) -> QueryBuilder {
         QueryBuilder::new(self.clone())
     }
 
-    // We will probably want to add a task parameter to this function
-    // pub fn get_embeddings_table_name(
-    //     &self,
-    //     model: &Model,
-    //     splitter: &Splitter,
-    // ) -> anyhow::Result<String> {
-    //     // There are other ways to acomplish the same thing, but I like hashing it and moving it
-    //     // into a UUID
-    //     let model_splitter_hash = md5::compute(
-    //         format!(
-    //             "{}_{}_{}_{}_{}_{}",
-    //             model.name,
-    //             model.task,
-    //             *model.parameters,
-    //             model.runtime,
-    //             splitter.name,
-    //             *splitter.parameters
-    //         )
-    //         .as_bytes(),
-    //     );
-    //     Ok(format!(
-    //         "{}.embeddings_{}",
-    //         self.name,
-    //         &uuid::Uuid::from_slice(&model_splitter_hash.0)?
-    //     ))
-    // }
+    #[instrument(skip(self))]
+    pub async fn get_pipelines(&self) -> anyhow::Result<Vec<Pipeline>> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let pipelines: Vec<models::Pipeline> = sqlx::query_as(&query_builder!(
+            "SELECT * FROM %s",
+            self.pipelines_table_name
+        ))
+        .fetch_all(&pool)
+        .await?;
+        let pipelines: Vec<Pipeline> = pipelines
+            .into_iter()
+            .map(|p| {
+                let mut pipeline: Pipeline = p.into();
+                pipeline
+                    .set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
+                pipeline
+            })
+            .collect();
+        Ok(pipelines)
+    }
+
+    #[instrument(skip(self))]
+    pub async fn get_project_info(&mut self) -> anyhow::Result<ProjectInfo> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        self.verify_in_database(&pool, false).await?;
+        Ok(self
+            .database_data
+            .as_ref()
+            .context("Collection must be verified to get project info")?
+            .project_info
+            .clone())
+    }
+
+    /// Check if [Collection] exists in the database
+    ///
+    /// # Example
+    /// ```
+    /// async fn example() -> anyhow::Result<()> {
+    ///   let builtins = Builtins::new(None);
+    ///   let collection_exists = builtins.does_collection_exist("collection number 1").await?;
+    ///   // Do stuff with your new found information
+    ///   Ok(())
+    /// }
+    /// ```
+    #[instrument(skip(self))]
+    pub async fn exists(&self) -> anyhow::Result<bool> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let collection: Option<models::Collection> = sqlx::query_as::<_, models::Collection>(
+            "SELECT * FROM pgml.collections WHERE name = $1 AND active = TRUE;",
+        )
+        .bind(&self.name)
+        .fetch_optional(&pool)
+        .await?;
+        Ok(collection.is_some())
+    }
 
     fn generate_table_names(name: &str) -> (String, String, String, String, String) {
         [

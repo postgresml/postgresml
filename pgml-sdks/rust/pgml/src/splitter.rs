@@ -1,5 +1,5 @@
 use pgml_macros::{custom_derive, custom_methods};
-use sqlx::postgres::PgPool;
+use sqlx::postgres::{PgConnection, PgPool};
 
 use crate::{
     collection::ProjectInfo,
@@ -29,10 +29,7 @@ pub struct Splitter {
 
 #[custom_methods(new)]
 impl Splitter {
-    pub fn new(
-        name: Option<String>,
-        parameters: Option<Json>
-    ) -> Self {
+    pub fn new(name: Option<String>, parameters: Option<Json>) -> Self {
         let name = name.unwrap_or("recursive_character".to_string());
         let parameters = parameters.unwrap_or(Json(serde_json::json!({})));
         Self {
@@ -48,48 +45,28 @@ impl Splitter {
         pool: &PgPool,
         throw_if_exists: bool,
     ) -> anyhow::Result<()> {
-        match &self.database_data {
-            Some(_) => Ok(()),
-            None => {
-                let project_info = self
-                    .project_info
-                    .as_ref()
-                    .expect("Cannot verify splitter without project info");
+        if self.database_data.is_none() {
+            let project_info = self
+                .project_info
+                .as_ref()
+                .expect("Cannot verify splitter without project info");
 
-                let result: Result<Option<models::Splitter>, _> = sqlx::query_as(
+            let splitter: Option<models::Splitter> = sqlx::query_as(
                     "SELECT * FROM pgml.sdk_splitters WHERE project_id = $1 AND name = $2 and parameters = $3",
                 )
                 .bind(project_info.id)
                 .bind(&self.name)
                 .bind(&self.parameters)
                 .fetch_optional(pool)
-                .await;
+                .await?;
 
-                let splitter: Option<models::Splitter> = match result {
-                    Ok(s) => anyhow::Ok(s),
-                    Err(e) => {
-                        match e.as_database_error() {
-                            Some(db_e) => {
-                                // Error 42P01 is "undefined_table"
-                                if db_e.code() == Some(std::borrow::Cow::from("42P01")) {
-                                    Self::create_splitters_table(pool).await?;
-                                    Ok(None)
-                                } else {
-                                    Err(e.into())
-                                }
-                            }
-                            None => Err(e.into()),
-                        }
-                    }
-                }?;
-
-                let splitter = if let Some(s) = splitter {
-                    if throw_if_exists {
-                        anyhow::bail!("Splitter already exists in database")
-                    }
-                    s
-                } else {
-                    sqlx::query_as(
+            let splitter = if let Some(s) = splitter {
+                if throw_if_exists {
+                    anyhow::bail!("Splitter already exists in database")
+                }
+                s
+            } else {
+                sqlx::query_as(
                         "INSERT INTO pgml.sdk_splitters (project_id, name, parameters) VALUES ($1, $2, $3) RETURNING *",
                     )
                     .bind(project_info.id)
@@ -97,25 +74,38 @@ impl Splitter {
                     .bind(&self.parameters)
                     .fetch_one(pool)
                     .await?
-                };
+            };
 
-                self.database_data = Some(SplitterDatabaseData {
-                    id: splitter.id,
-                    created_at: splitter.created_at,
-                });
-                Ok(())
-            }
+            self.database_data = Some(SplitterDatabaseData {
+                id: splitter.id,
+                created_at: splitter.created_at,
+            });
         }
+        Ok(())
     }
 
-    pub async fn create_splitters_table(pool: &PgPool) -> anyhow::Result<()> {
+    pub async fn create_splitters_table(conn: &mut PgConnection) -> anyhow::Result<()> {
         sqlx::query(queries::CREATE_SPLITTERS_TABLE)
-            .execute(pool)
+            .execute(conn)
             .await?;
         Ok(())
     }
 
     pub fn set_project_info(&mut self, project_info: ProjectInfo) {
         self.project_info = Some(project_info)
+    }
+}
+
+impl From<models::Splitter> for Splitter {
+    fn from(splitter: models::Splitter) -> Self {
+        Self {
+            name: splitter.name,
+            parameters: splitter.parameters,
+            project_info: None,
+            database_data: Some(SplitterDatabaseData {
+                id: splitter.id,
+                created_at: splitter.created_at,
+            }),
+        }
     }
 }

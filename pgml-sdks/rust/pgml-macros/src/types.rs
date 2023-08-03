@@ -44,6 +44,7 @@ pub enum SupportedType {
     Model,
     QueryBuilder,
     QueryRunner,
+    Pipeline,
 }
 
 impl ToString for SupportedType {
@@ -100,6 +101,7 @@ impl SupportedType {
             SupportedType::Model => format!("Model{}", language.unwrap_or("")),
             SupportedType::QueryBuilder => format!("QueryBuilder{}", language.unwrap_or("")),
             SupportedType::QueryRunner => format!("QueryRunner{}", language.unwrap_or("")),
+            SupportedType::Pipeline => format!("Pipeline{}", language.unwrap_or("")),
         }
     }
 }
@@ -211,6 +213,7 @@ impl<'ast> Visit<'ast> for GetSupportedType {
             "Model" => Some(SupportedType::Model),
             "QueryBuilder" => Some(SupportedType::QueryBuilder),
             "QueryRunner" => Some(SupportedType::QueryRunner),
+            "Pipeline" => Some(SupportedType::Pipeline),
             _ => None,
         };
 
