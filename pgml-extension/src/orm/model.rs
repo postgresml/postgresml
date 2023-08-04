@@ -217,7 +217,10 @@ impl Model {
         let path = std::path::PathBuf::from(format!("/tmp/postgresml/models/{id}"));
 
         info!("Tuning {}", model);
-        let metrics = transformers::tune(&project.task, dataset, &model.hyperparams, &path);
+        let metrics = match transformers::tune(&project.task, dataset, &model.hyperparams, &path) {
+            Ok(metrics) => metrics,
+            Err(e) => error!("{e}"),
+        };
         model.metrics = Some(JsonB(json!(metrics)));
         info!("Metrics: {:?}", &metrics);
 
