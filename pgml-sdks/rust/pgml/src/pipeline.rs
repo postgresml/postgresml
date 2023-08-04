@@ -1,4 +1,5 @@
 use anyhow::Context;
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use pgml_macros::{custom_derive, custom_methods};
 use sqlx::{Executor, PgConnection, PgPool};
 use tracing::instrument;
@@ -95,16 +96,10 @@ impl Pipeline {
 
     #[instrument(skip(self))]
     pub async fn get_status(&mut self) -> anyhow::Result<PipelineSyncData> {
-        let database_url = &self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to get status")?
-            .database_url;
+        let pool = self.get_pool().await?;
 
-        let pool = get_or_initialize_pool(database_url).await?;
-        self.verify_in_database(&pool, false).await?;
-
-        let embeddings_table_name = self.create_or_get_embeddings_table(&pool).await?;
+        self.verify_in_database(false).await?;
+        let embeddings_table_name = self.create_or_get_embeddings_table().await?;
 
         let database_data = self
             .database_data
@@ -165,13 +160,11 @@ impl Pipeline {
         })
     }
 
-    #[instrument(skip(self, pool))]
-    pub async fn verify_in_database(
-        &mut self,
-        pool: &PgPool,
-        throw_if_exists: bool,
-    ) -> anyhow::Result<()> {
+    #[instrument(skip(self))]
+    pub async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
         if self.database_data.is_none() {
+            let pool = self.get_pool().await?;
+
             let project_info = self
                 .project_info
                 .as_ref()
@@ -182,13 +175,32 @@ impl Pipeline {
                 format!("{}.pipelines", project_info.name)
             ))
             .bind(&self.name)
-            .fetch_optional(pool)
+            .fetch_optional(&pool)
             .await?;
 
             let pipeline = if let Some(p) = pipeline {
                 if throw_if_exists {
                     anyhow::bail!("Pipeline {} already exists", p.name);
                 }
+                let model: models::Model = sqlx::query_as(
+                    "SELECT id, created_at, runtime::TEXT, hyperparams FROM pgml.models WHERE id = $1",
+                )
+                .bind(p.model_id)
+                .fetch_one(&pool)
+                .await?;
+                let mut model: Model = model.into();
+                model.set_project_info(project_info.clone());
+                self.model = Some(model);
+
+                let splitter: models::Splitter =
+                    sqlx::query_as("SELECT * FROM pgml.sdk_splitters WHERE id = $1")
+                        .bind(p.splitter_id)
+                        .fetch_one(&pool)
+                        .await?;
+                let mut splitter: Splitter = splitter.into();
+                splitter.set_project_info(project_info.clone());
+                self.splitter = Some(splitter);
+
                 p
             } else {
                 let model = self
@@ -196,14 +208,14 @@ impl Pipeline {
                     .as_mut()
                     .expect("Cannot save pipeline without model");
                 model.set_project_info(project_info.clone());
-                model.verify_in_database(pool, false).await?;
+                model.verify_in_database(false).await?;
 
                 let splitter = self
                     .splitter
                     .as_mut()
                     .expect("Cannot save pipeline without splitter");
                 splitter.set_project_info(project_info.clone());
-                splitter.verify_in_database(pool, false).await?;
+                splitter.verify_in_database(false).await?;
 
                 sqlx::query_as(&query_builder!(
                         "INSERT INTO %s (name, model_id, splitter_id, parameters) VALUES ($1, $2, $3, $4) RETURNING *",
@@ -225,7 +237,7 @@ impl Pipeline {
                             .id,
                     )
                     .bind(&self.parameters)
-                    .fetch_one(pool)
+                    .fetch_one(&pool)
                     .await?
             };
 
@@ -240,78 +252,28 @@ impl Pipeline {
         Ok(())
     }
 
-    #[instrument(skip(self, pool))]
-    pub async fn get_and_set_model(&mut self, pool: &PgPool) -> anyhow::Result<&mut Model> {
-        self.verify_in_database(pool, false).await?;
-        if self.model.is_none() {
-            let model: models::Model = sqlx::query_as(
-                "SELECT id, created_at, runtime::TEXT, hyperparams FROM pgml.models WHERE id = $1",
-            )
-            .bind(
-                self.database_data
-                    .as_ref()
-                    .context("Pipeline must be verified to set model")?
-                    .model_id,
-            )
-            .fetch_one(pool)
-            .await?;
-            let project_info = self
-                .project_info
-                .as_ref()
-                .expect("Cannot set model without project info");
-            let mut model: Model = model.into();
-            model.set_project_info(project_info.clone());
-            self.model = Some(model);
-        }
-        Ok(self.model.as_mut().unwrap())
-    }
-
-    async fn get_and_set_splitter(&mut self, pool: &PgPool) -> anyhow::Result<&mut Splitter> {
-        self.verify_in_database(pool, false).await?;
-        if self.splitter.is_none() {
-            let splitter: models::Splitter =
-                sqlx::query_as("SELECT * FROM pgml.sdk_splitters WHERE id = $1")
-                    .bind(
-                        self.database_data
-                            .as_ref()
-                            .context("Pipeline must be verified to set splitter")?
-                            .splitter_id,
-                    )
-                    .fetch_one(pool)
-                    .await?;
-            let project_info = self
-                .project_info
-                .as_ref()
-                .expect("Cannot set model without project info");
-            let mut splitter: Splitter = splitter.into();
-            splitter.set_project_info(project_info.clone());
-            self.splitter = Some(splitter);
-        }
-        Ok(self.splitter.as_mut().unwrap())
-    }
-
-    #[instrument(skip(self, pool))]
+    #[instrument(skip(self))]
     pub async fn execute(
         &mut self,
         document_ids: &Option<Vec<i64>>,
-        pool: &PgPool,
+        mp: MultiProgress,
     ) -> anyhow::Result<()> {
-        // Verify in the database once before calling other functions that all rely on it
-        self.verify_in_database(pool, false).await?;
-
         // TODO: Chunk document_ids if there are too many
-        let chunk_ids = self.sync_chunks(document_ids, pool).await?;
-        self.sync_embeddings(chunk_ids, pool).await?;
-        self.sync_tsvectors(document_ids, pool).await?;
+        let chunk_ids = self.sync_chunks(document_ids, &mp).await?;
+        self.sync_embeddings(chunk_ids, &mp).await?;
+        self.sync_tsvectors(document_ids, &mp).await?;
         Ok(())
     }
 
-    #[instrument(skip(self, pool))]
+    #[instrument(skip(self))]
     async fn sync_chunks(
         &mut self,
         document_ids: &Option<Vec<i64>>,
-        pool: &PgPool,
+        mp: &MultiProgress,
     ) -> anyhow::Result<Option<Vec<i64>>> {
+        self.verify_in_database(false).await?;
+        let pool = self.get_pool().await?;
+
         let database_data = self
             .database_data
             .as_mut()
@@ -322,12 +284,22 @@ impl Pipeline {
             .as_ref()
             .context("Pipeline must have project info to generate chunks")?;
 
+        let progress_bar = mp.add(ProgressBar::new(1)
+            .with_style(
+                ProgressStyle::with_template(
+                    "[{elapsed_precise}] {spinner:0.cyan/blue} {prefix}: {msg}",
+                )
+                .unwrap(),
+            )
+            .with_prefix(self.name.clone()))
+            .with_message("generating chunks");
+
         // This part is a bit tricky
         // We want to return the ids for all chunks we inserted OR would have inserted if they didn't already exist
         // The query is structured in such a way to not insert any chunks that already exist so we
         // can't rely on the data returned from the inset queries, we need to query the chunks table
         // It is important we return the ids for chunks we would have inserted if they didn't already exist so we are robust to random crashes
-        if document_ids.is_some() {
+        let chunk_ids = if document_ids.is_some() {
             sqlx::query(&query_builder!(
                 queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS,
                 &format!("{}.chunks", project_info.name),
@@ -336,16 +308,16 @@ impl Pipeline {
             ))
             .bind(database_data.splitter_id)
             .bind(document_ids)
-            .execute(pool)
+            .execute(&pool)
             .await?;
             let chunk_ids: Vec<i64> = sqlx::query_scalar(&query_builder!(
                 "SELECT id FROM %s WHERE document_id = ANY($1)",
                 &format!("{}.chunks", project_info.name)
             ))
             .bind(document_ids)
-            .fetch_all(pool)
+            .fetch_all(&pool)
             .await?;
-            Ok(Some(chunk_ids))
+            Some(chunk_ids)
         } else {
             sqlx::query(&query_builder!(
                 queries::GENERATE_CHUNKS,
@@ -354,25 +326,29 @@ impl Pipeline {
                 &format!("{}.chunks", project_info.name)
             ))
             .bind(database_data.splitter_id)
-            .execute(pool)
+            .execute(&pool)
             .await?;
-            Ok(None)
-        }
+            None
+        };
+        progress_bar.finish();
+        Ok(chunk_ids)
     }
 
-    #[instrument(skip(self, pool))]
+    #[instrument(skip(self))]
     async fn sync_embeddings(
         &mut self,
         chunk_ids: Option<Vec<i64>>,
-        pool: &PgPool,
+        mp: &MultiProgress,
     ) -> anyhow::Result<()> {
-        self.get_and_set_model(pool).await?;
-        let embeddings_table_name = self.create_or_get_embeddings_table(pool).await?;
+        self.verify_in_database(false).await?;
+        let pool = self.get_pool().await?;
+
+        let embeddings_table_name = self.create_or_get_embeddings_table().await?;
 
         let model = self
             .model
             .as_ref()
-            .context("Pipeline must have model to generate embeddings")?;
+            .context("Pipeline must be verified to generate embeddings")?;
 
         let database_data = self
             .database_data
@@ -404,7 +380,7 @@ impl Pipeline {
                     .bind(&parameters)
                     .bind(database_data.splitter_id)
                     .bind(chunk_ids)
-                    .execute(pool)
+                    .execute(&pool)
                     .await?;
                 } else {
                     sqlx::query(&query_builder!(
@@ -416,7 +392,7 @@ impl Pipeline {
                     .bind(&model.name)
                     .bind(&parameters)
                     .bind(database_data.splitter_id)
-                    .execute(pool)
+                    .execute(&pool)
                     .await?;
                 }
             }
@@ -428,7 +404,7 @@ impl Pipeline {
                         &format!("{}.chunks", project_info.name),
                         database_data.splitter_id,
                         chunk_ids,
-                        pool,
+                        &pool,
                     )
                     .await?;
             }
@@ -437,12 +413,15 @@ impl Pipeline {
         Ok(())
     }
 
-    #[instrument(skip(self, pool))]
+    #[instrument(skip(self))]
     async fn sync_tsvectors(
         &mut self,
         document_ids: &Option<Vec<i64>>,
-        pool: &PgPool,
+        mp: &MultiProgress,
     ) -> anyhow::Result<()> {
+        self.verify_in_database(false).await?;
+        let pool = self.get_pool().await?;
+
         let parameters = self
             .parameters
             .as_ref()
@@ -466,7 +445,7 @@ impl Pipeline {
                 format!("{}.documents", project_info.name)
             ))
             .bind(document_ids)
-            .execute(pool)
+            .execute(&pool)
             .await?;
         } else {
             sqlx::query(&query_builder!(
@@ -480,15 +459,16 @@ impl Pipeline {
                     .context("Full text search configuration must be a string")?,
                 format!("{}.documents", project_info.name)
             ))
-            .execute(pool)
+            .execute(&pool)
             .await?;
         }
         Ok(())
     }
 
-    #[instrument(skip(self, pool))]
-    async fn create_or_get_embeddings_table(&mut self, pool: &PgPool) -> anyhow::Result<String> {
-        self.verify_in_database(pool, false).await?;
+    #[instrument(skip(self))]
+    async fn create_or_get_embeddings_table(&mut self) -> anyhow::Result<String> {
+        self.verify_in_database(false).await?;
+        let pool = self.get_pool().await?;
 
         let embeddings_table_name = format!(
             "{}.{}_embeddings",
@@ -510,14 +490,13 @@ impl Pipeline {
                 .project_info
                 .as_ref()
                 .context("Pipeline must have project info to get the embeddings table name")?.name)
-            .bind(&embeddings_table_name).fetch_one(pool).await?;
+            .bind(&embeddings_table_name).fetch_one(&pool).await?;
 
         if !exists {
-            self.get_and_set_model(pool).await?;
             let model = self
                 .model
                 .as_ref()
-                .context("Cannot create embeddings table without having the model")?;
+                .context("Pipeline must be verified to create embeddings table")?;
 
             // Remove the stored name from the parameters
             let mut parameters = model.parameters.clone();
@@ -532,7 +511,7 @@ impl Pipeline {
                             "SELECT embedding from pgml.embed(transformer => $1, text => 'Hello, World!', kwargs => $2) as embedding")
                             .bind(&model.name)
                             .bind(parameters)
-                            .fetch_one(pool).await?;
+                            .fetch_one(&pool).await?;
                     embedding.0.len() as i64
                 }
                 t => {
@@ -554,7 +533,7 @@ impl Pipeline {
                 ),
                 embedding_length
             ))
-            .execute(pool)
+            .execute(&pool)
             .await?;
             pool.execute(
                 query_builder!(
@@ -601,19 +580,21 @@ impl Pipeline {
 
     #[instrument(skip(self))]
     pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
-        let database_url = &self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to call to_dict. Are you calling to_dict on a pipeline that has not been added to a collection?")?
-            .database_url;
-        let pool = get_or_initialize_pool(database_url).await?;
-        self.verify_in_database(&pool, false).await?;
+        self.verify_in_database(false).await?;
 
-        let model = self.get_and_set_model(&pool).await?;
-        let model_dict = model.to_dict().await?;
+        let model_dict = self
+            .model
+            .as_mut()
+            .context("Pipeline must be verified to call to_dict")?
+            .to_dict()
+            .await?;
 
-        let splitter = self.get_and_set_splitter(&pool).await?;
-        let splitter_dict = splitter.to_dict().await?;
+        let splitter_dict = self
+            .splitter
+            .as_mut()
+            .context("Pipeline must be verified to call to_dict")?
+            .to_dict()
+            .await?;
 
         let database_data = self
             .database_data
@@ -627,6 +608,15 @@ impl Pipeline {
             "splitter": *splitter_dict
         })
         .into())
+    }
+
+    async fn get_pool(&self) -> anyhow::Result<PgPool> {
+        let database_url = &self
+            .project_info
+            .as_ref()
+            .context("Project info not set for pipeline")?
+            .database_url;
+        get_or_initialize_pool(database_url).await
     }
 
     // We want to be able to call this function from anywhere

@@ -269,7 +269,11 @@ impl QueryBuilder {
                             .as_mut()
                             .context("Need pipeline to run query builder with remote embeddings")?;
                         pipeline.set_project_info(project_info);
-                        let model = pipeline.get_and_set_model(&pool).await?;
+                        pipeline.verify_in_database(false).await?;
+                        let model = pipeline
+                            .model
+                            .as_ref()
+                            .context("Pipeline must be verified to perform vector search with remote embeddings")?;
 
                         let query_parameters = self.query_parameters.to_owned().unwrap_or_default();
 

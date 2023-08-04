@@ -128,13 +128,14 @@ impl Model {
         }
     }
 
-    #[instrument(skip(self, pool))]
+    #[instrument(skip(self))]
     pub async fn verify_in_database(
         &mut self,
-        pool: &PgPool,
         throw_if_exists: bool,
     ) -> anyhow::Result<()> {
         if self.database_data.is_none() {
+            let pool = self.get_pool().await?;
+
             let project_info = self
                 .project_info
                 .as_ref()
@@ -152,7 +153,7 @@ impl Model {
                 .bind(project_info.id)
                 .bind(Into::<&str>::into(&self.runtime))
                 .bind(&parameters)
-                .fetch_optional(pool)
+                .fetch_optional(&pool)
                 .await?;
 
             let model = if let Some(m) = model {
@@ -170,7 +171,7 @@ impl Model {
                     .bind("successful")
                     .bind(serde_json::json!({}))
                     .bind(serde_json::json!({}))
-                    .fetch_one(pool)
+                    .fetch_one(&pool)
                     .await?;
                 model
             };
@@ -189,13 +190,7 @@ impl Model {
 
     #[instrument(skip(self))]
     pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
-        let database_url = &self
-            .project_info
-            .as_ref()
-            .context("Model must have project info to call to_dict")?
-            .database_url;
-        let pool = get_or_initialize_pool(database_url).await?;
-        self.verify_in_database(&pool, false).await?;
+        self.verify_in_database(false).await?;
 
         let database_data = self
             .database_data
@@ -208,6 +203,15 @@ impl Model {
             "runtime": Into::<&str>::into(&self.runtime),
             "parameters": *self.parameters,
         }).into())
+    }
+
+    async fn get_pool(&self) -> anyhow::Result<PgPool> {
+        let database_url = &self
+            .project_info
+            .as_ref()
+            .context("Project info not set for model")?
+            .database_url;
+        get_or_initialize_pool(database_url).await
     }
 }
 

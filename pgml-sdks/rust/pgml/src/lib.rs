@@ -183,6 +183,8 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
 
 #[cfg(test)]
 mod tests {
+    use indicatif::ProgressStyle;
+
     use super::*;
     use crate::{model::Model, pipeline::Pipeline, splitter::Splitter, types::Json};
 
@@ -220,8 +222,7 @@ mod tests {
         init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_ccc_0", None);
         assert!(collection.database_data.is_none());
-        let pool = get_or_initialize_pool(&None).await?;
-        collection.verify_in_database(&pool, false).await?;
+        collection.verify_in_database(false).await?;
         assert!(collection.database_data.is_some());
         collection.archive().await?;
         Ok(())
@@ -415,5 +416,33 @@ mod tests {
         assert!(results.len() == 3);
         collection.archive().await?;
         Ok(())
+    }
+
+    #[sqlx::test]
+    fn test_progress() {
+        use indicatif::MultiProgress;
+        use indicatif::ProgressBar;
+
+        let mp = MultiProgress::new();
+
+        let bar3 = ProgressBar::new(1000000);
+
+        let bar3 = bar3
+            .with_style(
+                ProgressStyle::with_template(
+                    "[{elapsed_precise}] {spinner:0.cyan/blue} {prefix}: {msg}",
+                )
+                .unwrap(),
+            )
+            .with_prefix("pipeline 1");
+        bar3.enable_steady_tick(core::time::Duration::new(0, 1000));
+
+        let bar3 = mp.clone().add(bar3);
+
+        for _ in 0..1000000000 {
+            bar3.set_message("we are setting the message");
+            // ...
+        }
+        bar3.finish();
     }
 }

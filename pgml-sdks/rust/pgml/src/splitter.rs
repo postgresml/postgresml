@@ -1,13 +1,12 @@
+use anyhow::Context;
 use pgml_macros::{custom_derive, custom_methods};
 use sqlx::postgres::{PgConnection, PgPool};
-use anyhow::Context;
 use tracing::instrument;
 
 use crate::{
     collection::ProjectInfo,
-    models, queries,
+    get_or_initialize_pool, models, queries,
     types::{DateTime, Json},
-    get_or_initialize_pool
 };
 
 #[cfg(feature = "javascript")]
@@ -43,13 +42,14 @@ impl Splitter {
         }
     }
 
-    #[instrument(skip(self, pool))]
+    #[instrument(skip(self))]
     pub async fn verify_in_database(
         &mut self,
-        pool: &PgPool,
         throw_if_exists: bool,
     ) -> anyhow::Result<()> {
         if self.database_data.is_none() {
+            let pool = self.get_pool().await?;
+
             let project_info = self
                 .project_info
                 .as_ref()
@@ -61,7 +61,7 @@ impl Splitter {
                 .bind(project_info.id)
                 .bind(&self.name)
                 .bind(&self.parameters)
-                .fetch_optional(pool)
+                .fetch_optional(&pool)
                 .await?;
 
             let splitter = if let Some(s) = splitter {
@@ -76,7 +76,7 @@ impl Splitter {
                     .bind(project_info.id)
                     .bind(&self.name)
                     .bind(&self.parameters)
-                    .fetch_one(pool)
+                    .fetch_one(&pool)
                     .await?
             };
 
@@ -101,13 +101,7 @@ impl Splitter {
 
     #[instrument(skip(self))]
     pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
-        let database_url = &self
-            .project_info
-            .as_ref()
-            .context("Splitter must have project info to call to_dict")?
-            .database_url;
-        let pool = get_or_initialize_pool(database_url).await?;
-        self.verify_in_database(&pool, false).await?;
+        self.verify_in_database(false).await?;
 
         let database_data = self
             .database_data
@@ -118,7 +112,17 @@ impl Splitter {
             "id": database_data.id,
             "name": self.name,
             "parameters": *self.parameters,
-        }).into())
+        })
+        .into())
+    }
+
+    async fn get_pool(&self) -> anyhow::Result<PgPool> {
+        let database_url = &self
+            .project_info
+            .as_ref()
+            .context("Project info not set for splitter")?
+            .database_url;
+        get_or_initialize_pool(database_url).await
     }
 }
 

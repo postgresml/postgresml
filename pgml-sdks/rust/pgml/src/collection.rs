@@ -1,4 +1,5 @@
 use anyhow::Context;
+use indicatif::MultiProgress;
 use itertools::Itertools;
 use pgml_macros::{custom_derive, custom_methods};
 use sqlx::postgres::PgPool;
@@ -69,10 +70,6 @@ pub struct Collection {
 )]
 impl Collection {
     /// Creates a new collection
-    ///
-    /// This should not be called directly. Use [crate::Database::create_or_get_collection] instead.
-    ///
-    /// Note that a default text splitter and model are created automatically.
     pub fn new(name: &str, database_url: Option<String>) -> Self {
         let (
             pipelines_table_name,
@@ -93,17 +90,14 @@ impl Collection {
         }
     }
 
-    #[instrument(skip(self, pool))]
-    pub async fn verify_in_database(
-        &mut self,
-        pool: &PgPool,
-        throw_if_exists: bool,
-    ) -> anyhow::Result<()> {
+    #[instrument(skip(self))]
+    pub async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
         if self.database_data.is_none() {
+            let pool = get_or_initialize_pool(&self.database_url).await?;
             let result: Result<Option<models::Collection>, _> =
                 sqlx::query_as("SELECT * FROM pgml.collections WHERE name = $1")
                     .bind(&self.name)
-                    .fetch_optional(pool)
+                    .fetch_optional(&pool)
                     .await;
 
             let collection: Option<models::Collection> = match result {
@@ -113,7 +107,7 @@ impl Collection {
                         // Error 42P01 is "undefined_table"
                         if db_e.code() == Some(std::borrow::Cow::from("42P01")) {
                             sqlx::query(queries::CREATE_COLLECTIONS_TABLE)
-                                .execute(pool)
+                                .execute(&pool)
                                 .await?;
                             Ok(None)
                         } else {
@@ -187,11 +181,10 @@ impl Collection {
 
     #[instrument(skip(self))]
     pub async fn add_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
-        self.verify_in_database(&pool, false).await?;
+        self.verify_in_database(false).await?;
         pipeline.set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
-        pipeline.verify_in_database(&pool, true).await?;
-        pipeline.execute(&None, &pool).await?;
+        let mp = MultiProgress::new();
+        pipeline.execute(&None, mp).await?;
         Ok(())
     }
 
@@ -202,9 +195,9 @@ impl Collection {
         arguments: Option<Json>,
     ) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
-        self.verify_in_database(&pool, false).await?;
+        self.verify_in_database(false).await?;
         pipeline.set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
-        pipeline.verify_in_database(&pool, false).await?;
+        pipeline.verify_in_database(false).await?;
 
         let database_data = pipeline
             .database_data
@@ -435,7 +428,7 @@ impl Collection {
         strict: Option<bool>,
     ) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
-        self.verify_in_database(&pool, false).await?;
+        self.verify_in_database(false).await?;
 
         let strict = strict.unwrap_or(true);
 
@@ -450,23 +443,25 @@ impl Collection {
                 Some(t) => t,
                 None => {
                     if strict {
-                        anyhow::bail!("`text` is not a key in document, skipping document. To supress this error, pass strict: false");
+                        anyhow::bail!("`text` is not a key in document, throwing error. To supress this error, pass strict: false");
                     } else {
-                        warn!("`text` is not a key in document, skipping document. To supress this error, pass strict: false");
+                        warn!("`text` is not a key in document, skipping document. To throw an error instead, pass strict: true");
                     }
                     continue;
                 }
             };
 
+            // We don't want the text key included in the document metadata, but everything else
+            // should be in there
             let document_json = serde_json::to_value(&document)?;
 
             let md5_digest = match document.get("id") {
                 Some(k) => md5::compute(k.to_string().as_bytes()),
                 None => {
                     if strict {
-                        anyhow::bail!("`id` is not a key in document, skipping document. To supress this error, pass strict: false");
+                        anyhow::bail!("`id` is not a key in document, throwing error. To supress this error, pass strict: false");
                     } else {
-                        warn!("`id` is not a key in document, skipping document. To supress this error, pass strict: false");
+                        warn!("`id` is not a key in document, skipping document. To throw an error instead, pass strict: true");
                     }
                     continue;
                 }
@@ -492,11 +487,11 @@ impl Collection {
 
     #[instrument(skip(self))]
     pub async fn sync_pipelines(&mut self, document_ids: Option<Vec<i64>>) -> anyhow::Result<()> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
-        self.verify_in_database(&pool, false).await?;
+        self.verify_in_database(false).await?;
         let pipelines = self.get_pipelines().await?;
+        let mp = MultiProgress::new();
         for mut pipeline in pipelines {
-            pipeline.execute(&document_ids, &pool).await?;
+            pipeline.execute(&document_ids, mp.clone()).await?;
         }
         Ok(())
     }
@@ -627,9 +622,9 @@ impl Collection {
         top_k: i64,
         pool: &PgPool,
     ) -> anyhow::Result<Vec<(f64, String, Json)>> {
-        self.verify_in_database(pool, false).await?;
+        self.verify_in_database(false).await?;
 
-        // Explicitly get and set the model for the pipeline
+        // Have to set the project info before we can get and set the model
         pipeline.set_project_info(
             self.database_data
                 .as_ref()
@@ -639,16 +634,21 @@ impl Collection {
                 .project_info
                 .clone(),
         );
-        let model = pipeline.get_and_set_model(pool).await?;
+        // Verify to get and set the model if we don't have it set on the pipeline yet
+        pipeline.verify_in_database(false).await?;
+        let model = pipeline
+            .model
+            .as_ref()
+            .context("Pipeline must be verified to perform vector search with remote embeddings")?;
 
-        let remote_embeddings =
-            build_remote_embeddings(model.runtime, &model.name, &query_parameters)?;
-        let mut embeddings = remote_embeddings.embed(vec![query.to_string()]).await?;
-        // Taking the embedding is much faster than cloning it
-        let embedding = std::mem::take(&mut embeddings[0]);
+        // We need to make sure we are not mutably and immutably borrowing the same things
+        let embedding = {
+            let remote_embeddings =
+                build_remote_embeddings(model.runtime, &model.name, &query_parameters)?;
+            let mut embeddings = remote_embeddings.embed(vec![query.to_string()]).await?;
+            std::mem::take(&mut embeddings[0])
+        };
 
-        // Explicit drop required here or we can't borrow the pipeline immutably
-        drop(remote_embeddings);
         let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
         sqlx::query_as(&query_builder!(
             queries::VECTOR_SEARCH,
@@ -693,10 +693,11 @@ impl Collection {
     }
 
     #[instrument(skip(self))]
-    pub async fn get_pipelines(&self) -> anyhow::Result<Vec<Pipeline>> {
+    pub async fn get_pipelines(&mut self) -> anyhow::Result<Vec<Pipeline>> {
+        self.verify_in_database(false).await?;
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let pipelines: Vec<models::Pipeline> = sqlx::query_as(&query_builder!(
-            "SELECT * FROM %s",
+            "SELECT * FROM %s WHERE active = TRUE",
             self.pipelines_table_name
         ))
         .fetch_all(&pool)
@@ -705,8 +706,13 @@ impl Collection {
             .into_iter()
             .map(|p| {
                 let mut pipeline: Pipeline = p.into();
-                pipeline
-                    .set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
+                pipeline.set_project_info(
+                    self.database_data
+                        .as_ref()
+                        .expect("Collection must be verified to get all pipelines")
+                        .project_info
+                        .clone(),
+                );
                 pipeline
             })
             .collect();
@@ -715,8 +721,7 @@ impl Collection {
 
     #[instrument(skip(self))]
     pub async fn get_project_info(&mut self) -> anyhow::Result<ProjectInfo> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
-        self.verify_in_database(&pool, false).await?;
+        self.verify_in_database(false).await?;
         Ok(self
             .database_data
             .as_ref()
@@ -725,7 +730,7 @@ impl Collection {
             .clone())
     }
 
-    /// Check if [Collection] exists in the database
+    /// Check if the [Collection] exists in the database
     ///
     /// # Example
     /// ```

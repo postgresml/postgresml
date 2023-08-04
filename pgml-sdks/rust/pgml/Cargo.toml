@@ -28,6 +28,7 @@ reqwest = { version = "0.11", features = ["json"] }
 async-trait = "0.1.71"
 tracing = { version = "0.1.37" }
 tracing-subscriber = { version = "0.3.17", features = ["json"] }
+indicatif = "0.17.6"
 
 [features]
 python = ["dep:pyo3", "dep:pyo3-asyncio"]
