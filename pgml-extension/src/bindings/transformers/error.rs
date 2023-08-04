@@ -2,13 +2,13 @@ use std::fmt;
 
 use pyo3::PyErr;
 
-use super::whitelist::WhitelistError;
+use super::whitelist;
 
 #[derive(Debug)]
 pub enum Error {
     Serde(serde_json::Error),
     Python(PyErr),
-    Model(WhitelistError),
+    Model(whitelist::Error),
     Data(String),
 }
 
@@ -31,8 +31,8 @@ impl From<PyErr> for Error {
     }
 }
 
-impl From<WhitelistError> for Error {
-    fn from(value: WhitelistError) -> Self {
+impl From<whitelist::Error> for Error {
+    fn from(value: whitelist::Error) -> Self {
         Self::Model(value)
     }
 }

@@ -11,7 +11,6 @@ use pyo3::types::PyTuple;
 use crate::orm::{Task, TextDataset};
 
 use self::error::Error;
-use self::whitelist::verify_task_against_whitelist;
 
 pub mod error;
 pub mod whitelist;
@@ -36,7 +35,7 @@ pub fn transform(
 ) -> Result<serde_json::Value> {
     crate::bindings::venv::activate();
 
-    verify_task_against_whitelist(task)?;
+    whitelist::verify_task(task)?;
 
     let task = serde_json::to_string(task)?;
     let args = serde_json::to_string(args)?;
