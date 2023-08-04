@@ -1,6 +1,7 @@
 use sea_query::enum_def;
 use sqlx::types::Uuid;
 use sqlx::FromRow;
+use serde::Serialize;
 
 use crate::types::{DateTime, Json};
 
@@ -20,12 +21,51 @@ pub struct Pipeline {
     pub parameters: Json,
 }
 
-/// A document
+/// A model used to perform some task
 #[enum_def]
 #[derive(FromRow)]
+pub struct Model {
+    pub id: i64,
+    pub created_at: DateTime,
+    pub runtime: String,
+    pub hyperparams: Json,
+}
+
+/// A text splitter
+#[enum_def]
+#[derive(FromRow)]
+pub struct Splitter {
+    pub id: i64,
+    pub created_at: DateTime,
+    pub name: String,
+    pub parameters: Json,
+}
+
+/// A pipeline with its model and splitter
+#[derive(FromRow, Clone)]
+pub struct PipelineWithModelAndSplitter {
+    pub pipeline_id: i64,
+    pub pipeline_name: String,
+    pub pipeline_created_at: DateTime,
+    pub pipeline_active: bool,
+    pub pipeline_parameters: Json,
+    pub model_id: i64,
+    pub model_created_at: DateTime,
+    pub model_runtime: String,
+    pub model_hyperparams: Json,
+    pub splitter_id: i64,
+    pub splitter_created_at: DateTime,
+    pub splitter_name: String,
+    pub splitter_parameters: Json,
+}
+
+/// A document
+#[enum_def]
+#[derive(FromRow, Serialize)]
 pub struct Document {
     pub id: i64,
     pub created_at: DateTime,
+    #[serde(with = "uuid::serde::compact")] // See: https://docs.rs/uuid/latest/uuid/serde/index.html
     pub source_uuid: Uuid,
     pub metadata: Json,
     pub text: String,
@@ -40,26 +80,6 @@ pub struct Collection {
     pub name: String,
     pub active: bool,
     pub project_id: i64,
-}
-
-/// A text splitter
-#[enum_def]
-#[derive(FromRow)]
-pub struct Splitter {
-    pub id: i64,
-    pub created_at: DateTime,
-    pub name: String,
-    pub parameters: Json,
-}
-
-/// A model used to perform some task
-#[enum_def]
-#[derive(FromRow)]
-pub struct Model {
-    pub id: i64,
-    pub created_at: DateTime,
-    pub runtime: String,
-    pub hyperparams: Json,
 }
 
 /// An embedding

@@ -183,8 +183,6 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use indicatif::ProgressStyle;
-
     use super::*;
     use crate::{model::Model, pipeline::Pipeline, splitter::Splitter, types::Json};
 
@@ -229,7 +227,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn can_add_pipeline() -> anyhow::Result<()> {
+    async fn can_add_remove_pipeline() -> anyhow::Result<()> {
         init_logger(None, None).ok();
         let model = Model::new(None, None, None);
         let splitter = Splitter::new(None, None);
@@ -251,23 +249,33 @@ mod tests {
         assert!(collection.database_data.is_none());
         collection.add_pipeline(&mut pipeline).await?;
         assert!(collection.database_data.is_some());
-        collection
-            .remove_pipeline(
-                &mut pipeline,
-                Some(
-                    serde_json::json!({
-                        "delete": true
-                    })
-                    .into(),
-                ),
-            )
-            .await?;
+        collection.remove_pipeline(&mut pipeline).await?;
+        let pipelines = collection.get_pipelines().await?;
+        assert!(pipelines.is_empty());
         collection.archive().await?;
         Ok(())
     }
 
     #[sqlx::test]
-    async fn can_vector_search() -> anyhow::Result<()> {
+    async fn disable_enable_pipeline() -> anyhow::Result<()> {
+        let model = Model::new(None, None, None);
+        let splitter = Splitter::new(None, None);
+        let mut pipeline = Pipeline::new("test_p_cap_57", Some(model), Some(splitter), None);
+        let mut collection = Collection::new("test_r_c_dep_0", None);
+        collection.add_pipeline(&mut pipeline).await?;
+        let queried_pipeline = &collection.get_pipelines().await?[0];
+        assert_eq!(pipeline.name, queried_pipeline.name);
+        collection.disable_pipeline(&mut pipeline).await?;
+        let queried_pipelines = &collection.get_pipelines().await?;
+        assert!(queried_pipelines.is_empty());
+        collection.enable_pipeline(&mut pipeline).await?;
+        let queried_pipeline = &collection.get_pipelines().await?[0];
+        assert_eq!(pipeline.name, queried_pipeline.name);
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
         init_logger(None, None).ok();
         let model = Model::new(None, None, None);
         let splitter = Splitter::new(None, None);
@@ -285,7 +293,7 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswle_5", None);
+        let mut collection = Collection::new("test_r_c_cvswle_28", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
@@ -324,7 +332,7 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswre_1", None);
+        let mut collection = Collection::new("test_r_c_cvswre_20", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
@@ -416,33 +424,5 @@ mod tests {
         assert!(results.len() == 3);
         collection.archive().await?;
         Ok(())
-    }
-
-    #[sqlx::test]
-    fn test_progress() {
-        use indicatif::MultiProgress;
-        use indicatif::ProgressBar;
-
-        let mp = MultiProgress::new();
-
-        let bar3 = ProgressBar::new(1000000);
-
-        let bar3 = bar3
-            .with_style(
-                ProgressStyle::with_template(
-                    "[{elapsed_precise}] {spinner:0.cyan/blue} {prefix}: {msg}",
-                )
-                .unwrap(),
-            )
-            .with_prefix("pipeline 1");
-        bar3.enable_steady_tick(core::time::Duration::new(0, 1000));
-
-        let bar3 = mp.clone().add(bar3);
-
-        for _ in 0..1000000000 {
-            bar3.set_message("we are setting the message");
-            // ...
-        }
-        bar3.finish();
     }
 }

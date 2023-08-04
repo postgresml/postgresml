@@ -43,10 +43,7 @@ impl Splitter {
     }
 
     #[instrument(skip(self))]
-    pub async fn verify_in_database(
-        &mut self,
-        throw_if_exists: bool,
-    ) -> anyhow::Result<()> {
+    pub async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
         if self.database_data.is_none() {
             let pool = self.get_pool().await?;
 
@@ -123,6 +120,20 @@ impl Splitter {
             .context("Project info not set for splitter")?
             .database_url;
         get_or_initialize_pool(database_url).await
+    }
+}
+
+impl From<models::PipelineWithModelAndSplitter> for Splitter {
+    fn from(x: models::PipelineWithModelAndSplitter) -> Self {
+        Self {
+            name: x.splitter_name,
+            parameters: x.splitter_parameters,
+            project_info: None,
+            database_data: Some(SplitterDatabaseData {
+                id: x.splitter_id,
+                created_at: x.splitter_created_at,
+            }),
+        }
     }
 }
 

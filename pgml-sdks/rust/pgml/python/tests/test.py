@@ -3,6 +3,7 @@ import pgml
 import pytest
 from multiprocessing import Pool
 from typing import List, Dict, Any
+import asyncio
 
 ####################################################################################
 ####################################################################################
@@ -70,7 +71,7 @@ def test_can_create_builtins():
 ###################################################
 
 @pytest.mark.asyncio
-async def test_can_vector_search():
+async def test_can_vector_search_with_local_embeddings():
     model = pgml.Model()
     splitter = pgml.Splitter()
     pipeline = pgml.Pipeline("test_p_p_tcvs_0", model, splitter)
@@ -102,8 +103,8 @@ async def test_can_vector_search_with_query_builder():
     await collection.upsert_documents(generate_dummy_documents(3))
     await collection.add_pipeline(pipeline)
     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
-    await collection.archive()
     assert len(results) == 3
+    await collection.archive()
 
 @pytest.mark.asyncio
 async def test_can_vector_search_with_query_builder_with_remote_embeddings():
@@ -114,8 +115,8 @@ async def test_can_vector_search_with_query_builder_with_remote_embeddings():
     await collection.upsert_documents(generate_dummy_documents(3))
     await collection.add_pipeline(pipeline)
     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
-    await collection.archive()
     assert len(results) == 3
+    await collection.archive()
 
 
 ###################################################
@@ -131,7 +132,8 @@ async def test_pipeline_to_dict():
     await collection.add_pipeline(pipeline)
     pipeline_dict = await pipeline.to_dict()
     assert pipeline_dict["name"] == "test_p_p_tptd_1"
-    await collection.remove_pipeline(pipeline, {"delete": True})
+    await collection.remove_pipeline(pipeline)
+    await collection.archive()
 
 
 ###################################################
@@ -156,3 +158,32 @@ async def test_pipeline_to_dict():
 #             assert(x == 3)
 #
 #     await collection.archive()
+
+
+
+###################################################
+## Manual tests ###################################
+###################################################
+
+async def silas_test_add_pipeline():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("silas_test_p_1", model, splitter)
+    collection = pgml.Collection(name="silas_test_c_2")
+    await collection.add_pipeline(pipeline)
+
+async def silas_test_upsert_documents():
+    collection = pgml.Collection(name="silas_test_c_2")
+    await collection.upsert_documents(generate_dummy_documents(30))
+
+async def silas_test_vector_search():
+    pipeline = pgml.Pipeline("silas_test_p_1")
+    collection = pgml.Collection(name="silas_test_c_2")
+    results = await collection.vector_search("Here is some query", pipeline)
+    print(results)
+
+# asyncio.run(silas_test_add_pipeline())
+# asyncio.run(silas_test_upsert_documents())
+# asyncio.run(silas_test_vector_search())
+
+

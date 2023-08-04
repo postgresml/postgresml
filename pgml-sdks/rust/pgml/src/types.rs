@@ -1,4 +1,5 @@
 use std::ops::{Deref, DerefMut};
+use serde::Serialize;
 
 /// A wrapper around serde_json::Value
 // #[derive(sqlx::Type, sqlx::FromRow, Debug)]
@@ -31,8 +32,20 @@ impl DerefMut for Json {
     }
 }
 
+impl Serialize for Json {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serde_json::Value::serialize(&self.0, serializer)
+    }
+}
+
 /// A wrapper around sqlx::types::chrono::DateTime<sqlx::types::chrono::Utc>
 #[derive(sqlx::Type, Debug, Clone)]
 #[sqlx(transparent)]
 // pub struct DateTime(pub sqlx::types::chrono::DateTime<sqlx::types::chrono::Utc>);
 pub struct DateTime(pub sqlx::types::chrono::NaiveDateTime);
+
+impl Serialize for DateTime {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.0.timestamp().serialize(serializer)
+    }
+}

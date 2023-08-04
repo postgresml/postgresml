@@ -1,13 +1,12 @@
+use anyhow::Context;
 use pgml_macros::{custom_derive, custom_methods};
 use sqlx::postgres::PgPool;
-use anyhow::Context;
 use tracing::instrument;
 
 use crate::{
     collection::ProjectInfo,
-    models,
+    get_or_initialize_pool, models,
     types::{DateTime, Json},
-    get_or_initialize_pool,
 };
 
 #[cfg(feature = "javascript")]
@@ -129,10 +128,7 @@ impl Model {
     }
 
     #[instrument(skip(self))]
-    pub async fn verify_in_database(
-        &mut self,
-        throw_if_exists: bool,
-    ) -> anyhow::Result<()> {
+    pub async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
         if self.database_data.is_none() {
             let pool = self.get_pool().await?;
 
@@ -202,7 +198,8 @@ impl Model {
             "name": self.name,
             "runtime": Into::<&str>::into(&self.runtime),
             "parameters": *self.parameters,
-        }).into())
+        })
+        .into())
     }
 
     async fn get_pool(&self) -> anyhow::Result<PgPool> {
@@ -215,16 +212,31 @@ impl Model {
     }
 }
 
-impl From<models::Model> for Model {
-    fn from(m: models::Model) -> Self {
+impl From<models::PipelineWithModelAndSplitter> for Model {
+    fn from(x: models::PipelineWithModelAndSplitter) -> Self {
         Self {
-            name: m.hyperparams["name"].as_str().unwrap().to_string(),
-            runtime: m.runtime.as_str().into(),
-            parameters: m.hyperparams,
+            name: x.model_hyperparams["name"].as_str().unwrap().to_string(),
+            runtime: x.model_runtime.as_str().into(),
+            parameters: x.model_hyperparams,
             project_info: None,
             database_data: Some(ModelDatabaseData {
-                id: m.id,
-                created_at: m.created_at,
+                id: x.model_id,
+                created_at: x.model_created_at,
+            }),
+        }
+    }
+}
+
+impl From<models::Model> for Model {
+    fn from(model: models::Model) -> Self {
+        Self {
+            name: model.hyperparams["name"].as_str().unwrap().to_string(),
+            runtime: model.runtime.as_str().into(),
+            parameters: model.hyperparams,
+            project_info: None,
+            database_data: Some(ModelDatabaseData {
+                id: model.id,
+                created_at: model.created_at,
             }),
         }
     }

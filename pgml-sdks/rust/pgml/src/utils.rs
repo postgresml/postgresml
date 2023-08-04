@@ -1,3 +1,5 @@
+use indicatif::{ProgressBar, ProgressStyle};
+
 /// A more type flexible version of format!
 #[macro_export]
 macro_rules! query_builder {
@@ -17,4 +19,18 @@ macro_rules! query_builder {
         )*
         query
     }};
+}
+
+pub fn default_progress_spinner(size: u64) -> ProgressBar {
+    ProgressBar::new(size).with_style(
+        ProgressStyle::with_template("[{elapsed_precise}] {spinner:0.cyan/blue} {prefix}: {msg}")
+            .unwrap(),
+    )
+}
+
+pub fn default_progress_bar(size: u64) -> ProgressBar {
+    ProgressBar::new(size).with_style(
+        ProgressStyle::with_template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} ")
+            .unwrap(),
+    )
 }
