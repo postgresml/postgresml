@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::{collections::HashMap, path::Path};
 
+use anyhow::{bail, Result};
 use once_cell::sync::Lazy;
 use pgrx::*;
 use pyo3::prelude::*;
@@ -10,12 +11,7 @@ use pyo3::types::PyTuple;
 
 use crate::orm::{Task, TextDataset};
 
-use self::error::Error;
-
-pub mod error;
 pub mod whitelist;
-
-pub type Result<T> = std::result::Result<T, error::Error>;
 
 static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
     Python::with_gil(|py| -> Py<PyModule> {
@@ -239,12 +235,7 @@ pub fn load_dataset(
                 "float32" => "FLOAT4",
                 "float16" => "FLOAT4",
                 "bool" => "BOOLEAN",
-                _ => {
-                    return Err(Error::Data(format!(
-                        "unhandled dataset feature while reading dataset: {}",
-                        type_
-                    )))
-                }
+                _ => bail!("unhandled dataset feature while reading dataset: {type_}"),
             };
             Ok(format!("{name} {type_}"))
         })
@@ -299,13 +290,11 @@ pub fn load_dataset(
                     value.as_bool().unwrap().into_datum(),
                 )),
                 type_ => {
-                    return Err(Error::Data(format!(
-                        "unhandled dataset value type while reading dataset: {value:?} {type_:?}",
-                    )))
+                    bail!("unhandled dataset value type while reading dataset: {value:?} {type_:?}")
                 }
             }
         }
-        Spi::run_with_args(&insert, Some(row)).unwrap();
+        Spi::run_with_args(&insert, Some(row))?
     }
 
     Ok(num_rows)
