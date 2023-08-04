@@ -80,8 +80,37 @@ impl<'r> FromRequest<'r> for &'r Cluster {
     }
 }
 
+#[derive(Debug)]
+pub struct ConnectedCluster<'a> {
+    pub inner: &'a Cluster,
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for ConnectedCluster<'r> {
+    type Error = ();
+
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+        let cluster = match request.guard::<&Cluster>().await {
+            request::Outcome::Success(cluster) => cluster,
+            _ => return request::Outcome::Forward(()),
+        };
+
+        if cluster.pool.as_ref().is_some() {
+            request::Outcome::Success(ConnectedCluster { inner: cluster })
+        } else {
+            request::Outcome::Forward(())
+        }
+    }
+}
+
 impl<'a> Cluster {
     pub fn pool(&'a self) -> &'a PgPool {
         self.pool.as_ref().unwrap()
+    }
+}
+
+impl<'a> ConnectedCluster<'_> {
+    pub fn pool(&'a self) -> &'a PgPool {
+        self.inner.pool()
     }
 }
