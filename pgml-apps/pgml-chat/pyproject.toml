@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pgml-chat"
-version = "0.1.0"
+version = "0.1.1"
 description = "PostgresML bot builder for all your documentation"
 authors = ["PostgresML <team@postgresml.org>"]
 license = "MIT"
