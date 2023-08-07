@@ -15,6 +15,7 @@ pub mod metrics;
 pub mod orm;
 pub mod vectors;
 
+#[cfg(not(feature = "use_as_lib"))]
 pg_module_magic!();
 
 extension_sql_file!("../sql/schema.sql", name = "schema");
