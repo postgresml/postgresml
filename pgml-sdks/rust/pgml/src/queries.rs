@@ -27,11 +27,11 @@ CREATE TABLE IF NOT EXISTS %s (
 
 pub const CREATE_DOCUMENTS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
-  id serial8 PRIMARY KEY, 
-  created_at timestamp NOT NULL DEFAULT now(), 
-  source_uuid uuid NOT NULL, 
-  metadata jsonb NOT NULL DEFAULT '{}', 
-  text text NOT NULL, 
+  id serial8 PRIMARY KEY,
+  created_at timestamp NOT NULL DEFAULT now(),
+  source_uuid uuid NOT NULL,
+  metadata jsonb NOT NULL DEFAULT '{}',
+  text text NOT NULL,
   UNIQUE (source_uuid)
 );
 "#;
@@ -60,7 +60,8 @@ CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
   created_at timestamp NOT NULL DEFAULT now(), 
   chunk_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  embedding vector(%d) NOT NULL
+  embedding vector(%d) NOT NULL,
+  UNIQUE (chunk_id)
 );
 "#;
 

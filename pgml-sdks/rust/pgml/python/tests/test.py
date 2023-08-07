@@ -139,10 +139,10 @@ async def test_pipeline_to_dict():
 ###################################################
 ## Test with multiprocessing ######################
 ###################################################
-# async def vector_search(collection, pipeline):
-#     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
-#     return len(results)
-#
+async def vector_search(collection, pipeline):
+    results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
+    return len(results)
+
 # @pytest.mark.asyncio
 # async def test_multiprocessing():
 #     model = pgml.Model()
@@ -152,8 +152,8 @@ async def test_pipeline_to_dict():
 #     await collection.upsert_documents(generate_dummy_documents(3))
 #     await collection.add_pipeline(pipeline)
 #
-#      with Pool(5) as p:
-#         results = p.map_async(vector_search, [(collection, pipeline), (co)])
+#     with Pool(5) as p:
+#         results = p.starmap_async(vector_search, [(collection, pipeline) for _ in range(5)])
 #         for x in results.get():
 #             assert(x == 3)
 #
@@ -169,21 +169,19 @@ async def silas_test_add_pipeline():
     model = pgml.Model()
     splitter = pgml.Splitter()
     pipeline = pgml.Pipeline("silas_test_p_1", model, splitter)
-    collection = pgml.Collection(name="silas_test_c_2")
+    collection = pgml.Collection(name="silas_test_c_6")
     await collection.add_pipeline(pipeline)
 
 async def silas_test_upsert_documents():
-    collection = pgml.Collection(name="silas_test_c_2")
-    await collection.upsert_documents(generate_dummy_documents(30))
+    collection = pgml.Collection(name="silas_test_c_6")
+    await collection.upsert_documents(generate_dummy_documents(300000))
 
 async def silas_test_vector_search():
     pipeline = pgml.Pipeline("silas_test_p_1")
-    collection = pgml.Collection(name="silas_test_c_2")
+    collection = pgml.Collection(name="silas_test_c_6")
     results = await collection.vector_search("Here is some query", pipeline)
     print(results)
 
 # asyncio.run(silas_test_add_pipeline())
 # asyncio.run(silas_test_upsert_documents())
 # asyncio.run(silas_test_vector_search())
-
-

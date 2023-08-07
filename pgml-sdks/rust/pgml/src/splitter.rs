@@ -62,9 +62,7 @@ impl Splitter {
                 .await?;
 
             let splitter = if let Some(s) = splitter {
-                if throw_if_exists {
-                    anyhow::bail!("Splitter already exists in database")
-                }
+                anyhow::ensure!(!throw_if_exists, "Splitter already exists in database");
                 s
             } else {
                 sqlx::query_as(
@@ -117,7 +115,7 @@ impl Splitter {
         let database_url = &self
             .project_info
             .as_ref()
-            .context("Project info not set for splitter")?
+            .context("Project info required to call method splitter.get_pool()")?
             .database_url;
         get_or_initialize_pool(database_url).await
     }

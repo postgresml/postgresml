@@ -17,9 +17,7 @@ use crate::{
 use crate::{languages::javascript::*, model::ModelJavascript, splitter::SplitterJavascript};
 
 #[cfg(feature = "python")]
-use crate::{
-    languages::CustomInto, model::ModelPython, pipeline::PipelinePython, splitter::SplitterPython,
-};
+use crate::{languages::CustomInto, pipeline::PipelinePython};
 
 #[derive(Clone)]
 enum SIden<'a> {

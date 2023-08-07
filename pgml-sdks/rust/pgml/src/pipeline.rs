@@ -1,5 +1,5 @@
 use anyhow::Context;
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use indicatif::MultiProgress;
 use pgml_macros::{custom_derive, custom_methods};
 use sqlx::{Executor, PgConnection, PgPool};
 use std::sync::atomic::AtomicBool;
@@ -265,7 +265,10 @@ impl Pipeline {
         // TODO: Chunk document_ids if there are too many
 
         // A couple notes on the following methods
-        // Atomic bools are required to work nicely with pyo3 otherwise we would use cells
+        // - Atomic bools are required to work nicely with pyo3 otherwise we would use cells
+        // - We use green threads because they are cheap, but we want to be super careful to not
+        // return an error before stopping the green thread. To meet that end, we map errors and
+        // return types often
         let chunk_ids = self.sync_chunks(document_ids, &mp).await?;
         self.sync_embeddings(chunk_ids, &mp).await?;
         self.sync_tsvectors(document_ids, &mp).await?;
@@ -325,7 +328,7 @@ impl Pipeline {
                 .bind(document_ids)
                 .fetch_all(&pool)
                 .await
-                .map(|t| Some(t))
+                .map(Some)
             } else {
                 sqlx::query(&query_builder!(
                     queries::GENERATE_CHUNKS,
@@ -342,7 +345,7 @@ impl Pipeline {
             chunk_ids
         };
         let progress_work = async {
-            while !is_done.load(Relaxed) == false {
+            while !is_done.load(Relaxed) {
                 progress_bar.inc(1);
                 tokio::time::sleep(std::time::Duration::from_millis(100)).await;
             }
@@ -397,38 +400,34 @@ impl Pipeline {
         // will load forever. We also want to make sure to propogate any errors we have
         let work = async {
             let res = match model.runtime {
-                ModelRuntime::Python => {
-                    if chunk_ids.is_some() {
-                        sqlx::query(&query_builder!(
-                            queries::GENERATE_EMBEDDINGS_FOR_CHUNK_IDS,
-                            embeddings_table_name,
-                            &format!("{}.chunks", project_info.name),
-                            embeddings_table_name
-                        ))
-                        .bind(&model.name)
-                        .bind(&parameters)
-                        .bind(database_data.splitter_id)
-                        .bind(chunk_ids)
-                        .execute(&pool)
-                        .await
-                        .map_err(|e| anyhow::anyhow!(e))
-                        .map(|_t| ())
-                    } else {
-                        sqlx::query(&query_builder!(
-                            queries::GENERATE_EMBEDDINGS,
-                            embeddings_table_name,
-                            &format!("{}.chunks", project_info.name),
-                            embeddings_table_name
-                        ))
-                        .bind(&model.name)
-                        .bind(&parameters)
-                        .bind(database_data.splitter_id)
-                        .execute(&pool)
-                        .await
-                        .map_err(|e| anyhow::anyhow!(e))
-                        .map(|_t| ())
-                    }
+                ModelRuntime::Python => if chunk_ids.is_some() {
+                    sqlx::query(&query_builder!(
+                        queries::GENERATE_EMBEDDINGS_FOR_CHUNK_IDS,
+                        embeddings_table_name,
+                        &format!("{}.chunks", project_info.name),
+                        embeddings_table_name
+                    ))
+                    .bind(&model.name)
+                    .bind(&parameters)
+                    .bind(database_data.splitter_id)
+                    .bind(chunk_ids)
+                    .execute(&pool)
+                    .await
+                } else {
+                    sqlx::query(&query_builder!(
+                        queries::GENERATE_EMBEDDINGS,
+                        embeddings_table_name,
+                        &format!("{}.chunks", project_info.name),
+                        embeddings_table_name
+                    ))
+                    .bind(&model.name)
+                    .bind(&parameters)
+                    .bind(database_data.splitter_id)
+                    .execute(&pool)
+                    .await
                 }
+                .map_err(|e| anyhow::anyhow!(e))
+                .map(|_t| ()),
                 r => {
                     let remote_embeddings = build_remote_embeddings(r, &model.name, &parameters)?;
                     remote_embeddings
@@ -585,6 +584,7 @@ impl Pipeline {
                 }
             };
 
+            let mut transaction = pool.begin().await?;
             sqlx::query(&query_builder!(
                 queries::CREATE_EMBEDDINGS_TABLE,
                 &embeddings_table_name,
@@ -597,41 +597,45 @@ impl Pipeline {
                 ),
                 embedding_length
             ))
-            .execute(&pool)
+            .execute(&mut transaction)
             .await?;
-            pool.execute(
-                query_builder!(
-                    queries::CREATE_INDEX,
-                    "",
-                    "created_at_index",
-                    &embeddings_table_name,
-                    "created_at"
+            transaction
+                .execute(
+                    query_builder!(
+                        queries::CREATE_INDEX,
+                        "",
+                        "created_at_index",
+                        &embeddings_table_name,
+                        "created_at"
+                    )
+                    .as_str(),
                 )
-                .as_str(),
-            )
-            .await?;
-            pool.execute(
-                query_builder!(
-                    queries::CREATE_INDEX,
-                    "",
-                    "chunk_id_index",
-                    &embeddings_table_name,
-                    "chunk_id"
+                .await?;
+            transaction
+                .execute(
+                    query_builder!(
+                        queries::CREATE_INDEX,
+                        "",
+                        "chunk_id_index",
+                        &embeddings_table_name,
+                        "chunk_id"
+                    )
+                    .as_str(),
                 )
-                .as_str(),
-            )
-            .await?;
-            pool.execute(
-                query_builder!(
-                    queries::CREATE_INDEX_USING_IVFFLAT,
-                    "",
-                    "vector_index",
-                    &embeddings_table_name,
-                    "embedding vector_cosine_ops"
+                .await?;
+            transaction
+                .execute(
+                    query_builder!(
+                        queries::CREATE_INDEX_USING_IVFFLAT,
+                        "",
+                        "vector_index",
+                        &embeddings_table_name,
+                        "embedding vector_cosine_ops"
+                    )
+                    .as_str(),
                 )
-                .as_str(),
-            )
-            .await?;
+                .await?;
+            transaction.commit().await?;
         }
 
         Ok(embeddings_table_name)
@@ -677,11 +681,17 @@ impl Pipeline {
             .as_ref()
             .context("Pipeline must be verified to call to_dict")?;
 
+        let parameters = self
+            .parameters
+            .as_ref()
+            .context("Pipeline must be verified to call to_dict")?;
+
         Ok(serde_json::json!({
             "id": database_data.id,
             "name": self.name,
             "model": *model_dict,
-            "splitter": *splitter_dict
+            "splitter": *splitter_dict,
+            "parameters": *parameters,
         })
         .into())
     }
@@ -690,7 +700,7 @@ impl Pipeline {
         let database_url = &self
             .project_info
             .as_ref()
-            .context("Project info not set for pipeline")?
+            .context("Project info required to call method pipeline.get_pool()")?
             .database_url;
         get_or_initialize_pool(database_url).await
     }
@@ -727,21 +737,3 @@ impl From<models::PipelineWithModelAndSplitter> for Pipeline {
         }
     }
 }
-
-// impl From<models::Pipeline> for Pipeline {
-//     fn from(pipeline: models::Pipeline) -> Self {
-//         Self {
-//             name: pipeline.name,
-//             model: None,
-//             splitter: None,
-//             project_info: None,
-//             database_data: Some(PipelineDatabaseData {
-//                 id: pipeline.id,
-//                 created_at: pipeline.created_at,
-//                 model_id: pipeline.model_id,
-//                 splitter_id: pipeline.splitter_id,
-//             }),
-//             parameters: Some(pipeline.parameters),
-//         }
-//     }
-// }

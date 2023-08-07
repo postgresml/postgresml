@@ -26,16 +26,60 @@ use crate::utils;
 use crate::{languages::javascript::*, model::ModelJavascript, splitter::SplitterJavascript};
 
 #[cfg(feature = "python")]
-use crate::{
-    languages::CustomInto, model::ModelPython, pipeline::PipelinePython,
-    query_builder::QueryBuilderPython, splitter::SplitterPython,
-};
+use crate::{languages::CustomInto, pipeline::PipelinePython, query_builder::QueryBuilderPython};
+
+/// Our project tasks
+#[derive(Debug, Clone)]
+pub enum ProjectTask {
+    Regression,
+    Classification,
+    QuestionAnswering,
+    Summarization,
+    Translation,
+    TextClassification,
+    TextGeneration,
+    Text2text,
+    Embedding,
+}
+
+impl From<&str> for ProjectTask {
+    fn from(s: &str) -> Self {
+        match s {
+            "regression" => Self::Regression,
+            "classification" => Self::Classification,
+            "question_answering" => Self::QuestionAnswering,
+            "summarization" => Self::Summarization,
+            "translation" => Self::Translation,
+            "text_classification" => Self::TextClassification,
+            "text_generation" => Self::TextGeneration,
+            "text2text" => Self::Text2text,
+            "embedding" => Self::Embedding,
+            _ => panic!("Unknown project task: {}", s),
+        }
+    }
+}
+
+impl From<&ProjectTask> for &'static str {
+    fn from(m: &ProjectTask) -> Self {
+        match m {
+            ProjectTask::Regression => "regression",
+            ProjectTask::Classification => "classification",
+            ProjectTask::QuestionAnswering => "question_answering",
+            ProjectTask::Summarization => "summarization",
+            ProjectTask::Translation => "translation",
+            ProjectTask::TextClassification => "text_classification",
+            ProjectTask::TextGeneration => "text_generation",
+            ProjectTask::Text2text => "text2text",
+            ProjectTask::Embedding => "embedding",
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct ProjectInfo {
     pub id: i64,
     pub name: String,
-    pub task: String,
+    pub task: ProjectTask,
     pub database_url: Option<String>,
 }
 
@@ -98,12 +142,12 @@ impl Collection {
     pub async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
         if self.database_data.is_none() {
             let pool = get_or_initialize_pool(&self.database_url).await?;
+
             let result: Result<Option<models::Collection>, _> =
                 sqlx::query_as("SELECT * FROM pgml.collections WHERE name = $1")
                     .bind(&self.name)
                     .fetch_optional(&pool)
                     .await;
-
             let collection: Option<models::Collection> = match result {
                 Ok(s) => anyhow::Ok(s),
                 Err(e) => match e.as_database_error() {
@@ -123,16 +167,14 @@ impl Collection {
             }?;
 
             self.database_data = if let Some(c) = collection {
-                if throw_if_exists {
-                    anyhow::bail!("Collection {} already exists", self.name);
-                }
+                anyhow::ensure!(!throw_if_exists, "Collection {} already exists", self.name);
                 Some(CollectionDatabaseData {
                     id: c.id,
                     created_at: c.created_at,
                     project_info: ProjectInfo {
                         id: c.project_id,
                         name: self.name.clone(),
-                        task: "embedding".to_string(),
+                        task: "embedding".into(),
                         database_url: self.database_url.clone(),
                     },
                 })
@@ -160,7 +202,7 @@ impl Collection {
                     project_info: ProjectInfo {
                         id: c.project_id,
                         name: self.name.clone(),
-                        task: "embedding".to_string(),
+                        task: "embedding".into(),
                         database_url: self.database_url.clone(),
                     },
                 };
@@ -190,7 +232,7 @@ impl Collection {
         let mp = MultiProgress::new();
         mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
         pipeline.execute(&None, mp).await?;
-        println!("Done Syncing {}\n", pipeline.name);
+        eprintln!("Done Syncing {}\n", pipeline.name);
         Ok(())
     }
 
@@ -488,15 +530,16 @@ impl Collection {
         // deal with, especially because we are dealing with async functions. This is much easier to read
         // Also, we may want to use a variant of chunks that is owned, I'm not 100% sure of what
         // cloning happens when passing values into sqlx bind. itertools variant will not work as
-        // it is not thread safe and pyo3 will get upset 
+        // it is not thread safe and pyo3 will get upset
         let mut document_ids = Vec::new();
         for chunk in documents?.chunks(10) {
             // We want the length before we filter out any None values
             let chunks_len = chunk.len();
             // Filter out the None values
             let chunk: Vec<&(uuid::Uuid, String, Json)> =
-                chunk.into_iter().filter_map(|x| x.as_ref()).collect();
+                chunk.iter().filter_map(|x| x.as_ref()).collect();
 
+            let mut transaction = pool.begin().await?;
             // First delete any documents that already have the same UUID then insert the new ones.
             // We are essentially upserting in two steps
             sqlx::query(&query_builder!(
@@ -504,8 +547,8 @@ impl Collection {
                 self.documents_table_name,
                 self.documents_table_name
             )).
-                bind(&chunk.iter().map(|(source_uuid, _, _)| source_uuid.clone()).collect::<Vec<_>>()).
-                execute(&pool).await?;
+                bind(&chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>()).
+                execute(&mut transaction).await?;
             let query_string_values = (0..chunk.len())
                 .map(|i| format!("(${}, ${}, ${})", i * 3 + 1, i * 3 + 2, i * 3 + 3))
                 .collect::<Vec<String>>()
@@ -520,12 +563,13 @@ impl Collection {
                 query = query.bind(source_uuid).bind(text).bind(metadata);
             }
 
-            let ids: Vec<i64> = query.fetch_all(&pool).await?;
+            let ids: Vec<i64> = query.fetch_all(&mut transaction).await?;
             document_ids.extend(ids);
             progress_bar.inc(chunks_len as u64);
+            transaction.commit().await?;
         }
         progress_bar.finish();
-        println!("Done Upserting Documents\n");
+        eprintln!("Done Upserting Documents\n");
 
         self.sync_pipelines(Some(document_ids)).await?;
         Ok(())
@@ -566,7 +610,7 @@ impl Collection {
             for mut pipeline in pipelines {
                 pipeline.execute(&document_ids, mp.clone()).await?;
             }
-            println!("Done Syncing Pipelines\n");
+            eprintln!("Done Syncing Pipelines\n");
         }
         Ok(())
     }
@@ -610,7 +654,6 @@ impl Collection {
     ///        .vector_search("Here is a test", None, None, None, None)
     ///        .await
     ///        .unwrap();
-    ///    println!("The results are: {:?}", results);
     ///    Ok(())
     /// }
     /// ```
@@ -879,13 +922,26 @@ mod tests {
         // Test basic upsert
         let documents = vec![
             serde_json::json!({"id": 1, "text": "hello world"}).into(),
+            serde_json::json!({"id": 2, "text": "hello world"}).into(),
+            serde_json::json!({"id": 3, "text": "hello world"}).into(),
+            serde_json::json!({"id": 4, "text": "hello world"}).into(),
+            serde_json::json!({"id": 5, "text": "hello world"}).into(),
+            serde_json::json!({"id": 6, "text": "hello world"}).into(),
+            serde_json::json!({"id": 7, "text": "hello world"}).into(),
+            serde_json::json!({"id": 8, "text": "hello world"}).into(),
+            serde_json::json!({"id": 9, "text": "hello world"}).into(),
+            serde_json::json!({"id": 10, "text": "hello world"}).into(),
+            serde_json::json!({"text": "hello world"}).into(),
+            serde_json::json!({"text": "hello world"}).into(),
             serde_json::json!({"text": "hello world"}).into(),
         ];
         collection
             .upsert_documents(documents.clone(), Some(false))
             .await?;
         let document = &collection.get_documents(None, Some(1)).await?[0];
-        assert_eq!(document["text"], "hello world");
+        println!("{:?}", document);
+        assert!(false);
+        // assert_eq!(document["text"], "hello world");
 
         // Test strictness
         assert!(collection

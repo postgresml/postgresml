@@ -48,53 +48,6 @@ impl From<&ModelRuntime> for &'static str {
     }
 }
 
-/// Our project tasks
-#[derive(Debug, Clone)]
-pub enum ProjectTask {
-    Regression,
-    Classification,
-    QuestionAnswering,
-    Summarization,
-    Translation,
-    TextClassification,
-    TextGeneration,
-    Text2text,
-    Embedding,
-}
-
-impl From<&str> for ProjectTask {
-    fn from(s: &str) -> Self {
-        match s {
-            "regression" => Self::Regression,
-            "classification" => Self::Classification,
-            "question_answering" => Self::QuestionAnswering,
-            "summarization" => Self::Summarization,
-            "translation" => Self::Translation,
-            "text_classification" => Self::TextClassification,
-            "text_generation" => Self::TextGeneration,
-            "text2text" => Self::Text2text,
-            "embedding" => Self::Embedding,
-            _ => panic!("Unknown project task: {}", s),
-        }
-    }
-}
-
-impl From<&ProjectTask> for &'static str {
-    fn from(m: &ProjectTask) -> Self {
-        match m {
-            ProjectTask::Regression => "regression",
-            ProjectTask::Classification => "classification",
-            ProjectTask::QuestionAnswering => "question_answering",
-            ProjectTask::Summarization => "summarization",
-            ProjectTask::Translation => "translation",
-            ProjectTask::TextClassification => "text_classification",
-            ProjectTask::TextGeneration => "text_generation",
-            ProjectTask::Text2text => "text2text",
-            ProjectTask::Embedding => "embedding",
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct ModelDatabaseData {
     pub id: i64,
@@ -153,9 +106,7 @@ impl Model {
                 .await?;
 
             let model = if let Some(m) = model {
-                if throw_if_exists {
-                    anyhow::bail!("Model already exists in database")
-                }
+                anyhow::ensure!(!throw_if_exists, "Model already exists in database");
                 m
             } else {
                 let model: models::Model = sqlx::query_as("INSERT INTO pgml.models (project_id, num_features, algorithm, runtime, hyperparams, status, search_params, search_args) VALUES ($1, $2, $3, $4::pgml.runtime, $5, $6, $7, $8) RETURNING id, created_at, runtime::TEXT, hyperparams")
@@ -206,7 +157,7 @@ impl Model {
         let database_url = &self
             .project_info
             .as_ref()
-            .context("Project info not set for model")?
+            .context("Project info required to call method model.get_pool()")?
             .database_url;
         get_or_initialize_pool(database_url).await
     }
