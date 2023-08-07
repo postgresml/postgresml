@@ -258,14 +258,11 @@ async def get_prompt(user_input: str = ""):
     )
     log.info(vector_results)
     context = ""
+
     for result in vector_results:
-        if result[0] > 0.7:
-            context += result[1] + "\n"
-    if context:
-        print("Found relevant documentation.... ")
-        query = base_prompt.format(context=context, question=user_input)
-    else:
-        query = user_input
+        context += result[1] + "\n"
+
+    query = base_prompt.format(context=context, question=user_input)
 
     return query
 
