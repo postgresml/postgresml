@@ -25,3 +25,4 @@ transformers==4.31.0
 xgboost==1.7.6
 langchain==0.0.237
 einops==0.6.1
+pynvml==11.5.0

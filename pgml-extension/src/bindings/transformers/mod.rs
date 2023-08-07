@@ -348,6 +348,8 @@ pub fn load_dataset(
 }
 
 pub fn clear_gpu_cache(memory_usage: Option<f32>) -> Result<bool> {
+    crate::bindings::venv::activate();
+
     Python::with_gil(|py| -> Result<bool> {
         let clear_gpu_cache: Py<PyAny> = PY_MODULE.getattr(py, "clear_gpu_cache")?;
         let success = clear_gpu_cache
