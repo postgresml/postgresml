@@ -566,6 +566,7 @@ fn load_dataset(
     TableIterator::new(vec![(name, rows)].into_iter())
 }
 
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "embed")]
 pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
     embed_batch(transformer, Vec::from([text]), kwargs)
@@ -574,6 +575,7 @@ pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> 
         .to_vec()
 }
 
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "embed")]
 pub fn embed_batch(
     transformer: &str,
