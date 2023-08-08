@@ -14,24 +14,24 @@ Before you begin, make sure you have the following:
 - Python version >=3.8
 - OpenAI API key
 - Python 3.8+
-- Poetry
+
 
 # Getting started
-1. Clone this repository, start a poetry shell and install dependencies
+1. Create a virtual environment and install `pgml-chat` using `pip`:
 ```bash
-git clone https://github.com/postgresml/postgresml
-cd postgresml/pgml-apps/pgml-chat
-poetry shell
-poetry install
-pip install .
+pip install pgml-chat
 ```
 
-2. Update environment variables in `.env` file
-```bash
-cp .env.template .env
-```
+`pgml-chat` will be installed in your PATH.
 
-Update environment variables with your OpenAI API key and PostgresML database credentials.
+2. Download `.env.template` file from PostgresML Github repository.
+
+```bash
+wget https://github.com/postgresml/postgresml/blob/master/pgml-apps/pgml-chat/.env.template 
+```
+3. Copy the template file to `.env`
+
+4. Update environment variables with your OpenAI API key and PostgresML database credentials.
 ```bash
 OPENAI_API_KEY=<OPENAI_API_KEY>
 DATABASE_URL=<POSTGRES_DATABASE_URL starts with postgres://>
@@ -156,6 +156,25 @@ If you have set up the Discord app correctly, you should see the following outpu
 Once the discord app is running, you can interact with the chatbot on Discord as shown below. In the example here, name of the bot is `pgchat`. This app responds only to direct messages to the bot.
 
 ![Discord Chatbot](./images/discord_screenshot.png)
+
+# Developer Guide
+
+1. Clone this repository, start a poetry shell and install dependencies
+
+```bash
+git clone https://github.com/postgresml/postgresml
+cd postgresml/pgml-apps/pgml-chat
+poetry shell
+poetry install
+pip install .
+```
+
+2. Create a .env file in the root directory of the project and add all the environment variables discussed in [Getting Started](#getting-started) section.
+3. All the logic is in `pgml_chat/main.py`
+4. Check the [roadmap](#roadmap) for features that you would like to work on.
+5. If you are looking for features that are not included here, please open an issue and we will add it to the roadmap.
+
+```bash
 
 ## Options
 You can control the behavior of the chatbot by setting the following environment variables:
