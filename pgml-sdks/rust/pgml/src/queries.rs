@@ -136,6 +136,7 @@ WHERE
     from 
       %s
   );
+ON CONFLICT (chunk_id) DO NOTHING;
 "#;
 
 pub const GENERATE_EMBEDDINGS_FOR_CHUNK_IDS: &str = r#"
@@ -158,6 +159,7 @@ WHERE
     from 
       %s
   );
+ON CONFLICT (chunk_id) DO NOTHING;
 "#;
 
 pub const EMBED_AND_VECTOR_SEARCH: &str = r#"

@@ -23,7 +23,10 @@ use crate::types::Json;
 use crate::utils;
 
 #[cfg(feature = "javascript")]
-use crate::{languages::javascript::*, model::ModelJavascript, splitter::SplitterJavascript};
+use crate::{
+    languages::javascript::*, languages::CustomInto, pipeline::PipelineJavascript,
+    query_builder::QueryBuilderJavascript,
+};
 
 #[cfg(feature = "python")]
 use crate::{languages::CustomInto, pipeline::PipelinePython, query_builder::QueryBuilderPython};

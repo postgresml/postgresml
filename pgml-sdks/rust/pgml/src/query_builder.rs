@@ -14,7 +14,10 @@ use crate::{
 };
 
 #[cfg(feature = "javascript")]
-use crate::{languages::javascript::*, model::ModelJavascript, splitter::SplitterJavascript};
+use crate::{
+    languages::{javascript::*, CustomInto},
+    pipeline::PipelineJavascript,
+};
 
 #[cfg(feature = "python")]
 use crate::{languages::CustomInto, pipeline::PipelinePython};

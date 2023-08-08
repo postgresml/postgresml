@@ -73,14 +73,14 @@ pub fn generate_javascript_derive(parsed: DeriveInput) -> proc_macro::TokenStrea
     let expanded = quote! {
         #[cfg(feature = "javascript")]
         pub struct #name_ident {
-            pub wrapped: #wrapped_type_ident
+            pub wrapped: std::boxed::Box<#wrapped_type_ident>
         }
 
         #[cfg(feature = "javascript")]
         impl From<#wrapped_type_ident> for #name_ident {
             fn from(w: #wrapped_type_ident) -> Self {
                 Self {
-                    wrapped: w,
+                    wrapped: std::boxed::Box::new(w),
                 }
             }
         }
@@ -88,23 +88,98 @@ pub fn generate_javascript_derive(parsed: DeriveInput) -> proc_macro::TokenStrea
         #[cfg(feature = "javascript")]
         impl From<#name_ident> for #wrapped_type_ident {
             fn from(w: #name_ident) -> Self {
-                w.wrapped
+                *w.wrapped
             }
         }
 
         #[cfg(feature = "javascript")]
-        impl FromJsType for #name_ident {
+        impl FromJsType for #wrapped_type_ident {
             type From = neon::types::JsObject;
-            fn from_js_type<'a, C: neon::context::Context<'a>>(cx: &mut C, arg: neon::handle::Handle<Self::From>) -> neon::result::NeonResult<Self> {
+           fn from_js_type<'a, C: neon::context::Context<'a>>(cx: &mut C, arg: neon::handle::Handle<Self::From>) -> neon::result::NeonResult<Self> {
                 use neon::prelude::*;
                 use core::ops::Deref;
-                let s: neon::handle::Handle<neon::types::JsBox<std::cell::RefCell<#name_ident>>> = arg.get(cx, "s")?;
-                let wrapped = (*s).deref().borrow().wrapped.clone();
-                Ok(Self {
-                    wrapped
-                })
+                let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = arg.get(cx, "s")?;
+                Ok(*s.wrapped.clone())
+            }
+
+        }
+
+        #[cfg(feature = "javascript")]
+        impl FromJsType for &mut #wrapped_type_ident {
+            type From = neon::types::JsObject;
+           fn from_js_type<'a, C: neon::context::Context<'a>>(cx: &mut C, arg: neon::handle::Handle<Self::From>) -> neon::result::NeonResult<Self> {
+                use neon::prelude::*;
+                use core::ops::Deref;
+                let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = arg.get(cx, "s")?;
+                unsafe {
+                    let ptr = &*s.wrapped as *const #wrapped_type_ident;
+                    let ptr = ptr as *mut #wrapped_type_ident;
+                    let boxed = Box::from_raw(ptr);
+                    Ok(Box::leak(boxed))
+                }
             }
         }
+
+        #[cfg(feature = "javascript")]
+        impl FromJsType for & #wrapped_type_ident {
+            type From = neon::types::JsObject;
+           fn from_js_type<'a, C: neon::context::Context<'a>>(cx: &mut C, arg: neon::handle::Handle<Self::From>) -> neon::result::NeonResult<Self> {
+                use neon::prelude::*;
+                use core::ops::Deref;
+                let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = arg.get(cx, "s")?;
+                unsafe {
+                    let ptr = &*s.wrapped as *const #wrapped_type_ident;
+                    let ptr = ptr as *mut #wrapped_type_ident;
+                    let boxed = Box::from_raw(ptr);
+                    Ok(Box::leak(boxed))
+                }
+            }
+        }
+
+        #[cfg(feature = "javascript")]
+        impl CustomInto<#wrapped_type_ident> for &#name_ident {
+            fn custom_into(self) -> #wrapped_type_ident {
+                *self.wrapped.clone()
+            }
+        }
+
+        #[cfg(feature = "javascript")]
+        impl CustomInto<&'static #wrapped_type_ident> for &#name_ident {
+            fn custom_into(self) -> &'static #wrapped_type_ident {
+                unsafe {
+                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
+                    let ptr = ptr as *mut #wrapped_type_ident;
+                    let boxed = Box::from_raw(ptr);
+                    Box::leak(boxed)
+                }
+            }
+        }
+
+        #[cfg(feature = "javascript")]
+        impl CustomInto<&'static mut #wrapped_type_ident> for &#name_ident {
+            fn custom_into(self) -> &'static mut #wrapped_type_ident {
+                unsafe {
+                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
+                    let ptr = ptr as *mut #wrapped_type_ident;
+                    let boxed = Box::from_raw(ptr);
+                    Box::leak(boxed)
+                }
+            }
+        }
+
+        // #[cfg(feature = "javascript")]
+        // impl FromJsType for #name_ident {
+        //     type From = neon::types::JsObject;
+        //     fn from_js_type<'a, C: neon::context::Context<'a>>(cx: &mut C, arg: neon::handle::Handle<Self::From>) -> neon::result::NeonResult<Self> {
+        //         use neon::prelude::*;
+        //         use core::ops::Deref;
+        //         let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = arg.get(cx, "s")?;
+        //         let wrapped = (*s).wrapped.clone();
+        //         Ok(Self {
+        //             wrapped
+        //         })
+        //     }
+        // }
 
         #[cfg(feature = "javascript")]
         impl IntoJsResult for #wrapped_type_ident {
@@ -227,15 +302,16 @@ pub fn generate_javascript_methods(
             if does_take_ownership_of_self {
                 quote! {
                     let this = this.into_inner(&mut cx);
-                    let s: neon::handle::Handle<neon::types::JsBox<std::cell::RefCell<#name_ident>>> = this.get(&mut cx, "s")?;
-                    let wrapped = (*s).deref().borrow_mut().wrapped.clone();
+                    let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = this.get(&mut cx, "s")?;
+                    let wrapped = (*s.wrapped).clone();
                     #(#inner_prep_arguments)*
                 }
             } else {
                 quote! {
                     let this = this.into_inner(&mut cx);
-                    let s: neon::handle::Handle<neon::types::JsBox<std::cell::RefCell<#name_ident>>> = this.get(&mut cx, "s")?;
-                    let wrapped = &mut (*s).deref().borrow_mut().wrapped;
+                    let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = this.get(&mut cx, "s")?;
+                    // let wrapped: &mut #wrapped_type_ident = <&mut #wrapped_type_ident>::from_js_type(&mut cx, s)?;
+                    let wrapped: &mut #wrapped_type_ident = s.custom_into();
                     #(#inner_prep_arguments)*
                 }
             }
@@ -340,7 +416,7 @@ pub fn generate_javascript_methods(
             fn into_js_result<'a, 'b, 'c: 'b, C: neon::context::Context<'c>>(self, cx: &mut C) -> neon::result::JsResult<'b, Self::Output> {
                 use neon::object::Object;
                 let obj = cx.empty_object();
-                let s = cx.boxed(std::cell::RefCell::new(self));
+                let s = cx.boxed(self);
                 obj.set(cx, "s", s)?;
                 #(#object_sets)*
                 Ok(obj)
@@ -370,7 +446,7 @@ fn get_method_wrapper_arguments_javascript(
         .for_each(|(i, (argument_name, argument_type))| {
             let argument_name_ident = format_ident!("{}", argument_name.replace("mut ", ""));
             let (outer_prep_argument, inner_prep_argument, method_argument) =
-                convert_method_wrapper_arguments(argument_name_ident, argument_type, i);
+                convert_method_wrapper_arguments(argument_name_ident, argument_type, i, false);
             outer_prep_arguments.push(outer_prep_argument);
             inner_prep_arguments.push(inner_prep_argument);
             method_arguments.push(method_argument);
@@ -382,91 +458,59 @@ fn convert_method_wrapper_arguments(
     name_ident: syn::Ident,
     ty: &SupportedType,
     index: usize,
+    checked_basic_reference: bool,
 ) -> (
     proc_macro2::TokenStream,
     proc_macro2::TokenStream,
     proc_macro2::TokenStream,
 ) {
-    match ty {
-        SupportedType::Reference(r) => {
-            let (o, i, m) = convert_method_wrapper_arguments(name_ident.clone(), &r.ty, index);
+    // I think this whole piece could be done better if we fix the way we handle references, but
+    // I'm not sure how to do that yet
+    match (&ty, checked_basic_reference) {
+        (SupportedType::Reference(r), false) => match *r.ty {
+            SupportedType::str => {
+                let argument_type_js = get_neon_type(&r.ty);
+                let t = syn::parse_str::<syn::Type>("String")
+                    .unwrap()
+                    .into_token_stream();
 
-            match *r.ty.clone() {
-                SupportedType::Option(_o) => panic!("We do not support references to options yet"),
-
-                SupportedType::Database
-                | SupportedType::Collection
-                | SupportedType::Splitter
-                | SupportedType::QueryBuilder
-                | SupportedType::QueryRunner
-                | SupportedType::Model => {
-                    // let argument_type_js = get_neon_type(&ty);
-                    let t = r.ty.to_type(Some("Javascript")).expect(
-                        "Could not parse type in convert_method_wrapper_arguments in javascript.rs",
-                    );
-                    (
-                        o,
-                        quote! {
-                            let #name_ident = #name_ident.into_inner(&mut cx);
-                            let s: neon::handle::Handle<neon::types::JsBox<std::cell::RefCell<#t>>> = #name_ident.get(&mut cx, "s")?;
-                            let #name_ident = &mut (*s).deref().borrow_mut().wrapped;
-                        },
-                        m,
-                    )
-                }
-                _ => {
-                    if r.mutable {
-                        (o, i, quote! { &mut #m})
-                    } else {
-                        (o, i, quote! { & #m })
-                    }
-                }
+                (
+                    quote! {
+                        let #name_ident = cx.argument::<#argument_type_js>(#index as i32)?;
+                        let #name_ident = <#t>::from_js_type(&mut cx, #name_ident)?;
+                    },
+                    quote! {},
+                    quote! { &#name_ident },
+                )
             }
-        }
-        SupportedType::Database
-        | SupportedType::Collection
-        | SupportedType::Splitter
-        | SupportedType::QueryBuilder
-        | SupportedType::QueryRunner
-        | SupportedType::Model => {
-            let argument_type_js = get_neon_type(&ty);
-            let t = ty.to_type(Some("Javascript")).expect(
-                "Could not parse type in convert_method_wrapper_arguments in javascript.rs",
-            );
-            (
-                quote! {
-                    let #name_ident = cx.argument::<#argument_type_js>(#index as i32)?.root(&mut cx);
-                },
-                quote! {
-                    let #name_ident = #name_ident.into_inner(&mut cx);
-                    let #name_ident = <#t>::from_js_type(&mut cx, #name_ident)?;
-                },
-                quote! { #name_ident },
-            )
-        }
-        SupportedType::str => {
-            let argument_type_js = get_neon_type(&ty);
-            let t = syn::parse_str::<syn::Type>("String")
-                .unwrap()
-                .into_token_stream();
-            (
-                quote! {
-                    let #name_ident = cx.argument::<#argument_type_js>(#index as i32)?;
-                    let #name_ident = <#t>::from_js_type(&mut cx, #name_ident)?;
-                },
-                quote! {},
-                quote! { #name_ident},
-            )
-        }
-        SupportedType::Option(_o) => {
-            let t = ty.to_type(Some("Javascript")).expect(
+            SupportedType::i64
+            | SupportedType::u64
+            | SupportedType::i32
+            | SupportedType::f64
+            | SupportedType::bool => {
+                let argument_type_js = get_neon_type(&r.ty);
+                let t = r.ty.to_type(None).expect(
+                    "Could not parse type in convert_method_wrapper_arguments in javascript.rs",
+                );
+                (
+                    quote! {
+                        let #name_ident = cx.argument::<#argument_type_js>(#index as i32)?;
+                        let #name_ident = <#t>::from_js_type(&mut cx, #name_ident)?;
+                    },
+                    quote! {},
+                    quote! { &#name_ident },
+                )
+            }
+            _ => convert_method_wrapper_arguments(name_ident, ty, index, true),
+        },
+        (SupportedType::Option(_o), _) => {
+            let t = ty.to_type(None).expect(
                 "Could not parse type in convert_method_wrapper_arguments in javascript.rs",
             );
             (
                 quote! {
                     let #name_ident = cx.argument_opt(#index as i32);
                     let #name_ident = <#t>::from_option_js_type(&mut cx, #name_ident)?;
-
                 },
                 quote! {},
                 quote! { #name_ident },
@@ -474,7 +518,7 @@ fn convert_method_wrapper_arguments(
         }
         _ => {
             let argument_type_js = get_neon_type(&ty);
-            let t = ty.to_type(Some("Javascript")).expect(
+            let t = ty.to_type(None).expect(
                 "Could not parse type in convert_method_wrapper_arguments in javascript.rs",
             );
             (
@@ -492,6 +536,7 @@ fn convert_method_wrapper_arguments(
 fn get_neon_type(ty: &SupportedType) -> syn::Type {
     match ty {
         SupportedType::Reference(r) => get_neon_type(&r.ty),
+        SupportedType::Option(o) => get_neon_type(o),
         SupportedType::str | SupportedType::String => {
             syn::parse_str("neon::types::JsString").unwrap()
         }
@@ -509,6 +554,7 @@ fn get_neon_type(ty: &SupportedType) -> syn::Type {
         | SupportedType::Collection
         | SupportedType::Splitter
         | SupportedType::QueryBuilder
+        | SupportedType::Pipeline
         | SupportedType::QueryRunner
         | SupportedType::Model => syn::parse_str("neon::types::JsObject").unwrap(),
         // Add more types as required

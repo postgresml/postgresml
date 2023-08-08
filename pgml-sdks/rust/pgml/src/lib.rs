@@ -82,6 +82,15 @@ pub enum LogFormat {
     Pretty,
 }
 
+impl From<&str> for LogFormat {
+    fn from(s: &str) -> Self {
+        match s {
+            "JSON" => LogFormat::JSON,
+            _ => LogFormat::Pretty,
+        }
+    }
+}
+
 fn init_logger(level: Option<String>, format: Option<String>) -> anyhow::Result<()> {
     let level = level.unwrap_or_else(|| env::var("LOG_LEVEL").unwrap_or("".to_string()));
     let level = match level.as_str() {
@@ -93,12 +102,8 @@ fn init_logger(level: Option<String>, format: Option<String>) -> anyhow::Result<
     };
 
     let format = format.unwrap_or_else(|| env::var("LOG_FORMAT").unwrap_or("".to_string()));
-    let format = match format.as_str() {
-        "JSON" => LogFormat::JSON,
-        _ => LogFormat::Pretty,
-    };
 
-    match format {
+    match format.as_str().into() {
         LogFormat::JSON => FmtSubscriber::builder()
             .json()
             .with_max_level(level)

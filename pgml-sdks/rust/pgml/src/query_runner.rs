@@ -6,7 +6,7 @@ use sqlx::{Postgres, Row};
 use crate::{get_or_initialize_pool, types::Json};
 
 #[cfg(feature = "javascript")]
-use crate::languages::javascript::*;
+use crate::{languages::javascript::*, languages::CustomInto};
 
 #[cfg(feature = "python")]
 use crate::languages::CustomInto;
