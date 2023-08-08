@@ -174,15 +174,15 @@ pip install .
 4. Check the [roadmap](#roadmap) for features that you would like to work on.
 5. If you are looking for features that are not included here, please open an issue and we will add it to the roadmap.
 
-```bash
 
-## Options
+
+# Options
 You can control the behavior of the chatbot by setting the following environment variables:
 - `SYSTEM_PROMPT`: This is the prompt that is used to initialize the chatbot. You can customize this prompt to change the behavior of the chatbot. For example, you can change the name of the chatbot or the location of the chatbot.
 - `BASE_PROMPT`: This is the prompt that is used to generate responses to user queries. You can customize this prompt to change the behavior of the chatbot. 
 - `MODEL`: This is the open source embedding model used to generate embeddings for the documents. You can change this to use a different model.
 
-## Roadmap
+# Roadmap
 - ~~`hyerbot --chat_interface {cli, slack, discord}` that supports Slack, and Discord.~~
 - Support for file formats like rst, html, pdf, docx, etc.
 - Support for open source models in addition to OpenAI for chat completion.
