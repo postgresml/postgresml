@@ -602,6 +602,7 @@ pub fn embed_batch(
 /// ```sql
 /// SELECT pgml.clear_gpu_cache(memory_usage => 0.5);
 /// ```
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "clear_gpu_cache")]
 pub fn clear_gpu_cache(memory_usage: default!(Option<f32>, "NULL")) -> bool {
     match crate::bindings::transformers::clear_gpu_cache(memory_usage) {
