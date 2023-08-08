@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[cfg(feature = "javascript")]
-use crate::{languages::javascript::*, languages::CustomInto};
+use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
 use crate::languages::CustomInto;

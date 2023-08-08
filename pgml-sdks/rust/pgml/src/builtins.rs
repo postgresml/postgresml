@@ -10,7 +10,7 @@ pub struct Builtins {
 use crate::{get_or_initialize_pool, query_runner::QueryRunner, types::Json};
 
 #[cfg(feature = "javascript")]
-use crate::{languages::javascript::*, query_runner::QueryRunnerJavascript, languages::CustomInto};
+use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
 use crate::{languages::CustomInto, query_runner::QueryRunnerPython};

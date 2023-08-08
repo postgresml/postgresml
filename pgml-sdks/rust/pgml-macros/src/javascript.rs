@@ -123,7 +123,7 @@ pub fn generate_javascript_derive(parsed: DeriveInput) -> proc_macro::TokenStrea
         #[cfg(feature = "javascript")]
         impl FromJsType for & #wrapped_type_ident {
             type From = neon::types::JsObject;
-           fn from_js_type<'a, C: neon::context::Context<'a>>(cx: &mut C, arg: neon::handle::Handle<Self::From>) -> neon::result::NeonResult<Self> {
+            fn from_js_type<'a, C: neon::context::Context<'a>>(cx: &mut C, arg: neon::handle::Handle<Self::From>) -> neon::result::NeonResult<Self> {
                 use neon::prelude::*;
                 use core::ops::Deref;
                 let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = arg.get(cx, "s")?;
@@ -135,51 +135,6 @@ pub fn generate_javascript_derive(parsed: DeriveInput) -> proc_macro::TokenStrea
                 }
             }
         }
-
-        #[cfg(feature = "javascript")]
-        impl CustomInto<#wrapped_type_ident> for &#name_ident {
-            fn custom_into(self) -> #wrapped_type_ident {
-                *self.wrapped.clone()
-            }
-        }
-
-        #[cfg(feature = "javascript")]
-        impl CustomInto<&'static #wrapped_type_ident> for &#name_ident {
-            fn custom_into(self) -> &'static #wrapped_type_ident {
-                unsafe {
-                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
-                    let ptr = ptr as *mut #wrapped_type_ident;
-                    let boxed = Box::from_raw(ptr);
-                    Box::leak(boxed)
-                }
-            }
-        }
-
-        #[cfg(feature = "javascript")]
-        impl CustomInto<&'static mut #wrapped_type_ident> for &#name_ident {
-            fn custom_into(self) -> &'static mut #wrapped_type_ident {
-                unsafe {
-                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
-                    let ptr = ptr as *mut #wrapped_type_ident;
-                    let boxed = Box::from_raw(ptr);
-                    Box::leak(boxed)
-                }
-            }
-        }
-
-        // #[cfg(feature = "javascript")]
-        // impl FromJsType for #name_ident {
-        //     type From = neon::types::JsObject;
-        //     fn from_js_type<'a, C: neon::context::Context<'a>>(cx: &mut C, arg: neon::handle::Handle<Self::From>) -> neon::result::NeonResult<Self> {
-        //         use neon::prelude::*;
-        //         use core::ops::Deref;
-        //         let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = arg.get(cx, "s")?;
-        //         let wrapped = (*s).wrapped.clone();
-        //         Ok(Self {
-        //             wrapped
-        //         })
-        //     }
-        // }
 
         #[cfg(feature = "javascript")]
         impl IntoJsResult for #wrapped_type_ident {
@@ -309,9 +264,12 @@ pub fn generate_javascript_methods(
             } else {
                 quote! {
                     let this = this.into_inner(&mut cx);
-                    let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = this.get(&mut cx, "s")?;
-                    // let wrapped: &mut #wrapped_type_ident = <&mut #wrapped_type_ident>::from_js_type(&mut cx, s)?;
-                    let wrapped: &mut #wrapped_type_ident = s.custom_into();
+                    // let s: neon::handle::handle<neon::types::jsbox<#name_ident>> = this.get(&mut cx, "s")?;
+                    // let wrapped: &mut #wrapped_type_ident = s.custom_into();
+
+                    let s: neon::handle::Handle<neon::types::JsObject> = this.get(&mut cx, "s")?;
+                    let wrapped =  <&mut #wrapped_type_ident>::from_js_type(&mut cx, s)?;
+
                     #(#inner_prep_arguments)*
                 }
             }

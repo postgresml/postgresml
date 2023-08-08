@@ -3,14 +3,14 @@ use std::fs::OpenOptions;
 use std::io::Write;
 
 const ADDITIONAL_DEFAULTS_FOR_PYTHON: &[u8] = br#"
-def py_init_logger(log_level: str) -> None
+def py_init_logger(level: Option[str], format: Option[str]) -> None
 
 Json = dict[str, Any]
 DateTime = int
 "#;
 
 const ADDITIONAL_DEFAULTS_FOR_JAVASCRIPT: &[u8] = br#"
-export function setupLogger(log_level: string): void;
+export function js_init_logger(level?: string, format?: string): void;
 
 export type Json = { [key: string]: any };
 export type DateTime = Date;
@@ -19,6 +19,7 @@ export function newCollection(name: string, database_url?: string): Collection;
 export function newModel(name?: string, task?: string, source?: string, parameters?: string, database_url?: string): Model;
 export function newSplitter(name?: string, parameters?: any, database_url?: string): Splitter;
 export function newBuiltins(database_url?: string): Builtins;
+export function newPipeline(name: string, model: Model, splitter: Splitter): Pipeline;
 "#;
 
 fn main() {

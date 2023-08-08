@@ -23,10 +23,7 @@ use crate::types::Json;
 use crate::utils;
 
 #[cfg(feature = "javascript")]
-use crate::{
-    languages::javascript::*, languages::CustomInto, pipeline::PipelineJavascript,
-    query_builder::QueryBuilderJavascript,
-};
+use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
 use crate::{languages::CustomInto, pipeline::PipelinePython, query_builder::QueryBuilderPython};
@@ -529,10 +526,10 @@ impl Collection {
             Ok(Some((source_uuid, text, metadata)))
         }).collect();
 
-        // Yes we could continue chaining the above iterators but types become super annoying to
+        // We could continue chaining the above iterators but types become super annoying to
         // deal with, especially because we are dealing with async functions. This is much easier to read
         // Also, we may want to use a variant of chunks that is owned, I'm not 100% sure of what
-        // cloning happens when passing values into sqlx bind. itertools variant will not work as
+        // cloning happens when passing values into sqlx bind. itertools variants will not work as
         // it is not thread safe and pyo3 will get upset
         let mut document_ids = Vec::new();
         for chunk in documents?.chunks(10) {

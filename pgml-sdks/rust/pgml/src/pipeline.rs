@@ -22,8 +22,7 @@ use crate::{
 use crate::{languages::CustomInto, model::ModelPython, splitter::SplitterPython};
 
 #[cfg(feature = "javascript")]
-use crate::{languages::{javascript::*, CustomInto}, model::ModelJavascript, splitter::SplitterJavascript};
-
+use crate::languages::javascript::*;
 
 #[derive(Debug, Clone)]
 pub enum PipelineSyncStatus {

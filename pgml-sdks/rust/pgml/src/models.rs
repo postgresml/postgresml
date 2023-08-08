@@ -5,9 +5,6 @@ use serde::Serialize;
 
 use crate::types::{DateTime, Json};
 
-#[cfg(feature = "javascript")]
-use crate::languages::javascript::*;
-
 /// A pipeline
 #[enum_def]
 #[derive(FromRow)]

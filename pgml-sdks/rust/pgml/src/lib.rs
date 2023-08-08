@@ -177,12 +177,25 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
 }
 
 #[cfg(feature = "javascript")]
+fn js_init_logger(mut cx: neon::context::FunctionContext) -> neon::result::JsResult<neon::types::JsUndefined> {
+    use crate::languages::javascript::*;
+    let level = cx.argument_opt(0);
+    let level = <Option<String>>::from_option_js_type(&mut cx, level)?;
+    let format = cx.argument_opt(1);
+    let format = <Option<String>>::from_option_js_type(&mut cx, format)?;
+    init_logger(level, format).ok();
+    ().into_js_result(&mut cx)
+}
+
+#[cfg(feature = "javascript")]
 #[neon::main]
 fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
+    cx.export_function("js_init_logger", js_init_logger)?;
     cx.export_function("newCollection", collection::CollectionJavascript::new)?;
     cx.export_function("newModel", model::ModelJavascript::new)?;
     cx.export_function("newSplitter", splitter::SplitterJavascript::new)?;
     cx.export_function("newBuiltins", builtins::BuiltinsJavascript::new)?;
+    cx.export_function("newPipeline", pipeline::PipelineJavascript::new)?;
     Ok(())
 }
 
