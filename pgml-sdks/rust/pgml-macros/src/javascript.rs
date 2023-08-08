@@ -101,7 +101,6 @@ pub fn generate_javascript_derive(parsed: DeriveInput) -> proc_macro::TokenStrea
                 let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = arg.get(cx, "s")?;
                 Ok(*s.wrapped.clone())
             }
-
         }
 
         #[cfg(feature = "javascript")]
@@ -264,12 +263,13 @@ pub fn generate_javascript_methods(
             } else {
                 quote! {
                     let this = this.into_inner(&mut cx);
-                    // let s: neon::handle::handle<neon::types::jsbox<#name_ident>> = this.get(&mut cx, "s")?;
-                    // let wrapped: &mut #wrapped_type_ident = s.custom_into();
-
-                    let s: neon::handle::Handle<neon::types::JsObject> = this.get(&mut cx, "s")?;
-                    let wrapped =  <&mut #wrapped_type_ident>::from_js_type(&mut cx, s)?;
-
+                    let s: neon::handle::Handle<neon::types::JsBox<#name_ident>> = this.get(&mut cx, "s")?;
+                    let wrapped = unsafe {
+                        let ptr = &*s.wrapped as *const #wrapped_type_ident;
+                        let ptr = ptr as *mut #wrapped_type_ident;
+                        let boxed = Box::from_raw(ptr);
+                        Ok(Box::leak(boxed))
+                    }?;
                     #(#inner_prep_arguments)*
                 }
             }
@@ -513,6 +513,7 @@ fn get_neon_type(ty: &SupportedType) -> syn::Type {
         | SupportedType::Splitter
         | SupportedType::QueryBuilder
         | SupportedType::Pipeline
+        | SupportedType::PipelineSyncData
         | SupportedType::QueryRunner
         | SupportedType::Model => syn::parse_str("neon::types::JsObject").unwrap(),
         // Add more types as required
@@ -532,13 +533,14 @@ fn convert_output_type_convert_from_javascript(
             Some(quote! {neon::result::JsResult<'a, neon::types::JsObject>}),
             Some(format_ident!("Self").into_token_stream()),
         ),
-        t @ SupportedType::Database
-        | t @ SupportedType::Model
-        | t @ SupportedType::Splitter
-        | t @ SupportedType::Collection => (
-            Some(quote! {neon::result::JsResult<'a, neon::types::JsObject>}),
-            Some(format_ident!("{}Javascript", t.to_string()).into_token_stream()),
-        ),
+        // t @ SupportedType::Database
+        // | t @ SupportedType::PipelineSyncData
+        // | t @ SupportedType::Model
+        // | t @ SupportedType::Splitter
+        // | t @ SupportedType::Collection => (
+        //     Some(quote! {neon::result::JsResult<'a, neon::types::JsObject>}),
+        //     Some(format_ident!("{}Javascript", t.to_string()).into_token_stream()),
+        // ),
         t => {
             let ty = get_neon_type(t);
             (Some(quote! {neon::result::JsResult<'a, #ty>}), None)
@@ -569,7 +571,6 @@ fn get_typescript_type(ty: &SupportedType) -> String {
                 get_typescript_type(v)
             )
         }
-        SupportedType::JsonHashMap => "Map<string, string>".to_string(),
         SupportedType::Tuple(t) => {
             let mut types = Vec::new();
             for ty in t {
@@ -584,6 +585,7 @@ fn get_typescript_type(ty: &SupportedType) -> String {
         }
         SupportedType::i64 | SupportedType::f64 | SupportedType::u64 => "number".to_string(),
         // Our own types
+        SupportedType::PipelineSyncData => "Json".to_string(),
         t @ SupportedType::Database
         | t @ SupportedType::Json
         | t @ SupportedType::DateTime

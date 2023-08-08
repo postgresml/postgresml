@@ -45,6 +45,7 @@ pub enum SupportedType {
     QueryBuilder,
     QueryRunner,
     Pipeline,
+    PipelineSyncData,
 }
 
 impl ToString for SupportedType {
@@ -70,7 +71,7 @@ impl SupportedType {
             SupportedType::str => "str".to_string(),
             SupportedType::String => "String".to_string(),
             SupportedType::bool => "bool".to_string(),
-            SupportedType::Json => "Json".to_string(),
+            SupportedType::Json | SupportedType::PipelineSyncData => "Json".to_string(),
             SupportedType::Vec(v) => format!("Vec<{}>", v.to_language_string(language)),
             SupportedType::HashMap((k, v)) => {
                 format!(
@@ -214,6 +215,7 @@ impl<'ast> Visit<'ast> for GetSupportedType {
             "QueryBuilder" => Some(SupportedType::QueryBuilder),
             "QueryRunner" => Some(SupportedType::QueryRunner),
             "Pipeline" => Some(SupportedType::Pipeline),
+            "PipelineSyncData" => Some(SupportedType::PipelineSyncData),
             _ => None,
         };
 

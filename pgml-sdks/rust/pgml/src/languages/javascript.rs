@@ -1,6 +1,9 @@
 use neon::prelude::*;
 
-use crate::types::{DateTime, Json};
+use crate::{
+    pipeline::PipelineSyncData,
+    types::{DateTime, Json},
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rust to JS //////////////////////////////////////////////////////////////////
@@ -140,6 +143,16 @@ impl IntoJsResult for Json {
             }
             _ => panic!("Unsupported type for JSON conversion"),
         }
+    }
+}
+
+impl IntoJsResult for PipelineSyncData {
+    type Output = JsValue;
+    fn into_js_result<'a, 'b, 'c: 'b, C: Context<'c>>(
+        self,
+        cx: &mut C,
+    ) -> JsResult<'b, Self::Output> {
+        Json::from(self).into_js_result(cx)
     }
 }
 

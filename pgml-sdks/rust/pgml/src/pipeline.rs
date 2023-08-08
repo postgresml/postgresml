@@ -25,43 +25,37 @@ use crate::{languages::CustomInto, model::ModelPython, splitter::SplitterPython}
 use crate::languages::javascript::*;
 
 #[derive(Debug, Clone)]
-pub enum PipelineSyncStatus {
-    NA,
-    NotSynced,
-    Synced,
-    Syncing,
-    Failed,
+pub struct InvividualSyncStatus {
+    pub synced: i64,
+    pub not_synced: i64,
+    pub total: i64,
 }
 
-impl From<&str> for PipelineSyncStatus {
-    fn from(s: &str) -> Self {
-        match s {
-            "not_synced" => Self::NotSynced,
-            "synced" => Self::Synced,
-            "syncing" => Self::Syncing,
-            "failed" => Self::Failed,
-            _ => Self::NA,
-        }
-    }
-}
-
-impl From<&PipelineSyncStatus> for &str {
-    fn from(s: &PipelineSyncStatus) -> Self {
-        match s {
-            PipelineSyncStatus::NotSynced => "not_synced",
-            PipelineSyncStatus::Synced => "synced",
-            PipelineSyncStatus::Syncing => "syncing",
-            PipelineSyncStatus::Failed => "failed",
-            _ => "na",
-        }
+impl From<InvividualSyncStatus> for Json {
+    fn from(value: InvividualSyncStatus) -> Self {
+        serde_json::json!({
+            "synced": value.synced,
+            "not_synced": value.not_synced,
+            "total": value.total,
+        }).into()
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct PipelineSyncData {
-    pub chunks_status: (i64, i64),
-    pub embeddings_status: (i64, i64),
-    pub tsvectors_status: (i64, i64),
+    pub chunks_status: InvividualSyncStatus,
+    pub embeddings_status: InvividualSyncStatus,
+    pub tsvectors_status: InvividualSyncStatus,
+}
+
+impl From<PipelineSyncData> for Json {
+    fn from(value: PipelineSyncData) -> Self {
+        serde_json::json!({
+            "chunks_status": *Json::from(value.chunks_status),
+            "embeddings_status": *Json::from(value.embeddings_status),
+            "tsvectors_status": *Json::from(value.tsvectors_status),
+        }).into()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -82,7 +76,7 @@ pub struct Pipeline {
     pub parameters: Option<Json>,
 }
 
-#[custom_methods(new, to_dict)]
+#[custom_methods(new, get_status, to_dict)]
 impl Pipeline {
     pub fn new(
         name: &str,
@@ -128,7 +122,11 @@ impl Pipeline {
         ))
         .bind(database_data.splitter_id)
         .fetch_one(&pool).await?;
-        let chunks_status = (chunks_status.0.unwrap_or(0), chunks_status.1.unwrap_or(0));
+        let chunks_status = InvividualSyncStatus {
+            synced: chunks_status.0.unwrap_or(0),
+            not_synced: chunks_status.1.unwrap_or(0) - chunks_status.1.unwrap_or(0),
+            total: chunks_status.1.unwrap_or(0),
+        };
 
         let embeddings_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
             "SELECT embeddings.m, chunks.m FROM (SELECT MAX(id) AS m FROM %s) embeddings, (SELECT MAX(id) AS m FROM %s WHERE splitter_id = $1) chunks",
@@ -137,10 +135,11 @@ impl Pipeline {
         ))
         .bind(database_data.splitter_id)
         .fetch_one(&pool).await?;
-        let embeddings_status = (
-            embeddings_status.0.unwrap_or(0),
-            embeddings_status.1.unwrap_or(0),
-        );
+        let embeddings_status = InvividualSyncStatus {
+            synced: embeddings_status.0.unwrap_or(0),
+            not_synced: embeddings_status.1.unwrap_or(0) - embeddings_status.1.unwrap_or(0),
+            total: embeddings_status.1.unwrap_or(0),
+        };
 
         let tsvectors_status = if parameters["full_text_search"]["active"]
             == serde_json::Value::Bool(true)
@@ -155,10 +154,11 @@ impl Pipeline {
         } else {
             (Some(0), Some(0))
         };
-        let tsvectors_status = (
-            tsvectors_status.0.unwrap_or(0),
-            tsvectors_status.1.unwrap_or(0),
-        );
+        let tsvectors_status = InvividualSyncStatus {
+            synced: tsvectors_status.0.unwrap_or(0),
+            not_synced: tsvectors_status.1.unwrap_or(0) - tsvectors_status.1.unwrap_or(0),
+            total: tsvectors_status.1.unwrap_or(0),
+        };
 
         Ok(PipelineSyncData {
             chunks_status,
@@ -665,6 +665,8 @@ impl Pipeline {
     pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
         self.verify_in_database(false).await?;
 
+        let status = self.get_status().await?;
+
         let model_dict = self
             .model
             .as_mut()
@@ -689,12 +691,14 @@ impl Pipeline {
             .as_ref()
             .context("Pipeline must be verified to call to_dict")?;
 
+
         Ok(serde_json::json!({
             "id": database_data.id,
             "name": self.name,
             "model": *model_dict,
             "splitter": *splitter_dict,
             "parameters": *parameters,
+            "status": *Json::from(status),
         })
         .into())
     }

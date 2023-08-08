@@ -31,6 +31,7 @@ def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
         dummy_documents.append({
             "id": i,
             "text": "This is a test document: {}".format(i),
+            "some_random_thing": "This will be metadata on it",
             "metadata": {
                 "uuid": i * 10,
                 "name": "Test Document {}".format(i)
@@ -75,7 +76,7 @@ async def test_can_vector_search_with_local_embeddings():
     model = pgml.Model()
     splitter = pgml.Splitter()
     pipeline = pgml.Pipeline("test_p_p_tcvs_0", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tcvs_3")
+    collection = pgml.Collection(name="test_p_c_tcvs_4")
     await collection.upsert_documents(generate_dummy_documents(3))
     await collection.add_pipeline(pipeline)
     results = await collection.vector_search("Here is some query", pipeline)
@@ -87,7 +88,7 @@ async def test_can_vector_search_with_remote_embeddings():
     model = pgml.Model(name="text-embedding-ada-002", source="openai")
     splitter = pgml.Splitter()
     pipeline = pgml.Pipeline("test_p_p_tcvswre_0", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tcvswre_2")
+    collection = pgml.Collection(name="test_p_c_tcvswre_3")
     await collection.upsert_documents(generate_dummy_documents(3))
     await collection.add_pipeline(pipeline)
     results = await collection.vector_search("Here is some query", pipeline)
@@ -99,7 +100,7 @@ async def test_can_vector_search_with_query_builder():
     model = pgml.Model()
     splitter = pgml.Splitter()
     pipeline = pgml.Pipeline("test_p_p_tcvswqb_1", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tcvswqb_4")
+    collection = pgml.Collection(name="test_p_c_tcvswqb_5")
     await collection.upsert_documents(generate_dummy_documents(3))
     await collection.add_pipeline(pipeline)
     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
@@ -111,7 +112,7 @@ async def test_can_vector_search_with_query_builder_with_remote_embeddings():
     model = pgml.Model(name="text-embedding-ada-002", source="openai")
     splitter = pgml.Splitter()
     pipeline = pgml.Pipeline("test_p_p_tcvswqbwre_1", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tcvswqbwre_0")
+    collection = pgml.Collection(name="test_p_c_tcvswqbwre_1")
     await collection.upsert_documents(generate_dummy_documents(3))
     await collection.add_pipeline(pipeline)
     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
@@ -139,6 +140,7 @@ async def test_pipeline_to_dict():
 ###################################################
 ## Test with multiprocessing ######################
 ###################################################
+
 async def vector_search(collection, pipeline):
     results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
     return len(results)
@@ -169,16 +171,16 @@ async def silas_test_add_pipeline():
     model = pgml.Model()
     splitter = pgml.Splitter()
     pipeline = pgml.Pipeline("silas_test_p_1", model, splitter)
-    collection = pgml.Collection(name="silas_test_c_6")
+    collection = pgml.Collection(name="silas_test_c_10")
     await collection.add_pipeline(pipeline)
 
 async def silas_test_upsert_documents():
-    collection = pgml.Collection(name="silas_test_c_6")
-    await collection.upsert_documents(generate_dummy_documents(300000))
+    collection = pgml.Collection(name="silas_test_c_9")
+    await collection.upsert_documents(generate_dummy_documents(10))
 
 async def silas_test_vector_search():
     pipeline = pgml.Pipeline("silas_test_p_1")
-    collection = pgml.Collection(name="silas_test_c_6")
+    collection = pgml.Collection(name="silas_test_c_9")
     results = await collection.vector_search("Here is some query", pipeline)
     print(results)
 

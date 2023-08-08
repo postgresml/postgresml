@@ -100,3 +100,5 @@ impl QueryRunner {
         query
     }
 }
+
+// Write some tests for this sturct above

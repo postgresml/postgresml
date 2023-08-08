@@ -135,7 +135,7 @@ WHERE
       chunk_id 
     from 
       %s
-  );
+  )
 ON CONFLICT (chunk_id) DO NOTHING;
 "#;
 
@@ -158,7 +158,7 @@ WHERE
       chunk_id 
     from 
       %s
-  );
+  )
 ON CONFLICT (chunk_id) DO NOTHING;
 "#;
 
