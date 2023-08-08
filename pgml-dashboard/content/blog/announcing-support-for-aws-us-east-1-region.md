@@ -34,7 +34,7 @@ To demonstrate the impact of moving the data closer to your application, we've c
 
 ## Using the New Region
 
-To take advantage of latency savings, you can <a href="https://postgresml.org/signup">deploy a dedicated PostgresML database</a> in `us-east-1` today. We make it as simple as filling up a very short form and clicking "Create database".
+To take advantage of latency savings, you can <a href="https://postgresml.org/signup">deploy a dedicated PostgresML database</a> in `us-east-1` today. We make it as simple as filling out a very short form and clicking "Create database".
 
 <center>
 
