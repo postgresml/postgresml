@@ -4,7 +4,7 @@
   <img width="54px" height="54px" src="/dashboard/static/images/team/lev.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Lev Kokotov</p>
-    <p class="m-0">August 8, 2022</p>
+    <p class="m-0">August 8, 2023</p>
   </div>
 </div>
 
