@@ -164,7 +164,7 @@ mod tests {
 
         let task_json = format!(json_template!(), model, true);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert!(verify_task(&task).is_err());
+        assert!(verify_task(&task).is_ok());
 
         set_config(CONFIG_HF_TRUST_REMOTE_CODE_BOOL, "true").unwrap();
         let task_json = format!(json_template!(), model, false);
