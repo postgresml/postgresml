@@ -13,7 +13,7 @@ authors = [
 homepage = "https://postgresml.org"
 repository = "https://github.com/postgresml/postgresml"
 documentation = "https://github.com/postgresml/postgresml/tree/master/pgml-sdks/python/pgml"
-readme = "../../python/pgml/README.md"
+readme = "./python/README.md"
 keywords = ["postgres","machine learning","vector databases","embeddings"]
 classifiers = [
     "Programming Language :: Rust",

@@ -260,6 +260,8 @@ impl QueryBuilder {
             Err(e) => match e.as_database_error() {
                 Some(d) => {
                     if d.code() == Some(Cow::from("XX000")) {
+                        println!("WHAT: {:?}", d);
+
                         // Explicitly get and set the model
                         let project_info = self.collection.get_project_info().await?;
                         let pipeline = self

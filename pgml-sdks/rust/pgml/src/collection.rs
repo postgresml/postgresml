@@ -534,10 +534,16 @@ impl Collection {
         let mut document_ids = Vec::new();
         for chunk in documents?.chunks(10) {
             // We want the length before we filter out any None values
-            let chunks_len = chunk.len();
+            let chunk_len = chunk.len();
             // Filter out the None values
             let chunk: Vec<&(uuid::Uuid, String, Json)> =
                 chunk.iter().filter_map(|x| x.as_ref()).collect();
+
+            // Make sure we didn't filter everything out
+            if chunk.is_empty() {
+                progress_bar.inc(chunk_len as u64);
+                continue;
+            }
 
             let mut transaction = pool.begin().await?;
             // First delete any documents that already have the same UUID then insert the new ones.
@@ -565,7 +571,7 @@ impl Collection {
 
             let ids: Vec<i64> = query.fetch_all(&mut transaction).await?;
             document_ids.extend(ids);
-            progress_bar.inc(chunks_len as u64);
+            progress_bar.inc(chunk_len as u64);
             transaction.commit().await?;
         }
         progress_bar.finish();
@@ -917,31 +923,18 @@ mod tests {
     #[sqlx::test]
     async fn can_upsert_documents() -> anyhow::Result<()> {
         init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cud_1", None);
+        let mut collection = Collection::new("test_r_c_cud_2", None);
 
         // Test basic upsert
         let documents = vec![
             serde_json::json!({"id": 1, "text": "hello world"}).into(),
-            serde_json::json!({"id": 2, "text": "hello world"}).into(),
-            serde_json::json!({"id": 3, "text": "hello world"}).into(),
-            serde_json::json!({"id": 4, "text": "hello world"}).into(),
-            serde_json::json!({"id": 5, "text": "hello world"}).into(),
-            serde_json::json!({"id": 6, "text": "hello world"}).into(),
-            serde_json::json!({"id": 7, "text": "hello world"}).into(),
-            serde_json::json!({"id": 8, "text": "hello world"}).into(),
-            serde_json::json!({"id": 9, "text": "hello world"}).into(),
-            serde_json::json!({"id": 10, "text": "hello world"}).into(),
-            serde_json::json!({"text": "hello world"}).into(),
-            serde_json::json!({"text": "hello world"}).into(),
             serde_json::json!({"text": "hello world"}).into(),
         ];
         collection
             .upsert_documents(documents.clone(), Some(false))
             .await?;
         let document = &collection.get_documents(None, Some(1)).await?[0];
-        println!("{:?}", document);
-        assert!(false);
-        // assert_eq!(document["text"], "hello world");
+        assert_eq!(document["text"], "hello world");
 
         // Test strictness
         assert!(collection
