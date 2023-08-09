@@ -34,7 +34,7 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
 
     let remote_code_allowed = trust_remote_code && model_is_trusted;
     if !remote_code_allowed && task_trust == Some(true) {
-        bail!("model {task_model} is not trusted to run remote code. Consider setting pgml.huggingface_trust_remote_code = 'true' and adding {task_model} to pgml.huggingface_trust_remote_code_whitelist");
+        bail!("model {task_model} is not trusted to run remote code. Consider setting pgml.huggingface_trust_remote_code = 'true' or adding {task_model} to pgml.huggingface_trust_remote_code_whitelist");
     }
 
     Ok(())
