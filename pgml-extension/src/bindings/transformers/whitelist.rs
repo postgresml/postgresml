@@ -20,7 +20,7 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
     let model_is_allowed =
         whitelisted_models.is_empty() || whitelisted_models.contains(&task_model);
     if !model_is_allowed {
-        bail!("model {task_model} is not whitelisted. Consider adding to pgml.huggingface_whitelist in postgresql.conf");
+        bail!("model {task_model} is not whitelisted. Consider adding to {CONFIG_HF_WHITELIST} in postgresql.conf");
     }
 
     let task_trust = get_trust_remote_code(task);
@@ -34,7 +34,7 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
 
     let remote_code_allowed = trust_remote_code && model_is_trusted;
     if !remote_code_allowed && task_trust == Some(true) {
-        bail!("model {task_model} is not trusted to run remote code. Consider setting pgml.huggingface_trust_remote_code = 'true' or adding {task_model} to pgml.huggingface_trust_remote_code_whitelist");
+        bail!("model {task_model} is not trusted to run remote code. Consider setting {CONFIG_HF_TRUST_REMOTE_CODE_BOOL}= 'true' or adding {task_model} to {CONFIG_HF_TRUST_WHITELIST}");
     }
 
     Ok(())
