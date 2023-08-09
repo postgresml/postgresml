@@ -44,7 +44,7 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
     let task_trust = get_trust_remote_code(task);
     let trust_remote_code = get_config(CONFIG_HF_TRUST_REMOTE_CODE_BOOL)
         .map(|v| v == "true")
-        .unwrap_or(false);
+        .unwrap_or(true);
 
     let trusted_models = config_csv_list(CONFIG_HF_TRUST_WHITELIST);
 
