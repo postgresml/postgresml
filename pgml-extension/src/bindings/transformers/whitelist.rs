@@ -1,5 +1,4 @@
-use std::fmt;
-
+use anyhow::{bail, Error};
 #[cfg(any(test, feature = "pg_test"))]
 use pgrx::{pg_schema, pg_test};
 use serde_json::Value;
@@ -9,23 +8,6 @@ use crate::config::get_config;
 static CONFIG_HF_WHITELIST: &str = "pgml.huggingface_whitelist";
 static CONFIG_HF_TRUST_REMOTE_CODE_BOOL: &str = "pgml.huggingface_trust_remote_code";
 static CONFIG_HF_TRUST_WHITELIST: &str = "pgml.huggingface_trust_remote_code_whitelist";
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
-pub enum Error {
-    NotInWhitelist,
-    RemoteCodeNotTrusted,
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Error::NotInWhitelist => writeln!(f, "model not in whitelist"),
-            Error::RemoteCodeNotTrusted => writeln!(f, "model remote code not trusted"),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
 
 /// Verify that the model in the task JSON is allowed based on the huggingface whitelists.
 pub fn verify_task(task: &Value) -> Result<(), Error> {
@@ -38,7 +20,7 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
     let model_is_allowed =
         whitelisted_models.is_empty() || whitelisted_models.contains(&task_model);
     if !model_is_allowed {
-        return Err(Error::NotInWhitelist);
+        bail!("model {task_model} is not whitelisted. Consider adding to pgml.huggingface_whitelist in postgresql.conf");
     }
 
     let task_trust = get_trust_remote_code(task);
@@ -52,7 +34,7 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
 
     let remote_code_allowed = trust_remote_code && model_is_trusted;
     if !remote_code_allowed && task_trust == Some(true) {
-        return Err(Error::RemoteCodeNotTrusted);
+        bail!("model {task_model} is not trusted to run remote code. Consider setting pgml.huggingface_trust_remote_code = 'true' and adding {task_model} to pgml.huggingface_trust_remote_code_whitelist");
     }
 
     Ok(())
