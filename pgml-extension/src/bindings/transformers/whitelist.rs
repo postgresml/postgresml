@@ -34,7 +34,7 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
 
     let remote_code_allowed = trust_remote_code && model_is_trusted;
     if !remote_code_allowed && task_trust == Some(true) {
-        bail!("model {task_model} is not trusted to run remote code. Consider setting {CONFIG_HF_TRUST_REMOTE_CODE_BOOL}= 'true' or adding {task_model} to {CONFIG_HF_TRUST_WHITELIST}");
+        bail!("model {task_model} is not trusted to run remote code. Consider setting {CONFIG_HF_TRUST_REMOTE_CODE_BOOL} = 'true' or adding {task_model} to {CONFIG_HF_TRUST_WHITELIST}");
     }
 
     Ok(())
