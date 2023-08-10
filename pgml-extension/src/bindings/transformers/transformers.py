@@ -150,7 +150,12 @@ class StandardPipeline(object):
                 self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
             else:
                 raise PgMLException(f"Unhandled task: {self.task}")
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            
+            if "use_auth_token" in kwargs:
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name,use_auth_token=kwargs["use_auth_token"])
+            else:
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            
             self.pipe = transformers.pipeline(
                 self.task,
                 model=self.model,
@@ -178,7 +183,6 @@ def transform(task, args, inputs):
         ensure_device(task)
         convert_dtype(task)
         model_name = task.get("model", None)
-        model_name = model_name.lower() if model_name else None
         if model_name and "-ggml" in model_name:
             pipe = GGMLPipeline(model_name, **task)
         elif model_name and "-gptq" in model_name:
