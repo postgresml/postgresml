@@ -63,6 +63,12 @@ pub struct Model {
     pub(crate) database_data: Option<ModelDatabaseData>,
 }
 
+impl Default for Model {
+    fn default() -> Self {
+        Self::new(None, None, None)
+    }
+}
+
 #[custom_methods(new)]
 impl Model {
     /// Creates a new [Model]

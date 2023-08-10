@@ -84,6 +84,15 @@ pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
         }
 
         #[cfg(feature = "python")]
+        impl CustomInto<#name_ident> for #wrapped_type_ident {
+            fn custom_into(self) -> #name_ident {
+                #name_ident {
+                    wrapped: std::boxed::Box::new(self),
+                }
+            }
+        }
+
+        #[cfg(feature = "python")]
         impl CustomInto<#wrapped_type_ident> for #name_ident {
             fn custom_into(self) -> #wrapped_type_ident {
                 *self.wrapped
@@ -327,7 +336,8 @@ pub fn generate_python_methods(
             let middle = if let Some(convert) = convert_from {
                 quote! {
                     #middle
-                    let x = <#convert>::from(x);
+                    // let x = <#convert>::from(x);
+                    let x: #convert = x.custom_into();
                 }
             } else {
                 middle

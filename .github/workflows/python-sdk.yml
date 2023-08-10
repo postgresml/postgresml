@@ -1,6 +1,11 @@
 name: deploy python sdk
 on:
   workflow_dispatch:
+    inputs:
+      deploy_to_pypi:
+        description: "Whether to deploy to PyPI (true) or TestPyPI (false)"
+        required: false
+        default: "false"
 jobs:
   deploy-python-sdk-linux:
     strategy:
@@ -24,31 +29,33 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
           TZ: Etc/UTC
         run: |
-            sudo apt update
-            sudo apt-get -y install software-properties-common
-            sudo add-apt-repository -y ppa:deadsnakes/ppa
-            sudo add-apt-repository -y ppa:apt-fast/stable
-            sudo apt update
-            sudo apt-get -y install apt-fast
-            sudo apt-fast -y install \
-              python3.7 python3.7-dev \
-              python3.8 python3.8-dev \
-              python3.9 python3.9-dev \
-              python3.10 python3.10-dev \
-              python3.11 python3.11-dev \
-              python3-pip \
-              git
-            pip install maturin
-            pip install patchelf
-      - name: Create dist directory
-        run: mkdir ../../python/dist
-      - name: Build wheels
-        run: maturin build --release --strip -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist -F python
-      - name: Deploy wheels
+          sudo apt update
+          sudo apt-get -y install software-properties-common
+          sudo add-apt-repository -y ppa:deadsnakes/ppa
+          sudo add-apt-repository -y ppa:apt-fast/stable
+          sudo apt update
+          sudo apt-get -y install apt-fast
+          sudo apt-fast -y install \
+            python3.7 python3.7-dev \
+            python3.8 python3.8-dev \
+            python3.9 python3.9-dev \
+            python3.10 python3.10-dev \
+            python3.11 python3.11-dev \
+            python3-pip \
+            git
+          pip install maturin
+          pip install patchelf
+      - name: Build and deploy wheels to TestPyPI
+        if: github.event.inputs.deploy_to_pypi == 'false'
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: maturin publish -r testpypi -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+      - name: Build and deploy wheels to PyPI
+        if: github.event.inputs.deploy_to_pypi == 'true'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        working-directory: pgml-sdks/python/pgml
-        run: maturin upload --skip-existing dist/*
+        run: maturin publish -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+
   deploy-python-sdk-mac:
     runs-on: macos-latest
     defaults:
@@ -72,15 +79,17 @@ jobs:
           brew install python@3.10
           brew install python@3.11
           pip3 install maturin
-      - name: Create dist directory
-        run: mkdir ../../python/dist
-      - name: Build wheels
-        run: maturin build --release --strip -i python3.8 -i python3.9 -i python3.10 -i python3.11 -o ../../python/pgml/dist -F python
-      - name: Deploy wheels
+      - name: Build and deploy wheels to TestPyPI
+        if: github.event.inputs.deploy_to_pypi == 'false'
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: maturin publish -r testpypi -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+      - name: Build and deploy wheels to PyPI
+        if: github.event.inputs.deploy_to_pypi == 'true'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        working-directory: pgml-sdks/python/pgml
-        run: maturin upload --skip-existing dist/*
+        run: maturin publish -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+
   deploy-python-sdk-windows:
     runs-on: windows-latest
     strategy:
@@ -101,17 +110,18 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }} 
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip3 install maturin
-      - name: Create dist directory
-        run: mkdir ..\..\python\dist
-      - name: Build wheels
-        run: maturin build --release --strip -o ..\..\python\pgml\dist -F python
-      - name: Deploy wheels
+      - name: Build and deploy wheels to TestPyPI
+        if: github.event.inputs.deploy_to_pypi == 'false'
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: maturin publish -r testpypi -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+      - name: Build and deploy wheels to PyPI
+        if: github.event.inputs.deploy_to_pypi == 'true'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        working-directory: pgml-sdks\python\pgml
-        run: maturin upload --skip-existing dist\*
+        run: maturin publish -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python

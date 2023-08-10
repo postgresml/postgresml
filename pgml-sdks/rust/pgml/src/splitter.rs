@@ -29,6 +29,12 @@ pub struct Splitter {
     pub(crate) database_data: Option<SplitterDatabaseData>,
 }
 
+impl Default for Splitter {
+    fn default() -> Self {
+        Self::new(None, None)
+    }
+}
+
 #[custom_methods(new)]
 impl Splitter {
     /// Creates a new [Splitter]
