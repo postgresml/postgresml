@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm"]
+        os: ["buildjet-16vcpu-ubuntu-2204-arm", "buildjet-16vcpu-ubuntu-2204-arm"]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -74,7 +74,8 @@ jobs:
           python3-pip \
           libpython3.10-dev \
           python3.10-dev \
-          ruby
+          ruby \
+          mold
 
         curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
         sudo gem install deb-s3-0.11.4.gem
