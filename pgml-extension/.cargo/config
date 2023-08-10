@@ -3,5 +3,7 @@
 rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
 
 [target.x86_64-unknown-linux-gnu]
-linker = "/usr/bin/clang"
-rustflags = ["-C", "link-arg=--ld-path=/usr/bin/mold,-Wl,-undefined,dynamic_lookup"]
+rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup,-fuse-ld=/usr/bin/mold"]
+
+[target.aarch64-unknown-linux-gnu]
+rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup,-fuse-ld=/usr/bin/mold"]
