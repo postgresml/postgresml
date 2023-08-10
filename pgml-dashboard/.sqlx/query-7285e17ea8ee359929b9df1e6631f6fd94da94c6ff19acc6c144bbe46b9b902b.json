@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n                    a.id,\n                    project_id,\n                    model_id,\n                    strategy::TEXT,\n                    created_at,\n                    a.id = last_deployment.id AS active\n                FROM pgml.deployments a\n                CROSS JOIN LATERAL (\n                    SELECT id FROM pgml.deployments b\n                    WHERE b.project_id = a.project_id\n                    ORDER BY b.id DESC\n                    LIMIT 1\n                ) last_deployment\n                WHERE project_id = $1\n                ORDER BY a.id DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "project_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "model_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "strategy",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 5,
+        "name": "active",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null,
+      false,
+      null
+    ]
+  },
+  "hash": "7285e17ea8ee359929b9df1e6631f6fd94da94c6ff19acc6c144bbe46b9b902b"
+}
