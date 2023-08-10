@@ -32,6 +32,6 @@ indicatif = "0.17.6"
 serde = "1.0.181"
 
 [features]
-default = ["javascript"]
+default = []
 python = ["dep:pyo3", "dep:pyo3-asyncio"]
 javascript = ["dep:neon"]

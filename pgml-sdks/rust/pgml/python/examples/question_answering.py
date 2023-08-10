@@ -32,10 +32,10 @@ async def main():
     await collection.upsert_documents(documents[:200])
 
     # Query
-    query = "Who won more than 20 grammy awards?"
+    query = "Who won 20 grammy awards?"
     console.print("Querying for %s..." % query)
     start = time()
-    results = await collection.query().vector_recall(query, pipeline).limit(5).run()
+    results = await collection.query().vector_recall(query, pipeline).limit(5).fetch_all()
     end = time()
     console.print("\n Results for '%s' " % (query), style="bold")
     console.print(results)

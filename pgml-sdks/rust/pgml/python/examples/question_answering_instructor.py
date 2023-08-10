@@ -48,7 +48,7 @@ async def main():
             },
         )
         .limit(5)
-        .run()
+        .fetch_all()
     )
     end = time()
     console.print("\n Results for '%s' " % (query), style="bold")

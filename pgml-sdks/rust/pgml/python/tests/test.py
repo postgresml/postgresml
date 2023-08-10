@@ -25,18 +25,18 @@ if LOG_LEVEL is None:
     LOG_LEVEL = "ERROR"
 pgml.py_init_logger(LOG_LEVEL)
 
+
 def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
     dummy_documents = []
     for i in range(count):
-        dummy_documents.append({
-            "id": i,
-            "text": "This is a test document: {}".format(i),
-            "some_random_thing": "This will be metadata on it",
-            "metadata": {
-                "uuid": i * 10,
-                "name": "Test Document {}".format(i)
+        dummy_documents.append(
+            {
+                "id": i,
+                "text": "This is a test document: {}".format(i),
+                "some_random_thing": "This will be metadata on it",
+                "metadata": {"uuid": i * 10, "name": "Test Document {}".format(i)},
             }
-        })
+        )
     return dummy_documents
 
 
@@ -44,23 +44,28 @@ def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
 ## Test the API exposed is correct ################
 ###################################################
 
+
 def test_can_create_collection():
     collection = pgml.Collection(name="test_p_c_tscc_0")
     assert collection is not None
+
 
 def test_can_create_model():
     model = pgml.Model()
     assert model is not None
 
+
 def test_can_create_splitter():
     splitter = pgml.Splitter()
     assert splitter is not None
+
 
 def test_can_create_pipeline():
     model = pgml.Model()
     splitter = pgml.Splitter()
     pipeline = pgml.Pipeline("test_p_p_tccp_0", model, splitter)
     assert pipeline is not None
+
 
 def test_can_create_builtins():
     builtins = pgml.Builtins()
@@ -70,6 +75,7 @@ def test_can_create_builtins():
 ###################################################
 ## Test various vector searches ###################
 ###################################################
+
 
 @pytest.mark.asyncio
 async def test_can_vector_search_with_local_embeddings():
@@ -83,6 +89,7 @@ async def test_can_vector_search_with_local_embeddings():
     assert len(results) == 3
     await collection.archive()
 
+
 @pytest.mark.asyncio
 async def test_can_vector_search_with_remote_embeddings():
     model = pgml.Model(name="text-embedding-ada-002", source="openai")
@@ -95,6 +102,7 @@ async def test_can_vector_search_with_remote_embeddings():
     assert len(results) == 3
     await collection.archive()
 
+
 @pytest.mark.asyncio
 async def test_can_vector_search_with_query_builder():
     model = pgml.Model()
@@ -103,9 +111,15 @@ async def test_can_vector_search_with_query_builder():
     collection = pgml.Collection(name="test_p_c_tcvswqb_5")
     await collection.upsert_documents(generate_dummy_documents(3))
     await collection.add_pipeline(pipeline)
-    results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
+    results = (
+        await collection.query()
+        .vector_recall("Here is some query", pipeline)
+        .limit(10)
+        .fetch_all()
+    )
     assert len(results) == 3
     await collection.archive()
+
 
 @pytest.mark.asyncio
 async def test_can_vector_search_with_query_builder_with_remote_embeddings():
@@ -115,7 +129,12 @@ async def test_can_vector_search_with_query_builder_with_remote_embeddings():
     collection = pgml.Collection(name="test_p_c_tcvswqbwre_1")
     await collection.upsert_documents(generate_dummy_documents(3))
     await collection.add_pipeline(pipeline)
-    results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
+    results = (
+        await collection.query()
+        .vector_recall("Here is some query", pipeline)
+        .limit(10)
+        .fetch_all()
+    )
     assert len(results) == 3
     await collection.archive()
 
@@ -123,6 +142,7 @@ async def test_can_vector_search_with_query_builder_with_remote_embeddings():
 ###################################################
 ## Test user output facing functions ##############
 ###################################################
+
 
 @pytest.mark.asyncio
 async def test_pipeline_to_dict():
@@ -141,9 +161,16 @@ async def test_pipeline_to_dict():
 ## Test with multiprocessing ######################
 ###################################################
 
+
 async def vector_search(collection, pipeline):
-    results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run()
+    results = (
+        await collection.query()
+        .vector_recall("Here is some query", pipeline)
+        .limit(10)
+        .fetch_all()
+    )
     return len(results)
+
 
 # @pytest.mark.asyncio
 # async def test_multiprocessing():
@@ -162,10 +189,10 @@ async def vector_search(collection, pipeline):
 #     await collection.archive()
 
 
-
 ###################################################
 ## Manual tests ###################################
 ###################################################
+
 
 async def silas_test_add_pipeline():
     model = pgml.Model()
@@ -174,15 +201,18 @@ async def silas_test_add_pipeline():
     collection = pgml.Collection(name="silas_test_c_10")
     await collection.add_pipeline(pipeline)
 
+
 async def silas_test_upsert_documents():
     collection = pgml.Collection(name="silas_test_c_9")
     await collection.upsert_documents(generate_dummy_documents(10))
+
 
 async def silas_test_vector_search():
     pipeline = pgml.Pipeline("silas_test_p_1")
     collection = pgml.Collection(name="silas_test_c_9")
     results = await collection.vector_search("Here is some query", pipeline)
     print(results)
+
 
 # asyncio.run(silas_test_add_pipeline())
 # asyncio.run(silas_test_upsert_documents())

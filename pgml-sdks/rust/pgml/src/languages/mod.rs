@@ -6,9 +6,9 @@ pub mod python;
 
 use std::collections::HashMap;
 
-use crate::types::{DateTime, Json};
+use crate::{types::{DateTime, Json}, pipeline::PipelineSyncData};
 
-macro_rules! gen_custom_into_for_self {
+macro_rules! gen_custom_into {
     ($t1:ty) => {
         impl CustomInto<$t1> for $t1 {
             fn custom_into(self) -> $t1 {
@@ -16,11 +16,24 @@ macro_rules! gen_custom_into_for_self {
             }
         }
     };
+    (($($T1:ident),+), ($($T2:ident),+), ($($C:tt),+)) => {
+        impl<$($T1, $T2: CustomInto<$T1>),+> CustomInto<($($T1),+,)> for ($($T2),+,) {
+            fn custom_into(self) -> ($($T1),+,) {
+                ($(self.$C.custom_into()),+,)
+            }
+        }
+    }
 }
 
 /// Very similar to the `Into` trait, but we can implement it on foreign types
 pub trait CustomInto<T> {
     fn custom_into(self) -> T;
+}
+
+impl CustomInto<Json> for PipelineSyncData {
+    fn custom_into(self) -> Json {
+        Json::from(self)
+    }
 }
 
 impl<T1, T2: CustomInto<T1>> CustomInto<Option<T1>> for Option<T2> {
@@ -57,24 +70,41 @@ impl CustomInto<&'static str> for &str {
     }
 }
 
+gen_custom_into!((T1), (TT2), (0));
+gen_custom_into!((T1, T2), (TT1, TT2), (0, 1));
+gen_custom_into!((T1, T2, T3), (TT1, TT2, TT3), (0, 1, 2));
+gen_custom_into!((T1, T2, T3, T4), (TT1, TT2, TT3, TT4), (0, 1, 2, 3));
+gen_custom_into!(
+    (T1, T2, T3, T4, T5),
+    (TT1, TT2, TT3, TT4, TT5),
+    (0, 1, 2, 3, 4)
+);
+gen_custom_into!(
+    (T1, T2, T3, T4, T5, T6),
+    (TT1, TT2, TT3, TT4, TT5, TT6),
+    (0, 1, 2, 3, 4, 5)
+);
+
 // There are some restrictions I cannot figure out around conflicting trait
 // implimentations so this is my solution for now
-gen_custom_into_for_self!(String);
+gen_custom_into!(String);
 
-gen_custom_into_for_self!(bool);
+gen_custom_into!(());
 
-gen_custom_into_for_self!(Json);
-gen_custom_into_for_self!(DateTime);
+gen_custom_into!(bool);
 
-gen_custom_into_for_self!(i8);
-gen_custom_into_for_self!(i16);
-gen_custom_into_for_self!(i32);
-gen_custom_into_for_self!(i64);
+gen_custom_into!(Json);
+gen_custom_into!(DateTime);
 
-gen_custom_into_for_self!(u8);
-gen_custom_into_for_self!(u16);
-gen_custom_into_for_self!(u32);
-gen_custom_into_for_self!(u64);
+gen_custom_into!(i8);
+gen_custom_into!(i16);
+gen_custom_into!(i32);
+gen_custom_into!(i64);
 
-gen_custom_into_for_self!(f32);
-gen_custom_into_for_self!(f64);
+gen_custom_into!(u8);
+gen_custom_into!(u16);
+gen_custom_into!(u32);
+gen_custom_into!(u64);
+
+gen_custom_into!(f32);
+gen_custom_into!(f64);

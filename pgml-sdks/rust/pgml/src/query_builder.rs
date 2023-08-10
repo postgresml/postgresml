@@ -62,7 +62,7 @@ pub struct QueryBuilder {
     query_parameters: Option<Json>,
 }
 
-#[custom_methods(limit, filter, vector_recall, to_full_string, run)]
+#[custom_methods(limit, filter, vector_recall, to_full_string, fetch_all)]
 impl QueryBuilder {
     pub fn new(collection: Collection) -> Self {
         Self {
@@ -244,7 +244,7 @@ impl QueryBuilder {
         self
     }
 
-    pub async fn run(mut self) -> anyhow::Result<Vec<(f64, String, Json)>> {
+    pub async fn fetch_all(mut self) -> anyhow::Result<Vec<(f64, String, Json)>> {
         let pool = get_or_initialize_pool(&self.collection.database_url).await?;
 
         let (sql, values) = self
@@ -267,7 +267,7 @@ impl QueryBuilder {
                         let pipeline = self
                             .pipeline
                             .as_mut()
-                            .context("Need pipeline to run query builder with remote embeddings")?;
+                            .context("Need pipeline to call fetch_all on query builder with remote embeddings")?;
                         pipeline.set_project_info(project_info);
                         pipeline.verify_in_database(false).await?;
                         let model = pipeline
@@ -283,7 +283,7 @@ impl QueryBuilder {
                             .embed(vec![self
                                 .query_string
                                 .to_owned()
-                                .context("Must have query_string to run query")?])
+                                .context("Must have query_string to call fetch_all on query_builder with remote embeddings")?])
                             .await?;
                         let embedding = std::mem::take(&mut embeddings[0]);
 

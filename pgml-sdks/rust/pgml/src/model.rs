@@ -49,7 +49,7 @@ impl From<&ModelRuntime> for &'static str {
 }
 
 #[derive(Debug, Clone)]
-pub struct ModelDatabaseData {
+pub(crate) struct ModelDatabaseData {
     pub id: i64,
     pub created_at: DateTime,
 }
@@ -59,12 +59,26 @@ pub struct Model {
     pub name: String,
     pub runtime: ModelRuntime,
     pub parameters: Json,
-    pub project_info: Option<ProjectInfo>,
-    pub database_data: Option<ModelDatabaseData>,
+    project_info: Option<ProjectInfo>,
+    pub(crate) database_data: Option<ModelDatabaseData>,
 }
 
 #[custom_methods(new)]
 impl Model {
+    /// Creates a new [Model]
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the model.
+    /// * `source` - The source of the model. Defaults to `pgml`, but can be set to providers like `openai`.
+    /// * `parameters` - The parameters to the model. Defaults to None
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pgml::Model;
+    /// let model = Model::new(Some("intfloat/e5-small".to_string()), None, None);
+    /// ```
     pub fn new(name: Option<String>, source: Option<String>, parameters: Option<Json>) -> Self {
         let name = name.unwrap_or("intfloat/e5-small".to_string());
         let parameters = parameters.unwrap_or(Json(serde_json::json!({})));
@@ -81,7 +95,7 @@ impl Model {
     }
 
     #[instrument(skip(self))]
-    pub async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
+    pub(crate) async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
         if self.database_data.is_none() {
             let pool = self.get_pool().await?;
 
@@ -131,12 +145,12 @@ impl Model {
         Ok(())
     }
 
-    pub fn set_project_info(&mut self, project_info: ProjectInfo) {
+    pub(crate) fn set_project_info(&mut self, project_info: ProjectInfo) {
         self.project_info = Some(project_info);
     }
 
     #[instrument(skip(self))]
-    pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
+    pub(crate) async fn to_dict(&mut self) -> anyhow::Result<Json> {
         self.verify_in_database(false).await?;
 
         let database_data = self
@@ -146,6 +160,7 @@ impl Model {
 
         Ok(serde_json::json!({
             "id": database_data.id,
+            "created_at": database_data.created_at,
             "name": self.name,
             "runtime": Into::<&str>::into(&self.runtime),
             "parameters": *self.parameters,

@@ -11,12 +11,12 @@
 - [Roadmap](#roadmap)
 
 ## Overview
+
 Python SDK is designed to facilitate the development of scalable vector search applications on PostgreSQL databases. With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
 ### Key Features
 
 - **Automated Database Management**: With the SDK, you can easily handle the management of database tables related to documents, text chunks, text splitters, LLM models, and embeddings. This automated management system simplifies the process of setting up and maintaining your vector search application's data structure.
-
 
 - **Embedding Generation from Open Source Models**: The Python SDK provides the ability to generate embeddings using hundreds of open source models. These models, trained on vast amounts of data, capture the semantic meaning of text and enable powerful analysis and search capabilities.
 
@@ -37,9 +37,10 @@ Embeddings, the core concept of the Python SDK, find applications in various sce
 - Classification: Embeddings are utilized in classification tasks, where text strings are classified based on their most similar label. By comparing the embeddings of text strings and labels, you can classify new text strings into predefined categories.
 
 ### How the Python SDK Works
+
 The Python SDK streamlines the development of vector search applications by abstracting away the complexities of database management and indexing. Here's an overview of how the SDK works:
 
-- **Document and Text Chunk Management**: The SDK provides a convenient interface to create, update, and delete documents and their corresponding text chunks. You can easily organize and structure your text data within the PostgreSQL database.
+- **Automatic Document and Text Chunk Management**: The SDK provides a convenient interface to manage documents and pipelines, automatically handling chunking and embedding for you. You can easily organize and structure your text data within the PostgreSQL database.
 
 - **Open Source Model Integration**: With the SDK, you can seamlessly incorporate a wide range of open source models to generate high-quality embeddings. These models capture the semantic meaning of text and enable powerful analysis and search capabilities.
 
@@ -48,19 +49,18 @@ The Python SDK streamlines the development of vector search applications by abst
 - **Querying and Search**: Once the embeddings are indexed, you can perform vector-based searches on the documents and text chunks stored in the PostgreSQL database. The SDK provides intuitive methods for executing queries and retrieving search results.
 
 ## Quickstart
+
 Follow the steps below to quickly get started with the Python SDK for building scalable vector search applications on PostgresML databases.
 
 ### Prerequisites
+
 Before you begin, make sure you have the following:
 
-- PostgresML Database: Ensure you have a PostgresML database version >`2.3.1`. You can spin up a database using [Docker](https://github.com/postgresml/postgresml#installation) or [sign up for a free GPU-powered database](https://postgresml.org/signup). Set the `PGML_CONNECTION` environment variable to the connection string of your PostgresML database. If not set, the SDK will use the default connection string for your local installation `postgres://postgres@127.0.0.1:5433/pgml_development`.
+- PostgresML Database: Ensure you have a PostgresML database version >`2.3.1`. You can spin up a database using [Docker](https://github.com/postgresml/postgresml#installation) or [sign up for a free GPU-powered database](https://postgresml.org/signup).
+
+- Set the `DATABASE_URL` environment variable to the connection string of your PostgresML database.
 
 - Python version >=3.8.1
-
-- `postgresql` command line utility
-  - Ubuntu: `sudo apt install libpq-dev`
-  - Centos/Fedora/Cygwin/Babun: `sudo yum install libpq-devel`
-  - Mac: `brew install postgresql`
 
 ### Installation
 
@@ -75,79 +75,87 @@ pip install pgml
 Once you have the Python SDK installed, you can use the following sample code as a starting point for your vector search application:
 
 ```python
-from pgml import Database
-import os
-import json
+from pgml import Collection, Model, Splitter, Pipeline
 from datasets import load_dataset
 from time import time
-from rich import print as rprint
+from dotenv import load_dotenv
+from rich.console import Console
 import asyncio
 
 async def main():
-    local_pgml = "postgres://postgres@127.0.0.1:5433/pgml_development"
-    conninfo = os.environ.get("PGML_CONNECTION", local_pgml)
+        load_dotenv()
+    console = Console()
 
-    db = Database(conninfo)
-
-    collection_name = "test_collection"
-    collection = await db.create_or_get_collection(collection_name)
+    # Initialize collection
+    collection = Collection("quora_collection")
 ```
 
 **Explanation:**
 
-- The code imports the necessary modules and packages, including pgml.Database, os, json, datasets, time, and rich.print.
-- It defines the local_pgml variable with the default local connection string, and retrieves the connection information from the PGML_CONNECTION environment variable or uses the default if not set.
-- An instance of the Database class is created by passing the connection information.
-- The method [`create_or_get_collection`](#create-or-get-a-collection) collection with the name `test_pgml_sdk_1` is retrieved if it exists or a new collection is created.
+- The code imports the necessary modules and packages, including pgml, datasets, time, and rich.
+- It creates an instance of the Collection class which we will add pipelines and documents onto
 
 Continuing within `async def main():`
 
 ```python
+    # Create a pipeline using the default model and splitter
+    model = Model()
+    splitter = Splitter()
+    pipeline = Pipeline("quorav1", model, splitter)
+    await collection.add_pipeline(pipeline)
+```
+
+**Explanation**
+
+- The code creates an instance of `Model` and `Splitter` using their default arguments.
+- Finally, the code constructs a pipeline called `"quroav1"` and add it to the collection we Initialized above. This pipeline automatically generates chunks and embeddings for every upserted document.
+
+Continuing with `async def main():`
+
+```
+    # Prep documents for upserting
     data = load_dataset("squad", split="train")
     data = data.to_pandas()
     data = data.drop_duplicates(subset=["context"])
-
     documents = [
-        {'id': r['id'], "text": r["context"], "title": r["title"]}
+        {"id": r["id"], "text": r["context"], "title": r["title"]}
         for r in data.to_dict(orient="records")
     ]
 
+    # Upsert documents
     await collection.upsert_documents(documents[:200])
-    await collection.generate_chunks()
-    await collection.generate_embeddings()
 ```
 
-**Explanation:**
+**Explanation**
 
 - The code loads the "squad" dataset, converts it to a pandas DataFrame, and drops any duplicate context values.
-- It creates a list of dictionaries representing the documents to be indexed, with each dictionary containing the document's ID, text, and title.
-- The [`upsert_documents`](#upsert-documents) method is called to insert or update the first 200 documents in the collection.
-- The [`generate_chunks`](#generate-chunks) method splits the documents into smaller text chunks for efficient indexing and search.
-- The [`generate_embeddings`](#generate-embeddings) method generates embeddings for the documents in the collection.
+- It creates a list of dictionaries representing the documents to be indexed, with each dictionary containing the document's id, text, and title.
+- Finally, they are upserted. As mentioned above, the pipeline added earlier automatically runs and generates chunks and embeddings for each document.
 
 Continuing within `async def main():`
+
 ```python
-    start = time()
-    results = await collection.vector_search("Who won 20 grammy awards?", top_k=2)
-    rprint(json.dumps(results, indent=2))
-    rprint("Query time: %0.3f seconds" % (time() - start))
-    await db.archive_collection(collection_name)
+    # Query
+    query = "Who won 20 grammy awards?"
+    results = await collection.query().vector_recall(query, pipeline).limit(5).fetch_all()
+    console.print(results)
+    # Archive collection
+    await collection.archive()
 ```
 
 **Explanation:**
 
-- The code initializes a timer using `time()` to measure the query time.
-- The [`vector_search`](#vector-search) method is called to perform a vector-based search on the collection. The query string is `Who won 20 grammy awards?`, and the top 2 results are requested.
-- The search results are printed using `rprint` and formatted as JSON with indentation.
-- The query time is calculated by subtracting the start time from the current time.
-- Finally, the `archive_collection` method is called to archive the collection and free up resources in the PostgresML database.
+- The `query` method is called to perform a vector-based search on the collection. The query string is `Who won more than 20 grammy awards?`, and the top 5 results are requested.
+- The search results are printed.
+- Finally, the `archive` method is called to archive the collection and free up resources in the PostgresML database.
 
 Call `main` function in an async loop.
 
 ```python
 if __name__ == "__main__":
-    asyncio.run(main())    
+    asyncio.run(main())
 ```
+
 **Running the Code**
 
 Open a terminal or command prompt and navigate to the directory where the file is saved.
@@ -157,58 +165,54 @@ Execute the following command:
 ```
 python vector_search.py
 ```
-You should see the search results and the query time printed in the terminal. As you can see, our vector search engine found the right text chunk with the answer we are looking for.
+
+You should see the search results printed in the terminal. As you can see, our vector search engine found the right text chunk with the answer we are looking for.
 
 ```
 [
-  {
-    "score": 0.8423336843624225,
-    "chunk": "Beyonc\u00e9 has won 20 Grammy Awards, both as a solo artist and member of Destiny's Child, making her the second most honored female artist by the Grammys, behind Alison Krauss and the most nominated woman in Grammy Award 
-history with 52 nominations. \"Single Ladies (Put a Ring on It)\" won Song of the Year in 2010 while \"Say My Name\" and \"Crazy in Love\" had previously won Best R&B Song. Dangerously in Love, B'Day and I Am... Sasha Fierce have all won Best 
-Contemporary R&B Album. Beyonc\u00e9 set the record for the most Grammy awards won by a female artist in one night in 2010 when she won six awards, breaking the tie she previously held with Alicia Keys, Norah Jones, Alison Krauss, and Amy 
-Winehouse, with Adele equaling this in 2012. Following her role in Dreamgirls she was nominated for Best Original Song for \"Listen\" and Best Actress at the Golden Globe Awards, and Outstanding Actress in a Motion Picture at the NAACP Image 
-Awards. Beyonc\u00e9 won two awards at the Broadcast Film Critics Association Awards 2006; Best Song for \"Listen\" and Best Original Soundtrack for Dreamgirls: Music from the Motion Picture.",
-    "metadata": {
-      "title": "Beyonc\u00e9"
-    }
-  },
-  {
-    "score": 0.8210568000806665,
-    "chunk": "A self-described \"modern-day feminist\", Beyonc\u00e9 creates songs that are often characterized by themes of love, relationships, and monogamy, as well as female sexuality and empowerment. On stage, her dynamic, highly 
-choreographed performances have led to critics hailing her as one of the best entertainers in contemporary popular music. Throughout a career spanning 19 years, she has sold over 118 million records as a solo artist, and a further 60 million 
-with Destiny's Child, making her one of the best-selling music artists of all time. She has won 20 Grammy Awards and is the most nominated woman in the award's history. The Recording Industry Association of America recognized her as the Top 
-Certified Artist in America during the 2000s decade. In 2009, Billboard named her the Top Radio Songs Artist of the Decade, the Top Female Artist of the 2000s and their Artist of the Millennium in 2011. Time listed her among the 100 most 
-influential people in the world in 2013 and 2014. Forbes magazine also listed her as the most powerful female musician of 2015.",
-    "metadata": {
-      "title": "Beyonc\u00e9"
-    }
-  }
+    (
+        0.8423336495860181,
+        'Beyoncé has won 20 Grammy Awards, both as a solo artist and member of Destiny\'s Child, making her the second most honored female artist by the Grammys, behind Alison Krauss and the most nominated woman in Grammy Award history with 52 nominations. "Single Ladies (Put a Ring on It)" won Song of the Year in 2010 while "Say My Name" and 
+"Crazy in Love" had previously won Best R&B Song. Dangerously in Love, B\'Day and I Am... Sasha Fierce have all won Best Contemporary R&B Album. Beyoncé set the record for the most Grammy awards won by a female artist in one night in 2010 when she won six awards, breaking the tie she previously held with Alicia Keys, Norah Jones, Alison Krauss, 
+and Amy Winehouse, with Adele equaling this in 2012. Following her role in Dreamgirls she was nominated for Best Original Song for "Listen" and Best Actress at the Golden Globe Awards, and Outstanding Actress in a Motion Picture at the NAACP Image Awards. Beyoncé won two awards at the Broadcast Film Critics Association Awards 2006; Best Song for 
+"Listen" and Best Original Soundtrack for Dreamgirls: Music from the Motion Picture.',
+        {'id': '56becc903aeaaa14008c949f', 'title': 'Beyoncé'}
+    ),
+    (
+        0.8210567582713351,
+        'A self-described "modern-day feminist", Beyoncé creates songs that are often characterized by themes of love, relationships, and monogamy, as well as female sexuality and empowerment. On stage, her dynamic, highly choreographed performances have led to critics hailing her as one of the best entertainers in contemporary popular music. 
+Throughout a career spanning 19 years, she has sold over 118 million records as a solo artist, and a further 60 million with Destiny\'s Child, making her one of the best-selling music artists of all time. She has won 20 Grammy Awards and is the most nominated woman in the award\'s history. The Recording Industry Association of America recognized 
+her as the Top Certified Artist in America during the 2000s decade. In 2009, Billboard named her the Top Radio Songs Artist of the Decade, the Top Female Artist of the 2000s and their Artist of the Millennium in 2011. Time listed her among the 100 most influential people in the world in 2013 and 2014. Forbes magazine also listed her as the most 
+powerful female musician of 2015.',
+        {'id': '56be88473aeaaa14008c9080', 'title': 'Beyoncé'}
+    )
 ]
 ```
+
 ## Usage
 
 ### High-level Description
+
 The Python SDK provides a set of functionalities to build scalable vector search applications on PostgresQL databases. It enables users to create a collection, which represents a schema in the database, to store tables for documents, chunks, models, splitters, and embeddings. The Collection class in the SDK handles all operations related to these tables, allowing users to interact with the collection and perform various tasks.
 
-#### Connect to Database
+#### Create or a Collection
 
 ```python
-local_pgml = "postgres://postgres@127.0.0.1:5433/pgml_development"
-
-conninfo = os.environ.get("PGML_CONNECTION", local_pgml)
-db = Database(conninfo)
+collection_name = Collection("test_collection")
 ```
 
-This initializes a connection pool to the DB and creates a table named `pgml.collections` if it does not already exist. By default it connects to local PostgresML database and at one connection maintained in the connection pool.
+This initializes a new Collection used to do everything from upserting documents to performing vector search.
 
-#### Create or Get a Collection
+### Add a Pipeline
 
 ```python
-collection_name = "test_collection"
-collection = await db.create_or_get_collection(collection_name)
+model = Model()
+splitter = Splitter()
+pipeline = Pipeline("test_pipeline", model, splitter)
+await collection.add_pipeline(pipeline)
 ```
 
-This creates a new schema in a PostgreSQL database if it does not already exist and creates tables and indices for documents, chunks, models, splitters, and embeddings.
+This creates a new pipeline with the specified `Model` and `Splitter`. The pipelines do the heavy lifting automatically handling the chunking and embedding of documents.
 
 #### Upsert Documents
 
@@ -216,75 +220,25 @@ This creates a new schema in a PostgreSQL database if it does not already exist 
 await collection.upsert_documents(documents)
 ```
 
-The method is used to insert or update documents in a database table based on their ID, text, and metadata.
-
-#### Generate Chunks
-
-```python
-await collection.generate_chunks(splitter_id = 1)
-```
-
-This method is used to generate chunks of text from unchunked documents using a specified text splitter. By default it uses `RecursiveCharacterTextSplitter` with default parameters. `splitter_id` is optional. You can pass a `splitter_id` corresponding to a new splitter that is registered. See below for `register_text_splitter`.
-
-#### Generate Embeddings
-
-```python
-await collection.generate_embeddings(model_id = 1, splitter_id = 1)
-```
-
-This methods generates embeddings uing the chunks from the text. By default it uses `intfloat/e5-small` embeddings model. `model_id` is optional. You can pass a `model_id` corresponding to a new model that is registered and `splitter_id`. See below for `register_model`.
-
+The method is used to insert or update documents in a database table based on their ID, and text. All enabled pipelines automatically chunk and embed upserted documents.
 
 #### Vector Search
 
 ```python
-results = await collection.vector_search("Who won 20 grammy awards?", top_k=2, model_id = 1, splitter_id = 1)
+results = await collection.query().vector_recall("Who won 20 grammy awards?", pipeline=pipeline).limit(2).fetch_all()
 ```
 
-This method converts the input query into embeddings and searches embeddings table for nearest match. You can change the number of results using `top_k`. You can also pass specific `splitter_id` and `model_id` that were used for chunking and generating embeddings.
-
-#### Register Model
-
-```python
-await collection.register_model(model_name="hkunlp/instructor-xl", model_params={"instruction": "Represent the Wikipedia document for retrieval: "})
-```
-
-This function allows for the registration of a model in a database, creating a record if it does not already exist. `model_name` is the name of the open source HuggingFace model being registered and `model_params` is a dictionary containing parameters for configuring the model. It can be empty if no parameters are needed.
-
-#### Register Text Splitter
-
-```python
-await collection.register_text_splitter(splitter_name="recursive_character",splitter_params={"chunk_size": "100","chunk_overlap": "20"})
-```
-
-This function allows for the registration of a text spliter in a database, creating a record if it doesn't already exist. Following [LangChain](https://python.langchain.com/en/latest/reference/modules/text_splitter.html) splitters are supported.
-
-```
-SPLITTERS = {
-    "character": CharacterTextSplitter,
-    "latex": LatexTextSplitter,
-    "markdown": MarkdownTextSplitter,
-    "nltk": NLTKTextSplitter,
-    "python": PythonCodeTextSplitter,
-    "recursive_character": RecursiveCharacterTextSplitter,
-    "spacy": SpacyTextSplitter,
-}
-```
-
+The `query` method returns a flexible query builder for high performance filterable vector search.
 
 ### Developer Setup
-This Python library is generated from our core rust-sdk. Please check [rust-sdk documentation](../../rust/pgml/README.md) for developer setup.
 
-### API Reference 
-
-- [Database](./docs/pgml/database.md)
-- [Collection](./docs/pgml/collection.md)
+This Python library is generated from our core rust-sdk. Please check [rust-sdk documentation](../../README.md) for developer setup.
 
 ### Roadmap
 
-- Enable filters on document metadata in `vector_search`. [Issue](https://github.com/postgresml/postgresml/issues/663)
-- `text_search` functionality on documents using Postgres text search. [Issue](https://github.com/postgresml/postgresml/issues/664)
-- `hybrid_search` functionality that does a combination of `vector_search` and `text_search` in an order specified by the user. [Issue](https://github.com/postgresml/postgresml/issues/665)
-- Ability to call and manage OpenAI embeddings for comparison purposes. [Issue](https://github.com/postgresml/postgresml/issues/666)
+- [x] Enable filters on document metadata in `vector_search`. [Issue](https://github.com/postgresml/postgresml/issues/663)
+- [x] `text_search` functionality on documents using Postgres text search. [Issue](https://github.com/postgresml/postgresml/issues/664)
+- [x] `hybrid_search` functionality that does a combination of `vector_search` and `text_search` in an order specified by the user. [Issue](https://github.com/postgresml/postgresml/issues/665)
+- [x] Ability to call and manage OpenAI embeddings for comparison purposes. [Issue](https://github.com/postgresml/postgresml/issues/666)
 - Save `vector_search` history for downstream monitoring of model performance. [Issue](https://github.com/postgresml/postgresml/issues/667)
 - Perform chunking on the DB with multiple langchain splitters. [Issue](https://github.com/postgresml/postgresml/issues/668)

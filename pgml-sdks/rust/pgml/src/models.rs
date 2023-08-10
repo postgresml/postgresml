@@ -89,6 +89,7 @@ pub struct Embedding {
     pub embedding: Vec<f32>,
 }
 
+/// A chunk of split text
 #[derive(FromRow)]
 pub struct Chunk {
     pub id: i64,

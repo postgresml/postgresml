@@ -39,7 +39,7 @@ async def main():
         await collection.query()
         .vector_recall(query, pipeline)
         .limit(5)
-        .run()
+        .fetch_all()
     )
     end = time()
     console.print("\n Results for '%s' " % (query), style="bold")

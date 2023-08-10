@@ -28,12 +28,15 @@ impl Builtins {
     /// * `query` - The query to run
     ///
     /// # Example
-    ///```
+    /// 
+    /// ```
+    /// use pgml::Builtins;
+    ///
     /// async fn example() -> anyhow::Result<()> {
-    ///   let builtins = Builtins::new();
-    ///   let query = "SELECT * FROM pgml.collections";
-    ///   let results = builtins.query(query).fetch_all().await?;
-    ///   Ok(())
+    ///     let builtins = Builtins::new(None);
+    ///     let query = "SELECT * FROM pgml.collections";
+    ///     let results = builtins.query(query).fetch_all().await?;
+    ///     Ok(())
     /// }
     ///```
     #[instrument(skip(self))]
@@ -50,17 +53,20 @@ impl Builtins {
     // * `args` - The arguments to the model
     //
     // # Example
+    //
     // ```
+    // use pgml::Builtins;
+    //
     // async fn example() -> anyhow::Result<()> {
-    //  let builtins = Builtins::new(None);
-    //  let task = Json::from(serde_json::json!("translation_en_to_fr"));
-    //  let inputs = vec![
-    //    "test1".to_string(),
-    //    "test2".to_string(),
-    //  ];
-    //  let results = builtins.transform(task, inputs, None).await?;
-    //  Ok(())
-    //}
+    //    let builtins = Builtins::new(None);
+    //    let task = Json::from(serde_json::json!("translation_en_to_fr"));
+    //    let inputs = vec![
+    //       "test1".to_string(),
+    //       "test2".to_string(),
+    //    ];
+    //    let results = builtins.transform(task, inputs, None).await?;
+    //    Ok(())
+    // }
     // ```
     pub async fn transform(
         &self,

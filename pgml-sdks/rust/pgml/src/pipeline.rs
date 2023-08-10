@@ -71,13 +71,30 @@ pub struct Pipeline {
     pub name: String,
     pub model: Option<Model>,
     pub splitter: Option<Splitter>,
-    pub project_info: Option<ProjectInfo>,
-    pub database_data: Option<PipelineDatabaseData>,
     pub parameters: Option<Json>,
+    project_info: Option<ProjectInfo>,
+    pub(crate) database_data: Option<PipelineDatabaseData>,
 }
 
 #[custom_methods(new, get_status, to_dict)]
 impl Pipeline {
+    /// Creates a new [Pipeline]
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the pipeline
+    /// * `model` - The pipeline [Model]
+    /// * `splitter` - The pipeline [Splitter]
+    /// * `parameters` - The parameters to the pipeline. Defaults to None
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pgml::{Pipeline, Model, Splitter};
+    /// let model = Model::new(None, None, None);
+    /// let splitter = Splitter::new(None, None);
+    /// let pipeline = Pipeline::new("my_splitter", Some(model), Some(splitter), None);
+    /// ```
     pub fn new(
         name: &str,
         model: Option<Model>,
@@ -89,12 +106,27 @@ impl Pipeline {
             name: name.to_string(),
             model,
             splitter,
+            parameters,
             project_info: None,
             database_data: None,
-            parameters,
         }
     }
 
+    /// Gets the status of the [Pipeline]
+    /// This includes the status of the chunks, embeddings, and tsvectors
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pgml::Collection;
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///     let mut collection = Collection::new("my_collection", None);
+    ///     let mut pipeline = collection.get_pipeline("my_pipeline").await?;
+    ///     let status = pipeline.get_status().await?;
+    ///     Ok(())
+    /// }
+    /// ```
     #[instrument(skip(self))]
     pub async fn get_status(&mut self) -> anyhow::Result<PipelineSyncData> {
         let pool = self.get_pool().await?;
@@ -168,7 +200,7 @@ impl Pipeline {
     }
 
     #[instrument(skip(self))]
-    pub async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
+    pub(crate) async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
         if self.database_data.is_none() {
             let pool = self.get_pool().await?;
 
@@ -233,14 +265,14 @@ impl Pipeline {
                         model
                             .database_data
                             .as_ref()
-                            .expect("Cannot save pipeline without model")
+                            .context("Cannot save pipeline without model")?
                             .id,
                     )
                     .bind(
                         splitter
                             .database_data
                             .as_ref()
-                            .expect("Cannot save pipeline without splitter")
+                            .context("Cannot save pipeline without splitter")?
                             .id,
                     )
                     .bind(&self.parameters)
@@ -260,7 +292,7 @@ impl Pipeline {
     }
 
     #[instrument(skip(self, mp))]
-    pub async fn execute(
+    pub(crate) async fn execute(
         &mut self,
         document_ids: &Option<Vec<i64>>,
         mp: MultiProgress,
@@ -645,7 +677,7 @@ impl Pipeline {
     }
 
     #[instrument(skip(self))]
-    pub fn set_project_info(&mut self, project_info: ProjectInfo) {
+    pub(crate) fn set_project_info(&mut self, project_info: ProjectInfo) {
         if self.model.is_some() {
             self.model
                 .as_mut()
@@ -661,6 +693,20 @@ impl Pipeline {
         self.project_info = Some(project_info);
     }
 
+    /// Convert the [Pipeline] to [Json]
+    ///
+    /// # Example:
+    ///
+    /// ```
+    /// use pgml::Collection;
+    /// 
+    /// async fn example() -> anyhow::Result<()> {
+    ///     let mut collection = Collection::new("my_collection", None);
+    ///     let mut pipeline = collection.get_pipeline("my_pipeline").await?;
+    ///     let pipeline_dict = pipeline.to_dict().await?;
+    ///     Ok(())
+    /// }
+    /// ```
     #[instrument(skip(self))]
     pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
         self.verify_in_database(false).await?;
@@ -712,8 +758,7 @@ impl Pipeline {
         get_or_initialize_pool(database_url).await
     }
 
-    // We want to be able to call this function from anywhere
-    pub async fn create_pipelines_table(
+    pub(crate) async fn create_pipelines_table(
         project_info: &ProjectInfo,
         conn: &mut PgConnection,
     ) -> anyhow::Result<()> {

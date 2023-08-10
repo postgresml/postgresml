@@ -16,7 +16,7 @@ use crate::languages::javascript::*;
 use crate::languages::CustomInto;
 
 #[derive(Debug, Clone)]
-pub struct SplitterDatabaseData {
+pub(crate) struct SplitterDatabaseData {
     pub id: i64,
     pub created_at: DateTime,
 }
@@ -25,12 +25,25 @@ pub struct SplitterDatabaseData {
 pub struct Splitter {
     pub name: String,
     pub parameters: Json,
-    pub project_info: Option<ProjectInfo>,
-    pub database_data: Option<SplitterDatabaseData>,
+    project_info: Option<ProjectInfo>,
+    pub(crate) database_data: Option<SplitterDatabaseData>,
 }
 
 #[custom_methods(new)]
 impl Splitter {
+    /// Creates a new [Splitter]
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the splitter.
+    /// * `parameters` - The parameters to the splitter. Defaults to None
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pgml::Splitter;
+    /// let splitter = Splitter::new(Some("recursive_character".to_string()), None);
+    /// ```
     pub fn new(name: Option<String>, parameters: Option<Json>) -> Self {
         let name = name.unwrap_or("recursive_character".to_string());
         let parameters = parameters.unwrap_or(Json(serde_json::json!({})));
@@ -43,7 +56,7 @@ impl Splitter {
     }
 
     #[instrument(skip(self))]
-    pub async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
+    pub(crate) async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
         if self.database_data.is_none() {
             let pool = self.get_pool().await?;
 
@@ -83,19 +96,19 @@ impl Splitter {
         Ok(())
     }
 
-    pub async fn create_splitters_table(conn: &mut PgConnection) -> anyhow::Result<()> {
+    pub(crate) async fn create_splitters_table(conn: &mut PgConnection) -> anyhow::Result<()> {
         sqlx::query(queries::CREATE_SPLITTERS_TABLE)
             .execute(conn)
             .await?;
         Ok(())
     }
 
-    pub fn set_project_info(&mut self, project_info: ProjectInfo) {
+    pub(crate) fn set_project_info(&mut self, project_info: ProjectInfo) {
         self.project_info = Some(project_info)
     }
 
     #[instrument(skip(self))]
-    pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
+    pub(crate) async fn to_dict(&mut self) -> anyhow::Result<Json> {
         self.verify_in_database(false).await?;
 
         let database_data = self
@@ -105,6 +118,7 @@ impl Splitter {
 
         Ok(serde_json::json!({
             "id": database_data.id,
+            "created_at": database_data.created_at,
             "name": self.name,
             "parameters": *self.parameters,
         })

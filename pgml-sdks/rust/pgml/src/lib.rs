@@ -27,10 +27,11 @@ mod splitter;
 pub mod types;
 mod utils;
 
-// Pub re-export the Database and Collection structs for use in the rust library
+// Re-export
 pub use builtins::Builtins;
 pub use collection::Collection;
 pub use model::Model;
+pub use pipeline::Pipeline;
 pub use splitter::Splitter;
 
 // Store the database(s) in a global variable so that we can access them from anywhere
@@ -177,7 +178,9 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
 }
 
 #[cfg(feature = "javascript")]
-fn js_init_logger(mut cx: neon::context::FunctionContext) -> neon::result::JsResult<neon::types::JsUndefined> {
+fn js_init_logger(
+    mut cx: neon::context::FunctionContext,
+) -> neon::result::JsResult<neon::types::JsUndefined> {
     use crate::languages::javascript::*;
     let level = cx.argument_opt(0);
     let level = <Option<String>>::from_option_js_type(&mut cx, level)?;
@@ -396,7 +399,7 @@ mod tests {
         let results = collection
             .query()
             .vector_recall("Here is some query", &mut pipeline, None)
-            .run()
+            .fetch_all()
             .await?;
         assert!(results.len() == 3);
         collection.archive().await?;
@@ -437,7 +440,7 @@ mod tests {
         let results = collection
             .query()
             .vector_recall("Here is some query", &mut pipeline, None)
-            .run()
+            .fetch_all()
             .await?;
         assert!(results.len() == 3);
         collection.archive().await?;
