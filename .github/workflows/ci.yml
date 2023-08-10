@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 jobs:
   tests:
-    runs-on: buildjet-16vcpu-ubuntu-2204-arm
+    runs-on: buildjet-16vcpu-ubuntu-2204
     defaults:
       run:
         working-directory: pgml-extension
