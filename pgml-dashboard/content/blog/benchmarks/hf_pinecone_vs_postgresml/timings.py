@@ -54,15 +54,15 @@ async def pgml_query(model, texts):
     return mean(run_times)
 
 if __name__ == "__main__":
-    # for model in embeddings_models:
-    #     run_times = []
-    #     print("Running model: ", model)
-    #     for i in range(10):
-    #         start = time()
-    #         output = query(model, texts, headers)
-    #         response_time = time() - start
-    #         print("HF Run %d: Time taken for %s = %0.3f" % (i, model, response_time))
-    #         run_times.append(response_time)
-    #     print("Average: %0.3f"%mean(run_times[5:]))
+    for model in embeddings_models:
+        run_times = []
+        print("Running model: ", model)
+        for i in range(10):
+            start = time()
+            output = query(model, texts, headers)
+            response_time = time() - start
+            print("HF Run %d: Time taken for %s = %0.3f" % (i, model, response_time))
+            run_times.append(response_time)
+        print("Average: %0.3f"%mean(run_times[5:]))
 
     asyncio.run(pgml_query(embeddings_models, texts))
