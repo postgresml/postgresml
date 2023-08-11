@@ -19,7 +19,7 @@ export function newCollection(name: string, database_url?: string): Collection;
 export function newModel(name?: string, source?: string, parameters?: Json): Model;
 export function newSplitter(name?: string, parameters?: Json): Splitter;
 export function newBuiltins(database_url?: string): Builtins;
-export function newPipeline(name: string, model: Model, splitter: Splitter, parameters?: Json): Pipeline;
+export function newPipeline(name: string, model?: Model, splitter?: Splitter, parameters?: Json): Pipeline;
 "#;
 
 fn main() {

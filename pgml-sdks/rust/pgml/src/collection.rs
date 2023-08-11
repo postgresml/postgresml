@@ -872,18 +872,20 @@ impl Collection {
             .expect("Error getting system time")
             .as_secs();
         let archive_table_name = format!("{}_archive_{}", &self.name, timestamp);
+        let mut transaciton = pool.begin().await?;
         sqlx::query("UPDATE pgml.collections SET name = $1, active = FALSE where name = $2")
             .bind(&archive_table_name)
             .bind(&self.name)
-            .execute(&pool)
+            .execute(&mut transaciton)
             .await?;
         sqlx::query(&query_builder!(
             "ALTER SCHEMA %s RENAME TO %s",
             &self.name,
             archive_table_name
         ))
-        .execute(&pool)
+        .execute(&mut transaciton)
         .await?;
+        transaciton.commit().await?;
         Ok(())
     }
 

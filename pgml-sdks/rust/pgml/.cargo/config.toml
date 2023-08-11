@@ -1,0 +1,5 @@
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup,-fuse-ld=/usr/bin/mold"]
+
+[target.aarch64-unknown-linux-gnu]
+rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup,-fuse-ld=/usr/bin/mold"]

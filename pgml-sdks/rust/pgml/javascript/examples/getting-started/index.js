@@ -1,34 +1,37 @@
 const pgml = require("pgml");
 require("dotenv").config();
 
-const CONNECTION_STRING =
-  process.env.PGML_CONNECTION ||
-  "postgres://postgres@127.0.0.1:5433/pgml_development";
-
 const main = async () => {
-  const db = await pgml.newDatabase(CONNECTION_STRING);
-  const collection_name = "hello_world";
-  const collection = await db.create_or_get_collection(collection_name);
+  // Initialize the collection
+  const collection = pgml.newCollection("my_javascript_collection");
+
+  // Add a pipeline
+  const model = pgml.newModel();
+  const splitter = pgml.newSplitter();
+  const pipeline = pgml.newPipeline("my_javascript_pipeline", model, splitter);
+  await collection.add_pipeline(pipeline);
+
+  // Upsert documents, these documents are automatically split into chunks and embedded by our pipeline
   const documents = [
     {
-      name: "Document One",
+      id: "Document One",
       text: "document one contents...",
     },
     {
-      name: "Document Two",
+      id: "Document Two",
       text: "document two contents...",
     },
   ];
   await collection.upsert_documents(documents);
-  await collection.generate_chunks();
-  await collection.generate_embeddings();
-  const queryResults = await collection.vector_search(
-    "What are the contents of document one?", // query text
-    {}, // embedding model parameters
-    1 // top_k
-  );
 
-  // convert the results to array of objects
+  // Perform vector search
+  const queryResults = await collection
+    .query()
+    .vector_recall("What are the contents of document one?", pipeline)
+    .limit(2)
+    .fetch_all();
+
+  // Convert the results to an array of objects
   const results = queryResults.map((result) => {
     const [similarity, text, metadata] = result;
     return {
@@ -38,7 +41,7 @@ const main = async () => {
     };
   });
 
-  await db.archive_collection(collection_name);
+  await collection.archive();
   return results;
 };
 
