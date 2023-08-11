@@ -28,24 +28,13 @@ pub enum SupportedType {
     Vec(Box<SupportedType>),
     HashMap((Box<SupportedType>, Box<SupportedType>)),
     Option(Box<SupportedType>),
-    JsonHashMap,
-    Json,
-    DateTime,
     Tuple(Vec<SupportedType>),
     S, // Self for return types only
     i64,
     u64,
     i32,
     f64,
-    // Our own types
-    Database,
-    Collection,
-    Splitter,
-    Model,
-    QueryBuilder,
-    QueryRunner,
-    Pipeline,
-    PipelineSyncData,
+    CustomType(String),
 }
 
 impl ToString for SupportedType {
@@ -71,7 +60,6 @@ impl SupportedType {
             SupportedType::str => "str".to_string(),
             SupportedType::String => "String".to_string(),
             SupportedType::bool => "bool".to_string(),
-            SupportedType::Json | SupportedType::PipelineSyncData => "Json".to_string(),
             SupportedType::Vec(v) => format!("Vec<{}>", v.to_language_string(language)),
             SupportedType::HashMap((k, v)) => {
                 format!(
@@ -93,16 +81,8 @@ impl SupportedType {
             SupportedType::u64 => "u64".to_string(),
             SupportedType::i32 => "i32".to_string(),
             SupportedType::f64 => "f64".to_string(),
-            SupportedType::JsonHashMap => "JsonHashMap".to_string(),
-            SupportedType::DateTime => "DateTime".to_string(),
             // Our own types
-            SupportedType::Database => format!("Database{}", language.unwrap_or("")),
-            SupportedType::Collection => format!("Collection{}", language.unwrap_or("")),
-            SupportedType::Splitter => format!("Splitter{}", language.unwrap_or("")),
-            SupportedType::Model => format!("Model{}", language.unwrap_or("")),
-            SupportedType::QueryBuilder => format!("QueryBuilder{}", language.unwrap_or("")),
-            SupportedType::QueryRunner => format!("QueryRunner{}", language.unwrap_or("")),
-            SupportedType::Pipeline => format!("Pipeline{}", language.unwrap_or("")),
+            SupportedType::CustomType(t) => format!("{}{}", t, language.unwrap_or("")),
         }
     }
 }
@@ -121,7 +101,7 @@ impl GetSupportedType {
 
     pub fn get_type_from_path(i: &syn::TypePath) -> SupportedType {
         let mut s = Self::default();
-        s.visit_path(&i.path);
+        s.visit_path_segment(i.path.segments.last().expect("No path segment found"));
         s.ty.expect("Error getting type from TypePath")
     }
 
@@ -199,25 +179,16 @@ impl<'ast> Visit<'ast> for GetSupportedType {
                     i.to_token_stream().to_string()
                 ),
             },
-            "JsonHashMap" => Some(SupportedType::JsonHashMap),
-            "DateTime" => Some(SupportedType::DateTime),
             "Self" => Some(SupportedType::S),
             "i64" => Some(SupportedType::i64),
             "u64" => Some(SupportedType::u64),
             "i32" => Some(SupportedType::i32),
             "f64" => Some(SupportedType::f64),
-            "Json" => Some(SupportedType::Json),
             // Our own types
-            "Database" => Some(SupportedType::Database),
-            "Collection" => Some(SupportedType::Collection),
-            "Splitter" => Some(SupportedType::Splitter),
-            "Model" => Some(SupportedType::Model),
-            "QueryBuilder" => Some(SupportedType::QueryBuilder),
-            "QueryRunner" => Some(SupportedType::QueryRunner),
-            "Pipeline" => Some(SupportedType::Pipeline),
-            "PipelineSyncData" => Some(SupportedType::PipelineSyncData),
-            _ => None,
+            t => Some(SupportedType::CustomType(t.to_string())),
         };
+
+        // println!("SELF TYPE {:?}", self.ty);
 
         if self.ty.is_none() {
             visit::visit_path_segment(self, i);
