@@ -9,26 +9,19 @@ use std::borrow::Cow;
 use std::time::SystemTime;
 use tracing::{instrument, warn};
 
-use crate::get_or_initialize_pool;
-use crate::model::ModelRuntime;
-use crate::models;
-use crate::pipeline::Pipeline;
-use crate::queries;
-use crate::query_builder;
-use crate::query_builder::QueryBuilder;
-use crate::remote_embeddings::build_remote_embeddings;
-use crate::splitter::Splitter;
-use crate::types::DateTime;
-use crate::types::Json;
-use crate::utils;
+use crate::{
+    get_or_initialize_pool, model::ModelRuntime, models, pipeline::Pipeline, queries,
+    query_builder, query_builder::QueryBuilder, remote_embeddings::build_remote_embeddings,
+    splitter::Splitter, types::DateTime, types::Json, utils,
+};
 
 #[cfg(feature = "javascript")]
 use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
 use crate::{
-    types::JsonPython, languages::python::*, pipeline::PipelinePython,
-    query_builder::QueryBuilderPython,
+    languages::python::*, pipeline::PipelinePython, query_builder::QueryBuilderPython,
+    types::JsonPython,
 };
 
 /// Our project tasks
