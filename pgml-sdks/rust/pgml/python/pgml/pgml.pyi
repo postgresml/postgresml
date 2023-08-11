@@ -8,6 +8,18 @@ DateTime = int
 from typing import List, Dict, Optional, Self, Any
 
 
+# Top of file key: A12BECOD!
+from typing import List, Dict, Optional, Self, Any
+
+
+class Builtins:
+	def __init__(self, database_url: Optional[str] = "Default set in Rust. Please check the documentation.") -> Self
+		...
+	def query(self, query: str) -> QueryRunner
+		...
+	async def transform(self, task: Json, inputs: List[str], args: Optional[Json] = {}) -> Json
+		...
+
 class Builtins:
 	def __init__(self, database_url: Optional[str] = "Default set in Rust. Please check the documentation.") -> Self
 		...

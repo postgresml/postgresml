@@ -52,6 +52,11 @@ impl IntoTableNameAndSchema for String {
     }
 }
 
+#[derive(Clone, Debug)]
+struct QueryBuilderState {
+
+}
+
 #[derive(custom_derive, Clone, Debug)]
 pub struct QueryBuilder {
     query: SelectStatement,
