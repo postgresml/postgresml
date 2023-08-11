@@ -13,7 +13,7 @@ use crate::{
 use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
-use crate::languages::python::*;
+use crate::{languages::python::*, types::JsonPython};
 
 #[derive(Debug, Clone)]
 pub(crate) struct SplitterDatabaseData {

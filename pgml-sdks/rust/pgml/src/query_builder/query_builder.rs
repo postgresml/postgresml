@@ -17,7 +17,7 @@ use crate::{
 use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
-use crate::{languages::python::*, pipeline::PipelinePython};
+use crate::{languages::python::*, pipeline::PipelinePython, types::JsonPython};
 
 #[derive(Clone)]
 enum SIden<'a> {
@@ -53,9 +53,7 @@ impl IntoTableNameAndSchema for String {
 }
 
 #[derive(Clone, Debug)]
-struct QueryBuilderState {
-
-}
+struct QueryBuilderState {}
 
 #[derive(custom_derive, Clone, Debug)]
 pub struct QueryBuilder {
@@ -265,8 +263,6 @@ impl QueryBuilder {
             Err(e) => match e.as_database_error() {
                 Some(d) => {
                     if d.code() == Some(Cow::from("XX000")) {
-                        println!("WHAT: {:?}", d);
-
                         // Explicitly get and set the model
                         let project_info = self.collection.get_project_info().await?;
                         let pipeline = self

@@ -9,7 +9,7 @@ use crate::{get_or_initialize_pool, types::Json};
 use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
-use crate::languages::python::*;
+use crate::{languages::python::*, types::JsonPython};
 
 #[derive(Clone, Debug)]
 enum BindValue {

@@ -1,6 +1,6 @@
 use anyhow::Context;
 use indicatif::MultiProgress;
-use pgml_macros::{custom_derive, custom_methods};
+use pgml_macros::{custom_derive, custom_methods, pgml_alias};
 use sqlx::{Executor, PgConnection, PgPool};
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
@@ -22,7 +22,9 @@ use crate::{
 use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
-use crate::{languages::python::*, model::ModelPython, splitter::SplitterPython};
+use crate::{
+    languages::python::*, model::ModelPython, splitter::SplitterPython, types::JsonPython,
+};
 
 #[derive(Debug, Clone)]
 pub struct InvividualSyncStatus {
@@ -42,7 +44,17 @@ impl From<InvividualSyncStatus> for Json {
     }
 }
 
-#[derive(Debug, Clone)]
+impl From<Json> for InvividualSyncStatus {
+    fn from(value: Json) -> Self {
+        Self {
+            synced: value["synced"].as_i64().expect("The synced field is not an integer"),
+            not_synced: value["not_synced"].as_i64().expect("The not_synced field is not an integer"),
+            total: value["total"].as_i64().expect("The total field is not an integer"),
+        }
+    }
+}
+
+#[derive(pgml_alias, Debug, Clone)]
 pub struct PipelineSyncData {
     pub chunks_status: InvividualSyncStatus,
     pub embeddings_status: InvividualSyncStatus,
@@ -57,6 +69,16 @@ impl From<PipelineSyncData> for Json {
             "tsvectors_status": *Json::from(value.tsvectors_status),
         })
         .into()
+    }
+}
+
+impl From<Json> for PipelineSyncData {
+    fn from(mut value: Json) -> Self {
+        Self {
+            chunks_status: Json::from(std::mem::take(&mut value["chunks_status"])).into(),
+            embeddings_status: Json::from(std::mem::take(&mut value["embeddings_status"])).into(),
+            tsvectors_status: Json::from(std::mem::take(&mut value["tsvectors_status"])).into(),
+        }
     }
 }
 
@@ -168,7 +190,8 @@ impl Pipeline {
             format!("{}.chunks", project_name)
         ))
         .bind(database_data.splitter_id)
-        .fetch_one(&pool).await?;
+        .fetch_one(&pool)
+        .await?;
         let embeddings_status = InvividualSyncStatus {
             synced: embeddings_status.0.unwrap_or(0),
             not_synced: embeddings_status.1.unwrap_or(0) - embeddings_status.0.unwrap_or(0),

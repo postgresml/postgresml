@@ -26,7 +26,10 @@ use crate::utils;
 use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
-use crate::{languages::python::*, pipeline::PipelinePython, query_builder::QueryBuilderPython};
+use crate::{
+    types::JsonPython, languages::python::*, pipeline::PipelinePython,
+    query_builder::QueryBuilderPython,
+};
 
 /// Our project tasks
 #[derive(Debug, Clone)]

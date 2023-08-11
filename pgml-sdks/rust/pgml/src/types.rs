@@ -1,9 +1,13 @@
+use pgml_macros::pgml_alias;
 use serde::Serialize;
 use std::ops::{Deref, DerefMut};
 
+#[cfg(feature = "python")]
+use crate::languages::python::*;
+
 /// A wrapper around serde_json::Value
 // #[derive(sqlx::Type, sqlx::FromRow, Debug)]
-#[derive(sqlx::Type, Debug, Clone)]
+#[derive(pgml_alias, sqlx::Type, Debug, Clone)]
 #[sqlx(transparent)]
 pub struct Json(pub serde_json::Value);
 

@@ -74,7 +74,7 @@ it("can vector search with local embeddings", async () => {
   let model = pgml.newModel();
   let splitter = pgml.newSplitter();
   let pipeline = pgml.newPipeline("test_j_p_cvswle_0", model, splitter);
-  let collection = pgml.newCollection("test_j_c_cvswle_2");
+  let collection = pgml.newCollection("test_j_c_cvswle_3");
   await collection.upsert_documents(generate_dummy_documents(3));
   await collection.add_pipeline(pipeline);
   let results = await collection.vector_search("Here is some query", pipeline);
@@ -86,33 +86,36 @@ it("can vector search with remote embeddings", async() => {
   let model = pgml.newModel("text-embedding-ada-002", "openai");
   let splitter = pgml.newSplitter();
   let pipeline = pgml.newPipeline("test_j_p_cvswre_0", model, splitter);
-  let collection = pgml.newCollection("test_j_c_cvswre_0");
+  let collection = pgml.newCollection("test_j_c_cvswre_1");
   await collection.upsert_documents(generate_dummy_documents(3));
   await collection.add_pipeline(pipeline);
   let results = await collection.vector_search("Here is some query", pipeline);
   expect(results).toHaveLength(3);
+  await collection.archive();
 });
 
 it("can vector search with query builder", async() => {
   let model = pgml.newModel();
   let splitter = pgml.newSplitter();
   let pipeline = pgml.newPipeline("test_j_p_cvswqb_0", model, splitter);
-  let collection = pgml.newCollection("test_j_c_cvswqb_0");
+  let collection = pgml.newCollection("test_j_c_cvswqb_1");
   await collection.upsert_documents(generate_dummy_documents(3));
   await collection.add_pipeline(pipeline);
-  let results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run();
+  let results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).fetch_all();
   expect(results).toHaveLength(3);
+  await collection.archive();
 });
 
 it("can vector search with query builder with remote embeddings", async() => {
   let model = pgml.newModel("text-embedding-ada-002", "openai");
   let splitter = pgml.newSplitter();
   let pipeline = pgml.newPipeline("test_j_p_cvswqbwre_0", model, splitter);
-  let collection = pgml.newCollection("test_j_c_cvswqbwre_0");
+  let collection = pgml.newCollection("test_j_c_cvswqbwre_1");
   await collection.upsert_documents(generate_dummy_documents(3));
   await collection.add_pipeline(pipeline);
-  let results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).run();
+  let results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).fetch_all();
   expect(results).toHaveLength(3);
+  await collection.archive();
 });
 
 
@@ -124,7 +127,7 @@ it("pipeline to dict", async () => {
   let model = pgml.newModel("text-embedding-ada-002", "openai");
   let splitter = pgml.newSplitter();
   let pipeline = pgml.newPipeline("test_j_p_ptd_0", model, splitter);
-  let collection = pgml.newCollection("test_j_c_ptd_0");
+  let collection = pgml.newCollection("test_j_c_ptd_1");
   await collection.add_pipeline(pipeline);
   let pipeline_dict = await pipeline.to_dict();
   console.log(JSON.stringify(pipeline_dict))

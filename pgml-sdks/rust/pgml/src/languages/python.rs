@@ -3,26 +3,11 @@ use pyo3::types::{PyDict, PyFloat, PyInt, PyList, PyString};
 use pyo3::{prelude::*, types::PyBool};
 use std::collections::HashMap;
 
-use crate::{
-    pipeline::PipelineSyncData,
-    types::{DateTime, Json},
-};
+use crate::{pipeline::PipelineSyncData, types::Json};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rust to PY //////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
-impl ToPyObject for DateTime {
-    fn to_object(&self, py: Python) -> PyObject {
-        self.0.timestamp().to_object(py)
-    }
-}
-
-impl IntoPy<PyObject> for DateTime {
-    fn into_py(self, py: Python) -> PyObject {
-        self.to_object(py)
-    }
-}
 
 impl ToPyObject for Json {
     fn to_object(&self, py: Python) -> PyObject {
@@ -60,6 +45,18 @@ impl ToPyObject for Json {
 }
 
 impl IntoPy<PyObject> for Json {
+    fn into_py(self, py: Python) -> PyObject {
+        self.to_object(py)
+    }
+}
+
+impl ToPyObject for PipelineSyncData {
+    fn to_object(&self, py: Python) -> PyObject {
+        Json::from(self.clone()).to_object(py)
+    }
+}
+
+impl IntoPy<PyObject> for PipelineSyncData {
     fn into_py(self, py: Python) -> PyObject {
         self.to_object(py)
     }
@@ -104,6 +101,13 @@ impl FromPyObject<'_> for Json {
         } else {
             panic!("Unsupported type for JSON conversion");
         }
+    }
+}
+
+impl FromPyObject<'_> for PipelineSyncData {
+    fn extract(ob: &PyAny) -> PyResult<Self> {
+        let json = Json::extract(ob)?;
+        Ok(json.into())
     }
 }
 
@@ -195,9 +199,6 @@ gen_custom_into!(String);
 gen_custom_into!(());
 
 gen_custom_into!(bool);
-
-gen_custom_into!(Json);
-gen_custom_into!(DateTime);
 
 gen_custom_into!(i8);
 gen_custom_into!(i16);

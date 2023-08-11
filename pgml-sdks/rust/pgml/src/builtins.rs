@@ -13,7 +13,7 @@ use crate::{get_or_initialize_pool, query_runner::QueryRunner, types::Json};
 use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
-use crate::{languages::python::*, query_runner::QueryRunnerPython};
+use crate::{languages::python::*, query_runner::QueryRunnerPython, types::JsonPython};
 
 #[custom_methods(new, query, transform)]
 impl Builtins {
