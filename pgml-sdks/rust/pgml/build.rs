@@ -3,9 +3,9 @@ use std::fs::OpenOptions;
 use std::io::Write;
 
 const ADDITIONAL_DEFAULTS_FOR_PYTHON: &[u8] = br#"
-def py_init_logger(level: Optional[str], format: Optional[str]) -> None
+def py_init_logger(level: Optional[str] = "Default set in Rust. Please see documentation.", format: Optional[str] = "Default set in Rust. Please see documentation.") -> None
 
-Json = dict[str, Any]
+Json = Any
 DateTime = int
 "#;
 

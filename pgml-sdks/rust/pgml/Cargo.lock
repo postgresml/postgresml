@@ -1125,6 +1125,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
+ "futures",
  "indicatif",
  "itertools",
  "md5",

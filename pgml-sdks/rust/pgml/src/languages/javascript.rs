@@ -184,20 +184,6 @@ impl<T: IntoJsResult> IntoJsResult for Vec<T> {
     }
 }
 
-// Our own types
-// gen_into!(
-//     crate::database::Database,
-//     JsBox<RefCell<crate::database::Database>>,
-//     RefCell<crate::database::Database>
-// );
-// impl Finalize for crate::database::Database {}
-// gen_into!(
-//     crate::collection::Collection,
-//     JsBox<RefCell<crate::collection::Collection>>,
-//     RefCell<crate::collection::Collection>
-// );
-// impl Finalize for crate::collection::Collection {}
-
 ////////////////////////////////////////////////////////////////////////////////
 // JS To Rust //////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

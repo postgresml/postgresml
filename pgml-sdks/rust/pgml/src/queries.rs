@@ -51,7 +51,8 @@ pub const CREATE_CHUNKS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
   document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   splitter_id int8 NOT NULL REFERENCES pgml.sdk_splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   chunk_index int8 NOT NULL, 
-  chunk text NOT NULL
+  chunk text NOT NULL,
+  UNIQUE (document_id, splitter_id, chunk_index)
 );
 "#;
 
@@ -279,7 +280,8 @@ FROM
               splitter_id = $1 
           )
       ) AS documents
-  ) chunks
+  ) chunks 
+ON CONFLICT (document_id, splitter_id, chunk_index) DO NOTHING 
 RETURNING id
 "#;
 
@@ -330,5 +332,6 @@ FROM
           )
       ) AS documents
   ) chunks
+ON CONFLICT (document_id, splitter_id, chunk_index) DO NOTHING 
 RETURNING id
 "#;

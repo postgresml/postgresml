@@ -19,11 +19,7 @@ if DATABASE_URL is None:
     print("No DATABASE_URL environment variable found. Please set one")
     exit(1)
 
-LOG_LEVEL = os.environ.get("LOG_LEVEL")
-if LOG_LEVEL is None:
-    print("No LOG_LEVEL environment variable found setting to ERROR")
-    LOG_LEVEL = "ERROR"
-pgml.py_init_logger(LOG_LEVEL)
+pgml.py_init_logger()
 
 
 def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
@@ -162,29 +158,39 @@ async def test_pipeline_to_dict():
 ###################################################
 
 
-async def vector_search(collection, pipeline):
-    results = (
-        await collection.query()
+def vector_search(collection_name, pipeline_name):
+    collection = pgml.Collection(collection_name)
+    pipeline = pgml.Pipeline(pipeline_name)
+    result = asyncio.run(
+        collection.query()
         .vector_recall("Here is some query", pipeline)
         .limit(10)
         .fetch_all()
     )
-    return len(results)
+    print(result)
+    return [0, 1, 2]
 
 
 # @pytest.mark.asyncio
 # async def test_multiprocessing():
+#     collection_name = "test_p_p_tm_1"
+#     pipeline_name = "test_p_c_tm_4"
+#
 #     model = pgml.Model()
 #     splitter = pgml.Splitter()
-#     pipeline = pgml.Pipeline("test_p_p_tm_1", model, splitter)
-#     collection = pgml.Collection(name="test_p_c_tm_4")
+#     pipeline = pgml.Pipeline(pipeline_name, model, splitter)
+#
+#     collection = pgml.Collection(collection_name)
 #     await collection.upsert_documents(generate_dummy_documents(3))
 #     await collection.add_pipeline(pipeline)
 #
 #     with Pool(5) as p:
-#         results = p.starmap_async(vector_search, [(collection, pipeline) for _ in range(5)])
-#         for x in results.get():
-#             assert(x == 3)
+#         results = p.starmap(
+#             vector_search, [(collection_name, pipeline_name) for _ in range(5)]
+#         )
+#         for x in results:
+#             print(x)
+#             assert len(x) == 3
 #
 #     await collection.archive()
 
@@ -201,18 +207,15 @@ async def silas_test_add_pipeline():
     collection = pgml.Collection(name="silas_test_c_10")
     await collection.add_pipeline(pipeline)
 
-
 async def silas_test_upsert_documents():
     collection = pgml.Collection(name="silas_test_c_9")
     await collection.upsert_documents(generate_dummy_documents(10))
-
 
 async def silas_test_vector_search():
     pipeline = pgml.Pipeline("silas_test_p_1")
     collection = pgml.Collection(name="silas_test_c_9")
     results = await collection.vector_search("Here is some query", pipeline)
     print(results)
-
 
 # asyncio.run(silas_test_add_pipeline())
 # asyncio.run(silas_test_upsert_documents())

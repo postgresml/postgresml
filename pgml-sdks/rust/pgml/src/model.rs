@@ -13,7 +13,7 @@ use crate::{
 use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
-use crate::languages::CustomInto;
+use crate::languages::python::*;
 
 /// A few notes on the following enums:
 /// - Sqlx does provide type derivation for enums, but it's not very good

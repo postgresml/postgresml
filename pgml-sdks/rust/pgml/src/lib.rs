@@ -59,25 +59,6 @@ async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result
     }
 }
 
-async fn connect(database_url: &Option<String>) -> anyhow::Result<()> {
-    get_or_initialize_pool(database_url).await?;
-    Ok(())
-}
-
-async fn reconnect() -> anyhow::Result<()> {
-    let mut pools = DATABASE_POOLS
-        .write()
-        .expect("Error getting DATABASE_POOLS for writing");
-    let pools = pools.get_or_insert_with(HashMap::new);
-    let keys = pools.keys().map(|k| k.to_owned()).collect::<Vec<_>>();
-    pools.clear();
-    for url in keys {
-        let pool = PgPool::connect_lazy(&url)?;
-        pools.insert(url.to_string(), pool.clone());
-    }
-    Ok(())
-}
-
 pub enum LogFormat {
     JSON,
     Pretty,
@@ -92,6 +73,7 @@ impl From<&str> for LogFormat {
     }
 }
 
+#[allow(dead_code)]
 fn init_logger(level: Option<String>, format: Option<String>) -> anyhow::Result<()> {
     let level = level.unwrap_or_else(|| env::var("LOG_LEVEL").unwrap_or("".to_string()));
     let level = match level.as_str() {
@@ -120,8 +102,10 @@ fn init_logger(level: Option<String>, format: Option<String>) -> anyhow::Result<
 
 // Normally the global async runtime is handled by tokio but because we are a library being called
 // by javascript and other langauges, we occasionally need to handle it ourselves
+#[allow(dead_code)]
 static mut RUNTIME: Option<Runtime> = None;
 
+#[allow(dead_code)]
 fn get_or_set_runtime<'a>() -> &'a Runtime {
     unsafe {
         if let Some(r) = &RUNTIME {
@@ -146,24 +130,6 @@ fn py_init_logger(level: Option<String>, format: Option<String>) -> pyo3::PyResu
 }
 
 #[cfg(feature = "python")]
-#[pyo3::prelude::pyfunction]
-fn connect_python(database_url: Option<String>) -> pyo3::PyResult<()> {
-    let runtime = get_or_set_runtime();
-    runtime
-        .block_on(connect(&database_url))
-        .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))
-}
-
-#[cfg(feature = "python")]
-#[pyo3::prelude::pyfunction]
-fn reconnect_python() -> pyo3::PyResult<()> {
-    let runtime = get_or_set_runtime();
-    runtime
-        .block_on(reconnect())
-        .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))
-}
-
-#[cfg(feature = "python")]
 #[pyo3::pymodule]
 fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(py_init_logger, m)?)?;
@@ -172,8 +138,6 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_class::<model::ModelPython>()?;
     m.add_class::<splitter::SplitterPython>()?;
     m.add_class::<builtins::BuiltinsPython>()?;
-    // m.add_function(pyo3::wrap_pyfunction!(connect_python, m)?)?;
-    // m.add_function(pyo3::wrap_pyfunction!(reconnect_python, m)?)?;
     Ok(())
 }
 
@@ -206,18 +170,6 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
 mod tests {
     use super::*;
     use crate::{model::Model, pipeline::Pipeline, splitter::Splitter, types::Json};
-
-    // This will be useful if we decide to use sqlx's test database feature
-    // fn set_pool(pool: PgPool) -> anyhow::Result<()> {
-    //     let mut pools = DATABASE_POOLS
-    //         .write()
-    //         .expect("Error getting DATABASE_POOLS for writing");
-    //     let pools = pools.get_or_insert_with(HashMap::new);
-    //     let environment_url =
-    //         std::env::var("DATABASE_URL").context("Error getting DATABASE_URL from environment")?;
-    //     pools.insert(environment_url, pool);
-    //     Ok(())
-    // }
 
     fn generate_dummy_documents(count: usize) -> Vec<Json> {
         let mut documents = Vec::new();
@@ -317,6 +269,53 @@ mod tests {
         collection.enable_pipeline(&mut pipeline).await?;
         let queried_pipeline = &collection.get_pipelines().await?[0];
         assert_eq!(pipeline.name, queried_pipeline.name);
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn sync_multiple_pipelines() -> anyhow::Result<()> {
+        init_logger(None, None).ok();
+        let model = Model::default();
+        let splitter = Splitter::default();
+        let mut pipeline1 = Pipeline::new(
+            "test_r_p_smp_0",
+            Some(model.clone()),
+            Some(splitter.clone()),
+            Some(
+                serde_json::json!({
+                    "full_text_search": {
+                        "active": true,
+                        "configuration": "english"
+                    }
+                })
+                .into(),
+            ),
+        );
+        let mut pipeline2 = Pipeline::new(
+            "test_r_p_smp_1",
+            Some(model),
+            Some(splitter),
+            Some(
+                serde_json::json!({
+                    "full_text_search": {
+                        "active": true,
+                        "configuration": "english"
+                    }
+                })
+                .into(),
+            ),
+        );
+        let mut collection = Collection::new("test_r_c_smp_3", None);
+        collection.add_pipeline(&mut pipeline1).await?;
+        collection.add_pipeline(&mut pipeline2).await?;
+        collection
+            .upsert_documents(generate_dummy_documents(3), Some(true))
+            .await?;
+        let status_1 = pipeline1.get_status().await?;
+        let status_2 = pipeline2.get_status().await?;
+        assert!(status_1.chunks_status.synced == status_1.chunks_status.total && status_1.chunks_status.not_synced == 0);
+        assert!(status_2.chunks_status.synced == status_2.chunks_status.total && status_2.chunks_status.not_synced == 0);
+        collection.archive().await?;
         Ok(())
     }
 

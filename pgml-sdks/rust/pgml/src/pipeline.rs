@@ -18,11 +18,11 @@ use crate::{
     utils,
 };
 
-#[cfg(feature = "python")]
-use crate::{languages::CustomInto, model::ModelPython, splitter::SplitterPython};
-
 #[cfg(feature = "javascript")]
 use crate::languages::javascript::*;
+
+#[cfg(feature = "python")]
+use crate::{languages::python::*, model::ModelPython, splitter::SplitterPython};
 
 #[derive(Debug, Clone)]
 pub struct InvividualSyncStatus {
@@ -37,7 +37,8 @@ impl From<InvividualSyncStatus> for Json {
             "synced": value.synced,
             "not_synced": value.not_synced,
             "total": value.total,
-        }).into()
+        })
+        .into()
     }
 }
 
@@ -54,7 +55,8 @@ impl From<PipelineSyncData> for Json {
             "chunks_status": *Json::from(value.chunks_status),
             "embeddings_status": *Json::from(value.embeddings_status),
             "tsvectors_status": *Json::from(value.tsvectors_status),
-        }).into()
+        })
+        .into()
     }
 }
 
@@ -148,7 +150,7 @@ impl Pipeline {
 
         // TODO: Maybe combine all of these into one query so it is faster
         let chunks_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
-            "SELECT chunks.m, documents.m FROM (SELECT MAX(document_id) AS m FROM %s WHERE splitter_id = $1) chunks, (SELECT MAX(id) AS m FROM %s) documents",
+            "SELECT (SELECT COUNT(DISTINCT document_id) FROM %s WHERE splitter_id = $1), COUNT(id) FROM %s",
             format!("{}.chunks", project_name),
             format!("{}.documents", project_name)
         ))
@@ -156,12 +158,12 @@ impl Pipeline {
         .fetch_one(&pool).await?;
         let chunks_status = InvividualSyncStatus {
             synced: chunks_status.0.unwrap_or(0),
-            not_synced: chunks_status.1.unwrap_or(0) - chunks_status.1.unwrap_or(0),
+            not_synced: chunks_status.1.unwrap_or(0) - chunks_status.0.unwrap_or(0),
             total: chunks_status.1.unwrap_or(0),
         };
 
         let embeddings_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
-            "SELECT embeddings.m, chunks.m FROM (SELECT MAX(id) AS m FROM %s) embeddings, (SELECT MAX(id) AS m FROM %s WHERE splitter_id = $1) chunks",
+            "SELECT (SELECT count(*) FROM %s), (SELECT count(*) FROM %s WHERE splitter_id = $1)",
             embeddings_table_name,
             format!("{}.chunks", project_name)
         ))
@@ -169,7 +171,7 @@ impl Pipeline {
         .fetch_one(&pool).await?;
         let embeddings_status = InvividualSyncStatus {
             synced: embeddings_status.0.unwrap_or(0),
-            not_synced: embeddings_status.1.unwrap_or(0) - embeddings_status.1.unwrap_or(0),
+            not_synced: embeddings_status.1.unwrap_or(0) - embeddings_status.0.unwrap_or(0),
             total: embeddings_status.1.unwrap_or(0),
         };
 
@@ -177,7 +179,7 @@ impl Pipeline {
             == serde_json::Value::Bool(true)
         {
             sqlx::query_as(&query_builder!(
-                "SELECT tsvectors.m, documents.m FROM (SELECT MAX(id) AS m FROM %s WHERE configuration = $1) tsvectors, (SELECT MAX(id) AS m FROM %s) documents",
+                "SELECT (SELECT COUNT(*) FROM %s WHERE configuration = $1), (SELECT COUNT(*) FROM %s)",
                 format!("{}.documents_tsvectors", project_name),
                 format!("{}.documents", project_name)
             ))
@@ -188,7 +190,7 @@ impl Pipeline {
         };
         let tsvectors_status = InvividualSyncStatus {
             synced: tsvectors_status.0.unwrap_or(0),
-            not_synced: tsvectors_status.1.unwrap_or(0) - tsvectors_status.1.unwrap_or(0),
+            not_synced: tsvectors_status.1.unwrap_or(0) - tsvectors_status.0.unwrap_or(0),
             total: tsvectors_status.1.unwrap_or(0),
         };
 
@@ -699,7 +701,7 @@ impl Pipeline {
     ///
     /// ```
     /// use pgml::Collection;
-    /// 
+    ///
     /// async fn example() -> anyhow::Result<()> {
     ///     let mut collection = Collection::new("my_collection", None);
     ///     let mut pipeline = collection.get_pipeline("my_pipeline").await?;
@@ -736,7 +738,6 @@ impl Pipeline {
             .parameters
             .as_ref()
             .context("Pipeline must be verified to call to_dict")?;
-
 
         Ok(serde_json::json!({
             "id": database_data.id,

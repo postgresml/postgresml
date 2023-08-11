@@ -17,7 +17,7 @@ use crate::{
 use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
-use crate::{languages::CustomInto, pipeline::PipelinePython};
+use crate::{languages::python::*, pipeline::PipelinePython};
 
 #[derive(Clone)]
 enum SIden<'a> {

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from rich.console import Console
 import asyncio
 
+
 async def main():
     load_dotenv()
     console = Console()
@@ -36,10 +37,7 @@ async def main():
     console.print("Querying for context ...")
     start = time()
     results = (
-        await collection.query()
-        .vector_recall(query, pipeline)
-        .limit(5)
-        .fetch_all()
+        await collection.query().vector_recall(query, pipeline).limit(5).fetch_all()
     )
     end = time()
     console.print("\n Results for '%s' " % (query), style="bold")
@@ -54,7 +52,9 @@ async def main():
     builtins = Builtins()
     console.print("Querying for answer ...")
     start = time()
-    answer = await builtins.transform("question-answering", [json.dumps({"question": query, "context": context})])
+    answer = await builtins.transform(
+        "question-answering", [json.dumps({"question": query, "context": context})]
+    )
     end = time()
     console.print("Results for query '%s'" % query, style="bold")
     console.print(answer)
@@ -62,6 +62,7 @@ async def main():
 
     # Archive collection
     await collection.archive()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

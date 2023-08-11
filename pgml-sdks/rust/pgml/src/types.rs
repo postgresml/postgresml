@@ -1,5 +1,5 @@
-use std::ops::{Deref, DerefMut};
 use serde::Serialize;
+use std::ops::{Deref, DerefMut};
 
 /// A wrapper around serde_json::Value
 // #[derive(sqlx::Type, sqlx::FromRow, Debug)]

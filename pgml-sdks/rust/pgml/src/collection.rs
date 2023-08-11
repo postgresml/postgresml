@@ -26,7 +26,7 @@ use crate::utils;
 use crate::languages::javascript::*;
 
 #[cfg(feature = "python")]
-use crate::{languages::CustomInto, pipeline::PipelinePython, query_builder::QueryBuilderPython};
+use crate::{languages::python::*, pipeline::PipelinePython, query_builder::QueryBuilderPython};
 
 /// Our project tasks
 #[derive(Debug, Clone)]
@@ -710,9 +710,21 @@ impl Collection {
         if !pipelines.is_empty() {
             let mp = MultiProgress::new();
             mp.println("Syncing Pipelines...")?;
-            for mut pipeline in pipelines {
-                pipeline.execute(&document_ids, mp.clone()).await?;
-            }
+            use futures::stream::StreamExt;
+            futures::stream::iter(pipelines)
+                // Need this map to get around moving the document_ids and mp
+                .map(|pipeline| (pipeline, document_ids.clone(), mp.clone()))
+                .for_each_concurrent(10, |(mut pipeline, document_ids, mp)| async move {
+                    pipeline
+                        .execute(&document_ids, mp)
+                        .await
+                        .expect("Failed to execute pipeline");
+                })
+                .await;
+            // pipelines.into_iter().for_each
+            // for mut pipeline in pipelines {
+            //     pipeline.execute(&document_ids, mp.clone()).await?;
+            // }
             eprintln!("Done Syncing Pipelines\n");
         }
         Ok(())
@@ -894,7 +906,7 @@ impl Collection {
         QueryBuilder::new(self.clone())
     }
 
-    /// Gets all pipelines for the [Collection] 
+    /// Gets all pipelines for the [Collection]
     ///
     /// # Example
     ///

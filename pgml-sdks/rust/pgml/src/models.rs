@@ -1,7 +1,7 @@
 use sea_query::enum_def;
+use serde::Serialize;
 use sqlx::types::Uuid;
 use sqlx::FromRow;
-use serde::Serialize;
 
 use crate::types::{DateTime, Json};
 
@@ -62,7 +62,8 @@ pub struct PipelineWithModelAndSplitter {
 pub struct Document {
     pub id: i64,
     pub created_at: DateTime,
-    #[serde(with = "uuid::serde::compact")] // See: https://docs.rs/uuid/latest/uuid/serde/index.html
+    #[serde(with = "uuid::serde::compact")]
+    // See: https://docs.rs/uuid/latest/uuid/serde/index.html
     pub source_uuid: Uuid,
     pub metadata: Json,
     pub text: String,
