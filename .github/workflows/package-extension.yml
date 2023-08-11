@@ -182,22 +182,21 @@ jobs:
         fi
 
         for pg in {11..15}; do
-          bash packages/postgresml/build.sh ${pg} v${{ inputs.packageVersion }} ${{ inputs.pythonVersion }}
+          bash packages/postgresml/build.sh ${pg} v${{ inputs.packageVersion }}-1 ${{ inputs.pythonVersion }}
 
           deb-s3 upload \
             --lock \
             --bucket apt.postgresml.org \
-            postgresml-${pg}-${{ inputs.packageVersion }}-ubuntu22.04-${ARCH}.deb \
+            postgresml-${pg}-${{ inputs.packageVersion }}-1-ubuntu22.04-${ARCH}.deb \
             --codename $(lsb_release -cs)
 
-          rm -f postgresml-${pg}-${{ inputs.packageVersion }}-ubuntu22.04-${ARCH}.deb 
+          rm -f postgresml-${pg}-${{ inputs.packageVersion }}-1-ubuntu22.04-${ARCH}.deb 
         done
   dashboard:
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
         os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm"]
-        
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -231,3 +230,29 @@ jobs:
           --bucket apt.postgresml.org \
           postgresml-dashboard-${{ inputs.packageVersion }}-ubuntu22.04-${ARCH}.deb \
           --codename $(lsb_release -cs)
+  publish-extension-docker-image:
+    needs: package
+    strategy:
+      matrix:
+        os: ["buildjet-4vcpu-ubuntu-2204"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: pgml-extension/docker/postgresml
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        run: |
+          docker run --privileged --rm tonistiigi/binfmt --install all
+          docker buildx create --use --name mybuilder
+          docker buildx build  \
+            --platform linux/amd64,linux/arm64 \
+            --tag ghcr.io/postgresml/postgresml:${{ inputs.version }} \
+            --build-arg POSTGRESML_VERSION=${{ inputs.postgresmlVersion }} \
+            --push .
