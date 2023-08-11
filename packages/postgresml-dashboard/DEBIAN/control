@@ -1,0 +1,9 @@
+Package: postgresml-dashboard
+Version: ${PACKAGE_VERSION}
+Section: database
+Priority: optional
+Architecture: ${ARCH}
+Depends: openssl
+Maintainer: PostgresML <team@postgresml.org>
+Homepage: https://postgresml.org
+Description: PostgresML Dashboard
