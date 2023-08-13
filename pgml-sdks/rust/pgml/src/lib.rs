@@ -314,8 +314,14 @@ mod tests {
             .await?;
         let status_1 = pipeline1.get_status().await?;
         let status_2 = pipeline2.get_status().await?;
-        assert!(status_1.chunks_status.synced == status_1.chunks_status.total && status_1.chunks_status.not_synced == 0);
-        assert!(status_2.chunks_status.synced == status_2.chunks_status.total && status_2.chunks_status.not_synced == 0);
+        assert!(
+            status_1.chunks_status.synced == status_1.chunks_status.total
+                && status_1.chunks_status.not_synced == 0
+        );
+        assert!(
+            status_2.chunks_status.synced == status_2.chunks_status.total
+                && status_2.chunks_status.not_synced == 0
+        );
         collection.archive().await?;
         Ok(())
     }
