@@ -1,7 +1,9 @@
 use std::fmt::Debug;
 
+use anyhow::{anyhow, Result};
 #[allow(unused_imports)] // used for test macros
 use pgrx::*;
+use pyo3::{PyResult, Python};
 
 use crate::orm::*;
 
@@ -38,6 +40,19 @@ pub trait Bindings: Send + Sync + Debug {
     fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
     where
         Self: Sized;
+}
+
+trait TracebackError<T> {
+    fn format_traceback(self, py: Python<'_>) -> Result<T>;
+}
+
+impl<T> TracebackError<T> for PyResult<T> {
+    fn format_traceback(self, py: Python<'_>) -> Result<T> {
+        self.map_err(|e| {
+            let traceback = e.traceback(py).unwrap().format().unwrap();
+            anyhow!("{traceback} {e}")
+        })
+    }
 }
 
 #[cfg(any(test, feature = "pg_test"))]
