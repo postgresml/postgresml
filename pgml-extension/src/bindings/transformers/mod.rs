@@ -3,14 +3,13 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::{collections::HashMap, path::Path};
 
+use anyhow::{anyhow, bail, Context, Result};
 use once_cell::sync::Lazy;
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
 use crate::orm::{Task, TextDataset};
-
-use self::whitelist::verify_task_against_whitelist;
 
 pub mod whitelist;
 
@@ -29,48 +28,43 @@ pub fn transform(
     task: &serde_json::Value,
     args: &serde_json::Value,
     inputs: Vec<&str>,
-) -> serde_json::Value {
+) -> Result<serde_json::Value> {
     crate::bindings::venv::activate();
 
-    if let Err(e) = verify_task_against_whitelist(task) {
-        error!("{e}");
-    }
+    whitelist::verify_task(task)?;
 
-    let task = serde_json::to_string(task).unwrap();
-    let args = serde_json::to_string(args).unwrap();
-    let inputs = serde_json::to_string(&inputs).unwrap();
+    let task = serde_json::to_string(task)?;
+    let args = serde_json::to_string(args)?;
+    let inputs = serde_json::to_string(&inputs)?;
 
-    let results = Python::with_gil(|py| -> String {
-        let transform: Py<PyAny> = PY_MODULE.getattr(py, "transform").unwrap();
+    let results = Python::with_gil(|py| -> Result<String> {
+        let transform: Py<PyAny> = PY_MODULE.getattr(py, "transform")?;
 
-        let result = transform.call1(
+        let output = transform.call1(
             py,
             PyTuple::new(
                 py,
                 &[task.into_py(py), args.into_py(py), inputs.into_py(py)],
             ),
-        );
+        )?;
 
-        let result = match result {
-            Err(e) => {
-                let traceback = e.traceback(py).unwrap().format().unwrap();
-                error!("{traceback} {e}")
-            }
-            Ok(o) => o.extract(py).unwrap(),
-        };
+        Ok(output.extract(py)?)
+    })?;
 
-        result
-    });
-    serde_json::from_str(&results).unwrap()
+    Ok(serde_json::from_str(&results)?)
 }
 
-pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -> Vec<Vec<f32>> {
+pub fn embed(
+    transformer: &str,
+    inputs: Vec<&str>,
+    kwargs: &serde_json::Value,
+) -> Result<Vec<Vec<f32>>> {
     crate::bindings::venv::activate();
 
-    let kwargs = serde_json::to_string(kwargs).unwrap();
-    Python::with_gil(|py| -> Vec<Vec<f32>> {
-        let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed").unwrap();
-        let result = embed.call1(
+    let kwargs = serde_json::to_string(kwargs)?;
+    Python::with_gil(|py| -> Result<Vec<Vec<f32>>> {
+        let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed")?;
+        let output = embed.call1(
             py,
             PyTuple::new(
                 py,
@@ -80,17 +74,9 @@ pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -
                     kwargs.into_py(py),
                 ],
             ),
-        );
+        )?;
 
-        let result = match result {
-            Err(e) => {
-                let traceback = e.traceback(py).unwrap().format().unwrap();
-                error!("{traceback} {e}")
-            }
-            Ok(o) => o.extract(py).unwrap(),
-        };
-
-        result
+        Ok(output.extract(py)?)
     })
 }
 
@@ -99,55 +85,50 @@ pub fn tune(
     dataset: TextDataset,
     hyperparams: &JsonB,
     path: &Path,
-) -> HashMap<String, f64> {
+) -> Result<HashMap<String, f64>> {
     crate::bindings::venv::activate();
 
     let task = task.to_string();
-    let hyperparams = serde_json::to_string(&hyperparams.0).unwrap();
+    let hyperparams = serde_json::to_string(&hyperparams.0)?;
 
-    Python::with_gil(|py| -> HashMap<String, f64> {
-        let tune = PY_MODULE.getattr(py, "tune").unwrap();
-        let result = tune.call1(
+    Python::with_gil(|py| -> Result<HashMap<String, f64>> {
+        let tune = PY_MODULE.getattr(py, "tune")?;
+        let path = path.to_string_lossy();
+        let output = tune.call1(
             py,
             (
                 &task,
                 &hyperparams,
-                path.to_str().unwrap(),
+                path.as_ref(),
                 dataset.x_train,
                 dataset.x_test,
                 dataset.y_train,
                 dataset.y_test,
             ),
-        );
-        let result = match result {
-            Err(e) => {
-                let traceback = e.traceback(py).unwrap().format().unwrap();
-                error!("{traceback} {e}")
-            }
-            Ok(o) => o,
-        };
-        result.extract(py).unwrap()
+        )?;
+
+        Ok(output.extract(py)?)
     })
 }
 
-pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Vec<String> {
+pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Result<Vec<String>> {
     crate::bindings::venv::activate();
 
-    Python::with_gil(|py| -> Vec<String> {
-        let generate = PY_MODULE.getattr(py, "generate").unwrap();
-        let config = serde_json::to_string(&config.0).unwrap();
+    Python::with_gil(|py| -> Result<Vec<String>> {
+        let generate = PY_MODULE.getattr(py, "generate")?;
+        let config = serde_json::to_string(&config.0)?;
         // cloning inputs in case we have to re-call on error is rather unfortunate here
         // similarly, using a json string to pass kwargs is also unfortunate extra parsing
         // it'd be nice to clean all this up one day
         let result = generate.call1(py, (model_id, inputs.clone(), &config));
         let result = match result {
             Err(e) => {
-                if e.get_type(py).name().unwrap() == "MissingModelError" {
+                if e.get_type(py).name()? == "MissingModelError" {
                     info!("Loading model into cache for connection reuse");
                     let mut dir = std::path::PathBuf::from("/tmp/postgresml/models");
                     dir.push(model_id.to_string());
                     if !dir.exists() {
-                        dump_model(model_id, dir.clone());
+                        dump_model(model_id, dir.clone())?;
                     }
                     let task = Spi::get_one_with_args::<String>(
                         "SELECT task::TEXT
@@ -156,51 +137,56 @@ pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Vec<String> 
                           ON models.project_id = projects.id
                       WHERE models.id = $1",
                         vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
-                    )
-                    .unwrap()
-                    .unwrap();
+                    )?
+                    .ok_or(anyhow!("task query returned None"))?;
 
-                    let load = PY_MODULE.getattr(py, "load_model").unwrap();
-                    let task = Task::from_str(&task).unwrap();
-                    load.call1(py, (model_id, task.to_string(), dir)).unwrap();
+                    let load = PY_MODULE.getattr(py, "load_model")?;
+                    let task = Task::from_str(&task)
+                        .map_err(|_| anyhow!("could not make a Task from {task}"))?;
+                    load.call1(py, (model_id, task.to_string(), dir))?;
 
-                    generate.call1(py, (model_id, inputs, config)).unwrap()
+                    generate.call1(py, (model_id, inputs, config))?
                 } else {
-                    let traceback = e.traceback(py).unwrap().format().unwrap();
-                    error!("{traceback} {e}")
+                    return Err(e.into());
                 }
             }
             Ok(o) => o,
         };
-        result.extract(py).unwrap()
+        Ok(result.extract(py)?)
     })
 }
 
-fn dump_model(model_id: i64, dir: PathBuf) {
+fn dump_model(model_id: i64, dir: PathBuf) -> Result<()> {
     if dir.exists() {
-        std::fs::remove_dir_all(&dir).unwrap();
+        std::fs::remove_dir_all(&dir).context("failed to remove directory while dumping model")?;
     }
-    std::fs::create_dir_all(&dir).unwrap();
-    Spi::connect(|client| {
+    std::fs::create_dir_all(&dir).context("failed to create directory while dumping model")?;
+    Spi::connect(|client| -> Result<()> {
         let result = client.select("SELECT path, part, data FROM pgml.files WHERE model_id = $1 ORDER BY path ASC, part ASC",
                None,
                 Some(vec![
                     (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
                 ])
-            ).unwrap();
+            )?;
         for row in result {
             let mut path = dir.clone();
-            path.push(row.get::<String>(1).unwrap().unwrap());
-            let data: Vec<u8> = row.get(3).unwrap().unwrap();
+            path.push(
+                row.get::<String>(1)?
+                    .ok_or(anyhow!("row get ordinal 1 returned None"))?,
+            );
+            let data: Vec<u8> = row
+                .get(3)?
+                .ok_or(anyhow!("row get ordinal 3 returned None"))?;
             let mut file = std::fs::OpenOptions::new()
                 .create(true)
                 .append(true)
-                .open(path)
-                .unwrap();
-            let _num_bytes = file.write(&data).unwrap();
-            file.flush().unwrap();
+                .open(path)?;
+
+            let _num_bytes = file.write(&data)?;
+            file.flush()?;
         }
-    });
+        Ok(())
+    })
 }
 
 pub fn load_dataset(
@@ -208,14 +194,14 @@ pub fn load_dataset(
     subset: Option<String>,
     limit: Option<usize>,
     kwargs: &serde_json::Value,
-) -> usize {
+) -> Result<usize> {
     crate::bindings::venv::activate();
 
-    let kwargs = serde_json::to_string(kwargs).unwrap();
+    let kwargs = serde_json::to_string(kwargs)?;
 
-    let dataset = Python::with_gil(|py| -> String {
-        let load_dataset: Py<PyAny> = PY_MODULE.getattr(py, "load_dataset").unwrap();
-        load_dataset
+    let dataset = Python::with_gil(|py| -> Result<String> {
+        let load_dataset: Py<PyAny> = PY_MODULE.getattr(py, "load_dataset")?;
+        Ok(load_dataset
             .call1(
                 py,
                 PyTuple::new(
@@ -227,19 +213,27 @@ pub fn load_dataset(
                         kwargs.into_py(py),
                     ],
                 ),
-            )
-            .unwrap()
-            .extract(py)
-            .unwrap()
-    });
+            )?
+            .extract(py)?)
+    })?;
 
     let table_name = format!("pgml.\"{}\"", name);
 
     // Columns are a (name: String, values: Vec<Value>) pair
-    let json: serde_json::Value = serde_json::from_str(&dataset).unwrap();
-    let json = json.as_object().unwrap();
-    let types = json.get("types").unwrap().as_object().unwrap();
-    let data = json.get("data").unwrap().as_object().unwrap();
+    let json: serde_json::Value = serde_json::from_str(&dataset)?;
+    let json = json
+        .as_object()
+        .ok_or(anyhow!("dataset json is not object"))?;
+    let types = json
+        .get("types")
+        .ok_or(anyhow!("dataset json missing `types` key"))?
+        .as_object()
+        .ok_or(anyhow!("dataset `types` key is not an object"))?;
+    let data = json
+        .get("data")
+        .ok_or(anyhow!("dataset json missing `data` key"))?
+        .as_object()
+        .ok_or(anyhow!("dataset `data` key is not an object"))?;
     let column_names = types
         .iter()
         .map(|(name, _type)| name.clone())
@@ -247,8 +241,11 @@ pub fn load_dataset(
         .join(", ");
     let column_types = types
         .iter()
-        .map(|(name, type_)| {
-            let type_ = match type_.as_str().unwrap() {
+        .map(|(name, type_)| -> Result<String> {
+            let type_ = type_
+                .as_str()
+                .ok_or(anyhow!("expected {type_} to be a json string"))?;
+            let type_ = match type_ {
                 "string" => "TEXT",
                 "dict" | "list" => "JSONB",
                 "int64" => "INT8",
@@ -258,11 +255,11 @@ pub fn load_dataset(
                 "float32" => "FLOAT4",
                 "float16" => "FLOAT4",
                 "bool" => "BOOLEAN",
-                _ => error!("unhandled dataset feature while reading dataset: {}", type_),
+                _ => bail!("unhandled dataset feature while reading dataset: {type_}"),
             };
-            format!("{name} {type_}")
+            Ok(format!("{name} {type_}"))
         })
-        .collect::<Vec<String>>()
+        .collect::<Result<Vec<String>>>()?
         .join(", ");
     let column_placeholders = types
         .iter()
@@ -274,27 +271,45 @@ pub fn load_dataset(
         .collect::<Vec<String>>()
         .join(", ");
     let num_cols = types.len();
-    let num_rows = data.values().next().unwrap().as_array().unwrap().len();
+    let num_rows = data
+        .values()
+        .next()
+        .ok_or(anyhow!("dataset json has no fields"))?
+        .as_array()
+        .ok_or(anyhow!("dataset json field is not an array"))?
+        .len();
 
     // Avoid the existence warning by checking the schema for the table first
     let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'", vec![
         (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
-    ]).unwrap().unwrap();
+    ])?.ok_or(anyhow!("table count query returned None"))?;
     if table_count == 1 {
-        Spi::run(&format!(r#"DROP TABLE IF EXISTS {table_name}"#)).unwrap()
+        Spi::run(&format!(r#"DROP TABLE IF EXISTS {table_name}"#))?;
     }
 
-    Spi::run(&format!(r#"CREATE TABLE {table_name} ({column_types})"#)).unwrap();
+    Spi::run(&format!(r#"CREATE TABLE {table_name} ({column_types})"#))?;
     let insert =
         format!(r#"INSERT INTO {table_name} ({column_names}) VALUES ({column_placeholders})"#);
     for i in 0..num_rows {
         let mut row = Vec::with_capacity(num_cols);
         for (name, values) in data {
-            let value = values.as_array().unwrap().get(i).unwrap();
-            match types.get(name).unwrap().as_str().unwrap() {
+            let value = values
+                .as_array()
+                .ok_or_else(|| anyhow!("expected {values} to be an array"))?
+                .get(i)
+                .ok_or_else(|| anyhow!("invalid index {i} for {values}"))?;
+            match types
+                .get(name)
+                .ok_or_else(|| anyhow!("{types:?} expected to have key {name}"))?
+                .as_str()
+                .ok_or_else(|| anyhow!("json field {name} expected to be string"))?
+            {
                 "string" => row.push((
                     PgBuiltInOids::TEXTOID.oid(),
-                    value.as_str().unwrap().into_datum(),
+                    value
+                        .as_str()
+                        .ok_or_else(|| anyhow!("expected {value} to be string"))?
+                        .into_datum(),
                 )),
                 "dict" | "list" => row.push((
                     PgBuiltInOids::JSONBOID.oid(),
@@ -302,35 +317,44 @@ pub fn load_dataset(
                 )),
                 "int64" | "int32" | "int16" => row.push((
                     PgBuiltInOids::INT8OID.oid(),
-                    value.as_i64().unwrap().into_datum(),
+                    value
+                        .as_i64()
+                        .ok_or_else(|| anyhow!("expected {value} to be i64"))?
+                        .into_datum(),
                 )),
                 "float64" | "float32" | "float16" => row.push((
                     PgBuiltInOids::FLOAT8OID.oid(),
-                    value.as_f64().unwrap().into_datum(),
+                    value
+                        .as_f64()
+                        .ok_or_else(|| anyhow!("expected {value} to be f64"))?
+                        .into_datum(),
                 )),
                 "bool" => row.push((
                     PgBuiltInOids::BOOLOID.oid(),
-                    value.as_bool().unwrap().into_datum(),
+                    value
+                        .as_bool()
+                        .ok_or_else(|| anyhow!("expected {value} to be bool"))?
+                        .into_datum(),
                 )),
-                type_ => error!(
-                    "unhandled dataset value type while reading dataset: {:?} {:?}",
-                    value, type_
-                ),
+                type_ => {
+                    bail!("unhandled dataset value type while reading dataset: {value:?} {type_:?}")
+                }
             }
         }
-        Spi::run_with_args(&insert, Some(row)).unwrap();
+        Spi::run_with_args(&insert, Some(row))?
     }
 
-    num_rows
+    Ok(num_rows)
 }
 
-pub fn clear_gpu_cache(memory_usage: Option<f32>) -> bool {
-    Python::with_gil(|py| -> bool {
-        let clear_gpu_cache: Py<PyAny> = PY_MODULE.getattr(py, "clear_gpu_cache").unwrap();
-        clear_gpu_cache
-            .call1(py, PyTuple::new(py, &[memory_usage.into_py(py)]))
-            .unwrap()
-            .extract(py)
-            .unwrap()
+pub fn clear_gpu_cache(memory_usage: Option<f32>) -> Result<bool> {
+    crate::bindings::venv::activate();
+
+    Python::with_gil(|py| -> Result<bool> {
+        let clear_gpu_cache: Py<PyAny> = PY_MODULE.getattr(py, "clear_gpu_cache")?;
+        let success = clear_gpu_cache
+            .call1(py, PyTuple::new(py, &[memory_usage.into_py(py)]))?
+            .extract(py)?;
+        Ok(success)
     })
 }

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+systemctl daemon-reload
+systemctl enable pgml-dashboard
+systemctl start pgml-dashboard
+
+echo "ROCKET_SECRET_KEY=$(openssl rand -hex 32)" >> /etc/pgml-dashboard/.env

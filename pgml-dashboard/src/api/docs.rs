@@ -80,6 +80,8 @@ async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk
         cluster,
         &path,
         vec![
+            NavLink::new("Announcing support for AWS us-east-1 region")
+                .href("/blog/announcing-support-for-aws-us-east-1-region"),
             NavLink::new("LLM based pipelines with PostgresML and dbt (data build tool)")
                 .href("/blog/llm-based-pipelines-with-postgresml-and-dbt"),
             NavLink::new("How we generate JavaScript and Python SDKs from our canonical Rust SDK")

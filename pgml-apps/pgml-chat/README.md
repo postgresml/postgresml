@@ -14,24 +14,24 @@ Before you begin, make sure you have the following:
 - Python version >=3.8
 - OpenAI API key
 - Python 3.8+
-- Poetry
+
 
 # Getting started
-1. Clone this repository, start a poetry shell and install dependencies
+1. Create a virtual environment and install `pgml-chat` using `pip`:
 ```bash
-git clone https://github.com/postgresml/postgresml
-cd postgresml/pgml-apps/pgml-chat
-poetry shell
-poetry install
-pip install .
+pip install pgml-chat
 ```
 
-2. Update environment variables in `.env` file
-```bash
-cp .env.template .env
-```
+`pgml-chat` will be installed in your PATH.
 
-Update environment variables with your OpenAI API key and PostgresML database credentials.
+2. Download `.env.template` file from PostgresML Github repository.
+
+```bash
+wget https://github.com/postgresml/postgresml/blob/master/pgml-apps/pgml-chat/.env.template 
+```
+3. Copy the template file to `.env`
+
+4. Update environment variables with your OpenAI API key and PostgresML database credentials.
 ```bash
 OPENAI_API_KEY=<OPENAI_API_KEY>
 DATABASE_URL=<POSTGRES_DATABASE_URL starts with postgres://>
@@ -157,13 +157,32 @@ Once the discord app is running, you can interact with the chatbot on Discord as
 
 ![Discord Chatbot](./images/discord_screenshot.png)
 
-## Options
+# Developer Guide
+
+1. Clone this repository, start a poetry shell and install dependencies
+
+```bash
+git clone https://github.com/postgresml/postgresml
+cd postgresml/pgml-apps/pgml-chat
+poetry shell
+poetry install
+pip install .
+```
+
+2. Create a .env file in the root directory of the project and add all the environment variables discussed in [Getting Started](#getting-started) section.
+3. All the logic is in `pgml_chat/main.py`
+4. Check the [roadmap](#roadmap) for features that you would like to work on.
+5. If you are looking for features that are not included here, please open an issue and we will add it to the roadmap.
+
+
+
+# Options
 You can control the behavior of the chatbot by setting the following environment variables:
 - `SYSTEM_PROMPT`: This is the prompt that is used to initialize the chatbot. You can customize this prompt to change the behavior of the chatbot. For example, you can change the name of the chatbot or the location of the chatbot.
 - `BASE_PROMPT`: This is the prompt that is used to generate responses to user queries. You can customize this prompt to change the behavior of the chatbot. 
 - `MODEL`: This is the open source embedding model used to generate embeddings for the documents. You can change this to use a different model.
 
-## Roadmap
+# Roadmap
 - ~~`hyerbot --chat_interface {cli, slack, discord}` that supports Slack, and Discord.~~
 - Support for file formats like rst, html, pdf, docx, etc.
 - Support for open source models in addition to OpenAI for chat completion.

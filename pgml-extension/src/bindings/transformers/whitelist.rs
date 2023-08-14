@@ -1,5 +1,4 @@
-use std::{error::Error, fmt};
-
+use anyhow::{bail, Error};
 #[cfg(any(test, feature = "pg_test"))]
 use pgrx::{pg_schema, pg_test};
 use serde_json::Value;
@@ -10,25 +9,8 @@ static CONFIG_HF_WHITELIST: &str = "pgml.huggingface_whitelist";
 static CONFIG_HF_TRUST_REMOTE_CODE_BOOL: &str = "pgml.huggingface_trust_remote_code";
 static CONFIG_HF_TRUST_WHITELIST: &str = "pgml.huggingface_trust_remote_code_whitelist";
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
-pub enum WhitelistError {
-    NotInWhitelist,
-    RemoteCodeNotTrusted,
-}
-
-impl fmt::Display for WhitelistError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            WhitelistError::NotInWhitelist => writeln!(f, "model not in whitelist"),
-            WhitelistError::RemoteCodeNotTrusted => writeln!(f, "model remote code not trusted"),
-        }
-    }
-}
-
-impl Error for WhitelistError {}
-
 /// Verify that the model in the task JSON is allowed based on the huggingface whitelists.
-pub fn verify_task_against_whitelist(task: &Value) -> Result<(), WhitelistError> {
+pub fn verify_task(task: &Value) -> Result<(), Error> {
     let task_model = match get_model_name(task) {
         Some(model) => model.to_string(),
         None => return Ok(()),
@@ -38,13 +20,13 @@ pub fn verify_task_against_whitelist(task: &Value) -> Result<(), WhitelistError>
     let model_is_allowed =
         whitelisted_models.is_empty() || whitelisted_models.contains(&task_model);
     if !model_is_allowed {
-        return Err(WhitelistError::NotInWhitelist);
+        bail!("model {task_model} is not whitelisted. Consider adding to {CONFIG_HF_WHITELIST} in postgresql.conf");
     }
 
     let task_trust = get_trust_remote_code(task);
     let trust_remote_code = get_config(CONFIG_HF_TRUST_REMOTE_CODE_BOOL)
         .map(|v| v == "true")
-        .unwrap_or(false);
+        .unwrap_or(true);
 
     let trusted_models = config_csv_list(CONFIG_HF_TRUST_WHITELIST);
 
@@ -52,7 +34,7 @@ pub fn verify_task_against_whitelist(task: &Value) -> Result<(), WhitelistError>
 
     let remote_code_allowed = trust_remote_code && model_is_trusted;
     if !remote_code_allowed && task_trust == Some(true) {
-        return Err(WhitelistError::RemoteCodeNotTrusted);
+        bail!("model {task_model} is not trusted to run remote code. Consider setting {CONFIG_HF_TRUST_REMOTE_CODE_BOOL} = 'true' or adding {task_model} to {CONFIG_HF_TRUST_WHITELIST}");
     }
 
     Ok(())
@@ -108,10 +90,9 @@ fn get_trust_remote_code(task: &Value) -> Option<bool> {
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
+    use super::*;
 
     use crate::config::set_config;
-
-    use super::*;
 
     // used for copy/pasting a templated string
     macro_rules! json_template {
@@ -154,7 +135,7 @@ mod tests {
         set_config(CONFIG_HF_WHITELIST, "").unwrap();
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert!(verify_task_against_whitelist(&task).is_ok());
+        assert!(verify_task(&task).is_ok());
     }
 
     #[pg_test]
@@ -163,15 +144,12 @@ mod tests {
         set_config(CONFIG_HF_WHITELIST, model).unwrap();
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert!(verify_task_against_whitelist(&task).is_ok());
+        assert!(verify_task(&task).is_ok());
 
         set_config(CONFIG_HF_WHITELIST, "other_model").unwrap();
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert_eq!(
-            verify_task_against_whitelist(&task),
-            Err(WhitelistError::NotInWhitelist)
-        );
+        assert!(verify_task(&task).is_err());
     }
 
     #[pg_test]
@@ -182,23 +160,20 @@ mod tests {
 
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert!(verify_task_against_whitelist(&task).is_ok());
+        assert!(verify_task(&task).is_ok());
 
         let task_json = format!(json_template!(), model, true);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert_eq!(
-            verify_task_against_whitelist(&task),
-            Err(WhitelistError::RemoteCodeNotTrusted)
-        );
+        assert!(verify_task(&task).is_ok());
 
         set_config(CONFIG_HF_TRUST_REMOTE_CODE_BOOL, "true").unwrap();
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert!(verify_task_against_whitelist(&task).is_ok());
+        assert!(verify_task(&task).is_ok());
 
         let task_json = format!(json_template!(), model, true);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert!(verify_task_against_whitelist(&task).is_ok());
+        assert!(verify_task(&task).is_ok());
     }
 
     #[pg_test]
@@ -209,25 +184,19 @@ mod tests {
 
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert!(verify_task_against_whitelist(&task).is_ok());
+        assert!(verify_task(&task).is_ok());
 
         let task_json = format!(json_template!(), model, true);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert_eq!(
-            verify_task_against_whitelist(&task),
-            Err(WhitelistError::RemoteCodeNotTrusted)
-        );
+        assert!(verify_task(&task).is_err());
 
         set_config(CONFIG_HF_TRUST_REMOTE_CODE_BOOL, "true").unwrap();
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert!(verify_task_against_whitelist(&task).is_ok());
+        assert!(verify_task(&task).is_ok());
 
         let task_json = format!(json_template!(), model, true);
         let task: Value = serde_json::from_str(&task_json).unwrap();
-        assert_eq!(
-            verify_task_against_whitelist(&task),
-            Err(WhitelistError::RemoteCodeNotTrusted)
-        );
+        assert!(verify_task(&task).is_err());
     }
 }

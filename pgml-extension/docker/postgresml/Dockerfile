@@ -1,6 +1,6 @@
 FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
 ENV PATH="/usr/local/cuda/bin:${PATH}"
-ARG POSTGRESML_VERSION=2.7.3
+ARG POSTGRESML_VERSION=2.7.4-1
 RUN apt update && \
 	apt install -y \
 		lsb-release \

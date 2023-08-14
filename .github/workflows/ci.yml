@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 jobs:
   tests:
-    runs-on: ubuntu-22.04
+    runs-on: buildjet-16vcpu-ubuntu-2204
     defaults:
       run:
         working-directory: pgml-extension
@@ -24,7 +24,8 @@ jobs:
               postgresql-server-dev-14 \
               pkg-config \
               python3-pip \
-              python3
+              python3 \
+              mold
           sudo pip3 install -r requirements.txt
       - name: Cache dependencies
         uses: actions/cache@v3

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+systemctl stop pgml-dashboard
+systemctl disable pgml-dashboard

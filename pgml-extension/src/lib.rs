@@ -15,6 +15,7 @@ pub mod metrics;
 pub mod orm;
 pub mod vectors;
 
+#[cfg(not(feature = "use_as_lib"))]
 pg_module_magic!();
 
 extension_sql_file!("../sql/schema.sql", name = "schema");
@@ -52,6 +53,13 @@ pub mod pg_test {
 
     pub fn postgresql_conf_options() -> Vec<&'static str> {
         // return any postgresql.conf settings that are required for your tests
-        vec!["shared_preload_libraries = 'pgml'"]
+        let mut options = vec!["shared_preload_libraries = 'pgml'"];
+        if let Some(venv) = option_env!("PGML_VENV") {
+            let option = format!("pgml.venv = '{venv}'");
+            options.push(Box::leak(option.into_boxed_str()));
+        } else {
+            println!("If using virtualenv for Python depenencies, set the `PGML_VENV` environment variable for testing");
+        }
+        options
     }
 }
