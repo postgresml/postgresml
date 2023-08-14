@@ -173,6 +173,17 @@ class StandardPipeline(object):
         return self.pipe(inputs, **kwargs)
 
 
+def get_model_from(task):
+    task = orjson.loads(task)
+    if "model" in task:
+        return task["model"]
+    
+    if "task" in task:
+        model = transformers.pipelines.SUPPORTED_TASKS[task["task"]]["default"]["model"]
+        ty = "tf" if "tf" in model else "pt"
+        return model[ty][0]
+
+
 def transform(task, args, inputs):
     task = orjson.loads(task)
     args = orjson.loads(args)
