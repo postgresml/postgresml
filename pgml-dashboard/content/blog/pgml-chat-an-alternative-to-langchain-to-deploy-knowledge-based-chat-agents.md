@@ -27,10 +27,10 @@ Similar to building and deploying machine learning models, building a chatbot in
 
 This offline setup lays the foundation for your chatbot's intelligence. It involves:
 
-- Gathering domain documents like articles, reports, and websites to teach your chatbot about the topics it will encounter.
-- Splitting these documents into smaller chunks using different splitter algorithms. This keeps each chunk within the context size limits of AI models. In addition, it allows for chunking strategies that are tailored to the file type (e.g. PDFs, HTML, .py etc.).
-- Generating semantic embeddings for each chunk using deep learning models like SentenceTransformers. The embeddings capture conceptual meaning.
-- Indexing the chunk embeddings for efficient similarity search during conversations.
+ 1. Gathering domain documents like articles, reports, and websites to teach your chatbot about the topics it will encounter.
+ 2. Splitting these documents into smaller chunks using different splitter algorithms. This keeps each chunk within the context size limits of AI models. In addition, it allows for chunking strategies that are tailored to the file type (e.g. PDFs, HTML, .py etc.).
+ 3. Generating semantic embeddings for each chunk using deep learning models like SentenceTransformers. The embeddings capture conceptual meaning.
+ 4. Indexing the chunk embeddings for efficient similarity search during conversations.
 
 This knowledge base setup powers the contextual understanding for your chatbot. It's compute-intensive but only needs to be peridocially updated as your domain knowledge evolves.
 
@@ -38,9 +38,9 @@ This knowledge base setup powers the contextual understanding for your chatbot. 
 
 With its knowledge base in place, now the chatbot links to models that allow natural conversations:
 
-- Based on users' questions, querying the indexed chunks to rapidly pull the most relevant passages.
-- Passing those passages to a model like GPT-3 to generate conversational responses.
-- Orchestrating the query, retrieval and generation flow to enable real-time chat.
+1. Based on users' questions, querying the indexed chunks to rapidly pull the most relevant passages.
+2. Passing those passages to a model like GPT-3 to generate conversational responses.
+3. Orchestrating the query, retrieval and generation flow to enable real-time chat.
 
 ## 3. Evaluating and Fine-tuning chatbot
 
@@ -55,8 +55,8 @@ Chatbot needs to be evaluated and fine-tuned before it can be deployed to the re
 Finally, the chatbot needs to be deployed to the real world. This involves:
 
 - Identifying the interface that the users will interact with. This can be Slack, Discord, Teams or your own custom chat platform. Once identified get the API keys for the interface.
-- The chatbot service needs to be hosted on a server that can handle the load of multiple users.
-- The chatbot needs to be integrated with the interface so that it can receive and respond to messages.
+- Hosting a chatbot service that can serve multiple users.
+- Integrating the chatbot service with the interface so that it can receive and respond to messages.
 
 # pgml-chat
 `pgml-chat` is a command line tool that allows you to do the following:
@@ -323,3 +323,5 @@ If you have set up the Discord app correctly, you should see the following outpu
 Once the discord app is running, you can interact with the chatbot on Discord as shown below. In the example here, name of the bot is `pgchat`. This app responds only to direct messages to the bot.
 
 ![Discord Chatbot](/dashboard/static/images/blog/discord_screenshot.png)
+
+# Conclusions
