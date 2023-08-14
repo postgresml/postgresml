@@ -5,7 +5,7 @@
     align-items: center;
 }
 
-.beta-badge {
+.version-badge {
     @extend .badge;
     text-transform: uppercase;
     color: #{$pink};
@@ -34,4 +34,24 @@
         
         border-left: 5px solid #{$color};
     }
+}
+
+@mixin deployment-status($color) {
+    @extend .badge;
+    border-radius: calc($border-radius / 2);
+    border: 2px solid $color;
+}
+
+.deployment-status-configuring, .deployment-status-creating, .deployment-status-Deploying, 
+.deployment-status-unhealthy, .deployment-status-updating {
+    @include deployment-status(#{$teal-tint-800});
+}
+
+.deployment-status-online, .deployment-status-backingup, .deployment-status-starting {
+    @include deployment-status(#{$teal-tint-100})
+}
+
+.deployment-status-destroyed, .deployment-status-failover, .deployment-status-stopping, 
+.deployment-status-stopped, .deployment-status-restarting, .deployment-status-shuttingDown {
+    @include deployment-status(#{$peach-tint-100})
 }
