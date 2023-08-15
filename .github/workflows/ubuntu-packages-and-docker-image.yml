@@ -28,6 +28,11 @@ jobs:
       with:
         working-directory: pgml-extension
         command: version
+    - name: Cache
+      uses: buildjet/cache@v3
+      with:
+        path: pgml-extension/target
+        key: buildjet-pgml-extension-1 # Change this when dependencies change
     - name: Install dependencies
       env:
         DEBIAN_FRONTEND: noninteractive
