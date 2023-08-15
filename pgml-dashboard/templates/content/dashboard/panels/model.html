@@ -10,9 +10,9 @@
   
     <dl>
       <dt>Project</dt>
-      <dd><a href="/dashboard/?tab=Projects&project_id=<%= project.id %>" data-turbo="false"><%= project.name %></a></dd>
+      <dd><a href="/dashboard?tab=Projects&project_id=<%= project.id %>" data-turbo="false"><%= project.name %></a></dd>
         <dt>Snapshot</dt>
-        <dd><a href="/dashboard/?tab=Snapshots&snapshot_id=<%= snapshot.id %>" data-turbo="false"><%= snapshot.relation_name %></a></dd>
+        <dd><a href="/dashboard?tab=Snapshots&snapshot_id=<%= snapshot.id %>" data-turbo="false"><%= snapshot.relation_name %></a></dd>
       <dt>Created</dt>
       <dd><time datetime="<% model.created_at; %>"><% model.created_at; %></time></dd>
     </dl>

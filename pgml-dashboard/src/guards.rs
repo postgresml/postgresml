@@ -1,8 +1,8 @@
 use std::env::var;
 
 use crate::templates::components::{StaticNav, StaticNavLink};
-use rocket::request::{self, FromRequest, Request};
 use rocket::http::Status;
+use rocket::request::{self, FromRequest, Request};
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 
 use crate::models;

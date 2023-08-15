@@ -4,7 +4,7 @@
     <ol class="object_list project_list">
       <% for project in projects { %>
       <li>
-        <a href="/dashboard/projects/<%= project.id %>/" data-turbo-frame="project">
+        <a href="/dashboard/projects/<%= project.id %>" data-turbo-frame="project">
           <span><%= project.name %></span>
           <span>
             <time datetime="<% project.created_at; %>">

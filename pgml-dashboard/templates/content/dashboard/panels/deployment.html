@@ -10,9 +10,9 @@
   
     <dl>
       <dt>Project</dt>
-      <dd><a href="/dashboard/?tab=Projects&project_id=<%= project.id %>" data-turbo="false"><%= project.name %></a></dd>
+      <dd><a href="/dashboard?tab=Projects&project_id=<%= project.id %>" data-turbo="false"><%= project.name %></a></dd>
       <dt>Model</dt>
-      <dd><a href="/dashboard/?tab=Models&model_id=<%= model.id %>" data-turbo="false"><%= model.algorithm %></a></dd>
+      <dd><a href="/dashboard?tab=Models&model_id=<%= model.id %>" data-turbo="false"><%= model.algorithm %></a></dd>
       <dt>Reason</dt>
       <dd><%= deployment.human_readable_strategy() %></dd>
       <dt>Deployed</dt>
