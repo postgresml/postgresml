@@ -1,7 +1,7 @@
 ---
 author: Santi Adavani
 description: 
-image: https://postgresml.org/dashboard/static/images/blog/llm_based_pipeline_hero.png
+image: https://postgresml.org/dashboard/static/images/blog/pgml_vs_hf_pinecone_query.png
 image_alt: "pgml-chat: A command-line tool for deploying responsive knowledge-based chatbots"
 ---
 # pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots: Part I
@@ -9,11 +9,10 @@ image_alt: "pgml-chat: A command-line tool for deploying responsive knowledge-ba
   <img width="54px" height="54px" src="/dashboard/static/images/team/santi.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Santi Adavani</p>
-    <p class="m-0">July 13, 2023</p>
+    <p class="m-0">August 17, 2023</p>
   </div>
 </div>
 
-TL,DR: 
 
 # Introduction
 Language models like GPT-3 seem really intelligent at first, but they have a huge blindspot - no external knowledge or memory. Ask them about current events or niche topics and they just can't keep up. To be truly useful in real applications, these large language models (LLMs) need knowledge added to them somehow. The trick is getting them that knowledge fast enough to have natural conversations. Open source tools like LangChain try to help by giving language models more context and knowledge. But they end up glueing together different services into a complex patchwork. This leads to a lot of infrastructure overhead, maintenance needs, and slow response times that hurt chatbot performance. We need a better solution tailored specifically for chatbots to inject knowledge in a way that's fast, relevant and integrated.
@@ -46,17 +45,17 @@ With its knowledge base in place, now the chatbot links to models that allow nat
 
 Chatbot needs to be evaluated and fine-tuned before it can be deployed to the real world. This involves:
 
-- Experimenting with different prompts and selecting the one that generates the best responses for a suite of questions.
-- Evaluating the chatbot's performance on a test set of questions by comparing the chatbot's responses to the ground truth responses.
-- If the performance is not satisfactory then we need to go to step 1 and generate embeddings using a different model. This is because the embeddings are the foundation of the chatbot's intelligence to get the most relevant passage from the knowledge base.
+ 1. Experimenting with different prompts and selecting the one that generates the best responses for a suite of questions.
+ 2. Evaluating the chatbot's performance on a test set of questions by comparing the chatbot's responses to the ground truth responses.
+ 3. If the performance is not satisfactory then we need to go to step 1 and generate embeddings using a different model. This is because the embeddings are the foundation of the chatbot's intelligence to get the most relevant passage from the knowledge base.
 
 ## 4. Connecting to the Real World
 
 Finally, the chatbot needs to be deployed to the real world. This involves:
 
-- Identifying the interface that the users will interact with. This can be Slack, Discord, Teams or your own custom chat platform. Once identified get the API keys for the interface.
-- Hosting a chatbot service that can serve multiple users.
-- Integrating the chatbot service with the interface so that it can receive and respond to messages.
+ 1. Identifying the interface that the users will interact with. This can be Slack, Discord, Teams or your own custom chat platform. Once identified get the API keys for the interface.
+ 2. Hosting a chatbot service that can serve multiple users.
+ 3. Integrating the chatbot service with the interface so that it can receive and respond to messages.
 
 # pgml-chat
 `pgml-chat` is a command line tool that allows you to do the following:
@@ -92,7 +91,7 @@ pip install pgml-chat
 
 `pgml-chat` will be installed in your virtual environment's PATH.
 
-2. Download `.env.template` file from PostgresML Github repository.
+2. Download `.env.template` file from PostgresML Github repository and make a copy.
 
 !!! generic
 
@@ -100,13 +99,10 @@ pip install pgml-chat
 
 ```bash
 wget https://github.com/postgresml/postgresml/blob/master/pgml-apps/pgml-chat/.env.template 
+cp .env.template .env
 ```
 
-!!!
-
-3. Copy the template file to `.env`
-
-4. Update environment variables with your OpenAI API key and PostgresML database credentials.
+3. Update environment variables with your OpenAI API key and PostgresML database credentials.
 
 !!! generic
 
@@ -324,4 +320,23 @@ Once the discord app is running, you can interact with the chatbot on Discord as
 
 ![Discord Chatbot](/dashboard/static/images/blog/discord_screenshot.png)
 
+# Comparing Query Latency
+
+To evaluate query latency, we performed an experiment with 10,000 Wikipedia documents from the SQuAD dataset. Embeddings were generated using the intfloat/e5-large model.
+
+For PostgresML, we used a GPU-powered serverless database running on NVIDIA A10G GPUs with client in us-west-2 region. For HuggingFace, we used their inference API endpoint running on NVIDIA A10G GPUs in us-east-1 region and a client in the same us-east-1 region. Pinecone was used as the vector search index for HuggingFace embeddings.
+
+By keeping the document dataset, model, and hardware constant, we aimed to evaluate the performance of the two systems independently. Care was taken to eliminate network latency as a factor - HuggingFace endpoint and client were co-located in us-east-1, while PostgresML database and client were co-located in us-west-2.
+
+![pgml_vs_hf_pinecone_query](/dashboard/static/images/blog/pgml_vs_hf_pinecone_query.png)
+
+Our experiments found that PostgresML outperformed HuggingFace + Pinecone in query latency by 6x. Mean latency was 39ms for PostgresML and 233ms for HuggingFace + Pinecone. Query latency was averaged across 100 queries to account for any outliers. This 6x improvement in mean latency can be attributed to PostgresML's tight integration of embedding generation, indexing, and querying within the database running on NVIDIA A10G GPUs. 
+
+For applications like chatbots that require low latency access to knowledge, PostgresML provides superior performance over combining multiple services. The serverless architecture also provides predictable pricing and scales seamlessly with usage.
+
 # Conclusions
+In this post, we announced PostgresML Chatbot Builder - an open source tool that makes it easy to build knowledge based chatbots. We discussed the effort required to integrate various components like ingestion, embedding generation, indexing etc. and how PostgresML Chatbot Builder automates this end-to-end workflow.
+
+We also presented some initial benchmark results comparing PostgresML and HuggingFace + Pinecone for query latency using the SQuAD dataset. PostgresML provided up to 6x lower latency thanks to its tight integration and optimizations.
+
+Stay tuned for part 2 of this benchmarking blog post where we will present more comprehensive results evaluating performance for generating embeddings with different models and batch sizes. We will also share additional query latency benchmarks with more document collections.
