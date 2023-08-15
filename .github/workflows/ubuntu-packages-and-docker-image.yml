@@ -28,11 +28,16 @@ jobs:
       with:
         working-directory: pgml-extension
         command: version
-    - name: Cache
+    - name: Cache artifacts
       uses: buildjet/cache@v3
       with:
         path: pgml-extension/target
-        key: buildjet-pgml-extension-1 # Change this when dependencies change
+        key: buildjet-pgml-extension-artifacts-1 # Change this when dependencies change
+    - name: Cache pgrx
+      uses: buildjet/cache@v3
+      with:
+        path: ~/.cargo/bin/cargo-pgrx
+        key: buildjet-pgml-extension-pgrx-1 # Change this when dependencies change
     - name: Install dependencies
       env:
         DEBIAN_FRONTEND: noninteractive
