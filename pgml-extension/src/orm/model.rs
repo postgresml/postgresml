@@ -1,3 +1,4 @@
+use anyhow::{anyhow, bail, Result};
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
@@ -88,7 +89,7 @@ impl Model {
         };
 
         if runtime == Runtime::python {
-            crate::bindings::venv::activate();
+            crate::bindings::venv::activate().unwrap();
         }
 
         let dataset = snapshot.tabular_dataset();
@@ -271,7 +272,7 @@ impl Model {
         model
     }
 
-    fn find(id: i64) -> Model {
+    fn find(id: i64) -> Result<Model> {
         let mut model = None;
         // Create the model record.
         Spi::connect(|client| {
@@ -308,31 +309,31 @@ impl Model {
                     Runtime::rust => {
                         match algorithm {
                             Algorithm::xgboost => {
-                                crate::bindings::xgboost::Estimator::from_bytes(&data)
+                                crate::bindings::xgboost::Estimator::from_bytes(&data)?
                             }
                             Algorithm::lightgbm => {
-                                crate::bindings::lightgbm::Estimator::from_bytes(&data)
+                                crate::bindings::lightgbm::Estimator::from_bytes(&data)?
                             }
                             Algorithm::linear => match project.task {
                                 Task::regression => {
-                                    crate::bindings::linfa::LinearRegression::from_bytes(&data)
+                                    crate::bindings::linfa::LinearRegression::from_bytes(&data)?
                                 }
                                 Task::classification => {
-                                    crate::bindings::linfa::LogisticRegression::from_bytes(&data)
+                                    crate::bindings::linfa::LogisticRegression::from_bytes(&data)?
                                 }
-                                _ => error!("No default runtime available for tasks other than `classification` and `regression` when using a linear algorithm."),
+                                _ => bail!("No default runtime available for tasks other than `classification` and `regression` when using a linear algorithm."),
                             },
-                            Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data),
+                            Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data)?,
                             _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
                         }
                     }
 
                     #[cfg(feature = "python")]
-                    Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data),
+                    Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data)?,
 
                     #[cfg(not(feature = "python"))]
                     Runtime::python => {
-                        error!("Python runtime not supported, recompile with `--features python`")
+                        bail!("Python runtime not supported, recompile with `--features python`")
                     }
                 };
 
@@ -366,29 +367,31 @@ impl Model {
                     num_features,
                 });
             }
-        });
 
-        model.unwrap_or_else(|| {
-            error!(
+            Ok(())
+        })?;
+
+        Ok(model.ok_or_else(|| {
+            anyhow!(
                 "pgml.models WHERE id = {:?} could not be loaded. Does it exist?",
                 id
             )
-        })
+        })?)
     }
 
-    pub fn find_cached(id: i64) -> Arc<Model> {
+    pub fn find_cached(id: i64) -> Result<Arc<Model>> {
         {
             let models = DEPLOYED_MODELS_BY_ID.lock();
             if let Some(model) = models.get(&id) {
-                return model.clone();
+                return Ok(model.clone());
             }
         }
 
         info!("Model cache miss {:?}", id);
-        let model = Model::find(id);
+        let model = Arc::new(Model::find(id)?);
         let mut models = DEPLOYED_MODELS_BY_ID.lock();
-        models.insert(id, Arc::new(model));
-        models.get(&id).unwrap().clone()
+        models.insert(id, Arc::clone(&model));
+        Ok(model)
     }
 
     fn get_fit_function(&self) -> crate::bindings::Fit {
@@ -563,7 +566,7 @@ impl Model {
     fn test(&self, dataset: &Dataset) -> IndexMap<String, f32> {
         info!("Testing {:?} estimator {:?}", self.project.task, self);
         // Test the estimator on the data
-        let y_hat = self.predict_batch(&dataset.x_test);
+        let y_hat = self.predict_batch(&dataset.x_test).unwrap();
         let y_test = &dataset.y_test;
 
         // Calculate metrics to evaluate this estimator and its hyperparams
@@ -573,7 +576,7 @@ impl Model {
                 #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
                 {
                     let sklearn_metrics =
-                        crate::bindings::sklearn::regression_metrics(y_test, &y_hat);
+                        crate::bindings::sklearn::regression_metrics(y_test, &y_hat).unwrap();
                     metrics.insert("sklearn_r2".to_string(), sklearn_metrics["r2"]);
                     metrics.insert(
                         "sklearn_mean_absolute_error".to_string(),
@@ -605,7 +608,8 @@ impl Model {
                         y_test,
                         &y_hat,
                         dataset.num_distinct_labels,
-                    );
+                    )
+                    .unwrap();
 
                     if dataset.num_distinct_labels == 2 {
                         metrics.insert("sklearn_roc_auc".to_string(), sklearn_metrics["roc_auc"]);
@@ -671,7 +675,8 @@ impl Model {
                         dataset.num_features,
                         &dataset.x_test,
                         &y_hat,
-                    );
+                    )
+                    .unwrap();
                     metrics.insert("silhouette".to_string(), sklearn_metrics["silhouette"]);
                 }
             }
@@ -693,7 +698,7 @@ impl Model {
 
         let fit = self.get_fit_function();
         let now = Instant::now();
-        self.bindings = Some(fit(dataset, hyperparams));
+        self.bindings = Some(fit(dataset, hyperparams).unwrap());
         let fit_time = now.elapsed();
 
         let now = Instant::now();
@@ -1134,23 +1139,23 @@ impl Model {
         features
     }
 
-    pub fn predict(&self, features: &[f32]) -> f32 {
-        self.predict_batch(features)[0]
+    pub fn predict(&self, features: &[f32]) -> Result<f32> {
+        Ok(self.predict_batch(features)?[0])
     }
 
-    pub fn predict_proba(&self, features: &[f32]) -> Vec<f32> {
+    pub fn predict_proba(&self, features: &[f32]) -> Result<Vec<f32>> {
         match self.project.task {
-            Task::regression => error!("You can't predict probabilities for a regression model"),
+            Task::regression => bail!("You can't predict probabilities for a regression model"),
             Task::classification => self
                 .bindings
                 .as_ref()
                 .unwrap()
                 .predict_proba(features, self.num_features),
-            _ => error!("no predict_proba for huggingface"),
+            _ => bail!("no predict_proba for huggingface"),
         }
     }
 
-    pub fn predict_joint(&self, features: &[f32]) -> Vec<f32> {
+    pub fn predict_joint(&self, features: &[f32]) -> Result<Vec<f32>> {
         match self.project.task {
             Task::regression => self.bindings.as_ref().unwrap().predict(
                 features,
@@ -1158,13 +1163,13 @@ impl Model {
                 self.num_classes,
             ),
             Task::classification => {
-                error!("You can't predict joint probabilities for a classification model")
+                bail!("You can't predict joint probabilities for a classification model")
             }
-            _ => error!("no predict_joint for huggingface"),
+            _ => bail!("no predict_joint for huggingface"),
         }
     }
 
-    pub fn predict_batch(&self, features: &[f32]) -> Vec<f32> {
+    pub fn predict_batch(&self, features: &[f32]) -> Result<Vec<f32>> {
         self.bindings
             .as_ref()
             .unwrap()

@@ -13,16 +13,25 @@ use serde_json::json;
 use crate::bindings::sklearn::package_version;
 use crate::orm::*;
 
+macro_rules! unwrap_or_error {
+    ($i:expr) => {
+        match $i {
+            Ok(v) => v,
+            Err(e) => error!("{e}"),
+        }
+    };
+}
+
 #[cfg(feature = "python")]
 #[pg_extern]
 pub fn activate_venv(venv: &str) -> bool {
-    crate::bindings::venv::activate_venv(venv)
+    unwrap_or_error!(crate::bindings::venv::activate_venv(venv))
 }
 
 #[cfg(feature = "python")]
 #[pg_extern(immutable, parallel_safe)]
 pub fn validate_python_dependencies() -> bool {
-    crate::bindings::venv::activate();
+    unwrap_or_error!(crate::bindings::venv::activate());
 
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys").unwrap();
@@ -40,13 +49,12 @@ pub fn validate_python_dependencies() -> bool {
         }
     });
 
-    info!(
-        "Scikit-learn {}, XGBoost {}, LightGBM {}, NumPy {}",
-        package_version("sklearn"),
-        package_version("xgboost"),
-        package_version("lightgbm"),
-        package_version("numpy"),
-    );
+    let sklearn = unwrap_or_error!(package_version("sklearn"));
+    let xgboost = unwrap_or_error!(package_version("xgboost"));
+    let lightgbm = unwrap_or_error!(package_version("lightgbm"));
+    let numpy = unwrap_or_error!(package_version("numpy"));
+
+    info!("Scikit-learn {sklearn}, XGBoost {xgboost}, LightGBM {lightgbm}, NumPy {numpy}",);
 
     true
 }
@@ -58,8 +66,8 @@ pub fn validate_python_dependencies() {}
 #[cfg(feature = "python")]
 #[pg_extern]
 pub fn python_package_version(name: &str) -> String {
-    crate::bindings::venv::activate();
-    package_version(name)
+    unwrap_or_error!(crate::bindings::venv::activate());
+    unwrap_or_error!(package_version(name))
 }
 
 #[cfg(not(feature = "python"))]
@@ -71,9 +79,9 @@ pub fn python_package_version(name: &str) {
 #[cfg(feature = "python")]
 #[pg_extern]
 pub fn python_pip_freeze() -> TableIterator<'static, (name!(package, String),)> {
-    crate::bindings::venv::activate();
+    unwrap_or_error!(crate::bindings::venv::activate());
 
-    let packages = crate::bindings::venv::freeze()
+    let packages = unwrap_or_error!(crate::bindings::venv::freeze())
         .into_iter()
         .map(|package| (package,));
 
@@ -99,7 +107,7 @@ pub fn validate_shared_library() {
 #[cfg(feature = "python")]
 #[pg_extern]
 fn python_version() -> String {
-    crate::bindings::venv::activate();
+    unwrap_or_error!(crate::bindings::venv::activate());
     let mut version = String::new();
 
     Python::with_gil(|py| {
@@ -479,27 +487,31 @@ fn predict_row(project_name: &str, row: pgrx::datum::AnyElement) -> f32 {
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_model(model_id: i64, features: Vec<f32>) -> f32 {
-    Model::find_cached(model_id).predict(&features)
+    let model = unwrap_or_error!(Model::find_cached(model_id));
+    unwrap_or_error!(model.predict(&features))
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict_proba")]
 fn predict_model_proba(model_id: i64, features: Vec<f32>) -> Vec<f32> {
-    Model::find_cached(model_id).predict_proba(&features)
+    let model = unwrap_or_error!(Model::find_cached(model_id));
+    unwrap_or_error!(model.predict_proba(&features))
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict_joint")]
 fn predict_model_joint(model_id: i64, features: Vec<f32>) -> Vec<f32> {
-    Model::find_cached(model_id).predict_joint(&features)
+    let model = unwrap_or_error!(Model::find_cached(model_id));
+    unwrap_or_error!(model.predict_joint(&features))
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict_batch")]
 fn predict_model_batch(model_id: i64, features: Vec<f32>) -> Vec<f32> {
-    Model::find_cached(model_id).predict_batch(&features)
+    let model = unwrap_or_error!(Model::find_cached(model_id));
+    unwrap_or_error!(model.predict_batch(&features))
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_model_row(model_id: i64, row: pgrx::datum::AnyElement) -> f32 {
-    let model = Model::find_cached(model_id);
+    let model = unwrap_or_error!(Model::find_cached(model_id));
     let snapshot = &model.snapshot;
     let numeric_encoded_features = model.numeric_encode_features(&[row]);
     let features_width = snapshot.features_width();
@@ -514,7 +526,7 @@ fn predict_model_row(model_id: i64, row: pgrx::datum::AnyElement) -> f32 {
             let column = &snapshot.columns[position.column_position - 1];
             column.preprocess(&data, &mut processed, features_width, position.row_position);
         });
-    model.predict(&processed)
+    unwrap_or_error!(model.predict(&processed))
 }
 
 #[pg_extern]
@@ -617,7 +629,11 @@ pub fn chunk(
     text: &str,
     kwargs: default!(JsonB, "'{}'"),
 ) -> TableIterator<'static, (name!(chunk_index, i64), name!(chunk, String))> {
-    let chunks = crate::bindings::langchain::chunk(splitter, text, &kwargs.0);
+    let chunks = match crate::bindings::langchain::chunk(splitter, text, &kwargs.0) {
+        Ok(chunks) => chunks,
+        Err(e) => error!("{e}"),
+    };
+
     let chunks = chunks
         .into_iter()
         .enumerate()
@@ -838,28 +854,23 @@ fn tune(
 #[cfg(feature = "python")]
 #[pg_extern(name = "sklearn_f1_score")]
 pub fn sklearn_f1_score(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> f32 {
-    crate::bindings::sklearn::f1(&ground_truth, &y_hat)
+    unwrap_or_error!(crate::bindings::sklearn::f1(&ground_truth, &y_hat))
 }
 
 #[cfg(feature = "python")]
 #[pg_extern(name = "sklearn_r2_score")]
 pub fn sklearn_r2_score(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> f32 {
-    crate::bindings::sklearn::r2(&ground_truth, &y_hat)
+    unwrap_or_error!(crate::bindings::sklearn::r2(&ground_truth, &y_hat))
 }
 
 #[cfg(feature = "python")]
 #[pg_extern(name = "sklearn_regression_metrics")]
 pub fn sklearn_regression_metrics(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> JsonB {
-    JsonB(
-        serde_json::from_str(
-            &serde_json::to_string(&crate::bindings::sklearn::regression_metrics(
-                &ground_truth,
-                &y_hat,
-            ))
-            .unwrap(),
-        )
-        .unwrap(),
-    )
+    let metrics = unwrap_or_error!(crate::bindings::sklearn::regression_metrics(
+        &ground_truth,
+        &y_hat,
+    ));
+    JsonB(json!(metrics))
 }
 
 #[cfg(feature = "python")]
@@ -869,17 +880,13 @@ pub fn sklearn_classification_metrics(
     y_hat: Vec<f32>,
     num_classes: i64,
 ) -> JsonB {
-    JsonB(
-        serde_json::from_str(
-            &serde_json::to_string(&crate::bindings::sklearn::classification_metrics(
-                &ground_truth,
-                &y_hat,
-                num_classes as usize,
-            ))
-            .unwrap(),
-        )
-        .unwrap(),
-    )
+    let metrics = unwrap_or_error!(crate::bindings::sklearn::classification_metrics(
+        &ground_truth,
+        &y_hat,
+        num_classes as _
+    ));
+
+    JsonB(json!(metrics))
 }
 
 #[pg_extern]

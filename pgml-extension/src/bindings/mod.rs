@@ -8,6 +8,32 @@ use pyo3::{PyResult, Python};
 use crate::orm::*;
 
 #[cfg(feature = "python")]
+#[macro_export]
+macro_rules! create_pymodule {
+    ($pyfile:literal) => {
+        pub static PY_MODULE: Lazy<anyhow::Result<Py<PyModule>>> = Lazy::new(|| {
+            Python::with_gil(|py| -> anyhow::Result<Py<PyModule>> {
+                let src = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), $pyfile));
+                Ok(PyModule::from_code(py, src, "", "")
+                    .format_traceback(py)?
+                    .into())
+            })
+        });
+    };
+}
+
+#[cfg(feature = "python")]
+#[macro_export]
+macro_rules! get_module {
+    ($module:ident) => {
+        match $module.as_ref() {
+            Ok(module) => module,
+            Err(e) => anyhow::bail!(e),
+        }
+    };
+}
+
+#[cfg(feature = "python")]
 pub mod langchain;
 pub mod lightgbm;
 pub mod linfa;
@@ -19,7 +45,7 @@ pub mod transformers;
 pub mod venv;
 pub mod xgboost;
 
-pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings>;
+pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>;
 
 /// The Bindings trait that has to be implemented by all algorithm
 /// providers we use in PostgresML. We don't rely on Serde serialization,
@@ -28,16 +54,21 @@ pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindi
 /// implement serde.
 pub trait Bindings: Send + Sync + Debug {
     /// Predict a set of datapoints.
-    fn predict(&self, features: &[f32], num_features: usize, num_classes: usize) -> Vec<f32>;
+    fn predict(
+        &self,
+        features: &[f32],
+        num_features: usize,
+        num_classes: usize,
+    ) -> Result<Vec<f32>>;
 
     /// Predict the probability of each class.
-    fn predict_proba(&self, features: &[f32], num_features: usize) -> Vec<f32>;
+    fn predict_proba(&self, features: &[f32], num_features: usize) -> Result<Vec<f32>>;
 
     /// Serialize self to bytes
-    fn to_bytes(&self) -> Vec<u8>;
+    fn to_bytes(&self) -> Result<Vec<u8>>;
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
     where
         Self: Sized;
 }
