@@ -1,9 +1,10 @@
 ---
 author: Santi Adavani
-description: 
+description: "pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots: Part I"
 image: https://postgresml.org/dashboard/static/images/blog/pgml_vs_hf_pinecone_query.png
-image_alt: "pgml-chat: A command-line tool for deploying responsive knowledge-based chatbots"
+image_alt: "pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots: Part I"
 ---
+
 # pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots: Part I
 <div class="d-flex align-items-center mb-4">
   <img width="54px" height="54px" src="/dashboard/static/images/team/santi.jpg" style="border-radius: 50%;" alt="Author" />
@@ -79,7 +80,6 @@ Before you begin, make sure you have the following:
 
 1. Create a virtual environment and install `pgml-chat` using `pip`:
 
-!!! generic
 
 !!! code_block
 
@@ -93,8 +93,6 @@ pip install pgml-chat
 
 2. Download `.env.template` file from PostgresML Github repository and make a copy.
 
-!!! generic
-
 !!! code_block
 
 ```bash
@@ -102,9 +100,10 @@ wget https://github.com/postgresml/postgresml/blob/master/pgml-apps/pgml-chat/.e
 cp .env.template .env
 ```
 
+!!!
+
 3. Update environment variables with your OpenAI API key and PostgresML database credentials.
 
-!!! generic
 
 !!! code_block
 
@@ -126,7 +125,6 @@ DISCORD_BOT_TOKEN=<DISCORD_BOT_TOKEN> # Discord bot token to run Discord chat se
 ## Usage
 You can get help on the command line interface by running:
 
-!!! generic
 
 !!! code_block
 
@@ -152,7 +150,6 @@ optional arguments:
 ## 1. Building the Knowledge Base
 In this step, we ingest documents, chunk documents, generate embeddings and index these embeddings for fast query. 
 
-!!! generic
 
 !!! code_block
 
@@ -164,7 +161,6 @@ LOG_LEVEL=DEBUG pgml-chat --root_dir <directory> --collection_name <collection_n
 
 You will see the following output:
 
-!!! generic
 
 !!! code_block
 
@@ -187,7 +183,7 @@ Extracting text from markdown ━━━━━━━━━━━━━━━━�
 
 **Root directory** is where you have all your documentation that you would like the chatbot to be aware of. 
 
-!!! Note 
+!!! note 
 
 In the current version, we only support markdown files. We will be adding support for other file types soon.
 
@@ -202,7 +198,6 @@ Here we will show how to experiment with prompts for the chat completion model t
 
 You can provide the bot with a name and style of response using `SYSTEM_PROMPT` and `BASE_PROMPT` environment variables. The bot will then generate a response based on the user's question, context from vector search and the prompt. For the bot we built for PostgresML, we used the following system prompt. You can change the name of the bot, location and the name of the topics it will answer questions about.
 
-!!! generic
 
 !!! code_block
 
@@ -214,7 +209,6 @@ SYSTEM_PROMPT="You are an assistant to answer questions about an open source sof
 
 We used the following base prompt for the bot. Note that the prompt is a formatted string with placeholders for the `{context}` and the `{question}`. The chat service will replace these placeholders with the context and the question before passing it to the chat completion model. You can tune this prompt to get the best responses for your chatbot. In addition, you can update the email address and the support link to your own.
 
-!!! generic
 
 !!! code_block
 
@@ -226,11 +220,12 @@ BASE_PROMPT="Given relevant parts of a document and a question, create a final a
                 If the context is empty then ask for clarification and suggest user to send an email to team@postgresml.org or join PostgresML [Discord](https://discord.gg/DmyJP3qJ7U)."
 ```
 
+!!!
+
 ## 3. Evaluating and Fine-tuning chatbot
 Here we will show how to evaluate the chatbot's performance using the `cli` chat interface. This step will help you experiment with different prompts without spinning up a chat service. You can increase the log level to ERROR to suppress the logs from pgml-chat and OpenAI chat completion service. 
 
 
-!!! generic
 
 !!! code_block
 
@@ -242,7 +237,6 @@ LOG_LEVEL=ERROR pgml-chat --collection_name <collection_name> --stage chat --cha
 
 You should be able to interact with the bot as shown below. Control-C to exit.
 
-!!! generic
 
 !!! code_block
 
@@ -272,7 +266,6 @@ Once you are comfortable with the chatbot's performance it is ready for connecti
 
 You need SLACK_BOT_TOKEN and SLACK_APP_TOKEN to run the chatbot on Slack. You can get these tokens by creating a Slack app. Follow the instructions [here](https://slack.dev/bolt-python/tutorial/getting-started) to create a Slack app.Include the following environment variables in your .env file:
 
-!!! generic
 
 !!! code_block
 
@@ -320,8 +313,7 @@ Once the discord app is running, you can interact with the chatbot on Discord as
 
 ![Discord Chatbot](/dashboard/static/images/blog/discord_screenshot.png)
 
-# Comparing Query Latency
-
+## PostgresML vs. Hugging Face + Pinecone
 To evaluate query latency, we performed an experiment with 10,000 Wikipedia documents from the SQuAD dataset. Embeddings were generated using the intfloat/e5-large model.
 
 For PostgresML, we used a GPU-powered serverless database running on NVIDIA A10G GPUs with client in us-west-2 region. For HuggingFace, we used their inference API endpoint running on NVIDIA A10G GPUs in us-east-1 region and a client in the same us-east-1 region. Pinecone was used as the vector search index for HuggingFace embeddings.
