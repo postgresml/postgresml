@@ -13,6 +13,7 @@ mkdir -p "$deb_dir"
 
 cp -R ${SCRIPT_DIR}/* "$deb_dir"
 rm "$deb_dir/build.sh"
+rm "$deb_dir/release.sh"
 
 (cat ${SCRIPT_DIR}/DEBIAN/control | envsubst) > "$deb_dir/DEBIAN/control"
 (cat ${SCRIPT_DIR}/DEBIAN/postinst | envsubst) > "$deb_dir/DEBIAN/postinst"
