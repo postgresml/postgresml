@@ -140,6 +140,7 @@ jobs:
   postgresml:
     needs: postgresml-pgml
     strategy:
+      fail-fast: false # Let the other job finish
       matrix:
         os: ["ubuntu-22.04"]
     runs-on: ${{ matrix.os }}
@@ -183,6 +184,7 @@ jobs:
       - postgresml
       - postgresml-dashboard
     strategy:
+      fail-fast: false # Let the other job finish
       matrix:
         os: ["buildjet-4vcpu-ubuntu-2204"]
     runs-on: ${{ matrix.os }}
