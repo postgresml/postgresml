@@ -22,7 +22,7 @@ cuda = ["xgboost/cuda", "lightgbm/cuda"]
 pgrx = "=0.9.8"
 pgrx-pg-sys = "=0.9.8"
 xgboost = { git = "https://github.com/postgresml/rust-xgboost.git", branch = "master" }
-once_cell = "1"
+once_cell = { version = "1", features = ["parking_lot"] }
 rand = "0.8"
 ndarray = { version = "0.15.6", features = ["serde", "blas"] }
 ndarray-stats = "0.5.1"
