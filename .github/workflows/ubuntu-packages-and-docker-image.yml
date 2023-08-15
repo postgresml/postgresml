@@ -212,6 +212,5 @@ jobs:
           docker buildx create --use --name mybuilder
           docker buildx build  \
             --platform linux/amd64,linux/arm64 \
-            --tag ghcr.io/postgresml/postgresml:${{ inputs.version }} \
-            --build-arg POSTGRESML_VERSION=${{ inputs.postgresmlVersion }} \
+            --tag ghcr.io/postgresml/postgresml:${{ inputs.packageVersion }} \
             --push .
