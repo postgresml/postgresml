@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+ln -sf /etc/postgresml/postgresml.conf /etc/postgresql/${PGVERSION}/main/conf.d/01-postgresml.conf
+
+sudo service postgresql restart
