@@ -13,7 +13,7 @@
         <% for model in &models[&project.id] { %>
         <li>
           <a href="/dashboard/models/<%= model.id %>" data-turbo-frame="model">
-            <span class="material-symbols-outlined">
+            <span class="material-symbols-outlined d-flex justify-content-center align-items-center">
               <% if model.search.is_some() { %>
                 <% if model.search.as_ref().unwrap().as_str() == "grid" { %>
                   grid_on
@@ -25,7 +25,7 @@
                 check_circle
               <% } %>
             </span>
-            <span><%= model.algorithm %></span>
+            <span class="ps-2"><%= model.algorithm %></span>
             <span><%= format!("{:.4}", model.key_metric(&project).unwrap()) %></span>
             <figure id="model_<%= model.id %>"></figure>
           </a>
