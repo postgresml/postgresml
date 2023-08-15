@@ -23,9 +23,9 @@ pub struct Cluster {
 
 impl Default for Cluster {
     fn default() -> Self {
-        let max_connections = 5;
+        let max_connections = 1;
         let min_connections = 1;
-        let idle_timeout = 15_000;
+        let idle_timeout = 0;
 
         let settings = ClustersSettings {
             max_connections,
