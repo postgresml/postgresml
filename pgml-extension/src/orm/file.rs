@@ -1,3 +1,4 @@
+use anyhow::Result;
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -17,12 +18,12 @@ static DEPLOYED_ESTIMATORS_BY_MODEL_ID: Lazy<Mutex<HashMap<i64, Arc<Box<dyn Bind
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// Fetch and load the most up-to-date estimator for the given model.
-pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Bindings>> {
+pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Result<Arc<Box<dyn Bindings>>> {
     // Get the estimator from process memory, if we already loaded it.
     {
         let estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock();
         if let Some(estimator) = estimators.get(&model_id) {
-            return estimator.clone();
+            return Ok(estimator.clone());
         }
     }
 
@@ -93,31 +94,31 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Arc<Box<dyn Binding
     let bindings: Box<dyn Bindings> = match runtime {
         Runtime::rust => {
             match algorithm {
-                Algorithm::xgboost => crate::bindings::xgboost::Estimator::from_bytes(&data),
-                Algorithm::lightgbm => crate::bindings::lightgbm::Estimator::from_bytes(&data),
+                Algorithm::xgboost => crate::bindings::xgboost::Estimator::from_bytes(&data)?,
+                Algorithm::lightgbm => crate::bindings::lightgbm::Estimator::from_bytes(&data)?,
                 Algorithm::linear => match task {
-                    Task::regression => crate::bindings::linfa::LinearRegression::from_bytes(&data),
+                    Task::regression => crate::bindings::linfa::LinearRegression::from_bytes(&data)?,
                     Task::classification => {
-                        crate::bindings::linfa::LogisticRegression::from_bytes(&data)
+                        crate::bindings::linfa::LogisticRegression::from_bytes(&data)?
                     }
                     _ => error!("Rust runtime only supports `classification` and `regression` task types for linear algorithms."),
                 },
-                Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data),
+                Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data)?,
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
             }
         }
 
         #[cfg(feature = "python")]
-        Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data),
+        Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data)?,
 
         #[cfg(not(feature = "python"))]
         Runtime::python => {
-            error!("Python runtime not supported, recompile with `--features python`")
+            anyhow::bail!("Python runtime not supported, recompile with `--features python`")
         }
     };
 
     // Cache the estimator in process memory.
     let mut estimators = DEPLOYED_ESTIMATORS_BY_MODEL_ID.lock();
     estimators.insert(model_id, Arc::new(bindings));
-    estimators.get(&model_id).unwrap().clone()
+    Ok(estimators.get(&model_id).unwrap().clone())
 }

@@ -1,5 +1,6 @@
 use std::convert::From;
 
+use anyhow::{bail, Result};
 use linfa::prelude::Predict;
 use linfa::traits::Fit;
 use ndarray::{ArrayView1, ArrayView2};
@@ -16,7 +17,7 @@ pub struct LinearRegression {
 }
 
 impl LinearRegression {
-    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings>
+    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
@@ -37,45 +38,49 @@ impl LinearRegression {
                     estimator = estimator
                         .with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
                 }
-                _ => error!("Unknown {}: {:?}", key.as_str(), value),
+                _ => bail!("Unknown {}: {:?}", key.as_str(), value),
             };
         }
 
         let estimator = estimator.fit(&linfa_dataset).unwrap();
 
-        Box::new(LinearRegression {
+        Ok(Box::new(LinearRegression {
             estimator,
             num_features: dataset.num_features,
-        })
+        }))
     }
 }
 
 impl Bindings for LinearRegression {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32], num_features: usize, _num_classes: usize) -> Vec<f32> {
+    fn predict(
+        &self,
+        features: &[f32],
+        num_features: usize,
+        _num_classes: usize,
+    ) -> Result<Vec<f32>> {
         let records =
-            ArrayView2::from_shape((features.len() / num_features, num_features), features)
-                .unwrap();
-        self.estimator.predict(records).targets.into_raw_vec()
+            ArrayView2::from_shape((features.len() / num_features, num_features), features)?;
+        Ok(self.estimator.predict(records).targets.into_raw_vec())
     }
 
     /// Predict a novel datapoint.
-    fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Vec<f32> {
-        todo!("predict_proba is currently only supported by the Python runtime.")
+    fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Result<Vec<f32>> {
+        bail!("predict_proba is currently only supported by the Python runtime.")
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
-        let estimator: LinearRegression = rmp_serde::from_read(bytes).unwrap();
-        Box::new(estimator)
+        let estimator: LinearRegression = rmp_serde::from_read(bytes)?;
+        Ok(Box::new(estimator))
     }
 
     /// Serialize self to bytes
-    fn to_bytes(&self) -> Vec<u8> {
-        rmp_serde::to_vec(self).unwrap()
+    fn to_bytes(&self) -> Result<Vec<u8>> {
+        Ok(rmp_serde::to_vec(self)?)
     }
 }
 
@@ -88,7 +93,7 @@ pub struct LogisticRegression {
 }
 
 impl LogisticRegression {
-    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings>
+    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
@@ -127,18 +132,18 @@ impl LogisticRegression {
                             value.as_f64().expect("gradient_tolerance must be a float") as f32,
                         )
                     }
-                    _ => error!("Unknown {}: {:?}", key.as_str(), value),
+                    _ => bail!("Unknown {}: {:?}", key.as_str(), value),
                 };
             }
 
             let estimator = estimator.fit(&linfa_dataset).unwrap();
 
-            Box::new(LogisticRegression {
+            Ok(Box::new(LogisticRegression {
                 estimator_binary: None,
                 estimator_multi: Some(estimator),
                 num_features: dataset.num_features,
                 num_distinct_labels: dataset.num_distinct_labels,
-            })
+            }))
         } else {
             let mut estimator = linfa_logistic::LogisticRegression::default();
 
@@ -162,35 +167,39 @@ impl LogisticRegression {
                             value.as_f64().expect("gradient_tolerance must be a float") as f32,
                         )
                     }
-                    _ => error!("Unknown {}: {:?}", key.as_str(), value),
+                    _ => bail!("Unknown {}: {:?}", key.as_str(), value),
                 };
             }
 
             let estimator = estimator.fit(&linfa_dataset).unwrap();
 
-            Box::new(LogisticRegression {
+            Ok(Box::new(LogisticRegression {
                 estimator_binary: Some(estimator),
                 estimator_multi: None,
                 num_features: dataset.num_features,
                 num_distinct_labels: dataset.num_distinct_labels,
-            })
+            }))
         }
     }
 }
 
 impl Bindings for LogisticRegression {
-    fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Vec<f32> {
-        todo!("predict_proba is currently only supported by the Python runtime.")
+    fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Result<Vec<f32>> {
+        bail!("predict_proba is currently only supported by the Python runtime.")
     }
 
-    fn predict(&self, features: &[f32], _num_features: usize, _num_classes: usize) -> Vec<f32> {
+    fn predict(
+        &self,
+        features: &[f32],
+        _num_features: usize,
+        _num_classes: usize,
+    ) -> Result<Vec<f32>> {
         let records = ArrayView2::from_shape(
             (features.len() / self.num_features, self.num_features),
             features,
-        )
-        .unwrap();
+        )?;
 
-        if self.num_distinct_labels > 2 {
+        Ok(if self.num_distinct_labels > 2 {
             self.estimator_multi
                 .as_ref()
                 .unwrap()
@@ -210,21 +219,21 @@ impl Bindings for LogisticRegression {
                 .into_iter()
                 .map(|x| x as f32)
                 .collect()
-        }
+        })
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
-        let estimator: LogisticRegression = rmp_serde::from_read(bytes).unwrap();
-        Box::new(estimator)
+        let estimator: LogisticRegression = rmp_serde::from_read(bytes)?;
+        Ok(Box::new(estimator))
     }
 
     /// Serialize self to bytes
-    fn to_bytes(&self) -> Vec<u8> {
-        rmp_serde::to_vec(self).unwrap()
+    fn to_bytes(&self) -> Result<Vec<u8>> {
+        Ok(rmp_serde::to_vec(self)?)
     }
 }
 
@@ -235,7 +244,7 @@ pub struct Svm {
 }
 
 impl Svm {
-    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
         let records = ArrayView2::from_shape(
             (dataset.num_train_rows, dataset.num_features),
             &dataset.x_train,
@@ -268,47 +277,51 @@ impl Svm {
                         "poli" => estimator = estimator.polynomial_kernel(3.0, 1.0), // degree = 3, c = 1.0 as per Scikit
                         "linear" => estimator = estimator.linear_kernel(),
                         "rbf" => estimator = estimator.gaussian_kernel(1e-7), // Default eps
-                        value => error!("Unknown kernel: {}", value),
+                        value => bail!("Unknown kernel: {}", value),
                     }
                 }
-                _ => error!("Unknown {}: {:?}", key, value),
+                _ => bail!("Unknown {}: {:?}", key, value),
             }
         }
 
         let estimator = estimator.fit(&linfa_dataset).unwrap();
 
-        Box::new(Svm {
+        Ok(Box::new(Svm {
             estimator,
             num_features: dataset.num_features,
-        })
+        }))
     }
 }
 
 impl Bindings for Svm {
-    fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Vec<f32> {
-        todo!("predict_proba is currently only supported by the Python runtime.")
+    fn predict_proba(&self, _features: &[f32], _num_features: usize) -> Result<Vec<f32>> {
+        bail!("predict_proba is currently only supported by the Python runtime.")
     }
 
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32], num_features: usize, _num_classes: usize) -> Vec<f32> {
+    fn predict(
+        &self,
+        features: &[f32],
+        num_features: usize,
+        _num_classes: usize,
+    ) -> Result<Vec<f32>> {
         let records =
-            ArrayView2::from_shape((features.len() / num_features, num_features), features)
-                .unwrap();
+            ArrayView2::from_shape((features.len() / num_features, num_features), features)?;
 
-        self.estimator.predict(records).targets.into_raw_vec()
+        Ok(self.estimator.predict(records).targets.into_raw_vec())
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
-        let estimator: Svm = rmp_serde::from_read(bytes).unwrap();
-        Box::new(estimator)
+        let estimator: Svm = rmp_serde::from_read(bytes)?;
+        Ok(Box::new(estimator))
     }
 
     /// Serialize self to bytes
-    fn to_bytes(&self) -> Vec<u8> {
-        rmp_serde::to_vec(self).unwrap()
+    fn to_bytes(&self) -> Result<Vec<u8>> {
+        Ok(rmp_serde::to_vec(self)?)
     }
 }
