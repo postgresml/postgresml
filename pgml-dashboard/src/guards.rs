@@ -2,6 +2,7 @@ use std::env::var;
 
 use crate::templates::components::{StaticNav, StaticNavLink};
 use rocket::request::{self, FromRequest, Request};
+use rocket::http::Status;
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 
 use crate::models;
@@ -92,13 +93,13 @@ impl<'r> FromRequest<'r> for ConnectedCluster<'r> {
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let cluster = match request.guard::<&Cluster>().await {
             request::Outcome::Success(cluster) => cluster,
-            _ => return request::Outcome::Forward(()),
+            _ => return request::Outcome::Forward(Status::NotFound),
         };
 
         if cluster.pool.as_ref().is_some() {
             request::Outcome::Success(ConnectedCluster { inner: cluster })
         } else {
-            request::Outcome::Forward(())
+            request::Outcome::Forward(Status::NotFound)
         }
     }
 }

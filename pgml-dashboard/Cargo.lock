@@ -2042,7 +2042,7 @@ checksum = "61a386cd715229d399604b50d1361683fe687066f42d56f54be995bc6868f71c"
 dependencies = [
  "inlinable_string",
  "pear_codegen",
- "yansi 1.0.0-rc",
+ "yansi",
 ]
 
 [[package]]
@@ -2312,7 +2312,7 @@ dependencies = [
  "quote",
  "syn 2.0.26",
  "version_check",
- "yansi 1.0.0-rc",
+ "yansi",
 ]
 
 [[package]]
@@ -2533,8 +2533,7 @@ dependencies = [
 [[package]]
 name = "rocket"
 version = "0.5.0-rc.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58734f7401ae5cfd129685b48f61182331745b357b96f2367f01aebaf1cc9cc9"
+source = "git+https://github.com/SergioBenitez/Rocket#ddeac5ddcf252d081d69f1b1cec8467ab9ec4d26"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -2545,7 +2544,6 @@ dependencies = [
  "figment",
  "futures",
  "indexmap 1.9.3",
- "is-terminal",
  "log",
  "memchr",
  "multer",
@@ -2565,14 +2563,13 @@ dependencies = [
  "tokio-util",
  "ubyte",
  "version_check",
- "yansi 0.5.1",
+ "yansi",
 ]
 
 [[package]]
 name = "rocket_codegen"
 version = "0.5.0-rc.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7093353f14228c744982e409259fb54878ba9563d08214f2d880d59ff2fc508b"
+source = "git+https://github.com/SergioBenitez/Rocket#ddeac5ddcf252d081d69f1b1cec8467ab9ec4d26"
 dependencies = [
  "devise",
  "glob",
@@ -2587,8 +2584,7 @@ dependencies = [
 [[package]]
 name = "rocket_http"
 version = "0.5.0-rc.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "936012c99162a03a67f37f9836d5f938f662e26f2717809761a9ac46432090f4"
+source = "git+https://github.com/SergioBenitez/Rocket#ddeac5ddcf252d081d69f1b1cec8467ab9ec4d26"
 dependencies = [
  "cookie",
  "either",
@@ -3277,9 +3273,9 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
 name = "state"
-version = "0.5.3"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbe866e1e51e8260c9eed836a042a5e7f6726bb2b411dffeaa712e19c388f23b"
+checksum = "2b8c4a4445d81357df8b1a650d0d0d6fbbbfe99d064aa5e02f3e4022061476d8"
 dependencies = [
  "loom",
 ]
@@ -4264,15 +4260,12 @@ dependencies = [
 
 [[package]]
 name = "yansi"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09041cd90cf85f7f8b2df60c646f853b7f535ce68f85244eb6731cf89fa498ec"
-
-[[package]]
-name = "yansi"
 version = "1.0.0-rc"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ee746ad3851dd3bc40e4a028ab3b00b99278d929e48957bcb2d111874a7e43e"
+dependencies = [
+ "is-terminal",
+]
 
 [[package]]
 name = "zoomies"
