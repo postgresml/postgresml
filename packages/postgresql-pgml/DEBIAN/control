@@ -12,4 +12,4 @@ Description: PostgresML - machine learning with PostgreSQL
  algorithms on tables or views, and to predict novel datapoints
  using only SQL.
  The extension is written in Rust using tcdi/pgrx with some additional
- functionality written in Python & PLPython.
+ functionality written in Python & PlPython.

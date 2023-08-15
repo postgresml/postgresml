@@ -1,12 +1,13 @@
-Package: postgresml-${PGVERSION}
+Package: postgresml-python
 Version: ${PACKAGE_VERSION}
 Section: database
 Priority: optional
 Architecture: ${ARCH}
-Depends: postgresql-${PGVERSION}, postgresql-common, python${PYTHON_VERSION}, python${PYTHON_VERSION}-dev, python3-pip, python3-virtualenv, postgresql-pgml-${PGVERSION}, build-essential
+Depends: python${PYTHON_VERSION}, python${PYTHON_VERSION}-dev, python3-pip, python3-virtualenv, build-essential
 Maintainer: PostgresML <team@postgresml.org>
 Homepage: https://postgresml.org
-Description: PostgresML - Generative AI and Simple ML inside PostgreSQL
+Description: PostgresML - Generative AI and Simple ML inside PostgreSQL (virtual environment)
  PostgresML is an AI application database.
  Download open source models from Huggingface, or train your own, to create and index LLM embeddings,
  generate text, or make online predictions using only SQL.
+ This package installs the Python dependencies necessary for using PostgresML.

@@ -4,15 +4,9 @@
 #
 set -e
 
-# Install config
-ln -sf /etc/postgresml/pgml.conf /etc/postgresql/${PGVERSION}/main/conf.d/01-pgml.conf
-
 # Setup virtualenv
-virtualenv /var/lib/postgresml/pgml-venv
-source "/var/lib/postgresml/pgml-venv/bin/activate"
-python -m pip install -r "/etc/postgresml/requirements.txt"
-python -m pip install -r "/etc/postgresml/requirements-xformers.txt" --no-dependencies
+virtualenv /var/lib/postgresml-python/pgml-venv
+source "/var/lib/postgresml-python/pgml-venv/bin/activate"
+python -m pip install -r "/etc/postgresml-python/requirements.txt"
+python -m pip install -r "/etc/postgresml-python/requirements-xformers.txt" --no-dependencies
 deactivate
-
-# Restart Postgres
-service postgresql restart
