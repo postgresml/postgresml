@@ -13,11 +13,8 @@ jobs:
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
-        os: ["buildjet-16vcpu-ubuntu-2204", "buildjet-16vcpu-ubuntu-2204-arm"]
+        os: ["buildjet-4vcpu-ubuntu-2204", "buildjet-8vcpu-ubuntu-2204-arm"]
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: pgml-extension
     steps:
     - uses: actions/checkout@v3
     - uses: actions-rs/toolchain@v1
@@ -28,6 +25,16 @@ jobs:
       with:
         working-directory: pgml-extension
         command: version
+    - name: Cache artifacts
+      uses: buildjet/cache@v3
+      with:
+        path: pgml-extension/target
+        key: buildjet-pgml-extension-artifacts-1 # Change this when dependencies change
+    - name: Cache pgrx
+      uses: buildjet/cache@v3
+      with:
+        path: ~/.cargo
+        key: buildjet-pgml-extension-pgrx-2 # Change this when dependencies change
     - name: Install dependencies
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -140,6 +147,7 @@ jobs:
   postgresml:
     needs: postgresml-pgml
     strategy:
+      fail-fast: false # Let the other job finish
       matrix:
         os: ["ubuntu-22.04"]
     runs-on: ${{ matrix.os }}
@@ -183,6 +191,7 @@ jobs:
       - postgresml
       - postgresml-dashboard
     strategy:
+      fail-fast: false # Let the other job finish
       matrix:
         os: ["buildjet-4vcpu-ubuntu-2204"]
     runs-on: ${{ matrix.os }}

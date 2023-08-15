@@ -16,10 +16,10 @@ if [[ -z "$package_version" ]]; then
 	exit 1
 fi
 
-if ! which dpkg-deb; then
+if ! which deb-s3; then
 	curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
 	sudo gem install deb-s3-0.11.4.gem
-	dpkg-deb --version
+	deb-s3
 fi
 
 sudo apt install python3-pip python3 python3-virtualenv -y
