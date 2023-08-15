@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
-        os: ["buildjet-4vcpu-ubuntu-2204", "buildjet-4vcpu-ubuntu-2204-arm"]
+        os: ["buildjet-4vcpu-ubuntu-2204", "buildjet-8vcpu-ubuntu-2204-arm"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
