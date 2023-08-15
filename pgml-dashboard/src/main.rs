@@ -183,48 +183,48 @@ mod test {
     #[rocket::async_test]
     async fn test_notebooks_index() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/notebooks/").dispatch().await;
+        let response = client.get("/dashboard/notebooks").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
     #[rocket::async_test]
     async fn test_projects_index() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/projects/").dispatch().await;
+        let response = client.get("/dashboard/projects").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
     #[rocket::async_test]
     async fn test_models_index() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/models/").dispatch().await;
+        let response = client.get("/dashboard/models").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
     #[rocket::async_test]
     async fn test_deployments_index() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/deployments/").dispatch().await;
+        let response = client.get("/dashboard/deployments").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
     #[rocket::async_test]
     async fn test_uploader() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/uploader/").dispatch().await;
+        let response = client.get("/dashboard/uploader").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
     #[rocket::async_test]
     async fn test_snapshots_index() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/snapshots/").dispatch().await;
+        let response = client.get("/dashboard/snapshots").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
     #[rocket::async_test]
     async fn test_snapshot_entries() {
-        let snapshots_endpoint = "/dashboard/snapshots/";
+        let snapshots_endpoint = "/dashboard/snapshots";
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(snapshots_endpoint).dispatch().await;
 
@@ -239,7 +239,7 @@ mod test {
 
     #[rocket::async_test]
     async fn test_notebook_entries() {
-        let notebooks_endpoint = "/dashboard/notebooks/";
+        let notebooks_endpoint = "/dashboard/notebooks";
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(notebooks_endpoint).dispatch().await;
 
@@ -254,7 +254,7 @@ mod test {
 
     #[rocket::async_test]
     async fn test_project_entries() {
-        let projects_endpoint = "/dashboard/projects/";
+        let projects_endpoint = "/dashboard/projects";
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(projects_endpoint).dispatch().await;
 
@@ -269,7 +269,7 @@ mod test {
 
     #[rocket::async_test]
     async fn test_model_entries() {
-        let models_endpoint = "/dashboard/models/";
+        let models_endpoint = "/dashboard/models";
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(models_endpoint).dispatch().await;
 
@@ -284,7 +284,7 @@ mod test {
 
     #[rocket::async_test]
     async fn test_deployment_entries() {
-        let deployments_endpoint = "/deployments/";
+        let deployments_endpoint = "/deployments";
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(deployments_endpoint).dispatch().await;
 
@@ -301,7 +301,7 @@ mod test {
     async fn test_docs() {
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client
-            .get("/docs/guides/setup/quick_start_with_docker/")
+            .get("/docs/guides/setup/quick_start_with_docker")
             .dispatch()
             .await;
         assert_eq!(response.status().code, 200);
@@ -310,7 +310,7 @@ mod test {
     #[rocket::async_test]
     async fn test_blogs() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/blog/postgresml-raises-4.7M-to-launch-serverless-ai-application-databases-based-on-postgres/").dispatch().await;
+        let response = client.get("/blog/postgresml-raises-4.7M-to-launch-serverless-ai-application-databases-based-on-postgres").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 }

@@ -261,7 +261,8 @@ SELECT * FROM test;
 
         // Style headings like we like them
         let mut plugins = ComrakPlugins::default();
-        plugins.render.heading_adapter = Some(&MarkdownHeadings {});
+        let binding = MarkdownHeadings::new();
+        plugins.render.heading_adapter = Some(&binding);
         plugins.render.codefence_syntax_highlighter = Some(&SyntaxHighlighter {});
 
         let mut html = vec![];
