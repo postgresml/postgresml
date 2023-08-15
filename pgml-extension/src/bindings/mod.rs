@@ -73,7 +73,7 @@ pub trait Bindings: Send + Sync + Debug {
         Self: Sized;
 }
 
-trait TracebackError<T> {
+pub trait TracebackError<T> {
     fn format_traceback(self, py: Python<'_>) -> Result<T>;
 }
 

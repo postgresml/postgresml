@@ -184,6 +184,37 @@ def get_model_from(task):
         return model[ty][0]
 
 
+def create_pipeline(task):
+    if isinstance(task, str):
+        task = orjson.loads(task)
+    ensure_device(task)
+    convert_dtype(task)
+    model_name = task.get("model", None)
+    if model_name and "-ggml" in model_name:
+        pipe = GGMLPipeline(model_name, **task)
+    elif model_name and "-gptq" in model_name:
+        pipe = GPTQPipeline(model_name, **task)
+    else:
+        try:
+            pipe = StandardPipeline(model_name, **task)
+        except TypeError:
+            # some models fail when given "device" kwargs, remove and try again
+            task.pop("device")
+            pipe = StandardPipeline(model_name, **task)
+    return pipe
+
+
+def transform_using(pipeline, args, inputs):
+    args = orjson.loads(args)
+    inputs = orjson.loads(inputs)
+
+    if pipeline.task == "question-answering":
+        inputs = [orjson.loads(input) for input in inputs]
+    convert_eos_token(pipeline.tokenizer, args)
+
+    return orjson.dumps(pipeline(inputs, **args), default=orjson_default).decode()
+
+
 def transform(task, args, inputs):
     task = orjson.loads(task)
     args = orjson.loads(args)
@@ -191,21 +222,7 @@ def transform(task, args, inputs):
 
     key = ",".join([f"{key}:{val}" for (key, val) in sorted(task.items())])
     if key not in __cache_transform_pipeline_by_task:
-        ensure_device(task)
-        convert_dtype(task)
-        model_name = task.get("model", None)
-        if model_name and "-ggml" in model_name:
-            pipe = GGMLPipeline(model_name, **task)
-        elif model_name and "-gptq" in model_name:
-            pipe = GPTQPipeline(model_name, **task)
-        else:
-            try:
-                pipe = StandardPipeline(model_name, **task)
-            except TypeError:
-                # some models fail when given "device" kwargs, remove and try again
-                task.pop("device")
-                pipe = StandardPipeline(model_name, **task)
-
+        pipe = create_pipeline(task)
         __cache_transform_pipeline_by_task[key] = pipe
 
     pipe = __cache_transform_pipeline_by_task[key]
