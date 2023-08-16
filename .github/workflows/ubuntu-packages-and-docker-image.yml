@@ -165,7 +165,7 @@ jobs:
         git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
         git checkout tag v${{ inputs.packageVersion }}
 
-       bash packages/postgresml/release.sh ${{ inputs.packageVersion }}
+        bash packages/postgresml/release.sh ${{ inputs.packageVersion }}
 
   #
   # PostgresML dashboard.
