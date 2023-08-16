@@ -15,7 +15,7 @@ image_alt: "pgml-chat: A command-line tool for deploying low-latency knowledge-b
 </div>
 
 
-# Introduction
+## Introduction
 Chatbots powered by large language models like GPT-4 seem amazingly smart at first. They can have conversations on almost any topic. But chatbots have a huge blindspot - no long-term memory. Ask them about current events from last week or topics related to your specific business, and they just draw a blank.
 
 To be truly useful for real applications, chatbots need fast access to knowledge - almost like human memory. Without quick recall, conversations become frustratingly slow and limited. It's like chatting with someone suffering from short-term memory loss.
@@ -34,10 +34,10 @@ We need a better foundational solution tailored specifically for chatbots - one 
 
 In this blog series, we will explore PostgresML to do just that. In the first part, we will talk about deploying a chatbot using `pgml-chat` command line tool built on top of PostgresML. We will compare PostgresML query performance with a combination of Hugging Face and Pinecone. In the second part, we will show how `pgml-chat` works under the hood and focus on achieving low-latencies.
 
-# Steps to build a chatbot on your own data
+## Steps to build a chatbot on your own data
 Similar to building and deploying machine learning models, building a chatbot involves steps that are both offline and online. The offline steps are compute-intensive and need to be done periodically when the data changes or the chatbot performance has deteriorated. The online steps are fast and need to be done in real-time. Below, we describe the steps in detail.
 
-## 1. Building the Knowledge Base
+### 1. Building the Knowledge Base
 
 This offline setup lays the foundation for your chatbot's intelligence. It involves:
 
@@ -48,7 +48,7 @@ This offline setup lays the foundation for your chatbot's intelligence. It invol
 
 This knowledge base setup powers the contextual understanding for your chatbot. It's compute-intensive but only needs to be peridocially updated as your domain knowledge evolves.
 
-## 2. Connecting to Conversational AI
+### 2. Connecting to Conversational AI
 
 With its knowledge base in place, now the chatbot links to models that allow natural conversations:
 
@@ -56,7 +56,7 @@ With its knowledge base in place, now the chatbot links to models that allow nat
 2. Passing those passages to a model like GPT-3 to generate conversational responses.
 3. Orchestrating the query, retrieval and generation flow to enable real-time chat.
 
-## 3. Evaluating and Fine-tuning the chatbot
+### 3. Evaluating and Fine-tuning the chatbot
 
 The chatbot needs to be evaluated and fine-tuned before it can be deployed to the real world. This involves:
 
@@ -64,7 +64,7 @@ The chatbot needs to be evaluated and fine-tuned before it can be deployed to th
  2. Evaluating the chatbot's performance on a test set of questions by comparing the chatbot's responses to the ground truth responses.
  3. If the performance is not satisfactory then we need to go to step 1 and generate embeddings using a different model. This is because the embeddings are the foundation of the chatbot's intelligence to get the most relevant passage from the knowledge base.
 
-## 4. Connecting to the Real World
+### 4. Connecting to the Real World
 
 Finally, the chatbot needs to be deployed to the real world. This involves:
 
@@ -72,7 +72,7 @@ Finally, the chatbot needs to be deployed to the real world. This involves:
  2. Hosting a chatbot service that can serve multiple users.
  3. Integrating the chatbot service with the interface so that it can receive and respond to messages.
 
-# pgml-chat
+## pgml-chat
 `pgml-chat` is a command line tool that allows you to do the following:
 - Build a knowledge base that involves:
   - Ingesting documents into the database
@@ -84,7 +84,7 @@ Finally, the chatbot needs to be deployed to the real world. This involves:
 - Provides a chat interface at command line to evaluate your setup
 - Runs Slack or Discord chat services so that your users can interact with your chatbot.
 
-## Getting Started
+### Getting Started
 
 Before you begin, make sure you have the following:
 
@@ -136,7 +136,7 @@ DISCORD_BOT_TOKEN=<DISCORD_BOT_TOKEN> # Discord bot token to run Discord chat se
 
 !!!
 
-## Usage
+### Usage
 You can get help on the command line interface by running:
 
 
@@ -161,7 +161,7 @@ optional arguments:
 
 !!!
 
-## 1. Building the Knowledge Base
+### 1. Building the Knowledge Base
 In this step, we ingest documents, chunk documents, generate embeddings and index these embeddings for fast query. 
 
 
@@ -207,7 +207,7 @@ In the current version, we only support markdown files. We will be adding suppor
 
 **LOG_LEVEL** will set the log level for the application. The default is `ERROR`. You can set it to `DEBUG` to see more detailed logs.
 
-## 2. Connecting to Conversational AI
+### 2. Connecting to Conversational AI
 Here we will show how to experiment with prompts for the chat completion model to generate responses. We will use OpenAI `gpt-3.5-turbo` for chat completion. You need an [OpenAI API key](https://platform.openai.com/account/api-keys) to run this step.  
 
 You can provide the bot with a name and style of response using `SYSTEM_PROMPT` and `BASE_PROMPT` environment variables. The bot will then generate a response based on the user's question, context from vector search and the prompt. For the bot we built for PostgresML, we used the following system prompt. You can change the name of the bot, location and the name of the topics it will answer questions about.
@@ -236,9 +236,8 @@ BASE_PROMPT="Given relevant parts of a document and a question, create a final a
 
 !!!
 
-## 3. Evaluating and Fine-tuning chatbot
+### 3. Evaluating and Fine-tuning chatbot
 Here we will show how to evaluate the chatbot's performance using the `cli` chat interface. This step will help you experiment with different prompts without spinning up a chat service. You can increase the log level to ERROR to suppress the logs from pgml-chat and OpenAI chat completion service. 
-
 
 
 !!! code_block
@@ -273,10 +272,10 @@ If the responses are not acceptible, then increase the LOG_LEVEL to check for th
 
 You can change the embeddings model using the environment variable `MODEL` in `.env` file. Some models like `hknulp/instructor-xl` also take an instruction to generate embeddings. You can change the instruction using the environment variable `MODEL_PARAMS`. You can also change the instruction for query embeddings using the environment variable `QUERY_PARAMS`.
 
-## 4. Connecting to the Real World
+### 4. Connecting to the Real World
 Once you are comfortable with the chatbot's performance it is ready for connecting to the real world. Here we will show how to run the chatbot as a Slack or Discord service. You need to create a Slack or Discord app and get the bot token and app token to run the chat service. Under the hood we use [`slack-bolt`](https://slack.dev/bolt-python/concepts) and [`discord.py`](https://discordpy.readthedocs.io/en/stable/) libraries to run the chat services.
 
-### Slack
+#### Slack
 
 You need SLACK_BOT_TOKEN and SLACK_APP_TOKEN to run the chatbot on Slack. You can get these tokens by creating a Slack app. Follow the instructions [here](https://slack.dev/bolt-python/tutorial/getting-started) to create a Slack app.Include the following environment variables in your .env file:
 
@@ -305,9 +304,8 @@ Once the slack app is running, you can interact with the chatbot on Slack as sho
 ![Slack Chatbot](/dashboard/static/images/blog/slack_screenshot.png)
 
 
-### Discord
+#### Discord
 
-**Setup**
 You need DISCORD_BOT_TOKEN to run the chatbot on Discord. You can get this token by creating a Discord app. Follow the instructions [here](https://discordpy.readthedocs.io/en/stable/discord.html) to create a Discord app. Include the following environment variables in your .env file:
 
 ```bash
@@ -327,7 +325,7 @@ Once the discord app is running, you can interact with the chatbot on Discord as
 
 ![Discord Chatbot](/dashboard/static/images/blog/discord_screenshot.png)
 
-## PostgresML vs. Hugging Face + Pinecone
+### PostgresML vs. Hugging Face + Pinecone
 To evaluate query latency, we performed an experiment with 10,000 Wikipedia documents from the SQuAD dataset. Embeddings were generated using the intfloat/e5-large model.
 
 For PostgresML, we used a GPU-powered serverless database running on NVIDIA A10G GPUs with client in us-west-2 region. For HuggingFace, we used their inference API endpoint running on NVIDIA A10G GPUs in us-east-1 region and a client in the same us-east-1 region. Pinecone was used as the vector search index for HuggingFace embeddings.
@@ -336,13 +334,13 @@ By keeping the document dataset, model, and hardware constant, we aimed to evalu
 
 ![pgml_vs_hf_pinecone_query](/dashboard/static/images/blog/pgml_vs_hf_pinecone_query.jpg)
 
-Our experiments found that PostgresML outperformed HuggingFace + Pinecone in query latency by 6x. Mean latency was 59ms for PostgresML and 233ms for HuggingFace + Pinecone. Query latency was averaged across 100 queries to account for any outliers. This ~4x improvement in mean latency can be attributed to PostgresML's tight integration of embedding generation, indexing, and querying within the database running on NVIDIA A10G GPUs.
+Our experiments found that PostgresML outperformed HuggingFace + Pinecone in query latency by ~4x. Mean latency was 59ms for PostgresML and 233ms for HuggingFace + Pinecone. Query latency was averaged across 100 queries to account for any outliers. This ~4x improvement in mean latency can be attributed to PostgresML's tight integration of embedding generation, indexing, and querying within the database running on NVIDIA A10G GPUs.
 
 For applications like chatbots that require low latency access to knowledge, PostgresML provides superior performance over combining multiple services. The serverless architecture also provides predictable pricing and scales seamlessly with usage.
 
-# Conclusions
+## Conclusions
 In this post, we announced PostgresML Chatbot Builder - an open source tool that makes it easy to build knowledge based chatbots. We discussed the effort required to integrate various components like ingestion, embedding generation, indexing etc. and how PostgresML Chatbot Builder automates this end-to-end workflow.
 
-We also presented some initial benchmark results comparing PostgresML and HuggingFace + Pinecone for query latency using the SQuAD dataset. PostgresML provided up to 6x lower latency thanks to its tight integration and optimizations.
+We also presented some initial benchmark results comparing PostgresML and HuggingFace + Pinecone for query latency using the SQuAD dataset. PostgresML provided up to ~4x lower latency thanks to its tight integration and optimizations.
 
 Stay tuned for part 2 of this benchmarking blog post where we will present more comprehensive results evaluating performance for generating embeddings with different models and batch sizes. We will also share additional query latency benchmarks with more document collections.
