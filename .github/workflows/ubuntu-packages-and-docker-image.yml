@@ -43,7 +43,7 @@ jobs:
         git submodule update --init --recursive
         git fetch --tags
         git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
-        # git checkout v${{ inputs.packageVersion }}
+        git checkout v${{ inputs.packageVersion }}
 
         # PostgreSQL apt
         curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
@@ -142,7 +142,7 @@ jobs:
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
         # Always build using latest scripts
-        # git checkout master
+        git checkout master
 
         bash packages/postgresql-pgml/release.sh ${{ inputs.packageVersion }}
 
