@@ -29,12 +29,12 @@ jobs:
       uses: buildjet/cache@v3
       with:
         path: pgml-extension/target
-        key: buildjet-pgml-extension-artifacts-1 # Change this when dependencies change
+        key: buildjet-pgml-extension-artifacts-1-${{ runner.arch }} # Change this when dependencies change
     - name: Cache pgrx
       uses: buildjet/cache@v3
       with:
         path: ~/.cargo
-        key: buildjet-pgml-extension-pgrx-2 # Change this when dependencies change
+        key: buildjet-pgml-extension-pgrx-2-${{ runner.arch }} # Change this when dependencies change
     - name: Install dependencies
       env:
         DEBIAN_FRONTEND: noninteractive
