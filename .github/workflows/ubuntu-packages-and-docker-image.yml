@@ -197,7 +197,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: pgml-extension/docker/postgresml
+        working-directory: docker
     steps:
       - uses: actions/checkout@v2
       - name: Login to GitHub Container Registry
