@@ -1,6 +1,0 @@
-#!/bin/bash
-#
-#
-set -e
-
-rm /etc/postgresql/${PGVERSION}/main/conf.d/01-pgml.conf

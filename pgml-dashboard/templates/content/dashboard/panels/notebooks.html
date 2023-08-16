@@ -8,7 +8,7 @@
     <ol class="object_list">
       <% for notebook in notebooks { %>
       <li>
-        <a href="/dashboard/notebooks/<%= notebook.id %>/" data-turbo-frame="notebook">
+        <a href="/dashboard/notebooks/<%= notebook.id %>" data-turbo-frame="notebook">
           <span>
             <%= notebook.name %>
           </span>

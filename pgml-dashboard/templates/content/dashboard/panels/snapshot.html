@@ -26,7 +26,7 @@
     <% let project = &projects[&models.iter().next().unwrap().project_id]; %>
     <ol class="object_list model_list">
       <li>
-        <a href="/dashboard/?tab=Projects&project_id=<%= project.id %>" data-turbo="false">
+        <a href="/dashboard?tab=Projects&project_id=<%= project.id %>" data-turbo="false">
           <h3 style="padding-right: 20%"><%= project.name %></h3>
           <b><%- project.key_metric_display_name().unwrap() %></b>
           <figure id="project_<%= project.id %>"></figure>
@@ -34,8 +34,8 @@
     </li>
       <% for model in models.iter() { %>
       <li>
-        <a href="/dashboard/?tab=Models&model_id=<%= model.id %>" data-turbo="false">
-          <span class="material-symbols-outlined">
+        <a href="/dashboard?tab=Models&model_id=<%= model.id %>" data-turbo="false">
+          <span class="material-symbols-outlined d-flex justify-content-center align-items-center">
             <% if model.search.is_some() { %>
               <% if model.search.as_ref().unwrap().as_str() == "grid" { %>
               grid_on
@@ -47,7 +47,7 @@
               check_circle
             <% } %>
           </span>
-          <span><%= model.algorithm %></span>
+          <span class="ps-2"><%= model.algorithm %></span>
           <span><%= format!("{:.4}", model.key_metric(&project).unwrap_or(0.)) %></span>
           <figure id="model_<%= model.id %>"></figure>
         </a>

@@ -88,7 +88,7 @@ pub async fn notebook_create(
     let notebook = crate::models::Notebook::create(cluster.pool(), data.name).await?;
 
     Ok(Redirect::to(format!(
-        "/dashboard/?tab=Notebooks&notebook_id={}",
+        "/dashboard?tab=Notebooks&notebook_id={}",
         notebook.id
     )))
 }
@@ -139,7 +139,7 @@ pub async fn cell_create(
     let _ = cell.render(cluster.pool()).await?;
 
     Ok(Redirect::to(format!(
-        "/dashboard/notebooks/{}/",
+        "/dashboard/notebooks/{}",
         notebook_id
     )))
 }
@@ -440,7 +440,7 @@ pub async fn uploader_upload(
         .await
     {
         Ok(()) => Ok(Redirect::to(format!(
-            "/dashboard/?tab=Upload_Data&table_name={}",
+            "/dashboard?tab=Upload_Data&table_name={}",
             uploaded_file.table_name()
         ))),
         Err(err) => Err(BadRequest(Layout::new("Uploader").render(

@@ -1,0 +1,12 @@
+Package: postgresml-${PGVERSION}
+Version: ${PACKAGE_VERSION}
+Section: database
+Priority: optional
+Architecture: all
+Depends: postgresml-python (>= 2.7.4), postgresql-pgml-${PGVERSION} (>= ${PACKAGE_VERSION})
+Maintainer: PostgresML <team@postgresml.org>
+Homepage: https://postgresml.org
+Description: PostgresML - Generative AI and Simple ML inside PostgreSQL
+ PostgresML is an AI application database.
+ Download open source models from Huggingface, or train your own, to create and index LLM embeddings,
+ generate text, or make online predictions using only SQL.

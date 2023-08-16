@@ -4,6 +4,7 @@
 /// that are very effective on real-world datasets.
 ///
 /// It uses its own dense matrix.
+use anyhow::{anyhow, Result};
 use xgboost::parameters::tree::*;
 use xgboost::parameters::*;
 use xgboost::{Booster, DMatrix};
@@ -136,11 +137,14 @@ fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
     params.build().unwrap()
 }
 
-pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
     fit(dataset, hyperparams, learning::Objective::RegLinear)
 }
 
-pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+pub fn fit_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Result<Box<dyn Bindings>> {
     fit(
         dataset,
         hyperparams,
@@ -152,7 +156,7 @@ fn fit(
     dataset: &Dataset,
     hyperparams: &Hyperparams,
     objective: learning::Objective,
-) -> Box<dyn Bindings> {
+) -> Result<Box<dyn Bindings>> {
     // split the train/test data into DMatrix
     let mut dtrain = DMatrix::from_dense(&dataset.x_train, dataset.num_train_rows).unwrap();
     let mut dtest = DMatrix::from_dense(&dataset.x_test, dataset.num_test_rows).unwrap();
@@ -216,7 +220,7 @@ fn fit(
     // train model, and print evaluation data
     let booster = Booster::train(&params).unwrap();
 
-    Box::new(Estimator { estimator: booster })
+    Ok(Box::new(Estimator { estimator: booster }))
 }
 
 pub struct Estimator {
@@ -236,10 +240,15 @@ impl std::fmt::Debug for Estimator {
 }
 
 impl Bindings for Estimator {
-    fn predict(&self, features: &[f32], num_features: usize, num_classes: usize) -> Vec<f32> {
-        let x = DMatrix::from_dense(features, features.len() / num_features).unwrap();
-        let y = self.estimator.predict(&x).unwrap();
-        match num_classes {
+    fn predict(
+        &self,
+        features: &[f32],
+        num_features: usize,
+        num_classes: usize,
+    ) -> Result<Vec<f32>> {
+        let x = DMatrix::from_dense(features, features.len() / num_features)?;
+        let y = self.estimator.predict(&x)?;
+        Ok(match num_classes {
             0 => y,
             _ => y
                 .chunks(num_classes)
@@ -252,26 +261,26 @@ impl Bindings for Estimator {
                         .unwrap() as f32
                 })
                 .collect::<Vec<f32>>(),
-        }
+        })
     }
 
-    fn predict_proba(&self, features: &[f32], num_features: usize) -> Vec<f32> {
-        let x = DMatrix::from_dense(features, features.len() / num_features).unwrap();
-        self.estimator.predict(&x).unwrap()
+    fn predict_proba(&self, features: &[f32], num_features: usize) -> Result<Vec<f32>> {
+        let x = DMatrix::from_dense(features, features.len() / num_features)?;
+        Ok(self.estimator.predict(&x)?)
     }
 
     /// Serialize self to bytes
-    fn to_bytes(&self) -> Vec<u8> {
+    fn to_bytes(&self) -> Result<Vec<u8>> {
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
-        self.estimator.save(std::path::Path::new(&path)).unwrap();
-        let bytes = std::fs::read(&path).unwrap();
-        std::fs::remove_file(&path).unwrap();
-        bytes
+        self.estimator.save(std::path::Path::new(&path))?;
+        let bytes = std::fs::read(&path)?;
+        std::fs::remove_file(&path)?;
+        Ok(bytes)
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
@@ -281,7 +290,7 @@ impl Bindings for Estimator {
             estimator = Booster::load_buffer(&bytes[16..]);
         }
 
-        let mut estimator = estimator.unwrap();
+        let mut estimator = estimator?;
 
         // Get concurrency setting
         let concurrency: i64 = Spi::get_one(
@@ -290,14 +299,13 @@ impl Bindings for Estimator {
                 current_setting('pgml.predict_concurrency', true),
                 '2'
             )::bigint",
-        )
-        .unwrap()
+        )?
         .unwrap();
 
         estimator
             .set_param("nthread", &concurrency.to_string())
-            .expect("could not set nthread XGBoost parameter");
+            .map_err(|e| anyhow!("could not set nthread XGBoost parameter: {e}"))?;
 
-        Box::new(Estimator { estimator })
+        Ok(Box::new(Estimator { estimator }))
     }
 }

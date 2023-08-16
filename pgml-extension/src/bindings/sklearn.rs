@@ -10,28 +10,20 @@ use pgrx::*;
 /// defined in `src/bindings/sklearn.py`.
 use std::collections::HashMap;
 
+use anyhow::Result;
 use once_cell::sync::Lazy;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
 use crate::bindings::Bindings;
 
-use crate::orm::*;
+use crate::{bindings::TracebackError, create_pymodule, orm::*};
 
-static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
-    Python::with_gil(|py| -> Py<PyModule> {
-        let src = include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/src/bindings/sklearn.py"
-        ));
-
-        PyModule::from_code(py, src, "", "").unwrap().into()
-    })
-});
+create_pymodule!("/src/bindings/sklearn.py");
 
 macro_rules! wrap_fit {
     ($fn_name:tt, $task:literal) => {
-        pub fn $fn_name(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+        pub fn $fn_name(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
             fit(dataset, hyperparams, $task)
         }
     };
@@ -139,56 +131,49 @@ fn fit(
     dataset: &Dataset,
     hyperparams: &Hyperparams,
     algorithm_task: &'static str,
-) -> Box<dyn Bindings> {
+) -> Result<Box<dyn Bindings>> {
     let hyperparams = serde_json::to_string(hyperparams).unwrap();
 
     let (estimator, predict, predict_proba) =
-        Python::with_gil(|py| -> (Py<PyAny>, Py<PyAny>, Py<PyAny>) {
-            let estimator: Py<PyAny> = PY_MODULE.getattr(py, "estimator").unwrap();
+        Python::with_gil(|py| -> Result<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
+            let module = get_module!(PY_MODULE);
 
-            let train: Py<PyAny> = estimator
-                .call1(
+            let estimator: Py<PyAny> = module.getattr(py, "estimator")?;
+
+            let train: Py<PyAny> = estimator.call1(
+                py,
+                PyTuple::new(
                     py,
-                    PyTuple::new(
-                        py,
-                        &[
-                            String::from(algorithm_task).into_py(py),
-                            dataset.num_features.into_py(py),
-                            dataset.num_labels.into_py(py),
-                            hyperparams.into_py(py),
-                        ],
-                    ),
-                )
-                .unwrap();
+                    &[
+                        String::from(algorithm_task).into_py(py),
+                        dataset.num_features.into_py(py),
+                        dataset.num_labels.into_py(py),
+                        hyperparams.into_py(py),
+                    ],
+                ),
+            )?;
 
-            let estimator: Py<PyAny> = train
-                .call1(py, PyTuple::new(py, [&dataset.x_train, &dataset.y_train]))
-                .unwrap();
+            let estimator: Py<PyAny> =
+                train.call1(py, PyTuple::new(py, [&dataset.x_train, &dataset.y_train]))?;
 
-            let predict: Py<PyAny> = PY_MODULE
-                .getattr(py, "predictor")
-                .unwrap()
-                .call1(py, PyTuple::new(py, [&estimator]))
-                .unwrap()
-                .extract(py)
-                .unwrap();
+            let predict: Py<PyAny> = module
+                .getattr(py, "predictor")?
+                .call1(py, PyTuple::new(py, [&estimator]))?
+                .extract(py)?;
 
-            let predict_proba: Py<PyAny> = PY_MODULE
-                .getattr(py, "predictor_proba")
-                .unwrap()
-                .call1(py, PyTuple::new(py, [&estimator]))
-                .unwrap()
-                .extract(py)
-                .unwrap();
+            let predict_proba: Py<PyAny> = module
+                .getattr(py, "predictor_proba")?
+                .call1(py, PyTuple::new(py, [&estimator]))?
+                .extract(py)?;
 
-            (estimator, predict, predict_proba)
-        });
+            Ok((estimator, predict, predict_proba))
+        })?;
 
-    Box::new(Estimator {
+    Ok(Box::new(Estimator {
         estimator,
         predict,
         predict_proba,
-    })
+    }))
 }
 
 pub struct Estimator {
@@ -211,139 +196,125 @@ impl std::fmt::Debug for Estimator {
 
 impl Bindings for Estimator {
     /// Predict a novel datapoint.
-    fn predict(&self, features: &[f32], _num_features: usize, _num_classes: usize) -> Vec<f32> {
-        Python::with_gil(|py| -> Vec<f32> {
-            self.predict
-                .call1(py, PyTuple::new(py, [features]))
-                .unwrap()
-                .extract(py)
-                .unwrap()
+    fn predict(
+        &self,
+        features: &[f32],
+        _num_features: usize,
+        _num_classes: usize,
+    ) -> Result<Vec<f32>> {
+        Python::with_gil(|py| {
+            Ok(self
+                .predict
+                .call1(py, PyTuple::new(py, [features]))?
+                .extract(py)?)
         })
     }
 
-    fn predict_proba(&self, features: &[f32], _num_features: usize) -> Vec<f32> {
-        Python::with_gil(|py| -> Vec<f32> {
-            self.predict_proba
-                .call1(py, PyTuple::new(py, [features]))
-                .unwrap()
-                .extract(py)
-                .unwrap()
+    fn predict_proba(&self, features: &[f32], _num_features: usize) -> Result<Vec<f32>> {
+        Python::with_gil(|py| {
+            Ok(self
+                .predict_proba
+                .call1(py, PyTuple::new(py, [features]))?
+                .extract(py)?)
         })
     }
 
     /// Serialize self to bytes
-    fn to_bytes(&self) -> Vec<u8> {
-        Python::with_gil(|py| -> Vec<u8> {
-            let save = PY_MODULE.getattr(py, "save").unwrap();
-            save.call1(py, PyTuple::new(py, [&self.estimator]))
-                .unwrap()
-                .extract(py)
-                .unwrap()
+    fn to_bytes(&self) -> Result<Vec<u8>> {
+        Python::with_gil(|py| {
+            let save = get_module!(PY_MODULE).getattr(py, "save")?;
+            Ok(save
+                .call1(py, PyTuple::new(py, [&self.estimator]))?
+                .extract(py)?)
         })
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
-        Python::with_gil(|py| -> Box<dyn Bindings> {
-            let load = PY_MODULE.getattr(py, "load").unwrap();
-            let estimator: Py<PyAny> = load
-                .call1(py, PyTuple::new(py, [bytes]))
-                .unwrap()
-                .extract(py)
-                .unwrap();
+        Python::with_gil(|py| -> Result<Box<dyn Bindings>> {
+            let module = get_module!(PY_MODULE);
 
-            let predict: Py<PyAny> = PY_MODULE
-                .getattr(py, "predictor")
-                .unwrap()
-                .call1(py, PyTuple::new(py, [&estimator]))
-                .unwrap()
-                .extract(py)
-                .unwrap();
+            let load = module.getattr(py, "load")?;
+            let estimator: Py<PyAny> = load.call1(py, PyTuple::new(py, [bytes]))?.extract(py)?;
 
-            let predict_proba: Py<PyAny> = PY_MODULE
-                .getattr(py, "predictor_proba")
-                .unwrap()
-                .call1(py, PyTuple::new(py, [&estimator]))
-                .unwrap()
-                .extract(py)
-                .unwrap();
+            let predict: Py<PyAny> = module
+                .getattr(py, "predictor")?
+                .call1(py, PyTuple::new(py, [&estimator]))?
+                .extract(py)?;
 
-            Box::new(Estimator {
+            let predict_proba: Py<PyAny> = module
+                .getattr(py, "predictor_proba")?
+                .call1(py, PyTuple::new(py, [&estimator]))?
+                .extract(py)?;
+
+            Ok(Box::new(Estimator {
                 estimator,
                 predict,
                 predict_proba,
-            })
+            }))
         })
     }
 }
 
-fn sklearn_metric(name: &str, ground_truth: &[f32], y_hat: &[f32]) -> f32 {
-    Python::with_gil(|py| -> f32 {
-        let calculate_metric = PY_MODULE.getattr(py, "calculate_metric").unwrap();
-        let wrapper: Py<PyAny> = calculate_metric
-            .call1(py, PyTuple::new(py, [name]))
-            .unwrap()
-            .extract(py)
+fn sklearn_metric(name: &str, ground_truth: &[f32], y_hat: &[f32]) -> Result<f32> {
+    Python::with_gil(|py| {
+        let calculate_metric = get_module!(PY_MODULE)
+            .getattr(py, "calculate_metric")
             .unwrap();
+        let wrapper: Py<PyAny> = calculate_metric
+            .call1(py, PyTuple::new(py, [name]))?
+            .extract(py)?;
 
         let score: f32 = wrapper
-            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))
-            .unwrap()
-            .extract(py)
-            .unwrap();
+            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))?
+            .extract(py)?;
 
-        score
+        Ok(score)
     })
 }
 
-pub fn f1(ground_truth: &[f32], y_hat: &[f32]) -> f32 {
+pub fn f1(ground_truth: &[f32], y_hat: &[f32]) -> Result<f32> {
     sklearn_metric("f1", ground_truth, y_hat)
 }
 
-pub fn r2(ground_truth: &[f32], y_hat: &[f32]) -> f32 {
+pub fn r2(ground_truth: &[f32], y_hat: &[f32]) -> Result<f32> {
     sklearn_metric("r2", ground_truth, y_hat)
 }
 
-pub fn precision(ground_truth: &[f32], y_hat: &[f32]) -> f32 {
+pub fn precision(ground_truth: &[f32], y_hat: &[f32]) -> Result<f32> {
     sklearn_metric("precision", ground_truth, y_hat)
 }
 
-pub fn recall(ground_truth: &[f32], y_hat: &[f32]) -> f32 {
+pub fn recall(ground_truth: &[f32], y_hat: &[f32]) -> Result<f32> {
     sklearn_metric("recall", ground_truth, y_hat)
 }
 
-pub fn confusion_matrix(ground_truth: &[f32], y_hat: &[f32]) -> Vec<Vec<f32>> {
-    Python::with_gil(|py| -> Vec<Vec<f32>> {
-        let calculate_metric = PY_MODULE.getattr(py, "calculate_metric").unwrap();
+pub fn confusion_matrix(ground_truth: &[f32], y_hat: &[f32]) -> Result<Vec<Vec<f32>>> {
+    Python::with_gil(|py| {
+        let calculate_metric = get_module!(PY_MODULE).getattr(py, "calculate_metric")?;
         let wrapper: Py<PyAny> = calculate_metric
-            .call1(py, PyTuple::new(py, ["confusion_matrix"]))
-            .unwrap()
-            .extract(py)
-            .unwrap();
+            .call1(py, PyTuple::new(py, ["confusion_matrix"]))?
+            .extract(py)?;
 
         let matrix: Vec<Vec<f32>> = wrapper
-            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))
-            .unwrap()
-            .extract(py)
-            .unwrap();
+            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))?
+            .extract(py)?;
 
-        matrix
+        Ok(matrix)
     })
 }
 
-pub fn regression_metrics(ground_truth: &[f32], y_hat: &[f32]) -> HashMap<String, f32> {
-    Python::with_gil(|py| -> HashMap<String, f32> {
-        let calculate_metric = PY_MODULE.getattr(py, "regression_metrics").unwrap();
+pub fn regression_metrics(ground_truth: &[f32], y_hat: &[f32]) -> Result<HashMap<String, f32>> {
+    Python::with_gil(|py| {
+        let calculate_metric = get_module!(PY_MODULE).getattr(py, "regression_metrics")?;
         let scores: HashMap<String, f32> = calculate_metric
-            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))
-            .unwrap()
-            .extract(py)
-            .unwrap();
+            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))?
+            .extract(py)?;
 
-        scores
+        Ok(scores)
     })
 }
 
@@ -351,47 +322,43 @@ pub fn classification_metrics(
     ground_truth: &[f32],
     y_hat: &[f32],
     num_classes: usize,
-) -> HashMap<String, f32> {
-    let mut scores = Python::with_gil(|py| -> HashMap<String, f32> {
-        let calculate_metric = PY_MODULE.getattr(py, "classification_metrics").unwrap();
+) -> Result<HashMap<String, f32>> {
+    let mut scores = Python::with_gil(|py| -> Result<HashMap<String, f32>> {
+        let calculate_metric = get_module!(PY_MODULE).getattr(py, "classification_metrics")?;
         let scores: HashMap<String, f32> = calculate_metric
-            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))
-            .unwrap()
-            .extract(py)
-            .unwrap();
+            .call1(py, PyTuple::new(py, [ground_truth, y_hat]))?
+            .extract(py)?;
 
-        scores
-    });
+        Ok(scores)
+    })?;
 
     if num_classes == 2 {
-        let roc_auc = sklearn_metric("roc_auc", ground_truth, y_hat);
+        let roc_auc = sklearn_metric("roc_auc", ground_truth, y_hat)?;
         scores.insert("roc_auc".to_string(), roc_auc);
     }
 
-    scores
+    Ok(scores)
 }
 
 pub fn cluster_metrics(
     num_features: usize,
     inputs: &[f32],
     labels: &[f32],
-) -> HashMap<String, f32> {
-    Python::with_gil(|py| -> HashMap<String, f32> {
-        let calculate_metric = PY_MODULE.getattr(py, "cluster_metrics").unwrap();
+) -> Result<HashMap<String, f32>> {
+    Python::with_gil(|py| {
+        let calculate_metric = get_module!(PY_MODULE).getattr(py, "cluster_metrics")?;
 
         let scores: HashMap<String, f32> = calculate_metric
-            .call1(py, (num_features, PyTuple::new(py, [inputs, labels])))
-            .unwrap()
-            .extract(py)
-            .unwrap();
+            .call1(py, (num_features, PyTuple::new(py, [inputs, labels])))?
+            .extract(py)?;
 
-        scores
+        Ok(scores)
     })
 }
 
-pub fn package_version(name: &str) -> String {
-    Python::with_gil(|py| -> String {
-        let package = py.import(name).unwrap();
-        package.getattr("__version__").unwrap().extract().unwrap()
+pub fn package_version(name: &str) -> Result<String> {
+    Python::with_gil(|py| {
+        let package = py.import(name)?;
+        Ok(package.getattr("__version__")?.extract()?)
     })
 }

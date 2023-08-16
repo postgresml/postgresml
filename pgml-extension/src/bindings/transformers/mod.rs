@@ -8,28 +8,23 @@ use once_cell::sync::Lazy;
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
+use serde_json::Value;
 
+use crate::create_pymodule;
 use crate::orm::{Task, TextDataset};
+
+use super::TracebackError;
 
 pub mod whitelist;
 
-static PY_MODULE: Lazy<Py<PyModule>> = Lazy::new(|| {
-    Python::with_gil(|py| -> Py<PyModule> {
-        let src = include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/src/bindings/transformers/transformers.py"
-        ));
-
-        PyModule::from_code(py, src, "", "").unwrap().into()
-    })
-});
+create_pymodule!("/src/bindings/transformers/transformers.py");
 
 pub fn transform(
     task: &serde_json::Value,
     args: &serde_json::Value,
     inputs: Vec<&str>,
 ) -> Result<serde_json::Value> {
-    crate::bindings::venv::activate();
+    crate::bindings::venv::activate()?;
 
     whitelist::verify_task(task)?;
 
@@ -38,20 +33,36 @@ pub fn transform(
     let inputs = serde_json::to_string(&inputs)?;
 
     let results = Python::with_gil(|py| -> Result<String> {
-        let transform: Py<PyAny> = PY_MODULE.getattr(py, "transform")?;
+        let transform: Py<PyAny> = get_module!(PY_MODULE)
+            .getattr(py, "transform")
+            .format_traceback(py)?;
 
-        let output = transform.call1(
-            py,
-            PyTuple::new(
+        let output = transform
+            .call1(
                 py,
-                &[task.into_py(py), args.into_py(py), inputs.into_py(py)],
-            ),
-        )?;
+                PyTuple::new(
+                    py,
+                    &[task.into_py(py), args.into_py(py), inputs.into_py(py)],
+                ),
+            )
+            .format_traceback(py)?;
 
-        Ok(output.extract(py)?)
+        Ok(output.extract(py).format_traceback(py)?)
     })?;
 
     Ok(serde_json::from_str(&results)?)
+}
+
+pub fn get_model_from(task: &Value) -> Result<String> {
+    Ok(Python::with_gil(|py| -> Result<String> {
+        let get_model_from = get_module!(PY_MODULE)
+            .getattr(py, "get_model_from")
+            .format_traceback(py)?;
+        let model = get_model_from
+            .call1(py, PyTuple::new(py, &[task.to_string().into_py(py)]))
+            .format_traceback(py)?;
+        Ok(model.extract(py).format_traceback(py)?)
+    })?)
 }
 
 pub fn embed(
@@ -59,24 +70,28 @@ pub fn embed(
     inputs: Vec<&str>,
     kwargs: &serde_json::Value,
 ) -> Result<Vec<Vec<f32>>> {
-    crate::bindings::venv::activate();
+    crate::bindings::venv::activate()?;
 
     let kwargs = serde_json::to_string(kwargs)?;
     Python::with_gil(|py| -> Result<Vec<Vec<f32>>> {
-        let embed: Py<PyAny> = PY_MODULE.getattr(py, "embed")?;
-        let output = embed.call1(
-            py,
-            PyTuple::new(
+        let embed: Py<PyAny> = get_module!(PY_MODULE)
+            .getattr(py, "embed")
+            .format_traceback(py)?;
+        let output = embed
+            .call1(
                 py,
-                &[
-                    transformer.to_string().into_py(py),
-                    inputs.into_py(py),
-                    kwargs.into_py(py),
-                ],
-            ),
-        )?;
+                PyTuple::new(
+                    py,
+                    &[
+                        transformer.to_string().into_py(py),
+                        inputs.into_py(py),
+                        kwargs.into_py(py),
+                    ],
+                ),
+            )
+            .format_traceback(py)?;
 
-        Ok(output.extract(py)?)
+        Ok(output.extract(py).format_traceback(py)?)
     })
 }
 
@@ -86,36 +101,42 @@ pub fn tune(
     hyperparams: &JsonB,
     path: &Path,
 ) -> Result<HashMap<String, f64>> {
-    crate::bindings::venv::activate();
+    crate::bindings::venv::activate()?;
 
     let task = task.to_string();
     let hyperparams = serde_json::to_string(&hyperparams.0)?;
 
     Python::with_gil(|py| -> Result<HashMap<String, f64>> {
-        let tune = PY_MODULE.getattr(py, "tune")?;
+        let tune = get_module!(PY_MODULE)
+            .getattr(py, "tune")
+            .format_traceback(py)?;
         let path = path.to_string_lossy();
-        let output = tune.call1(
-            py,
-            (
-                &task,
-                &hyperparams,
-                path.as_ref(),
-                dataset.x_train,
-                dataset.x_test,
-                dataset.y_train,
-                dataset.y_test,
-            ),
-        )?;
+        let output = tune
+            .call1(
+                py,
+                (
+                    &task,
+                    &hyperparams,
+                    path.as_ref(),
+                    dataset.x_train,
+                    dataset.x_test,
+                    dataset.y_train,
+                    dataset.y_test,
+                ),
+            )
+            .format_traceback(py)?;
 
-        Ok(output.extract(py)?)
+        Ok(output.extract(py).format_traceback(py)?)
     })
 }
 
 pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Result<Vec<String>> {
-    crate::bindings::venv::activate();
+    crate::bindings::venv::activate()?;
 
     Python::with_gil(|py| -> Result<Vec<String>> {
-        let generate = PY_MODULE.getattr(py, "generate")?;
+        let generate = get_module!(PY_MODULE)
+            .getattr(py, "generate")
+            .format_traceback(py)?;
         let config = serde_json::to_string(&config.0)?;
         // cloning inputs in case we have to re-call on error is rather unfortunate here
         // similarly, using a json string to pass kwargs is also unfortunate extra parsing
@@ -140,19 +161,22 @@ pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Result<Vec<S
                     )?
                     .ok_or(anyhow!("task query returned None"))?;
 
-                    let load = PY_MODULE.getattr(py, "load_model")?;
+                    let load = get_module!(PY_MODULE).getattr(py, "load_model")?;
                     let task = Task::from_str(&task)
                         .map_err(|_| anyhow!("could not make a Task from {task}"))?;
-                    load.call1(py, (model_id, task.to_string(), dir))?;
+                    load.call1(py, (model_id, task.to_string(), dir))
+                        .format_traceback(py)?;
 
-                    generate.call1(py, (model_id, inputs, config))?
+                    generate
+                        .call1(py, (model_id, inputs, config))
+                        .format_traceback(py)?
                 } else {
                     return Err(e.into());
                 }
             }
             Ok(o) => o,
         };
-        Ok(result.extract(py)?)
+        Ok(result.extract(py).format_traceback(py)?)
     })
 }
 
@@ -195,12 +219,14 @@ pub fn load_dataset(
     limit: Option<usize>,
     kwargs: &serde_json::Value,
 ) -> Result<usize> {
-    crate::bindings::venv::activate();
+    crate::bindings::venv::activate()?;
 
     let kwargs = serde_json::to_string(kwargs)?;
 
     let dataset = Python::with_gil(|py| -> Result<String> {
-        let load_dataset: Py<PyAny> = PY_MODULE.getattr(py, "load_dataset")?;
+        let load_dataset: Py<PyAny> = get_module!(PY_MODULE)
+            .getattr(py, "load_dataset")
+            .format_traceback(py)?;
         Ok(load_dataset
             .call1(
                 py,
@@ -213,8 +239,10 @@ pub fn load_dataset(
                         kwargs.into_py(py),
                     ],
                 ),
-            )?
-            .extract(py)?)
+            )
+            .format_traceback(py)?
+            .extract(py)
+            .format_traceback(py)?)
     })?;
 
     let table_name = format!("pgml.\"{}\"", name);
@@ -348,13 +376,17 @@ pub fn load_dataset(
 }
 
 pub fn clear_gpu_cache(memory_usage: Option<f32>) -> Result<bool> {
-    crate::bindings::venv::activate();
+    crate::bindings::venv::activate().unwrap();
 
     Python::with_gil(|py| -> Result<bool> {
-        let clear_gpu_cache: Py<PyAny> = PY_MODULE.getattr(py, "clear_gpu_cache")?;
+        let clear_gpu_cache: Py<PyAny> = get_module!(PY_MODULE)
+            .getattr(py, "clear_gpu_cache")
+            .format_traceback(py)?;
         let success = clear_gpu_cache
-            .call1(py, PyTuple::new(py, &[memory_usage.into_py(py)]))?
-            .extract(py)?;
+            .call1(py, PyTuple::new(py, &[memory_usage.into_py(py)]))
+            .format_traceback(py)?
+            .extract(py)
+            .format_traceback(py)?;
         Ok(success)
     })
 }

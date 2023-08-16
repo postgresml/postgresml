@@ -278,6 +278,7 @@ postgresql-server-dev-${POSTGRES_VERSION}
 python3
 python3-pip
 libpython3
+mold
 ```
 
 ##### Rust

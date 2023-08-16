@@ -18,8 +18,10 @@ mkdir -p "$deb_dir"
 
 cp -R ${SCRIPT_DIR}/* "$deb_dir"
 rm "$deb_dir/build.sh"
+rm "$deb_dir/release.sh"
 
-( cd pgml-dashboard && \
+
+( cd ${SCRIPT_DIR}/../../pgml-dashboard && \
   cargo build --release && \
   cp target/release/pgml-dashboard "$deb_dir/usr/bin/pgml-dashboard" && \
   cp -R content "$deb_dir/usr/share/pgml-dashboard/dashboard-content" && \

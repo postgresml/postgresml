@@ -2,6 +2,8 @@ use crate::bindings::Bindings;
 use crate::orm::dataset::Dataset;
 use crate::orm::task::Task;
 use crate::orm::Hyperparams;
+
+use anyhow::Result;
 use lightgbm;
 use pgrx::*;
 use serde_json::json;
@@ -22,15 +24,18 @@ impl std::fmt::Debug for Estimator {
     }
 }
 
-pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
     fit(dataset, hyperparams, Task::regression)
 }
 
-pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Box<dyn Bindings> {
+pub fn fit_classification(
+    dataset: &Dataset,
+    hyperparams: &Hyperparams,
+) -> Result<Box<dyn Bindings>> {
     fit(dataset, hyperparams, Task::classification)
 }
 
-fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bindings> {
+fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Result<Box<dyn Bindings>> {
     let mut hyperparams = hyperparams.clone();
     match task {
         Task::regression => {
@@ -65,14 +70,19 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Box<dyn Bind
 
     let estimator = lightgbm::Booster::train(data, &json! {hyperparams}).unwrap();
 
-    Box::new(Estimator { estimator })
+    Ok(Box::new(Estimator { estimator }))
 }
 
 impl Bindings for Estimator {
     /// Predict a set of datapoints.
-    fn predict(&self, features: &[f32], num_features: usize, num_classes: usize) -> Vec<f32> {
-        let results = self.predict_proba(features, num_features);
-        match num_classes {
+    fn predict(
+        &self,
+        features: &[f32],
+        num_features: usize,
+        num_classes: usize,
+    ) -> Result<Vec<f32>> {
+        let results = self.predict_proba(features, num_features)?;
+        Ok(match num_classes {
             // TODO make lightgbm predict both classes like scikit and xgboost
             0 => results,
             2 => results.iter().map(|i| i.round()).collect(),
@@ -87,47 +97,46 @@ impl Bindings for Estimator {
                         .unwrap() as f32
                 })
                 .collect(),
-        }
+        })
     }
 
     // Predict the raw probability of classes for a classifier.
-    fn predict_proba(&self, features: &[f32], num_features: usize) -> Vec<f32> {
-        self.estimator
-            .predict(features, num_features as i32)
-            .unwrap()
+    fn predict_proba(&self, features: &[f32], num_features: usize) -> Result<Vec<f32>> {
+        Ok(self
+            .estimator
+            .predict(features, num_features as i32)?
             .into_iter()
             .map(|i| i as f32)
-            .collect()
+            .collect())
     }
 
     /// Serialize self to bytes
-    fn to_bytes(&self) -> Vec<u8> {
+    fn to_bytes(&self) -> Result<Vec<u8>> {
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
-        self.estimator.save_file(&path).unwrap();
-        let bytes = std::fs::read(&path).unwrap();
-        std::fs::remove_file(&path).unwrap();
+        self.estimator.save_file(&path)?;
+        let bytes = std::fs::read(&path)?;
+        std::fs::remove_file(&path)?;
 
-        bytes
+        Ok(bytes)
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Box<dyn Bindings>
+    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
         let r: u64 = rand::random();
         let path = format!("/tmp/pgml_{}.bin", r);
-        std::fs::write(&path, bytes).unwrap();
+        std::fs::write(&path, bytes)?;
         let mut estimator = lightgbm::Booster::from_file(&path);
         if estimator.is_err() {
             // backward compatibility w/ 2.0.0
-            std::fs::write(&path, &bytes[16..]).unwrap();
+            std::fs::write(&path, &bytes[16..])?;
             estimator = lightgbm::Booster::from_file(&path);
         }
-        std::fs::remove_file(&path).unwrap();
-        Box::new(Estimator {
-            estimator: estimator.unwrap(),
-        })
+        std::fs::remove_file(&path)?;
+        let estimator = estimator?;
+        Ok(Box::new(Estimator { estimator }))
     }
 }

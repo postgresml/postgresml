@@ -1,23 +1,20 @@
-name: package extension (deb)
+name: Ubuntu packages and Docker image
 
 on:
   workflow_dispatch:
     inputs:
       packageVersion:
         default: "2.7.4"
-      pythonVersion:
-        default: "3.10"
-
 jobs:
-  extension:
+  #
+  # PostgresML extension.
+  #
+  postgresml-pgml:
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
-        os: ["buildjet-16vcpu-ubuntu-2204-arm", "buildjet-16vcpu-ubuntu-2204-arm"]
+        os: ["buildjet-4vcpu-ubuntu-2204", "buildjet-8vcpu-ubuntu-2204-arm"]
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: pgml-extension
     steps:
     - uses: actions/checkout@v3
     - uses: actions-rs/toolchain@v1
@@ -28,12 +25,25 @@ jobs:
       with:
         working-directory: pgml-extension
         command: version
+    - name: Cache artifacts
+      uses: buildjet/cache@v3
+      with:
+        path: pgml-extension/target
+        key: buildjet-pgml-extension-artifacts-1-${{ runner.arch }} # Change this when dependencies change
+    - name: Cache pgrx
+      uses: buildjet/cache@v3
+      with:
+        path: ~/.cargo
+        key: buildjet-pgml-extension-pgrx-2-${{ runner.arch }} # Change this when dependencies change
     - name: Install dependencies
       env:
         DEBIAN_FRONTEND: noninteractive
         TZ: Etc/UTC
       run: |
         git submodule update --init --recursive
+        git fetch --tags
+        git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
+        git checkout v${{ inputs.packageVersion }}
 
         # PostgreSQL apt
         curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
@@ -131,68 +141,36 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
-        for pg in {11..15}; do
-          export PACKAGE_VERSION=${{ inputs.packageVersion }}
-          export PGVERSION=${pg}
+        # Always build using latest scripts
+        git checkout master
 
-          if [[ $(arch) == "x86_64" ]]; then
-            export ARCH=amd64
-          else
-            export ARCH=arm64
-          fi
+        bash packages/postgresql-pgml/release.sh ${{ inputs.packageVersion }}
 
-          mkdir -p target/release/pgml-pg${pg}/DEBIAN
-          (cat control | envsubst) > target/release/pgml-pg${pg}/DEBIAN/control
-          dpkg-deb --root-owner-group --build target/release/pgml-pg${pg} postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu22.04-${ARCH}.deb
-
-          deb-s3 upload \
-            --bucket apt.postgresml.org \
-            postgresql-pgml-${pg}_${PACKAGE_VERSION}-ubuntu22.04-${ARCH}.deb \
-            --codename $(lsb_release -cs)
-        done
-  package:
-    needs: extension
+  #
+  # PostgresML meta package which installs
+  # all the necessary dependencies.
+  #
+  postgresml:
+    needs: postgresml-pgml
     strategy:
-      max-parallel: 1
-      fail-fast: false # Let the other job finish, or they can lock each other out
+      fail-fast: false # Let the other job finish
       matrix:
-        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm"]
+        os: ["ubuntu-22.04"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
-    - name: Install dependencies
-      env:
-        DEBIAN_FRONTEND: noninteractive
-        TZ: Etc/UTC
-      run: |
-        curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
-        sudo gem install deb-s3-0.11.4.gem
-        dpkg-deb --version
-        sudo apt install -y python3-pip python3 python3-virtualenv
     - name: Build and release package
       env:
         AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
-        if [[ $(arch) == "x86_64" ]]; then
-          export ARCH=amd64
-        else
-          export ARCH=arm64
-        fi
+        bash packages/postgresml/release.sh ${{ inputs.packageVersion }}
 
-        for pg in {11..15}; do
-          bash packages/postgresml/build.sh ${pg} v${{ inputs.packageVersion }}-1 ${{ inputs.pythonVersion }}
-
-          deb-s3 upload \
-            --lock \
-            --bucket apt.postgresml.org \
-            postgresml-${pg}-${{ inputs.packageVersion }}-1-ubuntu22.04-${ARCH}.deb \
-            --codename $(lsb_release -cs)
-
-          rm -f postgresml-${pg}-${{ inputs.packageVersion }}-1-ubuntu22.04-${ARCH}.deb 
-        done
-  dashboard:
+  #
+  # PostgresML dashboard.
+  #
+  postgresml-dashboard:
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
@@ -203,42 +181,29 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-    - name: Install dependencies
-      env:
-        DEBIAN_FRONTEND: noninteractive
-        TZ: Etc/UTC
-      run: |
-        curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
-        sudo gem install deb-s3-0.11.4.gem
-        dpkg-deb --version
     - name: Build and release package
       env:
         AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
-        if [[ $(arch) == "x86_64" ]]; then
-          export ARCH=amd64
-        else
-          export ARCH=arm64
-        fi
+        bash packages/postgresml-dashboard/release.sh ${{ inputs.packageVersion }}
 
-        bash packages/postgresml-dashboard/build.sh ${{ inputs.packageVersion }}
-
-        deb-s3 upload \
-          --lock \
-          --bucket apt.postgresml.org \
-          postgresml-dashboard-${{ inputs.packageVersion }}-ubuntu22.04-${ARCH}.deb \
-          --codename $(lsb_release -cs)
+  #
+  # PostgresML Docker image.
+  #
   publish-extension-docker-image:
-    needs: package
+    needs:
+      - postgresml
+      - postgresml-dashboard
     strategy:
+      fail-fast: false # Let the other job finish
       matrix:
         os: ["buildjet-4vcpu-ubuntu-2204"]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: pgml-extension/docker/postgresml
+        working-directory: docker
     steps:
       - uses: actions/checkout@v2
       - name: Login to GitHub Container Registry
@@ -253,6 +218,5 @@ jobs:
           docker buildx create --use --name mybuilder
           docker buildx build  \
             --platform linux/amd64,linux/arm64 \
-            --tag ghcr.io/postgresml/postgresml:${{ inputs.version }} \
-            --build-arg POSTGRESML_VERSION=${{ inputs.postgresmlVersion }} \
+            --tag ghcr.io/postgresml/postgresml:${{ inputs.packageVersion }} \
             --push .

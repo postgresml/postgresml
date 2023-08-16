@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 jobs:
   tests:
-    runs-on: buildjet-16vcpu-ubuntu-2204
+    runs-on: buildjet-4vcpu-ubuntu-2204
     defaults:
       run:
         working-directory: pgml-extension
@@ -28,7 +28,7 @@ jobs:
               mold
           sudo pip3 install -r requirements.txt
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: buildjet/cache@v3
         with:
           path: |
             ~/.cargo
