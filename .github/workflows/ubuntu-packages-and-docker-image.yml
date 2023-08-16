@@ -42,6 +42,10 @@ jobs:
       run: |
         git submodule update --init --recursive
 
+        # Make sure we compile the tagged version
+        git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
+        git checkout tag v${{ inputs.packageVersion }}
+
         # PostgreSQL apt
         curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
         sudo sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
@@ -159,6 +163,10 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
+        # Make sure we compile the tagged version
+        git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
+        git checkout tag v${{ inputs.packageVersion }}
+
        bash packages/postgresml/release.sh ${{ inputs.packageVersion }}
 
   #
@@ -181,6 +189,10 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
+        # Make sure we compile the tagged version
+        git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
+        git checkout tag v${{ inputs.packageVersion }}
+
         bash packages/postgresml-dashboard/release.sh ${{ inputs.packageVersion }}
 
   #
