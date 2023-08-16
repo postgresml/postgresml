@@ -93,6 +93,7 @@ $bg-black: #0D0D0E;
 $hp-gradient: linear-gradient(48.19deg, #D940FF 0%, #9E02FE 24.43%, #00D1FF 100%);
 $hp-gradient-active: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(48.19deg, #FB40FF 0%, #BB02FE 24.43%, #00D1FF 100%);
 
+$gradient-text: linear-gradient(270deg, #26CBFF 0%, #808CFF 50%, #C92FFF 100%);
 $primary-gradient-main: linear-gradient(45deg, #D940FF 0%, #8F02FE 24.43%, #5162FF 52.60%, #00D1FF 100%);
 $gradient-main: linear-gradient(45deg, #FB40FF 0%, #BB02FE 25%, #00D1FF 100%);
 $gradient-light: linear-gradient(260.55deg, rgba(255, 255, 255, 0.56) 15.62%, rgba(255, 255, 255, 0.28) 67.01%);
@@ -116,8 +117,21 @@ $btn-transition: none;
 $btn-box-shadow: none;
 
 // Forms
-$input-padding-y: 20px;
-$input-padding-x: 16px;
+$input-padding-y: 16px;
+$input-padding-x: 20px;
+$input-border-width: 2px;
+$input-focus-border-color: #{$neon-shade-100};
+$input-color: #{$gray-200};
+$input-focus-color: #{$gray-200};
+$input-placeholder-color: #{$gray-400};
+$input-disabled-bg: #{$gray-700};
+$input-disabled-color: #{$gray-400};
+$input-bg: #{$gray-700};
+
+$input-group-addon-color: #{$gray-300};
+$input-group-addon-bg: #{$gray-700};
+$input-group-addon-border-color: #{$gray-700};
+
 $input-btn-focus-box-shadow: none;
 $form-label-font-weight: 500;
 $form-check-input-width: 1.4em;
@@ -143,6 +157,8 @@ $form-range-track-bg: #111213;
 $input-box-shadow: none;
 $form-switch-checked-color: #{$gray-100};
 $form-switch-focus-color: #{$gray-100};
+
+$input-color: #{$gray-400};
 
 // Badge
 $badge-font-weight: normal;

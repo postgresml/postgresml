@@ -36,29 +36,8 @@
     --form-switch-hover: #{$neon-tint-300};
     --form-switch-active: #{$neon-tint-100};
 
-    .form-control {
-        --bs-form-control-bg: #{$gray-700};
-        --bs-body-color: #{$gray-200};
-        --bs-border-color: #{$gray-700};
-
-        &:disabled {
-            --bs-form-control-disabled-bg: #{$gray-700};
-        }
-
-        &:focus {
-            border-color: var(--bs-form-control-bg);
-        }
-    }
-
     .form-label {
         color: #{$gray-100};
-    }
-
-    .input-group-text {
-        --bs-border-color: #{$gray-700};
-
-        background-color: #{$gray-700};
-        color: #{$gray-200};
     }
 
     --webapp-nav-bg: #{$gray-800};

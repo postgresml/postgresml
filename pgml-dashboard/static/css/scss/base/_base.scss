@@ -70,27 +70,13 @@ article {
     }
 }
 
-
-.form-control {
-    border-radius: var(--bs-border-radius-pill);
-}
-
-.text-black {
-    color: #{$gray-900} !important;
-}
-
-// Override white overrides.
-.text-white {
-    color: #{$gray-100} !important;
-}
-
 .bg-white {
     background-color: #{$bg-white} !important;
 }
 
 // Our flagship gradient.
 .party-time {
-    background: linear-gradient(270deg, #26CBFF 0%, #808CFF 50%, #C92FFF 100%);
+    background: $gradient-text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -108,12 +94,6 @@ article {
     @include media-breakpoint-up(lg) {
         min-height: 100vh !important;
     }
-}
-
-// Override text-bg-dark colors.
-.text-bg-dark {
-    color: rgba(219, 219, 220, 1);
-    background-color: rgba(38, 38, 38, 1) !important;
 }
 
 .list-group {
@@ -137,7 +117,7 @@ article {
 }
 
 .syntax-highlight {
-    background: linear-gradient(225deg, #3EDCFF 0%, #3E9AFF 100%);
+    background: $gradient-blue;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -152,4 +132,4 @@ article {
           -ms-user-select: none; /* Internet Explorer/Edge */
               user-select: none; /* Non-prefixed version, currently
                                     supported by Chrome, Edge, Opera and Firefox */
-  }
+}
