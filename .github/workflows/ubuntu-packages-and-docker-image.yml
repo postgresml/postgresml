@@ -41,8 +41,6 @@ jobs:
         TZ: Etc/UTC
       run: |
         git submodule update --init --recursive
-
-        # Make sure we compile the tagged version
         git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
         git checkout tag v${{ inputs.packageVersion }}
 
@@ -163,7 +161,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
-        # Make sure we compile the tagged version
+        git submodule update --init --recursive
         git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
         git checkout tag v${{ inputs.packageVersion }}
 
@@ -189,7 +187,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
-        # Make sure we compile the tagged version
+        git submodule update --init --recursive
         git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
         git checkout tag v${{ inputs.packageVersion }}
 
