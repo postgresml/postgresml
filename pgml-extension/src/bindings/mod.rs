@@ -79,9 +79,12 @@ pub trait TracebackError<T> {
 
 impl<T> TracebackError<T> for PyResult<T> {
     fn format_traceback(self, py: Python<'_>) -> Result<T> {
-        self.map_err(|e| {
-            let traceback = e.traceback(py).unwrap().format().unwrap();
-            anyhow!("{traceback} {e}")
+        self.map_err(|e| match e.traceback(py) {
+            Some(traceback) => match traceback.format() {
+                Ok(traceback) => anyhow!("{traceback} {e}"),
+                Err(format_e) => anyhow!("{e} {format_e}"),
+            },
+            None => anyhow!("{e}"),
         })
     }
 }
