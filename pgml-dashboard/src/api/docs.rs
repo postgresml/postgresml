@@ -80,6 +80,8 @@ async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk
         cluster,
         &path,
         vec![
+            NavLink::new("pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots: Part I")
+                .href("/blog/pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-I"),
             NavLink::new("Announcing support for AWS us-east-1 region")
                 .href("/blog/announcing-support-for-aws-us-east-1-region"),
             NavLink::new("LLM based pipelines with PostgresML and dbt (data build tool)")
