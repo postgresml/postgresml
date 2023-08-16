@@ -29,18 +29,21 @@ jobs:
       uses: buildjet/cache@v3
       with:
         path: pgml-extension/target
-        key: buildjet-pgml-extension-artifacts-1 # Change this when dependencies change
+        key: buildjet-pgml-extension-artifacts-1-${{ runner.arch }} # Change this when dependencies change
     - name: Cache pgrx
       uses: buildjet/cache@v3
       with:
         path: ~/.cargo
-        key: buildjet-pgml-extension-pgrx-2 # Change this when dependencies change
+        key: buildjet-pgml-extension-pgrx-2-${{ runner.arch }} # Change this when dependencies change
     - name: Install dependencies
       env:
         DEBIAN_FRONTEND: noninteractive
         TZ: Etc/UTC
       run: |
         git submodule update --init --recursive
+        git fetch --tags
+        git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
+        git checkout v${{ inputs.packageVersion }}
 
         # PostgreSQL apt
         curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
@@ -138,6 +141,9 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
+        # Always build using latest scripts
+        git checkout master
+
         bash packages/postgresql-pgml/release.sh ${{ inputs.packageVersion }}
 
   #
@@ -159,7 +165,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
-       bash packages/postgresml/release.sh ${{ inputs.packageVersion }}
+        bash packages/postgresml/release.sh ${{ inputs.packageVersion }}
 
   #
   # PostgresML dashboard.
