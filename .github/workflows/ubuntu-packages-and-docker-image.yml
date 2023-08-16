@@ -41,6 +41,7 @@ jobs:
         TZ: Etc/UTC
       run: |
         git submodule update --init --recursive
+        git fetch --tags
         git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
         git checkout tag v${{ inputs.packageVersion }}
 
@@ -162,6 +163,7 @@ jobs:
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
         git submodule update --init --recursive
+        git fetch --tags
         git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
         git checkout tag v${{ inputs.packageVersion }}
 
@@ -188,6 +190,7 @@ jobs:
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
         git submodule update --init --recursive
+        git fetch --tags
         git fetch --depth 1 origin tag v${{ inputs.packageVersion }}
         git checkout tag v${{ inputs.packageVersion }}
 
