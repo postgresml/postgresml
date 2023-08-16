@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from rich import print
 import asyncio
 from tqdm.auto import tqdm
-from statistics import mean
+from statistics import mean, median
 
 async def main():
     load_dotenv()
@@ -20,16 +20,17 @@ async def main():
     data = load_dataset("squad", split="train")
     data = data.to_pandas()
     data = data.drop_duplicates(subset=["context"])
-
+    model_id = await collection.register_model(model_name="intfloat/e5-large")
     run_times = []
     for query in data["context"][0:100]:
         start = time()
-        results = await collection.vector_search(query, top_k=5)
+        results = await collection.vector_search(query, top_k=5, model_id=model_id)
         _end = time()
         run_times.append(_end-start)
     #print("PGML Query times:")
     #print(run_times)
     print("PGML Average query time: %0.3f"%mean(run_times))
+    print("PGML Median query time: %0.3f"%median(run_times))
 
     #await db.archive_collection(collection_name)
 
