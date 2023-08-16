@@ -41,7 +41,7 @@ for pg in {11..15}; do
     --build "$release_dir" \
     $(package_name ${pg})
 
-  echo deb-s3 upload \
+  deb-s3 upload \
     --bucket apt.postgresml.org \
     $(package_name ${pg}) \
     --codename $(lsb_release -cs)
