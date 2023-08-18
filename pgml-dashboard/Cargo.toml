@@ -1,6 +1,6 @@
 [package]
 name = "pgml-dashboard"
-version = "2.7.4"
+version = "2.7.6"
 edition = "2021"
 authors = ["PostgresML <team@postgresml.org>"]
 license = "MIT"
