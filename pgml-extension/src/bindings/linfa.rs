@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 
 use super::Bindings;
 use crate::orm::*;
-use pgrx::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LinearRegression {
