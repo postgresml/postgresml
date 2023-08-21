@@ -939,7 +939,7 @@ impl Collection {
             FROM 
               %s p 
               INNER JOIN pgml.models m ON p.model_id = m.id 
-              INNER JOIN pgml.sdk_splitters s ON p.splitter_id = s.id 
+              INNER JOIN pgml.splitters s ON p.splitter_id = s.id 
             WHERE 
               p.active = TRUE
             "#,
@@ -1002,7 +1002,7 @@ impl Collection {
             FROM 
               %s p 
               INNER JOIN pgml.models m ON p.model_id = m.id 
-              INNER JOIN pgml.sdk_splitters s ON p.splitter_id = s.id 
+              INNER JOIN pgml.splitters s ON p.splitter_id = s.id 
             WHERE 
               p.active = TRUE
               AND p.name = $1

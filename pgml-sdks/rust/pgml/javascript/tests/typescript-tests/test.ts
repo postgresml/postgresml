@@ -16,7 +16,7 @@ if (!DATABASE_URL) {
 }
 const LOG_LEVEL = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : "ERROR";
 
-pgml.js_init_logger(DATABASE_URL, LOG_LEVEL);
+pgml.js_init_logger(LOG_LEVEL);
 
 const generate_dummy_documents = (count: number) => {
   let docs = [];
@@ -127,9 +127,10 @@ it("pipeline to dict", async () => {
   let model = pgml.newModel("text-embedding-ada-002", "openai");
   let splitter = pgml.newSplitter();
   let pipeline = pgml.newPipeline("test_j_p_ptd_0", model, splitter);
-  let collection = pgml.newCollection("test_j_c_ptd_1");
+  let collection = pgml.newCollection("test_j_c_ptd_2");
   await collection.add_pipeline(pipeline);
   let pipeline_dict = await pipeline.to_dict();
   console.log(JSON.stringify(pipeline_dict))
   expect(pipeline_dict["name"]).toBe("test_j_p_ptd_0");
+  await collection.archive();
 });

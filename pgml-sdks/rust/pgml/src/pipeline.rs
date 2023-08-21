@@ -257,7 +257,7 @@ impl Pipeline {
                 self.model = Some(model);
 
                 let splitter: models::Splitter =
-                    sqlx::query_as("SELECT * FROM pgml.sdk_splitters WHERE id = $1")
+                    sqlx::query_as("SELECT * FROM pgml.splitters WHERE id = $1")
                         .bind(p.splitter_id)
                         .fetch_one(&pool)
                         .await?;
