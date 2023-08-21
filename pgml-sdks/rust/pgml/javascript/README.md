@@ -62,7 +62,7 @@ Before you begin, make sure you have the following:
 
 ### Installation
 
-To install the JavaScript SDK, use pip:
+To install the JavaScript SDK, use npm:
 
 ```
 npm i pgml
