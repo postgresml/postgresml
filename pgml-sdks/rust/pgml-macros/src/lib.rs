@@ -36,14 +36,11 @@ pub fn custom_methods(
     output
 }
 
-#[proc_macro_derive(custom_into_py)]
-pub fn custom_into_py(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(pgml_alias)]
+pub fn pgml_alias(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let mut output = proc_macro::TokenStream::new();
     let parsed = parse_macro_input!(input as DeriveInput);
-    python::generate_into_py(parsed)
-}
-
-#[proc_macro_derive(custom_into_js_result)]
-pub fn custom_into_js_result(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let parsed = parse_macro_input!(input as DeriveInput);
-    javascript::generate_custom_into_js_result(parsed)
+    output.extend(python::pgml_alias(parsed.clone()));
+    // output.extend(javascript::pgml_alias(parsed));
+    output
 }

@@ -1,6 +1,6 @@
 {
   "name": "pgml",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Open Source Alternative for Building End-to-End Vector Search Applications without OpenAI & Pinecone",
   "keywords": ["postgres", "machine learning", "vector databases", "embeddings"],
   "main": "index.js",

@@ -36,10 +36,7 @@ fn serde_value_to_sea_query_value(value: &serde_json::Value) -> sea_query::Value
         let value = value.as_array().unwrap();
         let ty = get_sea_query_array_type(&value[0]);
         let value = Some(Box::new(
-            value
-                .iter()
-                .map(serde_value_to_sea_query_value)
-                .collect(),
+            value.iter().map(serde_value_to_sea_query_value).collect(),
         ));
         sea_query::Value::Array(ty, value)
     } else if value.is_object() {

@@ -1,6 +1,9 @@
 use neon::prelude::*;
 
-use crate::types::{DateTime, Json};
+use crate::{
+    pipeline::PipelineSyncData,
+    types::{DateTime, Json},
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rust to JS //////////////////////////////////////////////////////////////////
@@ -143,6 +146,16 @@ impl IntoJsResult for Json {
     }
 }
 
+impl IntoJsResult for PipelineSyncData {
+    type Output = JsValue;
+    fn into_js_result<'a, 'b, 'c: 'b, C: Context<'c>>(
+        self,
+        cx: &mut C,
+    ) -> JsResult<'b, Self::Output> {
+        Json::from(self).into_js_result(cx)
+    }
+}
+
 impl<K: IntoJsResult, V: IntoJsResult> IntoJsResult for std::collections::HashMap<K, V> {
     type Output = JsObject;
     fn into_js_result<'a, 'b, 'c: 'b, C: Context<'c>>(
@@ -170,20 +183,6 @@ impl<T: IntoJsResult> IntoJsResult for Vec<T> {
         Ok(js_array)
     }
 }
-
-// Our own types
-// gen_into!(
-//     crate::database::Database,
-//     JsBox<RefCell<crate::database::Database>>,
-//     RefCell<crate::database::Database>
-// );
-// impl Finalize for crate::database::Database {}
-// gen_into!(
-//     crate::collection::Collection,
-//     JsBox<RefCell<crate::collection::Collection>>,
-//     RefCell<crate::collection::Collection>
-// );
-// impl Finalize for crate::collection::Collection {}
 
 ////////////////////////////////////////////////////////////////////////////////
 // JS To Rust //////////////////////////////////////////////////////////////////

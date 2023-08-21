@@ -1,106 +1,222 @@
-import asyncio
 import os
 import pgml
+import pytest
+from multiprocessing import Pool
+from typing import List, Dict, Any
+import asyncio
 
-CONNECTION_STRING = os.environ.get("DATABASE_URL")
+####################################################################################
+####################################################################################
+## PLEASE BE AWARE THESE TESTS DO INVOLVE CHECKS ON LAZILY CREATED DATABASE ITEMS ##
+## IF ANY OF THE COLLECTION NAMES ALREADY EXIST, SOME TESTS MAY FAIL              ##
+## THIS DOES NOT MEAN THE SDK IS BROKEN. PLEASE CLEAR YOUR DATABASE INSTANCE      ##
+## BEFORE RUNNING ANY TESTS                                                       ##
+####################################################################################
+####################################################################################
 
-async def main():
-    collection_name = "ptest22"
-    db = pgml.Database(CONNECTION_STRING)
-    collection = await db.create_or_get_collection(collection_name)
-    print("The Collection")
-    print(collection)
-    collection_does_exist = await db.does_collection_exist(collection_name)
-    print("Collection does exist")
-    print(collection_does_exist)
-    x = [{'id': '5733be284776f41900661182', 'text': 'Architecturally, the school has a Catholic character. Atop the Main Building\'s gold dome is a golden statue of the Virgin Mary. Immediately in front of the Main Building and facing it, is a copper statue of Christ with arms upraised with the legend "Venite Ad Me Omnes". Next to the Main Building is the Basilica of the Sacred Heart. Immediately behind the basilica is the Grotto, a Marian place of prayer and reflection. It is a replica of the grotto at Lourdes, France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome), is a simple, modern stone statue of Mary.', 'title': 'University_of_Notre_Dame'}] 
-    await collection.upsert_documents(x)
-    await collection.register_text_splitter("recursive_character", {"chunk_size": 1500, "chunk_overlap": 40})
-    splitters = await collection.get_text_splitters()
-    print("The Splitters")
-    print(splitters)
-    await collection.generate_chunks()
-    await collection.register_model("embedding", "intfloat/e5-small")
-    models = await collection.get_models()
-    print("The Models")
-    print(models)
-    await collection.generate_embeddings()
-    results = await collection.vector_search("small")
-    print("The Results")
-    print(results)
-    await db.archive_collection(collection_name)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL is None:
+    print("No DATABASE_URL environment variable found. Please set one")
+    exit(1)
 
-async def query_builder():
-    collection_name = "pqtest2"
-    db = pgml.Database(CONNECTION_STRING)
-    collection = await db.create_or_get_collection(collection_name)
-    print("The collection:")
-    print(collection)
-    documents = [
-        {
-            "id": 1,
-            "metadata": {
-                "uuid": 1
-            },
-            "text": "This is a test document",
-        },
-        {
-            "id": 2,
-            "metadata": {
-                "uuid": 2
-            },
-            "text": "This is another test document",
-        },
-        {
-            "id": 3,
-            "metadata": {
-                "uuid": 3
-            },
-            "text": "PostgresML",
-        }
+pgml.py_init_logger()
 
-    ]
-    await collection.upsert_documents(documents)
-    await collection.generate_tsvectors('english')
-    await collection.generate_chunks()
-    await collection.generate_embeddings()
 
-    query = collection.query().vector_recall("test").filter({
-        "metadata": {
-            "metadata": {
-                "$or": [
-                    {"uuid": {"$eq": 1}},
-                    {"uuid": {"$lt": 4}}
-                ]
+def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
+    dummy_documents = []
+    for i in range(count):
+        dummy_documents.append(
+            {
+                "id": i,
+                "text": "This is a test document: {}".format(i),
+                "some_random_thing": "This will be metadata on it",
+                "metadata": {"uuid": i * 10, "name": "Test Document {}".format(i)},
             }
-        },
-        "full_text": {
-            "text": "postgresml"
-        }
-    }).limit(10)
-    print("Running query:")
-    print(query.to_full_string())
-    results = await query.run()
-    print("The results:")
+        )
+    return dummy_documents
+
+
+###################################################
+## Test the API exposed is correct ################
+###################################################
+
+
+def test_can_create_collection():
+    collection = pgml.Collection(name="test_p_c_tscc_0")
+    assert collection is not None
+
+
+def test_can_create_model():
+    model = pgml.Model()
+    assert model is not None
+
+
+def test_can_create_splitter():
+    splitter = pgml.Splitter()
+    assert splitter is not None
+
+
+def test_can_create_pipeline():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tccp_0", model, splitter)
+    assert pipeline is not None
+
+
+def test_can_create_builtins():
+    builtins = pgml.Builtins()
+    assert builtins is not None
+
+
+###################################################
+## Test various vector searches ###################
+###################################################
+
+
+@pytest.mark.asyncio
+async def test_can_vector_search_with_local_embeddings():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvs_0", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvs_4")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = await collection.vector_search("Here is some query", pipeline)
+    assert len(results) == 3
+    await collection.archive()
+
+
+@pytest.mark.asyncio
+async def test_can_vector_search_with_remote_embeddings():
+    model = pgml.Model(name="text-embedding-ada-002", source="openai")
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvswre_0", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvswre_3")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = await collection.vector_search("Here is some query", pipeline)
+    assert len(results) == 3
+    await collection.archive()
+
+
+@pytest.mark.asyncio
+async def test_can_vector_search_with_query_builder():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvswqb_1", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvswqb_5")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = (
+        await collection.query()
+        .vector_recall("Here is some query", pipeline)
+        .limit(10)
+        .fetch_all()
+    )
+    assert len(results) == 3
+    await collection.archive()
+
+
+@pytest.mark.asyncio
+async def test_can_vector_search_with_query_builder_with_remote_embeddings():
+    model = pgml.Model(name="text-embedding-ada-002", source="openai")
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvswqbwre_1", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvswqbwre_1")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = (
+        await collection.query()
+        .vector_recall("Here is some query", pipeline)
+        .limit(10)
+        .fetch_all()
+    )
+    assert len(results) == 3
+    await collection.archive()
+
+
+###################################################
+## Test user output facing functions ##############
+###################################################
+
+
+@pytest.mark.asyncio
+async def test_pipeline_to_dict():
+    model = pgml.Model(name="text-embedding-ada-002", source="openai")
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tptd_1", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tptd_1")
+    await collection.add_pipeline(pipeline)
+    pipeline_dict = await pipeline.to_dict()
+    assert pipeline_dict["name"] == "test_p_p_tptd_1"
+    await collection.remove_pipeline(pipeline)
+    await collection.archive()
+
+
+###################################################
+## Test with multiprocessing ######################
+###################################################
+
+
+def vector_search(collection_name, pipeline_name):
+    collection = pgml.Collection(collection_name)
+    pipeline = pgml.Pipeline(pipeline_name)
+    result = asyncio.run(
+        collection.query()
+        .vector_recall("Here is some query", pipeline)
+        .limit(10)
+        .fetch_all()
+    )
+    print(result)
+    return [0, 1, 2]
+
+
+# @pytest.mark.asyncio
+# async def test_multiprocessing():
+#     collection_name = "test_p_p_tm_1"
+#     pipeline_name = "test_p_c_tm_4"
+#
+#     model = pgml.Model()
+#     splitter = pgml.Splitter()
+#     pipeline = pgml.Pipeline(pipeline_name, model, splitter)
+#
+#     collection = pgml.Collection(collection_name)
+#     await collection.upsert_documents(generate_dummy_documents(3))
+#     await collection.add_pipeline(pipeline)
+#
+#     with Pool(5) as p:
+#         results = p.starmap(
+#             vector_search, [(collection_name, pipeline_name) for _ in range(5)]
+#         )
+#         for x in results:
+#             print(x)
+#             assert len(x) == 3
+#
+#     await collection.archive()
+
+
+###################################################
+## Manual tests ###################################
+###################################################
+
+
+async def silas_test_add_pipeline():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("silas_test_p_1", model, splitter)
+    collection = pgml.Collection(name="silas_test_c_10")
+    await collection.add_pipeline(pipeline)
+
+async def silas_test_upsert_documents():
+    collection = pgml.Collection(name="silas_test_c_9")
+    await collection.upsert_documents(generate_dummy_documents(10))
+
+async def silas_test_vector_search():
+    pipeline = pgml.Pipeline("silas_test_p_1")
+    collection = pgml.Collection(name="silas_test_c_9")
+    results = await collection.vector_search("Here is some query", pipeline)
     print(results)
 
-    # await db.archive_collection(collection_name)
-
-async def query_runner():
-    db = pgml.Database(CONNECTION_STRING)
-    # results = await db.query("SELECT * from pgml.collections WHERE id = $1").bind_int(1).fetch_all()
-    results = await db.query("SELECT * from pgml.collections").fetch_all()
-    print(results)
-
-async def transform():
-    db = pgml.Database(CONNECTION_STRING)
-    # results = await db.query("SELECT * from pgml.collections WHERE id = $1").bind_int(1).fetch_all()
-    results = await db.transform("translation_en_to_fr", ["This is a test", "This is a test 2"])
-    print(results)
-
-
-if __name__ == "__main__":
-    asyncio.run(query_builder())    
-    # asyncio.run(main())    
-    # asyncio.run(query_runner())
-    # asyncio.run(transform())
+# asyncio.run(silas_test_add_pipeline())
+# asyncio.run(silas_test_upsert_documents())
+# asyncio.run(silas_test_vector_search())

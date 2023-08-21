@@ -1,12 +1,15 @@
 use pgml_macros::{custom_derive, custom_methods};
-use sqlx::postgres::{PgArguments, PgPool};
+use sqlx::postgres::PgArguments;
 use sqlx::query::Query;
 use sqlx::{Postgres, Row};
 
-use crate::types::Json;
+use crate::{get_or_initialize_pool, types::Json};
 
 #[cfg(feature = "javascript")]
 use crate::languages::javascript::*;
+
+#[cfg(feature = "python")]
+use crate::{languages::python::*, types::JsonPython};
 
 #[derive(Clone, Debug)]
 enum BindValue {
@@ -19,9 +22,9 @@ enum BindValue {
 
 #[derive(custom_derive, Clone, Debug)]
 pub struct QueryRunner {
-    pool: PgPool,
     query: String,
     bind_values: Vec<BindValue>,
+    database_url: Option<String>,
 }
 
 #[custom_methods(
@@ -34,25 +37,27 @@ pub struct QueryRunner {
     bind_json
 )]
 impl QueryRunner {
-    pub fn new(query: &str, pool: PgPool) -> Self {
+    pub fn new(query: &str, database_url: Option<String>) -> Self {
         Self {
-            pool,
             query: query.to_string(),
             bind_values: Vec::new(),
+            database_url,
         }
     }
 
     pub async fn fetch_all(mut self) -> anyhow::Result<Json> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
         self.query = format!("SELECT json_agg(j) FROM ({}) j", self.query);
         let query = self.build_query();
-        let results = query.fetch_all(&self.pool).await?;
-        let results = results.get(0).unwrap().get::<serde_json::Value, _>(0); 
+        let results = query.fetch_all(&pool).await?;
+        let results = results.get(0).unwrap().get::<serde_json::Value, _>(0);
         Ok(Json(results))
     }
 
     pub async fn execute(self) -> anyhow::Result<()> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
         let query = self.build_query();
-        query.execute(&self.pool).await?;
+        query.execute(&pool).await?;
         Ok(())
     }
 

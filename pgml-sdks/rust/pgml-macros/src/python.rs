@@ -12,52 +12,64 @@ from typing import List, Dict, Optional, Self, Any
 
 "#;
 
-pub fn generate_into_py(parsed: DeriveInput) -> proc_macro::TokenStream {
-    let name = parsed.ident;
-    let fields_named = match parsed.data {
-        syn::Data::Struct(s) => match s.fields {
-            syn::Fields::Named(n) => n,
-            _ => panic!("custom_into_py proc_macro structs should only have named fields"),
-        },
-        _ => panic!("custom_into_py proc_macro should only be used on structs"),
-    };
-
-    let sets: Vec<proc_macro2::TokenStream> = fields_named.named.into_pairs().map(|p| {
-        let v = p.into_value();
-        let name = v.ident.to_token_stream().to_string();
-        let name_ident = v.ident;
-        quote! {
-            dict.set_item(#name, self.#name_ident).expect("Error setting python value in custom_into_py proc_macro");
-        }
-    }).collect();
-
-    let stub = format!("\n{} = dict[str, Any]\n", name);
-
-    let mut file = OpenOptions::new()
-        .create(true)
-        .write(true)
-        .append(true)
-        .read(true)
-        .open("python/pgml/pgml.pyi")
-        .unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)
-        .expect("Unable to read stubs file for python");
-    if !contents.contains(&stub) {
-        file.write_all(stub.as_bytes())
-            .expect("Unable to write stubs file for python");
-    }
+/// This function assumes the user has already impliemented:
+/// - `FromPyObject` for the wrapped type
+/// - `ToPyObject` for the wrapped type
+/// - `IntoPy<PyObject>` for the wrapped type
+pub fn pgml_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
+    let name_ident = format_ident!("{}Python", parsed.ident);
+    let wrapped_type_ident = parsed.ident;
 
     let expanded = quote! {
         #[cfg(feature = "python")]
-        impl pyo3::conversion::IntoPy<pyo3::PyObject> for #name {
-            fn into_py(self, py: pyo3::marker::Python<'_>) -> pyo3::PyObject {
-                let dict = pyo3::types::PyDict::new(py);
-                #(#sets)*
-                dict.into()
+        #[derive(Clone, Debug)]
+        pub struct #name_ident {
+            pub wrapped: #wrapped_type_ident
+        }
+
+        #[cfg(feature = "python")]
+        impl CustomInto<#name_ident> for #wrapped_type_ident {
+            fn custom_into(self) -> #name_ident {
+                #name_ident {
+                    wrapped: self,
+                }
+            }
+        }
+
+        #[cfg(feature = "python")]
+        impl CustomInto<#wrapped_type_ident> for #name_ident {
+            fn custom_into(self) -> #wrapped_type_ident {
+                self.wrapped
+            }
+        }
+
+        // From Python to Rust
+        #[cfg(feature = "python")]
+        impl pyo3::conversion::FromPyObject<'_> for #name_ident {
+            fn extract(obj: &pyo3::PyAny) -> pyo3::PyResult<Self> {
+                Ok(Self {
+                    wrapped: obj.extract()?
+                })
+            }
+        }
+
+        // From Rust to Python
+        #[cfg(feature = "python")]
+        impl pyo3::conversion::ToPyObject for #name_ident {
+            fn to_object(&self, py: pyo3::Python) -> pyo3::PyObject {
+                use pyo3::conversion::ToPyObject;
+                self.wrapped.to_object(py)
+            }
+        }
+        #[cfg(feature = "python")]
+        impl pyo3::conversion::IntoPy<pyo3::PyObject> for #name_ident {
+            fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+                use pyo3::conversion::ToPyObject;
+                self.wrapped.to_object(py)
             }
         }
     };
+
     proc_macro::TokenStream::from(expanded)
 }
 
@@ -69,16 +81,88 @@ pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
     let expanded = quote! {
         #[cfg(feature = "python")]
         #[pyo3::pyclass(name = #wrapped_type_name)]
-        #[derive(Debug)]
+        #[derive(Clone, Debug)]
         pub struct #name_ident {
-            wrapped: #wrapped_type_ident
+            pub wrapped: std::boxed::Box<#wrapped_type_ident>
         }
 
         #[cfg(feature = "python")]
-        impl From<#wrapped_type_ident> for #name_ident {
-            fn from(w: #wrapped_type_ident) -> Self {
-                Self {
-                    wrapped: w,
+        impl CustomInto<#name_ident> for #wrapped_type_ident {
+            fn custom_into(self) -> #name_ident {
+                #name_ident {
+                    wrapped: std::boxed::Box::new(self),
+                }
+            }
+        }
+
+        #[cfg(feature = "python")]
+        impl CustomInto<#wrapped_type_ident> for #name_ident {
+            fn custom_into(self) -> #wrapped_type_ident {
+                *self.wrapped
+            }
+        }
+
+        #[cfg(feature = "python")]
+        impl CustomInto<&'static mut #wrapped_type_ident> for &mut #name_ident {
+            fn custom_into(self) -> &'static mut #wrapped_type_ident {
+                // This is how we get around the liftime checker
+                unsafe {
+                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
+                    let ptr = ptr as *mut #wrapped_type_ident;
+                    let boxed = Box::from_raw(ptr);
+                    Box::leak(boxed)
+                }
+            }
+        }
+
+        #[cfg(feature = "python")]
+        impl CustomInto<&'static #wrapped_type_ident> for &mut #name_ident {
+            fn custom_into(self) -> &'static #wrapped_type_ident {
+                // This is how we get around the liftime checker
+                unsafe {
+                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
+                    let ptr = ptr as *mut #wrapped_type_ident;
+                    let boxed = Box::from_raw(ptr);
+                    Box::leak(boxed)
+                }
+            }
+        }
+
+        #[cfg(feature = "python")]
+        impl CustomInto<#wrapped_type_ident> for &mut #name_ident {
+            fn custom_into(self) -> #wrapped_type_ident {
+                // This is how we get around the liftime checker
+                unsafe {
+                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
+                    let ptr = ptr as *mut #wrapped_type_ident;
+                    let boxed = Box::from_raw(ptr);
+                    Box::leak(boxed).to_owned()
+                }
+            }
+        }
+
+        #[cfg(feature = "python")]
+        impl CustomInto<&'static #wrapped_type_ident> for &#name_ident {
+            fn custom_into(self) -> &'static #wrapped_type_ident {
+                // This is how we get around the liftime checker
+                unsafe {
+                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
+                    let ptr = ptr as *mut #wrapped_type_ident;
+                    let boxed = Box::from_raw(ptr);
+                    Box::leak(boxed)
+                }
+            }
+        }
+
+        #[cfg(feature = "python")]
+        impl CustomInto<#wrapped_type_ident> for &#name_ident {
+            fn custom_into(self) -> #wrapped_type_ident {
+                // This is how we get around the liftime checker
+                unsafe {
+                    let ptr = &*self.wrapped as *const #wrapped_type_ident;
+                    let ptr = ptr as *mut #wrapped_type_ident;
+                    let boxed = Box::from_raw(ptr);
+                    Box::leak(boxed).to_owned()
                 }
             }
         }
@@ -87,7 +171,8 @@ pub fn generate_python_derive(parsed: DeriveInput) -> proc_macro::TokenStream {
         impl pyo3::IntoPy<pyo3::PyObject> for #wrapped_type_ident {
             fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
                 use pyo3::conversion::IntoPy;
-                #name_ident::from(self.clone()).into_py(py)
+                let x: #name_ident = self.custom_into();
+                x.into_py(py)
             }
         }
     };
@@ -130,12 +215,30 @@ pub fn generate_python_methods(
         }
         let method_ident = method.method_ident.clone();
 
-        let (method_arguments, wrapper_arguments) = get_method_wrapper_arguments_python(&method);
+        let (method_arguments, wrapper_arguments, prep_wrapper_arguments) =
+            get_method_wrapper_arguments_python(&method);
         let (output_type, convert_from) = match &method.output_type {
             OutputType::Result(v) | OutputType::Other(v) => {
                 convert_output_type_convert_from_python(v, &method)
             }
             OutputType::Default => (None, None),
+        };
+
+        let some_wrapper_type = match method.receiver.as_ref() {
+            Some(r) => {
+                let st = r.to_string();
+                Some(if st.contains("&") {
+                    let st = st.replace("self", &wrapped_type_ident.to_string());
+                    let s = syn::parse_str::<syn::Type>(&st).expect(&format!(
+                        "Error converting self type to necessary syn type: {:?}",
+                        r
+                    ));
+                    s.to_token_stream()
+                } else {
+                    quote! { #wrapped_type_ident }
+                })
+            }
+            None => None,
         };
 
         let signature = quote! {
@@ -147,18 +250,29 @@ pub fn generate_python_methods(
             "new" => "__init__".to_string(),
             _ => method_ident.to_string(),
         };
-        let p3 = method
+        let mut p3 = method
             .method_arguments
             .iter()
-            .map(|a| format!("{}: {}", a.0, get_python_type(&a.1)))
-            .collect::<Vec<String>>()
-            .join(", ");
+            .map(|a| {
+                format!(
+                    "{}: {}",
+                    a.0.replace("mut", "").trim(),
+                    get_python_type(&a.1)
+                )
+            })
+            .collect::<Vec<String>>();
+        p3.insert(0, "self".to_string());
+        let p3 = p3.join(", ");
         let p4 = match &method.output_type {
             OutputType::Result(v) | OutputType::Other(v) => get_python_type(v),
             OutputType::Default => "None".to_string(),
         };
-        stubs.push_str(&format!("\t{} {}(self, {}) -> {}", p1, p2, p3, p4));
+        stubs.push_str(&format!("\t{} {}({}) -> {}", p1, p2, p3, p4));
         stubs.push_str("\n\t\t...\n");
+
+        let prepared_wrapper_arguments = quote! {
+            #(#prep_wrapper_arguments)*
+        };
 
         // The new function for pyO3 requires some unique syntax
         let (signature, middle) = if method_ident == "new" {
@@ -188,23 +302,30 @@ pub fn generate_python_methods(
                 }
             };
             let middle = quote! {
+                use std::ops::DerefMut;
+                #prepared_wrapper_arguments
                 #middle
-                Ok(#name_ident::from(x))
+                let x: Self = x.custom_into();
+                Ok(x)
             };
             (signature, middle)
         } else {
             let middle = quote! {
                 #method_ident(#(#wrapper_arguments),*)
             };
+
             let middle = if method.is_async {
                 quote! {
-                    wrapped.#middle.await
+                    {
+                        wrapped.#middle.await
+                    }
                 }
             } else {
                 quote! {
                     wrapped.#middle
                 }
             };
+
             let middle = if let OutputType::Result(_r) = method.output_type {
                 quote! {
                     let x = match #middle {
@@ -220,22 +341,27 @@ pub fn generate_python_methods(
             let middle = if let Some(convert) = convert_from {
                 quote! {
                     #middle
-                    let x = #convert::from(x);
+                    // let x = <#convert>::from(x);
+                    let x: #convert = x.custom_into();
                 }
             } else {
                 middle
             };
             let middle = if method.is_async {
                 quote! {
-                    let wrapped = self.wrapped.clone();
+                    let mut wrapped: #some_wrapper_type = self.custom_into();
+                    #prepared_wrapper_arguments
                     pyo3_asyncio::tokio::future_into_py(py, async move {
+                        use std::ops::DerefMut;
                         #middle
                         Ok(x)
                     })
                 }
             } else {
                 quote! {
-                    let wrapped = self.wrapped.clone();
+                    let mut wrapped: #some_wrapper_type = self.custom_into();
+                    use std::ops::DerefMut;
+                    #prepared_wrapper_arguments
                     #middle
                     Ok(x)
                 }
@@ -280,12 +406,17 @@ pub fn generate_python_methods(
 
 pub fn get_method_wrapper_arguments_python(
     method: &GetImplMethod,
-) -> (Vec<proc_macro2::TokenStream>, Vec<proc_macro2::TokenStream>) {
+) -> (
+    Vec<proc_macro2::TokenStream>,
+    Vec<proc_macro2::TokenStream>,
+    Vec<proc_macro2::TokenStream>,
+) {
     let mut method_arguments = Vec::new();
     let mut wrapper_arguments = Vec::new();
+    let mut prep_wrapper_arguments = Vec::new();
 
     if let Some(_receiver) = &method.receiver {
-        method_arguments.push(quote! { &self });
+        method_arguments.push(quote! { &mut self });
     }
 
     method
@@ -293,10 +424,15 @@ pub fn get_method_wrapper_arguments_python(
         .iter()
         .for_each(|(argument_name, argument_type)| {
             let argument_name_ident = format_ident!("{}", argument_name.replace("mut ", ""));
-            let (method_argument, wrapper_argument) =
-                convert_method_wrapper_arguments(argument_name_ident, argument_type);
+            let (method_argument, wrapper_argument, prep_wrapper_argument) =
+                convert_method_wrapper_arguments(
+                    argument_name_ident,
+                    argument_type,
+                    method.is_async,
+                );
             method_arguments.push(method_argument);
             wrapper_arguments.push(wrapper_argument);
+            prep_wrapper_arguments.push(prep_wrapper_argument);
         });
 
     let extra_arg = quote! {
@@ -308,26 +444,32 @@ pub fn get_method_wrapper_arguments_python(
         method_arguments.push(extra_arg);
     }
 
-    (method_arguments, wrapper_arguments)
+    (method_arguments, wrapper_arguments, prep_wrapper_arguments)
 }
 
 fn convert_method_wrapper_arguments(
     name_ident: syn::Ident,
     ty: &SupportedType,
-) -> (proc_macro2::TokenStream, proc_macro2::TokenStream) {
-    match ty {
-        SupportedType::Reference(r) => {
-            let (d, w) = convert_method_wrapper_arguments(name_ident, r);
-            (d, quote! { & #w})
-        }
-        SupportedType::str => (quote! {#name_ident: String}, quote! { #name_ident}),
-        _ => {
-            let t = ty
-                .to_type()
-                .expect("Could not parse type in convert_method_type in python.rs");
-            (quote! { #name_ident : #t}, quote! {#name_ident})
-        }
-    }
+    _is_async: bool,
+) -> (
+    proc_macro2::TokenStream,
+    proc_macro2::TokenStream,
+    proc_macro2::TokenStream,
+) {
+    let pyo3_type = ty
+        .to_type(Some("Python"))
+        .expect("Could not parse type in convert_method_wrapper_arguments in python.rs");
+    let normal_type = ty
+        .to_type(None)
+        .expect("Could not parse type in convert_method_wrapper_arguments in python.rs");
+
+    (
+        quote! { #name_ident: #pyo3_type },
+        quote! { #name_ident },
+        quote! {
+            let #name_ident: #normal_type = #name_ident.custom_into();
+        },
+    )
 }
 
 fn convert_output_type_convert_from_python(
@@ -344,9 +486,9 @@ fn convert_output_type_convert_from_python(
         ),
         t => {
             let ty = t
-                .to_type()
+                .to_type(Some("Python"))
                 .expect("Error converting to type in convert_output_type_convert_from_python");
-            (Some(quote! {pyo3::PyResult<#ty>}), None)
+            (Some(quote! {pyo3::PyResult<#ty>}), Some(quote! {#ty}))
         }
     };
 
@@ -359,7 +501,7 @@ fn convert_output_type_convert_from_python(
 
 fn get_python_type(ty: &SupportedType) -> String {
     match ty {
-        SupportedType::Reference(r) => get_python_type(r),
+        SupportedType::Reference(r) => get_python_type(&r.ty),
         SupportedType::S => "Self".to_string(),
         SupportedType::str | SupportedType::String => "str".to_string(),
         SupportedType::bool => "bool".to_string(),
@@ -384,15 +526,10 @@ fn get_python_type(ty: &SupportedType) -> String {
                 format!("tuple[{}]", types.join(", "))
             }
         }
-        SupportedType::i64 => "int".to_string(),
+        SupportedType::i64 | SupportedType::u64 => "int".to_string(),
         SupportedType::f64 => "float".to_string(),
         // Our own types
-        t @ SupportedType::Database
-        | t @ SupportedType::Collection
-        | t @ SupportedType::Model
-        | t @ SupportedType::QueryBuilder
-        | t @ SupportedType::QueryRunner
-        | t @ SupportedType::Splitter => t.to_string(),
+        SupportedType::CustomType(t) => t.to_string(),
         // Add more types as required
         _ => "Any".to_string(),
     }
@@ -400,15 +537,17 @@ fn get_python_type(ty: &SupportedType) -> String {
 
 fn get_type_for_optional(ty: &SupportedType) -> String {
     match ty {
-        SupportedType::Reference(r) => get_type_for_optional(r),
+        SupportedType::Reference(r) => get_type_for_optional(&r.ty),
         SupportedType::str | SupportedType::String => {
             "\"Default set in Rust. Please check the documentation.\"".to_string()
         }
         SupportedType::HashMap(_) => "{}".to_string(),
         SupportedType::Vec(_) => "[]".to_string(),
-        SupportedType::i64 => 1.to_string(),
+        SupportedType::i64 | SupportedType::u64 => 1.to_string(),
         SupportedType::f64 => 1.0.to_string(),
-        SupportedType::Json => "{}".to_string(),
-        _ => panic!("Type not yet supported for optional python stub: {:?}", ty),
+        SupportedType::bool => "True".to_string(),
+
+        _ => "Any".to_string(),
+        // _ => panic!("Type not yet supported for optional python stub: {:?}", ty),
     }
 }
