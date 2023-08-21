@@ -56,7 +56,7 @@ Follow the steps below to quickly get started with the Python SDK for building s
 
 Before you begin, make sure you have the following:
 
-- PostgresML Database: Ensure you have a PostgresML database version >`2.3.1`. You can spin up a database using [Docker](https://github.com/postgresml/postgresml#installation) or [sign up for a free GPU-powered database](https://postgresml.org/signup).
+- PostgresML Database: Ensure you have a PostgresML database version >= `2.7.7` You can spin up a database using [Docker](https://github.com/postgresml/postgresml#installation) or [sign up for a free GPU-powered database](https://postgresml.org/signup).
 
 - Set the `DATABASE_URL` environment variable to the connection string of your PostgresML database.
 

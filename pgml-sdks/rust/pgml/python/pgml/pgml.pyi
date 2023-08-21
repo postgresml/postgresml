@@ -1,5 +1,5 @@
 
-def py_init_logger(level: Optional[str] = "Default set in Rust. Please see documentation.", format: Optional[str] = "Default set in Rust. Please see documentation.") -> None
+def py_init_logger(level: Optional[str] = "", format: Optional[str] = "") -> None
 
 Json = Any
 DateTime = int

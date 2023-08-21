@@ -27,7 +27,7 @@ const main = async () => {
   // Perform vector search
   const queryResults = await collection
     .query()
-    .vector_recall("What are the contents of document one?", pipeline)
+    .vector_recall("Some user query that will match document one first", pipeline)
     .limit(2)
     .fetch_all();
 
@@ -46,5 +46,5 @@ const main = async () => {
 };
 
 main().then((results) => {
-  console.log("Vector search Results: ", results);
+  console.log("Vector search Results: \n", results);
 });
