@@ -5,7 +5,7 @@ jobs:
   build-javascript-sdk:
     strategy:
       matrix:
-        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm", "macos-latest", "windows-latest"]
+        os: ["windows-latest"]
         include:
           - neon-out-name: "x86_64-unknown-linux-gnu-index.node"
             os: "ubuntu-22.04"
@@ -32,6 +32,7 @@ jobs:
         run: |
           npm i 
           npm run build-release
+          ls -R
       - name: Upload built .node file
         uses: actions/upload-artifact@v3
         with:
