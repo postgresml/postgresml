@@ -30,14 +30,25 @@ console.log(name)
 console.log(args)
 console.log(release)
 
-exec(
-  `mkdir dist; ls`,
-  (err, stdout, stderr) => {
+
+exec('ls', {'shell':'powershell.exe'}, (err, stdout, stderr)=> {
     if (err) {
       console.log("ERR:", err);
     } else {
       console.log("STDOUT:", stdout);
       console.log("STDERR:", stderr);
     }
-  },
-);
+})
+
+
+// exec(
+//   `ls`,
+//   (err, stdout, stderr) => {
+//     if (err) {
+//       console.log("ERR:", err);
+//     } else {
+//       console.log("STDOUT:", stdout);
+//       console.log("STDERR:", stderr);
+//     }
+//   },
+// );
