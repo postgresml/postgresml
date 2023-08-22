@@ -71,22 +71,8 @@ In this step, we ingest documents, chunk documents, generate embeddings and inde
 LOG_LEVEL=DEBUG pgml-chat --root_dir <directory> --collection_name <collection_name> --stage ingest
 ```
 
-You will see the following output:
-```bash
-[15:39:12] DEBUG    [15:39:12] - Using selector: KqueueSelector 
-           INFO     [15:39:12] - Starting pgml_chatbot           
-           INFO     [15:39:12] - Scanning <root directory> for markdown files
-[15:39:13] INFO     [15:39:13] - Found 85 markdown files 
-Extracting text from markdown ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-           INFO     [15:39:13] - Upserting documents into database                                      
-[15:39:32] INFO     [15:39:32] - Generating chunks       
-[15:39:33] INFO     [15:39:33] - Starting chunk count: 0            
-[15:39:35] INFO     [15:39:35] - Ending chunk count: 576                                                  
-           INFO     [15:39:35] - Total documents: 85 Total chunks: 576                                                                                            
-           INFO     [15:39:35] - Generating embeddings           
-[15:39:36] INFO     [15:39:36] - Splitter ID: 2                                                                
-[15:40:47] INFO     [15:40:47] - Embeddings generated in 71.073 seconds                
-```
+You will see output logging the pipelines progress.
+
 ## Chat
 You can interact with the bot using the command line interface or Slack. 
 
