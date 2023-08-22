@@ -31,7 +31,11 @@ console.log(args)
 console.log(release)
 
 
-exec('ls', {'shell':'powershell.exe'}, (err, stdout, stderr)=> {
+exec(`
+  ls
+  mkdir dist
+  ls
+  `, {'shell':'powershell.exe'}, (err, stdout, stderr)=> {
     if (err) {
       console.log("ERR:", err);
     } else {
