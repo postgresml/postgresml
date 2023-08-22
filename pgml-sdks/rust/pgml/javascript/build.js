@@ -23,33 +23,25 @@ const set_name = (type, arch) => {
 
 let name = set_name(type, arch);
 
-let args = process.argv.slice(2); 
+let args = process.argv.slice(2);
 let release = args.includes("--release");
 
-let shell_args = (type == "Windows" || type == "Windows_NT") ? {'shell':'powershell.exe'} : {}
+let shell_args =
+  type == "Windows" || type == "Windows_NT" ? { shell: "powershell.exe" } : {};
 
-exec(`
+exec(
+  `
   mkdir dist;
-  cargo-cp-artifact -nc "${name}" -- cargo build --message-format=json-render-diagnostics -F javascript ${release ? "--release" : ""};
+  npx cargo-cp-artifact -nc "${name}" -- cargo build --message-format=json-render-diagnostics -F javascript ${release ? "--release" : ""};
   mv ${name} dist;
-  `, shell_args, (err, stdout, stderr)=> {
+  `,
+  shell_args,
+  (err, stdout, stderr) => {
     if (err) {
       console.log("ERR:", err);
     } else {
       console.log("STDOUT:", stdout);
       console.log("STDERR:", stderr);
     }
-})
-
-
-// exec(
-//   `ls`,
-//   (err, stdout, stderr) => {
-//     if (err) {
-//       console.log("ERR:", err);
-//     } else {
-//       console.log("STDOUT:", stdout);
-//       console.log("STDERR:", stderr);
-//     }
-//   },
-// );
+  },
+);
