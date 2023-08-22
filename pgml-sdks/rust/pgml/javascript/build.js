@@ -32,7 +32,7 @@ console.log(release)
 
 exec(
   `
-  mkdir dist
+  echo "HERE IS A TEST"
   `,
   (err, stdout, stderr) => {
     if (err) {
