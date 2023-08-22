@@ -26,16 +26,13 @@ let name = set_name(type, arch);
 let args = process.argv.slice(2); 
 let release = args.includes("--release");
 
-console.log(name)
-console.log(args)
-console.log(release)
-
+let shell_args = (type == "Windows" || type == "Windows_NT") ? {'shell':'powershell.exe'} : {}
 
 exec(`
   mkdir dist;
-  cargo-cp-artifact -nc ${name} -- cargo build --message-format=json-render-diagnostics -F javascript ${release ? "--release" : ""};
+  cargo-cp-artifact -nc "${name}" -- cargo build --message-format=json-render-diagnostics -F javascript ${release ? "--release" : ""};
   mv ${name} dist;
-  `, {'shell':'powershell.exe'}, (err, stdout, stderr)=> {
+  `, shell_args, (err, stdout, stderr)=> {
     if (err) {
       console.log("ERR:", err);
     } else {
