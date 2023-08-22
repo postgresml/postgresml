@@ -9,7 +9,7 @@ const set_name = (type, arch) => {
     return "x86_64-apple-darwin-index.node";
   } else if (type == "Darwin" && arch == "arm64") {
     return "aarch64-apple-darwin-index.node";
-  } else if (type == "Windows" && arch == "x64") {
+  } else if ((type == "Windows" || type == "Windows_NT") && arch == "x64") {
     return "x86_64-pc-windows-gnu-index.node";
   } else if (type == "Linux" && arch == "x64") {
     return "x86_64-unknown-linux-gnu-index.node";
