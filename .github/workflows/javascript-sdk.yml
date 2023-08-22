@@ -25,7 +25,7 @@ jobs:
       - name: Do build
         run: |
           npm i
-          npm run build-release
+          mkdir dist
           ls -R
       - name: Upload built .node file
         uses: actions/upload-artifact@v3
