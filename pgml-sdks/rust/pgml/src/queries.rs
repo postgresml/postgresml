@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS %s (
   name text NOT NULL,
   created_at timestamp NOT NULL DEFAULT now(), 
   model_id int8 NOT NULL REFERENCES pgml.models ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
-  splitter_id int8 NOT NULL REFERENCES pgml.sdk_splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
+  splitter_id int8 NOT NULL REFERENCES pgml.splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
   active BOOLEAN NOT NULL DEFAULT TRUE,
   parameters jsonb NOT NULL DEFAULT '{}',
   UNIQUE (name)
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS %s (
 "#;
 
 pub const CREATE_SPLITTERS_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS pgml.sdk_splitters (
+CREATE TABLE IF NOT EXISTS pgml.splitters (
   id serial8 PRIMARY KEY,
   created_at timestamp NOT NULL DEFAULT now(),
   name text NOT NULL, 
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS pgml.sdk_splitters (
 pub const CREATE_CHUNKS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, created_at timestamp NOT NULL DEFAULT now(), 
   document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  splitter_id int8 NOT NULL REFERENCES pgml.sdk_splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
+  splitter_id int8 NOT NULL REFERENCES pgml.splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   chunk_index int8 NOT NULL, 
   chunk text NOT NULL,
   UNIQUE (document_id, splitter_id, chunk_index)
@@ -241,7 +241,7 @@ WITH splitter as (
       name,
       parameters
     FROM
-      pgml.sdk_splitters 
+      pgml.splitters 
     WHERE
       id = $1
 )
@@ -291,7 +291,7 @@ WITH splitter as (
       name,
       parameters
     FROM
-      pgml.sdk_splitters 
+      pgml.splitters 
     WHERE
       id = $1
 )

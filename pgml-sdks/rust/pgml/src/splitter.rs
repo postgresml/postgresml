@@ -72,7 +72,7 @@ impl Splitter {
                 .expect("Cannot verify splitter without project info");
 
             let splitter: Option<models::Splitter> = sqlx::query_as(
-                    "SELECT * FROM pgml.sdk_splitters WHERE project_id = $1 AND name = $2 and parameters = $3",
+                    "SELECT * FROM pgml.splitters WHERE project_id = $1 AND name = $2 and parameters = $3",
                 )
                 .bind(project_info.id)
                 .bind(&self.name)
@@ -85,7 +85,7 @@ impl Splitter {
                 s
             } else {
                 sqlx::query_as(
-                        "INSERT INTO pgml.sdk_splitters (project_id, name, parameters) VALUES ($1, $2, $3) RETURNING *",
+                        "INSERT INTO pgml.splitters (project_id, name, parameters) VALUES ($1, $2, $3) RETURNING *",
                     )
                     .bind(project_info.id)
                     .bind(&self.name)
