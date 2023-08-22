@@ -338,7 +338,7 @@ results = (
 )
 ```
 
-The above query would filter out all documents that do not have a key `special` with a value `True` or (do not have a key `uuid` equal to 1 and a key `index` less than 100).
+The above query would filter out all documents that do not have a key `special` with a value `True` or (have a key `uuid` equal to 1 and a key `index` less than 100).
 
 #### Full Text Filtering
 
