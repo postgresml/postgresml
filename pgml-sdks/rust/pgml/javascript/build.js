@@ -31,10 +31,7 @@ console.log(args)
 console.log(release)
 
 exec(
-  `
-  mkdir dist
-  ls
-  `,
+  `mkdir dist; ls`,
   (err, stdout, stderr) => {
     if (err) {
       console.log("ERR:", err);
