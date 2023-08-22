@@ -28,7 +28,6 @@ let release = args.includes("--release");
 
 exec(
   `
-  rm -r dist
   mkdir dist
   cargo-cp-artifact -nc ${name} -- cargo build --message-format=json-render-diagnostics -F javascript ${release ? "--release" : ""}
   mv ${name} dist
