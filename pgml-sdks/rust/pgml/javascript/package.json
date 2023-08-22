@@ -5,9 +5,8 @@
   "keywords": ["postgres", "machine learning", "vector databases", "embeddings"],
   "main": "index.js",
   "scripts": {
-    "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics -F javascript",
-    "build-debug": "npm run build --",
-    "build-release": "npm run build -- --release"
+    "build": "node build.js",
+    "build-release": "node build.js -- --release"
   },
   "author": {
     "name": "PostgresML",
