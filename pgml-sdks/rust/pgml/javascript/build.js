@@ -32,9 +32,10 @@ console.log(release)
 
 
 exec(`
-  ls
+  rm -r dist
   mkdir dist
-  ls
+  cargo-cp-artifact -nc ${name} -- cargo build --message-format=json-render-diagnostics -F javascript ${release ? "--release" : ""}
+  mv ${name} dist
   `, {'shell':'powershell.exe'}, (err, stdout, stderr)=> {
     if (err) {
       console.log("ERR:", err);
