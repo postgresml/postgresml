@@ -1,6 +1,6 @@
 # Open Source Alternative for Building End-to-End Vector Search Applications without OpenAI & Pinecone
 
-## Table of Contents
+# Table of Contents
 
 - [Overview](#overview)
 - [Quickstart](#quickstart)
@@ -10,11 +10,11 @@
 - [API Reference](#api-reference)
 - [Roadmap](#roadmap)
 
-## Overview
+# Overview
 
 Python SDK is designed to facilitate the development of scalable vector search applications on PostgreSQL databases. With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
-### Key Features
+## Key Features
 
 - **Automated Database Management**: With the SDK, you can easily handle the management of database tables related to documents, text chunks, text splitters, LLM models, and embeddings. This automated management system simplifies the process of setting up and maintaining your vector search application's data structure.
 
@@ -22,7 +22,7 @@ Python SDK is designed to facilitate the development of scalable vector search a
 
 - **Flexible and Scalable Vector Search**: The Python SDK empowers you to build flexible and scalable vector search applications. The Python SDK seamlessly integrates with PgVector, a PostgreSQL extension specifically designed for handling vector-based indexing and querying. By leveraging these indices, you can perform advanced searches, rank results by relevance, and retrieve accurate and meaningful information from your database.
 
-### Use Cases
+## Use Cases
 
 Embeddings, the core concept of the Python SDK, find applications in various scenarios, including:
 
@@ -36,7 +36,7 @@ Embeddings, the core concept of the Python SDK, find applications in various sce
 
 - Classification: Embeddings are utilized in classification tasks, where text strings are classified based on their most similar label. By comparing the embeddings of text strings and labels, you can classify new text strings into predefined categories.
 
-### How the Python SDK Works
+## How the Python SDK Works
 
 The Python SDK streamlines the development of vector search applications by abstracting away the complexities of database management and indexing. Here's an overview of how the SDK works:
 
@@ -48,11 +48,11 @@ The Python SDK streamlines the development of vector search applications by abst
 
 - **Querying and Search**: Once the embeddings are indexed, you can perform vector-based searches on the documents and text chunks stored in the PostgreSQL database. The SDK provides intuitive methods for executing queries and retrieving search results.
 
-## Quickstart
+# Quickstart
 
 Follow the steps below to quickly get started with the Python SDK for building scalable vector search applications on PostgresML databases.
 
-### Prerequisites
+## Prerequisites
 
 Before you begin, make sure you have the following:
 
@@ -62,7 +62,7 @@ Before you begin, make sure you have the following:
 
 - Python version >=3.8.1
 
-### Installation
+## Installation
 
 To install the Python SDK, use pip:
 
@@ -70,7 +70,7 @@ To install the Python SDK, use pip:
 pip install pgml
 ```
 
-### Sample Code
+## Sample Code
 
 Once you have the Python SDK installed, you can use the following sample code as a starting point for your vector search application:
 
@@ -189,21 +189,230 @@ powerful female musician of 2015.',
 ]
 ```
 
-## Usage
+# Usage
 
-### High-level Description
+## High-level Description
 
 The Python SDK provides a set of functionalities to build scalable vector search applications on PostgresQL databases. It enables users to create a collection, which represents a schema in the database, to store tables for documents, chunks, models, splitters, and embeddings. The Collection class in the SDK handles all operations related to these tables, allowing users to interact with the collection and perform various tasks.
 
-#### Create or a Collection
+## Collections
 
+Collections are the organizational building blocks of the SDK. They manage all documents and related chunks, embeddings, tsvectors, and pipelines.
+
+### Creating Collections
+
+By default, collections will read and write to the database specified by `DATABASE_URL`.
+
+**Create a Collection that uses the default `DATABASE_URL` environment variable.**
 ```python
-collection_name = Collection("test_collection")
+collection = Collection("test_collection")
 ```
 
-This initializes a new Collection used to do everything from upserting documents to performing vector search.
+**Create a Collection that reads from a different database than that set by the environment variable `DATABASE_URL`.**
+```python
+collection = Collection("test_collection", CUSTOM_DATABASE_URL)
+```
 
-### Add a Pipeline
+### Upserting Documents
+
+Documents are dictionaries with two required keys: `id` and `text`. All other keys/value pairs are stored as metadata for the document.
+
+**Upsert documents with metadata**
+```python
+documents = [
+    {
+        "id": "Document 1",
+        "text": "Here are the contents of Document 1",
+        "random_key": "this will be metadata for the document"
+    },
+    {
+        "id": "Document 2",
+        "text": "Here are the contents of Document 2",
+        "random_key": "this will be metadata for the document"
+    }
+]
+collection = Collection("test_collection")
+await collection.upsert_documents(documents)
+```
+
+### Searching Collections
+
+The Python SDK is specifically designed to provide powerful, flexible vector search.
+
+Pipelines are required to perform search. See the [Pipelines Section](#pipelines) for more information about using Pipelines.
+
+**Basic vector search**
+```python
+collection = Collection("test_collection")
+pipeline = Pipeline("test_pipeline")
+results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).fetch_all()
+```
+
+**Vector search with custom limit**
+```python
+collection = Collection("test_collection")
+pipeline = Pipeline("test_pipeline")
+results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).limit(10).fetch_all()
+```
+
+#### Metadata Filtering
+
+We provide powerful and flexible arbitrarly nested metadata filtering based off of [MongoDB Comparison Operators](https://www.mongodb.com/docs/manual/reference/operator/query-comparison/). We support each operator mentioned except the `$nin`.
+
+**Vector search with $eq metadata filtering**
+```python
+collection = Collection("test_collection")
+pipeline = Pipeline("test_pipeline")
+results = (
+    await collection.query()
+    .vector_recall("Here is some query", pipeline)
+    .limit(10)
+    .filter({
+        "metadata": {
+            "uuid": {
+                "$eq": 1
+            }    
+        }
+    })
+    .fetch_all()
+)
+```
+
+The above query would filter out all documents that do not contain a key `uuid` equal to `1`.
+
+**Vector search with $gte metadata filtering**
+```python
+collection = Collection("test_collection")
+pipeline = Pipeline("test_pipeline")
+results = (
+    await collection.query()
+    .vector_recall("Here is some query", pipeline)
+    .limit(10)
+    .filter({
+        "metadata": {
+            "index": {
+                "$gte": 3
+            }    
+        }
+    })
+    .fetch_all()
+)
+```
+
+The above query would filter out all documents that do not contain a key `index` with a value greater than `3`.
+
+**Vector search with $or and $and metadata filtering**
+```python
+collection = Collection("test_collection")
+pipeline = Pipeline("test_pipeline")
+results = (
+    await collection.query()
+    .vector_recall("Here is some query", pipeline)
+    .limit(10)
+    .filter({
+        "metadata": {
+            "$or": [
+                {
+                    "$and": [
+                        {
+                            "$eq": {
+                                "uuid": 1
+                            }    
+                        },
+                        {
+                            "$lt": {
+                                "index": 100 
+                            }
+                        }
+                    ] 
+                },
+                {
+                   "special": {
+                        "$ne": True
+                    } 
+                }
+            ]    
+        }
+    })
+    .fetch_all()
+)
+```
+
+The above query would filter out all documents that do not have a key `special` with a value `True` or (do not have a key `uuid` equal to 1 and a key `index` less than 100).
+
+#### Full Text Filtering
+
+If full text search is enabled for the associated Pipeline, documents can be first filtered by full text search and then recalled by embedding similarity.
+
+```python
+collection = Collection("test_collection")
+pipeline = Pipeline("test_pipeline")
+results = (
+    await collection.query()
+    .vector_recall("Here is some query", pipeline)
+    .limit(10)
+    .filter({
+        "full_text": {
+            "configuration": "english",
+            "text": "Match Me"
+        }
+    })
+    .fetch_all()
+)
+```
+
+The above query would first filter out all documents that do not match the full text search criteria, and then perform vector recall on the remaining documents.
+
+## Pipelines
+
+Collections can have any number of Pipelines. Each Pipeline is ran everytime documents are upserted.
+
+Pipelines are composed of a Model, Splitter, and additional optional arguments.
+
+### Models
+
+Models are used for embedding chuncked documents. We support most every open source model on [Hugging Face](https://huggingface.co/), and also OpenAI's embedding models.
+
+**Create a default Model "intfloat/e5-small" with default parameters: {}**
+```python
+model = Model()
+```
+
+**Create a Model with custom parameters**
+```python
+model = Model(
+    name="hkunlp/instructor-base",
+    parameters={"instruction": "Represent the Wikipedia document for retrieval: "}    
+)
+```
+
+**Use an OpenAI model**
+```python
+model = pgml.Model(name="text-embedding-ada-002", source="openai")
+```
+
+### Splitters
+
+Splitters are used to split documents into chunks before embedding them. We support splitters found in [LangChain](https://www.langchain.com/).
+
+**Create a default Splitter "recursive_character" with default parameters: {}**
+```python
+splitter = Splitter()
+```
+
+**Create a Splitter with custom parameters**
+```python
+splitter = Splitter(
+    name="recursive_character", 
+    parameters={"chunk_size": 1500, "chunk_overlap": 40}
+)
+```
+
+### Adding Pipelines to a Collection 
+
+When adding a Pipeline to a collection it is required that Pipeline has a Model and Splitter.
+
+The first time a Pipeline is added to a Collection it will automatically chunk and embed any documents already in that Collection. 
 
 ```python
 model = Model()
@@ -212,33 +421,74 @@ pipeline = Pipeline("test_pipeline", model, splitter)
 await collection.add_pipeline(pipeline)
 ```
 
-This creates a new pipeline with the specified `Model` and `Splitter`. The pipelines do the heavy lifting automatically handling the chunking and embedding of documents.
+### Enabling full text search
 
-#### Upsert Documents
+Pipelines can take additional arguments enabling full text search. When full text search is enabled, in addition to automatically chunking and embedding, the Pipeline will create the necessary tsvectors to perform full text search.
 
-```python
-await collection.upsert_documents(documents)
-```
-
-The method is used to insert or update documents in a database table based on their ID, and text. All enabled pipelines automatically chunk and embed upserted documents.
-
-#### Vector Search
+For more information on full text search please see: [Postgres Full Text Search](https://www.postgresql.org/docs/15/textsearch.html).
 
 ```python
-results = await collection.query().vector_recall("Who won 20 grammy awards?", pipeline=pipeline).limit(2).fetch_all()
+model = Model()
+splitter = Splitter()
+pipeline = Pipeline("test_pipeline", model, splitter, {
+    "full_text_search": {
+        "active": True,
+        "configuration": "english"
+    }
+})
+await collection.add_pipeline(pipeline)
 ```
 
-The `query` method returns a flexible query builder for high performance filterable vector search.
+### Searching with Pipelines
 
-### Developer Setup
+Pipelines are a required argument when performing vector search. After a Pipeline has been added to a Collection, the Model and Splitter can be omitted when instantiating it.
+
+```python
+pipeline = Pipeline("test_pipeline")
+collection = Collection("test_collection")
+results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).fetch_all()    
+```
+
+### Enabling, Disabling, and Removing Pipelines
+
+Pipelines can be disabled or removed to prevent them from running automatically when documents are upserted. 
+
+**Disable a Pipeline**
+```python
+pipeline = Pipeline("test_pipeline")
+collection = Collection("test_collection")
+await collection.disable_pipeline(pipeline)
+```
+
+Disabling a Pipeline prevents it from running automatically, but leaves all chunks and embeddings already created by that Pipeline in the database.
+
+**Enable a Pipeline**
+```python
+pipeline = Pipeline("test_pipeline")
+collection = Collection("test_collection")
+await collection.enable_pipeline(pipeline)
+```
+
+Enabling a Pipeline will cause it to automatically run and chunk and embed all documents it may have missed while disabled.
+
+**Remove a Pipeline**
+```python
+pipeline = Pipeline("test_pipeline")
+collection = Collection("test_collection")
+await collection.remove_pipeline(pipeline)
+```
+
+Removing a Pipeline deletes it and all associated data from the database. Removed Pipelines cannot be re-enabled but can be recreated.
+
+## Developer Setup
 
 This Python library is generated from our core rust-sdk. Please check [rust-sdk documentation](../../README.md) for developer setup.
 
-### Roadmap
+## Roadmap
 
 - [x] Enable filters on document metadata in `vector_search`. [Issue](https://github.com/postgresml/postgresml/issues/663)
 - [x] `text_search` functionality on documents using Postgres text search. [Issue](https://github.com/postgresml/postgresml/issues/664)
-- [x] `hybrid_search` functionality that does a combination of `vector_search` and `text_search` in an order specified by the user. [Issue](https://github.com/postgresml/postgresml/issues/665)
+- [x] `hybrid_search` functionality that does a combination of `vector_search` and `text_search`. [Issue](https://github.com/postgresml/postgresml/issues/665)
 - [x] Ability to call and manage OpenAI embeddings for comparison purposes. [Issue](https://github.com/postgresml/postgresml/issues/666)
-- Save `vector_search` history for downstream monitoring of model performance. [Issue](https://github.com/postgresml/postgresml/issues/667)
-- Perform chunking on the DB with multiple langchain splitters. [Issue](https://github.com/postgresml/postgresml/issues/668)
+- [ ] Save `vector_search` history for downstream monitoring of model performance. [Issue](https://github.com/postgresml/postgresml/issues/667)
+- [ ] Perform chunking on the DB with multiple langchain splitters. [Issue](https://github.com/postgresml/postgresml/issues/668)
