@@ -7,12 +7,6 @@ jobs:
       matrix:
         os: ["windows-latest"]
         include:
-          - neon-out-name: "x86_64-unknown-linux-gnu-index.node"
-            os: "ubuntu-22.04"
-          - neon-out-name: "aarch64-unknown-linux-gnu-index.node"
-            os: "buildjet-4vcpu-ubuntu-2204-arm"
-          - neon-out-name: "x86_64-apple-darwin-index.node"
-            os: "macos-latest"
           - neon-out-name: "x86_64-pc-windows-gnu-index.node"
             os: "windows-latest"
     runs-on: ${{ matrix.os }}
@@ -30,7 +24,7 @@ jobs:
           command: version
       - name: Do build
         run: |
-          npm i 
+          npm i
           npm run build-release
           ls -R
       - name: Upload built .node file
