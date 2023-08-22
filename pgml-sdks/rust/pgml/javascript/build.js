@@ -26,6 +26,10 @@ let name = set_name(type, arch);
 let args = process.argv.slice(2); 
 let release = args.includes("--release");
 
+console.log(name)
+console.log(args)
+console.log(release)
+
 exec(
   `
   mkdir dist
