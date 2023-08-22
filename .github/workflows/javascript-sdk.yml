@@ -26,7 +26,6 @@ jobs:
         run: |
           npm i
           npm run build-release
-          ls -R
       - name: Upload built .node file
         uses: actions/upload-artifact@v3
         with:

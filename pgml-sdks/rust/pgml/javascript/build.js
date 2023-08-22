@@ -31,9 +31,7 @@ console.log(args)
 console.log(release)
 
 exec(
-  `
-  echo "HERE IS A TEST"
-  `,
+  `ls`,
   (err, stdout, stderr) => {
     if (err) {
       console.log("ERR:", err);
