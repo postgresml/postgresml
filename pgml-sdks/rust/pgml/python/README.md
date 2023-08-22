@@ -112,7 +112,7 @@ Continuing within `async def main():`
 
 Continuing with `async def main():`
 
-```
+```python
     # Prep documents for upserting
     data = load_dataset("squad", split="train")
     data = data.to_pandas()
@@ -168,7 +168,7 @@ python vector_search.py
 
 You should see the search results printed in the terminal. As you can see, our vector search engine found the right text chunk with the answer we are looking for.
 
-```
+```python
 [
     (
         0.8423336495860181,
@@ -388,7 +388,7 @@ model = Model(
 
 **Use an OpenAI model**
 ```python
-model = pgml.Model(name="text-embedding-ada-002", source="openai")
+model = Model(name="text-embedding-ada-002", source="openai")
 ```
 
 ### Splitters
@@ -490,5 +490,5 @@ This Python library is generated from our core rust-sdk. Please check [rust-sdk 
 - [x] `text_search` functionality on documents using Postgres text search. [Issue](https://github.com/postgresml/postgresml/issues/664)
 - [x] `hybrid_search` functionality that does a combination of `vector_search` and `text_search`. [Issue](https://github.com/postgresml/postgresml/issues/665)
 - [x] Ability to call and manage OpenAI embeddings for comparison purposes. [Issue](https://github.com/postgresml/postgresml/issues/666)
+- [x] Perform chunking on the DB with multiple langchain splitters. [Issue](https://github.com/postgresml/postgresml/issues/668)
 - [ ] Save `vector_search` history for downstream monitoring of model performance. [Issue](https://github.com/postgresml/postgresml/issues/667)
-- [ ] Perform chunking on the DB with multiple langchain splitters. [Issue](https://github.com/postgresml/postgresml/issues/668)
