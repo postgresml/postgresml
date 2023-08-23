@@ -6,6 +6,7 @@ use serde::Deserialize;
 pub enum Runtime {
     python,
     rust,
+    openai,
 }
 
 impl std::str::FromStr for Runtime {
@@ -15,6 +16,7 @@ impl std::str::FromStr for Runtime {
         match input {
             "python" => Ok(Runtime::python),
             "rust" => Ok(Runtime::rust),
+            "openai" => Ok(Runtime::openai),
             _ => Err(()),
         }
     }
@@ -25,6 +27,7 @@ impl std::string::ToString for Runtime {
         match *self {
             Runtime::python => "python".to_string(),
             Runtime::rust => "rust".to_string(),
+            Runtime::openai => "openai".to_string(),
         }
     }
 }

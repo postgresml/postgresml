@@ -82,7 +82,7 @@ SELECT pgml.auto_updated_at('pgml.snapshots');
 CREATE TABLE IF NOT EXISTS pgml.models(
 	id BIGSERIAL PRIMARY KEY,
 	project_id BIGINT NOT NULL,
-	snapshot_id BIGINT NOT NULL,
+	snapshot_id BIGINT,
 	num_features INT NOT NULL,
 	algorithm TEXT NOT NULL,
 	runtime pgml.runtime DEFAULT 'python'::pgml.runtime,
