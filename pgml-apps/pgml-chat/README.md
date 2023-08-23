@@ -26,7 +26,7 @@ pip install pgml-chat
 2. Download `.env.template` file from PostgresML Github repository.
 
 ```bash
-wget https://github.com/postgresml/postgresml/blob/master/pgml-apps/pgml-chat/.env.template 
+wget https://raw.githubusercontent.com/postgresml/postgresml/master/pgml-apps/pgml-chat/.env.template
 ```
 3. Copy the template file to `.env`
 

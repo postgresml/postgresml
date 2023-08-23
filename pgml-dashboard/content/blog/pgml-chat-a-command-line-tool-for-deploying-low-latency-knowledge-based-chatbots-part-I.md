@@ -110,7 +110,7 @@ pip install pgml-chat
 !!! code_block
 
 ```bash
-wget https://github.com/postgresml/postgresml/blob/master/pgml-apps/pgml-chat/.env.template 
+wget https://raw.githubusercontent.com/postgresml/postgresml/master/pgml-apps/pgml-chat/.env.template
 cp .env.template .env
 ```
 
