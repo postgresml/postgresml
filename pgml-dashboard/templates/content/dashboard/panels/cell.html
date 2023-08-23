@@ -1,85 +1,86 @@
 <turbo-frame id="cell_<%= cell.id %>">
   <% if cell.deleted_at.is_some()  { %>
   <% } else { %>
-  <div data-controller="notebook-cell" class="notebook-cell <%= cell.cell_type_display() %>" data-action="click->notebook#selectCell" data-notebook-target="cell">
 
-
-    <!-- Edit -->
-
-    <!-- Display -->
-    <div class="card mb-3 select-hover <% if selected { %> active <% } %>">
-      <% if !edit && !cell.code() { %>
-      <a href="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit" class="stretched-link"></a>
-      <% } %>
-      <div class="card-body">
-        <div class="d-flex">
-          <div class="pe-4"><%= cell.cell_number %></div>
-          <div class="flex-grow-1">
-            <% if cell.code() || edit { %>
-              <textarea name="contents" data-notebook-cell-target="editor" data-type="<%= cell.cell_type_display() %>"><%= cell.contents %></textarea>
-            <% } else if cell.html().is_some() { %>
-            <div class="notebook-rendering" data-turbo="false">
-              <%- cell.html().unwrap() %>
-            </div>
-            <% } %>
-          </div>
-        </div>
-        
-        <!-- <div class="notebook-buttons">
-          <% if cell.code() && !edit { %>
-          <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/play" method="post" data-action="notebook-cell#play">
-            <button class="btn btn-tertiary fs-3" type="submit" title="Execute cell" data-notebook-cell-target="play">
-              <span class="material-symbols-outlined">
-                play_arrow
-              </span>
-            </button>
+  <!-- Display -->
+  <div class="card mb-3 select-hover <% if selected { %> active <% } %>" data-controller="notebook-cell" data-action="click->notebook#selectCell" data-notebook-target="cell" data-cell-id="<%= cell.id %>">
+    <% if !edit && !cell.code() { %>
+    <a
+      href="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit"
+      class="stretched-link"
+    ></a>
+    <% } %>
+    <div class="card-body">
+      <div class="d-flex w-100">
+        <div class="pe-4"><%= cell.cell_number %></div>
+        <div class="flex-grow-1 overflow-x-hidden">
+          <% if cell.code() || edit { %>
+          <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit" method="post" data-cell-play-id="<%= cell.id %>">
+            <textarea name="contents" data-notebook-cell-target="editor" data-type="<%= cell.cell_type_display() %>"><%= cell.contents %></textarea>
+            <input type="hidden" name="cell_type" value="<%= cell.cell_type %>">
           </form>
           <% } %>
-          <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/remove" method="post">
-            <button class="btn btn-tertiary fs-3" type="submit" title="Delete cell">
-              <span class="material-symbols-outlined">delete_forever</span>
-            </button>
-          </form>
-          <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit?bust_cache=<%= bust_cache %>" method="get">
-            <button class="btn btn-tertiary fs-3" type="submit" title="Edit cell">
-              <span class="material-symbols-outlined">edit</span>
-            </button>
-          </form>
-        </div> -->
-      </div>
-      <% if cell.execution_time.is_some() { %>
-      <!-- <div class="notebook-duration">
-        <div class="markdown-body">
-          <div class="flex flex-row-reverse">
-            <code>Time: <%= crate::utils::time::format_microseconds(cell.execution_time.unwrap().microseconds as f64) %></code>
+
+          <% if cell.code() && cell.html().is_some() || cell.html().is_some() && !cell.code() && !edit { %>
+          <div class="my-3 d-flex justify-content-center align-items-center flex-column overflow-x-scroll w-100">
+            <%- cell.html().unwrap() %>
           </div>
+          <% } %>
         </div>
-      </div> -->
-      <% } %>
-      <!-- <div class="notebook-cell-edit">
-        <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit" method="post" data-notebook-cell-target="form" data-action="notebook-cell#play">
-          <div class="flex">
-            <div class="flex-grow margin-right-1">
-              <textarea name="contents" data-notebook-cell-target="editor"><%= cell.contents %></textarea>
-            </div>
-            <div class="notebook-buttons flex-end">
-              <select name="cell_type" data-action="notebook-cell#selectCellType" title="Select cell type" data-notebook-cell-target="type">
-                <option value="3" <% if cell.cell_type == 3 { %>selected<% } %>>SQL</option>
-                <option value="1" <% if cell.cell_type == 1 { %>selected<% } %>>Markdown</option>
-              </select>
-              <button class="btn btn-tertiary fs-3" type="submit" title="Execute cell" data-notebook-cell-target="play">
-                <span class="material-symbols-outlined">play_arrow</span>
-              </button>
-               <button class="btn btn-tertiary fs-3" title="Cancel edit" data-action="notebook-cell#cancelEdit">
-                <span class="material-symbols-outlined">cancel</span>
-              </button>
-            </div>
-          </div>
+      </div>
+      <a class="hidden" href="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>" data-notebook-target="loadCell"></a>
+
+      
+      <!-- <div class="notebook-buttons">
+        <% if cell.code() && !edit { %>
+        <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/play" method="post" data-action="notebook-cell#play">
+          <button class="btn btn-tertiary fs-3" type="submit" title="Execute cell" data-notebook-cell-target="play">
+            <span class="material-symbols-outlined">
+              play_arrow
+            </span>
+          </button>
         </form>
-        <form class="hidden" action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>?bust_cache=<%= bust_cache %>" method="get" data-notebook-cell-target="cancelEdit">
+        <% } %>
+        <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/remove" method="post">
+          <button class="btn btn-tertiary fs-3" type="submit" title="Delete cell">
+            <span class="material-symbols-outlined">delete_forever</span>
+          </button>
+        </form>
+        <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit?bust_cache=<%= bust_cache %>" method="get">
+          <button class="btn btn-tertiary fs-3" type="submit" title="Edit cell">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
         </form>
       </div> -->
     </div>
+    <% if cell.execution_time.is_some() { %>
+    <div class="d-flex justify-content-end p-2">
+      <code><%= crate::utils::time::format_microseconds(cell.execution_time.unwrap().microseconds as f64) %></code>
+    </div>
+    <% } %>
+    <!-- <div class="notebook-cell-edit">
+      <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit" method="post" data-notebook-cell-target="form" data-action="notebook-cell#play">
+        <div class="flex">
+          <div class="flex-grow margin-right-1">
+            <textarea name="contents" data-notebook-cell-target="editor"><%= cell.contents %></textarea>
+          </div>
+          <div class="notebook-buttons flex-end">
+            <select name="cell_type" data-action="notebook-cell#selectCellType" title="Select cell type" data-notebook-cell-target="type">
+              <option value="3" <% if cell.cell_type == 3 { %>selected<% } %>>SQL</option>
+              <option value="1" <% if cell.cell_type == 1 { %>selected<% } %>>Markdown</option>
+            </select>
+            <button class="btn btn-tertiary fs-3" type="submit" title="Execute cell" data-notebook-cell-target="play">
+              <span class="material-symbols-outlined">play_arrow</span>
+            </button>
+             <button class="btn btn-tertiary fs-3" title="Cancel edit" data-action="notebook-cell#cancelEdit">
+              <span class="material-symbols-outlined">cancel</span>
+            </button>
+          </div>
+        </div>
+      </form>
+      <form class="hidden" action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>?bust_cache=<%= bust_cache %>" method="get" data-notebook-cell-target="cancelEdit">
+      </form>
+    </div> -->
   </div>
   <% } %>
 </turbo-frame>

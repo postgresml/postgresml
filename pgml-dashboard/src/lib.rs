@@ -20,8 +20,9 @@ pub mod utils;
 use guards::{Cluster, ConnectedCluster};
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
-    components::{StaticNav, NavLink}, DeploymentsTab, Layout, ModelsTab, NotebooksTab, NotebookTab, ProjectsTab,
-    SnapshotsTab, UploaderTab,
+    components::{NavLink, StaticNav},
+    DeploymentsTab, Layout, ModelsTab, NotebookTab, NotebooksTab, ProjectsTab, SnapshotsTab,
+    UploaderTab,
 };
 use utils::tabs;
 
@@ -70,7 +71,10 @@ pub async fn project_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<Respo
 }
 
 #[get("/notebooks?<new>")]
-pub async fn notebook_index(cluster: ConnectedCluster<'_>, new: Option<&str>) -> Result<ResponseOk, Error> {
+pub async fn notebook_index(
+    cluster: ConnectedCluster<'_>,
+    new: Option<&str>,
+) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
         templates::Notebooks {
             notebooks: models::Notebook::all(&cluster.pool()).await?,
@@ -88,13 +92,7 @@ pub async fn notebook_create(
 ) -> Result<Redirect, Error> {
     let notebook = crate::models::Notebook::create(cluster.pool(), data.name).await?;
 
-    models::Cell::create(
-        cluster.pool(),
-        &notebook,
-        models::CellType::Sql as i32,
-        "",
-    )
-    .await?;
+    models::Cell::create(cluster.pool(), &notebook, models::CellType::Sql as i32, "").await?;
 
     Ok(Redirect::to(format!(
         "/dashboard?tab=Notebook&id={}",
@@ -111,10 +109,9 @@ pub async fn notebook_get(
     let cells = notebook.cells(cluster.pool()).await?;
 
     Ok(ResponseOk(
-        templates::Notebook {
-            cells,
-            notebook,
-        }.render_once().unwrap(),
+        templates::Notebook { cells, notebook }
+            .render_once()
+            .unwrap(),
     ))
 }
 
@@ -490,32 +487,25 @@ pub async fn dashboard(
 ) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
 
-    let mut breadcrumbs = vec![
-        NavLink::new(
-            "Dashboard",
-            "/dashboard",
-        )];
+    let mut breadcrumbs = vec![NavLink::new("Dashboard", "/dashboard")];
 
     let tab = tab.unwrap_or("Notebooks");
 
     match tab {
         "Notebooks" => {
-            breadcrumbs.push(NavLink::new(
-                "Notebooks",
-                "/dashboard?tab=Notebooks",
-            ).active());
-        },
+            breadcrumbs.push(NavLink::new("Notebooks", "/dashboard?tab=Notebooks").active());
+        }
 
         "Notebook" => {
             let notebook = models::Notebook::get_by_id(cluster.pool(), id.unwrap()).await?;
-            breadcrumbs.push(NavLink::new(
-                "Notebooks",
-                "/dashboard?tab=Notebooks"));
+            breadcrumbs.push(NavLink::new("Notebooks", "/dashboard?tab=Notebooks"));
 
             breadcrumbs.push(
                 NavLink::new(
-                    notebook.name.as_str(), &format!("/dashboard?tab=Notebook&id={}", notebook.id))
-                .active()
+                    notebook.name.as_str(),
+                    &format!("/dashboard?tab=Notebook&id={}", notebook.id),
+                )
+                .active(),
             );
         }
 
@@ -525,22 +515,18 @@ pub async fn dashboard(
     layout.breadcrumbs(breadcrumbs);
 
     let tabs = match tab {
-        "Notebooks" => vec![
-        tabs::Tab {
+        "Notebooks" => vec![tabs::Tab {
             name: "Notebooks",
             content: NotebooksTab { notebook_id: id }.render_once().unwrap(),
-        },],
-        "Projects" => vec![
-            tabs::Tab {
-                name: "Projects",
-                content: ProjectsTab { project_id: id }.render_once().unwrap(),
-        },],
-        "Notebook" => vec![
-            tabs::Tab {
-                name: "Notebook",
-                content: NotebookTab { id: id.unwrap() }.render_once().unwrap(),
-            },
-        ],
+        }],
+        "Projects" => vec![tabs::Tab {
+            name: "Projects",
+            content: ProjectsTab { project_id: id }.render_once().unwrap(),
+        }],
+        "Notebook" => vec![tabs::Tab {
+            name: "Notebook",
+            content: NotebookTab { id: id.unwrap() }.render_once().unwrap(),
+        }],
         _ => todo!(),
     };
 

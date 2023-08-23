@@ -92,6 +92,10 @@
     &:active {
         @include bold_by_shadow(var(--bs-btn-active-color));
     }
+
+    &:disabled {
+        --bs-btn-disabled-border-color: transparent;
+    }
 }
 
 .btn-primary-web-app {
