@@ -1,16 +1,9 @@
 // TODO: Use header classes and slim down card-title class. 
 .card {
-    --bs-card-spacer-y: 32px;
-    --bs-card-spacer-x: 32px;
-    
     backdrop-filter: blur(8px);
 
     &.select-hover {
-        &:hover {
-            --bs-card-border-color: #{$purple};
-        }
-
-        &.active {
+        &:hover, &:focus, &.active {
             --bs-card-border-color: #{$purple};
         }
     }

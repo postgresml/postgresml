@@ -268,14 +268,14 @@
 }
 
 .input-group {
-    border-radius: $input-border-radius;
+    border-radius: #{$input-border-radius};
     border: 2px solid transparent;
     &:focus-within {
         border: 2px solid #{$input-focus-border-color};
     }
 
     transition: $input-transition;
-    background-color: $input-bg;
+    background-color: #{$input-bg};
     padding: 16px 14px;
 
     .form-control[type=text] {
@@ -286,4 +286,11 @@
         border: none;
         padding: 0px 6px;
     }
+}
+
+.form-control.borderless {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    caret-color: #{$input-color};
 }

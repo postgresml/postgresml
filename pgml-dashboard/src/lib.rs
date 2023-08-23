@@ -20,7 +20,7 @@ pub mod utils;
 use guards::{Cluster, ConnectedCluster};
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
-    components::StaticNav, DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab,
+    components::{StaticNav, NavLink}, DeploymentsTab, Layout, ModelsTab, NotebooksTab, NotebookTab, ProjectsTab,
     SnapshotsTab, UploaderTab,
 };
 use utils::tabs;
@@ -69,11 +69,12 @@ pub async fn project_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<Respo
     ))
 }
 
-#[get("/notebooks")]
-pub async fn notebook_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+#[get("/notebooks?<new>")]
+pub async fn notebook_index(cluster: ConnectedCluster<'_>, new: Option<&str>) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
         templates::Notebooks {
             notebooks: models::Notebook::all(&cluster.pool()).await?,
+            new: new.is_some(),
         }
         .render_once()
         .unwrap(),
@@ -87,8 +88,16 @@ pub async fn notebook_create(
 ) -> Result<Redirect, Error> {
     let notebook = crate::models::Notebook::create(cluster.pool(), data.name).await?;
 
+    models::Cell::create(
+        cluster.pool(),
+        &notebook,
+        models::CellType::Sql as i32,
+        "",
+    )
+    .await?;
+
     Ok(Redirect::to(format!(
-        "/dashboard?tab=Notebooks&notebook_id={}",
+        "/dashboard?tab=Notebook&id={}",
         notebook.id
     )))
 }
@@ -99,13 +108,14 @@ pub async fn notebook_get(
     notebook_id: i64,
 ) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
+    let cells = notebook.cells(cluster.pool()).await?;
 
-    Ok(ResponseOk(Layout::new("Notebooks").render(
+    Ok(ResponseOk(
         templates::Notebook {
-            cells: notebook.cells(cluster.pool()).await?,
+            cells,
             notebook,
-        },
-    )))
+        }.render_once().unwrap(),
+    ))
 }
 
 #[post("/notebooks/<notebook_id>/reset")]
@@ -224,7 +234,7 @@ pub async fn cell_trigger_edit(
         templates::Cell {
             cell,
             notebook,
-            selected: false,
+            selected: true,
             edit: true,
             bust_cache,
         }
@@ -471,52 +481,97 @@ pub async fn uploaded_index(cluster: ConnectedCluster<'_>, table_name: &str) -> 
     )
 }
 
-#[get("/?<tab>&<notebook_id>&<model_id>&<project_id>&<snapshot_id>&<deployment_id>&<table_name>")]
+#[get("/?<tab>&<id>&<table_name>")]
 pub async fn dashboard(
-    cluster: &Cluster,
+    cluster: ConnectedCluster<'_>,
     tab: Option<&str>,
-    notebook_id: Option<i64>,
-    model_id: Option<i64>,
-    project_id: Option<i64>,
-    snapshot_id: Option<i64>,
-    deployment_id: Option<i64>,
+    id: Option<i64>,
     table_name: Option<String>,
 ) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.context);
-    layout.breadcrumbs(vec![crate::templates::components::NavLink::new(
-        "Dashboard",
-        "/dashboard",
-    )
-    .active()]);
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
 
-    let all_tabs = vec![
+    let mut breadcrumbs = vec![
+        NavLink::new(
+            "Dashboard",
+            "/dashboard",
+        )];
+
+    let tab = tab.unwrap_or("Notebooks");
+
+    match tab {
+        "Notebooks" => {
+            breadcrumbs.push(NavLink::new(
+                "Notebooks",
+                "/dashboard?tab=Notebooks",
+            ).active());
+        },
+
+        "Notebook" => {
+            let notebook = models::Notebook::get_by_id(cluster.pool(), id.unwrap()).await?;
+            breadcrumbs.push(NavLink::new(
+                "Notebooks",
+                "/dashboard?tab=Notebooks"));
+
+            breadcrumbs.push(
+                NavLink::new(
+                    notebook.name.as_str(), &format!("/dashboard?tab=Notebook&id={}", notebook.id))
+                .active()
+            );
+        }
+
+        _ => (),
+    };
+
+    layout.breadcrumbs(breadcrumbs);
+
+    let tabs = match tab {
+        "Notebooks" => vec![
         tabs::Tab {
             name: "Notebooks",
-            content: NotebooksTab { notebook_id }.render_once().unwrap(),
-        },
-        tabs::Tab {
-            name: "Projects",
-            content: ProjectsTab { project_id }.render_once().unwrap(),
-        },
-        tabs::Tab {
-            name: "Models",
-            content: ModelsTab { model_id }.render_once().unwrap(),
-        },
-        tabs::Tab {
-            name: "Deployments",
-            content: DeploymentsTab { deployment_id }.render_once().unwrap(),
-        },
-        tabs::Tab {
-            name: "Snapshots",
-            content: SnapshotsTab { snapshot_id }.render_once().unwrap(),
-        },
-        tabs::Tab {
-            name: "Upload_Data",
-            content: UploaderTab { table_name }.render_once().unwrap(),
-        },
-    ];
+            content: NotebooksTab { notebook_id: id }.render_once().unwrap(),
+        },],
+        "Projects" => vec![
+            tabs::Tab {
+                name: "Projects",
+                content: ProjectsTab { project_id: id }.render_once().unwrap(),
+        },],
+        "Notebook" => vec![
+            tabs::Tab {
+                name: "Notebook",
+                content: NotebookTab { id: id.unwrap() }.render_once().unwrap(),
+            },
+        ],
+        _ => todo!(),
+    };
 
-    let nav_tabs = tabs::Tabs::new(all_tabs, Some("Notebooks"), tab)?;
+    // let all_tabs = vec![
+    //     tabs::Tab {
+    //         name: "Notebooks",
+    //         content: NotebooksTab { notebook_id }.render_once().unwrap(),
+    //     },
+    //     tabs::Tab {
+    //         name: "Projects",
+    //         content: ProjectsTab { project_id }.render_once().unwrap(),
+    //     },
+    //     tabs::Tab {
+    //         name: "Models",
+    //         content: ModelsTab { model_id }.render_once().unwrap(),
+    //     },
+    //     tabs::Tab {
+    //         name: "Deployments",
+    //         content: DeploymentsTab { deployment_id }.render_once().unwrap(),
+    //     },
+    //     tabs::Tab {
+    //         name: "Snapshots",
+    //         content: SnapshotsTab { snapshot_id }.render_once().unwrap(),
+    //     },
+    //     tabs::Tab {
+    //         name: "Upload_Data",
+    //         content: UploaderTab { table_name }.render_once().unwrap(),
+    //     },
+    // ];
+
+    let nav_tabs = tabs::Tabs::new(tabs, Some("Notebooks"), Some(tab))?;
 
     Ok(ResponseOk(
         layout.render(templates::Dashboard { tabs: nav_tabs }),

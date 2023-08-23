@@ -164,7 +164,7 @@ impl std::fmt::Display for CellType {
     }
 }
 
-#[derive(FromRow, Debug, Clone)]
+#[derive(FromRow, Debug, Clone, Default)]
 pub struct Cell {
     pub id: i64,
     pub notebook_id: i64,

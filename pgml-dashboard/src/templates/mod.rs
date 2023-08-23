@@ -185,6 +185,7 @@ pub struct Projects {
 #[template(path = "content/dashboard/panels/notebooks.html")]
 pub struct Notebooks {
     pub notebooks: Vec<models::Notebook>,
+    pub new: bool,
 }
 
 #[derive(TemplateOnce)]
@@ -462,6 +463,12 @@ pub struct Dashboard<'a> {
 #[template(path = "content/dashboard/tabs/notebooks_tab.html")]
 pub struct NotebooksTab {
     pub notebook_id: Option<i64>,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/notebook_tab.html")]
+pub struct NotebookTab {
+    pub id: i64,
 }
 
 #[derive(TemplateOnce)]

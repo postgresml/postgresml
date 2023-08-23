@@ -5,10 +5,15 @@ export default class extends Controller {
     'renameNotebookForm',
     'notebookName',
     'cell',
+    'scroller',
   ];
 
   connect() {
     document.addEventListener('keyup', this.executeSelectedCell.bind(this))
+    const rect = this.scrollerTarget.getBoundingClientRect()
+    const innerHeight = window.innerHeight
+
+    this.scrollerTarget.style.maxHeight = `${innerHeight - rect.top - 10}px`
   }
 
   disconnect() {

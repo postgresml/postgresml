@@ -12,21 +12,28 @@ export default class extends Controller {
 
   connect() {
     // Enable CodeMirror editor if we are editing.
-    if (this.hasEditorTarget && this.hasFormTarget && !this.codeMirror) {
+    if (this.hasEditorTarget && !this.codeMirror) {
       this.initCodeMirrorOnTarget(this.editorTarget)
     }
   }
 
   // Enable CodeMirror on target.
   initCodeMirrorOnTarget(target) {
+    let mode = 'sql'
+
+    if (target.dataset.type === 'markdown') {
+      mode = 'gfm'
+    }
+
     this.codeMirror = CodeMirror.fromTextArea(target, {
       lineWrapping: true,
       matchBrackets: true,
-      mode: 'sql',
+      mode,
       scrollbarStyle: 'null',
+      lineNumbers: mode === 'sql',
     })
 
-    this.codeMirror.setSize('100%', 250)
+    this.codeMirror.setSize('100%', 'auto')
 
     const keyMap = {
       'Ctrl-Enter': () => this.formTarget.requestSubmit(),
@@ -42,13 +49,13 @@ export default class extends Controller {
 
   // Change syntax highlighting.
   selectCellType(event) {
-    const value = this.typeTarget.options[this.typeTarget.selectedIndex].value
+    // const value = this.typeTarget.options[this.typeTarget.selectedIndex].value
 
-    if (value == 3) {
-      this.codeMirror.setOption('mode', 'sql')
-    } else {
-      this.codeMirror.setOption('mode', 'gfm')
-    }
+    // if (value == 3) {
+    //   this.codeMirror.setOption('mode', 'sql')
+    // } else {
+    //   this.codeMirror.setOption('mode', 'gfm')
+    // }
   }
 
   // Prevent the page from scrolling up
