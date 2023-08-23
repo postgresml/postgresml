@@ -31,6 +31,7 @@ let shell_args =
 
 exec(
   `
+  rm -r dist;
   mkdir dist;
   npx cargo-cp-artifact -nc "${name}" -- cargo build --message-format=json-render-diagnostics -F javascript ${release ? "--release" : ""};
   mv ${name} dist;
