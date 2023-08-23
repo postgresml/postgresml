@@ -115,6 +115,10 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Result<Arc<Box<dyn 
         Runtime::python => {
             anyhow::bail!("Python runtime not supported, recompile with `--features python`")
         }
+
+        Runtime::openai => {
+            error!("OpenAI runtime is not supported for training or inference");
+        }
     };
 
     // Cache the estimator in process memory.

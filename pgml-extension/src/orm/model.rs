@@ -306,6 +306,10 @@ impl Model {
                 .unwrap();
 
                 let bindings: Box<dyn Bindings> = match runtime {
+                    Runtime::openai => {
+                        error!("OpenAI runtime is not supported for training or inference");
+                    }
+
                     Runtime::rust => {
                         match algorithm {
                             Algorithm::xgboost => {
@@ -396,6 +400,10 @@ impl Model {
 
     fn get_fit_function(&self) -> crate::bindings::Fit {
         match self.runtime {
+            Runtime::openai => {
+                error!("OpenAI runtime is not supported for training or inference");
+            }
+
             Runtime::rust => match self.project.task {
                 Task::regression => match self.algorithm {
                     Algorithm::xgboost => xgboost::fit_regression,
