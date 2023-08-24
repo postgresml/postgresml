@@ -73,8 +73,26 @@ export default class extends Controller {
   }
 
   playAll() {
-    const forms = document.querySelectorAll('form[data-form-role="play"]')
-    forms.forEach(form => form.requestSubmit())
+    const forms = this.scrollerTarget.querySelectorAll(`form[data-cell-play-id]`)
+    this.playCells([...forms])
+  }
+
+  playCells(forms) {
+    const form = forms.shift()
+    const cellType = form.querySelector('input[name="cell_type"]').value
+    const contents = form.querySelector('textarea[name="contents"]').value
+    const body = `cell_type=${cellType}&contents=${encodeURIComponent(contents)}`
+    fetch(form.action, {
+      method: 'POST',
+      body,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+    }).then(response => {
+      if (forms.length > 0) {
+        this.playCells(forms)
+      }
+    })
   }
 
   // Check that the cell finished running.

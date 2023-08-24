@@ -74,11 +74,6 @@
   
       <% for cell in cells {
         let edit = false;
-        let bust_cache = std::time::SystemTime::now()
-            .duration_since(std::time::SystemTime::UNIX_EPOCH)
-            .unwrap_or(std::time::Duration::from_millis(1000))
-            .as_millis()
-            .to_string();
         let selected = false;
     
         include!("cell.html");
@@ -88,7 +83,7 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-body">
-            <div class="w-100 h-100 mt-5 py-5 px-3 d-flex flex-column justify-content-center align-items-center border-white border-1" style="background: black;">
+            <div class="w-100 h-100 mt-5 py-5 px-3 d-flex flex-column justify-content-center align-items-center" style="background: black; border: 2px solid white; border-radius: 12px;">
                 <p class="mb-4 fw-semibold">Are you sure you want to delete this cell?</p>
 
                 <div class="d-flex justify-content-center align-items-center gap-2">

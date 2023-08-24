@@ -161,14 +161,14 @@ pub async fn notebook_reorder(
     notebook_id: i64,
     cells: Json<forms::Reorder>,
 ) -> Result<Redirect, Error> {
-    let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
+    let _notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
 
     let pool = cluster.pool();
     let mut transaction = pool.begin().await?;
 
     // Super bad n+1, but it's ok for now?
     for (idx, cell_id) in cells.cells.iter().enumerate() {
-        let mut cell = models::Cell::get_by_id(&mut transaction, *cell_id).await?;
+        let cell = models::Cell::get_by_id(&mut transaction, *cell_id).await?;
         cell.reorder(&mut transaction, idx as i32 + 1).await?;
     }
 
@@ -189,18 +189,12 @@ pub async fn cell_get(
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
-    let bust_cache = std::time::SystemTime::now()
-        .duration_since(std::time::SystemTime::UNIX_EPOCH)?
-        .as_millis()
-        .to_string();
-
     Ok(ResponseOk(
         templates::Cell {
             cell,
             notebook,
             selected: false,
             edit: false,
-            bust_cache,
         }
         .render_once()
         .unwrap(),
@@ -239,18 +233,12 @@ pub async fn cell_edit(
     .await?;
     cell.render(cluster.pool()).await?;
 
-    let bust_cache = std::time::SystemTime::now()
-        .duration_since(std::time::SystemTime::UNIX_EPOCH)?
-        .as_millis()
-        .to_string();
-
     Ok(ResponseOk(
         templates::Cell {
             cell,
             notebook,
             selected: false,
             edit: false,
-            bust_cache,
         }
         .render_once()
         .unwrap(),
@@ -265,10 +253,6 @@ pub async fn cell_trigger_edit(
 ) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
-    let bust_cache = std::time::SystemTime::now()
-        .duration_since(std::time::SystemTime::UNIX_EPOCH)?
-        .as_millis()
-        .to_string();
 
     Ok(ResponseOk(
         templates::Cell {
@@ -276,7 +260,6 @@ pub async fn cell_trigger_edit(
             notebook,
             selected: true,
             edit: true,
-            bust_cache,
         }
         .render_once()
         .unwrap(),
@@ -292,10 +275,6 @@ pub async fn cell_play(
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let mut cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     cell.render(cluster.pool()).await?;
-    let bust_cache = std::time::SystemTime::now()
-        .duration_since(std::time::SystemTime::UNIX_EPOCH)?
-        .as_millis()
-        .to_string();
 
     Ok(ResponseOk(
         templates::Cell {
@@ -303,7 +282,6 @@ pub async fn cell_play(
             notebook,
             selected: true,
             edit: false,
-            bust_cache,
         }
         .render_once()
         .unwrap(),
@@ -506,7 +484,6 @@ pub async fn uploaded_index(cluster: ConnectedCluster<'_>, table_name: &str) -> 
     let sql = templates::Sql::new(
         cluster.pool(),
         &format!("SELECT * FROM {} LIMIT 10", table_name),
-        true,
     )
     .await
     .unwrap();
@@ -560,7 +537,7 @@ pub async fn dashboard(
     let tabs = match tab {
         "Notebooks" => vec![tabs::Tab {
             name: "Notebooks",
-            content: NotebooksTab { notebook_id: id }.render_once().unwrap(),
+            content: NotebooksTab {}.render_once().unwrap(),
         }],
         "Projects" => vec![tabs::Tab {
             name: "Projects",

@@ -53,11 +53,18 @@ impl Default for Cluster {
                 },
                 account_management_nav: StaticNav::default(),
                 upper_left_nav: StaticNav {
-                    links: vec![StaticNavLink::new(
-                        "Dashboard".to_string(),
-                        "/dashboard".to_string(),
-                    )
-                    .icon("thumbnail_bar")],
+                    links: vec![
+                        StaticNavLink::new(
+                            "Notebooks".to_string(),
+                            "/dashboard?tab=Notebooks".to_string(),
+                        )
+                        .icon("thumbnail_bar"),
+                        StaticNavLink::new(
+                            "Projects".to_string(),
+                            "/dashboard?tab=Projects".to_string(),
+                        )
+                        .icon("thumbnail_bar"),
+                    ],
                 },
                 lower_left_nav: StaticNav::default(),
             },

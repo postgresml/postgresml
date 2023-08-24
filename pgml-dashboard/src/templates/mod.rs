@@ -202,7 +202,6 @@ pub struct Cell {
     pub cell: models::Cell,
     pub edit: bool,
     pub selected: bool,
-    pub bust_cache: String,
 }
 
 #[derive(TemplateOnce)]
@@ -219,15 +218,10 @@ pub struct Sql {
     pub columns: Vec<String>,
     pub rows: Vec<Vec<String>>,
     pub execution_duration: std::time::Duration,
-    pub render_execution_duration: bool,
 }
 
 impl Sql {
-    pub async fn new(
-        pool: &PgPool,
-        query: &str,
-        render_execution_duration: bool,
-    ) -> anyhow::Result<Sql> {
+    pub async fn new(pool: &PgPool, query: &str) -> anyhow::Result<Sql> {
         let prepared_stmt = pool.prepare(query).await?;
         let cols = prepared_stmt.columns();
 
@@ -374,7 +368,6 @@ impl Sql {
             columns,
             rows,
             execution_duration,
-            render_execution_duration,
         })
     }
 }
@@ -461,9 +454,7 @@ pub struct Dashboard<'a> {
 }
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/notebooks_tab.html")]
-pub struct NotebooksTab {
-    pub notebook_id: Option<i64>,
-}
+pub struct NotebooksTab;
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/notebook_tab.html")]

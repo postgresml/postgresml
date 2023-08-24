@@ -35,6 +35,12 @@
     }
 }
 
+.sortable-drag {
+    .card {
+        background: #{$gray-900};
+    }
+}
+
 .generic-card {
     @extend .card, .card-light;
 

@@ -288,7 +288,7 @@ impl Cell {
     }
 
     pub async fn reorder(
-        &self,
+        self,
         pool: impl sqlx::PgExecutor<'_>,
         cell_number: i32,
     ) -> anyhow::Result<Cell> {
@@ -346,17 +346,10 @@ impl Cell {
                     .collect();
                 let mut rendering = String::new();
                 let mut total_execution_duration = std::time::Duration::default();
-                let render_individual_execution_duration = queries.len() > 1;
 
                 for query in queries {
                     let query = self.tag() + query;
-                    let result = match templates::Sql::new(
-                        pool,
-                        &query,
-                        render_individual_execution_duration,
-                    )
-                    .await
-                    {
+                    let result = match templates::Sql::new(pool, &query).await {
                         Ok(sql) => {
                             total_execution_duration += sql.execution_duration;
                             sql.render_once()?
