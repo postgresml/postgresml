@@ -5,7 +5,7 @@ use sqlx::FromRow;
 
 use crate::types::{DateTime, Json};
 
-/// A pipeline
+// A pipeline
 #[enum_def]
 #[derive(FromRow)]
 pub struct Pipeline {
@@ -18,7 +18,7 @@ pub struct Pipeline {
     pub parameters: Json,
 }
 
-/// A model used to perform some task
+// A model used to perform some task
 #[enum_def]
 #[derive(FromRow)]
 pub struct Model {
@@ -28,7 +28,7 @@ pub struct Model {
     pub hyperparams: Json,
 }
 
-/// A text splitter
+// A text splitter
 #[enum_def]
 #[derive(FromRow)]
 pub struct Splitter {
@@ -38,7 +38,7 @@ pub struct Splitter {
     pub parameters: Json,
 }
 
-/// A pipeline with its model and splitter
+// A pipeline with its model and splitter
 #[derive(FromRow, Clone)]
 pub struct PipelineWithModelAndSplitter {
     pub pipeline_id: i64,
@@ -56,7 +56,7 @@ pub struct PipelineWithModelAndSplitter {
     pub splitter_parameters: Json,
 }
 
-/// A document
+// A document
 #[enum_def]
 #[derive(FromRow, Serialize)]
 pub struct Document {
@@ -69,7 +69,7 @@ pub struct Document {
     pub text: String,
 }
 
-/// A collection of documents
+// A collection of documents
 #[enum_def]
 #[derive(FromRow)]
 pub struct Collection {
@@ -80,7 +80,7 @@ pub struct Collection {
     pub project_id: i64,
 }
 
-/// An embedding
+// An embedding
 #[enum_def]
 #[derive(FromRow)]
 pub struct Embedding {
@@ -90,7 +90,7 @@ pub struct Embedding {
     pub embedding: Vec<f32>,
 }
 
-/// A chunk of split text
+// A chunk of split text
 #[derive(FromRow)]
 pub struct Chunk {
     pub id: i64,
