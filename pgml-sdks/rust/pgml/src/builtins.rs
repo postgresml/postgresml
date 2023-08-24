@@ -2,6 +2,7 @@ use pgml_macros::{custom_derive, custom_methods};
 use sqlx::Row;
 use tracing::instrument;
 
+/// Provides access to builtin database methods
 #[derive(custom_derive, Debug, Clone)]
 pub struct Builtins {
     pub database_url: Option<String>,

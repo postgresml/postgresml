@@ -59,15 +59,15 @@ async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result
     }
 }
 
-pub enum LogFormat {
-    JSON,
+enum LogFormat {
+    Json,
     Pretty,
 }
 
 impl From<&str> for LogFormat {
     fn from(s: &str) -> Self {
         match s {
-            "JSON" => LogFormat::JSON,
+            "Json" => LogFormat::Json,
             _ => LogFormat::Pretty,
         }
     }
@@ -87,7 +87,7 @@ fn init_logger(level: Option<String>, format: Option<String>) -> anyhow::Result<
     let format = format.unwrap_or_else(|| env::var("LOG_FORMAT").unwrap_or("".to_string()));
 
     match format.as_str().into() {
-        LogFormat::JSON => FmtSubscriber::builder()
+        LogFormat::Json => FmtSubscriber::builder()
             .json()
             .with_max_level(level)
             .try_init()

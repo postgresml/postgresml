@@ -21,6 +21,7 @@ pub(crate) struct SplitterDatabaseData {
     pub created_at: DateTime,
 }
 
+/// A text splitter
 #[derive(custom_derive, Debug, Clone)]
 pub struct Splitter {
     pub name: String,

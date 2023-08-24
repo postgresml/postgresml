@@ -54,6 +54,7 @@ pub(crate) struct ModelDatabaseData {
     pub created_at: DateTime,
 }
 
+/// A model used for embedding, inference, etc...
 #[derive(custom_derive, Debug, Clone)]
 pub struct Model {
     pub name: String,

@@ -47,9 +47,15 @@ impl From<InvividualSyncStatus> for Json {
 impl From<Json> for InvividualSyncStatus {
     fn from(value: Json) -> Self {
         Self {
-            synced: value["synced"].as_i64().expect("The synced field is not an integer"),
-            not_synced: value["not_synced"].as_i64().expect("The not_synced field is not an integer"),
-            total: value["total"].as_i64().expect("The total field is not an integer"),
+            synced: value["synced"]
+                .as_i64()
+                .expect("The synced field is not an integer"),
+            not_synced: value["not_synced"]
+                .as_i64()
+                .expect("The not_synced field is not an integer"),
+            total: value["total"]
+                .as_i64()
+                .expect("The total field is not an integer"),
         }
     }
 }
@@ -90,6 +96,7 @@ pub struct PipelineDatabaseData {
     pub splitter_id: i64,
 }
 
+/// A pipeline that processes documents
 #[derive(custom_derive, Debug, Clone)]
 pub struct Pipeline {
     pub name: String,
