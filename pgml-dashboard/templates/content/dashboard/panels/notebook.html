@@ -2,9 +2,9 @@
   <div data-controller="notebook">
     
     <div class="card mb-4 z-1" data-notebook-target="menu">
-      <div class="card-body">
+      <div class="card-body p-1">
         <div class="row">
-          <div class="col-12 col-lg-6">
+          <div class="col-12 col-xxl-6">
             <div class="d-flex justify-content-start align-items-center h-100">
               <button class="btn btn-tertiary d-flex gap-1" data-action="notebook#playAll">
                 <span class="material-symbols-outlined fs-5">
@@ -20,7 +20,7 @@
                   Clear All Output
                 </button>
               </form>
-              <button class="btn btn-tertiary d-flex gap-1">
+              <button class="btn btn-tertiary d-flex gap-1" data-action="notebook#newCell">
                 <span class="material-symbols-outlined fs-5">
                   add
                 </span>
@@ -29,7 +29,7 @@
             </div>
           </div>
 
-          <div class="col-12 col-lg-6">
+          <div class="col-12 col-xxl-6">
             <div class="d-flex justify-content-end align-items-center h-100">
               <button class="btn btn-tertiary d-flex gap-1" data-notebook-target="cellButton" disabled data-action="notebook#playCell">
                 <span class="material-symbols-outlined fs-5">
@@ -37,24 +37,40 @@
                 </span>
                 Run
               </button>
-              <button class="btn btn-tertiary d-flex gap-1" disabled data-action="notebook#playStop">
+              <button class="btn btn-tertiary d-flex gap-1" data-notebook-target="stopButton" disabled data-action="notebook#playStop">
                 <span class="material-symbols-outlined fs-5">
                   stop
                 </span>
                 Stop
               </button>
-              <button class="btn btn-tertiary d-flex gap-1" data-notebook-target="cellButton" disabled data-action="notebook#deleteCell">
+              <button class="btn btn-tertiary d-flex gap-1" data-notebook-target="cellButton" disabled data-action="notebook#deleteCellConfirm">
                 <span class="material-symbols-outlined fs-5">
                   delete
                 </span>
                 Delete
               </button>
+              <div class="dropdown nav-item d-flex justify-content-center align-items-center">
+                <button data-notebook-target="cellButton" class="horizontal-hide btn-dropdown dropdown-toggle leftnav-collapse-affect bg-transparent" disabled href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="0, 10" aria-expanded="false">
+                  <span data-notebook-target="syntaxName">Markdown</span>
+                  <span class="material-symbols-outlined">
+                    expand_more
+                  </span>
+                </button>
+                <ul class="dropdown-menu w-100">
+                  <li class="menu-item d-flex align-items-center">
+                    <a href="#" data-action="notebook#changeSyntax" data-syntax="gfm">Markdown</a>
+                  </li>
+                  <li class="menu-item d-flex align-items-center">
+                    <a href="#" data-action="notebook#changeSyntax" data-syntax="sql">SQL</a>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="overflow-y-scroll pe-2" data-notebook-target="scroller">
+    <div class="overflow-y-scroll pe-2" data-notebook-target="scroller" data-notebook-id="<%= notebook.id %>">
   
       <% for cell in cells {
         let edit = false;
@@ -68,6 +84,29 @@
         include!("cell.html");
       } %>
     </div>
-  
+    <div id="deleteModal" class="modal modal-xl" tabindex="-1" aria-modal="true" role="dialog" data-notebook-target="deleteModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="w-100 h-100 mt-5 py-5 px-3 d-flex flex-column justify-content-center align-items-center border-white border-1" style="background: black;">
+                <p class="mb-4 fw-semibold">Are you sure you want to delete this cell?</p>
+
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                  <button class="btn btn-primary-web-app" data-bs-dismiss="modal" data-action="notebook#deleteCell">
+                    Yes
+                  </button>
+                  <button class="btn btn-secondary-web-app" data-bs-dismiss="modal">
+                    No
+                  </button>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <form action="/dashboard/notebooks/<%= notebook.id %>/cell" method="post" data-notebook-target="newCell">
+      <input type="hidden" name="cell_type" value="3"> <!-- SQL -->
+      <input type="hidden" name="contents" value="">
+    </form>
   </div>
 </turbo-frame>

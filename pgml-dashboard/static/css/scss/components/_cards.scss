@@ -3,8 +3,12 @@
     backdrop-filter: blur(8px);
 
     &.select-hover {
-        &:hover, &:focus, &.active {
+        &:focus, &.active {
             --bs-card-border-color: #{$purple};
+        }
+
+        &:hover:not(.active) {
+            --bs-card-border-color: #{$gray-600};
         }
     }
 

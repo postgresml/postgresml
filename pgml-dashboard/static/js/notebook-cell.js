@@ -8,6 +8,9 @@ export default class extends Controller {
     'play',
     'type',
     'cancelEdit',
+    'cell',
+    'cellType',
+    'dragAndDrop',
   ];
 
   connect() {
@@ -15,6 +18,21 @@ export default class extends Controller {
     if (this.hasEditorTarget && !this.codeMirror) {
       this.initCodeMirrorOnTarget(this.editorTarget)
     }
+
+    if (this.cellTarget.dataset.cellState === 'new') {
+      this.cellTarget.scrollIntoView()
+    }
+
+    this.cellTarget.addEventListener('mouseover', this.showDragAndDrop.bind(this))
+    this.cellTarget.addEventListener('mouseout', this.hideDragAndDrop.bind(this))
+  }
+
+  showDragAndDrop(event) {
+    this.dragAndDropTarget.classList.remove('d-none')
+  }
+
+  hideDragAndDrop(event) {
+    this.dragAndDropTarget.classList.add('d-none')
   }
 
   // Enable CodeMirror on target.
@@ -87,6 +105,17 @@ export default class extends Controller {
   cancelEdit(event) {
     event.preventDefault()
     this.cancelEditTarget.requestSubmit()
+  }
+
+  setSyntax(syntax) {
+    this.codeMirror.setOption('mode', syntax)
+
+    let cellType = 3
+    if (syntax === 'gfm') {
+      cellType = 1
+    }
+
+    this.cellTypeTarget.value = cellType
   }
 }
 

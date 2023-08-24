@@ -1,4 +1,5 @@
 use rocket::fs::TempFile;
+use serde::Deserialize;
 
 #[derive(FromForm)]
 pub struct Notebook<'a> {
@@ -15,4 +16,9 @@ pub struct Cell<'a> {
 pub struct Upload<'a> {
     pub file: TempFile<'a>,
     pub has_header: bool,
+}
+
+#[derive(Deserialize)]
+pub struct Reorder {
+    pub cells: Vec<i64>,
 }

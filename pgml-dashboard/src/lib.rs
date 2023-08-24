@@ -4,6 +4,7 @@ extern crate rocket;
 use rocket::form::Form;
 use rocket::response::Redirect;
 use rocket::route::Route;
+use rocket::serde::json::Json;
 use sailfish::TemplateOnce;
 use sqlx::PgPool;
 use std::collections::HashMap;
@@ -131,7 +132,7 @@ pub async fn notebook_reset(
 
 #[post("/notebooks/<notebook_id>/cell", data = "<cell>")]
 pub async fn cell_create(
-    cluster: &Cluster,
+    cluster: ConnectedCluster<'_>,
     notebook_id: i64,
     cell: Form<forms::Cell<'_>>,
 ) -> Result<Redirect, Error> {
@@ -143,7 +144,35 @@ pub async fn cell_create(
         cell.contents,
     )
     .await?;
-    let _ = cell.render(cluster.pool()).await?;
+
+    if !cell.contents.is_empty() {
+        let _ = cell.render(cluster.pool()).await?;
+    }
+
+    Ok(Redirect::to(format!(
+        "/dashboard/notebooks/{}",
+        notebook_id
+    )))
+}
+
+#[post("/notebooks/<notebook_id>/reorder", data = "<cells>")]
+pub async fn notebook_reorder(
+    cluster: ConnectedCluster<'_>,
+    notebook_id: i64,
+    cells: Json<forms::Reorder>,
+) -> Result<Redirect, Error> {
+    let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
+
+    let pool = cluster.pool();
+    let mut transaction = pool.begin().await?;
+
+    // Super bad n+1, but it's ok for now?
+    for (idx, cell_id) in cells.cells.iter().enumerate() {
+        let mut cell = models::Cell::get_by_id(&mut transaction, *cell_id).await?;
+        cell.reorder(&mut transaction, idx as i32 + 1).await?;
+    }
+
+    transaction.commit().await?;
 
     Ok(Redirect::to(format!(
         "/dashboard/notebooks/{}",
@@ -176,6 +205,20 @@ pub async fn cell_get(
         .render_once()
         .unwrap(),
     ))
+}
+
+#[post("/notebooks/<notebook_id>/cell/<cell_id>/cancel")]
+pub async fn cell_cancel(
+    cluster: ConnectedCluster<'_>,
+    notebook_id: i64,
+    cell_id: i64,
+) -> Result<Redirect, Error> {
+    let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
+    cell.cancel(cluster.pool()).await?;
+    Ok(Redirect::to(format!(
+        "/dashboard/notebooks/{}/cell/{}",
+        notebook_id, cell_id
+    )))
 }
 
 #[post("/notebooks/<notebook_id>/cell/<cell_id>/edit", data = "<data>")]
@@ -302,8 +345,8 @@ pub async fn cell_delete(
     let _ = cell.delete(cluster.pool()).await?;
 
     Ok(Redirect::to(format!(
-        "/dashboard/notebooks/{}",
-        notebook_id
+        "/dashboard/notebooks/{}/cell/{}",
+        notebook_id, cell_id
     )))
 }
 
@@ -579,6 +622,7 @@ pub fn routes() -> Vec<Route> {
         cell_play,
         cell_remove,
         cell_delete,
+        cell_cancel,
         models_index,
         models_get,
         snapshots_index,
@@ -589,6 +633,7 @@ pub fn routes() -> Vec<Route> {
         uploader_upload,
         uploaded_index,
         dashboard,
+        notebook_reorder,
     ]
 }
 

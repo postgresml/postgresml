@@ -24,9 +24,6 @@
       <% } %>
     </tbody>
   </table>
-  <% if render_execution_duration { %>
-    <code>Time: <%= crate::utils::time::format_microseconds(execution_duration.as_micros() as f64) %></code>
-  <% } %>
 </div>
 
 <% } %>

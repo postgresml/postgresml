@@ -111,8 +111,8 @@
 .cm-strikethrough {text-decoration: line-through;}
 
 .cm-s-default .cm-keyword {color: #FF33FF; }
-.cm-s-default .cm-atom {color: #fff;}
-.cm-s-default .cm-number {color: #164;}
+.cm-s-default .cm-atom {color: #00FF00;}
+.cm-s-default .cm-number {color: #00FF00;}
 .cm-s-default .cm-def {color: #00f;}
 .cm-s-default .cm-variable,
 .cm-s-default .cm-punctuation,
@@ -120,8 +120,8 @@
 .cm-s-default .cm-operator {}
 .cm-s-default .cm-variable-2 {color: #05a;}
 .cm-s-default .cm-variable-3, .cm-s-default .cm-type {color: #00FF00; }
-.cm-s-default .cm-comment {color: #a50;}
-.cm-s-default .cm-string {color: #fff; }
+.cm-s-default .cm-comment {color: #BAEAFF;}
+.cm-s-default .cm-string {color: #FF9900; }
 .cm-s-default .cm-string-2 {color: #fff;}
 .cm-s-default .cm-meta {color: #555;}
 .cm-s-default .cm-qualifier {color: #555;}
