@@ -1,4 +1,4 @@
-<turbo-frame id="cell_<%= cell.id %>" data-notebook-id="<%= notebook.id %>" data-cell-id="<%= cell.id %>">
+<turbo-frame id="cell_<%= cell.id %>" data-notebook-id="<%= notebook.id %>" data-cell-id="<%= cell.id %>" data-cell-type="<%= cell.cell_type %>">
   <% if cell.deleted_at.is_some()  { %>
   <% } else { %>
 

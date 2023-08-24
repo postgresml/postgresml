@@ -231,7 +231,10 @@ pub async fn cell_edit(
         &data.contents,
     )
     .await?;
+
+    debug!("Rendering cell id={}", cell.id);
     cell.render(cluster.pool()).await?;
+    debug!("Rendering of cell id={} complete", cell.id);
 
     Ok(ResponseOk(
         templates::Cell {
@@ -527,7 +530,17 @@ pub async fn dashboard(
                 )
                 .active(),
             );
-        }
+        },
+
+        "Projects" => {
+            breadcrumbs.push(NavLink::new("Projects", "/dashboard?tab=Projects").active());
+        },
+
+        "Project" => {
+            let project = models::Project::get_by_id(cluster.pool(), id.unwrap()).await?;
+            breadcrumbs.push(NavLink::new("Projects", "/dashboard?tab=Projects"));
+            breadcrumbs.push(NavLink::new(&project.name, &format!("/dashboard?tab=Project&id={}", project.id)));
+        },
 
         _ => (),
     };
@@ -547,6 +560,12 @@ pub async fn dashboard(
             name: "Notebook",
             content: NotebookTab { id: id.unwrap() }.render_once().unwrap(),
         }],
+        // "Project" => vec![
+        //     tabs::Tab {
+        //         name: "Project",
+        //         content: Project
+        //     }
+        // ]
         _ => todo!(),
     };
 

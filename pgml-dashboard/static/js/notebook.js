@@ -6,6 +6,7 @@ export default class extends Controller {
     'scroller',
     'cellButton',
     'stopButton',
+    'playAllButton',
     'deleteModal',
     'newCell',
     'syntaxName',
@@ -72,16 +73,19 @@ export default class extends Controller {
     })
   }
 
-  playAll() {
-    const forms = this.scrollerTarget.querySelectorAll(`form[data-cell-play-id]`)
-    this.playCells([...forms])
+  playAll(event) {
+    event.currentTarget.disabled = true
+    const frames = this.scrollerTarget.querySelectorAll('turbo-frame[data-cell-type="3"]')
+    this.playCells([...frames])
   }
 
-  playCells(forms) {
-    const form = forms.shift()
+  playCells(frames) {
+    const frame = frames.shift()
+    const form = document.querySelector(`form[data-cell-play-id="${frame.dataset.cellId}"]`)
     const cellType = form.querySelector('input[name="cell_type"]').value
     const contents = form.querySelector('textarea[name="contents"]').value
     const body = `cell_type=${cellType}&contents=${encodeURIComponent(contents)}`
+
     fetch(form.action, {
       method: 'POST',
       body,
@@ -89,8 +93,17 @@ export default class extends Controller {
         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
       },
     }).then(response => {
-      if (forms.length > 0) {
-        this.playCells(forms)
+      // Reload turbo frame
+      frame.querySelector('a[data-notebook-target="loadCell"]').click()
+
+      if (response.status > 300) {
+        throw new Error(response.statusText)
+      }
+
+      if (frames.length > 0) {
+        setTimeout(() => this.playCells(frames), 250)
+      } else {
+        this.playAllButtonTarget.disabled = false
       }
     })
   }

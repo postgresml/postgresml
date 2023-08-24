@@ -1,11 +1,10 @@
 <turbo-frame id="projects">
-  <section class="card">
+  <div class="card">
     <div class="card-body">
-      <h1><span class="material-symbols-outlined">apps</span>Projects</h1> 
       <ol class="object_list project_list">
         <% for project in projects { %>
         <li>
-          <a href="/dashboard/projects/<%= project.id %>" data-turbo-frame="project">
+          <a href="/dashboard?tab=Project&id=<%= project.id %>" data-turbo-frame="dashboard">
             <span><%= project.name %></span>
             <span>
               <time datetime="<% project.created_at; %>">

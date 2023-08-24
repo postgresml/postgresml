@@ -4,6 +4,9 @@ use crate::templates::components::{StaticNav, StaticNavLink};
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
+use once_cell::sync::OnceCell;
+
+static POOL: OnceCell<PgPool> = OnceCell::new();
 
 use crate::models;
 use crate::Context;
@@ -28,19 +31,21 @@ impl Default for Cluster {
 
         Cluster {
             pool: Some(
-                PgPoolOptions::new()
-                    .max_connections(max_connections)
-                    .idle_timeout(None)
-                    .min_connections(min_connections)
-                    .after_connect(|conn, _meta| {
-                        Box::pin(async move {
-                            conn.execute("SET application_name = 'pgml_dashboard';")
-                                .await?;
-                            Ok(())
+                POOL.get_or_init(|| {
+                    PgPoolOptions::new()
+                        .max_connections(max_connections)
+                        .idle_timeout(None)
+                        .min_connections(min_connections)
+                        .after_connect(|conn, _meta| {
+                            Box::pin(async move {
+                                conn.execute("SET application_name = 'pgml_dashboard';")
+                                    .await?;
+                                Ok(())
+                            })
                         })
-                    })
-                    .connect_lazy(&default_database_url())
-                    .expect("Default database URL is alformed"),
+                        .connect_lazy(&default_database_url())
+                        .expect("Default database URL is alformed")
+                }).clone()
             ),
             context: Context {
                 user: models::User::default(),
