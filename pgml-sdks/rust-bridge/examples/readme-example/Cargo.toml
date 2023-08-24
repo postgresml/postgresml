@@ -1,0 +1,17 @@
+[package]
+name = "macros-test"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rust_bridge = {path = "../../rust-bridge", version = "0.1.0"}
+pyo3 = { version = "0.18.3", optional = true, features = ["extension-module"] }
+pyo3-asyncio = { version = "0.18", features = ["attributes", "tokio-runtime"], optional = true }
+neon = { version = "0.10", optional = true, default-features = false, features = ["napi-6", "promise-api", "channel-api"] }
+
+[features]
+default = ["python"]
+python = ["dep:pyo3", "dep:pyo3-asyncio"]
+javascript = ["dep:neon"]
