@@ -182,6 +182,12 @@ pub struct Projects {
 }
 
 #[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/project_tab.html")]
+pub struct ProjectTab {
+    pub project_id: i64,
+}
+
+#[derive(TemplateOnce)]
 #[template(path = "content/dashboard/panels/notebooks.html")]
 pub struct Notebooks {
     pub notebooks: Vec<models::Notebook>,
@@ -464,9 +470,7 @@ pub struct NotebookTab {
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/projects_tab.html")]
-pub struct ProjectsTab {
-    pub project_id: Option<i64>,
-}
+pub struct ProjectsTab;
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/deployments_tab.html")]
@@ -476,15 +480,24 @@ pub struct DeploymentsTab {
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/models_tab.html")]
-pub struct ModelsTab {
-    pub model_id: Option<i64>,
+pub struct ModelsTab;
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/model_tab.html")]
+pub struct ModelTab {
+    pub model_id: i64,
 }
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/snapshots_tab.html")]
-pub struct SnapshotsTab {
-    pub snapshot_id: Option<i64>,
+pub struct SnapshotsTab;
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/snapshot_tab.html")]
+pub struct SnapshotTab {
+    pub snapshot_id: i64,
 }
+
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/uploader_tab.html")]

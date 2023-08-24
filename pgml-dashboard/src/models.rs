@@ -137,6 +137,14 @@ impl Notebook {
 
         Ok(())
     }
+
+    pub fn created_by(&self) -> &'static str {
+        if self.id <= 9 {
+            "PostgresML"
+        } else {
+            "User"
+        }
+    }
 }
 
 #[derive(PartialEq)]

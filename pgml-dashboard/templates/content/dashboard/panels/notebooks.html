@@ -1,18 +1,18 @@
 <turbo-frame id="notebooks">
-  <div>
-    <div style="width: 752px; 
-        height: 619px; 
+  <div class="pb-5">
+    <div style="width: 526px;
+        height: 433px; 
         max-width: 50vw; 
         position:relative; 
         left: 50%;
-        top: 50%;
+        top: 93px;
         transform: translateX(-50%);
         border-radius: 752px;
         background: radial-gradient(46.38% 45.17% at 22.72% 36.90%, rgba(57, 210, 231, 0.60) 26.40%, rgba(174, 110, 255, 0.60) 100%);
         filter: blur(252.66856384277344px);">
     </div>
     <% if !notebooks.is_empty() { %>
-    <div class="row gx-4 gy-4 position-relative" style="margin-top: -619px;">
+    <div class="row gx-4 gy-4 position-relative" style="margin-top: -433px;">
       <% for notebook in notebooks { %>
       <div class="col-12 col-md-6 col-xxl-4">
         <div class="card h-100">
@@ -22,7 +22,7 @@
                 <h6 class="h6 mb-0">
                   <%= notebook.name %>
                 </h6>
-                <small class="text-muted">Created by: PostgresML</small>
+                <small class="text-muted">Created by: <%= notebook.created_by() %></small>
               </div>
 
               <div>

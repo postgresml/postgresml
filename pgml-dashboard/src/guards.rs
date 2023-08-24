@@ -69,6 +69,21 @@ impl Default for Cluster {
                             "/dashboard?tab=Projects".to_string(),
                         )
                         .icon("thumbnail_bar"),
+                        StaticNavLink::new(
+                            "Models".to_string(),
+                            "/dashboard?tab=Models".to_string(),
+                        )
+                        .icon("thumbnail_bar"),
+                        StaticNavLink::new(
+                            "Snapshots".to_string(),
+                            "/dashboard?tab=Snapshots".to_string(),
+                        )
+                        .icon("thumbnail_bar"),
+                        StaticNavLink::new(
+                            "Upload data".to_string(),
+                            "/dashboard?tab=Upload_Data".to_string(),
+                        )
+                        .icon("thumbnail_bar"),
                     ],
                 },
                 lower_left_nav: StaticNav::default(),

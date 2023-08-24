@@ -1,42 +1,38 @@
 <turbo-frame id="project">
-  <section>
-    <h1><span class="material-symbols-outlined">apps</span><%= project.name %></h1>
-    <dl>
-      <dt>Created</dt>
-      <dd><% project.created_at; %></dd>
-    </dl> 
-  
-    <h2><span class="material-symbols-outlined">model_training</span>Models</h2>
-    <ol class="object_list model_list">
-      <li>
-          <span></span>
-          <span><b>Algorithm</b></span>
-          <span><b><%- project.key_metric_display_name().unwrap() %></b></span>    
-          <figure></figure>
-      </li>
-      <% for model in models.iter() { %>
-      <li>
-        <a href="/dashboard?tab=Models&model_id=<%= model.id %>" data-turbo="false">
-          <span class="material-symbols-outlined d-flex justify-content-center align-items-center">
-            <% if model.search.is_some() { %>
-              <% if model.search.as_ref().unwrap().as_str() == "grid" { %>
-                grid_on
+  <div class="notebook">
+    <section>
+      <h2><span class="material-symbols-outlined">model_training</span>Models</h2>
+      <ol class="object_list model_list">
+        <li>
+            <span></span>
+            <span><b>Algorithm</b></span>
+            <span><b><%- project.key_metric_display_name().unwrap() %></b></span>    
+            <figure></figure>
+        </li>
+        <% for model in models.iter() { %>
+        <li>
+          <a href="/dashboard?tab=Model&id=<%= model.id %>" data-turbo-frame="_top">
+            <span class="material-symbols-outlined d-flex justify-content-center align-items-center">
+              <% if model.search.is_some() { %>
+                <% if model.search.as_ref().unwrap().as_str() == "grid" { %>
+                  grid_on
+                <% } %>
+                <% if model.search.as_ref().unwrap().as_str() == "random" { %>
+                  shuffle
+                <% } %>
+              <% } else { %>
+                check_circle
               <% } %>
-              <% if model.search.as_ref().unwrap().as_str() == "random" { %>
-                shuffle
-              <% } %>
-            <% } else { %>
-              check_circle
-            <% } %>
-          </span>
-          <span class="ps-2"><%= model.algorithm %></span>
-          <span><%= format!("{:.4}", model.key_metric(&project).unwrap()) %></span>
-          <figure id="model_<%= model.id %>"></figure>
-        </a>
-      </li>
-      <% } %>
-    </ol>
-  </section>
+            </span>
+            <span class="ps-2"><%= model.algorithm %></span>
+            <span><%= format!("{:.4}", model.key_metric(&project).unwrap()) %></span>
+            <figure id="model_<%= model.id %>"></figure>
+          </a>
+        </li>
+        <% } %>
+      </ol>
+    </section>
+  </div>
   
   <script defer type="module">
     import { renderModel } from '/dashboard/static/js/main.js';
