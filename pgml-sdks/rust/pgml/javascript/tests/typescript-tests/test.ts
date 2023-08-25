@@ -18,7 +18,9 @@ const generate_dummy_documents = (count: number) => {
     docs.push({
       id: i,
       text: `This is a test document: ${i}`,
+      project: "a10",
       uuid: i * 10,
+      floating_uuid: i * 1.1,
       name: `Test Document ${i}`,
     });
   }
@@ -36,7 +38,7 @@ it("can create collection", () => {
 
 it("can create model", () => {
   let model = pgml.newModel("test", "openai", {
-    "tester": "test 0123948712394871234987"
+    tester: "test 0123948712394871234987",
   });
   expect(model).toBeTruthy();
 });
@@ -74,7 +76,7 @@ it("can vector search with local embeddings", async () => {
   await collection.archive();
 });
 
-it("can vector search with remote embeddings", async() => {
+it("can vector search with remote embeddings", async () => {
   let model = pgml.newModel("text-embedding-ada-002", "openai");
   let splitter = pgml.newSplitter();
   let pipeline = pgml.newPipeline("test_j_p_cvswre_0", model, splitter);
@@ -86,26 +88,34 @@ it("can vector search with remote embeddings", async() => {
   await collection.archive();
 });
 
-it("can vector search with query builder", async() => {
+it("can vector search with query builder", async () => {
   let model = pgml.newModel();
   let splitter = pgml.newSplitter();
   let pipeline = pgml.newPipeline("test_j_p_cvswqb_0", model, splitter);
   let collection = pgml.newCollection("test_j_c_cvswqb_1");
   await collection.upsert_documents(generate_dummy_documents(3));
   await collection.add_pipeline(pipeline);
-  let results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).fetch_all();
+  let results = await collection
+    .query()
+    .vector_recall("Here is some query", pipeline)
+    .limit(10)
+    .fetch_all();
   expect(results).toHaveLength(3);
   await collection.archive();
 });
 
-it("can vector search with query builder with remote embeddings", async() => {
+it("can vector search with query builder with remote embeddings", async () => {
   let model = pgml.newModel("text-embedding-ada-002", "openai");
   let splitter = pgml.newSplitter();
   let pipeline = pgml.newPipeline("test_j_p_cvswqbwre_0", model, splitter);
   let collection = pgml.newCollection("test_j_c_cvswqbwre_1");
   await collection.upsert_documents(generate_dummy_documents(3));
   await collection.add_pipeline(pipeline);
-  let results = await collection.query().vector_recall("Here is some query", pipeline).limit(10).fetch_all();
+  let results = await collection
+    .query()
+    .vector_recall("Here is some query", pipeline)
+    .limit(10)
+    .fetch_all();
   expect(results).toHaveLength(3);
   await collection.archive();
 });
@@ -122,10 +132,12 @@ it("can vector search with query builder and metadata filtering", async () => {
     .vector_recall("Here is some query", pipeline)
     .filter({
       metadata: {
-        $or: [{ uuid: { $eq: 0 } }, { uuid: { $eq: 20 } }],
+        $or: [{ uuid: { $eq: 0 } }, { floating_uuid: { $lt: 2 } }],
+        project: { $eq: "a10" },
       },
     })
-    .limit(10).fetch_all();
+    .limit(10)
+    .fetch_all();
   expect(results).toHaveLength(2);
   await collection.archive();
 });
@@ -141,7 +153,7 @@ it("pipeline to dict", async () => {
   let collection = pgml.newCollection("test_j_c_ptd_2");
   await collection.add_pipeline(pipeline);
   let pipeline_dict = await pipeline.to_dict();
-  console.log(JSON.stringify(pipeline_dict))
+  console.log(JSON.stringify(pipeline_dict));
   expect(pipeline_dict["name"]).toBe("test_j_p_ptd_0");
   await collection.archive();
 });
