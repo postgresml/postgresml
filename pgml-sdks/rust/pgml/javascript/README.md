@@ -76,7 +76,7 @@ Once you have the JavaScript SDK installed, you can use the following sample cod
 const pgml = require("pgml");
 
 const main = async () => {
-    collection = pgml.newCollection("my_javascript_collection");
+    const collection = pgml.newCollection("my_javascript_collection");
 ```
 
 **Explanation:**
@@ -199,12 +199,12 @@ By default, collections will read and write to the database specified by `DATABA
 
 **Create a Collection that uses the default `DATABASE_URL` environment variable.**
 ```javascript
-collection = pgml.newCollection("test_collection")
+const collection = pgml.newCollection("test_collection")
 ```
 
 **Create a Collection that reads from a different database than that set by the environment variable `DATABASE_URL`.**
 ```javascript
-collection = pgml.newCollection("test_collection", CUSTOM_DATABASE_URL)
+const collection = pgml.newCollection("test_collection", CUSTOM_DATABASE_URL)
 ```
 
 ### Upserting Documents
