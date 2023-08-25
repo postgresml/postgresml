@@ -30,7 +30,8 @@ def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
                 "id": i,
                 "text": "This is a test document: {}".format(i),
                 "some_random_thing": "This will be metadata on it",
-                "metadata": {"uuid": i * 10, "name": "Test Document {}".format(i)},
+                "uuid": i * 10,
+                "name": "Test Document {}".format(i),
             }
         )
     return dummy_documents
@@ -135,6 +136,31 @@ async def test_can_vector_search_with_query_builder_with_remote_embeddings():
     await collection.archive()
 
 
+@pytest.mark.asyncio
+async def test_can_vector_search_with_query_builder_and_metadata_filtering():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvswqbamf_1", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvswqbamf_2")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = (
+        await collection.query()
+        .vector_recall("Here is some query", pipeline)
+        .filter({
+            "metadata": {
+                "uuid": {
+                    "$eq": 0
+                }
+            }
+        })
+        .limit(10)
+        .fetch_all()
+    )
+    assert len(results) == 1
+    await collection.archive()
+
+
 ###################################################
 ## Test user output facing functions ##############
 ###################################################
@@ -158,17 +184,17 @@ async def test_pipeline_to_dict():
 ###################################################
 
 
-def vector_search(collection_name, pipeline_name):
-    collection = pgml.Collection(collection_name)
-    pipeline = pgml.Pipeline(pipeline_name)
-    result = asyncio.run(
-        collection.query()
-        .vector_recall("Here is some query", pipeline)
-        .limit(10)
-        .fetch_all()
-    )
-    print(result)
-    return [0, 1, 2]
+# def vector_search(collection_name, pipeline_name):
+#     collection = pgml.Collection(collection_name)
+#     pipeline = pgml.Pipeline(pipeline_name)
+#     result = asyncio.run(
+#         collection.query()
+#         .vector_recall("Here is some query", pipeline)
+#         .limit(10)
+#         .fetch_all()
+#     )
+#     print(result)
+#     return [0, 1, 2]
 
 
 # @pytest.mark.asyncio
@@ -200,23 +226,23 @@ def vector_search(collection_name, pipeline_name):
 ###################################################
 
 
-async def silas_test_add_pipeline():
-    model = pgml.Model()
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline("silas_test_p_1", model, splitter)
-    collection = pgml.Collection(name="silas_test_c_10")
-    await collection.add_pipeline(pipeline)
+# async def test_add_pipeline():
+#     model = pgml.Model()
+#     splitter = pgml.Splitter()
+#     pipeline = pgml.Pipeline("silas_test_p_1", model, splitter)
+#     collection = pgml.Collection(name="silas_test_c_10")
+#     await collection.add_pipeline(pipeline)
+#
+# async def test_upsert_documents():
+#     collection = pgml.Collection(name="silas_test_c_9")
+#     await collection.upsert_documents(generate_dummy_documents(10))
+#
+# async def test_vector_search():
+#     pipeline = pgml.Pipeline("silas_test_p_1")
+#     collection = pgml.Collection(name="silas_test_c_9")
+#     results = await collection.vector_search("Here is some query", pipeline)
+#     print(results)
 
-async def silas_test_upsert_documents():
-    collection = pgml.Collection(name="silas_test_c_9")
-    await collection.upsert_documents(generate_dummy_documents(10))
-
-async def silas_test_vector_search():
-    pipeline = pgml.Pipeline("silas_test_p_1")
-    collection = pgml.Collection(name="silas_test_c_9")
-    results = await collection.vector_search("Here is some query", pipeline)
-    print(results)
-
-# asyncio.run(silas_test_add_pipeline())
-# asyncio.run(silas_test_upsert_documents())
-# asyncio.run(silas_test_vector_search())
+# asyncio.run(test_add_pipeline())
+# asyncio.run(test_upsert_documents())
+# asyncio.run(test_vector_search())

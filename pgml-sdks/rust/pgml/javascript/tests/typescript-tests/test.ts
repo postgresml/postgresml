@@ -1,4 +1,4 @@
-import pgml from '../../index.js'
+import pgml from "../../index.js";
 
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
@@ -9,29 +9,21 @@ import pgml from '../../index.js'
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-const DATABASE_URL = process.env.DATABASE_URL;
-if (!DATABASE_URL) {
-  console.log("No DATABASE_URL environment variable found. Please set one")
-  process.exit(1)
-}
 const LOG_LEVEL = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : "ERROR";
-
 pgml.js_init_logger(LOG_LEVEL);
 
 const generate_dummy_documents = (count: number) => {
   let docs = [];
   for (let i = 0; i < count; i++) {
     docs.push({
-      "id": i,
-      "text": `This is a test document: ${i}`,
-      "metadata": {
-        "uuid": i * 10,
-        "name": `Test Document ${i}`
-      }
+      id: i,
+      text: `This is a test document: ${i}`,
+      uuid: i * 10,
+      name: `Test Document ${i}`,
     });
   }
   return docs;
-}
+};
 
 ///////////////////////////////////////////////////
 // Test the API exposed is correct ////////////////
@@ -118,6 +110,25 @@ it("can vector search with query builder with remote embeddings", async() => {
   await collection.archive();
 });
 
+it("can vector search with query builder and metadata filtering", async () => {
+  let model = pgml.newModel();
+  let splitter = pgml.newSplitter();
+  let pipeline = pgml.newPipeline("test_j_p_cvswqbamf_0", model, splitter);
+  let collection = pgml.newCollection("test_j_c_cvswqbamf_4");
+  await collection.upsert_documents(generate_dummy_documents(3));
+  await collection.add_pipeline(pipeline);
+  let results = await collection
+    .query()
+    .vector_recall("Here is some query", pipeline)
+    .filter({
+      metadata: {
+        $or: [{ uuid: { $eq: 0 } }, { uuid: { $eq: 20 } }],
+      },
+    })
+    .limit(10).fetch_all();
+  expect(results).toHaveLength(2);
+  await collection.archive();
+});
 
 ///////////////////////////////////////////////////
 // Test user output facing functions //////////////

@@ -315,13 +315,13 @@ results = (
                 {
                     "$and": [
                         {
-                            "$eq": {
-                                "uuid": 1
+                            "uuid": {
+                                "$eq": 1
                             }    
                         },
                         {
-                            "$lt": {
-                                "index": 100 
+                            "index": {
+                                "$lt": 100 
                             }
                         }
                     ] 
