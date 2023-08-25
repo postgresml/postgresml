@@ -92,6 +92,9 @@ async fn configure_reporting() -> Option<sentry::ClientInitGuard> {
 
 #[rocket::main]
 async fn main() {
+    #[cfg(tokio_unstable)]
+    console_subscriber::init();
+
     dotenv::dotenv().ok();
     // it's important to hang on to sentry so it isn't dropped and stops reporting
     let _sentry = configure_reporting().await;

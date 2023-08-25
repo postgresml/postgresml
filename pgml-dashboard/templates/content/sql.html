@@ -1,3 +1,5 @@
+<% let _execution_duration = execution_duration; %>
+
 <% if columns.is_empty() { %>
 <div class="markdown-body">
   <pre><code>OK</code></pre>
@@ -24,9 +26,6 @@
       <% } %>
     </tbody>
   </table>
-  <% if render_execution_duration { %>
-    <code>Time: <%= crate::utils::time::format_microseconds(execution_duration.as_micros() as f64) %></code>
-  <% } %>
 </div>
 
 <% } %>

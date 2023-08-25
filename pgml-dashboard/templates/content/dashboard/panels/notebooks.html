@@ -1,34 +1,77 @@
 <turbo-frame id="notebooks">
-  <section>
-     <h1 class="d-flex align-items-center">
-      <span class="material-symbols-outlined mb-1">newspaper</span>Notebooks
-    </h1> 
-    
+  <div class="pb-5">
+    <div style="width: 526px;
+        height: 433px; 
+        max-width: 50vw; 
+        position:relative; 
+        left: 50%;
+        top: 93px;
+        transform: translateX(-50%);
+        border-radius: 752px;
+        background: radial-gradient(46.38% 45.17% at 22.72% 36.90%, rgba(57, 210, 231, 0.60) 26.40%, rgba(174, 110, 255, 0.60) 100%);
+        filter: blur(252.66856384277344px);">
+    </div>
     <% if !notebooks.is_empty() { %>
-    <ol class="object_list">
+    <div class="row gx-4 gy-4 position-relative" style="margin-top: -433px;">
       <% for notebook in notebooks { %>
-      <li>
-        <a href="/dashboard/notebooks/<%= notebook.id %>" data-turbo-frame="notebook">
-          <span>
-            <%= notebook.name %>
-          </span>
-        </a>
-      </li>
-      <% } %>
-    </ol>
-    <% } %>
-  
-    <h2>New notebook</h2>
-  
-    <form action="/dashboard/notebooks" method="post">
-        <div class="d-flex flex-row gap-3">
-            <div class="mb-3">
-              <input class="form-control" type="text" name="name" required placeholder="New unique notebook name" size="50" />
-            </div>
-            <div class="mb-3">
-              <button class="btn btn-secondary-web-app h-100" class="next" type="submit" data-turbo="false">Create notebook</button>
-            </div>
+      <div class="col-12 col-md-6 col-xxl-4">
+        <div class="card h-100">
+          <div class="card-body h-100">
+            <div class="d-flex flex-column justify-content-between h-100 gap-4">
+              <div>
+                <h6 class="h6 mb-0">
+                  <%= notebook.name %>
+                </h6>
+                <small class="text-muted">Created by: <%= notebook.created_by() %></small>
+              </div>
+
+              <div>
+                <small class="text-muted">Last modified <%= notebook.updated_at.month() as u32 %>/<%= notebook.updated_at.day() %>/<%= notebook.updated_at.year() %></small>
+              </div>
+          </div>
+            <a href="/dashboard?tab=Notebook&id=<%= notebook.id %>" data-turbo-frame="_top" class="stretched-link">
+            </a>
+          </div>
         </div>
-    </form>
-  </section>
+      </div>
+      <% } %>
+      <% if new { %>
+      <div class="col-12 col-md-6 col-xxl-4">
+        <div class="card h-100">
+          <div class="card-body h-100 pt-1 pe-1">
+            <div class="d-flex flex-column h-100">
+              <div class="d-flex justify-content-end">
+                <a href="/dashboard/notebooks" class="btn btn-close"></a>
+              </div>
+              <div class="d-flex flex-column justify-content-between flex-grow-1">
+                <div>
+                  <form action="/dashboard/notebooks" method="post" data-turbo-frame="_top">
+                    <input class="form-control borderless" placeholder="Create a title" type="text" class="w-100" autofocus required name="name">
+                  </form>
+                  <small class="text-muted">Created by: User</small>
+                </div>
+
+                <small class="text-muted">Last modified 8/22/2023</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% } %>
+      <% if !new { %>
+      <div class="col-12 col-md-6 col-xxl-4">
+        <div class="h-100 position-relative">
+          <a href="/dashboard/notebooks?new=true" class="stretched-link"></a>
+          <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="d-flex align-content-center flex-column">
+              <img height="48" width="auto" src="/dashboard/static/images/icons/new_notebook.svg" alt="New notebook">
+              <button class="btn btn-tertiary"><span class="fs-5">+</span> Create New Notebook</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    <% } %>
+  </div>
 </turbo-frame>

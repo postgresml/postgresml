@@ -218,7 +218,6 @@ export function renderCorrelation(feature_name, other_name, samples, y) {
 }
 
 export function renderHyperparam(id, name, title, param, best_index, mean, std) {
-    console.log("renderHyperparam", id, name, title, param, best_index, mean, std);
     Plotly.newPlot(
         id,
         [{

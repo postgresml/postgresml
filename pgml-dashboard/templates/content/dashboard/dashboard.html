@@ -1,29 +1,7 @@
-<%
-  fn check_if_active(active: &str, tab: &str) -> String {
-    let state = if active == tab {
-      "active".to_string()
-    } else {
-      "".to_string()
-    };
-    state
-  }
-%>
-<h1>Dashboard</h1>
 <turbo-frame id="dashboard">
-  <ul class="nav nav-tabs" role="tablist" >
-    <% for (i, tab) in tabs.tabs.iter().enumerate() { %>
-    <li class="nav-item" role="presentation">
-      <a class="nav-link <%- check_if_active(tabs.active, tab.name) %>" href="/dashboard?tab=<%- tab.name %>" type="button" role="tab" aria-controls="tab-<%- tab.name %>" aria-selected="<%= i %>" data-turbo-action="advance" >
-        <%- tab.name.replace("_", " ") %>
-      </a>
-    </li>
-    <% } %>
-  </ul>
-  <div class="tab-content mt-4">
-    <% for (i, tab) in tabs.tabs.into_iter().enumerate() { %>
-    <div class="tab-pane notebook <%- check_if_active(tabs.active, tab.name) %>" id="tab-<%- tab.name %>" role="tabpanel" aria-labelledby="tab-<%- tab.name %>" tabindex="<%- i %>">
-      <%- tab.content %>
-    </div>
-    <% } %>
+  <% for tab in tabs.tabs.into_iter() { %>
+  <div>
+    <%- tab.content %>
   </div>
+  <% } %>
 </turbo-frame>

@@ -20,7 +20,7 @@
     <body>
         <main>
             <div class="container-fluid p-0 min-vh-lg-100">
-                <div class="row gx-0 min-vh-lg-100">
+                <div class="row gx-0 min-vh-lg-100 gy-0">
                     <%- NavbarWebApp::render(left_nav_links, account_management_nav ) %>
 
                     <div class="d-flex">
@@ -33,7 +33,7 @@
                                 <%- Breadcrumbs::render( breadcrumbs ) %>
                             </div>
 
-                            <div class="p-5 overflow-auto">
+                            <div class="ps-5 pt-2 pe-5 mb-2 overflow-auto">
                                 <%- content.unwrap_or_default() %>
                             </div>
                         </div>

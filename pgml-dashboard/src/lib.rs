@@ -4,6 +4,7 @@ extern crate rocket;
 use rocket::form::Form;
 use rocket::response::Redirect;
 use rocket::route::Route;
+use rocket::serde::json::Json;
 use sailfish::TemplateOnce;
 use sqlx::PgPool;
 use std::collections::HashMap;
@@ -20,8 +21,8 @@ pub mod utils;
 use guards::{Cluster, ConnectedCluster};
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
-    components::StaticNav, DeploymentsTab, Layout, ModelsTab, NotebooksTab, ProjectsTab,
-    SnapshotsTab, UploaderTab,
+    components::{NavLink, StaticNav},
+    *,
 };
 use utils::tabs;
 
@@ -69,11 +70,15 @@ pub async fn project_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<Respo
     ))
 }
 
-#[get("/notebooks")]
-pub async fn notebook_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+#[get("/notebooks?<new>")]
+pub async fn notebook_index(
+    cluster: ConnectedCluster<'_>,
+    new: Option<&str>,
+) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
         templates::Notebooks {
             notebooks: models::Notebook::all(&cluster.pool()).await?,
+            new: new.is_some(),
         }
         .render_once()
         .unwrap(),
@@ -87,8 +92,10 @@ pub async fn notebook_create(
 ) -> Result<Redirect, Error> {
     let notebook = crate::models::Notebook::create(cluster.pool(), data.name).await?;
 
+    models::Cell::create(cluster.pool(), &notebook, models::CellType::Sql as i32, "").await?;
+
     Ok(Redirect::to(format!(
-        "/dashboard?tab=Notebooks&notebook_id={}",
+        "/dashboard?tab=Notebook&id={}",
         notebook.id
     )))
 }
@@ -99,13 +106,13 @@ pub async fn notebook_get(
     notebook_id: i64,
 ) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
+    let cells = notebook.cells(cluster.pool()).await?;
 
-    Ok(ResponseOk(Layout::new("Notebooks").render(
-        templates::Notebook {
-            cells: notebook.cells(cluster.pool()).await?,
-            notebook,
-        },
-    )))
+    Ok(ResponseOk(
+        templates::Notebook { cells, notebook }
+            .render_once()
+            .unwrap(),
+    ))
 }
 
 #[post("/notebooks/<notebook_id>/reset")]
@@ -124,7 +131,7 @@ pub async fn notebook_reset(
 
 #[post("/notebooks/<notebook_id>/cell", data = "<cell>")]
 pub async fn cell_create(
-    cluster: &Cluster,
+    cluster: ConnectedCluster<'_>,
     notebook_id: i64,
     cell: Form<forms::Cell<'_>>,
 ) -> Result<Redirect, Error> {
@@ -136,7 +143,35 @@ pub async fn cell_create(
         cell.contents,
     )
     .await?;
-    let _ = cell.render(cluster.pool()).await?;
+
+    if !cell.contents.is_empty() {
+        let _ = cell.render(cluster.pool()).await?;
+    }
+
+    Ok(Redirect::to(format!(
+        "/dashboard/notebooks/{}",
+        notebook_id
+    )))
+}
+
+#[post("/notebooks/<notebook_id>/reorder", data = "<cells>")]
+pub async fn notebook_reorder(
+    cluster: ConnectedCluster<'_>,
+    notebook_id: i64,
+    cells: Json<forms::Reorder>,
+) -> Result<Redirect, Error> {
+    let _notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
+
+    let pool = cluster.pool();
+    let mut transaction = pool.begin().await?;
+
+    // Super bad n+1, but it's ok for now?
+    for (idx, cell_id) in cells.cells.iter().enumerate() {
+        let cell = models::Cell::get_by_id(&mut transaction, *cell_id).await?;
+        cell.reorder(&mut transaction, idx as i32 + 1).await?;
+    }
+
+    transaction.commit().await?;
 
     Ok(Redirect::to(format!(
         "/dashboard/notebooks/{}",
@@ -153,22 +188,30 @@ pub async fn cell_get(
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
-    let bust_cache = std::time::SystemTime::now()
-        .duration_since(std::time::SystemTime::UNIX_EPOCH)?
-        .as_millis()
-        .to_string();
-
     Ok(ResponseOk(
         templates::Cell {
             cell,
             notebook,
             selected: false,
             edit: false,
-            bust_cache,
         }
         .render_once()
         .unwrap(),
     ))
+}
+
+#[post("/notebooks/<notebook_id>/cell/<cell_id>/cancel")]
+pub async fn cell_cancel(
+    cluster: ConnectedCluster<'_>,
+    notebook_id: i64,
+    cell_id: i64,
+) -> Result<Redirect, Error> {
+    let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
+    cell.cancel(cluster.pool()).await?;
+    Ok(Redirect::to(format!(
+        "/dashboard/notebooks/{}/cell/{}",
+        notebook_id, cell_id
+    )))
 }
 
 #[post("/notebooks/<notebook_id>/cell/<cell_id>/edit", data = "<data>")]
@@ -187,12 +230,10 @@ pub async fn cell_edit(
         &data.contents,
     )
     .await?;
-    cell.render(cluster.pool()).await?;
 
-    let bust_cache = std::time::SystemTime::now()
-        .duration_since(std::time::SystemTime::UNIX_EPOCH)?
-        .as_millis()
-        .to_string();
+    debug!("Rendering cell id={}", cell.id);
+    cell.render(cluster.pool()).await?;
+    debug!("Rendering of cell id={} complete", cell.id);
 
     Ok(ResponseOk(
         templates::Cell {
@@ -200,7 +241,6 @@ pub async fn cell_edit(
             notebook,
             selected: false,
             edit: false,
-            bust_cache,
         }
         .render_once()
         .unwrap(),
@@ -215,18 +255,13 @@ pub async fn cell_trigger_edit(
 ) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
-    let bust_cache = std::time::SystemTime::now()
-        .duration_since(std::time::SystemTime::UNIX_EPOCH)?
-        .as_millis()
-        .to_string();
 
     Ok(ResponseOk(
         templates::Cell {
             cell,
             notebook,
-            selected: false,
+            selected: true,
             edit: true,
-            bust_cache,
         }
         .render_once()
         .unwrap(),
@@ -242,10 +277,6 @@ pub async fn cell_play(
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let mut cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     cell.render(cluster.pool()).await?;
-    let bust_cache = std::time::SystemTime::now()
-        .duration_since(std::time::SystemTime::UNIX_EPOCH)?
-        .as_millis()
-        .to_string();
 
     Ok(ResponseOk(
         templates::Cell {
@@ -253,7 +284,6 @@ pub async fn cell_play(
             notebook,
             selected: true,
             edit: false,
-            bust_cache,
         }
         .render_once()
         .unwrap(),
@@ -295,8 +325,8 @@ pub async fn cell_delete(
     let _ = cell.delete(cluster.pool()).await?;
 
     Ok(Redirect::to(format!(
-        "/dashboard/notebooks/{}",
-        notebook_id
+        "/dashboard/notebooks/{}/cell/{}",
+        notebook_id, cell_id
     )))
 }
 
@@ -440,14 +470,16 @@ pub async fn uploader_upload(
         .await
     {
         Ok(()) => Ok(Redirect::to(format!(
-            "/dashboard?tab=Upload_Data&table_name={}",
+            "/dashboard/uploader/done?table_name={}",
             uploaded_file.table_name()
         ))),
-        Err(err) => Err(BadRequest(Layout::new("Uploader").render(
+        Err(err) => Err(BadRequest(
             templates::Uploader {
                 error: Some(err.to_string()),
-            },
-        ))),
+            }
+            .render_once()
+            .unwrap(),
+        )),
     }
 }
 
@@ -456,7 +488,6 @@ pub async fn uploaded_index(cluster: ConnectedCluster<'_>, table_name: &str) -> 
     let sql = templates::Sql::new(
         cluster.pool(),
         &format!("SELECT * FROM {} LIMIT 10", table_name),
-        true,
     )
     .await
     .unwrap();
@@ -471,52 +502,156 @@ pub async fn uploaded_index(cluster: ConnectedCluster<'_>, table_name: &str) -> 
     )
 }
 
-#[get("/?<tab>&<notebook_id>&<model_id>&<project_id>&<snapshot_id>&<deployment_id>&<table_name>")]
+#[get("/?<tab>&<id>")]
 pub async fn dashboard(
-    cluster: &Cluster,
+    cluster: ConnectedCluster<'_>,
     tab: Option<&str>,
-    notebook_id: Option<i64>,
-    model_id: Option<i64>,
-    project_id: Option<i64>,
-    snapshot_id: Option<i64>,
-    deployment_id: Option<i64>,
-    table_name: Option<String>,
+    id: Option<i64>,
 ) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.context);
-    layout.breadcrumbs(vec![crate::templates::components::NavLink::new(
-        "Dashboard",
-        "/dashboard",
-    )
-    .active()]);
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
 
-    let all_tabs = vec![
-        tabs::Tab {
+    let mut breadcrumbs = vec![NavLink::new("Dashboard", "/dashboard")];
+
+    let tab = tab.unwrap_or("Notebooks");
+
+    match tab {
+        "Notebooks" => {
+            breadcrumbs.push(NavLink::new("Notebooks", "/dashboard?tab=Notebooks").active());
+        }
+
+        "Notebook" => {
+            let notebook = models::Notebook::get_by_id(cluster.pool(), id.unwrap()).await?;
+            breadcrumbs.push(NavLink::new("Notebooks", "/dashboard?tab=Notebooks"));
+
+            breadcrumbs.push(
+                NavLink::new(
+                    notebook.name.as_str(),
+                    &format!("/dashboard?tab=Notebook&id={}", notebook.id),
+                )
+                .active(),
+            );
+        }
+
+        "Projects" => {
+            breadcrumbs.push(NavLink::new("Projects", "/dashboard?tab=Projects").active());
+        }
+
+        "Project" => {
+            let project = models::Project::get_by_id(cluster.pool(), id.unwrap()).await?;
+            breadcrumbs.push(NavLink::new("Projects", "/dashboard?tab=Projects"));
+            breadcrumbs.push(
+                NavLink::new(
+                    &project.name,
+                    &format!("/dashboard?tab=Project&id={}", project.id),
+                )
+                .active(),
+            );
+        }
+
+        "Models" => {
+            breadcrumbs.push(NavLink::new("Models", "/dashboard?tab=Models").active());
+        }
+
+        "Model" => {
+            let model = models::Model::get_by_id(cluster.pool(), id.unwrap()).await?;
+            let project = models::Project::get_by_id(cluster.pool(), model.project_id).await?;
+
+            breadcrumbs.push(NavLink::new("Models", "/dashboard?tab=Models"));
+            breadcrumbs.push(NavLink::new(
+                &project.name,
+                &format!("/dashboard?tab=Project&id={}", project.id),
+            ));
+            breadcrumbs.push(
+                NavLink::new(
+                    &model.algorithm,
+                    &format!("/dashboard?tab=Model&id={}", model.id),
+                )
+                .active(),
+            );
+        }
+
+        "Snapshots" => {
+            breadcrumbs.push(NavLink::new("Snapshots", "/dashboard?tab=Snapshots").active());
+        }
+
+        "Snapshot" => {
+            let snapshot = models::Snapshot::get_by_id(cluster.pool(), id.unwrap()).await?;
+
+            breadcrumbs.push(NavLink::new("Snapshots", "/dashboard?tab=Snapshots"));
+            breadcrumbs.push(
+                NavLink::new(
+                    &snapshot.relation_name,
+                    &format!("/dashboard?tab=Snapshot&id={}", snapshot.id),
+                )
+                .active(),
+            );
+        }
+
+        "Upload_Data" => {
+            breadcrumbs.push(NavLink::new("Upload Data", "/dashboard?tab=Upload_Data").active());
+        }
+        _ => (),
+    };
+
+    layout.breadcrumbs(breadcrumbs);
+
+    let tabs = match tab {
+        "Notebooks" => vec![tabs::Tab {
             name: "Notebooks",
-            content: NotebooksTab { notebook_id }.render_once().unwrap(),
-        },
-        tabs::Tab {
+            content: NotebooksTab {}.render_once().unwrap(),
+        }],
+        "Projects" => vec![tabs::Tab {
             name: "Projects",
-            content: ProjectsTab { project_id }.render_once().unwrap(),
-        },
-        tabs::Tab {
+            content: ProjectsTab {}.render_once().unwrap(),
+        }],
+        "Notebook" => vec![tabs::Tab {
+            name: "Notebook",
+            content: NotebookTab { id: id.unwrap() }.render_once().unwrap(),
+        }],
+        "Project" => vec![tabs::Tab {
+            name: "Project",
+            content: ProjectTab {
+                project_id: id.unwrap(),
+            }
+            .render_once()
+            .unwrap(),
+        }],
+        "Models" => vec![tabs::Tab {
             name: "Models",
-            content: ModelsTab { model_id }.render_once().unwrap(),
-        },
-        tabs::Tab {
-            name: "Deployments",
-            content: DeploymentsTab { deployment_id }.render_once().unwrap(),
-        },
-        tabs::Tab {
-            name: "Snapshots",
-            content: SnapshotsTab { snapshot_id }.render_once().unwrap(),
-        },
-        tabs::Tab {
-            name: "Upload_Data",
-            content: UploaderTab { table_name }.render_once().unwrap(),
-        },
-    ];
+            content: ModelsTab {}.render_once().unwrap(),
+        }],
 
-    let nav_tabs = tabs::Tabs::new(all_tabs, Some("Notebooks"), tab)?;
+        "Model" => vec![tabs::Tab {
+            name: "Model",
+            content: ModelTab {
+                model_id: id.unwrap(),
+            }
+            .render_once()
+            .unwrap(),
+        }],
+
+        "Snapshots" => vec![tabs::Tab {
+            name: "Snapshots",
+            content: SnapshotsTab {}.render_once().unwrap(),
+        }],
+
+        "Snapshot" => vec![tabs::Tab {
+            name: "Snapshot",
+            content: SnapshotTab {
+                snapshot_id: id.unwrap(),
+            }
+            .render_once()
+            .unwrap(),
+        }],
+
+        "Upload_Data" => vec![tabs::Tab {
+            name: "Upload data",
+            content: UploaderTab { table_name: None }.render_once().unwrap(),
+        }],
+        _ => todo!(),
+    };
+
+    let nav_tabs = tabs::Tabs::new(tabs, Some("Notebooks"), Some(tab))?;
 
     Ok(ResponseOk(
         layout.render(templates::Dashboard { tabs: nav_tabs }),
@@ -538,6 +673,7 @@ pub fn routes() -> Vec<Route> {
         cell_play,
         cell_remove,
         cell_delete,
+        cell_cancel,
         models_index,
         models_get,
         snapshots_index,
@@ -548,6 +684,7 @@ pub fn routes() -> Vec<Route> {
         uploader_upload,
         uploaded_index,
         dashboard,
+        notebook_reorder,
     ]
 }
 

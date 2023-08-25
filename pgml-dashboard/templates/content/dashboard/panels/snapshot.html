@@ -1,86 +1,88 @@
 <turbo-frame id="snapshot">
-  <section>
-    <h1><span class="material-symbols-outlined">storage</span><%= snapshot.relation_name %>   
-      <% if &snapshot.status == "created" { %>
-        <span class="material-symbols-outlined success">done</span>
-      <% } else { %>
-        <span class="material-symbols-outlined">sync</span>
-      <% } %>
-    </h1>
-  
-    <dl>
-      <dt>Snapshot ID</dt>
-      <dd><%= snapshot.id %></dd>
-      <dt>Table Size</dt>
-      <dd><%= snapshot.table_size %></dd>
-      <dt>Rows</dt>
-      <dd><%= snapshot.rows().unwrap() %></dd>
-      <dt>Features</dt>
-      <dd><%= snapshot.feature_size().unwrap() %></dd>
-      <dt>Created</dt>
-      <dd><time datetime="<% snapshot.created_at; %>"><% snapshot.created_at; %></time></dd>
-    </dl>
-  
-  <% if !models.is_empty() { %>
-    <h2><span class="material-symbols-outlined">model_training</span>Models</h2>
-    <% let project = &projects[&models.iter().next().unwrap().project_id]; %>
-    <ol class="object_list model_list">
-      <li>
-        <a href="/dashboard?tab=Projects&project_id=<%= project.id %>" data-turbo="false">
-          <h3 style="padding-right: 20%"><%= project.name %></h3>
-          <b><%- project.key_metric_display_name().unwrap() %></b>
-          <figure id="project_<%= project.id %>"></figure>
-        </a>
-    </li>
-      <% for model in models.iter() { %>
-      <li>
-        <a href="/dashboard?tab=Models&model_id=<%= model.id %>" data-turbo="false">
-          <span class="material-symbols-outlined d-flex justify-content-center align-items-center">
-            <% if model.search.is_some() { %>
-              <% if model.search.as_ref().unwrap().as_str() == "grid" { %>
-              grid_on
-              <% } %>
-              <% if model.search.as_ref().unwrap() == "random" { %>
-              shuffle
-              <% } %>
-            <% } else { %>
-              check_circle
-            <% } %>
-          </span>
-          <span class="ps-2"><%= model.algorithm %></span>
-          <span><%= format!("{:.4}", model.key_metric(&project).unwrap_or(0.)) %></span>
-          <figure id="model_<%= model.id %>"></figure>
-        </a>
+  <div class="notebook">
+    <section>
+      <h1><span class="material-symbols-outlined">storage</span><%= snapshot.relation_name %>   
+        <% if &snapshot.status == "created" { %>
+          <span class="material-symbols-outlined success">done</span>
+        <% } else { %>
+          <span class="material-symbols-outlined">sync</span>
+        <% } %>
+      </h1>
+    
+      <dl>
+        <dt>Snapshot ID</dt>
+        <dd><%= snapshot.id %></dd>
+        <dt>Table Size</dt>
+        <dd><%= snapshot.table_size %></dd>
+        <dt>Rows</dt>
+        <dd><%= snapshot.rows().unwrap() %></dd>
+        <dt>Features</dt>
+        <dd><%= snapshot.feature_size().unwrap() %></dd>
+        <dt>Created</dt>
+        <dd><time datetime="<% snapshot.created_at; %>"><% snapshot.created_at; %></time></dd>
+      </dl>
+    
+    <% if !models.is_empty() { %>
+      <h2><span class="material-symbols-outlined">model_training</span>Models</h2>
+      <% let project = &projects[&models.iter().next().unwrap().project_id]; %>
+      <ol class="object_list model_list">
+        <li>
+          <a href="/dashboard?tab=Project&id=<%= project.id %>" data-turbo-frame="_top">
+            <h3 style="padding-right: 20%"><%= project.name %></h3>
+            <b><%- project.key_metric_display_name().unwrap() %></b>
+            <figure id="project_<%= project.id %>"></figure>
+          </a>
       </li>
-      <% } %>
-    </ol>
-  <% } %>
-  
-  <% if snapshot.exists { %>
-    <h2><span class="material-symbols-outlined">label_important</span>Labels</h2>
-    <% for label in snapshot.labels().unwrap().iter() {
-      let name = label["name"].as_str().unwrap();
-      let name_machine = name.replace(" ", "_");
-    %>
-      <h3><%= name %>&nbsp;<code><%= label["pg_type"].as_str().unwrap() | upper %></code></h3>
-      <figure id="<%= name_machine %>_distribution"></figure>
-      <figure id="<%= name_machine %>_outliers"></figure>
+        <% for model in models.iter() { %>
+        <li>
+          <a href="/dashboard?tab=Model&id=<%= model.id %>" data-turbo-frame="_top">
+            <span class="material-symbols-outlined d-flex justify-content-center align-items-center">
+              <% if model.search.is_some() { %>
+                <% if model.search.as_ref().unwrap().as_str() == "grid" { %>
+                grid_on
+                <% } %>
+                <% if model.search.as_ref().unwrap() == "random" { %>
+                shuffle
+                <% } %>
+              <% } else { %>
+                check_circle
+              <% } %>
+            </span>
+            <span class="ps-2"><%= model.algorithm %></span>
+            <span><%= format!("{:.4}", model.key_metric(&project).unwrap_or(0.)) %></span>
+            <figure id="model_<%= model.id %>"></figure>
+          </a>
+        </li>
+        <% } %>
+      </ol>
     <% } %>
-    <h2><span class="material-symbols-outlined">bubble_chart</span>Features</h2>
-    <% for feature in snapshot.features().unwrap().iter() {
-      let name = feature["name"].as_str().unwrap();
-      let name_machine = name.replace(" ", "_");
-    %>
-      <h3><%= name %>&nbsp;<code><%= feature["pg_type"].as_str().unwrap() | upper %></code></h3>
-      <figure id="<%= name_machine %>_distribution"></figure>
-      <% if snapshot.y_column_name.as_ref().is_some() { %>
-      <% for y_column_name in snapshot.y_column_name.as_ref().unwrap().iter() { %>
-      <figure id="<%= name_machine %>_correlation_<%= y_column_name %>"></figure>
+    
+    <% if snapshot.exists { %>
+      <h2><span class="material-symbols-outlined">label_important</span>Labels</h2>
+      <% for label in snapshot.labels().unwrap().iter() {
+        let name = label["name"].as_str().unwrap();
+        let name_machine = name.replace(" ", "_");
+      %>
+        <h3><%= name %>&nbsp;<code><%= label["pg_type"].as_str().unwrap() | upper %></code></h3>
+        <figure id="<%= name_machine %>_distribution"></figure>
+        <figure id="<%= name_machine %>_outliers"></figure>
       <% } %>
+      <h2><span class="material-symbols-outlined">bubble_chart</span>Features</h2>
+      <% for feature in snapshot.features().unwrap().iter() {
+        let name = feature["name"].as_str().unwrap();
+        let name_machine = name.replace(" ", "_");
+      %>
+        <h3><%= name %>&nbsp;<code><%= feature["pg_type"].as_str().unwrap() | upper %></code></h3>
+        <figure id="<%= name_machine %>_distribution"></figure>
+        <% if snapshot.y_column_name.as_ref().is_some() { %>
+        <% for y_column_name in snapshot.y_column_name.as_ref().unwrap().iter() { %>
+        <figure id="<%= name_machine %>_correlation_<%= y_column_name %>"></figure>
+        <% } %>
+        <% } %>
       <% } %>
-    <% } %>
-  </section>
-  
+    </section>
+  </div>
+    
   <script defer type="module">
     import { renderModel, renderDistribution, renderCorrelation, renderOutliers } from '/dashboard/static/js/main.js';
   

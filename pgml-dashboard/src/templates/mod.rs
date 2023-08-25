@@ -182,9 +182,16 @@ pub struct Projects {
 }
 
 #[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/project_tab.html")]
+pub struct ProjectTab {
+    pub project_id: i64,
+}
+
+#[derive(TemplateOnce)]
 #[template(path = "content/dashboard/panels/notebooks.html")]
 pub struct Notebooks {
     pub notebooks: Vec<models::Notebook>,
+    pub new: bool,
 }
 
 #[derive(TemplateOnce)]
@@ -201,7 +208,6 @@ pub struct Cell {
     pub cell: models::Cell,
     pub edit: bool,
     pub selected: bool,
-    pub bust_cache: String,
 }
 
 #[derive(TemplateOnce)]
@@ -218,15 +224,10 @@ pub struct Sql {
     pub columns: Vec<String>,
     pub rows: Vec<Vec<String>>,
     pub execution_duration: std::time::Duration,
-    pub render_execution_duration: bool,
 }
 
 impl Sql {
-    pub async fn new(
-        pool: &PgPool,
-        query: &str,
-        render_execution_duration: bool,
-    ) -> anyhow::Result<Sql> {
+    pub async fn new(pool: &PgPool, query: &str) -> anyhow::Result<Sql> {
         let prepared_stmt = pool.prepare(query).await?;
         let cols = prepared_stmt.columns();
 
@@ -373,7 +374,6 @@ impl Sql {
             columns,
             rows,
             execution_duration,
-            render_execution_duration,
         })
     }
 }
@@ -460,15 +460,17 @@ pub struct Dashboard<'a> {
 }
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/notebooks_tab.html")]
-pub struct NotebooksTab {
-    pub notebook_id: Option<i64>,
+pub struct NotebooksTab;
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/notebook_tab.html")]
+pub struct NotebookTab {
+    pub id: i64,
 }
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/projects_tab.html")]
-pub struct ProjectsTab {
-    pub project_id: Option<i64>,
-}
+pub struct ProjectsTab;
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/deployments_tab.html")]
@@ -478,14 +480,22 @@ pub struct DeploymentsTab {
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/models_tab.html")]
-pub struct ModelsTab {
-    pub model_id: Option<i64>,
+pub struct ModelsTab;
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/model_tab.html")]
+pub struct ModelTab {
+    pub model_id: i64,
 }
 
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/snapshots_tab.html")]
-pub struct SnapshotsTab {
-    pub snapshot_id: Option<i64>,
+pub struct SnapshotsTab;
+
+#[derive(TemplateOnce)]
+#[template(path = "content/dashboard/tabs/snapshot_tab.html")]
+pub struct SnapshotTab {
+    pub snapshot_id: i64,
 }
 
 #[derive(TemplateOnce)]

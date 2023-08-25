@@ -34,7 +34,7 @@ jobs:
             ~/.cargo
             pgml-extension/target
             ~/.pgrx
-          key: ${{ runner.os }}-rust-2-${{ hashFiles('pgml-extension/Cargo.lock') }}
+          key: ${{ runner.os }}-rust-3-${{ hashFiles('pgml-extension/Cargo.lock') }}
       - name: Submodules
         run: |
           git submodule update --init --recursive

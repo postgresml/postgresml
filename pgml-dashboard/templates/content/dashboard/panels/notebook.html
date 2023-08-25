@@ -1,57 +1,107 @@
 <turbo-frame id="notebook">
   <div data-controller="notebook">
-    <section class="notebook-title">
-      <div class="flex flex-center">
-        <div class="notebook-render-container">
-          <h1 class="flex-grow" data-action="click->notebook#renameNotebook" data-notebook-target="notebookName">
-            <span class="material-symbols-outlined">newspaper</span>
-            <%= notebook.name %>
-          </h1>
-        </div>
-        <div class="notebook-buttons">
-          <form class="hidden" action="/dashboard/notebooks/<%= notebook.id %>/rename" method="post" data-notebook-target="renameNotebookForm">
-            <h1><input type="text" name="name" value="<%= notebook.name %>" required></h1>
-          </form>
-          <form action="/dashboard/notebooks/<%= notebook.id %>/reset" method="post">
-            <button class="btn btn-tertiary fs-3" type="submit" title="Reset all executable cells">
-              <span class="material-symbols-outlined" data-turbo-frame="notebook">replay</span>
-            </button>
-          </form>
-        </div>
-      </div>
-    </section>
-  
-    <% for cell in cells {
-      let edit = false;
-      let bust_cache = std::time::SystemTime::now()
-          .duration_since(std::time::SystemTime::UNIX_EPOCH)
-          .unwrap_or(std::time::Duration::from_millis(1000))
-          .as_millis()
-          .to_string();
-      let selected = false;
-  
-      include!("cell.html");
-    } %>
-  
-    <section class="notebook-last-cell notebook-cell" data-controller="notebook-cell">
-      <div class="notebook-cell-edit">
-        <form action="/dashboard/notebooks/<%= notebook.id %>/cell" method="post" data-notebook-cell-target="form" data-action="notebook-cell#freezeScrollOnNextRender notebook-cell#play">
-          <div class="flex">
-            <div class="flex-grow margin-right-1">
-              <textarea data-cell-id="new" name="contents" data-notebook-cell-target="editor"></textarea>
-            </div>
-            <div class="notebook-buttons flex-end">
-              <select name="cell_type" id="cell_type" data-action="notebook-cell#selectCellType" title="Select cell type" data-notebook-cell-target="type">
-                <option value="3" selected>SQL</option>
-                <option value="1">Markdown</option>
-              </select>
-              <button class="btn btn-tertiary fs-3" type="submit" title="Create cell" data-notebook-cell-target="play">
-                <span class="material-symbols-outlined">play_arrow</span>
+    
+    <div class="card mb-4 z-1" data-notebook-target="menu">
+      <div class="card-body p-1">
+        <div class="row">
+          <div class="col-12 col-xxl-6">
+            <div class="d-flex justify-content-start align-items-center h-100">
+              <button class="btn btn-tertiary d-flex gap-1" data-action="notebook#playAll" data-notebook-target="playAllButton">
+                <span class="material-symbols-outlined fs-5">
+                  play_arrow
+                </span>
+                Run All
+              </button>
+              <form action="/dashboard/notebooks/<%= notebook.id %>/reset" method="post">
+                <button class="btn btn-tertiary d-flex gap-1">
+                  <span class="material-symbols-outlined fs-5">
+                    replay
+                  </span>
+                  Clear All Output
+                </button>
+              </form>
+              <button class="btn btn-tertiary d-flex gap-1" data-action="notebook#newCell">
+                <span class="material-symbols-outlined fs-5">
+                  add
+                </span>
+                Create New Cell
               </button>
             </div>
           </div>
-        </form>
+
+          <div class="col-12 col-xxl-6">
+            <div class="d-flex justify-content-end align-items-center h-100">
+              <button class="btn btn-tertiary d-flex gap-1" data-notebook-target="cellButton" disabled data-action="notebook#playCell">
+                <span class="material-symbols-outlined fs-5">
+                  play_arrow
+                </span>
+                <span data-notebook-target="playButtonText">Run</span>
+              </button>
+              <button class="btn btn-tertiary d-flex gap-1" data-notebook-target="stopButton" disabled data-action="notebook#playStop">
+                <span class="material-symbols-outlined fs-5">
+                  stop
+                </span>
+                Stop
+              </button>
+              <button class="btn btn-tertiary d-flex gap-1" data-notebook-target="cellButton" disabled data-action="notebook#deleteCellConfirm">
+                <span class="material-symbols-outlined fs-5">
+                  delete
+                </span>
+                Delete
+              </button>
+              <div class="dropdown nav-item d-flex justify-content-center align-items-center">
+                <button data-notebook-target="cellButton" class="horizontal-hide btn-dropdown dropdown-toggle leftnav-collapse-affect bg-transparent border-0" disabled href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="0, 10" aria-expanded="false">
+                  <span data-notebook-target="syntaxName">Markdown</span>
+                  <span class="material-symbols-outlined">
+                    expand_more
+                  </span>
+                </button>
+                <ul class="dropdown-menu w-100">
+                  <li class="menu-item d-flex align-items-center">
+                    <a href="#" data-action="notebook#changeSyntax" data-syntax="gfm">Markdown</a>
+                  </li>
+                  <li class="menu-item d-flex align-items-center">
+                    <a href="#" data-action="notebook#changeSyntax" data-syntax="sql">SQL</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </section>
+    </div>
+    <div class="overflow-y-scroll pe-2" data-notebook-target="scroller" data-notebook-id="<%= notebook.id %>">
+  
+      <% for cell in cells {
+        let edit = false;
+        let selected = false;
+    
+        include!("cell.html");
+      } %>
+    </div>
+    <div id="deleteModal" class="modal modal-xl" tabindex="-1" aria-modal="true" role="dialog" data-notebook-target="deleteModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="w-100 h-100 mt-5 py-5 px-3 d-flex flex-column justify-content-center align-items-center" style="background: black; border: 2px solid white; border-radius: 12px;">
+                <p class="mb-4 fw-semibold">Are you sure you want to delete this cell?</p>
+
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                  <button class="btn btn-primary-web-app" data-bs-dismiss="modal" data-action="notebook#deleteCell">
+                    Yes
+                  </button>
+                  <button class="btn btn-secondary-web-app" data-bs-dismiss="modal">
+                    No
+                  </button>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <form action="/dashboard/notebooks/<%= notebook.id %>/cell" method="post" data-notebook-target="newCell">
+      <input type="hidden" name="cell_type" value="3"> <!-- SQL -->
+      <input type="hidden" name="contents" value="">
+    </form>
   </div>
 </turbo-frame>

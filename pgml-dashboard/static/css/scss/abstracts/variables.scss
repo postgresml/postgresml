@@ -115,6 +115,12 @@ $border-radius-lg: 16px;
 $btn-border-width: 1px;
 $btn-transition: none;
 $btn-box-shadow: none;
+$btn-close-width: 14px;
+$btn-close-height: 14px;
+$btn-close-padding-x: 0;
+$btn-close-color: #{$gray-100};
+$btn-close-opacity: 1.0;
+$btn-close-white-filter: none;
 
 // Forms
 $input-padding-y: 16px;
@@ -187,7 +193,9 @@ $enable-shadows: true;
 
 // Spaces
 $card-box-shadow: 16px 20px 24px rgba(6, 20, 37, 0.04);
-$card-border-radius: 20px;
+$card-border-radius: 8px;
+$card-spacer-x: 20px;
+$card-spacer-y: 20px;
 $enable-negative-margins: true;
 
 // Dropdown

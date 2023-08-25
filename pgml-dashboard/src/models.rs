@@ -19,7 +19,7 @@ pub struct Project {
 }
 
 impl Project {
-    pub async fn get_by_id(pool: &PgPool, id: i64) -> anyhow::Result<Project> {
+    pub async fn get_by_id(pool: impl sqlx::PgExecutor<'_>, id: i64) -> anyhow::Result<Project> {
         Ok(sqlx::query_as!(
             Project,
             "SELECT
@@ -137,6 +137,14 @@ impl Notebook {
 
         Ok(())
     }
+
+    pub fn created_by(&self) -> &'static str {
+        if self.id <= 9 {
+            "PostgresML"
+        } else {
+            "User"
+        }
+    }
 }
 
 #[derive(PartialEq)]
@@ -164,7 +172,7 @@ impl std::fmt::Display for CellType {
     }
 }
 
-#[derive(FromRow, Debug, Clone)]
+#[derive(FromRow, Debug, Clone, Default)]
 pub struct Cell {
     pub id: i64,
     pub notebook_id: i64,
@@ -218,7 +226,7 @@ impl Cell {
         .await?)
     }
 
-    pub async fn get_by_id(pool: &PgPool, id: i64) -> anyhow::Result<Cell> {
+    pub async fn get_by_id(pool: impl sqlx::PgExecutor<'_>, id: i64) -> anyhow::Result<Cell> {
         Ok(sqlx::query_as!(
             Cell,
             "SELECT
@@ -287,6 +295,53 @@ impl Cell {
         .await?)
     }
 
+    pub async fn reorder(
+        self,
+        pool: impl sqlx::PgExecutor<'_>,
+        cell_number: i32,
+    ) -> anyhow::Result<Cell> {
+        Ok(sqlx::query_as!(
+            Cell,
+            "
+            UPDATE pgml.notebook_cells
+            SET cell_number = $1
+            WHERE id = $2
+            RETURNING *
+        ",
+            cell_number,
+            self.id
+        )
+        .fetch_one(pool)
+        .await?)
+    }
+
+    pub fn tag(&self) -> String {
+        format!("/* pgml_dashboard_cell_id: {} */", self.id)
+    }
+
+    pub async fn cancel(&self, pool: &PgPool) -> anyhow::Result<()> {
+        sqlx::query(&format!(
+            "SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE query LIKE '{}%'",
+            self.tag(),
+        ))
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub fn state(&self) -> &'static str {
+        if self.contents.is_empty() {
+            "new"
+        } else if self.rendering.is_some() {
+            "rendered"
+        } else {
+            "rendering"
+        }
+    }
+
     pub async fn render(&mut self, pool: &PgPool) -> anyhow::Result<()> {
         let cell_type: CellType = self.cell_type.into();
 
@@ -299,16 +354,10 @@ impl Cell {
                     .collect();
                 let mut rendering = String::new();
                 let mut total_execution_duration = std::time::Duration::default();
-                let render_individual_execution_duration = queries.len() > 1;
 
                 for query in queries {
-                    let result = match templates::Sql::new(
-                        pool,
-                        query,
-                        render_individual_execution_duration,
-                    )
-                    .await
-                    {
+                    let query = self.tag() + query;
+                    let result = match templates::Sql::new(pool, &query).await {
                         Ok(sql) => {
                             total_execution_duration += sql.execution_duration;
                             sql.render_once()?
@@ -396,17 +445,17 @@ pub struct Model {
     pub id: i64,
     pub project_id: i64,
     pub snapshot_id: i64,
-    num_features: i32,
+    pub num_features: i32,
     pub algorithm: String,
-    runtime: Option<String>,
-    hyperparams: serde_json::Value,
-    status: String,
-    metrics: Option<serde_json::Value>,
+    pub runtime: Option<String>,
+    pub hyperparams: serde_json::Value,
+    pub status: String,
+    pub metrics: Option<serde_json::Value>,
     pub search: Option<String>,
-    search_params: serde_json::Value,
-    search_args: serde_json::Value,
+    pub search_params: serde_json::Value,
+    pub search_args: serde_json::Value,
     pub created_at: PrimitiveDateTime,
-    updated_at: PrimitiveDateTime,
+    pub updated_at: PrimitiveDateTime,
 }
 
 impl Model {

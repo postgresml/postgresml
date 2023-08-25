@@ -8,25 +8,52 @@ export default class extends Controller {
     'play',
     'type',
     'cancelEdit',
+    'cell',
+    'cellType',
+    'dragAndDrop',
+    'running',
+    'executionTime',
   ];
 
   connect() {
     // Enable CodeMirror editor if we are editing.
-    if (this.hasEditorTarget && this.hasFormTarget && !this.codeMirror) {
+    if (this.hasEditorTarget && !this.codeMirror) {
       this.initCodeMirrorOnTarget(this.editorTarget)
     }
+
+    if (this.cellTarget.dataset.cellState === 'new') {
+      this.cellTarget.scrollIntoView()
+    }
+
+    this.cellTarget.addEventListener('mouseover', this.showDragAndDrop.bind(this))
+    this.cellTarget.addEventListener('mouseout', this.hideDragAndDrop.bind(this))
+  }
+
+  showDragAndDrop(event) {
+    this.dragAndDropTarget.classList.remove('d-none')
+  }
+
+  hideDragAndDrop(event) {
+    this.dragAndDropTarget.classList.add('d-none')
   }
 
   // Enable CodeMirror on target.
   initCodeMirrorOnTarget(target) {
+    let mode = 'sql'
+
+    if (target.dataset.type === 'markdown') {
+      mode = 'gfm'
+    }
+
     this.codeMirror = CodeMirror.fromTextArea(target, {
       lineWrapping: true,
       matchBrackets: true,
-      mode: 'sql',
+      mode,
       scrollbarStyle: 'null',
+      lineNumbers: mode === 'sql',
     })
 
-    this.codeMirror.setSize('100%', 250)
+    this.codeMirror.setSize('100%', 'auto')
 
     const keyMap = {
       'Ctrl-Enter': () => this.formTarget.requestSubmit(),
@@ -36,19 +63,6 @@ export default class extends Controller {
     };
 
     this.codeMirror.addKeyMap(keyMap)
-
-    this.selectCellType()
-  }
-
-  // Change syntax highlighting.
-  selectCellType(event) {
-    const value = this.typeTarget.options[this.typeTarget.selectedIndex].value
-
-    if (value == 3) {
-      this.codeMirror.setOption('mode', 'sql')
-    } else {
-      this.codeMirror.setOption('mode', 'gfm')
-    }
   }
 
   // Prevent the page from scrolling up
@@ -61,8 +75,11 @@ export default class extends Controller {
   // Disable cell until execution completes.
   // Prevents duplicate submits.
   play(event) {
-    this.playTarget.querySelector('span').innerHTML = 'pending'
-    this.playTarget.disabled = true
+    this.runningTarget.classList.remove('d-none')
+
+    if (this.hasExecutionTimeTarget) {
+      this.executionTimeTarget.classList.add('d-none')
+    }
 
     if (this.codeMirror) {
       const disableKeyMap = {
@@ -80,6 +97,17 @@ export default class extends Controller {
   cancelEdit(event) {
     event.preventDefault()
     this.cancelEditTarget.requestSubmit()
+  }
+
+  setSyntax(syntax) {
+    this.codeMirror.setOption('mode', syntax)
+
+    let cellType = 3
+    if (syntax === 'gfm') {
+      cellType = 1
+    }
+
+    this.cellTypeTarget.value = cellType
   }
 }
 
