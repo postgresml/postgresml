@@ -153,7 +153,6 @@ it("pipeline to dict", async () => {
   let collection = pgml.newCollection("test_j_c_ptd_2");
   await collection.add_pipeline(pipeline);
   let pipeline_dict = await pipeline.to_dict();
-  console.log(JSON.stringify(pipeline_dict));
   expect(pipeline_dict["name"]).toBe("test_j_p_ptd_0");
   await collection.archive();
 });
