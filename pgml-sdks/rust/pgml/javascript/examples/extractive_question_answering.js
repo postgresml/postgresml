@@ -44,9 +44,7 @@ const main = async () => {
     .map((result) => {
       return result[1];
     })
-    .join("\n")
-    .replace('"', '\\"')
-    .replace("'", "''");
+    .join("\n");
 
   // Query for answer
   const builtins = pgml.newBuiltins();
