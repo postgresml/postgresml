@@ -1,4 +1,4 @@
-from pgml import Collection, Model, Splitter, Pipeline, Builtins
+from pgml import Collection, Model, Splitter, Pipeline, Builtins, py_init_logger
 import json
 from datasets import load_dataset
 from time import time
@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from rich.console import Console
 import asyncio
 
+
+py_init_logger()
 
 async def main():
     load_dotenv()
@@ -48,15 +50,16 @@ async def main():
     context = " ".join(results[0][1].strip().split())
     context = context.replace('"', '\\"').replace("'", "''")
 
-    # Query for answer
+    # Query for summary 
     builtins = Builtins()
-    console.print("Querying for answer ...")
+    console.print("Querying for summary ...")
     start = time()
-    answer = await builtins.transform(
-        "question-answering", [json.dumps({"question": query, "context": context})]
+    summary = await builtins.transform(
+        {"task": "summarization", "model": "sshleifer/distilbart-cnn-12-6"},
+        [json.dumps({"question": query, "context": context})],
     )
     end = time()
-    console.print("Answer '%s'" % answer, style="bold")
+    console.print("Summary '%s'" % summary, style="bold")
     console.print("Query time = %0.3f" % (end - start))
 
     # Archive collection
