@@ -38,7 +38,7 @@ it("can create collection", () => {
 
 it("can create model", () => {
   let model = pgml.newModel("test", "openai", {
-    tester: "test 0123948712394871234987",
+    some_example_parameter: "test 0123948712394871234987",
   });
   expect(model).toBeTruthy();
 });
