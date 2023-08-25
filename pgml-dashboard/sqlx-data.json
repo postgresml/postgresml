@@ -38,6 +38,75 @@
     },
     "query": "SELECT * FROM pgml.notebooks WHERE id = $1"
   },
+  "23498954ab1fc5d9195509f1e048f31802115f1f3981776ea6de96a0292a7973": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "notebook_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "cell_type",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "cell_number",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "version",
+          "ordinal": 4,
+          "type_info": "Int4"
+        },
+        {
+          "name": "contents",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "rendering",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "execution_time",
+          "ordinal": 7,
+          "type_info": "Interval"
+        },
+        {
+          "name": "deleted_at",
+          "ordinal": 8,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            UPDATE pgml.notebook_cells\n            SET cell_number = $1\n            WHERE id = $2\n            RETURNING *\n        "
+  },
   "287957935aa0f5468d34153df78bf1534d74801636954d0c2e04943225de4d19": {
     "describe": {
       "columns": [
