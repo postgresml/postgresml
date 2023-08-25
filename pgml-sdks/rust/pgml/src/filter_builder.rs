@@ -117,7 +117,7 @@ fn get_value_type(value: &serde_json::Value) -> String {
     } else if value.is_string() {
         "text".to_string()
     } else if value.is_i64() {
-        "bigint".to_string()
+        "float8".to_string()
     } else if value.is_f64() {
         "float8".to_string()
     } else if value.is_boolean() {

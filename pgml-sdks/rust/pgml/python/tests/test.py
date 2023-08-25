@@ -29,7 +29,8 @@ def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
             {
                 "id": i,
                 "text": "This is a test document: {}".format(i),
-                "some_random_thing": "This will be metadata on it",
+                "project": "a10",
+                "floating_uuid": i * 1.01,
                 "uuid": i * 10,
                 "name": "Test Document {}".format(i),
             }
@@ -147,17 +148,18 @@ async def test_can_vector_search_with_query_builder_and_metadata_filtering():
     results = (
         await collection.query()
         .vector_recall("Here is some query", pipeline)
-        .filter({
-            "metadata": {
-                "uuid": {
-                    "$eq": 0
-                }
+        .filter(
+            {
+                "metadata": {
+                    "$or": [{"uuid": {"$eq": 0}}, {"floating_uuid": {"$lt": 2}}],
+                    "project": {"$eq": "a10"},
+                },
             }
-        })
+        )
         .limit(10)
         .fetch_all()
     )
-    assert len(results) == 1
+    assert len(results) == 2
     await collection.archive()
 
 
