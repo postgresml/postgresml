@@ -86,9 +86,9 @@ const main = async () => {
 Continuing within `const main`
 
 ```javascript
-    model = pgml.newModel();
-    splitter = pgml.newSplitter();
-    pipeline = pgml.Pipeline("my_javascript_pipeline", model, splitter);
+    const model = pgml.newModel();
+    const splitter = pgml.newSplitter();
+    const pipeline = pgml.newPipeline("my_javascript_pipeline", model, splitter);
     await collection.add_pipeline(pipeline);
 ```
 
@@ -213,7 +213,7 @@ Documents are dictionaries with two required keys: `id` and `text`. All other ke
 
 **Upsert documents with metadata**
 ```javascript
-documents = [
+const documents = [
     {
         id: "Document 1",
         text: "Here are the contents of Document 1",
@@ -225,7 +225,7 @@ documents = [
         random_key: "this will be metadata for the document"
     }
 ]
-collection = Collection("test_collection")
+const collection = pgml.newCollection("test_collection")
 await collection.upsert_documents(documents)
 ```
 
@@ -237,16 +237,16 @@ Pipelines are required to perform search. See the [Pipelines Section](#pipelines
 
 **Basic vector search**
 ```javascript
-collection = pgml.newCollection("test_collection")
-pipeline = pgml.newPipeline("test_pipeline")
-results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).fetch_all()
+const collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).fetch_all()
 ```
 
 **Vector search with custom limit**
 ```javascript
-collection = pgml.newCollection("test_collection")
-pipeline = pgml.newPipeline("test_pipeline")
-results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).limit(10).fetch_all()
+const collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).limit(10).fetch_all()
 ```
 
 #### Metadata Filtering
@@ -255,15 +255,15 @@ We provide powerful and flexible arbitrarly nested metadata filtering based off 
 
 **Vector search with $eq metadata filtering**
 ```javascript
-collection = pgml.newCollection("test_collection")
-pipeline = pgml.newPipeline("test_pipeline")
-results = await collection.query()
+const collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const results = await collection.query()
     .vector_recall("Here is some query", pipeline)
     .limit(10)
     .filter({
-        "metadata": {
-            "uuid": {
-                "$eq": 1
+        metadata: {
+            uuid: {
+                $eq: 1
             }    
         }
     })
@@ -274,15 +274,15 @@ The above query would filter out all documents that do not contain a key `uuid` 
 
 **Vector search with $gte metadata filtering**
 ```javascript
-collection = pgml.newCollection("test_collection")
-pipeline = pgml.newPipeline("test_pipeline")
-results = await collection.query()
+const collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const results = await collection.query()
     .vector_recall("Here is some query", pipeline)
     .limit(10)
     .filter({
-        "metadata": {
-            "index": {
-                "$gte": 3
+        metadata: {
+            index: {
+                $gte: 3
             }    
         }
     })
@@ -294,31 +294,31 @@ The above query would filter out all documents that do not contain a key `index`
 
 **Vector search with $or and $and metadata filtering**
 ```javascript
-collection = pgml.newCollection("test_collection")
-pipeline = pgml.newPipeline("test_pipeline")
-results = await collection.query()
+const collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const results = await collection.query()
     .vector_recall("Here is some query", pipeline)
     .limit(10)
     .filter({
-        "metadata": {
-            "$or": [
+        metadata: {
+            $or: [
                 {
-                    "$and": [
+                    $and: [
                         {
-                            "$eq": {
-                                "uuid": 1
+                            uuid: {
+                                $eq: 1
                             }    
                         },
                         {
-                            "$lt": {
-                                "index": 100 
+                            index: {
+                                $lt: 100 
                             }
                         }
                     ] 
                 },
                 {
-                   "special": {
-                        "$ne": True
+                   special: {
+                        $ne: true
                     } 
                 }
             ]    
@@ -334,15 +334,15 @@ The above query would filter out all documents that do not have a key `special` 
 If full text search is enabled for the associated Pipeline, documents can be first filtered by full text search and then recalled by embedding similarity.
 
 ```javascript
-collection = pgml.newCollection("test_collection")
-pipeline = pgml.newPipeline("test_pipeline")
-results = await collection.query()
+const collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const results = await collection.query()
     .vector_recall("Here is some query", pipeline)
     .limit(10)
     .filter({
-        "full_text": {
-            "configuration": "english",
-            "text": "Match Me"
+        full_text: {
+            configuration: "english",
+            text: "Match Me"
         }
     })
     .fetch_all()
@@ -362,20 +362,20 @@ Models are used for embedding chuncked documents. We support most every open sou
 
 **Create a default Model "intfloat/e5-small" with default parameters: {}**
 ```javascript
-model = pgml.newModel()
+const model = pgml.newModel()
 ```
 
 **Create a Model with custom parameters**
 ```javascript
-model = pgml.newModel(
-    name="hkunlp/instructor-base",
-    parameters={instruction: "Represent the Wikipedia document for retrieval: "}    
+const model = pgml.newModel(
+    "hkunlp/instructor-base",
+    {instruction: "Represent the Wikipedia document for retrieval: "}    
 )
 ```
 
 **Use an OpenAI model**
 ```javascript
-model = pgml.newModel(name="text-embedding-ada-002", source="openai")
+const model = pgml.newModel(name="text-embedding-ada-002", source="openai")
 ```
 
 ### Splitters
@@ -384,14 +384,14 @@ Splitters are used to split documents into chunks before embedding them. We supp
 
 **Create a default Splitter "recursive_character" with default parameters: {}**
 ```javascript
-splitter = pgml.newSplitter()
+const splitter = pgml.newSplitter()
 ```
 
 **Create a Splitter with custom parameters**
 ```javascript
-splitter = pgml.newSplitter(
-    name="recursive_character", 
-    parameters={chunk_size: 1500, chunk_overlap: 40}
+const splitter = pgml.newSplitter(
+    "recursive_character", 
+    {chunk_size: 1500, chunk_overlap: 40}
 )
 ```
 
@@ -402,9 +402,9 @@ When adding a Pipeline to a collection it is required that Pipeline has a Model 
 The first time a Pipeline is added to a Collection it will automatically chunk and embed any documents already in that Collection. 
 
 ```javascript
-model = pgml.newModel()
-splitter = pgml.newSplitter()
-pipeline = pgml.newPipeline("test_pipeline", model, splitter)
+const model = pgml.newModel()
+const splitter = pgml.newSplitter()
+const pipeline = pgml.newPipeline("test_pipeline", model, splitter)
 await collection.add_pipeline(pipeline)
 ```
 
@@ -415,9 +415,9 @@ Pipelines can take additional arguments enabling full text search. When full tex
 For more information on full text search please see: [Postgres Full Text Search](https://www.postgresql.org/docs/15/textsearch.html).
 
 ```javascript
-model = pgml.newModel()
-splitter = pgml.newSplitter()
-pipeline = pgml.newPipeline("test_pipeline", model, splitter, {
+const model = pgml.newModel()
+const splitter = pgml.newSplitter()
+const pipeline = pgml.newPipeline("test_pipeline", model, splitter, {
     "full_text_search": {
         active: True,
         configuration: "english"
@@ -431,9 +431,9 @@ await collection.add_pipeline(pipeline)
 Pipelines are a required argument when performing vector search. After a Pipeline has been added to a Collection, the Model and Splitter can be omitted when instantiating it.
 
 ```javascript
-pipeline = pgml.newPipeline("test_pipeline")
-collection = pgml.newCollection("test_collection")
-results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).fetch_all()    
+const pipeline = pgml.newPipeline("test_pipeline")
+const collection = pgml.newCollection("test_collection")
+const results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).fetch_all()
 ```
 
 ### Enabling, Disabling, and Removing Pipelines
@@ -442,8 +442,8 @@ Pipelines can be disabled or removed to prevent them from running automatically 
 
 **Disable a Pipeline**
 ```javascript
-pipeline = pgml.newPipeline("test_pipeline")
-collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const collection = pgml.newCollection("test_collection")
 await collection.disable_pipeline(pipeline)
 ```
 
@@ -451,8 +451,8 @@ Disabling a Pipeline prevents it from running automatically, but leaves all chun
 
 **Enable a Pipeline**
 ```javascript
-pipeline = pgml.newPipeline("test_pipeline")
-collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const collection = pgml.newCollection("test_collection")
 await collection.enable_pipeline(pipeline)
 ```
 
@@ -460,8 +460,8 @@ Enabling a Pipeline will cause it to automatically run and chunk and embed all d
 
 **Remove a Pipeline**
 ```javascript
-pipeline = pgml.newPipeline("test_pipeline")
-collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const collection = pgml.newCollection("test_collection")
 await collection.remove_pipeline(pipeline)
 ```
 
