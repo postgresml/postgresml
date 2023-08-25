@@ -3,23 +3,29 @@ require("dotenv").config();
 
 const main = async () => {
   // Initialize the collection
-  const collection = pgml.newCollection("my_javascript_collection");
+  const collection = pgml.newCollection("my_javascript_qai_collection");
 
   // Add a pipeline
-  const model = pgml.newModel();
+  const model = pgml.newModel("hkunlp/instructor-base", "pgml", {
+    instruction: "Represent the Wikipedia document for retrieval: ",
+  });
   const splitter = pgml.newSplitter();
-  const pipeline = pgml.newPipeline("my_javascript_pipeline", model, splitter);
+  const pipeline = pgml.newPipeline(
+    "my_javascript_qai_pipeline",
+    model,
+    splitter,
+  );
   await collection.add_pipeline(pipeline);
 
   // Upsert documents, these documents are automatically split into chunks and embedded by our pipeline
   const documents = [
     {
       id: "Document One",
-      text: "document one contents...",
+      text: "PostgresML is the best tool for machine learning applications!",
     },
     {
       id: "Document Two",
-      text: "document two contents...",
+      text: "PostgresML is open source and available to everyone!",
     },
   ];
   await collection.upsert_documents(documents);
@@ -27,8 +33,11 @@ const main = async () => {
   // Perform vector search
   const queryResults = await collection
     .query()
-    .vector_recall("Some user query that will match document one first", pipeline)
-    .limit(2)
+    .vector_recall("What is the best tool for machine learning?", pipeline, {
+      instruction:
+        "Represent the Wikipedia question for retrieving supporting documents: ",
+    })
+    .limit(1)
     .fetch_all();
 
   // Convert the results to an array of objects
@@ -41,6 +50,7 @@ const main = async () => {
     };
   });
 
+  // Archive the collection
   await collection.archive();
   return results;
 };

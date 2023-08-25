@@ -1,7 +1,13 @@
-## Javascript Examples
+## Examples
 
-Here we have a set of examples of different use cases of the pgml javascript SDK.
+### [Semantic Search](./semantic_search.js)
+This is a basic example to perform semantic search on a collection of documents. Embeddings are created using `intfloat/e5-small` model. The results are semantically similar documemts to the query. Finally, the collection is archived.
 
-## Examples:
+### [Question Answering](./question_answering.js)
+This is an example to find documents relevant to a question from the collection of documents. The query is passed to vector search to retrieve documents that match closely in the embeddings space. A score is returned with each of the search result.
 
-1. [Getting Started](./getting-started/) - Simple project that uses the pgml SDK to create a collection, add a pipeline, upsert documents, and run a vector search on the collection.
+### [Question Answering using Instructore Model](./question_answering_instructor.js)
+In this example, we will use `hknlp/instructor-base` model to build text embeddings instead of the default `intfloat/e5-small` model.
+
+### [Extractive Question Answering](./extractive_question_answering.js)
+In this example, we will show how to use `vector_recall` result as a `context` to a HuggingFace question answering model. We will use `Builtins.transform()` to run the model on the database.

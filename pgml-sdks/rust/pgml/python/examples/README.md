@@ -1,7 +1,7 @@
 ## Examples
 
 ### [Semantic Search](./semantic_search.py)
-This is a basic example to perform semantic search on a collection of documents. It loads the Quora dataset, creates a collection in a PostgreSQL database, upserts documents, generates chunks and embeddings, and then performs a vector search on a query. Embeddings are created using `intfloat/e5-small` model. The results are are semantically similar documemts to the query. Finally, the collection is archived.
+This is a basic example to perform semantic search on a collection of documents. It loads the Quora dataset, creates a collection in a PostgreSQL database, upserts documents, generates chunks and embeddings, and then performs a vector search on a query. Embeddings are created using `intfloat/e5-small` model. The results are semantically similar documemts to the query. Finally, the collection is archived.
 
 ### [Question Answering](./question_answering.py)
 This is an example to find documents relevant to a question from the collection of documents. It loads the Stanford Question Answering Dataset (SQuAD) into the database, generates chunks and embeddings. Query is passed to vector search to retrieve documents that match closely in the embeddings space. A score is returned with each of the search result.
