@@ -9,6 +9,7 @@ import asyncio
 
 py_init_logger()
 
+
 async def main():
     load_dotenv()
     console = Console()
@@ -50,13 +51,13 @@ async def main():
     context = " ".join(results[0][1].strip().split())
     context = context.replace('"', '\\"').replace("'", "''")
 
-    # Query for summary 
+    # Query for summary
     builtins = Builtins()
     console.print("Querying for summary ...")
     start = time()
     summary = await builtins.transform(
         {"task": "summarization", "model": "sshleifer/distilbart-cnn-12-6"},
-        [json.dumps({"question": query, "context": context})],
+        [context],
     )
     end = time()
     console.print("Summary '%s'" % summary, style="bold")
