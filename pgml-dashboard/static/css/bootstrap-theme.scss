@@ -20,7 +20,15 @@
 @import "./bootstrap-5.3.0-alpha1/scss/containers";
 @import "./bootstrap-5.3.0-alpha1/scss/grid";
 @import "./bootstrap-5.3.0-alpha1/scss/tables";
-@import "./bootstrap-5.3.0-alpha1/scss/forms";
+
+@import "./bootstrap-5.3.0-alpha1/scss/forms/labels";
+@import "./bootstrap-5.3.0-alpha1/scss/forms/form-text";
+@import "./bootstrap-5.3.0-alpha1/scss/forms/form-control";
+@import "./bootstrap-5.3.0-alpha1/scss/forms/form-select";
+@import "./bootstrap-5.3.0-alpha1/scss/forms/form-check";
+// Do not import form-range, we style it ourselves entirely
+// @import "../bootstrap-5.3.0-alpha1/scss/forms/form-range";
+
 @import "./bootstrap-5.3.0-alpha1/scss/buttons";
 @import "./bootstrap-5.3.0-alpha1/scss/transitions";
 @import "./bootstrap-5.3.0-alpha1/scss/dropdown";

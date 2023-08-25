@@ -69,46 +69,7 @@
     color: #{$gray-100};
 }
 
-
-.form-range[type=range] {
-    cursor: pointer;
-}
-
-// Firefox
-.form-range[type="range"]::-moz-range-progress {
-    background-color: #{$neon-tint-100};
-    height: 4px;
-    border: 0;
-}
-
-// IE
-.form-range[type="range"]::-ms-fill-lower {
-    background-color: #{$neon-tint-100};
-}
-
-// Chrome (doesn't really work as designed)
-.form-range[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    height: 24px;
-    width: 24px;
-    position: relative;
-    bottom: 4px;
-    border-radius: 50%;
-    border: #{$form-range-thumb-border};
-    background: #{$form-range-thumb-bg};
-}
-
-.form-range[type=range]::-webkit-slider-runnable-track {
-  height: #{$form-range-track-height};
-  border: 0;
-}
-
-.form-range[type=range]:focus::-webkit-slider-runnable-track {
-    background: #{$neon-tint-100};
-}
-// End of Chrome
-
-.form-range-custome {
+.form-range {
     & {
         font-size: 1.5rem;
         width: 100%;
