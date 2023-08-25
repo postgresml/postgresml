@@ -320,7 +320,7 @@ mod tests {
             assert_eq!(
                 sql,
                 format!(
-                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>>'{{id}}')::bigint {} 1 AND ("test_table"."metadata"#>>'{{id2,id3}}')::bigint {} 1"##,
+                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>>'{{id}}')::float8 {} 1 AND ("test_table"."metadata"#>>'{{id2,id3}}')::float8 {} 1"##,
                     operator, operator
                 )
             );
@@ -344,7 +344,7 @@ mod tests {
             assert_eq!(
                 sql,
                 format!(
-                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>>'{{id}}')::bigint {} (1) AND ("test_table"."metadata"#>>'{{id2,id3}}')::bigint {} (1)"##,
+                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>>'{{id}}')::float8 {} (1) AND ("test_table"."metadata"#>>'{{id2,id3}}')::float8 {} (1)"##,
                     operator, operator
                 )
             );
