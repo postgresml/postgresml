@@ -375,7 +375,7 @@ const model = pgml.newModel(
 
 **Use an OpenAI model**
 ```javascript
-const model = pgml.newModel(name="text-embedding-ada-002", source="openai")
+const model = pgml.newModel("text-embedding-ada-002", "openai")
 ```
 
 ### Splitters
