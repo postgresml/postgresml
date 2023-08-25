@@ -15,3 +15,6 @@ In this example, we will show how to use `vector_recall` result as a `context` t
 ### [Table Question Answering](./table_question_answering.py)
 In this example, we will use [Open Table-and-Text Question Answering (OTT-QA)
 ](https://github.com/wenhuchen/OTT-QA) dataset to run queries on tables. We will use `deepset/all-mpnet-base-v2-table` model that is trained for embedding tabular data for retrieval tasks. 
+
+### [Summarizing Question Answering](./summarizing_question_answering.py)
+This is an example to find documents relevant to a question from the collection of documents and then summarize those documents.

@@ -11,3 +11,6 @@ In this example, we will use `hknlp/instructor-base` model to build text embeddi
 
 ### [Extractive Question Answering](./extractive_question_answering.js)
 In this example, we will show how to use `vector_recall` result as a `context` to a HuggingFace question answering model. We will use `Builtins.transform()` to run the model on the database.
+
+### [Summarizing Question Answering](./summarizing_question_answering.js)
+This is an example to find documents relevant to a question from the collection of documents and then summarize those documents.
