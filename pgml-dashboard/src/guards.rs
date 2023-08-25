@@ -1,10 +1,10 @@
 use std::env::var;
 
 use crate::templates::components::{StaticNav, StaticNavLink};
+use once_cell::sync::OnceCell;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
-use once_cell::sync::OnceCell;
 
 static POOL: OnceCell<PgPool> = OnceCell::new();
 
@@ -26,7 +26,9 @@ pub struct Cluster {
 
 impl Default for Cluster {
     fn default() -> Self {
-        let max_connections = 1;
+        // Needed for query cancellation
+        let max_connections = 2;
+
         let min_connections = 1;
 
         Cluster {
@@ -45,7 +47,8 @@ impl Default for Cluster {
                         })
                         .connect_lazy(&default_database_url())
                         .expect("Default database URL is alformed")
-                }).clone()
+                })
+                .clone(),
             ),
             context: Context {
                 user: models::User::default(),

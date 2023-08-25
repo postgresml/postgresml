@@ -10,6 +10,7 @@ export default class extends Controller {
     'deleteModal',
     'newCell',
     'syntaxName',
+    'playButtonText',
   ];
 
   cellCheckIntervalMillis = 500
@@ -114,13 +115,14 @@ export default class extends Controller {
     const cell = document.querySelector(`div[data-cell-id="${this.activeCellId}"]`)
 
     if (cell.dataset.cellState === 'rendered') {
+      this.playButtonTextTarget.innerHTML = 'Run'
       clearInterval(this.cellCheckInterval)
       this.enableCellButtons()
       this.stopButtonTarget.disabled = true
     }
   }
 
-  playCell() {
+  playCell(event) {
     // Start execution.
     const cell = document.querySelector(`div[data-cell-id="${this.activeCellId}"]`)
 
@@ -128,6 +130,7 @@ export default class extends Controller {
     form.requestSubmit()
     
     if (cell.dataset.cellType === '3') {
+      this.playButtonTextTarget.innerHTML = 'Running'
       this.disableCellButtons()
       
       cell.dataset.cellState = 'running'

@@ -498,7 +498,6 @@ pub struct SnapshotTab {
     pub snapshot_id: i64,
 }
 
-
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/uploader_tab.html")]
 pub struct UploaderTab {

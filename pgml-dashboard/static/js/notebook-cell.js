@@ -11,6 +11,8 @@ export default class extends Controller {
     'cell',
     'cellType',
     'dragAndDrop',
+    'running',
+    'executionTime',
   ];
 
   connect() {
@@ -61,19 +63,6 @@ export default class extends Controller {
     };
 
     this.codeMirror.addKeyMap(keyMap)
-
-    this.selectCellType()
-  }
-
-  // Change syntax highlighting.
-  selectCellType(event) {
-    // const value = this.typeTarget.options[this.typeTarget.selectedIndex].value
-
-    // if (value == 3) {
-    //   this.codeMirror.setOption('mode', 'sql')
-    // } else {
-    //   this.codeMirror.setOption('mode', 'gfm')
-    // }
   }
 
   // Prevent the page from scrolling up
@@ -86,8 +75,11 @@ export default class extends Controller {
   // Disable cell until execution completes.
   // Prevents duplicate submits.
   play(event) {
-    this.playTarget.querySelector('span').innerHTML = 'pending'
-    this.playTarget.disabled = true
+    this.runningTarget.classList.remove('d-none')
+
+    if (this.hasExecutionTimeTarget) {
+      this.executionTimeTarget.classList.add('d-none')
+    }
 
     if (this.codeMirror) {
       const disableKeyMap = {

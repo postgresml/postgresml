@@ -5,10 +5,11 @@
     &.select-hover {
         &:focus, &.active {
             --bs-card-border-color: #{$purple};
+            --bs-card-bg: #{$gray-600};
         }
 
         &:hover:not(.active) {
-            --bs-card-border-color: #{$gray-600};
+            --bs-card-border-color: #{$gray-700};
         }
     }
 

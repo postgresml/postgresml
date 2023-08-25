@@ -22,7 +22,7 @@ use guards::{Cluster, ConnectedCluster};
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
     components::{NavLink, StaticNav},
-    *
+    *,
 };
 use utils::tabs;
 
@@ -473,9 +473,12 @@ pub async fn uploader_upload(
             "/dashboard/uploader/done?table_name={}",
             uploaded_file.table_name()
         ))),
-        Err(err) => Err(BadRequest(templates::Uploader {
+        Err(err) => Err(BadRequest(
+            templates::Uploader {
                 error: Some(err.to_string()),
-            }.render_once().unwrap(),
+            }
+            .render_once()
+            .unwrap(),
         )),
     }
 }
@@ -527,45 +530,66 @@ pub async fn dashboard(
                 )
                 .active(),
             );
-        },
+        }
 
         "Projects" => {
             breadcrumbs.push(NavLink::new("Projects", "/dashboard?tab=Projects").active());
-        },
+        }
 
         "Project" => {
             let project = models::Project::get_by_id(cluster.pool(), id.unwrap()).await?;
             breadcrumbs.push(NavLink::new("Projects", "/dashboard?tab=Projects"));
-            breadcrumbs.push(NavLink::new(&project.name, &format!("/dashboard?tab=Project&id={}", project.id)).active());
-        },
+            breadcrumbs.push(
+                NavLink::new(
+                    &project.name,
+                    &format!("/dashboard?tab=Project&id={}", project.id),
+                )
+                .active(),
+            );
+        }
 
         "Models" => {
             breadcrumbs.push(NavLink::new("Models", "/dashboard?tab=Models").active());
-        },
+        }
 
         "Model" => {
             let model = models::Model::get_by_id(cluster.pool(), id.unwrap()).await?;
             let project = models::Project::get_by_id(cluster.pool(), model.project_id).await?;
 
             breadcrumbs.push(NavLink::new("Models", "/dashboard?tab=Models"));
-            breadcrumbs.push(NavLink::new(&project.name, &format!("/dashboard?tab=Project&id={}", project.id)));
-            breadcrumbs.push(NavLink::new(&model.algorithm, &format!("/dashboard?tab=Model&id={}", model.id)).active());
-        },
+            breadcrumbs.push(NavLink::new(
+                &project.name,
+                &format!("/dashboard?tab=Project&id={}", project.id),
+            ));
+            breadcrumbs.push(
+                NavLink::new(
+                    &model.algorithm,
+                    &format!("/dashboard?tab=Model&id={}", model.id),
+                )
+                .active(),
+            );
+        }
 
         "Snapshots" => {
             breadcrumbs.push(NavLink::new("Snapshots", "/dashboard?tab=Snapshots").active());
-        },
+        }
 
         "Snapshot" => {
             let snapshot = models::Snapshot::get_by_id(cluster.pool(), id.unwrap()).await?;
 
             breadcrumbs.push(NavLink::new("Snapshots", "/dashboard?tab=Snapshots"));
-            breadcrumbs.push(NavLink::new(&snapshot.relation_name, &format!("/dashboard?tab=Snapshot&id={}", snapshot.id)).active());
-        },
+            breadcrumbs.push(
+                NavLink::new(
+                    &snapshot.relation_name,
+                    &format!("/dashboard?tab=Snapshot&id={}", snapshot.id),
+                )
+                .active(),
+            );
+        }
 
         "Upload_Data" => {
             breadcrumbs.push(NavLink::new("Upload Data", "/dashboard?tab=Upload_Data").active());
-        },
+        }
         _ => (),
     };
 
@@ -578,52 +602,52 @@ pub async fn dashboard(
         }],
         "Projects" => vec![tabs::Tab {
             name: "Projects",
-            content: ProjectsTab { }.render_once().unwrap(),
+            content: ProjectsTab {}.render_once().unwrap(),
         }],
         "Notebook" => vec![tabs::Tab {
             name: "Notebook",
             content: NotebookTab { id: id.unwrap() }.render_once().unwrap(),
         }],
-        "Project" => vec![
-            tabs::Tab {
-                name: "Project",
-                content: ProjectTab { project_id: id.unwrap() }.render_once().unwrap(),
-            },
-        ],
-        "Models" => vec![
-            tabs::Tab {
-                name: "Models",
-                content: ModelsTab {}.render_once().unwrap(),
-            },
-        ],
-
-        "Model" => vec![
-            tabs::Tab {
-                name: "Model",
-                content: ModelTab { model_id: id.unwrap() }.render_once().unwrap(),
+        "Project" => vec![tabs::Tab {
+            name: "Project",
+            content: ProjectTab {
+                project_id: id.unwrap(),
             }
-        ],
+            .render_once()
+            .unwrap(),
+        }],
+        "Models" => vec![tabs::Tab {
+            name: "Models",
+            content: ModelsTab {}.render_once().unwrap(),
+        }],
 
-        "Snapshots" => vec![
-            tabs::Tab {
-                name: "Snapshots",
-                content: SnapshotsTab{}.render_once().unwrap(),
-            },
-        ],
-
-        "Snapshot" => vec![
-            tabs::Tab {
-                name: "Snapshot",
-                content: SnapshotTab { snapshot_id: id.unwrap() }.render_once().unwrap(),
+        "Model" => vec![tabs::Tab {
+            name: "Model",
+            content: ModelTab {
+                model_id: id.unwrap(),
             }
-        ],
+            .render_once()
+            .unwrap(),
+        }],
 
-        "Upload_Data" => vec![
-            tabs::Tab {
-                name: "Upload data",
-                content: UploaderTab { table_name: None }.render_once().unwrap(),
+        "Snapshots" => vec![tabs::Tab {
+            name: "Snapshots",
+            content: SnapshotsTab {}.render_once().unwrap(),
+        }],
+
+        "Snapshot" => vec![tabs::Tab {
+            name: "Snapshot",
+            content: SnapshotTab {
+                snapshot_id: id.unwrap(),
             }
-        ],
+            .render_once()
+            .unwrap(),
+        }],
+
+        "Upload_Data" => vec![tabs::Tab {
+            name: "Upload data",
+            content: UploaderTab { table_name: None }.render_once().unwrap(),
+        }],
         _ => todo!(),
     };
 

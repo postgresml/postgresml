@@ -20,22 +20,24 @@
     <% } %>
     <div class="card-body position-relative">
       <div class="position-absolute d-none" data-notebook-cell-target="dragAndDrop" style="top: 5px; right: 0;">
-        <span class="material-symbols-outlined btn-tertiary btn">
-          swap_vert
-        </span>
+        <button class="btn btn-tertiary">
+          <span class="material-symbols-outlined fs-5">
+            swap_vert
+          </span>
+        </button>
       </div>
       <div class="d-flex w-100">
         <div class="pe-4" data-cell-number="<%= cell.cell_number %>"><%= cell.cell_number %></div>
         <div class="flex-grow-1 overflow-x-hidden">
           <% if cell.code() || edit { %>
-          <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit" method="post" data-cell-play-id="<%= cell.id %>">
+          <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit" method="post" data-cell-play-id="<%= cell.id %>" data-action="notebook-cell#play">
             <textarea name="contents" data-notebook-cell-target="editor" data-type="<%= cell.cell_type_display() %>"><%= cell.contents %></textarea>
             <input type="hidden" name="cell_type" value="<%= cell.cell_type %>" data-notebook-cell-target="cellType">
           </form>
           <% } %>
 
           <% if cell.code() && cell.html().is_some() || cell.html().is_some() && !cell.code() && !edit { %>
-          <div class="my-3 overflow-x-scroll w-100">
+          <div class="my-3 overflow-x-auto w-100">
             <%- cell.html().unwrap() %>
           </div>
           <% } %>
@@ -56,8 +58,11 @@
       <!-- /Controls called via JS -->
 
     </div>
+    <div class="card-footer bg-black d-none border-0" data-notebook-cell-target="running" style="border-bottom-right-radius: 12px; border-bottom-left-radius: 12px;">
+      <code>Running...</code>
+    </div>
     <% if cell.execution_time.is_some() { %>
-    <div class="d-flex justify-content-end p-2">
+    <div class="d-flex justify-content-end p-2" data-notebook-cell-target="executionTime">
       <code><%= crate::utils::time::format_microseconds(cell.execution_time.unwrap().microseconds as f64) %></code>
     </div>
     <% } %>
