@@ -293,7 +293,7 @@ pub fn generate_javascript_methods(
 
     typescript_declarations.push('}');
 
-    let path = std::env::var("PYTHON_STUB_FILE");
+    let path = std::env::var("TYPESCRIPT_DECLARATION_FILE");
     if let Ok(path) = path {
         let mut file = OpenOptions::new()
             .create(true)
