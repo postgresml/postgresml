@@ -503,3 +503,7 @@ pub struct SnapshotTab {
 pub struct UploaderTab {
     pub table_name: Option<String>,
 }
+
+#[derive(TemplateOnce)]
+#[template(path = "content/playground.html")]
+pub struct Playground;

@@ -658,6 +658,12 @@ pub async fn dashboard(
     ))
 }
 
+#[get("/playground")]
+pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
+    let mut layout = crate::templates::WebAppBase::new("Playground", &cluster.context);
+    Ok(ResponseOk(layout.render(templates::Playground {})))
+}
+
 pub fn routes() -> Vec<Route> {
     routes![
         notebook_index,

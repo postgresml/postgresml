@@ -1,4 +1,5 @@
 use log::{error, info, warn};
+
 use rocket::{
     catch, catchers, fs::FileServer, get, http::Status, request::Request, response::Redirect,
 };
@@ -131,6 +132,7 @@ async fn main() {
         .mount("/dashboard/static", FileServer::from(&config::static_dir()))
         .mount("/dashboard", pgml_dashboard::routes())
         .mount("/", pgml_dashboard::api::docs::routes())
+        .mount("/", rocket::routes![pgml_dashboard::playground])
         .register(
             "/",
             catchers![error_catcher, not_authorized_catcher, not_found_handler],
