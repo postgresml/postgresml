@@ -151,8 +151,7 @@ Continuing within `async def main():`
 Call `main` function in an async loop.
 
 ```python
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())
 ```
 
 **Running the Code**
