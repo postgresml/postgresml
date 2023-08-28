@@ -2,7 +2,7 @@
 
 This crate provides a number of macros that automatically handle translating mostly vanilla Rust to [Py03](https://github.com/PyO3/pyo3) and [Neon](https://neon-bindings.com/) compatible Rust code.
 
-It is designed to greatly improve the rate at which simultaneously developing libraries for multiple languages can be done. We use it internally for developing our [Rust SDK](https://github.com/postgresml/postgresml/tree/master/pgml-sdks/pgml/).
+It is designed to greatly improve the rate at which simultaneously developing libraries for multiple languages can be done. We use it internally for developing our [Rust SDK](https://github.com/postgresml/postgresml/tree/master/pgml-sdks/rust/pgml).
 
 # Overview 
 
@@ -63,7 +63,7 @@ impl Test {
 }
 ```
 
-These macros produce a lot of code, you can inspect it using [cargo-expand](https://github.com/dtolnay/cargo-expand) but we will just show the snippes necessary to understand what is happening:
+These macros produce a lot of code, you can inspect it using [cargo-expand](https://github.com/dtolnay/cargo-expand) but we will just show the snippets necessary to understand what is happening:
 
 ```rust
 pub struct Test {
@@ -115,7 +115,7 @@ The struct `Test` is defined just like before, but notice there is another struc
 
 The impl block for the struct `Test` is there just like before, but notice the impl block for `TestPython` which is written in the fashion Py03 requires, but simply parses arguments and calls through to `Test`'s methods.
 
-The key takeaway is that the macros used in this crate take vanilla Rust code and translate it to Rust that crates like Py03 expect and use to generate native Python classes.
+The key takeaway is that the macros used in this crate take vanilla Rust code and translate it to Rust that crates like Py03 use to generate native Python classes.
 
 # Python
 
