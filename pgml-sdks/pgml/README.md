@@ -3,8 +3,8 @@
 # Suported Languages
 
 We support a number of different languages:
-- [Python](/python)
-- [JavaScript](/javascript)
+- [Python](python)
+- [JavaScript](javascript)
 - Rust
 
 Our SDK is written completely in Rust and translated by Rust to our other supported languages. See each individual language for an overview and specification on how to use the SDK.
