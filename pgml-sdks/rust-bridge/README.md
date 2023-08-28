@@ -119,8 +119,8 @@ The key takeaway is that the macros used in this crate take vanilla Rust code an
 
 # Python
 
-This crate translates Rust to [Py03](https://github.com/PyO3/pyo3) compatible Rust. See the [examples](/examples) folder for how to use it.
+This crate translates Rust to [Py03](https://github.com/PyO3/pyo3) compatible Rust. See the [examples](examples) folder for how to use it.
 
 # JavaScript
 
-This crate translates Rust to [Neon](https://neon-bindings.com/) compatible Rust. See the [examples](/examples) folder for how to use it.
+This crate translates Rust to [Neon](https://neon-bindings.com/) compatible Rust. See the [examples](examples) folder for how to use it.
