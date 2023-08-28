@@ -29,6 +29,8 @@ jobs:
         with:
           command: version
       - name: Do build
+        env:
+          TYPESCRIPT_DECLARATION_FILE: "javascript/index.d.ts"
         run: |
           npm i 
           npm run build-release

@@ -1,0 +1,10 @@
+[package]
+name = "rust_bridge"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rust_bridge_traits = { path = "../rust-bridge-traits" }
+rust_bridge_macros = { path = "../rust-bridge-macros" }

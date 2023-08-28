@@ -1,0 +1,9 @@
+[workspace]
+members = [
+  "rust-bridge",
+  "rust-bridge-traits",
+  "rust-bridge-macros"
+]
+exclude = [
+  "examples"
+]
