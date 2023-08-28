@@ -7,7 +7,6 @@
 - [Usage](#usage)
 - [Examples](./examples/README.md)
 - [Developer setup](#developer-setup)
-- [API Reference](#api-reference)
 - [Roadmap](#roadmap)
 
 # Overview
@@ -482,7 +481,7 @@ Removing a Pipeline deletes it and all associated data from the database. Remove
 
 ## Developer Setup
 
-This Python library is generated from our core rust-sdk. Please check [rust-sdk documentation](../../README.md) for developer setup.
+This Python library is generated from our core rust-sdk. Please check [rust-sdk documentation](../README.md) for developer setup.
 
 ## Roadmap
 
