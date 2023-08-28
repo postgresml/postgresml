@@ -25,7 +25,7 @@ jobs:
               pkg-config \
               python3-pip \
               python3 \
-              mold
+              lld
           sudo pip3 install -r requirements.txt
       - name: Cache dependencies
         uses: buildjet/cache@v3
