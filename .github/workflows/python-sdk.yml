@@ -49,11 +49,13 @@ jobs:
         if: github.event.inputs.deploy_to_pypi == 'false'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
         run: maturin publish -r testpypi -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
       - name: Build and deploy wheels to PyPI
         if: github.event.inputs.deploy_to_pypi == 'true'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
         run: maturin publish -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
 
   deploy-python-sdk-mac:
@@ -83,11 +85,13 @@ jobs:
         if: github.event.inputs.deploy_to_pypi == 'false'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
         run: maturin publish -r testpypi -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
       - name: Build and deploy wheels to PyPI
         if: github.event.inputs.deploy_to_pypi == 'true'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
         run: maturin publish -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
 
   deploy-python-sdk-windows:
@@ -119,9 +123,11 @@ jobs:
         if: github.event.inputs.deploy_to_pypi == 'false'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
         run: maturin publish -r testpypi -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
       - name: Build and deploy wheels to PyPI
         if: github.event.inputs.deploy_to_pypi == 'true'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
         run: maturin publish -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
