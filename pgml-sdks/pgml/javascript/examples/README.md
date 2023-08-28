@@ -7,6 +7,8 @@ npm i
 export DATABASE_URL={YOUR DATABASE URL}
 ```
 
+Optionally, configure a .env file containing a DATABASE_URL variable.
+
 ## [Semantic Search](./semantic_search.js)
 This is a basic example to perform semantic search on a collection of documents. Embeddings are created using `intfloat/e5-small` model. The results are semantically similar documemts to the query. Finally, the collection is archived.
 
