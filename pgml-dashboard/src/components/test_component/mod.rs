@@ -1,5 +1,5 @@
-use sailfish::TemplateOnce;
 use crate::components::component;
+use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "test_component/template.html")]
