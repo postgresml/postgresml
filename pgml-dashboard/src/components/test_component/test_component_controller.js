@@ -7,9 +7,8 @@ export default class extends Controller {
   initialize() {
     console.log('Initialized test-component')
   }
-  
+
   connect() {}
 
   disconnect() {}
 }
-
