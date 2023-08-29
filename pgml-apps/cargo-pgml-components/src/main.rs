@@ -204,6 +204,13 @@ fn bundle(project_path: Option<String>) {
 
     drop(modules);
 
+    // Clean up old bundles
+    for file in glob("static/css/style.*.css").expect("failed to glob") {
+        let file = file.expect("failed to glob file");
+        debug!("Removing '{}'", file.display());
+        let _ = remove_file(file);
+    }
+
     // Bundle SCSS.
     // Build Bootstrap
     execute_command(
