@@ -1,0 +1,40 @@
+<% use crate::components::LeftNavMenu; %>
+<nav class="leftnav nav-pills h-100" data-controller="extend-bs-collapse" data-extend-bs-collapse-affected-value=".leftnav-collapse-affect">
+  <div class="d-flex flex-column justify-content-between h-100 w-100">
+    <div class="d-flex flex-column">
+      <button class="btn-left-nav-toggle mb-5" type="button" data-bs-toggle="collapse" data-bs-target=".leftnav-collapse" aria-expanded="true">
+        <span class="collapse collapse-horizontal leftnav-collapse show" data-extend-bs-collapse-target="stateReference">
+          Menu
+        </span>
+        <span class="left-nav-toggle-icon material-symbols-outlined leftnav-collapse-affect expanded">
+          keyboard_double_arrow_left
+        </span>
+      </button>
+
+      <div class="dropdown nav-item d-flex w-100 mb-4 show">
+        <button class="horizontal-hide btn-dropdown dropdown-toggle leftnav-collapse-affect expanded" href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="0, 10" aria-expanded="false">
+          <%- dropdown_nav.clone().get_active().name %>
+          <span class="material-symbols-outlined">
+            expand_more
+          </span>
+        </button>
+
+        <div class="btn-dropdown-menu-item horizontal-hide m-auto dropdown-toggle leftnav-collapse-affect collapsed" href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="68, -44" aria-expanded="false">
+          <a class="d-flex align-items-center justify-content-start gap-2">
+            <span class="material-symbols-outlined">grid_view</span>
+          </a>
+        </div>
+
+        <ul class="dropdown-menu w-100">
+          <% for link in dropdown_nav.links { %>
+            <li class="menu-item d-flex align-items-center">
+              <a href="<%- link.href %>"><%- link.name %></a>
+            </li>
+          <% } %>
+        </ul>
+      </div>
+        <%+ LeftNavMenu { nav: upper_nav } %>
+    </div>
+    <%+ LeftNavMenu { nav: lower_nav} %>
+  </div>
+</nav>

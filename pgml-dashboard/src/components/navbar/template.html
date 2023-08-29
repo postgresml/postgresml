@@ -29,7 +29,7 @@
   
           <ul class="navbar-nav gap-4 gap-lg-3 mb-2 mb-lg-0">
             <li class="align-items-center d-none d-lg-flex">
-              <%- GithubIcon{show_stars: true}.render_once().unwrap() %>
+              <%+ GithubIcon {show_stars: true} %>
             </li>
             <li class="d-flex align-items-center d-block d-lg-none">
               <a class="nav-link p-0" href="https://github.com/postgresml/postgresml">Open Source</a>
@@ -69,4 +69,4 @@
     </nav>
   </div>
 
-  <% include!("../../components/search_modal.html");%>
+  <% include!("../../../templates/components/search_modal.html");%>

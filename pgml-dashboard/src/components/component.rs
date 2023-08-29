@@ -21,6 +21,18 @@ macro_rules! component {
             }
         }
     };
+
+    ($name:tt, $lifetime:lifetime) => {
+        impl<$lifetime> From<$name<$lifetime>> for crate::components::Component {
+            fn from(thing: $name<$lifetime>) -> crate::components::Component {
+                use sailfish::TemplateOnce;
+
+                crate::components::Component {
+                    value: thing.render_once().unwrap(),
+                }
+            }
+        }
+    };
 }
 
 pub(crate) use component;
