@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-pub use crate::components::{NavLink, StaticNav, StaticNavLink, self};
+pub use crate::components::{self, NavLink, StaticNav, StaticNavLink};
 
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;

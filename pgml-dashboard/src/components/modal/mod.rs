@@ -1,5 +1,5 @@
+use crate::components::{component, Component};
 use sailfish::TemplateOnce;
-use crate::components::{Component, component};
 
 /// A component that renders a Bootstrap modal.
 #[derive(TemplateOnce, Default)]

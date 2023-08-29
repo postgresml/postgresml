@@ -10,6 +10,7 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 
 pub mod api;
+pub mod components;
 pub mod fairings;
 pub mod forms;
 pub mod guards;
@@ -17,7 +18,6 @@ pub mod models;
 pub mod responses;
 pub mod templates;
 pub mod utils;
-pub mod components;
 
 use guards::{Cluster, ConnectedCluster};
 use responses::{BadRequest, Error, ResponseOk};

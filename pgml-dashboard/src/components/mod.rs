@@ -3,12 +3,13 @@ use crate::utils::config;
 use sailfish::TemplateOnce;
 
 mod component;
-mod modal;
 mod confirm_modal;
+mod modal;
+pub mod test_component;
 
 pub(crate) use component::{component, Component};
-pub use modal::Modal;
 pub use confirm_modal::ConfirmModal;
+pub use modal::Modal;
 
 #[derive(TemplateOnce)]
 #[template(path = "components/box.html")]

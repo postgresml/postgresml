@@ -1,10 +1,10 @@
 //! A tool to assemble and bundle our frontend components.
 
-use clap::Parser;
+use clap::{Args, Parser, Subcommand};
 use convert_case::{Case, Casing};
 use glob::glob;
 use std::env::{current_dir, set_current_dir};
-use std::fs::{read_to_string, remove_file, File};
+use std::fs::{create_dir_all, read_to_string, remove_file, File};
 use std::io::Write;
 use std::path::Path;
 use std::process::{exit, Command};
@@ -18,25 +18,152 @@ static PROJECT_PATHS: &[&str] = &["src", "static/js", "static/css"];
 //// These executables are required to be installed globally.
 static REQUIRED_EXECUTABLES: &[&str] = &["sass", "rollup"];
 
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// Ignore this, cargo passes in the name of the command as the first arg.
-    subcomand: String,
+static COMPONENT_TEMPLATE_RS: &'static str = r#"
+use sailfish::TemplateOnce;
+use crate::components::component;
 
-    /// Path to the project directory.
+#[derive(TemplateOnce, Default)]
+#[template(path = "{component_path}/template.html")]
+pub struct {component_name} {
+    value: String,
+}
+
+impl {component_name} {
+    pub fn new() -> {component_name} {
+        {component_name}::default()
+    }
+}
+
+component!({component_name});
+"#;
+
+static COMPONENT_STIMULUS_JS: &'static str = r#"
+import { Controller } from '@hotwired/stimulus'
+
+export default class extends Controller {
+  static targets = []
+  static outlets = []
+
+  initialize() {
+    console.log('Initialized {controller_name}')
+  }
+
+  connect() {}
+
+  disconnect() {}
+}
+"#;
+
+static COMPONENT_HTML: &'static str = r#"
+<div data-controller="{controller_name}">
+  <%= value %>
+</div>
+"#;
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None, propagate_version = true, bin_name = "cargo", name = "cargo")]
+struct Cli {
+    #[command(subcommand)]
+    subcomand: CargoSubcommands,
+}
+
+#[derive(Subcommand, Debug)]
+enum CargoSubcommands {
+    PgmlComponents(PgmlCommands),
+}
+
+#[derive(Args, Debug)]
+struct PgmlCommands {
+    #[command(subcommand)]
+    command: Commands,
+
     #[arg(short, long)]
     project_path: Option<String>,
 }
 
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Bundle SASS and JavaScript into neat bundle files.
+    Bundle {},
+
+    /// Add a new component.
+    AddComponent {
+        name: String,
+
+        #[arg(short, long, default_value = "false")]
+        overwrite: bool,
+    },
+}
+
 fn main() {
     env_logger::init();
+    let cli = Cli::parse();
+
+    match cli.subcomand {
+        CargoSubcommands::PgmlComponents(pgml_commands) => match pgml_commands.command {
+            Commands::Bundle {} => bundle(pgml_commands.project_path),
+            Commands::AddComponent { name, overwrite } => add_component(name, overwrite),
+        },
+    }
+}
+
+fn execute_command(command: &mut Command) -> std::io::Result<String> {
+    let output = match command.output() {
+        Ok(output) => output,
+        Err(err) => {
+            return Err(err);
+        }
+    };
+
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    let stdout = String::from_utf8_lossy(&output.stderr).to_string();
+
+    if !output.status.success() {
+        error!(
+            "{} failed: {}",
+            command.get_program().to_str().unwrap(),
+            String::from_utf8_lossy(&output.stderr).to_string(),
+        );
+        exit(1);
+    }
+
+    if !stderr.is_empty() {
+        warn!("{}", stderr);
+    }
+
+    if !stdout.is_empty() {
+        info!("{}", stdout);
+    }
+
+    Ok(stdout)
+}
+
+fn check_executables() {
+    for executable in REQUIRED_EXECUTABLES {
+        match execute_command(Command::new(executable).arg("--version")) {
+            Ok(_) => (),
+            Err(err) => {
+                error!(
+                    "'{}' is not installed. Install it with 'npm install -g {}'",
+                    executable, executable
+                );
+                debug!(
+                    "Failed to execute '{} --version': {}",
+                    executable,
+                    err.to_string()
+                );
+                exit(1);
+            }
+        }
+    }
+}
+
+/// Bundle SASS and JavaScript into neat bundle files.
+fn bundle(project_path: Option<String>) {
     check_executables();
 
-    let args = Args::parse();
-
     // Validate that the required project paths exist.
-    let cwd = if let Some(project_path) = args.project_path {
+    let cwd = if let Some(project_path) = project_path {
         project_path
     } else {
         current_dir().unwrap().to_str().unwrap().to_owned()
@@ -198,53 +325,65 @@ fn main() {
     println!("Finished bundling CSS and JavaScript successfully");
 }
 
-fn execute_command(command: &mut Command) -> std::io::Result<String> {
-    let output = match command.output() {
-        Ok(output) => output,
-        Err(err) => {
-            return Err(err);
-        }
-    };
+fn add_component(name: String, overwrite: bool) {
+    let component_name = name.as_str().to_case(Case::UpperCamel);
+    let component_path = name.as_str().to_case(Case::Snake);
+    let folder = Path::new("src/components").join(&component_path);
 
-    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-    let stdout = String::from_utf8_lossy(&output.stderr).to_string();
-
-    if !output.status.success() {
-        error!(
-            "{} failed: {}",
-            command.get_program().to_str().unwrap(),
-            String::from_utf8_lossy(&output.stderr).to_string(),
-        );
-        exit(1);
-    }
-
-    if !stderr.is_empty() {
-        warn!("{}", stderr);
-    }
-
-    if !stdout.is_empty() {
-        info!("{}", stdout);
-    }
-
-    Ok(stdout)
-}
-
-fn check_executables() {
-    for executable in REQUIRED_EXECUTABLES {
-        match execute_command(Command::new(executable).arg("--version")) {
+    if !folder.exists() {
+        match create_dir_all(folder.clone()) {
             Ok(_) => (),
             Err(err) => {
                 error!(
-                    "'{}' is not installed. Install it with 'npm install -g {}'",
-                    executable, executable
-                );
-                debug!(
-                    "Failed to execute '{} --version': {}",
-                    executable,
-                    err.to_string()
+                    "Failed to create path '{}' for component '{}': {}",
+                    folder.display(),
+                    name,
+                    err
                 );
                 exit(1);
             }
         }
+    } else if !overwrite {
+        error!("Component '{}' already exists", folder.display());
+        exit(1);
     }
+
+    // Create mod.rs
+    let mod_file = format!(
+        "{}",
+        COMPONENT_TEMPLATE_RS
+            .replace("{component_name}", &component_name)
+            .replace("{component_path}", &component_path)
+    );
+
+    let mod_path = folder.join("mod.rs");
+
+    let mut mod_file_fd = File::create(mod_path).expect("failed to create mod.rs");
+    writeln!(&mut mod_file_fd, "{}", mod_file.trim()).expect("failed to write mod.rs");
+    drop(mod_file_fd);
+
+    // Create template.html
+    let template_path = folder.join("template.html");
+    let mut template_file = File::create(template_path).expect("failed to create template.html");
+    let template_source =
+        COMPONENT_HTML.replace("{controller_name}", &component_path.replace("_", "-"));
+    writeln!(&mut template_file, "{}", template_source.trim(),)
+        .expect("failed to write template.html");
+    drop(template_file);
+
+    // Create Stimulus controller
+    let stimulus_path = folder.join(&format!("{}_controller.js", component_path));
+    let mut template_file =
+        File::create(stimulus_path).expect("failed to create stimulus controller");
+    let controller_source =
+        COMPONENT_STIMULUS_JS.replace("{controller_name}", &component_path.replace("_", "-"));
+    writeln!(&mut template_file, "{}", controller_source.trim())
+        .expect("failed to write stimulus controller");
+    drop(template_file);
+
+    // let mut components_list = File::create("src/components/components.rs").expect("failed to create src/components/components.rs");
+    // let components = read_dir("src/components").expect("failed to read components directory");
+
+    println!("Component '{}' created successfully", folder.display());
+    println!("Don't forget to add it to src/components/mod.rs");
 }
