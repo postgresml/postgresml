@@ -1,7 +1,5 @@
 # Collections
 
-
-
 Collections are the organizational building blocks of the SDK. They manage all documents and related chunks, embeddings, tsvectors, and pipelines.
 
 ## Creating Collections
@@ -10,40 +8,30 @@ By default, collections will read and write to the database specified by `DATABA
 
 ### **Default `DATABASE_URL`**
 
-{% tabs %}
-{% tab title="Python" %}
+=== "Python"
 ```python
 collection = Collection("test_collection")
 ```
-{% endtab %}
-
-{% tab title="JavaScript" %}
+=== "JavaScript"
 ```javascript
 collection = pgml.newCollection("test_collection")
 ```
-{% endtab %}
-{% endtabs %}
+=== 
 
 ### **Custom DATABASE\_URL**
 
 Create a Collection that reads from a different database than that set by the environment variable `DATABASE_URL`.
 
-{% tabs %}
-{% tab title="Python" %}
+=== "Python"
 ```python
 collection = Collection("test_collection", CUSTOM_DATABASE_URL)
 ```
-{% endtab %}
-
-{% tab title="Javascript" %}
+=== "JavaScript"
 ```javascript
 collection = pgml.newCollection("test_collection", CUSTOM_DATABASE_URL)
 ```
-{% endtab %}
-{% endtabs %}
+=== 
 
-```
-```
 
 ## Upserting Documents
 
@@ -51,8 +39,7 @@ Documents are dictionaries with two required keys: `id` and `text`. All other ke
 
 **Upsert documents with metadata**
 
-{% tabs %}
-{% tab title="Python" %}
+=== "Python"
 ```python
 documents = [
     {
@@ -69,9 +56,7 @@ documents = [
 collection = Collection("test_collection")
 await collection.upsert_documents(documents)
 ```
-{% endtab %}
-
-{% tab title="JavaScript" %}
+=== "JavaScript"
 ```javascript
   const documents = [
             {
@@ -85,5 +70,4 @@ await collection.upsert_documents(documents)
     ];
     await collection.upsert_documents(documents);
 ```
-{% endtab %}
-{% endtabs %}
+=== 

@@ -30,26 +30,38 @@ async fn doc_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk,
         NavLink::new("Getting Started").href("/docs/pgml-docs/getting-started"),
         NavLink::new("Natural Language Processing").children(vec![
             NavLink::new("Overview").href("/docs/pgml-docs/natural-language-processing/README"),
-            NavLink::new("Text Classification").href("/docs/pgml-docs/natural-language-processing/text-classification"),
-            NavLink::new("Zero-shot Classification").href("/docs/pgml-docs/natural-language-processing/zero-shot-classification"),
+            NavLink::new("Text Classification")
+                .href("/docs/pgml-docs/natural-language-processing/text-classification"),
+            NavLink::new("Zero-shot Classification")
+                .href("/docs/pgml-docs/natural-language-processing/zero-shot-classification"),
             NavLink::new("Token Classification")
                 .href("/docs/pgml-docs/natural-language-processing/token-classification"),
-            NavLink::new("Question Answering").href("/docs/pgml-docs/natural-language-processing/question-answering"),
-            NavLink::new("Translation").href("/docs/pgml-docs/natural-language-processing/translation"),
-            NavLink::new("Summarization").href("/docs/pgml-docs/natural-language-processing/summarization"),
-            NavLink::new("Text Generation").href("/docs/pgml-docs/natural-language-processing/text-generation"),
-            NavLink::new("Text-to-Text Generation").href("/docs/pgml-docs/natural-language-processing/text-to-text-generation"),
+            NavLink::new("Question Answering")
+                .href("/docs/pgml-docs/natural-language-processing/question-answering"),
+            NavLink::new("Translation")
+                .href("/docs/pgml-docs/natural-language-processing/translation"),
+            NavLink::new("Summarization")
+                .href("/docs/pgml-docs/natural-language-processing/summarization"),
+            NavLink::new("Text Generation")
+                .href("/docs/pgml-docs/natural-language-processing/text-generation"),
+            NavLink::new("Text-to-Text Generation")
+                .href("/docs/pgml-docs/natural-language-processing/text-to-text-generation"),
             NavLink::new("Fill Mask").href("/docs/pgml-docs/natural-language-processing/fill-mask"),
-            NavLink::new("Embeddings").href("/docs/pgml-docs/natural-language-processing/embeddings"),
+            NavLink::new("Embeddings")
+                .href("/docs/pgml-docs/natural-language-processing/embeddings"),
         ]),
         NavLink::new("Vector Database").href("/docs/pgml-docs/vector-database"),
         NavLink::new("Supervised Learning").children(vec![
             NavLink::new("Overview").href("/docs/pgml-docs/supervised-learning/README"),
-            NavLink::new("Data Pre-processing").href("/docs/pgml-docs/supervised-learning/data-pre-processing"),
+            NavLink::new("Data Pre-processing")
+                .href("/docs/pgml-docs/supervised-learning/data-pre-processing"),
             NavLink::new("Regression").href("/docs/pgml-docs/supervised-learning/regression"),
-            NavLink::new("Classification").href("/docs/pgml-docs/supervised-learning/classification"),
-            NavLink::new("Hyperparameter Search").href("/docs/pgml-docs/supervised-learning/hyperparameter-search"),
-            NavLink::new("Joint Optimization").href("/docs/pgml-docs/supervised-learning/joint-optimization"),
+            NavLink::new("Classification")
+                .href("/docs/pgml-docs/supervised-learning/classification"),
+            NavLink::new("Hyperparameter Search")
+                .href("/docs/pgml-docs/supervised-learning/hyperparameter-search"),
+            NavLink::new("Joint Optimization")
+                .href("/docs/pgml-docs/supervised-learning/joint-optimization"),
         ]),
         NavLink::new("Unsupervised Learning").href("/docs/pgml-docs/unsupervised-learning"),
         NavLink::new("SDKs").children(vec![
@@ -58,6 +70,16 @@ async fn doc_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk,
             NavLink::new("Pipelines").href("/docs/pgml-docs/sdks/pipelines"),
             NavLink::new("Vector Search").href("/docs/pgml-docs/sdks/search"),
         ]),
+        NavLink::new("Chatbots").href("/docs/pgml-docs/chatbots"),
+        NavLink::new("Self-Hosting").children(vec![
+            NavLink::new("Quick Start with Docker")
+                .href("/docs/guides/setup/quick_start_with_docker"),
+            NavLink::new("Local Installation").href("/docs/guides/setup/v2/installation"),
+            NavLink::new("Upgrade from v1.0 to v2.0").href("/docs/guides/setup/v2/upgrade-from-v1"),
+            NavLink::new("v1").href("/docs/guides/setup/installation"),
+        ]),
+        NavLink::new("Distributed Training").href("/docs/guides/setup/distributed_training"),
+        NavLink::new("Contributor Docs").href("/docs/guides/setup/developers"),
     ];
 
     render(cluster, &path, guides, "Guides", &Path::new("docs")).await
@@ -136,7 +158,6 @@ async fn render<'a>(
     let path = Path::new(&config::content_dir())
         .join(folder)
         .join(&(path.to_str().unwrap().to_string() + ".md"));
-
 
     // Read to string
     let contents = match tokio::fs::read_to_string(&path).await {
