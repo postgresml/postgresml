@@ -1,0 +1,16 @@
+<div class="modal <%- size_class %>" id="<%= id %>" data-controller="modal" tabindex="-1" aria-modal="true" role="dialog" data-modal-target="modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <% if let Some(header) = header { %>
+        <div class="modal-header">
+          <%+ header %>
+        </div>
+      <% } %>
+      <div class="modal-body">
+        <div class="w-100 h-100 mt-5 py-5 px-3 d-flex flex-column justify-content-center align-items-center" style="background: black; border: 2px solid white; border-radius: 12px;">
+            <%+ body %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

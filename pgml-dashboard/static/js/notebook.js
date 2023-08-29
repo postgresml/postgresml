@@ -7,11 +7,12 @@ export default class extends Controller {
     'cellButton',
     'stopButton',
     'playAllButton',
-    'deleteModal',
     'newCell',
     'syntaxName',
     'playButtonText',
   ];
+
+  static outlets = ['modal'];
 
   cellCheckIntervalMillis = 500
 
@@ -21,7 +22,7 @@ export default class extends Controller {
     const innerHeight = window.innerHeight
 
     this.scrollerTarget.style.maxHeight = `${innerHeight - rect.top - 10}px`
-    this.confirmDeleteModal = new bootstrap.Modal(this.deleteModalTarget)
+    // this.confirmDeleteModal = new bootstrap.Modal(this.deleteModalTarget)
 
     this.sortable = Sortable.create(this.scrollerTarget, {
       onUpdate: this.updateCellOrder.bind(this),
@@ -202,7 +203,7 @@ export default class extends Controller {
   }
 
   deleteCellConfirm() {
-    this.confirmDeleteModal.show()
+    this.modalOutlet.show()
   }
 
   deleteCell() {

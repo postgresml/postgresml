@@ -3,7 +3,12 @@ use crate::utils::config;
 use sailfish::TemplateOnce;
 
 mod component;
+mod modal;
+mod confirm_modal;
+
 pub(crate) use component::{component, Component};
+pub use modal::Modal;
+pub use confirm_modal::ConfirmModal;
 
 #[derive(TemplateOnce)]
 #[template(path = "components/box.html")]
@@ -248,72 +253,4 @@ impl StaticNavLink {
 #[template(path = "components/left_nav_menu.html")]
 pub struct LeftNavMenu {
     pub nav: StaticNav,
-}
-
-/// A component that renders a Bootstrap modal.
-#[derive(TemplateOnce, Default)]
-#[template(path = "components/modal.html")]
-pub struct Modal {
-    pub id: String,
-    pub size_class: String,
-    pub header: Option<Component>,
-    pub body: Component,
-}
-
-component!(Modal);
-
-impl Modal {
-    /// Create a new x-large modal with the given body.
-    pub fn new(body: Component) -> Self {
-        let modal = Modal::default();
-        let id = format!("modal-{}", crate::utils::random_string(10));
-
-        modal.id(&id).body(body).xlarge()
-    }
-
-    /// Set the modal's id.
-    pub fn id(mut self, id: &str) -> Modal {
-        self.id = id.into();
-        self
-    }
-
-    /// Set the modal's body.
-    pub fn body(mut self, body: Component) -> Modal {
-        self.body = body;
-        self
-    }
-
-    /// Make the modal x-large.
-    pub fn xlarge(mut self) -> Modal {
-        self.size_class = "modal-xl".into();
-        self
-    }
-
-    /// Set the modal's header.
-    pub fn header(mut self, header: Component) -> Modal {
-        self.header = Some(header);
-        self
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_modal() {
-        let postgres_logo = PostgresLogo::new("https://www.postgresql.org");
-        let modal = Modal::new(postgres_logo.into());
-        let rendering = modal.render_once().unwrap();
-
-        assert!(rendering.contains("modal-xl"));
-    }
-
-    #[test]
-    fn test_modal_with_string() {
-        let modal = Modal::new("some random string".into());
-        let rendering = modal.render_once().unwrap();
-
-        assert!(rendering.contains("some random string"));
-    }
 }

@@ -11,11 +11,11 @@ pub struct Component {
 
 macro_rules! component {
     ($name:tt) => {
-        impl From<$name> for Component {
-            fn from(thing: $name) -> Component {
+        impl From<$name> for crate::templates::components::Component {
+            fn from(thing: $name) -> crate::templates::components::Component {
                 use sailfish::TemplateOnce;
 
-                Component {
+                crate::templates::components::Component {
                     value: thing.render_once().unwrap(),
                 }
             }
