@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["PostgresML <team@postgresml.org>"]
 license = "MIT"
+description = "A tool for bundling SCSS and JavaScript Stimulus components like Rails does."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
