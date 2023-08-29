@@ -21,8 +21,7 @@ def activate_venv(venv):
         __venv = venv
         return True
     else:
-        print("Virtualenv not found: %s" % venv)
-        return False
+        raise RuntimeError("Virtual environment '{}' does not exist".format(venv))
 
 
 def freeze():
