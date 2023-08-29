@@ -388,6 +388,11 @@ fn add_component(name: String, overwrite: bool) {
         .expect("failed to write stimulus controller");
     drop(template_file);
 
+    // Create SASS file
+    let sass_path = folder.join(&format!("{}.scss", component_path));
+    let sass_file = File::create(sass_path).expect("failed to create sass file");
+    drop(sass_file);
+
     // let mut components_list = File::create("src/components/components.rs").expect("failed to create src/components/components.rs");
     // let components = read_dir("src/components").expect("failed to read components directory");
 
