@@ -63,10 +63,6 @@ pub fn deployment() -> String {
 }
 
 pub fn css_url() -> String {
-    if dev_mode() {
-        return "/dashboard/static/css/style.css".to_string();
-    }
-
     let filename = format!("style.{}.css", env!("CSS_VERSION"));
 
     let path = format!("/dashboard/static/css/{filename}");
@@ -78,13 +74,9 @@ pub fn css_url() -> String {
 }
 
 pub fn js_url(name: &str) -> String {
-    let name = if dev_mode() {
-        name.to_string()
-    } else {
-        let name = name.split(".").collect::<Vec<&str>>();
-        let name = name[0..name.len() - 1].join(".");
-        format!("{name}.{}.js", env!("JS_VERSION"))
-    };
+    let name = name.split(".").collect::<Vec<&str>>();
+    let name = name[0..name.len() - 1].join(".");
+    let name = format!("{name}.{}.js", env!("JS_VERSION"));
 
     let path = format!("/dashboard/static/js/{name}");
 

@@ -28,6 +28,16 @@ fn main() {
     let js_version = read_to_string("static/js/.pgml-bundle").expect("failed to read .pgml-bundle");
     let js_version = js_version.trim();
 
+    let status = Command::new("cp")
+        .arg("static/js/main.js")
+        .arg(&format!("static/js/main.{}.js", js_version))
+        .status()
+        .expect("failed to bundle main.js");
+
+    if !status.success() {
+        panic!("failed to bundle main.js");
+    }
+
     println!("cargo:rustc-env=CSS_VERSION={css_version}");
     println!("cargo:rustc-env=JS_VERSION={js_version}");
 }
