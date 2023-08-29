@@ -67,7 +67,7 @@ checksum = "b4682ae6287fcf752ecaabbfcc7b6f9b72aa33933dc23a554d853aea8eea8635"
 
 [[package]]
 name = "cargo-pgml-components"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "convert_case",

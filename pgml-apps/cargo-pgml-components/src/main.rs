@@ -15,6 +15,9 @@ extern crate log;
 /// These paths are exepcted to exist in the project directory.
 static PROJECT_PATHS: &[&str] = &["src", "static/js", "static/css"];
 
+//// These executables are required to be installed globally.
+static REQUIRED_EXECUTABLES: &[&str] = &["sass", "rollup"];
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -28,6 +31,8 @@ struct Args {
 
 fn main() {
     env_logger::init();
+    check_executables();
+
     let args = Args::parse();
 
     // Validate that the required project paths exist.
@@ -194,7 +199,12 @@ fn main() {
 }
 
 fn execute_command(command: &mut Command) -> std::io::Result<String> {
-    let output = command.output()?;
+    let output = match command.output() {
+        Ok(output) => output,
+        Err(err) => {
+            return Err(err);
+        }
+    };
 
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
     let stdout = String::from_utf8_lossy(&output.stderr).to_string();
@@ -217,4 +227,24 @@ fn execute_command(command: &mut Command) -> std::io::Result<String> {
     }
 
     Ok(stdout)
+}
+
+fn check_executables() {
+    for executable in REQUIRED_EXECUTABLES {
+        match execute_command(Command::new(executable).arg("--version")) {
+            Ok(_) => (),
+            Err(err) => {
+                error!(
+                    "'{}' is not installed. Install it with 'npm install -g {}'",
+                    executable, executable
+                );
+                debug!(
+                    "Failed to execute '{} --version': {}",
+                    executable,
+                    err.to_string()
+                );
+                exit(1);
+            }
+        }
+    }
 }
