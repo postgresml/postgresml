@@ -1,8 +1,8 @@
 use sailfish::TemplateOnce;
-use crate::templates::components::component;
+use crate::components::component;
 
 #[derive(TemplateOnce)]
-#[template(path = "components/confirm_modal/template.html")]
+#[template(path = "confirm_modal/template.html")]
 pub struct ConfirmModal {
 	confirm_question: String,
 	confirm_text: String,

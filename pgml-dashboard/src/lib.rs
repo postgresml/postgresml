@@ -17,6 +17,7 @@ pub mod models;
 pub mod responses;
 pub mod templates;
 pub mod utils;
+pub mod components;
 
 use guards::{Cluster, ConnectedCluster};
 use responses::{BadRequest, Error, ResponseOk};

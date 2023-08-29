@@ -1,9 +1,9 @@
 use sailfish::TemplateOnce;
-use crate::templates::components::{Component, component};
+use crate::components::{Component, component};
 
 /// A component that renders a Bootstrap modal.
 #[derive(TemplateOnce, Default)]
-#[template(path = "components/modal/template.html")]
+#[template(path = "modal/template.html")]
 pub struct Modal {
     pub id: String,
     pub size_class: String,

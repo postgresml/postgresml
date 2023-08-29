@@ -13,3 +13,5 @@ glob = "0.3"
 convert_case = "0.6"
 clap = { version = "4", features = ["derive"] }
 md5 = "0.7"
+log = "0.4"
+env_logger = "0.10"

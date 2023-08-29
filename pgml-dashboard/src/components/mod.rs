@@ -1,4 +1,4 @@
-use crate::templates::models;
+use crate::models;
 use crate::utils::config;
 use sailfish::TemplateOnce;
 

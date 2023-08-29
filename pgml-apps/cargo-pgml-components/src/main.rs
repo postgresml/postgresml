@@ -3,11 +3,17 @@
 use clap::Parser;
 use convert_case::{Case, Casing};
 use glob::glob;
-use std::env::set_current_dir;
+use std::env::{current_dir, set_current_dir};
 use std::fs::{read_to_string, remove_file, File};
 use std::io::Write;
 use std::path::Path;
-use std::process::Command;
+use std::process::{exit, Command};
+
+#[macro_use]
+extern crate log;
+
+/// These paths are exepcted to exist in the project directory.
+static PROJECT_PATHS: &[&str] = &["src", "static/js", "static/css"];
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -17,28 +23,48 @@ struct Args {
 
     /// Path to the project directory.
     #[arg(short, long)]
-    project_path: String,
+    project_path: Option<String>,
 }
 
 fn main() {
+    env_logger::init();
     let args = Args::parse();
 
-    let path = Path::new(&args.project_path);
+    // Validate that the required project paths exist.
+    let cwd = if let Some(project_path) = args.project_path {
+        project_path
+    } else {
+        current_dir().unwrap().to_str().unwrap().to_owned()
+    };
 
-    if !path.exists() {
-        panic!("Project path '{}' does not exist", path.display());
+    let path = Path::new(&cwd);
+
+    for project_path in PROJECT_PATHS {
+        let check = path.join(project_path);
+
+        if !check.exists() {
+            error!(
+                "Project path '{}/{}' does not exist but is required",
+                path.display(),
+                project_path
+            );
+            exit(1);
+        }
     }
 
     set_current_dir(path).expect("failed to change paths");
 
     // Assemble SCSS.
-    let scss = glob("src/templates/**/*.scss").expect("failed to glob scss files");
+    let scss = glob("src/components/**/*.scss").expect("failed to glob scss files");
 
     let mut modules =
         File::create("static/css/modules.scss").expect("failed to create modules.scss");
 
     for stylesheet in scss {
         let stylesheet = stylesheet.expect("failed to glob stylesheet");
+
+        debug!("Adding '{}' to SCSS bundle", stylesheet.display());
+
         let line = format!(r#"@import "../../{}";"#, stylesheet.display());
 
         writeln!(&mut modules, "{}", line).expect("failed to write line to modules.scss");
@@ -48,15 +74,12 @@ fn main() {
 
     // Bundle SCSS.
     // Build Bootstrap
-    let sass = Command::new("sass")
-        .arg("static/css/bootstrap-theme.scss")
-        .arg("static/css/style.css")
-        .status()
-        .expect("`npm exec sass` failed");
-
-    if !sass.success() {
-        panic!("Sass compilatio failed");
-    }
+    execute_command(
+        Command::new("sass")
+            .arg("static/css/bootstrap-theme.scss")
+            .arg("static/css/style.css"),
+    )
+    .unwrap();
 
     // Hash the bundle.
     let bundle = read_to_string("static/css/style.css").expect("failed to read bundle.css");
@@ -65,20 +88,19 @@ fn main() {
         .take(8)
         .collect::<String>();
 
-    if !Command::new("cp")
-        .arg("static/css/style.css")
-        .arg(format!("static/css/style.{}.css", hash))
-        .status()
-        .expect("cp static/css/style.css failed to run")
-        .success()
-    {
-        panic!("Bundling CSS failed");
-    }
+    execute_command(
+        Command::new("cp")
+            .arg("static/css/style.css")
+            .arg(format!("static/css/style.{}.css", hash)),
+    )
+    .unwrap();
 
     let mut hash_file =
         File::create("static/css/.pgml-bundle").expect("failed to create .pgml-bundle");
     writeln!(&mut hash_file, "{}", hash).expect("failed to write hash to .pgml-bundle");
     drop(hash_file);
+
+    debug!("Created css .pgml-bundle with hash {}", hash);
 
     // Assemble JavaScript.
 
@@ -87,7 +109,7 @@ fn main() {
         let _ = remove_file(file.expect("failed to glob file"));
     }
 
-    let js = glob("src/templates/**/*.js").expect("failed to glob js files");
+    let js = glob("src/components/**/*.js").expect("failed to glob js files");
     let js = js.chain(glob("static/js/*.js").expect("failed to glob static/js/*.js"));
     let js = js.filter(|path| {
         let path = path.as_ref().unwrap();
@@ -139,18 +161,15 @@ fn main() {
     drop(modules);
 
     // Bundle JavaScript.
-    let rollup = Command::new("rollup")
-        .arg("static/js/modules.js")
-        .arg("--file")
-        .arg("static/js/bundle.js")
-        .arg("--format")
-        .arg("es")
-        .status()
-        .expect("`rollup` failed");
-
-    if !rollup.success() {
-        panic!("Rollup failed");
-    }
+    execute_command(
+        Command::new("rollup")
+            .arg("static/js/modules.js")
+            .arg("--file")
+            .arg("static/js/bundle.js")
+            .arg("--format")
+            .arg("es"),
+    )
+    .unwrap();
 
     // Hash the bundle.
     let bundle = read_to_string("static/js/bundle.js").expect("failed to read bundle.js");
@@ -159,18 +178,43 @@ fn main() {
         .take(8)
         .collect::<String>();
 
-    if !Command::new("cp")
-        .arg("static/js/bundle.js")
-        .arg(format!("static/js/bundle.{}.js", hash))
-        .status()
-        .expect("cp static/js/bundle.js failed to run")
-        .success()
-    {
-        panic!("Bundling JavaScript failed");
-    }
+    execute_command(
+        Command::new("cp")
+            .arg("static/js/bundle.js")
+            .arg(format!("static/js/bundle.{}.js", hash)),
+    )
+    .unwrap();
 
     let mut hash_file =
         File::create("static/js/.pgml-bundle").expect("failed to create .pgml-bundle");
     writeln!(&mut hash_file, "{}", hash).expect("failed to write hash to .pgml-bundle");
     drop(hash_file);
+
+    println!("Finished bundling CSS and JavaScript successfully");
+}
+
+fn execute_command(command: &mut Command) -> std::io::Result<String> {
+    let output = command.output()?;
+
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    let stdout = String::from_utf8_lossy(&output.stderr).to_string();
+
+    if !output.status.success() {
+        error!(
+            "{} failed: {}",
+            command.get_program().to_str().unwrap(),
+            String::from_utf8_lossy(&output.stderr).to_string(),
+        );
+        exit(1);
+    }
+
+    if !stderr.is_empty() {
+        warn!("{}", stderr);
+    }
+
+    if !stdout.is_empty() {
+        info!("{}", stdout);
+    }
+
+    Ok(stdout)
 }

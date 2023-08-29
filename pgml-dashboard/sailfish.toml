@@ -1,1 +1,1 @@
-template_dirs = ["templates", "src/templates"]
+template_dirs = ["templates", "src/templates", "src/components"]
