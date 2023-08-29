@@ -10,6 +10,7 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 
 pub mod api;
+pub mod components;
 pub mod fairings;
 pub mod forms;
 pub mod guards;
@@ -656,6 +657,12 @@ pub async fn dashboard(
     Ok(ResponseOk(
         layout.render(templates::Dashboard { tabs: nav_tabs }),
     ))
+}
+
+#[get("/playground")]
+pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
+    let mut layout = crate::templates::WebAppBase::new("Playground", &cluster.context);
+    Ok(ResponseOk(layout.render(templates::Playground {})))
 }
 
 pub fn routes() -> Vec<Route> {

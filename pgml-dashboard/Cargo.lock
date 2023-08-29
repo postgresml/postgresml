@@ -1013,7 +1013,7 @@ dependencies = [
  "atomic",
  "pear",
  "serde",
- "toml 0.7.6",
+ "toml",
  "uncased",
  "version_check",
 ]
@@ -1786,12 +1786,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "md5"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "490cc448043f947bae3cbee9c203358d62dbee0db12107a74be5c30ccfd09771"
-
-[[package]]
 name = "measure_time"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2192,7 +2186,6 @@ dependencies = [
  "itertools",
  "lazy_static",
  "log",
- "md5",
  "num-traits",
  "once_cell",
  "parking_lot 0.12.1",
@@ -2872,9 +2865,9 @@ checksum = "ef703b7cb59335eae2eb93ceb664c0eb7ea6bf567079d843e09420219668e072"
 
 [[package]]
 name = "sailfish"
-version = "0.5.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79aef0b4612749106d372dfdeee715082f2f0fe24263be08e19db9b00b694bf9"
+checksum = "7519b7521780097b0183bb4b0c7c2165b924f5f1d44c3ef765bde8c2f8008fd1"
 dependencies = [
  "itoap",
  "ryu",
@@ -2884,9 +2877,9 @@ dependencies = [
 
 [[package]]
 name = "sailfish-compiler"
-version = "0.5.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "787ef14715822299715d98d6eb6157f03a57a5258ffbd3321847f7450853dd64"
+checksum = "535500faca492ee8054fbffdfca6447ca97fa495e0ede9f28fa473e1a44f9d5c"
 dependencies = [
  "filetime",
  "home",
@@ -2894,15 +2887,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
- "syn 1.0.109",
- "toml 0.5.11",
+ "syn 2.0.26",
+ "toml",
 ]
 
 [[package]]
 name = "sailfish-macros"
-version = "0.5.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0d39ce164c9e19147bcc4fa9ce9dcfc0a451e6cd0a996bb896fc7dee92887a4"
+checksum = "06a95a6b8a0f59bf66f430a4ed37ece23fcefcd26898399573043e56fb202be2"
 dependencies = [
  "proc-macro2",
  "sailfish-compiler",
@@ -3872,15 +3865,6 @@ dependencies = [
  "pin-project-lite",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "toml"
-version = "0.5.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4f7f0dd8d50a853a531c426359045b1998f04219d88799810762cd4ad314234"
-dependencies = [
- "serde",
 ]
 
 [[package]]

@@ -1,0 +1,72 @@
+<% use crate::templates::components::GithubIcon; %>
+<% use crate::templates::components::PostgresLogo; %>
+
+  <div class="sticky-top-nav">
+    <nav class="navbar-marketing-site horizontal navbar-expand-lg" data-controller="search topnav-styling">
+      <div class="container gap-4">
+        <div class="controls">
+          <%+ PostgresLogo::new("/") %>
+          
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </div>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav flex-grow-1 gap-4 me-auto mb-4 mb-lg-0">
+            <li class="nav-item d-flex align-items-center">
+              <a class="nav-link p-0" href="/docs/guides/setup/quick_start_with_docker">Docs</a>
+            </li>
+            <% if !standalone_dashboard { %>
+            <!-- <li class="nav-item d-flex align-items-center">
+              <a class="nav-link p-0" href="/plan_comparison">Pricing</a>
+            </li> -->
+            <% } %>
+            <li class="nav-item d-flex align-items-center">
+              <a class="nav-link p-0" href="/blog/announcing-support-for-aws-us-east-1-region">Blog</a>
+            </li>
+          </ul>
+  
+          <ul class="navbar-nav gap-4 gap-lg-3 mb-2 mb-lg-0">
+            <li class="align-items-center d-none d-lg-flex">
+              <%+ GithubIcon {show_stars: true} %>
+            </li>
+            <li class="d-flex align-items-center d-block d-lg-none">
+              <a class="nav-link p-0" href="https://github.com/postgresml/postgresml">Open Source</a>
+            </li>
+            <li class="nav-item d-flex align-items-center">
+              <button type="text" class="btn nav-link btn-search-alt p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+                Search
+              </button>
+            </li>
+            <% if !standalone_dashboard { %>
+            <div class="vr my-2 opacity-100 d-lg-block d-none" style="width: 2px"></div>
+              <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
+            <li class="nav-item d-flex align-items-center">
+              <a class="nav-link p-0" href="/login">Sign In</a>
+            </li>
+            <li class="d-flex align-items-center">
+              <a class="btn btn-primary py-2 px-3" href="/signup">Sign Up</a>
+            </li>
+              <% } else { %>
+            <li class="nav-item d-flex align-items-center">
+              <a class="nav-link p-0" href="/logout">Sign Out</a>
+            </li>
+            <li class="d-flex align-items-center">
+              <a class="btn btn-primary py-2 px-3" href="/clusters">Console</a>
+            </li>
+              <% } %>
+            <% } %>
+
+            <% if standalone_dashboard { %>
+            <li class="nav-item d-flex align-items-center">
+              <a class="btn btn-primary py-2 px-3" href="/dashboard">Dashboard</a>
+            </li>
+            <% } %>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <% include!("../../../templates/components/search_modal.html");%>

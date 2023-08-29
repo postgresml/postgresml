@@ -70,44 +70,8 @@
       }
     }
   </script>
-  <script type="module-shim" data-turbo-track="reload">
-    import { Application } from '@hotwired/stimulus'
+  <script data-turbo-trace="reload" type="module-shim" src="<%= config::js_url("bundle.js") %>" async defer></script>
 
-    import ClickReplace from '<%= config::js_url("click-replace.js") %>'
-    import Search from '<%= config::js_url("search.js") %>'
-    import BtnSecondary from '<%= config::js_url("btn-secondary.js") %>'
-    import AutoreloadFrame from '<%= config::js_url("autoreload-frame.js") %>'
-    import XScrollerDrag from '<%= config::js_url("x-scroller-drag.js") %>'
-    import DocsToc from '<%= config::js_url("docs-toc.js") %>'
-    import Timeseries from '<%= config::js_url("timeseries.js") %>'
-    import EnableTooltip from '<%= config::js_url("enable-tooltip.js") %>'
-    import Copy from '<%= config::js_url("copy.js") %>'
-    import NewProject from '<%= config::js_url("new-project.js") %>'
-    import Notebook from '<%= config::js_url("notebook.js") %>'
-    import NotebookCell from '<%= config::js_url("notebook-cell.js") %>'
-    import QuickPrediction from '<%= config::js_url("quick-prediction.js") %>'
-    import TopnavStyling from '<%= config::js_url("topnav-styling.js") %>'
-    import TopnavWebApp from '<%= config::js_url("topnav-web-app.js") %>'
-    import ExtendBSCollapse from '<%= config::js_url("extend-bs-collapse.js") %>'
-
-    const application = Application.start()
-    application.register('click-replace', ClickReplace)
-    application.register('search', Search)
-    application.register('btn-secondary', BtnSecondary)
-    application.register('autoreload-frame', AutoreloadFrame)
-    application.register('x-scroller-drag', XScrollerDrag)
-    application.register('docs-toc', DocsToc)
-    application.register('timeseries', Timeseries)
-    application.register('enable-tooltip', EnableTooltip)
-    application.register('copy', Copy)
-    application.register('new-project', NewProject)
-    application.register('notebook', Notebook)
-    application.register('notebook-cell', NotebookCell)
-    application.register('quick-prediction', QuickPrediction)
-    application.register('topnav-styling', TopnavStyling)
-    application.register('topnav-web-app', TopnavWebApp)
-    application.register('extend-bs-collapse', ExtendBSCollapse)
-  </script>
 
   <% if config::dev_mode() { %>
   <!-- dev only - save page position after reload -->

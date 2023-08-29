@@ -1,5 +1,15 @@
+<% use crate::templates::components::{ConfirmModal, Modal};
+
+let modal = Modal::new(
+  ConfirmModal::new(
+    "Are you sure you want to delete this cell?"
+  ).confirm_action("notebook#deleteCell").into()
+);
+
+
+%>
 <turbo-frame id="notebook">
-  <div data-controller="notebook">
+  <div data-controller="notebook" data-notebook-modal-outlet="#<%=modal.id %>">
     
     <div class="card mb-4 z-1" data-notebook-target="menu">
       <div class="card-body p-1">
@@ -70,6 +80,8 @@
         </div>
       </div>
     </div>
+
+    <!-- Cells -->
     <div class="overflow-y-scroll pe-2" data-notebook-target="scroller" data-notebook-id="<%= notebook.id %>">
   
       <% for cell in cells {
@@ -79,26 +91,9 @@
         include!("cell.html");
       } %>
     </div>
-    <div id="deleteModal" class="modal modal-xl" tabindex="-1" aria-modal="true" role="dialog" data-notebook-target="deleteModal">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-body">
-            <div class="w-100 h-100 mt-5 py-5 px-3 d-flex flex-column justify-content-center align-items-center" style="background: black; border: 2px solid white; border-radius: 12px;">
-                <p class="mb-4 fw-semibold">Are you sure you want to delete this cell?</p>
 
-                <div class="d-flex justify-content-center align-items-center gap-2">
-                  <button class="btn btn-primary-web-app" data-bs-dismiss="modal" data-action="notebook#deleteCell">
-                    Yes
-                  </button>
-                  <button class="btn btn-secondary-web-app" data-bs-dismiss="modal">
-                    No
-                  </button>
-                </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+     <%+ modal %>
+
     <form action="/dashboard/notebooks/<%= notebook.id %>/cell" method="post" data-notebook-target="newCell">
       <input type="hidden" name="cell_type" value="3"> <!-- SQL -->
       <input type="hidden" name="contents" value="">

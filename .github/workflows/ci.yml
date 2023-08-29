@@ -10,7 +10,12 @@ jobs:
         working-directory: pgml-extension
     steps:
       - uses: actions/checkout@v3
+      - name: Changed files in pgml-extension
+        id: pgml_extension_changed
+        run: |
+          echo "PGML_EXTENSION_CHANGED_FILES=$(git diff --name-only HEAD HEAD~1 . | wc -l)" >> $GITHUB_OUTPUT
       - name: Install dependencies
+        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           sudo apt-get update && \
             DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC sudo apt-get install -y \
@@ -29,6 +34,7 @@ jobs:
           sudo pip3 install -r requirements.txt
       - name: Cache dependencies
         uses: buildjet/cache@v3
+        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         with:
           path: |
             ~/.cargo
@@ -36,9 +42,11 @@ jobs:
             ~/.pgrx
           key: ${{ runner.os }}-rust-3-${{ hashFiles('pgml-extension/Cargo.lock') }}
       - name: Submodules
+        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           git submodule update --init --recursive
       - name: Run tests
+        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           source ~/.cargo/env

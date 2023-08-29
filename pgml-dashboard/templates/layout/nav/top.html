@@ -5,7 +5,7 @@
     <nav class="navbar-marketing-site horizontal navbar-expand-lg" data-controller="search topnav-styling">
       <div class="container gap-4">
         <div class="controls">
-          <%- PostgresLogo{link: "/".to_string()}.render_once().unwrap() %>
+          <%+ PostgresLogo::new("/") %>
           
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>

@@ -1,4 +1,5 @@
 use log::{error, info, warn};
+
 use rocket::{
     catch, catchers, fs::FileServer, get, http::Status, request::Request, response::Redirect,
 };
@@ -99,26 +100,6 @@ async fn main() {
     // it's important to hang on to sentry so it isn't dropped and stops reporting
     let _sentry = configure_reporting().await;
 
-    if config::dev_mode() {
-        warn!("============================================");
-        warn!("PostgresML is set to run in development mode");
-        warn!("============================================");
-
-        let status = tokio::process::Command::new("npm")
-            .arg("exec")
-            .arg("sass")
-            .arg("static/css/bootstrap-theme.scss")
-            .arg("static/css/style.css")
-            .status()
-            .await
-            .unwrap();
-
-        if !status.success() {
-            error!("SCSS compilation failed. Do you have `node`, `npm`, and `sass` installed and working globally?");
-            std::process::exit(1);
-        }
-    }
-
     markdown::SearchIndex::build().await.unwrap();
 
     pgml_dashboard::migrate(&guards::Cluster::default().pool())
@@ -131,6 +112,7 @@ async fn main() {
         .mount("/dashboard/static", FileServer::from(&config::static_dir()))
         .mount("/dashboard", pgml_dashboard::routes())
         .mount("/", pgml_dashboard::api::docs::routes())
+        .mount("/", rocket::routes![pgml_dashboard::playground])
         .register(
             "/",
             catchers![error_catcher, not_authorized_catcher, not_found_handler],

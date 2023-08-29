@@ -279,6 +279,7 @@ python3
 python3-pip
 libpython3
 lld
+mold
 ```
 
 ##### Rust
@@ -352,7 +353,7 @@ cargo sqlx database setup
 
 ### Frontend dependencies
 
-The dashboard frontend is using Sass which requires Node & the Sass compiler. You can install Node from Brew, your package repository, or by using [Node Version Manager](https://github.com/nvm-sh/nvm).
+The dashboard frontend is using Sass and Rollup, which require Node. You can install Node from Brew, your package repository, or by using [Node Version Manager](https://github.com/nvm-sh/nvm).
 
 If using nvm, you can install the latest stable Node version with:
 
@@ -360,10 +361,11 @@ If using nvm, you can install the latest stable Node version with:
 nvm install stable
 ```
 
-Once you have Node installed, you can install the Sass compiler globally:
+Once you have Node installed, you can install the remaining requirements globally:
 
 ```bash
-npm install -g sass
+npm install -g sass rollup
+cargo install cargo-pgml-components
 ```
 
 ### Compile and run

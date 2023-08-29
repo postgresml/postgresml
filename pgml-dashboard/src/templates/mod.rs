@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use components::{NavLink, StaticNav, StaticNavLink};
+pub use crate::components::{self, NavLink, StaticNav, StaticNavLink};
 
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
@@ -10,7 +10,6 @@ use sqlx::{Column, Executor, PgPool, Row, Statement, TypeInfo, ValueRef};
 use crate::models;
 use crate::utils::tabs;
 
-pub mod components;
 pub mod docs;
 pub mod head;
 
@@ -503,3 +502,7 @@ pub struct SnapshotTab {
 pub struct UploaderTab {
     pub table_name: Option<String>,
 }
+
+#[derive(TemplateOnce)]
+#[template(path = "content/playground.html")]
+pub struct Playground;

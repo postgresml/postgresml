@@ -1,0 +1,61 @@
+use crate::components::{component, Component};
+use sailfish::TemplateOnce;
+
+/// A component that renders a Bootstrap modal.
+#[derive(TemplateOnce, Default)]
+#[template(path = "modal/template.html")]
+pub struct Modal {
+    pub id: String,
+    pub size_class: String,
+    pub header: Option<Component>,
+    pub body: Component,
+}
+
+component!(Modal);
+
+impl Modal {
+    /// Create a new x-large modal with the given body.
+    pub fn new(body: Component) -> Self {
+        let modal = Modal::default();
+        let id = format!("modal-{}", crate::utils::random_string(10));
+
+        modal.id(&id).body(body).xlarge()
+    }
+
+    /// Set the modal's id.
+    pub fn id(mut self, id: &str) -> Modal {
+        self.id = id.into();
+        self
+    }
+
+    /// Set the modal's body.
+    pub fn body(mut self, body: Component) -> Modal {
+        self.body = body;
+        self
+    }
+
+    /// Make the modal x-large.
+    pub fn xlarge(mut self) -> Modal {
+        self.size_class = "modal-xl".into();
+        self
+    }
+
+    /// Set the modal's header.
+    pub fn header(mut self, header: Component) -> Modal {
+        self.header = Some(header);
+        self
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_modal_with_string() {
+        let modal = Modal::new("some random string".into());
+        let rendering = modal.render_once().unwrap();
+
+        assert!(rendering.contains("some random string"));
+    }
+}

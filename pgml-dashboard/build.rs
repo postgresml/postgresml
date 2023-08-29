@@ -1,8 +1,10 @@
-use std::fs::{read_to_string, remove_file};
+use std::fs::read_to_string;
 use std::process::Command;
 
 fn main() {
     println!("cargo:rerun-if-changed=migrations");
+    println!("cargo:rerun-if-changed=static/css/.pgml-bundle");
+    println!("cargo:rerun-if-changed=static/js/.pgml-bundle");
 
     let output = Command::new("git")
         .args(&["rev-parse", "HEAD"])
@@ -11,77 +13,31 @@ fn main() {
     let git_hash = String::from_utf8(output.stdout).unwrap();
     println!("cargo:rustc-env=GIT_SHA={}", git_hash);
 
-    // Build Bootstrap
-    let status = Command::new("npm")
-        .arg("exec")
-        .arg("sass")
-        .arg("static/css/bootstrap-theme.scss")
-        .arg("static/css/style.css")
+    let status = Command::new("cargo")
+        .arg("pgml-components")
+        .arg("bundle")
         .status()
-        .expect("`npm exec sass` failed");
+        .expect("failed to run 'cargo pgml-bundle'");
 
     if !status.success() {
-        println!("SCSS compilation failed to run");
+        panic!("failed to run 'cargo pgml-bundle'");
     }
 
-    // Bundle CSS to bust cache.
-    let contents = read_to_string("static/css/style.css")
-        .unwrap()
-        .as_bytes()
-        .to_vec();
-    let css_version = format!("{:x}", md5::compute(contents))
-        .chars()
-        .take(8)
-        .collect::<String>();
+    let css_version =
+        read_to_string("static/css/.pgml-bundle").expect("failed to read .pgml-bundle");
+    let css_version = css_version.trim();
 
-    if !Command::new("cp")
-        .arg("static/css/style.css")
-        .arg(format!("static/css/style.{}.css", css_version))
+    let js_version = read_to_string("static/js/.pgml-bundle").expect("failed to read .pgml-bundle");
+    let js_version = js_version.trim();
+
+    let status = Command::new("cp")
+        .arg("static/js/main.js")
+        .arg(&format!("static/js/main.{}.js", js_version))
         .status()
-        .expect("cp static/css/style.css failed to run")
-        .success()
-    {
-        println!("Bundling CSS failed");
-    }
+        .expect("failed to bundle main.js");
 
-    let mut js_version = Vec::new();
-
-    // Remove all bundled files
-    for file in glob::glob("static/js/*.*.js").expect("failed to glob") {
-        let _ = remove_file(file.expect("failed to glob file"));
-    }
-
-    // Build JS to bust cache
-    for file in glob::glob("static/js/*.js").expect("failed to glob") {
-        let file = file.expect("failed to glob path");
-        let contents = read_to_string(file)
-            .expect("failed to read js file")
-            .as_bytes()
-            .to_vec();
-
-        js_version.push(format!("{:x}", md5::compute(contents)));
-    }
-
-    let js_version = format!("{:x}", md5::compute(js_version.join("").as_bytes()))
-        .chars()
-        .take(8)
-        .collect::<String>();
-
-    for file in glob::glob("static/js/*.js").expect("failed to glob JS") {
-        let filename = file.expect("failed to glob path").display().to_string();
-        let name = filename.split(".").collect::<Vec<&str>>();
-        let name = name[0..name.len() - 1].join(".");
-        let output_name = format!("{}.{}.js", name, js_version);
-
-        if !Command::new("cp")
-            .arg(&filename)
-            .arg(&output_name)
-            .status()
-            .expect("failed to cp js file")
-            .success()
-        {
-            println!("Bundling JS failed");
-        }
+    if !status.success() {
+        panic!("failed to bundle main.js");
     }
 
     println!("cargo:rustc-env=CSS_VERSION={css_version}");
