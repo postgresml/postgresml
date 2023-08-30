@@ -47,7 +47,7 @@ pub fn validate_dependencies() -> Result<bool> {
     let venv = activate()?;
 
     if let Some(venv) = venv {
-        info!("Using virtual environment located in: {}", venv);
+        info!("Using virtual environment: {}", venv);
     } else {
         info!("Using system Python environment");
     }
@@ -56,6 +56,8 @@ pub fn validate_dependencies() -> Result<bool> {
         let sys = PyModule::import(py, "sys").unwrap();
         let version: String = sys.getattr("version").unwrap().extract().unwrap();
         info!("Python version: {version}");
+
+        // Check some basic Python dependencies.
         for module in [
             "xgboost",
             "lightgbm",

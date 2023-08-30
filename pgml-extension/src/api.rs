@@ -68,21 +68,8 @@ pub fn python_version() -> String {
     String::from("Python is not installed, recompile with `--features python`")
 }
 
-#[cfg(feature = "python")]
-#[pg_extern]
-pub fn cuda_available() -> bool {
-    unwrap_or_error!(crate::bindings::python::cuda_available())
-}
-
-#[cfg(not(feature = "python"))]
-pub fn cuda_available() -> bool {
-    false
-}
-
 #[pg_extern]
 pub fn debug_info() {
-    unwrap_or_error!(crate::bindings::python::activate());
-
     let arch = std::env::consts::ARCH;
     let family = std::env::consts::FAMILY;
     let os = std::env::consts::OS;
@@ -94,9 +81,28 @@ pub fn debug_info() {
 
     #[cfg(feature = "python")]
     {
+        let python_version = unwrap_or_error!(crate::bindings::python::version());
+        info!("Python: {}", python_version);
+
+        let cuda_available = unwrap_or_error!(crate::bindings::python::cuda_available());
+        info!("CUDA available: {}", cuda_available);
+
+        let venv = unwrap_or_error!(crate::bindings::python::activate());
+
+        if let Some(venv) = venv {
+            info!("Virtual environment: {}", venv);
+        } else {
+            info!("Using system Python environment");
+        }
+
         let python_packages = unwrap_or_error!(crate::bindings::python::pip_freeze());
         let python_packages = python_packages.join("\n");
         info!("Python packages:\n{}", python_packages);
+    }
+
+    #[cfg(not(feature = "python"))]
+    {
+        info!("Python support disabled");
     }
 }
 
