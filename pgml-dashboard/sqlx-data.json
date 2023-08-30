@@ -566,7 +566,7 @@
       "nullable": [
         false,
         false,
-        false,
+        true,
         false,
         false,
         null,
@@ -864,7 +864,7 @@
       "nullable": [
         false,
         false,
-        false,
+        true,
         false,
         false,
         null,
@@ -1113,7 +1113,7 @@
       "nullable": [
         false,
         false,
-        false,
+        true,
         false,
         false,
         null,
