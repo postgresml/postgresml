@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: pgml-sdks/rust/pgml/javascript
+        working-directory: pgml-sdks/pgml/javascript
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: node-artifacts 
-          path: pgml-sdks/rust/pgml/javascript/dist/${{ matrix.neon-out-name }}
+          path: pgml-sdks/pgml/javascript/dist/${{ matrix.neon-out-name }}
           retention-days: 1
   # publish-javascript-sdk:
   #   needs: build-javascript-sdk
