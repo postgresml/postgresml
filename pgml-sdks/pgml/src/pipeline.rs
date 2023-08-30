@@ -659,7 +659,7 @@ impl Pipeline {
                 ),
                 embedding_length
             ))
-            .execute(&mut transaction)
+            .execute(&mut *transaction)
             .await?;
             transaction
                 .execute(

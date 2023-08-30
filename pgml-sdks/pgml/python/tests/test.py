@@ -32,6 +32,7 @@ def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
                 "project": "a10",
                 "floating_uuid": i * 1.01,
                 "uuid": i * 10,
+                "test": None,
                 "name": "Test Document {}".format(i),
             }
         )
@@ -178,6 +179,74 @@ async def test_pipeline_to_dict():
     pipeline_dict = await pipeline.to_dict()
     assert pipeline_dict["name"] == "test_p_p_tptd_1"
     await collection.remove_pipeline(pipeline)
+    await collection.archive()
+
+
+###################################################
+## Test document related functions ################
+###################################################
+
+
+@pytest.mark.asyncio
+async def test_upsert_and_get_documents():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline(
+        "test_p_p_tuagd_0",
+        model,
+        splitter,
+        {"full_text_search": {"active": True, "configuration": "english"}},
+    )
+    collection = pgml.Collection(name="test_p_c_tuagd_2")
+    await collection.add_pipeline(
+        pipeline,
+    )
+    await collection.upsert_documents(generate_dummy_documents(10))
+
+    documents = await collection.get_documents()
+    assert len(documents) == 10
+
+    documents = await collection.get_documents(
+        {"offset": 1, "limit": 2, "filter": {"metadata": {"id": {"$gt": 0}}}}
+    )
+    assert len(documents) == 2 and documents[0]["document"]["id"] == 2
+    last_row_id = documents[-1]["row_id"]
+
+    documents = await collection.get_documents(
+        {
+            "filter": {
+                "metadata": {"id": {"$gt": 3}},
+                "full_text_search": {"configuration": "english", "text": "4"},
+            },
+            "last_row_id": last_row_id,
+        }
+    )
+    assert len(documents) == 1 and documents[0]["document"]["id"] == 4
+
+    await collection.archive()
+
+
+@pytest.mark.asyncio
+async def test_delete_documents():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline(
+        "test_p_p_tdd_0",
+        model,
+        splitter,
+        {"full_text_search": {"active": True, "configuration": "english"}},
+    )
+    collection = pgml.Collection("test_p_c_tdd_1")
+    await collection.add_pipeline(pipeline)
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.delete_documents(
+        {
+            "metadata": {"id": {"$gte": 0}},
+            "full_text_search": {"configuration": "english", "text": "0"},
+        }
+    )
+    documents = await collection.get_documents()
+    assert len(documents) == 2 and documents[0]["document"]["id"] == 1
     await collection.archive()
 
 

@@ -10,7 +10,6 @@ pub struct Builtins {
 
 use crate::{get_or_initialize_pool, query_runner::QueryRunner, types::Json};
 
-
 #[cfg(feature = "python")]
 use crate::{query_runner::QueryRunnerPython, types::JsonPython};
 

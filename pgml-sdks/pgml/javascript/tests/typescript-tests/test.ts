@@ -21,6 +21,7 @@ const generate_dummy_documents = (count: number) => {
       project: "a10",
       uuid: i * 10,
       floating_uuid: i * 1.1,
+      test: null,
       name: `Test Document ${i}`,
     });
   }
@@ -154,5 +155,68 @@ it("pipeline to dict", async () => {
   await collection.add_pipeline(pipeline);
   let pipeline_dict = await pipeline.to_dict();
   expect(pipeline_dict["name"]).toBe("test_j_p_ptd_0");
+  await collection.archive();
+});
+
+///////////////////////////////////////////////////
+// Test document related functions ////////////////
+///////////////////////////////////////////////////
+
+it("can upsert and get documents", async () => {
+  let model = pgml.newModel();
+  let splitter = pgml.newSplitter();
+  let pipeline = pgml.newPipeline("test_p_p_cuagd_0", model, splitter, {
+    full_text_search: { active: true, configuration: "english" },
+  });
+  let collection = pgml.newCollection("test_p_c_cuagd_1");
+  await collection.add_pipeline(pipeline);
+  await collection.upsert_documents(generate_dummy_documents(10));
+
+  let documents = await collection.get_documents();
+  expect(documents).toHaveLength(10);
+
+  documents = await collection.get_documents({
+    offset: 1,
+    limit: 2,
+    filter: { metadata: { id: { $gt: 0 } } },
+  });
+  expect(documents).toHaveLength(2);
+  expect(documents[0]["document"]["id"]).toBe(2);
+  let last_row_id = documents[1]["row_id"];
+
+  documents = await collection.get_documents({
+    filter: {
+      metadata: { id: { $gt: 3 } },
+      full_text_search: { configuration: "english", text: "4" },
+    },
+    last_row_id: last_row_id,
+  });
+  expect(documents).toHaveLength(1);
+  expect(documents[0]["document"]["id"]).toBe(4);
+
+  await collection.archive();
+});
+
+it("can delete documents", async () => {
+  let model = pgml.newModel();
+  let splitter = pgml.newSplitter();
+  let pipeline = pgml.newPipeline(
+    "test_p_p_cdd_0",
+    model,
+    splitter,
+
+    { full_text_search: { active: true, configuration: "english" } },
+  );
+  let collection = pgml.newCollection("test_p_c_cdd_2");
+  await collection.add_pipeline(pipeline);
+  await collection.upsert_documents(generate_dummy_documents(3));
+  await collection.delete_documents({
+    metadata: { id: { $gte: 0 } },
+    full_text_search: { configuration: "english", text: "0" },
+  });
+  let documents = await collection.get_documents();
+  expect(documents).toHaveLength(2);
+  expect(documents[0]["document"]["id"]).toBe(1);
+
   await collection.archive();
 });

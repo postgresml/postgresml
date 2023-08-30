@@ -40,7 +40,7 @@ impl ToPyObject for Json {
                 }
                 dict.to_object(py)
             }
-            _ => panic!("Unsupported type for JSON conversion"),
+            serde_json::Value::Null => py.None(),
         }
     }
 }
@@ -100,6 +100,9 @@ impl FromPyObject<'_> for Json {
             }
             Ok(Self(serde_json::Value::Array(json_values)))
         } else {
+            if ob.is_none() {
+                return Ok(Self(serde_json::Value::Null));
+            }
             panic!("Unsupported type for JSON conversion");
         }
     }

@@ -2,6 +2,8 @@ use anyhow::Context;
 use indicatif::MultiProgress;
 use itertools::Itertools;
 use rust_bridge::{alias, alias_methods};
+use sea_query::{Alias, Expr, JoinType, Order, PostgresQueryBuilder, Query};
+use sea_query_binder::SqlxBinder;
 use sqlx::postgres::PgPool;
 use sqlx::Executor;
 use sqlx::PgConnection;
@@ -9,10 +11,18 @@ use std::borrow::Cow;
 use std::time::SystemTime;
 use tracing::{instrument, warn};
 
+use crate::filter_builder;
 use crate::{
-    get_or_initialize_pool, model::ModelRuntime, models, pipeline::Pipeline, queries,
-    query_builder, query_builder::QueryBuilder, remote_embeddings::build_remote_embeddings,
-    splitter::Splitter, types::DateTime, types::Json, utils,
+    get_or_initialize_pool,
+    model::ModelRuntime,
+    models,
+    pipeline::Pipeline,
+    queries, query_builder,
+    query_builder::QueryBuilder,
+    remote_embeddings::build_remote_embeddings,
+    splitter::Splitter,
+    types::{DateTime, IntoTableNameAndSchema, Json, SIden, TryToNumeric},
+    utils,
 };
 
 #[cfg(feature = "python")]
@@ -101,6 +111,7 @@ pub struct Collection {
     new,
     upsert_documents,
     get_documents,
+    delete_documents,
     get_pipelines,
     get_pipeline,
     add_pipeline,
@@ -192,7 +203,7 @@ impl Collection {
 
                 let project_id: i64 = sqlx::query_scalar("INSERT INTO pgml.projects (name, task) VALUES ($1, 'embedding'::pgml.task) ON CONFLICT (name) DO UPDATE SET task = EXCLUDED.task RETURNING id, task::TEXT")
                     .bind(&self.name)
-                    .fetch_one(&mut transaction)
+                    .fetch_one(&mut *transaction)
                     .await?;
 
                 transaction
@@ -202,7 +213,7 @@ impl Collection {
                 let c: models::Collection = sqlx::query_as("INSERT INTO pgml.collections (name, project_id) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING RETURNING *")
                         .bind(&self.name)
                         .bind(project_id)
-                        .fetch_one(&mut transaction)
+                        .fetch_one(&mut *transaction)
                         .await?;
 
                 let collection_database_data = CollectionDatabaseData {
@@ -320,7 +331,7 @@ impl Collection {
             "DROP TABLE IF EXISTS %s",
             embeddings_table_name
         ))
-        .execute(&mut transaction)
+        .execute(&mut *transaction)
         .await?;
 
         // Need to delete from the tsvectors table only if no other pipelines use the
@@ -331,7 +342,7 @@ impl Collection {
                     self.pipelines_table_name))
                 .bind(parameters["full_text_search"]["configuration"].as_str())
                 .bind(database_data.id)
-                .execute(&mut transaction)
+                .execute(&mut *transaction)
                 .await?;
 
         sqlx::query(&query_builder!(
@@ -339,7 +350,7 @@ impl Collection {
             self.pipelines_table_name
         ))
         .bind(database_data.id)
-        .execute(&mut transaction)
+        .execute(&mut *transaction)
         .await?;
 
         transaction.commit().await?;
@@ -541,60 +552,42 @@ impl Collection {
     ///        serde_json::json!({"id": 1, "text": "hello world"}).into(),
     ///        serde_json::json!({"id": 2, "text": "hello world"}).into(),
     ///    ];
-    ///    collection.upsert_documents(documents, Some(true)).await?;
+    ///    collection.upsert_documents(documents).await?;
     ///    Ok(())
     /// }
     /// ```
     #[instrument(skip(self, documents))]
-    pub async fn upsert_documents(
-        &mut self,
-        documents: Vec<Json>,
-        strict: Option<bool>,
-    ) -> anyhow::Result<()> {
+    pub async fn upsert_documents(&mut self, documents: Vec<Json>) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(false).await?;
-
-        let strict = strict.unwrap_or(true);
 
         let progress_bar = utils::default_progress_bar(documents.len() as u64);
         progress_bar.println("Upserting Documents...");
 
-        let documents: anyhow::Result<Vec<_>> = documents.into_iter().map(|mut document| {
-            let document = document
-                .as_object_mut()
-                .expect("Documents must be a vector of objects");
-            let text = match document.remove("text") {
-                Some(t) => t,
-                None => {
-                    if strict {
-                        anyhow::bail!("`text` is not a key in document, throwing error. To supress this error, pass strict: false");
-                    } else {
-                        warn!("`text` is not a key in document, skipping document. To throw an error instead, pass strict: true");
-                    }
-                    return Ok(None)
-                }
-            };
-            let text = text.as_str().context("`text` must be a string")?.to_string();
+        let documents: anyhow::Result<Vec<_>> = documents
+            .into_iter()
+            .map(|mut document| {
+                let document = document
+                    .as_object_mut()
+                    .expect("Documents must be a vector of objects");
+                let text = document
+                    .remove("text")
+                    .map(|t| t.as_str().expect("`text` must be a string").to_string());
 
-            // We don't want the text included in the document metadata, but everything else
-            // should be in there
-            let metadata = serde_json::to_value(&document)?.into();
+                // We don't want the text included in the document metadata, but everything else
+                // should be in there
+                let metadata = serde_json::to_value(&document)?.into();
 
-            let md5_digest = match document.get("id") {
-                Some(k) => md5::compute(k.to_string().as_bytes()),
-                None => {
-                    if strict {
-                        anyhow::bail!("`id` is not a key in document, throwing error. To supress this error, pass strict: false");
-                    } else {
-                        warn!("`id` is not a key in document, skipping document. To throw an error instead, pass strict: true");
-                    }
-                    return Ok(None)
-                }
-            };
-            let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
+                let id = document
+                    .get("id")
+                    .context("`id` must be a key in documen")?
+                    .to_string();
+                let md5_digest = md5::compute(id.as_bytes());
+                let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-            Ok(Some((source_uuid, text, metadata)))
-        }).collect();
+                Ok(Some((source_uuid, text, metadata)))
+            })
+            .collect();
 
         // We could continue chaining the above iterators but types become super annoying to
         // deal with, especially because we are dealing with async functions. This is much easier to read
@@ -606,26 +599,41 @@ impl Collection {
             // We want the length before we filter out any None values
             let chunk_len = chunk.len();
             // Filter out the None values
-            let chunk: Vec<&(uuid::Uuid, String, Json)> =
+            let mut chunk: Vec<&(uuid::Uuid, Option<String>, Json)> =
                 chunk.iter().filter_map(|x| x.as_ref()).collect();
 
-            // Make sure we didn't filter everything out
+            // If the chunk is empty, we can skip the rest of the loop
             if chunk.is_empty() {
                 progress_bar.inc(chunk_len as u64);
                 continue;
             }
 
+            // Split the chunk into two groups, one with text, and one with just metadata
+            let split_index = itertools::partition(&mut chunk, |(_, text, _)| text.is_some());
+            let (text_chunk, metadata_chunk) = chunk.split_at(split_index);
+
+            // Start the transaction
             let mut transaction = pool.begin().await?;
-            // First delete any documents that already have the same UUID then insert the new ones.
+
+            // Update the metadata
+            sqlx::query(query_builder!(
+                "UPDATE %s d SET metadata = v.metadata FROM (SELECT UNNEST($1) source_uuid, UNNEST($2) metadata) v WHERE d.source_uuid = v.source_uuid",
+                self.documents_table_name
+            ).as_str()).bind(metadata_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>())
+                .bind(metadata_chunk.iter().map(|(_, _, metadata)| metadata.0.clone()).collect::<Vec<_>>())
+                .execute(&mut *transaction).await?;
+
+            // First delete any documents that already have the same UUID as documents in
+            // text_chunk, then insert the new ones.
             // We are essentially upserting in two steps
             sqlx::query(&query_builder!(
                 "DELETE FROM %s WHERE source_uuid IN (SELECT source_uuid FROM %s WHERE source_uuid = ANY($1::uuid[]))",
                 self.documents_table_name,
                 self.documents_table_name
             )).
-                bind(&chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>()).
-                execute(&mut transaction).await?;
-            let query_string_values = (0..chunk.len())
+                bind(&text_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>()).
+                execute(&mut *transaction).await?;
+            let query_string_values = (0..text_chunk.len())
                 .map(|i| format!("(${}, ${}, ${})", i * 3 + 1, i * 3 + 2, i * 3 + 3))
                 .collect::<Vec<String>>()
                 .join(",");
@@ -635,11 +643,10 @@ impl Collection {
             );
             let query = query_builder!(query_string, self.documents_table_name);
             let mut query = sqlx::query_scalar(&query);
-            for (source_uuid, text, metadata) in chunk.into_iter() {
+            for (source_uuid, text, metadata) in text_chunk.iter() {
                 query = query.bind(source_uuid).bind(text).bind(metadata);
             }
-
-            let ids: Vec<i64> = query.fetch_all(&mut transaction).await?;
+            let ids: Vec<i64> = query.fetch_all(&mut *transaction).await?;
             document_ids.extend(ids);
             progress_bar.inc(chunk_len as u64);
             transaction.commit().await?;
@@ -655,8 +662,7 @@ impl Collection {
     ///
     /// # Arguments
     ///
-    /// * `last_id` - The last id of the document to get. If none, starts at 0
-    /// * `limit` - The number of documents to get. If none, gets 100
+    /// * `args` - The filters and options to apply to the query
     ///
     /// # Example
     ///
@@ -665,36 +671,190 @@ impl Collection {
     ///
     /// async fn example() -> anyhow::Result<()> {
     ///     let mut collection = Collection::new("my_collection", None);
-    ///     let documents = collection.get_documents(None, None).await?;
+    ///     let documents = collection.get_documents(None).await?;
     ///     Ok(())
     /// }
     #[instrument(skip(self))]
-    pub async fn get_documents(
-        &mut self,
-        last_id: Option<i64>,
-        limit: Option<i64>,
-    ) -> anyhow::Result<Vec<Json>> {
+    pub async fn get_documents(&mut self, args: Option<Json>) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
-        let documents: Vec<models::Document> = sqlx::query_as(&query_builder!(
-            "SELECT * FROM %s WHERE id > $1 ORDER BY id ASC LIMIT $2",
-            self.documents_table_name
-        ))
-        .bind(last_id.unwrap_or(0))
-        .bind(limit.unwrap_or(100))
-        .fetch_all(&pool)
-        .await?;
-        documents
+
+        let mut args = args.unwrap_or_default().0;
+        let args = args.as_object_mut().context("args must be an object")?;
+
+        // Get limit or set it to 1000
+        let limit = args
+            .remove("limit")
+            .map(|l| l.try_to_u64())
+            .unwrap_or(Ok(1000))?;
+
+        let mut query = Query::select();
+        query
+            .from_as(
+                self.documents_table_name.to_table_tuple(),
+                SIden::Str("documents"),
+            )
+            .expr(Expr::cust("*")) // Adds the * in SELECT * FROM
+            .order_by((SIden::Str("documents"), SIden::Str("id")), Order::Asc)
+            .limit(limit);
+
+        if let Some(last_row_id) = args.remove("last_row_id") {
+            let last_row_id = last_row_id
+                .try_to_u64()
+                .context("last_row_id must be an integer")?;
+            query.and_where(Expr::col((SIden::Str("documents"), SIden::Str("id"))).gt(last_row_id));
+        }
+
+        if let Some(offset) = args.remove("offset") {
+            let offset = offset.try_to_u64().context("offset must be an integer")?;
+            query.offset(offset);
+        }
+
+        if let Some(mut filter) = args.remove("filter") {
+            let filter = filter
+                .as_object_mut()
+                .context("filter must be a Json object")?;
+
+            if let Some(f) = filter.remove("metadata") {
+                query.cond_where(
+                    filter_builder::FilterBuilder::new(f, "documents", "metadata").build(),
+                );
+            }
+            if let Some(f) = filter.remove("full_text_search") {
+                let f = f
+                    .as_object()
+                    .context("Full text filter must be a Json object")?;
+                let configuration = f
+                    .get("configuration")
+                    .context("In full_text_search `configuration` is required")?
+                    .as_str()
+                    .context("In full_text_search `configuration` must be a string")?;
+                let filter_text = f
+                    .get("text")
+                    .context("In full_text_search `text` is required")?
+                    .as_str()
+                    .context("In full_text_search `text` must be a string")?;
+                query
+                    .join_as(
+                        JoinType::InnerJoin,
+                        self.documents_tsvectors_table_name.to_table_tuple(),
+                        Alias::new("documents_tsvectors"),
+                        Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                            .equals((SIden::Str("documents_tsvectors"), SIden::Str("document_id"))),
+                    )
+                    .and_where(
+                        Expr::col((
+                            SIden::Str("documents_tsvectors"),
+                            SIden::Str("configuration"),
+                        ))
+                        .eq(configuration),
+                    )
+                    .and_where(Expr::cust_with_values(
+                        format!(
+                            "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
+                            configuration
+                        ),
+                        [filter_text],
+                    ));
+            }
+        }
+
+        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
+        let documents: Vec<models::Document> =
+            sqlx::query_as_with(&sql, values).fetch_all(&pool).await?;
+        Ok(documents
             .into_iter()
-            .map(|d| {
-                serde_json::to_value(d)
-                    .map(|t| t.into())
-                    .map_err(|e| anyhow::anyhow!(e))
-            })
-            .collect()
+            .map(|d| d.into_user_friendly_json())
+            .collect())
+    }
+    /// Deletes documents in a [Collection]
+    ///
+    /// # Arguments
+    ///
+    /// * `filter` - The filters to apply
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pgml::Collection;
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///     let mut collection = Collection::new("my_collection", None);
+    ///     let documents = collection.delete_documents(serde_json::json!({
+    ///         "metadata": {
+    ///             "id": {
+    ///                 "eq": 1
+    ///             }
+    ///         }
+    ///     }).into()).await?;
+    ///     Ok(())
+    /// }
+    #[instrument(skip(self))]
+    pub async fn delete_documents(&mut self, mut filter: Json) -> anyhow::Result<()> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+
+        let mut query = Query::delete();
+        query.from_table(self.documents_table_name.to_table_tuple());
+
+        let filter = filter
+            .as_object_mut()
+            .context("filter must be a Json object")?;
+
+        if let Some(f) = filter.remove("metadata") {
+            query
+                .cond_where(filter_builder::FilterBuilder::new(f, "documents", "metadata").build());
+        }
+
+        if let Some(mut f) = filter.remove("full_text_search") {
+            let f = f
+                .as_object_mut()
+                .context("Full text filter must be a Json object")?;
+            let configuration = f
+                .get("configuration")
+                .context("In full_text_search `configuration` is required")?
+                .as_str()
+                .context("In full_text_search `configuration` must be a string")?;
+            let filter_text = f
+                .get("text")
+                .context("In full_text_search `text` is required")?
+                .as_str()
+                .context("In full_text_search `text` must be a string")?;
+            let mut inner_select_query = Query::select();
+            inner_select_query
+                .from_as(
+                    self.documents_tsvectors_table_name.to_table_tuple(),
+                    SIden::Str("documents_tsvectors"),
+                )
+                .column(SIden::Str("document_id"))
+                .and_where(Expr::cust_with_values(
+                    format!(
+                        "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
+                        configuration
+                    ),
+                    [filter_text],
+                ))
+                .and_where(
+                    Expr::col((
+                        SIden::Str("documents_tsvectors"),
+                        SIden::Str("configuration"),
+                    ))
+                    .eq(configuration),
+                );
+            query.and_where(
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .in_subquery(inner_select_query),
+            );
+        }
+
+        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
+        sqlx::query_with(&sql, values).fetch_all(&pool).await?;
+        Ok(())
     }
 
     #[instrument(skip(self))]
-    pub async fn sync_pipelines(&mut self, document_ids: Option<Vec<i64>>) -> anyhow::Result<()> {
+    pub(crate) async fn sync_pipelines(
+        &mut self,
+        document_ids: Option<Vec<i64>>,
+    ) -> anyhow::Result<()> {
         self.verify_in_database(false).await?;
         let pipelines = self.get_pipelines().await?;
         if !pipelines.is_empty() {
@@ -711,10 +871,6 @@ impl Collection {
                         .expect("Failed to execute pipeline");
                 })
                 .await;
-            // pipelines.into_iter().for_each
-            // for mut pipeline in pipelines {
-            //     pipeline.execute(&document_ids, mp.clone()).await?;
-            // }
             eprintln!("Done Syncing Pipelines\n");
         }
         Ok(())
@@ -878,14 +1034,14 @@ impl Collection {
         sqlx::query("UPDATE pgml.collections SET name = $1, active = FALSE where name = $2")
             .bind(&archive_table_name)
             .bind(&self.name)
-            .execute(&mut transaciton)
+            .execute(&mut *transaciton)
             .await?;
         sqlx::query(&query_builder!(
             "ALTER SCHEMA %s RENAME TO %s",
             &self.name,
             archive_table_name
         ))
-        .execute(&mut transaciton)
+        .execute(&mut *transaciton)
         .await?;
         transaciton.commit().await?;
         Ok(())
@@ -1060,47 +1216,5 @@ impl Collection {
         .map(|s| format!("{}{}", name, s))
         .collect_tuple()
         .unwrap()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::init_logger;
-
-    #[sqlx::test]
-    async fn can_upsert_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cud_2", None);
-
-        // Test basic upsert
-        let documents = vec![
-            serde_json::json!({"id": 1, "text": "hello world"}).into(),
-            serde_json::json!({"text": "hello world"}).into(),
-        ];
-        collection
-            .upsert_documents(documents.clone(), Some(false))
-            .await?;
-        let document = &collection.get_documents(None, Some(1)).await?[0];
-        assert_eq!(document["text"], "hello world");
-
-        // Test strictness
-        assert!(collection
-            .upsert_documents(documents, Some(true))
-            .await
-            .is_err());
-
-        // Test upsert
-        let documents = vec![
-            serde_json::json!({"id": 1, "text": "hello world 2"}).into(),
-            serde_json::json!({"text": "hello world"}).into(),
-        ];
-        collection
-            .upsert_documents(documents.clone(), Some(false))
-            .await?;
-        let document = &collection.get_documents(None, Some(1)).await?[0];
-        assert_eq!(document["text"], "hello world 2");
-        collection.archive().await?;
-        Ok(())
     }
 }
