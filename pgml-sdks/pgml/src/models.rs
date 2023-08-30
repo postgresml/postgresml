@@ -69,6 +69,19 @@ pub struct Document {
     pub text: String,
 }
 
+impl Document {
+    pub fn into_user_friendly_json(mut self) -> Json {
+        self.metadata["text"] = self.text.into();
+        serde_json::json!({
+            "row_id": self.id,
+            "created_at": self.created_at,
+            "source_uuid": self.source_uuid,
+            "document": self.metadata,
+        })
+        .into()
+    }
+}
+
 // A collection of documents
 #[enum_def]
 #[derive(FromRow)]

@@ -20,7 +20,7 @@ use crate::types::JsonPython;
 /// annoying, but with the traits implimented below is a breeze and can be done just using .into
 
 /// Our model runtimes
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ModelRuntime {
     Python,
     OpenAI,

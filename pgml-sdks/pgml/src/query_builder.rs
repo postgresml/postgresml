@@ -1,53 +1,24 @@
 use anyhow::Context;
-use itertools::Itertools;
 use rust_bridge::{alias, alias_methods};
 use sea_query::{
-    query::SelectStatement, Alias, CommonTableExpression, Expr, Func, Iden, JoinType, Order,
+    query::SelectStatement, Alias, CommonTableExpression, Expr, Func, JoinType, Order,
     PostgresQueryBuilder, Query, QueryStatementWriter, WithClause,
 };
 use sea_query_binder::SqlxBinder;
 use std::borrow::Cow;
 
 use crate::{
-    filter_builder, get_or_initialize_pool, models, pipeline::Pipeline,
-    remote_embeddings::build_remote_embeddings, types::Json, Collection,
+    filter_builder, get_or_initialize_pool,
+    model::ModelRuntime,
+    models,
+    pipeline::Pipeline,
+    remote_embeddings::build_remote_embeddings,
+    types::{IntoTableNameAndSchema, Json, SIden},
+    Collection,
 };
 
 #[cfg(feature = "python")]
 use crate::{pipeline::PipelinePython, types::JsonPython};
-
-#[derive(Clone)]
-enum SIden<'a> {
-    Str(&'a str),
-    String(String),
-}
-
-impl Iden for SIden<'_> {
-    fn unquoted(&self, s: &mut dyn std::fmt::Write) {
-        write!(
-            s,
-            "{}",
-            match self {
-                SIden::Str(s) => s,
-                SIden::String(s) => s.as_str(),
-            }
-        )
-        .unwrap();
-    }
-}
-
-trait IntoTableNameAndSchema {
-    fn to_table_tuple<'b>(&self) -> (SIden<'b>, SIden<'b>);
-}
-
-impl IntoTableNameAndSchema for String {
-    fn to_table_tuple<'b>(&self) -> (SIden<'b>, SIden<'b>) {
-        self.split('.')
-            .map(|s| SIden::String(s.to_string()))
-            .collect_tuple()
-            .expect("Malformed table name in IntoTableNameAndSchema")
-    }
-}
 
 #[derive(Clone, Debug)]
 struct QueryBuilderState {}
@@ -88,7 +59,7 @@ impl QueryBuilder {
         if let Some(f) = filter.remove("metadata") {
             self = self.filter_metadata(f);
         }
-        if let Some(f) = filter.remove("full_text") {
+        if let Some(f) = filter.remove("full_text_search") {
             self = self.filter_full_text(f);
         }
         self
@@ -131,7 +102,7 @@ impl QueryBuilder {
                 .eq(configuration),
             )
             .and_where(Expr::cust_with_values(
-                &format!(
+                format!(
                     "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
                     configuration
                 ),
@@ -272,6 +243,11 @@ impl QueryBuilder {
                             .model
                             .as_ref()
                             .context("Pipeline must be verified to perform vector search with remote embeddings")?;
+
+                        // If the model runtime is python, the error was not caused by an unsupported runtime
+                        if model.runtime == ModelRuntime::Python {
+                            return Err(anyhow::anyhow!(e));
+                        }
 
                         let query_parameters = self.query_parameters.to_owned().unwrap_or_default();
 

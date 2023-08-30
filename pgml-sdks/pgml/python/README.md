@@ -213,9 +213,11 @@ collection = Collection("test_collection", CUSTOM_DATABASE_URL)
 
 ### Upserting Documents
 
-Documents are dictionaries with two required keys: `id` and `text`. All other keys/value pairs are stored as metadata for the document.
+The `upsert_documents` method can be used to insert new documents and update existing documents.
 
-**Upsert documents with metadata**
+New documents are dictionaries with two required keys: `id` and `text`. All other keys/value pairs are stored as metadata for the document.
+
+**Upsert new documents with metadata**
 ```python
 documents = [
     {
@@ -231,6 +233,97 @@ documents = [
 ]
 collection = Collection("test_collection")
 await collection.upsert_documents(documents)
+```
+
+Document metadata can be updated by upserting the document without the `text` key.
+
+**Update document metadata**
+```python
+documents = [
+    {
+        "id": "Document 1",
+        "random_key": "this will be NEW metadata for the document"
+    },
+    {
+        "id": "Document 2",
+        "random_key": "this will be NEW metadata for the document"
+    }
+]
+collection = Collection("test_collection")
+await collection.upsert_documents(documents)
+```
+
+### Getting Documents
+
+Documents can be retrieved using the `get_documents` method on the collection object
+
+**Get the first 100 documents**
+```python
+collection = Collection("test_collection")
+documents = await collection.get_documents({ "limit": 100 })
+```
+
+#### Pagination
+
+The Python SDK supports limit-offset pagination and keyset pagination
+
+**Limit-Offset pagination**
+```python
+collection = Collection("test_collection")
+documents = await collection.get_documents({ "limit": 100, "offset": 10 })
+```
+
+**Keyset pagination**
+```python
+collection = Collection("test_collection")
+documents = await collection.get_documents({ "limit": 100, "last_row_id": 10 })
+```
+
+The `last_row_id` can be taken from the `row_id` field in the returned document's dictionary.
+
+#### Filtering
+
+Metadata and full text filtering are supported just like they are in vector recall.
+
+**Metadata and full text filtering**
+```python
+collection = Collection("test_collection")
+documents = await collection.get_documents({
+    "limit": 100,
+    "offset": 10,
+    "filter": {
+        "metadata": {
+            "id": {
+                "$eq": 1
+            }
+        },
+        "full_text_search": {
+            "configuration": "english",
+            "text": "Some full text query"
+        }
+    }
+})
+
+```
+
+### Deleting Documents
+
+Documents can be deleted with the `delete_documents` method on the collection object.
+
+Metadata and full text filtering are supported just like they are in vector recall.
+
+```python
+documents = await collection.delete_documents({
+    "metadata": {
+        "id": {
+            "$eq": 1
+        }
+    },
+    "full_text_search": {
+        "configuration": "english",
+        "text": "Some full text query"
+    }
+})
 ```
 
 ### Searching Collections
@@ -350,7 +443,7 @@ results = (
     .vector_recall("Here is some query", pipeline)
     .limit(10)
     .filter({
-        "full_text": {
+        "full_text_search": {
             "configuration": "english",
             "text": "Match Me"
         }

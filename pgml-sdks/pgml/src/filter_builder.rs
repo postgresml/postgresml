@@ -116,9 +116,7 @@ fn get_value_type(value: &serde_json::Value) -> String {
         get_value_type(value)
     } else if value.is_string() {
         "text".to_string()
-    } else if value.is_i64() {
-        "float8".to_string()
-    } else if value.is_f64() {
+    } else if value.is_i64() || value.is_f64() {
         "float8".to_string()
     } else if value.is_boolean() {
         "bool".to_string()
@@ -278,29 +276,35 @@ mod tests {
     }
 
     #[test]
-    fn eq_ne_comparison_operators() {
-        let basic_comparison_operators = vec!["", "NOT "];
-        let basic_comparison_operators_names = vec!["$eq", "$ne"];
-        for (operator, name) in basic_comparison_operators
-            .into_iter()
-            .zip(basic_comparison_operators_names.into_iter())
-        {
-            let sql = construct_filter_builder_with_json(json!({
-                "id": {name: 1},
-                "id2": {"id3": {name: "test"}},
-                "id4": {"id5": {"id6": {name: true}}},
-                "id7": {"id8": {"id9": {"id10": {name: [1, 2, 3]}}}}
-            }))
-            .build()
-            .to_valid_sql_query();
-            assert_eq!(
-                sql,
-                format!(
-                    r##"SELECT "id" FROM "test_table" WHERE {}"test_table"."metadata" @> E'{{\"id\":1}}' AND {}"test_table"."metadata" @> E'{{\"id2\":{{\"id3\":\"test\"}}}}' AND {}"test_table"."metadata" @> E'{{\"id4\":{{\"id5\":{{\"id6\":true}}}}}}' AND {}"test_table"."metadata" @> E'{{\"id7\":{{\"id8\":{{\"id9\":{{\"id10\":[1,2,3]}}}}}}}}'"##,
-                    operator, operator, operator, operator
-                )
-            );
-        }
+    fn eq_operator() {
+        let sql = construct_filter_builder_with_json(json!({
+            "id": {"$eq": 1},
+            "id2": {"id3": {"$eq": "test"}},
+            "id4": {"id5": {"id6": {"$eq": true}}},
+            "id7": {"id8": {"id9": {"id10": {"$eq": [1, 2, 3]}}}}
+        }))
+        .build()
+        .to_valid_sql_query();
+        assert_eq!(
+            sql,
+            r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata") @> E'{\"id\":1}' AND ("test_table"."metadata") @> E'{\"id2\":{\"id3\":\"test\"}}' AND ("test_table"."metadata") @> E'{\"id4\":{\"id5\":{\"id6\":true}}}' AND ("test_table"."metadata") @> E'{\"id7\":{\"id8\":{\"id9\":{\"id10\":[1,2,3]}}}}'"##
+        );
+    }
+
+    #[test]
+    fn ne_operator() {
+        let sql = construct_filter_builder_with_json(json!({
+            "id": {"$ne": 1},
+            "id2": {"id3": {"$ne": "test"}},
+            "id4": {"id5": {"id6": {"$ne": true}}},
+            "id7": {"id8": {"id9": {"id10": {"$ne": [1, 2, 3]}}}}
+        }))
+        .build()
+        .to_valid_sql_query();
+        assert_eq!(
+            sql,
+            r##"SELECT "id" FROM "test_table" WHERE (NOT ("test_table"."metadata")) @> E'{\"id\":1}' AND (NOT ("test_table"."metadata")) @> E'{\"id2\":{\"id3\":\"test\"}}' AND (NOT ("test_table"."metadata")) @> E'{\"id4\":{\"id5\":{\"id6\":true}}}' AND (NOT ("test_table"."metadata")) @> E'{\"id7\":{\"id8\":{\"id9\":{\"id10\":[1,2,3]}}}}'"##
+        );
     }
 
     #[test]
@@ -320,7 +324,7 @@ mod tests {
             assert_eq!(
                 sql,
                 format!(
-                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>>'{{id}}')::float8 {} 1 AND ("test_table"."metadata"#>>'{{id2,id3}}')::float8 {} 1"##,
+                    r##"SELECT "id" FROM "test_table" WHERE (("test_table"."metadata"#>>'{{id}}')::float8) {} 1 AND (("test_table"."metadata"#>>'{{id2,id3}}')::float8) {} 1"##,
                     operator, operator
                 )
             );
@@ -344,7 +348,7 @@ mod tests {
             assert_eq!(
                 sql,
                 format!(
-                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>>'{{id}}')::float8 {} (1) AND ("test_table"."metadata"#>>'{{id2,id3}}')::float8 {} (1)"##,
+                    r##"SELECT "id" FROM "test_table" WHERE (("test_table"."metadata"#>>'{{id}}')::float8) {} (1) AND (("test_table"."metadata"#>>'{{id2,id3}}')::float8) {} (1)"##,
                     operator, operator
                 )
             );
@@ -363,7 +367,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r##"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"id\":1}' AND "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}'"##
+            r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata") @> E'{\"id\":1}' AND ("test_table"."metadata") @> E'{\"id2\":{\"id3\":1}}'"##
         );
     }
 
@@ -379,7 +383,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r##"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"id\":1}' OR "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}'"##
+            r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata") @> E'{\"id\":1}' OR ("test_table"."metadata") @> E'{\"id2\":{\"id3\":1}}'"##
         );
     }
 
@@ -395,7 +399,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r##"SELECT "id" FROM "test_table" WHERE NOT ("test_table"."metadata" @> E'{\"id\":1}' AND "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}')"##
+            r##"SELECT "id" FROM "test_table" WHERE NOT (("test_table"."metadata") @> E'{\"id\":1}' AND ("test_table"."metadata") @> E'{\"id2\":{\"id3\":1}}')"##
         );
     }
 
@@ -415,7 +419,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata" @> E'{\"id\":1}' OR "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}') AND "test_table"."metadata" @> E'{\"id4\":1}'"##
+            r##"SELECT "id" FROM "test_table" WHERE (("test_table"."metadata") @> E'{\"id\":1}' OR ("test_table"."metadata") @> E'{\"id2\":{\"id3\":1}}') AND ("test_table"."metadata") @> E'{\"id4\":1}'"##
         );
         let sql = construct_filter_builder_with_json(json!({
             "$or": [
@@ -431,7 +435,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata" @> E'{\"id\":1}' AND "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}') OR "test_table"."metadata" @> E'{\"id4\":1}'"##
+            r##"SELECT "id" FROM "test_table" WHERE (("test_table"."metadata") @> E'{\"id\":1}' AND ("test_table"."metadata") @> E'{\"id2\":{\"id3\":1}}') OR ("test_table"."metadata") @> E'{\"id4\":1}'"##
         );
         let sql = construct_filter_builder_with_json(json!({
             "metadata": {"$or": [
@@ -443,7 +447,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r##"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"metadata\":{\"uuid\":\"1\"}}' OR "test_table"."metadata" @> E'{\"metadata\":{\"uuid2\":\"2\"}}'"##
+            r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata") @> E'{\"metadata\":{\"uuid\":\"1\"}}' OR ("test_table"."metadata") @> E'{\"metadata\":{\"uuid2\":\"2\"}}'"##
         );
     }
 }

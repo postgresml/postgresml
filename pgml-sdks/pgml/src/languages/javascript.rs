@@ -1,5 +1,5 @@
 use neon::prelude::*;
-use rust_bridge::javascript::{IntoJsResult, FromJsType};
+use rust_bridge::javascript::{FromJsType, IntoJsResult};
 
 use crate::{
     pipeline::PipelineSyncData,
@@ -54,7 +54,7 @@ impl IntoJsResult for Json {
                 }
                 Ok(js_object.upcast())
             }
-            _ => panic!("Unsupported type for JSON conversion"),
+            serde_json::Value::Null => Ok(cx.null().upcast()),
         }
     }
 }
@@ -113,6 +113,8 @@ impl FromJsType for Json {
                 json.insert(key, json_value.0);
             }
             Ok(Self(serde_json::Value::Object(json)))
+        } else if arg.is_a::<JsNull, _>(cx) {
+            Ok(Self(serde_json::Value::Null))
         } else {
             panic!("Unsupported type for Json conversion");
         }
