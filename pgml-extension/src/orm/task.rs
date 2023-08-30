@@ -48,7 +48,7 @@ impl Task {
             Task::text_generation => "perplexity",
             Task::text2text => "perplexity",
             Task::cluster => "silhouette",
-            Task::embedding => error!("No default target metric for embedding task")
+            Task::embedding => error!("No default target metric for embedding task"),
         }
         .to_string()
     }
@@ -64,7 +64,7 @@ impl Task {
             Task::text_generation => false,
             Task::text2text => false,
             Task::cluster => true,
-            Task::embedding => error!("No default target metric positive for embedding task")
+            Task::embedding => error!("No default target metric positive for embedding task"),
         }
     }
 

@@ -38,11 +38,11 @@ pub mod langchain;
 pub mod lightgbm;
 pub mod linfa;
 #[cfg(feature = "python")]
+pub mod python;
+#[cfg(feature = "python")]
 pub mod sklearn;
 #[cfg(feature = "python")]
 pub mod transformers;
-#[cfg(feature = "python")]
-pub mod venv;
 pub mod xgboost;
 
 pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>;

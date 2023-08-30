@@ -6,11 +6,9 @@ use pgrx::iter::{SetOfIterator, TableIterator};
 use pgrx::*;
 
 #[cfg(feature = "python")]
-use pyo3::prelude::*;
 use serde_json::json;
 
 #[cfg(feature = "python")]
-use crate::bindings::sklearn::package_version;
 use crate::orm::*;
 
 macro_rules! unwrap_or_error {
@@ -25,38 +23,13 @@ macro_rules! unwrap_or_error {
 #[cfg(feature = "python")]
 #[pg_extern]
 pub fn activate_venv(venv: &str) -> bool {
-    unwrap_or_error!(crate::bindings::venv::activate_venv(venv))
+    unwrap_or_error!(crate::bindings::python::activate_venv(venv))
 }
 
 #[cfg(feature = "python")]
 #[pg_extern(immutable, parallel_safe)]
 pub fn validate_python_dependencies() -> bool {
-    unwrap_or_error!(crate::bindings::venv::activate());
-
-    Python::with_gil(|py| {
-        let sys = PyModule::import(py, "sys").unwrap();
-        let version: String = sys.getattr("version").unwrap().extract().unwrap();
-        info!("Python version: {version}");
-        for module in ["xgboost", "lightgbm", "numpy", "sklearn"] {
-            match py.import(module) {
-                Ok(_) => (),
-                Err(e) => {
-                    panic!(
-                        "The {module} package is missing. Install it with `sudo pip3 install {module}`\n{e}"
-                    );
-                }
-            }
-        }
-    });
-
-    let sklearn = unwrap_or_error!(package_version("sklearn"));
-    let xgboost = unwrap_or_error!(package_version("xgboost"));
-    let lightgbm = unwrap_or_error!(package_version("lightgbm"));
-    let numpy = unwrap_or_error!(package_version("numpy"));
-
-    info!("Scikit-learn {sklearn}, XGBoost {xgboost}, LightGBM {lightgbm}, NumPy {numpy}",);
-
-    true
+    unwrap_or_error!(crate::bindings::python::validate_dependencies())
 }
 
 #[cfg(not(feature = "python"))]
@@ -66,8 +39,7 @@ pub fn validate_python_dependencies() {}
 #[cfg(feature = "python")]
 #[pg_extern]
 pub fn python_package_version(name: &str) -> String {
-    unwrap_or_error!(crate::bindings::venv::activate());
-    unwrap_or_error!(package_version(name))
+    unwrap_or_error!(crate::bindings::python::package_version(name))
 }
 
 #[cfg(not(feature = "python"))]
@@ -79,13 +51,19 @@ pub fn python_package_version(name: &str) {
 #[cfg(feature = "python")]
 #[pg_extern]
 pub fn python_pip_freeze() -> TableIterator<'static, (name!(package, String),)> {
-    unwrap_or_error!(crate::bindings::venv::activate());
+    unwrap_or_error!(crate::bindings::python::pip_freeze())
+}
 
-    let packages = unwrap_or_error!(crate::bindings::venv::freeze())
-        .into_iter()
-        .map(|package| (package,));
+#[cfg(feature = "python")]
+#[pg_extern]
+fn python_version() -> String {
+    unwrap_or_error!(crate::bindings::python::version())
+}
 
-    TableIterator::new(packages)
+#[cfg(not(feature = "python"))]
+#[pg_extern]
+pub fn python_version() -> String {
+    String::from("Python is not installed, recompile with `--features python`")
 }
 
 #[pg_extern]
@@ -102,26 +80,6 @@ pub fn validate_shared_library() {
     if !shared_preload_libraries.contains("pgml") {
         error!("`pgml` must be added to `shared_preload_libraries` setting or models cannot be deployed");
     }
-}
-
-#[cfg(feature = "python")]
-#[pg_extern]
-fn python_version() -> String {
-    unwrap_or_error!(crate::bindings::venv::activate());
-    let mut version = String::new();
-
-    Python::with_gil(|py| {
-        let sys = PyModule::import(py, "sys").unwrap();
-        version = sys.getattr("version").unwrap().extract().unwrap();
-    });
-
-    version
-}
-
-#[cfg(not(feature = "python"))]
-#[pg_extern]
-pub fn python_version() -> String {
-    String::from("Python is not installed, recompile with `--features python`")
 }
 
 #[pg_extern(immutable, parallel_safe)]
