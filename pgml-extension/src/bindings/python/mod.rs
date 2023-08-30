@@ -2,7 +2,6 @@
 
 use anyhow::Result;
 use once_cell::sync::Lazy;
-use pgrx::iter::TableIterator;
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
@@ -24,51 +23,76 @@ pub fn activate_venv(venv: &str) -> Result<bool> {
     })
 }
 
-pub fn activate() -> Result<bool> {
+pub fn activate() -> Result<Option<String>> {
     match get_config(CONFIG_NAME) {
-        Some(venv) => activate_venv(&venv),
-        None => Ok(false),
+        Some(venv) => match activate_venv(&venv) {
+            Ok(_) => Ok(Some(venv)),
+            Err(_) => Ok(None),
+        },
+        None => Ok(None),
     }
 }
 
-pub fn pip_freeze() -> Result<TableIterator<'static, (name!(package, String),)>> {
+pub fn pip_freeze() -> Result<Vec<String>> {
     activate()?;
-    let packages = Python::with_gil(|py| -> Result<Vec<String>> {
+    Ok(Python::with_gil(|py| -> Result<Vec<String>> {
         let freeze = get_module!(PY_MODULE).getattr(py, "freeze")?;
         let result = freeze.call0(py)?;
 
         Ok(result.extract(py)?)
-    })?;
-
-    Ok(TableIterator::new(
-        packages.into_iter().map(|package| (package,)),
-    ))
+    })?)
 }
 
 pub fn validate_dependencies() -> Result<bool> {
-    activate()?;
-    Python::with_gil(|py| {
+    let venv = activate()?;
+
+    if let Some(venv) = venv {
+        info!("Using virtual environment located in: {}", venv);
+    } else {
+        info!("Using system Python environment");
+    }
+
+    let validated = Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys").unwrap();
         let version: String = sys.getattr("version").unwrap().extract().unwrap();
         info!("Python version: {version}");
-        for module in ["xgboost", "lightgbm", "numpy", "sklearn"] {
+        for module in [
+            "xgboost",
+            "lightgbm",
+            "numpy",
+            "sklearn",
+            "transformers",
+            "datasets",
+            "torch",
+            "sentence_transformers",
+            "InstructorEmbedding",
+        ] {
             match py.import(module) {
                 Ok(_) => (),
                 Err(e) => {
-                    panic!(
-                        "The {module} package is missing. Install it with `sudo pip3 install {module}`\n{e}"
+                    info!(
+                        "The {module} package is missing. Install it with `sudo pip3 install {module}`: {e}"
                     );
+                    info!("Installing without Python dependencies, some functionality may be unavailable");
+                    return false;
                 }
             }
         }
+
+        true
     });
 
-    let sklearn = package_version("sklearn")?;
-    let xgboost = package_version("xgboost")?;
-    let lightgbm = package_version("lightgbm")?;
-    let numpy = package_version("numpy")?;
+    if validated {
+        let sklearn = package_version("sklearn")?;
+        let xgboost = package_version("xgboost")?;
+        let lightgbm = package_version("lightgbm")?;
+        let numpy = package_version("numpy")?;
+        let transformers = package_version("transformers")?;
+        let torch = package_version("torch")?;
+        let sentence_transformers = package_version("sentence_transformers")?;
 
-    info!("Scikit-learn {sklearn}, XGBoost {xgboost}, LightGBM {lightgbm}, NumPy {numpy}",);
+        info!("PyTorch {torch}, Transformers {transformers}, Sentence Transformers {sentence_transformers}, Scikit-learn {sklearn}, XGBoost {xgboost}, LightGBM {lightgbm}, NumPy {numpy}",);
+    }
 
     Ok(true)
 }
@@ -87,5 +111,15 @@ pub fn package_version(name: &str) -> Result<String> {
     Python::with_gil(|py| {
         let package = py.import(name)?;
         Ok(package.getattr("__version__")?.extract()?)
+    })
+}
+
+pub fn cuda_available() -> Result<bool> {
+    activate()?;
+    Python::with_gil(|py| {
+        let cuda_available: Py<PyAny> = get_module!(PY_MODULE).getattr(py, "cuda_available")?;
+        let result: Py<PyAny> = cuda_available.call0(py)?;
+
+        Ok(result.extract(py)?)
     })
 }

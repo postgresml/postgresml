@@ -31,3 +31,8 @@ def freeze():
         from pip.operations import freeze
 
     return list(freeze.freeze())
+
+
+def cuda_available():
+    import torch
+    return torch.cuda.is_available()

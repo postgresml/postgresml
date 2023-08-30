@@ -51,7 +51,9 @@ pub fn python_package_version(name: &str) {
 #[cfg(feature = "python")]
 #[pg_extern]
 pub fn python_pip_freeze() -> TableIterator<'static, (name!(package, String),)> {
-    unwrap_or_error!(crate::bindings::python::pip_freeze())
+    let packages = unwrap_or_error!(crate::bindings::python::pip_freeze());
+
+    TableIterator::new(packages.into_iter().map(|package| (package,)))
 }
 
 #[cfg(feature = "python")]
@@ -66,6 +68,38 @@ pub fn python_version() -> String {
     String::from("Python is not installed, recompile with `--features python`")
 }
 
+#[cfg(feature = "python")]
+#[pg_extern]
+pub fn cuda_available() -> bool {
+    unwrap_or_error!(crate::bindings::python::cuda_available())
+}
+
+#[cfg(not(feature = "python"))]
+pub fn cuda_available() -> bool {
+    false
+}
+
+#[pg_extern]
+pub fn debug_info() {
+    unwrap_or_error!(crate::bindings::python::activate());
+
+    let arch = std::env::consts::ARCH;
+    let family = std::env::consts::FAMILY;
+    let os = std::env::consts::OS;
+
+    info!("PostgresML v{}", env!("CARGO_PKG_VERSION"));
+    info!("Arch: {}", arch);
+    info!("Family: {}", family);
+    info!("OS: {}", os);
+
+    #[cfg(feature = "python")]
+    {
+        let python_packages = unwrap_or_error!(crate::bindings::python::pip_freeze());
+        let python_packages = python_packages.join("\n");
+        info!("Python packages:\n{}", python_packages);
+    }
+}
+
 #[pg_extern]
 pub fn validate_shared_library() {
     let shared_preload_libraries: String = Spi::get_one(
@@ -78,7 +112,7 @@ pub fn validate_shared_library() {
     .unwrap();
 
     if !shared_preload_libraries.contains("pgml") {
-        error!("`pgml` must be added to `shared_preload_libraries` setting or models cannot be deployed");
+        info!("'pgml' must be added to 'shared_preload_libraries' or models cannot be deployed");
     }
 }
 
