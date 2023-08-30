@@ -304,7 +304,7 @@ mod test {
     async fn test_docs() {
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client
-            .get("/docs/guides/setup/quick_start_with_docker")
+            .get("/docs/pgml-docs/getting-started")
             .dispatch()
             .await;
         assert_eq!(response.status().code, 200);
