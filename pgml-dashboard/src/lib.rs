@@ -367,7 +367,12 @@ pub async fn models_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, E
 #[get("/models/<id>")]
 pub async fn models_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<ResponseOk, Error> {
     let model = models::Model::get_by_id(cluster.pool(), id).await?;
-    let snapshot = models::Snapshot::get_by_id(cluster.pool(), model.snapshot_id).await?;
+    let snapshot = if let Some(snapshot_id) = model.snapshot_id {
+        Some(models::Snapshot::get_by_id(cluster.pool(), snapshot_id).await?)
+    } else {
+        None
+    };
+
     let project = models::Project::get_by_id(cluster.pool(), model.project_id).await?;
 
     Ok(ResponseOk(

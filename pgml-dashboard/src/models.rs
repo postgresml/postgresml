@@ -444,7 +444,7 @@ pub enum Runtime {
 pub struct Model {
     pub id: i64,
     pub project_id: i64,
-    pub snapshot_id: i64,
+    pub snapshot_id: Option<i64>,
     pub num_features: i32,
     pub algorithm: String,
     pub runtime: Option<String>,

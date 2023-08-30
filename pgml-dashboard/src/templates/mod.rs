@@ -397,7 +397,7 @@ pub struct Models {
 pub struct Model {
     pub model: models::Model,
     pub project: models::Project,
-    pub snapshot: models::Snapshot,
+    pub snapshot: Option<models::Snapshot>,
     pub deployed: bool,
 }
 
