@@ -89,7 +89,7 @@ impl Model {
         };
 
         if runtime == Runtime::python {
-            crate::bindings::venv::activate().unwrap();
+            crate::bindings::python::activate().unwrap();
         }
 
         let dataset = snapshot.tabular_dataset();

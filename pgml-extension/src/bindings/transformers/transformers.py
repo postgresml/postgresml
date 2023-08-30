@@ -34,6 +34,8 @@ from transformers import (
     DataCollatorWithPadding,
     DefaultDataCollator,
     GenerationConfig,
+    PegasusForConditionalGeneration,
+    PegasusTokenizer,
     TrainingArguments,
     Trainer,
 )

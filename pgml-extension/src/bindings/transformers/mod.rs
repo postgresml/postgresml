@@ -24,7 +24,7 @@ pub fn transform(
     args: &serde_json::Value,
     inputs: Vec<&str>,
 ) -> Result<serde_json::Value> {
-    crate::bindings::venv::activate()?;
+    crate::bindings::python::activate()?;
 
     whitelist::verify_task(task)?;
 
@@ -70,7 +70,7 @@ pub fn embed(
     inputs: Vec<&str>,
     kwargs: &serde_json::Value,
 ) -> Result<Vec<Vec<f32>>> {
-    crate::bindings::venv::activate()?;
+    crate::bindings::python::activate()?;
 
     let kwargs = serde_json::to_string(kwargs)?;
     Python::with_gil(|py| -> Result<Vec<Vec<f32>>> {
@@ -101,7 +101,7 @@ pub fn tune(
     hyperparams: &JsonB,
     path: &Path,
 ) -> Result<HashMap<String, f64>> {
-    crate::bindings::venv::activate()?;
+    crate::bindings::python::activate()?;
 
     let task = task.to_string();
     let hyperparams = serde_json::to_string(&hyperparams.0)?;
@@ -131,7 +131,7 @@ pub fn tune(
 }
 
 pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Result<Vec<String>> {
-    crate::bindings::venv::activate()?;
+    crate::bindings::python::activate()?;
 
     Python::with_gil(|py| -> Result<Vec<String>> {
         let generate = get_module!(PY_MODULE)
@@ -219,7 +219,7 @@ pub fn load_dataset(
     limit: Option<usize>,
     kwargs: &serde_json::Value,
 ) -> Result<usize> {
-    crate::bindings::venv::activate()?;
+    crate::bindings::python::activate()?;
 
     let kwargs = serde_json::to_string(kwargs)?;
 
@@ -376,7 +376,7 @@ pub fn load_dataset(
 }
 
 pub fn clear_gpu_cache(memory_usage: Option<f32>) -> Result<bool> {
-    crate::bindings::venv::activate().unwrap();
+    crate::bindings::python::activate().unwrap();
 
     Python::with_gil(|py| -> Result<bool> {
         let clear_gpu_cache: Py<PyAny> = get_module!(PY_MODULE)

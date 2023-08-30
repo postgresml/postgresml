@@ -6,10 +6,10 @@ use pyo3::types::PyTuple;
 
 use crate::{bindings::TracebackError, create_pymodule};
 
-create_pymodule!("/src/bindings/langchain.py");
+create_pymodule!("/src/bindings/langchain/langchain.py");
 
 pub fn chunk(splitter: &str, text: &str, kwargs: &serde_json::Value) -> Result<Vec<String>> {
-    crate::bindings::venv::activate()?;
+    crate::bindings::python::activate()?;
 
     let kwargs = serde_json::to_string(kwargs).unwrap();
 

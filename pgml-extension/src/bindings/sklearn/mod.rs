@@ -15,11 +15,13 @@ use once_cell::sync::Lazy;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use crate::bindings::Bindings;
+use crate::{
+    bindings::{Bindings, TracebackError},
+    create_pymodule,
+    orm::*,
+};
 
-use crate::{bindings::TracebackError, create_pymodule, orm::*};
-
-create_pymodule!("/src/bindings/sklearn.py");
+create_pymodule!("/src/bindings/sklearn/sklearn.py");
 
 macro_rules! wrap_fit {
     ($fn_name:tt, $task:literal) => {
@@ -353,12 +355,5 @@ pub fn cluster_metrics(
             .extract(py)?;
 
         Ok(scores)
-    })
-}
-
-pub fn package_version(name: &str) -> Result<String> {
-    Python::with_gil(|py| {
-        let package = py.import(name)?;
-        Ok(package.getattr("__version__")?.extract()?)
     })
 }
