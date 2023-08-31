@@ -115,10 +115,13 @@ pub fn add(name: &str, overwrite: bool) {
 /// Update `mod.rs` with all the components in `src/components`.
 pub fn update_modules() {
     let mut modules = Vec::new();
+    let mut paths: Vec<_> = unwrap_or_exit!(read_dir(COMPONENT_DIRECTORY))
+        .map(|p| p.unwrap())
+        .collect();
+    paths.sort_by_key(|dir| dir.path());
 
-    for path in unwrap_or_exit!(read_dir(COMPONENT_DIRECTORY)) {
-        let path = unwrap_or_exit!(path).path();
-
+    for path in paths {
+        let path = path.path();
         if path.is_file() {
             continue;
         }
