@@ -10,9 +10,6 @@ description = "Python SDK is designed to facilitate the development of scalable 
 authors = [
   {name = "PostgresML",  email = "team@postgresml.org"},
 ]
-homepage = "https://postgresml.org"
-repository = "https://github.com/postgresml/postgresml"
-documentation = "https://github.com/postgresml/postgresml/tree/master/pgml-sdks/python/pgml"
 readme = "./python/README.md"
 keywords = ["postgres","machine learning","vector databases","embeddings"]
 classifiers = [
@@ -21,6 +18,10 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
+[project.urls]
+Homepage = "https://postgresml.org"
+Repository = "https://github.com/postgresml/postgresml"
+Documentation = "https://github.com/postgresml/postgresml/tree/master/pgml-sdks/pgml/python/"
 
 [tool.maturin]
 python-source = "python"
