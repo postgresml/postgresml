@@ -2,7 +2,7 @@
 
 use clap::{Args, Parser, Subcommand};
 use std::env::{current_dir, set_current_dir};
-use std::fs::{create_dir_all};
+use std::fs::create_dir_all;
 use std::path::Path;
 
 #[macro_use]
@@ -65,7 +65,9 @@ fn main() {
         CargoSubcommands::PgmlComponents(pgml_commands) => match pgml_commands.command {
             Commands::Bundle {} => bundle(pgml_commands.project_path),
             Commands::Add(command) => match command {
-                AddCommands::Component { name } => crate::frontend::components::add(&name, pgml_commands.overwrite),
+                AddCommands::Component { name } => {
+                    crate::frontend::components::add(&name, pgml_commands.overwrite)
+                }
             },
         },
     }

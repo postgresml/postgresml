@@ -1,8 +1,8 @@
 use owo_colors::OwoColorize;
 use std::fs::File;
-use std::io::Write;
+use std::io::{ErrorKind, Write};
 use std::path::Path;
-use std::process::{exit, Command};
+use std::process::Command;
 
 macro_rules! unwrap_or_exit {
     ($i:expr) => {
@@ -17,6 +17,13 @@ macro_rules! unwrap_or_exit {
     };
 }
 
+macro_rules! debug1 {
+    ($e:expr) => {
+        debug!("{}:{}:{} {}", file!(), line!(), column!(), $e);
+    };
+}
+
+pub(crate) use debug1;
 pub(crate) use unwrap_or_exit;
 
 pub fn info(value: &str) {
@@ -43,12 +50,14 @@ pub fn execute_command(command: &mut Command) -> std::io::Result<String> {
     let stdout = String::from_utf8_lossy(&output.stderr).to_string();
 
     if !output.status.success() {
-        error!(
+        let error = String::from_utf8_lossy(&output.stderr).to_string();
+        debug!(
             "{} failed: {}",
             command.get_program().to_str().unwrap(),
-            String::from_utf8_lossy(&output.stderr).to_string(),
+            error,
         );
-        exit(1);
+
+        return Err(std::io::Error::new(ErrorKind::Other, error));
     }
 
     if !stderr.is_empty() {
