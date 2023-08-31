@@ -1,8 +1,6 @@
 # Webpack Demo
 
-The JavaScript SDK utilizes native node modules as our SDK is written in Rust.
-
-To get it working with webpack, we need a loader that is designed to work with native node modules. In this case, we have opted to use the [node-loader](https://github.com/webpack-contrib/node-loader) module. See [webpack.config.js](./webpack.config.js) for how we configured it.
+The JavaScript SDK utilizes native node modules as our SDK is written in Rust. To get it working with webpack, we need a loader that is designed to work with native node modules. In this case, we have opted to use the [node-loader](https://github.com/webpack-contrib/node-loader) module. See [webpack.config.js](./webpack.config.js) for how we configured it.
 
 ## Prerequisites
 
