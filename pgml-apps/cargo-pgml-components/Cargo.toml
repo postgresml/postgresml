@@ -1,6 +1,6 @@
 [package]
 name = "cargo-pgml-components"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 authors = ["PostgresML <team@postgresml.org>"]
 license = "MIT"
@@ -15,3 +15,6 @@ clap = { version = "4", features = ["derive"] }
 md5 = "0.7"
 log = "0.4"
 env_logger = "0.10"
+anyhow = "1"
+owo-colors = "3"
+sailfish = "0.8"

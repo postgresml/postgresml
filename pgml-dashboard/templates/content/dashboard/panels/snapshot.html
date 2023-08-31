@@ -84,7 +84,7 @@
   </div>
     
   <script defer type="module">
-    import { renderModel, renderDistribution, renderCorrelation, renderOutliers } from '/dashboard/static/js/main.js';
+    import { renderModel, renderDistribution, renderCorrelation, renderOutliers } from '@postgresml/main';
   
     function renderCharts() {
     <% for feature in snapshot.features().unwrap().iter() {
