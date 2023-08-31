@@ -32,6 +32,7 @@ pub fn install() {
     }
 }
 
+/// Execute a command making sure that nvm is available.
 pub fn execute_with_nvm(command: &mut Command) -> std::io::Result<String> {
     let mut cmd = Command::new(NVM_EXEC);
     cmd.arg(command.get_program());
@@ -41,6 +42,7 @@ pub fn execute_with_nvm(command: &mut Command) -> std::io::Result<String> {
     execute_command(&mut cmd)
 }
 
+/// Install the nvm entrypoint we provide into /tmp
 fn install_nvm_entrypoint() {
     let mut file = unwrap_or_exit!(File::create(NVM_EXEC));
     unwrap_or_exit!(writeln!(&mut file, "{}", include_str!("nvm.sh")));
@@ -51,6 +53,7 @@ fn install_nvm_entrypoint() {
     ));
 }
 
+/// Install node using nvm
 fn install_node() {
     debug!("installing node");
     // Node is already installed.
