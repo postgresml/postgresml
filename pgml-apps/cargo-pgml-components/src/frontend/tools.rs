@@ -18,6 +18,7 @@ pub fn install() {
         match execute_command(Command::new(tool).arg("--version")) {
             Ok(_) => (),
             Err(err) => {
+                debug!("{}", err);
                 warn(&format!("installing {}", tool));
                 unwrap_or_exit!(execute_command(
                     Command::new("npm").arg("install").arg("-g").arg(tool)

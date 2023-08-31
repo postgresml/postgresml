@@ -1,5 +1,4 @@
 use sailfish::TemplateOnce;
-use std::collections::HashMap;
 
 use crate::frontend::components::Component as ComponentModel;
 
@@ -42,7 +41,7 @@ pub struct Stimulus {
 impl Stimulus {
     pub fn new(component: &ComponentModel) -> Self {
         Self {
-            controller_name: component.path().replace("_", "-"),
+            controller_name: component.controller_name(),
         }
     }
 }

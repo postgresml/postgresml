@@ -1,20 +1,16 @@
 //! A tool to assemble and bundle our frontend components.
 
 use clap::{Args, Parser, Subcommand};
-use convert_case::{Case, Casing};
-use glob::glob;
 use std::env::{current_dir, set_current_dir};
-use std::fs::{create_dir_all, read_dir, read_to_string, remove_file, File};
-use std::io::Write;
+use std::fs::{create_dir_all};
 use std::path::Path;
-use std::process::{exit, Command};
 
 #[macro_use]
 extern crate log;
 
 mod frontend;
 mod util;
-use util::{execute_command, info, unwrap_or_exit};
+use util::{info, unwrap_or_exit};
 
 /// These paths are exepcted to exist in the project directory.
 static PROJECT_PATHS: &[&str] = &["src", "static/js", "static/css"];
@@ -53,8 +49,6 @@ enum Commands {
     /// Add new elements to the project.
     #[command(subcommand)]
     Add(AddCommands),
-
-    UpdateComponents {},
 }
 
 #[derive(Subcommand, Debug)]
@@ -71,10 +65,8 @@ fn main() {
         CargoSubcommands::PgmlComponents(pgml_commands) => match pgml_commands.command {
             Commands::Bundle {} => bundle(pgml_commands.project_path),
             Commands::Add(command) => match command {
-                AddCommands::Component { name } => add_component(name, pgml_commands.overwrite),
+                AddCommands::Component { name } => crate::frontend::components::add(&name, pgml_commands.overwrite),
             },
-            Commands::UpdateComponents {} => update_components(),
-            _ => (),
         },
     }
 }
@@ -94,21 +86,15 @@ fn bundle(project_path: Option<String>) {
         let check = path.join(project_path);
 
         if !check.exists() {
-            unwrap_or_exit!(create_dir_all(check));
+            unwrap_or_exit!(create_dir_all(&check));
+            info(&format!("created {} directory", check.display()));
         }
     }
 
     unwrap_or_exit!(set_current_dir(path));
     frontend::sass::bundle();
     frontend::javascript::bundle();
+    frontend::components::update_modules();
 
     info("Bundle complete");
-}
-
-fn add_component(name: String, overwrite: bool) {
-    crate::frontend::components::add(&name, overwrite);
-}
-
-fn update_components() {
-    crate::frontend::components::update_modules();
 }

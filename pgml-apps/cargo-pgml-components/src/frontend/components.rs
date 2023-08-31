@@ -1,6 +1,5 @@
 use convert_case::{Case, Casing};
 use sailfish::TemplateOnce;
-use std::collections::HashMap;
 use std::fs::{create_dir_all, read_dir};
 use std::path::Path;
 use std::process::exit;
@@ -41,6 +40,7 @@ impl Component {
         self.path().replace("_", "-")
     }
 
+    #[allow(dead_code)]
     pub fn controller_path(&self) -> String {
         format!("{}_controller.js", self.path())
     }

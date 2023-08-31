@@ -5,6 +5,7 @@ mod component;
 pub(crate) use component::{component, Component};
 
 <% for component in modules.iter() { %>
+// <%= component.full_path() %>
 pub mod <%= component.path() %>;
 pub use <%= component.rust_module() %>::<%= component.name() %>;
 <% } %>

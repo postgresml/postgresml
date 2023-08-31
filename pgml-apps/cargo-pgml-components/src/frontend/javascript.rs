@@ -3,7 +3,6 @@
 use glob::glob;
 use std::fs::{copy, read_to_string, remove_file, File};
 use std::io::Write;
-use std::path::Path;
 use std::process::Command;
 
 use convert_case::{Case, Casing};
