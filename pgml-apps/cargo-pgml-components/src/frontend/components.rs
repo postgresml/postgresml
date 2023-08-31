@@ -1,6 +1,6 @@
 use convert_case::{Case, Casing};
 use sailfish::TemplateOnce;
-use std::fs::{create_dir_all, read_dir};
+use std::fs::{create_dir_all, read_dir, read_to_string};
 use std::path::Path;
 use std::process::exit;
 
@@ -131,7 +131,13 @@ pub fn update_modules() {
     }
 
     let modules = unwrap_or_exit!(templates::Mod { modules }.render_once());
+    let existing_modules = unwrap_or_exit!(read_to_string(COMPONENT_MOD));
 
-    unwrap_or_exit!(write_to_file(&Path::new(COMPONENT_MOD), &modules));
-    info(&format!("written {}", COMPONENT_MOD));
+    if modules != existing_modules {
+        debug!("mod.rs is different");
+        unwrap_or_exit!(write_to_file(&Path::new(COMPONENT_MOD), &modules));
+        info(&format!("written {}", COMPONENT_MOD));
+    }
+
+    debug!("mod.rs is the same");
 }

@@ -13,6 +13,7 @@ use crate::util::{info, unwrap_or_exit, warn};
 /// The name of the JS file that imports all other JS files
 /// created in the modules.
 static MODULES_FILE: &'static str = "static/js/modules.js";
+static MODULES_FILE_TMP: &'static str = "/tmp/pgml-components-modules.js";
 
 /// The JS bundle.
 static JS_FILE: &'static str = "static/js/bundle.js";
@@ -52,7 +53,7 @@ fn assemble_modules() {
         !path.contains("main.js") && !path.contains("bundle.js") && !path.contains("modules.js")
     });
 
-    let mut modules = unwrap_or_exit!(File::create(MODULES_FILE));
+    let mut modules = unwrap_or_exit!(File::create(MODULES_FILE_TMP));
 
     unwrap_or_exit!(writeln!(&mut modules, "// Build with --bin components"));
     unwrap_or_exit!(writeln!(
@@ -92,7 +93,13 @@ fn assemble_modules() {
         ));
     }
 
-    info(&format!("written {}", MODULES_FILE));
+    let new_modules = unwrap_or_exit!(read_to_string(MODULES_FILE_TMP));
+    let old_modules = unwrap_or_exit!(read_to_string(MODULES_FILE));
+
+    if new_modules != old_modules {
+        unwrap_or_exit!(copy(MODULES_FILE_TMP, MODULES_FILE));
+        info(&format!("written {}", MODULES_FILE));
+    }
 }
 
 pub fn bundle() {
