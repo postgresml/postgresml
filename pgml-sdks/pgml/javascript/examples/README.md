@@ -23,3 +23,6 @@ In this example, we will show how to use `vector_recall` result as a `context` t
 
 ## [Summarizing Question Answering](./summarizing_question_answering.js)
 This is an example to find documents relevant to a question from the collection of documents and then summarize those documents.
+
+## [Webpack](./webpack)
+This is an example of how to use webpack with the SDK
