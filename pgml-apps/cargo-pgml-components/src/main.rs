@@ -2,7 +2,7 @@
 
 use clap::{Args, Parser, Subcommand};
 use std::env::{current_dir, set_current_dir};
-use std::fs::{create_dir_all};
+use std::fs::create_dir_all;
 use std::path::Path;
 
 #[macro_use]
@@ -62,17 +62,23 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.subcomand {
-        CargoSubcommands::PgmlComponents(pgml_commands) => match pgml_commands.command {
-            Commands::Bundle {} => bundle(pgml_commands.project_path),
-            Commands::Add(command) => match command {
-                AddCommands::Component { name } => crate::frontend::components::add(&name, pgml_commands.overwrite),
-            },
-        },
+        CargoSubcommands::PgmlComponents(pgml_commands) => {
+            validate_project(pgml_commands.project_path);
+            match pgml_commands.command {
+                Commands::Bundle {} => bundle(),
+                Commands::Add(command) => match command {
+                    AddCommands::Component { name } => {
+                        crate::frontend::components::add(&name, pgml_commands.overwrite)
+                    }
+                },
+            }
+        }
     }
 }
 
-/// Bundle SASS and JavaScript into neat bundle files.
-fn bundle(project_path: Option<String>) {
+fn validate_project(project_path: Option<String>) {
+    debug!("validating project directory");
+
     // Validate that the required project paths exist.
     let cwd = if let Some(project_path) = project_path {
         project_path
@@ -92,9 +98,13 @@ fn bundle(project_path: Option<String>) {
     }
 
     unwrap_or_exit!(set_current_dir(path));
+}
+
+/// Bundle SASS and JavaScript into neat bundle files.
+fn bundle() {
     frontend::sass::bundle();
     frontend::javascript::bundle();
     frontend::components::update_modules();
 
-    info("Bundle complete");
+    info("bundle complete");
 }

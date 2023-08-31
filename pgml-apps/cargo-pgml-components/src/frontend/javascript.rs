@@ -7,7 +7,8 @@ use std::process::Command;
 
 use convert_case::{Case, Casing};
 
-use crate::util::{execute_command, info, unwrap_or_exit, warn};
+use crate::frontend::tools::execute_with_nvm;
+use crate::util::{info, unwrap_or_exit, warn};
 
 /// The name of the JS file that imports all other JS files
 /// created in the modules.
@@ -99,7 +100,7 @@ pub fn bundle() {
     assemble_modules();
 
     // Bundle JavaScript.
-    unwrap_or_exit!(execute_command(
+    unwrap_or_exit!(execute_with_nvm(
         Command::new(JS_COMPILER)
             .arg(MODULES_FILE)
             .arg("--file")

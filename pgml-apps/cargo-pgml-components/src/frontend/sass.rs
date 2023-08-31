@@ -5,7 +5,8 @@ use std::fs::{copy, read_to_string, remove_file, File};
 use std::io::Write;
 use std::process::Command;
 
-use crate::util::{execute_command, info, unwrap_or_exit, warn};
+use crate::frontend::tools::execute_with_nvm;
+use crate::util::{info, unwrap_or_exit, warn};
 
 /// The name of the SASS file that imports all other SASS files
 /// created in the modules.
@@ -77,7 +78,7 @@ pub fn bundle() {
     cleanup_old_bundles();
 
     // Build Sass.
-    unwrap_or_exit!(execute_command(
+    unwrap_or_exit!(execute_with_nvm(
         Command::new(SASS_COMPILER).arg(SASS_FILE).arg(CSS_FILE),
     ));
 
