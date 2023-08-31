@@ -78,8 +78,13 @@ struct PgmlCommands {
     #[command(subcommand)]
     command: Commands,
 
+    /// Specify project path (default: current directory)
     #[arg(short, long)]
     project_path: Option<String>,
+
+    /// Overwrite existing files (default: false)
+    #[arg(short, long, default_value = "false")]
+    overwrite: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -87,15 +92,17 @@ enum Commands {
     /// Bundle SASS and JavaScript into neat bundle files.
     Bundle {},
 
-    /// Add a new component.
-    AddComponent {
-        name: String,
-
-        #[arg(short, long, default_value = "false")]
-        overwrite: bool,
-    },
+    /// Add new elements to the project.
+    #[command(subcommand)]
+    Add(AddCommands),
 
     UpdateComponents {},
+}
+
+#[derive(Subcommand, Debug)]
+enum AddCommands {
+    /// Add a new component.
+    Component { name: String },
 }
 
 fn main() {
@@ -105,8 +112,11 @@ fn main() {
     match cli.subcomand {
         CargoSubcommands::PgmlComponents(pgml_commands) => match pgml_commands.command {
             Commands::Bundle {} => bundle(pgml_commands.project_path),
-            Commands::AddComponent { name, overwrite } => add_component(name, overwrite),
+            Commands::Add(command) => match command {
+                AddCommands::Component { name } => add_component(name, pgml_commands.overwrite),
+            },
             Commands::UpdateComponents {} => update_components(),
+            _ => (),
         },
     }
 }
@@ -225,111 +235,113 @@ fn bundle(project_path: Option<String>) {
 }
 
 fn add_component(name: String, overwrite: bool) {
-    let component_name = name.as_str().to_case(Case::UpperCamel);
-    let component_path = name.as_str().to_case(Case::Snake);
-    let folder = Path::new("src/components").join(&component_path);
+    crate::frontend::components::add(&name, overwrite);
+    // let component_name = name.as_str().to_case(Case::UpperCamel);
+    // let component_path = name.as_str().to_case(Case::Snake);
+    // let folder = Path::new("src/components").join(&component_path);
 
-    if !folder.exists() {
-        match create_dir_all(folder.clone()) {
-            Ok(_) => (),
-            Err(err) => {
-                error!(
-                    "Failed to create path '{}' for component '{}': {}",
-                    folder.display(),
-                    name,
-                    err
-                );
-                exit(1);
-            }
-        }
-    } else if !overwrite {
-        error!("Component '{}' already exists", folder.display());
-        exit(1);
-    }
+    // if !folder.exists() {
+    //     match create_dir_all(folder.clone()) {
+    //         Ok(_) => (),
+    //         Err(err) => {
+    //             error!(
+    //                 "Failed to create path '{}' for component '{}': {}",
+    //                 folder.display(),
+    //                 name,
+    //                 err
+    //             );
+    //             exit(1);
+    //         }
+    //     }
+    // } else if !overwrite {
+    //     error!("Component '{}' already exists", folder.display());
+    //     exit(1);
+    // }
 
-    // Create mod.rs
-    let mod_file = format!(
-        "{}",
-        COMPONENT_TEMPLATE_RS
-            .replace("{component_name}", &component_name)
-            .replace("{component_path}", &component_path)
-    );
+    // // Create mod.rs
+    // let mod_file = format!(
+    //     "{}",
+    //     COMPONENT_TEMPLATE_RS
+    //         .replace("{component_name}", &component_name)
+    //         .replace("{component_path}", &component_path)
+    // );
 
-    let mod_path = folder.join("mod.rs");
+    // let mod_path = folder.join("mod.rs");
 
-    let mut mod_file_fd = File::create(mod_path).expect("failed to create mod.rs");
-    writeln!(&mut mod_file_fd, "{}", mod_file.trim()).expect("failed to write mod.rs");
-    drop(mod_file_fd);
+    // let mut mod_file_fd = File::create(mod_path).expect("failed to create mod.rs");
+    // writeln!(&mut mod_file_fd, "{}", mod_file.trim()).expect("failed to write mod.rs");
+    // drop(mod_file_fd);
 
-    // Create template.html
-    let template_path = folder.join("template.html");
-    let mut template_file = File::create(template_path).expect("failed to create template.html");
-    let template_source =
-        COMPONENT_HTML.replace("{controller_name}", &component_path.replace("_", "-"));
-    writeln!(&mut template_file, "{}", template_source.trim(),)
-        .expect("failed to write template.html");
-    drop(template_file);
+    // // Create template.html
+    // let template_path = folder.join("template.html");
+    // let mut template_file = File::create(template_path).expect("failed to create template.html");
+    // let template_source =
+    //     COMPONENT_HTML.replace("{controller_name}", &component_path.replace("_", "-"));
+    // writeln!(&mut template_file, "{}", template_source.trim(),)
+    //     .expect("failed to write template.html");
+    // drop(template_file);
 
-    // Create Stimulus controller
-    let stimulus_path = folder.join(&format!("{}_controller.js", component_path));
-    let mut template_file =
-        File::create(stimulus_path).expect("failed to create stimulus controller");
-    let controller_source =
-        COMPONENT_STIMULUS_JS.replace("{controller_name}", &component_path.replace("_", "-"));
-    writeln!(&mut template_file, "{}", controller_source.trim())
-        .expect("failed to write stimulus controller");
-    drop(template_file);
+    // // Create Stimulus controller
+    // let stimulus_path = folder.join(&format!("{}_controller.js", component_path));
+    // let mut template_file =
+    //     File::create(stimulus_path).expect("failed to create stimulus controller");
+    // let controller_source =
+    //     COMPONENT_STIMULUS_JS.replace("{controller_name}", &component_path.replace("_", "-"));
+    // writeln!(&mut template_file, "{}", controller_source.trim())
+    //     .expect("failed to write stimulus controller");
+    // drop(template_file);
 
-    // Create SASS file
-    let sass_path = folder.join(&format!("{}.scss", component_path));
-    let sass_file = File::create(sass_path).expect("failed to create sass file");
-    drop(sass_file);
+    // // Create SASS file
+    // let sass_path = folder.join(&format!("{}.scss", component_path));
+    // let sass_file = File::create(sass_path).expect("failed to create sass file");
+    // drop(sass_file);
 
-    println!("Component '{}' created successfully", folder.display());
-    update_components();
+    // println!("Component '{}' created successfully", folder.display());
+    // update_components();
 }
 
 fn update_components() {
-    let mut file = File::create("src/components/mod.rs").expect("failed to create mod.rs");
+    crate::frontend::components::update_modules();
+    // let mut file = File::create("src/components/mod.rs").expect("failed to create mod.rs");
 
-    writeln!(
-        &mut file,
-        "// This file is automatically generated by cargo-pgml-components."
-    )
-    .expect("failed to write to mod.rs");
-    writeln!(&mut file, "// Do not modify it directly.").expect("failed to write to mod.rs");
-    writeln!(&mut file, "mod component;").expect("failed to write to mod.rs");
-    writeln!(
-        &mut file,
-        "pub(crate) use component::{{component, Component}};"
-    )
-    .expect("failed to write to mod.rs");
+    // writeln!(
+    //     &mut file,
+    //     "// This file is automatically generated by cargo-pgml-components."
+    // )
+    // .expect("failed to write to mod.rs");
+    // writeln!(&mut file, "// Do not modify it directly.").expect("failed to write to mod.rs");
+    // writeln!(&mut file, "mod component;").expect("failed to write to mod.rs");
+    // writeln!(
+    //     &mut file,
+    //     "pub(crate) use component::{{component, Component}};"
+    // )
+    // .expect("failed to write to mod.rs");
 
-    for component in read_dir("src/components").expect("failed to read components directory") {
-        let path = component.expect("dir entry").path();
+    // for component in read_dir("src/components").expect("failed to read components directory") {
+    //     let path = component.expect("dir entry").path();
 
-        if path.is_file() {
-            continue;
-        }
+    //     if path.is_file() {
+    //         continue;
+    //     }
 
-        let components = path.components();
-        let component_name = components
-            .clone()
-            .last()
-            .expect("component_name")
-            .as_os_str()
-            .to_str()
-            .unwrap();
-        let module = components
-            .skip(2)
-            .map(|c| c.as_os_str().to_str().unwrap())
-            .collect::<Vec<&str>>()
-            .join("::");
-        // let module = format!("crate::{}", module);
-        let component_name = component_name.to_case(Case::UpperCamel);
+    //     let components = path.components();
+    //     let component_name = components
+    //         .clone()
+    //         .last()
+    //         .expect("component_name")
+    //         .as_os_str()
+    //         .to_str()
+    //         .unwrap();
+    //     let module = components
+    //         .skip(2)
+    //         .map(|c| c.as_os_str().to_str().unwrap())
+    //         .collect::<Vec<&str>>()
+    //         .join("::");
+    //     // let module = format!("crate::{}", module);
+    //     let component_name = component_name.to_case(Case::UpperCamel);
 
-        writeln!(&mut file, "pub mod {};", module).expect("failed to write to mod.rs");
-        writeln!(&mut file, "pub use {}::{};", module, component_name)
-            .expect("failed to write to mod.rs");
-    }
+    //     writeln!(&mut file, "pub mod {};", module).expect("failed to write to mod.rs");
+    //     writeln!(&mut file, "pub use {}::{};", module, component_name)
+    //         .expect("failed to write to mod.rs");
+    // }
 }

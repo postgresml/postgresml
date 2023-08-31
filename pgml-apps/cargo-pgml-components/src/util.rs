@@ -1,4 +1,7 @@
 use owo_colors::OwoColorize;
+use std::fs::File;
+use std::io::Write;
+use std::path::Path;
 use std::process::{exit, Command};
 
 macro_rules! unwrap_or_exit {
@@ -57,4 +60,12 @@ pub fn execute_command(command: &mut Command) -> std::io::Result<String> {
     }
 
     Ok(stdout)
+}
+
+pub fn write_to_file(path: &Path, content: &str) -> std::io::Result<()> {
+    let mut file = File::create(path)?;
+
+    file.write_all(content.as_bytes())?;
+
+    Ok(())
 }
