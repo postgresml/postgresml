@@ -41,6 +41,10 @@ impl Component {
         self.path().replace("_", "-")
     }
 
+    pub fn controller_path(&self) -> String {
+        format!("{}_controller.js", self.path())
+    }
+
     pub fn rust_module(&self) -> String {
         let full_path = self.full_path();
         let path = Path::new(&full_path);

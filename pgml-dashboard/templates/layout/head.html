@@ -37,18 +37,34 @@
   <meta name="twitter:title" content="<%= head.title %> – PostgresML">
 
   <link rel="icon" href="/dashboard/static/images/owl.ico">
-  <link rel="stylesheet" data-turbo-track="reload" href="<%- config::css_url() %>">
-  <script defer src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <script type="importmap" data-turbo-track="reload">
+    {
+      "imports": {
+        "@hotwired/stimulus": "/dashboard/static/js/libs/stimulus-3.2.1.min.js",
+        "@lodash/core": "/dashboard/static/js/libs/lodash-4.17.15-core.js",
+        "@postgresml/main": "<%= config::js_url("main.js") %>"
+      }
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- If browser doesn't support ES5 modules -->
+  <script type="nomodule" async defer src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" data-turbo-track="reload" href="<%- config::css_url() %>">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=swap">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
 
-  <script async src="https://data.cloud.hyperparam.ai/script.js" data-website-id="499122fd-f307-4e8d-af4b-88b9f5e9903b"></script>
-  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
-  <script defer type="module" src="/dashboard/static/js/libs/turbo-7.3.0.min.js"></script>
-  <script defer src="https://cdn.plot.ly/plotly-2.11.1.min.js"></script>
+  <script async defer src="https://data.cloud.hyperparam.ai/script.js" data-website-id="499122fd-f307-4e8d-af4b-88b9f5e9903b"></script>  
+  <script async defer type="module" src="/dashboard/static/js/libs/turbo-7.3.0.min.js"></script>
+  <script async defer src="https://cdn.plot.ly/plotly-2.11.1.min.js"></script>
 
   <!-- Code Mirror -->
   <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
@@ -60,17 +76,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/show-hint.min.css" integrity="sha512-OmcLQEy8iGiD7PSm85s06dnR7G7C9C0VqahIPAj/KHk5RpOCmnC6R2ob1oK4/uwYhWa9BF1GC6tzxsC8TIx7Jg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
   <script type="module" defer async src="/dashboard/static/js/libs/sortable-1.12.0.min.js"></script>
-
-  <script type="importmap-shim" data-turbo-track="reload">
-    {
-      "imports": {
-        "@hotwired/stimulus": "/dashboard/static/js/libs/stimulus-3.2.1.min.js",
-        "@lodash/core": "/dashboard/static/js/libs/lodash-4.17.15-core.js",
-        "@postgresml/main": "<%= config::js_url("main.js") %>"
-      }
-    }
-  </script>
-  <script data-turbo-trace="reload" type="module-shim" src="<%= config::js_url("bundle.js") %>" async defer></script>
+  <script data-turbo-trace="reload" type="module" src="<%= config::js_url("bundle.js") %>" async defer></script>
 
 
   <% if config::dev_mode() { %>
