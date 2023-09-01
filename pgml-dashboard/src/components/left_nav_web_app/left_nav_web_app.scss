@@ -1,6 +1,6 @@
 .leftnav {
     @extend .navbar;
-    width: 260px;
+    max-width: 260px;
 
     border: none;
     align-items: start;
