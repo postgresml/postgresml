@@ -258,9 +258,6 @@
         color: #{$gray-100};
         width: 100%;
         transition: padding $animation-timer;
-
-        text-overflow: ellipsis;
-        overflow: hidden;
     }
 
     &:hover {
