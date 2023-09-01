@@ -210,9 +210,10 @@ impl Collection {
                     .execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name).as_str())
                     .await?;
 
-                let c: models::Collection = sqlx::query_as("INSERT INTO pgml.collections (name, project_id) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING RETURNING *")
+                let c: models::Collection = sqlx::query_as("INSERT INTO pgml.collections (name, project_id, version) VALUES ($1, $2, $3) ON CONFLICT (name) DO NOTHING RETURNING *")
                         .bind(&self.name)
                         .bind(project_id)
+                        .bind(crate::SDK_VERSION)
                         .fetch_one(&mut *transaction)
                         .await?;
 

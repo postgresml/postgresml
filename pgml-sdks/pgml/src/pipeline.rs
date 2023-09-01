@@ -688,9 +688,9 @@ impl Pipeline {
             transaction
                 .execute(
                     query_builder!(
-                        queries::CREATE_INDEX_USING_IVFFLAT,
+                        queries::CREATE_INDEX_USING_HNSW,
                         "",
-                        "vector_index",
+                        "hnsw_vector_index",
                         &embeddings_table_name,
                         "embedding vector_cosine_ops"
                     )

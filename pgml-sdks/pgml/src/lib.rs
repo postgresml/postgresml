@@ -12,6 +12,7 @@ use tokio::runtime::{Builder, Runtime};
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
+mod migrations;
 mod builtins;
 mod collection;
 mod filter_builder;
@@ -33,6 +34,9 @@ pub use collection::Collection;
 pub use model::Model;
 pub use pipeline::Pipeline;
 pub use splitter::Splitter;
+
+// This is use when inserting collections to set the sdk_version used during creation
+static SDK_VERSION: &'static str = "0.9.2";
 
 // Store the database(s) in a global variable so that we can access them from anywhere
 // This is not necessarily idiomatic Rust, but it is a good way to acomplish what we need
@@ -74,7 +78,7 @@ impl From<&str> for LogFormat {
 }
 
 #[allow(dead_code)]
-fn init_logger(level: Option<String>, format: Option<String>) -> anyhow::Result<()> {
+fn internal_init_logger(level: Option<String>, format: Option<String>) -> anyhow::Result<()> {
     let level = level.unwrap_or_else(|| env::var("LOG_LEVEL").unwrap_or("".to_string()));
     let level = match level.as_str() {
         "TRACE" => Level::TRACE,
@@ -124,15 +128,15 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
 
 #[cfg(feature = "python")]
 #[pyo3::prelude::pyfunction]
-fn py_init_logger(level: Option<String>, format: Option<String>) -> pyo3::PyResult<()> {
-    init_logger(level, format).ok();
+fn init_logger(level: Option<String>, format: Option<String>) -> pyo3::PyResult<()> {
+    internal_init_logger(level, format).ok();
     Ok(())
 }
 
 #[cfg(feature = "python")]
 #[pyo3::pymodule]
 fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
-    m.add_function(pyo3::wrap_pyfunction!(py_init_logger, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(init_logger, m)?)?;
     m.add_class::<pipeline::PipelinePython>()?;
     m.add_class::<collection::CollectionPython>()?;
     m.add_class::<model::ModelPython>()?;
@@ -142,7 +146,7 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
 }
 
 #[cfg(feature = "javascript")]
-fn js_init_logger(
+fn init_logger(
     mut cx: neon::context::FunctionContext,
 ) -> neon::result::JsResult<neon::types::JsUndefined> {
     use rust_bridge::javascript::{FromJsType, IntoJsResult};
@@ -150,14 +154,14 @@ fn js_init_logger(
     let level = <Option<String>>::from_option_js_type(&mut cx, level)?;
     let format = cx.argument_opt(1);
     let format = <Option<String>>::from_option_js_type(&mut cx, format)?;
-    init_logger(level, format).ok();
+    internal_init_logger(level, format).ok();
     ().into_js_result(&mut cx)
 }
 
 #[cfg(feature = "javascript")]
 #[neon::main]
 fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
-    cx.export_function("js_init_logger", js_init_logger)?;
+    cx.export_function("init_logger", init_logger)?;
     cx.export_function("newCollection", collection::CollectionJavascript::new)?;
     cx.export_function("newModel", model::ModelJavascript::new)?;
     cx.export_function("newSplitter", splitter::SplitterJavascript::new)?;
@@ -195,7 +199,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_create_collection() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_ccc_0", None);
         assert!(collection.database_data.is_none());
         collection.verify_in_database(false).await?;
@@ -206,7 +210,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_add_remove_pipeline() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -236,7 +240,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_add_remove_pipelines() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline1 = Pipeline::new(
@@ -280,7 +284,7 @@ mod tests {
 
     #[sqlx::test]
     async fn sync_multiple_pipelines() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline1 = Pipeline::new(
@@ -337,7 +341,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -372,7 +376,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_vector_search_with_remote_embeddings() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::new(
             Some("text-embedding-ada-002".to_string()),
             Some("openai".to_string()),
@@ -411,7 +415,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_vector_search_with_query_builder() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -448,7 +452,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_vector_search_with_query_builder_with_remote_embeddings() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::new(
             Some("text-embedding-ada-002".to_string()),
             Some("openai".to_string()),
@@ -489,7 +493,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_filter_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::new(None, None, None);
         let splitter = Splitter::new(None, None);
         let mut pipeline = Pipeline::new(
@@ -558,7 +562,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_upsert_and_filter_get_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -651,7 +655,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_paginate_get_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cpgd_2", None);
         collection
             .upsert_documents(generate_dummy_documents(10))
@@ -733,7 +737,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_filter_and_paginate_get_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -836,7 +840,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_filter_and_delete_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::new(None, None, None);
         let splitter = Splitter::new(None, None);
         let mut pipeline = Pipeline::new(

@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS pgml.collections (
   name text NOT NULL, 
   active BOOLEAN DEFAULT TRUE, 
   project_id int8 NOT NULL REFERENCES pgml.projects ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
+  sdk_version text;
   UNIQUE (name)
 );
 "#;
@@ -88,8 +89,8 @@ pub const CREATE_INDEX_USING_GIN: &str = r#"
 CREATE INDEX %d IF NOT EXISTS %s ON %s USING GIN (%d);
 "#;
 
-pub const CREATE_INDEX_USING_IVFFLAT: &str = r#"
-CREATE INDEX %d IF NOT EXISTS %s ON %s USING ivfflat (%d);
+pub const CREATE_INDEX_USING_HNSW: &str = r#"
+CREATE INDEX %d IF NOT EXISTS %S on %s using hnsw (%d);
 "#;
 
 /////////////////////////////
