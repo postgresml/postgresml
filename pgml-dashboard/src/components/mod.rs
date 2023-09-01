@@ -53,6 +53,10 @@ pub use navbar_web_app::NavbarWebApp;
 pub mod postgres_logo;
 pub use postgres_logo::PostgresLogo;
 
+// src/components/profile_icon
+pub mod profile_icon;
+pub use profile_icon::ProfileIcon;
+
 // src/components/static_nav
 pub mod static_nav;
 pub use static_nav::StaticNav;
