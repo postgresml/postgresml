@@ -6,12 +6,18 @@ use crate::components::StaticNavLink;
 #[derive(TemplateOnce, Default)]
 #[template(path = "dropdown/template.html")]
 pub struct Dropdown {
+    /// The currently selected value.
     value: String,
+
+    /// The list of dropdown links to render.
     links: Vec<StaticNavLink>,
+
+    /// Whether or not the dropdown is collapsble.
+    collapsable: bool,
 }
 
 impl Dropdown {
-    pub fn new(links: Vec<StaticNavLink>) -> Dropdown {
+    pub fn new(links: Vec<StaticNavLink>) -> Self {
         let binding = links
             .iter()
             .filter(|link| link.active)
@@ -27,6 +33,11 @@ impl Dropdown {
             value,
             ..Default::default()
         }
+    }
+
+    pub fn collapsable(mut self) -> Self {
+        self.collapsable = true;
+        self
     }
 }
 
