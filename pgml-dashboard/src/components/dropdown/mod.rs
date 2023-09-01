@@ -81,6 +81,16 @@ impl Dropdown {
         self.menu_position = "dropdown-menu-start".to_owned();
         self
     }
+
+    pub fn offset(mut self, offset: &str) -> Self {
+        self.offset = offset.to_owned();
+        self
+    }
+
+    pub fn offset_collapsed(mut self, offset: &str) -> Self {
+        self.offset_collapsed = offset.to_owned();
+        self
+    }
 }
 
 component!(Dropdown);
