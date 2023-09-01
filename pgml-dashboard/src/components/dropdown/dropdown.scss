@@ -17,7 +17,12 @@
     }
 
     .dropdown-menu {
-        min-width: 100%;
+        width: 100%;
+    }
+
+    .dropdown-item {
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 }
 
@@ -64,6 +69,8 @@
     .menu-item {
         a {
             padding: 8px 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         &:hover {
