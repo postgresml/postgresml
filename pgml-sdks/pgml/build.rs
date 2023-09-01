@@ -3,14 +3,16 @@ use std::fs::OpenOptions;
 use std::io::Write;
 
 const ADDITIONAL_DEFAULTS_FOR_PYTHON: &[u8] = br#"
-def py_init_logger(level: Optional[str] = "", format: Optional[str] = "") -> None
+def init_logger(level: Optional[str] = "", format: Optional[str] = "") -> None
+async def migrate() -> None
 
 Json = Any
 DateTime = int
 "#;
 
 const ADDITIONAL_DEFAULTS_FOR_JAVASCRIPT: &[u8] = br#"
-export function js_init_logger(level?: string, format?: string): void;
+export function init_logger(level?: string, format?: string): void;
+export function migrate(): Promise<void>;
 
 export type Json = { [key: string]: any };
 export type DateTime = Date;

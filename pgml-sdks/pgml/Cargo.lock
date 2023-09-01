@@ -51,6 +51,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 
 [[package]]
+name = "async-recursion"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e97ce7de6cf12de5d7226c73f5ba9811622f4db3a5b91b55c53e987e5f91cba"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.28",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1235,6 +1246,7 @@ name = "pgml"
 version = "0.9.1"
 dependencies = [
  "anyhow",
+ "async-recursion",
  "async-trait",
  "chrono",
  "futures",
@@ -1344,6 +1356,7 @@ version = "0.18.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3b1ac5b3731ba34fdaa9785f8d74d17448cd18f30cf19e0c7e7b1fdb5272109"
 dependencies = [
+ "anyhow",
  "cfg-if",
  "indoc",
  "libc",

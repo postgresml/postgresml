@@ -19,7 +19,7 @@ if DATABASE_URL is None:
     print("No DATABASE_URL environment variable found. Please set one")
     exit(1)
 
-pgml.py_init_logger()
+pgml.init_logger()
 
 
 def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
@@ -248,6 +248,16 @@ async def test_delete_documents():
     documents = await collection.get_documents()
     assert len(documents) == 2 and documents[0]["document"]["id"] == 1
     await collection.archive()
+
+
+###################################################
+## Migration tests ################################
+###################################################
+
+
+@pytest.mark.asyncio
+async def test_migrate():
+    await pgml.migrate()
 
 
 ###################################################

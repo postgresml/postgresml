@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use tracing::instrument;
 
 #[instrument(skip(pool))]
-pub async fn migrate(pool: PgPool, _: Vec<i64>) -> anyhow::Result<()> {
+pub async fn migrate(pool: PgPool, _: Vec<i64>) -> anyhow::Result<String> {
     let collection_names: Vec<String> = sqlx::query_scalar("SELECT name FROM pgml.collections")
         .fetch_all(&pool)
         .await?;
@@ -16,18 +16,30 @@ pub async fn migrate(pool: PgPool, _: Vec<i64>) -> anyhow::Result<()> {
                 .await?;
         for pipeline_name in pipeline_names {
             let table_name = format!("{}.{}_embeddings", collection_name, pipeline_name);
+            let index_name = format!("{}_pipeline_hnsw_vector_index", pipeline_name);
             pool.execute(
                 query_builder!(
                     queries::CREATE_INDEX_USING_HNSW,
                     "",
-                    "hnsw_vector_index",
+                    index_name,
                     &table_name,
-                    "embedding vector_cosine_ops"
+                    "embedding vector_cosine_ops",
+                    ""
                 )
                 .as_str(),
             )
             .await?;
         }
+        // We can get rid of the old IVFFlat index now. There was a bug where we named it the same
+        // thing no matter what, so we only need to remove one index.
+        pool.execute(
+            query_builder!(
+                "DROP INDEX CONCURRENTLY IF EXISTS %s.vector_index",
+                collection_name
+            )
+            .as_str(),
+        )
+        .await?;
     }
 
     // Required to set the default value for a not null column being added, but we want to remove
@@ -38,5 +50,5 @@ pub async fn migrate(pool: PgPool, _: Vec<i64>) -> anyhow::Result<()> {
         .execute("ALTER TABLE pgml.collections ALTER COLUMN sdk_version DROP DEFAULT")
         .await?;
     transaction.commit().await?;
-    Ok(())
+    Ok("0.9.2".to_string())
 }

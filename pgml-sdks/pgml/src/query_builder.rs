@@ -13,7 +13,7 @@ use crate::{
     models,
     pipeline::Pipeline,
     remote_embeddings::build_remote_embeddings,
-    types::{IntoTableNameAndSchema, Json, SIden},
+    types::{IntoTableNameAndSchema, Json, SIden, TryToNumeric},
     Collection,
 };
 
@@ -120,6 +120,7 @@ impl QueryBuilder {
         // Save these in case of failure
         self.pipeline = Some(pipeline.clone());
         self.query_string = Some(query.to_owned());
+        self.query_parameters = query_parameters.clone();
 
         let query_parameters = query_parameters.unwrap_or_default().0;
         let embeddings_table_name =
@@ -218,13 +219,34 @@ impl QueryBuilder {
     pub async fn fetch_all(mut self) -> anyhow::Result<Vec<(f64, String, Json)>> {
         let pool = get_or_initialize_pool(&self.collection.database_url).await?;
 
-        let (sql, values) = self
-            .query
-            .clone()
-            .with(self.with.clone())
-            .build_sqlx(PostgresQueryBuilder);
+        let query_parameters = self.query_parameters.unwrap_or_default();
+
         let result: Result<Vec<(f64, String, Json)>, _> =
-            sqlx::query_as_with(&sql, values).fetch_all(&pool).await;
+            if !query_parameters["hnsw"]["ef_search"].is_null() {
+                let mut transaction = pool.begin().await?;
+                let ef_search = query_parameters["hnsw"]["ef_search"]
+                    .try_to_i64()
+                    .context("ef_search must be an integer")?;
+                sqlx::query("SET LOCAL hnsw.ef_search = $1")
+                    .bind(ef_search)
+                    .execute(&mut *transaction)
+                    .await?;
+                let (sql, values) = self
+                    .query
+                    .clone()
+                    .with(self.with.clone())
+                    .build_sqlx(PostgresQueryBuilder);
+                let results = sqlx::query_as_with(&sql, values).fetch_all(&mut *transaction).await;
+                transaction.commit().await?;
+                results
+            } else {
+                let (sql, values) = self
+                    .query
+                    .clone()
+                    .with(self.with.clone())
+                    .build_sqlx(PostgresQueryBuilder);
+                sqlx::query_as_with(&sql, values).fetch_all(&pool).await
+            };
 
         match result {
             Ok(r) => Ok(r),
@@ -248,8 +270,6 @@ impl QueryBuilder {
                         if model.runtime == ModelRuntime::Python {
                             return Err(anyhow::anyhow!(e));
                         }
-
-                        let query_parameters = self.query_parameters.to_owned().unwrap_or_default();
 
                         let remote_embeddings =
                             build_remote_embeddings(model.runtime, &model.name, &query_parameters)?;

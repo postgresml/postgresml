@@ -90,7 +90,7 @@ CREATE INDEX %d IF NOT EXISTS %s ON %s USING GIN (%d);
 "#;
 
 pub const CREATE_INDEX_USING_HNSW: &str = r#"
-CREATE INDEX %d IF NOT EXISTS %S on %s using hnsw (%d);
+CREATE INDEX %d IF NOT EXISTS %s on %s using hnsw (%d) %d;
 "#;
 
 /////////////////////////////

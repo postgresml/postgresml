@@ -10,7 +10,7 @@ import pgml from "../../index.js";
 ////////////////////////////////////////////////////////////////////////////////////
 
 const LOG_LEVEL = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : "ERROR";
-pgml.js_init_logger(LOG_LEVEL);
+pgml.init_logger(LOG_LEVEL);
 
 const generate_dummy_documents = (count: number) => {
   let docs = [];
@@ -219,4 +219,12 @@ it("can delete documents", async () => {
   expect(documents[0]["document"]["id"]).toBe(1);
 
   await collection.archive();
+});
+
+///////////////////////////////////////////////////
+// Test migrations ////////////////////////////////
+///////////////////////////////////////////////////
+
+it("can migrate", async () => {
+  await pgml.migrate();
 });

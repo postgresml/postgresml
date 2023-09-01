@@ -46,9 +46,12 @@ impl QueryRunner {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.query = format!("SELECT json_agg(j) FROM ({}) j", self.query);
         let query = self.build_query();
-        let results = query.fetch_all(&pool).await?;
-        let results = results.get(0).unwrap().get::<serde_json::Value, _>(0);
-        Ok(Json(results))
+        let results = query.fetch_one(&pool).await?;
+        let results = results.try_get::<serde_json::Value, _>(0);
+        match results {
+            Ok(r) => Ok(Json(r)),
+            _ => Ok(Json(serde_json::json!([]))),
+        }
     }
 
     pub async fn execute(self) -> anyhow::Result<()> {

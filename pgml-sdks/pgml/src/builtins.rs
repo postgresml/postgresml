@@ -98,7 +98,7 @@ mod tests {
     async fn can_query() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let builtins = Builtins::new(None);
-        let query = "SELECT 10";
+        let query = "SELECT * from pgml.collections";
         let results = builtins.query(query).fetch_all().await?;
         assert!(results.as_array().is_some());
         Ok(())
