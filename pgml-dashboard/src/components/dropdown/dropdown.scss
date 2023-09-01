@@ -1,6 +1,6 @@
 .dropdown {
     @extend .d-flex;
-    width: 100%;
+    min-width: 100%;
 
     .dropdown-toggle {
         a {
@@ -17,7 +17,7 @@
     }
 
     .dropdown-menu {
-        width: 100%;
+        min-width: 100%;
     }
 }
 
@@ -56,7 +56,7 @@
     }
 
     .btn-dropdown-text {
-        width: 100%;
+        min-width: 100%;
         // overflow: hidden;
         // text-overflow: ellipsis;
         // text-align: left;
