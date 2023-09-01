@@ -244,57 +244,6 @@
     font-weight: $font-weight-medium;
 }
 
-.btn-dropdown {
-    @extend .btn;
-    border-radius: $border-radius;
-    background: #{$gray-700};
-    color: #{$gray-100};
-    display: flex;
-    justify-content: space-between;
-    font-weight: $font-weight-normal;
-
-    --bs-btn-border-color: transparent;
-    --bs-btn-border-width: 1px;
-    --bs-btn-hover-border-color: #{$neon-shade-100};
-    --bs-btn-active-border-color: #{$neon-shade-100};
-    --bs-btn-active-bg: #{$gray-700};
-    --bs-btn-active-color: #{$gray-100};
-    --bs-btn-hover-color: #{$gray-100};
-
-    .material-symbols-outlined {
-        color: #{$neon-shade-100};
-    }
-
-    &:after {
-        content: None;
-    }
-
-    &.show {
-        .material-symbols-outlined {
-            transform: rotate(-180deg);
-        }
-    }
-
-    .collapase {
-        width: 100%;
-    }
-}
-
-.btn-dropdown-menu-item {
-    @extend .menu-item;
-    a {
-        padding: 8px 12px;
-    }
-
-    &:hover {
-        cursor: pointer;
-    }
-
-    &:after {
-        content: None;
-    }
-}
-
 .btn-left-nav-toggle {
     @extend .btn;
     --bs-btn-padding-x: 0px;

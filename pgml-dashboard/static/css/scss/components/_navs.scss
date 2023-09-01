@@ -195,18 +195,6 @@
     }
 }
 
-.leftnav {
-    @extend .navbar;
-
-    border: none;
-    align-items: start;
-    background-color: inherit;
-
-    @include media-breakpoint-down(lg) {
-        background-color: #{$gray-900}
-    }
-}
-
 .toc, .guides {
     --bs-border-color: #{$gray-500};
     .nav-link {
@@ -265,11 +253,14 @@
         color: #{$neon-shade-300};
     }
 
-    & button, & a {
+    button, a {
         padding: 8px 24px 8px 24px;
         color: #{$gray-100};
         width: 100%;
         transition: padding $animation-timer;
+
+        text-overflow: ellipsis;
+        overflow: hidden;
     }
 
     &:hover {

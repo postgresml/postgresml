@@ -10,6 +10,7 @@
 .dropdown-menu {
     @include dropdown-menu($gray-600);
     max-height: $dropdown-menu-height;
+    overflow: hidden;
 }
 
 .sub-menu-dropdown {

@@ -13,6 +13,10 @@ pub use breadcrumbs::Breadcrumbs;
 pub mod confirm_modal;
 pub use confirm_modal::ConfirmModal;
 
+// src/components/dropdown
+pub mod dropdown;
+pub use dropdown::Dropdown;
+
 // src/components/github_icon
 pub mod github_icon;
 pub use github_icon::GithubIcon;
