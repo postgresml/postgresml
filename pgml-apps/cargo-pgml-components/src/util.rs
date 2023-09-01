@@ -1,5 +1,5 @@
 use owo_colors::OwoColorize;
-use std::fs::File;
+use std::fs::{read_to_string, File};
 use std::io::{ErrorKind, Write};
 use std::path::Path;
 use std::process::Command;
@@ -77,4 +77,17 @@ pub fn write_to_file(path: &Path, content: &str) -> std::io::Result<()> {
     file.write_all(content.as_bytes())?;
 
     Ok(())
+}
+
+#[allow(dead_code)]
+pub fn compare_files(path1: &Path, path2: &Path) -> std::io::Result<bool> {
+    let content1 = read_to_string(path1)?;
+    let content2 = read_to_string(path2)?;
+
+    compare_strings(&content1, &content2)
+}
+
+pub fn compare_strings(string1: &str, string2: &str) -> std::io::Result<bool> {
+    // TODO: faster string comparison method needed.
+    Ok(string1 == string2)
 }
