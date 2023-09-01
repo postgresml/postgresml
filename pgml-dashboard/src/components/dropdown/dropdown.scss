@@ -1,24 +1,24 @@
 .dropdown {
-	@extend .d-flex;
-	width: 100%;
+    @extend .d-flex;
+    width: 100%;
 
-	.dropdown-toggle {
-	    a {
-	        padding: 8px 12px;
-	    }
+    .dropdown-toggle {
+        a {
+            padding: 8px 12px;
+        }
 
-	    &:hover {
-	        cursor: pointer;
-	    }
+        &:hover {
+            cursor: pointer;
+        }
 
-	    &:after {
-	        content: none;
-	    }
-	}
+        &:after {
+            content: none;
+        }
+    }
 
-	.dropdown-menu {
-		width: 100%;
-	}
+    .dropdown-menu {
+        width: 100%;
+    }
 }
 
 .btn-dropdown {
@@ -63,18 +63,18 @@
     }
 
     .menu-item {
-	    a {
-	        padding: 8px 12px;
-	    }
+        a {
+            padding: 8px 12px;
+        }
 
-	    &:hover {
-	        cursor: pointer;
-	    }
+        &:hover {
+            cursor: pointer;
+        }
 
-	    &:after {
-	        content: None;
-	    }
-	}
+        &:after {
+            content: None;
+        }
+    }
 }
 
 
