@@ -84,10 +84,10 @@ pub fn compare_files(path1: &Path, path2: &Path) -> std::io::Result<bool> {
     let content1 = read_to_string(path1)?;
     let content2 = read_to_string(path2)?;
 
-    compare_strings(&content1, &content2)
+    Ok(compare_strings(&content1, &content2))
 }
 
-pub fn compare_strings(string1: &str, string2: &str) -> std::io::Result<bool> {
+pub fn compare_strings(string1: &str, string2: &str) -> bool {
     // TODO: faster string comparison method needed.
-    Ok(string1 == string2)
+    string1.trim() == string2.trim()
 }

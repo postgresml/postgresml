@@ -133,7 +133,7 @@ pub fn update_modules() {
     let modules = unwrap_or_exit!(templates::Mod { modules }.render_once());
     let existing_modules = unwrap_or_exit!(read_to_string(COMPONENT_MOD));
 
-    if !unwrap_or_exit!(compare_strings(&modules, &existing_modules)) {
+    if !compare_strings(&modules, &existing_modules) {
         debug!("mod.rs is different");
         unwrap_or_exit!(write_to_file(&Path::new(COMPONENT_MOD), &modules));
         info(&format!("written {}", COMPONENT_MOD));
