@@ -6,7 +6,6 @@ let modal = Modal::new(
   ).confirm_action("notebook#deleteCell").into()
 );
 
-
 %>
 <turbo-frame id="notebook">
   <div data-controller="notebook" data-notebook-modal-outlet="#<%=modal.id %>">
