@@ -5,15 +5,13 @@ use crate::frontend::components::Component as ComponentModel;
 #[derive(TemplateOnce)]
 #[template(path = "frontend/templates/component.rs.tpl")]
 pub struct Component {
-    pub component_name: String,
-    pub component_path: String,
+    pub component: ComponentModel,
 }
 
 impl Component {
     pub fn new(component: &ComponentModel) -> Self {
         Self {
-            component_name: component.name(),
-            component_path: component.path(),
+            component: component.clone(),
         }
     }
 }
@@ -50,4 +48,5 @@ impl Stimulus {
 #[template(path = "frontend/templates/mod.rs.tpl")]
 pub struct Mod {
     pub modules: Vec<ComponentModel>,
+    pub root: bool,
 }

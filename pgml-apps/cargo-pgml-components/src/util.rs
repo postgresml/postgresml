@@ -72,7 +72,9 @@ pub fn execute_command(command: &mut Command) -> std::io::Result<String> {
 }
 
 pub fn write_to_file(path: &Path, content: &str) -> std::io::Result<()> {
-    let mut file = File::create(path)?;
+    debug!("writing to file: {}", path.display());
+
+    let mut file = File::create(path)?;    
 
     file.write_all(content.as_bytes())?;
 
