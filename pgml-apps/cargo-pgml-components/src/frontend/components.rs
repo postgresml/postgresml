@@ -134,32 +134,6 @@ pub fn add(path: &Path, overwrite: bool) {
 /// Update `mod.rs` with all the components in `src/components`.
 pub fn update_modules() {
     update_module(Path::new(COMPONENT_DIRECTORY), true);
-    // let mut modules = Vec::new();
-    // let mut paths: Vec<_> = unwrap_or_exit!(read_dir(COMPONENT_DIRECTORY))
-    //     .map(|p| p.unwrap())
-    //     .collect();
-    // paths.sort_by_key(|dir| dir.path());
-
-    // for path in paths {
-    //     let path = path.path();
-    //     if path.is_file() {
-    //         continue;
-    //     }
-
-    //     let component = Component::from(Path::new(&path));
-    //     modules.push(component);
-    // }
-
-    // let modules = unwrap_or_exit!(templates::Mod { modules, root: true }.render_once());
-    // let existing_modules = unwrap_or_exit!(read_to_string(COMPONENT_MOD));
-
-    // if !compare_strings(&modules, &existing_modules) {
-    //     debug!("mod.rs is different");
-    //     unwrap_or_exit!(write_to_file(&Path::new(COMPONENT_MOD), &modules));
-    //     info(&format!("written {}", COMPONENT_MOD));
-    // }
-
-    // debug!("mod.rs is the same");
 }
 
 /// Recusively write `mod.rs` in every Rust module directory
