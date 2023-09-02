@@ -86,8 +86,7 @@ pub fn add(path: &Path, overwrite: bool) {
         exit(1);
     }
 
-    let binding = Path::new(&COMPONENT_DIRECTORY).join(path);
-    let parent = binding
+    let parent = path
         .parent()
         .expect("paths should have parents, where are you putting the component?");
 
@@ -155,12 +154,13 @@ fn update_module(path: &Path, root: bool) {
             update_module(&path, false);
         }
 
-        let component = Component::from(Path::new(&path));
+        let component_path = path.components().skip(2).collect::<PathBuf>();
+        let component = Component::from(Path::new(&component_path));
         modules.push(component);
     }
 
     let components_mod = path.join("mod.rs");
-    let modules = unwrap_or_exit!(templates::Mod { modules, root }.render_once());
+    let modules = unwrap_or_exit!(templates::Mod { modules, root }.render_once()).replace("\n\n", "\n");
 
     let existing_modules = if components_mod.is_file() {
         unwrap_or_exit!(read_to_string(&components_mod))
@@ -179,6 +179,7 @@ fn update_module(path: &Path, root: bool) {
 
 /// Check that the path has more Rust modules.
 fn has_more_modules(path: &Path) -> bool {
+    let path = Path::new(COMPONENT_DIRECTORY).join(path);
     debug!("checking if {} has more modules", path.display());
 
     if !path.exists() {

@@ -4,13 +4,10 @@
 <% if root { %>
 mod component;
 pub(crate) use component::{component, Component};
-
 <% } %>
-
 <% for component in modules.iter() { %>
 // <%= component.full_path() %>
 pub mod <%= component.name() %>;
-
 <% if !component.is_node() { %>
 pub use <%= component.name() %>::<%= component.rust_name() %>;
 <% } %>
