@@ -1,3 +1,3 @@
-<div data-controller="<%= controller_name %>">
+<div data-controller="<%= component.controller_name() %>">
   <%%= value %>
 </div>

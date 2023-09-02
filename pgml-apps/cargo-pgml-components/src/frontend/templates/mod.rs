@@ -19,13 +19,13 @@ impl Component {
 #[derive(TemplateOnce)]
 #[template(path = "frontend/templates/template.html.tpl")]
 pub struct Html {
-    pub controller_name: String,
+    pub component: ComponentModel,
 }
 
 impl Html {
     pub fn new(component: &ComponentModel) -> Self {
         Self {
-            controller_name: component.path().replace("_", "-"),
+            component: component.clone(),
         }
     }
 }

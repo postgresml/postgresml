@@ -8,7 +8,6 @@ use crate::frontend::templates;
 use crate::util::{compare_strings, error, info, unwrap_or_exit, write_to_file};
 
 static COMPONENT_DIRECTORY: &'static str = "src/components";
-static COMPONENT_MOD: &'static str = "src/components/mod.rs";
 
 #[derive(Clone)]
 pub struct Component {
@@ -43,30 +42,21 @@ impl Component {
     }
 
     pub fn full_path(&self) -> PathBuf {
-        Path::new(COMPONENT_DIRECTORY)
-            .join(&self.path)
-            .to_owned()
+        Path::new(COMPONENT_DIRECTORY).join(&self.path).to_owned()
     }
 
     pub fn controller_name(&self) -> String {
-        self.name.to_case(Case::Snake).replace("_", "-")
+        self.path
+            .components()
+            .map(|c| c.as_os_str().to_str().expect("os path valid utf-8"))
+            .collect::<Vec<&str>>()
+            .join("-")
+            .replace("_", "-")
+            .to_string()
     }
 
     pub fn controller_path(&self) -> String {
-        format!("{}_controller.js", self.controller_name())
-    }
-
-    pub fn rust_module(&self) -> String {
-        let full_path = self.full_path();
-        let path = Path::new(&full_path);
-        let components = path.components();
-
-        components
-            .skip(2) // skip src/components
-            .map(|c| c.as_os_str().to_str().unwrap())
-            .collect::<Vec<&str>>()
-            .join("::")
-            .to_string()
+        format!("{}_controller.js", self.name().to_case(Case::Snake))
     }
 }
 
@@ -88,6 +78,21 @@ impl From<&Path> for Component {
 pub fn add(path: &Path, overwrite: bool) {
     if let Some(_extension) = path.extension() {
         error("component name should not contain an extension");
+        exit(1);
+    }
+
+    if !path_rust_safe(path) {
+        error("component name contains Rust keywords");
+        exit(1);
+    }
+
+    let binding = Path::new(&COMPONENT_DIRECTORY).join(path);
+    let parent = binding
+        .parent()
+        .expect("paths should have parents, where are you putting the component?");
+
+    if parent.exists() && !has_more_modules(parent) {
+        error("component cannot be placed into a directory that has a component already");
         exit(1);
     }
 
@@ -157,6 +162,8 @@ pub fn update_modules() {
     // debug!("mod.rs is the same");
 }
 
+/// Recusively write `mod.rs` in every Rust module directory
+/// that has other modules in it.
 fn update_module(path: &Path, root: bool) {
     let mut modules = Vec::new();
     let mut paths: Vec<_> = unwrap_or_exit!(read_dir(path))
@@ -196,16 +203,108 @@ fn update_module(path: &Path, root: bool) {
     debug!("mod.rs is the same");
 }
 
+/// Check that the path has more Rust modules.
 fn has_more_modules(path: &Path) -> bool {
+    debug!("checking if {} has more modules", path.display());
+
+    if !path.exists() {
+        return false;
+    }
+
     assert!(path.is_dir());
 
-    let paths = unwrap_or_exit!(read_dir(path));
-    let paths = paths.map(|path| path.unwrap().path().to_owned());
-    let files = paths.filter(|path| path.is_file()).filter(|path| path.file_name().unwrap() != "mod.rs").count();
+    for path in unwrap_or_exit!(read_dir(path)) {
+        let dir_entry = unwrap_or_exit!(path);
+        let path = dir_entry.path();
 
-    let only_has_mod = files == 0;
+        if path.is_dir() {
+            continue;
+        }
 
-    debug!("{} has more modules: {}", path.display(), only_has_mod);
+        if let Some(file_name) = path.file_name() {
+            if file_name != "mod.rs" {
+                return false;
+            }
+        }
+    }
 
-    only_has_mod
+    true
 }
+
+fn path_rust_safe(path: &Path) -> bool {
+    let components = path.components();
+
+    for component in components {
+        let name = component
+            .as_os_str()
+            .to_str()
+            .expect("os string to be valid utf-8");
+        if KEYWORDS.contains(&name) {
+            return false;
+        }
+    }
+
+    true
+}
+
+static KEYWORDS: &[&str] = &[
+    // STRICT, 2015
+    "as",
+    "break",
+    "const",
+    "continue",
+    "crate",
+    "else",
+    "enum",
+    "extern",
+    "false",
+    "fn",
+    "for",
+    "if",
+    "impl",
+    "in",
+    "let",
+    "loop",
+    "match",
+    "mod",
+    "move",
+    "mut",
+    "pub",
+    "ref",
+    "return",
+    "self",
+    "Self",
+    "static",
+    "struct",
+    "super",
+    "trait",
+    "true",
+    "type",
+    "unsafe",
+    "use",
+    "where",
+    "while",
+    // STRICT, 2018
+    #[cfg(feature = "2018")]
+    "async",
+    #[cfg(feature = "2018")]
+    "await",
+    #[cfg(feature = "2018")]
+    "dyn",
+    // RESERVED, 2015
+    "abstract",
+    "become",
+    "box",
+    "do",
+    "final",
+    "macro",
+    "override",
+    "priv",
+    "typeof",
+    "unsized",
+    "virtual",
+    "yield",
+    // RESERVED, 2018
+    #[cfg(feature = "2018")]
+    "try",
+];
