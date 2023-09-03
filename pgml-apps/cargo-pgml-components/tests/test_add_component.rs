@@ -38,6 +38,24 @@ fn test_add_component() {
         temp.child(&format!("src/components/test_component/{}", path))
             .assert(predicate::path::exists());
     }
+
+    let rust = read_to_string(temp.child("src/components/test_component/mod.rs").path()).unwrap();
+    assert!(rust.contains("pub struct TestComponent {"));
+
+    let js = read_to_string(
+        temp.child("src/components/test_component/test_component_controller.js")
+            .path(),
+    )
+    .unwrap();
+    assert!(js.contains("export default class extends Controller"));
+    assert!(js.contains("console.log('Initialized test-component')"));
+
+    let html = read_to_string(
+        temp.child("src/components/test_component/template.html")
+            .path(),
+    )
+    .unwrap();
+    assert!(html.contains("<div data-controller=\"test-component\">"));
 }
 
 #[test]
@@ -187,13 +205,63 @@ fn test_add_subcomponent() {
 }
 
 #[test]
+fn test_component_with_dashes() {
+    let mut cmd = Command::cargo_bin("cargo-pgml-components").unwrap();
+    let temp = assert_fs::TempDir::new().unwrap();
+
+    cmd.arg("pgml-components")
+        .arg("--project-path")
+        .arg(temp.path().display().to_string())
+        .arg("add")
+        .arg("component")
+        .arg("test-component/subcomponent/alpha-beta-gamma");
+
+    cmd.assert().success();
+
+    for path in [
+        "mod.rs",
+        "template.html",
+        "alpha_beta_gamma.scss",
+        "alpha_beta_gamma_controller.js",
+    ] {
+        temp.child(&format!(
+            "src/components/test_component/subcomponent/alpha_beta_gamma/{}",
+            path
+        ))
+        .assert(predicate::path::exists());
+    }
+
+    let rust = read_to_string(
+        temp.child("src/components/test_component/subcomponent/alpha_beta_gamma/mod.rs")
+            .path(),
+    )
+    .unwrap();
+
+    assert!(rust.contains("pub struct AlphaBetaGamma {"));
+
+    let js = read_to_string(
+        temp.child(
+            "src/components/test_component/subcomponent/alpha_beta_gamma/alpha_beta_gamma_controller.js",
+        )
+        .path(),
+    ).unwrap();
+
+    assert!(js.contains("export default class extends Controller"));
+    assert!(js.contains("console.log('Initialized test-component-subcomponent-alpha-beta-gamma')"));
+
+    let html = read_to_string(
+        temp.child("src/components/test_component/subcomponent/alpha_beta_gamma/template.html")
+            .path(),
+    )
+    .unwrap();
+
+    assert!(html.contains("<div data-controller=\"test-component-subcomponent-alpha-beta-gamma\">"));
+}
+
+#[test]
 fn test_invalid_component_names() {
     let temp = assert_fs::TempDir::new().unwrap();
-    for name in [
-        "has-a-dash",
-        "5_starts_with_a_number",
-        "has%_special_characters",
-    ] {
+    for name in ["5_starts_with_a_number", "has%_special_characters"] {
         let mut cmd = Command::cargo_bin("cargo-pgml-components").unwrap();
 
         cmd.arg("pgml-components")

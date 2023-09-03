@@ -9,7 +9,7 @@ use crate::frontend::templates;
 use crate::util::{compare_strings, error, info, unwrap_or_exit, write_to_file};
 
 static COMPONENT_DIRECTORY: &'static str = "src/components";
-static COMPONENT_NAME_REGEX: &'static str = "^[a-zA-Z]+[a-zA-Z0-9_/]*$";
+static COMPONENT_NAME_REGEX: &'static str = "^[a-zA-Z]+[a-zA-Z0-9_/-]*$";
 
 #[derive(Clone)]
 pub struct Component {
@@ -110,6 +110,7 @@ pub fn add(path: &Path, overwrite: bool) {
             c.as_os_str()
                 .to_str()
                 .expect("utf-8 component")
+                .replace("-", "_")
                 .to_case(Case::Snake)
         })
         .collect::<PathBuf>();
