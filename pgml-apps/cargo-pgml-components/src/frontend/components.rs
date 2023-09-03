@@ -148,7 +148,7 @@ pub fn add(path: &Path, overwrite: bool) {
     let rust = unwrap_or_exit!(templates::Component::new(&component).render_once());
     let stimulus = unwrap_or_exit!(templates::Stimulus::new(&component).render_once());
     let html = unwrap_or_exit!(templates::Html::new(&component).render_once());
-    let scss = String::new();
+    let scss = unwrap_or_exit!(templates::Sass::new(&component).render_once());
 
     let html_path = path.join("template.html");
     unwrap_or_exit!(write_to_file(&html_path, &html));

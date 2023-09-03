@@ -66,7 +66,7 @@ fn install_node() {
 
     debug!("node is not available");
 
-    if let Err(err) = execute_command(Command::new("nvm").arg("--version")) {
+    if let Err(err) = execute_with_nvm(Command::new("nvm").arg("--version")) {
         debug!("nvm is not available");
         debug1!(err);
         // Install Node Version Manager.

@@ -50,3 +50,17 @@ pub struct Mod {
     pub modules: Vec<ComponentModel>,
     pub root: bool,
 }
+
+#[derive(TemplateOnce)]
+#[template(path = "frontend/templates/sass.scss.tpl")]
+pub struct Sass {
+    pub component: ComponentModel,
+}
+
+impl Sass {
+    pub fn new(component: &ComponentModel) -> Self {
+        Self {
+            component: component.clone(),
+        }
+    }
+}

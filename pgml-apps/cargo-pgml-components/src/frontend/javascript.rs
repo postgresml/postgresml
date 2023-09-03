@@ -126,6 +126,7 @@ pub fn bundle() {
     assemble_modules();
 
     // Bundle JavaScript.
+    info("bundling javascript with rollup");
     unwrap_or_exit!(execute_with_nvm(
         Command::new(JS_COMPILER)
             .arg(MODULES_FILE)
