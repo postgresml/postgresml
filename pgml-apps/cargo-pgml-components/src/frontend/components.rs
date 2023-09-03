@@ -104,6 +104,16 @@ pub fn add(path: &Path, overwrite: bool) {
         exit(1);
     }
 
+    let path = path
+        .components()
+        .map(|c| {
+            c.as_os_str()
+                .to_str()
+                .expect("utf-8 component")
+                .to_case(Case::Snake)
+        })
+        .collect::<PathBuf>();
+
     let mut parent = path.parent().expect("paths should have parents");
     let mut full_path = Path::new(COMPONENT_DIRECTORY).join(parent);
 
@@ -123,7 +133,7 @@ pub fn add(path: &Path, overwrite: bool) {
         full_path = Path::new(COMPONENT_DIRECTORY).join(parent);
     }
 
-    let component = Component::from(path);
+    let component = Component::from(path.as_path());
     let path = component.full_path();
 
     if path.exists() && !overwrite {
