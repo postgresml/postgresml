@@ -4,7 +4,6 @@
 mod component;
 pub(crate) use component::{component, Component};
 
-
 // src/components/breadcrumbs
 pub mod breadcrumbs;
 pub use breadcrumbs::Breadcrumbs;

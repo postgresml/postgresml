@@ -5,15 +5,13 @@ use crate::frontend::components::Component as ComponentModel;
 #[derive(TemplateOnce)]
 #[template(path = "frontend/templates/component.rs.tpl")]
 pub struct Component {
-    pub component_name: String,
-    pub component_path: String,
+    pub component: ComponentModel,
 }
 
 impl Component {
     pub fn new(component: &ComponentModel) -> Self {
         Self {
-            component_name: component.name(),
-            component_path: component.path(),
+            component: component.clone(),
         }
     }
 }
@@ -21,13 +19,13 @@ impl Component {
 #[derive(TemplateOnce)]
 #[template(path = "frontend/templates/template.html.tpl")]
 pub struct Html {
-    pub controller_name: String,
+    pub component: ComponentModel,
 }
 
 impl Html {
     pub fn new(component: &ComponentModel) -> Self {
         Self {
-            controller_name: component.path().replace("_", "-"),
+            component: component.clone(),
         }
     }
 }
@@ -50,4 +48,19 @@ impl Stimulus {
 #[template(path = "frontend/templates/mod.rs.tpl")]
 pub struct Mod {
     pub modules: Vec<ComponentModel>,
+    pub root: bool,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "frontend/templates/sass.scss.tpl")]
+pub struct Sass {
+    pub component: ComponentModel,
+}
+
+impl Sass {
+    pub fn new(component: &ComponentModel) -> Self {
+        Self {
+            component: component.clone(),
+        }
+    }
 }

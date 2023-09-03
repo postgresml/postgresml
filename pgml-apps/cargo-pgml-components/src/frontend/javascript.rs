@@ -1,14 +1,16 @@
 //! Javascript bundling.
 
 use glob::glob;
+use std::collections::HashSet;
 use std::fs::{copy, read_to_string, remove_file, File};
 use std::io::Write;
-use std::process::Command;
+use std::path::PathBuf;
+use std::process::{exit, Command};
 
 use convert_case::{Case, Casing};
 
 use crate::frontend::tools::execute_with_nvm;
-use crate::util::{info, unwrap_or_exit, warn};
+use crate::util::{error, info, unwrap_or_exit, warn};
 
 /// The name of the JS file that imports all other JS files
 /// created in the modules.
@@ -64,20 +66,44 @@ fn assemble_modules() {
         "const application = Application.start()"
     ));
 
+    let mut dup_check = HashSet::new();
+
+    // You can have controllers in static/js
+    // or in their respective components folders.
     for source in js {
         let source = unwrap_or_exit!(source);
 
-        let full_path = source.display();
-        let stem = source.file_stem().unwrap().to_str().unwrap();
-        let upper_camel = stem.to_case(Case::UpperCamel);
+        let full_path = source.display().to_string();
 
-        let mut controller_name = stem.split("_").collect::<Vec<&str>>();
+        let path = source
+            .components()
+            .skip(2) // skip src/components or static/js
+            .collect::<Vec<_>>();
 
-        if stem.contains("controller") {
-            let _ = controller_name.pop().unwrap();
+        assert!(!path.is_empty());
+
+        let path = path.iter().collect::<PathBuf>();
+        let components = path.components();
+        let controller_name = if components.clone().count() > 1 {
+            components
+                .map(|c| c.as_os_str().to_str().expect("component to be valid utf-8"))
+                .filter(|c| !c.ends_with(".js"))
+                .collect::<Vec<&str>>()
+                .join("_")
+        } else {
+            path.file_stem()
+                .expect("old controllers to be a single file")
+                .to_str()
+                .expect("stemp to be valid utf-8")
+                .to_string()
+        };
+        let upper_camel = controller_name.to_case(Case::UpperCamel).to_string();
+        let controller_name = controller_name.replace("_", "-");
+
+        if !dup_check.insert(controller_name.clone()) {
+            error(&format!("duplicate controller name: {}", controller_name));
+            exit(1);
         }
-
-        let controller_name = controller_name.join("-");
 
         unwrap_or_exit!(writeln!(
             &mut modules,
@@ -100,6 +126,7 @@ pub fn bundle() {
     assemble_modules();
 
     // Bundle JavaScript.
+    info("bundling javascript with rollup");
     unwrap_or_exit!(execute_with_nvm(
         Command::new(JS_COMPILER)
             .arg(MODULES_FILE)

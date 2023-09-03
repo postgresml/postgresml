@@ -78,6 +78,7 @@ pub fn bundle() {
     cleanup_old_bundles();
 
     // Build Sass.
+    info("bundling css with sass");
     unwrap_or_exit!(execute_with_nvm(
         Command::new(SASS_COMPILER).arg(SASS_FILE).arg(CSS_FILE),
     ));

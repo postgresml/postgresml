@@ -8,6 +8,7 @@ use std::path::Path;
 #[macro_use]
 extern crate log;
 
+mod backend;
 mod components;
 mod frontend;
 mod util;
@@ -75,7 +76,7 @@ fn main() {
                 Commands::Bundle {} => bundle(),
                 Commands::Add(command) => match command {
                     AddCommands::Component { name } => {
-                        crate::frontend::components::add(&name, pgml_commands.overwrite)
+                        crate::frontend::components::add(&Path::new(&name), pgml_commands.overwrite)
                     }
                 },
             }
