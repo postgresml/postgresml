@@ -256,6 +256,17 @@ fn test_component_with_dashes() {
     .unwrap();
 
     assert!(html.contains("<div data-controller=\"test-component-subcomponent-alpha-beta-gamma\">"));
+
+    for path in [
+        "test_component/subcomponent/mod.rs",
+        "test_component/mod.rs",
+    ] {
+        temp.child(&format!("src/components/{}", path))
+            .assert(predicate::path::exists());
+
+        let file = read_to_string(temp.child(&format!("src/components/{}", path)).path()).unwrap();
+        assert!(file.contains("pub mod"));
+    }
 }
 
 #[test]
