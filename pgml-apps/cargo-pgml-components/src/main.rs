@@ -8,6 +8,7 @@ use std::path::Path;
 #[macro_use]
 extern crate log;
 
+mod backend;
 mod components;
 mod frontend;
 mod util;

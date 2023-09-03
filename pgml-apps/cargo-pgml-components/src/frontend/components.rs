@@ -1,4 +1,5 @@
 use convert_case::{Case, Casing};
+use regex::Regex;
 use sailfish::TemplateOnce;
 use std::fs::{create_dir_all, read_dir, read_to_string};
 use std::path::{Path, PathBuf};
@@ -8,6 +9,7 @@ use crate::frontend::templates;
 use crate::util::{compare_strings, error, info, unwrap_or_exit, write_to_file};
 
 static COMPONENT_DIRECTORY: &'static str = "src/components";
+static COMPONENT_NAME_REGEX: &'static str = "^[a-zA-Z]+[a-zA-Z0-9_/]*$";
 
 #[derive(Clone)]
 pub struct Component {
@@ -17,11 +19,20 @@ pub struct Component {
 }
 
 impl Component {
+    /// Create a new component.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the component.
+    /// * `path` - The path of the component, relative to `src/components`.
+    ///
     pub fn new(name: &str, path: &Path) -> Component {
+        let full_path = Path::new(COMPONENT_DIRECTORY).join(path);
+
         Component {
             name: name.to_owned(),
             path: path.to_owned(),
-            is_node: has_more_modules(path),
+            is_node: has_more_modules(&full_path),
         }
     }
 
@@ -86,13 +97,30 @@ pub fn add(path: &Path, overwrite: bool) {
         exit(1);
     }
 
-    let parent = path
-        .parent()
-        .expect("paths should have parents, where are you putting the component?");
+    let regex = Regex::new(COMPONENT_NAME_REGEX).unwrap();
 
-    if parent.exists() && !has_more_modules(parent) {
-        error("component cannot be placed into a directory that has a component already");
+    if !regex.is_match(&path.to_str().unwrap()) {
+        error("component name is not valid");
         exit(1);
+    }
+
+    let mut parent = path.parent().expect("paths should have parents");
+    let mut full_path = Path::new(COMPONENT_DIRECTORY).join(parent);
+
+    while full_path != Path::new(COMPONENT_DIRECTORY) {
+        debug!("testing full path: {}", full_path.display());
+
+        if full_path.exists()
+            && full_path != Path::new(COMPONENT_DIRECTORY) // Not a top-level compoment
+            && !has_more_modules(&full_path)
+        // Directory contains a module already.
+        {
+            error("component cannot be placed into a directory that has a component already");
+            exit(1);
+        }
+
+        parent = parent.parent().expect("paths should have parents");
+        full_path = Path::new(COMPONENT_DIRECTORY).join(parent);
     }
 
     let component = Component::from(path);
@@ -138,6 +166,7 @@ pub fn update_modules() {
 /// Recusively write `mod.rs` in every Rust module directory
 /// that has other modules in it.
 fn update_module(path: &Path, root: bool) {
+    debug!("updating {} module", path.display());
     let mut modules = Vec::new();
     let mut paths: Vec<_> = unwrap_or_exit!(read_dir(path))
         .map(|p| p.unwrap())
@@ -151,7 +180,10 @@ fn update_module(path: &Path, root: bool) {
         }
 
         if has_more_modules(&path) {
+            debug!("{} has more modules", path.display());
             update_module(&path, false);
+        } else {
+            debug!("it does not really no");
         }
 
         let component_path = path.components().skip(2).collect::<PathBuf>();
@@ -159,8 +191,11 @@ fn update_module(path: &Path, root: bool) {
         modules.push(component);
     }
 
+    debug!("writing {} modules to mod.rs", modules.len());
+
     let components_mod = path.join("mod.rs");
-    let modules = unwrap_or_exit!(templates::Mod { modules, root }.render_once()).replace("\n\n", "\n");
+    let modules =
+        unwrap_or_exit!(templates::Mod { modules, root }.render_once()).replace("\n\n", "\n");
 
     let existing_modules = if components_mod.is_file() {
         unwrap_or_exit!(read_to_string(&components_mod))
@@ -179,10 +214,10 @@ fn update_module(path: &Path, root: bool) {
 
 /// Check that the path has more Rust modules.
 fn has_more_modules(path: &Path) -> bool {
-    let path = Path::new(COMPONENT_DIRECTORY).join(path);
     debug!("checking if {} has more modules", path.display());
 
     if !path.exists() {
+        debug!("path does not exist");
         return false;
     }
 
@@ -198,11 +233,13 @@ fn has_more_modules(path: &Path) -> bool {
 
         if let Some(file_name) = path.file_name() {
             if file_name != "mod.rs" {
+                debug!("it has another file that's not mod.rs");
                 return false;
             }
         }
     }
 
+    debug!("it does");
     true
 }
 

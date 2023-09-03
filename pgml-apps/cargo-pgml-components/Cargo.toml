@@ -18,3 +18,9 @@ env_logger = "0.10"
 anyhow = "1"
 owo-colors = "3"
 sailfish = "0.8"
+regex = "1"
+
+[dev-dependencies]
+assert_cmd = "2"
+assert_fs = "1"
+predicates = "3"
