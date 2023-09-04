@@ -2,7 +2,7 @@
 author: Montana Low
 description: PostgresML makes it easy to use machine learning on your data and scale workloads horizontally in our cloud. One of the most common use cases is to improve search results. In this article, we'll show you how to build a search engine from the ground up, that leverages multiple types of natural language processing (NLP) and machine learning (ML) models to improve search results, including vector search and also personalization with embeddings.
 image: https://postgresml.org/dashboard/static/images/blog/elephant_sky.jpg
-image_alt: Postgres is a beautiful composition engine that provides advanced AI capabilities..
+image_alt: PostgresML is a composition engine that provides advanced AI capabilities.
 ---
 
 # How-to Improve Search Results with Machine Learning
@@ -19,7 +19,7 @@ image_alt: Postgres is a beautiful composition engine that provides advanced AI 
 PostgresML makes it easy to use machine learning with your database and to scale workloads horizontally in our cloud. One of the most common use cases is to improve search results. In this article, we'll show you how to build a search engine from the ground up, that leverages multiple types of natural language processing (NLP) and machine learning (ML) models to improve search results, including vector search and personalization with embeddings. 
 
 <img src="/dashboard/static/images/blog/elephant_sky.jpg" alt="data is always the best medicine" />
-<center><p><i>Postgres is a beautiful composition engine that provides advanced AI capabilities.</i></p></center>
+<center><p><i>PostgresML is a composition engine that provides advanced AI capabilities.</i></p></center>
 
 ## Keyword Search
 
@@ -147,9 +147,9 @@ WHERE title_and_body_text @@ to_tsquery('english', 'another & second');
 
 !!! results
 
- id |         title         |                   body                   |                  title_and_body_text
-----+-----------------------+------------------------------------------+-------------------------------------------------------
-  2 | This is another title | This is the body of the second document. | 'anoth':3 'bodi':8 'document':12 'second':11 'titl':4
+| id | title                 | body                                     | title_and_body_text                                   |
+|----|-----------------------|------------------------------------------|-------------------------------------------------------|
+| 2  | This is another title | This is the body of the second document. | 'anoth':3 'bodi':8 'document':12 'second':11 'titl':4 |
 
 !!!
 
@@ -397,7 +397,7 @@ WITH first_pass_ranked_documents AS (
 SELECT
     -- Use the ML model to predict the probability that a user will click on the result
     pgml.predict('Search Ranking', array[title_rank, body_rank]) AS ml_rank,
-     *
+    *
 FROM first_pass_ranked_documents
 ORDER BY ml_rank DESC
 LIMIT 10;
@@ -420,6 +420,8 @@ LIMIT 10;
 
 You'll notice that calculating the `ml_rank` adds virtually no additional time to the query. The `ml_rank` is not exactly "well calibrated", since I just made up 4 for searches worth of `search_result_clicks` data, but it's a good example of how we can use machine learning to re-rank search results extremely efficiently, without having to write much code or deploy any new microservices.
 
+You can also be selective about which fields you return to the application for greater efficiency over the network, or return everything for logging and debugging modes. After all, this is all just standard SQL, with a few extra function calls involved to make predictions.
+
 ## Next steps with Machine Learning
 
 With composable CTEs and a mature Postgres ecosystem, you can continue to extend your search engine capabilities in many ways.
@@ -432,7 +434,7 @@ Postgres offers `MATERIALIZED VIEWS` that can be periodically refreshed to compu
 
 ### Use more sophisticated ML Algorithms
 
-PostgresML offers more than 50 algorithms. Modern tree based models like XGBoost, LightGBM and CatBoost provide state-of-the-art results for ranking problems like this. They are also relatively fast and efficient. PostgresML makes it simple to just pass an additional `algorithm` parameter to the `pgml.train` function to use a different algorithm. All the resulting models will be tracked in your project, and the best one automatically deployed. You can also pass a specific **model_id** to `pgml.predict` instead of a **project_name** to use a specific model. This makes it easy to compare the results of different algorithms statistically. You can also compare the results of different algorithms at the application level in AB tests for business metrics, not just statistical measures like r<sup>2</sup>.
+PostgresML offers more than 50 algorithms. Modern gradient boosted tree based models like XGBoost, LightGBM and CatBoost provide state-of-the-art results for ranking problems like this. They are also relatively fast and efficient. PostgresML makes it simple to just pass an additional `algorithm` parameter to the `pgml.train` function to use a different algorithm. All the resulting models will be tracked in your project, and the best one automatically deployed. You can also pass a specific **model_id** to `pgml.predict` instead of a **project_name** to use a specific model. This makes it easy to compare the results of different algorithms statistically. You can also compare the results of different algorithms at the application level in AB tests for business metrics, not just statistical measures like r<sup>2</sup>.
 
 ### Train regularly
 
@@ -450,7 +452,7 @@ There are a few ways to implement personalization for search results. PostgresML
 
 ### Multi-Modal Search
 
-You may want to offer search results over multiple document types. For example a professional social networking site may return results from **People**, **Companies**, **Job Postings**, etc. You can have features specific to each document type, and PostgresML will handle the `NULL` inputs where documents don't have data for specific feature. This will allow you to build one model that ranks all types of "documents" together to optimize a single global objective.
+You may want to offer search results over multiple document types. For example a professional social networking site may return results from **People**, **Companies**, **JobPostings**, etc. You can have features specific to each document type, and PostgresML will handle the `NULL` inputs where documents don't have data for specific feature. This will allow you to build one model that ranks all types of "documents" together to optimize a single global objective.
 
 ### Tie it all together in a single query
 
@@ -458,7 +460,7 @@ You can tier multiple models and ranking algorithms together in a single query. 
 
 ### Make it fast
 
-When you have a dozen joins across many tables in a single query, it's important to make sure the query is fast. We typically target sub 100ms for end to end search latency, including LLM embedding generation and large production scale datasets. You can use standard `EXPLAIN ANALYZE ...` SQL to see what parts of the query take the cost the most time or memory. Postgres offers many index types (BTREE, GIST, GIN, IVFFLAT, HNSW) which can efficiently deal with billion row datasets of numeric, text, keyword, JSON, vector or even geospatial data. 
+When you have a dozen joins across many tables in a single query, it's important to make sure the query is fast. We typically target sub 100ms for end to end search latency on large production scale datasets, including LLM embedding generation, vector search, and personalization reranking. You can use standard SQL `EXPLAIN ANALYZE` to see what parts of the query take the cost the most time or memory. Postgres offers many index types (BTREE, GIST, GIN, IVFFLAT, HNSW) which can efficiently deal with billion row datasets of numeric, text, keyword, JSON, vector or even geospatial data. 
 
 ### Make it scale
 
