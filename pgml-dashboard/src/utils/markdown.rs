@@ -220,7 +220,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
             let code = match options.lang {
                 "postgresql" | "sql" | "postgresql-line-nums" => {
                     lazy_static! {
-                        static ref SQL_KEYS: [&'static str; 61] = [
+                        static ref SQL_KEYS: [&'static str; 66] = [
                             "CASCADE",
                             "INNER ",
                             "ON ",
@@ -288,7 +288,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "pgml.predict",
                             "pgml.transform",
                         ];
-                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 61] = [
+                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 66] = [
                             "<span class=\"syntax-highlight\">CASCADE</span>",
                             "<span class=\"syntax-highlight\">INNER </span>",
                             "<span class=\"syntax-highlight\">ON </span>",
@@ -346,6 +346,11 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "<strong>pgml.norm_l2</strong>",
                             "<span class=\"syntax-highlight\">CONCURRENTLY</span>",
                             "<span class=\"syntax-highlight\">ON</span>\n",
+                            "<span class=\"syntax-highlight\">VALUES</span>",
+                            "<span class=\"syntax-highlight\">@@</span>",
+                            "<span class=\"syntax-highlight\">=></span>",
+                            "<span class=\"syntax-highlight\">GENERATED ALWAYS AS</span>",
+                            "<span class=\"syntax-highlight\">STORED</span>",
                             "<span class=\"syntax-highlight\">IF NOT EXISTS</span>",
                             "<strong>pgml.train</strong>",
                             "<strong>pgml.predict</strong>",
