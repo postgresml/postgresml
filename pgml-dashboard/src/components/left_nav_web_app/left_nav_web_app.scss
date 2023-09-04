@@ -1,0 +1,12 @@
+.leftnav {
+    @extend .navbar;
+    max-width: 260px;
+
+    border: none;
+    align-items: start;
+    background-color: inherit;
+
+    @include media-breakpoint-down(lg) {
+        background-color: #{$gray-900}
+    }
+}

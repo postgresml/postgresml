@@ -1,11 +1,39 @@
 <% use crate::components::*; %>
 
-<h3 class="h3">Playground</h3>
+<div class="min-height: 100vh;">
+  <h3 class="h3">Playground</h3>
 
-<div class="mb-3">
-  <%+ GithubIcon::new() %>
-</div>
+  <div class="mb-3">
+    <%+ GithubIcon::new() %>
+  </div>
 
-<div class="mb-3">
-  <%- Navbar::render(None) %>
+  <div class="mb-3">
+    <div class="row">
+      <div class="col-6" style="min-height: 400px;">
+        <%+ Dropdown::new(
+          vec![
+            StaticNavLink::new("Test".into(), "#test".into())
+          ]
+        ).collapsable()
+        .icon(ProfileIcon::new().into()) %>
+      </div>
+      <div class="col-6" style="min-height: 400px;">
+        <%+ Dropdown::new(
+          vec![
+            StaticNavLink::new("Test".into(), "#test".into())
+          ]
+        ).collapsable()
+        .text("Dropdown".into()) %>
+      </div>
+      <div class="col-2" style="min-height: 400px;">
+        <%+ Dropdown::new(
+          vec![
+            StaticNavLink::new("Really long title in the dropdown".into(), "#test".into()),
+            StaticNavLink::new("Normal link".into(), "#test".into())
+          ]
+        ).collapsable()
+        .text("Really long name in the dropdown".into()) %>
+      </div>
+    </div>
+  </div>
 </div>

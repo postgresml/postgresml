@@ -1,5 +1,6 @@
 <% use crate::templates::components::GithubIcon; %>
 <% use crate::templates::components::PostgresLogo; %>
+<% use crate::components::{Dropdown, ProfileIcon}; %>
 
   <div class="fixed-top-nav">
     <nav class="navbar-web-app horizontal navbar-expand-lg" data-controller="search topnav-web-app">
@@ -57,22 +58,12 @@
             </li>
   
             <% if !account_management_nav.links.is_empty() { %>
-            <li class="d-none d-lg-flex nav-item align-items-center dropdown">
-              <a class="dropdown-toggle topnav-controlls" href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="10, 15" aria-expanded="false">
-                <% include!("../../../templates/components/profile_icon.html"); %>
-              </a>
-              <!-- Account management for lg and up screens -->
-              <ul class="dropdown-menu dropdown-menu-end">
-                <% for item in account_management_nav.links.clone() { %>
-                  <li class="menu-item rounded-0 d-flex align-items-center <% if item.disabled { %>disabled<% } %>">
-                    <a class="<% if item.disabled { %>disabled<% } %>" <% if item.disabled { %>
-                      href="" disabled <% } else { %>
-                      href="<%- item.href %>"<% } %>>
-                      <%- item.name %>
-                    </a>
-                  </li>
-                <% } %>
-              </ul>
+            <li class="d-none d-lg-flex nav-item align-items-center">
+              <%+
+                  Dropdown::new(account_management_nav.links.clone())
+                    .icon(ProfileIcon::new().into())
+                    .expandable()
+                %>
             </li>
             <li class="nav-item d-flex d-lg-none align-items-center">
               <a class="nav-link p-lg-0" data-bs-toggle="collapse" data-bs-target=".horizontal-collapse">Account Management</a>

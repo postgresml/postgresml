@@ -1,0 +1,56 @@
+
+<% use crate::components::dropdown::DropdownValue; %>
+
+<!-- Dropdown component -->
+<div class="dropdown <% if expandable { %>expandable<% } %>">
+  <% if let DropdownValue::Icon(icon) = value { %>
+  <a
+    class="topnav-controlls dropdown-toggle"
+    role="button"
+    data-bs-toggle="dropdown"
+    data-bs-offset="<%= offset %>"
+    href="#"
+    aria-expanded="false">
+      <%+ icon %>
+  </a>
+  <% } else if let DropdownValue::Text(text) = value { %>
+  <button
+    class="horizontal-hide btn btn-dropdown dropdown-toggle <% if collapsable { %> leftnav-collapse-affect <% } %>"
+    role="button"
+    data-bs-toggle="dropdown"
+    data-bs-offset="<%= offset %>"
+    aria-expanded="false">
+      <span class="btn-dropdown-text"><%+ text %></span>
+      <span class="material-symbols-outlined">
+        expand_more
+      </span>
+  </button>
+  <% } %>
+
+  <% if collapsable { %>
+  <div
+    class="menu-item horizontal-hide dropdown-toggle collapsed <% if collapsable { %> leftnav-collapse-affect <% } %>"
+    role="button"
+    data-bs-toggle="dropdown"
+    data-bs-offset="<%= offset_collapsed %>"
+    aria-expanded="false"
+  >
+    <a class="d-flex align-items-center justify-content-start gap-2">
+      <span class="material-symbols-outlined">grid_view</span>
+    </a>
+  </div>
+  <% } %>
+
+  <ul class="dropdown-menu <%= menu_position %>">
+    <% for link in links { %>
+      <li class="menu-item d-flex align-items-center <% if link.disabled { %>disabled<% } %>">
+        <% if link.disabled { %>
+          <a type="button" class="dropdown-item" disabled href="#"><%= link.name %></a>
+        <% } else { %>
+          <a type="button" class="dropdown-item" href="<%- link.href %>"><%= link.name %></a>
+        <% } %>
+      </li>
+    <% } %>
+  </ul>
+</div>
+<!-- /Dropdown component -->
