@@ -97,7 +97,7 @@ Postgres provides the complete reference [documentation](https://www.postgresql.
 
 ### Indexing
 
-Postgres treats everything in the standard SQL `WHERE` clause as a filter, by default. It makes this keyword search work by scanning the entire table, converting each document body to a `tsvector`, and then comparing the `tsquery` to the `tsvector`. This is called a "sequential scan". It's fine for small tables, but for production use cases at scale, we'll need a more efficient solution. 
+Postgres treats everything in the standard SQL `WHERE` clause as a filter. By default, it makes this keyword search work by scanning the entire table, converting each document body to a `tsvector`, and then comparing the `tsquery` to the `tsvector`. This is called a "sequential scan". It's fine for small tables, but for production use cases at scale, we'll need a more efficient solution. 
 
 The first step is to store the `tsvector` in the table, so we don't have to generate it during each search. We can do this by adding a new `GENERATED` column to our table, that will automatically stay up to date. We also want to search both the **title** and **body**, so we'll concatenate `||` the fields we want to include in our search, separated by a simple space `' '`. 
 
@@ -115,7 +115,7 @@ GENERATED ALWAYS AS (to_tsvector('english', title || ' ' || body )) STORED;
 
 !!!
 
-One nice function of generated columns is that they will backfill the data for existing columns. They can also be indexed, just like any other column. We can add a Generalized Inverted Index (GIN) on this new column that will pre-compute the lists of all documents that contain each keyword. This will allow us to skip the sequential scan, and instead use the index to find the exact list of documents that satisfy any given `tsquery`.
+One nice aspect of generated columns is that they will backfill the data for existing rows. They can also be indexed, just like any other column. We can add a Generalized Inverted Index (GIN) on this new column that will pre-compute the lists of all documents that contain each keyword. This will allow us to skip the sequential scan, and instead use the index to find the exact list of documents that satisfy any given `tsquery`.
 
 !!! generic
 
@@ -155,11 +155,11 @@ WHERE title_and_body_text @@ to_tsquery('english', 'another & second');
 
 !!!
 
-We can see our new `tsvector` column in the results now as well, since we used `SELECT *`. You'll notice that the `tsvector` contains the stemmed words from both the **title** and **body**, along with their position. The position information allows Postgres to support **phrase** matches as well as single keywords. You'll also notice that _stopwords_, like "the", "is", and "of" have been removed. This is a common optimization for keyword search, since these words are so common, they don't add much value to the search results.
+We can see our new `tsvector` column in the results now as well, since we used `SELECT *`. You'll notice that the `tsvector` contains the stemmed words from both the **title** and **body**, along with their position. The position information allows Postgres to support _phrase_ matches as well as single keywords. You'll also notice that _stopwords_, like "the", "is", and "of" have been removed. This is a common optimization for keyword search, since these words are so common, they don't add much value to the search results.
 
 ### Ranking
 
-Ranking is a critical component of search, and it's also where Machine Learning becomes critical for great results. Our users will expect us to sort our results with the most relevant at the top. A simple arithmatic relevance score is provided `ts_rank`. It computes the Term Frequency (TF) of each keyword in the query that matches the document. For example, if the document has 2 keyword matches out of 5 words total, it's `ts_rank` will be `2 / 5 = 0.4`. The more matches and the fewer total words, the higher the score and the more relevant the document.
+Ranking is a critical component of search, and it's also where Machine Learning becomes critical for great results. Our users will expect us to sort our results with the most relevant at the top. A simple arithmetic relevance score is provided `ts_rank`. It computes the Term Frequency (TF) of each keyword in the query that matches the document. For example, if the document has 2 keyword matches out of 5 words total, it's `ts_rank` will be `2 / 5 = 0.4`. The more matches and the fewer total words, the higher the score and the more relevant the document.
 
 With multiple query terms OR `|` together, the `ts_rank` will add the numerators and denominators to account for both. For example, if the document has 2 keyword matches out of 5 words total for the first query term, and 1 keyword match out of 5 words total for the second query term, it's ts_rank will be `(2 + 1) / (5 + 5) = 0.3`. The full `ts_rank` function has many additional options and configurations that you can read about in the [documentation](https://www.postgresql.org/docs/current/textsearch-controls.html#TEXTSEARCH-RANKING), but this should give you the basic idea.
 
@@ -189,7 +189,7 @@ Our document that matches 2 of the keywords has twice the score of the documents
 
 ### Boosting
 
-A quick improvement we could make to our search query would be to differentiate relevance of the title and body. It's intuitive that a keyword match in the title is more relevant than a keyword match in the body. We can implement a simple boosting function by multiplying the title rank 2x, and adding it to the body rank. This will **boost** title matches up the rankings in our final results list. This can be done by creating a simple arithmetic formula in the `ORDER BY` clause.
+A quick improvement we could make to our search query would be to differentiate relevance of the title and body. It's intuitive that a keyword match in the title is more relevant than a keyword match in the body. We can implement a simple boosting function by multiplying the title rank 2x, and adding it to the body rank. This will _boost_ title matches up the rankings in our final results list. This can be done by creating a simple arithmetic formula in the `ORDER BY` clause.
 
 !!! generic
 
@@ -212,11 +212,11 @@ Wait a second... is a title match 2x or 10x, or maybe log(π / tsrank<sup>2</sup
 
 So far we've only considered simple statistical measures of relevance like `ts_rank`s TF/IDF, but people have a much more sophisticated idea of relevance. Luckily, they'll tell you exactly what they think is relevant by clicking on it. We can use this feedback to train a model that learns the optimal weights of **title_rank** vs **body_rank** for our boosting function. We'll redefine relevance as the probability that a user will click on a search result, given our inputs like **title_rank** and **body_rank**.
 
-This is considered a Supervised Learning problem, because we have a labeled dataset of user clicks that we can use to train our model. The inputs to our function are called **features** of the data for the machine learning model, and the output is often referred to as the **label**.
+This is considered a Supervised Learning problem, because we have a labeled dataset of user clicks that we can use to train our model. The inputs to our function are called _features_ of the data for the machine learning model, and the output is often referred to as the _label_.
 
 ### Training Data
 
-First things first, we need to record some user clicks on our search results. We'll create a new table to store our training data, which are the observed inputs and output of our new relevance function. In a real system, we'd probably have separate tables to record **sessions**, **searches**, **results**, **clicks** and other events, but for simplicity in this example, we'll just record the exact information we need to train our model in a single table. Everytime we perform a search, we'll record the `ts_rank` for the both the title and body, and whether the user clicked on the result.
+First things first, we need to record some user clicks on our search results. We'll create a new table to store our training data, which are the observed inputs and output of our new relevance function. In a real system, we'd probably have separate tables to record **sessions**, **searches**, **results**, **clicks** and other events, but for simplicity in this example, we'll just record the exact information we need to train our model in a single table. Everytime we perform a search, we'll record the `ts_rank` for the both the **title** and **body**, and whether the user **clicked** on the result.
 
 !!! generic
 
@@ -232,9 +232,9 @@ CREATE TABLE search_result_clicks (
 
 !!!
 
-One of the hardest parts of machine learning is gathering the data from disparate sources and turning it into features like this. There are often teams of data engineers involved maintain endless pipelines from one feature store or data warehouse and then back again. We don't need that complexity in PostgresML and can just insert the ML features directly into the database.
+One of the hardest parts of machine learning is gathering the data from disparate sources and turning it into features like this. There are often teams of data engineers involved in maintaining endless pipelines from one feature store or data warehouse and then back again. We don't need that complexity in PostgresML and can just insert the ML features directly into the database.
 
-I've made up 4 example searches, across our 3 documents, and recorded the `ts_rank` for the title and body, and whether the user clicked on the result. I've cherry-picked some intuitive results, where the user always clicked on the top ranked document, that has the highest combined title and body ranks. We'll insert this data into our new table.
+I've made up 4 example searches, across our 3 documents, and recorded the `ts_rank` for the **title** and **body**, and whether the user **clicked** on the result. I've cherry-picked some intuitive results, where the user always clicked on the top ranked document, that has the highest combined title and body ranks. We'll insert this data into our new table.
 
 !!! generic
 
@@ -267,11 +267,11 @@ VALUES
 
 !!!
 
-In a real application, we'd record the results of millions of searches results with the ts_ranks and clicks from our users, but even this small amount of data is enough to train a model with PostgresML. Bootstrapping or back-filling data is also possible with several techniques. You could build the app, and have your admins or employees just use it to generate training data before a public release. 
+In a real application, we'd record the results of millions of searches results with the ts_ranks and clicks from our users, but even this small amount of data is enough to train a model with PostgresML. Bootstrapping or back-filling data is also possible with several techniques. You could build the app, and have your admins or employees use it to generate training data before a public release. 
 
 ### Training a Model to rank search results
 
-We'll train a model for our "Search Ranking" project using the `pgml.train` function, which takes several arguments. The `project_name` is just a handle we can use to refer to the model later when we're ranking results, and the `task` is the type of model we want to train. In this case, we want to train a model to predict the probability of a user clicking on a search result, given the `title_rank` and `body_rank` of the result. This is a regression problem, because we're predicting a continuous value between 0 and 1. We could also train a classification model to make a boolean prediction whether a user will click on a result, but we'll save that for another example. 
+We'll train a model for our "Search Ranking" project using the `pgml.train` function, which takes several arguments. The `project_name` is a handle we can use to refer to the model later when we're ranking results, and the `task` is the type of model we want to train. In this case, we want to train a model to predict the probability of a user clicking on a search result, given the `title_rank` and `body_rank` of the result. This is a regression problem, because we're predicting a continuous value between 0 and 1. We could also train a classification model to make a boolean prediction whether a user will click on a result, but we'll save that for another example. 
 
 Here goes some machine learning:
 
@@ -364,13 +364,13 @@ If you're watching your database logs, you'll notice the first time a model is u
 !!!
 
 
-The model is predicting values close to 1 where there was a click, and values closer to 0 where there wasn't a click. This is a good sign that the model is learning something useful. We can also use the `pgml.predict` function to make predictions on new data, and this is where things actually get interesting in online search results with PostgresML.
+The model is predicting values close to 1 when there was a click, and values closer to 0 when there wasn't a click. This is a good sign that the model is learning something useful. We can also use the `pgml.predict` function to make predictions on new data, and this is where things actually get interesting in online search results with PostgresML.
 
 ### Ranking Search Results with Machine Learning
 
 Search results are often computed in multiple steps of recall and (re)ranking. Each step can apply more sophisticated (and expensive) models on more and more features, before pruning less relevant results for the next step. We're going to expand our original keyword search query to include a machine learning model that will re-rank the results. We'll use the `pgml.predict` function to make predictions on the title and body rank of each result, and then we'll use the predictions to re-rank the results.
 
-It's nice to organize the query into logical steps, and we can use **Common Table Expressions** (CTEs) to do this. CTEs are like temporary tables that only exist for the duration of the query. We can use CTEs to organize our query into logical steps. We'll start by defining a CTE that will rank all the documents in our table by the ts_rank for title and body text. We define a CTE with the `WITH` keyword, and then we can use the CTE as if it were a table in the rest of the query. We'll name our CTE **first_pass_ranked_documents**. Having the full power of SQL gives us a lot of power to flex in this step. 
+It's nice to organize the query into logical steps, and we can use **Common Table Expressions** (CTEs) to do this. CTEs are like temporary tables that only exist for the duration of the query. We'll start by defining a CTE that will rank all the documents in our table by the ts_rank for title and body text. We define a CTE using the `WITH` keyword, and then we can use the CTE as if it were a table in the rest of the query. We'll name our CTE **first_pass_ranked_documents**. Having the full power of SQL gives us a lot of power to flex in this step. 
 
 1) We can efficiently recall matching documents using the keyword index `WHERE title_and_body_text @@ to_tsquery('english', 'second | title'))`
 2) We can generate multiple ts_rank scores for each row the documents using the `ts_rank` function as if they were columns in the table
