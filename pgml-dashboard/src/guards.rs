@@ -59,7 +59,31 @@ impl Default for Cluster {
                             .active(true),
                     ],
                 },
-                account_management_nav: StaticNav::default(),
+                account_management_nav: StaticNav {
+                    links: vec![
+                        StaticNavLink::new("Notebooks".to_string(), "/dashboard".to_string()),
+                        StaticNavLink::new(
+                            "Projects".to_string(),
+                            "/dashboard?tab=Projects".to_string(),
+                        ),
+                        StaticNavLink::new(
+                            "Models".to_string(),
+                            "/dashboard?tab=Models".to_string(),
+                        ),
+                        StaticNavLink::new(
+                            "Snapshots".to_string(),
+                            "/dashboard?tab=Snapshots".to_string(),
+                        ),
+                        StaticNavLink::new(
+                            "Upload data".to_string(),
+                            "/dashboard?tab=Upload_Data".to_string(),
+                        ),
+                        StaticNavLink::new(
+                            "PostgresML.org".to_string(),
+                            "https://postgresml.org".to_string(),
+                        ),
+                    ],
+                },
                 upper_left_nav: StaticNav {
                     links: vec![
                         StaticNavLink::new(

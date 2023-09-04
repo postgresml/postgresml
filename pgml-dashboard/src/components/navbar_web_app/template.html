@@ -59,8 +59,11 @@
   
             <% if !account_management_nav.links.is_empty() { %>
             <li class="d-none d-lg-flex nav-item align-items-center">
-              <%+ Dropdown::new(account_management_nav.links.clone())
-              .icon(ProfileIcon::new().into()) %>
+              <%+
+                  Dropdown::new(account_management_nav.links.clone())
+                    .icon(ProfileIcon::new().into())
+                    .expandable()
+                %>
             </li>
             <li class="nav-item d-flex d-lg-none align-items-center">
               <a class="nav-link p-lg-0" data-bs-toggle="collapse" data-bs-target=".horizontal-collapse">Account Management</a>

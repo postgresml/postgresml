@@ -33,6 +33,7 @@ pub struct Dropdown {
 
     /// Where the dropdown menu should appear
     menu_position: String,
+    expandable: bool,
 }
 
 impl Dropdown {
@@ -89,6 +90,11 @@ impl Dropdown {
 
     pub fn offset_collapsed(mut self, offset: &str) -> Self {
         self.offset_collapsed = offset.to_owned();
+        self
+    }
+
+    pub fn expandable(mut self) -> Self {
+        self.expandable = true;
         self
     }
 }

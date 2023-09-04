@@ -20,6 +20,13 @@
         width: 100%;
     }
 
+    &.expandable {
+        .dropdown-menu {
+            width: auto;
+            min-width: 100%;
+        }
+    }
+
     .dropdown-item {
         overflow: hidden;
         text-overflow: ellipsis;
