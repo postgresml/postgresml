@@ -2,3 +2,15 @@
 [*.scss]
 indent_style = space
 indent_size = 4
+
+[*.js]
+indent_style = space
+indent_size = 2
+
+[*.rs]
+indent_style = space
+indent_size = 4
+
+[*.html]
+ident_style = space
+indent_size = 4
