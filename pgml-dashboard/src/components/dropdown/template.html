@@ -15,7 +15,7 @@
   </a>
   <% } else if let DropdownValue::Text(text) = value { %>
   <button
-    class="horizontal-hide btn btn-dropdown dropdown-toggle <% if collapsable { %> leftnav-collapse-affect <% } %>"
+    class="horizontal-hide btn btn-dropdown dropdown-toggle expanded <% if collapsable { %>leftnav-collapse-affect<% } %>"
     role="button"
     data-bs-toggle="dropdown"
     data-bs-offset="<%= offset %>"
