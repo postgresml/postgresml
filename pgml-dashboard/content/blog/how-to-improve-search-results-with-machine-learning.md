@@ -11,7 +11,7 @@ image_alt: PostgresML is a composition engine that provides advanced AI capabili
   <img width="54px" height="54px" src="/dashboard/static/images/team/montana.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Montana Low</p>
-    <p class="m-0">August 4, 2023</p>
+    <p class="m-0">September 4, 2023</p>
   </div>
 </div>
 
