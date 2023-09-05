@@ -133,18 +133,6 @@
     --bs-offcanvas-padding-x: 0;
 }
 
-.nav-tabs {
-
-    .nav-link {
-        @extend .btn, .btn-tertiary, .rounded-0;
-        border: none;
-
-        &.active {
-            border-bottom: var(--bs-nav-tabs-border-width) solid #{$purple};
-        }
-    }
-}
-
 .navbar-marketing-site {
     @extend .navbar;
 

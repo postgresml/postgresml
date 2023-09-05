@@ -4,7 +4,6 @@
 mod component;
 pub(crate) use component::{component, Component};
 
-
 // src/components/breadcrumbs
 pub mod breadcrumbs;
 pub use breadcrumbs::Breadcrumbs;
@@ -49,6 +48,9 @@ pub use navbar::Navbar;
 pub mod navbar_web_app;
 pub use navbar_web_app::NavbarWebApp;
 
+// src/components/navigation
+pub mod navigation;
+
 // src/components/postgres_logo
 pub mod postgres_logo;
 pub use postgres_logo::PostgresLogo;
@@ -64,6 +66,9 @@ pub use static_nav::StaticNav;
 // src/components/static_nav_link
 pub mod static_nav_link;
 pub use static_nav_link::StaticNavLink;
+
+// src/components/tables
+pub mod tables;
 
 // src/components/test_component
 pub mod test_component;

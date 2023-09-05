@@ -1,0 +1,30 @@
+<ul class="nav nav-tabs" role="tablist">
+  <% for tab in &tabs { %>
+  <li class="nav-item" role="presentation">
+    <button
+      class="<%= tab.button_classes() %>"
+      data-bs-toggle="tab"
+      data-bs-target="#<%= tab.id() %>"
+      type="button"
+      role="tab"
+      aria-controls="<%= tab.id() %>"
+      aria-selected="<%= tab.selected() %>"
+    >
+      <%= tab.name() %>
+    </button>
+  </li>
+  <% } %>
+</ul>
+<div class="tab-content">
+  <% for (i, tab) in tabs.into_iter().enumerate() { %>
+    <div
+      class="<%= tab.content_classes() %>"
+      id="<%= tab.id() %>"
+      role="tabpanel"
+      aria-labelledby="tab-<%= tab.id() %>"
+      tabindex="<%= i %>"
+    >
+      <%+ tab %>  
+    </div>
+  <% } %>
+</div>

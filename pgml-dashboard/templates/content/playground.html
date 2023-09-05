@@ -36,4 +36,27 @@
       </div>
     </div>
   </div>
+  <div class="mb-3">
+    <%+ navigation::tabs::Tabs::new(&vec![
+        navigation::tabs::Tab::new(
+            "Test tab",
+            "Test content".into()
+        ),
+        navigation::tabs::Tab::new(
+            "Second tab",
+            "Second tab content".into()
+        ),
+        navigation::tabs::Tab::new(
+            "Third active tab",
+            "Hello third tab".into(),
+        ),
+    ]).active_tab("Third active tab") %>
+  </div>
+  <div class="mb-3">
+    <%+ tables::large::Table::new(&["Date", "Time", "Status"], &vec![
+        tables::large::Row::new(&["01/01/2022".into(), "20:00:43.956373 +00:00:00 UTC".into(), "Ready".into()]),
+        tables::large::Row::new(&["01/01/2022".into(), "20:00:43.956373 +00:00:00 UTC".into(), "Ready".into()]),
+        tables::large::Row::new(&["01/01/2022".into(), "20:00:43.956373 +00:00:00 UTC".into(), "Ready".into()]),
+    ]) %>
+  </div>
 </div>

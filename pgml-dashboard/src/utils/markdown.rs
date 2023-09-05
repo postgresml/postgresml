@@ -669,7 +669,7 @@ impl<'a> Tab<'a> {
             "
             <li class=\"nav-item\" role=\"presentation\">
                 <button
-                    class=\"nav-link {active}\"
+                    class=\"nav-link btn btn-tertiary rounded-0 {active}\"
                     data-bs-toggle=\"tab\"
                     data-bs-target=\"#tab-{id}\"
                     type=\"button\"

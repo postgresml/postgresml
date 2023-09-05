@@ -3,7 +3,6 @@ use std::process::Command;
 
 fn main() {
     println!("cargo:rerun-if-changed=migrations");
-    println!("cargo:rerun-if-changed=src");
 
     let output = Command::new("git")
         .args(&["rev-parse", "HEAD"])

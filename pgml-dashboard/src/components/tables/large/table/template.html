@@ -1,0 +1,14 @@
+<table class="table table-lg">
+  <thead>
+    <tr>
+      <% for header in headers { %>
+        <th><%= header %></th>
+      <% } %>
+    </tr>
+  </thead>
+  <tbody>
+    <% for row in rows { %>
+    <%+ row %>
+    <% } %>
+  </tbody>
+</div>

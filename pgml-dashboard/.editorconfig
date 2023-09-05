@@ -13,4 +13,4 @@ indent_size = 4
 
 [*.html]
 ident_style = space
-indent_size = 4
+indent_size = 2
