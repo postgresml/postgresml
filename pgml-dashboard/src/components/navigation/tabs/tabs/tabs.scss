@@ -1,0 +1,21 @@
+.nav-tabs {
+    // These tabs are used in docs as well, where they are
+    // generated using Bootstrap. It wasn't obvious to me
+    // how to replace those with this component yet, so I'm just
+    // enforcing the font-family here so they look the same. Docs use Roboto by default.
+    font-family: 'silka', 'Roboto', 'sans-serif';
+
+    --bs-nav-tabs-border-width: 4px;
+
+    .nav-link {
+        border: none;
+
+        &.active, &:focus, &:active {
+            border-bottom: 4px solid #{$slate-tint-700};
+            color: #{$slate-tint-700};
+            text-shadow: none;
+        }
+
+        color: #{$slate-tint-100};
+    }
+}

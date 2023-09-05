@@ -1,0 +1,19 @@
+table.table.table-lg {
+    * {
+        border-width: 0;
+    }
+
+    thead {
+        th {
+            color: #{$slate-shade-100};
+            background: #{$gray-800};
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            padding: 16px 0;
+
+            &:first-of-type {
+                padding-left: 67px;
+            }
+        }
+    }
+}

@@ -1,0 +1,37 @@
+table.table.table-lg {
+    tr {
+        &:first-of-type {
+            td {
+                padding-top: 16px;
+            }
+        }
+
+        &:hover {
+            div.table-cell-content {
+                background: #{$gray-800};
+            }
+        }
+
+        td {
+            vertical-align: middle;
+            padding: 8px 0;
+
+            div.table-cell-content {
+                background: #{$gray-600};
+                padding: 20px 0;
+            }
+
+            &:first-of-type {
+                div.table-cell-content {
+                    padding-left: 67px;
+                }
+            }
+
+            &:last-of-type {
+                div.table-cell-content {
+                    padding-right: 67px;    
+                }
+            }
+        }
+    }
+}
