@@ -10,6 +10,7 @@ pub struct Component {
     pub value: String,
 }
 
+#[macro_export]
 macro_rules! component {
     ($name:tt) => {
         impl From<$name> for crate::components::Component {
@@ -36,7 +37,8 @@ macro_rules! component {
     };
 }
 
-pub(crate) use component;
+
+pub use component;
 
 // Render any string.
 impl From<&str> for Component {
