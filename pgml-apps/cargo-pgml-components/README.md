@@ -68,7 +68,59 @@ src/components/dropdown/dropdown.sass
 src/components/dropdown/mod.rs
 ```
 
-Once created, the component can be used in any Sailfish template:
+Initially, the component will be very barebones, but it will have all the necessary dependencies connected automatically.
+
+###### `template.html`
+
+The HTML template will just have a `<div>` that's connected to the Stimulus controller.
+
+```html
+<div data-controller="dropdown">
+</div>
+``` 
+
+###### `dropdown_controller.js`
+
+The Stimulus controller is connected to the `<div>` in the template above, and can be used immediately.
+
+```javascript
+import { Controller } from '@hotwired/stimulus'
+
+export default class extends Controller {
+	initiliaze() {
+		console.log('Initialized dropdown controller')
+	}
+}
+```
+
+###### `dropdown.sass`
+
+The Sass stylesheet doesn't have much, but you can start adding styles into it immediately. We don't have to use `data-controller` CSS selectors, the typical class selectors are fine. The command just generates something that will immediately work without any further configuration.
+
+```css
+div[data-controller="dropdown"] {
+	width: 100%;
+	height: 100px;
+
+	background: red;
+}
+```
+
+###### `mod.rs`
+
+Everything is linked together ultimately with Rust. This file defines a struct that implements `sailfish::TemplateOnce`.
+
+```rust
+use sailfish::TemplateOnce;
+
+#[derive(TemplateOnce)]
+#[template(path = "dropdown/template.html")]
+pub struct Dropdown {
+	pub value: String,
+}
+```
+
+Once the component is created, it can be used in any Sailfish template:
 
 ```html
 <% use crate::components::Dropdown; %>
@@ -80,6 +132,8 @@ Once created, the component can be used in any Sailfish template:
 </div>
 ```
 
-Components can be placed into any directory under `src/components`. They have to be in their own folder, so to have components organized neatly, you'd need to create folders that only contain other components and not be a component by itself.
+Components can be placed into any directory under `src/components`. They have to be in their own folder, so to have components organized neatly, you'd need to have folders that only contain other components and not be a component by itself.
 
 For example, all buttons can be placed in `controls/buttons`, e.g. `controls/buttons/primary`, `controls/buttons/secondary`, but there cannot be a component in `controls/buttons`. There is no inherent limitation in our framework, but it's good to keep things tidy.
+
+`pgml-components` does all of this automatically and makes sure that you don't accidently add components into a directory that already has one.
