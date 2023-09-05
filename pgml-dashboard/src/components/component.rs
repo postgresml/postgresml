@@ -37,7 +37,6 @@ macro_rules! component {
     };
 }
 
-
 pub use component;
 
 // Render any string.
