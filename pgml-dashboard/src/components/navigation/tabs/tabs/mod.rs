@@ -28,7 +28,7 @@ impl Tabs {
             .tabs
             .into_iter()
             .map(|tab| {
-                if tab.name() == name.to_string() {
+                if tab.name().to_lowercase() == name.to_string().to_lowercase() {
                     tab.active()
                 } else {
                     tab.inactive()
