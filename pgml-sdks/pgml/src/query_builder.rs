@@ -262,8 +262,6 @@ impl QueryBuilder {
             Ok(r) => Ok(r),
             Err(e) => match e.as_database_error() {
                 Some(d) => {
-                    println!("THE ERORR: {:?}", d);
-                    println!("THE ERROR CODE: {:?}", d.code());
                     if d.code() == Some(Cow::from("XX000")) {
                         // Explicitly get and set the model
                         let project_info = self.collection.get_project_info().await?;
@@ -277,8 +275,6 @@ impl QueryBuilder {
                             .model
                             .as_ref()
                             .context("Pipeline must be verified to perform vector search with remote embeddings")?;
-
-                        println!("THE MODEL: {:?}", model);
 
                         // If the model runtime is python, the error was not caused by an unsupported runtime
                         if model.runtime == ModelRuntime::Python {

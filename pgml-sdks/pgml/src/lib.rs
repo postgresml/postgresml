@@ -36,7 +36,7 @@ pub use pipeline::Pipeline;
 pub use splitter::Splitter;
 
 // This is use when inserting collections to set the sdk_version used during creation
-static SDK_VERSION: &'static str = "0.9.2";
+static SDK_VERSION: &str = "0.9.2";
 
 // Store the database(s) in a global variable so that we can access them from anywhere
 // This is not necessarily idiomatic Rust, but it is a good way to acomplish what we need
@@ -567,7 +567,8 @@ mod tests {
         internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new("test_r_p_cvswqbachesv_1", Some(model), Some(splitter), None);
+        let mut pipeline =
+            Pipeline::new("test_r_p_cvswqbachesv_1", Some(model), Some(splitter), None);
         let mut collection = Collection::new("test_r_c_cvswqbachesv_3", None);
         collection.add_pipeline(&mut pipeline).await?;
 
@@ -607,7 +608,12 @@ mod tests {
             None,
         );
         let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new("test_r_p_cvswqbachesvare_2", Some(model), Some(splitter), None);
+        let mut pipeline = Pipeline::new(
+            "test_r_p_cvswqbachesvare_2",
+            Some(model),
+            Some(splitter),
+            None,
+        );
         let mut collection = Collection::new("test_r_c_cvswqbachesvare_7", None);
         collection.add_pipeline(&mut pipeline).await?;
 

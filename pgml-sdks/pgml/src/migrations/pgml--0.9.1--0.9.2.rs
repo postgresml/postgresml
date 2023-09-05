@@ -15,20 +15,28 @@ pub async fn migrate(pool: PgPool, _: Vec<i64>) -> anyhow::Result<String> {
                 .fetch_all(&pool)
                 .await?;
         for pipeline_name in pipeline_names {
-            let table_name = format!("{}.{}_embeddings", collection_name, pipeline_name);
-            let index_name = format!("{}_pipeline_hnsw_vector_index", pipeline_name);
-            pool.execute(
-                query_builder!(
-                    queries::CREATE_INDEX_USING_HNSW,
-                    "",
-                    index_name,
-                    &table_name,
-                    "embedding vector_cosine_ops",
-                    ""
+            let embeddings_table_name = format!("{}_embeddings", pipeline_name);
+            let exists: bool = sqlx::query_scalar("SELECT EXISTS (SELECT * FROM information_schema.tables WHERE table_name = $1 and table_schema = $2)")
+                .bind(embeddings_table_name)
+                .bind(&collection_name)
+                .fetch_one(&pool)
+                .await?;
+            if exists {
+                let table_name = format!("{}.{}_embeddings", collection_name, pipeline_name);
+                let index_name = format!("{}_pipeline_hnsw_vector_index", pipeline_name);
+                pool.execute(
+                    query_builder!(
+                        queries::CREATE_INDEX_USING_HNSW,
+                        "",
+                        index_name,
+                        &table_name,
+                        "embedding vector_cosine_ops",
+                        ""
+                    )
+                    .as_str(),
                 )
-                .as_str(),
-            )
-            .await?;
+                .await?;
+            }
         }
         // We can get rid of the old IVFFlat index now. There was a bug where we named it the same
         // thing no matter what, so we only need to remove one index.
