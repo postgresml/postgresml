@@ -22,6 +22,23 @@ impl Tabs {
 
         Tabs { tabs }
     }
+
+    pub fn active_tab(mut self, name: impl ToString) -> Self {
+        let tabs = self
+            .tabs
+            .into_iter()
+            .map(|tab| {
+                if tab.name() == name.to_string() {
+                    tab.active()
+                } else {
+                    tab.inactive()
+                }
+            })
+            .collect();
+
+        self.tabs = tabs;
+        self
+    }
 }
 
 component!(Tabs);

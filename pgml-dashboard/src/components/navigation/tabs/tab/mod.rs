@@ -57,6 +57,11 @@ impl Tab {
         self
     }
 
+    pub fn inactive(mut self) -> Self {
+        self.active = false;
+        self
+    }
+
     pub fn is_active(&self) -> bool {
         self.active
     }

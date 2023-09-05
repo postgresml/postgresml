@@ -49,8 +49,8 @@
         navigation::tabs::Tab::new(
             "Third active tab",
             "Hello third tab".into(),
-        ).active(),
-    ]) %>
+        ),
+    ]).active_tab("Third active tab") %>
   </div>
   <div class="mb-3">
     <%+ tables::large::Table::new(&["Date", "Time", "Status"], &vec![
