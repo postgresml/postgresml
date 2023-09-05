@@ -567,12 +567,52 @@ mod tests {
         internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new("test_r_p_cvswqb_1", Some(model), Some(splitter), None);
-        let mut collection = Collection::new("test_r_c_cvswqb_3", None);
+        let mut pipeline = Pipeline::new("test_r_p_cvswqbachesv_1", Some(model), Some(splitter), None);
+        let mut collection = Collection::new("test_r_c_cvswqbachesv_3", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
+        let mut pipeline = Pipeline::new("test_r_p_cvswqbachesv_1", None, None, None);
+        collection
+            .upsert_documents(generate_dummy_documents(3))
+            .await?;
+        let results = collection
+            .query()
+            .vector_recall(
+                "Here is some query",
+                &mut pipeline,
+                Some(
+                    json!({
+                        "hnsw": {
+                            "ef_search": 2
+                        }
+                    })
+                    .into(),
+                ),
+            )
+            .fetch_all()
+            .await?;
+        assert!(results.len() == 3);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value_and_remote_embeddings(
+    ) -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let model = Model::new(
+            Some("text-embedding-ada-002".to_string()),
+            Some("openai".to_string()),
+            None,
+        );
+        let splitter = Splitter::default();
+        let mut pipeline = Pipeline::new("test_r_p_cvswqbachesvare_2", Some(model), Some(splitter), None);
+        let mut collection = Collection::new("test_r_c_cvswqbachesvare_7", None);
+        collection.add_pipeline(&mut pipeline).await?;
+
+        // Recreate the pipeline to replicate a more accurate example
+        let mut pipeline = Pipeline::new("test_r_p_cvswqbachesvare_2", None, None, None);
         collection
             .upsert_documents(generate_dummy_documents(3))
             .await?;
