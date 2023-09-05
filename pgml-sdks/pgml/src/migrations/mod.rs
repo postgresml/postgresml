@@ -71,7 +71,7 @@ mod tests {
     use crate::internal_init_logger;
 
     #[tokio::test]
-    async fn test_migrate() -> anyhow::Result<()> {
+    async fn can_migrate() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         migrate().await?;
         Ok(())

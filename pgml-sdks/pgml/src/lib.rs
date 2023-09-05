@@ -508,7 +508,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(30000))
             .await?;
         let results = collection
             .query()
