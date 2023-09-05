@@ -2,8 +2,8 @@
 // You shouldn't modify it manually.
 
 <% if root { %>
-mod component;
-pub(crate) use component::{component, Component};
+pub mod component;
+pub use component::{component, Component};
 <% } %>
 <% for component in modules.iter() { %>
 // <%= component.full_path() %>
