@@ -1,4 +1,4 @@
-use crate::components::{component, Component};
+use pgml_components::{component, Component};
 use sailfish::TemplateOnce;
 
 /// A component that renders a Bootstrap modal.

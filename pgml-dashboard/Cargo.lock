@@ -2170,6 +2170,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
 
 [[package]]
+name = "pgml-components"
+version = "0.1.0"
+dependencies = [
+ "sailfish",
+]
+
+[[package]]
 name = "pgml-dashboard"
 version = "2.7.6"
 dependencies = [
@@ -2189,6 +2196,7 @@ dependencies = [
  "num-traits",
  "once_cell",
  "parking_lot 0.12.1",
+ "pgml-components",
  "pgvector",
  "rand",
  "regex",

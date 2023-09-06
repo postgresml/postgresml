@@ -44,3 +44,4 @@ zoomies = { git="https://github.com/HyperparamAI/zoomies.git", branch="master" }
 pgvector = { version = "0.2.2", features = [ "sqlx", "postgres" ] }
 console-subscriber = "*"
 glob = "*"
+pgml-components = { path = "../packages/pgml-components" }

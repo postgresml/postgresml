@@ -171,12 +171,12 @@ pub fn add(path: &Path, overwrite: bool) {
 
 /// Update `mod.rs` with all the components in `src/components`.
 pub fn update_modules() {
-    update_module(Path::new(COMPONENT_DIRECTORY), true);
+    update_module(Path::new(COMPONENT_DIRECTORY));
 }
 
 /// Recusively write `mod.rs` in every Rust module directory
 /// that has other modules in it.
-fn update_module(path: &Path, root: bool) {
+fn update_module(path: &Path) {
     debug!("updating {} module", path.display());
     let mut modules = Vec::new();
     let mut paths: Vec<_> = unwrap_or_exit!(read_dir(path))
@@ -192,7 +192,7 @@ fn update_module(path: &Path, root: bool) {
 
         if has_more_modules(&path) {
             debug!("{} has more modules", path.display());
-            update_module(&path, false);
+            update_module(&path);
         } else {
             debug!("it does not really no");
         }
@@ -206,7 +206,7 @@ fn update_module(path: &Path, root: bool) {
 
     let components_mod = path.join("mod.rs");
     let modules =
-        unwrap_or_exit!(templates::Mod { modules, root }.render_once()).replace("\n\n", "\n");
+        unwrap_or_exit!(templates::Mod { modules }.render_once()).replace("\n\n", "\n");
 
     let existing_modules = if components_mod.is_file() {
         unwrap_or_exit!(read_to_string(&components_mod))
