@@ -64,6 +64,9 @@ jobs:
         working-directory: pgml-sdks/pgml/javascript
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          apt-get -y install curl
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
