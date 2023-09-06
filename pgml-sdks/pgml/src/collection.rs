@@ -210,9 +210,10 @@ impl Collection {
                     .execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name).as_str())
                     .await?;
 
-                let c: models::Collection = sqlx::query_as("INSERT INTO pgml.collections (name, project_id) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING RETURNING *")
+                let c: models::Collection = sqlx::query_as("INSERT INTO pgml.collections (name, project_id, sdk_version) VALUES ($1, $2, $3) ON CONFLICT (name) DO NOTHING RETURNING *")
                         .bind(&self.name)
                         .bind(project_id)
+                        .bind(crate::SDK_VERSION)
                         .fetch_one(&mut *transaction)
                         .await?;
 
@@ -925,7 +926,6 @@ impl Collection {
                     queries::EMBED_AND_VECTOR_SEARCH,
                     self.pipelines_table_name,
                     embeddings_table_name,
-                    embeddings_table_name,
                     self.chunks_table_name,
                     self.documents_table_name
                 ))
@@ -968,6 +968,11 @@ impl Collection {
                 .await
             }
         }
+        .map(|r| {
+            r.into_iter()
+                .map(|(score, id, metadata)| (1. - score, id, metadata))
+                .collect()
+        })
     }
 
     #[instrument(skip(self, pool))]
@@ -1010,7 +1015,6 @@ impl Collection {
         let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
         sqlx::query_as(&query_builder!(
             queries::VECTOR_SEARCH,
-            embeddings_table_name,
             embeddings_table_name,
             self.chunks_table_name,
             self.documents_table_name

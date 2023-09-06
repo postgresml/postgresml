@@ -14,7 +14,7 @@ use crate::{
     models, queries, query_builder,
     remote_embeddings::build_remote_embeddings,
     splitter::Splitter,
-    types::{DateTime, Json},
+    types::{DateTime, Json, TryToNumeric},
     utils,
 };
 
@@ -591,19 +591,16 @@ impl Pipeline {
     }
 
     #[instrument(skip(self))]
-    async fn create_or_get_embeddings_table(&mut self) -> anyhow::Result<String> {
+    pub(crate) async fn create_or_get_embeddings_table(&mut self) -> anyhow::Result<String> {
         self.verify_in_database(false).await?;
         let pool = self.get_pool().await?;
 
-        let embeddings_table_name = format!(
-            "{}.{}_embeddings",
-            &self
-                .project_info
-                .as_ref()
-                .context("Pipeline must have project info to get the embeddings table name")?
-                .name,
-            self.name
-        );
+        let collection_name = &self
+            .project_info
+            .as_ref()
+            .context("Pipeline must have project info to get the embeddings table name")?
+            .name;
+        let embeddings_table_name = format!("{}.{}_embeddings", collection_name, self.name);
 
         // Notice that we actually check for existence of the table in the database instead of
         // blindly creating it with `CREATE TABLE IF NOT EXISTS`. This is because we want to avoid
@@ -623,9 +620,9 @@ impl Pipeline {
                 .as_ref()
                 .context("Pipeline must be verified to create embeddings table")?;
 
-            // Remove the stored name from the parameters
-            let mut parameters = model.parameters.clone();
-            parameters
+            // Remove the stored name from the model parameters
+            let mut model_parameters = model.parameters.clone();
+            model_parameters
                 .as_object_mut()
                 .context("Model parameters must be an object")?
                 .remove("name");
@@ -635,13 +632,13 @@ impl Pipeline {
                     let embedding: (Vec<f32>,) = sqlx::query_as(
                             "SELECT embedding from pgml.embed(transformer => $1, text => 'Hello, World!', kwargs => $2) as embedding")
                             .bind(&model.name)
-                            .bind(parameters)
+                            .bind(model_parameters)
                             .fetch_one(&pool).await?;
                     embedding.0.len() as i64
                 }
                 t => {
                     let remote_embeddings =
-                        build_remote_embeddings(t.to_owned(), &model.name, &model.parameters)?;
+                        build_remote_embeddings(t.to_owned(), &model.name, &model_parameters)?;
                     remote_embeddings.get_embedding_size().await?
                 }
             };
@@ -661,38 +658,65 @@ impl Pipeline {
             ))
             .execute(&mut *transaction)
             .await?;
+            let index_name = format!("{}_pipeline_created_at_index", self.name);
             transaction
                 .execute(
                     query_builder!(
                         queries::CREATE_INDEX,
                         "",
-                        "created_at_index",
+                        index_name,
                         &embeddings_table_name,
                         "created_at"
                     )
                     .as_str(),
                 )
                 .await?;
+            let index_name = format!("{}_pipeline_chunk_id_index", self.name);
             transaction
                 .execute(
                     query_builder!(
                         queries::CREATE_INDEX,
                         "",
-                        "chunk_id_index",
+                        index_name,
                         &embeddings_table_name,
                         "chunk_id"
                     )
                     .as_str(),
                 )
                 .await?;
+            // See: https://github.com/pgvector/pgvector
+            let (m, ef_construction) = match &self.parameters {
+                Some(p) => {
+                    let m = if !p["hnsw"]["m"].is_null() {
+                        p["hnsw"]["m"]
+                            .try_to_u64()
+                            .context("hnsw.m must be an integer")?
+                    } else {
+                        16
+                    };
+                    let ef_construction = if !p["hnsw"]["ef_construction"].is_null() {
+                        p["hnsw"]["ef_construction"]
+                            .try_to_u64()
+                            .context("hnsw.ef_construction must be an integer")?
+                    } else {
+                        64
+                    };
+                    (m, ef_construction)
+                }
+                None => (16, 64),
+            };
+            let index_with_parameters =
+                format!("WITH (m = {}, ef_construction = {})", m, ef_construction);
+            let index_name = format!("{}_pipeline_hnsw_vector_index", self.name);
             transaction
                 .execute(
                     query_builder!(
-                        queries::CREATE_INDEX_USING_IVFFLAT,
+                        queries::CREATE_INDEX_USING_HNSW,
                         "",
-                        "vector_index",
+                        index_name,
                         &embeddings_table_name,
-                        "embedding vector_cosine_ops"
+                        "embedding vector_cosine_ops",
+                        index_with_parameters
                     )
                     .as_str(),
                 )
@@ -788,11 +812,23 @@ impl Pipeline {
         project_info: &ProjectInfo,
         conn: &mut PgConnection,
     ) -> anyhow::Result<()> {
+        let pipelines_table_name = format!("{}.pipelines", project_info.name);
         sqlx::query(&query_builder!(
             queries::CREATE_PIPELINES_TABLE,
-            &format!("{}.pipelines", project_info.name)
+            pipelines_table_name
         ))
-        .execute(conn)
+        .execute(&mut *conn)
+        .await?;
+        conn.execute(
+            query_builder!(
+                queries::CREATE_INDEX,
+                "",
+                "pipeline_name_index",
+                pipelines_table_name,
+                "name"
+            )
+            .as_str(),
+        )
         .await?;
         Ok(())
     }

@@ -1,8 +1,6 @@
 const pgml = require("pgml");
 require("dotenv").config();
 
-pgml.js_init_logger();
-
 const main = async () => {
   // Initialize the collection
   const collection = pgml.newCollection("my_javascript_sqa_collection");

@@ -19,7 +19,7 @@ if DATABASE_URL is None:
     print("No DATABASE_URL environment variable found. Please set one")
     exit(1)
 
-pgml.py_init_logger()
+pgml.init_logger()
 
 
 def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
@@ -164,6 +164,44 @@ async def test_can_vector_search_with_query_builder_and_metadata_filtering():
     await collection.archive()
 
 
+@pytest.mark.asyncio
+async def test_can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvswqbachesv_0", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvswqbachesv_0")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = (
+        await collection.query()
+        .vector_recall("Here is some query", pipeline)
+        .filter({"hnsw": {"ef_search": 2}})
+        .limit(10)
+        .fetch_all()
+    )
+    assert len(results) == 3
+    await collection.archive()
+
+
+@pytest.mark.asyncio
+async def test_can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value_and_remote_embeddings():
+    model = pgml.Model(name="text-embedding-ada-002", source="openai")
+    splitter = pgml.Splitter()
+    pipeline = pgml.Pipeline("test_p_p_tcvswqbachesvare_0", model, splitter)
+    collection = pgml.Collection(name="test_p_c_tcvswqbachesvare_0")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    await collection.add_pipeline(pipeline)
+    results = (
+        await collection.query()
+        .vector_recall("Here is some query", pipeline)
+        .filter({"hnsw": {"ef_search": 2}})
+        .limit(10)
+        .fetch_all()
+    )
+    assert len(results) == 3
+    await collection.archive()
+
+
 ###################################################
 ## Test user output facing functions ##############
 ###################################################
@@ -248,6 +286,16 @@ async def test_delete_documents():
     documents = await collection.get_documents()
     assert len(documents) == 2 and documents[0]["document"]["id"] == 1
     await collection.archive()
+
+
+###################################################
+## Migration tests ################################
+###################################################
+
+
+@pytest.mark.asyncio
+async def test_migrate():
+    await pgml.migrate()
 
 
 ###################################################

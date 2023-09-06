@@ -10,7 +10,7 @@ import pgml from "../../index.js";
 ////////////////////////////////////////////////////////////////////////////////////
 
 const LOG_LEVEL = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : "ERROR";
-pgml.js_init_logger(LOG_LEVEL);
+pgml.init_logger(LOG_LEVEL);
 
 const generate_dummy_documents = (count: number) => {
   let docs = [];
@@ -143,6 +143,52 @@ it("can vector search with query builder and metadata filtering", async () => {
   await collection.archive();
 });
 
+it("can vector search with query builder and custom hnsfw ef_search value", async () => {
+  let model = pgml.newModel();
+  let splitter = pgml.newSplitter();
+  let pipeline = pgml.newPipeline("test_j_p_cvswqbachesv_0", model, splitter);
+  let collection = pgml.newCollection("test_j_c_cvswqbachesv_0");
+  await collection.upsert_documents(generate_dummy_documents(3));
+  await collection.add_pipeline(pipeline);
+  let results = await collection
+    .query()
+    .vector_recall("Here is some query", pipeline)
+    .filter({
+      hnsw: {
+        ef_search: 2,
+      },
+    })
+    .limit(10)
+    .fetch_all();
+  expect(results).toHaveLength(3);
+  await collection.archive();
+});
+
+it("can vector search with query builder and custom hnsfw ef_search value and remote embeddings", async () => {
+  let model = pgml.newModel("text-embedding-ada-002", "openai");
+  let splitter = pgml.newSplitter();
+  let pipeline = pgml.newPipeline(
+    "test_j_p_cvswqbachesvare_0",
+    model,
+    splitter,
+  );
+  let collection = pgml.newCollection("test_j_c_cvswqbachesvare_0");
+  await collection.upsert_documents(generate_dummy_documents(3));
+  await collection.add_pipeline(pipeline);
+  let results = await collection
+    .query()
+    .vector_recall("Here is some query", pipeline)
+    .filter({
+      hnsw: {
+        ef_search: 2,
+      },
+    })
+    .limit(10)
+    .fetch_all();
+  expect(results).toHaveLength(3);
+  await collection.archive();
+});
+
 ///////////////////////////////////////////////////
 // Test user output facing functions //////////////
 ///////////////////////////////////////////////////
@@ -219,4 +265,12 @@ it("can delete documents", async () => {
   expect(documents[0]["document"]["id"]).toBe(1);
 
   await collection.archive();
+});
+
+///////////////////////////////////////////////////
+// Test migrations ////////////////////////////////
+///////////////////////////////////////////////////
+
+it("can migrate", async () => {
+  await pgml.migrate();
 });

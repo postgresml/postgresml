@@ -16,6 +16,7 @@ mod builtins;
 mod collection;
 mod filter_builder;
 mod languages;
+pub mod migrations;
 mod model;
 pub mod models;
 mod pipeline;
@@ -33,6 +34,9 @@ pub use collection::Collection;
 pub use model::Model;
 pub use pipeline::Pipeline;
 pub use splitter::Splitter;
+
+// This is use when inserting collections to set the sdk_version used during creation
+static SDK_VERSION: &str = "0.9.2";
 
 // Store the database(s) in a global variable so that we can access them from anywhere
 // This is not necessarily idiomatic Rust, but it is a good way to acomplish what we need
@@ -74,7 +78,7 @@ impl From<&str> for LogFormat {
 }
 
 #[allow(dead_code)]
-fn init_logger(level: Option<String>, format: Option<String>) -> anyhow::Result<()> {
+fn internal_init_logger(level: Option<String>, format: Option<String>) -> anyhow::Result<()> {
     let level = level.unwrap_or_else(|| env::var("LOG_LEVEL").unwrap_or("".to_string()));
     let level = match level.as_str() {
         "TRACE" => Level::TRACE,
@@ -124,15 +128,25 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
 
 #[cfg(feature = "python")]
 #[pyo3::prelude::pyfunction]
-fn py_init_logger(level: Option<String>, format: Option<String>) -> pyo3::PyResult<()> {
-    init_logger(level, format).ok();
+fn init_logger(level: Option<String>, format: Option<String>) -> pyo3::PyResult<()> {
+    internal_init_logger(level, format).ok();
     Ok(())
+}
+
+#[cfg(feature = "python")]
+#[pyo3::prelude::pyfunction]
+fn migrate(py: pyo3::Python) -> pyo3::PyResult<&pyo3::PyAny> {
+    pyo3_asyncio::tokio::future_into_py(py, async move {
+        migrations::migrate().await?;
+        Ok(())
+    })
 }
 
 #[cfg(feature = "python")]
 #[pyo3::pymodule]
 fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
-    m.add_function(pyo3::wrap_pyfunction!(py_init_logger, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(init_logger, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(migrate, m)?)?;
     m.add_class::<pipeline::PipelinePython>()?;
     m.add_class::<collection::CollectionPython>()?;
     m.add_class::<model::ModelPython>()?;
@@ -142,7 +156,7 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
 }
 
 #[cfg(feature = "javascript")]
-fn js_init_logger(
+fn init_logger(
     mut cx: neon::context::FunctionContext,
 ) -> neon::result::JsResult<neon::types::JsUndefined> {
     use rust_bridge::javascript::{FromJsType, IntoJsResult};
@@ -150,14 +164,34 @@ fn js_init_logger(
     let level = <Option<String>>::from_option_js_type(&mut cx, level)?;
     let format = cx.argument_opt(1);
     let format = <Option<String>>::from_option_js_type(&mut cx, format)?;
-    init_logger(level, format).ok();
+    internal_init_logger(level, format).ok();
     ().into_js_result(&mut cx)
+}
+
+#[cfg(feature = "javascript")]
+fn migrate(
+    mut cx: neon::context::FunctionContext,
+) -> neon::result::JsResult<neon::types::JsPromise> {
+    use neon::prelude::*;
+    use rust_bridge::javascript::IntoJsResult;
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+    deferred
+        .try_settle_with(&channel, move |mut cx| {
+            let runtime = crate::get_or_set_runtime();
+            let x = runtime.block_on(migrations::migrate());
+            let x = x.expect("Error running migration");
+            x.into_js_result(&mut cx)
+        })
+        .expect("Error sending js");
+    Ok(promise)
 }
 
 #[cfg(feature = "javascript")]
 #[neon::main]
 fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
-    cx.export_function("js_init_logger", js_init_logger)?;
+    cx.export_function("init_logger", init_logger)?;
+    cx.export_function("migrate", migrate)?;
     cx.export_function("newCollection", collection::CollectionJavascript::new)?;
     cx.export_function("newModel", model::ModelJavascript::new)?;
     cx.export_function("newSplitter", splitter::SplitterJavascript::new)?;
@@ -195,7 +229,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_create_collection() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_ccc_0", None);
         assert!(collection.database_data.is_none());
         collection.verify_in_database(false).await?;
@@ -206,7 +240,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_add_remove_pipeline() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -236,7 +270,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_add_remove_pipelines() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline1 = Pipeline::new(
@@ -256,6 +290,46 @@ mod tests {
         assert!(pipelines.len() == 1);
         assert!(collection.get_pipeline("test_r_p_carps_0").await.is_err());
         collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn can_specify_custom_hnsw_parameters_for_pipelines() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let model = Model::default();
+        let splitter = Splitter::default();
+        let mut pipeline = Pipeline::new(
+            "test_r_p_cschpfp_0",
+            Some(model),
+            Some(splitter),
+            Some(
+                serde_json::json!({
+                    "hnsw": {
+                        "m": 100,
+                        "ef_construction": 200
+                    }
+                })
+                .into(),
+            ),
+        );
+        let collection_name = "test_r_c_cschpfp_1";
+        let mut collection = Collection::new(collection_name, None);
+        collection.add_pipeline(&mut pipeline).await?;
+        let full_embeddings_table_name = pipeline.create_or_get_embeddings_table().await?;
+        let embeddings_table_name = full_embeddings_table_name.split(".").collect::<Vec<_>>()[1];
+        let pool = get_or_initialize_pool(&None).await?;
+        let results: Vec<(String, String)> = sqlx::query_as(&query_builder!(
+            "select indexname, indexdef from pg_indexes where tablename = '%d' and schemaname = '%d'",
+            embeddings_table_name,
+            collection_name
+        )).fetch_all(&pool).await?;
+        let names = results.iter().map(|(name, _)| name).collect::<Vec<_>>();
+        let definitions = results
+            .iter()
+            .map(|(_, definition)| definition)
+            .collect::<Vec<_>>();
+        assert!(names.contains(&&format!("{}_pipeline_hnsw_vector_index", pipeline.name)));
+        assert!(definitions.contains(&&format!("CREATE INDEX {}_pipeline_hnsw_vector_index ON {} USING hnsw (embedding vector_cosine_ops) WITH (m='100', ef_construction='200')", pipeline.name, full_embeddings_table_name)));
         Ok(())
     }
 
@@ -280,7 +354,7 @@ mod tests {
 
     #[sqlx::test]
     async fn sync_multiple_pipelines() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline1 = Pipeline::new(
@@ -337,7 +411,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -372,7 +446,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_vector_search_with_remote_embeddings() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::new(
             Some("text-embedding-ada-002".to_string()),
             Some("openai".to_string()),
@@ -393,7 +467,7 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswre_20", None);
+        let mut collection = Collection::new("test_r_c_cvswre_21", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
@@ -402,7 +476,7 @@ mod tests {
             .upsert_documents(generate_dummy_documents(3))
             .await?;
         let results = collection
-            .vector_search("Here is some query", &mut pipeline, None, None)
+            .vector_search("Here is some query", &mut pipeline, None, Some(10))
             .await?;
         assert!(results.len() == 3);
         collection.archive().await?;
@@ -411,7 +485,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_vector_search_with_query_builder() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -428,17 +502,70 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswqb_3", None);
+        let mut collection = Collection::new("test_r_c_cvswqb_4", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(4))
             .await?;
         let results = collection
             .query()
             .vector_recall("Here is some query", &mut pipeline, None)
+            .limit(3)
+            .fetch_all()
+            .await?;
+        assert!(results.len() == 3);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn can_vector_search_with_query_builder_and_pass_model_parameters_in_search(
+    ) -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let model = Model::new(
+            Some("hkunlp/instructor-base".to_string()),
+            Some("python".to_string()),
+            Some(json!({"instruction": "Represent the Wikipedia document for retrieval: "}).into()),
+        );
+        let splitter = Splitter::default();
+        let mut pipeline = Pipeline::new(
+            "test_r_p_cvswqbapmpis_1",
+            Some(model),
+            Some(splitter),
+            Some(
+                serde_json::json!({
+                    "full_text_search": {
+                        "active": true,
+                        "configuration": "english"
+                    }
+                })
+                .into(),
+            ),
+        );
+        let mut collection = Collection::new("test_r_c_cvswqbapmpis_4", None);
+        collection.add_pipeline(&mut pipeline).await?;
+
+        // Recreate the pipeline to replicate a more accurate example
+        let mut pipeline = Pipeline::new("test_r_p_cvswqbapmpis_1", None, None, None);
+        collection
+            .upsert_documents(generate_dummy_documents(3))
+            .await?;
+        let results = collection
+            .query()
+            .vector_recall(
+                "Here is some query",
+                &mut pipeline,
+                Some(
+                    json!({
+                        "instruction": "Represent the Wikipedia document for retrieval: "
+                    })
+                    .into(),
+                ),
+            )
+            .limit(10)
             .fetch_all()
             .await?;
         assert!(results.len() == 3);
@@ -448,7 +575,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_vector_search_with_query_builder_with_remote_embeddings() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::new(
             Some("text-embedding-ada-002".to_string()),
             Some("openai".to_string()),
@@ -469,17 +596,18 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswqbwre_3", None);
+        let mut collection = Collection::new("test_r_c_cvswqbwre_5", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(4))
             .await?;
         let results = collection
             .query()
             .vector_recall("Here is some query", &mut pipeline, None)
+            .limit(3)
             .fetch_all()
             .await?;
         assert!(results.len() == 3);
@@ -488,8 +616,90 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn can_filter_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+    async fn can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value(
+    ) -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let model = Model::default();
+        let splitter = Splitter::default();
+        let mut pipeline =
+            Pipeline::new("test_r_p_cvswqbachesv_1", Some(model), Some(splitter), None);
+        let mut collection = Collection::new("test_r_c_cvswqbachesv_3", None);
+        collection.add_pipeline(&mut pipeline).await?;
+
+        // Recreate the pipeline to replicate a more accurate example
+        let mut pipeline = Pipeline::new("test_r_p_cvswqbachesv_1", None, None, None);
+        collection
+            .upsert_documents(generate_dummy_documents(3))
+            .await?;
+        let results = collection
+            .query()
+            .vector_recall(
+                "Here is some query",
+                &mut pipeline,
+                Some(
+                    json!({
+                        "hnsw": {
+                            "ef_search": 2
+                        }
+                    })
+                    .into(),
+                ),
+            )
+            .fetch_all()
+            .await?;
+        assert!(results.len() == 3);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value_and_remote_embeddings(
+    ) -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let model = Model::new(
+            Some("text-embedding-ada-002".to_string()),
+            Some("openai".to_string()),
+            None,
+        );
+        let splitter = Splitter::default();
+        let mut pipeline = Pipeline::new(
+            "test_r_p_cvswqbachesvare_2",
+            Some(model),
+            Some(splitter),
+            None,
+        );
+        let mut collection = Collection::new("test_r_c_cvswqbachesvare_7", None);
+        collection.add_pipeline(&mut pipeline).await?;
+
+        // Recreate the pipeline to replicate a more accurate example
+        let mut pipeline = Pipeline::new("test_r_p_cvswqbachesvare_2", None, None, None);
+        collection
+            .upsert_documents(generate_dummy_documents(3))
+            .await?;
+        let results = collection
+            .query()
+            .vector_recall(
+                "Here is some query",
+                &mut pipeline,
+                Some(
+                    json!({
+                        "hnsw": {
+                            "ef_search": 2
+                        }
+                    })
+                    .into(),
+                ),
+            )
+            .fetch_all()
+            .await?;
+        assert!(results.len() == 3);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn can_filter_vector_search() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
         let model = Model::new(None, None, None);
         let splitter = Splitter::new(None, None);
         let mut pipeline = Pipeline::new(
@@ -558,7 +768,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_upsert_and_filter_get_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -651,7 +861,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_paginate_get_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cpgd_2", None);
         collection
             .upsert_documents(generate_dummy_documents(10))
@@ -733,7 +943,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_filter_and_paginate_get_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -836,9 +1046,9 @@ mod tests {
 
     #[sqlx::test]
     async fn can_filter_and_delete_documents() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
-        let model = Model::new(None, None, None);
-        let splitter = Splitter::new(None, None);
+        internal_init_logger(None, None).ok();
+        let model = Model::default();
+        let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
             "test_r_p_cfadd_1",
             Some(model),

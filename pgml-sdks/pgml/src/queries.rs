@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS pgml.collections (
   name text NOT NULL, 
   active BOOLEAN DEFAULT TRUE, 
   project_id int8 NOT NULL REFERENCES pgml.projects ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
+  sdk_version text;
   UNIQUE (name)
 );
 "#;
@@ -88,8 +89,8 @@ pub const CREATE_INDEX_USING_GIN: &str = r#"
 CREATE INDEX %d IF NOT EXISTS %s ON %s USING GIN (%d);
 "#;
 
-pub const CREATE_INDEX_USING_IVFFLAT: &str = r#"
-CREATE INDEX %d IF NOT EXISTS %s ON %s USING ivfflat (%d);
+pub const CREATE_INDEX_USING_HNSW: &str = r#"
+CREATE INDEX %d IF NOT EXISTS %s on %s using hnsw (%d) %d;
 "#;
 
 /////////////////////////////
@@ -187,50 +188,32 @@ embedding AS (
       text => $2,
       kwargs => $3
     )::vector AS embedding
-), 
-comparison AS (
-  SELECT 
-    chunk_id, 
-    1 - (
-      %s.embedding <=> (SELECT embedding FROM embedding)
-    ) AS score 
-  FROM 
-    %s 
 ) 
 SELECT 
-  comparison.score, 
+  embeddings.embedding <=> (SELECT embedding FROM embedding) score, 
   chunks.chunk, 
   documents.metadata 
 FROM 
-  comparison 
-  INNER JOIN %s chunks ON chunks.id = comparison.chunk_id 
+  %s embeddings
+  INNER JOIN %s chunks ON chunks.id = embeddings.chunk_id 
   INNER JOIN %s documents ON documents.id = chunks.document_id 
   ORDER BY 
-  comparison.score DESC 
+  score ASC 
   LIMIT 
   $4;
 "#;
 
 pub const VECTOR_SEARCH: &str = r#"
-WITH comparison AS (
-  SELECT 
-    chunk_id, 
-    1 - (
-      %s.embedding <=> $1::vector 
-    ) AS score 
-  FROM 
-    %s 
-) 
 SELECT 
-  comparison.score, 
+  embeddings.embedding <=> $1::vector score,
   chunks.chunk, 
   documents.metadata 
 FROM 
-  comparison 
-  INNER JOIN %s chunks ON chunks.id = comparison.chunk_id 
+  %s embeddings
+  INNER JOIN %s chunks ON chunks.id = embeddings.chunk_id 
   INNER JOIN %s documents ON documents.id = chunks.document_id 
   ORDER BY 
-  comparison.score DESC 
+  score ASC 
   LIMIT 
   $2;
 "#;

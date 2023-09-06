@@ -92,13 +92,13 @@ impl Builtins {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::init_logger;
+    use crate::internal_init_logger;
 
     #[sqlx::test]
     async fn can_query() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let builtins = Builtins::new(None);
-        let query = "SELECT 10";
+        let query = "SELECT * from pgml.collections";
         let results = builtins.query(query).fetch_all().await?;
         assert!(results.as_array().is_some());
         Ok(())
@@ -106,7 +106,7 @@ mod tests {
 
     #[sqlx::test]
     async fn can_transform() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
+        internal_init_logger(None, None).ok();
         let builtins = Builtins::new(None);
         let task = Json::from(serde_json::json!("translation_en_to_fr"));
         let inputs = vec!["test1".to_string(), "test2".to_string()];

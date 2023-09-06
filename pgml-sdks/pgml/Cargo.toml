@@ -20,7 +20,7 @@ serde_json = "1.0.9"
 anyhow = "1.0.9"
 tokio = { version = "1.28.2", features = [ "macros" ] }
 chrono = "0.4.9"
-pyo3 = { version = "0.18.3", optional = true, features = ["extension-module"] }
+pyo3 = { version = "0.18.3", optional = true, features = ["extension-module", "anyhow"] }
 pyo3-asyncio = { version = "0.18", features = ["attributes", "tokio-runtime"], optional = true }
 neon = { version = "0.10", optional = true, default-features = false, features = ["napi-6", "promise-api", "channel-api"] }
 itertools = "0.10.5"

@@ -44,6 +44,9 @@ impl Serialize for Json {
 
 pub(crate) trait TryToNumeric {
     fn try_to_u64(&self) -> anyhow::Result<u64>;
+    fn try_to_i64(&self) -> anyhow::Result<i64> {
+        self.try_to_u64().map(|u| u as i64)
+    }
 }
 
 impl TryToNumeric for serde_json::Value {
