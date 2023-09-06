@@ -519,6 +519,24 @@ const pipeline = pgml.newPipeline("test_pipeline", model, splitter, {
 await collection.add_pipeline(pipeline)
 ```
 
+### Configuring HNSW Indexing Parameters
+
+Our SDK utilizes [pgvector](https://github.com/pgvector/pgvector) for storing vectors and performing recall. We use HNSW indexing as it is the most performant mix of performance and recall.
+
+Our SDK allows for configuration of `m` (the maximum number of connections per layer (16 by default)) and `ef_construction` (the size of the dynamic candidate list when constructing the graph (64 by default)) per pipeline.
+
+```javascript
+const model = pgml.newModel()
+const splitter = pgml.newSplitter()
+const pipeline = pgml.newPipeline("test_pipeline", model, splitter, {
+    hnsw: {
+        m: 100,
+        ef_construction: 200
+    }
+})
+await collection.add_pipeline(pipeline)
+```
+
 ### Searching with Pipelines
 
 Pipelines are a required argument when performing vector search. After a Pipeline has been added to a Collection, the Model and Splitter can be omitted when instantiating it.
