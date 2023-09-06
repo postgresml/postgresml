@@ -6,7 +6,7 @@ table.table.table-lg {
             }
         }
 
-        &:hover {
+        &:hover, &.active {
             div.table-cell-content {
                 background: #{$gray-800};
             }
@@ -31,6 +31,14 @@ table.table.table-lg {
                 div.table-cell-content {
                     padding-right: 67px;    
                 }
+            }
+        }
+    }
+
+    &.selectable {
+        tbody {
+            tr:hover {
+                cursor: pointer;
             }
         }
     }

@@ -1,6 +1,9 @@
-<% use crate::components::*; %>
+<% use crate::components::*; 
+use crate::components::tables::large::*;
+use crate::components::navigation::tabs::*;
+%>
 
-<div class="min-height: 100vh;">
+<div class="min-height: 100vh;" data-controller="playground">
   <h3 class="h3">Playground</h3>
 
   <div class="mb-3">
@@ -37,26 +40,52 @@
     </div>
   </div>
   <div class="mb-3">
-    <%+ navigation::tabs::Tabs::new(&vec![
-        navigation::tabs::Tab::new(
-            "Test tab",
-            "Test content".into()
-        ),
-        navigation::tabs::Tab::new(
-            "Second tab",
-            "Second tab content".into()
-        ),
-        navigation::tabs::Tab::new(
-            "Third active tab",
-            "Hello third tab".into(),
-        ),
-    ]).active_tab("Third active tab") %>
+    <%+ Tabs::new(
+        &[
+            Tab::new(
+                "Test tab",
+                Table::new(
+                    &["Date", "Time", "Status"],
+                    &[
+                        Row::new(&[
+                            "01/01/2022".into(),
+                            "20:00:43.956373 +00:00:00 UTC".into(),
+                            "Ready".into()
+                        ])
+                        .action("click->playground#selectRow")
+                        .data("row-id", "1"),
+                        
+                        Row::new(&[
+                            "01/01/2022".into(),
+                            "20:00:43.956373 +00:00:00 UTC".into(), "Ready".into()
+                        ])
+                        .action("click->playground#selectRow")
+                        .data("row-id", "2"),
+
+                        Row::new(&[
+                            "01/01/2022".into(),
+                            "20:00:43.956373 +00:00:00 UTC".into(), "Ready".into()
+                        ])
+                        .action("click->playground#selectRow")
+                        .data("row-id", "3"),
+
+                    ])
+                    .selectable()
+                    .into()
+            ),
+            Tab::new(
+                "Second tab",
+                "Second tab content".into()
+            ),
+            Tab::new(
+                "Third active tab",
+                "Hello third tab".into(),
+            ),
+        ]
+    )
+    .active_tab("Test tab") %>
   </div>
   <div class="mb-3">
-    <%+ tables::large::Table::new(&["Date", "Time", "Status"], &vec![
-        tables::large::Row::new(&["01/01/2022".into(), "20:00:43.956373 +00:00:00 UTC".into(), "Ready".into()]),
-        tables::large::Row::new(&["01/01/2022".into(), "20:00:43.956373 +00:00:00 UTC".into(), "Ready".into()]),
-        tables::large::Row::new(&["01/01/2022".into(), "20:00:43.956373 +00:00:00 UTC".into(), "Ready".into()]),
-    ]) %>
+
   </div>
 </div>
