@@ -926,7 +926,6 @@ impl Collection {
                     queries::EMBED_AND_VECTOR_SEARCH,
                     self.pipelines_table_name,
                     embeddings_table_name,
-                    embeddings_table_name,
                     self.chunks_table_name,
                     self.documents_table_name
                 ))
@@ -1011,7 +1010,6 @@ impl Collection {
         let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
         sqlx::query_as(&query_builder!(
             queries::VECTOR_SEARCH,
-            embeddings_table_name,
             embeddings_table_name,
             self.chunks_table_name,
             self.documents_table_name

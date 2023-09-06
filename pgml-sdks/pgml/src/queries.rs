@@ -188,50 +188,32 @@ embedding AS (
       text => $2,
       kwargs => $3
     )::vector AS embedding
-), 
-comparison AS (
-  SELECT 
-    chunk_id, 
-    1 - (
-      %s.embedding <=> (SELECT embedding FROM embedding)
-    ) AS score 
-  FROM 
-    %s 
 ) 
 SELECT 
-  comparison.score, 
+  embeddings.embedding <=> (SELECT embedding FROM embedding) score, 
   chunks.chunk, 
   documents.metadata 
 FROM 
-  comparison 
-  INNER JOIN %s chunks ON chunks.id = comparison.chunk_id 
+  %s embeddings
+  INNER JOIN %s chunks ON chunks.id = embeddings.chunk_id 
   INNER JOIN %s documents ON documents.id = chunks.document_id 
   ORDER BY 
-  comparison.score DESC 
+  score ASC 
   LIMIT 
   $4;
 "#;
 
 pub const VECTOR_SEARCH: &str = r#"
-WITH comparison AS (
-  SELECT 
-    chunk_id, 
-    1 - (
-      %s.embedding <=> $1::vector 
-    ) AS score 
-  FROM 
-    %s 
-) 
 SELECT 
-  comparison.score, 
+  embeddings.embedding <=> $1::vector score,
   chunks.chunk, 
   documents.metadata 
 FROM 
-  comparison 
-  INNER JOIN %s chunks ON chunks.id = comparison.chunk_id 
+  %s embeddings
+  INNER JOIN %s chunks ON chunks.id = embeddings.chunk_id 
   INNER JOIN %s documents ON documents.id = chunks.document_id 
   ORDER BY 
-  comparison.score DESC 
+  score ASC 
   LIMIT 
   $2;
 "#;

@@ -178,43 +178,33 @@ impl QueryBuilder {
         let mut embedding_cte = CommonTableExpression::from_select(embedding_cte);
         embedding_cte.table_name(Alias::new("embedding"));
 
-        // Build the comparison CTE
-        let mut comparison_cte = Query::select();
-        comparison_cte
-            .from_as(
-                embeddings_table_name.to_table_tuple(),
-                SIden::Str("embeddings"),
-            )
-            .columns([models::EmbeddingIden::ChunkId])
-            .expr(Expr::cust(
-                "1 - (embeddings.embedding <=> (select embedding from embedding)) as score",
-            ));
-        let mut comparison_cte = CommonTableExpression::from_select(comparison_cte);
-        comparison_cte.table_name(Alias::new("comparison"));
-
         // Build the where clause
         let mut with_clause = WithClause::new();
         self.with = with_clause
             .cte(pipeline_cte)
             .cte(model_cte)
             .cte(embedding_cte)
-            .cte(comparison_cte)
             .to_owned();
 
         // Build the query
         self.query
+            .expr(Expr::cust(
+                "(embeddings.embedding <=> (SELECT embedding from embedding)) score",
+            ))
             .columns([
-                (SIden::Str("comparison"), SIden::Str("score")),
                 (SIden::Str("chunks"), SIden::Str("chunk")),
                 (SIden::Str("documents"), SIden::Str("metadata")),
             ])
-            .from(SIden::Str("comparison"))
+            .from_as(
+                embeddings_table_name.to_table_tuple(),
+                SIden::Str("embeddings"),
+            )
             .join_as(
                 JoinType::InnerJoin,
                 self.collection.chunks_table_name.to_table_tuple(),
                 Alias::new("chunks"),
                 Expr::col((SIden::Str("chunks"), SIden::Str("id")))
-                    .equals((SIden::Str("comparison"), SIden::Str("chunk_id"))),
+                    .equals((SIden::Str("embeddings"), SIden::Str("chunk_id"))),
             )
             .join_as(
                 JoinType::InnerJoin,
@@ -223,7 +213,7 @@ impl QueryBuilder {
                 Expr::col((SIden::Str("documents"), SIden::Str("id")))
                     .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
             )
-            .order_by((SIden::Str("comparison"), SIden::Str("score")), Order::Desc);
+            .order_by(SIden::Str("score"), Order::Asc);
 
         self
     }
@@ -296,27 +286,14 @@ impl QueryBuilder {
                             .await?;
                         let embedding = std::mem::take(&mut embeddings[0]);
 
-                        // Explicit drop required here or we can't borrow the pipeline immutably
-                        drop(remote_embeddings);
-                        let embeddings_table_name =
-                            format!("{}.{}_embeddings", self.collection.name, pipeline.name);
+                        let mut embedding_cte = Query::select();
+                        embedding_cte
+                            .expr(Expr::cust_with_values("$1::vector embedding", [embedding]));
 
-                        let mut comparison_cte = Query::select();
-                        comparison_cte
-                            .from_as(
-                                embeddings_table_name.to_table_tuple(),
-                                SIden::Str("embeddings"),
-                            )
-                            .columns([models::EmbeddingIden::ChunkId])
-                            .expr(Expr::cust_with_values(
-                                "1 - (embeddings.embedding <=> $1::vector) as score",
-                                [embedding],
-                            ));
-
-                        let mut comparison_cte = CommonTableExpression::from_select(comparison_cte);
-                        comparison_cte.table_name(Alias::new("comparison"));
+                        let mut embedding_cte = CommonTableExpression::from_select(embedding_cte);
+                        embedding_cte.table_name(Alias::new("embedding"));
                         let mut with_clause = WithClause::new();
-                        with_clause.cte(comparison_cte);
+                        with_clause.cte(embedding_cte);
 
                         let (sql, values) = self
                             .query

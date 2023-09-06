@@ -467,7 +467,7 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswre_20", None);
+        let mut collection = Collection::new("test_r_c_cvswre_21", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
@@ -476,7 +476,7 @@ mod tests {
             .upsert_documents(generate_dummy_documents(3))
             .await?;
         let results = collection
-            .vector_search("Here is some query", &mut pipeline, None, None)
+            .vector_search("Here is some query", &mut pipeline, None, Some(10))
             .await?;
         assert!(results.len() == 3);
         collection.archive().await?;
@@ -502,17 +502,70 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswqb_3", None);
+        let mut collection = Collection::new("test_r_c_cvswqb_4", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(30000))
+            .upsert_documents(generate_dummy_documents(4))
             .await?;
         let results = collection
             .query()
             .vector_recall("Here is some query", &mut pipeline, None)
+            .limit(3)
+            .fetch_all()
+            .await?;
+        assert!(results.len() == 3);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn can_vector_search_with_query_builder_and_pass_model_parameters_in_search(
+    ) -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let model = Model::new(
+            Some("hkunlp/instructor-base".to_string()),
+            Some("python".to_string()),
+            Some(json!({"instruction": "Represent the Wikipedia document for retrieval: "}).into()),
+        );
+        let splitter = Splitter::default();
+        let mut pipeline = Pipeline::new(
+            "test_r_p_cvswqbapmpis_1",
+            Some(model),
+            Some(splitter),
+            Some(
+                serde_json::json!({
+                    "full_text_search": {
+                        "active": true,
+                        "configuration": "english"
+                    }
+                })
+                .into(),
+            ),
+        );
+        let mut collection = Collection::new("test_r_c_cvswqbapmpis_4", None);
+        collection.add_pipeline(&mut pipeline).await?;
+
+        // Recreate the pipeline to replicate a more accurate example
+        let mut pipeline = Pipeline::new("test_r_p_cvswqbapmpis_1", None, None, None);
+        collection
+            .upsert_documents(generate_dummy_documents(3))
+            .await?;
+        let results = collection
+            .query()
+            .vector_recall(
+                "Here is some query",
+                &mut pipeline,
+                Some(
+                    json!({
+                        "instruction": "Represent the Wikipedia document for retrieval: "
+                    })
+                    .into(),
+                ),
+            )
+            .limit(10)
             .fetch_all()
             .await?;
         assert!(results.len() == 3);
@@ -543,17 +596,18 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswqbwre_3", None);
+        let mut collection = Collection::new("test_r_c_cvswqbwre_5", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(4))
             .await?;
         let results = collection
             .query()
             .vector_recall("Here is some query", &mut pipeline, None)
+            .limit(3)
             .fetch_all()
             .await?;
         assert!(results.len() == 3);
