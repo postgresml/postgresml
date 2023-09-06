@@ -36,7 +36,6 @@ tracing-subscriber = { version = "0.3.17", features = ["json"] }
 indicatif = "0.17.6"
 serde = "1.0.181"
 futures = "0.3.28"
-async-recursion = "1.0.4"
 
 [features]
 default = []
