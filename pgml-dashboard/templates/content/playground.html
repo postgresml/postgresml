@@ -52,19 +52,22 @@ use crate::components::navigation::tabs::*;
                             "20:00:43.956373 +00:00:00 UTC".into(),
                             "Ready".into()
                         ])
-                        .action("click->playground#selectRow"),
+                        .action("click->playground#selectRow")
+                        .data("row-id", "1"),
                         
                         Row::new(&[
                             "01/01/2022".into(),
                             "20:00:43.956373 +00:00:00 UTC".into(), "Ready".into()
                         ])
-                        .action("click->playground#selectRow"),
+                        .action("click->playground#selectRow")
+                        .data("row-id", "2"),
 
                         Row::new(&[
                             "01/01/2022".into(),
                             "20:00:43.956373 +00:00:00 UTC".into(), "Ready".into()
                         ])
-                        .action("click->playground#selectRow"),
+                        .action("click->playground#selectRow")
+                        .data("row-id", "3"),
 
                     ])
                     .selectable()

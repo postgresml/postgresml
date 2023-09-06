@@ -1,6 +1,9 @@
 <tr
   data-action="<%= action %>"
   data-tables-large-table-target="row"
+  <% for (name, value) in data { %>
+  data-<%= name %>="<%= value %>"
+  <% } %>
 >
   <% for column in columns { %>
   <td>
