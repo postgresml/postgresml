@@ -1,4 +1,4 @@
-<% use crate::templates::components::{ConfirmModal, Modal};
+<% use crate::templates::components::{ConfirmModal, Modal, navigation::Anchor};
 
 let modal = Modal::new(
   ConfirmModal::new(
@@ -59,7 +59,7 @@ let modal = Modal::new(
                 Delete
               </button>
               <div class="dropdown nav-item d-flex justify-content-center align-items-center">
-                <button data-notebook-target="cellButton" class="horizontal-hide btn btn-dropdown dropdown-toggle leftnav-collapse-affect bg-transparent border-0" disabled href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="0, 10" aria-expanded="false">
+                <button data-notebook-target="cellButton" class="btn btn-dropdown dropdown-toggle leftnav-collapse-affect bg-transparent border-0" disabled href="#" role="button" data-bs-toggle="dropdown" data-bs-offset="0, 10" aria-expanded="false">
                   <span data-notebook-target="syntaxName">Markdown</span>
                   <span class="material-symbols-outlined">
                     expand_more
@@ -67,10 +67,16 @@ let modal = Modal::new(
                 </button>
                 <ul class="dropdown-menu w-100">
                   <li class="menu-item d-flex align-items-center">
-                    <a href="#" data-action="notebook#changeSyntax" data-syntax="gfm">Markdown</a>
+                    <%+ Anchor::new("Markdown".into(), "#")
+                      .data("syntax", "gfm")
+                      .data("action", "notebook#changeSyntax")
+                    %>
                   </li>
                   <li class="menu-item d-flex align-items-center">
-                    <a href="#" data-action="notebook#changeSyntax" data-syntax="sql">SQL</a>
+                    <%+ Anchor::new("SQL".into(), "#")
+                      .data("syntax", "sql")
+                      .data("action", "notebook#changeSyntax")
+                    %>
                   </li>
                 </ul>
               </div>

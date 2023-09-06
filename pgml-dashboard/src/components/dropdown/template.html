@@ -44,11 +44,7 @@
   <ul class="dropdown-menu <%= menu_position %>">
     <% for link in links { %>
       <li class="menu-item d-flex align-items-center <% if link.disabled { %>disabled<% } %>">
-        <% if link.disabled { %>
-          <a type="button" class="dropdown-item" disabled href="#"><%= link.name %></a>
-        <% } else { %>
-          <a type="button" class="dropdown-item" href="<%- link.href %>"><%= link.name %></a>
-        <% } %>
+        <%+ link %>
       </li>
     <% } %>
   </ul>
