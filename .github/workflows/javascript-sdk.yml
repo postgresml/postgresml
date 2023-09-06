@@ -75,6 +75,9 @@ jobs:
         uses: postgresml/gh-actions-cargo@master
         with:
           command: version
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
       - name: Do build
         env:
           TYPESCRIPT_DECLARATION_FILE: "javascript/index.d.ts"
