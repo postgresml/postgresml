@@ -5,6 +5,17 @@ use tracing::instrument;
 
 #[instrument(skip(pool))]
 pub async fn migrate(pool: PgPool, _: Vec<i64>) -> anyhow::Result<String> {
+    pool.execute("ALTER EXTENSION vector UPDATE").await?;
+    let version: String =
+        sqlx::query_scalar("SELECT extversion FROM pg_extension WHERE extname = 'vector'")
+            .fetch_one(&pool)
+            .await?;
+    let value = version.split(".").collect::<Vec<&str>>()[1].parse::<u64>()?;
+    anyhow::ensure!(
+        value >= 5,
+        "Vector extension must be at least version 0.5.0"
+    );
+
     let collection_names: Vec<String> = sqlx::query_scalar("SELECT name FROM pgml.collections")
         .fetch_all(&pool)
         .await?;
