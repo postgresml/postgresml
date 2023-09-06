@@ -1,6 +1,6 @@
-use crate::components::component;
 use crate::components::{StaticNav, StaticNavLink};
 use crate::utils::config;
+use pgml_components::component;
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce)]

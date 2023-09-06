@@ -1,5 +1,5 @@
 use sailfish::TemplateOnce;
-use crate::components::component;
+use pgml_components::component;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "<%= component.path() %>/template.html")]

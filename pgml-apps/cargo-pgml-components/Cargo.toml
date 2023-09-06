@@ -1,6 +1,6 @@
 [package]
 name = "cargo-pgml-components"
-version = "0.1.14"
+version = "0.1.15"
 edition = "2021"
 authors = ["PostgresML <team@postgresml.org>"]
 license = "MIT"

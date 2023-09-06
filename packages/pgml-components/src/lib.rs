@@ -13,11 +13,11 @@ pub struct Component {
 #[macro_export]
 macro_rules! component {
     ($name:tt) => {
-        impl From<$name> for crate::components::Component {
-            fn from(thing: $name) -> crate::components::Component {
+        impl From<$name> for pgml_components::Component {
+            fn from(thing: $name) -> pgml_components::Component {
                 use sailfish::TemplateOnce;
 
-                crate::components::Component {
+                pgml_components::Component {
                     value: thing.render_once().unwrap(),
                 }
             }
@@ -25,11 +25,11 @@ macro_rules! component {
     };
 
     ($name:tt, $lifetime:lifetime) => {
-        impl<$lifetime> From<$name<$lifetime>> for crate::components::Component {
-            fn from(thing: $name<$lifetime>) -> crate::components::Component {
+        impl<$lifetime> From<$name<$lifetime>> for pgml_components::Component {
+            fn from(thing: $name<$lifetime>) -> pgml_components::Component {
                 use sailfish::TemplateOnce;
 
-                crate::components::Component {
+                pgml_components::Component {
                     value: thing.render_once().unwrap(),
                 }
             }
@@ -37,7 +37,7 @@ macro_rules! component {
     };
 }
 
-pub use component;
+// pub use component;
 
 // Render any string.
 impl From<&str> for Component {

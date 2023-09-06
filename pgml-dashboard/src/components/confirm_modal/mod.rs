@@ -1,4 +1,4 @@
-use crate::components::component;
+use pgml_components::component;
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce)]

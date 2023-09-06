@@ -1,6 +1,6 @@
 #![allow(unused_variables)]
-use crate::components::component;
-use crate::components::component::Component;
+use pgml_components::component;
+use pgml_components::Component;
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default, Clone)]

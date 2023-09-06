@@ -9,7 +9,6 @@ use std::path::Path;
 extern crate log;
 
 mod backend;
-mod components;
 mod frontend;
 mod util;
 use util::{info, unwrap_or_exit};
@@ -106,7 +105,6 @@ fn validate_project(project_path: Option<String>) {
     }
 
     unwrap_or_exit!(set_current_dir(path));
-    components::install();
 }
 
 /// Bundle SASS and JavaScript into neat bundle files.
