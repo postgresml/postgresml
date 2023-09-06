@@ -1,13 +1,10 @@
-from pgml import Collection, Model, Splitter, Pipeline, Builtins, py_init_logger
+from pgml import Collection, Model, Splitter, Pipeline, Builtins
 import json
 from datasets import load_dataset
 from time import time
 from dotenv import load_dotenv
 from rich.console import Console
 import asyncio
-
-
-py_init_logger()
 
 
 async def main():
