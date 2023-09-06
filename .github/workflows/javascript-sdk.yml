@@ -68,6 +68,7 @@ jobs:
         run: |
           apt update
           apt-get -y install curl
+          apt-get -y install build-essential
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
