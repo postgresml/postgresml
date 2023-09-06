@@ -968,6 +968,11 @@ impl Collection {
                 .await
             }
         }
+        .map(|r| {
+            r.into_iter()
+                .map(|(score, id, metadata)| (1. - score, id, metadata))
+                .collect()
+        })
     }
 
     #[instrument(skip(self, pool))]

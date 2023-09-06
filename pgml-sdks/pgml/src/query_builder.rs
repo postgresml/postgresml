@@ -327,7 +327,7 @@ impl QueryBuilder {
                 }
                 None => Err(anyhow::anyhow!(e)),
             },
-        }
+        }.map(|r| r.into_iter().map(|(score, id, metadata)| (1. - score, id, metadata)).collect())
     }
 
     // This is mostly so our SDKs in other languages have some way to debug
