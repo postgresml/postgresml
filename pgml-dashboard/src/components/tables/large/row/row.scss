@@ -2,7 +2,9 @@ table.table.table-lg {
     tr {
         &:first-of-type {
             td {
-                padding-top: 16px;
+               .table-cell-content {
+                   padding-top: 16px;
+               }
             }
         }
 
