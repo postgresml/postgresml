@@ -1,0 +1,38 @@
+<div data-controller="inputs-range-group" data-inputs-range-group-bounds-value='{"min": <%- min%>, "max": <%- max%>}'>
+  <div class="d-flex flex-column flex-md-row">
+    <div class="flex-grow-1">
+        <h6 class="h6"><%- title %></h6>
+    </div>
+    <div>
+      <div class="input-group">
+        <input class="text-input form-control text-end text-white fw-bold" maxlength="4" type="text" 
+          data-inputs-range-group-target="text"
+          data-action="focusout->inputs-range-group#updateRange"
+          <% if text_target.is_some() {%><%- text_target.unwrap()%><% } %>>
+        <div class="input-group-text fw-bold text-start" style="width: 2em;">
+          <%- units %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <input class="form-range"
+    type="range"
+    name="<%- identifier %>"
+    min="<%- min %>"
+    max="<%- max %>"
+    step="<%- step %>"
+    value="<%- initial_value %>"
+    data-action="inputs-range-group#updateText" 
+    data-inputs-range-group-target="range"
+    <% if range_target.is_some() { %><%- range_target.unwrap() %><% } %>>
+    
+    <% if cost_rate.is_some() { %>
+    <div class="w-100 d-flex justify-content-end">
+      <div class="hourly-rate">
+        <div class="unit">$</div>
+        <div class="cost"><%= format!("{:.2}",cost_rate.unwrap()) %>/hr</div>
+      </div>
+    </div>
+    <% } %>
+</div>
