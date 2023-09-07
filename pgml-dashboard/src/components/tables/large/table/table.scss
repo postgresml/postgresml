@@ -1,7 +1,10 @@
 table.table.table-lg {
-    * {
+    td, tr, th {
         border-width: 0;
     }
+
+    border-collapse: separate;
+    border-spacing: 0 16px;
 
     thead {
         th {
@@ -15,5 +18,37 @@ table.table.table-lg {
                 padding-left: 67px;
             }
         }
+    }
+
+    tbody {
+         tr {
+            &:hover, &.active {
+                td {
+                    background: #{$gray-800};
+                }
+            }
+
+            td {
+                background: #{$gray-600};
+                vertical-align: middle;
+                padding: 20px 0;
+
+                &:first-of-type {
+                    padding-left: 67px;
+                }
+            }
+        }
+    }
+
+    &.selectable {
+        tbody {
+            tr:hover {
+                cursor: pointer;
+            }
+        }
+    }
+
+    .table-cell-content {
+        height: 100%;
     }
 }
