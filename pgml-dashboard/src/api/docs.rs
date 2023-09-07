@@ -80,6 +80,8 @@ async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk
         cluster,
         &path,
         vec![
+            NavLink::new("Announcing HNSW Support in Our SDK")
+                .href("/blog/announcing-hnsw-support-in-our-sdk"),
             NavLink::new("How-to Improve Search Results with Machine Learning")
                 .href("/blog/how-to-improve-search-results-with-machine-learning"),
             NavLink::new("pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots: Part I")
