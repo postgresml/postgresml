@@ -89,7 +89,7 @@ impl Model {
         };
 
         if runtime == Runtime::python {
-            crate::bindings::python::activate().unwrap();
+            let _ = crate::bindings::python::activate();
         }
 
         let dataset = snapshot.tabular_dataset();
@@ -333,7 +333,10 @@ impl Model {
                     }
 
                     #[cfg(feature = "python")]
-                    Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data)?,
+                    Runtime::python => {
+                        let _ = crate::bindings::python::activate();
+                        crate::bindings::sklearn::Estimator::from_bytes(&data)?
+                    }
 
                     #[cfg(not(feature = "python"))]
                     Runtime::python => {
