@@ -1,0 +1,29 @@
+div[data-controller="inputs-range-group"] {
+    .text-input {
+        width: 4em;
+    }
+
+    .hourly-rate {
+        display: flex;
+        flex-direction: row;
+        background-color: #{$gray-900};
+        border-radius: $border-radius;
+        padding: 8px 4px;
+
+        color: #{$gray-400};
+        text-align: center;
+        font-size: 18px;
+        font-style: normal;
+        font-weight: 700;
+        line-height: 24px;
+        letter-spacing: 0.18px;
+    }
+
+    .cost {
+        width: 5em;
+    }
+
+    .unit {
+        width: 28px;
+    }
+}

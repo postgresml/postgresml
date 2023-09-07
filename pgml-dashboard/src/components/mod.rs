@@ -17,6 +17,9 @@ pub use dropdown::Dropdown;
 pub mod github_icon;
 pub use github_icon::GithubIcon;
 
+// src/components/inputs
+pub mod inputs;
+
 // src/components/left_nav_menu
 pub mod left_nav_menu;
 pub use left_nav_menu::LeftNavMenu;
