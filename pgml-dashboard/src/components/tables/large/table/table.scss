@@ -23,7 +23,9 @@ table.table.table-lg {
     tbody {
          tr {
             &:hover, &.active {
-                background: #{$gray-800};
+                td {
+                    background: #{$gray-800};
+                }
             }
 
             td {
