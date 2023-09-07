@@ -9,7 +9,7 @@ pub struct RangeGroup {
     pub min: i64,
     pub max: i64,
     pub step: f32,
-    pub initial_value: String,
+    pub initial_value: f64,
     pub text_target: Option<String>,
     pub range_target: Option<String>,
     pub cost_rate: Option<f32>,
@@ -24,7 +24,7 @@ impl RangeGroup {
             min: 0,
             max: 100,
             step: 1.0,
-            initial_value: String::from("1"),
+            initial_value: 1.0,
             text_target: None,
             range_target: None,
             cost_rate: None,
@@ -44,8 +44,8 @@ impl RangeGroup {
         self
     }
 
-    pub fn initial_value(mut self, value: &str) -> Self {
-        self.initial_value = value.to_owned();
+    pub fn initial_value(mut self, value: f64) -> Self {
+        self.initial_value = value;
         self
     }
 

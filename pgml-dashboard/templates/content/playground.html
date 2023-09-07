@@ -101,15 +101,15 @@ use crate::components::inputs::range_group::RangeGroup;
     <div class="mb-5">
       <div class="my-5">
         <%+ RangeGroup::new("Input 1")
-          .initial_value("4")
+          .initial_value(4.0)
           .identifier("my_test_input")
-          .bounds(3, 38, 2.0)
+          .bounds(2, 38, 2.0)
           .units("T") %>
       </div>
 
       <div class="my-5">
         <%+ RangeGroup::new("Input 2: with hourly rate")
-        .initial_value("3")
+        .initial_value(3.0)
         .identifier("my_test input 2")
         .bounds(1, 20, 1.0)
         .units("GB")
