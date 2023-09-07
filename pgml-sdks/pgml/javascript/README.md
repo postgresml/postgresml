@@ -586,6 +586,8 @@ Changes between SDK versions are not necessarily backwards compatible. We provid
 await pgml.migrate()
 ```
 
+This will migrate all collections to be compatible with the latest SDK version.
+
 ## Developer Setup
 
 This javascript library is generated from our core rust-sdk. Please check [rust-sdk documentation](../README.md) for developer setup.

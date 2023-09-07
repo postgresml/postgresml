@@ -598,6 +598,8 @@ from pgml import migrate
 await migrate()
 ```
 
+This will migrate all collections to be compatible with the latest SDK version.
+
 ## Developer Setup
 
 This Python library is generated from our core rust-sdk. Please check [rust-sdk documentation](../README.md) for developer setup.
