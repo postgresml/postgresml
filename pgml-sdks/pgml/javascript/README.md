@@ -578,6 +578,16 @@ await collection.remove_pipeline(pipeline)
 
 Removing a Pipeline deletes it and all associated data from the database. Removed Pipelines cannot be re-enabled but can be recreated.
 
+## Upgrading
+
+Changes between SDK versions are not necessarily backwards compatible. We provide a migrate function to help transition smoothly.
+
+```javascript
+await pgml.migrate()
+```
+
+This will migrate all collections to be compatible with the latest SDK version.
+
 ## Developer Setup
 
 This javascript library is generated from our core rust-sdk. Please check [rust-sdk documentation](../README.md) for developer setup.
