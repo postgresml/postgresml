@@ -16,19 +16,19 @@ table.table.table-lg {
             vertical-align: middle;
             padding: 8px 0;
 
-            div.table-cell-content {
+            div.table-cell-content-inner {
                 background: #{$gray-600};
                 padding: 20px 0;
             }
 
             &:first-of-type {
-                div.table-cell-content {
+                div.table-cell-content-inner {
                     padding-left: 67px;
                 }
             }
 
             &:last-of-type {
-                div.table-cell-content {
+                div.table-cell-content-inner {
                     padding-right: 67px;    
                 }
             }
@@ -41,5 +41,9 @@ table.table.table-lg {
                 cursor: pointer;
             }
         }
+    }
+
+    .table-cell-content {
+        height: 100%;
     }
 }
