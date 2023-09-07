@@ -2,10 +2,14 @@ name: deploy javascript sdk
 on:
   workflow_dispatch:
 jobs:
-  build-javascript-sdk:
+  build-javascript-sdk-macos-windows:
     strategy:
       matrix:
-        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm", "macos-latest", "windows-latest"]
+        os:
+          [
+            "macos-latest",
+            "windows-latest",
+          ]
         include:
           - neon-out-name: "x86_64-unknown-linux-gnu-index.node"
             os: "ubuntu-22.04"
@@ -37,7 +41,54 @@ jobs:
       - name: Upload built .node file
         uses: actions/upload-artifact@v3
         with:
-          name: node-artifacts 
+          name: node-artifacts
+          path: pgml-sdks/pgml/javascript/dist/${{ matrix.neon-out-name }}
+          retention-days: 1
+  build-javascript-sdk-linux:
+    strategy:
+      matrix:
+        os:
+          [
+            "ubuntu-22.04",
+            "buildjet-4vcpu-ubuntu-2204-arm",
+          ]
+        include:
+          - neon-out-name: "x86_64-unknown-linux-gnu-index.node"
+            os: "ubuntu-22.04"
+          - neon-out-name: "aarch64-unknown-linux-gnu-index.node"
+            os: "buildjet-4vcpu-ubuntu-2204-arm"
+    runs-on: ubuntu-latest
+    container: ubuntu:16.04
+    defaults:
+      run:
+        working-directory: pgml-sdks/pgml/javascript
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          apt update
+          apt-get -y install curl
+          apt-get -y install build-essential
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Validate cargo is working
+        uses: postgresml/gh-actions-cargo@master
+        with:
+          command: version
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Do build
+        env:
+          TYPESCRIPT_DECLARATION_FILE: "javascript/index.d.ts"
+        run: |
+          npm i 
+          npm run build-release
+      - name: Upload built .node file
+        uses: actions/upload-artifact@v3
+        with:
+          name: node-artifacts
           path: pgml-sdks/pgml/javascript/dist/${{ matrix.neon-out-name }}
           retention-days: 1
   # publish-javascript-sdk:
@@ -69,7 +120,7 @@ jobs:
   #     - name: Generate types declaration
   #       run: |
   #         npm i
-  #         npm run build 
+  #         npm run build
   #         rm index.node
   #     - run: npm ci
   #     - run: npm publish
