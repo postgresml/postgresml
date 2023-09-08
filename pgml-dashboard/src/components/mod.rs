@@ -5,6 +5,10 @@
 pub mod breadcrumbs;
 pub use breadcrumbs::Breadcrumbs;
 
+// src/components/chatbot
+pub mod chatbot;
+pub use chatbot::Chatbot;
+
 // src/components/confirm_modal
 pub mod confirm_modal;
 pub use confirm_modal::ConfirmModal;

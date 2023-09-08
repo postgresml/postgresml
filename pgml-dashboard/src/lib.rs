@@ -670,6 +670,12 @@ pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(layout.render(templates::Playground {})))
 }
 
+#[get("/chatbot")]
+pub async fn chatbot(cluster: &Cluster) -> Result<ResponseOk, Error> {
+    let mut layout = crate::templates::WebAppBase::new("Chatbot", &cluster.context);
+    Ok(ResponseOk(layout.render(templates::Chatbot {})))
+}
+
 pub fn routes() -> Vec<Route> {
     routes![
         notebook_index,

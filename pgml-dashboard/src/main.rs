@@ -113,6 +113,7 @@ async fn main() {
         .mount("/dashboard", pgml_dashboard::routes())
         .mount("/", pgml_dashboard::api::docs::routes())
         .mount("/", rocket::routes![pgml_dashboard::playground])
+        .mount("/", rocket::routes![pgml_dashboard::chatbot])
         .register(
             "/",
             catchers![error_catcher, not_authorized_catcher, not_found_handler],
