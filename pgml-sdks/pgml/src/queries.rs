@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS pgml.collections (
   name text NOT NULL, 
   active BOOLEAN DEFAULT TRUE, 
   project_id int8 NOT NULL REFERENCES pgml.projects ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
-  sdk_version text;
+  sdk_version text
   UNIQUE (name)
 );
 "#;
