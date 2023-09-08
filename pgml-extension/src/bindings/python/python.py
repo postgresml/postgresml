@@ -21,8 +21,7 @@ def activate_venv(venv):
         __venv = venv
         return True
     else:
-        print("Virtualenv not found: %s" % venv)
-        return False
+        raise RuntimeError("Virtual environment '{}' does not exist".format(venv))
 
 
 def freeze():
@@ -32,3 +31,8 @@ def freeze():
         from pip.operations import freeze
 
     return list(freeze.freeze())
+
+
+def cuda_available():
+    import torch
+    return torch.cuda.is_available()
