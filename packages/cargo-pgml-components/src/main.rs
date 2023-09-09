@@ -61,7 +61,12 @@ enum Commands {
 #[derive(Subcommand, Debug)]
 enum AddCommands {
     /// Add a new component.
-    Component { name: String, frame: bool },
+    Component {
+        name: String,
+
+        #[arg(short, long, default_value = "false")]
+        frame: bool,
+    },
 }
 
 fn main() {

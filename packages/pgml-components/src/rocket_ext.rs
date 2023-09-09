@@ -3,6 +3,8 @@ use rocket::{
     request, response,
 };
 
+use sentry_anyhow::capture_anyhow;
+
 // A response that doesn't crash and can be returned from any Rocket route.
 pub struct Response {
     pub status: Status,
@@ -97,5 +99,13 @@ where
 {
     fn from(error: E) -> Self {
         Error(error.into())
+    }
+}
+
+impl<'r> response::Responder<'r, 'r> for Error {
+    fn respond_to(self, _request: &request::Request<'_>) -> response::Result<'r> {
+        capture_anyhow(&self.0);
+        error!("{:?}", self.0);
+        Err(Status::InternalServerError)
     }
 }

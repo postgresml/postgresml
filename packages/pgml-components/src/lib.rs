@@ -2,6 +2,9 @@
 //! A basic UI component. Any other component can accept this
 //! as a parameter and render it.
 
+#[macro_use]
+extern crate log;
+
 pub mod rocket_ext;
 pub use rocket_ext::{Response, Error};
 

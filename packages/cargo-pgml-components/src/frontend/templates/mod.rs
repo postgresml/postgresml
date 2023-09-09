@@ -48,6 +48,7 @@ impl Stimulus {
 #[template(path = "frontend/templates/mod.rs.tpl")]
 pub struct Mod {
     pub modules: Vec<ComponentModel>,
+    pub root: bool,
 }
 
 #[derive(TemplateOnce)]

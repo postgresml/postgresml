@@ -1,5 +1,6 @@
-use pgml_components::Response;
+use pgml_components::{Response, Error};
 use rocket::form::Form;
+use sailfish::TemplateOnce;
 
 use <%= component.rust_path() %>;
 

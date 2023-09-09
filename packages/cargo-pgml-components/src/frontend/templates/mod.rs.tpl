@@ -8,3 +8,6 @@ pub mod <%= component.name() %>;
 pub use <%= component.name() %>::<%= component.rust_name() %>;
 <% } %>
 <% } %>
+<% if root { %>
+pub mod routes;
+<% } %>

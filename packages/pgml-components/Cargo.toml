@@ -7,3 +7,5 @@ edition = "2021"
 sailfish = ">=0.8"
 rocket = { git = "https://github.com/SergioBenitez/Rocket", commit = "26a3f00f82b6ddec2bbdb3ecb0c29d6ff0da7472" }
 anyhow = "1"
+sentry-anyhow = "0.31"
+log = "0.4"
