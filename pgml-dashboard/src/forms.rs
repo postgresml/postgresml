@@ -22,3 +22,8 @@ pub struct Upload<'a> {
 pub struct Reorder {
     pub cells: Vec<i64>,
 }
+
+#[derive(Deserialize)]
+pub struct ChatbotPostData {
+    pub question: String,
+}

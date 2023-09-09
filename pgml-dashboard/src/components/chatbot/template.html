@@ -1,26 +1,148 @@
-<div data-controller="chatbot">
-  <div class="container">
-    <div class="row">
-      <!-- <div class="col-sm-2"> -->
-      <!--   BRAIN -->
-      <!-- </div> -->
+<div data-controller="chatbot" class="container d-flex rounded-3">
+  <div id="chatbot-left-column" class="border-light border-end">
+    <h3 class="d-none d-xxl-block">Change the Brain:</h3>
+    <div id="chatbot-change-the-brain-spacer" class="d-xxl-none"></div>
 
-      <div class="col-md-12">
-        <div id="chatbot-messages">
+    <div>
+      <input
+        type="radio"
+        class="btn-check"
+        name="chatbot-brain-options"
+        id="chatbot-brain-option1"
+        autocomplete="off"
+        value="pgml"
+        checked
+        data-action="chatbot#handleBrainChange"
+      />
+      <label
+        class="chatbot-brain-option-label rounded-2"
+        for="chatbot-brain-option1"
+        data-action="chatbot#handleBrainChange"
+      >
+        <div class="d-flex flex-row items-center">
+          <img
+            class="rounded-2"
+            src="/dashboard/static/images/owl_gradient.svg"
+            alt="PostgresML Logo"
+            width="48"
+          />
+          <div class="d-none d-xxl-block">PostgresML</div>
         </div>
+      </label>
+    </div>
 
-        <div id="chatbot-example-questions">
+    <div>
+      <input
+        type="radio"
+        class="btn-check"
+        name="chatbot-brain-options"
+        id="chatbot-brain-option2"
+        autocomplete="off"
+        value="chatgpt"
+        data-action="chatbot#handleBrainChange"
+      />
+      <label
+        class="chatbot-brain-option-label rounded-2"
+        for="chatbot-brain-option2"
+        data-action="chatbot#handleBrainChange"
+      >
+        <div class="d-flex flex-row items-center">
+          <img
+            class="rounded-2"
+            src="/dashboard/static/images/logos/openai.webp"
+            alt="OpenAI Logo"
+            width="48"
+          />
+          <div class="d-none d-xxl-block">ChatGPT</div>
         </div>
+      </label>
+    </div>
 
-        <!-- <Form data-controller="chatbot-form"> -->
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="Send a message">
-            <span class="input-group-btn">
-             <button class="btn btn-default" type="button">Button</button>
-            </span>
-          </div> 
-        <!-- </Form> -->
+    <div>
+      <input
+        type="radio"
+        class="btn-check"
+        name="chatbot-brain-options"
+        id="chatbot-brain-option3"
+        autocomplete="off"
+        value="anthropic"
+        data-action="chatbot#handleBrainChange"
+      />
+      <label
+        class="chatbot-brain-option-label rounded-2"
+        for="chatbot-brain-option3"
+        data-action="chatbot#handleBrainChange"
+      >
+        <div class="d-flex flex-row items-center">
+          <img
+            class="rounded-2"
+            src="/dashboard/static/images/logos/anthropic.webp"
+            alt="Anthropic Logo"
+            width="48"
+          />
+          <div class="d-none d-xxl-block">Anthropic</div>
+        </div>
+      </label>
+    </div>
 
+    <div>
+      <input
+        type="radio"
+        class="btn-check"
+        name="chatbot-brain-options"
+        id="chatbot-brain-option4"
+        autocomplete="off"
+        value="meta"
+        data-action="chatbot#handleBrainChange"
+      />
+      <label
+        class="chatbot-brain-option-label rounded-2"
+        for="chatbot-brain-option4"
+        data-action="chatbot#handleBrainChange"
+      >
+        <div class="d-flex flex-row items-center">
+          <img
+            class="rounded-2"
+            src="/dashboard/static/images/logos/meta.webp"
+            alt="Anthropic Logo"
+            height="48"
+            width="48"
+          />
+          <div class="d-none d-xxl-block">Meta</div>
+        </div>
+      </label>
+    </div>
+
+  </div>
+
+
+
+  <div id="chatbot-right-column" class="flex-grow-1 d-flex flex-column">
+    <div>
+      <h2 class="p-3 m-0">Chatbot</h2>
+    </div>
+    
+    <div id="chatbot-inner-right-column" class="flex-grow-1 position-relative">
+      <div id="chatbot-history">
+        <div id="chatbot-answer-loading" class=""></div>
+      </div>
+    
+      <div class="position-absolute bottom-0 w-100 p-3">
+        <div class="" id="chatbot-example-questions"></div>
+        <form data-controller="chatbot-form" class="">
+          <div class="">
+            <input
+              id="chatbot-question-input"
+              type="text"
+              class="form-control"
+              placeholder="Send a message"
+              data-action="keydown.enter->chatbot#handleEnter"
+            />
+            <!-- <span class="input-group-btn"> -->
+            <!--  <button class="btn btn-default" type="button">B</button> -->
+            <!-- </span> -->
+          </div>
+        </form>
       </div>
     </div>
   </div>
