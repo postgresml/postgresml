@@ -1,17 +1,61 @@
 div[data-controller="chatbot"] {
-    // Used to identify the component in the DOM.
-    // Delete these styles if you don't need them.
-    min-width: 100px;
-    width: 100%;
-    height: 100px;
+    background-color: #{$gray-700};
+    min-height: 20vh;
+    padding: 0px;
+}
 
-    background: red;
+#chatbot-left-column {
+    padding: 0.5rem;
+}
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
+#chatbot-right-column {
+}
 
-    h3 {
-        color: white;
-    }
+#chatbot-change-the-brain-spacer {
+    margin-top: calc($spacer * 2.8);
+}
+
+.chatbot-brain-option-label {
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+input[type="radio"]:checked + label {
+    background-color: #{$gray-800};
+}
+
+.chatbot-brain-option-label img {
+    padding: 0.5rem;
+    margin: 0.2rem;
+    background-color: #{$gray-600};
+}
+
+#chatbot-question-input {
+    background-color: #{$gray-600};
+}
+
+#chatbot-inner-right-column {
+    background-color: #{$gray-800};
+}
+
+.chatbot-user-message {
+
+}
+
+.chatbot-bot-message {
+    background-color: #{$gray-600};
+}
+
+.chatbot-user-message .chatbot-message-avatar {
+    padding: 0.5rem;
+    background-color: #{$gray-600};
+}
+
+.chatbot-bot-message .chatbot-message-avatar {
+    padding: 0.5rem;
+    background-color: #{$gray-800};
+}
+
+.chatbot-message-avatar {
+    height: 44px;
 }

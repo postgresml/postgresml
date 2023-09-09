@@ -111,7 +111,7 @@ async fn main() {
         .mount("/", rocket::routes![index, error])
         .mount("/dashboard/static", FileServer::from(&config::static_dir()))
         .mount("/dashboard", pgml_dashboard::routes())
-        .mount("/", pgml_dashboard::api::docs::routes())
+        .mount("/", pgml_dashboard::api::routes())
         .mount("/", rocket::routes![pgml_dashboard::playground])
         .mount("/", rocket::routes![pgml_dashboard::chatbot])
         .register(
