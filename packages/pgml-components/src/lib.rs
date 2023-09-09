@@ -2,6 +2,9 @@
 //! A basic UI component. Any other component can accept this
 //! as a parameter and render it.
 
+pub mod rocket_ext;
+pub use rocket_ext::{Response, Error};
+
 use sailfish::TemplateOnce;
 
 #[derive(Default, Clone, TemplateOnce)]

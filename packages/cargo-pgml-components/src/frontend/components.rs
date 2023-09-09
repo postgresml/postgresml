@@ -52,6 +52,25 @@ impl Component {
         self.name.to_case(Case::UpperCamel).to_string()
     }
 
+    pub fn rust_path(&self) -> String {
+        let mut parts = vec!["crate".to_string(), "components".to_string()];
+        parts.extend(
+            self.path
+                .components()
+                .map(|c| {
+                    c.as_os_str()
+                        .to_str()
+                        .expect("os path valid utf-8")
+                        .to_case(Case::Snake)
+                        .to_string()
+                })
+                .collect::<Vec<String>>(),
+        );
+        let _ = parts.pop();
+        parts.push(self.rust_name());
+        parts.join("::")
+    }
+
     pub fn full_path(&self) -> PathBuf {
         Path::new(COMPONENT_DIRECTORY).join(&self.path).to_owned()
     }
@@ -68,6 +87,23 @@ impl Component {
 
     pub fn controller_path(&self) -> String {
         format!("{}_controller.js", self.name().to_case(Case::Snake))
+    }
+
+    pub fn frame_url(&self) -> String {
+        let path = self
+            .path
+            .components()
+            .map(|c| {
+                c.as_os_str()
+                    .to_str()
+                    .expect("os path valid utf-8")
+                    .to_case(Case::Kebab)
+                    .to_string()
+            })
+            .collect::<PathBuf>();
+        let path = Path::new("/frames").join(&path);
+
+        format!("{}", path.display())
     }
 }
 
@@ -86,7 +122,7 @@ impl From<&Path> for Component {
 }
 
 /// Add a new component.
-pub fn add(path: &Path, overwrite: bool) {
+pub fn add(path: &Path, overwrite: bool, frame: bool) {
     if let Some(_extension) = path.extension() {
         error("component name should not contain an extension");
         exit(1);
@@ -166,6 +202,13 @@ pub fn add(path: &Path, overwrite: bool) {
     unwrap_or_exit!(write_to_file(&scss_path, &scss));
     info(&format!("written {}", scss_path.display()));
 
+    if frame {
+        let frame = unwrap_or_exit!(crate::backend::controllers::templates::Frame::new(&component).render_once());
+        let frame_path = path.join("frame.rs");
+        unwrap_or_exit!(write_to_file(&frame_path, &frame));
+        info(&format!("written {}", frame_path.display()));
+    }
+
     update_modules();
 }
 
@@ -205,8 +248,7 @@ fn update_module(path: &Path) {
     debug!("writing {} modules to mod.rs", modules.len());
 
     let components_mod = path.join("mod.rs");
-    let modules =
-        unwrap_or_exit!(templates::Mod { modules }.render_once()).replace("\n\n", "\n");
+    let modules = unwrap_or_exit!(templates::Mod { modules }.render_once()).replace("\n\n", "\n");
 
     let existing_modules = if components_mod.is_file() {
         unwrap_or_exit!(read_to_string(&components_mod))
