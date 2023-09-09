@@ -6,7 +6,9 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 
 use crate::frontend::templates;
-use crate::util::{compare_strings, error, info, unwrap_or_exit, write_to_file};
+use crate::util::{
+    compare_strings, error, info, unwrap_or_exit, write_if_different, write_to_file,
+};
 
 static COMPONENT_DIRECTORY: &'static str = "src/components";
 static COMPONENT_NAME_REGEX: &'static str = "^[a-zA-Z]+[a-zA-Z0-9_/-]*$";
@@ -17,6 +19,7 @@ pub struct Component {
     path: PathBuf,
     is_node: bool,
     frame: bool,
+    form: bool,
 }
 
 impl Component {
@@ -35,6 +38,7 @@ impl Component {
             path: path.to_owned(),
             is_node: has_more_modules(&full_path),
             frame: false,
+            form: false,
         }
     }
 
@@ -44,7 +48,16 @@ impl Component {
     }
 
     pub fn is_frame(&self) -> bool {
-        self.frame || self.full_path().join("frame.rs").exists()
+        self.frame || self.frame_path().exists()
+    }
+
+    pub fn form(mut self, form: bool) -> Self {
+        self.form = form;
+        self
+    }
+
+    pub fn is_form(&self) -> bool {
+        self.form || self.full_path().join("forms.rs").exists()
     }
 
     pub fn path(&self) -> String {
@@ -99,6 +112,10 @@ impl Component {
         parts.join("::")
     }
 
+    pub fn frame_path(&self) -> PathBuf {
+        self.full_path().join("frame.rs").to_owned()
+    }
+
     pub fn full_path(&self) -> PathBuf {
         Path::new(COMPONENT_DIRECTORY).join(&self.path).to_owned()
     }
@@ -150,7 +167,7 @@ impl From<&Path> for Component {
 }
 
 /// Add a new component.
-pub fn add(path: &Path, overwrite: bool, frame: bool) {
+pub fn add(path: &Path, overwrite: bool, frame: bool, form: bool) {
     if let Some(_extension) = path.extension() {
         error("component name should not contain an extension");
         exit(1);
@@ -198,7 +215,7 @@ pub fn add(path: &Path, overwrite: bool, frame: bool) {
         full_path = Path::new(COMPONENT_DIRECTORY).join(parent);
     }
 
-    let component = Component::from(path.as_path()).frame(frame);
+    let component = Component::from(path.as_path()).frame(frame).form(form);
     let path = component.full_path();
 
     if path.exists() && !overwrite {
@@ -231,10 +248,24 @@ pub fn add(path: &Path, overwrite: bool, frame: bool) {
     info(&format!("written {}", scss_path.display()));
 
     if frame {
-        let frame = unwrap_or_exit!(crate::backend::controllers::templates::Frame::new(&component).render_once());
+        let frame = unwrap_or_exit!(
+            crate::backend::controllers::templates::Frame::new(&component).render_once()
+        );
         let frame_path = path.join("frame.rs");
         unwrap_or_exit!(write_to_file(&frame_path, &frame));
         info(&format!("written {}", frame_path.display()));
+    }
+
+    if form {
+        let form_path = path.join("forms.rs");
+        let form = unwrap_or_exit!(
+            crate::backend::controllers::templates::Form::new(&component).render_once()
+        );
+        let written = unwrap_or_exit!(write_if_different(&form_path, &form));
+
+        if written {
+            info(&format!("written {}", form_path.display()));
+        }
     }
 
     update_modules();
@@ -244,9 +275,10 @@ pub fn add(path: &Path, overwrite: bool, frame: bool) {
 pub fn update_modules() {
     let all_components = update_module(Path::new(COMPONENT_DIRECTORY), true);
 
-    println!("{:?}", all_components);
-
-    let routes = unwrap_or_exit!(crate::backend::controllers::templates::Routes::new(&all_components).render_once());
+    let routes = unwrap_or_exit!(crate::backend::controllers::templates::Routes::new(
+        &all_components
+    )
+    .render_once());
     let routes_path = Path::new(COMPONENT_DIRECTORY).join("routes.rs");
 
     let existing_routes = if routes_path.exists() {
@@ -293,7 +325,12 @@ fn update_module(path: &Path, root: bool) -> Vec<Component> {
     debug!("writing {} modules to mod.rs", components.len());
 
     let components_mod = path.join("mod.rs");
-    let modules = unwrap_or_exit!(templates::Mod { modules: components.clone(), root }.render_once()).replace("\n\n", "\n");
+    let modules = unwrap_or_exit!(templates::Mod {
+        modules: components.clone(),
+        root
+    }
+    .render_once())
+    .replace("\n\n", "\n");
 
     let existing_modules = if components_mod.is_file() {
         unwrap_or_exit!(read_to_string(&components_mod))

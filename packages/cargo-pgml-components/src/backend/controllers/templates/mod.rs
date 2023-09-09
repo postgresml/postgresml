@@ -9,10 +9,11 @@ pub struct Frame {
 
 impl Frame {
     pub fn new(component: &Component) -> Self {
-        Frame { component: component.clone() }
+        Frame {
+            component: component.clone(),
+        }
     }
 }
-
 
 #[derive(TemplateOnce)]
 #[template(path = "backend/controllers/templates/routes.rs.tpl")]
@@ -22,6 +23,22 @@ pub struct Routes {
 
 impl Routes {
     pub fn new(components: &[Component]) -> Self {
-        Routes { components: components.to_vec() }
+        Routes {
+            components: components.to_vec(),
+        }
+    }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "backend/controllers/templates/form.rs.tpl")]
+pub struct Form {
+    component: Component,
+}
+
+impl Form {
+    pub fn new(component: &Component) -> Self {
+        Form {
+            component: component.clone(),
+        }
     }
 }

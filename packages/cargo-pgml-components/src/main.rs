@@ -64,8 +64,11 @@ enum AddCommands {
     Component {
         name: String,
 
-        #[arg(short, long, default_value = "false")]
+        #[arg(long, default_value = "false")]
         frame: bool,
+
+        #[arg(long, default_value = "false")]
+        form: bool,
     },
 }
 
@@ -79,8 +82,13 @@ fn main() {
             match pgml_commands.command {
                 Commands::Bundle {} => bundle(),
                 Commands::Add(command) => match command {
-                    AddCommands::Component { name, frame } => {
-                        crate::frontend::components::add(&Path::new(&name), pgml_commands.overwrite, frame)
+                    AddCommands::Component { name, frame, form } => {
+                        crate::frontend::components::add(
+                            &Path::new(&name),
+                            pgml_commands.overwrite,
+                            frame,
+                            form,
+                        )
                     }
                 },
             }

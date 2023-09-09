@@ -93,3 +93,18 @@ pub fn compare_strings(string1: &str, string2: &str) -> bool {
     // TODO: faster string comparison method needed.
     string1.trim() == string2.trim()
 }
+
+pub fn write_if_different(path: &Path, content: &str) -> std::io::Result<bool> {
+    let existing = if path.exists() {
+        read_to_string(path)?
+    } else {
+        String::new()
+    };
+
+    if !compare_strings(&existing, content) {
+        write_to_file(path, content)?;
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
