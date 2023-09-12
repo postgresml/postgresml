@@ -1,4 +1,5 @@
 /// Module providing various metrics used to rank the algorithms.
+use pgrx::*;
 use std::collections::{BTreeSet, HashMap};
 
 use ndarray::{Array2, ArrayView1};
