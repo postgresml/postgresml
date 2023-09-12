@@ -20,7 +20,7 @@ impl RangeGroup {
     pub fn new(title: &str) -> RangeGroup {
         RangeGroup {
             title: title.to_owned(),
-            identifier: title.replace(" ", "_"),
+            identifier: title.replace(" ", "_").to_lowercase(),
             min: 0,
             max: 100,
             step: 1.0,
