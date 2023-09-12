@@ -98,7 +98,7 @@ jobs:
       with:
         working-directory: pgml-extension
         command: install
-        args: cargo-pgrx --version "0.9.8" --locked
+        args: cargo-pgrx --version "0.10.0" --locked
     - name: pgrx init
       uses: postgresml/gh-actions-cargo@master
       with:
@@ -187,6 +187,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
+        cargo install cargo-pgml-components
         bash packages/postgresml-dashboard/release.sh ${{ inputs.packageVersion }}
 
   #

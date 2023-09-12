@@ -1,5 +1,5 @@
 import asyncio
-from pgml import Collection, Model, Splitter, Pipeline
+from pgml import Collection, Model, Splitter, Pipeline, migrate, init_logger
 import logging
 from rich.logging import RichHandler
 from rich.progress import track
@@ -121,6 +121,7 @@ async def generate_response(
     messages, openai_api_key, temperature=0.7, max_tokens=256, top_p=0.9
 ):
     openai.api_key = openai_api_key
+    log.debug("Generating response from OpenAI API: " + str(messages))
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
@@ -170,7 +171,7 @@ async def chat_cli():
             response = await generate_response(
                 messages, openai_api_key, max_tokens=512, temperature=0.0
             )
-            print("PgBot: " + response)
+            log.info("PgBot: " + response)
 
             user_input = input("User (Ctrl-C to exit): ")
         except KeyboardInterrupt:
@@ -241,8 +242,8 @@ async def run():
     The `main` function connects to a database, ingests documents from a specified folder, generates
     chunks, and logs the total number of documents and chunks.
     """
-    print("Starting pgml-chat.... ")
-
+    log.info("Starting pgml-chat.... ")
+    # await migrate()
     if stage == "ingest":
         root_dir = args.root_dir
         await ingest_documents(root_dir)
@@ -255,6 +256,7 @@ async def run():
 
 
 def main():
+    init_logger()
     if (
         stage == "chat"
         and chat_interface == "discord"
