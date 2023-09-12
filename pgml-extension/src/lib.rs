@@ -29,19 +29,17 @@ pub extern "C" fn _PG_init() {
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_migration_file_exists() {
         let paths = std::fs::read_dir("./sql").unwrap();
         for path in paths {
             let path = path.unwrap().path().display().to_string();
-            if path.contains(VERSION) {
+            if path.contains(crate::VERSION) {
                 return;
             }
         }
 
-        panic!("Migration file for version {} not found", VERSION);
+        panic!("Migration file for version {} not found", crate::VERSION);
     }
 }
 

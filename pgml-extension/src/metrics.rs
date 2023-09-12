@@ -52,17 +52,17 @@ impl ConfusionMatrix {
         y_hat: &ArrayView1<usize>,
         num_classes: usize,
     ) -> ConfusionMatrix {
-        if ground_truth.len() != y_hat.len() {
-            error!("Can't compute metrics when the ground truth labels are a different size than the predicted labels. {} != {}", ground_truth.len(), y_hat.len())
-        };
-
         // Distinct classes.
         let mut classes = ground_truth.iter().collect::<BTreeSet<_>>();
         classes.extend(&mut y_hat.iter().collect::<BTreeSet<_>>().into_iter());
 
+        if ground_truth.len() != y_hat.len() {
+            error!("Can't compute metrics when the ground truth labels are a different size than the predicted labels. {} != {}", ground_truth.len(), y_hat.len());
+        }
+
         if num_classes != classes.len() {
-            error!("Can't compute metrics when the number of classes in the test set is different than the number of classes in the training set. {} != {}", num_classes, classes.len())
-        };
+            error!("Can't compute metrics when the number of classes in the test set is different than the number of classes in the training set. {} != {}", num_classes, classes.len());
+        }
 
         // Class value = index in the confusion matrix
         // e.g. class value 5 will be index 4 if there are classes 1, 2, 3 and 4 present.
