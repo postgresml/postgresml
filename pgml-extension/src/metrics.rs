@@ -1,4 +1,5 @@
 /// Module providing various metrics used to rank the algorithms.
+use pgrx::*;
 use std::collections::{BTreeSet, HashMap};
 
 use ndarray::{Array2, ArrayView1};
@@ -51,13 +52,17 @@ impl ConfusionMatrix {
         y_hat: &ArrayView1<usize>,
         num_classes: usize,
     ) -> ConfusionMatrix {
-        assert_eq!(ground_truth.len(), y_hat.len());
+        if ground_truth.len() != y_hat.len() {
+            error!("Can't compute metrics when the ground truth labels are a different size than the predicted labels. {} != {}", ground_truth.len(), y_hat.len())
+        };
 
         // Distinct classes.
         let mut classes = ground_truth.iter().collect::<BTreeSet<_>>();
         classes.extend(&mut y_hat.iter().collect::<BTreeSet<_>>().into_iter());
 
-        assert_eq!(num_classes, classes.len());
+        if num_classes != classes.len() {
+            error!("Can't compute metrics when the number of classes in the test set is different than the number of classes in the training set. {} != {}", num_classes, classes.len())
+        };
 
         // Class value = index in the confusion matrix
         // e.g. class value 5 will be index 4 if there are classes 1, 2, 3 and 4 present.
