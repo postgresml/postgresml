@@ -11,10 +11,13 @@ use crate::orm::*;
 #[macro_export]
 macro_rules! create_pymodule {
     ($pyfile:literal) => {
-        pub static PY_MODULE: Lazy<anyhow::Result<Py<PyModule>>> = Lazy::new(|| {
-            Python::with_gil(|py| -> anyhow::Result<Py<PyModule>> {
+        pub static PY_MODULE: once_cell::sync::Lazy<
+            anyhow::Result<pyo3::Py<pyo3::types::PyModule>>,
+        > = once_cell::sync::Lazy::new(|| {
+            pyo3::Python::with_gil(|py| -> anyhow::Result<pyo3::Py<pyo3::types::PyModule>> {
+                use $crate::bindings::TracebackError;
                 let src = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), $pyfile));
-                Ok(PyModule::from_code(py, src, "", "")
+                Ok(pyo3::types::PyModule::from_code(py, src, "", "")
                     .format_traceback(py)?
                     .into())
             })
