@@ -18,6 +18,9 @@
 <html lang="en-US" data-bs-theme="dark">
     <%- head %>
     <body>
+        <% for component in body_components { %>
+        <%+ component %>
+        <% } %>
         <main>
             <div class="container-fluid p-0 min-vh-lg-100">
                 <div class="row gx-0 min-vh-lg-100 gy-0">

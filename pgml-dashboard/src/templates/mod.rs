@@ -1,3 +1,4 @@
+use pgml_components::Component;
 use std::collections::HashMap;
 
 pub use crate::components::{self, NavLink, StaticNav, StaticNavLink};
@@ -104,6 +105,7 @@ pub struct WebAppBase<'a> {
     pub account_management_nav: StaticNav,
     pub upper_left_nav: StaticNav,
     pub lower_left_nav: StaticNav,
+    pub body_components: Vec<Component>,
 }
 
 impl<'a> WebAppBase<'a> {
@@ -150,6 +152,11 @@ impl<'a> WebAppBase<'a> {
 
     pub fn content(&mut self, content: &str) -> &mut Self {
         self.content = Some(content.to_owned());
+        self
+    }
+
+    pub fn body_components(&mut self, components: Vec<Component>) -> &mut Self {
+        self.body_components = components;
         self
     }
 
