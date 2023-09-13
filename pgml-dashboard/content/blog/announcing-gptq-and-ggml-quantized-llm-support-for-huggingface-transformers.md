@@ -104,7 +104,10 @@ PostgresML will automatically use GPTQ or GGML when a HuggingFace model has one 
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
-      "model": "mlabonne/gpt2-GPTQ-4bit"
+      "model": "mlabonne/gpt2-GPTQ-4bit",
+      "model_basename": "gptq_model-4bit-128g",
+      "use_triton": true,
+      "use_safetensors": true
     }'::JSONB,
     inputs => ARRAY[
         'Once upon a time,'

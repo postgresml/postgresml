@@ -89,11 +89,12 @@ def ensure_device(kwargs):
 
 class GPTQPipeline(object):
     def __init__(self, model_name, **task):
-        import auto_gptq
+        from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
         from huggingface_hub import snapshot_download
         model_path = snapshot_download(model_name)
 
-        self.model = auto_gptq.AutoGPTQForCausalLM.from_quantized(model_path, **task)
+        quantized_config = BaseQuantizeConfig.from_pretrained(model_path)
+        self.model = AutoGPTQForCausalLM.from_quantized(model_path, quantized_config=quantized_config, **task)
         if "use_fast_tokenizer" in task:
             self.tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=task.pop("use_fast_tokenizer"))
         else:
@@ -192,9 +193,13 @@ def create_pipeline(task):
     ensure_device(task)
     convert_dtype(task)
     model_name = task.get("model", None)
-    if model_name and "-ggml" in model_name:
+    if model_name:
+        lower = model_name.lower()
+    else:
+        lower = None
+    if lower and "-ggml" in lower:
         pipe = GGMLPipeline(model_name, **task)
-    elif model_name and "-gptq" in model_name:
+    elif lower and "-gptq" in lower:
         pipe = GPTQPipeline(model_name, **task)
     else:
         try:
