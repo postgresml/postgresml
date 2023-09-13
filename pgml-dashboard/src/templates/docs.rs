@@ -19,8 +19,8 @@ impl NavLink {
     pub fn new(title: &str) -> NavLink {
         NavLink {
             id: crate::utils::random_string(25),
-            title: title.to_string(),
-            href: "#".to_string(),
+            title: title.to_owned(),
+            href: "#".to_owned(),
             children: vec![],
             open: false,
         }
@@ -28,7 +28,7 @@ impl NavLink {
 
     /// Set the link href.
     pub fn href(mut self, href: &str) -> NavLink {
-        self.href = href.to_string();
+        self.href = href.to_owned();
         self
     }
 
