@@ -17,6 +17,7 @@ click = "^8.1.6"
 black = "^23.7.0"
 slack-bolt = "^1.18.0"
 discord-py = "^2.3.1"
+pendulum = "^2.1.2"
 
 
 [build-system]

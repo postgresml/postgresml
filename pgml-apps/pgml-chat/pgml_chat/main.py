@@ -1,5 +1,5 @@
 import asyncio
-from pgml import Collection, Model, Splitter, Pipeline, migrate, init_logger
+from pgml import Collection, Model, Splitter, Pipeline, migrate, init_logger, Builtins
 import logging
 from rich.logging import RichHandler
 from rich.progress import track
@@ -11,6 +11,8 @@ import argparse
 from time import time
 import openai
 import signal
+from uuid import uuid4
+import pendulum
 
 import ast
 from slack_bolt.async_app import AsyncApp
@@ -61,6 +63,54 @@ parser.add_argument(
     help="Chat interface to use",
 )
 
+parser.add_argument(
+    "--chat_history",
+    dest="chat_history",
+    type=int,
+    default=1,
+    help="Number of messages from history used for generating response",
+)
+
+parser.add_argument(
+    "--bot_name",
+    dest="bot_name",
+    type=str,
+    default="PgBot",
+    help="Name of the bot",
+)
+
+parser.add_argument(
+    "--bot_language",
+    dest="bot_language",
+    type=str,
+    default="English",
+    help="Language of the bot",
+)
+
+parser.add_argument(
+    "--bot_topic",
+    dest="bot_topic",
+    type=str,
+    default="PostgresML",
+    help="Topic of the bot",
+)
+parser.add_argument(
+    "--bot_topic_primary_language",
+    dest="bot_topic_primary_language",
+    type=str,
+    default="",
+    help="Primary programming language of the topic",
+)
+
+parser.add_argument(
+    "--bot_persona",
+    dest="bot_persona",
+    type=str,
+    default="Engineer",
+    help="Persona of the bot",
+)
+
+
 args = parser.parse_args()
 
 FORMAT = "%(message)s"
@@ -77,9 +127,19 @@ load_dotenv(".env")
 
 
 # The code is using the `argparse` module to parse command line arguments.
+chat_history_collection_name = args.collection_name + "_chat_history"
 collection = Collection(args.collection_name)
+chat_collection = Collection(chat_history_collection_name)
 stage = args.stage
 chat_interface = args.chat_interface
+chat_history = args.chat_history
+
+# Get all bot related environment variables
+bot_name = args.bot_name
+bot_language = args.bot_language
+bot_persona = args.bot_persona
+bot_topic = args.bot_topic
+bot_topic_primary_language = args.bot_topic_primary_language
 
 # The above code is retrieving environment variables and assigning their values to various variables.
 database_url = os.environ.get("DATABASE_URL")
@@ -87,14 +147,51 @@ splitter_name = os.environ.get("SPLITTER", "recursive_character")
 splitter_params = os.environ.get(
     "SPLITTER_PARAMS", {"chunk_size": 1500, "chunk_overlap": 40}
 )
+
 splitter = Splitter(splitter_name, splitter_params)
-model_name = os.environ.get("MODEL", "intfloat/e5-small")
-model_params = ast.literal_eval(os.environ.get("MODEL_PARAMS", {}))
+model_name = "hkunlp/instructor-xl"
+model_embedding_instruction = "Represent the %s document for retrieval: " % (bot_topic)
+model_params = {"instruction": model_embedding_instruction}
 model = Model(model_name, "pgml", model_params)
 pipeline = Pipeline(args.collection_name + "_pipeline", model, splitter)
-query_params = ast.literal_eval(os.environ.get("QUERY_PARAMS", {}))
-system_prompt = os.environ.get("SYSTEM_PROMPT")
-base_prompt = os.environ.get("BASE_PROMPT")
+chat_history_pipeline = Pipeline(
+    chat_history_collection_name + "_pipeline", model, splitter
+)
+
+query_params_instruction = (
+    "Represent the %s question for retrieving supporting documents: " % (bot_topic)
+)
+query_params = {"instruction": query_params_instruction}
+
+default_system_prompt_template = """
+You are an assistant to answer questions about {topic}. 
+Your name is {name}.\n 
+"""
+# Use portion of a long document to see if any of the text is relevant to answer the question. Given relevant parts of a document and a question, create a final answer.
+# Include a {response_programming_language} code snippet the answer wherever possible.
+# You speak like {persona} in {language}.
+
+default_system_prompt = default_system_prompt_template.format(
+    topic=bot_topic,
+    name=bot_name,
+    persona=bot_persona,
+    language=bot_language,
+    response_programming_language=bot_topic_primary_language,
+)
+
+system_prompt = os.environ.get("SYSTEM_PROMPT", default_system_prompt)
+
+base_prompt = """Use the following pieces of context to answer the question at the end. First identify which of the contexts are relevant to the question.
+If you don't know the answer, just say that you don't know, don't try to make up an answer. 
+Use five sentences maximum and keep the answer as concise as possible. 
+####
+{context}
+###
+Question: {question}
+###
+Include a {response_programming_language} code snippet verbatim in the answer wherever possible. You speak like {persona} in {language}. If the context is empty, ask for more information.
+Helpful Answer:"""
+
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 
 
@@ -117,6 +214,67 @@ async def upsert_documents(folder: str) -> int:
     return len(md_files)
 
 
+async def generate_chat_response(
+    user_input,
+    system_prompt,
+    openai_api_key,
+    temperature=0.7,
+    max_tokens=256,
+    top_p=0.9,
+):
+    messages = []
+    messages.append({"role": "system", "content": system_prompt})
+    # Get history
+    builtins = Builtins()
+    query = """SELECT metadata->>'role' as role, text as content from %s.documents
+            WHERE metadata @> '{\"interface\" : \"%s\"}'::JSONB 
+            AND metadata @> '{\"role\" : \"user\"}'::JSONB 
+            OR metadata @> '{\"role\" : \"assistant\"}'::JSONB 
+            ORDER BY metadata->>'timestamp' DESC LIMIT %d""" % (
+        chat_history_collection_name,
+        chat_interface,
+        chat_history * 2,
+    )
+    results = await builtins.query(query).fetch_all()
+    results.reverse()
+    messages = messages + results
+
+    history_documents = []
+    _document = {
+        "text": user_input,
+        "id": str(uuid4())[:8],
+        "interface": chat_interface,
+        "role": "user",
+        "timestamp": pendulum.now().timestamp(),
+    }
+    history_documents.append(_document)
+
+    if user_input:
+        query = await get_prompt(user_input)
+    messages.append({"role": "system", "content": query})
+    print(messages)
+    response = await generate_response(
+        messages,
+        openai_api_key,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        top_p=top_p,
+    )
+
+    _document = {
+        "text": response,
+        "id": str(uuid4())[:8],
+        "interface": chat_interface,
+        "role": "assistant",
+        "timestamp": pendulum.now().timestamp(),
+    }
+    history_documents.append(_document)
+
+    await chat_collection.upsert_documents(history_documents)
+
+    return response
+
+
 async def generate_response(
     messages, openai_api_key, temperature=0.7, max_tokens=256, top_p=0.9
 ):
@@ -137,42 +295,64 @@ async def generate_response(
 async def ingest_documents(folder: str):
     # Add the pipeline to the collection, does nothing if we have already added it
     await collection.add_pipeline(pipeline)
+    await chat_collection.add_pipeline(chat_history_pipeline)
     # This will upsert, chunk, and embed the contents in the folder
     total_docs = await upsert_documents(folder)
     log.info("Total documents: " + str(total_docs))
 
 
 async def get_prompt(user_input: str = ""):
+    # user_input = "In the context of " + bot_topic + ", " + user_input
     vector_results = (
         await collection.query()
         .vector_recall(user_input, pipeline, query_params)
-        .limit(2)
+        .limit(5)
         .fetch_all()
     )
     log.info(vector_results)
+
     context = ""
 
-    for result in vector_results:
-        context += result[1] + "\n"
+    for id, result in enumerate(vector_results):
+        if result[0] > 0.6:
+            context += "#### \n Context %d: "%(id) + result[1] + "\n"
 
-    query = base_prompt.format(context=context, question=user_input)
+    query = base_prompt.format(
+        context=context,
+        question=user_input,
+        topic=bot_topic,
+        persona=bot_persona,
+        language=bot_language,
+        response_programming_language=bot_topic_primary_language,
+    )
 
     return query
 
 
 async def chat_cli():
     user_input = "Who are you?"
+    messages = [{"role": "system", "content": system_prompt}]
+    history_document = [
+        {
+            "text": system_prompt,
+            "id": str(uuid4())[:8],
+            "interface": "cli",
+            "role": "system",
+            "timestamp": pendulum.now().timestamp(),
+        }
+    ]
+    await chat_collection.upsert_documents(history_document)
     while True:
         try:
-            messages = [{"role": "system", "content": system_prompt}]
-            if user_input:
-                query = await get_prompt(user_input)
-            messages.append({"role": "user", "content": query})
-            response = await generate_response(
-                messages, openai_api_key, max_tokens=512, temperature=0.0
+            response = await generate_chat_response(
+                user_input,
+                system_prompt,
+                openai_api_key,
+                max_tokens=512,
+                temperature=0.7,
+                top_p=0.9,
             )
-            log.info("PgBot: " + response)
-
+            print("PgBot: " + response)
             user_input = input("User (Ctrl-C to exit): ")
         except KeyboardInterrupt:
             print("Exiting...")
@@ -191,13 +371,13 @@ async def chat_slack():
         @app.message(f"<@{bot_user_id}>")
         async def message_hello(message, say):
             print("Message received... ")
-            messages = [{"role": "system", "content": system_prompt}]
             user_input = message["text"]
-
-            query = await get_prompt(user_input)
-            messages.append({"role": "user", "content": query})
-            response = await generate_response(
-                messages, openai_api_key, max_tokens=512, temperature=1.0
+            response = await generate_chat_response(
+                user_input,
+                system_prompt,
+                openai_api_key,
+                max_tokens=512,
+                temperature=0.7,
             )
             user = message["user"]
 
@@ -224,15 +404,11 @@ async def on_ready():
 @client.event
 async def on_message(message):
     bot_mention = f"<@{client.user.id}>"
-    messages = [{"role": "system", "content": system_prompt}]
     if message.author != client.user and bot_mention in message.content:
         print("Discord response in progress ..")
         user_input = message.content
-        query = await get_prompt(user_input)
-
-        messages.append({"role": "user", "content": query})
-        response = await generate_response(
-            messages, openai_api_key, max_tokens=512, temperature=1.0
+        response = await generate_chat_response(
+            user_input, system_prompt, openai_api_key, max_tokens=512, temperature=0.7
         )
         await message.channel.send(response)
 
@@ -265,4 +441,6 @@ def main():
         client.run(os.environ["DISCORD_BOT_TOKEN"])
     else:
         asyncio.run(run())
+
+
 main()
