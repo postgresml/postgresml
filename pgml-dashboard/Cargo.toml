@@ -45,3 +45,5 @@ pgvector = { version = "0.2.2", features = [ "sqlx", "postgres" ] }
 console-subscriber = "*"
 glob = "*"
 pgml-components = { path = "../packages/pgml-components" }
+reqwest = { version = "0.11.20", features = ["json"] }
+pgml = { version = "0.9.2", path = "../pgml-sdks/pgml/" }
