@@ -84,7 +84,7 @@ pub fn validate_shared_library() {
 
 #[pg_extern(immutable, parallel_safe)]
 fn version() -> String {
-    crate::VERSION.to_string()
+    format!("{} ({})", crate::VERSION, crate::COMMIT)
 }
 
 #[allow(clippy::too_many_arguments)]

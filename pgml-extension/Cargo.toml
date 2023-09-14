@@ -53,6 +53,9 @@ csv = "1.2"
 [dev-dependencies]
 pgrx-tests = "=0.10.0"
 
+[build-dependencies]
+vergen = { version = "8", features = ["build", "git", "gitcl"] }
+
 [profile.dev]
 panic = "unwind"
 lto = "thin"
