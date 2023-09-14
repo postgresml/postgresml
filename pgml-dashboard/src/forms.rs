@@ -26,4 +26,7 @@ pub struct Reorder {
 #[derive(Deserialize)]
 pub struct ChatbotPostData {
     pub question: String,
+    pub model: u8,
+    #[serde(rename = "knowledgeBase")]
+    pub knowledge_base: u8,
 }
