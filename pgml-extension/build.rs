@@ -16,4 +16,6 @@ fn main() {
         "cargo:link-args=-Wl,--version-script={}/ld.map",
         std::env::current_dir().unwrap().to_string_lossy(),
     );
+
+    vergen::EmitBuilder::builder().all_git().emit().unwrap();
 }

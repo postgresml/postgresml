@@ -7,6 +7,7 @@ extern crate signal_hook;
 use pgrx::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const COMMIT: &str = env!("VERGEN_GIT_SHA");
 
 pub mod api;
 pub mod bindings;
