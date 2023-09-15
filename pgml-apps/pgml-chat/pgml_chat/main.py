@@ -179,9 +179,6 @@ Use the following steps:
 6. Most importantly, don't make up code snippets that are not present in the documents.
 7. If the user input is generic like Cool, Thanks, Hello, etc. then respond with a generic answer. 
 """
-# Use portion of a long document to see if any of the text is relevant to answer the question. Given relevant parts of a document and a question, create a final answer.
-# Include a {response_programming_language} code snippet the answer wherever possible.
-# You speak like {persona} in {language}.
 
 default_system_prompt = default_system_prompt_template.format(
     topic=bot_topic,
