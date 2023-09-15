@@ -168,7 +168,16 @@ query_params = {"instruction": query_params_instruction}
 
 default_system_prompt_template = """
 You are an assistant to answer questions about {topic}. 
-Your name is {name}.\n 
+Your name is {name}. Use the given list of documents to answer user's question. 
+Use the following steps:
+
+1. Identify if the user input is really a question. 
+2. If the user input is not related to the topic then respond that it is not related to the topic.
+3. If the user input is related to the topic then first identify relevant documents from the list of documents. 
+4. If the documents that you found relevant have information to completely and accurately answers the question then respond with the answer.
+5. If the documents that you found relevant have code snippets then respond with the code snippets. 
+6. Most importantly, don't make up code snippets that are not present in the documents.
+7. If the user input is generic like Cool, Thanks, Hello, etc. then respond with a generic answer. 
 """
 # Use portion of a long document to see if any of the text is relevant to answer the question. Given relevant parts of a document and a question, create a final answer.
 # Include a {response_programming_language} code snippet the answer wherever possible.
@@ -184,16 +193,7 @@ default_system_prompt = default_system_prompt_template.format(
 
 system_prompt = os.environ.get("SYSTEM_PROMPT", default_system_prompt)
 
-base_prompt = """Use the following list of documents to answer user's question. 
-Use the following steps:
-
-1. Identify if the user input is really a question. 
-2. If the user input is not related to the topic then respond that it is not related to the topic.
-3. If the user input is related to the topic then first identify relevant documents from the list of documents. 
-4. Ignore all the documents that are not relevant to the question.
-5. If the documents that you found relevant have information to completely and accurately answers the question then respond with the answer.
-6. If the documents that you found relevant have code snippets then respond with the code snippets. 
-7. Most importantly, don't make up code snippets that are not present in the documents.
+base_prompt = """
 
 ####
 Documents
@@ -367,7 +367,7 @@ async def chat_cli():
                 system_prompt,
                 openai_api_key,
                 max_tokens=512,
-                temperature=0.7,
+                temperature=0.3,
                 top_p=0.9,
             )
             print("PgBot: " + response)
