@@ -152,6 +152,8 @@ splitter = Splitter(splitter_name, splitter_params)
 model_name = "hkunlp/instructor-xl"
 model_embedding_instruction = "Represent the %s document for retrieval: " % (bot_topic)
 model_params = {"instruction": model_embedding_instruction}
+# model_name = "BAAI/bge-large-en-v1.5"
+# model_params = {}
 model = Model(model_name, "pgml", model_params)
 pipeline = Pipeline(args.collection_name + "_pipeline", model, splitter)
 chat_history_pipeline = Pipeline(
@@ -162,6 +164,7 @@ query_params_instruction = (
     "Represent the %s question for retrieving supporting documents: " % (bot_topic)
 )
 query_params = {"instruction": query_params_instruction}
+#query_params = {}
 
 default_system_prompt_template = """
 You are an assistant to answer questions about {topic}. 
@@ -181,15 +184,30 @@ default_system_prompt = default_system_prompt_template.format(
 
 system_prompt = os.environ.get("SYSTEM_PROMPT", default_system_prompt)
 
-base_prompt = """Use the following pieces of context to answer the question at the end. First identify which of the contexts are relevant to the question.
-If you don't know the answer, just say that you don't know, don't try to make up an answer. 
-Use five sentences maximum and keep the answer as concise as possible. 
+base_prompt = """Use the following list of documents to answer user's question. 
+Use the following steps:
+
+1. Identify if the user input is really a question. 
+2. If the user input is not related to the topic then respond that it is not related to the topic.
+3. If the user input is related to the topic then first identify relevant documents from the list of documents. 
+4. Ignore all the documents that are not relevant to the question.
+5. If the documents that you found relevant have information to completely and accurately answers the question then respond with the answer.
+6. If the documents that you found relevant have code snippets then respond with the code snippets. 
+7. Most importantly, don't make up code snippets that are not present in the documents.
+
+####
+Documents
 ####
 {context}
 ###
-Question: {question}
+User: {question}
 ###
-Include a {response_programming_language} code snippet verbatim in the answer wherever possible. You speak like {persona} in {language}. If the context is empty, ask for more information.
+
+If the user input is generic then respond with a generic answer. For example: If the user says "Hello" then respond with "Hello". If the user says "Thank you" then respond with "You are welcome".
+You speak like {persona} in {language}. 
+
+Most importantly, If you don't find any document to answer the question say I don't know! DON'T MAKE UP AN ANSWER! It is very important that you don't make up an answer!
+
 Helpful Answer:"""
 
 openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -251,7 +269,7 @@ async def generate_chat_response(
 
     if user_input:
         query = await get_prompt(user_input)
-    messages.append({"role": "system", "content": query})
+    messages.append({"role": "user", "content": query})
     print(messages)
     response = await generate_response(
         messages,
@@ -281,7 +299,7 @@ async def generate_response(
     openai.api_key = openai_api_key
     log.debug("Generating response from OpenAI API: " + str(messages))
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-3.5-turbo-16k",
         messages=messages,
         temperature=temperature,
         max_tokens=max_tokens,
@@ -302,10 +320,10 @@ async def ingest_documents(folder: str):
 
 
 async def get_prompt(user_input: str = ""):
-    # user_input = "In the context of " + bot_topic + ", " + user_input
+    query_input = "In the context of " + bot_topic + ", " + user_input
     vector_results = (
         await collection.query()
-        .vector_recall(user_input, pipeline, query_params)
+        .vector_recall(query_input, pipeline, query_params)
         .limit(5)
         .fetch_all()
     )
@@ -315,7 +333,7 @@ async def get_prompt(user_input: str = ""):
 
     for id, result in enumerate(vector_results):
         if result[0] > 0.6:
-            context += "#### \n Context %d: "%(id) + result[1] + "\n"
+            context += "#### \n Document %d: "%(id) + result[1] + "\n"
 
     query = base_prompt.format(
         context=context,
