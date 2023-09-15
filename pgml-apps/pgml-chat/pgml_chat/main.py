@@ -296,7 +296,8 @@ async def generate_response(
     openai.api_key = openai_api_key
     log.debug("Generating response from OpenAI API: " + str(messages))
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k",
+        # model="gpt-3.5-turbo-16k",
+        model="gpt-4",
         messages=messages,
         temperature=temperature,
         max_tokens=max_tokens,
