@@ -168,7 +168,7 @@ query_params = {"instruction": query_params_instruction}
 
 default_system_prompt_template = """
 You are an assistant to answer questions about {topic}. 
-Your name is {name}. Use the given list of documents to answer user's question. 
+Your name is {name}. You speak like {persona} in {language}. Use the given list of documents to answer user's question. 
 Use the following steps:
 
 1. Identify if the user input is really a question. 
@@ -199,11 +199,6 @@ Documents
 ###
 User: {question}
 ###
-
-If the user input is generic then respond with a generic answer. For example: If the user says "Hello" then respond with "Hello". If the user says "Thank you" then respond with "You are welcome".
-You speak like {persona} in {language}. 
-
-Most importantly, If you don't find any document to answer the question say I don't know! DON'T MAKE UP AN ANSWER! It is very important that you don't make up an answer!
 
 Helpful Answer:"""
 
