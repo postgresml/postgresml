@@ -22,7 +22,7 @@
     min="<%- min %>"
     max="<%- max %>"
     step="<%- step %>"
-    value="<%- initial_value %>"
+    value="<%- initial_value.to_string() %>"
     data-action="inputs-range-group#updateText" 
     data-inputs-range-group-target="range"
     <% if range_target.is_some() { %><%- range_target.unwrap() %><% } %>>
