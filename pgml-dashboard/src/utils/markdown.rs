@@ -1196,11 +1196,11 @@ impl SearchIndex {
         let path = Self::path();
 
         if !path.exists() {
-            std::fs::create_dir(Self::path())
+            std::fs::create_dir(&path)
                 .expect("failed to create search_index directory, is the filesystem writable?");
         }
 
-        let index = match tantivy::Index::open_in_dir(&Self::path()) {
+        let index = match tantivy::Index::open_in_dir(&path) {
             Ok(index) => index,
             Err(err) => {
                 warn!(
@@ -1208,7 +1208,7 @@ impl SearchIndex {
                     path.display(),
                     err
                 );
-                Index::create_in_dir(&Self::path(), Self::schema())?
+                Index::create_in_dir(&path, Self::schema())?
             }
         };
 
