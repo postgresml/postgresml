@@ -1193,7 +1193,24 @@ impl SearchIndex {
     }
 
     pub fn open() -> tantivy::Result<SearchIndex> {
-        let index = tantivy::Index::open_in_dir(&Self::path())?;
+        let path = Self::path();
+
+        if !path.exists() {
+            std::fs::create_dir(&path)
+                .expect("failed to create search_index directory, is the filesystem writable?");
+        }
+
+        let index = match tantivy::Index::open_in_dir(&path) {
+            Ok(index) => index,
+            Err(err) => {
+                warn!(
+                    "Failed to open Tantivy index in '{}', creating an empty one, error: {}",
+                    path.display(),
+                    err
+                );
+                Index::create_in_dir(&path, Self::schema())?
+            }
+        };
 
         let reader = index.reader_builder().try_into()?;
 
