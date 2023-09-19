@@ -241,29 +241,38 @@ def transform(task, args, inputs):
     return orjson.dumps(pipe(inputs, **args), default=orjson_default).decode()
 
 
-def embed(transformer, inputs, kwargs):
-    kwargs = orjson.loads(kwargs)
-
-    ensure_device(kwargs)
+def create_embedding(transformer):
     instructor = transformer.startswith("hkunlp/instructor")
-    
+    klass = INSTRUCTOR if instructor else SentenceTransformer 
+    return klass(transformer)
+
+
+def embed_using(model, transformer, inputs, kwargs):
+    if isinstance(kwargs, str):
+        kwargs = orjson.loads(kwargs)
+
+    instructor = transformer.startswith("hkunlp/instructor")
     if instructor:
-        klass = INSTRUCTOR
-        
         texts_with_instructions = []
         instruction = kwargs.pop("instruction")
         for text in inputs:
             texts_with_instructions.append([instruction, text])
             
         inputs = texts_with_instructions
-    else:
-        klass = SentenceTransformer
-
-    if transformer not in __cache_sentence_transformer_by_name:
-        __cache_sentence_transformer_by_name[transformer] = klass(transformer)
-    model = __cache_sentence_transformer_by_name[transformer]
 
     return model.encode(inputs, **kwargs)
+
+
+def embed(transformer, inputs, kwargs):
+    kwargs = orjson.loads(kwargs)
+
+    ensure_device(kwargs)
+
+    if transformer not in __cache_sentence_transformer_by_name:
+        __cache_sentence_transformer_by_name[transformer] = create_embedding(transformer)
+    model = __cache_sentence_transformer_by_name[transformer]
+
+    return embed_using(model, transformer, inputs, kwargs)
 
 
 def clear_gpu_cache(memory_usage: None):
