@@ -4,7 +4,6 @@ use std::str::FromStr;
 use std::{collections::HashMap, path::Path};
 
 use anyhow::{anyhow, bail, Context, Result};
-use once_cell::sync::Lazy;
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
@@ -47,22 +46,22 @@ pub fn transform(
             )
             .format_traceback(py)?;
 
-        Ok(output.extract(py).format_traceback(py)?)
+        output.extract(py).format_traceback(py)
     })?;
 
     Ok(serde_json::from_str(&results)?)
 }
 
 pub fn get_model_from(task: &Value) -> Result<String> {
-    Ok(Python::with_gil(|py| -> Result<String> {
+    Python::with_gil(|py| -> Result<String> {
         let get_model_from = get_module!(PY_MODULE)
             .getattr(py, "get_model_from")
             .format_traceback(py)?;
         let model = get_model_from
             .call1(py, PyTuple::new(py, &[task.to_string().into_py(py)]))
             .format_traceback(py)?;
-        Ok(model.extract(py).format_traceback(py)?)
-    })?)
+        model.extract(py).format_traceback(py)
+    })
 }
 
 pub fn embed(
@@ -91,7 +90,7 @@ pub fn embed(
             )
             .format_traceback(py)?;
 
-        Ok(output.extract(py).format_traceback(py)?)
+        output.extract(py).format_traceback(py)
     })
 }
 
@@ -126,7 +125,7 @@ pub fn tune(
             )
             .format_traceback(py)?;
 
-        Ok(output.extract(py).format_traceback(py)?)
+        output.extract(py).format_traceback(py)
     })
 }
 
@@ -176,7 +175,7 @@ pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Result<Vec<S
             }
             Ok(o) => o,
         };
-        Ok(result.extract(py).format_traceback(py)?)
+        result.extract(py).format_traceback(py)
     })
 }
 
@@ -227,7 +226,7 @@ pub fn load_dataset(
         let load_dataset: Py<PyAny> = get_module!(PY_MODULE)
             .getattr(py, "load_dataset")
             .format_traceback(py)?;
-        Ok(load_dataset
+        load_dataset
             .call1(
                 py,
                 PyTuple::new(
@@ -242,7 +241,7 @@ pub fn load_dataset(
             )
             .format_traceback(py)?
             .extract(py)
-            .format_traceback(py)?)
+            .format_traceback(py)
     })?;
 
     let table_name = format!("pgml.\"{}\"", name);
