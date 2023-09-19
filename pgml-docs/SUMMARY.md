@@ -1,6 +1,6 @@
 # Table of contents
 
-* [Home](README.md)
+* [Guides](README.md)
 * [Overview](overview.md)
 * [Getting Started](getting-started/README.md)
   * [Sign up](getting-started/sign-up.md)
