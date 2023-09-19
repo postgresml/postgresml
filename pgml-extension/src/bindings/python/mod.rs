@@ -1,14 +1,13 @@
 //! Use virtualenv.
 
 use anyhow::Result;
-use once_cell::sync::Lazy;
 use pgrx::iter::TableIterator;
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
 use crate::config::get_config;
-use crate::{bindings::TracebackError, create_pymodule};
+use crate::create_pymodule;
 
 static CONFIG_NAME: &str = "pgml.venv";
 

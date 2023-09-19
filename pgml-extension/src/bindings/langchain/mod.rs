@@ -1,10 +1,9 @@
 use anyhow::Result;
-use once_cell::sync::Lazy;
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use crate::{bindings::TracebackError, create_pymodule};
+use crate::create_pymodule;
 
 create_pymodule!("/src/bindings/langchain/langchain.py");
 

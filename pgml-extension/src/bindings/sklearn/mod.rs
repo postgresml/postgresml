@@ -11,15 +11,10 @@ use pgrx::*;
 use std::collections::HashMap;
 
 use anyhow::Result;
-use once_cell::sync::Lazy;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use crate::{
-    bindings::{Bindings, TracebackError},
-    create_pymodule,
-    orm::*,
-};
+use crate::{bindings::Bindings, create_pymodule, orm::*};
 
 create_pymodule!("/src/bindings/sklearn/sklearn.py");
 

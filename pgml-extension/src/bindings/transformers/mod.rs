@@ -4,7 +4,6 @@ use std::str::FromStr;
 use std::{collections::HashMap, path::Path};
 
 use anyhow::{anyhow, bail, Context, Result};
-use once_cell::sync::Lazy;
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
