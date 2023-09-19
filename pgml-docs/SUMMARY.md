@@ -1,7 +1,6 @@
 # Table of contents
 
 * [Home](README.md)
-* [Reverse Sync Test](test.md)
 * [Overview](overview.md)
 * [Getting Started](getting-started/README.md)
   * [Sign up](getting-started/sign-up.md)
