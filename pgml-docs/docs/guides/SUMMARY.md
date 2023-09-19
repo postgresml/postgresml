@@ -1,7 +1,6 @@
 # Table of contents
 
-* [Guides](README.md)
-* [Overview](overview.md)
+* [Overview](README.md)
 * [Getting Started](getting-started/README.md)
   * [Sign up](getting-started/sign-up.md)
   * [Select a plan](getting-started/select-a-plan.md)
