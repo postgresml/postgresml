@@ -378,12 +378,12 @@ impl Model {
             Ok(())
         })?;
 
-        Ok(model.ok_or_else(|| {
+        model.ok_or_else(|| {
             anyhow!(
                 "pgml.models WHERE id = {:?} could not be loaded. Does it exist?",
                 id
             )
-        })?)
+        })
     }
 
     pub fn find_cached(id: i64) -> Result<Arc<Model>> {
