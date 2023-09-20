@@ -16,7 +16,7 @@ impl IntoJsResult for DateTime {
         self,
         cx: &mut C,
     ) -> JsResult<'b, Self::Output> {
-        let date = neon::types::JsDate::new(cx, self.0.timestamp_millis() as f64)
+        let date = neon::types::JsDate::new(cx, self.0.assume_utc().unix_timestamp() as f64 * 1000.0)
             .expect("Error converting to JS Date");
         Ok(date)
     }

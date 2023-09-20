@@ -267,6 +267,19 @@ it("can delete documents", async () => {
   await collection.archive();
 });
 
+it("can order documents", async () => {
+  let collection = pgml.newCollection("test_j_c_cod_0");
+  await collection.upsert_documents(generate_dummy_documents(3));
+  let documents = await collection.get_documents({
+    order_by: {
+      id: "desc",
+    },
+  });
+  expect(documents).toHaveLength(3);
+  expect(documents[0]["document"]["id"]).toBe(2);
+  await collection.archive();
+});
+
 ///////////////////////////////////////////////////
 // Test migrations ////////////////////////////////
 ///////////////////////////////////////////////////
