@@ -1,0 +1,18 @@
+div[data-controller="inputs-text-editable-title"] {
+    .title-edit {
+        span.material-symbols-outlined {
+            color: #{$slate-shade-500};
+            margin: auto;
+            font-size: inherit;
+            text-overflow: ellipsis;
+        }
+
+        &:hover {
+            span.material-symbols-outlined {
+                color: #{$slate-shade-300}
+            }
+        }
+
+        
+    }
+}

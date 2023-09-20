@@ -1,0 +1,19 @@
+<div data-controller="inputs-text-editable-title">
+  <div class="title-edit" style="display: block" 
+    data-inputs-text-editable-title-target="titleContainer"
+    data-action="click->inputs-text-editable-title#toggleEditor">
+    <<%= header_type.to_string() %> class="text-center <%= header_type.to_string() %> d-flex gap-3">
+      <span  data-inputs-text-editable-title-target="title">
+        <%= value %>
+      </span>
+      <span class="material-symbols-outlined">
+        border_color
+      </span>
+    </<%= header_type.to_string() %>>
+  </div>
+
+  <input type="text" class="form-control" value="<%= value %>" style="display: none"  maxlength="50"
+    name="<%= input_name.unwrap_or_else(|| "".to_string()) %>"
+    data-inputs-text-editable-title-target="input"
+    <%- input_target %> >
+</div>
