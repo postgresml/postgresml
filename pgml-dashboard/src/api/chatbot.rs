@@ -84,14 +84,14 @@ pub async fn chatbot_answer(
         .map(|(_, context, _)| context)
         .collect::<Vec<String>>()
         .join("\n");
-
+    
     let answer = match data.model {
         _ => get_openai_chatgpt_answer(&context, &data.question).await,
     }?;
 
     Ok(ResponseOk(
         json!({
-            "answer": answer
+            "answer": answer 
         })
         .to_string(),
     ))

@@ -15,7 +15,7 @@ const KNOWLEDGE_BASES: [&'static str; 4] = [
     "Knowledge Base 4",
 ];
 
-pub struct ChatbotBrain {
+struct ChatbotBrain {
     provider: String,
     model: String,
     logo: String,
@@ -36,7 +36,7 @@ impl ChatbotBrain {
 pub struct Chatbot {
     brains: Vec<ChatbotBrain>,
     example_questions: &'static [(&'static str, &'static str); 4],
-    knowledge_bases: &'static [&'static str; 4]
+    knowledge_bases: &'static [&'static str; 4],
 }
 
 impl Chatbot {
@@ -66,7 +66,7 @@ impl Chatbot {
         Chatbot {
             brains,
             example_questions: &EXAMPLE_QUESTIONS,
-            knowledge_bases: &KNOWLEDGE_BASES
+            knowledge_bases: &KNOWLEDGE_BASES,
         }
     }
 }
