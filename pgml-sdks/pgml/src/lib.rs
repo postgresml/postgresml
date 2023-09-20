@@ -19,6 +19,7 @@ mod languages;
 pub mod migrations;
 mod model;
 pub mod models;
+mod order_by_builder;
 mod pipeline;
 mod queries;
 mod query_builder;
@@ -1127,6 +1128,83 @@ mod tests {
             .iter()
             .all(|d| d["document"]["id"].as_i64().unwrap() != 6));
 
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    fn can_order_documents() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cod_1", None);
+        collection
+            .upsert_documents(vec![
+                json!({
+                    "id": 1,
+                    "text": "Test Document 1",
+                    "number": 99,
+                    "nested_number": {
+                        "number": 3
+                    },
+
+                    "tie": 2,
+                })
+                .into(),
+                json!({
+                    "id": 2,
+                    "text": "Test Document 1",
+                    "number": 98,
+                    "nested_number": {
+                        "number": 2
+                    },
+                    "tie": 2,
+                })
+                .into(),
+                json!({
+                    "id": 3,
+                    "text": "Test Document 1",
+                    "number": 97,
+                    "nested_number": {
+                        "number": 1
+                    },
+                    "tie": 2
+                })
+                .into(),
+            ])
+            .await?;
+        let documents = collection
+            .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| d["document"]["number"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![97, 98, 99]
+        );
+        let documents = collection
+            .get_documents(Some(
+                json!({"order_by": {"nested_number": {"number": "asc"}}}).into(),
+            ))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| d["document"]["nested_number"]["number"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![1, 2, 3]
+        );
+        let documents = collection
+            .get_documents(Some(
+                json!({"order_by": {"nested_number": {"number": "asc"}, "tie": "desc"}}).into(),
+            ))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| d["document"]["nested_number"]["number"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![1, 2, 3]
+        );
         collection.archive().await?;
         Ok(())
     }

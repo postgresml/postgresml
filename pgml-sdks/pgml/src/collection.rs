@@ -2,7 +2,7 @@ use anyhow::Context;
 use indicatif::MultiProgress;
 use itertools::Itertools;
 use rust_bridge::{alias, alias_methods};
-use sea_query::{Alias, Expr, JoinType, Order, PostgresQueryBuilder, Query};
+use sea_query::{Alias, Expr, JoinType, NullOrdering, Order, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use sqlx::postgres::PgPool;
 use sqlx::Executor;
@@ -11,11 +11,10 @@ use std::borrow::Cow;
 use std::time::SystemTime;
 use tracing::{instrument, warn};
 
-use crate::filter_builder;
 use crate::{
-    get_or_initialize_pool,
+    filter_builder, get_or_initialize_pool,
     model::ModelRuntime,
-    models,
+    models, order_by_builder,
     pipeline::Pipeline,
     queries, query_builder,
     query_builder::QueryBuilder,
@@ -695,9 +694,18 @@ impl Collection {
                 SIden::Str("documents"),
             )
             .expr(Expr::cust("*")) // Adds the * in SELECT * FROM
-            .order_by((SIden::Str("documents"), SIden::Str("id")), Order::Asc)
             .limit(limit);
 
+        if let Some(order_by) = args.remove("order_by") {
+            let order_by_builder =
+                order_by_builder::OrderByBuilder::new(order_by, "documents", "metadata").build()?;
+            for (order_by, order) in order_by_builder {
+                query.order_by_expr_with_nulls(order_by, order, NullOrdering::Last);
+            }
+        }
+        query.order_by((SIden::Str("documents"), SIden::Str("id")), Order::Asc);
+
+        // TODO: Make keyset based pagination work with custom order by
         if let Some(last_row_id) = args.remove("last_row_id") {
             let last_row_id = last_row_id
                 .try_to_u64()
