@@ -2,7 +2,7 @@
 use crate::components::tables::large::*;
 use crate::components::navigation::tabs::*;
 use crate::components::inputs::range_group::RangeGroup;
-use crate::components::inputs::text::editable_title::{EditableTitle, Headers, StimulusTarget};
+use crate::components::inputs::text::editable_header::{EditableHeader, Headers, StimulusTarget};
 %>
 
 <div class="min-height: 100vh;" data-controller="playground">
@@ -118,7 +118,7 @@ use crate::components::inputs::text::editable_title::{EditableTitle, Headers, St
     </div>
 
     <div class="d-flex flex-row justify-content-between">
-      <%+ EditableTitle::new()
+      <%+ EditableHeader::new()
           .value("Size H1")
           .header_type(Headers::H1) %>
       <div>
@@ -126,7 +126,7 @@ use crate::components::inputs::text::editable_title::{EditableTitle, Headers, St
       </div>
     </div>
     <div class="d-flex flex-row justify-content-between">
-      <%+ EditableTitle::new()
+      <%+ EditableHeader::new()
           .value("Size H2")
           .header_type(Headers::H2) %>
       <div>
@@ -134,7 +134,7 @@ use crate::components::inputs::text::editable_title::{EditableTitle, Headers, St
       </div>
     </div>
     <div class="d-flex flex-row justify-content-between">
-      <%+ EditableTitle::new()
+      <%+ EditableHeader::new()
           .value("Size H3")
           .header_type(Headers::H3)
           .input_name("title")

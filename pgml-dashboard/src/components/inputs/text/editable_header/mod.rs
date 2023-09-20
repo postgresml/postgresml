@@ -64,17 +64,17 @@ impl Render for StimulusTarget {
 }
 
 #[derive(TemplateOnce)]
-#[template(path = "inputs/text/editable_title/template.html")]
-pub struct EditableTitle {
+#[template(path = "inputs/text/editable_header/template.html")]
+pub struct EditableHeader {
     value: String,
     header_type: Headers,
     input_target: StimulusTarget,
     input_name: Option<String>,
 }
 
-impl EditableTitle {
-    pub fn new() -> EditableTitle {
-        EditableTitle {
+impl EditableHeader {
+    pub fn new() -> EditableHeader {
+        EditableHeader {
             value: String::from("Title Goes Here"),
             header_type: Headers::H3,
             input_target: StimulusTarget::new(),
@@ -103,4 +103,4 @@ impl EditableTitle {
     }
 }
 
-component!(EditableTitle);
+component!(EditableHeader);
