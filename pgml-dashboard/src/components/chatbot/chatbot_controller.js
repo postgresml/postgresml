@@ -53,6 +53,8 @@ export default class extends Controller {
   initialize() {
     this.alertCount = 0;
     this.gettingAnswer = false;
+    this.expanded = false;
+    this.chatbot = document.getElementById("chatbot");
     this.alertsWrapper = document.getElementById("chatbot-alerts-wrapper");
     this.questionInput = document.getElementById("chatbot-question-input");
     autosize(this.questionInput);
@@ -99,6 +101,12 @@ export default class extends Controller {
   }
 
   handleResize() {
+    if (this.expanded && window.innerWidth >= 1000) {
+      this.chatbot.classList.add("chatbot-full");
+    } else {
+      this.chatbot.classList.remove("chatbot-full");
+    }
+
     let html = this.chatHistory.innerHTML;
     this.chatHistory.innerHTML = "";
     let height = this.chatHistory.offsetHeight;
@@ -162,6 +170,13 @@ export default class extends Controller {
   handleExampleQuestionClick(e) {
     const question = e.currentTarget.getAttribute("data-value");
     this.newUserQuestion(question);
+  }
+
+  handleExpandClick() {
+    this.expanded = !this.expanded;
+    this.chatbot.classList.toggle("chatbot-expanded");
+    this.handleResize();
+    this.questionInput.focus();
   }
 
   showChatbotAlert = (level, message) => {

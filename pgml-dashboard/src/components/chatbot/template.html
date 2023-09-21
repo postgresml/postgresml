@@ -1,95 +1,101 @@
-<div id="chatbot" data-controller="chatbot" class="container d-flex rounded-3 overflow-hidden">
-  <div id="chatbot-left-column" class="">
-    <h5 id="chatbot-change-the-brain-title" class="d-none d-xl-block">Change the Brain:</h5>
-    <div id="chatbot-change-the-brain-spacer" class="d-xl-none"></div>
+<div id="chatbot" data-controller="chatbot" class="container">
+  <div id="chatbot-inner-wrapper" class="d-flex rounded-3 overflow-hidden">
+    <div id="chatbot-left-column" class="">
+      <h5 id="chatbot-change-the-brain-title">Change the Brain:</h5>
+      <div id="chatbot-change-the-brain-spacer"></div>
 
-    <% for (index, brain) in brains.iter().enumerate() { %>
-      <div>
-        <input
-          type="radio"
-          class="btn-check"
-          name="chatbot-brain-options"
-          id="chatbot-brain-option<%= index %>"
-          autocomplete="off"
-          value="<%= index %>"
-          data-action="chatbot#handleBrainChange"
-          <% if index == 0 { %>
-            checked
-          <% } %>
-        />
-        <label
-          class="chatbot-brain-option-label rounded-2"
-          for="chatbot-brain-option<%= index %>"
-          data-action="chatbot#handleBrainChange"
-        >
-          <div class="d-flex flex-row align-items-center gap-2" style="">
-            <div class="chatbot-brain-option-logo" style="background-image: url('<%= brain.logo %>')"></div>
-            <div class="d-none d-xl-block chatbot-brain-provider"><strong><%= brain.provider %></strong> <%= brain.model %></div>
-          </div>
-        </label>
-      </div>
-    <% } %>
-
-    <div class="d-none d-xl-block mt-5">
-      <h5 id="knowledge-base-title">Knowledge Base:</h5>
-      <% for (index, knowledge_base) in knowledge_bases.iter().enumerate() { %>
+      <% for (index, brain) in brains.iter().enumerate() { %>
         <div>
           <input
             type="radio"
             class="btn-check"
-            name="chatbot-knowledge-base-options"
-            id="chatbot-knowledge-base-option<%= index %>"
+            name="chatbot-brain-options"
+            id="chatbot-brain-option<%= index %>"
             autocomplete="off"
             value="<%= index %>"
-            data-action="chatbot#handleKnowledgeBaseChange"
+            data-action="chatbot#handleBrainChange"
             <% if index == 0 { %>
               checked
             <% } %>
           />
           <label
-            class="chatbot-knowledge-base-option-label rounded-2"
-            for="chatbot-knowledge-base-option<%= index %>"
-            data-action="chatbot#handleKnowledgeBaseChange"
+            class="chatbot-brain-option-label rounded-2"
+            for="chatbot-brain-option<%= index %>"
+            data-action="chatbot#handleBrainChange"
           >
             <div class="d-flex flex-row align-items-center gap-2" style="">
-              <div class="d-none d-xl-block chatbot-knowledge-base-provider"><%= knowledge_base %></div>
+              <div class="chatbot-brain-option-logo" style="background-image: url('<%= brain.logo %>')"></div>
+              <div class="chatbot-brain-provider"><strong><%= brain.provider %></strong> <%= brain.model %></div>
             </div>
           </label>
         </div>
       <% } %>
-    </div>
 
-  </div>
-
-  <div id="chatbot-right-column" class="flex-grow-1 d-flex flex-column">
-    <div>
-      <h3 id="chatbot-chatbot-title" class="pt-3 pb-3 m-0">Chatbot</h3>
-    </div>
-    
-    <div id="chatbot-inner-right-column" class="flex-grow-1 position-relative">
-      <div id="chatbot-history" data-action="resize@window->chatbot#handleResize">
-      </div>
-
-      <div id="chatbot-question-input-wrapper" class="position-absolute bottom-0 w-100">
-        <div id="chatbot-example-questions" class="d-flex flex-wrap gap-2 mb-3">
-          <% for (q_top, q_bottom) in example_questions.iter() { %>
-          <div class="chatbot-example-question rounded-2 p-2 flex-grow-1" data-action="click->chatbot#handleExampleQuestionClick" data-value='<%= format!("{} {}", q_top, q_bottom) %>'>
-              <div><strong><%= q_top %></strong></div>
-              <div><%= q_bottom %></div>
-            </div>
-          <% } %>
-        </div>
-
-        <div id="chatbot-question-textarea-wrapper" class="d-flex position-relative">
-          <textarea id="chatbot-question-input" class="flex-grow-1 text-white rounded-start-2 z-1" rows="1" placeholder="Send a message" data-action="keydown.enter->chatbot#handleEnter"></textarea>
-          <div id="chatbot-question-input-button-wrapper" class="p-2 d-flex align-items-end rounded-end-2 z-1">
-            <div id="chatbot-question-input-button" class=""></div>
+      <div id="knowledge-base-wrapper" class="mt-5">
+        <h5 id="knowledge-base-title">Knowledge Base:</h5>
+        <% for (index, knowledge_base) in knowledge_bases.iter().enumerate() { %>
+          <div>
+            <input
+              type="radio"
+              class="btn-check"
+              name="chatbot-knowledge-base-options"
+              id="chatbot-knowledge-base-option<%= index %>"
+              autocomplete="off"
+              value="<%= index %>"
+              data-action="chatbot#handleKnowledgeBaseChange"
+              <% if index == 0 { %>
+                checked
+              <% } %>
+            />
+            <label
+              class="chatbot-knowledge-base-option-label rounded-2"
+              for="chatbot-knowledge-base-option<%= index %>"
+              data-action="chatbot#handleKnowledgeBaseChange"
+            >
+              <div class="d-flex flex-row align-items-center gap-2" style="">
+                <div class="chatbot-knowledge-base-provider"><%= knowledge_base %></div>
+              </div>
+            </label>
           </div>
-          <div id="chatbot-question-input-border" class="position-absolute rounded-2"></div>
+        <% } %>
+      </div>
+
+    </div>
+
+    <div id="chatbot-right-column" class="flex-grow-1 d-flex flex-column">
+      <div class="d-flex justify-content-between align-items-center pt-3 pb-3 pe-3 m-0">
+        <h3 id="chatbot-chatbot-title">Chatbot</h3>
+        <div class="p-1 rounded-2" style="background-color: #444444; cursor: pointer;" data-action="click->chatbot#handleExpandClick">
+          <img class="filter-white" width="28px" height="28px" src="/dashboard/static/images/icons/arrow_expanded.svg"/>
+        </div>
+      </div>
+      
+      <div id="chatbot-inner-right-column" class="flex-grow-1 position-relative">
+        <div id="chatbot-history" data-action="resize@window->chatbot#handleResize">
+        </div>
+
+        <div id="chatbot-question-input-wrapper" class="position-absolute bottom-0 w-100">
+          <div id="chatbot-example-questions" class="d-flex flex-wrap gap-2 mb-3">
+            <% for (q_top, q_bottom) in example_questions.iter() { %>
+            <div class="chatbot-example-question rounded-2 p-2 flex-grow-1" data-action="click->chatbot#handleExampleQuestionClick" data-value='<%= format!("{} {}", q_top, q_bottom) %>'>
+                <div><strong><%= q_top %></strong></div>
+                <div><%= q_bottom %></div>
+              </div>
+            <% } %>
+          </div>
+
+          <div id="chatbot-question-textarea-wrapper" class="d-flex position-relative">
+            <textarea id="chatbot-question-input" class="flex-grow-1 text-white rounded-start-2 z-1" rows="1" placeholder="Send a message" data-action="keydown.enter->chatbot#handleEnter"></textarea>
+            <div id="chatbot-question-input-button-wrapper" class="p-2 d-flex align-items-end rounded-end-2 z-1">
+              <div id="chatbot-question-input-button" class=""></div>
+            </div>
+            <div id="chatbot-question-input-border" class="position-absolute rounded-2"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
+  <div id="chatbot-expanded-background" data-action="click->chatbot#handleExpandClick"></div>
 </div>
 
 <div id="chatbot-alerts-wrapper">
