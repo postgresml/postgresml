@@ -17,7 +17,7 @@ PostgresML makes it easy to use machine learning with your database and to scale
 
 ## Introducing HNSW
 
-Underneath the hood our SDK utilizes [pgvector](https://github.com/pgvector/pgvector) to store, index, and recall vectors. Up until this point our SDk used IVFFlat indexing to divide vectors into lists, search a subset of those lists, and return the closest vector matches.
+Underneath the hood our SDK utilizes [pgvector](https://github.com/pgvector/pgvector) to store, index, and recall vectors. Up until this point our SDK used IVFFlat indexing to divide vectors into lists, search a subset of those lists, and return the closest vector matches.
 
 While the IVFFlat indexing method is fast, it is not as fast as HNSW. Thanks to the latest update of [pgvector](https://github.com/pgvector/pgvector) our SDK now utilizes HNSW indexing, creating multi-layer graphs instead of lists and removing the required training step IVFFlat imposed.
 
