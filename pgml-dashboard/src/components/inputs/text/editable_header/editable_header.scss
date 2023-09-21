@@ -1,0 +1,36 @@
+div[data-controller="inputs-text-editable-header"] {
+    .editable-header-container {
+        span.material-symbols-outlined {
+            color: #{$slate-shade-500};
+            font-size: inherit;
+            text-overflow: ellipsis;
+            &.active {
+                color: #{$slate-tint-500};
+            }
+        }
+
+        &:hover {
+            span.material-symbols-outlined {
+                color: #{$slate-shade-300}
+            }
+        }
+
+        &:focus, &:focus-within {
+            span.material-symbols-outlined {
+                color: #{$slate-tint-500};
+            }
+        }
+
+    }
+
+    input, input:focus {
+        border: none;
+        border-radius: 0;
+        border-bottom: 2px solid #{$slate-tint-500};
+        background: transparent;
+        font-size: inherit;
+        line-height: inherit;
+        padding: 0px;
+        margin-bottom: -2px; // compensate for border space
+    }
+}

@@ -4,3 +4,6 @@
 // src/components/inputs/range_group
 pub mod range_group;
 pub use range_group::RangeGroup;
+
+// src/components/inputs/text
+pub mod text;

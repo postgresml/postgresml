@@ -1,0 +1,23 @@
+<div data-controller="inputs-text-editable-header">
+  <div class="editable-header-container" style="display: block"
+    data-action="click->inputs-text-editable-header#toggleEditor">
+    <<%= header_type.to_string() %> class="align-items-center <%= header_type.to_string() %> d-flex gap-3">
+      <span  data-inputs-text-editable-header-target="header">
+        <%= value %>
+      </span>
+
+      <input type="text" class="form-control" value="<%= value %>" style="display: none"  maxlength="50"
+      name='<%= input_name.unwrap_or_else(|| "".to_string()) %>'
+      data-inputs-text-editable-header-target="input"
+      <%- input_target %> >
+      
+      <div>
+        <span class="material-symbols-outlined">
+          border_color
+        </span>
+      </div>
+    </<%= header_type.to_string() %>>
+  </div>
+
+
+</div>
