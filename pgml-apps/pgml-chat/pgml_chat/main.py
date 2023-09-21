@@ -164,16 +164,17 @@ query_params_instruction = (
     "Represent the %s question for retrieving supporting documents: " % (bot_topic)
 )
 query_params = {"instruction": query_params_instruction}
-#query_params = {}
+# query_params = {}
 
 default_system_prompt_template = """
 You are an assistant to answer questions about {topic}. 
-Your name is {name}. You speak like {persona} in {language}. Use the given list of documents to answer user's question. 
+Your name is {name}. You speak like {persona} in {language}. Use the given list of documents to answer user's question.
+Use the conversation history if it is applicable to answer the question. 
 Use the following steps:
 
 1. Identify if the user input is really a question. 
-2. If the user input is not related to the topic then respond that it is not related to the topic.
-3. If the user input is related to the topic then first identify relevant documents from the list of documents. 
+2. If the user input is not related to the {topic} then respond that it is not related to the {topic}.
+3. If the user input is related to the {topic} then first identify relevant documents from the list of documents. 
 4. If the documents that you found relevant have information to completely and accurately answers the question then respond with the answer.
 5. If the documents that you found relevant have code snippets then respond with the code snippets. 
 6. Most importantly, don't make up code snippets that are not present in the documents.
@@ -191,7 +192,7 @@ default_system_prompt = default_system_prompt_template.format(
 system_prompt = os.environ.get("SYSTEM_PROMPT", default_system_prompt)
 
 base_prompt = """
-
+{conversation_history}
 ####
 Documents
 ####
@@ -204,6 +205,15 @@ Helpful Answer:"""
 
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 
+system_prompt_document = [
+        {
+            "text": system_prompt,
+            "id": str(uuid4())[:8],
+            "interface": chat_interface,
+            "role": "system",
+            "timestamp": pendulum.now().timestamp(),
+        }
+]
 
 async def upsert_documents(folder: str) -> int:
     log.info("Scanning " + folder + " for markdown files")
@@ -231,23 +241,80 @@ async def generate_chat_response(
     temperature=0.7,
     max_tokens=256,
     top_p=0.9,
+    user_name="",
 ):
     messages = []
     messages.append({"role": "system", "content": system_prompt})
-    # Get history
-    builtins = Builtins()
-    query = """SELECT metadata->>'role' as role, text as content from %s.documents
-            WHERE metadata @> '{\"interface\" : \"%s\"}'::JSONB 
-            AND metadata @> '{\"role\" : \"user\"}'::JSONB 
-            OR metadata @> '{\"role\" : \"assistant\"}'::JSONB 
-            ORDER BY metadata->>'timestamp' DESC LIMIT %d""" % (
-        chat_history_collection_name,
-        chat_interface,
-        chat_history * 2,
+    # chat_history_user_messages = await chat_collection.query().vector_recall(user_input, chat_history_pipeline, query_params)(
+    #     {   
+    #         "limit" : chat_history,
+    #         "filter": {
+    #             "metadata": {
+    #                 "$and": [
+    #                     {{"role": {"$eq": "user"}}},
+    #                     {"interface": {"$eq": chat_interface}},
+    #                 ]
+    #             }
+    #         },
+    #     }
+    # ).fetch_all()
+
+    # chat_history_assistant_messages = await chat_collection.query().vector_recall(user_input, chat_history_pipeline, query_params)(
+    #     {   
+    #         "limit" : chat_history,
+    #         "filter": {
+    #             "metadata": {
+    #                 "$and": [
+    #                     {{"role": {"$eq": "assistant"}}},
+    #                     {"interface": {"$eq": chat_interface}},
+    #                 ]
+    #             }
+    #         },
+    #     }
+    # ).fetch_all()
+
+    chat_history_messages = await chat_collection.get_documents( {
+        "limit" : chat_history*2,
+        "order_by": {"timestamp": "desc"},
+        "filter": {
+            "metadata": {
+                "$and" : [
+                    {
+                        "$or": 
+                        [
+                        {"role": {"$eq": "assistant"}},
+                        {"role": {"$eq": "user"}}
+                        ]
+                    },
+                    {
+                        "interface" : {
+                            "$eq" : chat_interface
+                        }
+                    },
+                    {
+                        "user_name" : {
+                            "$eq" : user_name
+                        }
+                    }
+                ]
+            }
+        }
+        }
     )
-    results = await builtins.query(query).fetch_all()
-    results.reverse()
-    messages = messages + results
+    
+    # Reverse the order so that user messages are first
+
+    chat_history_messages.reverse()
+
+    conversation_history = ""
+    for entry in chat_history_messages:
+        document = entry["document"]
+        if document["role"] == "user":
+            conversation_history += "User: " + document["text"] + "\n"
+        if document["role"] == "assistant":
+            conversation_history += "Assistant: " + document["text"] + "\n"
+
+    log.info(conversation_history)
 
     history_documents = []
     _document = {
@@ -256,13 +323,17 @@ async def generate_chat_response(
         "interface": chat_interface,
         "role": "user",
         "timestamp": pendulum.now().timestamp(),
+        "user_name": user_name,
     }
     history_documents.append(_document)
 
     if user_input:
-        query = await get_prompt(user_input)
+        query = await get_prompt(user_input,conversation_history)
+
     messages.append({"role": "user", "content": query})
-    print(messages)
+
+    log.info(messages)
+
     response = await generate_response(
         messages,
         openai_api_key,
@@ -277,6 +348,7 @@ async def generate_chat_response(
         "interface": chat_interface,
         "role": "assistant",
         "timestamp": pendulum.now().timestamp(),
+        "user_name": user_name,
     }
     history_documents.append(_document)
 
@@ -312,7 +384,7 @@ async def ingest_documents(folder: str):
     log.info("Total documents: " + str(total_docs))
 
 
-async def get_prompt(user_input: str = ""):
+async def get_prompt(user_input: str = "", conversation_history: str = "") -> str:
     query_input = "In the context of " + bot_topic + ", " + user_input
     vector_results = (
         await collection.query()
@@ -323,12 +395,15 @@ async def get_prompt(user_input: str = ""):
     log.info(vector_results)
 
     context = ""
-
     for id, result in enumerate(vector_results):
         if result[0] > 0.6:
-            context += "#### \n Document %d: "%(id) + result[1] + "\n"
+            context += "#### \n Document %d: " % (id) + result[1] + "\n"
 
+    if conversation_history:
+        conversation_history = "#### \n Conversation History: \n" + conversation_history
+    
     query = base_prompt.format(
+        conversation_history=conversation_history,
         context=context,
         question=user_input,
         topic=bot_topic,
@@ -341,20 +416,10 @@ async def get_prompt(user_input: str = ""):
 
 
 async def chat_cli():
-    user_input = "Who are you?"
-    messages = [{"role": "system", "content": system_prompt}]
-    history_document = [
-        {
-            "text": system_prompt,
-            "id": str(uuid4())[:8],
-            "interface": "cli",
-            "role": "system",
-            "timestamp": pendulum.now().timestamp(),
-        }
-    ]
-    await chat_collection.upsert_documents(history_document)
+    user_name = os.environ.get("USER")
     while True:
         try:
+            user_input = input("User (Ctrl-C to exit): ")
             response = await generate_chat_response(
                 user_input,
                 system_prompt,
@@ -362,9 +427,9 @@ async def chat_cli():
                 max_tokens=512,
                 temperature=0.3,
                 top_p=0.9,
+                user_name=user_name,
             )
             print("PgBot: " + response)
-            user_input = input("User (Ctrl-C to exit): ")
         except KeyboardInterrupt:
             print("Exiting...")
             break
@@ -383,14 +448,16 @@ async def chat_slack():
         async def message_hello(message, say):
             print("Message received... ")
             user_input = message["text"]
+            user = message["user"]
             response = await generate_chat_response(
                 user_input,
                 system_prompt,
                 openai_api_key,
                 max_tokens=512,
                 temperature=0.7,
+                user_name = user,
             )
-            user = message["user"]
+            
 
             await say(text=f"<@{user}> {response}")
 
@@ -409,6 +476,7 @@ client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
+    await chat_collection.upsert_documents(system_prompt_document)
     print(f"We have logged in as {client.user}")
 
 
@@ -419,7 +487,7 @@ async def on_message(message):
         print("Discord response in progress ..")
         user_input = message.content
         response = await generate_chat_response(
-            user_input, system_prompt, openai_api_key, max_tokens=512, temperature=0.7
+            user_input, system_prompt, openai_api_key, max_tokens=512, temperature=0.7,user_name=message.author.name
         )
         await message.channel.send(response)
 
@@ -430,6 +498,7 @@ async def run():
     chunks, and logs the total number of documents and chunks.
     """
     log.info("Starting pgml-chat.... ")
+    await chat_collection.upsert_documents(system_prompt_document)
     # await migrate()
     if stage == "ingest":
         root_dir = args.root_dir
