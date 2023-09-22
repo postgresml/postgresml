@@ -15,7 +15,7 @@ This is a basic example to perform semantic search on a collection of documents.
 ## [Question Answering](./question_answering.py)
 This is an example to find documents relevant to a question from the collection of documents. It loads the Stanford Question Answering Dataset (SQuAD) into the database, generates chunks and embeddings. Query is passed to vector search to retrieve documents that match closely in the embeddings space. A score is returned with each of the search result.
 
-## [Question Answering using Instructore Model](./question_answering_instructor.py)
+## [Question Answering using Instructor Model](./question_answering_instructor.py)
 In this example, we will use `hknlp/instructor-base` model to build text embeddings instead of the default `intfloat/e5-small` model.
 
 ## [Extractive Question Answering](./extractive_question_answering.py)
