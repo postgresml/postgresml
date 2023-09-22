@@ -54,7 +54,7 @@ async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result
     let environment_url = environment_url.as_deref();
     let url = database_url
         .as_deref()
-        .unwrap_or(environment_url.expect("Please set DATABASE_URL environment variable"));
+        .unwrap_or_else(|| environment_url.expect("Please set DATABASE_URL environment variable"));
     if let Some(pool) = pools.get(url) {
         Ok(pool.clone())
     } else {
