@@ -135,7 +135,7 @@ LIMIT 5;
 
 !!!
 
-Not only are the results better (the `cosine_similarity` is higher overall), but HNSW is over 3x faster, reducing our search and embedding time to 17.465ms.
+Not only are the results better (the `cosine_similarity` is higher overall), but HNSW is over 5x faster, reducing our search and embedding time to 17.465ms.
 
 This is a massive upgrade to the recall speed utilized by our SDK and greatly improves overall performance.
 
