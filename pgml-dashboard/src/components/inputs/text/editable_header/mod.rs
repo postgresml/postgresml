@@ -1,5 +1,5 @@
+use crate::components::stimulus::stimulus_target::StimulusTarget;
 use pgml_components::component;
-use sailfish::runtime::{Buffer, Render};
 use sailfish::TemplateOnce;
 use std::fmt;
 
@@ -22,44 +22,6 @@ impl fmt::Display for Headers {
             Headers::H5 => write!(f, "h5"),
             Headers::H6 => write!(f, "h6"),
         }
-    }
-}
-
-pub struct StimulusTarget {
-    controller: Option<String>,
-    target_name: Option<String>,
-}
-
-impl StimulusTarget {
-    pub fn new() -> StimulusTarget {
-        StimulusTarget {
-            controller: None,
-            target_name: None,
-        }
-    }
-
-    pub fn controller(mut self, controller: &str) -> Self {
-        self.controller = Some(controller.to_string());
-        self
-    }
-
-    pub fn target_name(mut self, target_name: &str) -> Self {
-        self.target_name = Some(target_name.to_string());
-        self
-    }
-}
-
-impl Render for StimulusTarget {
-    fn render(&self, b: &mut Buffer) -> Result<(), sailfish::RenderError> {
-        if self.controller.is_none() || self.target_name.is_none() {
-            return format!("").render(b);
-        }
-        format!(
-            "data-{}-target=\"{}\"",
-            self.controller.to_owned().unwrap(),
-            self.target_name.to_owned().unwrap()
-        )
-        .render(b)
     }
 }
 

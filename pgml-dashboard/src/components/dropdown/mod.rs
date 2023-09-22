@@ -1,3 +1,5 @@
+use crate::components::navigation::dropdown_link::DropdownLink;
+use crate::components::stimulus::stimulus_target::StimulusTarget;
 use pgml_components::component;
 use pgml_components::Component;
 use sailfish::TemplateOnce;
@@ -21,41 +23,68 @@ pub struct Dropdown {
     /// The currently selected value.
     value: DropdownValue,
 
-    /// The list of dropdown links to render.
-    links: Vec<StaticNavLink>,
+    /// The list of dropdown items to render.
+    items: Vec<Component>,
 
     /// Position of the dropdown menu.
     offset: String,
 
-    /// Whether or not the dropdown is collapsble.
+    /// Whether or not the dropdown is collapsable.
     collapsable: bool,
     offset_collapsed: String,
 
     /// Where the dropdown menu should appear
     menu_position: String,
     expandable: bool,
+
+    /// target to control value
+    value_target: StimulusTarget,
 }
 
 impl Dropdown {
-    pub fn new(links: Vec<StaticNavLink>) -> Self {
+    pub fn new() -> Self {
+        Dropdown {
+            items: Vec::new(),
+            value: DropdownValue::Text("Dropdown".to_owned().into()),
+            offset: "0, 10".to_owned(),
+            offset_collapsed: "68, -44".to_owned(),
+            menu_position: "".to_owned(),
+            ..Default::default()
+        }
+    }
+
+    pub fn nav(links: Vec<StaticNavLink>) -> Self {
         let binding = links
             .iter()
             .filter(|link| link.active)
             .collect::<Vec<&StaticNavLink>>();
+
         let active = binding.first();
         let value = if let Some(active) = active {
             active.name.to_owned()
         } else {
-            "Menu".to_owned()
+            "Dropdown Nav".to_owned()
         };
+
+        let mut items = Vec::new();
+        for link in links {
+            let item = DropdownLink::new(link);
+            items.push(item.into());
+        }
+
         Dropdown {
-            links,
+            items,
             value: DropdownValue::Text(value.into()),
             offset: "0, 10".to_owned(),
             offset_collapsed: "68, -44".to_owned(),
             menu_position: "".to_owned(),
             ..Default::default()
         }
+    }
+
+    pub fn items(mut self, items: Vec<Component>) -> Self {
+        self.items = items;
+        self
     }
 
     pub fn text(mut self, value: Component) -> Self {
@@ -95,6 +124,11 @@ impl Dropdown {
 
     pub fn expandable(mut self) -> Self {
         self.expandable = true;
+        self
+    }
+
+    pub fn value_target(mut self, value_target: StimulusTarget) -> Self {
+        self.value_target = value_target;
         self
     }
 }

@@ -52,7 +52,27 @@ $teal-tint-900: #002c33;
 $teal-tint-1000: #001619;
 
 // Peach Scale 
+$peach-shade-100: #E9467A;
+$peach-shade-200: #D13F6D;
+$peach-shade-300: #BA3861;
+$peach-shade-400: #A33155;
+$peach-shade-500: #882A49;
+$peach-shade-600: #74233D;
+$peach-shade-700: #5D1C30;
+$peach-shade-800: #451524;
+$peach-shade-900: #2E0E18;
+$peach-shade-1000: #17070C;
+
 $peach-tint-100: #E9467A;
+$peach-tint-200: #EB5887;
+$peach-tint-300: #ED6A94;
+$peach-tint-400: #EF7DA1;
+$peach-tint-500: #F190AF;
+$peach-tint-600: #F4A2BC;
+$peach-tint-700: #F6B5C9;
+$peach-tint-800: #F8C7D7;
+$peach-tint-900: #FADAE4;
+$peach-tint-1000: #FCECF1;
 
 // Slate Scale 
 $slate-tint-100: #9185FF;
@@ -80,7 +100,8 @@ $slate-shade-1000: #0E0D19;
 // Colors
 $primary: #0D0D0E;
 $secondary: $gray-100;
-$danger: #ff4136;
+$danger: $peach-shade-100;
+$error: $peach-shade-100;
 $purple: $slate-tint-100;
 $pink: #e7477c;
 $hp-white: #{$gray-200};

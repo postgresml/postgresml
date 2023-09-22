@@ -48,6 +48,10 @@
     --bs-btn-active-color: #{$gray-100};
     --bs-btn-hover-color: #{$gray-100};
 
+    &.error {
+        border-color: #{$error};
+    }
+
     .material-symbols-outlined {
         color: #{$neon-shade-100};
     }
@@ -73,7 +77,7 @@
     }
 
     .menu-item {
-        a {
+        a, div {
             padding: 8px 12px;
             overflow: hidden;
             text-overflow: ellipsis;
