@@ -79,6 +79,21 @@
         @extend .icon-party;
         @extend .icon-xl;
     }
+
+    &-purple {
+        @extend .icon-purple;
+        @extend .icon-xl;
+    }
+
+    &-orange {
+        @extend .icon-orange;
+        @extend .icon-xl;
+    }
+
+    &-green {
+        @extend .icon-green;
+        @extend .icon-xl;
+    }
 }
 
 .icon-alt-padding {

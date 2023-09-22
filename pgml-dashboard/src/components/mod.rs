@@ -66,6 +66,10 @@ pub use postgres_logo::PostgresLogo;
 pub mod profile_icon;
 pub use profile_icon::ProfileIcon;
 
+// src/components/star
+pub mod star;
+pub use star::Star;
+
 // src/components/static_nav
 pub mod static_nav;
 pub use static_nav::StaticNav;
