@@ -189,7 +189,7 @@ default_system_prompt = default_system_prompt_template.format(
     response_programming_language=bot_topic_primary_language,
 )
 
-system_prompt = os.environ.get("SYSTEM_PROMPT", default_system_prompt)
+system_prompt = default_system_prompt
 
 base_prompt = """
 {conversation_history}
@@ -245,33 +245,6 @@ async def generate_chat_response(
 ):
     messages = []
     messages.append({"role": "system", "content": system_prompt})
-    # chat_history_user_messages = await chat_collection.query().vector_recall(user_input, chat_history_pipeline, query_params)(
-    #     {   
-    #         "limit" : chat_history,
-    #         "filter": {
-    #             "metadata": {
-    #                 "$and": [
-    #                     {{"role": {"$eq": "user"}}},
-    #                     {"interface": {"$eq": chat_interface}},
-    #                 ]
-    #             }
-    #         },
-    #     }
-    # ).fetch_all()
-
-    # chat_history_assistant_messages = await chat_collection.query().vector_recall(user_input, chat_history_pipeline, query_params)(
-    #     {   
-    #         "limit" : chat_history,
-    #         "filter": {
-    #             "metadata": {
-    #                 "$and": [
-    #                     {{"role": {"$eq": "assistant"}}},
-    #                     {"interface": {"$eq": chat_interface}},
-    #                 ]
-    #             }
-    #         },
-    #     }
-    # ).fetch_all()
 
     chat_history_messages = await chat_collection.get_documents( {
         "limit" : chat_history*2,
@@ -317,9 +290,10 @@ async def generate_chat_response(
     log.info(conversation_history)
 
     history_documents = []
+    user_message_id = str(uuid4())[:8]
     _document = {
         "text": user_input,
-        "id": str(uuid4())[:8],
+        "id": user_message_id,
         "interface": chat_interface,
         "role": "user",
         "timestamp": pendulum.now().timestamp(),
@@ -345,6 +319,7 @@ async def generate_chat_response(
     _document = {
         "text": response,
         "id": str(uuid4())[:8],
+        "parent_message_id" : user_message_id,
         "interface": chat_interface,
         "role": "assistant",
         "timestamp": pendulum.now().timestamp(),
