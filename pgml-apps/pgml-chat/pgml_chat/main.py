@@ -67,7 +67,7 @@ parser.add_argument(
     "--chat_history",
     dest="chat_history",
     type=int,
-    default=1,
+    default=0,
     help="Number of messages from history used for generating response",
 )
 
