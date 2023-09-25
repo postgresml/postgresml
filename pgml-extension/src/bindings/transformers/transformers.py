@@ -577,6 +577,7 @@ def tune(task, hyperparams, path, x_train, x_test, y_train, y_test):
     algorithm = {}
 
     if task == "text-classification":
+        max_length = hyperparams.pop("max_length", 1024)
         model = AutoModelForSequenceClassification.from_pretrained(
             model_name, num_labels=2
         )
