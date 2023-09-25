@@ -98,7 +98,7 @@ parser.add_argument(
     "--bot_topic_primary_language",
     dest="bot_topic_primary_language",
     type=str,
-    default="",
+    default="SQL",
     help="Primary programming language of the topic",
 )
 
