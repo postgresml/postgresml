@@ -1,6 +1,8 @@
 ---
 author: Silas Marvin
 description: HNSW indexing is the latest upgrade in vector recall performance. In this post we announce our updated SDK that utilizes HNSW indexing to give world class performance in vector search.
+image: https://postgresml.org/dashboard/static/images/blog/announcing_hnsw_support.webp
+image_alt: HNSW provides a significant improvement in recall speed compared to IVFFlat 
 ---
 
 # Announcing HNSW Support in Our SDK
@@ -14,6 +16,9 @@ description: HNSW indexing is the latest upgrade in vector recall performance. I
 </div>
 
 PostgresML makes it easy to use machine learning with your database and to scale workloads horizontally in our cloud. Our SDK makes it even easier.
+
+<img src="/dashboard/static/images/blog/announcing_hnsw_support.webp" alt="data is always the best medicine" />
+<center><p><i>HNSW (hierarchical navigable small worlds) is an indexing method that greatly improves vector recall</i></p></center>
 
 ## Introducing HNSW
 
