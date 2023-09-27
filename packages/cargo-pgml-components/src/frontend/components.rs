@@ -6,16 +6,20 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 
 use crate::frontend::templates;
-use crate::util::{compare_strings, error, info, unwrap_or_exit, write_to_file};
+use crate::util::{
+    compare_strings, error, info, unwrap_or_exit, write_if_different, write_to_file,
+};
 
 static COMPONENT_DIRECTORY: &'static str = "src/components";
 static COMPONENT_NAME_REGEX: &'static str = "^[a-zA-Z]+[a-zA-Z0-9_/-]*$";
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Component {
     name: String,
     path: PathBuf,
     is_node: bool,
+    frame: bool,
+    form: bool,
 }
 
 impl Component {
@@ -33,7 +37,27 @@ impl Component {
             name: name.to_owned(),
             path: path.to_owned(),
             is_node: has_more_modules(&full_path),
+            frame: false,
+            form: false,
         }
+    }
+
+    pub fn frame(mut self, frame: bool) -> Self {
+        self.frame = frame;
+        self
+    }
+
+    pub fn is_frame(&self) -> bool {
+        self.frame || self.frame_path().exists()
+    }
+
+    pub fn form(mut self, form: bool) -> Self {
+        self.form = form;
+        self
+    }
+
+    pub fn is_form(&self) -> bool {
+        self.form || self.full_path().join("forms.rs").exists()
     }
 
     pub fn path(&self) -> String {
@@ -50,6 +74,46 @@ impl Component {
 
     pub fn rust_name(&self) -> String {
         self.name.to_case(Case::UpperCamel).to_string()
+    }
+
+    pub fn rust_path(&self) -> String {
+        let mut parts = vec!["crate".to_string(), "components".to_string()];
+        parts.extend(
+            self.path
+                .components()
+                .map(|c| {
+                    c.as_os_str()
+                        .to_str()
+                        .expect("os path valid utf-8")
+                        .to_case(Case::Snake)
+                        .to_string()
+                })
+                .collect::<Vec<String>>(),
+        );
+        let _ = parts.pop();
+        parts.push(self.rust_name());
+        parts.join("::")
+    }
+
+    pub fn rust_module(&self) -> String {
+        let mut parts = vec!["crate".to_string(), "components".to_string()];
+        parts.extend(
+            self.path
+                .components()
+                .map(|c| {
+                    c.as_os_str()
+                        .to_str()
+                        .expect("os path valid utf-8")
+                        .to_case(Case::Snake)
+                        .to_string()
+                })
+                .collect::<Vec<String>>(),
+        );
+        parts.join("::")
+    }
+
+    pub fn frame_path(&self) -> PathBuf {
+        self.full_path().join("frame.rs").to_owned()
     }
 
     pub fn full_path(&self) -> PathBuf {
@@ -69,6 +133,23 @@ impl Component {
     pub fn controller_path(&self) -> String {
         format!("{}_controller.js", self.name().to_case(Case::Snake))
     }
+
+    pub fn frame_url(&self) -> String {
+        let path = self
+            .path
+            .components()
+            .map(|c| {
+                c.as_os_str()
+                    .to_str()
+                    .expect("os path valid utf-8")
+                    .to_case(Case::Kebab)
+                    .to_string()
+            })
+            .collect::<PathBuf>();
+        let path = Path::new("/frames").join(&path);
+
+        format!("{}", path.display())
+    }
 }
 
 impl From<&Path> for Component {
@@ -86,7 +167,7 @@ impl From<&Path> for Component {
 }
 
 /// Add a new component.
-pub fn add(path: &Path, overwrite: bool) {
+pub fn add(path: &Path, overwrite: bool, frame: bool, form: bool) {
     if let Some(_extension) = path.extension() {
         error("component name should not contain an extension");
         exit(1);
@@ -134,7 +215,7 @@ pub fn add(path: &Path, overwrite: bool) {
         full_path = Path::new(COMPONENT_DIRECTORY).join(parent);
     }
 
-    let component = Component::from(path.as_path());
+    let component = Component::from(path.as_path()).frame(frame).form(form);
     let path = component.full_path();
 
     if path.exists() && !overwrite {
@@ -166,19 +247,58 @@ pub fn add(path: &Path, overwrite: bool) {
     unwrap_or_exit!(write_to_file(&scss_path, &scss));
     info(&format!("written {}", scss_path.display()));
 
+    if frame {
+        let frame = unwrap_or_exit!(
+            crate::backend::controllers::templates::Frame::new(&component).render_once()
+        );
+        let frame_path = path.join("frame.rs");
+        unwrap_or_exit!(write_to_file(&frame_path, &frame));
+        info(&format!("written {}", frame_path.display()));
+    }
+
+    if form {
+        let form_path = path.join("forms.rs");
+        let form = unwrap_or_exit!(
+            crate::backend::controllers::templates::Form::new(&component).render_once()
+        );
+        let written = unwrap_or_exit!(write_if_different(&form_path, &form));
+
+        if written {
+            info(&format!("written {}", form_path.display()));
+        }
+    }
+
     update_modules();
 }
 
 /// Update `mod.rs` with all the components in `src/components`.
 pub fn update_modules() {
-    update_module(Path::new(COMPONENT_DIRECTORY));
+    let all_components = update_module(Path::new(COMPONENT_DIRECTORY), true);
+
+    let routes = unwrap_or_exit!(crate::backend::controllers::templates::Routes::new(
+        &all_components
+    )
+    .render_once());
+    let routes_path = Path::new(COMPONENT_DIRECTORY).join("routes.rs");
+
+    let existing_routes = if routes_path.exists() {
+        unwrap_or_exit!(read_to_string(&routes_path))
+    } else {
+        String::new()
+    };
+
+    if !compare_strings(&existing_routes, &routes) {
+        unwrap_or_exit!(write_to_file(&routes_path, &routes));
+        info(&format!("written {}", routes_path.display()));
+    }
 }
 
 /// Recusively write `mod.rs` in every Rust module directory
 /// that has other modules in it.
-fn update_module(path: &Path) {
+fn update_module(path: &Path, root: bool) -> Vec<Component> {
     debug!("updating {} module", path.display());
-    let mut modules = Vec::new();
+    let mut all_components = Vec::new();
+    let mut components = Vec::new();
     let mut paths: Vec<_> = unwrap_or_exit!(read_dir(path))
         .map(|p| p.unwrap())
         .collect();
@@ -192,21 +312,25 @@ fn update_module(path: &Path) {
 
         if has_more_modules(&path) {
             debug!("{} has more modules", path.display());
-            update_module(&path);
+            all_components.extend(update_module(&path, false));
         } else {
             debug!("it does not really no");
         }
 
         let component_path = path.components().skip(2).collect::<PathBuf>();
         let component = Component::from(Path::new(&component_path));
-        modules.push(component);
+        components.push(component);
     }
 
-    debug!("writing {} modules to mod.rs", modules.len());
+    debug!("writing {} modules to mod.rs", components.len());
 
     let components_mod = path.join("mod.rs");
-    let modules =
-        unwrap_or_exit!(templates::Mod { modules }.render_once()).replace("\n\n", "\n");
+    let modules = unwrap_or_exit!(templates::Mod {
+        modules: components.clone(),
+        root
+    }
+    .render_once())
+    .replace("\n\n", "\n");
 
     let existing_modules = if components_mod.is_file() {
         unwrap_or_exit!(read_to_string(&components_mod))
@@ -221,6 +345,8 @@ fn update_module(path: &Path) {
     }
 
     debug!("mod.rs is the same");
+    all_components.extend(components);
+    all_components
 }
 
 /// Check that the path has more Rust modules.

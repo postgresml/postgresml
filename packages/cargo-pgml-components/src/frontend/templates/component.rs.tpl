@@ -1,5 +1,9 @@
 use sailfish::TemplateOnce;
 use pgml_components::component;
+<% if component.is_frame() { %>
+pub mod frame;
+<% } %><% if component.is_form() { %>
+pub mod forms; <% } %>
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "<%= component.path() %>/template.html")]
