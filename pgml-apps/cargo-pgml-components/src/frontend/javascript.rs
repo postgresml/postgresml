@@ -25,6 +25,11 @@ static JS_HASH_FILE: &'static str = "static/js/.pgml-bundle";
 static MODULES_GLOB: &'static str = "src/components/**/*.js";
 static STATIC_JS_GLOB: &'static str = "static/js/*.js";
 
+// Dashboard glob
+static DASHBOARD_JS_GLOB: &'static str = "../deps/postgresml/pgml-dashboard/static/js/*.js";
+static DASHBOARD_COMPONENTS_JS_GLOB: &'static str =
+    "../deps/postgresml/pgml-dashboard/src/components/**/*.js";
+
 /// Finds old JS bundles we created.
 static OLD_BUNLDES_GLOB: &'static str = "static/js/*.*.js";
 
@@ -45,13 +50,15 @@ fn cleanup_old_bundles() {
 fn assemble_modules() {
     let js = unwrap_or_exit!(glob(MODULES_GLOB));
     let js = js.chain(unwrap_or_exit!(glob(STATIC_JS_GLOB)));
+    let js = js.chain(unwrap_or_exit!(glob(DASHBOARD_JS_GLOB)));
+    let js = js.chain(unwrap_or_exit!(glob(DASHBOARD_COMPONENTS_JS_GLOB)));
 
     // Don't bundle artifacts we produce.
     let js = js.filter(|path| {
         let path = path.as_ref().unwrap();
         let path = path.display().to_string();
 
-        !path.contains("main.js") && !path.contains("bundle.js") && !path.contains("modules.js")
+        !path.contains("main.") && !path.contains("bundle.") && !path.contains("modules.")
     });
 
     let mut modules = unwrap_or_exit!(File::create(MODULES_FILE));
@@ -75,27 +82,37 @@ fn assemble_modules() {
 
         let full_path = source.display().to_string();
 
-        let path = source
-            .components()
-            .skip(2) // skip src/components or static/js
-            .collect::<Vec<_>>();
+        let path = source.components().collect::<Vec<_>>();
 
         assert!(!path.is_empty());
 
         let path = path.iter().collect::<PathBuf>();
         let components = path.components();
-        let controller_name = if components.clone().count() > 1 {
-            components
+        let file_stem = path.file_stem().unwrap().to_str().unwrap().to_string();
+        let controller_name = if file_stem.ends_with("controller") {
+            let mut parts = vec![];
+
+            let pp = components
                 .map(|c| c.as_os_str().to_str().expect("component to be valid utf-8"))
                 .filter(|c| !c.ends_with(".js"))
-                .collect::<Vec<&str>>()
-                .join("_")
+                .collect::<Vec<&str>>();
+            let mut saw_src = false;
+            let mut saw_components = false;
+            for p in pp {
+                if p == "src" {
+                    saw_src = true;
+                } else if p == "components" {
+                    saw_components = true;
+                } else if saw_src && saw_components {
+                    parts.push(p);
+                }
+            }
+
+            assert!(!parts.is_empty());
+
+            parts.join("_")
         } else {
-            path.file_stem()
-                .expect("old controllers to be a single file")
-                .to_str()
-                .expect("stemp to be valid utf-8")
-                .to_string()
+            file_stem
         };
         let upper_camel = controller_name.to_case(Case::UpperCamel).to_string();
         let controller_name = controller_name.replace("_", "-");
@@ -133,7 +150,10 @@ pub fn bundle() {
             .arg("--file")
             .arg(JS_FILE)
             .arg("--format")
-            .arg("es"),
+            .arg("es")
+            .arg("-p")
+            .arg("@rollup/plugin-node-resolve") // .arg("-p")
+                                                // .arg("@rollup/plugin-terser"),
     ));
 
     info(&format!("written {}", JS_FILE));

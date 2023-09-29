@@ -7,6 +7,7 @@ use std::process::{exit, Command};
 
 /// Required tools.
 static TOOLS: &[&str] = &["sass", "rollup"];
+static ROLLUP_PLUGINS: &[&str] = &["@rollup/plugin-terser", "@rollup/plugin-node-resolve"];
 static NVM_EXEC: &'static str = "/tmp/pgml-components-nvm.sh";
 static NVM_SOURCE: &'static str = "https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh";
 static NVM_SOURCE_DOWNLOADED: &'static str = "/tmp/pgml-components-nvm-source.sh";
@@ -28,6 +29,22 @@ pub fn install() {
                     Command::new("npm").arg("install").arg("-g").arg(tool)
                 ));
             }
+        }
+    }
+
+    for plugin in ROLLUP_PLUGINS {
+        if execute_with_nvm(
+            Command::new("rollup")
+                .arg("-p")
+                .arg(plugin)
+                .arg("--version"),
+        )
+        .is_err()
+        {
+            warn(&format!("installing rollup plugin {}", plugin));
+            unwrap_or_exit!(execute_with_nvm(
+                Command::new("npm").arg("install").arg("-g").arg(plugin)
+            ));
         }
     }
 }

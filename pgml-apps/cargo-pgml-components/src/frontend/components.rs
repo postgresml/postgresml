@@ -205,8 +205,7 @@ fn update_module(path: &Path) {
     debug!("writing {} modules to mod.rs", modules.len());
 
     let components_mod = path.join("mod.rs");
-    let modules =
-        unwrap_or_exit!(templates::Mod { modules }.render_once()).replace("\n\n", "\n");
+    let modules = unwrap_or_exit!(templates::Mod { modules }.render_once()).replace("\n\n", "\n");
 
     let existing_modules = if components_mod.is_file() {
         unwrap_or_exit!(read_to_string(&components_mod))
