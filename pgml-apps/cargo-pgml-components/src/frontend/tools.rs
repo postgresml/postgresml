@@ -34,14 +34,9 @@ pub fn install() {
     }
 
     for plugin in ROLLUP_PLUGINS {
-        if execute_with_nvm(
-            Command::new("rollup")
-                .arg("-p")
-                .arg(plugin)
-                .arg("--version"),
-        )
-        .is_err()
-        {
+        let installed = execute_with_nvm(Command::new("npm").arg("list").arg("-g").arg(plugin)).is_ok();
+
+        if !installed {
             warn(&format!("installing rollup plugin {}", plugin));
             unwrap_or_exit!(execute_with_nvm(
                 Command::new("npm").arg("install").arg("-g").arg(plugin)
@@ -67,6 +62,7 @@ pub fn execute_with_nvm(command: &mut Command) -> std::io::Result<String> {
 
 /// Install the nvm entrypoint we provide into /tmp
 fn install_nvm_entrypoint() {
+    info("checking for nvm");
     let mut file = unwrap_or_exit!(File::create(NVM_EXEC));
     unwrap_or_exit!(writeln!(&mut file, "{}", include_str!("nvm.sh")));
     drop(file);
@@ -79,6 +75,7 @@ fn install_nvm_entrypoint() {
 /// Install node using nvm
 fn install_node() {
     debug!("installing node");
+    info("checking for node");
     // Node is already installed.
     if let Ok(_) = execute_with_nvm(Command::new("node").arg("--version")) {
         debug!("node is available");
