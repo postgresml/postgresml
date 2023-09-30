@@ -191,10 +191,7 @@ fn update_module(path: &Path) {
         }
 
         if has_more_modules(&path) {
-            debug!("{} has more modules", path.display());
             update_module(&path);
-        } else {
-            debug!("it does not really no");
         }
 
         let component_path = path.components().skip(2).collect::<PathBuf>();
@@ -205,8 +202,7 @@ fn update_module(path: &Path) {
     debug!("writing {} modules to mod.rs", modules.len());
 
     let components_mod = path.join("mod.rs");
-    let modules =
-        unwrap_or_exit!(templates::Mod { modules }.render_once()).replace("\n\n", "\n");
+    let modules = unwrap_or_exit!(templates::Mod { modules }.render_once()).replace("\n\n", "\n");
 
     let existing_modules = if components_mod.is_file() {
         unwrap_or_exit!(read_to_string(&components_mod))
@@ -220,7 +216,7 @@ fn update_module(path: &Path) {
         info(&format!("written {}", components_mod.display().to_string()));
     }
 
-    debug!("mod.rs is the same");
+    debug!("{}/mod.rs is different", components_mod.display());
 }
 
 /// Check that the path has more Rust modules.
@@ -228,7 +224,7 @@ fn has_more_modules(path: &Path) -> bool {
     debug!("checking if {} has more modules", path.display());
 
     if !path.exists() {
-        debug!("path does not exist");
+        debug!("path {} does not exist", path.display());
         return false;
     }
 
@@ -244,13 +240,12 @@ fn has_more_modules(path: &Path) -> bool {
 
         if let Some(file_name) = path.file_name() {
             if file_name != "mod.rs" {
-                debug!("it has another file that's not mod.rs");
+                debug!("{} has another file that's not mod.rs", path.display());
                 return false;
             }
         }
     }
 
-    debug!("it does");
     true
 }
 
