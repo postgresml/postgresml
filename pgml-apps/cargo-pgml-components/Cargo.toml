@@ -19,6 +19,8 @@ anyhow = "1"
 owo-colors = "3"
 sailfish = "0.8"
 regex = "1"
+toml = "0.7"
+serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
 assert_cmd = "2"

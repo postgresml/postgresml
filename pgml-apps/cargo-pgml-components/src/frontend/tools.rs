@@ -1,8 +1,9 @@
 //! Tools required by us to build stuff.
 
-use crate::util::{debug1, error, execute_command, unwrap_or_exit, warn};
+use crate::util::{debug1, error, execute_command, info, unwrap_or_exit, warn};
 use std::fs::File;
 use std::io::Write;
+use std::path::Path;
 use std::process::{exit, Command};
 
 /// Required tools.
@@ -46,6 +47,11 @@ pub fn install() {
                 Command::new("npm").arg("install").arg("-g").arg(plugin)
             ));
         }
+    }
+
+    if Path::new("package.json").exists() {
+        info("installing dependencies from package.json");
+        unwrap_or_exit!(execute_with_nvm(Command::new("npm").arg("install")));
     }
 }
 

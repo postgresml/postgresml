@@ -9,6 +9,7 @@ use std::process::{exit, Command};
 
 use convert_case::{Case, Casing};
 
+use crate::config::Config;
 use crate::frontend::tools::execute_with_nvm;
 use crate::util::{error, info, unwrap_or_exit, warn};
 
@@ -24,11 +25,6 @@ static JS_HASH_FILE: &'static str = "static/js/.pgml-bundle";
 /// Finds all the JS files we have generated or the user has created.
 static MODULES_GLOB: &'static str = "src/components/**/*.js";
 static STATIC_JS_GLOB: &'static str = "static/js/*.js";
-
-// Dashboard glob
-static DASHBOARD_JS_GLOB: &'static str = "../deps/postgresml/pgml-dashboard/static/js/*.js";
-static DASHBOARD_COMPONENTS_JS_GLOB: &'static str =
-    "../deps/postgresml/pgml-dashboard/src/components/**/*.js";
 
 /// Finds old JS bundles we created.
 static OLD_BUNLDES_GLOB: &'static str = "static/js/*.*.js";
@@ -47,14 +43,22 @@ fn cleanup_old_bundles() {
     }
 }
 
-fn assemble_modules() {
+fn assemble_modules(config: Config) {
     let js = unwrap_or_exit!(glob(MODULES_GLOB));
-    let js = js.chain(unwrap_or_exit!(glob(STATIC_JS_GLOB)));
-    let js = js.chain(unwrap_or_exit!(glob(DASHBOARD_JS_GLOB)));
-    let js = js.chain(unwrap_or_exit!(glob(DASHBOARD_COMPONENTS_JS_GLOB)));
+    let mut js = js
+        .chain(unwrap_or_exit!(glob(STATIC_JS_GLOB)))
+        .collect::<Vec<_>>();
+
+    for path in &config.javascript.additional_paths {
+        debug!("adding additional path to javascript bundle: {}", path);
+        js = js
+            .into_iter()
+            .chain(unwrap_or_exit!(glob(path)))
+            .collect::<Vec<_>>();
+    }
 
     // Don't bundle artifacts we produce.
-    let js = js.filter(|path| {
+    let js = js.iter().filter(|path| {
         let path = path.as_ref().unwrap();
         let path = path.display().to_string();
 
@@ -138,23 +142,28 @@ fn assemble_modules() {
     info(&format!("written {}", MODULES_FILE));
 }
 
-pub fn bundle() {
+pub fn bundle(config: Config, minify: bool) {
     cleanup_old_bundles();
-    assemble_modules();
+    assemble_modules(config.clone());
+
+    let mut command = Command::new(JS_COMPILER);
+
+    command
+        .arg(MODULES_FILE)
+        .arg("--file")
+        .arg(JS_FILE)
+        .arg("--format")
+        .arg("es")
+        .arg("-p")
+        .arg("@rollup/plugin-node-resolve");
+
+    if minify {
+        command.arg("-p").arg("@rollup/plugin-terser");
+    }
 
     // Bundle JavaScript.
     info("bundling javascript with rollup");
-    unwrap_or_exit!(execute_with_nvm(
-        Command::new(JS_COMPILER)
-            .arg(MODULES_FILE)
-            .arg("--file")
-            .arg(JS_FILE)
-            .arg("--format")
-            .arg("es")
-            .arg("-p")
-            .arg("@rollup/plugin-node-resolve") // .arg("-p")
-                                                // .arg("@rollup/plugin-terser"),
-    ));
+    unwrap_or_exit!(execute_with_nvm(&mut command));
 
     info(&format!("written {}", JS_FILE));
 

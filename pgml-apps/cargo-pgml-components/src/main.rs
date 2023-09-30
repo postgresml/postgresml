@@ -9,8 +9,11 @@ use std::path::Path;
 extern crate log;
 
 mod backend;
+mod config;
 mod frontend;
 mod util;
+
+use config::Config;
 use util::{info, unwrap_or_exit};
 
 /// These paths are exepcted to exist in the project directory.
@@ -51,7 +54,10 @@ struct PgmlCommands {
 #[derive(Subcommand, Debug)]
 enum Commands {
     /// Bundle SASS and JavaScript into neat bundle files.
-    Bundle {},
+    Bundle {
+        #[arg(short, long, default_value = "false")]
+        minify: bool,
+    },
 
     /// Add new elements to the project.
     #[command(subcommand)]
@@ -65,6 +71,7 @@ enum AddCommands {
 }
 
 fn main() {
+    let config = Config::load();
     env_logger::init();
     let cli = Cli::parse();
 
@@ -72,7 +79,7 @@ fn main() {
         CargoSubcommands::PgmlComponents(pgml_commands) => {
             validate_project(pgml_commands.project_path);
             match pgml_commands.command {
-                Commands::Bundle {} => bundle(),
+                Commands::Bundle { minify } => bundle(config, minify),
                 Commands::Add(command) => match command {
                     AddCommands::Component { name } => {
                         crate::frontend::components::add(&Path::new(&name), pgml_commands.overwrite)
@@ -108,9 +115,9 @@ fn validate_project(project_path: Option<String>) {
 }
 
 /// Bundle SASS and JavaScript into neat bundle files.
-fn bundle() {
+fn bundle(config: Config, minify: bool) {
     frontend::sass::bundle();
-    frontend::javascript::bundle();
+    frontend::javascript::bundle(config, minify);
     frontend::components::update_modules();
 
     info("bundle complete");

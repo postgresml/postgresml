@@ -141,6 +141,8 @@ dependencies = [
  "predicates",
  "regex",
  "sailfish",
+ "serde",
+ "toml",
 ]
 
 [[package]]
