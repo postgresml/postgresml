@@ -144,7 +144,7 @@ SELECT
     )
   ) AS cosine_similarity
 FROM pgml.amazon_us_reviews
-ORDER BY cosine_similarity
+ORDER BY review_embedding_e5_large <=> (SELECT embedding FROM request)
 LIMIT 5;
 ```
 

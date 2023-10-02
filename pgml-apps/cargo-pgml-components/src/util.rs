@@ -39,6 +39,8 @@ pub fn warn(value: &str) {
 }
 
 pub fn execute_command(command: &mut Command) -> std::io::Result<String> {
+    debug!("Executing {:?}", command);
+
     let output = match command.output() {
         Ok(output) => output,
         Err(err) => {

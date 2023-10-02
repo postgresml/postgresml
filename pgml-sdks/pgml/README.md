@@ -1,6 +1,6 @@
 # Open Source Alternative for Building End-to-End Vector Search Applications without OpenAI & Pinecone
 
-# Suported Languages
+# Supported Languages
 
 We support a number of different languages:
 - [Python](python)
