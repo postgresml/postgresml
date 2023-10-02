@@ -216,7 +216,7 @@ This is considered a Supervised Learning problem, because we have a labeled data
 
 ### Training Data
 
-First things first, we need to record some user clicks on our search results. We'll create a new table to store our training data, which are the observed inputs and output of our new relevance function. In a real system, we'd probably have separate tables to record **sessions**, **searches**, **results**, **clicks** and other events, but for simplicity in this example, we'll just record the exact information we need to train our model in a single table. Everytime we perform a search, we'll record the `ts_rank` for the both the **title** and **body**, and whether the user **clicked** on the result.
+First things first, we need to record some user clicks on our search results. We'll create a new table to store our training data, which are the observed inputs and output of our new relevance function. In a real system, we'd probably have separate tables to record **sessions**, **searches**, **results**, **clicks** and other events, but for simplicity in this example, we'll just record the exact information we need to train our model in a single table. Everytime we perform a search, we'll record the `ts_rank` for both the **title** and **body**, and whether the user **clicked** on the result.
 
 !!! generic
 
