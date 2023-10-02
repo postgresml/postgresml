@@ -35,10 +35,10 @@ pub fn install() {
 
     for plugin in ROLLUP_PLUGINS {
         if execute_with_nvm(
-            Command::new("rollup")
-                .arg("-p")
+            Command::new("npm")
+                .arg("list")
+                .arg("-g")
                 .arg(plugin)
-                .arg("--version"),
         )
         .is_err()
         {
