@@ -11,7 +11,7 @@ image_alt: HNSW provides a significant improvement in recall speed compared to I
   <img width="54px" height="54px" src="/dashboard/static/images/team/silas.jpg" style="border-radius: 50%;" alt="Author" />
   <div class="ps-3 d-flex justify-content-center flex-column">
     <p class="m-0">Silas Marvin</p>
-    <p class="m-0">September 21, 2023</p>
+    <p class="m-0">October 2, 2023</p>
   </div>
 </div>
 
