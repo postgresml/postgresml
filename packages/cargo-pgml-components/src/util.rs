@@ -30,12 +30,24 @@ pub fn info(value: &str) {
     println!("{}", value.green());
 }
 
+pub fn info_n(value: &str) {
+    print!("{}", value.green());
+}
+
 pub fn error(value: &str) {
     println!("{}", value.red());
 }
 
+pub fn error_n(value: &str) {
+    print!("{}", value.red());
+}
+
 pub fn warn(value: &str) {
     println!("{}", value.yellow());
+}
+
+pub fn warn_n(value: &str) {
+    print!("{}", value.yellow());
 }
 
 pub fn execute_command(command: &mut Command) -> std::io::Result<String> {
@@ -47,19 +59,18 @@ pub fn execute_command(command: &mut Command) -> std::io::Result<String> {
             return Err(err);
         }
     };
-
-    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-    let stdout = String::from_utf8_lossy(&output.stderr).to_string();
+    
+    let stderr = unwrap_or_exit!(String::from_utf8(output.stderr)).to_string();
+    let stdout = unwrap_or_exit!(String::from_utf8(output.stdout)).to_string();
 
     if !output.status.success() {
-        let error = String::from_utf8_lossy(&output.stderr).to_string();
         debug!(
             "{} failed: {}",
             command.get_program().to_str().unwrap(),
-            error,
+            stderr,
         );
 
-        return Err(std::io::Error::new(ErrorKind::Other, error));
+        return Err(std::io::Error::new(ErrorKind::Other, stderr));
     }
 
     if !stderr.is_empty() {
@@ -94,4 +105,15 @@ pub fn compare_files(path1: &Path, path2: &Path) -> std::io::Result<bool> {
 pub fn compare_strings(string1: &str, string2: &str) -> bool {
     // TODO: faster string comparison method needed.
     string1.trim() == string2.trim()
+}
+
+pub fn psql_output(query: &str) -> std::io::Result<String> {
+    let mut cmd = Command::new("psql");
+    cmd
+        .arg("-c")
+        .arg(query)
+        .arg("-t");
+
+    let output = execute_command(&mut cmd)?;
+    Ok(output.trim().to_string())
 }

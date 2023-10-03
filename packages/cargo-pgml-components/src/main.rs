@@ -12,6 +12,7 @@ mod backend;
 mod config;
 mod frontend;
 mod util;
+mod local_dev;
 
 use config::Config;
 use util::{info, unwrap_or_exit};
@@ -62,6 +63,9 @@ enum Commands {
     /// Add new elements to the project.
     #[command(subcommand)]
     Add(AddCommands),
+
+    /// Setup local dev.
+    LocalDev {},
 }
 
 #[derive(Subcommand, Debug)]
@@ -85,6 +89,7 @@ fn main() {
                         crate::frontend::components::add(&Path::new(&name), pgml_commands.overwrite)
                     }
                 },
+                Commands::LocalDev{} => local_dev::setup(),
             }
         }
     }
