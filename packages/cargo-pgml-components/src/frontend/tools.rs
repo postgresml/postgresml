@@ -34,14 +34,7 @@ pub fn install() {
     }
 
     for plugin in ROLLUP_PLUGINS {
-        if execute_with_nvm(
-            Command::new("npm")
-                .arg("list")
-                .arg("-g")
-                .arg(plugin)
-        )
-        .is_err()
-        {
+        if execute_with_nvm(Command::new("npm").arg("list").arg("-g").arg(plugin)).is_err() {
             warn(&format!("installing rollup plugin {}", plugin));
             unwrap_or_exit!(execute_with_nvm(
                 Command::new("npm").arg("install").arg("-g").arg(plugin)

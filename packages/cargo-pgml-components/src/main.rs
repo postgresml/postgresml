@@ -11,8 +11,8 @@ extern crate log;
 mod backend;
 mod config;
 mod frontend;
-mod util;
 mod local_dev;
+mod util;
 
 use config::Config;
 use util::{info, unwrap_or_exit};
@@ -89,7 +89,7 @@ fn main() {
                         crate::frontend::components::add(&Path::new(&name), pgml_commands.overwrite)
                     }
                 },
-                Commands::LocalDev{} => local_dev::setup(),
+                Commands::LocalDev {} => local_dev::setup(),
             }
         }
     }

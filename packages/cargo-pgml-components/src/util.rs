@@ -59,7 +59,7 @@ pub fn execute_command(command: &mut Command) -> std::io::Result<String> {
             return Err(err);
         }
     };
-    
+
     let stderr = unwrap_or_exit!(String::from_utf8(output.stderr)).to_string();
     let stdout = unwrap_or_exit!(String::from_utf8(output.stdout)).to_string();
 
@@ -109,11 +109,31 @@ pub fn compare_strings(string1: &str, string2: &str) -> bool {
 
 pub fn psql_output(query: &str) -> std::io::Result<String> {
     let mut cmd = Command::new("psql");
-    cmd
-        .arg("-c")
-        .arg(query)
-        .arg("-t");
+    cmd.arg("-c").arg(query).arg("-t");
 
     let output = execute_command(&mut cmd)?;
     Ok(output.trim().to_string())
 }
+
+pub fn print(s: &str) {
+    print!("{}", s);
+    let _ = std::io::stdout().flush();
+}
+
+macro_rules! ok_or_error {
+    ($what:expr, $expr:block, $howto:expr) => {{
+        use std::io::Write;
+        print!("{}...", $what);
+        let _ = std::io::stdout().flush();
+
+        if $expr {
+            crate::util::info("ok");
+        } else {
+            crate::util::error("error");
+            println!("{}", $howto);
+            std::process::exit(1);
+        }
+    }};
+}
+
+pub(crate) use ok_or_error;
