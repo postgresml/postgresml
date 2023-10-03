@@ -1,0 +1,15 @@
+<a
+  <% if !classes.is_empty() { %>
+  class="<%= classes %>"
+  <% } %>
+  <% for (name, value) in data_attributes { %>
+  data-<%- name %>="<%= value %>"
+  <% } %>
+  role="<%= role %>"
+  <% if disabled { %>
+  disabled
+  <% } %>
+  href="<%= href %>"
+> 
+  <%+ value %>
+</a>

@@ -1,3 +1,5 @@
+use crate::components::navigation::Anchor;
+use crate::components::component::Component;
 #[derive(Debug, Clone, Default)]
 pub struct StaticNavLink {
     pub name: String,
@@ -38,5 +40,18 @@ impl StaticNavLink {
     pub fn hide_for_lg_screens(mut self, hide: bool) -> Self {
         self.hide_for_lg_screens = hide;
         self
+    }
+}
+
+impl From<StaticNavLink> for Anchor {
+    fn from(link: StaticNavLink) -> Anchor {
+        let mut anchor = Anchor::new(Component::from(link.name), link.href);
+        if link.active {
+            anchor = anchor.active();
+        }
+        if link.disabled {
+            anchor = anchor.disabled();
+        }
+        anchor
     }
 }

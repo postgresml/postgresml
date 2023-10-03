@@ -3,6 +3,7 @@ use pgml_components::Component;
 use sailfish::TemplateOnce;
 
 use crate::components::StaticNavLink;
+use crate::components::navigation::Anchor;
 
 pub enum DropdownValue {
     Icon(Component),
@@ -22,7 +23,7 @@ pub struct Dropdown {
     value: DropdownValue,
 
     /// The list of dropdown links to render.
-    links: Vec<StaticNavLink>,
+    links: Vec<Anchor>,
 
     /// Position of the dropdown menu.
     offset: String,
@@ -38,18 +39,24 @@ pub struct Dropdown {
 
 impl Dropdown {
     pub fn new(links: Vec<StaticNavLink>) -> Self {
+        let links = links.into_iter().map(Anchor::from).collect::<Vec<Anchor>>();
+        Self::from_anchors(&links)
+    }
+
+    pub fn from_anchors(links: &[Anchor]) -> Self {
         let binding = links
             .iter()
-            .filter(|link| link.active)
-            .collect::<Vec<&StaticNavLink>>();
+            .filter(|link| link.is_active())
+            .collect::<Vec<&Anchor>>();
         let active = binding.first();
         let value = if let Some(active) = active {
-            active.name.to_owned()
+            active.value().render_once().unwrap()
         } else {
             "Menu".to_owned()
         };
+
         Dropdown {
-            links,
+            links: links.to_vec(),
             value: DropdownValue::Text(value.into()),
             offset: "0, 10".to_owned(),
             offset_collapsed: "68, -44".to_owned(),
