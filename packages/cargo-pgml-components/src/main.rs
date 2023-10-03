@@ -11,6 +11,7 @@ extern crate log;
 mod backend;
 mod config;
 mod frontend;
+mod local_dev;
 mod util;
 
 use config::Config;
@@ -62,6 +63,9 @@ enum Commands {
     /// Add new elements to the project.
     #[command(subcommand)]
     Add(AddCommands),
+
+    /// Setup local dev.
+    LocalDev {},
 }
 
 #[derive(Subcommand, Debug)]
@@ -85,6 +89,7 @@ fn main() {
                         crate::frontend::components::add(&Path::new(&name), pgml_commands.overwrite)
                     }
                 },
+                Commands::LocalDev {} => local_dev::setup(),
             }
         }
     }

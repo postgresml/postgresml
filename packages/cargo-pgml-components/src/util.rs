@@ -48,18 +48,17 @@ pub fn execute_command(command: &mut Command) -> std::io::Result<String> {
         }
     };
 
-    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-    let stdout = String::from_utf8_lossy(&output.stderr).to_string();
+    let stderr = unwrap_or_exit!(String::from_utf8(output.stderr)).to_string();
+    let stdout = unwrap_or_exit!(String::from_utf8(output.stdout)).to_string();
 
     if !output.status.success() {
-        let error = String::from_utf8_lossy(&output.stderr).to_string();
         debug!(
             "{} failed: {}",
             command.get_program().to_str().unwrap(),
-            error,
+            stderr,
         );
 
-        return Err(std::io::Error::new(ErrorKind::Other, error));
+        return Err(std::io::Error::new(ErrorKind::Other, stderr));
     }
 
     if !stderr.is_empty() {
@@ -95,3 +94,34 @@ pub fn compare_strings(string1: &str, string2: &str) -> bool {
     // TODO: faster string comparison method needed.
     string1.trim() == string2.trim()
 }
+
+pub fn psql_output(query: &str) -> std::io::Result<String> {
+    let mut cmd = Command::new("psql");
+    cmd.arg("-c").arg(query).arg("-t").arg("-d").arg("postgres");
+
+    let output = execute_command(&mut cmd)?;
+    Ok(output.trim().to_string())
+}
+
+pub fn print(s: &str) {
+    print!("{}", s);
+    let _ = std::io::stdout().flush();
+}
+
+macro_rules! ok_or_error {
+    ($what:expr, $expr:block, $howto:expr) => {{
+        use std::io::Write;
+        print!("{}...", $what);
+        let _ = std::io::stdout().flush();
+
+        if $expr {
+            crate::util::info("ok");
+        } else {
+            crate::util::error("error");
+            println!("{}", $howto);
+            std::process::exit(1);
+        }
+    }};
+}
+
+pub(crate) use ok_or_error;
