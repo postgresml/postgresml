@@ -5,7 +5,7 @@ image: https://postgresml.org/dashboard/static/images/blog/announcing_hnsw_suppo
 image_alt: HNSW provides a significant improvement in recall speed compared to IVFFlat 
 ---
 
-# Announcing HNSW Support in Our SDK
+# Speeding up vector recall by 5x with HNSW
 
 <div class="d-flex align-items-center mb-4">
   <img width="54px" height="54px" src="/dashboard/static/images/team/silas.jpg" style="border-radius: 50%;" alt="Author" />
