@@ -1,0 +1,33 @@
+<% 
+use crate::components::dropdown::Dropdown;
+use crate::components::stimulus::stimulus_target::StimulusTarget;
+%>
+<div data-controller="inputs-select">
+
+  <% let mut dropdown = Dropdown::new()
+      .items(options)
+      .offset(&offset)
+      .offset_collapsed(&offset_collapsed)
+      .text(value.clone().into());
+
+      if menu_position == "dropdown-menu-end" {
+        dropdown = dropdown.menu_end();
+      } else if menu_position == "dropdown-menu-start" {
+        dropdown = dropdown.menu_start();
+      }
+
+      if collapsable {
+        dropdown = dropdown.collapsable();
+      }
+
+      if expandable {
+        dropdown = dropdown.expandable();
+      }
+
+      dropdown = dropdown.value_target(StimulusTarget::new().controller("inputs-select").name("value"));
+  %>
+
+  <%+ dropdown %>
+      
+  <input type="hidden" name="<%= name %>" value="<%= value %>" data-inputs-select-target="input">
+</div>

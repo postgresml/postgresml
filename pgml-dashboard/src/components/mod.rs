@@ -67,6 +67,9 @@ pub use static_nav::StaticNav;
 pub mod static_nav_link;
 pub use static_nav_link::StaticNavLink;
 
+// src/components/stimulus
+pub mod stimulus;
+
 // src/components/tables
 pub mod tables;
 

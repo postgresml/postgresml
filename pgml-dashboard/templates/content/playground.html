@@ -2,7 +2,9 @@
 use crate::components::tables::large::*;
 use crate::components::navigation::tabs::*;
 use crate::components::inputs::range_group::RangeGroup;
-use crate::components::inputs::text::editable_header::{EditableHeader, Headers, StimulusTarget};
+use crate::components::inputs::text::editable_header::{EditableHeader, Headers};
+use crate::components::stimulus::stimulus_target::StimulusTarget;
+use crate::components::inputs::select::Select;
 %>
 
 <div class="min-height: 100vh;" data-controller="playground">
@@ -21,26 +23,29 @@ use crate::components::inputs::text::editable_header::{EditableHeader, Headers, 
   <div class="mb-5">
     <div class="row">
       <div class="col-6" style="min-height: 400px;">
-        <%+ Dropdown::new(
+        <%+ Dropdown::nav(
           vec![
-            StaticNavLink::new("Test".into(), "#test".into())
+            StaticNavLink::new("Test1".into(), "#test1".into()),
+            StaticNavLink::new("Test2".into(), "#test2".into()),
+            StaticNavLink::new("Starts Active".into(), "#test".into()).active(true)
           ]
         ).collapsable()
         .icon(ProfileIcon::new().into()) %>
       </div>
       <div class="col-6" style="min-height: 400px;">
-        <%+ Dropdown::new(
+        <%+ Dropdown::nav(
           vec![
-            StaticNavLink::new("Test".into(), "#test".into())
+          StaticNavLink::new("Test1".into(), "#test1".into()),
+          StaticNavLink::new("Test2".into(), "#test2".into()),
+          StaticNavLink::new("Starts Active".into(), "#test".into()).active(true)
           ]
-        ).collapsable()
-        .text("Dropdown".into()) %>
+        ).collapsable() %>
       </div>
       <div class="col-2" style="min-height: 400px;">
-        <%+ Dropdown::new(
+        <%+ Dropdown::nav(
           vec![
             StaticNavLink::new("Really long title in the dropdown".into(), "#test".into()),
-            StaticNavLink::new("Normal link".into(), "#test".into())
+            StaticNavLink::new("Normal link".into(), "#test".into()),
           ]
         ).collapsable()
         .text("Really long name in the dropdown".into()) %>
@@ -141,7 +146,7 @@ use crate::components::inputs::text::editable_header::{EditableHeader, Headers, 
           .input_target(
             StimulusTarget::new()
               .controller("some-existing-controller")
-              .target_name("desired-target-name")
+              .name("desired-target-name")
           ) %>
       <div>
         this is a thing that takes up space
@@ -149,4 +154,10 @@ use crate::components::inputs::text::editable_header::{EditableHeader, Headers, 
     </div>
   </div>
 
+</div>
+
+<div style="margin-bottom: 14rem;">
+  <%+ Select::new()
+      .options(vec!["option_pg1".to_owned(), "option2".to_owned(), "option3".to_owned()])
+      .name("selectName") %>
 </div>

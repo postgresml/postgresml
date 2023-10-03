@@ -20,7 +20,7 @@
     data-bs-toggle="dropdown"
     data-bs-offset="<%= offset %>"
     aria-expanded="false">
-      <span class="btn-dropdown-text"><%+ text %></span>
+      <span class="btn-dropdown-text" <%- value_target %>><%+ text %></span>
       <span class="material-symbols-outlined">
         expand_more
       </span>
@@ -41,15 +41,9 @@
   </div>
   <% } %>
 
-  <ul class="dropdown-menu <%= menu_position %>">
-    <% for link in links { %>
-      <li class="menu-item d-flex align-items-center <% if link.disabled { %>disabled<% } %>">
-        <% if link.disabled { %>
-          <a type="button" class="dropdown-item" disabled href="#"><%= link.name %></a>
-        <% } else { %>
-          <a type="button" class="dropdown-item" href="<%- link.href %>"><%= link.name %></a>
-        <% } %>
-      </li>
+  <ul class="dropdown-menu overflow-auto <%= menu_position %>">
+    <% for item in items { %>
+        <%+ item %>
     <% } %>
   </ul>
 </div>

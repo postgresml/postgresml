@@ -6,7 +6,7 @@
         <%= value %>
       </span>
 
-      <input type="text" class="form-control" value="<%= value %>" style="display: none"  maxlength="50"
+      <input type="text" class="form-control" value="<%= value %>" style="display: none"  maxlength="50" autocomplete="off"
       name='<%= input_name.unwrap_or_else(|| "".to_string()) %>'
       data-inputs-text-editable-header-target="input"
       <%- input_target %> >

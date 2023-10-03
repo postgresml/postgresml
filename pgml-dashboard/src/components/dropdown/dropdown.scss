@@ -39,6 +39,7 @@
     display: flex;
     justify-content: space-between;
     font-weight: $font-weight-normal;
+    padding: 16px 20px;
 
     --bs-btn-border-color: transparent;
     --bs-btn-border-width: 1px;
@@ -47,6 +48,10 @@
     --bs-btn-active-bg: #{$gray-700};
     --bs-btn-active-color: #{$gray-100};
     --bs-btn-hover-color: #{$gray-100};
+
+    &.error {
+        border-color: #{$error};
+    }
 
     .material-symbols-outlined {
         color: #{$neon-shade-100};
@@ -73,7 +78,7 @@
     }
 
     .menu-item {
-        a {
+        a, div {
             padding: 8px 12px;
             overflow: hidden;
             text-overflow: ellipsis;
