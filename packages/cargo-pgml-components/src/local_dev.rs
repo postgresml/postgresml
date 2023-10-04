@@ -194,18 +194,14 @@ fn dependencies() -> anyhow::Result<()> {
         info("ok");
     }
 
-    ok_or_error!(
-        "checking for PostgreSQL connectivity",
-        {
-            if let Err(err) = psql_output("SELECT version()") {
-                error!("{}", err);
-                false
-            } else {
-                true
-            }
-        },
-        postgres_running()
-    );
+    print("checking for PostgreSQL connectivity...");
+    if let Err(err) = psql_output("SELECT version()") {
+        error("error");
+        error!("{}", err);
+        println!("{}", postgres_running());
+    } else {
+        info("ok");
+    }
 
     ok_or_error!(
         "checking for pgvector PostgreSQL extension",
