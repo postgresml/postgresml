@@ -3,8 +3,12 @@
 //! Code to handle the setup of our pretty complex local development
 //! environment.
 
-use crate::util::{execute_command, info, ok_or_error, print, psql_output, unwrap_or_exit, warn};
-use std::process::Command;
+use crate::util::{
+    compare_files, error, execute_command, info, ok_or_error, print, psql_output, unwrap_or_exit,
+    warn,
+};
+use std::path::Path;
+use std::process::{exit, Command};
 
 #[cfg(target_os = "macos")]
 static PG_INSTALL: &str = "
@@ -155,6 +159,29 @@ fn dependencies() -> anyhow::Result<()> {
         BUILD_ESSENTIAL
     );
 
+    #[cfg(target_os = "linux")]
+    let postgres_service = "postgresql";
+
+    #[cfg(target_os = "macos")]
+    let postgres_service = "postgresql@15";
+
+    print("checking if PostgreSQL is running...");
+    if !check_service_running(postgres_service) {
+        error("error");
+
+        println!("\nPostgreSQL service is not running. To start PostgreSQL, run:\n");
+
+        #[cfg(target_os = "linux")]
+        println!("\tsudo service postgresql start\n");
+
+        #[cfg(target_os = "macos")]
+        println!("\tbrew service start postgresql@15\n");
+
+        exit(1);
+    } else {
+        info("ok");
+    }
+
     ok_or_error!(
         "checking for PostgreSQL connectivity",
         {
@@ -219,6 +246,7 @@ fn dependencies() -> anyhow::Result<()> {
     let output = psql_output(
         "SELECT datname FROM pg_database WHERE datname = 'pgml_dashboard_development'",
     )?;
+
     if !output.contains("pgml_dashboard_development") {
         warn("missing");
         print("creating pgml_dashboard_development database...");
@@ -244,6 +272,55 @@ fn dependencies() -> anyhow::Result<()> {
         info("ok");
     } else {
         info("ok");
+        print("running quick environment test...");
+        unwrap_or_exit!(execute_command(
+            Command::new("dropdb")
+                .arg("--if-exists")
+                .arg("pgml_components_environment_test")
+        ));
+        unwrap_or_exit!(execute_command(
+            Command::new("createdb").arg("pgml_components_environment_test")
+        ));
+        unwrap_or_exit!(execute_command(
+            Command::new("psql")
+                .arg("-c")
+                .arg("CREATE EXTENSION vector")
+                .arg("pgml_components_environment_test")
+        ));
+        unwrap_or_exit!(execute_command(
+            Command::new("psql")
+                .arg("-c")
+                .arg("CREATE EXTENSION pgml")
+                .arg("pgml_components_environment_test")
+        ));
+        unwrap_or_exit!(execute_command(
+            Command::new("dropdb").arg("pgml_components_environment_test")
+        ));
+        info("ok");
+    }
+
+    print("checking .env file...");
+    let env = Path::new(".env");
+    let env_template = Path::new(".env.development");
+
+    if !env.exists() && env_template.exists() {
+        unwrap_or_exit!(execute_command(
+            Command::new("cp").arg(".env.development").arg(".env")
+        ));
+        info("ok");
+    } else if env.exists() && env_template.exists() {
+        let identical = unwrap_or_exit!(compare_files(&env, &env_template));
+        if !identical {
+            warn("different");
+            warn(".env has been modified");
+        } else {
+            info("ok");
+        }
+    } else if !env_template.exists() {
+        warn("unknown");
+        warn(".env.development not found, can't install or validate .env");
+    } else {
+        info("ok");
     }
 
     info("all dependencies are installed and working");
@@ -253,4 +330,14 @@ fn dependencies() -> anyhow::Result<()> {
 
 pub fn setup() {
     unwrap_or_exit!(dependencies())
+}
+
+fn check_service_running(name: &str) -> bool {
+    #[cfg(target_os = "linux")]
+    let command = format!("service {} status", name);
+
+    #[cfg(target_os = "macos")]
+    let command = format!("brew service status {}", name);
+
+    execute_command(Command::new("bash").arg("-c").arg(&command)).is_ok()
 }
