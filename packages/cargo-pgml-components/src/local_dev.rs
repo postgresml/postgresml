@@ -3,8 +3,12 @@
 //! Code to handle the setup of our pretty complex local development
 //! environment.
 
-use crate::util::{execute_command, info, ok_or_error, print, psql_output, unwrap_or_exit, warn};
-use std::process::Command;
+use crate::util::{
+    compare_files, error, execute_command, info, ok_or_error, print, psql_output, unwrap_or_exit,
+    warn,
+};
+use std::path::Path;
+use std::process::{exit, Command};
 
 #[cfg(target_os = "macos")]
 static PG_INSTALL: &str = "
@@ -39,7 +43,7 @@ To install pg_stat_statements into your database:
 2. Add pg_stat_statements into your shared_preload_libraries:\n
 \tpsql -c 'ALTER SYSTEM SET shared_preload_libraries TO pgml,pg_stat_statements'
 3. Restart PostgreSQL:\n
-\tbrew service restart postgresql@15
+\tbrew services restart postgresql@15
 ";
 
 #[cfg(target_os = "linux")]
@@ -55,18 +59,20 @@ To install pg_stat_statements into your database:
 ";
 
 #[cfg(target_os = "macos")]
-static PG_PGVECTOR: &str = "Install pgvector into your PostgreSQL database:\n
-\tgit clone --branch v0.5.0 https://github.com/pgvector/pgvector && \\
-\tcd pgvector && \\
+static PG_PGVECTOR: &str = "
+\t rm -rf /tmp/pgvector && \\
+\tgit clone --branch v0.5.0 https://github.com/pgvector/pgvector /tmp/pgvector && \\
+\tcd /tmp/pgvector && \\
 \techo \"trusted = true\" >> vector.control && \\
 \tmake && \\
 \tmake install
 ";
 
 #[cfg(target_os = "linux")]
-static PG_PGVECTOR: &str = "Install pgvector into your PostgreSQL database:\n
-\tgit clone --branch v0.5.0 https://github.com/pgvector/pgvector && \\
-\tcd pgvector && \\
+static PG_PGVECTOR: &str = "
+\t rm -rf /tmp/pgvector && \\
+\tgit clone --branch v0.5.0 https://github.com/pgvector/pgvector /tmp/pgvector && \\
+\tcd /tmp/pgvector && \\
 \techo \"trusted = true\" >> vector.control && \\
 \tmake && \\
 \tsudo make install
@@ -111,7 +117,7 @@ Is PostgreSQL running and accepting connections?
     let start = format!(
         "
 To start PostgreSQL, run:\n
-\tbrew service start postgresql@15
+\tbrew services start postgresql@15
     "
     );
 
@@ -155,18 +161,49 @@ fn dependencies() -> anyhow::Result<()> {
         BUILD_ESSENTIAL
     );
 
-    ok_or_error!(
-        "checking for PostgreSQL connectivity",
-        {
-            if let Err(err) = psql_output("SELECT version()") {
-                error!("{}", err);
-                false
-            } else {
-                true
-            }
-        },
-        postgres_running()
-    );
+    #[cfg(target_os = "macos")]
+    {
+        print("checking for brew...");
+        if execute_command(Command::new("which").arg("brew")).is_err() {
+            error("missing");
+            println!("\nBrew is not installed. Install it from https://brew.sh/\n");
+            exit(1);
+        } else {
+            info("ok");
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    let postgres_service = "postgresql";
+
+    #[cfg(target_os = "macos")]
+    let postgres_service = "postgresql@15";
+
+    print("checking if PostgreSQL is running...");
+    if !check_service_running(postgres_service) {
+        error("error");
+
+        println!("\nPostgreSQL service is not running. To start PostgreSQL, run:\n");
+
+        #[cfg(target_os = "linux")]
+        println!("\tsudo service postgresql start\n");
+
+        #[cfg(target_os = "macos")]
+        println!("\tbrew services start postgresql@15\n");
+
+        exit(1);
+    } else {
+        info("ok");
+    }
+
+    print("checking for PostgreSQL connectivity...");
+    if let Err(err) = psql_output("SELECT version()") {
+        error("error");
+        error!("{}", err);
+        println!("{}", postgres_running());
+    } else {
+        info("ok");
+    }
 
     ok_or_error!(
         "checking for pgvector PostgreSQL extension",
@@ -219,6 +256,7 @@ fn dependencies() -> anyhow::Result<()> {
     let output = psql_output(
         "SELECT datname FROM pg_database WHERE datname = 'pgml_dashboard_development'",
     )?;
+
     if !output.contains("pgml_dashboard_development") {
         warn("missing");
         print("creating pgml_dashboard_development database...");
@@ -244,6 +282,55 @@ fn dependencies() -> anyhow::Result<()> {
         info("ok");
     } else {
         info("ok");
+        print("running quick environment test...");
+        unwrap_or_exit!(execute_command(
+            Command::new("dropdb")
+                .arg("--if-exists")
+                .arg("pgml_components_environment_test")
+        ));
+        unwrap_or_exit!(execute_command(
+            Command::new("createdb").arg("pgml_components_environment_test")
+        ));
+        unwrap_or_exit!(execute_command(
+            Command::new("psql")
+                .arg("-c")
+                .arg("CREATE EXTENSION vector")
+                .arg("pgml_components_environment_test")
+        ));
+        unwrap_or_exit!(execute_command(
+            Command::new("psql")
+                .arg("-c")
+                .arg("CREATE EXTENSION pgml")
+                .arg("pgml_components_environment_test")
+        ));
+        unwrap_or_exit!(execute_command(
+            Command::new("dropdb").arg("pgml_components_environment_test")
+        ));
+        info("ok");
+    }
+
+    print("checking .env file...");
+    let env = Path::new(".env");
+    let env_template = Path::new(".env.development");
+
+    if !env.exists() && env_template.exists() {
+        unwrap_or_exit!(execute_command(
+            Command::new("cp").arg(".env.development").arg(".env")
+        ));
+        info("ok");
+    } else if env.exists() && env_template.exists() {
+        let identical = unwrap_or_exit!(compare_files(&env, &env_template));
+        if !identical {
+            warn("different");
+            warn(".env has been modified");
+        } else {
+            info("ok");
+        }
+    } else if !env_template.exists() {
+        warn("unknown");
+        warn(".env.development not found, can't install or validate .env");
+    } else {
+        info("ok");
     }
 
     info("all dependencies are installed and working");
@@ -253,4 +340,36 @@ fn dependencies() -> anyhow::Result<()> {
 
 pub fn setup() {
     unwrap_or_exit!(dependencies())
+}
+
+pub fn install_pgvector() {
+    #[cfg(target_os = "linux")]
+    {
+        let check_sudo = execute_command(Command::new("sudo").arg("ls"));
+        if check_sudo.is_err() {
+            println!("Installing pgvector requires sudo permissions.");
+            exit(1);
+        }
+    }
+
+    print("installing pgvector PostgreSQL extension...");
+
+    let result = execute_command(Command::new("bash").arg("-c").arg(PG_PGVECTOR));
+
+    if let Ok(_) = result {
+        info("ok");
+    } else if let Err(ref err) = result {
+        error("error");
+        error!("{}", err);
+    }
+}
+
+fn check_service_running(name: &str) -> bool {
+    #[cfg(target_os = "linux")]
+    let command = format!("service {} status", name);
+
+    #[cfg(target_os = "macos")]
+    let command = format!("brew services list | grep {} | grep started", name);
+
+    execute_command(Command::new("bash").arg("-c").arg(&command)).is_ok()
 }
