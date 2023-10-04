@@ -65,13 +65,21 @@ enum Commands {
     Add(AddCommands),
 
     /// Setup local dev.
-    LocalDev {},
+    #[command(subcommand)]
+    LocalDev(LocalDevCommands),
 }
 
 #[derive(Subcommand, Debug)]
 enum AddCommands {
     /// Add a new component.
     Component { name: String },
+}
+
+#[derive(Subcommand, Debug)]
+enum LocalDevCommands {
+    /// Setup local dev.
+    Check {},
+    InstallPgvector {},
 }
 
 fn main() {
@@ -89,7 +97,10 @@ fn main() {
                         crate::frontend::components::add(&Path::new(&name), pgml_commands.overwrite)
                     }
                 },
-                Commands::LocalDev {} => local_dev::setup(),
+                Commands::LocalDev(command) => match command {
+                    LocalDevCommands::Check {} => local_dev::setup(),
+                    LocalDevCommands::InstallPgvector {} => local_dev::install_pgvector(),
+                },
             }
         }
     }

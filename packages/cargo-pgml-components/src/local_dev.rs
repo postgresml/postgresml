@@ -43,7 +43,7 @@ To install pg_stat_statements into your database:
 2. Add pg_stat_statements into your shared_preload_libraries:\n
 \tpsql -c 'ALTER SYSTEM SET shared_preload_libraries TO pgml,pg_stat_statements'
 3. Restart PostgreSQL:\n
-\tbrew service restart postgresql@15
+\tbrew services restart postgresql@15
 ";
 
 #[cfg(target_os = "linux")]
@@ -59,18 +59,20 @@ To install pg_stat_statements into your database:
 ";
 
 #[cfg(target_os = "macos")]
-static PG_PGVECTOR: &str = "Install pgvector into your PostgreSQL database:\n
-\tgit clone --branch v0.5.0 https://github.com/pgvector/pgvector && \\
-\tcd pgvector && \\
+static PG_PGVECTOR: &str = "
+\t rm -rf /tmp/pgvector && \\
+\tgit clone --branch v0.5.0 https://github.com/pgvector/pgvector /tmp/pgvector && \\
+\tcd /tmp/pgvector && \\
 \techo \"trusted = true\" >> vector.control && \\
 \tmake && \\
 \tmake install
 ";
 
 #[cfg(target_os = "linux")]
-static PG_PGVECTOR: &str = "Install pgvector into your PostgreSQL database:\n
-\tgit clone --branch v0.5.0 https://github.com/pgvector/pgvector && \\
-\tcd pgvector && \\
+static PG_PGVECTOR: &str = "
+\t rm -rf /tmp/pgvector && \\
+\tgit clone --branch v0.5.0 https://github.com/pgvector/pgvector /tmp/pgvector && \\
+\tcd /tmp/pgvector && \\
 \techo \"trusted = true\" >> vector.control && \\
 \tmake && \\
 \tsudo make install
@@ -115,7 +117,7 @@ Is PostgreSQL running and accepting connections?
     let start = format!(
         "
 To start PostgreSQL, run:\n
-\tbrew service start postgresql@15
+\tbrew services start postgresql@15
     "
     );
 
@@ -187,7 +189,7 @@ fn dependencies() -> anyhow::Result<()> {
         println!("\tsudo service postgresql start\n");
 
         #[cfg(target_os = "macos")]
-        println!("\tbrew service start postgresql@15\n");
+        println!("\tbrew services start postgresql@15\n");
 
         exit(1);
     } else {
@@ -340,12 +342,34 @@ pub fn setup() {
     unwrap_or_exit!(dependencies())
 }
 
+pub fn install_pgvector() {
+    #[cfg(target_os = "linux")]
+    {
+        let check_sudo = execute_command(Command::new("sudo").arg("ls"));
+        if check_sudo.is_err() {
+            println!("Installing pgvector requires sudo permissions.");
+            exit(1);
+        }
+    }
+
+    print("installing pgvector PostgreSQL extension...");
+
+    let result = execute_command(Command::new("bash").arg("-c").arg(PG_PGVECTOR));
+
+    if let Ok(_) = result {
+        info("ok");
+    } else if let Err(ref err) = result {
+        error("error");
+        error!("{}", err);
+    }
+}
+
 fn check_service_running(name: &str) -> bool {
     #[cfg(target_os = "linux")]
     let command = format!("service {} status", name);
 
     #[cfg(target_os = "macos")]
-    let command = format!("brew service status {}", name);
+    let command = format!("brew services list | grep {} | grep started", name);
 
     execute_command(Command::new("bash").arg("-c").arg(&command)).is_ok()
 }
