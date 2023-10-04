@@ -64,7 +64,8 @@ div[data-controller="chatbot"] {
         padding-left: 2rem;
     }
 
-    #chatbot-example-questions {
+    .chatbot-example-questions {
+        display: none;
         max-height: 66px;
         overflow: hidden;
     }
@@ -241,11 +242,6 @@ div[data-controller="chatbot"] {
         right: 15px;
         max-width: 500px;
         z-index: 100;
-    }
-
-    .filter-white {
-        filter: invert(99%) sepia(1%) saturate(2%) hue-rotate(289deg)
-            brightness(105%) contrast(100%);
     }
 }
 

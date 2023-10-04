@@ -1,10 +1,14 @@
 #[macro_use]
 extern crate rocket;
 
-use rocket::form::Form;
+use rand::{distributions::Alphanumeric, Rng};
 use rocket::response::Redirect;
 use rocket::route::Route;
 use rocket::serde::json::Json;
+use rocket::{
+    form::Form,
+    http::{Cookie, CookieJar},
+};
 use sailfish::TemplateOnce;
 use sqlx::PgPool;
 use std::collections::HashMap;
@@ -668,12 +672,6 @@ pub async fn dashboard(
 pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Playground", &cluster.context);
     Ok(ResponseOk(layout.render(templates::Playground {})))
-}
-
-#[get("/chatbot")]
-pub async fn chatbot(cluster: &Cluster) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Chatbot", &cluster.context);
-    Ok(ResponseOk(layout.render(templates::Chatbot {})))
 }
 
 pub fn routes() -> Vec<Route> {

@@ -1,4 +1,8 @@
+use anyhow::Context;
 use indicatif::{ProgressBar, ProgressStyle};
+use lopdf::Document;
+use std::fs;
+use std::path::Path;
 
 /// A more type flexible version of format!
 #[macro_export]
@@ -33,4 +37,29 @@ pub fn default_progress_bar(size: u64) -> ProgressBar {
         ProgressStyle::with_template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} ")
             .unwrap(),
     )
+}
+
+pub fn get_file_contents(path: &Path) -> anyhow::Result<String> {
+    let extension = path
+        .extension()
+        .with_context(|| format!("Error reading file extension: {}", path.display()))?
+        .to_str()
+        .with_context(|| format!("Extension is not valid UTF-8: {}", path.display()))?;
+    Ok(match extension {
+        "pdf" => {
+            let doc = Document::load(path)
+                .with_context(|| format!("Error reading PDF file: {}", path.display()))?;
+            doc.get_pages()
+                .into_iter()
+                .map(|(page_number, _)| {
+                    doc.extract_text(&vec![page_number]).with_context(|| {
+                        format!("Error extracting content from PDF file: {}", path.display())
+                    })
+                })
+                .collect::<anyhow::Result<Vec<String>>>()?
+                .join("\n")
+        }
+        _ => fs::read_to_string(path)
+            .with_context(|| format!("Error reading file: {}", path.display()))?,
+    })
 }

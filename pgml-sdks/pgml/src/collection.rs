@@ -1,15 +1,19 @@
 use anyhow::Context;
 use indicatif::MultiProgress;
 use itertools::Itertools;
+use regex::Regex;
 use rust_bridge::{alias, alias_methods};
 use sea_query::{Alias, Expr, JoinType, NullOrdering, Order, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
+use serde_json::json;
 use sqlx::postgres::PgPool;
 use sqlx::Executor;
 use sqlx::PgConnection;
 use std::borrow::Cow;
+use std::path::Path;
 use std::time::SystemTime;
 use tracing::{instrument, warn};
+use walkdir::WalkDir;
 
 use crate::{
     filter_builder, get_or_initialize_pool,
@@ -120,7 +124,9 @@ pub struct Collection {
     vector_search,
     query,
     exists,
-    archive
+    archive,
+    upsert_directory,
+    upsert_file
 )]
 impl Collection {
     /// Creates a new [Collection]
@@ -552,14 +558,20 @@ impl Collection {
     ///        serde_json::json!({"id": 1, "text": "hello world"}).into(),
     ///        serde_json::json!({"id": 2, "text": "hello world"}).into(),
     ///    ];
-    ///    collection.upsert_documents(documents).await?;
+    ///    collection.upsert_documents(documents, None).await?;
     ///    Ok(())
     /// }
     /// ```
     #[instrument(skip(self, documents))]
-    pub async fn upsert_documents(&mut self, documents: Vec<Json>) -> anyhow::Result<()> {
+    pub async fn upsert_documents(
+        &mut self,
+        documents: Vec<Json>,
+        args: Option<Json>,
+    ) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(false).await?;
+
+        let args = args.unwrap_or_default();
 
         let progress_bar = utils::default_progress_bar(documents.len() as u64);
         progress_bar.println("Upserting Documents...");
@@ -569,23 +581,25 @@ impl Collection {
             .map(|mut document| {
                 let document = document
                     .as_object_mut()
-                    .expect("Documents must be a vector of objects");
-                let text = document
-                    .remove("text")
-                    .map(|t| t.as_str().expect("`text` must be a string").to_string());
+                    .context("Documents must be a vector of objects")?;
 
                 // We don't want the text included in the document metadata, but everything else
                 // should be in there
+                let text = document.remove("text").map(|t| {
+                    t.as_str()
+                        .expect("`text` must be a string in document")
+                        .to_string()
+                });
                 let metadata = serde_json::to_value(&document)?.into();
 
                 let id = document
                     .get("id")
-                    .context("`id` must be a key in documen")?
+                    .context("`id` must be a key in document")?
                     .to_string();
                 let md5_digest = md5::compute(id.as_bytes());
                 let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-                Ok(Some((source_uuid, text, metadata)))
+                Ok((source_uuid, text, metadata))
             })
             .collect();
 
@@ -596,17 +610,8 @@ impl Collection {
         // it is not thread safe and pyo3 will get upset
         let mut document_ids = Vec::new();
         for chunk in documents?.chunks(10) {
-            // We want the length before we filter out any None values
-            let chunk_len = chunk.len();
-            // Filter out the None values
-            let mut chunk: Vec<&(uuid::Uuid, Option<String>, Json)> =
-                chunk.iter().filter_map(|x| x.as_ref()).collect();
-
-            // If the chunk is empty, we can skip the rest of the loop
-            if chunk.is_empty() {
-                progress_bar.inc(chunk_len as u64);
-                continue;
-            }
+            // Need to make it a vec to partition it and must include explicit typing here
+            let mut chunk: Vec<&(uuid::Uuid, Option<String>, Json)> = chunk.into_iter().collect();
 
             // Split the chunk into two groups, one with text, and one with just metadata
             let split_index = itertools::partition(&mut chunk, |(_, text, _)| text.is_some());
@@ -615,40 +620,55 @@ impl Collection {
             // Start the transaction
             let mut transaction = pool.begin().await?;
 
-            // Update the metadata
-            sqlx::query(query_builder!(
+            if !metadata_chunk.is_empty() {
+                // Update the metadata
+                // Merge the metadata if the user has specified to do so otherwise replace it
+                if args["metadata"]["merge"].as_bool().unwrap_or(false) == true {
+                    sqlx::query(query_builder!(
+                    "UPDATE %s d SET metadata = d.metadata || v.metadata FROM (SELECT UNNEST($1) source_uuid, UNNEST($2) metadata) v WHERE d.source_uuid = v.source_uuid",
+                    self.documents_table_name
+                ).as_str()).bind(metadata_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>())
+                    .bind(metadata_chunk.iter().map(|(_, _, metadata)| metadata.0.clone()).collect::<Vec<_>>())
+                    .execute(&mut *transaction).await?;
+                } else {
+                    sqlx::query(query_builder!(
                 "UPDATE %s d SET metadata = v.metadata FROM (SELECT UNNEST($1) source_uuid, UNNEST($2) metadata) v WHERE d.source_uuid = v.source_uuid",
                 self.documents_table_name
             ).as_str()).bind(metadata_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>())
                 .bind(metadata_chunk.iter().map(|(_, _, metadata)| metadata.0.clone()).collect::<Vec<_>>())
                 .execute(&mut *transaction).await?;
+                }
+            }
 
-            // First delete any documents that already have the same UUID as documents in
-            // text_chunk, then insert the new ones.
-            // We are essentially upserting in two steps
-            sqlx::query(&query_builder!(
+            if !text_chunk.is_empty() {
+                // First delete any documents that already have the same UUID as documents in
+                // text_chunk, then insert the new ones.
+                // We are essentially upserting in two steps
+                sqlx::query(&query_builder!(
                 "DELETE FROM %s WHERE source_uuid IN (SELECT source_uuid FROM %s WHERE source_uuid = ANY($1::uuid[]))",
                 self.documents_table_name,
                 self.documents_table_name
             )).
                 bind(&text_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>()).
                 execute(&mut *transaction).await?;
-            let query_string_values = (0..text_chunk.len())
-                .map(|i| format!("(${}, ${}, ${})", i * 3 + 1, i * 3 + 2, i * 3 + 3))
-                .collect::<Vec<String>>()
-                .join(",");
-            let query_string = format!(
+                let query_string_values = (0..text_chunk.len())
+                    .map(|i| format!("(${}, ${}, ${})", i * 3 + 1, i * 3 + 2, i * 3 + 3))
+                    .collect::<Vec<String>>()
+                    .join(",");
+                let query_string = format!(
                 "INSERT INTO %s (source_uuid, text, metadata) VALUES {} ON CONFLICT (source_uuid) DO UPDATE SET text = $2, metadata = $3 RETURNING id",
                 query_string_values
             );
-            let query = query_builder!(query_string, self.documents_table_name);
-            let mut query = sqlx::query_scalar(&query);
-            for (source_uuid, text, metadata) in text_chunk.iter() {
-                query = query.bind(source_uuid).bind(text).bind(metadata);
+                let query = query_builder!(query_string, self.documents_table_name);
+                let mut query = sqlx::query_scalar(&query);
+                for (source_uuid, text, metadata) in text_chunk.iter() {
+                    query = query.bind(source_uuid).bind(text).bind(metadata);
+                }
+                let ids: Vec<i64> = query.fetch_all(&mut *transaction).await?;
+                document_ids.extend(ids);
+                progress_bar.inc(chunk.len() as u64);
             }
-            let ids: Vec<i64> = query.fetch_all(&mut *transaction).await?;
-            document_ids.extend(ids);
-            progress_bar.inc(chunk_len as u64);
+
             transaction.commit().await?;
         }
         progress_bar.finish();
@@ -675,7 +695,7 @@ impl Collection {
     ///     Ok(())
     /// }
     #[instrument(skip(self))]
-    pub async fn get_documents(&mut self, args: Option<Json>) -> anyhow::Result<Vec<Json>> {
+    pub async fn get_documents(&self, args: Option<Json>) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
         let mut args = args.unwrap_or_default().0;
@@ -775,6 +795,7 @@ impl Collection {
             .map(|d| d.into_user_friendly_json())
             .collect())
     }
+
     /// Deletes documents in a [Collection]
     ///
     /// # Arguments
@@ -798,7 +819,7 @@ impl Collection {
     ///     Ok(())
     /// }
     #[instrument(skip(self))]
-    pub async fn delete_documents(&mut self, mut filter: Json) -> anyhow::Result<()> {
+    pub async fn delete_documents(&self, mut filter: Json) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
         let mut query = Query::delete();
@@ -1214,6 +1235,92 @@ impl Collection {
         .fetch_optional(&pool)
         .await?;
         Ok(collection.is_some())
+    }
+
+    #[instrument(skip(self))]
+    pub async fn upsert_directory(&mut self, path: &str, args: Json) -> anyhow::Result<()> {
+        self.verify_in_database(false).await?;
+        let mut documents: Vec<Json> = Vec::new();
+
+        let file_types: Vec<&str> = args["file_types"]
+            .as_array()
+            .context("file_types must be an array of valid file types. E.G. ['md', 'txt']")?
+            .into_iter()
+            .map(|v| {
+                let v = v.as_str().with_context(|| {
+                    format!("file_types must be an array of valid file types. E.G. ['md', 'txt']. Found: {}", v)
+                })?;
+                Ok(v)
+            })
+            .collect::<anyhow::Result<Vec<&str>>>()?;
+
+        let file_batch_size: usize = args["file_batch_size"]
+            .as_u64()
+            .map(|v| v as usize)
+            .unwrap_or(10);
+
+        let follow_links: bool = args["follow_links"].as_bool().unwrap_or(false);
+
+        let ignore_paths: Vec<Regex> =
+            args["ignore_paths"]
+                .as_array()
+                .map_or(Ok(Vec::new()), |v| {
+                    v.into_iter()
+                        .map(|v| {
+                            let v = v.as_str().with_context(|| {
+                                format!("ignore_paths must be an array of valid regexes")
+                            })?;
+                            Regex::new(v).with_context(|| format!("Invalid regex: {}", v))
+                        })
+                        .collect()
+                })?;
+
+        for entry in WalkDir::new(path).follow_links(follow_links) {
+            let entry = entry.context("Error reading directory")?;
+            if !entry.path().is_file() {
+                continue;
+            }
+            if let Some(extension) = entry.path().extension() {
+                let nice_path = entry.path().to_str().context("Path is not valid UTF-8")?;
+                let extension = extension
+                    .to_str()
+                    .with_context(|| format!("Extension is not valid UTF-8: {}", nice_path))?;
+                if !file_types.contains(&extension)
+                    || ignore_paths.iter().any(|r| r.is_match(nice_path))
+                {
+                    continue;
+                }
+
+                let contents = utils::get_file_contents(&entry.path())?;
+                documents.push(
+                    json!({
+                        "id": nice_path,
+                        "file_type": extension,
+                        "text": contents
+                    })
+                    .into(),
+                );
+                if documents.len() == file_batch_size {
+                    self.upsert_documents(documents, None).await?;
+                    documents = Vec::new();
+                }
+            }
+        }
+        if documents.len() > 0 {
+            self.upsert_documents(documents, None).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn upsert_file(&mut self, path: &str) -> anyhow::Result<()> {
+        self.verify_in_database(false).await?;
+        let path = Path::new(path);
+        let contents = utils::get_file_contents(&path)?;
+        let document = json!({
+            "id": path,
+            "text": contents
+        });
+        self.upsert_documents(vec![document.into()], None).await
     }
 
     fn generate_table_names(name: &str) -> (String, String, String, String, String) {
