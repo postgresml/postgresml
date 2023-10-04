@@ -42,9 +42,6 @@ collection = pgml.newCollection("test_collection", CUSTOM_DATABASE_URL)
 {% endtab %}
 {% endtabs %}
 
-```
-```
-
 ## Upserting Documents
 
 Documents are dictionaries with two required keys: `id` and `text`. All other keys/value pairs are stored as metadata for the document.
