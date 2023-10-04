@@ -36,6 +36,8 @@ tracing-subscriber = { version = "0.3.17", features = ["json"] }
 indicatif = "0.17.6"
 serde = "1.0.181"
 futures = "0.3.28"
+walkdir = "2.4.0"
+lopdf = { version = "0.31.0", features = ["nom_parser"] }
 
 [features]
 default = []

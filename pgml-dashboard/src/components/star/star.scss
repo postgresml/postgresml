@@ -17,6 +17,9 @@ div[data-controller="star"] {
         left: 0;
         width: 100%;
         height: auto;
+        -webkit-animation:spin 35s linear infinite;
+        -moz-animation:spin 35s linear infinite;
+        animation:spin 35s linear infinite;
     }
 
     #star-content {
@@ -32,4 +35,8 @@ div[data-controller="star"] {
         text-align: center;
         font-size: 0.8rem;
     }
+
+    @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+    @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+    @keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
 }

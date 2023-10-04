@@ -390,7 +390,7 @@ mod tests {
         collection.add_pipeline(&mut pipeline1).await?;
         collection.add_pipeline(&mut pipeline2).await?;
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(3), None)
             .await?;
         let status_1 = pipeline1.get_status().await?;
         let status_2 = pipeline2.get_status().await?;
@@ -435,7 +435,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswle_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(3), None)
             .await?;
         let results = collection
             .vector_search("Here is some query", &mut pipeline, None, None)
@@ -451,6 +451,7 @@ mod tests {
         let model = Model::new(
             Some("text-embedding-ada-002".to_string()),
             Some("openai".to_string()),
+            None,
             None,
         );
         let splitter = Splitter::default();
@@ -474,7 +475,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswre_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(3), None)
             .await?;
         let results = collection
             .vector_search("Here is some query", &mut pipeline, None, Some(10))
@@ -509,7 +510,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(4))
+            .upsert_documents(generate_dummy_documents(4), None)
             .await?;
         let results = collection
             .query()
@@ -530,6 +531,7 @@ mod tests {
             Some("hkunlp/instructor-base".to_string()),
             Some("python".to_string()),
             Some(json!({"instruction": "Represent the Wikipedia document for retrieval: "}).into()),
+            None,
         );
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -552,7 +554,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqbapmpis_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(3), None)
             .await?;
         let results = collection
             .query()
@@ -581,6 +583,7 @@ mod tests {
             Some("text-embedding-ada-002".to_string()),
             Some("openai".to_string()),
             None,
+            None,
         );
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -603,7 +606,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(4))
+            .upsert_documents(generate_dummy_documents(4), None)
             .await?;
         let results = collection
             .query()
@@ -630,7 +633,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqbachesv_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(3), None)
             .await?;
         let results = collection
             .query()
@@ -661,6 +664,7 @@ mod tests {
             Some("text-embedding-ada-002".to_string()),
             Some("openai".to_string()),
             None,
+            None,
         );
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -675,7 +679,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqbachesvare_2", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(3), None)
             .await?;
         let results = collection
             .query()
@@ -701,8 +705,8 @@ mod tests {
     #[sqlx::test]
     async fn can_filter_vector_search() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::new(None, None, None);
-        let splitter = Splitter::new(None, None);
+        let model = Model::default();
+        let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
             "test_r_p_cfd_1",
             Some(model),
@@ -720,7 +724,7 @@ mod tests {
         let mut collection = Collection::new("test_r_c_cfd_2", None);
         collection.add_pipeline(&mut pipeline).await?;
         collection
-            .upsert_documents(generate_dummy_documents(5))
+            .upsert_documents(generate_dummy_documents(5), None)
             .await?;
 
         let filters = vec![
@@ -796,7 +800,7 @@ mod tests {
             serde_json::json!({"id": 2, "random_key": 11, "text": "hello world 2"}).into(),
             serde_json::json!({"id": 3, "random_key": 12, "text": "hello world 3"}).into(),
         ];
-        collection.upsert_documents(documents.clone()).await?;
+        collection.upsert_documents(documents.clone(), None).await?;
         let document = &collection.get_documents(None).await?[0];
         assert_eq!(document["document"]["text"], "hello world 1");
 
@@ -806,7 +810,7 @@ mod tests {
             serde_json::json!({"id": 2, "random_key": 12}).into(),
             serde_json::json!({"id": 3, "random_key": 13}).into(),
         ];
-        collection.upsert_documents(documents.clone()).await?;
+        collection.upsert_documents(documents.clone(), None).await?;
 
         let documents = collection
             .get_documents(Some(
@@ -865,7 +869,7 @@ mod tests {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cpgd_2", None);
         collection
-            .upsert_documents(generate_dummy_documents(10))
+            .upsert_documents(generate_dummy_documents(10), None)
             .await?;
 
         let documents = collection
@@ -966,7 +970,7 @@ mod tests {
         collection.add_pipeline(&mut pipeline).await?;
 
         collection
-            .upsert_documents(generate_dummy_documents(10))
+            .upsert_documents(generate_dummy_documents(10), None)
             .await?;
 
         let documents = collection
@@ -1068,7 +1072,7 @@ mod tests {
         let mut collection = Collection::new("test_r_c_cfadd_1", None);
         collection.add_pipeline(&mut pipeline).await?;
         collection
-            .upsert_documents(generate_dummy_documents(10))
+            .upsert_documents(generate_dummy_documents(10), None)
             .await?;
 
         collection
@@ -1137,39 +1141,42 @@ mod tests {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cod_1", None);
         collection
-            .upsert_documents(vec![
-                json!({
-                    "id": 1,
-                    "text": "Test Document 1",
-                    "number": 99,
-                    "nested_number": {
-                        "number": 3
-                    },
+            .upsert_documents(
+                vec![
+                    json!({
+                        "id": 1,
+                        "text": "Test Document 1",
+                        "number": 99,
+                        "nested_number": {
+                            "number": 3
+                        },
 
-                    "tie": 2,
-                })
-                .into(),
-                json!({
-                    "id": 2,
-                    "text": "Test Document 1",
-                    "number": 98,
-                    "nested_number": {
-                        "number": 2
-                    },
-                    "tie": 2,
-                })
-                .into(),
-                json!({
-                    "id": 3,
-                    "text": "Test Document 1",
-                    "number": 97,
-                    "nested_number": {
-                        "number": 1
-                    },
-                    "tie": 2
-                })
-                .into(),
-            ])
+                        "tie": 2,
+                    })
+                    .into(),
+                    json!({
+                        "id": 2,
+                        "text": "Test Document 1",
+                        "number": 98,
+                        "nested_number": {
+                            "number": 2
+                        },
+                        "tie": 2,
+                    })
+                    .into(),
+                    json!({
+                        "id": 3,
+                        "text": "Test Document 1",
+                        "number": 97,
+                        "nested_number": {
+                            "number": 1
+                        },
+                        "tie": 2
+                    })
+                    .into(),
+                ],
+                None,
+            )
             .await?;
         let documents = collection
             .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
@@ -1206,6 +1213,126 @@ mod tests {
             vec![1, 2, 3]
         );
         collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    fn can_merge_metadata() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cmm_4", None);
+        collection
+            .upsert_documents(
+                vec![
+                    json!({
+                        "id": 1,
+                        "text": "Test Document 1",
+                        "number": 99,
+                        "second_number": 10,
+                    })
+                    .into(),
+                    json!({
+                        "id": 2,
+                        "text": "Test Document 1",
+                        "number": 98,
+                        "second_number": 11,
+                    })
+                    .into(),
+                    json!({
+                        "id": 3,
+                        "text": "Test Document 1",
+                        "number": 97,
+                        "second_number": 12,
+                    })
+                    .into(),
+                ],
+                None,
+            )
+            .await?;
+        let documents = collection
+            .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| (
+                    d["document"]["number"].as_i64().unwrap(),
+                    d["document"]["second_number"].as_i64().unwrap()
+                ))
+                .collect::<Vec<_>>(),
+            vec![(97, 12), (98, 11), (99, 10)]
+        );
+        collection
+            .upsert_documents(
+                vec![
+                    json!({
+                        "id": 1,
+                        "number": 0,
+                        "another_number": 1
+                    })
+                    .into(),
+                    json!({
+                        "id": 2,
+                        "number": 1,
+                        "another_number": 2
+                    })
+                    .into(),
+                    json!({
+                        "id": 3,
+                        "number": 2,
+                        "another_number": 3
+                    })
+                    .into(),
+                ],
+                Some(
+                    json!({
+                        "metadata": {
+                            "merge": true
+                        }
+                    })
+                    .into(),
+                ),
+            )
+            .await?;
+        let documents = collection
+            .get_documents(Some(
+                json!({"order_by": {"number": {"number": "asc"}}}).into(),
+            ))
+            .await?;
+
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| (
+                    d["document"]["number"].as_i64().unwrap(),
+                    d["document"]["another_number"].as_i64().unwrap(),
+                    d["document"]["second_number"].as_i64().unwrap()
+                ))
+                .collect::<Vec<_>>(),
+            vec![(0, 1, 10), (1, 2, 11), (2, 3, 12)]
+        );
+        collection.archive().await?;
+        Ok(())
+    }
+
+    ///////////////////////////////
+    // Ingesting //////////////////
+    ///////////////////////////////
+
+    #[sqlx::test]
+    fn can_upsert_directory() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cid_4", None);
+        collection
+            .upsert_directory(
+                "./test_documents",
+                json!({
+                    "file_types": ["pdf"],
+                    "follow_links": true,
+                    "file_batch_size": 10,
+                })
+                .into(),
+            )
+            .await?;
         Ok(())
     }
 }
