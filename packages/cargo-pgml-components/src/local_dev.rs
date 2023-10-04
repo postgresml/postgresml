@@ -159,6 +159,18 @@ fn dependencies() -> anyhow::Result<()> {
         BUILD_ESSENTIAL
     );
 
+    #[cfg(target_os = "macos")]
+    {
+        print("checking for brew...");
+        if execute_command(Command::new("which").arg("brew")).is_err() {
+            error("missing");
+            println!("\nBrew is not installed. Install it from https://brew.sh/\n");
+            exit(1);
+        } else {
+            info("ok");
+        }
+    }
+
     #[cfg(target_os = "linux")]
     let postgres_service = "postgresql";
 
