@@ -40,7 +40,7 @@ const createHistoryMessage = (side, question, id, knowledgeBase) => {
           </div>
         </div>
         </div>
-        <div class="chatbot-message ps-1">
+        <div class="chatbot-message ps-1 overflow-hidden">
           ${question}
         </div>
       </div>
