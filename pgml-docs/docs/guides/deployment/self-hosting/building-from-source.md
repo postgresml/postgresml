@@ -27,7 +27,9 @@ This guide assumes that you're using PostgreSQL 14, so if your Postgres version 
 All of our source code is open source and hosted in GitHub. You can download it with git:
 
 ```bash
-git clone https://github.com/postgresml/postgresml
+git clone https://github.com/postgresml/postgresml && \
+cd postgresml && \
+git submodule update --init --recursive
 ```
 
 The repository contains the extension, the dashboard, SDKs, and all apps we've written that are powered by PostgresML.
