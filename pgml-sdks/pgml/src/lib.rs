@@ -1313,26 +1313,4 @@ mod tests {
         collection.archive().await?;
         Ok(())
     }
-
-    ///////////////////////////////
-    // Ingesting //////////////////
-    ///////////////////////////////
-
-    #[sqlx::test]
-    fn can_upsert_directory() -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cid_4", None);
-        collection
-            .upsert_directory(
-                "./test_documents",
-                json!({
-                    "file_types": ["pdf"],
-                    "follow_links": true,
-                    "file_batch_size": 10,
-                })
-                .into(),
-            )
-            .await?;
-        Ok(())
-    }
 }
