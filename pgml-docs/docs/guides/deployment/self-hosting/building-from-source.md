@@ -1,10 +1,10 @@
 # Building from Source
 
-PostgresML is a Postgres extension written in Rust, so it can be built and installed on any system that supported by PostgreSQL and the Rust compiler. If you're planning on using GPU acceleration for Large Language Models or for XGBoost / LightGBM supervised learning, we would recommend you use an operating system well supported by Nvidia drivers and Cuda. Thankfully, that list is pretty large these days, including popular distributions like Ubuntu, Debian, RHEL, Centos, Fedora and OpenSuse.
+PostgresML is a Postgres extension written in Rust, so it can be built and installed on any system supported by PostgreSQL and the Rust compiler. If you're planning on using GPU acceleration for Large Language Models or for XGBoost / LightGBM supervised learning, we would recommend you use an operating system well supported by Nvidia drivers and Cuda. Thankfully, that list is pretty large these days, including popular distributions like Ubuntu, Debian, RHEL, Centos, Fedora and OpenSuse.
 
 ### Dependencies
 
-PostgresML depends on a few system packages and libraries that should be installed separately in order to successfully compile it from source. The names of the packages vary based on the Linux distribution you're using, but in most cases you should be able to find all of them verbatim in your package manger repositories:
+PostgresML depends on a few system packages and libraries that should be installed separately. The names of the packages vary based on the Linux distribution you're using, but in most cases you should be able to find all of them in your package manager repositories:
 
 ```
 cmake
@@ -20,11 +20,11 @@ postgresql-server-dev-14
 lld
 ```
 
-This guide assumes that you're using PostgreSQL 14, so if your Postgres version is different, replace `14` in `postgresql-server-dev-14` with the correct version of Postgres. PostgresML supports all Postgres versions supported by `pgrx` and the PostgreSQL community (as of this writing, versions 12 through 16).
+This guide assumes that you're using PostgreSQL 14, so if your Postgres version is different, replace `14` in `postgresql-server-dev-14` with the correct version. PostgresML supports all Postgres versions supported by `pgrx` and the PostgreSQL community (as of this writing, versions 12 through 16).
 
 ### Getting the source code
 
-All of our source code is open source and hosted in GitHub. You can download it with git:
+All of our source code is open source and hosted on GitHub. You can download it with git:
 
 ```bash
 git clone https://github.com/postgresml/postgresml && \
@@ -36,11 +36,11 @@ The repository contains the extension, the dashboard, SDKs, and all apps we've w
 
 ### Installing PostgresML
 
-For a typical deployment in production, you would need to compile and install the extension into your system PostgreSQL installation. PostgresML is using the `pgrx` Rust extension toolkit, so this is pretty easy and straight forward to do.
+For a typical deployment in production, you would need to compile and install the extension into your system PostgreSQL installation. PostgresML is using the `pgrx` Rust extension toolkit, so this is straight forward.
 
 #### Install pgrx
 
-`pgrx` is open source and available from crates.io. We are currently using the `0.10.0` version. It's important that your `pgrx` version matches what we're using, since there are some hard dependencies between our code and theirs.
+`pgrx` is open source and available from crates.io. We are currently using the `0.10.0` version. It's important that your `pgrx` version matches what we're using, since there are some hard dependencies between our code and `pgrx`.
 
 To install `pgrx`, simply run:
 
@@ -63,9 +63,9 @@ cd pgml-extension && \
 cargo pgrx package
 ```
 
-This will produce a number of artifacts in `target/release/pg14-pgml` which you can then copy to their respective folders in `/usr` using `sudo cp`. At the time of this writing, `pgrx` is working on a command that does this automatically, but it has not been released yet.
+This will produce a number of artifacts in `target/release/pg14-pgml` which you can then copy to their respective folders in `/usr` using `sudo cp`. At the time writing, `pgrx` was working on a command that does this automatically, but it was not been released yet.
 
-Once the files are copied to their respective folders in `/usr`, you need to make sure the `pgml` extension is loaded in `shared_preload_libraries`. We use shared memory to control model versioning and other cool things that make PostgresML "just work". In `/etc/postgresql/14/main/postgresql.conf`, change or add the following line:
+Once the files are copied into their respective folders in `/usr`, you need to make sure that the`pgml` extension is loaded in `shared_preload_libraries`. We use shared memory to control model versioning and other cool things that make PostgresML "just work". In `/etc/postgresql/14/main/postgresql.conf`, change or add the following line:
 
 ```
 shared_preload_libraries = 'pgml'
@@ -79,7 +79,7 @@ sudo service postgresql restart
 
 #### Validate the installation
 
-To make sure PostgresML is installed, you can create the extension in a database of your choice:
+To make sure PostgresML is installed correctly, you can create the extension in a database of your choice:
 
 ```
 postgresml=# CREATE EXTENSION pgml;
