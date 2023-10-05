@@ -215,7 +215,7 @@ Adding more replicas to the system is identical to adding just one replica. A Po
 
 ### PostgresML considerations
 
-PostgresML uses regular Postgres tables to store the data required for its operations. This data is automatically sent to replicas as part of normal replication, so a Postgres replica is a normal PostgresML inference server.
+PostgresML uses regular Postgres tables to store the data required for its operation. This data is automatically sent to replicas as part of streaming replication, so a Postgres replica is a normal PostgresML inference server.
 
 PostgresML integrates with HuggingFace which stores its cache in `/var/lib/postgresql/.cache` folder. That folder is not replicated because it lives outside the Postgres WAL system. When you try to use `pgml.embed()` or `pgml.transform()` on the replica for the first time, it will need to download the models from the HuggingFace repository. Once downloaded, it will continue to operate just like the primary.
 

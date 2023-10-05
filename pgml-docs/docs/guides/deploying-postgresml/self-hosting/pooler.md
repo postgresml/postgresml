@@ -28,7 +28,7 @@ If not, you can easily install it from source.
 
 #### Compiling from source
 
-Download the source code from Github:
+Download the source code from GitHub:
 
 ```bash
 git clone https://github.com/postgresml/pgcat
@@ -52,7 +52,7 @@ cargo build --release &#x26;&#x26; \
 
 PgCat uses the TOML configuration language and, if installed from APT, will use the configuration file stored in `/etc/pgcat.toml`. If installed from source, you'll have to pass the configuration file path as an argument when launching.
 
-This example will assume that you have a database called `postgresml` with a user `postgresml_user` already configured. You can create and use as many databases and users as you need. That being said, each database/user combination will be a separate connection pool in PgCat and create its own PostgreSQL server connections.
+This example will assume that you have a database called `postgresml` with a user `postgresml_user` already configured. You can create and use as many databases and users as you need. That being said, each database/user combination will be a separate connection pool in PgCat and will create its own PostgreSQL server connections.
 
 For a primary-only setup used to serve Large Language Models, the pooler configuration is pretty basic:
 
@@ -80,9 +80,9 @@ password = "<secure password>"
 pool_size = 1
 ```
 
-Important considerations here are the `pool_size` of only `1` which will create and maintain only one PostgreSQL connection loaded with the LLM. Both `idle_timeout` and `server_lifetime` settings are set to 24 hours, so every 24 hours a new PostgreSQL connection will be created and the old one closed. This may not be desirable since loading a LLM into the GPU can take several seconds. To avoid this, this value can be set to be arbitrarily large, e.g. 100 years. In that case, the connection will basically never be closed.
+An important consideration here is the `pool_size` of only `1` which will create and maintain only one PostgreSQL connection loaded with the LLM. Both `idle_timeout` and `server_lifetime` settings are set to 24 hours, so every 24 hours a new PostgreSQL connection will be created and the old one closed. This may not be desirable since loading a LLM into the GPU can take several seconds. To avoid this, this value can be set to be arbitrarily large, e.g. 100 years. In that case, the connection will basically never be closed.
 
-Having only one server connection is not mandatory. If your hardware allows to load more than one LLM into your GPUs, you can increase the `pool_size` to a larger value. Our dedicated databases currently support up to 256GB GPU-powered LLMs, so we allow considerably more connections than would be otherwise supported by say just a GeForce RTX 4080.
+Having only one server connection is not mandatory. If your hardware allows to load more than one LLM into your GPUs, you can increase the `pool_size` to a larger value. Our Dedicated databases currently support up to 256GB GPU-powered LLMs, so we allow considerably more connections than would be otherwise supported by say just a GeForce RTX 4080.
 
 ### Running the pooler
 
