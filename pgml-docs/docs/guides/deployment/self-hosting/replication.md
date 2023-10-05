@@ -220,3 +220,17 @@ PostgresML uses regular Postgres tables to store the data required for its opera
 PostgresML integrates with HuggingFace which stores its cache in `/var/lib/postgresql/.cache` folder. That folder is not replicated because it lives outside the Postgres WAL system. When you try to use `pgml.embed()` or `pgml.transform()` on the replica for the first time, it will need to download the models from the HuggingFace repository. Once downloaded, it will continue to operate just like the primary.
 
 The cache can be preemptively transferred to the replica in order to minimize cold start time. Any file transfer tool can be used, e.g. `rsync` or `scp`. The HuggingFace cache is identical on all machines in a PostgresML cluster.
+
+### Pooler
+
+If you're using a pooler to load balance your traffic and have followed our Pooler installation guide, you can add your newly created replica to the pooler configuration. With PgCat, it's as easy as:
+
+```toml
+[pools.postgresml.shards.0]
+servers = [
+    ["<primary host or IP address>", 5432, "primary"],
+    ["<replica host or IP address>", 5432, "replica"], 
+]
+```
+
+Reload the config by running `kill -SIGHUP $(pgrep pgcat)` and you can now connect to the pooler and automatically load balance your queries against both the primary and the replica.
