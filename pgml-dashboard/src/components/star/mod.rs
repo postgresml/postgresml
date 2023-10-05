@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::components::component;
+use pgml_components::component;
 use once_cell::sync::Lazy;
 use sailfish::TemplateOnce;
 

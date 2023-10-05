@@ -513,7 +513,3 @@ pub struct UploaderTab {
 #[derive(TemplateOnce)]
 #[template(path = "content/playground.html")]
 pub struct Playground;
-
-#[derive(TemplateOnce)]
-#[template(path = "content/chatbot.html")]
-pub struct Chatbot;
