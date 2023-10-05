@@ -26,24 +26,30 @@ export function newPipeline(name: string, model?: Model, splitter?: Splitter, pa
 
 fn main() {
     // Remove python stub file that is auto generated each build
-    remove_file("./python/pgml/pgml.pyi").ok();
-    let mut file = OpenOptions::new()
-        .create(true)
-        .write(true)
-        .append(true)
-        .open("./python/pgml/pgml.pyi")
-        .unwrap();
-    // Add our opening function declaration here
-    file.write_all(ADDITIONAL_DEFAULTS_FOR_PYTHON).unwrap();
+    let path = std::env::var("PYTHON_STUB_FILE");
+    if let Ok(path) = path {
+        remove_file(&path).ok();
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .append(true)
+            .open(path)
+            .unwrap();
+        // Add our opening function declaration here
+        file.write_all(ADDITIONAL_DEFAULTS_FOR_PYTHON).unwrap();
+    }
 
-    // Remove typescript declaration file that is auto generated each build
-    remove_file("./javascript/index.d.ts").ok();
-    let mut file = OpenOptions::new()
-        .create(true)
-        .write(true)
-        .append(true)
-        .open("./javascript/index.d.ts")
-        .unwrap();
-    // Add some manual declarations here
-    file.write_all(ADDITIONAL_DEFAULTS_FOR_JAVASCRIPT).unwrap();
+    let path = std::env::var("TYPESCRIPT_DECLARATION_FILE");
+    if let Ok(path) = path {
+        // Remove typescript declaration file that is auto generated each build
+        remove_file(&path).ok();
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .append(true)
+            .open(path)
+            .unwrap();
+        // Add some manual declarations here
+        file.write_all(ADDITIONAL_DEFAULTS_FOR_JAVASCRIPT).unwrap();
+    }
 }

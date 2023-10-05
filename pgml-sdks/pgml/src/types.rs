@@ -66,15 +66,14 @@ impl TryToNumeric for serde_json::Value {
     }
 }
 
-/// A wrapper around sqlx::types::chrono::DateTime<sqlx::types::chrono::Utc>
+/// A wrapper around sqlx::types::PrimitiveDateTime
 #[derive(sqlx::Type, Debug, Clone)]
 #[sqlx(transparent)]
-// pub struct DateTime(pub sqlx::types::chrono::DateTime<sqlx::types::chrono::Utc>);
-pub struct DateTime(pub sqlx::types::chrono::NaiveDateTime);
+pub struct DateTime(pub sqlx::types::time::PrimitiveDateTime);
 
 impl Serialize for DateTime {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.0.timestamp().serialize(serializer)
+        self.0.assume_utc().unix_timestamp().serialize(serializer)
     }
 }
 

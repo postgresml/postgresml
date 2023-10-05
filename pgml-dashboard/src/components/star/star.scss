@@ -1,0 +1,42 @@
+div[data-controller="star"] {
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+
+    #star-wrapper {
+        position: relative;
+        width: 120px;
+        height: 120px;
+    }
+
+    svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: auto;
+        -webkit-animation:spin 35s linear infinite;
+        -moz-animation:spin 35s linear infinite;
+        animation:spin 35s linear infinite;
+    }
+
+    #star-content {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        text-align: center;
+        font-size: 0.8rem;
+    }
+
+    @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+    @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+    @keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+}

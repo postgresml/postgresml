@@ -1,10 +1,14 @@
 #[macro_use]
 extern crate rocket;
 
-use rocket::form::Form;
+use rand::{distributions::Alphanumeric, Rng};
 use rocket::response::Redirect;
 use rocket::route::Route;
 use rocket::serde::json::Json;
+use rocket::{
+    form::Form,
+    http::{Cookie, CookieJar},
+};
 use sailfish::TemplateOnce;
 use sqlx::PgPool;
 use std::collections::HashMap;
