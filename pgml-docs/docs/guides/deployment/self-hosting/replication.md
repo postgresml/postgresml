@@ -158,9 +158,9 @@ Finally, copy the data directory from the primary onto the replica:
 
 ```
 PGPASSWORD=<secure password> pg_basebackup \
-    -h <the host or IP address of the primary>
-    -p 5432
-    -U replication_user
+    -h <the host or IP address of the primary> \
+    -p 5432 \
+    -U replication_user \
     -D /var/lib/postgresql/14/main
 ```
 
@@ -179,7 +179,7 @@ restore_command = 'pgbackrest --stanza=demo archive-get %f "%p"'
 
 By default, if Postgres is started as a replica, it will download all the WAL it can find from the archive, apply the data changes and promote itself to the primary role. To avoid this and keep the Postgres replica running as a read replica, we need to configure it to run in standby mode. To do so, place a file called `standby.signal` into the data directory, like so:
 
-```
+```bash
 sudo -u postgres touch /var/lib/postgresql/14/main/standby.signal
 ```
 
@@ -187,13 +187,13 @@ sudo -u postgres touch /var/lib/postgresql/14/main/standby.signal
 
 Finally, the replica is ready to start:
 
-```
+```bash
 sudo service postgresql start
 ```
 
 If you connect to it with `psql`, you can validate it's running in read-only mode:
 
-```
+```sql
 SELECT pg_is_in_recovery();
 ```
 
