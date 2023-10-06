@@ -58,6 +58,8 @@
     * [Pooler](deploying-postgresml/self-hosting/pooler.md)
     * [Building from source](deploying-postgresml/self-hosting/building-from-source.md)
     * [Replication](deploying-postgresml/self-hosting/replication.md)
+    * [Backups](deploying-postgresml/self-hosting/backups.md)
+    * [Running on EC2](deploying-postgresml/self-hosting/running-on-ec2.md)
 * [PgCat](pgcat.md)
 * [Benchmarks](benchmarks/README.md)
   * [PostgresML is 8-40x faster than Python HTTP microservices](benchmarks/postgresml-is-8-40x-faster-than-python-http-microservices.md)
