@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use pgml_components::component;
 use once_cell::sync::Lazy;
+use pgml_components::component;
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default)]

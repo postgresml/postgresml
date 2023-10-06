@@ -32,12 +32,14 @@
                         </div>
     
                         <div class="clear-from-under-navbar flex-grow-1 min-vw-0">
-                            <div class="px-5 py-3">
+                            <div class="px-5 py-3" style="position: absolute">
                                 <%- Breadcrumbs::render( breadcrumbs ) %>
                             </div>
 
-                            <div class="px-xs-2 px-md-5 pt-2 mb-2 overflow-auto">
-                                <%- content.unwrap_or_default() %>
+                            <div class="px-xs-2 px-md-5 overflow-auto" style="padding-top: 57px;">
+                                <div class="webapp-content-max-width-container">
+                                    <%- content.unwrap_or_default() %>
+                                </div>
                             </div>
                         </div>
                     </div>

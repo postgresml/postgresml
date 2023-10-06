@@ -9,7 +9,7 @@
     height: $navbar-height;
     position: fixed; 
     top: 0px;
-    z-index: $zindex-fixed;
+    z-index: calc($zindex-fixed + 1);
 }
 
 .navbar {

@@ -121,7 +121,13 @@ struct Document {
 }
 
 impl Document {
-    fn new(text: String, role: ChatRole, user_id: String, model: ChatbotBrain, knowledge_base: KnowledgeBase) -> Document {
+    fn new(
+        text: String,
+        role: ChatRole,
+        user_id: String,
+        model: ChatbotBrain,
+        knowledge_base: KnowledgeBase,
+    ) -> Document {
         let id = rand::thread_rng()
             .sample_iter(&Alphanumeric)
             .take(32)
@@ -225,7 +231,7 @@ pub async fn wrapped_chatbot_get_answer(
         ChatRole::User,
         user.chatbot_session_id.clone(),
         brain,
-        knowledge_base
+        knowledge_base,
     );
 
     let collection = knowledge_base.collection();
@@ -317,7 +323,7 @@ pub async fn wrapped_chatbot_get_answer(
             ChatRole::Bot,
             user.chatbot_session_id.clone(),
             brain,
-            knowledge_base
+            knowledge_base,
         ))
         .unwrap()
         .into(),
@@ -327,7 +333,8 @@ pub async fn wrapped_chatbot_get_answer(
     tokio::spawn(async move {
         history_collection
             .upsert_documents(new_history_messages, None)
-            .await.expect("Failed to upsert user history");
+            .await
+            .expect("Failed to upsert user history");
     });
 
     Ok(answer)

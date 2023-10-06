@@ -10,30 +10,42 @@ use sailfish::TemplateOnce;
 
 type ExampleQuestions = [(&'static str, [(&'static str, &'static str); 4]); 4];
 const EXAMPLE_QUESTIONS: ExampleQuestions = [
-    ("PostgresML", [
-        ("PostgresML", "sample question continued"),
-        ("PostgresML", "sample question continued"),
-        ("PostgresML", "sample question continued"),
-        ("PostgresML", "sample question continued"),
-    ]),
-    ("PyTorch", [
-        ("PyTorch", "sample question continued"),
-        ("PyTorch", "sample question continued"),
-        ("PyTorch", "sample question continued"),
-        ("PyTorch", "sample question continued"),
-    ]),
-    ("Rust", [
-        ("Rust", "sample question continued"),
-        ("Rust", "sample question continued"),
-        ("Rust", "sample question continued"),
-        ("Rust", "sample question continued"),
-    ]),
-    ("PostgreSQL", [
-        ("PostgreSQL", "sample question continued"),
-        ("PostgreSQL", "sample question continued"),
-        ("PostgreSQL", "sample question continued"),
-        ("PostgreSQL", "sample question continued"),
-    ]),
+    (
+        "PostgresML",
+        [
+            ("PostgresML", "sample question continued"),
+            ("PostgresML", "sample question continued"),
+            ("PostgresML", "sample question continued"),
+            ("PostgresML", "sample question continued"),
+        ],
+    ),
+    (
+        "PyTorch",
+        [
+            ("PyTorch", "sample question continued"),
+            ("PyTorch", "sample question continued"),
+            ("PyTorch", "sample question continued"),
+            ("PyTorch", "sample question continued"),
+        ],
+    ),
+    (
+        "Rust",
+        [
+            ("Rust", "sample question continued"),
+            ("Rust", "sample question continued"),
+            ("Rust", "sample question continued"),
+            ("Rust", "sample question continued"),
+        ],
+    ),
+    (
+        "PostgreSQL",
+        [
+            ("PostgreSQL", "sample question continued"),
+            ("PostgreSQL", "sample question continued"),
+            ("PostgreSQL", "sample question continued"),
+            ("PostgreSQL", "sample question continued"),
+        ],
+    ),
 ];
 
 const KNOWLEDGE_BASES: [&'static str; 0] = [
@@ -44,18 +56,9 @@ const KNOWLEDGE_BASES: [&'static str; 0] = [
 ];
 
 const KNOWLEDGE_BASES_WITH_LOGO: [KnowledgeBaseWithLogo; 4] = [
-    KnowledgeBaseWithLogo::new(
-        "PostgresML",
-        "/dashboard/static/images/owl_gradient.svg",
-    ),
-    KnowledgeBaseWithLogo::new(
-        "PyTorch",
-        "/dashboard/static/images/logos/pytorch.svg",
-    ),
-    KnowledgeBaseWithLogo::new(
-        "Rust",
-        "/dashboard/static/images/logos/rust.svg",
-    ),
+    KnowledgeBaseWithLogo::new("PostgresML", "/dashboard/static/images/owl_gradient.svg"),
+    KnowledgeBaseWithLogo::new("PyTorch", "/dashboard/static/images/logos/pytorch.svg"),
+    KnowledgeBaseWithLogo::new("Rust", "/dashboard/static/images/logos/rust.svg"),
     KnowledgeBaseWithLogo::new(
         "PostgreSQL",
         "/dashboard/static/images/logos/postgresql.svg",
