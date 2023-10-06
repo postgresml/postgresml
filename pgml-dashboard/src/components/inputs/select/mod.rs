@@ -1,7 +1,9 @@
 use crate::components::stimulus::stimulus_action::{StimulusAction, StimulusEvents};
+use crate::components::stimulus::stimulus_target::StimulusTarget;
 use pgml_components::component;
 use pgml_components::Component;
 use sailfish::TemplateOnce;
+use crate::types::CustomOption;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "inputs/select/template.html")]
@@ -14,6 +16,8 @@ pub struct Select {
     menu_position: String,
     expandable: bool,
     name: String,
+    value_target: StimulusTarget,
+    action: CustomOption<StimulusAction>,
 }
 
 impl Select {
@@ -34,13 +38,13 @@ impl Select {
         ])
     }
 
-    pub fn options(mut self, values: Vec<String>) -> Self {
+    pub fn options<S: ToString>(mut self, values: Vec<S>) -> Self {
         let mut options = Vec::new();
-        self.value = values.first().unwrap().to_owned();
+        self.value = values.first().unwrap().to_string();
 
         for value in values {
             let item = Option::new(
-                value,
+                value.to_string(),
                 StimulusAction::new()
                     .controller("inputs-select")
                     .method("choose")
@@ -90,6 +94,16 @@ impl Select {
 
     pub fn expandable(mut self) -> Self {
         self.expandable = true;
+        self
+    }
+
+    pub fn value_target(mut self, value_target: StimulusTarget) -> Self {
+        self.value_target = value_target;
+        self
+    }
+
+    pub fn action(mut self, action: StimulusAction) -> Self {
+        self.action = action.into();
         self
     }
 }

@@ -13,6 +13,7 @@ use sailfish::TemplateOnce;
 use sqlx::PgPool;
 use std::collections::HashMap;
 
+pub mod types;
 pub mod api;
 pub mod components;
 pub mod fairings;
