@@ -68,30 +68,6 @@ impl Dataset<f32> {
     }
 }
 
-#[derive(Debug)]
-pub struct TextDataset {
-    pub x_train: Vec<String>,
-    pub y_train: Vec<String>,
-    pub x_test: Vec<String>,
-    pub y_test: Vec<String>,
-    pub num_features: usize,
-    pub num_labels: usize,
-    pub num_rows: usize,
-    pub num_train_rows: usize,
-    pub num_test_rows: usize,
-    pub num_distinct_labels: usize,
-}
-
-impl Display for TextDataset {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "TextDataset {{ num_features: {}, num_labels: {}, num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
-            self.num_features, self.num_labels, self.num_distinct_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
-        )
-    }
-}
-
 fn drop_table_if_exists(table_name: &str) {
     // Avoid the existence for DROP TABLE IF EXISTS warning by checking the schema for the table first
     let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'", vec![

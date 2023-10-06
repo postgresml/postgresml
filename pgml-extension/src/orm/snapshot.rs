@@ -9,9 +9,9 @@ use pgrx::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+use crate::orm::Dataset;
 use crate::orm::Sampling;
 use crate::orm::Status;
-use crate::orm::{Dataset, TextDataset};
 
 // Categories use a designated string to represent NULL categorical values,
 // rather than Option<String> = None, because the JSONB serialization schema
@@ -785,7 +785,7 @@ impl Snapshot {
         (num_train_rows, num_test_rows)
     }
 
-    pub fn text_dataset(&mut self) -> TextDataset {
+    pub fn text_dataset(&mut self) -> Dataset<String> {
         let mut data = None;
 
         Spi::connect(|client| {
@@ -795,10 +795,10 @@ impl Snapshot {
             let num_features = self.num_features();
             let num_labels = self.num_labels();
 
-            let mut x_train: Vec<String> = Vec::with_capacity(num_train_rows * num_features);
-            let mut y_train: Vec<String> = Vec::with_capacity(num_train_rows * num_labels);
-            let mut x_test: Vec<String> = Vec::with_capacity(num_test_rows * num_features);
-            let mut y_test: Vec<String> = Vec::with_capacity(num_test_rows * num_labels);
+            let mut x_train = Vec::with_capacity(num_train_rows * num_features);
+            let mut y_train = Vec::with_capacity(num_train_rows * num_labels);
+            let mut x_test = Vec::with_capacity(num_test_rows * num_features);
+            let mut y_test = Vec::with_capacity(num_test_rows * num_labels);
 
             result.enumerate().for_each(|(i, row)| {
                 for column in &mut self.columns {
@@ -826,7 +826,7 @@ impl Snapshot {
                 }
             });
 
-            data = Some(TextDataset {
+            data = Some(Dataset {
                 x_train,
                 y_train,
                 x_test,

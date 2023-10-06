@@ -10,7 +10,7 @@ use pyo3::types::PyTuple;
 use serde_json::Value;
 
 use crate::create_pymodule;
-use crate::orm::{Task, TextDataset};
+use crate::orm::{Dataset, Task};
 
 use super::TracebackError;
 
@@ -94,12 +94,15 @@ pub fn embed(
     })
 }
 
-pub fn tune(
+pub fn tune<T>(
     task: &Task,
-    dataset: TextDataset,
+    dataset: Dataset<T>,
     hyperparams: &JsonB,
     path: &Path,
-) -> Result<HashMap<String, f64>> {
+) -> Result<HashMap<String, f64>>
+where
+    T: IntoPy<Py<PyAny>>,
+{
     crate::bindings::python::activate()?;
 
     let task = task.to_string();
