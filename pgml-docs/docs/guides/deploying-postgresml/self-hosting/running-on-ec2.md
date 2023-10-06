@@ -67,7 +67,7 @@ or a RAIDZ1 with 5 volumes:
 
 RAIDZ1 protects against single volume failure, allowing you to replace an EBS volume without taking your database offline or restoring from backup. Considering EBS guarantees and additional redundancy provided by RAIDZ, this is a reasonable configuration to use for systems that require good durability and performance guarantees.
 
-A RAID configuration with at 4 volumes allows up to 4x read throughput which, in EBS terms, can produce up to 600MBps, without having to pay for additional IOPS.
+A RAID configuration with 4 volumes allows up to 4x read throughput of a single volume which, in EBS terms, can produce up to 600MBps, without having to pay for additional IOPS.
 
 ####
 

@@ -49,3 +49,39 @@ CREATE EXTENSION
 postgres=#
 ```
 
+### GPU support
+
+If you have access to Nvidia GPUs and would like to use them for accelerating LLMs or XGBoost/LightGBM/Catboost, you'll need to install Cuda and the matching drivers.
+
+#### Installing Cuda
+
+Nvidia has an apt repository that can be added to your system pretty easily:
+
+```bash
+curl -LsSf \
+    https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb \
+    -o /tmp/cuda-keyring.deb
+sudo dpkg -i /tmp/cuda-keyring.deb
+sudo apt update
+sudo apt install -y cuda
+```
+
+Once installed, you should check your installation by running `nvidia-smi`:
+
+<pre><code><strong>$ nvidia-smi
+</strong>
+Fri Oct  6 09:38:19 2023
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.54.04              Driver Version: 536.23       CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA GeForce RTX 3070 Ti     On  | 00000000:08:00.0  On |                  N/A |
+|  0%   41C    P8              28W / 290W |   1268MiB /  8192MiB |      5%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+</code></pre>
+
+It's important that the Cuda version and the Nvidia driver versions are compatible. When installing Cuda for the first time, it's common to have to reboot the system before both are detected successfully.

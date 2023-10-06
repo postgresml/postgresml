@@ -88,15 +88,34 @@ repo1-retention-full=14
 repo1-retention-archive=14
 ```
 
-This configuration will ensure that you have at least 14 backups and 14 backups worth of WAL files. Because Postgres allows point-in-time recovery, you'll be able to restore your database to any version (up to millisecond precision) going back two (2) weeks.
+This configuration will ensure that you have at least 14 backups and 14 backups worth of WAL files. Because Postgres allows point-in-time recovery, you'll be able to restore your database to any version (up to millisecond precision) going back two weeks.
 
 #### Automating backups
 
 Backups can be automated by running `pgbackrest backup --stanza=main` with a cron. You can edit your cron with `crontab -e` and add a daily midnight run, ensuring that you have fresh backups every day. Make sure you're editing the crontab of the `postgres` user since no other user will be allowed to backup Postgres or read the pgBackRest configuration file.
 
+#### Backup overruns
+
+If backups are taken frequently and take a long time to complete, it is possible for one backup to overrun the other. pgBackRest uses lock files located in `/tmp/pgbackrest` to ensure that no two backups are taken concurrently. If a backup attempts to start when another one is running, pgBackRest will abort the later backup.
+
+This is a good safety measure, but if it happens, the backup schedule will break and you could end up with missing backups. There are a couple options to avoid this problem: take less frequent backups as not to overrun them, or implement a lock and wait protection outside of pgBackRest.
+
+#### Lock and wait
+
+To implement a lock and wait protection using only Bash, you can use `flock(1)`. Flock will open and hold a filesystem lock on a file until a command it's running is complete. When the lock is released, any other waiting flock will take the lock and run its own command.
+
+To implement backups that don't overrun, it's usually sufficient to just protect the pgBackRest command with flock, like so:
+
+```bash
+touch /tmp/pgbackrest-flock-lock
+flock /tmp/pgbackrest-flock-lock pgbackrest backup --stanza=main
+```
+
+If you find yourself in a situation with too many overrunning backups, you end up with a system that's constantly backing up. As comforting as that sounds, that's not a great backup policy since you can't be sure that your backup schedule is being followed. If that's your situation, it may be time to consider alternative backup solutions like filesystem snapshots (e.g. ZFS snapshots) or volume level snapshots (e.g. EBS snapshots).
+
 ### PostgresML considerations
 
-Since PostgresML stores most of its data in regular Postgres tables, a PostgreSQL backup is a valid PostgresML backup. The only thing stored outside of Postgres is the Hugging Face LLM cache, which is stored directly on disk in `/var/lib/postgresql/.cache`. In case of a disaster, the cache will be lost, but that's fine. Since it's only a cache, next time a PostgresML `pgml.embed()` or `pgml.transform()` function is used, PostgresML will automatically repopulate all the necessary files in the cache from Hugging Face and resume normal operations.
+Since PostgresML stores most of its data in regular Postgres tables, a PostgreSQL backup is a valid PostgresML backup. The only thing stored outside of Postgres is the Hugging Face LLM cache, which is stored directly on disk in `/var/lib/postgresql/.cache`. In case of a disaster, the cache will be lost, but that's fine; since it's only a cache, next time PostgresML `pgml.embed()` or `pgml.transform()` functions are used, PostgresML will automatically repopulate all the necessary files in the cache from Hugging Face and resume normal operations.
 
 #### HuggingFace cold starts
 
