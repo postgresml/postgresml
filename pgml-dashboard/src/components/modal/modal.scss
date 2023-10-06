@@ -1,7 +1,8 @@
-.modal {
+div[data-controller="modal"].modal {
     --bs-modal-margin: 1.65rem;
     --bs-modal-header-padding: 0;
     --bs-modal-width: 75vw;
+    --bs-modal-padding: 40px;
 
     @include media-breakpoint-up(lg) {
         --bs-modal-width: 40rem;
@@ -28,5 +29,18 @@
     .input-group {
         width: 100%;
         display: flex;
+    }
+
+    .modal-body {
+        margin-top: 3rem;
+        background-color: #{$gray-600};
+        border: 2px solid #{$gray-100}; 
+        border-radius: $border-radius;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        display: flex;
+        width: 100%;
+        height: 100%;
     }
 }

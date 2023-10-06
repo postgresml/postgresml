@@ -9,6 +9,7 @@ pub struct Modal {
     pub size_class: String,
     pub header: Option<Component>,
     pub body: Component,
+    pub default_style: bool,
 }
 
 component!(Modal);
@@ -16,7 +17,10 @@ component!(Modal);
 impl Modal {
     /// Create a new x-large modal with the given body.
     pub fn new(body: Component) -> Self {
-        let modal = Modal::default();
+        let modal = Modal {
+            default_style: true,
+            ..Modal::default()
+        };
         let id = format!("modal-{}", crate::utils::random_string(10));
 
         modal.id(&id).body(body).xlarge()
@@ -43,6 +47,20 @@ impl Modal {
     /// Set the modal's header.
     pub fn header(mut self, header: Component) -> Modal {
         self.header = Some(header);
+        self
+    }
+
+    // Quick implimitation to toggle the modal
+    pub fn toggle(id: &str) -> String {
+        format!(r#"data-bs-toggle="modal" data-bs-target="{}{}""#, "#", id)
+    }
+
+    pub fn dismiss() -> String {
+        r#"data-bs-dismiss="modal""#.into()
+    }
+
+    pub fn no_default_style(mut self) -> Modal {
+        self.default_style = false;
         self
     }
 }
