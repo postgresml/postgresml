@@ -5,6 +5,10 @@
 pub mod breadcrumbs;
 pub use breadcrumbs::Breadcrumbs;
 
+// src/components/chatbot
+pub mod chatbot;
+pub use chatbot::Chatbot;
+
 // src/components/confirm_modal
 pub mod confirm_modal;
 pub use confirm_modal::ConfirmModal;
@@ -58,6 +62,10 @@ pub use postgres_logo::PostgresLogo;
 // src/components/profile_icon
 pub mod profile_icon;
 pub use profile_icon::ProfileIcon;
+
+// src/components/star
+pub mod star;
+pub use star::Star;
 
 // src/components/static_nav
 pub mod static_nav;

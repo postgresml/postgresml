@@ -143,3 +143,9 @@ impl<'r> response::Responder<'r, 'r> for Error {
             .ok()
     }
 }
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}

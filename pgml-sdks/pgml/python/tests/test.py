@@ -288,6 +288,16 @@ async def test_delete_documents():
     await collection.archive()
 
 
+@pytest.mark.asyncio
+async def test_order_documents():
+    collection = pgml.Collection("test_p_c_tod_0")
+    await collection.upsert_documents(generate_dummy_documents(3))
+    documents = await collection.get_documents({"order_by": {"id": "desc"}})
+    assert len(documents) == 3
+    assert documents[0]["document"]["id"] == 2
+    await collection.archive()
+
+
 ###################################################
 ## Migration tests ################################
 ###################################################

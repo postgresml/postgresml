@@ -337,10 +337,9 @@ LIMIT 10;
 
 There's a big difference in the time it takes to search 300,000 vectors vs 1,300 vectors, almost 20 times as long, although it does find one more vector that was not in the original list:
 
-```
-| Big Trouble in Little China [UMD for PSP] | 0.8649691870870362 |
-|-------------------------------------------|--------------------|
-```
+| title                                      | cosine\_similarity |
+| ------------------------------------------ | ------------------ |
+| Big Trouble in Little China \[UMD for PSP] | 0.8649691870870362 |
 
 This is a weird result. It's not Sci-Fi like all the others and it wasn't clustered with them in the closest list, which makes sense. So why did it rank so highly? Let's dig into the individual reviews to see if we can tell what's going on.
 
