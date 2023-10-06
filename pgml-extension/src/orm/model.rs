@@ -574,7 +574,7 @@ impl Model {
 
     // The box is borrowed so that it may be reused by the caller
     #[allow(clippy::borrowed_box)]
-    fn test(&self, dataset: &Dataset) -> IndexMap<String, f32> {
+    fn test(&self, dataset: &Dataset<f32>) -> IndexMap<String, f32> {
         info!("Testing {:?} estimator {:?}", self.project.task, self);
         // Test the estimator on the data
         let y_hat = self.predict_batch(&dataset.x_test).unwrap();
@@ -699,7 +699,7 @@ impl Model {
 
     fn get_bindings_and_metrics(
         &mut self,
-        dataset: &Dataset,
+        dataset: &Dataset<f32>,
         hyperparams: &Hyperparams,
     ) -> (Box<dyn Bindings>, IndexMap<String, f32>) {
         info!(
@@ -769,7 +769,7 @@ impl Model {
             .unwrap() as f32
     }
 
-    fn fit(&mut self, dataset: &Dataset) {
+    fn fit(&mut self, dataset: &Dataset<f32>) {
         // Sometimes our algorithms take a long time. The only way to stop code
         // that we don't have control over is using a signal handler. Signal handlers
         // however are not allowed to allocate any memory. Therefore, we cannot register

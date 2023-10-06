@@ -20,7 +20,10 @@ create_pymodule!("/src/bindings/sklearn/sklearn.py");
 
 macro_rules! wrap_fit {
     ($fn_name:tt, $task:literal) => {
-        pub fn $fn_name(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
+        pub fn $fn_name(
+            dataset: &Dataset<f32>,
+            hyperparams: &Hyperparams,
+        ) -> Result<Box<dyn Bindings>> {
             fit(dataset, hyperparams, $task)
         }
     };
@@ -125,7 +128,7 @@ wrap_fit!(spectral_bi, "spectral_biclustering");
 wrap_fit!(spectral_co, "spectral_coclustering");
 
 fn fit(
-    dataset: &Dataset,
+    dataset: &Dataset<f32>,
     hyperparams: &Hyperparams,
     algorithm_task: &'static str,
 ) -> Result<Box<dyn Bindings>> {
