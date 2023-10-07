@@ -52,6 +52,7 @@
 * [Data Storage & Retrieval](data-storage-and-retrieval/README.md)
   * [Tabular data](data-storage-and-retrieval/tabular-data.md)
   * [Vectors](data-storage-and-retrieval/vectors.md)
+  * [Partitioning](data-storage-and-retrieval/partitioning.md)
 * [Deploying PostgresML](deploying-postgresml/README.md)
   * [PostgresML Cloud](deploying-postgresml/postgresml-cloud/README.md)
     * [Plans](deploying-postgresml/postgresml-cloud/plans/README.md)

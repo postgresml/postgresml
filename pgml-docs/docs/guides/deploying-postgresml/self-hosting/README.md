@@ -85,3 +85,39 @@ Fri Oct  6 09:38:19 2023
 </code></pre>
 
 It's important that the Cuda version and the Nvidia driver versions are compatible. When installing Cuda for the first time, it's common to have to reboot the system before both are detected successfully.
+
+### pgvector
+
+`pgvector` is optimized for the CPU architecture of your machine, so it's best to compile it from source directly on the machine that will be using it.
+
+#### Dependencies
+
+`pgvector` has very few dependencies beyond just the standard build chain. You can install all of them with this command:
+
+```bash
+sudo apt install -y \
+    build-essential \
+    postgresql-server-dev-14
+```
+
+Replace `14` in `postgresql-server-dev-14` with your Postgres version.
+
+#### Install pgvector
+
+&#x20;You can install `pgvector` directly from GitHub by just running:
+
+```
+git clone https://github.com/pgvector/pgvector /tmp/pgvector
+git -C /tmp/pgvector checkout v0.5.0
+echo "trusted = true" >> "/tmp/pgvector/vector.control"
+make -C /tmp/pgvector
+sudo make install -C /tmp/pgvector
+```
+
+Once installed, you can create the extension in the database of your choice:
+
+```
+postgresml=# CREATE EXTENSION vector;
+CREATE EXTENSION
+```
+
