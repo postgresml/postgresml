@@ -176,11 +176,11 @@ Postgres supports many more indexing algorithms, e.g. GiST, BRIN, GIN, and Hash.
 
 ### Accelerating recall
 
-Once the dataset gets large enough, and we're talking millions of rows, it's no longer practical to query the table directly. The amount of data Postgres has to scan becomes large and queries become slow. To help with that, tables should have indexes that order and organize commonly read columns. Searching a B-Tree index can be done in _O(log n)_ time, which is orders of magnitude faster than the _O(n)_ full table search.
+Once the dataset gets large enough, and we're talking millions of rows, it's no longer practical to query the table directly. The amount of data Postgres has to scan becomes large and queries become slow. At that point, tables should have indexes that order and organize commonly read columns. Searching an index can be done in _O(log n)_ time, which is orders of magnitude faster than the _O(n)_ full table scan.
 
 #### Querying an index
 
-Postgres automatically uses indexes when its possible and optimal to do so. From our example, we can filter the dataset by the  "Address" column, and we can do so very quickly because of the index we created:
+Postgres automatically uses indexes when its possible and optimal to do so. From our example, if we filter the dataset by the  "Address" column, Postgres will use the index we created and return a result quickly:
 
 ```sql
 SELECT
@@ -199,9 +199,9 @@ which produces
 (1 row)
 ```
 
-Since we have a unique index on the table, we will only see one row with that address.
+Since we have a unique index on the table, we expect to see only one row with that address.
 
-To double check that Postgres is using an index, we can check the query execution plan. A query plan is a list of steps that Postgres will take to get the query result we requested. To see the query plan, prepend the keyword `EXPLAIN` to the query you're running:
+To double check that Postgres is using an index, we can take a look at the query execution plan. A query plan is a list of steps that Postgres will take to get the result of the query. To see the query plan, prepend the keyword `EXPLAIN` to the query you'd like to run:
 
 ```
 postgresml=# EXPLAIN (FORMAT JSON) SELECT
@@ -232,12 +232,10 @@ WHERE "Address" = '1 Infinite Loop, Cupertino, California';
  ]
 ```
 
-The plan indicates it will use an "Index Scan" on the index `usa_house_prices_Address_index` which is what we're expecting.
+The plan indicates that it will use an "Index Scan" on `usa_house_prices_Address_index` which is what we're expecting. Using `EXPLAIN` doesn't actually run the query, so it's safe to use on production systems.
 
-Using `EXPLAIN` doesn't actually run the query, so it's safe to use on production systems.
-
-The ability to create indexes on datasets of any size, and to then efficiently query that data with those indexes is what separates Postgres from most ad-hoc tools like Pandas and Arrow. Postgres can store and query data that would never fit in memory, and it can do that quicker and more efficiently than most other database systems used in the industry.
+The ability to create indexes on datasets of any size, and to efficiently query that data using indexes, is what separates Postgres from most ad-hoc tools like Pandas and Arrow. Postgres can store and query data that would never fit in memory, and it can do that quicker and more efficiently than most other database systems used in the industry.
 
 #### Maintaining an index
 
-Postgres indexes require no special maintenance. They are automatically updated when data is added or removed. Postgres also ensures that indexes are efficiently organized and are ACID compliant. The database guarantees that the data is always consistent, no matter how many concurrent changes are made.
+Postgres indexes require no special maintenance. They are automatically updated when data is added and removed. Postgres also ensures that indexes are efficiently organized and are ACID compliant: the database guarantees that the data is always consistent, no matter how many concurrent changes are made.
