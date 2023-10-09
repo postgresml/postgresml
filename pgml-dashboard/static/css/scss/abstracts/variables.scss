@@ -209,6 +209,9 @@ $nav-pills-border-radius: calc(#{$border-radius} / 2);
 $left-nav-w: 17rem;
 $left-nav-w-collapsed: 88px;
 
+// WebApp Content Container
+$webapp-content-max-width: 1224px;
+
 //Grid
 $enable-cssgrid: true;
 $enable-shadows: true;
@@ -240,6 +243,7 @@ $breadcrumb-padding-x:              4px;
 $breadcrumb-item-padding-x:         4px;
 $breadcrumb-margin-bottom:          0px;
 $breadcrumb-divider:                quote("");
+$breadcrumb-height:                 57px;
 
 // animations
 $animation-timer: 0.35s;
