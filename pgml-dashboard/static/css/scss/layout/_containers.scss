@@ -149,5 +149,5 @@
 .webapp-content-max-width-container {
     max-width: $webapp-content-max-width;
     margin-left: 0px;
-    min-height: calc(100vh - $navbar-height - 1px);
+    min-height: calc(100vh - $navbar-height - $breadcrumb-height - 1px);
   }
