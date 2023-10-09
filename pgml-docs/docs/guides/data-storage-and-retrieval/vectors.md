@@ -1,8 +1,8 @@
 # Vectors
 
-Vectors are lists of numbers representing a measurement in multidimensional space. There are many types of vectors, e.g. embeddings used in vector search, but ultimately they are all just arrays of floating points.
+Vectors are lists of numbers representing a measurement in multidimensional space. There are many types of vectors, e.g. embeddings used for vector search, but ultimately they are all just arrays of floating points.
 
-In Postgres, a vector is just another data type that can be stored in regular tables and queried together with other columns. For this guide, we've chosen `pgvector`, an extension that implements the `vector` data type, many vector operations like inner product and cosine distance, and approximate nearest neighbor (ANN) search using IVFFlat and Hierarchical Navigable Small Worlds (HNSW).
+In Postgres, a vector is just another data type that can be stored in regular tables and queried together with other columns. At PostgresML, we're using `pgvector`, a Postgres extension that implements the `vector` data type, many vector operations like inner product and cosine distance, and approximate nearest neighbor (ANN) search.
 
 ### Installing pgvector
 
@@ -84,17 +84,17 @@ LIMIT 3;
 (5 rows)
 ```
 
-This query uses `pgml.embed()` to generate an embedding on the fly and finds the closest neighbors to that embedding in the entire USA House Prices dataset.
+This query uses `pgml.embed()` to generate an embedding on the fly and finds the exact closest neighbors to that embedding in the entire USA House Prices dataset.
 
 ### Approximate nearest neighbors
 
-This dataset only has 5,000 rows which, for Postgres, is really easy to scan. In the real world, these datasets grow to become very large and searching the entire table becomes too slow to be practical. Nevertheless, we can get closest matches using approximation. Approximate nearest neighbors, or ANN, is a commonly used technique to organize vectors to be able to find results that are "close enough".
+This dataset only has 5,000 rows which, for Postgres, is really easy to scan. In the real world, these datasets grow to become very large and searching the entire table becomes too slow to be practical. When that happens, we can get closest matches using approximation. Approximate nearest neighbors, or ANN, is a commonly used technique to organize vectors to be able to find results that are "close enough".
 
 `pgvector` implements two ANN algorithms: IVFFlat and HNSW. Both have their pros and cons and can be used in production to search millions of vectors.
 
 ### IVFFlat
 
-IVFFlat splits the list of vectors into roughly equal parts, grouped around centroids calculated using k-nearest neighbors, or KNN. Once split, the lists are stored in a B-tree index, ordered by the centroid.
+IVFFlat splits the list of vectors into roughly equal parts, grouped around centroids calculated using k-nearest neighbors (KNN). Once split, the lists are stored in a B-tree index, ordered by the centroid.
 
 When searching for a nearest neighbor match, `pgvector` picks the closest centroid to the candidate vector, fetches all the vectors from the list, sorts them, and fetches the closest neighbors. Since the list represents only a fraction of all the vectors, using an IVFFlat index is considerably faster than scanning the entire table.
 
@@ -118,7 +118,7 @@ USING ivfflat(embedding vector_cosine_ops)
 WITH (lists = 71);
 ```
 
-71 is the approximate square root of 5,000 rows we have in that table. Now that we have an index, if we `EXPLAIN` the query we just ran above, we'll get an "Index Scan" on the cosine distance index:
+71 is the approximate square root of 5,000 rows we have in that table. With the index created, if we `EXPLAIN` the query we just ran, we'll get an "Index Scan" on the cosine distance index:
 
 ```
 postgresml=# EXPLAIN SELECT
@@ -137,7 +137,7 @@ It's important to create an IVFFlat index after you have added a representative 
 
 #### Maintaining an IVFFlat index
 
-IVFFlat is a simple algorithm and constructs an index is quickly. Splitting, sorting and solving KNN is optimized using the Postgres query engine and vectorized CPU operations (e.g. AVX512 on modern CPUs) built into `pgvector`. When queried, the index provides good recall acceleration and approximation for typical use cases.
+IVFFlat is a simple algorithm and constructs an index quickly. Splitting, sorting and solving KNN is optimized using the Postgres query engine and vectorized CPU operations (e.g. AVX512 on modern CPUs) built into `pgvector`. When queried, the index provides good recall acceleration and approximation for typical use cases.
 
 On the other hand, because of the nature of centroids, if the dataset changes significantly, the original KNN calculation becomes inaccurate. In that case, an IVFFlat index should be rebuilt which Postgres makes pretty easy:
 
@@ -145,7 +145,7 @@ On the other hand, because of the nature of centroids, if the dataset changes si
 REINDEX INDEX CONCURRENTLY usa_house_prices_embedding_idx;
 ```
 
-As of this writing, `pgvector` doesn't provide monitoring for index degredation. The application user should monitor recall from their vector search operations, and if the recall starts dropping, issue a reindex.
+As of this writing, `pgvector` doesn't provide monitoring tools for index degradation. The application user should monitor recall from their vector search operations, and if the recall starts dropping, issue a reindex.
 
 ### HNSW
 

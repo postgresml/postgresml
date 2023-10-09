@@ -1,14 +1,14 @@
 # Tabular data
 
-Tabular data is data stored in tables. A table is a format that defines rows and columns, and is the most common type of data organization mechanism. Examples of tabular data are spreadsheets, database tables, CSV files, and Pandas dataframes.
+Tabular data is data stored in tables. A table is a format that defines rows and columns, and is the most common type of data organization. Examples of tabular data are spreadsheets, database tables, CSV files, and Pandas dataframes.
 
 Storing and accessing tabular data in an efficient manner is a subject of multiple decade-long studies, and is the core purpose of most database systems. PostgreSQL has been leading the charge on optimal tabular storage for a long time, and remains one of the most popular and effective ways to store, organize and retrieve tabular data today.
 
 ### Creating tables
 
-Postgres makes it really easy to create and use tables. If you're looking to use PostgresML for a supervised learning project, creating a table will be very similar to a Pandas dataframe, except it will be durable and easily accessible for as long as the database exists.
+Postgres makes it easy to create and use tables. If you're looking to use PostgresML for a supervised learning project, creating a table will be very similar to a Pandas dataframe, except it will be durable and accessible for as long as the database exists.
 
-For the rest of this guide, we'll take the [USA House Prices](https://www.kaggle.com/code/fatmakursun/supervised-unsupervised-learning-examples/) dataset from Kaggle, store it in a Postgres table and run some basic queries. The dataset has seven (7) columns and 5,000 rows:
+For the rest of this guide, we'll use the [USA House Prices](https://www.kaggle.com/code/fatmakursun/supervised-unsupervised-learning-examples/) dataset from Kaggle, store it in a Postgres table and run some basic queries. The dataset has seven (7) columns and 5,000 rows:
 
 | Column                       | Data type | Postgres data type |
 | ---------------------------- | --------- | ------------------ |
@@ -54,7 +54,7 @@ postgresml=#
 
 ### Ingesting data
 
-Right now the table is empty which is a bit boring. Let's import the USA House Prices dataset using one of the fastest way to do so in Postgres: with `COPY`.
+When created for the first time, the table is empty. Let's import our example data using one of the fastest way to do so in Postgres: with `COPY`.
 
 If you're like me and prefer to use the terminal, you can open up `psql` and ingest the data like this:
 
@@ -95,7 +95,7 @@ The SQL language is expressive and allows to select, filter and aggregate any nu
 
 ### Adding more data
 
-Because databases store data permanently, adding more data to Postgres can be done in many ways. The simplest and most commonly used way is to just insert it into a table you already have. Using the same example dataset, we can add a new row with just one query:
+Because databases store data permanently, adding more data to Postgres can be done in many ways. The simplest and most common way is to just insert it into a table you already have. Using the same example dataset, we can add a new row with just one query:
 
 ```sql
 INSERT INTO usa_house_prices (
@@ -117,7 +117,7 @@ INSERT INTO usa_house_prices (
 );
 ```
 
-If you have more CSV files you'd like to ingest, you can run `COPY` for each one. Many ETL pipelines from Snowflake or Redshift chunk their output into multiple CSVs, which can be individually imported into Postgres using `COPY`.
+If you have more CSV files you'd like to ingest, you can run `COPY` for each one. Many ETL pipelines from Snowflake or Redshift chunk their output into multiple CSVs, which can be individually imported into Postgres using `COPY`:
 
 {% tabs %}
 {% tab title="Python" %}
@@ -155,7 +155,7 @@ Now that our dataset is changing, we should explore some tools to protect it aga
 
 Databases store important data so they were built with many safety features in mind to protect from common errors. In machine learning, one of the most common errors is data duplication, i.e. having the same row appear in the a table twice. Postgres can protect us against this with unique indexes.
 
-Looking at the USA House Price dataset, we can find its natural key pretty easily. Since most columns are aggregates, the only column that seems like it should contain unique values is the "Address". There should never be more than one house for sale at a single address.
+Looking at the USA House Prices dataset, we can find its natural key pretty easily. Since most columns are aggregates, the only column that seems like it should contain unique values is the "Address", i.e there should never be more than one house for sale at a single address.
 
 To ensure that our table reflects this, let's add a unique index:
 
@@ -163,16 +163,16 @@ To ensure that our table reflects this, let's add a unique index:
 CREATE UNIQUE INDEX ON usa_house_prices USING btree("Address");
 ```
 
-When creating a unique index, Postgres scans the whole table, ensuring there are no duplicates in the "Address" column, and writes the column into an index using the B-Tree algorithm.
+When creating a unique index, Postgres scans the whole table, checks to ensure there are no duplicates in the indexed column, and writes the column into an index using the B-Tree algorithm.
 
-If we attempt to insert the same row again, now we're getting an error:
+If we attempt to insert the same row again, we'll get an error:
 
 ```
 ERROR:  duplicate key value violates unique constraint "usa_house_prices_Address_idx"
 DETAIL:  Key ("Address")=(1 Infinite Loop, Cupertino, California) already exists.
 ```
 
-Postgres supports many more indexing algorithms, e.g. GiST, BRIN, GIN, and Hash. Many extensions, e.g. `pgvector`, implement their own index types like HNSW and IVFFlat, which help efficiently retrieve specialized values. We explore those in our guide about [Vectors](vectors.md).
+Postgres supports many more indexing algorithms, e.g. GiST, BRIN, GIN, and Hash. Many extensions, e.g. `pgvector`, implement their own index types like HNSW and IVFFlat, which help efficiently search and retrieve vector values. We explore those in our guide about [Vectors](vectors.md).
 
 ### Accelerating recall
 
@@ -180,7 +180,7 @@ Once the dataset gets large enough, and we're talking millions of rows, it's no 
 
 #### Querying an index
 
-Postgres automatically uses indexes when its possible and optimal to do so. From our example, if we filter the dataset by the  "Address" column, Postgres will use the index we created and return a result quickly:
+Postgres automatically uses indexes when possible and optimal to do so. From our example, if we filter the dataset by the  "Address" column, Postgres will use the index we created and return a result quickly:
 
 ```sql
 SELECT
@@ -190,8 +190,6 @@ FROM usa_house_prices
 WHERE "Address" = '1 Infinite Loop, Cupertino, California';
 ```
 
-which produces
-
 ```
  Avg. Area House Age |                Address
 ---------------------+----------------------------------------
@@ -200,6 +198,8 @@ which produces
 ```
 
 Since we have a unique index on the table, we expect to see only one row with that address.
+
+#### Query plan
 
 To double check that Postgres is using an index, we can take a look at the query execution plan. A query plan is a list of steps that Postgres will take to get the result of the query. To see the query plan, prepend the keyword `EXPLAIN` to the query you'd like to run:
 
@@ -234,8 +234,8 @@ WHERE "Address" = '1 Infinite Loop, Cupertino, California';
 
 The plan indicates that it will use an "Index Scan" on `usa_house_prices_Address_index` which is what we're expecting. Using `EXPLAIN` doesn't actually run the query, so it's safe to use on production systems.
 
-The ability to create indexes on datasets of any size, and to efficiently query that data using indexes, is what separates Postgres from most ad-hoc tools like Pandas and Arrow. Postgres can store and query data that would never fit in memory, and it can do that quicker and more efficiently than most other database systems used in the industry.
+The ability to create indexes on datasets of any size, and to efficiently query that data using them, is what separates Postgres from most ad-hoc tools like Pandas and Arrow. Postgres can store and query data that would never fit in memory, and it can do that quicker and more efficiently than most other databases used in the industry.
 
 #### Maintaining an index
 
-Postgres indexes require no special maintenance. They are automatically updated when data is added and removed. Postgres also ensures that indexes are efficiently organized and are ACID compliant: the database guarantees that the data is always consistent, no matter how many concurrent changes are made.
+Postgres indexes require no special maintenance. They are automatically updated when data is added and removed. Postgres also ensures that indexes are efficiently organized and are ACID compliant: the database guarantees that the data is always consistent, no matter how many concurrent changes are made.&#x20;
