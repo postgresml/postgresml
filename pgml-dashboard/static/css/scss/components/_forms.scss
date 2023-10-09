@@ -30,6 +30,7 @@
     &[type=checkbox] {
         background-color: var(--form-switch-default);
         border-color: var(--form-switch-default);
+        width: 2.5em !important;
     
         &:hover {
             border-color: var(--form-switch-hover);
