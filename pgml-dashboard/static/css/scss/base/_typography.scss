@@ -32,41 +32,29 @@
 .text-white {
     color: #{$gray-100} !important;
 }
-.text-gradient-blue {
-    background: #{$gradient-blue};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
-}
-.text-gradient-green {
-    background: #{$gradient-green};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
-}
-.text-gradient-orange {
-    background: #{$gradient-orange};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
-}
-.text-gradient-pink {
-    background: #{$gradient-pink};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
-}
-.text-gradient-purple {
-    background: #{$gradient-purple};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
-}
 .text-soft-white {
     color: #{$gray-200} !important;
+}
+
+@mixin text-gradient($gradient) {
+    background: #{$gradient};
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+.text-gradient-blue {
+    @include text-gradient($gradient-blue);
+}
+.text-gradient-green {
+    @include text-gradient($gradient-green);
+}
+.text-gradient-orange {
+    @include text-gradient($gradient-orange);
+}
+.text-gradient-pink {
+    @include text-gradient($gradient-pink);
+}
+.text-gradient-purple {
+    @include text-gradient($gradient-purple);
 }
