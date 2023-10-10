@@ -7,7 +7,8 @@
     text-align: center;
     gap: 8px;
 
-    &[disabled], &:disabled {
+    &[disabled],
+    &:disabled {
         cursor: not-allowed;
     }
 }
@@ -52,20 +53,20 @@
     --bs-btn-font-size: 18px;
 
     // the attached canvas for border in secondary-btn.js
-    &> .secondary-btn-canvas {
+    & > .secondary-btn-canvas {
         position: absolute;
         border: None;
         display: None;
     }
-    
+
     &:hover {
-        &> .secondary-btn-canvas {
+        & > .secondary-btn-canvas {
             display: block;
         }
     }
 
     &:active {
-        &> .secondary-btn-canvas {
+        & > .secondary-btn-canvas {
             filter: brightness(65%);
             display: block;
         }
@@ -80,7 +81,7 @@
     --bs-btn-hover-bg: transparent;
     --bs-btn-hover-color: #{$gray-100};
     --bs-btn-hover-border-color: transparent;
-    
+
     --bs-btn-active-bg: transparent;
     --bs-btn-active-color: #{$gray-100};
     --bs-btn-active-border-color: transparent;
@@ -115,18 +116,22 @@
 
     border: 0px;
 
-    &:disabled, &.disabled {
+    &:disabled,
+    &.disabled {
         color: #{$neon-shade-400};
         background-color: #{$neon-shade-700};
     }
 
-    &:hover, &:active {
+    &:hover,
+    &:active {
         @include bold_by_shadow(var(--bs-btn-hover-color));
     }
     &:active {
         @include bold_by_shadow(var(--bs-btn-active-color));
     }
-    &:focus, &:focus-visible, &:focus-within {
+    &:focus,
+    &:focus-visible,
+    &:focus-within {
         @include bold_by_shadow(var(--bs-btn-focus-color));
     }
 }
@@ -153,7 +158,9 @@
     &:active {
         @include bold_by_shadow(var(--bs-btn-active-color));
     }
-    &:focus, &:focus-visible, &:focus-within {
+    &:focus,
+    &:focus-visible,
+    &:focus-within {
         @include bold_by_shadow(var(--bs-btn-focus-color));
     }
 }
@@ -182,14 +189,14 @@
 
     &.with-icon {
         &::after {
-            content: ">"
+            content: ">";
         }
     }
 }
 
 .btn-code-toolbar {
-    @extend .btn; 
-    @extend .btn-tertiary; 
+    @extend .btn;
+    @extend .btn-tertiary;
     @extend .noselect;
 
     @extend .z-1;
@@ -202,14 +209,15 @@
         text-shadow: none;
     }
 
-    &:disabled, &[disabled] {
+    &:disabled,
+    &[disabled] {
         color: #{$slate-shade-700} !important;
     }
 }
 
 .btn-copy {
     @extend .btn-code-toolbar;
-    position: absolute; 
+    position: absolute;
     top: 4px;
     right: 4px;
 }
@@ -221,7 +229,7 @@
     border-bottom: 2px solid #{$gray-300};
     color: #{$gray-100};
     padding: 0 0 calc($spacer / 2) 0;
-    
+
     &:hover {
         border-bottom-color: #{$neon-shade-100};
     }
@@ -231,7 +239,7 @@
         border-bottom: #{$gray-500};
     }
 
-    &> span {
+    & > span {
         color: #{$neon-shade-100};
     }
 }
@@ -258,7 +266,7 @@
     border-left: 0px;
     border-right: 0px;
     border-bottom: 1px solid #{$gray-100} !important;
-    
+
     --bs-btn-active-color: #{$gray-100};
     --bs-btn-hover-color: #{$gray-100};
 }
@@ -266,7 +274,7 @@
 .left-nav-toggle-icon {
     margin-left: calc($left-nav-w - 9rem);
     margin-right: 0px;
-    
+
     &.expanding {
         animation-name: expand-margin;
         animation-duration: $animation-timer;
@@ -279,7 +287,7 @@
     }
 
     &.expanded {
-        margin-left: calc($left-nav-w - 9rem); 
+        margin-left: calc($left-nav-w - 9rem);
         margin-right: 0px;
     }
 
@@ -296,21 +304,21 @@
 
 @keyframes collapse-margin {
     from {
-        margin-left: calc($left-nav-w - 9rem); 
+        margin-left: calc($left-nav-w - 9rem);
         margin-right: 0px;
     }
     to {
-        margin-left: calc($left-nav-w-collapsed/2 - 32px); 
-        margin-right: calc($left-nav-w-collapsed/2 - 32px); 
+        margin-left: calc($left-nav-w-collapsed/2 - 32px);
+        margin-right: calc($left-nav-w-collapsed/2 - 32px);
     }
 }
 @keyframes expand-margin {
     from {
-        margin-left: calc($left-nav-w-collapsed/2 - 32px); 
+        margin-left: calc($left-nav-w-collapsed/2 - 32px);
         margin-right: calc($left-nav-w-collapsed/2 - 32px);
     }
     to {
-        margin-left: calc($left-nav-w - 9rem); 
+        margin-left: calc($left-nav-w - 9rem);
         margin-right: 0px;
     }
 }
