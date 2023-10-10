@@ -26,6 +26,9 @@
     line-height: 16px;
 }
 
+.text-error {
+    color: #{$error} !important;
+}
 .text-black {
     color: #{$gray-900} !important;
 }

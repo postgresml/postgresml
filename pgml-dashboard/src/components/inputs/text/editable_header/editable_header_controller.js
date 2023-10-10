@@ -1,20 +1,15 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ["input", "header"]
+  static targets = ["input", "header", "error"]
 
-  initialize() {
-    this.inputTarget.addEventListener("focusout", (e) => {
-      this.headerTarget.innerHTML = e.target.value
-      this.toggleEditor()
-    })
+  focusout(e) {
+    this.headerTarget.innerHTML = e.target.value
+    this.toggleEditor()
+  }
 
-    // blur input on enter
-    this.inputTarget.addEventListener("keydown", (e) => {
-      if(e.key == "Enter") {
-        this.inputTarget.blur()
-      }
-    })
+  blur() {
+    this.inputTarget.blur()
   }
 
   toggleEditor(e) {
@@ -31,5 +26,14 @@ export default class extends Controller {
       this.inputTarget.style.display = "none"
       this.headerTarget.style.display = "flex"
     }
+  }
+
+  error(e) {
+    this.errorTarget.innerHTML = e.detail
+    this.errorTarget.style.display = "block"
+  }
+
+  clear() {
+    this.errorTarget.style.display = "none"
   }
 }
