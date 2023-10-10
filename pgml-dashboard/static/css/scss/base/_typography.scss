@@ -1,7 +1,9 @@
-
-
 // all other displays are default bootstrap styling
-.display-2 {font-weight: 700; font-size: 4rem; line-height: 80px;}
+.display-2 {
+    font-weight: 700;
+    font-size: 4rem;
+    line-height: 80px;
+}
 
 // TODO: Go through html and ensure headers use appropriate header class, header and class do not need to match.
 // .h1 {font-weight: 700; font-size: 64px; line-height: 72px;}
@@ -11,10 +13,48 @@
 // .h5 {font-weight: 700; font-size: 28px; line-height: 34px;}
 // .h6 {font-weight: 700; font-size: 24px; line-height: 30px;}
 
-.subcopy-text {font-size: 18px; line-height: 22px}
-.body-text {font-size: 16px; line-height: 20px}
-.legal-text {font-size: 12px; line-height: 16px;}
+.subcopy-text {
+    font-size: 18px;
+    line-height: 22px;
+}
+.body-text {
+    font-size: 16px;
+    line-height: 20px;
+}
+.legal-text {
+    font-size: 12px;
+    line-height: 16px;
+}
 
-.text-black {color: #{$gray-900} !important;}
-.text-white {color: #{$gray-100} !important;}
-.text-soft-white { color: #{$gray-200} !important; }
+.text-black {
+    color: #{$gray-900} !important;
+}
+.text-white {
+    color: #{$gray-100} !important;
+}
+.text-soft-white {
+    color: #{$gray-200} !important;
+}
+
+@mixin text-gradient($gradient) {
+    background: #{$gradient};
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+.text-gradient-blue {
+    @include text-gradient($gradient-blue);
+}
+.text-gradient-green {
+    @include text-gradient($gradient-green);
+}
+.text-gradient-orange {
+    @include text-gradient($gradient-orange);
+}
+.text-gradient-pink {
+    @include text-gradient($gradient-pink);
+}
+.text-gradient-purple {
+    @include text-gradient($gradient-purple);
+}

@@ -6,6 +6,6 @@ export default class extends Controller {
   choose(e) {
     this.inputTarget.value = e.target.innerHTML
     this.valueTarget.innerHTML = e.target.innerHTML
+    this.inputTarget.dispatchEvent(new Event('change'))
   }
-
 }
