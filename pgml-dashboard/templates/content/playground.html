@@ -133,9 +133,11 @@ use crate::components::inputs::select::Select;
     <div class="d-flex flex-row justify-content-between">
       <%+ EditableHeader::new()
           .value("Size H2")
-          .header_type(Headers::H2) %>
+          .header_type(Headers::H2)
+          .id("header-2") %>
       <div>
-        this is a thing that takes up space
+        <button data-action="playground#addErrorH2">Add an Error</button>
+        <button data-action="playground#clearErrorH2">Clear Error</button>
       </div>
     </div>
     <div class="d-flex flex-row justify-content-between">
@@ -147,9 +149,10 @@ use crate::components::inputs::select::Select;
             StimulusTarget::new()
               .controller("some-existing-controller")
               .name("desired-target-name")
-          ) %>
+          ).id("header-3") %>
       <div>
-        this is a thing that takes up space
+        <button data-action="playground#addError">Add an Error</button>
+        <button data-action="playground#clearError">Clear Error</button>
       </div>
     </div>
   </div>

@@ -32,6 +32,7 @@ pub struct EditableHeader {
     header_type: Headers,
     input_target: StimulusTarget,
     input_name: Option<String>,
+    id: String,
 }
 
 impl EditableHeader {
@@ -41,6 +42,7 @@ impl EditableHeader {
             header_type: Headers::H3,
             input_target: StimulusTarget::new(),
             input_name: None,
+            id: String::from(""),
         }
     }
 
@@ -61,6 +63,11 @@ impl EditableHeader {
 
     pub fn input_name(mut self, input_name: &str) -> Self {
         self.input_name = Some(input_name.to_string());
+        self
+    }
+
+    pub fn id(mut self, id: &str) -> Self {
+        self.id = id.to_string();
         self
     }
 }
