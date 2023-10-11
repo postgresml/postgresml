@@ -583,7 +583,8 @@ pub fn get_sub_links(list: &markdown::mdast::List) -> Result<Vec<NavLink>> {
                                                         .unwrap();
                                                     let parent = NavLink::new(text.value.as_str())
                                                         .href(&url);
-                                                    links.push(parent)
+                                                    info!("link: {:?}", parent);
+                                                    links.push(parent);
                                                 }
                                                 _ => error!("unhandled link child: {:?}", node),
                                             }
