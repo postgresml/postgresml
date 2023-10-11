@@ -286,7 +286,7 @@ mod test {
     async fn test_docs() {
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client
-            .get("/docs/guides/setup/quick_start_with_docker")
+            .get("/docs/guides/README")
             .dispatch()
             .await;
         assert_eq!(response.status().code, 200);

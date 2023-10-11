@@ -138,6 +138,10 @@ SELECT pgml.predict(
 # Installation
 PostgresML installation consists of three parts: PostgreSQL database, Postgres extension for machine learning and a dashboard app. The extension provides all the machine learning functionality and can be used independently using any SQL IDE. The dashboard app provides an easy to use interface for writing SQL notebooks, performing and tracking ML experiments and ML models.
 
+## Serverless Cloud
+
+If you want to check out the functionality without the hassle of Docker, [sign up for a free PostgresML account](https://postgresml.org/signup). You'll get a free database in seconds, with access to GPUs and state of the art LLMs.
+
 ## Docker
 
 ```
@@ -150,19 +154,14 @@ docker run \
     sudo -u postgresml psql -d postgresml
 ```
 
-For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/guides/setup/quick_start_with_docker) documentation.
-
-## Serverless Cloud
-
-If you want to check out the functionality without the hassle of Docker, [sign up for a free PostgresML account](https://postgresml.org/signup). You'll get a free database in seconds, with access to GPUs and state of the art LLMs.
+For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/guides/developer-docs/quick-start-with-docker) documentation.
 
 # Getting Started
 
 ## Option 1
 
-- On local installation, go to dashboard app at `http://localhost:8000/` to use SQL notebooks.
-
 - On the cloud console click on the **Dashboard** button to connect to your instance with a SQL notebook, or connect directly with tools listed below.
+- On local installation, go to dashboard app at `http://localhost:8000/` to use SQL notebooks.
 
 ## Option 2
 

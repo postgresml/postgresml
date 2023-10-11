@@ -24,54 +24,36 @@ async fn search(query: &str, index: &State<markdown::SearchIndex>) -> ResponseOk
     )
 }
 
-#[get("/docs/<path..>", rank = 10)]
-async fn doc_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
-    let guides = vec![
-        NavLink::new("Setup").children(vec![
-            NavLink::new("Installation").children(vec![
-                NavLink::new("v2").href("/docs/guides/setup/v2/installation"),
-                NavLink::new("Upgrade from v1.0 to v2.0")
-                    .href("/docs/guides/setup/v2/upgrade-from-v1"),
-                NavLink::new("v1").href("/docs/guides/setup/installation"),
-            ]),
-            NavLink::new("Quick Start with Docker")
-                .href("/docs/guides/setup/quick_start_with_docker"),
-            NavLink::new("Distributed Training").href("/docs/guides/setup/distributed_training"),
-            NavLink::new("GPU Support").href("/docs/guides/setup/gpu_support"),
-            NavLink::new("Developer Setup").href("/docs/guides/setup/developers"),
-        ]),
-        NavLink::new("Training").children(vec![
-            NavLink::new("Overview").href("/docs/guides/training/overview"),
-            NavLink::new("Algorithm Selection").href("/docs/guides/training/algorithm_selection"),
-            NavLink::new("Hyperparameter Search")
-                .href("/docs/guides/training/hyperparameter_search"),
-            NavLink::new("Preprocessing Data").href("/docs/guides/training/preprocessing"),
-            NavLink::new("Joint Optimization").href("/docs/guides/training/joint_optimization"),
-        ]),
-        NavLink::new("Predictions").children(vec![
-            NavLink::new("Overview").href("/docs/guides/predictions/overview"),
-            NavLink::new("Deployments").href("/docs/guides/predictions/deployments"),
-            NavLink::new("Batch Predictions").href("/docs/guides/predictions/batch"),
-        ]),
-        NavLink::new("Transformers").children(vec![
-            NavLink::new("Setup").href("/docs/guides/transformers/setup"),
-            NavLink::new("Pre-trained Models").href("/docs/guides/transformers/pre_trained_models"),
-            NavLink::new("Fine Tuning").href("/docs/guides/transformers/fine_tuning"),
-            NavLink::new("Embeddings").href("/docs/guides/transformers/embeddings"),
-        ]),
-        NavLink::new("Vector Operations").children(vec![
-            NavLink::new("Overview").href("/docs/guides/vector_operations/overview")
-        ]),
-        NavLink::new("Dashboard").href("/docs/guides/dashboard/overview"),
-        NavLink::new("Schema").children(vec![
-            NavLink::new("Models").href("/docs/guides/schema/models"),
-            NavLink::new("Snapshots").href("/docs/guides/schema/snapshots"),
-            NavLink::new("Projects").href("/docs/guides/schema/projects"),
-            NavLink::new("Deployments").href("/docs/guides/schema/deployments"),
-        ]),
-    ];
+use rocket::fs::NamedFile;
 
-    render(cluster, &path, guides, "Guides", &Path::new("docs")).await
+#[get("/docs/guides/.gitbook/assets/<path>", rank = 10)]
+pub async fn gitbook_assets(path: PathBuf) -> Option<NamedFile> {
+    let path = PathBuf::from(&config::docs_dir())
+        .join("docs/guides/.gitbook/assets/")
+        .join(path);
+
+    NamedFile::open(path).await.ok()
+}
+
+#[get("/docs/<path..>", rank = 5)]
+async fn doc_handler(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
+    let root = PathBuf::from("docs/guides/");
+    let index_path = PathBuf::from(&config::docs_dir())
+        .join(&root)
+        .join("SUMMARY.md");
+    let contents = tokio::fs::read_to_string(&index_path).await.expect(
+        format!(
+            "could not read table of contents markdown: {:?}",
+            index_path
+        )
+        .as_str(),
+    );
+    let mdast = ::markdown::to_mdast(&contents, &::markdown::ParseOptions::default())
+        .expect("could not parse table of contents markdown");
+    let guides = markdown::parse_summary_into_nav_links(&mdast)
+        .expect("could not extract nav links from table of contents");
+
+    render(cluster, &path, guides, "Guides", &Path::new("docs"), &config::docs_dir()).await
 }
 
 #[get("/blog/<path..>", rank = 10)]
@@ -134,6 +116,7 @@ async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk
         ],
         "Blog",
         &Path::new("blog"),
+        &config::blogs_dir(),
     )
     .await
 }
@@ -144,14 +127,16 @@ async fn render<'a>(
     mut nav_links: Vec<NavLink>,
     nav_title: &'a str,
     folder: &'a Path,
+    content: &'a str,
 ) -> Result<ResponseOk, Status> {
     let url = path.clone();
 
     // Get the document content
-    let path = Path::new(&config::content_dir())
+    let path = Path::new(&content)
         .join(folder)
         .join(&(path.to_str().unwrap().to_string() + ".md"));
 
+    info!("path: {:?}", path);
     // Read to string
     let contents = match tokio::fs::read_to_string(&path).await {
         Ok(contents) => contents,
@@ -244,7 +229,7 @@ async fn render<'a>(
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![doc_handler, blog_handler, search]
+    routes![gitbook_assets, doc_handler, blog_handler, search]
 }
 
 #[cfg(test)]
