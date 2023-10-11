@@ -4,7 +4,7 @@ use pgml_components::component;
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce)]
-#[template(path = "layout/nav/top.html")]
+#[template(path = "navbar/template.html")]
 pub struct Navbar {
     pub current_user: Option<models::User>,
     pub standalone_dashboard: bool,
