@@ -263,6 +263,7 @@ mod tests {
     use super::*;
 
     #[pg_test]
+    #[ignore = "requires model download"]
     fn vllm_quickstart() {
         crate::bindings::python::activate().unwrap();
 
@@ -282,5 +283,12 @@ mod tests {
         let llm = LLMBuilder::new("facebook/opt-125m").build().unwrap();
         let outputs = llm.generate(&prompts, Some(&sampling_params)).unwrap();
         assert_eq!(prompts.len(), outputs.len());
+    }
+
+    #[pg_test]
+    fn model_support() {
+        if let Err(e) = LLMBuilder::new("intfloat/e5-small").build() {
+            assert!(e.to_string().contains("not supported"));
+        }
     }
 }
