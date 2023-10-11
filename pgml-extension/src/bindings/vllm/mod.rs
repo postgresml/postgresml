@@ -6,6 +6,9 @@ use pyo3::{prelude::*, types::PyDict};
 
 use super::TracebackError;
 
+mod params;
+pub use params::*;
+
 pub struct LLMBuilder {
     model: String,
     tokenizer: Option<String>,
@@ -16,7 +19,7 @@ pub struct LLMBuilder {
     quantization: Option<Quantization>,
     revision: Option<String>,
     seed: u64,
-    gpu_memory_utilization: f32,
+    gpu_memory_utilization: f64,
     swap_space: u32,
 }
 
@@ -32,7 +35,7 @@ pub enum Quantization {
 }
 
 pub struct LLM {
-    inner: Py<PyAny>,
+    inner: PyObject,
 }
 
 impl LLMBuilder {
@@ -113,7 +116,7 @@ impl LLMBuilder {
     /// values will increase the KV cache size and thus improve the model's
     /// throughput. However, if the value is too high, it may cause out-of-
     /// memory (OOM) errors.
-    pub fn gpu_memory_utilization(mut self, gpu_memory_utilization: f32) -> Self {
+    pub fn gpu_memory_utilization(mut self, gpu_memory_utilization: f64) -> Self {
         self.gpu_memory_utilization = gpu_memory_utilization;
         self
     }
@@ -130,19 +133,35 @@ impl LLMBuilder {
 
     /// Create a [`LLM`] from the [`LLMBuilder`]
     pub fn build(self) -> Result<LLM> {
-        let inner = Python::with_gil(|py| -> Result<Py<PyAny>> {
+        let inner = Python::with_gil(|py| -> Result<PyObject> {
             let kwargs = PyDict::new(py);
-            kwargs.set_item("model", self.model)?;
-            kwargs.set_item("tokenizer", self.tokenizer)?;
-            kwargs.set_item("tokenizer_mode", self.tokenizer_mode.to_string())?;
-            kwargs.set_item("trust_remote_code", self.trust_remote_code)?;
-            kwargs.set_item("tensor_parallel_size", self.tensor_parallel_size)?;
-            kwargs.set_item("dtype", self.dtype)?;
-            kwargs.set_item("quantization", self.quantization.map(|q| q.to_string()))?;
-            kwargs.set_item("revision", self.revision)?;
-            kwargs.set_item("seed", self.seed)?;
-            kwargs.set_item("gpu_memory_utilization", self.gpu_memory_utilization)?;
-            kwargs.set_item("swap_space", self.swap_space)?;
+            kwargs.set_item("model", self.model).format_traceback(py)?;
+            kwargs
+                .set_item("tokenizer", self.tokenizer)
+                .format_traceback(py)?;
+            kwargs
+                .set_item("tokenizer_mode", self.tokenizer_mode.to_string())
+                .format_traceback(py)?;
+            kwargs
+                .set_item("trust_remote_code", self.trust_remote_code)
+                .format_traceback(py)?;
+            kwargs
+                .set_item("tensor_parallel_size", self.tensor_parallel_size)
+                .format_traceback(py)?;
+            kwargs.set_item("dtype", self.dtype).format_traceback(py)?;
+            kwargs
+                .set_item("quantization", self.quantization.map(|q| q.to_string()))
+                .format_traceback(py)?;
+            kwargs
+                .set_item("revision", self.revision)
+                .format_traceback(py)?;
+            kwargs.set_item("seed", self.seed).format_traceback(py)?;
+            kwargs
+                .set_item("gpu_memory_utilization", self.gpu_memory_utilization)
+                .format_traceback(py)?;
+            kwargs
+                .set_item("swap_space", self.swap_space)
+                .format_traceback(py)?;
 
             let vllm = PyModule::import(py, "vllm").format_traceback(py)?;
             vllm.getattr("LLM")
@@ -169,14 +188,25 @@ impl LLM {
     /// This automatically batches the given prompts, considering
     /// the memory constraint. For the best performance, put all of your prompts
     /// into a single list and pass it to this method.
-    pub fn generate(&self, prompts: &[&str]) -> Result<Vec<String>> {
+    pub fn generate(
+        &self,
+        prompts: &[&str],
+        params: Option<&SamplingParams>,
+    ) -> Result<Vec<String>> {
         let prompts: Vec<_> = prompts.iter().map(|s| s.to_string()).collect();
+
         Python::with_gil(|py| {
-            let outputs: Vec<Py<PyAny>> = self
+            let kwargs = PyDict::new(py);
+            kwargs.set_item("prompts", prompts).format_traceback(py)?;
+            kwargs
+                .set_item("sampling_params", params)
+                .format_traceback(py)?;
+
+            let outputs: Vec<PyObject> = self
                 .inner
                 .getattr(py, "generate")
                 .format_traceback(py)?
-                .call1(py, (prompts.into_py(py),))
+                .call(py, (), Some(kwargs))
                 .format_traceback(py)?
                 .extract(py)
                 .format_traceback(py)?;
@@ -184,7 +214,7 @@ impl LLM {
             outputs
                 .iter()
                 .map(|output| -> Result<String> {
-                    let outputs: Vec<Py<PyAny>> = output
+                    let outputs: Vec<PyObject> = output
                         .getattr(py, "outputs")
                         .format_traceback(py)?
                         .extract(py)
@@ -243,8 +273,14 @@ mod tests {
             "The capital of France is",
             "The future of AI is",
         ];
+        let sampling_params = SamplingParamsBuilder::new()
+            .temperature(0.8)
+            .top_p(0.95)
+            .build()
+            .unwrap();
+
         let llm = LLMBuilder::new("facebook/opt-125m").build().unwrap();
-        let outputs = llm.generate(&prompts).unwrap();
+        let outputs = llm.generate(&prompts, Some(&sampling_params)).unwrap();
         assert_eq!(prompts.len(), outputs.len());
     }
 }
