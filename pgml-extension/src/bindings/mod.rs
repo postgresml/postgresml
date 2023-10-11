@@ -46,6 +46,8 @@ pub mod python;
 pub mod sklearn;
 #[cfg(feature = "python")]
 pub mod transformers;
+#[cfg(feature = "python")]
+pub mod vllm;
 pub mod xgboost;
 
 pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>;
