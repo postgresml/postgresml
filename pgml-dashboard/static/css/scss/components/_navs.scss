@@ -198,12 +198,9 @@
         &:focus:not(:hover) {
             color: #{$gray-100}
         }
-
     }
     [aria-expanded=false] {
-        span.material-symbols-outlined {
-            transform: rotate(-90deg);
-        }
+        transform: rotate(-90deg);
     }
     @include media-breakpoint-down(xxl) {
         border-radius: 0px;
