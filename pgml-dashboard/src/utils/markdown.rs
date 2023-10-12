@@ -575,7 +575,8 @@ pub fn get_sub_links(list: &markdown::mdast::List) -> Result<Vec<NavLink>> {
                                                     let mut url =
                                                         Path::new(&link.url).with_extension("");
                                                     if url.ends_with("README") {
-                                                        url = url.parent().unwrap().join("./").into();
+                                                        url =
+                                                            url.parent().unwrap().join("./").into();
                                                     }
                                                     let url = Path::new("/docs/guides")
                                                         .join(url)
