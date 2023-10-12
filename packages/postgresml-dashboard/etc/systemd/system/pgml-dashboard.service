@@ -7,7 +7,7 @@ StartLimitIntervalSec=0
 Environment=RUST_LOG=info
 Environment=DASHBOARD_STATIC_DIRECTORY=/usr/share/pgml-dashboard/dashboard-static
 Environment=DASHBOARD_CONTENT_DIRECTORY=/usr/share/pgml-dashboard/dashboard-content
-Environment=DASHBOARD_CONTENT_DIRECTORY=/usr/share/pgml-docs
+Environment=DASHBOARD_DOCS_DIRECTORY=/usr/share/pgml-docs
 Environment=ROCKET_ADDRESS=0.0.0.0
 Environment=GITHUB_STARS=${GITHUB_STARS}
 Environment=SEARCH_INDEX_DIRECTORY=/var/lib/pgml-dashboard/search-index
