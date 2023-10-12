@@ -52,7 +52,6 @@ async fn doc_handler(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk, Sta
         .expect("could not parse table of contents markdown");
     let guides = markdown::parse_summary_into_nav_links(&mdast)
         .expect("could not extract nav links from table of contents");
-
     render(
         cluster,
         &path,
@@ -137,14 +136,21 @@ async fn render<'a>(
     folder: &'a Path,
     content: &'a str,
 ) -> Result<ResponseOk, Status> {
-    let url = path.clone();
+    let mut path = path
+        .to_str()
+        .expect("path must convert to a string")
+        .to_string();
+    let mut url = path.clone();
+    if path.ends_with("/") {
+        path.push_str("README");
+        url.push_str("./");
+    }
 
     // Get the document content
     let path = Path::new(&content)
         .join(folder)
-        .join(&(path.to_str().unwrap().to_string() + ".md"));
+        .join(&(path.to_string() + ".md"));
 
-    info!("path: {:?}", path);
     // Read to string
     let contents = match tokio::fs::read_to_string(&path).await {
         Ok(contents) => contents,
@@ -207,7 +213,7 @@ async fn render<'a>(
 
     // Handle navigation
     for nav_link in nav_links.iter_mut() {
-        nav_link.should_open(&url.to_str().unwrap().to_string());
+        nav_link.should_open(&url);
     }
 
     let user = if cluster.context.user.is_anonymous() {
