@@ -140,10 +140,9 @@ async fn render<'a>(
         .to_str()
         .expect("path must convert to a string")
         .to_string();
-    let mut url = path.clone();
+    let url = path.clone();
     if path.ends_with("/") {
         path.push_str("README");
-        url.push_str("./");
     }
 
     // Get the document content

@@ -1,12 +1,12 @@
 <div class="nav flex-column" role="tablist" aria-orientation="vertical">
   <%
-  let color = if open {
-    "purple"
-  } else {
-    ""
-  };
 
   if children.is_empty() {
+    let color = if open {
+    "purple"
+    } else {
+    ""
+    };
   %>
   <a class="nav-link px-0 text-break <%- color %>" href="<%- href %>"><%- title %></a>
   <% } else {
@@ -20,6 +20,12 @@
       "show"
     } else {
       "false"
+    };
+
+    let color = if active {
+      "purple"
+    } else {
+      ""
     };
   %>
 
