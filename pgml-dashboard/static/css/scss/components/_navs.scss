@@ -183,6 +183,7 @@
     text-decoration: none;
     border-radius: calc($border-radius / 2);
     white-space: nowrap;
+    font-weight: 400;
 
     .material-symbols-outlined {
         color: #{$neon-shade-300};
@@ -198,13 +199,14 @@
     &:hover {
         background-color: #{$gray-700};
         color: #{$gray-100};
+        @include semibold_by_shadow($gray-100)
     }
     
     &:active, :focus, :target, .active {
         background-color: #{$neon-tint-100};
         color: #{$gray-100};
         border-radius: calc($border-radius / 2);
-
+        
         span {
             color: #{$gray-100};
         }

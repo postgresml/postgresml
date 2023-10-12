@@ -11,7 +11,7 @@
             <% if link.icon.as_ref().is_some() { %>
             <span class="material-symbols-outlined"><%- link.icon.unwrap() %></span>
             <% } %>
-            <span class="fw-normal collapse collapse-horizontal leftnav-collapse show"><%= link.name %></span>
+            <span class="collapse collapse-horizontal leftnav-collapse show"><%= link.name %></span>
             </a>
         </li>
         <% } %>
