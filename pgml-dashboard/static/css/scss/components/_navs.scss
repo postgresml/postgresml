@@ -199,16 +199,28 @@
     &:hover {
         background-color: #{$gray-700};
         color: #{$gray-100};
-        @include semibold_by_shadow($gray-100)
+        
+        span:not(.material-symbols-outlined) {
+            @include semibold_by_shadow($gray-100)
+        }
+        span.material-symbols-outlined {
+            @include bold_by_shadow($neon-shade-300)
+        }
     }
     
     &:active, :focus, :target, .active {
         background-color: #{$neon-tint-100};
         color: #{$gray-100};
         border-radius: calc($border-radius / 2);
-        
+
         span {
             color: #{$gray-100};
+        }
+    }
+
+    &:hover a.active {
+        span.material-symbols-outlined {
+            @include bold_by_shadow($gray-100)
         }
     }
 
