@@ -152,8 +152,14 @@ async fn render<'a>(
 
     // Read to string
     let contents = match tokio::fs::read_to_string(&path).await {
-        Ok(contents) => contents,
-        Err(_) => return Err(Status::NotFound),
+        Ok(contents) => {
+            info!("loading markdown file: '{:?}", path);
+            contents
+        }
+        Err(err) => {
+            warn!("Error parsing markdown file: '{:?}' {:?}", path, err);
+            return Err(Status::NotFound);
+        }
     };
     let parts = contents.split("---").collect::<Vec<&str>>();
     let ((image, description), contents) = if parts.len() > 1 {
