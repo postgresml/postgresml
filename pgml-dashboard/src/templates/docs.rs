@@ -12,6 +12,7 @@ pub struct NavLink {
     pub href: String,
     pub children: Vec<NavLink>,
     pub open: bool,
+    pub active: bool,
 }
 
 impl NavLink {
@@ -19,16 +20,17 @@ impl NavLink {
     pub fn new(title: &str) -> NavLink {
         NavLink {
             id: crate::utils::random_string(25),
-            title: title.to_string(),
-            href: "#".to_string(),
+            title: title.to_owned(),
+            href: "#".to_owned(),
             children: vec![],
             open: false,
+            active: false,
         }
     }
 
     /// Set the link href.
     pub fn href(mut self, href: &str) -> NavLink {
-        self.href = href.to_string();
+        self.href = href.to_owned();
         self
     }
 
@@ -42,20 +44,14 @@ impl NavLink {
     /// Automatically expand the link and it's parents
     /// when one of the children is visible.
     pub fn should_open(&mut self, path: &str) -> bool {
-        let open = if self.children.is_empty() {
-            self.open = self.href.contains(&path);
-            self.open
-        } else {
-            for child in self.children.iter_mut() {
-                if child.should_open(path) {
-                    self.open = true;
-                }
+        self.active = self.href.ends_with(&path);
+        self.open = self.active;
+        for child in self.children.iter_mut() {
+            if child.should_open(path) {
+                self.open = true;
             }
-
-            self.open
-        };
-
-        open
+        }
+        self.open
     }
 }
 

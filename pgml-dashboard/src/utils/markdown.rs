@@ -1,16 +1,19 @@
 use crate::{templates::docs::TocLink, utils::config};
-use comrak::{
-    adapters::{HeadingAdapter, HeadingMeta, SyntaxHighlighterAdapter},
-    arena_tree::Node,
-    nodes::{Ast, AstNode, NodeValue},
-    parse_document, Arena, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions,
-};
+
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
+use anyhow::Result;
+use comrak::{
+    adapters::{HeadingAdapter, HeadingMeta, SyntaxHighlighterAdapter},
+    arena_tree::Node,
+    nodes::{Ast, AstNode, NodeValue},
+    parse_document, Arena, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions,
+};
+use convert_case::Casing;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use tantivy::collector::TopDocs;
@@ -18,28 +21,22 @@ use tantivy::query::{QueryParser, RegexQuery};
 use tantivy::schema::*;
 use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
+use url::Url;
 
+use crate::templates::docs::NavLink;
 use std::fmt;
-use std::sync::atomic::AtomicUsize;
 
-pub struct MarkdownHeadings {
-    header_counter: AtomicUsize,
-}
+pub struct MarkdownHeadings {}
 
 impl MarkdownHeadings {
     pub fn new() -> Self {
-        Self {
-            header_counter: AtomicUsize::new(0),
-        }
+        Self {}
     }
 }
 
 impl HeadingAdapter for MarkdownHeadings {
     fn enter(&self, meta: &HeadingMeta) -> String {
-        let id = self
-            .header_counter
-            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let id = format!("header-{}", id);
+        let id = meta.content.to_case(convert_case::Case::Kebab);
 
         match meta.level {
             1 => format!(r#"<h1 class="h1 mb-5" id="{id}">"#),
@@ -491,7 +488,7 @@ pub fn options() -> ComrakOptions {
 }
 
 /// Iterate through the document tree and call function F on all nodes.
-fn iter_nodes<'a, F>(node: &'a AstNode<'a>, f: &mut F) -> anyhow::Result<()>
+fn iter_nodes<'a, F>(node: &'a AstNode<'a>, f: &mut F) -> Result<()>
 where
     F: FnMut(&'a AstNode<'a>) -> anyhow::Result<bool>,
 {
@@ -506,6 +503,126 @@ where
     Ok(())
 }
 
+pub fn iter_mut_all<F>(node: &mut markdown::mdast::Node, f: &mut F) -> Result<()>
+where
+    F: FnMut(&mut markdown::mdast::Node) -> Result<()>,
+{
+    let _ = f(node);
+    match node.children_mut() {
+        Some(children) => {
+            for child in children {
+                let _ = iter_mut_all(child, f);
+            }
+        }
+        _ => (),
+    }
+
+    Ok(())
+}
+
+pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
+    let _ = iter_mut_all(node, &mut |node| {
+        match node {
+            markdown::mdast::Node::Link(ref mut link) => {
+                info!("handling link: {:?}", link);
+                match Url::parse(&link.url) {
+                    Ok(url) => {
+                        if !url.has_host() {
+                            info!("relative: {:?}", link);
+                            let mut url_path = url.path().to_string();
+                            let url_path_path = Path::new(&url_path);
+                            match url_path_path.extension() {
+                                Some(ext) => {
+                                    if ext.to_str() == Some(".md") {
+                                        info!("md: {:?}", link);
+                                        let base = url_path_path.with_extension("");
+                                        url_path = base.into_os_string().into_string().unwrap();
+                                    }
+                                }
+                                _ => {
+                                    warn!("not markdown path: {:?}", path)
+                                }
+                            }
+                            link.url = path.join(url_path).into_os_string().into_string().unwrap();
+                        }
+                    }
+                    Err(e) => {
+                        warn!("could not parse url in markdown: {}", e)
+                    }
+                }
+            }
+            _ => (),
+        };
+
+        Ok(())
+    });
+}
+
+pub fn get_sub_links(list: &markdown::mdast::List) -> Result<Vec<NavLink>> {
+    let mut links = Vec::new();
+    for node in list.children.iter() {
+        match node {
+            markdown::mdast::Node::ListItem(list_item) => {
+                for node in list_item.children.iter() {
+                    match node {
+                        markdown::mdast::Node::Paragraph(paragraph) => {
+                            for node in paragraph.children.iter() {
+                                match node {
+                                    markdown::mdast::Node::Link(link) => {
+                                        for node in link.children.iter() {
+                                            match node {
+                                                markdown::mdast::Node::Text(text) => {
+                                                    let mut url = Path::new(&link.url)
+                                                        .with_extension("")
+                                                        .to_string_lossy()
+                                                        .to_string();
+                                                    if url.ends_with("README") {
+                                                        url = url.replace("README", "");
+                                                    }
+                                                    let url = Path::new("/docs/guides")
+                                                        .join(url)
+                                                        .into_os_string()
+                                                        .into_string()
+                                                        .unwrap();
+                                                    let parent = NavLink::new(text.value.as_str())
+                                                        .href(&url);
+                                                    links.push(parent);
+                                                }
+                                                _ => error!("unhandled link child: {:?}", node),
+                                            }
+                                        }
+                                    }
+                                    _ => error!("unhandled paragraph child: {:?}", node),
+                                }
+                            }
+                        }
+                        markdown::mdast::Node::List(list) => {
+                            let mut link = links.pop().unwrap();
+                            link.children = get_sub_links(list).unwrap();
+                            links.push(link);
+                        }
+                        _ => error!("unhandled list_item child: {:?}", node),
+                    }
+                }
+            }
+            _ => error!("unhandled list child: {:?}", node),
+        }
+    }
+    Ok(links)
+}
+
+pub fn parse_summary_into_nav_links(root: &markdown::mdast::Node) -> Result<Vec<NavLink>> {
+    for node in root.children().unwrap().iter() {
+        match node {
+            markdown::mdast::Node::List(list) => {
+                return get_sub_links(list);
+            }
+            _ => { /* irrelevant */ }
+        }
+    }
+    return Ok(vec![]);
+}
+
 /// Get the title of the article.
 ///
 /// # Arguments
@@ -513,18 +630,22 @@ where
 /// * `root` - The root node of the document tree.
 ///
 pub fn get_title<'a>(root: &'a AstNode<'a>) -> anyhow::Result<String> {
-    let mut title = String::new();
+    let mut title = None;
 
     iter_nodes(root, &mut |node| {
+        if title.is_some() {
+            return Ok(false);
+        }
+
         match &node.data.borrow().value {
             &NodeValue::Heading(ref header) => {
                 if header.level == 1 {
-                    let sibling = node
+                    let content = node
                         .first_child()
                         .ok_or(anyhow::anyhow!("markdown heading has no child"))?;
-                    match &sibling.data.borrow().value {
+                    match &content.data.borrow().value {
                         &NodeValue::Text(ref text) => {
-                            title = text.to_owned();
+                            title = Some(text.to_owned());
                             return Ok(false);
                         }
                         _ => (),
@@ -537,6 +658,10 @@ pub fn get_title<'a>(root: &'a AstNode<'a>) -> anyhow::Result<String> {
         Ok(true)
     })?;
 
+    let title = match title {
+        Some(title) => title,
+        None => String::new(),
+    };
     Ok(title)
 }
 
@@ -933,6 +1058,113 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         tabs.clear();
                         node.detach();
                     }
+                } else if text.starts_with("{% endtab %}") {
+                    //ignore it
+                    node.detach()
+                } else if text.starts_with("{% tab title=\"") {
+                    let mut parent = {
+                        match node.parent() {
+                            Some(parent) => parent,
+                            None => node,
+                        }
+                    };
+
+                    let tab = Tab::new(text.replace("{% tab title=\"", "").replace("\" %}", ""));
+
+                    if tabs.is_empty() {
+                        let n =
+                            arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                                r#"
+                                <ul class="nav nav-tabs">
+                            "#
+                                .to_string()
+                                .into(),
+                            )))));
+
+                        parent.insert_after(n);
+                        parent.detach();
+                        parent = n;
+                    }
+
+                    if tabs.is_empty() {
+                        tabs.push(tab.active());
+                    } else {
+                        tabs.push(tab);
+                    };
+
+                    parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(
+                        NodeValue::HtmlInline(tabs.last().unwrap().render().into()),
+                    )))));
+
+                    // Remove the "===" from the tree.
+                    node.detach();
+                } else if text.starts_with("{% endtabs %}") {
+                    let mut parent = {
+                        match node.parent() {
+                            Some(parent) => parent,
+                            None => node,
+                        }
+                    };
+
+                    if !tabs.is_empty() {
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
+                            NodeValue::HtmlInline("</ul>".to_string().into()),
+                        ))));
+
+                        parent.insert_after(n);
+                        parent.detach();
+
+                        parent = n;
+
+                        let n =
+                            arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                                r#"<div class="tab-content">"#.to_string().into(),
+                            )))));
+
+                        parent.insert_after(n);
+
+                        parent = n;
+
+                        for tab in tabs.iter() {
+                            let r = arena.alloc(Node::new(RefCell::new(Ast::new(
+                                NodeValue::HtmlInline(
+                                    format!(
+                                        r#"
+                                                <div
+                                                    class="tab-pane {active} pt-2"
+                                                    id="tab-{id}"
+                                                    role="tabpanel"
+                                                    aria-labelledby="tab-{id}">
+                                            "#,
+                                        active = if tab.active { "show active" } else { "" },
+                                        id = tab.id
+                                    )
+                                    .into(),
+                                ),
+                            ))));
+
+                            for child in tab.children.iter() {
+                                r.append(child);
+                            }
+
+                            parent.append(r);
+                            parent = r;
+
+                            let n = arena.alloc(Node::new(RefCell::new(Ast::new(
+                                NodeValue::HtmlInline(r#"</div>"#.to_string().into()),
+                            ))));
+
+                            parent.insert_after(n);
+                            parent = n;
+                        }
+
+                        parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(
+                            NodeValue::HtmlInline(r#"</div>"#.to_string().into()),
+                        )))));
+
+                        tabs.clear();
+                        node.detach();
+                    }
                 } else if text.starts_with("!!! info")
                     || text.starts_with("!!! bug")
                     || text.starts_with("!!! tip")
@@ -1108,9 +1340,8 @@ impl SearchIndex {
     }
 
     pub fn documents() -> Vec<PathBuf> {
-        let guides =
-            glob::glob(&(config::content_dir() + "/docs/guides/**/*.md")).expect("glob failed");
-        let blogs = glob::glob(&(config::content_dir() + "/blog/**/*.md")).expect("glob failed");
+        let guides = glob::glob(&(config::docs_dir() + "/guides/**/*.md")).expect("glob failed");
+        let blogs = glob::glob(&(config::blogs_dir() + "/blog/**/*.md")).expect("glob failed");
         guides
             .chain(blogs)
             .map(|path| path.expect("glob path failed"))

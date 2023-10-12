@@ -34,10 +34,17 @@ pub fn static_dir() -> String {
     }
 }
 
-pub fn content_dir() -> String {
+pub fn blogs_dir() -> String {
     match var("DASHBOARD_CONTENT_DIRECTORY") {
         Ok(dir) => dir,
         Err(_) => "content".to_string(),
+    }
+}
+
+pub fn docs_dir() -> String {
+    match var("DASHBOARD_DOCS_DIRECTORY") {
+        Ok(dir) => dir,
+        Err(_) => "../pgml-docs/".to_string(),
     }
 }
 
