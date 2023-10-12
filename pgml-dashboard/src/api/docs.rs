@@ -140,10 +140,9 @@ async fn render<'a>(
         .to_str()
         .expect("path must convert to a string")
         .to_string();
-    let mut url = path.clone();
+    let url = path.clone();
     if path.ends_with("/") {
         path.push_str("README");
-        url.push_str("./");
     }
 
     // Get the document content
@@ -153,8 +152,14 @@ async fn render<'a>(
 
     // Read to string
     let contents = match tokio::fs::read_to_string(&path).await {
-        Ok(contents) => contents,
-        Err(_) => return Err(Status::NotFound),
+        Ok(contents) => {
+            info!("loading markdown file: '{:?}", path);
+            contents
+        }
+        Err(err) => {
+            warn!("Error parsing markdown file: '{:?}' {:?}", path, err);
+            return Err(Status::NotFound);
+        }
     };
     let parts = contents.split("---").collect::<Vec<&str>>();
     let ((image, description), contents) = if parts.len() > 1 {
