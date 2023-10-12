@@ -145,14 +145,12 @@ async fn render<'a>(
         path.push_str("README");
         url.push_str("./");
     }
-    info!("it's a path: {:?} {:?}", path, url);
 
     // Get the document content
     let path = Path::new(&content)
         .join(folder)
         .join(&(path.to_string() + ".md"));
 
-    info!("path: {:?}", path);
     // Read to string
     let contents = match tokio::fs::read_to_string(&path).await {
         Ok(contents) => contents,

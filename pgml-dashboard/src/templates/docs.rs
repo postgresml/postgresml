@@ -42,8 +42,6 @@ impl NavLink {
     /// Automatically expand the link and it's parents
     /// when one of the children is visible.
     pub fn should_open(&mut self, path: &str) -> bool {
-        info!("self: {:?} | {:?}", self.href, path);
-
         self.open = self.href.contains(&path);
         let open = if self.children.is_empty() {
             self.open
