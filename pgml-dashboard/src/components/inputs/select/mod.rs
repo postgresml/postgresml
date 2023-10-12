@@ -1,9 +1,9 @@
 use crate::components::stimulus::stimulus_action::{StimulusAction, StimulusEvents};
 use crate::components::stimulus::stimulus_target::StimulusTarget;
+use crate::types::CustomOption;
 use pgml_components::component;
 use pgml_components::Component;
 use sailfish::TemplateOnce;
-use crate::types::CustomOption;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "inputs/select/template.html")]

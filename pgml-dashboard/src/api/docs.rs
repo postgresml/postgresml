@@ -53,7 +53,15 @@ async fn doc_handler(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk, Sta
     let guides = markdown::parse_summary_into_nav_links(&mdast)
         .expect("could not extract nav links from table of contents");
 
-    render(cluster, &path, guides, "Guides", &Path::new("docs"), &config::docs_dir()).await
+    render(
+        cluster,
+        &path,
+        guides,
+        "Guides",
+        &Path::new("docs"),
+        &config::docs_dir(),
+    )
+    .await
 }
 
 #[get("/blog/<path..>", rank = 10)]

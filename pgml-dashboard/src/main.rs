@@ -285,10 +285,7 @@ mod test {
     #[rocket::async_test]
     async fn test_docs() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client
-            .get("/docs/guides/README")
-            .dispatch()
-            .await;
+        let response = client.get("/docs/guides/README").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 

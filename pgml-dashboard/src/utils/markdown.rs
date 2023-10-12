@@ -26,13 +26,11 @@ use url::Url;
 use crate::templates::docs::NavLink;
 use std::fmt;
 
-pub struct MarkdownHeadings {
-}
+pub struct MarkdownHeadings {}
 
 impl MarkdownHeadings {
     pub fn new() -> Self {
-        Self {
-        }
+        Self {}
     }
 }
 
@@ -583,7 +581,6 @@ pub fn get_sub_links(list: &markdown::mdast::List) -> Result<Vec<NavLink>> {
                                                         .unwrap();
                                                     let parent = NavLink::new(text.value.as_str())
                                                         .href(&url);
-                                                    info!("link: {:?}", parent);
                                                     links.push(parent);
                                                 }
                                                 _ => error!("unhandled link child: {:?}", node),
@@ -1075,8 +1072,8 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                                 r#"
                                 <ul class="nav nav-tabs">
                             "#
-                                    .to_string()
-                                    .into(),
+                                .to_string()
+                                .into(),
                             )))));
 
                         parent.insert_after(n);
@@ -1137,7 +1134,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                                         active = if tab.active { "show active" } else { "" },
                                         id = tab.id
                                     )
-                                        .into(),
+                                    .into(),
                                 ),
                             ))));
 
@@ -1338,8 +1335,7 @@ impl SearchIndex {
     }
 
     pub fn documents() -> Vec<PathBuf> {
-        let guides =
-            glob::glob(&(config::docs_dir() + "/guides/**/*.md")).expect("glob failed");
+        let guides = glob::glob(&(config::docs_dir() + "/guides/**/*.md")).expect("glob failed");
         let blogs = glob::glob(&(config::blogs_dir() + "/blog/**/*.md")).expect("glob failed");
         guides
             .chain(blogs)
