@@ -1,9 +1,11 @@
-<% use crate::templates::components::GithubIcon; %>
-<% use crate::templates::components::PostgresLogo; %>
-<% use crate::components::{Dropdown, ProfileIcon}; %>
+<% 
+  use crate::templates::components::GithubIcon;
+  use crate::templates::components::PostgresLogo;
+  use crate::components::{Dropdown, ProfileIcon}; 
+%>
 
-  <div class="fixed-top-nav">
-    <nav class="navbar-web-app horizontal navbar-expand-lg" data-controller="search topnav-web-app">
+  <div class="fixed-top-nav" data-controller="navigation-navbar-web-app">
+    <nav class="navbar navbar-web-app horizontal navbar-expand-lg" data-controller="search topnav-web-app">
       
       <div class="controls">
         <!-- Toggles items that come from left nav -->
@@ -19,7 +21,7 @@
   
         <!-- Button to toggle collapsed menu for less than lg screens -->
         <button class="navbar-toggler collapsed topnav-controlls" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <% include!("../../../templates/components/profile_icon.html"); %>
+          <%+ ProfileIcon::new() %>
         </button>
       </div>
 
@@ -149,4 +151,4 @@
     </nav>
   </div>
 
-  <% include!("../../../templates/components/search_modal.html");%>
+  <% include!("../../../../../templates/components/search_modal.html");%>

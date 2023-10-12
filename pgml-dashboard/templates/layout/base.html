@@ -1,4 +1,4 @@
-<% use crate::templates::components::Navbar; %>
+<% use crate::components::navigation::navbar::marketing::Marketing as MarketingNavbar; %>
 <!DOCTYPE html>
 <html lang="en-US" data-bs-theme="dark">
 
@@ -11,7 +11,7 @@
           <div class="ellipse-21" style="width: 35vw; height: 35vh; top: 0vh; left: -7vw"></div>
         </div>
 
-        <%- Navbar::render( user ) %>
+        <%+ MarketingNavbar::new( user ) %>
 
         <div class="container my-4 my-xxl-5">
           <div class="row position-relative">

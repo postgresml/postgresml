@@ -1,0 +1,26 @@
+.leftnav-container {
+    position: sticky; 
+    top: $navbar-height; 
+    height: calc( 100vh - $navbar-height );
+    background-color: var(--webapp-nav-bg);
+    border-right: 1px solid #{$gray-500};
+    max-width: $left-nav-w;
+    padding-top: 0px;
+    z-index: $zindex-fixed;
+
+    @include media-breakpoint-down(lg) {
+        display: none;
+    }
+}
+
+.leftnav {
+    max-width: 260px;
+
+    border: none;
+    align-items: start;
+    background-color: inherit;
+
+    @include media-breakpoint-down(lg) {
+        background-color: #{$gray-900}
+    }
+}

@@ -3,22 +3,20 @@ use crate::utils::config;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 
-#[derive(TemplateOnce)]
-#[template(path = "layout/nav/top.html")]
-pub struct Navbar {
+#[derive(TemplateOnce, Default)]
+#[template(path = "navigation/navbar/marketing/template.html")]
+pub struct Marketing {
     pub current_user: Option<models::User>,
     pub standalone_dashboard: bool,
 }
 
-impl Navbar {
-    pub fn render(user: Option<models::User>) -> String {
-        Navbar {
+impl Marketing {
+    pub fn new(user: Option<models::User>) -> Marketing {
+        Marketing {
             current_user: user,
             standalone_dashboard: config::standalone_dashboard(),
         }
-        .render_once()
-        .unwrap()
     }
 }
 
-component!(Navbar);
+component!(Marketing);

@@ -316,11 +316,11 @@ The `pgml.train` function will return a table with some information about the tr
 
 !!!
 
-PostgresML automatically deploys a model for online predictions after training, if the **key metric** is a better than the currently deployed model. We'll train many models over time for this project, and you can read more about deployments later.
+PostgresML automatically deploys a model for online predictions after training, if the **key metric** is better than the currently deployed model. We'll train many models over time for this project, and you can read more about deployments later.
 
 ### Making Predictions
 
-Once a model is trained, you can use `pgml.predict` to use it on new inputs. `pgml.predict` is a function that takes our project name, along with an array of features to predict on. In this case, our features are th `title_rank` and `body_rank`. We can use the `pgml.predict` function to make predictions on the training data, but in a real application, we'd want to make predictions on new data that the model hasn't seen before. Let's do a quick sanity check, and see what the model predicts for all the values of our training data. 
+Once a model is trained, you can use `pgml.predict` to use it on new inputs. `pgml.predict` is a function that takes our project name, along with an array of features to predict on. In this case, our features are `title_rank` and `body_rank`. We can use the `pgml.predict` function to make predictions on the training data, but in a real application, we'd want to make predictions on new data that the model hasn't seen before. Let's do a quick sanity check, and see what the model predicts for all the values of our training data. 
 
 
 !!! generic

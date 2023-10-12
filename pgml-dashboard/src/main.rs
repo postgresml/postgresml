@@ -102,7 +102,7 @@ async fn main() {
 
     markdown::SearchIndex::build().await.unwrap();
 
-    pgml_dashboard::migrate(&guards::Cluster::default().pool())
+    pgml_dashboard::migrate(&guards::Cluster::default(None).pool())
         .await
         .unwrap();
 

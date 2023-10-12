@@ -1,12 +1,11 @@
 <% use crate::templates::components::GithubIcon; %>
 <% use crate::templates::components::PostgresLogo; %>
 
-  <div class="sticky-top-nav">
-    <nav class="navbar-marketing-site horizontal navbar-expand-lg" data-controller="search topnav-styling">
+  <div class="sticky-top-nav" data-controller="navigation-navbar-marketing">
+    <nav class="navbar navbar-marketing-site horizontal navbar-expand-lg" data-controller="search topnav-styling">
       <div class="container gap-4">
         <div class="controls">
           <%+ PostgresLogo::new("/") %>
-          
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
@@ -29,7 +28,7 @@
   
           <ul class="navbar-nav gap-4 gap-lg-3 mb-2 mb-lg-0">
             <li class="align-items-center d-none d-lg-flex">
-              <%- GithubIcon{show_stars: true}.render_once().unwrap() %>
+              <%+ GithubIcon {show_stars: true} %>
             </li>
             <li class="d-flex align-items-center d-block d-lg-none">
               <a class="nav-link p-0" href="https://github.com/postgresml/postgresml">Open Source</a>
@@ -69,4 +68,4 @@
     </nav>
   </div>
 
-  <% include!("../../components/search_modal.html");%>
+  <% include!("../../../../../templates/components/search_modal.html");%>
