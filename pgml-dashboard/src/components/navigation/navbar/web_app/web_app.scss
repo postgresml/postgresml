@@ -1,0 +1,24 @@
+.navbar-web-app {
+    background-color: var(--webapp-nav-bg);
+
+    border-bottom: 1px solid #{$gray-500};
+    border-radius: 0px;
+    gap: 12px;
+
+    @include media-breakpoint-down(lg) {
+        background-color: #{$gray-900};
+    }
+
+    .navbar-collapse {
+        @include media-breakpoint-down(lg) {
+            position: fixed;
+            top: $navbar-height;
+            left: 0px;
+            width: 100vw;
+        }
+    }
+    
+    &.horizontal {
+        height: $navbar-height;
+    }
+}

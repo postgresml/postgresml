@@ -24,8 +24,8 @@ pub struct Cluster {
     pub context: Context,
 }
 
-impl Default for Cluster {
-    fn default() -> Self {
+impl Cluster {
+    pub fn default(uri: Option<String>) -> Self {
         // Needed for query cancellation
         let max_connections = 2;
 
@@ -90,27 +90,51 @@ impl Default for Cluster {
                             "Notebooks".to_string(),
                             "/dashboard?tab=Notebooks".to_string(),
                         )
-                        .icon("thumbnail_bar"),
+                        .icon("thumbnail_bar")
+                        .active(
+                            uri.is_some()
+                                && (uri.clone().unwrap().starts_with("/dashboard?tab=Notebook")
+                                    || uri.clone().unwrap() == "/dashboard"),
+                        ),
                         StaticNavLink::new(
                             "Projects".to_string(),
                             "/dashboard?tab=Projects".to_string(),
                         )
-                        .icon("thumbnail_bar"),
+                        .icon("thumbnail_bar")
+                        .active(
+                            uri.is_some()
+                                && uri.clone().unwrap().starts_with("/dashboard?tab=Project"),
+                        ),
                         StaticNavLink::new(
                             "Models".to_string(),
                             "/dashboard?tab=Models".to_string(),
                         )
-                        .icon("thumbnail_bar"),
+                        .icon("thumbnail_bar")
+                        .active(
+                            uri.is_some()
+                                && uri.clone().unwrap().starts_with("/dashboard?tab=Model"),
+                        ),
                         StaticNavLink::new(
                             "Snapshots".to_string(),
                             "/dashboard?tab=Snapshots".to_string(),
                         )
-                        .icon("thumbnail_bar"),
+                        .icon("thumbnail_bar")
+                        .active(
+                            uri.is_some()
+                                && uri.clone().unwrap().starts_with("/dashboard?tab=Snapshot"),
+                        ),
                         StaticNavLink::new(
                             "Upload data".to_string(),
                             "/dashboard?tab=Upload_Data".to_string(),
                         )
-                        .icon("thumbnail_bar"),
+                        .icon("thumbnail_bar")
+                        .active(
+                            uri.is_some()
+                                && uri
+                                    .clone()
+                                    .unwrap()
+                                    .starts_with("/dashboard?tab=Upload_Data"),
+                        ),
                     ],
                 },
                 lower_left_nav: StaticNav::default(),
@@ -124,7 +148,8 @@ impl<'r> FromRequest<'r> for &'r Cluster {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        request::Outcome::Success(request.local_cache(|| Cluster::default()))
+        let uri = request.uri().to_string();
+        request::Outcome::Success(request.local_cache(|| Cluster::default(Some(uri))))
     }
 }
 

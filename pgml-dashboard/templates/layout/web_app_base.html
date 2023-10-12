@@ -1,10 +1,10 @@
 <% 
     use crate::templates::components::{
-        NavbarWebApp,
-        LeftNavWebApp,
         Breadcrumbs,
         StaticNavLink
-    }; 
+    };
+    use crate::components::navigation::navbar::web_app::WebApp as WebAppNavbar;
+    use crate::components::navigation::left_nav::web_app::WebApp as WebAppLeftNav;
 %>
 
 <%
@@ -24,11 +24,11 @@
         <main>
             <div class="container-fluid p-0 min-vh-lg-100">
                 <div class="row gx-0 min-vh-lg-100 gy-0">
-                    <%- NavbarWebApp::render(left_nav_links, account_management_nav ) %>
+                    <%+ WebAppNavbar::new(left_nav_links, account_management_nav) %>
 
                     <div class="d-flex">
                         <div class="leftnav-container py-3" >
-                            <%- LeftNavWebApp::render( upper_left_nav, lower_left_nav, dropdown_nav ) %>
+                            <%+ WebAppLeftNav::new( upper_left_nav, lower_left_nav, dropdown_nav ) %>
                         </div>
     
                         <div class="clear-from-under-navbar flex-grow-1 min-vw-0">

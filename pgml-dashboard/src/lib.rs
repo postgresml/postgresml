@@ -13,7 +13,6 @@ use sailfish::TemplateOnce;
 use sqlx::PgPool;
 use std::collections::HashMap;
 
-pub mod types;
 pub mod api;
 pub mod components;
 pub mod fairings;
@@ -22,6 +21,7 @@ pub mod guards;
 pub mod models;
 pub mod responses;
 pub mod templates;
+pub mod types;
 pub mod utils;
 
 use guards::{Cluster, ConnectedCluster};

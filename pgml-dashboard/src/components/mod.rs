@@ -28,10 +28,6 @@ pub mod inputs;
 pub mod left_nav_menu;
 pub use left_nav_menu::LeftNavMenu;
 
-// src/components/left_nav_web_app
-pub mod left_nav_web_app;
-pub use left_nav_web_app::LeftNavWebApp;
-
 // src/components/modal
 pub mod modal;
 pub use modal::Modal;
@@ -43,14 +39,6 @@ pub use nav::Nav;
 // src/components/nav_link
 pub mod nav_link;
 pub use nav_link::NavLink;
-
-// src/components/navbar
-pub mod navbar;
-pub use navbar::Navbar;
-
-// src/components/navbar_web_app
-pub mod navbar_web_app;
-pub use navbar_web_app::NavbarWebApp;
 
 // src/components/navigation
 pub mod navigation;
