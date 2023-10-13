@@ -2,7 +2,7 @@
       data-inputs-range-group-bounds-value='{"min": <%- min%>, "max": <%- max%>}'
       data-inputs-range-group-initial-value="<%- initial_value.to_string() %>"
       data-inputs-range-group-target="group"
-      <% if group_target.is_some() { %><%- group_target.unwrap() %> <% } %>
+      <%- group_target %>
       data-action="reset->inputs-range-group#reset">
   <div class="d-flex flex-column flex-md-row">
     <div class="flex-grow-1">
@@ -13,7 +13,7 @@
         <input class="text-input form-control text-end text-white fw-bold" maxlength="4" type="text" 
           data-inputs-range-group-target="text"
           data-action="focusout->inputs-range-group#updateRange"
-          <% if text_target.is_some() {%><%- text_target.unwrap()%><% } %>>
+          <%- text_target %>>
         <div class="input-group-text fw-bold text-start" style="width: 2em;">
           <%- units %>
         </div>
@@ -30,7 +30,7 @@
     value="<%- initial_value.to_string() %>"
     data-action="inputs-range-group#updateText" 
     data-inputs-range-group-target="range"
-    <% if range_target.is_some() { %><%- range_target.unwrap() %><% } %>>
+    <%- range_target %>>
     
     <% if cost_rate.is_some() { %>
     <div class="w-100 d-flex justify-content-end">
