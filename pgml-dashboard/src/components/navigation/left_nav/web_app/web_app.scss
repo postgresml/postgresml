@@ -14,6 +14,7 @@
 }
 
 .leftnav {
+    @extend .navbar;
     max-width: 260px;
 
     border: none;

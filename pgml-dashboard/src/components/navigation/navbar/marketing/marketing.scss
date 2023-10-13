@@ -1,4 +1,5 @@
 .navbar-marketing-site {
+    @extend .navbar;
     &.horizontal {
         background: linear-gradient(180deg, rgba(0, 0, 0, 0.64) -55.68%, rgba(0, 0, 0, 0) 100%);
     }

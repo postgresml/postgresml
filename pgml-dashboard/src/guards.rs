@@ -90,7 +90,7 @@ impl Cluster {
                             "Notebooks".to_string(),
                             "/dashboard?tab=Notebooks".to_string(),
                         )
-                        .icon("thumbnail_bar")
+                        .icon("add_notes")
                         .active(
                             uri.is_some()
                                 && (uri.clone().unwrap().starts_with("/dashboard?tab=Notebook")
@@ -100,7 +100,7 @@ impl Cluster {
                             "Projects".to_string(),
                             "/dashboard?tab=Projects".to_string(),
                         )
-                        .icon("thumbnail_bar")
+                        .icon("library_add")
                         .active(
                             uri.is_some()
                                 && uri.clone().unwrap().starts_with("/dashboard?tab=Project"),
@@ -109,7 +109,7 @@ impl Cluster {
                             "Models".to_string(),
                             "/dashboard?tab=Models".to_string(),
                         )
-                        .icon("thumbnail_bar")
+                        .icon("space_dashboard")
                         .active(
                             uri.is_some()
                                 && uri.clone().unwrap().starts_with("/dashboard?tab=Model"),
@@ -118,7 +118,7 @@ impl Cluster {
                             "Snapshots".to_string(),
                             "/dashboard?tab=Snapshots".to_string(),
                         )
-                        .icon("thumbnail_bar")
+                        .icon("filter_center_focus")
                         .active(
                             uri.is_some()
                                 && uri.clone().unwrap().starts_with("/dashboard?tab=Snapshot"),
@@ -127,7 +127,7 @@ impl Cluster {
                             "Upload data".to_string(),
                             "/dashboard?tab=Upload_Data".to_string(),
                         )
-                        .icon("thumbnail_bar")
+                        .icon("upload")
                         .active(
                             uri.is_some()
                                 && uri
