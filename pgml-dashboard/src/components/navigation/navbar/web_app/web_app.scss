@@ -1,4 +1,5 @@
 .navbar-web-app {
+    @extend .navbar;
     background-color: var(--webapp-nav-bg);
 
     border-bottom: 1px solid #{$gray-500};
