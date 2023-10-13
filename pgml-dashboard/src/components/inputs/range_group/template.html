@@ -1,4 +1,9 @@
-<div data-controller="inputs-range-group" data-inputs-range-group-bounds-value='{"min": <%- min%>, "max": <%- max%>}'>
+<div data-controller="inputs-range-group" 
+      data-inputs-range-group-bounds-value='{"min": <%- min%>, "max": <%- max%>}'
+      data-inputs-range-group-initial-value="<%- initial_value.to_string() %>"
+      data-inputs-range-group-target="group"
+      <% if group_target.is_some() { %><%- group_target.unwrap() %> <% } %>
+      data-action="reset->inputs-range-group#reset">
   <div class="d-flex flex-column flex-md-row">
     <div class="flex-grow-1">
         <h6 class="h6"><%- title %></h6>

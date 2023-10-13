@@ -14,6 +14,7 @@ pub struct RangeGroup {
     pub range_target: Option<String>,
     pub cost_rate: Option<f32>,
     pub units: String,
+    pub group_target: Option<String>,
 }
 
 impl RangeGroup {
@@ -29,6 +30,7 @@ impl RangeGroup {
             range_target: None,
             cost_rate: None,
             units: String::default(),
+            group_target: None,
         }
     }
 
@@ -66,6 +68,11 @@ impl RangeGroup {
 
     pub fn units(mut self, units: &str) -> Self {
         self.units = units.to_owned();
+        self
+    }
+
+    pub fn group_target(mut self, target: &str) -> Self {
+        self.group_target = Some(target.to_owned());
         self
     }
 }
