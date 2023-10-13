@@ -1,5 +1,6 @@
 use pgml_components::component;
 use sailfish::TemplateOnce;
+use crate::components::stimulus::stimulus_target::StimulusTarget;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "inputs/range_group/template.html")]
@@ -10,10 +11,11 @@ pub struct RangeGroup {
     pub max: i64,
     pub step: f32,
     pub initial_value: f64,
-    pub text_target: Option<String>,
-    pub range_target: Option<String>,
+    pub text_target: StimulusTarget,
+    pub range_target: StimulusTarget,
     pub cost_rate: Option<f32>,
     pub units: String,
+    pub group_target: StimulusTarget,
 }
 
 impl RangeGroup {
@@ -25,10 +27,11 @@ impl RangeGroup {
             max: 100,
             step: 1.0,
             initial_value: 1.0,
-            text_target: None,
-            range_target: None,
+            text_target: StimulusTarget::new(),
+            range_target: StimulusTarget::new(),
             cost_rate: None,
             units: String::default(),
+            group_target: StimulusTarget::new(),
         }
     }
 
@@ -49,13 +52,13 @@ impl RangeGroup {
         self
     }
 
-    pub fn text_target(mut self, target: &str) -> Self {
-        self.text_target = Some(target.to_owned());
+    pub fn text_target(mut self, target: StimulusTarget) -> Self {
+        self.text_target = target;
         self
     }
 
-    pub fn range_target(mut self, target: &str) -> Self {
-        self.range_target = Some(target.to_owned());
+    pub fn range_target(mut self, target: StimulusTarget) -> Self {
+        self.range_target = target.to_owned();
         self
     }
 
@@ -66,6 +69,11 @@ impl RangeGroup {
 
     pub fn units(mut self, units: &str) -> Self {
         self.units = units.to_owned();
+        self
+    }
+
+    pub fn group_target(mut self, target: StimulusTarget) -> Self {
+        self.group_target = target;
         self
     }
 }
