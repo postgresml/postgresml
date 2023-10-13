@@ -1,4 +1,5 @@
 use pyo3::{prelude::*, types::PyDict};
+use serde_json::Value;
 
 use super::SamplingParams;
 
@@ -210,6 +211,28 @@ impl ToPyObject for Quantization {
             Quantization::Awq => "awg".to_string(),
         }
         .into_py(py)
+    }
+}
+
+impl TryFrom<Value> for LLMBuilder {
+    type Error = &'static str;
+
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        match value.as_object() {
+            Some(map) => {
+                let model = map
+                    .get("model")
+                    .ok_or("Json object must have `model` key")?
+                    .as_str()
+                    .ok_or("`model` key must be a str")?;
+
+                Ok(LLMBuilder::new(model))
+            }
+            None => match value.as_str() {
+                Some(model) => Ok(LLMBuilder::new(model)),
+                None => Err("Json value expected as str or object"),
+            },
+        }
     }
 }
 
