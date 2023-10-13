@@ -1,7 +1,4 @@
-use anyhow::Result;
 use pyo3::{prelude::*, types::PyDict};
-
-use crate::bindings::TracebackError;
 
 #[derive(Debug, Clone)]
 pub struct SamplingParamsBuilder {
@@ -178,57 +175,30 @@ impl SamplingParamsBuilder {
         self
     }
 
-    pub fn build(self) -> Result<SamplingParams> {
-        let inner = Python::with_gil(|py| -> Result<PyObject> {
+    pub fn build(self) -> PyResult<SamplingParams> {
+        let inner = Python::with_gil(|py| -> PyResult<PyObject> {
             let kwargs = PyDict::new(py);
-            kwargs.set_item("n", self.n).format_traceback(py)?;
-            kwargs
-                .set_item("best_of", self.best_of)
-                .format_traceback(py)?;
-            kwargs
-                .set_item("presence_penalty", self.presence_penalty)
-                .format_traceback(py)?;
-            kwargs
-                .set_item("frequency_penalty", self.frequency_penalty)
-                .format_traceback(py)?;
-            kwargs
-                .set_item("temperature", self.temperature)
-                .format_traceback(py)?;
-            kwargs.set_item("top_p", self.top_p).format_traceback(py)?;
-            kwargs.set_item("top_k", self.top_k).format_traceback(py)?;
-            kwargs
-                .set_item("use_beam_search", self.use_beam_search)
-                .format_traceback(py)?;
-            kwargs
-                .set_item("length_penalty", self.length_penalty)
-                .format_traceback(py)?;
-            kwargs
-                .set_item("early_stopping", self.early_stopping)
-                .format_traceback(py)?;
-            kwargs.set_item("stop", self.stop).format_traceback(py)?;
-            kwargs
-                .set_item("stop_token_ids", self.stop_token_ids)
-                .format_traceback(py)?;
-            kwargs
-                .set_item("ignore_eos", self.ignore_eos)
-                .format_traceback(py)?;
-            kwargs
-                .set_item("max_tokens", self.max_tokens)
-                .format_traceback(py)?;
-            kwargs
-                .set_item("logprobs", self.logprobs)
-                .format_traceback(py)?;
-            kwargs
-                .set_item("skip_special_tokens", self.skip_special_tokens)
-                .format_traceback(py)?;
+            kwargs.set_item("n", self.n)?;
+            kwargs.set_item("best_of", self.best_of)?;
+            kwargs.set_item("presence_penalty", self.presence_penalty)?;
+            kwargs.set_item("frequency_penalty", self.frequency_penalty)?;
+            kwargs.set_item("temperature", self.temperature)?;
+            kwargs.set_item("top_p", self.top_p)?;
+            kwargs.set_item("top_k", self.top_k)?;
+            kwargs.set_item("use_beam_search", self.use_beam_search)?;
+            kwargs.set_item("length_penalty", self.length_penalty)?;
+            kwargs.set_item("early_stopping", self.early_stopping)?;
+            kwargs.set_item("stop", self.stop)?;
+            kwargs.set_item("stop_token_ids", self.stop_token_ids)?;
+            kwargs.set_item("ignore_eos", self.ignore_eos)?;
+            kwargs.set_item("max_tokens", self.max_tokens)?;
+            kwargs.set_item("logprobs", self.logprobs)?;
+            kwargs.set_item("skip_special_tokens", self.skip_special_tokens)?;
 
-            let vllm = PyModule::import(py, "vllm").format_traceback(py)?;
-            vllm.getattr("SamplingParams")
-                .format_traceback(py)?
-                .call((), Some(kwargs))
-                .format_traceback(py)?
+            let vllm = PyModule::import(py, "vllm")?;
+            vllm.getattr("SamplingParams")?
+                .call((), Some(kwargs))?
                 .extract()
-                .format_traceback(py)
         })?;
 
         Ok(SamplingParams { inner })
