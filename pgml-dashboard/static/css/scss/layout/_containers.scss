@@ -148,6 +148,10 @@
 
 .webapp-content-max-width-container {
     max-width: $webapp-content-max-width;
-    margin: 0px auto;
+    margin: 0px 20px;
     min-height: calc(100vh - $navbar-height - $breadcrumb-height - 1px);
+    
+    @include media-breakpoint-up(md) {
+        margin: 0px auto;
+    }
   }
