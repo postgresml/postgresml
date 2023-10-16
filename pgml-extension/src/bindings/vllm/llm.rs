@@ -1,7 +1,7 @@
 use pyo3::{prelude::*, types::PyDict};
 use serde_json::Value;
 
-use super::SamplingParams;
+use super::{RequestOutput, SamplingParams};
 
 pub struct LLMBuilder {
     model: String,
@@ -170,7 +170,7 @@ impl LLM {
         &self,
         prompts: &[&str],
         params: Option<&SamplingParams>,
-    ) -> PyResult<Vec<String>> {
+    ) -> PyResult<Vec<RequestOutput>> {
         let prompts: Vec<_> = prompts.iter().map(|s| s.to_string()).collect();
 
         Python::with_gil(|py| {
@@ -178,19 +178,10 @@ impl LLM {
             kwargs.set_item("prompts", prompts)?;
             kwargs.set_item("sampling_params", params)?;
 
-            let outputs: Vec<PyObject> = self
-                .inner
+            self.inner
                 .getattr(py, "generate")?
                 .call(py, (), Some(kwargs))?
-                .extract(py)?;
-
-            outputs
-                .iter()
-                .map(|output| -> PyResult<String> {
-                    let outputs: Vec<PyObject> = output.getattr(py, "outputs")?.extract(py)?;
-                    outputs.first().unwrap().getattr(py, "text")?.extract(py)
-                })
-                .collect::<PyResult<Vec<_>>>()
+                .extract(py)
         })
     }
 }
@@ -238,7 +229,7 @@ impl TryFrom<Value> for LLMBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::SamplingParamsBuilder;
+    use crate::bindings::vllm::SamplingParamsBuilder;
 
     use super::*;
 

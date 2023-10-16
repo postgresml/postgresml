@@ -653,7 +653,19 @@ fn transform(mut task: Value, args: Value, inputs: Vec<&str>) -> anyhow::Result<
             builder.build().unwrap()
         });
 
-        Ok(json!(llm.generate(&inputs, None)?))
+        let outputs = llm
+            .generate(&inputs, None)?
+            .iter()
+            .map(|o| {
+                o.outputs()
+                    .unwrap()
+                    .iter()
+                    .map(|o| o.text().unwrap())
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<Vec<_>>>();
+
+        Ok(json!(outputs))
     } else {
         if let Some(map) = task.as_object_mut() {
             // pop backend keyword, if present
