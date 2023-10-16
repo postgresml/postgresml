@@ -1,0 +1,16 @@
+div[data-controller="accordian"] {
+    .accordian-header {
+        cursor: pointer;
+    }
+
+    .accordian-body {
+        display: none;
+        height: 0px;
+        transition: all 0.5s ease-in-out;
+    }
+
+    .accordian-body.selected {
+        display: block;
+        height: auto;
+    }
+}

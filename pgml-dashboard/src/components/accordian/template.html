@@ -1,0 +1,16 @@
+<% use std::iter::zip; %>
+
+<div data-controller="accordian">
+  <div class="accordian">
+    <% for i in (0..html_contents.len()) { %>
+      <div class="accordian-item">
+        <div class="accordian-header <% if i == selected { %> selected <% } %>" data-action="click->accordian#titleClick" data-value="accordian-body<%= i %>">
+          <%- html_titles[i] %>
+        </div>
+        <div class="accordian-body <% if i == selected { %> selected <% } %>" data-accordian-target="accordian-body<%= i %>">
+          <%- html_contents[i] %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
