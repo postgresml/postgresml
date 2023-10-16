@@ -1,6 +1,6 @@
+use crate::components::stimulus::stimulus_target::StimulusTarget;
 use pgml_components::component;
 use sailfish::TemplateOnce;
-use crate::components::stimulus::stimulus_target::StimulusTarget;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "inputs/range_group/template.html")]

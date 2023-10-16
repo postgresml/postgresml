@@ -1340,7 +1340,8 @@ impl SearchIndex {
     }
 
     pub fn documents() -> Vec<PathBuf> {
-        let guides = glob::glob(&(config::docs_dir() + "/guides/**/*.md")).expect("glob failed");
+        let guides =
+            glob::glob(&(config::docs_dir() + "/docs/guides/**/*.md")).expect("glob failed");
         let blogs = glob::glob(&(config::blogs_dir() + "/blog/**/*.md")).expect("glob failed");
         guides
             .chain(blogs)
@@ -1406,7 +1407,9 @@ impl SearchIndex {
                 .split("content")
                 .last()
                 .unwrap()
-                .to_string();
+                .to_string()
+                .replace("README", "")
+                .replace(&config::docs_dir(), "/");
             let mut doc = Document::default();
             doc.add_text(title_field, &title_text);
             doc.add_text(body_field, &body_text);

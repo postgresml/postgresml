@@ -1,5 +1,5 @@
-use sailfish::TemplateOnce;
 use pgml_components::component;
+use sailfish::TemplateOnce;
 
 // This component will probably not work very well if two are on the same page at once. We can get
 // around it if we include some randomness with the data values in the template.html but that
@@ -10,7 +10,7 @@ use pgml_components::component;
 pub struct Accordian {
     html_contents: Vec<String>,
     html_titles: Vec<String>,
-    selected: usize
+    selected: usize,
 }
 
 impl Accordian {
