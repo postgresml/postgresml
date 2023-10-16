@@ -44,7 +44,7 @@ pub fn blogs_dir() -> String {
 pub fn docs_dir() -> String {
     match var("DASHBOARD_DOCS_DIRECTORY") {
         Ok(dir) => dir,
-        Err(_) => "../pgml-docs/".to_string(),
+        Err(_) => "../pgml-docs".to_string(),
     }
 }
 
