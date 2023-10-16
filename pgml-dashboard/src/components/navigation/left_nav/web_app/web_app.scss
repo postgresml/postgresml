@@ -25,3 +25,71 @@
         background-color: #{$gray-900}
     }
 }
+
+div[data-controller="navigation-left-nav-web-app"] {
+    .menu-container {
+        transition: width $animation-timer;
+        &.expanding, &.expanded {
+            width: 220px;
+        }
+        &.collapsing, &.collapsed {
+            width: 48px;
+        }
+    }
+
+    .btn-left-nav-toggle {
+        --bs-btn-padding-x: 0px;
+        display: flex;
+        justify-content: start;
+        font-weight: $font-weight-bold;
+    
+        color: #{$gray-100};
+    
+        border-radius: 0px;
+        --bs-btn-border-color: transparent;
+        border: 0px;
+    
+        --bs-btn-active-color: #{$gray-100};
+        --bs-btn-hover-color: #{$gray-100};
+    }
+    
+    .left-nav-toggle-icon {
+        margin-left: 12px;
+        margin-right: 0px;
+    
+        transition: all $animation-timer;
+        &.collapsing {
+            transform: rotate(-180deg);
+        }
+    
+        &.collapsed {
+            transform: rotate(-180deg);
+        }
+    
+        &.collapsing {
+            height: auto !important;
+        }
+    }
+}
+
+
+@keyframes collapse-margin {
+    from {
+        margin-left: calc($left-nav-w - 9rem);
+        margin-right: 0px;
+    }
+    to {
+        margin-left: calc($left-nav-w-collapsed/2 - 32px);
+        margin-right: calc($left-nav-w-collapsed/2 - 32px);
+    }
+}
+@keyframes expand-margin {
+    from {
+        margin-left: calc($left-nav-w-collapsed/2 - 32px);
+        margin-right: calc($left-nav-w-collapsed/2 - 32px);
+    }
+    to {
+        margin-left: calc($left-nav-w - 9rem);
+        margin-right: 0px;
+    }
+}

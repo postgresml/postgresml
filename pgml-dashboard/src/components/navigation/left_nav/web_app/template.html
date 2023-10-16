@@ -1,21 +1,22 @@
-<% use crate::components::{LeftNavMenu, Dropdown}; %>
-<nav class="leftnav nav-pills h-100" data-controller="extend-bs-collapse navigation-left-nav-web-app" data-extend-bs-collapse-affected-value=".leftnav-collapse-affect">
-  <div class="d-flex flex-column justify-content-between h-100 w-100">
-    <div class="d-flex flex-column">
-      <button class="btn-left-nav-toggle mb-5" type="button" data-bs-toggle="collapse" data-bs-target=".leftnav-collapse" aria-expanded="true">
-        <span class="collapse collapse-horizontal leftnav-collapse show" data-extend-bs-collapse-target="stateReference">
-          Menu
-        </span>
-        <span class="left-nav-toggle-icon material-symbols-outlined leftnav-collapse-affect expanded">
-          keyboard_double_arrow_left
-        </span>
-      </button>
 
-      <div class="mb-4">
-        <%+ Dropdown::nav(dropdown_nav.links).collapsable() %>
+<% use crate::components::{LeftNavMenu, Dropdown}; %>
+<div class="leftnav-container py-3" data-controller="navigation-left-nav-web-app">
+  <nav class="leftnav nav-pills h-100" data-controller="extend-bs-collapse" data-extend-bs-collapse-affected-value=".leftnav-collapse-affect">
+    <div class="d-flex flex-column justify-content-between h-100 menu-container leftnav-collapse-affect expanded">
+      <div class="d-flex flex-column">
+        <button class="btn btn-left-nav-toggle mb-4" type="button" data-bs-toggle="collapse" data-bs-target=".leftnav-collapse" aria-expanded="true">
+          <span class="left-nav-toggle-icon material-symbols-outlined leftnav-collapse-affect expanded">
+            keyboard_double_arrow_left
+          </span>
+          <span class="collapse collapse-horizontal leftnav-collapse show" data-extend-bs-collapse-target="stateReference"></span>
+        </button>
+
+        <div class="mb-4">
+          <%+ Dropdown::nav(dropdown_nav.links).collapsable() %>
+        </div>
+        <%+ LeftNavMenu { nav: upper_nav } %>
       </div>
-      <%+ LeftNavMenu { nav: upper_nav } %>
+      <%+ LeftNavMenu { nav: lower_nav} %>
     </div>
-    <%+ LeftNavMenu { nav: lower_nav} %>
-  </div>
-</nav>
+  </nav>
+</div>
