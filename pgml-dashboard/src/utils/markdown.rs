@@ -1409,7 +1409,7 @@ impl SearchIndex {
                 .unwrap()
                 .to_string()
                 .replace("README", "")
-                .replace(&config::docs_dir(), "/");
+                .replace(&config::docs_dir(), "");
             let mut doc = Document::default();
             doc.add_text(title_field, &title_text);
             doc.add_text(body_field, &body_text);
