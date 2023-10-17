@@ -72,7 +72,7 @@ impl Default for Model {
     }
 }
 
-#[alias_methods(new)]
+#[alias_methods(new, transform)]
 impl Model {
     /// Creates a new [Model]
     ///
@@ -202,6 +202,7 @@ impl Model {
         let task = json!({
             "task": task,
             "model": self.name,
+            "trust_remote_code": true
         });
         let args = args.unwrap_or_default();
         let query = sqlx::query("SELECT pgml.transform(task => $1, inputs => $2, args => $3)");
@@ -256,7 +257,12 @@ mod tests {
     #[sqlx::test]
     async fn model_can_transform() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::new(Some("Helsinki-NLP/opus-mt-en-fr".to_string()), Some("pgml".to_string()), None, None);
+        let model = Model::new(
+            Some("Helsinki-NLP/opus-mt-en-fr".to_string()),
+            Some("pgml".to_string()),
+            None,
+            None,
+        );
         let results = model
             .transform(
                 "translation",
