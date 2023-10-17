@@ -4,7 +4,10 @@ use crate::components::navigation::tabs::*;
 use crate::components::inputs::range_group::RangeGroup;
 use crate::components::inputs::text::editable_header::{EditableHeader, Headers};
 use crate::components::stimulus::stimulus_target::StimulusTarget;
+use crate::components::stimulus::stimulus_action::StimulusAction;
+use crate::components::stimulus::stimulus_action::StimulusEvents;
 use crate::components::inputs::select::Select;
+use crate::components::inputs::switch::Switch;
 %>
 
 <div class="min-height: 100vh;" data-controller="playground">
@@ -154,6 +157,24 @@ use crate::components::inputs::select::Select;
         <button data-action="playground#addError">Add an Error</button>
         <button data-action="playground#clearError">Clear Error</button>
       </div>
+    </div>
+    <div class="d-flex flex-row justify-content-between">
+      <div style="width: 30%">
+        <%+ Switch::new()
+            .on_toggle(
+              StimulusAction::new()
+              .controller("playground")
+              .method("testOnToggleSwitch"))
+            .target(StimulusTarget::new()
+              .controller("playground")
+              .name("switch"))
+            .left("CPU", "memory")
+            .right("GPU", "mode_fan")
+            .start_toggled() %>
+          </div>
+          <div>
+            <button data-action="click->playground#resetSwitch">Reset Switch</button>
+          </div>
     </div>
   </div>
 

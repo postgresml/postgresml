@@ -1,0 +1,37 @@
+<% use crate::components::inputs::switch::State; %>
+<div data-controller="inputs-switch"
+  class="switch-container d-flex flex-row"
+  data-action='click->inputs-switch#toggle <% for action in on_toggle { %> toggle-><%- action %> <% } %> reset->inputs-switch#reset'
+  data-inputs-switch-left-value="<%- left_value %>"
+  data-inputs-switch-left-icon-value="<%- left_icon %>"
+  data-inputs-switch-right-value="<%- right_value %>"
+  data-inputs-switch-right-icon-value="<%- right_icon %>"
+  data-inputs-switch-initial-value="<%- initial_state.to_string() %>"
+  <%- target %>>
+  <div class='label toggle w-50 <%- match initial_state {State::Left => "left".to_string(), State::Right => "right".to_string()} %>' data-inputs-switch-target="toggle">
+    <span class="material-symbols-outlined" data-inputs-switch-target="toggleIcon" >
+      <%- match initial_state {
+        State::Left => left_icon.to_string(),
+        State::Right => right_icon.to_string(),
+      } %>
+    </span>
+    <h5 class="h5 my-0" data-inputs-switch-target="toggleText">
+      <%- match initial_state {
+        State::Left => left_value.to_string(),
+        State::Right => right_value.to_string(),
+      } %>
+    </h5>
+  </div>
+  <div class="label choice">
+    <span class="material-symbols-outlined" ><%- left_icon  %></span>
+    <h5 class="h5 my-0">
+      <%- left_value %>
+    </h5>
+  </div>
+  <div class="label choice">
+    <span class="material-symbols-outlined"><%- right_icon  %></span>
+    <h5 class="h5 my-0">
+      <%- right_value %>
+    </h5>
+  </div>
+</div>

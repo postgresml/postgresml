@@ -9,5 +9,9 @@ pub use range_group::RangeGroup;
 pub mod select;
 pub use select::Select;
 
+// src/components/inputs/switch
+pub mod switch;
+pub use switch::Switch;
+
 // src/components/inputs/text
 pub mod text;
