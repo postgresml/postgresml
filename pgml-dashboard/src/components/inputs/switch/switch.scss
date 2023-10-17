@@ -1,0 +1,43 @@
+div[data-controller="inputs-switch"] {
+    &.switch-container {
+        background: #{$gray-100};
+        border-radius: 5rem;
+        border: 3px solid #{$gray-100};
+        position: relative;
+    }
+
+    .label {
+        padding: 8px 20px;
+        border-radius: 5rem;
+        text-align: center;
+        display: flex;
+        @extend .gap-2;
+    }
+
+    .toggle {
+        background: #{$neon-shade-100};
+        position: absolute;
+        top: 0px;
+        left: 0px;
+    }
+
+    .choice {
+        background: #{$gray-100};
+        color: #{$neon-shade-100};
+        flex: 1;
+
+        * {
+            color: inherit;
+        }
+    }
+
+    .left {
+        left: 0;
+        transition: all $animation-timer;
+    }
+
+    .right {
+        left: 50%;
+        transition: all $animation-timer;
+    }
+}
