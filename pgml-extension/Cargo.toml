@@ -7,20 +7,20 @@ edition = "2021"
 crate-type = ["lib", "cdylib"]
 
 [features]
-default = ["pg16", "python"]
+default = ["pg15", "python"]
+pg11 = ["pgrx/pg11", "pgrx-tests/pg11"]
 pg12 = ["pgrx/pg12", "pgrx-tests/pg12"]
 pg13 = ["pgrx/pg13", "pgrx-tests/pg13"]
 pg14 = ["pgrx/pg14", "pgrx-tests/pg14"]
 pg15 = ["pgrx/pg15", "pgrx-tests/pg15"]
-pg16 = ["pgrx/pg16", "pgrx-tests/pg16"]
 use_as_lib = []
 pg_test = []
 python = ["pyo3"]
 cuda = ["xgboost/cuda", "lightgbm/cuda"]
 
 [dependencies]
-pgrx = "=0.11.0"
-pgrx-pg-sys = "=0.11.0"
+pgrx = "=0.10.0"
+pgrx-pg-sys = "=0.10.0"
 xgboost = { git = "https://github.com/postgresml/rust-xgboost.git", branch = "master" }
 once_cell = { version = "1", features = ["parking_lot"] }
 rand = "0.8"
@@ -51,7 +51,7 @@ flate2 = "1.0"
 csv = "1.2"
 
 [dev-dependencies]
-pgrx-tests = "=0.11.0"
+pgrx-tests = "=0.10.0"
 
 [build-dependencies]
 vergen = { version = "8", features = ["build", "git", "gitcl"] }
