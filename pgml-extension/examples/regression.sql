@@ -106,7 +106,8 @@ SELECT * FROM pgml.deployed_models ORDER BY deployed_at DESC LIMIT 5;
 -- do a hyperparam search on your favorite algorithm
 SELECT pgml.train(
     'Diabetes Progression', 
-    algorithm => 'xgboost', 
+    algorithm => 'xgboost',
+    hyperparams => '{"eval_metric": "rmse"}'::JSONB,
     search => 'grid', 
     search_params => '{
         "max_depth": [1, 2], 
