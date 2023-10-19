@@ -17,7 +17,7 @@ model = Model()
 
 {% tab title="JavaScript" %}
 ```javascript
-model = pgml.newModel()
+const model = pgml.newModel()
 ```
 {% endtab %}
 {% endtabs %}
@@ -36,9 +36,10 @@ model = Model(
 
 {% tab title="JavaScript" %}
 ```javascript
-model = pgml.newModel(
-    name="hkunlp/instructor-base",
-    parameters={instruction: "Represent the Wikipedia document for retrieval: "}    
+const model = pgml.newModel(
+  "hkunlp/instructor-base",
+  "pgml",
+  { instruction: "Represent the Wikipedia document for retrieval: " }
 )
 ```
 {% endtab %}
@@ -55,7 +56,7 @@ model = Model(name="text-embedding-ada-002", source="openai")
 
 {% tab title="JavaScript" %}
 ```javascript
-model = pgml.newModel(name="text-embedding-ada-002", source="openai")
+const model = pgml.newModel("text-embedding-ada-002", "openai")
 ```
 {% endtab %}
 {% endtabs %}
@@ -75,7 +76,7 @@ splitter = Splitter()
 
 {% tab title="JavaScript" %}
 ```javascript
-splitter = pgml.newSplitter()
+const splitter = pgml.newSplitter()
 ```
 {% endtab %}
 {% endtabs %}
@@ -95,8 +96,8 @@ splitter = Splitter(
 {% tab title="JavaScript" %}
 ```javascript
 splitter = pgml.newSplitter(
-    name="recursive_character", 
-    parameters={chunk_size: 1500, chunk_overlap: 40}
+  "recursive_character",
+  { chunk_size: 1500, chunk_overlap: 40 }
 )
 ```
 {% endtab %}
@@ -120,9 +121,9 @@ await collection.add_pipeline(pipeline)
 
 {% tab title="JavaScript" %}
 ```javascript
-model = pgml.newModel()
-splitter = pgml.newSplitter()
-pipeline = pgml.newPipeline("test_pipeline", model, splitter)
+const model = pgml.newModel()
+const splitter = pgml.newSplitter()
+const pipeline = pgml.newPipeline("test_pipeline", model, splitter)
 await collection.add_pipeline(pipeline)
 ```
 {% endtab %}
@@ -151,13 +152,47 @@ await collection.add_pipeline(pipeline)
 
 {% tab title="JavaScript" %}
 ```javascript
-model = pgml.newModel()
-splitter = pgml.newSplitter()
-pipeline = pgml.newPipeline("test_pipeline", model, splitter, {
-    "full_text_search": {
-        active: True,
-        configuration: "english"
+const model = pgml.newModel()
+const splitter = pgml.newSplitter()
+const pipeline = pgml.newPipeline("test_pipeline", model, splitter, {
+  full_text_search: {
+    active: true,
+    configuration: "english"
+  }
+})
+await collection.add_pipeline(pipeline)
+```
+{% endtab %}
+{% endtabs %}
+
+### Customizing the HNSW Index
+
+By default the SDK uses HNSW indexes to efficiently perform vector recall. The default HNSW index sets `m` to 16 and `ef_construction` to 64. These defaults can be customized when the Pipeline is created.
+
+{% tabs %}
+{% tab title="Python" %}
+```python
+model = Model()
+splitter = Splitter()
+pipeline = Pipeline("test_pipeline", model, splitter, {
+    "hnsw": {
+        "m": 16,
+        "ef_construction": 64
     }
+})
+await collection.add_pipeline(pipeline)
+```
+{% endtab %}
+
+{% tab title="JavaScript" %}
+```javascript
+const model = pgml.newModel()
+const splitter = pgml.newSplitter()
+const pipeline = pgml.newPipeline("test_pipeline", model, splitter, {
+  hnsw: {
+    m: 16,
+    ef_construction: 64
+  }
 })
 await collection.add_pipeline(pipeline)
 ```
@@ -179,18 +214,16 @@ results = await collection.query().vector_recall("Why is PostgresML the best?", 
 
 {% tab title="JavaScript" %}
 ```javascript
-pipeline = pgml.newPipeline("test_pipeline")
-collection = pgml.newCollection("test_collection")
-results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).fetch_all()    
+const pipeline = pgml.newPipeline("test_pipeline")
+const collection = pgml.newCollection("test_collection")
+const results = await collection.query().vector_recall("Why is PostgresML the best?", pipeline).fetch_all()    
 ```
 {% endtab %}
 {% endtabs %}
 
-
+## **Disable a Pipeline**
 
 Pipelines can be disabled or removed to prevent them from running automatically when documents are upserted.
-
-## **Disable a Pipeline**
 
 {% tabs %}
 {% tab title="Python" %}
@@ -203,8 +236,8 @@ await collection.disable_pipeline(pipeline)
 
 {% tab title="JavaScript" %}
 ```javascript
-pipeline = pgml.newPipeline("test_pipeline")
-collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const collection = pgml.newCollection("test_collection")
 await collection.disable_pipeline(pipeline)
 ```
 {% endtab %}
@@ -213,6 +246,8 @@ await collection.disable_pipeline(pipeline)
 Disabling a Pipeline prevents it from running automatically, but leaves all chunks and embeddings already created by that Pipeline in the database.
 
 ## **Enable a Pipeline**
+
+Disabled pipelines can be re-enabled.
 
 {% tabs %}
 {% tab title="Python" %}
@@ -225,8 +260,8 @@ await collection.enable_pipeline(pipeline)
 
 {% tab title="JavaScript" %}
 ```javascript
-pipeline = pgml.newPipeline("test_pipeline")
-collection = pgml.newCollection("test_collection")
+const pipeline = pgml.newPipeline("test_pipeline")
+const collection = pgml.newCollection("test_collection")
 await collection.enable_pipeline(pipeline)
 ```
 {% endtab %}
@@ -246,11 +281,10 @@ await collection.remove_pipeline(pipeline)
 {% endtab %}
 
 {% tab title="JavaScript" %}
-```javascript
-pipeline = pgml.newPipeline("test_pipeline")
-collection = pgml.newCollection("test_collection")
-await collection.remove_pipeline(pipeline)
-```
+<pre class="language-javascript"><code class="lang-javascript">const pipeline = pgml.newPipeline("test_pipeline")
+<strong>const collection = pgml.newCollection("test_collection")
+</strong>await collection.remove_pipeline(pipeline)
+</code></pre>
 {% endtab %}
 {% endtabs %}
 

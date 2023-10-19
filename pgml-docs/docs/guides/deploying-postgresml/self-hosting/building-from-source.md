@@ -40,12 +40,12 @@ For a typical deployment in production, you would need to compile and install th
 
 #### Install pgrx
 
-`pgrx` is open source and available from crates.io. We are currently using the `0.11.0` version. It's important that your `pgrx` version matches what we're using, since there are some hard dependencies between our code and `pgrx`.
+`pgrx` is open source and available from crates.io. We are currently using the `0.10.0` version. It's important that your `pgrx` version matches what we're using, since there are some hard dependencies between our code and `pgrx`.
 
 To install `pgrx`, simply run:
 
 ```
-cargo install cargo-pgrx --version "0.11.0"
+cargo install cargo-pgrx --version "0.10.0"
 ```
 
 Before using `pgrx`, it needs to be initialized against the installed version of PostgreSQL. In this example, we'll be using the Ubuntu 22.04 default PostgreSQL 14 installation:
