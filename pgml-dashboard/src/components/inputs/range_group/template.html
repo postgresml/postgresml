@@ -1,14 +1,17 @@
 <div data-controller="inputs-range-group" 
       data-inputs-range-group-bounds-value='{"min": <%- min%>, "max": <%- max%>}'
       data-inputs-range-group-initial-value="<%- initial_value.to_string() %>"
+      data-detail="<%- initial_value.to_string() %>"
       data-inputs-range-group-target="group"
       <%- group_target %>
       data-action="reset->inputs-range-group#reset">
   <div class="d-flex flex-column flex-md-row">
+    <% if show_title { %>
     <div class="flex-grow-1">
         <h6 class="h6"><%- title %></h6>
     </div>
-    <div>
+    <% } %>
+    <div <% if !show_value { %> style="display: none"<% } %>>
       <div class="input-group">
         <input class="text-input form-control text-end text-white fw-bold" maxlength="5" type="text" 
           data-inputs-range-group-target="text"
@@ -21,16 +24,43 @@
     </div>
   </div>
 
-  <input class="form-range"
-    type="range"
-    name="<%- identifier %>"
-    min="<%- min %>"
-    max="<%- max %>"
-    step="<%- step %>"
-    value="<%- initial_value.to_string() %>"
-    data-action="inputs-range-group#updateText" 
-    data-inputs-range-group-target="range"
-    <%- range_target %>>
+  <div class="range-container">
+    <input class="form-range z-1 <% if options.len() > 0 { %> input-offset <% } %>" 
+      type="range"
+      name="<%- identifier %>"
+      min="<%- min %>"
+      max="<%- max %>"
+      step="<%- step %>"
+      value="<%- initial_value.to_string() %>"
+      data-action="inputs-range-group#updateText mousedown->inputs-range-group#on_grab mouseup->inputs-range-group#on_release inputs-range-group#updateTicksEventWrapper inputs-range-group#updateTicksTextEventWrapper" 
+      data-inputs-range-group-target="range"
+      <%- range_target %>>
+
+      <% if options.len() > 0 { %>
+      <div class="tick-container">
+        <% for item in &options { %>
+          <div class="tick-unit">
+            <div class="tick" data-inputs-range-group-target="tick"></div>
+
+            <div class="d-none d-lg-flex flex-column text-nowrap mt-2 tick-text" data-inputs-range-group-target="tickText">
+              <% for info in item { %>
+              <div class="legal-text fw-bold" ><%- info %></div>
+              <% } %>
+            </div>
+
+            <div class="d-block d-lg-none">
+              <div class="flex-column text-nowrap mt-2 tick-text" data-inputs-range-group-target="smScreenText">
+                <% for info in item { %>
+                <div class="legal-text fw-bold" ><%- info.replace("Memory", "") %></div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+      <div class="line w-100" data-inputs-range-group-target="line"></div>
+      <% } %>
+    </div>
     
     <% if cost_rate.is_some() { %>
     <div class="w-100 d-flex justify-content-end">

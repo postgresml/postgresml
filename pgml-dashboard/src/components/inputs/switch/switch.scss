@@ -11,6 +11,7 @@ div[data-controller="inputs-switch"] {
         border-radius: 5rem;
         text-align: center;
         display: flex;
+        justify-content: center;
         @extend .gap-2;
     }
 

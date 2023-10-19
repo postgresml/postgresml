@@ -79,11 +79,11 @@
     & {
         color: #{$neon-tint-100};
         --thumb-height: 1.125em;
-        --track-height: 0.125em;
+        --track-height: 4px;
         --brightness-hover: 110%;
         --brightness-down: 90%;
         --clip-edges: 0.125em;
-        --track-color: #{$gray-600};
+        --track-color: #{$form-range-track-color};
         --bg-color: transparent;
     }
 

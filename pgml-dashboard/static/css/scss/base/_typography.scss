@@ -1,19 +1,62 @@
 // all other displays are default bootstrap styling
 .display-2 {
-    font-weight: 700;
+    font-weight: $font-weight-bold;
     font-size: 4rem;
     line-height: 80px;
 }
 
-// TODO: Go through html and ensure headers use appropriate header class, header and class do not need to match.
-// .h1 {font-weight: 700; font-size: 64px; line-height: 72px;}
-// .h2 {font-weight: 700; font-size: 48px; line-height: 54px;}
-// .h3 {font-weight: 700; font-size: 40px; line-height: 46px;}
-// .h4 {font-weight: 700; font-size: 32px; line-height: 40px;}
-// .h5 {font-weight: 700; font-size: 28px; line-height: 34px;}
-// .h6 {font-weight: 700; font-size: 24px; line-height: 30px;}
+.h1-big {
+    font-weight: $font-weight-bold; font-size: 80px; line-height: 84px;
+    @include media-breakpoint-down(md) {
+        font-size: 48px; line-height: 52px;
+    } 
+}
+h1, .h1 { 
+    font-weight: $font-weight-bold; font-size: 64px; line-height: 72px;
+    @include media-breakpoint-down(md) {
+        font-size: 44px; line-height: 48px;
+    }
+}
+h2, .h2 {
+    font-weight: $font-weight-bold; font-size: 48px; line-height: 54px;
+    @include media-breakpoint-down(md) {
+        font-size: 40px; line-height: 44px;
+    }
+}
+h3, .h3 {
+    font-weight: $font-weight-bold; font-size: 40px; line-height: 46px;
+    @include media-breakpoint-down(md) {
+        font-size: 32px; line-height: 36px;
+    }
+}
+h4, .h4 {
+    font-weight: $font-weight-bold; font-size: 32px; line-height: 40px;
+    @include media-breakpoint-down(md) {
+        font-size: 28px; line-height: 32px;
+    }
+}
+h5, .h5 {
+    font-weight: $font-weight-bold; font-size: 28px; line-height: 34px;
+    @include media-breakpoint-down(md) {
+        font-size: 24px; line-height: 28px;
+    }
+}
+h6, .h6 {
+    font-weight: $font-weight-bold; font-size: 24px; line-height: 30px;
+    @include media-breakpoint-down(md) {
+        font-size: 20px; line-height: 26px;
+    }
+}
+
+.eyebrow {
+    font-weight: $font-weight-bold; font-size: 18px; line-height: 24px;
+    @include media-breakpoint-down(md) {
+        font-size: 16px; line-height: 22px;
+    }
+}
 
 .subcopy-text {
+    font-family: Inter;
     font-size: 18px;
     line-height: 22px;
 }
@@ -22,6 +65,7 @@
     line-height: 20px;
 }
 .legal-text {
+    font-family: Inter;
     font-size: 12px;
     line-height: 16px;
 }
