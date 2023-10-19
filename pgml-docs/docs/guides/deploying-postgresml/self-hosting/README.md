@@ -31,7 +31,7 @@ Finally, you can install PostgresML:
 sudo apt install -y postgresml-14
 ```
 
-Ubuntu 22.04 ships with PostgreSQL 14, but if you have a different version installed on your system, just change `14` in the package name to your Postgres version. We currently support all  versions supported by the community: Postgres 12 through 15.
+Ubuntu 22.04 ships with PostgreSQL 14, but if you have a different version installed on your system, just change `14` in the package name to your Postgres version. We currently support all  versions supported by the community: Postgres 12 through 16.
 
 ### Validate your installation
 
