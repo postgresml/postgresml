@@ -40,19 +40,28 @@ pub fn vllm_inference(task: &Value, inputs: &[&str]) -> PyResult<Value> {
     Ok(json!(outputs))
 }
 
+/// Determine if the "model" specified in the task is the same model as the one cached.
+/// 
+/// # Panic
+/// This function panics if:
+/// - `task` is not an object
+/// - "model" key is missing from `task` object
+/// - "model" value is not a str
 fn get_model_name<M>(model: &M, task: &Value) -> ModelName
 where
     M: std::ops::Deref<Target = Option<LLM>>,
 {
-    match task
-        .as_object()
-        .and_then(|obj| obj.get("model").and_then(|m| m.as_str()))
-    {
-        Some(name) => match model.as_ref() {
-            Some(llm) if llm.model() == name => ModelName::Same,
-            _ => ModelName::Different(name.to_string()),
-        },
-        None => ModelName::Same,
+    let name = task.as_object()
+        .expect("`task` is an object")
+        .get("model")
+        .expect("model key is present")
+        .as_str()
+        .expect("model value is a str");
+
+    if matches!(model.as_ref(), Some(llm) if llm.model() == name) {
+        ModelName::Same
+    } else {
+        ModelName::Different(name.to_string())
     }
 }
 
