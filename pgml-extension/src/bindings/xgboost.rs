@@ -128,7 +128,9 @@ fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
             },
             "max_leaves" => params.max_leaves(value.as_u64().unwrap() as u32),
             "max_bin" => params.max_bin(value.as_u64().unwrap() as u32),
-            "booster" | "n_estimators" | "boost_rounds" | "eval_metric" | "objective" => &mut params, // Valid but not relevant to this section
+            "booster" | "n_estimators" | "boost_rounds" | "eval_metric" | "objective" => {
+                &mut params
+            } // Valid but not relevant to this section
             "nthread" => &mut params,
             "random_state" => &mut params,
             _ => panic!("Unknown hyperparameter {:?}: {:?}", key, value),
@@ -182,11 +184,15 @@ fn objective_from_string(name: &str, dataset: &Dataset) -> learning::Objective {
         "gpu:reg:linear" => learning::Objective::GpuRegLinear,
         "gpu:reg:logistic" => learning::Objective::GpuRegLogistic,
         "gpu:binary:logistic" => learning::Objective::GpuBinaryLogistic,
-        "gpu:binary:logitraw" => learning::Objective::GpuBinaryLogisticRaw ,
+        "gpu:binary:logitraw" => learning::Objective::GpuBinaryLogisticRaw,
         "count:poisson" => learning::Objective::CountPoisson,
         "survival:cox" => learning::Objective::SurvivalCox,
-        "multi:softmax" => learning::Objective::MultiSoftmax(dataset.num_distinct_labels.try_into().unwrap()),
-        "multi:softprob" => learning::Objective::MultiSoftprob(dataset.num_distinct_labels.try_into().unwrap()),
+        "multi:softmax" => {
+            learning::Objective::MultiSoftmax(dataset.num_distinct_labels.try_into().unwrap())
+        }
+        "multi:softprob" => {
+            learning::Objective::MultiSoftprob(dataset.num_distinct_labels.try_into().unwrap())
+        }
         "rank:pairwise" => learning::Objective::RankPairwise,
         "reg:gamma" => learning::Objective::RegGamma,
         "reg:tweedie" => learning::Objective::RegTweedie(Some(dataset.num_distinct_labels as f32)),
@@ -204,7 +210,7 @@ fn fit(
     let mut dtest = DMatrix::from_dense(&dataset.x_test, dataset.num_test_rows).unwrap();
     dtrain.set_labels(&dataset.y_train).unwrap();
     dtest.set_labels(&dataset.y_test).unwrap();
-    
+
     // specify datasets to evaluate against during training
     let evaluation_sets = &[(&dtrain, "train"), (&dtest, "test")];
 
@@ -215,25 +221,33 @@ fn fit(
     let eval_metrics = match hyperparams.get("eval_metric") {
         Some(metrics) => {
             if metrics.is_array() {
-                learning::Metrics::Custom(metrics.as_array().unwrap().iter().map(|metric| {
-                    eval_metric_from_string(metric.as_str().unwrap())
-                }).collect())
+                learning::Metrics::Custom(
+                    metrics
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|metric| eval_metric_from_string(metric.as_str().unwrap()))
+                        .collect(),
+                )
             } else {
-                learning::Metrics::Custom(Vec::from([eval_metric_from_string(metrics.as_str().unwrap())]))
+                learning::Metrics::Custom(Vec::from([eval_metric_from_string(
+                    metrics.as_str().unwrap(),
+                )]))
             }
-        },
+        }
         None => learning::Metrics::Auto,
     };
     let learning_params = match learning::LearningTaskParametersBuilder::default()
         .objective(match hyperparams.get("objective") {
             Some(value) => objective_from_string(value.as_str().unwrap(), dataset),
-            None => objective
+            None => objective,
         })
         .eval_metrics(eval_metrics)
         .seed(seed)
-        .build() {
+        .build()
+    {
         Ok(params) => params,
-        Err(e) => error!("Failed to parse learning params:\n\n{}", e)
+        Err(e) => error!("Failed to parse learning params:\n\n{}", e),
     };
 
     // overall configuration for Booster
@@ -254,9 +268,10 @@ fn fit(
                 .map(|value| value.as_i64().expect("nthread must be an integer") as u32),
         )
         .verbose(true)
-        .build() {
+        .build()
+    {
         Ok(params) => params,
-        Err(e) => error!("Failed to configure booster:\n\n{}", e)
+        Err(e) => error!("Failed to configure booster:\n\n{}", e),
     };
 
     let mut builder = TrainingParametersBuilder::default();
@@ -276,15 +291,16 @@ fn fit(
         .evaluation_sets(Some(evaluation_sets))
         // model parameters
         .booster_params(booster_params)
-        .build() {
+        .build()
+    {
         Ok(params) => params,
-        Err(e) => error!("Failed to create training parameters:\n\n{}", e)
+        Err(e) => error!("Failed to create training parameters:\n\n{}", e),
     };
 
     // train model, and print evaluation data
     let booster = match Booster::train(&params) {
         Ok(booster) => booster,
-        Err(e) => error!("Failed to train model:\n\n{}", e)
+        Err(e) => error!("Failed to train model:\n\n{}", e),
     };
 
     Ok(Box::new(Estimator { estimator: booster }))

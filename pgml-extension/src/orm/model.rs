@@ -969,9 +969,7 @@ impl Model {
                     let tuple = unsafe { PgHeapTuple::from_composite_datum(row.datum()) };
                     for (i, column) in self.snapshot.features().enumerate() {
                         let index = NonZeroUsize::new(i + 1).unwrap();
-                        let attribute = tuple
-                            .get_attribute_by_index(index)
-                            .unwrap();
+                        let attribute = tuple.get_attribute_by_index(index).unwrap();
                         match &column.statistics.categories {
                             Some(_categories) => {
                                 let key = match attribute.atttypid {
