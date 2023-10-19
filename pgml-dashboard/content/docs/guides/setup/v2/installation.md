@@ -65,6 +65,7 @@ To install the necessary Python packages into a virtual environment, use the `vi
 virtualenv pgml-venv && \
 source pgml-venv/bin/activate && \
 pip install -r requirements.txt && \
+pip install -r requirements-autogptq.txt && \
 pip install -r requirements-xformers.txt --no-dependencies
 ```
 

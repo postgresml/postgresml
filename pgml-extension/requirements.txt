@@ -1,5 +1,4 @@
 accelerate==0.22.0
-auto-gptq==0.4.2
 bitsandbytes==0.41.1
 catboost==1.2
 ctransformers==0.2.27
