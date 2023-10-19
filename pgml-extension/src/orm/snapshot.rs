@@ -261,6 +261,9 @@ impl Column {
         statistics.mean = data.iter().sum::<f32>() / data.len() as f32;
         statistics.median = data[data.len() / 2];
         statistics.missing = array.len() - data.len();
+        if self.label && statistics.missing > 0 {
+            error!("The training data labels in \"{}\" contain {} NULL values. Consider filtering these values from the training data by creating a VIEW that includes a SQL filter like `WHERE {} IS NOT NULL`.", self.name, statistics.missing, self.name);
+        }
         statistics.variance = data
             .iter()
             .map(|i| {
