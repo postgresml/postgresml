@@ -135,7 +135,7 @@ jobs:
         working-directory: pgml-extension
         command: pgrx
         args: package --pg-config /usr/lib/postgresql/15/bin/pg_config
-     name: Build Postgres 16
+    - name: Build Postgres 16
       uses: postgresml/gh-actions-cargo@master
       with:
         working-directory: pgml-extension
