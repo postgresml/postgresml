@@ -1,13 +1,17 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ["test", "switch"]
+  static targets = ["test", "switch", "rangeOptions"]
 
   initialize() {
     this.errorH3 = new CustomEvent("error", { detail: "message passed through event h3" })
     this.clearH3 = new Event("clear")
     this.errorH2 = new CustomEvent("error", { detail: "message passed through event h2" })
     this.clearH2 = new Event("clear")
+
+    this.rangeOptionsTarget.addEventListener("rangeInput", (e) => {
+      console.log("rangeOptionsTarget input event value = ", e.detail)
+    })
   }
 
 
@@ -37,6 +41,14 @@ export default class extends Controller {
 
   resetSwitch() {
     this.switchTarget.dispatchEvent(new Event("reset"))
+  }
+
+  resetOptionsRange() {
+    this.rangeOptionsTarget.dispatchEvent(new Event("reset"))
+  }
+
+  logOptionsRange() {
+    console.log("rangeOptionsTarget current value = ", this.rangeOptionsTarget.dataset.detail)
   }
 
 }

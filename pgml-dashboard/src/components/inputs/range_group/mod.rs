@@ -16,6 +16,9 @@ pub struct RangeGroup {
     pub cost_rate: Option<f32>,
     pub units: String,
     pub group_target: StimulusTarget,
+    pub options: Vec<Vec<String>>,
+    pub show_value: bool,
+    pub show_title: bool,
 }
 
 impl RangeGroup {
@@ -32,6 +35,9 @@ impl RangeGroup {
             cost_rate: None,
             units: String::default(),
             group_target: StimulusTarget::new(),
+            options: Vec::new(),
+            show_value: true,
+            show_title: true,
         }
     }
 
@@ -74,6 +80,29 @@ impl RangeGroup {
 
     pub fn group_target(mut self, target: StimulusTarget) -> Self {
         self.group_target = target;
+        self
+    }
+
+    pub fn options(mut self, options: Vec<Vec<String>>) -> Self {
+        self.options = options;
+        self.min = 1;
+        self.max = self.options.len() as i64;
+        self.step = 1.0;
+        self
+    }
+
+    pub fn title(mut self, title: &str) -> Self {
+        self.title = title.to_owned();
+        self
+    }
+
+    pub fn hide_title(mut self) -> Self {
+        self.show_title = false;
+        self
+    }
+
+    pub fn hide_value(mut self) -> Self {
+        self.show_value = false;
         self
     }
 }

@@ -123,6 +123,59 @@ use crate::components::inputs::switch::Switch;
         .units("GB")
         .cost_rate(0.144) %>
       </div>
+
+      <div class="my-5">
+        <%+ RangeGroup::new("range with ticks")
+            .initial_value(2.0)
+            .group_target(
+              StimulusTarget::new()
+                .controller("playground")
+                .name("rangeOptions")
+            )
+            .options(
+              vec!(
+                vec!(
+                  "4 CPU".to_owned(),
+                  "16 GB Memory".to_owned(),
+                  "24 GB GPU Memory".to_owned(),
+                ), 
+                vec!(
+                  "8 CPU".to_owned(),
+                  "32 GB Memory".to_owned(),
+                  "24 GB GPU Memory".to_owned(),
+                ),
+                vec!(
+                  "16 CPU".to_owned(),
+                  "64 GB Memory".to_owned(),
+                  "24 GB GPU Memory".to_owned(),
+                ),
+                vec!(
+                  "32 CPU".to_owned(),
+                  "128 GB Memory".to_owned(),
+                  "24 GB GPU Memory".to_owned(),
+                ),
+                vec!(
+                  "32 CPU".to_owned(),
+                  "128 GB Memory".to_owned(),
+                  "24 GB GPU Memory".to_owned(),
+                ),
+                vec!(
+                  "64 CPU".to_owned(),
+                  "256 GB Memory".to_owned(),
+                  "24 GB GPU Memory".to_owned(),
+                ),
+                vec!(
+                  "48 CPU".to_owned(),
+                  "192 GB Memory".to_owned(),
+                  "96 GB GPU Memory".to_owned(),
+                ),
+              )
+            )
+            .hide_title()
+            .hide_value() %>
+      </div>
+      <button data-action="playground#resetOptionsRange">Reset Options Input</button>
+      <button data-action="playground#logOptionsRange">log value</button>
     </div>
 
     <div class="d-flex flex-row justify-content-between">
