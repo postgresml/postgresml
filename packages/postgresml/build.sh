@@ -3,7 +3,7 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-export PACKAGE_VERSION=${1:-"2.7.4"}
+export PACKAGE_VERSION=${1:-"2.7.10"}
 export PGVERSION=${2:-"14"}
 
 deb_dir="/tmp/postgresml/deb-build"
