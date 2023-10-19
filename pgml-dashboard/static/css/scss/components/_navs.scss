@@ -149,7 +149,9 @@
         }
     }
     [aria-expanded=false] {
-        transform: rotate(-90deg);
+        span.material-symbols-outlined {
+            transform: rotate(-90deg);
+        }
     }
     @include media-breakpoint-down(xxl) {
         border-radius: 0px;
