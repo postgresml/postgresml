@@ -2,7 +2,6 @@ use std::fmt::Write;
 use std::str::FromStr;
 
 use ndarray::Zip;
-use once_cell::sync::OnceCell;
 use pgrx::iter::{SetOfIterator, TableIterator};
 use pgrx::*;
 use serde_json::Value;
@@ -10,7 +9,6 @@ use serde_json::Value;
 #[cfg(feature = "python")]
 use serde_json::json;
 
-use crate::bindings::vllm::{LLMBuilder, LLM};
 #[cfg(feature = "python")]
 use crate::orm::*;
 
@@ -642,30 +640,7 @@ fn transform(mut task: Value, args: Value, inputs: Vec<&str>) -> anyhow::Result<
     });
 
     if use_vllm {
-        crate::bindings::python::activate().unwrap();
-
-        static LAZY_LLM: OnceCell<LLM> = OnceCell::new();
-        let llm = LAZY_LLM.get_or_init(move || {
-            let builder = match LLMBuilder::try_from(task) {
-                Ok(b) => b,
-                Err(e) => error!("{e}"),
-            };
-            builder.build().unwrap()
-        });
-
-        let outputs = llm
-            .generate(&inputs, None)?
-            .iter()
-            .map(|o| {
-                o.outputs()
-                    .unwrap()
-                    .iter()
-                    .map(|o| o.text().unwrap())
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<Vec<_>>>();
-
-        Ok(json!(outputs))
+        Ok(crate::bindings::vllm::vllm_inference(&task, &inputs)?)
     } else {
         if let Some(map) = task.as_object_mut() {
             // pop backend keyword, if present

@@ -29,6 +29,7 @@ pub enum Quantization {
 }
 
 pub struct LLM {
+    model: String,
     inner: PyObject,
 }
 
@@ -133,7 +134,7 @@ impl LLMBuilder {
     pub fn build(self) -> PyResult<LLM> {
         let inner = Python::with_gil(|py| -> PyResult<PyObject> {
             let kwargs = PyDict::new(py);
-            kwargs.set_item("model", self.model)?;
+            kwargs.set_item("model", self.model.clone())?;
             kwargs.set_item("tokenizer", self.tokenizer)?;
             kwargs.set_item("tokenizer_mode", self.tokenizer_mode)?;
             kwargs.set_item("trust_remote_code", self.trust_remote_code)?;
@@ -149,7 +150,10 @@ impl LLMBuilder {
             vllm.getattr("LLM")?.call((), Some(kwargs))?.extract()
         })?;
 
-        Ok(LLM { inner })
+        Ok(LLM {
+            inner,
+            model: self.model,
+        })
     }
 }
 
@@ -183,6 +187,10 @@ impl LLM {
                 .call(py, (), Some(kwargs))?
                 .extract(py)
         })
+    }
+
+    pub fn model(&self) -> &str {
+        self.model.as_str()
     }
 }
 
