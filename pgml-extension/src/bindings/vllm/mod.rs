@@ -1,4 +1,4 @@
-//! Rust bindings to the Python package `vllm`.
+//! Rust bindings to the Python package [vLLM](https://vllm.readthedocs.io/en/latest/)
 
 mod inference;
 mod llm;

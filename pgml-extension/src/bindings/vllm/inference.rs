@@ -4,6 +4,8 @@ use serde_json::{json, Value};
 
 use super::LLM;
 
+/// Cache a single model per client process. vLLM does not allow multiple, simultaneous models to be loaded.
+/// See GH issue, https://github.com/vllm-project/vllm/issues/565
 static MODEL: Mutex<Option<LLM>> = Mutex::new(None);
 
 pub fn vllm_inference(task: &Value, inputs: &[&str]) -> PyResult<Value> {
