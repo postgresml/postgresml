@@ -7,7 +7,7 @@ use crate::components::stimulus::stimulus_target::StimulusTarget;
 use crate::components::stimulus::stimulus_action::StimulusAction;
 use crate::components::stimulus::stimulus_action::StimulusEvents;
 use crate::components::inputs::select::Select;
-use crate::components::inputs::switch::Switch;
+use crate::components::inputs::switch::{Switch, State};
 %>
 
 <div class="min-height: 100vh;" data-controller="playground">
@@ -223,7 +223,7 @@ use crate::components::inputs::switch::Switch;
               .name("switch"))
             .left("CPU", "memory")
             .right("GPU", "mode_fan")
-            .start_toggled() %>
+            .default_position(State::Right) %>
           </div>
           <div>
             <button data-action="click->playground#resetSwitch">Reset Switch</button>

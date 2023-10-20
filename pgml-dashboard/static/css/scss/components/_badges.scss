@@ -5,8 +5,7 @@
     align-items: center;
 }
 
-.version-badge {
-    @extend .badge;
+.eyebrow-badge {
     text-transform: uppercase;
     color: #{$pink};
 }
