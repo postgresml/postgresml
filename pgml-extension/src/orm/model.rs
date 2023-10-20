@@ -2,6 +2,7 @@ use anyhow::{anyhow, bail, Result};
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
+use std::num::NonZeroUsize;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Instant;
@@ -962,16 +963,13 @@ impl Model {
     pub fn numeric_encode_features(&self, rows: &[pgrx::datum::AnyElement]) -> Vec<f32> {
         // TODO handle FLOAT4[] as if it were pgrx::datum::AnyElement, skipping all this, and going straight to predict
         let mut features = Vec::new(); // TODO pre-allocate space
-        let columns = &self.snapshot.columns;
         for row in rows {
             match row.oid() {
                 pgrx_pg_sys::RECORDOID => {
                     let tuple = unsafe { PgHeapTuple::from_composite_datum(row.datum()) };
-                    for index in 1..tuple.len() + 1 {
-                        let column = &columns[index - 1];
-                        let attribute = tuple
-                            .get_attribute_by_index(index.try_into().unwrap())
-                            .unwrap();
+                    for (i, column) in self.snapshot.features().enumerate() {
+                        let index = NonZeroUsize::new(i + 1).unwrap();
+                        let attribute = tuple.get_attribute_by_index(index).unwrap();
                         match &column.statistics.categories {
                             Some(_categories) => {
                                 let key = match attribute.atttypid {
@@ -982,14 +980,14 @@ impl Model {
                                     | pgrx_pg_sys::VARCHAROID
                                     | pgrx_pg_sys::BPCHAROID => {
                                         let element: Result<Option<String>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         element
                                             .unwrap()
                                             .unwrap_or(snapshot::NULL_CATEGORY_KEY.to_string())
                                     }
                                     pgrx_pg_sys::BOOLOID => {
                                         let element: Result<Option<bool>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         element
                                             .unwrap()
                                             .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
@@ -998,7 +996,7 @@ impl Model {
                                     }
                                     pgrx_pg_sys::INT2OID => {
                                         let element: Result<Option<i16>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         element
                                             .unwrap()
                                             .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
@@ -1007,7 +1005,7 @@ impl Model {
                                     }
                                     pgrx_pg_sys::INT4OID => {
                                         let element: Result<Option<i32>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         element
                                             .unwrap()
                                             .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
@@ -1016,7 +1014,7 @@ impl Model {
                                     }
                                     pgrx_pg_sys::INT8OID => {
                                         let element: Result<Option<i64>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         element
                                             .unwrap()
                                             .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
@@ -1025,7 +1023,7 @@ impl Model {
                                     }
                                     pgrx_pg_sys::FLOAT4OID => {
                                         let element: Result<Option<f32>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         element
                                             .unwrap()
                                             .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
@@ -1034,7 +1032,7 @@ impl Model {
                                     }
                                     pgrx_pg_sys::FLOAT8OID => {
                                         let element: Result<Option<f64>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         element
                                             .unwrap()
                                             .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
@@ -1056,79 +1054,79 @@ impl Model {
                                     }
                                     pgrx_pg_sys::BOOLOID => {
                                         let element: Result<Option<bool>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         features.push(
                                             element.unwrap().map_or(f32::NAN, |v| v as u8 as f32),
                                         );
                                     }
                                     pgrx_pg_sys::INT2OID => {
                                         let element: Result<Option<i16>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         features
                                             .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgrx_pg_sys::INT4OID => {
                                         let element: Result<Option<i32>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         features
                                             .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgrx_pg_sys::INT8OID => {
                                         let element: Result<Option<i64>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         features
                                             .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgrx_pg_sys::FLOAT4OID => {
                                         let element: Result<Option<f32>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         features.push(element.unwrap().map_or(f32::NAN, |v| v));
                                     }
                                     pgrx_pg_sys::FLOAT8OID => {
                                         let element: Result<Option<f64>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         features
                                             .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     // TODO handle NULL to NaN for arrays
                                     pgrx_pg_sys::BOOLARRAYOID => {
                                         let element: Result<Option<Vec<bool>>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         for j in element.as_ref().unwrap().as_ref().unwrap() {
                                             features.push(*j as i8 as f32);
                                         }
                                     }
                                     pgrx_pg_sys::INT2ARRAYOID => {
                                         let element: Result<Option<Vec<i16>>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         for j in element.as_ref().unwrap().as_ref().unwrap() {
                                             features.push(*j as f32);
                                         }
                                     }
                                     pgrx_pg_sys::INT4ARRAYOID => {
                                         let element: Result<Option<Vec<i32>>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         for j in element.as_ref().unwrap().as_ref().unwrap() {
                                             features.push(*j as f32);
                                         }
                                     }
                                     pgrx_pg_sys::INT8ARRAYOID => {
                                         let element: Result<Option<Vec<i64>>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         for j in element.as_ref().unwrap().as_ref().unwrap() {
                                             features.push(*j as f32);
                                         }
                                     }
                                     pgrx_pg_sys::FLOAT4ARRAYOID => {
                                         let element: Result<Option<Vec<f32>>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         for j in element.as_ref().unwrap().as_ref().unwrap() {
                                             features.push(*j);
                                         }
                                     }
                                     pgrx_pg_sys::FLOAT8ARRAYOID => {
                                         let element: Result<Option<Vec<f64>>, TryFromDatumError> =
-                                            tuple.get_by_index(index.try_into().unwrap());
+                                            tuple.get_by_index(index);
                                         for j in element.as_ref().unwrap().as_ref().unwrap() {
                                             features.push(*j as f32);
                                         }

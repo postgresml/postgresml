@@ -74,7 +74,7 @@ pub(crate) enum Encode {
     #[default]
     native,
     // Encode each category as the mean of the target
-    target_mean,
+    target,
     // Encode each category as one boolean column per category
     one_hot,
     // Encode each category as ascending integer values
@@ -230,7 +230,7 @@ impl Column {
         target: &ndarray::ArrayView<f32, ndarray::Ix1>,
     ) {
         // target encode if necessary before analyzing
-        if self.preprocessor.encode == Encode::target_mean {
+        if self.preprocessor.encode == Encode::target {
             let categories = self.statistics.categories.as_mut().unwrap();
             let mut sums = vec![0_f32; categories.len() + 1];
             Zip::from(array).and(target).for_each(|&value, &target| {
@@ -261,6 +261,9 @@ impl Column {
         statistics.mean = data.iter().sum::<f32>() / data.len() as f32;
         statistics.median = data[data.len() / 2];
         statistics.missing = array.len() - data.len();
+        if self.label && statistics.missing > 0 {
+            error!("The training data labels in \"{}\" contain {} NULL values. Consider filtering these values from the training data by creating a VIEW that includes a SQL filter like `WHERE {} IS NOT NULL`.", self.name, statistics.missing, self.name);
+        }
         statistics.variance = data
             .iter()
             .map(|i| {
@@ -535,7 +538,7 @@ impl Snapshot {
                     Some(preprocessor) => {
                         let preprocessor = preprocessor.clone();
                         if Column::categorical_type(&pg_type) {
-                            if preprocessor.impute == Impute::mean && preprocessor.encode != Encode::target_mean {
+                            if preprocessor.impute == Impute::mean && preprocessor.encode != Encode::target {
                                 error!("Error initializing preprocessor for column: {:?}.\n\n  You can not specify {{\"impute: mean\"}} for a categorical variable unless it is also encoded using `target_mean`, because there is no \"average\" category. `{{\"impute: mode\"}}` is valid alternative, since there is a most common category. Another option would be to encode using target_mean, and then the target mean will be imputed for missing categoricals.", name);
                             }
                         } else if preprocessor.encode != Encode::native {
@@ -1014,7 +1017,7 @@ impl Snapshot {
                                     let value = match key.as_str() {
                                         NULL_CATEGORY_KEY => 0_f32, // NULL values are always Category 0
                                         _ => match &column.preprocessor.encode {
-                                            Encode::target_mean | Encode::native | Encode::one_hot { .. } => len as f32,
+                                            Encode::target | Encode::native | Encode::one_hot { .. } => len as f32,
                                             Encode::ordinal(values) => match values.iter().position(|v| v == key.as_str()) {
                                                 Some(i) => (i + 1) as f32,
                                                 None => error!("value is not present in ordinal: {:?}. Valid values: {:?}", key, values),
