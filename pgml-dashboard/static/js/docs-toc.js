@@ -10,13 +10,9 @@ export default class extends Controller {
       rootMargin: '-10% 0% -50% 0%',
       threshold: [1],
     });
-    document.body.addEventListener('activate.bs.scrollspy', function(e) {
-
-    });
   }
 
   clicked(e) {
-    console.log('clicked', this, e);
     let href = e.target.attributes.href.nodeValue;
     if (href) {
       if (href.startsWith("#")) {
