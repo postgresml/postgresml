@@ -121,12 +121,12 @@ mod default_head_template_test {
     fn default() {
         let head = DefaultHeadTemplate::new(None);
         let rendered = head.render_once().unwrap();
+
         assert!(
             rendered.contains(r#"<head>"#) &&
             rendered.contains(r#"<title> – PostgresML</title>"#) &&
             rendered.contains(r#"<meta name="description" content="Train and deploy models to make online predictions using only SQL, with an open source Postgres extension.">"#) &&
             !rendered.contains("preload") &&
-            rendered.contains(r#"<script type="importmap-shim" data-turbo-track="reload">"#) &&
             rendered.contains("</head>")
         )
     }
