@@ -14,6 +14,7 @@ fn main() {
     let status = Command::new("cargo")
         .arg("pgml-components")
         .arg("bundle")
+        .arg("--lock")
         .status()
         .expect("failed to run 'cargo pgml-bundle'");
 
