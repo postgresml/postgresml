@@ -140,7 +140,7 @@ mod test {
     async fn rocket() -> Rocket<Build> {
         dotenv::dotenv().ok();
 
-        pgml_dashboard::migrate(Cluster::default().pool())
+        pgml_dashboard::migrate(Cluster::default(None).pool())
             .await
             .unwrap();
 
