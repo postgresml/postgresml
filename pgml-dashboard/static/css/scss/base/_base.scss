@@ -43,11 +43,22 @@ pre {
 
 // links
 a {
-    text-decoration: none; 
+    text-decoration: none;
 
     &:not(.btn, .nav .nav-link, .breadcrumb-item a, .list-group-item, .a-reset, .navbar .nav-link, .navbar .navbar-brand, .menu-item a) {
         color: var(--bs-link-color);
         background-color: transparent;
+    }
+
+    &h1, h2, h3, h4, h5, h6 {
+        &:hover {
+            &:before {
+                content: '#';
+                margin-left: -1em;
+                position: absolute;
+            }
+        }
+        scroll-margin-top: 108px;
     }
 }
 

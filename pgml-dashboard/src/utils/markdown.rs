@@ -3,10 +3,7 @@ use crate::{templates::docs::TocLink, utils::config};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::sync::{
-    atomic::{AtomicUsize, Ordering},
-    Arc,
-};
+use std::sync::Arc;
 
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
 use anyhow::Result;
@@ -16,6 +13,7 @@ use comrak::{
     nodes::{Ast, AstNode, NodeValue},
     parse_document, Arena, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions,
 };
+use convert_case::Casing;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use tantivy::collector::TopDocs;
@@ -28,43 +26,37 @@ use url::Url;
 use crate::templates::docs::NavLink;
 use std::fmt;
 
-pub struct MarkdownHeadings {
-    counter: Arc<AtomicUsize>,
-}
+pub struct MarkdownHeadings {}
 
 impl MarkdownHeadings {
     pub fn new() -> Self {
-        Self {
-            counter: Arc::new(AtomicUsize::new(0)),
-        }
+        Self {}
     }
 }
 
 impl HeadingAdapter for MarkdownHeadings {
     fn enter(&self, meta: &HeadingMeta) -> String {
-        // let id = meta.content.to_case(convert_case::Case::Kebab);
-        let id = self.counter.fetch_add(1, Ordering::SeqCst);
-        let id = format!("header-{}", id);
+        let id = meta.content.to_case(convert_case::Case::Kebab);
 
         match meta.level {
-            1 => format!(r#"<h1 class="h1 mb-5" id="{id}">"#),
-            2 => format!(r#"<h2 class="h2 mb-4 mt-5" id="{id}">"#),
-            3 => format!(r#"<h3 class="h3 mb-4 mt-5" id="{id}">"#),
-            4 => format!(r#"<h4 class="h5 mb-3 mt-3" id="{id}">"#),
-            5 => format!(r#"<h5 class="h6 mb-2 mt-4" id="{id}">"#),
-            6 => format!(r#"<h6 class="h6 mb-1 mt-1" id="{id}">"#),
+            1 => format!(r##"<a href="#{id}"><h1 class="h1 mb-5" id="{id}">"##),
+            2 => format!(r##"<a href="#{id}"><h2 class="h2 mb-4 mt-5" id="{id}">"##),
+            3 => format!(r##"<a href="#{id}"><h3 class="h3 mb-4 mt-5" id="{id}">"##),
+            4 => format!(r##"<a href="#{id}"><h4 class="h5 mb-3 mt-3" id="{id}">"##),
+            5 => format!(r##"<a href="#{id}"><h5 class="h6 mb-2 mt-4" id="{id}">"##),
+            6 => format!(r##"<a href="#{id}"><h6 class="h6 mb-1 mt-1" id="{id}">"##),
             _ => unreachable!(),
         }
     }
 
     fn exit(&self, meta: &HeadingMeta) -> String {
         match meta.level {
-            1 => r#"</h1>"#,
-            2 => r#"</h2>"#,
-            3 => r#"</h3>"#,
-            4 => r#"</h4>"#,
-            5 => r#"</h5>"#,
-            6 => r#"</h6>"#,
+            1 => r#"</h1></a>"#,
+            2 => r#"</h2></a>"#,
+            3 => r#"</h3></a>"#,
+            4 => r#"</h4></a>"#,
+            5 => r#"</h5></a>"#,
+            6 => r#"</h6></a>"#,
             _ => unreachable!(),
         }
         .into()
@@ -712,12 +704,10 @@ pub fn wrap_tables<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> 
 ///
 pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
     let mut links = Vec::new();
-    let mut header_counter = 0;
 
     iter_nodes(root, &mut |node| {
         match &node.data.borrow().value {
             &NodeValue::Heading(ref header) => {
-                header_counter += 1;
                 if header.level != 1 {
                     let sibling = match node.first_child() {
                         Some(child) => child,
@@ -728,7 +718,7 @@ pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
                     };
                     match &sibling.data.borrow().value {
                         &NodeValue::Text(ref text) => {
-                            links.push(TocLink::new(text, header_counter - 1).level(header.level));
+                            links.push(TocLink::new(text).level(header.level));
                             return Ok(false);
                         }
                         _ => (),
