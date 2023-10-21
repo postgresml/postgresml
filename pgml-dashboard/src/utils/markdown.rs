@@ -3,7 +3,10 @@ use crate::{templates::docs::TocLink, utils::config};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    Arc,
+};
 
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
 use anyhow::Result;
@@ -13,7 +16,6 @@ use comrak::{
     nodes::{Ast, AstNode, NodeValue},
     parse_document, Arena, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions,
 };
-use convert_case::Casing;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use tantivy::collector::TopDocs;
@@ -26,17 +28,23 @@ use url::Url;
 use crate::templates::docs::NavLink;
 use std::fmt;
 
-pub struct MarkdownHeadings {}
+pub struct MarkdownHeadings {
+    counter: Arc<AtomicUsize>,
+}
 
 impl MarkdownHeadings {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            counter: Arc::new(AtomicUsize::new(0)),
+        }
     }
 }
 
 impl HeadingAdapter for MarkdownHeadings {
     fn enter(&self, meta: &HeadingMeta) -> String {
-        let id = meta.content.to_case(convert_case::Case::Kebab);
+        // let id = meta.content.to_case(convert_case::Case::Kebab);
+        let id = self.counter.fetch_add(1, Ordering::SeqCst);
+        let id = format!("header-{}", id);
 
         match meta.level {
             1 => format!(r#"<h1 class="h1 mb-5" id="{id}">"#),
@@ -217,7 +225,9 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
             let code = match options.lang {
                 "postgresql" | "sql" | "postgresql-line-nums" => {
                     lazy_static! {
-                        static ref SQL_KEYS: [&'static str; 66] = [
+                        static ref SQL_KEYS: [&'static str; 68] = [
+                            "PARTITION OF",
+                            "PARTITION BY",
                             "CASCADE",
                             "INNER ",
                             "ON ",
@@ -285,7 +295,9 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "pgml.predict",
                             "pgml.transform",
                         ];
-                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 66] = [
+                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 68] = [
+                            r#"<span class="syntax-highlight">PARTITION OF</span>"#,
+                            r#"<span class="syntax-highlight">PARTITION BY</span>"#,
                             "<span class=\"syntax-highlight\">CASCADE</span>",
                             "<span class=\"syntax-highlight\">INNER </span>",
                             "<span class=\"syntax-highlight\">ON </span>",
