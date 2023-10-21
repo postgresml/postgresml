@@ -116,3 +116,13 @@ fn install_node() {
         warn("installed node")
     }
 }
+
+pub fn debug() {
+    let node = unwrap_or_exit!(execute_with_nvm(Command::new("which").arg("node")));
+    println!("node: {}", node.trim());
+
+    for tool in TOOLS {
+        let output = unwrap_or_exit!(execute_with_nvm(Command::new("which").arg(tool)));
+        println!("{}: {}", tool, output.trim());
+    }
+}

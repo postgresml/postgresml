@@ -126,7 +126,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-pgml-components"
-version = "0.1.18-alpha.2"
+version = "0.1.19"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -134,6 +134,7 @@ dependencies = [
  "clap",
  "convert_case",
  "env_logger",
+ "file-lock",
  "glob",
  "log",
  "md5",
@@ -279,6 +280,16 @@ name = "fastrand"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6999dc1837253364c2ebb0704ba97994bd874e8f195d665c50b7548f6ea92764"
+
+[[package]]
+name = "file-lock"
+version = "2.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec788ff423b138c9c5faf201347926573b605c517fb1c5a56aa632b218bf47bb"
+dependencies = [
+ "cc",
+ "libc",
+]
 
 [[package]]
 name = "filetime"

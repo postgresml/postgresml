@@ -1,8 +1,10 @@
 //! A tool to assemble and bundle our frontend components.
 
 use clap::{Args, Parser, Subcommand};
+use file_lock::{FileLock, FileOptions};
 use std::env::{current_dir, set_current_dir};
-use std::fs::create_dir_all;
+use std::fs::{create_dir_all, File};
+use std::io::Write;
 use std::path::Path;
 
 #[macro_use]
@@ -58,6 +60,12 @@ enum Commands {
     Bundle {
         #[arg(short, long, default_value = "false")]
         minify: bool,
+
+        #[arg(short, long, default_value = "false")]
+        debug: bool,
+
+        #[arg(short, long, default_value = "false")]
+        lock: bool,
     },
 
     /// Add new elements to the project.
@@ -91,7 +99,11 @@ fn main() {
         CargoSubcommands::PgmlComponents(pgml_commands) => {
             validate_project(pgml_commands.project_path);
             match pgml_commands.command {
-                Commands::Bundle { minify } => bundle(config, minify),
+                Commands::Bundle {
+                    minify,
+                    debug,
+                    lock,
+                } => bundle(config, minify, debug, lock),
                 Commands::Add(command) => match command {
                     AddCommands::Component { name } => {
                         crate::frontend::components::add(&Path::new(&name), pgml_commands.overwrite)
@@ -131,10 +143,45 @@ fn validate_project(project_path: Option<String>) {
 }
 
 /// Bundle SASS and JavaScript into neat bundle files.
-fn bundle(config: Config, minify: bool) {
+fn bundle(config: Config, minify: bool, debug: bool, lock: bool) {
+    let lock = if lock { Some(acquire_lock()) } else { None };
+
+    if debug {
+        frontend::tools::debug();
+    }
+
+    frontend::tools::install();
+
+    if debug {
+        frontend::tools::debug();
+    }
+
     frontend::sass::bundle();
     frontend::javascript::bundle(config, minify);
     frontend::components::update_modules();
 
     info("bundle complete");
+
+    if let Some(lock) = lock {
+        unwrap_or_exit!(lock.unlock());
+    }
+}
+
+fn acquire_lock() -> FileLock {
+    print!("acquiring lock...");
+    unwrap_or_exit!(std::io::stdout().flush());
+
+    let file = "/tmp/pgml-components-lock";
+
+    // Create file if not exists
+    if !Path::new(file).exists() {
+        unwrap_or_exit!(File::create(file));
+    }
+
+    let options = FileOptions::new().write(true).create(true).append(true);
+
+    let lock = unwrap_or_exit!(FileLock::lock(file, true, options));
+
+    info("ok");
+    lock
 }

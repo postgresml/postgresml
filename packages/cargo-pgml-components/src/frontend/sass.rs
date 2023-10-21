@@ -72,8 +72,6 @@ fn cleanup_old_bundles() {
 
 /// Entrypoint.
 pub fn bundle() {
-    crate::frontend::tools::install();
-
     assemble_modules();
     cleanup_old_bundles();
 
