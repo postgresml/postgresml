@@ -640,9 +640,13 @@ pub fn get_title<'a>(root: &'a AstNode<'a>) -> anyhow::Result<String> {
         match &node.data.borrow().value {
             &NodeValue::Heading(ref header) => {
                 if header.level == 1 {
-                    let content = node
-                        .first_child()
-                        .ok_or(anyhow::anyhow!("markdown heading has no child"))?;
+                    let content = match node.first_child() {
+                        Some(child) => child,
+                        None => {
+                            warn!("markdown heading has no child");
+                            return Ok(false);
+                        }
+                    };
                     match &content.data.borrow().value {
                         &NodeValue::Text(ref text) => {
                             title = Some(text.to_owned());
@@ -703,9 +707,13 @@ pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
             &NodeValue::Heading(ref header) => {
                 header_counter += 1;
                 if header.level != 1 {
-                    let sibling = node
-                        .first_child()
-                        .ok_or(anyhow::anyhow!("markdown heading has no child"))?;
+                    let sibling = match node.first_child() {
+                        Some(child) => child,
+                        None => {
+                            warn!("markdown heading has no child");
+                            return Ok(false);
+                        }
+                    };
                     match &sibling.data.borrow().value {
                         &NodeValue::Text(ref text) => {
                             links.push(TocLink::new(text, header_counter - 1).level(header.level));
