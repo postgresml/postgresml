@@ -69,5 +69,3 @@ RAIDZ1 protects against single volume failure, allowing you to replace an EBS vo
 
 A RAID configuration with 4 volumes allows up to 4x read throughput of a single volume which, in EBS terms, can produce up to 600MBps, without having to pay for additional IOPS.
 
-####
-
