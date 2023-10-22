@@ -27,7 +27,7 @@ A Debian (Ubuntu 22.04) package which installs everything needed for PostgresML 
 
 ### `postgresml-dashboard`
 
-A Debian (Ubuntu 22.04) package which compiles and distributes `pgml-dashboard`. It follows the same release cadence as the extension package, documented below.
+A Debian (Ubuntu 22.04) package which compiles and distributes `pgml-dashboard`. It follows the same release cadence as the extension package, documented below. The dashboard is distributed separately because it's a web app and often won't run on the same system as PostgresML.
 
 ### `postgresml-python`
 
