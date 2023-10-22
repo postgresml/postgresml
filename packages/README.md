@@ -94,7 +94,7 @@ Push a commit to `master` with the changes above. Once pushed, make a new Github
 
 #### Name of the tag
 
-Make sure that the tag is named correctly. Tags are immutable, so if we push the wrong name, it'll stay in git forever. Tags should be named with the version number preceeded by the letter "v", e.g. `v2.7.11`.
+Make sure that the tag is named correctly. Tags are immutable, so if we push the wrong name, it'll stay in git forever. Tags should be named with the version number preceded by the letter "v", e.g. `v2.7.11`.
 
 ### 4. Run Github Actions
 
