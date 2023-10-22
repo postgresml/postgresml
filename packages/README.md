@@ -92,6 +92,10 @@ When the extension is packaged, the migration will be included automatically by 
 
 Push a commit to `master` with the changes above. Once pushed, make a new Github release. The release should be named after the version, e.g. `v2.7.11` so we and our users can more easily find the changelog.
 
+#### Name of the tag
+
+Make sure that the tag is named correctly. Tags are immutable, so if we push the wrong name, it'll stay in git forever. Tags should be named with the version number preceeded by the letter "v", e.g. `v2.7.11`.
+
 ### 4. Run Github Actions
 
 In this order, run the Github actions:
