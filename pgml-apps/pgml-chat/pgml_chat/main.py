@@ -10,6 +10,7 @@ import glob
 import argparse
 from time import time
 import openai
+import litellm
 import signal
 
 import ast
@@ -120,9 +121,9 @@ async def upsert_documents(folder: str) -> int:
 async def generate_response(
     messages, openai_api_key, temperature=0.7, max_tokens=256, top_p=0.9
 ):
-    openai.api_key = openai_api_key
+    litellm.api_key = openai_api_key
     log.debug("Generating response from OpenAI API: " + str(messages))
-    response = openai.ChatCompletion.create(
+    response = litellm.completion(
         model="gpt-3.5-turbo",
         messages=messages,
         temperature=temperature,
