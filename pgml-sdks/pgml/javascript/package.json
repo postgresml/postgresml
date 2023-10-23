@@ -27,7 +27,4 @@
     "@types/node": "^20.3.1",
     "cargo-cp-artifact": "^0.1"
   },
-  "dependencies": {
-    "pgml": "^0.9.3"
-  }
 }
