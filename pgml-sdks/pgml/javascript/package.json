@@ -26,5 +26,5 @@
   "devDependencies": {
     "@types/node": "^20.3.1",
     "cargo-cp-artifact": "^0.1"
-  },
+  }
 }
