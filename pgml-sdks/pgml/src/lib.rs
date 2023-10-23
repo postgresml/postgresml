@@ -8,7 +8,7 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 use std::env;
 use std::sync::RwLock;
-use tokio::runtime::{Builder, Runtime};
+use tokio::runtime::Runtime;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
@@ -116,11 +116,7 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
         if let Some(r) = &RUNTIME {
             r
         } else {
-            let runtime = Builder::new_current_thread()
-                .worker_threads(1)
-                .enable_all()
-                .build()
-                .unwrap();
+            let runtime = Runtime::new().unwrap();
             RUNTIME = Some(runtime);
             get_or_set_runtime()
         }

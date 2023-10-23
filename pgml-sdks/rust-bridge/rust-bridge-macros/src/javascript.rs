@@ -235,8 +235,9 @@ pub fn generate_javascript_methods(
 
         let middle = if method.is_async {
             quote! {
-                let runtime = crate::get_or_set_runtime();
-                let x = runtime.block_on(#wrapped_call);
+                // let runtime = crate::get_or_set_runtime();
+                // let x = runtime.block_on(#wrapped_call);
+                let x = #wrapped_call.await;
 
             }
         } else {
@@ -265,14 +266,19 @@ pub fn generate_javascript_methods(
                 #signature {
                     use neon::prelude::*;
                     use rust_bridge::javascript::{IntoJsResult, FromJsType};
+
                     #outer_prepared
+                    #inner_prepared
+
                     let channel = cx.channel();
                     let (deferred, promise) = cx.promise();
-                    deferred.try_settle_with(&channel, move |mut cx| {
-                        #inner_prepared
+                    crate::get_or_set_runtime().spawn(async move {
                         #middle
-                        x.into_js_result(&mut cx)
-                    }).expect("Error sending js");
+                        deferred.try_settle_with(&channel, move |mut cx| {
+                            x.into_js_result(&mut cx)
+                        }).expect("Error sending js");
+                    });
+
                     Ok(promise)
                 }
             }
