@@ -1,6 +1,6 @@
 {
   "name": "pgml",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Open Source Alternative for Building End-to-End Vector Search Applications without OpenAI & Pinecone",
   "keywords": [
     "postgres",
@@ -26,5 +26,8 @@
   "devDependencies": {
     "@types/node": "^20.3.1",
     "cargo-cp-artifact": "^0.1"
+  },
+  "dependencies": {
+    "pgml": "^0.9.3"
   }
 }
