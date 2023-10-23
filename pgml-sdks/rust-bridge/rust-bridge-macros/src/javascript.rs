@@ -280,17 +280,6 @@ pub fn generate_javascript_methods(
                     });
 
                     Ok(promise)
-
-                    // #outer_prepared
-                    // let channel = cx.channel();
-                    // let (deferred, promise) = cx.promise();
-                    // deferred.try_settle_with(&channel, move |mut cx| {
-                    //     #inner_prepared
-                    //     #middle
-                    //     x.into_js_result(&mut cx)
-                    // }).expect("Error sending js");
-                    // Ok(promise)
-
                 }
             }
         } else {
