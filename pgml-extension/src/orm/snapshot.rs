@@ -508,7 +508,7 @@ impl Snapshot {
         let preprocessors: HashMap<String, Preprocessor> =
             serde_json::from_value(preprocess.0).expect("is valid");
 
-        Spi::connect(|client| {
+        Spi::connect(|mut client| {
             let mut columns: Vec<Column> = Vec::new();
             client.select("SELECT column_name::TEXT, udt_name::TEXT, is_nullable::BOOLEAN, ordinal_position::INTEGER FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position ASC",
                 None,
@@ -587,7 +587,7 @@ impl Snapshot {
                 }
             }
 
-            let result = client.select("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status, columns, materialized) VALUES ($1, $2, $3, $4::pgml.sampling, $5::pgml.status, $6, $7) RETURNING id, relation_name, y_column_name, test_size, test_sampling::TEXT, status::TEXT, columns, analysis, created_at, updated_at;",
+            let result = client.update("INSERT INTO pgml.snapshots (relation_name, y_column_name, test_size, test_sampling, status, columns, materialized) VALUES ($1, $2, $3, $4::pgml.sampling, $5::pgml.status, $6, $7) RETURNING id, relation_name, y_column_name, test_size, test_sampling::TEXT, status::TEXT, columns, analysis, created_at, updated_at;",
                 Some(1),
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), relation_name.into_datum()),
@@ -623,7 +623,7 @@ impl Snapshot {
                 if s.test_sampling == Sampling::random {
                     sql += " ORDER BY random()";
                 }
-                client.select(&sql, None, None).unwrap();
+                client.update(&sql, None, None).unwrap();
             }
             snapshot = Some(s);
         });

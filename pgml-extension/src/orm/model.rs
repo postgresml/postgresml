@@ -96,8 +96,8 @@ impl Model {
         let dataset = snapshot.tabular_dataset();
         let status = Status::in_progress;
         // Create the model record.
-        Spi::connect(|client| {
-            let result = client.select("
+        Spi::connect(|mut client| {
+            let result = client.update("
           INSERT INTO pgml.models (project_id, snapshot_id, algorithm, runtime, hyperparams, status, search, search_params, search_args, num_features)
           VALUES ($1, $2, cast($3 AS pgml.algorithm), cast($4 AS pgml.runtime), $5, cast($6 as pgml.status), $7, $8, $9, $10)
           RETURNING id, project_id, snapshot_id, algorithm, runtime, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
@@ -168,8 +168,8 @@ impl Model {
         let dataset = snapshot.text_dataset();
 
         // Create the model record.
-        Spi::connect(|client| {
-            let result = client.select("
+        Spi::connect(|mut client| {
+            let result = client.update("
           INSERT INTO pgml.models (project_id, snapshot_id, algorithm, runtime, hyperparams, status, search, search_params, search_args, num_features)
           VALUES ($1, $2, cast($3 AS pgml.algorithm), cast($4 AS pgml.runtime), $5, cast($6 as pgml.status), $7, $8, $9, $10)
           RETURNING id, project_id, snapshot_id, algorithm, runtime::TEXT, hyperparams, status, metrics, search, search_params, search_args, created_at, updated_at;",
