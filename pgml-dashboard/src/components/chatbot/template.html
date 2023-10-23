@@ -21,7 +21,7 @@
             <% } %>
           />
           <label
-            class="chatbot-brain-option-label rounded-2"
+            class="chatbot-brain-option-label rounded-2 w-100"
             for="chatbot-knowledge-base-option<%= index %>"
             data-action="chatbot#handleKnowledgeBaseChange"
           >
@@ -102,8 +102,8 @@
     <div id="chatbot-right-column" class="flex-grow-1 d-flex flex-column overflow-hidden">
       <div class="d-flex justify-content-between align-items-center pt-3 pb-3 pe-3 m-0">
         <h3 id="chatbot-chatbot-title">Chatbot</h3>
-        <div class="p-1 rounded-2" style="background-color: #444444; cursor: pointer;" data-action="click->chatbot#handleExpandClick">
-          <img id="chatbot-expand-contract-image" class="" width="28px" height="28px" src="/dashboard/static/images/icons/arrow_expanded.svg"/>
+        <div id="chatbot-expand-contract-image-wrapper" class="p-1 rounded-2" data-action="click->chatbot#handleExpandClick">
+          <img id="chatbot-expand-contract-image" width="28px" height="28px" src="/dashboard/static/images/icons/arrow_expanded.svg"/>
         </div>
       </div>
       
@@ -125,7 +125,7 @@
 
           <div id="chatbot-question-textarea-wrapper" class="d-flex position-relative">
             <textarea id="chatbot-question-input" class="flex-grow-1 text-white rounded-start-2 z-1" rows="1" placeholder="Send a message" data-action="keydown.enter->chatbot#handleEnter"></textarea>
-            <div id="chatbot-question-input-button-wrapper" class="p-2 d-flex align-items-end rounded-end-2 z-1">
+            <div id="chatbot-question-input-button-wrapper" class="p-2 d-flex align-items-end rounded-end-2 z-1" data-action="click->chatbot#handleEnter">
               <div id="chatbot-question-input-button" class=""></div>
             </div>
             <div id="chatbot-question-input-border" class="position-absolute rounded-2"></div>
