@@ -5,7 +5,6 @@ export default class extends Controller {
   static outlets = []
 
   initialize() {
-    console.log('Initialized lists-item')
   }
 
   connect() {}
