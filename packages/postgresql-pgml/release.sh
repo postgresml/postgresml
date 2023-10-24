@@ -27,7 +27,7 @@ function package_name() {
   echo "postgresql-pgml-${1}_${PACKAGE_VERSION}-ubuntu22.04-${ARCH}.deb"
 }
 
-for pg in {11..15}; do
+for pg in {12..16}; do
   release_dir="$extension_dir/target/release/pgml-pg${pg}"
 
   mkdir -p "$release_dir/DEBIAN"

@@ -20,7 +20,7 @@ function package_name() {
 	echo "postgresml-$1-$package_version-ubuntu22.04-all.deb"
 }
 
-for pg in {11..15}; do
+for pg in {12..16}; do
   bash ${SCRIPT_DIR}/build.sh ${package_version} ${pg}
 
   if [[ ! -f $(package_name ${pg}) ]]; then
