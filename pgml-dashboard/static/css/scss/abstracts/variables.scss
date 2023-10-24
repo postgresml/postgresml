@@ -97,13 +97,24 @@ $slate-shade-800: #2B274C;
 $slate-shade-900: #1D1A33;
 $slate-shade-1000: #0E0D19;
 
+$magenta-shade-100: #E6008A;
+$magenta-shade-200: #cf007c;
+$magenta-shade-300: #b8006e;
+$magenta-shade-400: #a10060;
+$magenta-shade-500: #8a0052;
+$magenta-shade-600: #730045;
+$magenta-shade-700: #5c0037;
+$magenta-shade-800: #450029;
+$magenta-shade-900: #2e001b;
+$magenta-shade-1000: #17000d;
+
 // Colors
 $primary: #0D0D0E;
 $secondary: $gray-100;
 $danger: $peach-shade-100;
 $error: $peach-shade-100;
 $purple: $slate-tint-100;
-$pink: #e7477c;
+$pink: $magenta-shade-100;
 $hp-white: #{$gray-200};
 
 // Background Colors

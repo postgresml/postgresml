@@ -7,11 +7,12 @@ div[data-controller="inputs-switch"] {
     }
 
     .label {
-        padding: 8px 20px;
+        padding: 8px 40px;
         border-radius: 5rem;
         text-align: center;
         display: flex;
         justify-content: center;
+        align-items: center;
         @extend .gap-2;
     }
 

@@ -60,8 +60,8 @@ impl Switch {
         self
     }
 
-    pub fn start_toggled(mut self) -> Switch {
-        self.initial_state = State::Right;
+    pub fn default_position(mut self, state: State) -> Switch {
+        self.initial_state = state;
         self
     }
 
