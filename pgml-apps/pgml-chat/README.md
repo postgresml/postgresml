@@ -34,23 +34,16 @@ wget https://raw.githubusercontent.com/postgresml/postgresml/master/pgml-apps/pg
 ```bash
 OPENAI_API_KEY=<OPENAI_API_KEY>
 DATABASE_URL=<POSTGRES_DATABASE_URL starts with postgres://>
-MODEL=hkunlp/instructor-xl
-MODEL_PARAMS={"instruction": "Represent the Wikipedia document for retrieval: "}
-QUERY_PARAMS={"instruction": "Represent the Wikipedia question for retrieving supporting documents: "}
-SYSTEM_PROMPT="You are an assistant to answer questions about an open source software named PostgresML. Your name is PgBot. You are based out of San Francisco, California."
-BASE_PROMPT="Given relevant parts of a document and a question, create a final answer.\ 
-                Include a SQL query in the answer wherever possible. \
-                Use the following portion of a long document to see if any of the text is relevant to answer the question.\
-                \nReturn any relevant text verbatim.\n{context}\nQuestion: {question}\n \
-                If the context is empty then ask for clarification and suggest user to send an email to team@postgresml.org or join PostgresML [Discord](https://discord.gg/DmyJP3qJ7U)."
 ```
 
 # Usage
 You can get help on the command line interface by running:
 
 ```bash
-(pgml-bot-builder-py3.9) pgml-chat % pgml-chat --help
-usage: pgml-chat [-h] --collection_name COLLECTION_NAME [--root_dir ROOT_DIR] [--stage {ingest,chat}] [--chat_interface {cli,slack}]
+(pgml-bot-builder-py3.9) pgml-chat % pgml-chat % pgml-chat --help
+usage: pgml-chat [-h] --collection_name COLLECTION_NAME [--root_dir ROOT_DIR] [--stage {ingest,chat}] [--chat_interface {cli,slack,discord}]
+                 [--chat_history CHAT_HISTORY] [--bot_name BOT_NAME] [--bot_language BOT_LANGUAGE] [--bot_topic BOT_TOPIC]
+                 [--bot_topic_primary_language BOT_TOPIC_PRIMARY_LANGUAGE] [--bot_persona BOT_PERSONA]
 
 PostgresML Chatbot Builder
 
@@ -61,8 +54,19 @@ optional arguments:
   --root_dir ROOT_DIR   Input folder to scan for markdown files. Required for ingest stage. Not required for chat stage (default: None)
   --stage {ingest,chat}
                         Stage to run (default: chat)
-  --chat_interface {cli, slack, discord}
+  --chat_interface {cli,slack,discord}
                         Chat interface to use (default: cli)
+  --chat_history CHAT_HISTORY
+                        Number of messages from history used for generating response (default: 1)
+  --bot_name BOT_NAME   Name of the bot (default: PgBot)
+  --bot_language BOT_LANGUAGE
+                        Language of the bot (default: English)
+  --bot_topic BOT_TOPIC
+                        Topic of the bot (default: PostgresML)
+  --bot_topic_primary_language BOT_TOPIC_PRIMARY_LANGUAGE
+                        Primary programming language of the topic (default: )
+  --bot_persona BOT_PERSONA
+                        Persona of the bot (default: Engineer)
 ```
 ## Ingest
 In this step, we ingest documents, chunk documents, generate embeddings and index these embeddings for fast query.
@@ -161,14 +165,8 @@ pip install .
 
 
 
-# Options
-You can control the behavior of the chatbot by setting the following environment variables:
-- `SYSTEM_PROMPT`: This is the prompt that is used to initialize the chatbot. You can customize this prompt to change the behavior of the chatbot. For example, you can change the name of the chatbot or the location of the chatbot.
-- `BASE_PROMPT`: This is the prompt that is used to generate responses to user queries. You can customize this prompt to change the behavior of the chatbot. 
-- `MODEL`: This is the open source embedding model used to generate embeddings for the documents. You can change this to use a different model.
-
 # Roadmap
-- ~~`hyerbot --chat_interface {cli, slack, discord}` that supports Slack, and Discord.~~
+- ~~Use a collection for chat history that can be retrieved and used to generate responses.~~
 - Support for file formats like rst, html, pdf, docx, etc.
 - Support for open source models in addition to OpenAI for chat completion.
-- Support for multi-turn converstaions using converstaion buffer. Use a collection for chat history that can be retrieved and used to generate responses.
+- Support for multi-turn converstaions using converstaion buffer. 
