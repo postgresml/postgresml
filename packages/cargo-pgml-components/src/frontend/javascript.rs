@@ -1,13 +1,14 @@
 //! Javascript bundling.
 
 use glob::glob;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs::{copy, read_to_string, remove_file, File};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
 
 use convert_case::{Case, Casing};
+use serde::{Deserialize, Serialize};
 
 use crate::config::Config;
 use crate::frontend::tools::execute_with_nvm;
@@ -31,6 +32,11 @@ static OLD_BUNLDES_GLOB: &'static str = "static/js/*.*.js";
 
 /// JS compiler
 static JS_COMPILER: &'static str = "rollup";
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Packages {
+    dependencies: HashMap<String, String>,
+}
 
 /// Delete old bundles we may have created.
 fn cleanup_old_bundles() {
@@ -146,6 +152,16 @@ pub fn bundle(config: Config, minify: bool) {
     cleanup_old_bundles();
     assemble_modules(config.clone());
 
+    let package_json = Path::new("package.json");
+
+    let packages: Packages = if package_json.is_file() {
+        let packages = unwrap_or_exit!(read_to_string(package_json));
+        unwrap_or_exit!(serde_json::from_str(&packages))
+    } else {
+        warn("package.json not found, can't validate rollup output");
+        serde_json::from_str(r#"{"dependencies": {}}"#).unwrap()
+    };
+
     let mut command = Command::new(JS_COMPILER);
 
     command
@@ -163,7 +179,17 @@ pub fn bundle(config: Config, minify: bool) {
 
     // Bundle JavaScript.
     info("bundling javascript with rollup");
-    unwrap_or_exit!(execute_with_nvm(&mut command));
+    let output = unwrap_or_exit!(execute_with_nvm(&mut command));
+
+    let lines = output.split("\n");
+    for line in lines {
+        for (package, _version) in &packages.dependencies {
+            if line.contains(package) {
+                error(&format!("unresolved import: {}", package));
+                exit(1);
+            }
+        }
+    }
 
     info(&format!("written {}", JS_FILE));
 
