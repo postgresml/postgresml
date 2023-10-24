@@ -10,6 +10,7 @@ packages = [{include = "pgml_chat"}]
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
 openai = "^0.27.8"
+litellm = "^0.11.1"
 rich = "^13.4.2"
 pgml = "^0.9.0"
 python-dotenv = "^1.0.0"
