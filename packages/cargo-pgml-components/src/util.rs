@@ -69,7 +69,7 @@ pub fn execute_command(command: &mut Command) -> std::io::Result<String> {
         info!("{}", stdout);
     }
 
-    Ok(stdout)
+    Ok(stdout.clone() + &stderr)
 }
 
 pub fn write_to_file(path: &Path, content: &str) -> std::io::Result<()> {

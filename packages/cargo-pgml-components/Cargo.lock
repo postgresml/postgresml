@@ -126,7 +126,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-pgml-components"
-version = "0.1.19"
+version = "0.1.20"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -143,6 +143,7 @@ dependencies = [
  "regex",
  "sailfish",
  "serde",
+ "serde_json",
  "toml",
 ]
 
@@ -429,6 +430,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "itoa"
+version = "1.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
+
+[[package]]
 name = "itoap"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -668,6 +675,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "serde_json"
+version = "1.0.107"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b420ce6e3d8bd882e9b243c6eed35dbc9a6110c9769e74b584e0d68d1f20c65"
+dependencies = [
+ "itoa",
+ "ryu",
+ "serde",
 ]
 
 [[package]]
