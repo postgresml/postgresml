@@ -57,6 +57,11 @@ impl Select {
         self
     }
 
+    pub fn value(mut self, value: &str) -> Self {
+        self.value = value.to_owned();
+        self
+    }
+
     pub fn name(mut self, name: &str) -> Self {
         self.name = name.to_owned();
         self
