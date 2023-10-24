@@ -30,7 +30,7 @@ from rich import print
     #     }
     # ).fetch_all()
 
-    
+
 async def main():
     collection = Collection("pgml_chat_all_docs_4_chat_history")
     builtins = Builtins()
@@ -108,6 +108,8 @@ async def main():
         .fetch_all()
     )
     # print(results)
+
+    # llama2-7b-chat
 
 
 if __name__ == "__main__":

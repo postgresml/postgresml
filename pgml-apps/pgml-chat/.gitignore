@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 
 pgml_chat/pgml_playground.py
+pgml_chat/llama2.py
