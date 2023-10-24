@@ -42,12 +42,14 @@
           <div class="tick-unit">
             <div class="tick" data-inputs-range-group-target="tick"></div>
 
+            <!-- large screen content -->
             <div class="d-none d-lg-flex flex-column text-nowrap mt-2 tick-text" data-inputs-range-group-target="tickText">
               <% for info in item { %>
               <div class="legal-text fw-bold" ><%- info %></div>
               <% } %>
             </div>
 
+            <!-- small screen content  -->
             <div class="d-block d-lg-none">
               <div class="flex-column text-nowrap mt-2 tick-text" data-inputs-range-group-target="smScreenText">
                 <% for info in item { %>

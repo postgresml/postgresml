@@ -256,3 +256,20 @@
     background: transparent;
     caret-color: #{$input-color};
 }
+
+.hourly-rate {
+    display: flex;
+    flex-direction: row;
+    gap: .5rem;
+    background-color: #{$gray-900};
+    border-radius: $border-radius;
+    padding: 16px 20px;
+
+    color: #{$gray-400};
+    text-align: center;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 24px;
+    letter-spacing: 0.18px;
+}

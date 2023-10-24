@@ -33,4 +33,10 @@ div[data-controller="inputs-text-editable-header"] {
         padding: 0px;
         margin-bottom: -2px; // compensate for border space
     }
+
+    #title {
+        &.error {
+            border-bottom: 1px solid #{$error}
+        }
+    }
 }

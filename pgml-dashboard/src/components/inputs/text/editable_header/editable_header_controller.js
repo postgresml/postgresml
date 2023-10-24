@@ -31,9 +31,11 @@ export default class extends Controller {
   error(e) {
     this.errorTarget.innerHTML = e.detail
     this.errorTarget.style.display = "block"
+    this.headerTarget.classList.add("error")
   }
 
   clear() {
     this.errorTarget.style.display = "none"
+    this.headerTarget.classList.remove("error")
   }
 }
