@@ -11,15 +11,21 @@ fn main() {
     let git_hash = String::from_utf8(output.stdout).unwrap();
     println!("cargo:rustc-env=GIT_SHA={}", git_hash);
 
-    let status = Command::new("cargo")
-        .arg("pgml-components")
-        .arg("bundle")
-        .arg("--lock")
-        .status()
-        .expect("failed to run 'cargo pgml-bundle'");
+    for i in 0..5 {
+        let status = Command::new("cargo")
+            .arg("pgml-components")
+            .arg("bundle")
+            .arg("--lock")
+            .status()
+            .expect("failed to run 'cargo pgml-bundle'");
 
-    if !status.success() {
-        panic!("failed to run 'cargo pgml-bundle'");
+        if !status.success() {
+            if i < 4 {
+                println!("cargo:warning=failed to run 'cargo pgml-bundle', retrying");
+            } else {
+                panic!("failed to run 'cargo pgml-bundle'");
+            }
+        }
     }
 
     let css_version =
