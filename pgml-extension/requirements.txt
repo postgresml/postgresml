@@ -21,8 +21,10 @@ torch==2.0.1
 torchaudio==2.0.2
 torchvision==0.15.2
 tqdm==4.66.1
-transformers==4.33.1
+transformers==4.34.1
 xgboost==2.0.0
 langchain==0.0.287
 einops==0.6.1
 pynvml==11.5.0
+transformers-stream-generator==0.0.4
+optimum==1.13.2
