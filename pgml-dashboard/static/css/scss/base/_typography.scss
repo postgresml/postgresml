@@ -90,7 +90,7 @@ h6, .h6 {
     background-clip: text;
     text-fill-color: transparent;
 }
-.text-gradient-blue {
+.text-gradient-blue, .syntax-highlight {
     @include text-gradient($gradient-blue);
 }
 .text-gradient-green {
@@ -104,6 +104,9 @@ h6, .h6 {
 }
 .text-gradient-purple {
     @include text-gradient($gradient-purple);
+}
+.text-gradient-party, .party-time {
+    @include text-gradient($gradient-text);
 }
 
 
