@@ -1,6 +1,6 @@
 <div id="chatbot" data-controller="chatbot" class="container">
   <div id="chatbot-inner-wrapper" class="d-flex rounded-3 overflow-hidden">
-    <div id="chatbot-left-column" class="">
+    <div id="chatbot-left-column" class="d-none d-sm-block">
 
       <!-- This is temporary until we have brains -->
       <h5 id="chatbot-change-the-brain-title">Knowledge Base:</h5>
@@ -101,7 +101,7 @@
 
     <div id="chatbot-right-column" class="flex-grow-1 d-flex flex-column overflow-hidden">
       <div class="d-flex justify-content-between align-items-center pt-3 pb-3 pe-3 m-0">
-        <h3 id="chatbot-chatbot-title">Chatbot</h3>
+        <h3 id="chatbot-chatbot-title" class="mb-0">Chatbot</h3>
         <div id="chatbot-expand-contract-image-wrapper" class="p-1 rounded-2" data-action="click->chatbot#handleExpandClick">
           <img id="chatbot-expand-contract-image" width="28px" height="28px" src="/dashboard/static/images/icons/arrow_expanded.svg"/>
         </div>
