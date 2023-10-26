@@ -26,6 +26,10 @@ const SVGS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
         "give_it_a_spin",
         include_str!("../../../static/images/icons/stars/give_it_a_spin.svg"),
     );
+    map.insert(
+        "give_it_a_spin_outline",
+        include_str!("../../../static/images/icons/stars/give_it_a_spin_outline.svg"),
+    );
     map
 });
 

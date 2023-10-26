@@ -65,7 +65,7 @@ const knowledgeBaseIdToName = (knowledgeBase) => {
 
 const createKnowledgeBaseNotice = (knowledgeBase) => {
   return `
-    <div class="chatbot-knowledge-base-notice text-center p-1">Chatting with Knowledge Base ${knowledgeBaseIdToName(
+    <div class="chatbot-knowledge-base-notice text-center p-3">Chatting with Knowledge Base ${knowledgeBaseIdToName(
       knowledgeBase,
     )}</div>
   `;

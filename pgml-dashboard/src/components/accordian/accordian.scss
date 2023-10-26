@@ -4,13 +4,7 @@ div[data-controller="accordian"] {
     }
 
     .accordian-body {
-        display: none;
-        height: 0px;
-        transition: all 0.5s ease-in-out;
-    }
-
-    .accordian-body.selected {
-        display: block;
-        height: auto;
+        overflow: hidden;
+        transition: all 0.3s ease-in-out;
     }
 }
