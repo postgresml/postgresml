@@ -4,6 +4,7 @@ use std::str::FromStr;
 use ndarray::Zip;
 use pgrx::iter::{SetOfIterator, TableIterator};
 use pgrx::*;
+use serde_json::Value;
 
 #[cfg(feature = "python")]
 use serde_json::json;
@@ -610,7 +611,7 @@ pub fn transform_json(
     inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
     cache: default!(bool, false),
 ) -> JsonB {
-    match crate::bindings::transformers::transform(&task.0, &args.0, inputs) {
+    match transform(task.0, args.0, inputs) {
         Ok(output) => JsonB(output),
         Err(e) => error!("{e}"),
     }
@@ -629,6 +630,23 @@ pub fn transform_string(
     match crate::bindings::transformers::transform(&task_json, &args.0, inputs) {
         Ok(output) => JsonB(output),
         Err(e) => error!("{e}"),
+    }
+}
+
+fn transform(mut task: Value, args: Value, inputs: Vec<&str>) -> anyhow::Result<Value> {
+    // use vLLM if model present in task and backend is set to vllm
+    let use_vllm =  task.as_object_mut().is_some_and(|obj| {
+        obj.contains_key("model") && matches!(obj.get("backend"), Some(Value::String(backend)) if backend.to_string().to_ascii_lowercase() == "vllm")
+    });
+
+    if use_vllm {
+        Ok(crate::bindings::vllm::vllm_inference(&task, &inputs)?)
+    } else {
+        if let Some(map) = task.as_object_mut() {
+            // pop backend keyword, if present
+            let _ = map.remove("backend");
+        }
+        crate::bindings::transformers::transform(&task, &args, inputs)
     }
 }
 
