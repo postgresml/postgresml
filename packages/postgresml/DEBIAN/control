@@ -3,7 +3,7 @@ Version: ${PACKAGE_VERSION}
 Section: database
 Priority: optional
 Architecture: all
-Depends: postgresml-python (>= 2.7.12), postgresql-pgml-${PGVERSION} (>= ${PACKAGE_VERSION})
+Depends: postgresml-python (>= 2.7.13), postgresql-pgml-${PGVERSION} (>= ${PACKAGE_VERSION})
 Maintainer: PostgresML <team@postgresml.org>
 Homepage: https://postgresml.org
 Description: PostgresML - Generative AI and Simple ML inside PostgreSQL

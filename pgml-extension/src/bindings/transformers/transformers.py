@@ -197,7 +197,7 @@ def create_pipeline(task):
         lower = model_name.lower()
     else:
         lower = None
-    if lower and "-ggml" in lower:
+    if lower and ("-ggml" in lower or "-gguf" in lower):
         pipe = GGMLPipeline(model_name, **task)
     elif lower and "-gptq" in lower:
         pipe = GPTQPipeline(model_name, **task)
