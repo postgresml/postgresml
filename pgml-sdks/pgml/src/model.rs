@@ -1,8 +1,6 @@
 use anyhow::Context;
 use rust_bridge::{alias, alias_methods};
-use serde_json::json;
 use sqlx::postgres::PgPool;
-use sqlx::Row;
 use tracing::instrument;
 
 use crate::{
@@ -61,14 +59,11 @@ pub struct Model {
     pub parameters: Json,
     project_info: Option<ProjectInfo>,
     pub(crate) database_data: Option<ModelDatabaseData>,
-    // This database_url is specifically used only for the model when calling transform and other
-    // one-off methods
-    database_url: Option<String>,
 }
 
 impl Default for Model {
     fn default() -> Self {
-        Self::new(None, None, None, None)
+        Self::new(None, None, None)
     }
 }
 
@@ -88,12 +83,7 @@ impl Model {
     /// use pgml::Model;
     /// let model = Model::new(Some("intfloat/e5-small".to_string()), None, None, None);
     /// ```
-    pub fn new(
-        name: Option<String>,
-        source: Option<String>,
-        parameters: Option<Json>,
-        database_url: Option<String>,
-    ) -> Self {
+    pub fn new(name: Option<String>, source: Option<String>, parameters: Option<Json>) -> Self {
         let name = name.unwrap_or("intfloat/e5-small".to_string());
         let parameters = parameters.unwrap_or(Json(serde_json::json!({})));
         let source = source.unwrap_or("pgml".to_string());
@@ -105,7 +95,6 @@ impl Model {
             parameters,
             project_info: None,
             database_data: None,
-            database_url,
         }
     }
 
@@ -191,30 +180,6 @@ impl Model {
             .database_url;
         get_or_initialize_pool(database_url).await
     }
-
-    pub async fn transform(
-        &self,
-        task: &str,
-        inputs: Vec<String>,
-        args: Option<Json>,
-    ) -> anyhow::Result<Json> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
-        let task = json!({
-            "task": task,
-            "model": self.name,
-            "trust_remote_code": true
-        });
-        let args = args.unwrap_or_default();
-        let query = sqlx::query("SELECT pgml.transform(task => $1, inputs => $2, args => $3)");
-        let results = query
-            .bind(task)
-            .bind(inputs)
-            .bind(&args)
-            .fetch_all(&pool)
-            .await?;
-        let results = results.get(0).unwrap().get::<serde_json::Value, _>(0);
-        Ok(Json(results))
-    }
 }
 
 impl From<models::PipelineWithModelAndSplitter> for Model {
@@ -228,7 +193,6 @@ impl From<models::PipelineWithModelAndSplitter> for Model {
                 id: x.model_id,
                 created_at: x.model_created_at,
             }),
-            database_url: None,
         }
     }
 }
@@ -244,36 +208,6 @@ impl From<models::Model> for Model {
                 id: model.id,
                 created_at: model.created_at,
             }),
-            database_url: None,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::internal_init_logger;
-
-    #[sqlx::test]
-    async fn model_can_transform() -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let model = Model::new(
-            Some("Helsinki-NLP/opus-mt-en-fr".to_string()),
-            Some("pgml".to_string()),
-            None,
-            None,
-        );
-        let results = model
-            .transform(
-                "translation",
-                vec![
-                    "How are you doing today?".to_string(),
-                    "What is a good song?".to_string(),
-                ],
-                None,
-            )
-            .await?;
-        assert!(results.as_array().is_some());
-        Ok(())
     }
 }
