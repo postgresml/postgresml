@@ -170,7 +170,7 @@ async fn get_openai_chatgpt_answer(
         .replace("{question}", question);
 
     let body = json!({
-        "model": "gpt-4",
+        "model": "gpt-3.5-turbo",
         "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": content}],
         "temperature": 0.7
     });
