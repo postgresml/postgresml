@@ -1,49 +1,42 @@
 use pgml_components::component;
 use sailfish::TemplateOnce;
 
-// const EXAMPLE_QUESTIONS: [(&'static str, &'static str); 4] = [
-//     ("Here is a Sample Question", "sample question continued"),
-//     ("Here is a Sample Question", "sample question continued"),
-//     ("Here is a Sample Question", "sample question continued"),
-//     ("Here is a Sample Question", "sample question continued"),
-// ];
-
 type ExampleQuestions = [(&'static str, [(&'static str, &'static str); 4]); 4];
 const EXAMPLE_QUESTIONS: ExampleQuestions = [
     (
         "PostgresML",
         [
-            ("PostgresML", "sample question continued"),
-            ("PostgresML", "sample question continued"),
-            ("PostgresML", "sample question continued"),
-            ("PostgresML", "sample question continued"),
+            ("How do I", "use pgml.transform()?"),
+            ("Show me", "a query to train a model"),
+            ("What is HNSW", "indexing"),
+            ("Teach me", "how to use pgml.embed()"),
         ],
     ),
     (
         "PyTorch",
         [
-            ("PyTorch", "sample question continued"),
-            ("PyTorch", "sample question continued"),
-            ("PyTorch", "sample question continued"),
-            ("PyTorch", "sample question continued"),
+            ("What are", "tensors?"),
+            ("How do I", "train a model?"),
+            ("Show me", "some features of PyTorch"),
+            ("Explain", "how to use an optimizer?"),
         ],
     ),
     (
         "Rust",
         [
-            ("Rust", "sample question continued"),
-            ("Rust", "sample question continued"),
-            ("Rust", "sample question continued"),
-            ("Rust", "sample question continued"),
+            ("What is", "a lifetime?"),
+            ("How do I", "use a for loop?"),
+            ("Show me", "an example of using map"),
+            ("Explain", "the borrow checker"),
         ],
     ),
     (
         "PostgreSQL",
         [
-            ("PostgreSQL", "sample question continued"),
-            ("PostgreSQL", "sample question continued"),
-            ("PostgreSQL", "sample question continued"),
-            ("PostgreSQL", "sample question continued"),
+            ("How do I", "join two tables?"),
+            ("What is", "a GIN index?"),
+            ("When should I", "use an outer join?"),
+            ("Explain", "what relational data is"),
         ],
     ),
 ];
