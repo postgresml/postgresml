@@ -26,6 +26,7 @@ mod query_builder;
 mod query_runner;
 mod remote_embeddings;
 mod splitter;
+mod transformer_pipeline;
 pub mod types;
 mod utils;
 
@@ -35,6 +36,7 @@ pub use collection::Collection;
 pub use model::Model;
 pub use pipeline::Pipeline;
 pub use splitter::Splitter;
+pub use transformer_pipeline::TransformerPipeline;
 
 // This is use when inserting collections to set the sdk_version used during creation
 static SDK_VERSION: &str = "0.9.2";
@@ -149,6 +151,7 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_class::<model::ModelPython>()?;
     m.add_class::<splitter::SplitterPython>()?;
     m.add_class::<builtins::BuiltinsPython>()?;
+    m.add_class::<transformer_pipeline::TransformerPipelinePython>()?;
     Ok(())
 }
 
@@ -193,6 +196,10 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
     cx.export_function("newModel", model::ModelJavascript::new)?;
     cx.export_function("newSplitter", splitter::SplitterJavascript::new)?;
     cx.export_function("newBuiltins", builtins::BuiltinsJavascript::new)?;
+    cx.export_function(
+        "newTransformerPipeline",
+        transformer_pipeline::TransformerPipelineJavascript::new,
+    )?;
     cx.export_function("newPipeline", pipeline::PipelineJavascript::new)?;
     Ok(())
 }
@@ -448,7 +455,6 @@ mod tests {
             Some("text-embedding-ada-002".to_string()),
             Some("openai".to_string()),
             None,
-            None,
         );
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -527,7 +533,6 @@ mod tests {
             Some("hkunlp/instructor-base".to_string()),
             Some("python".to_string()),
             Some(json!({"instruction": "Represent the Wikipedia document for retrieval: "}).into()),
-            None,
         );
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
@@ -578,7 +583,6 @@ mod tests {
         let model = Model::new(
             Some("text-embedding-ada-002".to_string()),
             Some("openai".to_string()),
-            None,
             None,
         );
         let splitter = Splitter::default();
@@ -659,7 +663,6 @@ mod tests {
         let model = Model::new(
             Some("text-embedding-ada-002".to_string()),
             Some("openai".to_string()),
-            None,
             None,
         );
         let splitter = Splitter::default();
