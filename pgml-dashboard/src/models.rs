@@ -25,7 +25,7 @@ impl Project {
             "SELECT
                     id,
                     name,
-                    task::TEXT,
+                    task::text,
                     created_at
                 FROM pgml.projects
                 WHERE id = $1",
@@ -44,6 +44,7 @@ impl Project {
                     task::TEXT,
                     created_at
                 FROM pgml.projects
+                WHERE task::text != 'embedding'
                 ORDER BY id DESC"
         )
         .fetch_all(pool)
