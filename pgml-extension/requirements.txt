@@ -23,7 +23,7 @@ torchvision==0.15.2
 tqdm==4.66.1
 transformers==4.34.1
 xgboost==2.0.0
-langchain==0.0.287
+langchain==0.0.325
 einops==0.6.1
 pynvml==11.5.0
 transformers-stream-generator==0.0.4
