@@ -9,7 +9,7 @@
         <% for link in links { %>
         <li class="d-flex gap-3 <% if link.disabled { %>disabled<% } %>">
           <span class="material-symbols-outlined" style="width: 16px; height: 16px;"><%- link.icon.unwrap() %></span>
-          <a href="<%- link.href %>"><%- link.name %></a>
+          <a class="submenu-link" href="<%- link.href %>"><%- link.name %></a>
         </li>
         <% } %>
       </ul>

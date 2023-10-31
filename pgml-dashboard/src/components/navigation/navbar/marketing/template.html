@@ -5,7 +5,7 @@
   use crate::components::static_nav_link::StaticNavLink;
 
   let solutions_links = vec![
-    StaticNavLink::new("ChatBot".to_string(), "/test".to_string()).icon("smart_toy"),
+    StaticNavLink::new("ChatBot".to_string(), "/chatbot".to_string()).icon("smart_toy"),
     StaticNavLink::new("Site Search".to_string(), "/test2".to_string()).icon("manage_search").disabled(true),
     StaticNavLink::new("Forcasting".to_string(), "/test2".to_string()).icon("avg_pace").disabled(true),
     StaticNavLink::new("Frad Detection".to_string(), "/test2".to_string()).icon("e911_emergency").disabled(true),
@@ -17,9 +17,18 @@
       <div class="container column-gap-4">
         <div class="controls">
           <%+ PostgresLogo::new("/") %>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
+
+          <div class="d-flex flex-row gap-1">
+            <li class="nav-item d-flex align-items-center d-block d-lg-none">
+              <button type="text" class="btn nav-link btn-search-alt border-0 p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+                <span class="material-symbols-outlined">search</span>
+              </button>
+            </li>
+  
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+          </div>
         </div>
 
         <div class="navbarSupportedContent underline collapse"></div>
@@ -30,13 +39,13 @@
             <ul class="navbar-nav flex-grow-1 gap-4 me-auto my-4 my-lg-0">
 
               <% if !standalone_dashboard { %>
-                <div class="d-none d-lg-block">
+                <div class="d-none d-lg-flex">
                   <%+ MarketingLink::new()
                       .name("Solutions")
                       .links(solutions_links.clone()) %>
                 </div>
                 <li class="nav-item d-flex align-items-center d-flex d-lg-none">
-                  <a class="nav-link p-0" href="#" data-bs-toggle="collapse" data-bs-target=".solutions-collapse">Solutions</a>
+                  <a class="nav-link p-0 fw-semibold" href="#" data-bs-toggle="collapse" data-bs-target=".solutions-collapse">Solutions</a>
                 </li>
 
                 <%+ MarketingLink::new().link(StaticNavLink::new("Pricing".to_string(), "/pricing".to_string())) %>
@@ -44,25 +53,27 @@
 
               <%+ MarketingLink::new().link(StaticNavLink::new("docs".to_string(), "/docs/guides/".to_string())) %>
               <%+ MarketingLink::new().link(StaticNavLink::new("Blog".to_string(), "/blog/speeding-up-vector-recall-by-5x-with-hnsw".to_string())) %>
+
+              <li class="nav-item d-none d-lg-flex align-items-center">
+                <button type="text" class="btn nav-link btn-search-alt border-0 p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+                  <span class="material-symbols-outlined">search</span>
+                </button>
+              </li>
             </ul>
     
-            <ul class="navbar-nav gap-4 gap-lg-3 mb-2 mb-lg-0">
+            <ul class="navbar-nav gap-4 mb-2 mb-lg-0">
               <li class="align-items-center d-none d-lg-flex">
                 <%+ GithubIcon {show_stars: true} %>
               </li>
-              <li class="d-flex align-items-center d-block d-lg-none">
-                <a class="nav-link p-0" href="https://github.com/postgresml/postgresml">GitHub</a>
-              </li>
-              <li class="nav-item d-flex align-items-center">
-                <button type="text" class="btn nav-link btn-search-alt p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
-                  Search
-                </button>
-              </li>
+
+              <div class="d-block d-lg-none">
+                <%+ MarketingLink::new().link(StaticNavLink::new("GitHub".to_string(), "https://github.com/postgresml/postgresml".to_string())) %>
+              </div>
+
 
               <% if !standalone_dashboard { %>
               <div class="mb-5 mt-4 my-lg-0 d-flex flex-column flex-lg-row gap-4">
                 
-                <div class="vr my-2 opacity-100 d-lg-block d-none" style="width: 2px"></div>
                   <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
                 <li class="nav-item d-flex align-items-center">
                   <a class="btn btn-secondary w-100" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/login">Sign In</a>

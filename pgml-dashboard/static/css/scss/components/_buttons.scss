@@ -245,9 +245,21 @@
 }
 
 .btn-search-alt {
-    border-radius: 0px;
-    border-left: none;
-    border-top: none;
-    border-right: none;
-    font-weight: $font-weight-medium;
+    gap: 0.1rem;
+    font-weight: 600;
+
+    &::before {
+        content: "/";
+        color: #{$slate-tint-100};
+        display: inline;
+        font-size: 1.5rem;
+        text-shadow: none;
+    }
+
+    &:active::before {
+        color: #{$slate-tint-400};
+        text-shadow: none;
+    }
+
 }
+

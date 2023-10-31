@@ -1,6 +1,6 @@
-use sailfish::TemplateOnce;
-use pgml_components::component;
 use crate::components::static_nav_link::StaticNavLink as NavLink;
+use pgml_components::component;
+use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "navigation/navbar/marketing_link/template.html")]

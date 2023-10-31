@@ -10,31 +10,6 @@
     color: #{$pink};
 }
 
-.github-badge {
-    $color: $neon-shade-100;
-    padding: 4px;
-
-    p {
-        margin: 0px;
-        background: #{$color};
-        border-radius: calc($border-radius / 2);
-        padding: 4px;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-
-    // Add right pointing arrow 
-    &::after {
-        content: "";
-        width: 0; 
-        height: 0; 
-        border-top: 5px solid transparent;
-        border-bottom: 5px solid transparent;
-        
-        border-left: 5px solid #{$color};
-    }
-}
-
 @mixin deployment-status($color) {
     @extend .badge;
     border-radius: calc($border-radius / 2);

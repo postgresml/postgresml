@@ -1,5 +1,10 @@
 li[data-controller="navigation-navbar-marketing-link"] {
+    
     .nav-item-container {
+        .nav-link {
+            font-weight: 600;
+        }
+
         &:hover {
             .nav-link {
                 border-bottom: 1px solid #{$slate-shade-100};
@@ -8,6 +13,14 @@ li[data-controller="navigation-navbar-marketing-link"] {
 
             .dropdown-list {
                 display: flex;
+            }
+        }
+
+        &:active {
+            .nav-link {
+                @include bold_by_shadow(#{$slate-shade-100});
+                color: #{$slate-tint-500};
+                border-bottom: 1px solid transparent;
             }
         }
     }
@@ -35,22 +48,23 @@ li[data-controller="navigation-navbar-marketing-link"] {
                 scale: .8;
             }
     
-            a {
+            .submenu-link {
                 display: inline-block;
                 border-bottom: 1px solid transparent;
                 --bs-link-color: #{$gray-900};
             }
         }
 
-        li.disabled, li.disabled:hover {
+        li.disabled, li.disabled:hover, li.disabled:active {
             span {
                 color: #{$gray-400};
             }
     
-            a {
+            .submenu-link {
                 display: inline-block;
                 border-bottom: 1px solid transparent;
                 --bs-link-color: #{$gray-400};
+                color: #{$gray-400};
                 pointer-events: none;
                 cursor: default;
                 &::after {
@@ -68,9 +82,21 @@ li[data-controller="navigation-navbar-marketing-link"] {
                 color: #{$slate-shade-400};
             }
     
-            a {
+            .submenu-link {
                 color: #{$slate-shade-400};
                 border-bottom: 1px solid #{$slate-shade-400};
+            }
+        }
+
+        li:active {
+            span {
+                color: #{$slate-shade-400};
+            }
+    
+            .submenu-link {
+                @include bold_by_shadow(#{$slate-shade-400});
+                color: #{$slate-shade-400};
+                border-bottom: 1px solid transparent;
             }
         }
     }
