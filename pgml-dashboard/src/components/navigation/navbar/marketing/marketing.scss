@@ -1,6 +1,64 @@
 .navbar-marketing-site {
     @extend .navbar;
+
+    @include media-breakpoint-up(xl) {
+        height: $navbar-height;
+        --bs-navbar-padding-y: 24px;
+        --bs-navbar-padding-x: 1.25rem;
+    }
+
+    .controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: $navbar-height;
+
+        @include media-breakpoint-down(xl) {
+            width: 100%;
+        }
+    }
+
+    .navbar-collapse {
+        @include media-breakpoint-up(xl) {
+            width: 100%;
+        }
+    }
+
     &.horizontal {
         background: linear-gradient(180deg, rgba(0, 0, 0, 0.64) -55.68%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .underline {
+        position: absolute;
+        width: 100%;
+        height: 1px;
+        background-color: #{$gray-600};
+        left: 0px;
+        top: 88px;
+
+        &.collapsing {
+            height: 1px !important;
+        }
+
+        &.show {
+            height: 1px;
+        }
+    }
+
+    .btn-primary {
+        @include media-breakpoint-up(xl) {
+            padding: 10px 20px;
+        }
+    }
+
+    .btn-secondary {
+        @include media-breakpoint-up(xl) {
+            padding: 8px 20px; // compensate for 1px boarder 
+        }
+    }
+
+    .icon-back-btn {
+        width: 15px; 
+        font-size: 1.5rem;
     }
 }

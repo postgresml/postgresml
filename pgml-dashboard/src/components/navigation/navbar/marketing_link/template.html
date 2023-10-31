@@ -1,0 +1,23 @@
+
+<li class="nav-item d-flex align-items-center position-relative" data-controller="navigation-navbar-marketing-link">
+  <div class="nav-item-container">
+    <% if links.len() > 0 { %>
+    <div class="nav-link p-0"><%- name %></div>
+  
+    <div class="position-absolute w-100" style="height: 20px;">
+      <ul class="dropdown-list">
+        <% for link in links { %>
+        <li class="d-flex gap-3 <% if link.disabled { %>disabled<% } %>">
+          <span class="material-symbols-outlined" style="width: 16px; height: 16px;"><%- link.icon.unwrap() %></span>
+          <a class="submenu-link" href="<%- link.href %>"><%- link.name %></a>
+        </li>
+        <% } %>
+      </ul>
+    </div>
+
+    <% } else { %>
+      <a class="nav-link p-0 <% if link.clone().unwrap().disabled { %>disabled<% } %>" href="<%- link.clone().unwrap().href %>" ><%- link.unwrap().name %></a>
+    <% } %>
+
+  </div>
+</li>

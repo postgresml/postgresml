@@ -1,0 +1,131 @@
+li[data-controller="navigation-navbar-marketing-link"] {
+    
+    .nav-item-container {
+        .nav-link {
+            font-weight: 600;
+        }
+
+        .nav-link.disabled {
+            color: #{$gray-400} !important;
+            border-bottom: none !important;
+            pointer-events: none;
+            cursor: default;
+
+            &::after {
+                content: " (coming soon!)";
+                font-size: 10px;
+                font-style: normal;
+                font-weight: 400;
+                line-height: 14px;
+            }
+        }
+
+        &:hover {
+            .nav-link {
+                border-bottom: 1px solid #{$slate-shade-100};
+                color: #{$slate-shade-100};
+            }
+
+            .dropdown-list {
+                display: flex;
+            }
+        }
+
+        &:active {
+            .nav-link {
+                @include bold_by_shadow(#{$slate-shade-100});
+                color: #{$slate-tint-500};
+                border-bottom: 1px solid transparent;
+            }
+        }
+    }
+
+
+    .dropdown-list {
+        list-style-type: none; /* Remove bullets */
+        padding: 1.5rem;
+        margin: 0;
+    
+        background: #{$gray-100};
+        color: #{$gray-900};
+        position: absolute; 
+        top: 100%; 
+        text-wrap: nowrap;
+        border-radius: $border-radius;
+        min-width: 12.5rem;
+        display: none;
+        flex-direction: column;
+        gap: 0.75rem;
+    
+        li {
+            span {
+                color: #{$slate-shade-100};
+                scale: .8;
+            }
+    
+            .submenu-link {
+                display: inline-block;
+                border-bottom: 1px solid transparent;
+                --bs-link-color: #{$gray-900};
+            }
+        }
+
+        li.disabled, li.disabled:hover, li.disabled:active {
+            span {
+                color: #{$gray-400};
+            }
+    
+            .submenu-link {
+                display: inline-block;
+                border-bottom: 1px solid transparent;
+                --bs-link-color: #{$gray-400};
+                color: #{$gray-400};
+                pointer-events: none;
+                cursor: default;
+                &::after {
+                    content: " (coming soon!)";
+                    font-size: 10px;
+                    font-style: normal;
+                    font-weight: 400;
+                    line-height: 14px;
+                }
+            }
+        }
+    
+        li:hover {
+            span {
+                color: #{$slate-shade-400};
+            }
+    
+            .submenu-link {
+                color: #{$slate-shade-400};
+                border-bottom: 1px solid #{$slate-shade-400};
+            }
+        }
+
+        li:active {
+            span {
+                color: #{$slate-shade-400};
+            }
+    
+            .submenu-link {
+                @include bold_by_shadow(#{$slate-shade-400});
+                color: #{$slate-shade-400};
+                border-bottom: 1px solid transparent;
+            }
+        }
+    }
+    
+    .dropdown-list::before {
+        content: "";
+        width: 0;
+        height: 0;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid #{$gray-100};
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        top: -17px;
+        position: absolute;
+    }
+}
+

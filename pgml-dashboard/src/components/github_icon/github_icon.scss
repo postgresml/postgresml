@@ -1,0 +1,31 @@
+.btn-github {
+  background-color: #{$gray-700};
+  border-radius: $border-radius;
+  padding: 10px 20px;
+
+}
+
+.github-badge {
+  $color: $neon-shade-100;
+  padding: 4px;
+
+  p {
+      margin: 0px;
+      background: #{$color};
+      border-radius: calc($border-radius / 2);
+      padding: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+  }
+
+  // Add right pointing arrow 
+  &::after {
+      content: "";
+      width: 0; 
+      height: 0; 
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      
+      border-left: 5px solid #{$color};
+  }
+}
