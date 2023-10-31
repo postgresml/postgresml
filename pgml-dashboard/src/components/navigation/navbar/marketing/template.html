@@ -1,69 +1,114 @@
-<% use crate::templates::components::GithubIcon; %>
-<% use crate::templates::components::PostgresLogo; %>
+<% 
+  use crate::templates::components::GithubIcon;
+  use crate::templates::components::PostgresLogo;
+  use crate::components::navigation::navbar::marketing_link::MarketingLink;
+  use crate::components::static_nav_link::StaticNavLink;
+
+  let solutions_links = vec![
+    StaticNavLink::new("ChatBot".to_string(), "/test".to_string()).icon("smart_toy"),
+    StaticNavLink::new("Site Search".to_string(), "/test2".to_string()).icon("manage_search").disabled(true),
+    StaticNavLink::new("Forcasting".to_string(), "/test2".to_string()).icon("avg_pace").disabled(true),
+    StaticNavLink::new("Frad Detection".to_string(), "/test2".to_string()).icon("e911_emergency").disabled(true),
+  ];
+%>
 
   <div class="sticky-top-nav" data-controller="navigation-navbar-marketing">
     <nav class="navbar-marketing-site horizontal navbar-expand-lg" data-controller="search topnav-styling">
-      <div class="container gap-4">
+      <div class="container column-gap-4">
         <div class="controls">
           <%+ PostgresLogo::new("/") %>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
         </div>
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav flex-grow-1 gap-4 me-auto mb-4 mb-lg-0">
-            <% if !standalone_dashboard { %>
-              <li class="nav-item d-flex align-items-center">
-                <a class="nav-link p-0" href="/pricing">Pricing</a>
-              </li>
-            <% } %>
-            <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-0" href="/docs/guides/">Docs</a>
-            </li>
-            <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-0" href="/blog/speeding-up-vector-recall-by-5x-with-hnsw">Blog</a>
-            </li>
-          </ul>
-  
-          <ul class="navbar-nav gap-4 gap-lg-3 mb-2 mb-lg-0">
-            <li class="align-items-center d-none d-lg-flex">
-              <%+ GithubIcon {show_stars: true} %>
-            </li>
-            <li class="d-flex align-items-center d-block d-lg-none">
-              <a class="nav-link p-0" href="https://github.com/postgresml/postgresml">Open Source</a>
-            </li>
-            <li class="nav-item d-flex align-items-center">
-              <button type="text" class="btn nav-link btn-search-alt p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
-                Search
-              </button>
-            </li>
-            <% if !standalone_dashboard { %>
-            <div class="vr my-2 opacity-100 d-lg-block d-none" style="width: 2px"></div>
-              <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
-            <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-0" href="/login">Sign In</a>
-            </li>
-            <li class="d-flex align-items-center">
-              <a class="btn btn-primary py-2 px-3" href="/signup">Sign Up</a>
-            </li>
-              <% } else { %>
-            <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-0" href="/logout">Sign Out</a>
-            </li>
-            <li class="d-flex align-items-center">
-              <a class="btn btn-primary py-2 px-3" href="/clusters">Console</a>
-            </li>
-              <% } %>
-            <% } %>
+        <div class="navbarSupportedContent underline collapse"></div>
 
-            <% if standalone_dashboard { %>
-            <li class="nav-item d-flex align-items-center">
-              <a class="btn btn-primary py-2 px-3" href="/dashboard">Dashboard</a>
-            </li>
-            <% } %>
-          </ul>
+        <div class="collapse navbar-collapse drawer-submenu-container navbarSupportedContent" id="navbarSupportedContent">
+          <!-- Main Menu -->
+          <div class="nav-item w-100 d-lg-flex flex-column flex-lg-row align-items-lg-center collapse collapse-horizontal solutions-collapse show drawer-submenu">
+            <ul class="navbar-nav flex-grow-1 gap-4 me-auto my-4 my-lg-0">
+
+              <% if !standalone_dashboard { %>
+                <div class="d-none d-lg-block">
+                  <%+ MarketingLink::new()
+                      .name("Solutions")
+                      .links(solutions_links.clone()) %>
+                </div>
+                <li class="nav-item d-flex align-items-center d-flex d-lg-none">
+                  <a class="nav-link p-0" href="#" data-bs-toggle="collapse" data-bs-target=".solutions-collapse">Solutions</a>
+                </li>
+
+                <%+ MarketingLink::new().link(StaticNavLink::new("Pricing".to_string(), "/pricing".to_string())) %>
+              <% } %>
+
+              <%+ MarketingLink::new().link(StaticNavLink::new("docs".to_string(), "/docs/guides/".to_string())) %>
+              <%+ MarketingLink::new().link(StaticNavLink::new("Blog".to_string(), "/blog/speeding-up-vector-recall-by-5x-with-hnsw".to_string())) %>
+            </ul>
+    
+            <ul class="navbar-nav gap-4 gap-lg-3 mb-2 mb-lg-0">
+              <li class="align-items-center d-none d-lg-flex">
+                <%+ GithubIcon {show_stars: true} %>
+              </li>
+              <li class="d-flex align-items-center d-block d-lg-none">
+                <a class="nav-link p-0" href="https://github.com/postgresml/postgresml">GitHub</a>
+              </li>
+              <li class="nav-item d-flex align-items-center">
+                <button type="text" class="btn nav-link btn-search-alt p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+                  Search
+                </button>
+              </li>
+
+              <% if !standalone_dashboard { %>
+              <div class="mb-5 mt-4 my-lg-0 d-flex flex-column flex-lg-row gap-4">
+                
+                <div class="vr my-2 opacity-100 d-lg-block d-none" style="width: 2px"></div>
+                  <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
+                <li class="nav-item d-flex align-items-center">
+                  <a class="btn btn-secondary w-100" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/login">Sign In</a>
+                </li>
+                <li class="d-flex align-items-center">
+                  <a class="btn btn-primary w-100" href="/signup">Start Your Project</a>
+                </li>
+                  <% } else { %>
+                <li class="nav-item d-flex align-items-center">
+                  <a class="btn btn-secondary w-100" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/logout">Sign Out</a>
+                </li>
+                <li class="d-flex align-items-center">
+                  <a class="btn btn-primary w-100" href="/clusters">Console</a>
+                </li>
+                  <% } %>
+                <% } %>
+
+                <% if standalone_dashboard { %>
+                <li class="nav-item d-flex align-items-center ">
+                  <a class="btn btn-primary w-100" href="/dashboard">Dashboard</a>
+                </li>
+                <% } %>
+              
+              </div>
+            </ul>
+          </div>
+
+
+          <!-- Solutions nav for less than large screens -->
+          <div class="nav-item collapse-horizontal solutions-collapse collapse drawer-submenu">
+            <ul class="sub-menu-dropdown mb-5 d-flex flex-column gap-3">
+              <a class="btn btn-tertiary-web-app" data-bs-toggle="collapse" data-bs-target=".solutions-collapse">
+                <span class="material-symbols-outlined icon-back-btn">
+                  arrow_back
+                </span>
+                Back
+              </a>
+              <% for link in solutions_links { %>
+                <%+ MarketingLink::new().link(StaticNavLink::new(link.name.to_string(), link.href.to_string())) %>
+              <% } %>
+            </ul>
+          </div>
+
+
         </div>
+
       </div>
     </nav>
   </div>

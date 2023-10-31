@@ -5,6 +5,10 @@
 pub mod marketing;
 pub use marketing::Marketing;
 
+// src/components/navigation/navbar/marketing_link
+pub mod marketing_link;
+pub use marketing_link::MarketingLink;
+
 // src/components/navigation/navbar/web_app
 pub mod web_app;
 pub use web_app::WebApp;
