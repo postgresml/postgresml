@@ -111,7 +111,10 @@
                 Back
               </a>
               <% for link in solutions_links { %>
-                <%+ MarketingLink::new().link(StaticNavLink::new(link.name.to_string(), link.href.to_string())) %>
+                <%+ MarketingLink::new().link(
+                  StaticNavLink::new(link.name.to_string(), link.href.to_string())
+                  .disabled(link.disabled)
+                ) %>
               <% } %>
             </ul>
           </div>

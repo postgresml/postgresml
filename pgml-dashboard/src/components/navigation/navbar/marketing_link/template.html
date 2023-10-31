@@ -16,7 +16,7 @@
     </div>
 
     <% } else { %>
-      <a class="nav-link p-0" href="<%- link.clone().unwrap().href %>" ><%- link.unwrap().name %></a>
+      <a class="nav-link p-0 <% if link.clone().unwrap().disabled { %>disabled<% } %>" href="<%- link.clone().unwrap().href %>" ><%- link.unwrap().name %></a>
     <% } %>
 
   </div>

@@ -5,6 +5,13 @@ li[data-controller="navigation-navbar-marketing-link"] {
             font-weight: 600;
         }
 
+        .nav-link.disabled {
+            color: #{$gray-400} !important;
+            border-bottom: none !important;
+            pointer-events: none;
+            cursor: default;
+        }
+
         &:hover {
             .nav-link {
                 border-bottom: 1px solid #{$slate-shade-100};
