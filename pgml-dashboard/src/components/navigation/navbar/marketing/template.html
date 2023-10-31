@@ -71,9 +71,8 @@
               </div>
 
 
-              <% if !standalone_dashboard { %>
               <div class="mb-5 mt-4 my-lg-0 d-flex flex-column flex-lg-row gap-4">
-                
+                <% if !standalone_dashboard { %>
                   <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
                 <li class="nav-item d-flex align-items-center">
                   <a class="btn btn-secondary w-100" data-controller="btn-secondary" data-btn-secondary-target="btnSecondary" href="/login">Sign In</a>
