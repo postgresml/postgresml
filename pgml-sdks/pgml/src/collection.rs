@@ -329,7 +329,7 @@ impl Collection {
             ))
             .bind(database_data.splitter_id)
             .bind(database_data.id)
-            .execute(&pool)
+            .execute(&mut *transaction)
             .await?;
 
         // Drop the embeddings table
