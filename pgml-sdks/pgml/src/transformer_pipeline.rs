@@ -28,6 +28,11 @@ impl TransformerPipeline {
         if let Some(m) = model {
             a.insert("model".to_string(), m.into());
         }
+        // We must convert any floating point values to integers or our extension will get angry
+        if let Some(v) = a.remove("gpu_layers") {
+            let int_v = v.as_f64().expect("gpu_layers must be an integer") as i64;
+            a.insert("gpu_layers".to_string(), int_v.into());
+        }
 
         Self {
             task: args,

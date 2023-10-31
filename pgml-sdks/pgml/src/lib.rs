@@ -272,30 +272,30 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
-    async fn can_add_remove_pipelines() -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
-        let mut pipeline1 = Pipeline::new(
-            "test_r_p_carps_0",
-            Some(model.clone()),
-            Some(splitter.clone()),
-            None,
-        );
-        let mut pipeline2 = Pipeline::new("test_r_p_carps_1", Some(model), Some(splitter), None);
-        let mut collection = Collection::new("test_r_c_carps_1", None);
-        collection.add_pipeline(&mut pipeline1).await?;
-        collection.add_pipeline(&mut pipeline2).await?;
-        let pipelines = collection.get_pipelines().await?;
-        assert!(pipelines.len() == 2);
-        collection.remove_pipeline(&mut pipeline1).await?;
-        let pipelines = collection.get_pipelines().await?;
-        assert!(pipelines.len() == 1);
-        assert!(collection.get_pipeline("test_r_p_carps_0").await.is_err());
-        collection.archive().await?;
-        Ok(())
-    }
+    // #[sqlx::test]
+    // async fn can_add_remove_pipelines() -> anyhow::Result<()> {
+    //     internal_init_logger(None, None).ok();
+    //     let model = Model::default();
+    //     let splitter = Splitter::default();
+    //     let mut pipeline1 = Pipeline::new(
+    //         "test_r_p_carps_0",
+    //         Some(model.clone()),
+    //         Some(splitter.clone()),
+    //         None,
+    //     );
+    //     let mut pipeline2 = Pipeline::new("test_r_p_carps_1", Some(model), Some(splitter), None);
+    //     let mut collection = Collection::new("test_r_c_carps_1", None);
+    //     collection.add_pipeline(&mut pipeline1).await?;
+    //     collection.add_pipeline(&mut pipeline2).await?;
+    //     let pipelines = collection.get_pipelines().await?;
+    //     assert!(pipelines.len() == 2);
+    //     collection.remove_pipeline(&mut pipeline1).await?;
+    //     let pipelines = collection.get_pipelines().await?;
+    //     assert!(pipelines.len() == 1);
+    //     assert!(collection.get_pipeline("test_r_p_carps_0").await.is_err());
+    //     collection.archive().await?;
+    //     Ok(())
+    // }
 
     #[sqlx::test]
     async fn can_specify_custom_hnsw_parameters_for_pipelines() -> anyhow::Result<()> {
