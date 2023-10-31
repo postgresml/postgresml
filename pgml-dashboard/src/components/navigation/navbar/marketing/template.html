@@ -13,13 +13,13 @@
 %>
 
   <div class="sticky-top-nav" data-controller="navigation-navbar-marketing">
-    <nav class="navbar-marketing-site horizontal navbar-expand-lg" data-controller="search topnav-styling">
+    <nav class="navbar-marketing-site horizontal navbar-expand-xl" data-controller="search topnav-styling">
       <div class="container column-gap-4">
         <div class="controls">
           <%+ PostgresLogo::new("/") %>
 
           <div class="d-flex flex-row gap-1">
-            <li class="nav-item d-flex align-items-center d-block d-lg-none">
+            <li class="nav-item d-flex align-items-center d-block d-xl-none">
               <button type="text" class="btn nav-link btn-search-alt border-0 p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
                 <span class="material-symbols-outlined">search</span>
               </button>
@@ -35,16 +35,16 @@
 
         <div class="collapse navbar-collapse drawer-submenu-container navbarSupportedContent" id="navbarSupportedContent">
           <!-- Main Menu -->
-          <div class="nav-item w-100 d-lg-flex flex-column flex-lg-row align-items-lg-center collapse collapse-horizontal solutions-collapse show drawer-submenu">
-            <ul class="navbar-nav flex-grow-1 gap-4 me-auto my-4 my-lg-0">
+          <div class="nav-item w-100 d-xl-flex flex-column flex-xl-row align-items-xl-center collapse collapse-horizontal solutions-collapse show drawer-submenu">
+            <ul class="navbar-nav flex-grow-1 gap-4 me-auto my-4 my-xl-0">
 
               <% if !standalone_dashboard { %>
-                <div class="d-none d-lg-flex">
+                <div class="d-none d-xl-flex">
                   <%+ MarketingLink::new()
                       .name("Solutions")
                       .links(solutions_links.clone()) %>
                 </div>
-                <li class="nav-item d-flex align-items-center d-flex d-lg-none">
+                <li class="nav-item d-flex align-items-center d-flex d-xl-none">
                   <a class="nav-link p-0 fw-semibold" href="#" data-bs-toggle="collapse" data-bs-target=".solutions-collapse">Solutions</a>
                 </li>
 
@@ -54,24 +54,24 @@
               <%+ MarketingLink::new().link(StaticNavLink::new("docs".to_string(), "/docs/guides/".to_string())) %>
               <%+ MarketingLink::new().link(StaticNavLink::new("Blog".to_string(), "/blog/speeding-up-vector-recall-by-5x-with-hnsw".to_string())) %>
 
-              <li class="nav-item d-none d-lg-flex align-items-center">
+              <li class="nav-item d-none d-xl-flex align-items-center">
                 <button type="text" class="btn nav-link btn-search-alt border-0 p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
                   <span class="material-symbols-outlined">search</span>
                 </button>
               </li>
             </ul>
     
-            <ul class="navbar-nav gap-4 mb-2 mb-lg-0">
-              <li class="align-items-center d-none d-lg-flex">
+            <ul class="navbar-nav gap-4 mb-2 mb-xl-0">
+              <li class="align-items-center d-none d-xl-flex">
                 <%+ GithubIcon {show_stars: true} %>
               </li>
 
-              <div class="d-block d-lg-none">
+              <div class="d-block d-xl-none">
                 <%+ MarketingLink::new().link(StaticNavLink::new("GitHub".to_string(), "https://github.com/postgresml/postgresml".to_string())) %>
               </div>
 
 
-              <div class="mb-5 mt-4 my-lg-0 d-flex flex-column flex-lg-row gap-4">
+              <div class="mb-5 mt-4 my-xl-0 d-flex flex-column flex-xl-row gap-4">
                 <% if !standalone_dashboard { %>
                   <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
                 <li class="nav-item d-flex align-items-center">
