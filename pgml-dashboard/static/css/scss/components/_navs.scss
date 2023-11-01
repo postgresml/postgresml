@@ -24,12 +24,6 @@
         --bs-navbar-padding-x: 20px;
         min-height: $navbar-height;
 
-        @include media-breakpoint-up(lg) {
-            height: $navbar-height;
-            --bs-navbar-padding-y: 24px;
-            --bs-navbar-padding-x: 1.25rem;
-        }
-
         &.pinned {
             background: #{$gray-900};
         }
@@ -42,23 +36,6 @@
     
             &:active {
                 border-bottom: 1px solid #{$slate-tint-500};
-            }
-        }
-
-        .controls {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-height: $navbar-height;
-
-            @include media-breakpoint-down(lg) {
-                width: 100%;
-            }
-        }
-
-        .navbar-collapse {
-            @include media-breakpoint-up(lg) {
-                width: 100%;
             }
         }
     }

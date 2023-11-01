@@ -1,31 +1,31 @@
 .navbar-marketing-site {
     @extend .navbar;
 
-    @include media-breakpoint-up(xl) {
-        height: $navbar-height;
-        --bs-navbar-padding-y: 24px;
-        --bs-navbar-padding-x: 1.25rem;
-    }
-
-    .controls {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        min-height: $navbar-height;
-
-        @include media-breakpoint-down(xl) {
-            width: 100%;
-        }
-    }
-
-    .navbar-collapse {
-        @include media-breakpoint-up(xl) {
-            width: 100%;
-        }
-    }
-
     &.horizontal {
         background: linear-gradient(180deg, rgba(0, 0, 0, 0.64) -55.68%, rgba(0, 0, 0, 0) 100%);
+
+        @include media-breakpoint-up(xl) {
+            height: $navbar-height;
+            --bs-navbar-padding-y: 24px;
+            --bs-navbar-padding-x: 1.25rem;
+        }
+    
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: $navbar-height;
+    
+            @include media-breakpoint-down(xl) {
+                width: 100%;
+            }
+        }
+    
+        .navbar-collapse {
+            @include media-breakpoint-up(xl) {
+                width: 100%;
+            }
+        }
     }
 
     .underline {
