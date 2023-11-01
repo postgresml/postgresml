@@ -21,5 +21,28 @@
     
     &.horizontal {
         height: $navbar-height;
+
+        @include media-breakpoint-up(lg) {
+            height: $navbar-height;
+            --bs-navbar-padding-y: 24px;
+            --bs-navbar-padding-x: 1.25rem;
+        }
+        
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: $navbar-height;
+
+            @include media-breakpoint-down(lg) {
+                width: 100%;
+            }
+        }
+
+        .navbar-collapse {
+            @include media-breakpoint-up(lg) {
+                width: 100%;
+            }
+        }
     }
 }
