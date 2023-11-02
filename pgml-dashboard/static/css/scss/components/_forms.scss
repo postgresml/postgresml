@@ -263,11 +263,13 @@
             box-shadow: none;
             border-width: 2px;
         }
+
+        padding-right: 20px;
     }
 }
 
 .invalid-feedback {
-    --bs-danger-text: #{$peach-shade-100};
+    --bs-danger-text: #{$error};
 }
 
 .hourly-rate {

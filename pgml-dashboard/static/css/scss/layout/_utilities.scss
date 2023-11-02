@@ -97,3 +97,9 @@
 .min-vw-0 {
     min-width: 0;
 }
+
+.min-vh-lg-100 {
+    @include media-breakpoint-up(lg) {
+        min-height: 100vh;
+    }
+}
