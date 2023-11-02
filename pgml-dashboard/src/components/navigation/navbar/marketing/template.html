@@ -54,6 +54,10 @@
               <%+ MarketingLink::new().link(StaticNavLink::new("Docs".to_string(), "/docs/guides/".to_string())) %>
               <%+ MarketingLink::new().link(StaticNavLink::new("Blog".to_string(), "/blog/speeding-up-vector-recall-by-5x-with-hnsw".to_string())) %>
 
+              <% if !standalone_dashboard { %>
+              <%+ MarketingLink::new().link(StaticNavLink::new("Company".to_string(), "/about".to_string())) %>
+              <% } %>
+
               <li class="nav-item d-none d-xl-flex align-items-center">
                 <button type="text" class="btn nav-link btn-search-alt border-0 p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
                   <span class="material-symbols-outlined">search</span>
