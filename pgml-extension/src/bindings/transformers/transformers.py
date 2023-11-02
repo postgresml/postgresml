@@ -38,7 +38,9 @@ from transformers import (
     PegasusTokenizer,
     TrainingArguments,
     Trainer,
+    TextIteratorStreamer,
 )
+from threading import Thread
 
 __cache_transformer_by_model_id = {}
 __cache_sentence_transformer_by_name = {}
@@ -110,6 +112,31 @@ class GPTQPipeline(object):
         return outputs
 
 
+class ThreadedGeneratorIterator:
+    def __init__(self, output):
+        self.done_data = []
+        self.output = output
+        self.done = False
+
+        def do_work(g):
+            for x in g.output:
+                g.done_data.append(x)
+            g.done = True
+        thread = Thread(target=do_work, args=(self,))
+        thread.start()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if len(self.done_data) > 0:
+            return self.done_data.pop(0)
+        elif self.done:
+            raise StopIteration
+        time.sleep(0.1)
+        return self.__next__()
+
+
 class GGMLPipeline(object):
     def __init__(self, model_name, **task):
         import ctransformers
@@ -120,6 +147,10 @@ class GGMLPipeline(object):
         self.model = ctransformers.AutoModelForCausalLM.from_pretrained(model_name, **task)
         self.tokenizer = None
         self.task = "text-generation"
+
+    def stream(self, inputs, **kwargs):
+        output = self.model(inputs[0], stream=True, **kwargs)
+        return ThreadedGeneratorIterator(output)
 
     def __call__(self, inputs, **kwargs):
         outputs = []
@@ -222,7 +253,7 @@ def transform_using(pipeline, args, inputs):
     return orjson.dumps(pipeline(inputs, **args), default=orjson_default).decode()
 
 
-def transform(task, args, inputs):
+def transform(task, args, inputs, stream=False):
     task = orjson.loads(task)
     args = orjson.loads(args)
     inputs = orjson.loads(inputs)
@@ -238,6 +269,8 @@ def transform(task, args, inputs):
         inputs = [orjson.loads(input) for input in inputs]
     convert_eos_token(pipe.tokenizer, args)
 
+    if stream:
+        return pipe.stream(inputs, **args)
     return orjson.dumps(pipe(inputs, **args), default=orjson_default).decode()
 
 
