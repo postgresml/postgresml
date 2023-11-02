@@ -257,6 +257,19 @@
     caret-color: #{$input-color};
 }
 
+.form-control {
+    &.is-invalid {
+        &:focus {
+            box-shadow: none;
+            border-width: 2px;
+        }
+    }
+}
+
+.invalid-feedback {
+    --bs-danger-text: #{$peach-shade-100};
+}
+
 .hourly-rate {
     display: flex;
     flex-direction: row;
