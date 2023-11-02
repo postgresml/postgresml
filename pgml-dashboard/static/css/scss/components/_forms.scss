@@ -257,6 +257,21 @@
     caret-color: #{$input-color};
 }
 
+.form-control {
+    &.is-invalid {
+        &:focus {
+            box-shadow: none;
+            border-width: 2px;
+        }
+
+        padding-right: #{$input-padding-x};
+    }
+}
+
+.invalid-feedback {
+    --bs-danger-text: #{$error};
+}
+
 .hourly-rate {
     display: flex;
     flex-direction: row;

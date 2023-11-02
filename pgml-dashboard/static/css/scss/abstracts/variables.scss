@@ -193,6 +193,9 @@ $form-range-thumb-active-bg: #{$primary};
 $form-range-thumb-bg: #{$primary};
 $form-range-thumb-border: 4px solid #{$neon-tint-100};
 $form-range-track-bg: #111213;
+$form-feedback-icon-invalid: none;
+$form-feedback-icon-valid: none;
+$form-feedback-invalid-color: #{$error};
 
 $input-box-shadow: none;
 $form-switch-checked-color: #{$gray-100};
