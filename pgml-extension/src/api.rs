@@ -5,7 +5,7 @@ use ndarray::Zip;
 use pgrx::iter::{SetOfIterator, TableIterator};
 use pgrx::*;
 use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyDict, PyString};
+use pyo3::types::{IntoPyDict, PyDict};
 
 #[cfg(feature = "python")]
 use serde_json::json;

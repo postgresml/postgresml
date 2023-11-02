@@ -189,7 +189,7 @@ class StandardPipeline(object):
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name,use_auth_token=kwargs["use_auth_token"])
             else:
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            
+
             self.pipe = transformers.pipeline(
                 self.task,
                 model=self.model,
@@ -202,6 +202,14 @@ class StandardPipeline(object):
             if self.pipe.tokenizer is None:
                 self.pipe.tokenizer = AutoTokenizer.from_pretrained(self.model.name_or_path)
             self.tokenizer = self.pipe.tokenizer
+
+    def stream(self, inputs, **kwargs):
+        streamer = TextIteratorStreamer(self.tokenizer)
+        inputs = self.tokenizer(inputs, return_tensors="pt").to(self.model.device)
+        generation_kwargs = dict(inputs, streamer=streamer, max_new_tokens=20)
+        thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
+        thread.start()
+        return streamer
 
     def __call__(self, inputs, **kwargs):
         return self.pipe(inputs, **kwargs)
