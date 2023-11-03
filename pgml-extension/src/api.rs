@@ -654,12 +654,10 @@ impl Iterator for TransformStreamIterator {
     fn next(&mut self) -> Option<Self::Item> {
         // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
         Python::with_gil(|py| -> Result<Option<String>, PyErr> {
-            println!("Getting next token!");
             let code = "next(python_iter, 'DEFAULT_DONE_STRING1239847uuuuu')";
             let res: String = py
                 .eval(code, Some(self.locals.as_ref(py)), None)?
                 .extract()?;
-            println!("WE GOT A VALUE {:?}", res);
             if res == "DEFAULT_DONE_STRING1239847uuuuu" {
                 Ok(None)
             } else {
@@ -682,7 +680,6 @@ pub fn transform_stream_json(
     let python_iter = crate::bindings::transformers::transform_stream(&task.0, &args.0, inputs)
         .map_err(|e| error!("{e}"))
         .unwrap();
-    println!("We got out of the transform call!");
     let res = TransformStreamIterator::new(python_iter);
     SetOfIterator::new(res)
 }
