@@ -103,6 +103,14 @@ class GPTQPipeline(object):
             self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.task = "text-generation"
 
+    def stream(self, inputs, **kwargs):
+        streamer = TextIteratorStreamer(self.tokenizer)
+        inputs = self.tokenizer(inputs, return_tensors="pt").to(self.model.device)
+        generation_kwargs = dict(inputs, streamer=streamer, **kwargs)
+        thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
+        thread.start()
+        return streamer
+
     def __call__(self, inputs, **kwargs):
         outputs = []
         for input in inputs:
@@ -206,7 +214,7 @@ class StandardPipeline(object):
     def stream(self, inputs, **kwargs):
         streamer = TextIteratorStreamer(self.tokenizer)
         inputs = self.tokenizer(inputs, return_tensors="pt").to(self.model.device)
-        generation_kwargs = dict(inputs, streamer=streamer, max_new_tokens=20)
+        generation_kwargs = dict(inputs, streamer=streamer, **kwargs)
         thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
         thread.start()
         return streamer
