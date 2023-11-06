@@ -133,7 +133,7 @@ CREATE EXTENSION
 pgml_test=# SELECT pgml.version();
  version 
 ---------
- 2.7.12
+ 2.7.4
 (1 row)
 ```
 
