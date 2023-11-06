@@ -2,6 +2,8 @@ import math
 import os
 import shutil
 import time
+import queue
+import sys
 
 import datasets
 from InstructorEmbedding import INSTRUCTOR
@@ -125,25 +127,23 @@ class ThreadedGeneratorIterator:
         self.done_data = []
         self.output = output
         self.done = False
+        self.q = queue.Queue()
 
-        def do_work(g):
-            for x in g.output:
-                g.done_data.append(x)
-            g.done = True
-        thread = Thread(target=do_work, args=(self,))
+        def do_work():
+            for x in self.output:
+                self.q.put(x)
+            self.done = True
+        thread = Thread(target=do_work)
         thread.start()
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if len(self.done_data) > 0:
-            return self.done_data.pop(0)
-        elif self.done:
-            raise StopIteration
-        time.sleep(0.1)
-        return self.__next__()
-
+        while not self.done or not self.q.empty():
+            v = self.q.get()
+            self.q.task_done()
+            return v
 
 class GGMLPipeline(object):
     def __init__(self, model_name, **task):

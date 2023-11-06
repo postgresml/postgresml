@@ -654,13 +654,12 @@ impl Iterator for TransformStreamIterator {
     fn next(&mut self) -> Option<Self::Item> {
         // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
         Python::with_gil(|py| -> Result<Option<String>, PyErr> {
-            let code = "next(python_iter, 'DEFAULT_DONE_STRING1239847uuuuu')";
-            let res: String = py
-                .eval(code, Some(self.locals.as_ref(py)), None)?
-                .extract()?;
-            if res == "DEFAULT_DONE_STRING1239847uuuuu" {
+            let code = "next(python_iter)";
+            let res: &PyAny = py.eval(code, Some(self.locals.as_ref(py)), None)?;
+            if res.is_none() {
                 Ok(None)
             } else {
+                let res: String = res.extract()?;
                 Ok(Some(res))
             }
         })
