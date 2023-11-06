@@ -1,35 +1,19 @@
-use core::ffi::CStr;
-use lazy_static::*;
-use pgrx::*;
 use std::collections::BTreeMap;
-use std::option::Option;
 use std::path::PathBuf;
 
-struct Gucs {
-    pgml_cache: GucSetting<Option<&'static CStr>>,
-    hf_hub_offline: GucSetting<bool>,
-}
+use crate::config::get_config;
 
-lazy_static! {
-    static ref GUCS: Gucs = Gucs {
-        pgml_cache: GucSetting::<Option<&'static CStr>>::new(None),
-        hf_hub_offline: GucSetting::<bool>::new(false),
-    };
-}
-
-pub fn pgml_cache_guc() -> Option<String> {
-    let v = GUCS.pgml_cache.get();
-    v.map(|v| v.to_string_lossy().to_string())
-}
+pub static CONFIG_CACHE: &str = "pgml.cache";
+pub static CONFIG_OFFLINE: &str = "pgml.offline";
 
 /// Creates map of ENVs to be set before staring huggingface python APIs.
 pub fn gen_hf_env_map() -> BTreeMap<&'static str, String> {
     let mut map = BTreeMap::new();
 
     let base_path: PathBuf;
-    match GUCS.pgml_cache.get() {
+
+    match get_config(CONFIG_CACHE) {
         Some(value) => {
-            let value = value.to_string_lossy().to_string();
             base_path = PathBuf::from(value);
         }
         None => {
@@ -51,14 +35,20 @@ pub fn gen_hf_env_map() -> BTreeMap<&'static str, String> {
         format!("{}", torch_home.display()),
     );
 
-    map.insert(
-        "HF_HUB_OFFLINE",
-        if GUCS.hf_hub_offline.get() {
-            "TRUE".to_string()
-        } else {
-            "FALSE".to_string()
-        },
-    );
+    let offline_value: String;
+    match get_config(CONFIG_OFFLINE) {
+        Some(value) => {
+            if value.is_empty() {
+                offline_value = String::from("FALSE");
+            } else {
+                offline_value = String::from("TRUE");
+            }
+        }
+        None => {
+            offline_value = String::from("TRUE");
+        }
+    }
+    map.insert("HF_HUB_OFFLINE", offline_value);
 
     return map;
 }

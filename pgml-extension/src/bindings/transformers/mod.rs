@@ -14,6 +14,7 @@ use std::cmp::Ordering;
 use std::env;
 use std::sync::RwLock;
 
+use crate::config::get_config;
 use crate::create_pymodule;
 use crate::orm::guc;
 use crate::orm::{Task, TextDataset};
@@ -456,14 +457,14 @@ mod tests {
 
         let tmp_path: &str = "/tmp/pgml";
 
-        set_config("pgml.cache", tmp_path).unwrap();
+        set_config(guc::CONFIG_CACHE, tmp_path).unwrap();
 
         set_env();
         let _ = crate::bindings::python::activate();
 
         let base_path: PathBuf;
 
-        match guc::pgml_cache_guc() {
+        match get_config(guc::CONFIG_CACHE) {
             Some(value) => {
                 base_path = PathBuf::from(value);
                 let base_path = base_path.display();
