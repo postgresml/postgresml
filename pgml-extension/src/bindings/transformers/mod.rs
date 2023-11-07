@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, bail, Context, Result};
 use lazy_static::*;
+use parking_lot::Mutex;
 use pgrx::*;
 use pyo3::ffi;
 use pyo3::prelude::*;
@@ -12,7 +13,6 @@ use pyo3::types::PyTuple;
 use serde_json::Value;
 use std::cmp::Ordering;
 use std::env;
-use std::sync::RwLock;
 
 use crate::config::get_config;
 use crate::create_pymodule;
@@ -27,8 +27,8 @@ create_pymodule!("/src/bindings/transformers/transformers.py");
 
 lazy_static! {
     // Record the previous applied ENVs.
-    static ref ENVS_APPLIED: RwLock<Box<BTreeMap<&'static str, String>>> =
-        RwLock::new(Box::new(BTreeMap::new()));
+    static ref ENVS_APPLIED: Mutex<Box<BTreeMap<&'static str, String>>> =
+        Mutex::new(Box::new(BTreeMap::new()));
 }
 
 pub fn transform(
@@ -416,12 +416,12 @@ pub fn set_env() {
     let py_inited = unsafe { ffi::Py_IsInitialized() != 0 };
 
     {
-        // This block can not be removed. It's used to drop read lock
-        // read lock held
-        let envs_current = ENVS_APPLIED.read().unwrap();
+        // This block can not be removed. It's used to drop lock
+        // lock held
+        let envs_applied = ENVS_APPLIED.lock();
 
         if py_inited {
-            if envs_to_apply.cmp(&envs_current) != Ordering::Equal {
+            if envs_to_apply.cmp(&envs_applied) != Ordering::Equal {
                 // Python had been initialized and GUCs changed. Report warning and do nothing.
                 warning!("HuggingFace env changed in this session. Please start a new session with new GUC values.");
                 return;
@@ -430,7 +430,7 @@ pub fn set_env() {
                 return;
             }
         }
-        // read lock dropped
+        // lock dropped
     }
 
     // Set the env
@@ -442,8 +442,7 @@ pub fn set_env() {
         }
     }
     // Record current ENVs
-    // write lock held
-    let _ = std::mem::replace(ENVS_APPLIED.write().unwrap().as_mut(), envs_to_apply);
+    let _ = std::mem::replace(ENVS_APPLIED.lock().as_mut(), envs_to_apply);
 }
 
 #[cfg(any(test, feature = "pg_test"))]
