@@ -1,0 +1,38 @@
+div[data-controller="sections-footers-marketing-footer"] {
+
+    font-size: 18px;
+    line-height: 24px; /* 133.333% */
+
+    .footer-title {
+        color: #{$gray-500};
+        text-transform: uppercase;
+        min-width: 20rem;
+    }
+
+    .nav-link {
+        color: #{$gray-100};
+        border-bottom: 1px solid transparent;
+        padding: 0px;
+        width: fit-content;
+
+        &:hover {
+            color: #{$slate-shade-100};
+            border-bottom: 1px solid #{$slate-shade-100};
+            path.alt-fill {
+                fill: #{$slate-shade-100};
+            }
+        }
+
+        &.disabled, &:disabled:hover {
+            color: #{$gray-300};
+            border-bottom: 1px solid transparent;
+        }
+    }
+
+    .comming-soon {
+        color: #{$gray-300};
+        font-size: 12px;
+        line-height: 24px;
+    }
+
+}

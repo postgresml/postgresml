@@ -35,6 +35,7 @@ pub struct Layout {
     pub nav_title: Option<String>,
     pub nav_links: Vec<docs::NavLink>,
     pub toc_links: Vec<docs::TocLink>,
+    pub footer: String,
 }
 
 impl Layout {
@@ -86,6 +87,11 @@ impl Layout {
     {
         self.content = Some(template.render_once().unwrap());
         (*self).clone().into()
+    }
+
+    pub fn footer(&mut self, footer: String) -> &mut Self {
+        self.footer = footer;
+        self
     }
 }
 
