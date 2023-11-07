@@ -12,7 +12,7 @@
         <div class="d-flex flex-column flex-grow-1 gap-3">
           <p class="footer-title  m-0">solutions</p>
           <% for link in solutions { %>
-          <a class="nav-link <% if link.disabled {%> disabled<% } %>" <% if !link.disabled {%> href="<%- link.href %>" <% } %>><%- link.name %> <%if link.disabled {%><span class="comming-soon">(comming soon!)</span><% } %></a>
+          <a class="nav-link <% if link.disabled {%> disabled<% } %>" <% if !link.disabled {%> href="<%- link.href %>" <% } %>><%- link.name %> <%if link.disabled {%><span class="coming-soon">(coming soon!)</span><% } %></a>
           <% } %>
         </div>
         <% } %>
