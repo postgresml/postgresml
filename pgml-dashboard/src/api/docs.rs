@@ -237,10 +237,12 @@ async fn render<'a>(
     if user.is_some() {
         layout.user(&user.unwrap());
     }
+
     let layout = layout
         .nav_title(nav_title)
         .nav_links(&nav_links)
-        .toc_links(&toc_links);
+        .toc_links(&toc_links)
+        .footer(cluster.context.marketing_footer.to_string());
 
     Ok(ResponseOk(
         layout.render(crate::templates::Article { content: html }),

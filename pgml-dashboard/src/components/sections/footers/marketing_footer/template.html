@@ -1,0 +1,93 @@
+<div data-controller="sections-footers-marketing-footer">
+  <div class="container-fluid main-container">
+    <div class="container mb-5">
+      <h5 class="h5 d-flex align-items-center gap-2 mb-5">
+        <img src="/dashboard/static/images/owl_gradient.svg" alt="PostgresML Logo" height="30" width="21">
+        <span>Postgres<span class="fw-semibold">ML</span></span>
+      </h5>
+  
+      <div class="d-flex flex-wrap w-100 row-gap-4">
+        <% if solutions.len() > 0 || resources.len() > 0 {%>
+        <div class="d-flex flex-wrap flex-grow-1 justify-content-around nav row-gap-4">
+          <% if solutions.len() > 0 { %>
+          <div class="d-flex flex-column flex-grow-1 gap-3">
+            <p class="footer-title fw-semibold  m-0">solutions</p>
+            <% for link in solutions { %>
+            <a class="nav-link <% if link.disabled {%> disabled<% } %>" <% if !link.disabled {%> href="<%- link.href %>" <% } %>><%- link.name %> <%if link.disabled {%><span class="coming-soon">(coming soon!)</span><% } %></a>
+            <% } %>
+          </div>
+          <% } %>
+  
+          <% if resources.len() > 0 { %>
+          <div class="d-flex flex-column flex-grow-1 gap-3">
+            <p class="footer-title fw-semibold  m-0">Resources</p>
+            <% for link in resources { %>
+              <div>
+                <a class="nav-link" href="<%- link.href %>"><%- link.name %></a>
+              </div>
+            <% } %>
+          </div>
+          <% } %>
+        </div>
+        <% } %>
+  
+        <div class="d-flex flex-wrap flex-grow-1 justify-content-around nav row-gap-4">
+          <% if company.len() > 0 { %>
+          <div class="d-flex flex-column flex-grow-1 gap-3">
+            <p class="footer-title fw-semibold  m-0 m-0">Company</p>
+            <% for link in company { %>
+            <a class="nav-link" href="<%- link.href %>"><%- link.name %></a>
+            <% } %>
+          </div>
+          <% } %>
+  
+          <div class="d-flex flex-column flex-grow-1 gap-3">
+            <p class="footer-title fw-semibold  m-0">Community</p>
+            <a class="nav-link d-flex gap-2 align-items-center" href="https://github.com/postgresml/postgresml">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path class="alt-fill" fill-rule="evenodd" clip-rule="evenodd" d="M9.00745 0C4.02656 0 0 4.12498 0 9.22815C0 13.3074 2.57996 16.7604 6.15904 17.9825C6.60652 18.0744 6.77043 17.7839 6.77043 17.5396C6.77043 17.3257 6.75568 16.5924 6.75568 15.8283C4.25002 16.3784 3.72824 14.7283 3.72824 14.7283C3.32557 13.6588 2.72893 13.3839 2.72893 13.3839C1.90883 12.8186 2.78867 12.8186 2.78867 12.8186C3.69837 12.8797 4.17572 13.7658 4.17572 13.7658C4.98089 15.1713 6.27833 14.7742 6.8003 14.5297C6.87478 13.9338 7.11355 13.5213 7.36706 13.2922C5.36863 13.0783 3.26602 12.2838 3.26602 8.73915C3.26602 7.73078 3.6237 6.90578 4.19047 6.26416C4.10105 6.03504 3.7878 5.0876 4.28008 3.81955C4.28008 3.81955 5.04062 3.57505 6.75549 4.76679C7.48969 4.56479 8.24686 4.46203 9.00745 4.46117C9.76799 4.46117 10.5433 4.56823 11.2592 4.76679C12.9743 3.57505 13.7348 3.81955 13.7348 3.81955C14.2271 5.0876 13.9137 6.03504 13.8242 6.26416C14.4059 6.90578 14.7489 7.73078 14.7489 8.73915C14.7489 12.2838 12.6463 13.0629 10.6329 13.2922C10.9611 13.5824 11.2443 14.1324 11.2443 15.0033C11.2443 16.2408 11.2295 17.234 11.2295 17.5394C11.2295 17.7839 11.3936 18.0744 11.8409 17.9827C15.42 16.7602 18 13.3074 18 9.22815C18.0147 4.12498 13.9734 0 9.00745 0Z" fill="white"/>
+              </svg>
+              GitHub
+            </a>
+            <a class="nav-link d-flex gap-2 align-items-center" href="https://discord.gg/DmyJP3qJ7U">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="16" viewBox="0 0 18 16" fill="none">
+                <path class="alt-fill" d="M15.2477 1.96647C14.0651 1.3912 12.8166 0.983085 11.5342 0.752548C11.3587 1.08587 11.1999 1.42882 11.0585 1.77995C9.69244 1.56123 8.30325 1.56123 6.93721 1.77995C6.79571 1.42885 6.63693 1.08591 6.46151 0.752548C5.17825 0.985032 3.92895 1.39412 2.74514 1.96948C0.394983 5.66391 -0.242108 9.26657 0.0764374 12.8181C1.45275 13.8985 2.99324 14.7202 4.63094 15.2474C4.9997 14.7205 5.326 14.1614 5.60639 13.5762C5.07383 13.3649 4.55982 13.1042 4.07029 12.797C4.19913 12.6978 4.32513 12.5955 4.44689 12.4962C5.87128 13.2079 7.42593 13.5769 8.99997 13.5769C10.574 13.5769 12.1287 13.2079 13.5531 12.4962C13.6762 12.603 13.8022 12.7053 13.9296 12.797C13.4392 13.1047 12.9242 13.3659 12.3907 13.5777C12.6708 14.1627 12.9971 14.7212 13.3662 15.2474C15.0053 14.7223 16.5469 13.901 17.9235 12.8196C18.2973 8.70097 17.285 5.1314 15.2477 1.96647ZM6.00988 10.6339C5.1222 10.6339 4.38884 9.77801 4.38884 8.72504C4.38884 7.67207 5.09672 6.80863 6.00705 6.80863C6.91739 6.80863 7.64509 7.67207 7.62951 8.72504C7.61394 9.77801 6.91456 10.6339 6.00988 10.6339ZM11.9901 10.6339C11.101 10.6339 10.3704 9.77801 10.3704 8.72504C10.3704 7.67207 11.0783 6.80863 11.9901 6.80863C12.9018 6.80863 13.6238 7.67207 13.6083 8.72504C13.5927 9.77801 12.8947 10.6339 11.9901 10.6339Z" fill="white"/>
+              </svg>
+              Discord
+            </a>
+            <a class="nav-link d-flex gap-2 align-items-center" href="https://twitter.com/postgresml">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20" fill="none">
+                <g clip-path="url(#clip0_625_83)">
+                  <path class="alt-fill" d="M10.7124 8.58676L17.4133 0.797501H15.8254L10.0071 7.56081L5.35992 0.797501H0L7.02738 11.0248L0 19.1931H1.58799L7.73237 12.0508L12.6401 19.1931H18L10.7121 8.58676H10.7124ZM8.53747 11.1149L7.82546 10.0965L2.16017 1.99292H4.59922L9.17118 8.53278L9.8832 9.55118L15.8262 18.052H13.3871L8.53747 11.1153V11.1149Z" fill="white"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_625_83">
+                    <rect width="18" height="18.405" fill="white" transform="translate(0 0.797501)"/>
+                  </clipPath>
+                </defs>
+              </svg>
+              
+            </a>
+            <a class="nav-link d-flex gap-2 align-items-center" href="https://www.youtube.com/@postgresml">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="14" viewBox="0 0 18 14" fill="none">
+                <path class="alt-fill" d="M17.6236 2.66743C17.4162 1.89249 16.8072 1.2835 16.0323 1.07606C14.6291 0.699701 9 0.699701 9 0.699701C9 0.699701 3.37093 0.699701 1.96773 1.07606C1.19279 1.2835 0.5838 1.89249 0.376358 2.66743C1.41308e-07 4.07063 0 7 0 7C0 7 1.41308e-07 9.92937 0.376358 11.3326C0.5838 12.1075 1.19279 12.7165 1.96773 12.9239C3.37093 13.3003 9 13.3003 9 13.3003C9 13.3003 14.6291 13.3003 16.0323 12.9239C16.8072 12.7165 17.4162 12.1075 17.6236 11.3326C18 9.92937 18 7 18 7C18 7 17.9985 4.07063 17.6236 2.66743Z" fill="white"/>
+                <path d="M7.19819 9.69985V4.30044L11.8745 7.00014L7.19819 9.69985Z" fill="#282828"/>
+              </svg>
+              YouTube
+            </a>
+            <a class="nav-link d-flex gap-2 align-items-center" href="https://www.linkedin.com/company/postgresml">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path class="alt-fill" fill-rule="evenodd" clip-rule="evenodd" d="M2 0H16C17.1046 0 18 0.89543 18 2V16C18 17.1046 17.1046 18 16 18H2C0.89543 18 0 17.1046 0 16V2C0 0.89543 0.89543 0 2 0ZM4.99995 14.9999C5.2761 14.9999 5.49995 14.7761 5.49995 14.4999V7.49994C5.49995 7.2238 5.2761 6.99994 4.99995 6.99994H3.49995C3.22381 6.99994 2.99995 7.2238 2.99995 7.49994V14.4999C2.99995 14.7761 3.22381 14.9999 3.49995 14.9999H4.99995ZM4.25002 5.99995C3.42159 5.99995 2.75002 5.32838 2.75002 4.49995C2.75002 3.67153 3.42159 2.99995 4.25002 2.99995C5.07844 2.99995 5.75002 3.67153 5.75002 4.49995C5.75002 5.32838 5.07844 5.99995 4.25002 5.99995ZM14.4999 15C14.7761 15 14.9999 14.7761 14.9999 14.5V9.9C15.0324 8.31078 13.8575 6.95452 12.2799 6.76C11.177 6.65925 10.1082 7.17441 9.49994 8.1V7.5C9.49994 7.22386 9.27608 7 8.99994 7H7.49994C7.2238 7 6.99994 7.22386 6.99994 7.5V14.5C6.99994 14.7761 7.2238 15 7.49994 15H8.99994C9.27608 15 9.49994 14.7761 9.49994 14.5V10.75C9.49994 9.92158 10.1715 9.25 10.9999 9.25C11.8284 9.25 12.4999 9.92158 12.4999 10.75V14.5C12.4999 14.7761 12.7238 15 12.9999 15H14.4999Z" fill="#FBFBFB"/>
+              </svg>
+              LinkedIn
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="container">
+      <p class="rights d-flex justify-content-center justify-content-sm-start">PostgresML 2023 Ⓒ All rights reserved.</p>
+    </div>
+  </div>
+</div>

@@ -1,9 +1,11 @@
 use std::env::var;
 
+use crate::components::sections::footers::marketing_footer::MarketingFooter;
 use crate::templates::components::{StaticNav, StaticNavLink};
 use once_cell::sync::OnceCell;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
+use sailfish::TemplateOnce;
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 
 static POOL: OnceCell<PgPool> = OnceCell::new();
@@ -138,6 +140,7 @@ impl Cluster {
                     ],
                 },
                 lower_left_nav: StaticNav::default(),
+                marketing_footer: MarketingFooter::new().render_once().unwrap(),
             },
         }
     }
