@@ -1,0 +1,61 @@
+div[data-controller="sections-footers-marketing-footer"] {
+
+    font-size: 18px;
+    line-height: 24px; /* 133.333% */
+
+    .main-container {
+        padding: 1rem 0rem;
+        @include media-breakpoint-up(md) {
+            padding: 3.5rem 6rem;
+        }
+    }
+
+    .footer-title {
+        color: #{$gray-500};
+        text-transform: uppercase;
+        min-width: 18rem;
+    }
+
+    .nav-link {
+        color: #{$gray-100};
+        border-bottom: 1px solid transparent;
+        padding: 0px;
+        width: fit-content;
+
+        &:hover {
+            color: #{$slate-shade-100};
+            border-bottom: 1px solid #{$slate-shade-100};
+            path.alt-fill {
+                fill: #{$slate-shade-100};
+            }
+        }
+
+        &:active {
+            @include bold_by_shadow(#{$slate-tint-700});
+            color: #{$slate-tint-700};
+            border-bottom: 1px solid transparent;
+            path.alt-fill {
+                @include bold_by_shadow(#{$slate-tint-700});
+                fill: #{$slate-tint-700};
+            }
+        }
+
+        &.disabled, &:disabled:hover, &:disabled:focus, &:disabled, &:disabled:active {
+            color: #{$gray-300};
+            border-bottom: 1px solid transparent;
+        }
+    }
+
+    .coming-soon {
+        color: #{$gray-300};
+        font-size: 12px;
+        line-height: 24px;
+    }
+
+    .rights {
+        color: #{$gray-100};
+        font-size: 14px;
+        line-height: 150%; /* 21px */
+    }
+
+}

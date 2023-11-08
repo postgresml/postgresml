@@ -21,6 +21,7 @@ pub mod types;
 pub mod utils;
 
 use guards::{Cluster, ConnectedCluster};
+use pgml_components::Component;
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
     components::{NavLink, StaticNav},
@@ -47,6 +48,7 @@ pub struct Context {
     pub account_management_nav: StaticNav,
     pub upper_left_nav: StaticNav,
     pub lower_left_nav: StaticNav,
+    pub marketing_footer: String,
 }
 
 #[get("/projects")]
