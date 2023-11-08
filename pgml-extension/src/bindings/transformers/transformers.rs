@@ -42,7 +42,7 @@ pub fn transform(
 pub fn transform_stream(
     task: &serde_json::Value,
     args: &serde_json::Value,
-    inputs: Vec<&str>,
+    input: &str,
 ) -> Result<Py<PyAny>> {
     crate::bindings::python::activate()?;
 
@@ -50,7 +50,7 @@ pub fn transform_stream(
 
     let task = serde_json::to_string(task)?;
     let args = serde_json::to_string(args)?;
-    let inputs = serde_json::to_string(&inputs)?;
+    let inputs = serde_json::to_string(&vec![input])?;
 
     Python::with_gil(|py| -> Result<Py<PyAny>> {
         let transform: Py<PyAny> = get_module!(PY_MODULE)

@@ -94,10 +94,10 @@ def ensure_device(kwargs):
         else:
             kwargs["device"] = "cpu"
 
-# A copy of HuggingFace's with small changes in the __next__
+# A copy of HuggingFace's with small changes in the __next__ to not raise an exception
 class TextIteratorStreamer(TextStreamer):
     def __init__(
-        self, tokenizer: "AutoTokenizer", skip_prompt: bool = False, timeout: Optional[float] = None, **decode_kwargs
+        self, tokenizer, skip_prompt = False, timeout = None, **decode_kwargs
     ):
         super().__init__(tokenizer, skip_prompt, **decode_kwargs)
         self.text_queue = queue.Queue()
@@ -160,11 +160,11 @@ class GPTQPipeline(object):
 
 
 class ThreadedGeneratorIterator:
-    def __init__(self, output):
-        self.done_data = []
+    def __init__(self, output, starting_input):
         self.output = output
         self.done = False
         self.q = queue.Queue()
+        self.q.put(starting_input)
 
         def do_work():
             for x in self.output:
@@ -199,7 +199,7 @@ class GGMLPipeline(object):
 
     def stream(self, inputs, **kwargs):
         output = self.model(inputs[0], stream=True, **kwargs)
-        return ThreadedGeneratorIterator(output)
+        return ThreadedGeneratorIterator(output, inputs[0])
 
     def __call__(self, inputs, **kwargs):
         outputs = []
