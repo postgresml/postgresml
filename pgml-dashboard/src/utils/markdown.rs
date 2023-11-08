@@ -225,7 +225,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
             let code = match options.lang {
                 "postgresql" | "sql" | "postgresql-line-nums" => {
                     lazy_static! {
-                        static ref SQL_KEYS: [&'static str; 68] = [
+                        static ref SQL_KEYS: [&'static str; 69] = [
                             "PARTITION OF",
                             "PARTITION BY",
                             "CASCADE",
@@ -276,6 +276,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "END",
                             "BETWEEN",
                             "SET",
+                            "REINDEX",
                             "INDEX",
                             "USING",
                             "GROUP BY",
@@ -295,7 +296,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "pgml.predict",
                             "pgml.transform",
                         ];
-                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 68] = [
+                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 69] = [
                             r#"<span class="syntax-highlight">PARTITION OF</span>"#,
                             r#"<span class="syntax-highlight">PARTITION BY</span>"#,
                             "<span class=\"syntax-highlight\">CASCADE</span>",
@@ -346,6 +347,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                             "<span class=\"syntax-highlight\">END</span>",
                             "<span class=\"syntax-highlight\">BETWEEN</span>",
                             "<span class=\"syntax-highlight\">SET</span>",
+                            "<span class=\"syntax-highlight\">REINDEX</span>",
                             "<span class=\"syntax-highlight\">INDEX</span>",
                             "<span class=\"syntax-highlight\">USING</span>",
                             "<span class=\"syntax-highlight\">GROUP BY</span>",
