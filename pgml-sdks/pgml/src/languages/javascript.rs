@@ -1,8 +1,11 @@
+use futures::StreamExt;
 use neon::prelude::*;
 use rust_bridge::javascript::{FromJsType, IntoJsResult};
+use std::sync::Arc;
 
 use crate::{
     pipeline::PipelineSyncData,
+    transformer_pipeline::TransformerStream,
     types::{DateTime, Json},
 };
 
@@ -16,8 +19,9 @@ impl IntoJsResult for DateTime {
         self,
         cx: &mut C,
     ) -> JsResult<'b, Self::Output> {
-        let date = neon::types::JsDate::new(cx, self.0.assume_utc().unix_timestamp() as f64 * 1000.0)
-            .expect("Error converting to JS Date");
+        let date =
+            neon::types::JsDate::new(cx, self.0.assume_utc().unix_timestamp() as f64 * 1000.0)
+                .expect("Error converting to JS Date");
         Ok(date)
     }
 }
@@ -66,6 +70,65 @@ impl IntoJsResult for PipelineSyncData {
         cx: &mut C,
     ) -> JsResult<'b, Self::Output> {
         Json::from(self).into_js_result(cx)
+    }
+}
+
+#[derive(Clone)]
+struct TransformerStreamArcMutex(Arc<tokio::sync::Mutex<TransformerStream>>);
+
+impl Finalize for TransformerStreamArcMutex {}
+
+fn transform_stream_iterate_next(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let this = cx.this();
+    let s: Handle<JsBox<TransformerStreamArcMutex>> = this
+        .get(&mut cx, "s")
+        .expect("Error getting self in transformer_stream_iterate_next");
+    let mut b: &JsBox<TransformerStreamArcMutex> = &s;
+    let ts: &TransformerStreamArcMutex = &s;
+    let ts: TransformerStreamArcMutex = ts.clone();
+
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+    crate::get_or_set_runtime().spawn(async move {
+        let mut ts = ts.0.lock().await;
+        let v = ts.next().await;
+        deferred
+            .try_settle_with(&channel, move |mut cx| {
+                let o = cx.empty_object();
+                if let Some(v) = v {
+                    let v: String = v.expect("Error calling next on TransformerStream");
+                    let v = cx.string(v);
+                    let d = cx.boolean(false);
+                    o.set(&mut cx, "value", v)
+                        .expect("Error setting object value in transformer_sream_iterate_next");
+                    o.set(&mut cx, "done", d)
+                        .expect("Error setting object value in transformer_sream_iterate_next");
+                } else {
+                    let d = cx.boolean(true);
+                    o.set(&mut cx, "done", d)
+                        .expect("Error setting object value in transformer_sream_iterate_next");
+                }
+                Ok(o)
+            })
+            .expect("Error sending js");
+    });
+    Ok(promise)
+}
+
+impl IntoJsResult for TransformerStream {
+    type Output = JsObject;
+    fn into_js_result<'a, 'b, 'c: 'b, C: Context<'c>>(
+        self,
+        cx: &mut C,
+    ) -> JsResult<'b, Self::Output> {
+        let o = cx.empty_object();
+        let f: Handle<JsFunction> = JsFunction::new(cx, transform_stream_iterate_next)?;
+        o.set(cx, "next", f)?;
+        let s = cx.boxed(TransformerStreamArcMutex(Arc::new(
+            tokio::sync::Mutex::new(self),
+        )));
+        o.set(cx, "s", s)?;
+        Ok(o)
     }
 }
 
