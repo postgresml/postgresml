@@ -281,6 +281,28 @@ it("can order documents", async () => {
 });
 
 ///////////////////////////////////////////////////
+// Transformer Pipeline Tests /////////////////////
+///////////////////////////////////////////////////
+
+it("can transformer pipeline", async () => {
+  const t = pgml.newTransformerPipeline("text-generation");
+  const it = await t.transform(["AI is going to"], {max_new_tokens: 5});
+  expect(it.length).toBeGreaterThan(0)
+});
+
+it("can transformer pipeline stream", async () => {
+  const t = pgml.newTransformerPipeline("text-generation");
+  const it = await t.transform_stream("AI is going to", {max_new_tokens: 5});
+  let result = await it.next();
+  let output = [];
+  while (!result.done) {
+    output.push(result.value);
+    result = await it.next();
+  }
+  expect(output.length).toBeGreaterThan(0)
+});
+
+///////////////////////////////////////////////////
 // Test migrations ////////////////////////////////
 ///////////////////////////////////////////////////
 

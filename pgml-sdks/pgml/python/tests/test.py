@@ -299,6 +299,27 @@ async def test_order_documents():
 
 
 ###################################################
+## Transformer Pipeline Tests #####################
+###################################################
+
+
+@pytest.mark.asyncio
+async def test_transformer_pipeline():
+    t = pgml.TransformerPipeline("text-generation")
+    it = await t.transform(["AI is going to"], {"max_new_tokens": 5})
+    assert (len(it)) > 0
+
+@pytest.mark.asyncio
+async def test_transformer_pipeline_stream():
+    t = pgml.TransformerPipeline("text-generation")
+    it = await t.transform_stream("AI is going to", {"max_new_tokens": 5})
+    total = []
+    async for c in it:
+        total.append(c)
+    assert (len(total)) > 0
+
+
+###################################################
 ## Migration tests ################################
 ###################################################
 

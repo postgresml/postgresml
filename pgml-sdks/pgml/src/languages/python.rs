@@ -65,7 +65,7 @@ impl TransformerStreamPython {
         slf
     }
 
-    fn __anext__<'p>(mut slf: PyRefMut<'_, Self>, py: Python<'p>) -> PyResult<Option<PyObject>> {
+    fn __anext__<'p>(slf: PyRefMut<'_, Self>, py: Python<'p>) -> PyResult<Option<PyObject>> {
         let ts = slf.wrapped.clone();
         let fut = pyo3_asyncio::tokio::future_into_py(py, async move {
             let mut ts = ts.lock().await;
@@ -150,7 +150,7 @@ impl FromPyObject<'_> for PipelineSyncData {
 }
 
 impl FromPyObject<'_> for TransformerStream {
-    fn extract(ob: &PyAny) -> PyResult<Self> {
+    fn extract(_ob: &PyAny) -> PyResult<Self> {
         panic!("We must implement this, but this is impossible to be reached")
     }
 }

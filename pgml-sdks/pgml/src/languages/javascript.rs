@@ -83,7 +83,6 @@ fn transform_stream_iterate_next(mut cx: FunctionContext) -> JsResult<JsPromise>
     let s: Handle<JsBox<TransformerStreamArcMutex>> = this
         .get(&mut cx, "s")
         .expect("Error getting self in transformer_stream_iterate_next");
-    let mut b: &JsBox<TransformerStreamArcMutex> = &s;
     let ts: &TransformerStreamArcMutex = &s;
     let ts: TransformerStreamArcMutex = ts.clone();
 

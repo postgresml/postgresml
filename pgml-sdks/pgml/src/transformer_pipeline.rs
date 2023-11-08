@@ -163,7 +163,7 @@ impl TransformerPipeline {
     #[instrument(skip(self))]
     pub async fn transform_stream(
         &self,
-        inputs: Vec<String>,
+        input: &str,
         args: Option<Json>,
         batch_size: Option<i32>,
     ) -> anyhow::Result<TransformerStream> {
@@ -173,10 +173,10 @@ impl TransformerPipeline {
 
         let mut transaction = pool.begin().await?;
         sqlx::query(
-            "DECLARE c CURSOR FOR SELECT pgml.transform_stream(task => $1, inputs => $2, args => $3)",
+            "DECLARE c CURSOR FOR SELECT pgml.transform_stream(task => $1, input => $2, args => $3)",
         )
         .bind(&self.task)
-        .bind(inputs)
+        .bind(input)
         .bind(&args)
         .execute(&mut *transaction)
         .await?;
@@ -246,7 +246,7 @@ mod tests {
         );
         let mut stream = t
             .transform_stream(
-                vec!["AI is going to".to_string()],
+                "AI is going to",
                 Some(
                     serde_json::json!({
                         "max_new_tokens": 10
