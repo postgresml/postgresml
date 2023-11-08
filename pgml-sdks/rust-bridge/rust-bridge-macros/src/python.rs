@@ -22,7 +22,6 @@ pub fn generate_alias_manual(parsed: DeriveInput) -> proc_macro::TokenStream {
 
     let expanded = quote! {
         #[cfg(feature = "python")]
-        #[derive(Clone, Debug)]
         pub struct #name_ident #ty_generics {
             pub wrapped: #wrapped_type_ident #ty_generics
         }

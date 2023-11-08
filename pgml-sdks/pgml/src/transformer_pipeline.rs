@@ -37,12 +37,6 @@ impl std::fmt::Debug for TransformerStream {
     }
 }
 
-impl Clone for TransformerStream {
-    fn clone(&self) -> Self {
-        panic!("We shouldn't be doing this");
-    }
-}
-
 impl TransformerStream {
     fn new(transaction: Transaction<'static, Postgres>, db_batch_size: i32) -> Self {
         let query = format!("FETCH {} FROM c", db_batch_size);
