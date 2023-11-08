@@ -40,9 +40,10 @@ from transformers import (
     PegasusTokenizer,
     TrainingArguments,
     Trainer,
-    TextIteratorStreamer,
+    TextStreamer,
 )
 from threading import Thread
+from typing import Optional
 
 __cache_transformer_by_model_id = {}
 __cache_sentence_transformer_by_name = {}
@@ -63,13 +64,16 @@ DTYPE_MAP = {
     "bool": torch.bool,
 }
 
+
 class PgMLException(Exception):
     pass
+
 
 def orjson_default(obj):
     if isinstance(obj, numpy.float32):
         return float(obj)
     raise TypeError
+
 
 def convert_dtype(kwargs):
     if "torch_dtype" in kwargs:
@@ -90,17 +94,46 @@ def ensure_device(kwargs):
         else:
             kwargs["device"] = "cpu"
 
+# A copy of HuggingFace's with small changes in the __next__
+class TextIteratorStreamer(TextStreamer):
+    def __init__(
+        self, tokenizer: "AutoTokenizer", skip_prompt: bool = False, timeout: Optional[float] = None, **decode_kwargs
+    ):
+        super().__init__(tokenizer, skip_prompt, **decode_kwargs)
+        self.text_queue = queue.Queue()
+        self.stop_signal = None
+        self.timeout = timeout
+
+    def on_finalized_text(self, text: str, stream_end: bool = False):
+        """Put the new text in the queue. If the stream is ending, also put a stop signal in the queue."""
+        self.text_queue.put(text, timeout=self.timeout)
+        if stream_end:
+            self.text_queue.put(self.stop_signal, timeout=self.timeout)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        value = self.text_queue.get(timeout=self.timeout)
+        if value != self.stop_signal:
+            return value
+
 
 class GPTQPipeline(object):
     def __init__(self, model_name, **task):
         from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
         from huggingface_hub import snapshot_download
+
         model_path = snapshot_download(model_name)
 
         quantized_config = BaseQuantizeConfig.from_pretrained(model_path)
-        self.model = AutoGPTQForCausalLM.from_quantized(model_path, quantized_config=quantized_config, **task)
+        self.model = AutoGPTQForCausalLM.from_quantized(
+            model_path, quantized_config=quantized_config, **task
+        )
         if "use_fast_tokenizer" in task:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=task.pop("use_fast_tokenizer"))
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_path, use_fast=task.pop("use_fast_tokenizer")
+            )
         else:
             self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.task = "text-generation"
@@ -116,7 +149,11 @@ class GPTQPipeline(object):
     def __call__(self, inputs, **kwargs):
         outputs = []
         for input in inputs:
-            tokens = self.tokenizer(input, return_tensors="pt").to(self.model.device).input_ids
+            tokens = (
+                self.tokenizer(input, return_tensors="pt")
+                .to(self.model.device)
+                .input_ids
+            )
             token_ids = self.model.generate(input_ids=tokens, **kwargs)[0]
             outputs.append(self.tokenizer.decode(token_ids))
         return outputs
@@ -133,6 +170,7 @@ class ThreadedGeneratorIterator:
             for x in self.output:
                 self.q.put(x)
             self.done = True
+
         thread = Thread(target=do_work)
         thread.start()
 
@@ -140,10 +178,11 @@ class ThreadedGeneratorIterator:
         return self
 
     def __next__(self):
-        while not self.done or not self.q.empty():
+        if not self.done or not self.q.empty():
             v = self.q.get()
             self.q.task_done()
             return v
+
 
 class GGMLPipeline(object):
     def __init__(self, model_name, **task):
@@ -152,7 +191,9 @@ class GGMLPipeline(object):
         task.pop("model")
         task.pop("task")
         task.pop("device")
-        self.model = ctransformers.AutoModelForCausalLM.from_pretrained(model_name, **task)
+        self.model = ctransformers.AutoModelForCausalLM.from_pretrained(
+            model_name, **task
+        )
         self.tokenizer = None
         self.task = "text-generation"
 
@@ -173,28 +214,39 @@ class StandardPipeline(object):
         # to the model constructor, so we construct the model/tokenizer manually if possible,
         # but that is only possible when the task is passed in, since if you pass the model
         # to the pipeline constructor, the task will no longer be inferred from the default...
-        if "task" in kwargs and model_name is not None and kwargs["task"] in [
-            "text-classification",
-            "question-answering",
-            "summarization",
-            "translation",
-            "text-generation"
-        ]:
+        if (
+            "task" in kwargs
+            and model_name is not None
+            and kwargs["task"]
+            in [
+                "text-classification",
+                "question-answering",
+                "summarization",
+                "translation",
+                "text-generation",
+            ]
+        ):
             self.task = kwargs.pop("task")
             kwargs.pop("model", None)
             if self.task == "text-classification":
-                self.model = AutoModelForSequenceClassification.from_pretrained(model_name, **kwargs)
+                self.model = AutoModelForSequenceClassification.from_pretrained(
+                    model_name, **kwargs
+                )
             elif self.task == "question-answering":
-                self.model = AutoModelForQuestionAnswering.from_pretrained(model_name, **kwargs)
+                self.model = AutoModelForQuestionAnswering.from_pretrained(
+                    model_name, **kwargs
+                )
             elif self.task == "summarization" or self.task == "translation":
                 self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **kwargs)
             elif self.task == "text-generation":
                 self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
             else:
                 raise PgMLException(f"Unhandled task: {self.task}")
-            
+
             if "use_auth_token" in kwargs:
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name,use_auth_token=kwargs["use_auth_token"])
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    model_name, use_auth_token=kwargs["use_auth_token"]
+                )
             else:
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -208,7 +260,9 @@ class StandardPipeline(object):
             self.task = self.pipe.task
             self.model = self.pipe.model
             if self.pipe.tokenizer is None:
-                self.pipe.tokenizer = AutoTokenizer.from_pretrained(self.model.name_or_path)
+                self.pipe.tokenizer = AutoTokenizer.from_pretrained(
+                    self.model.name_or_path
+                )
             self.tokenizer = self.pipe.tokenizer
 
     def stream(self, inputs, **kwargs):
@@ -227,7 +281,7 @@ def get_model_from(task):
     task = orjson.loads(task)
     if "model" in task:
         return task["model"]
-    
+
     if "task" in task:
         model = transformers.pipelines.SUPPORTED_TASKS[task["task"]]["default"]["model"]
         ty = "tf" if "tf" in model else "pt"
@@ -292,7 +346,7 @@ def transform(task, args, inputs, stream=False):
 
 def create_embedding(transformer):
     instructor = transformer.startswith("hkunlp/instructor")
-    klass = INSTRUCTOR if instructor else SentenceTransformer 
+    klass = INSTRUCTOR if instructor else SentenceTransformer
     return klass(transformer)
 
 
@@ -306,7 +360,7 @@ def embed_using(model, transformer, inputs, kwargs):
         instruction = kwargs.pop("instruction")
         for text in inputs:
             texts_with_instructions.append([instruction, text])
-            
+
         inputs = texts_with_instructions
 
     return model.encode(inputs, **kwargs)
@@ -318,7 +372,9 @@ def embed(transformer, inputs, kwargs):
     ensure_device(kwargs)
 
     if transformer not in __cache_sentence_transformer_by_name:
-        __cache_sentence_transformer_by_name[transformer] = create_embedding(transformer)
+        __cache_sentence_transformer_by_name[transformer] = create_embedding(
+            transformer
+        )
     model = __cache_sentence_transformer_by_name[transformer]
 
     return embed_using(model, transformer, inputs, kwargs)
@@ -783,5 +839,3 @@ def generate(model_id, data, config):
             )
             all_preds.extend(decoded_preds)
     return all_preds
-
-

@@ -668,15 +668,35 @@ impl Iterator for TransformStreamIterator {
     }
 }
 
-#[pg_extern(name = "transform_stream")]
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
+#[pg_extern(immutable, parallel_safe, name = "transform_stream")]
+#[allow(unused_variables)] // cache is maintained for api compatibility
 pub fn transform_stream_json(
     task: JsonB,
     args: default!(JsonB, "'{}'"),
     inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
-    _cache: default!(bool, false),
+    cache: default!(bool, false),
 ) -> SetOfIterator<'static, String> {
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
     let python_iter = crate::bindings::transformers::transform_stream(&task.0, &args.0, inputs)
+        .map_err(|e| error!("{e}"))
+        .unwrap();
+    let res = TransformStreamIterator::new(python_iter);
+    SetOfIterator::new(res)
+}
+
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
+#[pg_extern(immutable, parallel_safe, name = "transform_stream")]
+#[allow(unused_variables)] // cache is maintained for api compatibility
+pub fn transform_stream_string(
+    task: String,
+    args: default!(JsonB, "'{}'"),
+    inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
+    cache: default!(bool, false),
+) -> SetOfIterator<'static, String> {
+    let task_json = json!({ "task": task });
+    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    let python_iter = crate::bindings::transformers::transform_stream(&task_json, &args.0, inputs)
         .map_err(|e| error!("{e}"))
         .unwrap();
     let res = TransformStreamIterator::new(python_iter);
