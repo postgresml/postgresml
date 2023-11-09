@@ -14,7 +14,6 @@ from typing import List, Dict, Optional, Self, Any
 
 /// This function assumes the user has already impliemented:
 /// - `FromPyObject` for the wrapped type
-/// - `ToPyObject` for the wrapped type
 /// - `IntoPy<PyObject>` for the wrapped type
 pub fn generate_alias_manual(parsed: DeriveInput) -> proc_macro::TokenStream {
     let name_ident = format_ident!("{}Python", parsed.ident);
@@ -22,7 +21,6 @@ pub fn generate_alias_manual(parsed: DeriveInput) -> proc_macro::TokenStream {
 
     let expanded = quote! {
         #[cfg(feature = "python")]
-        #[derive(Clone, Debug)]
         pub struct #name_ident {
             pub wrapped: #wrapped_type_ident
         }
@@ -55,17 +53,10 @@ pub fn generate_alias_manual(parsed: DeriveInput) -> proc_macro::TokenStream {
 
         // From Rust to Python
         #[cfg(feature = "python")]
-        impl pyo3::conversion::ToPyObject for #name_ident {
-            fn to_object(&self, py: pyo3::Python) -> pyo3::PyObject {
-                use pyo3::conversion::ToPyObject;
-                self.wrapped.to_object(py)
-            }
-        }
-        #[cfg(feature = "python")]
         impl pyo3::conversion::IntoPy<pyo3::PyObject> for #name_ident {
             fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
                 use pyo3::conversion::ToPyObject;
-                self.wrapped.to_object(py)
+                self.wrapped.into_py(py)
             }
         }
     };
