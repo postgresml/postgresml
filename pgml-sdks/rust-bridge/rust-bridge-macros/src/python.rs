@@ -18,17 +18,16 @@ from typing import List, Dict, Optional, Self, Any
 pub fn generate_alias_manual(parsed: DeriveInput) -> proc_macro::TokenStream {
     let name_ident = format_ident!("{}Python", parsed.ident);
     let wrapped_type_ident = parsed.ident;
-    let (impl_generics, ty_generics, where_clause) = parsed.generics.split_for_impl();
 
     let expanded = quote! {
         #[cfg(feature = "python")]
-        pub struct #name_ident #ty_generics {
-            pub wrapped: #wrapped_type_ident #ty_generics
+        pub struct #name_ident {
+            pub wrapped: #wrapped_type_ident
         }
 
         #[cfg(feature = "python")]
-        impl #impl_generics rust_bridge::python::CustomInto<#name_ident #ty_generics> for #wrapped_type_ident #ty_generics #where_clause {
-            fn custom_into(self) -> #name_ident #ty_generics {
+        impl rust_bridge::python::CustomInto<#name_ident> for #wrapped_type_ident {
+            fn custom_into(self) -> #name_ident {
                 #name_ident {
                     wrapped: self,
                 }
@@ -36,15 +35,15 @@ pub fn generate_alias_manual(parsed: DeriveInput) -> proc_macro::TokenStream {
         }
 
         #[cfg(feature = "python")]
-        impl #impl_generics rust_bridge::python::CustomInto<#wrapped_type_ident #ty_generics> for #name_ident #ty_generics #where_clause {
-            fn custom_into(self) -> #wrapped_type_ident #ty_generics {
+        impl rust_bridge::python::CustomInto<#wrapped_type_ident> for #name_ident {
+            fn custom_into(self) -> #wrapped_type_ident {
                 self.wrapped
             }
         }
 
         // From Python to Rust
         #[cfg(feature = "python")]
-        impl #impl_generics pyo3::conversion::FromPyObject<'_> for #name_ident #ty_generics #where_clause {
+        impl pyo3::conversion::FromPyObject<'_> for #name_ident {
             fn extract(obj: &pyo3::PyAny) -> pyo3::PyResult<Self> {
                 Ok(Self {
                     wrapped: obj.extract()?
@@ -54,7 +53,7 @@ pub fn generate_alias_manual(parsed: DeriveInput) -> proc_macro::TokenStream {
 
         // From Rust to Python
         #[cfg(feature = "python")]
-        impl #impl_generics pyo3::conversion::IntoPy<pyo3::PyObject> for #name_ident #ty_generics #where_clause {
+        impl pyo3::conversion::IntoPy<pyo3::PyObject> for #name_ident {
             fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
                 use pyo3::conversion::ToPyObject;
                 self.wrapped.into_py(py)
