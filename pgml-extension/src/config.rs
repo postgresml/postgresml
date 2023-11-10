@@ -72,7 +72,7 @@ pub fn gen_hf_env_map() -> BTreeMap<&'static str, String> {
             }
         }
         None => {
-            offline_value = String::from("TRUE");
+            offline_value = String::from("FALSE");
         }
     }
     map.insert(ENV_HF_HUB_OFFLINE, offline_value);
