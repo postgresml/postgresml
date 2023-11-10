@@ -7,16 +7,11 @@ use anyhow::{anyhow, bail, Context, Result};
 use lazy_static::*;
 use parking_lot::Mutex;
 use pgrx::*;
-use pyo3::ffi;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 use serde_json::Value;
-use std::cmp::Ordering;
-use std::env;
 
-use crate::config::get_config;
 use crate::create_pymodule;
-use crate::orm::guc;
 use crate::orm::{Task, TextDataset};
 
 use super::TracebackError;
@@ -36,7 +31,6 @@ pub fn transform(
     args: &serde_json::Value,
     inputs: Vec<&str>,
 ) -> Result<serde_json::Value> {
-    set_env();
     crate::bindings::python::activate()?;
 
     whitelist::verify_task(task)?;
@@ -83,7 +77,6 @@ pub fn embed(
     inputs: Vec<&str>,
     kwargs: &serde_json::Value,
 ) -> Result<Vec<Vec<f32>>> {
-    set_env();
     crate::bindings::python::activate()?;
 
     let kwargs = serde_json::to_string(kwargs)?;
@@ -115,7 +108,6 @@ pub fn tune(
     hyperparams: &JsonB,
     path: &Path,
 ) -> Result<HashMap<String, f64>> {
-    set_env();
     crate::bindings::python::activate()?;
 
     let task = task.to_string();
@@ -146,7 +138,6 @@ pub fn tune(
 }
 
 pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Result<Vec<String>> {
-    set_env();
     crate::bindings::python::activate()?;
 
     Python::with_gil(|py| -> Result<Vec<String>> {
@@ -235,7 +226,6 @@ pub fn load_dataset(
     limit: Option<usize>,
     kwargs: &serde_json::Value,
 ) -> Result<usize> {
-    set_env();
     crate::bindings::python::activate()?;
 
     let kwargs = serde_json::to_string(kwargs)?;
@@ -393,7 +383,6 @@ pub fn load_dataset(
 }
 
 pub fn clear_gpu_cache(memory_usage: Option<f32>) -> Result<bool> {
-    set_env();
     crate::bindings::python::activate().unwrap();
 
     Python::with_gil(|py| -> Result<bool> {
@@ -407,88 +396,4 @@ pub fn clear_gpu_cache(memory_usage: Option<f32>) -> Result<bool> {
             .format_traceback(py)?;
         Ok(success)
     })
-}
-
-// Called before hugginface python APIs. Setup ENVs for HuggingFace. See
-// https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables#hfhuboffline
-pub fn set_env() {
-    let envs_to_apply = guc::gen_hf_env_map();
-    let py_inited = unsafe { ffi::Py_IsInitialized() != 0 };
-
-    {
-        // This block can not be removed. It's used to drop lock
-        // lock held
-        let envs_applied = ENVS_APPLIED.lock();
-
-        if py_inited {
-            if envs_to_apply.cmp(&envs_applied) != Ordering::Equal {
-                // Python had been initialized and GUCs changed. Report warning and do nothing.
-                warning!("HuggingFace env changed in this session. Please start a new session with new GUC values.");
-                return;
-            } else {
-                // GUCs haven't been changed. Just return.
-                return;
-            }
-        }
-        // lock dropped
-    }
-
-    // Set the env
-    for (k, v) in &envs_to_apply {
-        if v.trim().is_empty() {
-            env::remove_var(k);
-        } else {
-            env::set_var(k, v);
-        }
-    }
-    // Record current ENVs
-    let _ = std::mem::replace(ENVS_APPLIED.lock().as_mut(), envs_to_apply);
-}
-
-#[cfg(any(test, feature = "pg_test"))]
-#[pg_schema]
-mod tests {
-    use super::*;
-
-    #[pg_test]
-    fn test_set_env() {
-        use crate::config::set_config;
-
-        let tmp_path: &str = "/tmp/pgml";
-
-        set_config(guc::CONFIG_CACHE, tmp_path).unwrap();
-
-        set_env();
-        let _ = crate::bindings::python::activate();
-
-        let base_path: PathBuf;
-
-        match get_config(guc::CONFIG_CACHE) {
-            Some(value) => {
-                base_path = PathBuf::from(value);
-                let base_path = base_path.display();
-
-                assert_eq!(
-                    env::var("HF_HOME").unwrap(),
-                    format!("{}/huggingface", base_path)
-                );
-                assert_eq!(
-                    env::var("SENTENCE_TRANSFORMERS_HOME").unwrap(),
-                    format!("{}/torch", base_path)
-                );
-                assert_eq!(
-                    env::var("HF_HOME").unwrap(),
-                    format!("{}/huggingface", tmp_path)
-                );
-                assert_eq!(
-                    env::var("SENTENCE_TRANSFORMERS_HOME").unwrap(),
-                    format!("{}/torch", tmp_path)
-                );
-            }
-            None => {
-                assert!(env::var("HF_HOME").is_err());
-                assert!(env::var("SENTENCE_TRANSFORMERS_HOME").is_err());
-            }
-        }
-    }
 }

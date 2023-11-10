@@ -1,7 +1,6 @@
 pub mod algorithm;
 pub mod dataset;
 pub mod file;
-pub mod guc;
 pub mod model;
 pub mod project;
 pub mod runtime;
