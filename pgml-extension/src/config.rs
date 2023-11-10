@@ -11,7 +11,7 @@ use pgrx_pg_sys::AsPgCStr;
 pub static CONFIG_CACHE: &str = "pgml.cache";
 pub static CONFIG_OFFLINE: &str = "pgml.offline";
 
-// environment variables for huggingface
+// environment variables for huggingface and sentence-transformers
 static ENV_HF_HOME: &str = "HF_HOME";
 static ENV_SENTENCE_TRANSFORMERS_HOME: &str = "SENTENCE_TRANSFORMERS_HOME";
 static ENV_HF_HUB_OFFLINE: &str = "HF_HUB_OFFLINE";
@@ -54,7 +54,7 @@ pub fn gen_hf_env_map() -> BTreeMap<&'static str, String> {
     hf_home.push("huggingface");
     map.insert(ENV_HF_HOME, format!("{}", hf_home.display()));
 
-    // SENTENCE_TRANSFORMERS_HOME is for sentence transformers
+    // SENTENCE_TRANSFORMERS_HOME is for sentence-transformers
     let mut torch_home = base_path.clone();
     torch_home.push("torch");
     map.insert(
