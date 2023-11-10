@@ -1,11 +1,9 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use anyhow::{anyhow, bail, Context, Result};
-use lazy_static::*;
-use parking_lot::Mutex;
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
@@ -19,12 +17,6 @@ use super::TracebackError;
 pub mod whitelist;
 
 create_pymodule!("/src/bindings/transformers/transformers.py");
-
-lazy_static! {
-    // Record the previous applied ENVs.
-    static ref ENVS_APPLIED: Mutex<Box<BTreeMap<&'static str, String>>> =
-        Mutex::new(Box::new(BTreeMap::new()));
-}
 
 pub fn transform(
     task: &serde_json::Value,
