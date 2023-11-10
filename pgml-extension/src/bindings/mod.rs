@@ -36,6 +36,7 @@ macro_rules! get_module {
     };
 }
 
+pub mod candle;
 #[cfg(feature = "python")]
 pub mod langchain;
 pub mod lightgbm;

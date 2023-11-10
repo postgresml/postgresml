@@ -703,6 +703,20 @@ pub fn transform_stream_string(
     SetOfIterator::new(res)
 }
 
+#[allow(unused_variables)] // cache is maintained for api compatibility
+#[pg_extern(immutable, parallel_safe, name = "transform_test")]
+pub fn transform_test(
+    task: JsonB,
+    args: default!(JsonB, "'{}'"),
+    inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
+    cache: default!(bool, false),
+) -> JsonB {
+    let output = crate::bindings::candle::transform(&task.0, &args.0, inputs)
+        .map_err(|e| error!("{e}"))
+        .unwrap();
+    JsonB(output)
+}
+
 #[cfg(feature = "python")]
 #[pg_extern(immutable, parallel_safe, name = "generate")]
 fn generate(project_name: &str, inputs: &str, config: default!(JsonB, "'{}'")) -> String {
