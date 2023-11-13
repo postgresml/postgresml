@@ -1733,6 +1733,7 @@ dependencies = [
  "heapless",
  "indexmap 1.9.3",
  "itertools 0.11.0",
+ "lazy_static",
  "lightgbm",
  "linfa",
  "linfa-linear",

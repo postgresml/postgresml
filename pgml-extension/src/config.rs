@@ -3,8 +3,11 @@ use std::env;
 use std::ffi::CStr;
 use std::path::PathBuf;
 
+use lazy_static::lazy_static;
+use pgrx::guc::GucFlags;
 #[cfg(any(test, feature = "pg_test"))]
 use pgrx::{pg_schema, pg_test};
+use pgrx::{GucContext, GucRegistry, GucSetting};
 use pgrx_pg_sys::AsPgCStr;
 
 // GUC variables for huggingface
@@ -15,6 +18,18 @@ pub static CONFIG_OFFLINE: &str = "pgml.offline";
 static ENV_HF_HOME: &str = "HF_HOME";
 static ENV_SENTENCE_TRANSFORMERS_HOME: &str = "SENTENCE_TRANSFORMERS_HOME";
 static ENV_HF_HUB_OFFLINE: &str = "HF_HUB_OFFLINE";
+
+struct Guc {
+    pgml_cache: GucSetting<Option<&'static CStr>>,
+    pgml_offline: GucSetting<bool>,
+}
+
+lazy_static! {
+    static ref GUC: Guc = Guc {
+        pgml_cache: GucSetting::<Option<&'static CStr>>::new(None),
+        pgml_offline: GucSetting::<bool>::new(false),
+    };
+}
 
 pub fn get_config(name: &str) -> Option<String> {
     // SAFETY: name is not null because it is a Rust reference.
@@ -93,6 +108,26 @@ pub fn set_env() {
             env::set_var(k, v);
         }
     }
+}
+
+pub fn init_gucs() {
+    GucRegistry::define_string_guc(
+        CONFIG_CACHE,
+        "pgml cache directory",
+        "This directory will serve as huggingface home and pytorch cache",
+        &GUC.pgml_cache,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
+
+    GucRegistry::define_bool_guc(
+        CONFIG_OFFLINE,
+        "Set the huggingface hub to offline mode, same as HF_HUB_OFFLINE",
+        "If set, no HTTP calls will be made when trying to fetch files. Only files that are already cached will be accessed. This is useful in case your network is slow and you don’t care about having absolutely the latest version of a file.",
+        &GUC.pgml_offline,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
 }
 
 #[cfg(any(test, feature = "pg_test"))]
