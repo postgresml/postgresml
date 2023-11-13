@@ -4,8 +4,6 @@ use std::str::FromStr;
 use ndarray::Zip;
 use pgrx::iter::{SetOfIterator, TableIterator};
 use pgrx::*;
-use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyDict};
 
 #[cfg(feature = "python")]
 use serde_json::json;
@@ -634,40 +632,6 @@ pub fn transform_string(
     }
 }
 
-struct TransformStreamIterator {
-    locals: Py<PyDict>,
-}
-
-impl TransformStreamIterator {
-    fn new(python_iter: Py<PyAny>) -> Self {
-        let locals = Python::with_gil(|py| -> Result<Py<PyDict>, PyErr> {
-            Ok([("python_iter", python_iter)].into_py_dict(py).into())
-        })
-        .map_err(|e| error!("{e}"))
-        .unwrap();
-        Self { locals }
-    }
-}
-
-impl Iterator for TransformStreamIterator {
-    type Item = String;
-    fn next(&mut self) -> Option<Self::Item> {
-        // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
-        Python::with_gil(|py| -> Result<Option<String>, PyErr> {
-            let code = "next(python_iter)";
-            let res: &PyAny = py.eval(code, Some(self.locals.as_ref(py)), None)?;
-            if res.is_none() {
-                Ok(None)
-            } else {
-                let res: String = res.extract()?;
-                Ok(Some(res))
-            }
-        })
-        .map_err(|e| error!("{e}"))
-        .unwrap()
-    }
-}
-
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "transform_stream")]
 #[allow(unused_variables)] // cache is maintained for api compatibility
@@ -678,11 +642,11 @@ pub fn transform_stream_json(
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, String> {
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
-    let python_iter = crate::bindings::transformers::transform_stream(&task.0, &args.0, input)
-        .map_err(|e| error!("{e}"))
-        .unwrap();
-    let res = TransformStreamIterator::new(python_iter);
-    SetOfIterator::new(res)
+    let python_iter =
+        crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, input)
+            .map_err(|e| error!("{e}"))
+            .unwrap();
+    SetOfIterator::new(python_iter)
 }
 
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
@@ -696,11 +660,11 @@ pub fn transform_stream_string(
 ) -> SetOfIterator<'static, String> {
     let task_json = json!({ "task": task });
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
-    let python_iter = crate::bindings::transformers::transform_stream(&task_json, &args.0, input)
-        .map_err(|e| error!("{e}"))
-        .unwrap();
-    let res = TransformStreamIterator::new(python_iter);
-    SetOfIterator::new(res)
+    let python_iter =
+        crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, input)
+            .map_err(|e| error!("{e}"))
+            .unwrap();
+    SetOfIterator::new(python_iter)
 }
 
 #[cfg(feature = "python")]
