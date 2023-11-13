@@ -115,7 +115,7 @@ pub fn transform_stream_iterator(
     args: &serde_json::Value,
     input: &str,
 ) -> Result<TransformStreamIterator> {
-    let python_iter = transform_stream(&task, &args, input)
+    let python_iter = transform_stream(task, args, input)
         .map_err(|e| error!("{e}"))
         .unwrap();
     Ok(TransformStreamIterator::new(python_iter))
