@@ -52,45 +52,33 @@ pub fn set_config(name: &str, value: &str) -> Result<(), pgrx::spi::Error> {
 pub fn gen_hf_env_map() -> BTreeMap<&'static str, String> {
     let mut map = BTreeMap::new();
 
-    let base_path: PathBuf;
+    if let Some(value) = GUC.pgml_cache.get() {
+        let base_path: PathBuf;
+        base_path = PathBuf::from(value.to_str().unwrap_or_default());
 
-    match get_config(CONFIG_CACHE) {
-        Some(value) => {
-            base_path = PathBuf::from(value);
-        }
-        None => {
-            return map;
-        }
+        // HF_HOME is for huggingface
+        // https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables#hfhome
+        let mut hf_home = base_path.clone();
+        hf_home.push("huggingface");
+        map.insert(ENV_HF_HOME, format!("{}", hf_home.display()));
+
+        // SENTENCE_TRANSFORMERS_HOME is for sentence-transformers
+        let mut torch_home = base_path.clone();
+        torch_home.push("torch");
+        map.insert(
+            ENV_SENTENCE_TRANSFORMERS_HOME,
+            format!("{}", torch_home.display()),
+        );
     }
 
-    // HF_HOME is for huggingface
-    // https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables#hfhome
-    let mut hf_home = base_path.clone();
-    hf_home.push("huggingface");
-    map.insert(ENV_HF_HOME, format!("{}", hf_home.display()));
-
-    // SENTENCE_TRANSFORMERS_HOME is for sentence-transformers
-    let mut torch_home = base_path.clone();
-    torch_home.push("torch");
     map.insert(
-        ENV_SENTENCE_TRANSFORMERS_HOME,
-        format!("{}", torch_home.display()),
+        ENV_HF_HUB_OFFLINE,
+        if GUC.pgml_offline.get() {
+            String::from("TRUE")
+        } else {
+            String::from("FALSE")
+        },
     );
-
-    let offline_value: String;
-    match get_config(CONFIG_OFFLINE) {
-        Some(value) => {
-            if value.is_empty() {
-                offline_value = String::from("FALSE");
-            } else {
-                offline_value = String::from("TRUE");
-            }
-        }
-        None => {
-            offline_value = String::from("FALSE");
-        }
-    }
-    map.insert(ENV_HF_HUB_OFFLINE, offline_value);
 
     return map;
 }
@@ -162,9 +150,9 @@ mod tests {
 
         let base_path: PathBuf;
 
-        match get_config(CONFIG_CACHE) {
+        match GUC.pgml_cache.get() {
             Some(value) => {
-                base_path = PathBuf::from(value);
+                base_path = PathBuf::from(value.to_str().unwrap_or_default());
                 let base_path = base_path.display();
 
                 assert_eq!(
@@ -189,5 +177,7 @@ mod tests {
                 assert!(env::var(ENV_SENTENCE_TRANSFORMERS_HOME).is_err());
             }
         }
+
+        assert_eq!(env::var(ENV_HF_HUB_OFFLINE).unwrap(), "FALSE");
     }
 }
