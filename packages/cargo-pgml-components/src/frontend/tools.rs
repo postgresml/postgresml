@@ -1,10 +1,14 @@
 //! Tools required by us to build stuff.
 
-use crate::util::{debug1, error, execute_command, info, unwrap_or_exit, warn};
+use crate::util::{debug1, error, execute_command, info, print, unwrap_or_exit, warn};
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use std::process::{exit, Command};
+use std::time::Duration;
+
+// use notify::{Watcher, RecursiveMode, event::{EventKind, AccessKind}};
+use notify_debouncer_full::{new_debouncer, notify::*, DebounceEventResult};
 
 /// Required tools.
 static TOOLS: &[&str] = &["sass", "rollup"];
@@ -125,4 +129,59 @@ pub fn debug() {
         let output = unwrap_or_exit!(execute_with_nvm(Command::new("which").arg(tool)));
         println!("{}: {}", tool, output.trim());
     }
+}
+
+pub fn watch() {
+    let mut debouncer = unwrap_or_exit!(new_debouncer(
+        Duration::from_secs(1),
+        None,
+        |result: DebounceEventResult| {
+            match result {
+                Ok(events) => {
+                    let mut detected = true;
+                    for event in &events {
+                        for path in &event.event.paths {
+                            let path = path.display().to_string();
+                            if path.ends_with("modules.scss")
+                                || path.contains("style.")
+                                || path.ends_with(".pgml-bundle")
+                                || path.ends_with("modules.js")
+                                || path.contains("bundle.")
+                            {
+                                detected = false;
+                            }
+                        }
+                    }
+
+                    if detected {
+                        print("changes detected, rebuilding...");
+                        rebuild();
+                        info("done");
+                    }
+                }
+
+                Err(e) => {
+                    debug!("debouncer error: {:?}", e);
+                }
+            }
+        }
+    ));
+
+    unwrap_or_exit!(debouncer
+        .watcher()
+        .watch(Path::new("src"), RecursiveMode::Recursive));
+    unwrap_or_exit!(debouncer
+        .watcher()
+        .watch(Path::new("static"), RecursiveMode::Recursive));
+
+    info("watching for changes");
+
+    // sleep forever
+    std::thread::sleep(std::time::Duration::MAX);
+}
+
+fn rebuild() {
+    unwrap_or_exit!(execute_command(
+        Command::new("cargo").arg("pgml-components").arg("bundle")
+    ));
 }
