@@ -75,6 +75,9 @@ enum Commands {
     /// Setup local dev.
     #[command(subcommand)]
     LocalDev(LocalDevCommands),
+
+    /// Watch for local changes,
+    Watch,
 }
 
 #[derive(Subcommand, Debug)]
@@ -113,6 +116,9 @@ fn main() {
                     LocalDevCommands::Check {} => local_dev::setup(),
                     LocalDevCommands::InstallPgvector {} => local_dev::install_pgvector(),
                 },
+                Commands::Watch => {
+                    frontend::tools::watch();
+                }
             }
         }
     }
