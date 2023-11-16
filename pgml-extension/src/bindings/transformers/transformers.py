@@ -312,7 +312,7 @@ def create_pipeline(task):
     return pipe
 
 
-def transform_using(pipeline, args, inputs):
+def transform_using(pipeline, args, inputs, stream=False):
     args = orjson.loads(args)
     inputs = orjson.loads(inputs)
 
@@ -320,6 +320,8 @@ def transform_using(pipeline, args, inputs):
         inputs = [orjson.loads(input) for input in inputs]
     convert_eos_token(pipeline.tokenizer, args)
 
+    if stream:
+        return pipeline.stream(inputs, **args)
     return orjson.dumps(pipeline(inputs, **args), default=orjson_default).decode()
 
 
