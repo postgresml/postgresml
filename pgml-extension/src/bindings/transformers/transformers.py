@@ -119,46 +119,6 @@ class TextIteratorStreamer(TextStreamer):
             return value
 
 
-class GPTQPipeline(object):
-    def __init__(self, model_name, **task):
-        from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
-        from huggingface_hub import snapshot_download
-
-        model_path = snapshot_download(model_name)
-
-        quantized_config = BaseQuantizeConfig.from_pretrained(model_path)
-        self.model = AutoGPTQForCausalLM.from_quantized(
-            model_path, quantized_config=quantized_config, **task
-        )
-        if "use_fast_tokenizer" in task:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model_path, use_fast=task.pop("use_fast_tokenizer")
-            )
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.task = "text-generation"
-
-    def stream(self, inputs, **kwargs):
-        streamer = TextIteratorStreamer(self.tokenizer)
-        inputs = self.tokenizer(inputs, return_tensors="pt").to(self.model.device)
-        generation_kwargs = dict(inputs, streamer=streamer, **kwargs)
-        thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
-        thread.start()
-        return streamer
-
-    def __call__(self, inputs, **kwargs):
-        outputs = []
-        for input in inputs:
-            tokens = (
-                self.tokenizer(input, return_tensors="pt")
-                .to(self.model.device)
-                .input_ids
-            )
-            token_ids = self.model.generate(input_ids=tokens, **kwargs)[0]
-            outputs.append(self.tokenizer.decode(token_ids))
-        return outputs
-
-
 class ThreadedGeneratorIterator:
     def __init__(self, output, starting_input):
         self.output = output
@@ -294,17 +254,12 @@ def create_pipeline(task):
     ensure_device(task)
     convert_dtype(task)
     model_name = task.get("model", None)
-    model_type = None
-    if "model_type" in task:
-        model_type = task["model_type"]
     if model_name:
         lower = model_name.lower()
     else:
         lower = None
     if lower and ("-ggml" in lower or "-gguf" in lower):
         pipe = GGMLPipeline(model_name, **task)
-    elif lower and "-gptq" in lower and not (model_type == "mistral" or model_type == "llama"):
-        pipe = GPTQPipeline(model_name, **task)
     else:
         try:
             pipe = StandardPipeline(model_name, **task)
