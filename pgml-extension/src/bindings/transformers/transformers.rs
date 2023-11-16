@@ -12,7 +12,7 @@ pub struct TransformStreamIterator {
 }
 
 impl TransformStreamIterator {
-    fn new(python_iter: Py<PyAny>) -> Self {
+    pub fn new(python_iter: Py<PyAny>) -> Self {
         let locals = Python::with_gil(|py| -> Result<Py<PyDict>, PyErr> {
             Ok([("python_iter", python_iter)].into_py_dict(py).into())
         })
