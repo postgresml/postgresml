@@ -26,7 +26,7 @@ mod query_builder;
 mod query_runner;
 mod remote_embeddings;
 mod splitter;
-mod transformer_pipeline;
+pub mod transformer_pipeline;
 pub mod types;
 mod utils;
 
