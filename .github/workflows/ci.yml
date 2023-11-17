@@ -42,7 +42,7 @@ jobs:
             ~/.cargo
             pgml-extension/target
             ~/.pgrx
-          key: ${{ runner.os }}-rust-3-${{ hashFiles('pgml-extension/Cargo.lock') }}
+          key: ${{ runner.os }}-rust-1.74-${{ hashFiles('pgml-extension/Cargo.lock') }}
       - name: Submodules
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
