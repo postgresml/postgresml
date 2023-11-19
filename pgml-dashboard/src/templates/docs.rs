@@ -1,5 +1,6 @@
 //! Documentation and blog templates.
 use sailfish::TemplateOnce;
+use convert_case::Casing;
 
 use crate::utils::markdown::SearchResult;
 
@@ -78,12 +79,10 @@ impl TocLink {
     ///
     /// * `title` - The title of the link.
     ///
-    pub fn new(title: &str, counter: usize) -> TocLink {
-        let id = format!("header-{}", counter);
-
+    pub fn new(title: &str) -> TocLink {
         TocLink {
             title: title.to_string(),
-            id,
+            id: title.to_case(convert_case::Case::Kebab),
             level: 0,
         }
     }
