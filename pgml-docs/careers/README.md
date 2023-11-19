@@ -1,28 +1,20 @@
-# Data Scientist
+# Careers
 
-PostgresML is building a GPU-powered AI application database. You can perform microsecond inference with the world's most capable feature store. It allows you to easily train and deploy online models using only SQL. We're looking for an experienced Data Scientist to help shape the core product, inside and out. This is an IC role, but will be critical in building the future team as well as the core product, while leading efforts toward more efficient and effective Machine Learning workflows for our customers.
+PostgresML is building a GPU-powered AI application database. You can perform microsecond inference with the world's most capable feature store. It allows you to easily train and deploy online models using only SQL. We're looking for an experienced Engineers to help shape the core product, inside and out. We're generally looking for individual contributors, but everyone be critical in building the future team as well as the core product, while leading efforts toward more efficient and effective Machine Learning workflows for our customers.
 
-Reach out if you want to:
+[data-scientist.md](careers/data-scientist.md "mention")
 
-* Create documentation for classical Machine Learning use cases on a brand new platform
-* Educate early customers and help them formulate business problems as supervised learning problems
-* Design statistical visualizations that provide insight across multiple data sets
-* Guide UX to create interpretable model outputs, as well as avenues for model improvement
-* Implement concepts in SQL, Python and Rust rather than Powerpoint
+[machine-learning-engineer.md](careers/machine-learning-engineer.md "mention")
+
+[full-stack-engineer.md](careers/full-stack-engineer.md "mention")
+
+[product-manager.md](careers/product-manager.md "mention")
 
 ### About Us
 
 We're a Seed stage startup with experienced software engineers and designers who specialize broadly across the skillsets required to build machine learning infrastructure. We use Rust to operate within Postgres for memory efficiency and performance at scale with standard supervised learning libraries, such as Torch, Tensorflow and XGBoost, to build a hosted, horizontally scalable platform on top of Postgres.
 
 We bias toward action and course correct based on feedback. We're not afraid of failure, we're always learning. We enjoy working on big problems with a pragmatic approach, participating in the broader open source community.
-
-### Qualifications
-
-* Bachelor's degree or equivalent experience in a quantitative field (Statistics, Mathematics, Computer Science, Engineering, etc.)
-* 5+ years of relevant experience in roles that require a strong statistical background day to day.
-* Experience designing machine learning models (data analysis, feature engineering, algorithm selection), and working with them in a production environment, using a language like R, Python or C++
-* Excellent understanding of SQL concepts for data retrieval, cleaning and feature engineering
-* Presentation and communication skills, diagrams as well as documents to explain deep concepts
 
 ### Benefits
 
