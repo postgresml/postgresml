@@ -35,7 +35,7 @@ pgvector = { version = "0.2.2", features = [ "sqlx", "postgres" ] }
 rand = "0.8"
 regex = "1.9"
 reqwest = { version = "0.11", features = ["json"] }
-rocket = { version = "0.5", features = ["secrets", "json"] }
+rocket = { git = "https://github.com/SergioBenitez/Rocket", features = ["secrets", "json"] }
 sailfish = "0.8.0" # 0.8.1 has breaking changes
 scraper = "0.17"
 serde = "1"
