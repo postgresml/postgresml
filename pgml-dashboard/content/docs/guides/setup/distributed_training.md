@@ -22,7 +22,7 @@ psql \
     -f dump.sql
 ```
 
-If you're using our <a href="/docs/guides/developer-docs/quick-start-with-docker">Docker</a> stack, you can import the data there:</p>
+If you're using our <a href="/docs/developer-docs/quick-start-with-docker">Docker</a> stack, you can import the data there:</p>
 
 ```
 psql \

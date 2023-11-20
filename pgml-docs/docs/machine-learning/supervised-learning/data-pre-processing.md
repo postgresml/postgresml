@@ -25,11 +25,11 @@ In this example:
 
 There are 3 steps to preprocessing data:
 
-* [Encoding](../../../../../pgml-dashboard/content/docs/guides/training/preprocessing.md#categorical-encodings) categorical values into quantitative values
-* [Imputing](../../../../../pgml-dashboard/content/docs/guides/training/preprocessing.md#imputing-missing-values) NULL values to some quantitative value
-* [Scaling](../../../../../pgml-dashboard/content/docs/guides/training/preprocessing.md#scaling-values) quantitative values across all variables to similar ranges
+* [Encoding](../../../../pgml-dashboard/content/docs/training/preprocessing.md#categorical-encodings) categorical values into quantitative values
+* [Imputing](../../../../pgml-dashboard/content/docs/training/preprocessing.md#imputing-missing-values) NULL values to some quantitative value
+* [Scaling](../../../../pgml-dashboard/content/docs/training/preprocessing.md#scaling-values) quantitative values across all variables to similar ranges
 
-These preprocessing steps may be specified on a per-column basis to the [train()](../../../../../docs/guides/training/overview) function. By default, PostgresML does minimal preprocessing on training data, and will raise an error during analysis if NULL values are encountered without a preprocessor. All types other than `TEXT` are treated as quantitative variables and cast to floating point representations before passing them to the underlying algorithm implementations.
+These preprocessing steps may be specified on a per-column basis to the [train()](../../../../../docs/training/overview) function. By default, PostgresML does minimal preprocessing on training data, and will raise an error during analysis if NULL values are encountered without a preprocessor. All types other than `TEXT` are treated as quantitative variables and cast to floating point representations before passing them to the underlying algorithm implementations.
 
 ```sql
 SELECT pgml.train(

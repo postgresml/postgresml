@@ -149,7 +149,7 @@ mod test {
             .mount("/", rocket::routes![index, error])
             .mount("/dashboard/static", FileServer::from(&config::static_dir()))
             .mount("/dashboard", pgml_dashboard::routes())
-            .mount("/", pgml_dashboard::api::docs::routes())
+            .mount("/", pgml_dashboard::api::cms::routes())
     }
 
     fn get_href_links(body: &str, pattern: &str) -> Vec<String> {
@@ -285,7 +285,7 @@ mod test {
     #[rocket::async_test]
     async fn test_docs() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/docs/guides/").dispatch().await;
+        let response = client.get("/docs/").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 

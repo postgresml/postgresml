@@ -5,7 +5,7 @@ The API is identical between v1.0 and v2.0, and models trained with v1.0 can be 
 
 !!! note
 
-Make sure you've set up the system requirements in [v2.0 installation](/docs/guides/setup/v2/installation/), so that the v2.0 extension may be installed.
+Make sure you've set up the system requirements in [v2.0 installation](/docs/setup/v2/installation/), so that the v2.0 extension may be installed.
 
 !!!
 

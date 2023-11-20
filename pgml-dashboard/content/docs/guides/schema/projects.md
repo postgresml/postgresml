@@ -1,6 +1,6 @@
 # Projects
 
-Projects are an artifact of calls to `pgml.train()`. See [Training Overview](/docs/guides/training/overview/) for ways to create new projects.
+Projects are an artifact of calls to `pgml.train()`. See [Training Overview](/docs/training/overview/) for ways to create new projects.
 
 ![Projects](/dashboard/static/images/dashboard/project.png)
 

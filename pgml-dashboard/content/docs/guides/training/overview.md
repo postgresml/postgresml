@@ -30,9 +30,9 @@ pgml.train(
 | `task` | The objective of the experiment: `regression` or `classification`. | `classification` |
 | `relation_name` | The Postgres table or view where the training data is stored or defined. | `public.users` |
 | `y_column_name` | The name of the label (aka "target" or "unknown") column in the training table. | `is_bot` |
-| `algorithm` | The algorithm to train on the dataset, see [Algorithm Selection](/docs/guides/training/algorithm_selection/) for details. | `xgboost` |
+| `algorithm` | The algorithm to train on the dataset, see [Algorithm Selection](/docs/training/algorithm_selection/) for details. | `xgboost` |
 | `hyperparams ` | The hyperparameters to pass to the algorithm for training, JSON formatted. | `{ "n_estimators": 25 }` |
-| `search` | If set, PostgresML will perform a hyperparameter search to find the best hyperparameters for the algorithm. See [Hyperparameter Search](/docs/guides/training/hyperparameter_search/) for details. | `grid` |
+| `search` | If set, PostgresML will perform a hyperparameter search to find the best hyperparameters for the algorithm. See [Hyperparameter Search](/docs/training/hyperparameter_search/) for details. | `grid` |
 | `search_params` | Search parameters used in the hyperparameter search, using the scikit-learn notation, JSON formatted. | ```{ "n_estimators": [5, 10, 25, 100] }``` |
 | `search_args` | Configuration parameters for the search, JSON formatted. Currently only `n_iter` is supported for `random` search. | `{ "n_iter": 10 }` |
 | `test_size ` | Fraction of the dataset to use for the test set and algorithm validation. | `0.25` |
@@ -136,7 +136,7 @@ target |                                                                        
 
 ## Training a Model
 
-Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](/docs/guides/training/algorithm_selection/) for a complete list of available algorithms.
+Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](/docs/training/algorithm_selection/) for a complete list of available algorithms.
 
 
 === "SQL"
@@ -177,7 +177,7 @@ INFO:  Metrics: {
 ===
 
 
-The output gives us information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](/docs/guides/predictions/deployments/) for a guide to managing the active model.
+The output gives us information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](/docs/predictions/deployments/) for a guide to managing the active model.
 
 ## Inspecting the results
 Now we can inspect some of the artifacts a training run creates. 

@@ -10,15 +10,15 @@ To create a Serverless database, make sure you have an account on postgresml.org
 
 Once logged in, select "New Database" from the left menu and choose the Serverless Plan.
 
-<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption><p>Create new database</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image%20(1).png" alt=""><figcaption><p>Create new database</p></figcaption></figure>
 
-<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption><p>Choose the Serverless plan</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image%20(2).png" alt=""><figcaption><p>Choose the Serverless plan</p></figcaption></figure>
 
 ### Configuring the database
 
 Serverless databases have three (3) configuration options: GPU Cache, Storage, and GPU Concurrency.
 
-<figure><img src="../../../.gitbook/assets/image (3).png" alt=""><figcaption><p>The three (3) configuration options for a Serverless database</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image%20(3).png" alt=""><figcaption><p>The three (3) configuration options for a Serverless database</p></figcaption></figure>
 
 #### GPU Cache
 

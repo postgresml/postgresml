@@ -572,7 +572,7 @@ pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
     });
 }
 
-pub fn get_sub_links(list: &markdown::mdast::List) -> Result<Vec<NavLink>> {
+pub fn get_sub_links(list: &markdown::mdast::List, path: &Path) -> Result<Vec<NavLink>> {
     let mut links = Vec::new();
     for node in list.children.iter() {
         match node {
@@ -593,7 +593,7 @@ pub fn get_sub_links(list: &markdown::mdast::List) -> Result<Vec<NavLink>> {
                                                     if url.ends_with("README") {
                                                         url = url.replace("README", "");
                                                     }
-                                                    let url = Path::new("/docs/guides")
+                                                    let url = path
                                                         .join(url)
                                                         .into_os_string()
                                                         .into_string()
@@ -612,7 +612,7 @@ pub fn get_sub_links(list: &markdown::mdast::List) -> Result<Vec<NavLink>> {
                         }
                         markdown::mdast::Node::List(list) => {
                             let mut link = links.pop().unwrap();
-                            link.children = get_sub_links(list).unwrap();
+                            link.children = get_sub_links(list, path).unwrap();
                             links.push(link);
                         }
                         _ => error!("unhandled list_item child: {:?}", node),
@@ -625,11 +625,11 @@ pub fn get_sub_links(list: &markdown::mdast::List) -> Result<Vec<NavLink>> {
     Ok(links)
 }
 
-pub fn parse_summary_into_nav_links(root: &markdown::mdast::Node) -> Result<Vec<NavLink>> {
+pub fn parse_summary_into_nav_links(root: &markdown::mdast::Node, path: &Path) -> Result<Vec<NavLink>> {
     for node in root.children().unwrap().iter() {
         match node {
             markdown::mdast::Node::List(list) => {
-                return get_sub_links(list);
+                return get_sub_links(list, path);
             }
             _ => { /* irrelevant */ }
         }
@@ -1363,7 +1363,7 @@ impl SearchIndex {
 
     pub fn documents() -> Vec<PathBuf> {
         let guides =
-            glob::glob(&(config::docs_dir() + "/docs/guides/**/*.md")).expect("glob failed");
+            glob::glob(&(config::docs_dir() + "/docs/**/*.md")).expect("glob failed");
         let blogs = glob::glob(&(config::blogs_dir() + "/blog/**/*.md")).expect("glob failed");
         guides
             .chain(blogs)

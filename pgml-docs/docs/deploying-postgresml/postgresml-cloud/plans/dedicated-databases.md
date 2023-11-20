@@ -16,7 +16,7 @@ Once logged in, select "New Database" from the left menu and choose the Dedicate
 
 <figure><img src="../../../.gitbook/assets/spaces_B7HH1yMjCs0skMpuwNIR_uploads_S9xbhlwvqnnFUYSJLJug_image.webp" alt=""><figcaption><p>Create new database</p></figcaption></figure>
 
-<figure><img src="../../../.gitbook/assets/image (4).png" alt=""><figcaption><p>Choose the Dedicated plan</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image%20(4).png" alt=""><figcaption><p>Choose the Dedicated plan</p></figcaption></figure>
 
 ### Configuring the database
 

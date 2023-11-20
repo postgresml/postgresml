@@ -11,7 +11,7 @@ use crate::{
     utils::{config, markdown},
 };
 
-#[get("/docs/search?<query>", rank = 1)]
+#[get("/search?<query>", rank = 1)]
 async fn search(query: &str, index: &State<markdown::SearchIndex>) -> ResponseOk {
     let results = index.search(query).unwrap();
 
@@ -24,20 +24,68 @@ async fn search(query: &str, index: &State<markdown::SearchIndex>) -> ResponseOk
     )
 }
 
-use rocket::fs::NamedFile;
 
-#[get("/docs/guides/.gitbook/assets/<path>", rank = 10)]
-pub async fn gitbook_assets(path: PathBuf) -> Option<NamedFile> {
+use rocket::fs::NamedFile;
+use rocket::http::uri::Origin;
+
+#[get("/careers/.gitbook/assets/<path>", rank = 10)]
+pub async fn careers_assets(path: PathBuf) -> Option<NamedFile> {
     let path = PathBuf::from(&config::docs_dir())
-        .join("docs/guides/.gitbook/assets/")
+        .join("careers").join(".gitbook").join("assets")
+        .join(path);
+
+    NamedFile::open(path).await.ok()
+}
+
+#[get("/careers/<path..>", rank = 5)]
+async fn careers_contenthandler(mut path: PathBuf, cluster: &Cluster, origin: &Origin<'_>) -> Result<ResponseOk, Status> {
+    // Rocket 0.5 began stripping trailing '/' from the path
+    if origin.path().ends_with("/") {
+        path = path.join("/");
+    }
+    let root = PathBuf::from("careers/");
+    let index_path = PathBuf::from(&config::docs_dir())
+        .join(&root)
+        .join("SUMMARY.md");
+    let contents = tokio::fs::read_to_string(&index_path).await.expect(
+        format!(
+            "could not read table of contents markdown: {:?}",
+            index_path
+        )
+            .as_str(),
+    );
+    let mdast = ::markdown::to_mdast(&contents, &::markdown::ParseOptions::default())
+        .expect("could not parse table of contents markdown");
+    let url = Path::new("/careers");
+    let careers = markdown::parse_summary_into_nav_links(&mdast, &url)
+        .expect("could not extract nav links from table of contents");
+    render(
+        cluster,
+        &path,
+        careers,
+        "Careers",
+        &Path::new("careers"),
+        &config::docs_dir(),
+    )
+        .await
+}
+#[get("/docs/.gitbook/assets/<path>", rank = 10)]
+pub async fn docs_gitbook_assets(path: PathBuf) -> Option<NamedFile> {
+    let path = PathBuf::from(&config::docs_dir())
+        .join("docs/.gitbook/assets/")
         .join(path);
 
     NamedFile::open(path).await.ok()
 }
 
 #[get("/docs/<path..>", rank = 5)]
-async fn doc_handler(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
-    let root = PathBuf::from("docs/guides/");
+async fn doc_handler(mut path: PathBuf, cluster: &Cluster, origin: &Origin<'_>) -> Result<ResponseOk, Status> {
+    info!("path: {:?}", path);
+    if origin.path().ends_with("/") {
+        path = path.join("");
+    }
+    info!("joined path: {:?}", path);
+    let root = PathBuf::from("docs/");
     let index_path = PathBuf::from(&config::docs_dir())
         .join(&root)
         .join("SUMMARY.md");
@@ -50,13 +98,14 @@ async fn doc_handler(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk, Sta
     );
     let mdast = ::markdown::to_mdast(&contents, &::markdown::ParseOptions::default())
         .expect("could not parse table of contents markdown");
-    let guides = markdown::parse_summary_into_nav_links(&mdast)
+    let url = Path::new("/docs");
+    let guides = markdown::parse_summary_into_nav_links(&mdast, &url)
         .expect("could not extract nav links from table of contents");
     render(
         cluster,
         &path,
         guides,
-        "Guides",
+        "Docs",
         &Path::new("docs"),
         &config::docs_dir(),
     )
@@ -141,7 +190,8 @@ async fn render<'a>(
         .expect("path must convert to a string")
         .to_string();
     let url = path.clone();
-    if path.ends_with("/") {
+    info!("path: {:?} | folder: {:?}", path, folder);
+    if path.ends_with("/") || path.is_empty() {
         path.push_str("README");
     }
 
@@ -149,6 +199,7 @@ async fn render<'a>(
     let path = Path::new(&content)
         .join(folder)
         .join(&(path.to_string() + ".md"));
+    info!("path: {:?}", path);
 
     // Read to string
     let contents = match tokio::fs::read_to_string(&path).await {
@@ -218,7 +269,7 @@ async fn render<'a>(
 
     // Handle navigation
     for nav_link in nav_links.iter_mut() {
-        nav_link.should_open(&url);
+        nav_link.should_open(&url, &folder);
     }
 
     let user = if cluster.context.user.is_anonymous() {
@@ -250,7 +301,7 @@ async fn render<'a>(
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![gitbook_assets, doc_handler, blog_handler, search]
+    routes![docs_gitbook_assets, doc_handler, blog_handler, careers_handler, careers_gitbook_assets, search]
 }
 
 #[cfg(test)]

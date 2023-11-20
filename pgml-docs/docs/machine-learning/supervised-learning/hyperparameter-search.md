@@ -28,7 +28,7 @@ SELECT * FROM pgml.train(
 
 
 
-You may pass any of the arguments listed in the algorithms documentation as hyperparameters. See [Algorithms](../../../../../docs/guides/training/algorithm\_selection) for the complete list of algorithms and their associated hyperparameters.
+You may pass any of the arguments listed in the algorithms documentation as hyperparameters. See [Algorithms](../../../../../docs/training/algorithm\_selection) for the complete list of algorithms and their associated hyperparameters.
 
 ### Search Algorithms
 

@@ -2,7 +2,7 @@
 
 PostgresML Cloud databases can be deployed using three (3) configurations: serverless, dedicated and enterprise. Each has its advantages and are tailored for companies of all sizes.
 
-<figure><img src="../../../.gitbook/assets/image (5).png" alt=""><figcaption><p>Plans available on PostgresML Cloud</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image%20(5).png" alt=""><figcaption><p>Plans available on PostgresML Cloud</p></figcaption></figure>
 
 ### Serverless
 

@@ -2,7 +2,7 @@
 
 !!! note
 
-With the release of PostgresML 2.0, this documentation has been deprecated. New installation instructions are <a href="/docs/guides/setup/v2/installation/">available</a>.
+With the release of PostgresML 2.0, this documentation has been deprecated. New installation instructions are <a href="/docs/setup/v2/installation/">available</a>.
 
 !!!
 

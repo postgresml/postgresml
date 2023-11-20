@@ -32,7 +32,7 @@ pgml.train(
 
 #### Parameters
 
-<table data-full-width="false"><thead><tr><th></th><th></th><th></th></tr></thead><tbody><tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Example</strong></td></tr><tr><td><code>project_name</code></td><td>An easily recognizable identifier to organize your work.</td><td><code>My First PostgresML Project</code></td></tr><tr><td><code>task</code></td><td>The objective of the experiment: <code>regression</code> or <code>classification</code>.</td><td><code>classification</code></td></tr><tr><td><code>relation_name</code></td><td>The Postgres table or view where the training data is stored or defined.</td><td><code>public.users</code></td></tr><tr><td><code>y_column_name</code></td><td>The name of the label (aka "target" or "unknown") column in the training table.</td><td><code>is_bot</code></td></tr><tr><td><code>algorithm</code></td><td>The algorithm to train on the dataset, see <a data-mention href="regression.md">regression.md</a> and <a data-mention href="classification.md">classification.md</a> sections for supported algorithms</td><td><code>xgboost</code></td></tr><tr><td><code>hyperparams</code></td><td>The hyperparameters to pass to the algorithm for training, JSON formatted.</td><td><code>{ "n_estimators": 25 }</code></td></tr><tr><td><code>search</code></td><td>If set, PostgresML will perform a hyperparameter search to find the best hyperparameters for the algorithm. See <a href="../../../../../docs/guides/training/hyperparameter_search">Hyperparameter Search</a> for details.</td><td><code>grid</code></td></tr><tr><td><code>search_params</code></td><td>Search parameters used in the hyperparameter search, using the scikit-learn notation, JSON formatted.</td><td><code>{ "n_estimators": [5, 10, 25, 100] }</code></td></tr><tr><td><code>search_args</code></td><td>Configuration parameters for the search, JSON formatted. Currently only <code>n_iter</code> is supported for <code>random</code> search.</td><td><code>{ "n_iter": 10 }</code></td></tr><tr><td><code>test_size</code></td><td>Fraction of the dataset to use for the test set and algorithm validation.</td><td><code>0.25</code></td></tr><tr><td><code>test_sampling</code></td><td>Algorithm used to fetch test data from the dataset: <code>random</code>, <code>first</code>, or <code>last</code>.</td><td><code>random</code></td></tr></tbody></table>
+<table data-full-width="false"><thead><tr><th></th><th></th><th></th></tr></thead><tbody><tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Example</strong></td></tr><tr><td><code>project_name</code></td><td>An easily recognizable identifier to organize your work.</td><td><code>My First PostgresML Project</code></td></tr><tr><td><code>task</code></td><td>The objective of the experiment: <code>regression</code> or <code>classification</code>.</td><td><code>classification</code></td></tr><tr><td><code>relation_name</code></td><td>The Postgres table or view where the training data is stored or defined.</td><td><code>public.users</code></td></tr><tr><td><code>y_column_name</code></td><td>The name of the label (aka "target" or "unknown") column in the training table.</td><td><code>is_bot</code></td></tr><tr><td><code>algorithm</code></td><td>The algorithm to train on the dataset, see <a data-mention href="regression.md">regression.md</a> and <a data-mention href="classification.md">classification.md</a> sections for supported algorithms</td><td><code>xgboost</code></td></tr><tr><td><code>hyperparams</code></td><td>The hyperparameters to pass to the algorithm for training, JSON formatted.</td><td><code>{ "n_estimators": 25 }</code></td></tr><tr><td><code>search</code></td><td>If set, PostgresML will perform a hyperparameter search to find the best hyperparameters for the algorithm. See <a href="../../../../../docs/training/hyperparameter_search">Hyperparameter Search</a> for details.</td><td><code>grid</code></td></tr><tr><td><code>search_params</code></td><td>Search parameters used in the hyperparameter search, using the scikit-learn notation, JSON formatted.</td><td><code>{ "n_estimators": [5, 10, 25, 100] }</code></td></tr><tr><td><code>search_args</code></td><td>Configuration parameters for the search, JSON formatted. Currently only <code>n_iter</code> is supported for <code>random</code> search.</td><td><code>{ "n_iter": 10 }</code></td></tr><tr><td><code>test_size</code></td><td>Fraction of the dataset to use for the test set and algorithm validation.</td><td><code>0.25</code></td></tr><tr><td><code>test_sampling</code></td><td>Algorithm used to fetch test data from the dataset: <code>random</code>, <code>first</code>, or <code>last</code>.</td><td><code>random</code></td></tr></tbody></table>
 
 ### Example
 
@@ -116,7 +116,7 @@ target |                                                                        
 
 ### Training a Model
 
-Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](../../../../../docs/guides/training/algorithm\_selection) for a complete list of available algorithms.
+Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](../../../../../docs/training/algorithm\_selection) for a complete list of available algorithms.
 
 ```sql
 SELECT * FROM pgml.train(
@@ -149,7 +149,7 @@ INFO:  Metrics: {
 (1 row)
 ```
 
-The output gives us information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](../../../../../docs/guides/predictions/deployments) for a guide to managing the active model.
+The output gives us information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](../../../../../docs/predictions/deployments) for a guide to managing the active model.
 
 ### Inspecting the results
 
@@ -224,7 +224,7 @@ LIMIT 25;
 
 ### Example
 
-If you've already been through the [Training Overview](../../../../../docs/guides/training/overview), you can see the results of those efforts:
+If you've already been through the [Training Overview](../../../../../docs/training/overview), you can see the results of those efforts:
 
 ```sql
 SELECT
@@ -267,7 +267,7 @@ SELECT * FROM pgml.deployed_models;
 
 PostgresML will automatically deploy a model only if it has better metrics than existing ones, so it's safe to experiment with different algorithms and hyperparameters.
 
-Take a look at [Deploying Models](../../../../../docs/guides/predictions/deployments) documentation for more details.
+Take a look at [Deploying Models](../../../../../docs/predictions/deployments) documentation for more details.
 
 ### Specific Models
 

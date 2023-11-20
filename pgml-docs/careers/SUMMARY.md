@@ -1,7 +1,7 @@
 # Table of contents
 
-* [Careers](README.md)
-  * [Data Scientist](careers/data-scientist.md)
-  * [Machine Learning Engineer](careers/machine-learning-engineer.md)
-  * [Full Stack Engineer](careers/full-stack-engineer.md)
-  * [Product Manager](careers/product-manager.md)
+* [Openings](README.md)
+  * [Data Scientist](data-scientist.md)
+  * [Machine Learning Engineer](machine-learning-engineer.md)
+  * [Full Stack Engineer](full-stack-engineer.md)
+  * [Product Manager](product-manager.md)
