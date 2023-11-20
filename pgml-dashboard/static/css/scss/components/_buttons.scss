@@ -31,6 +31,11 @@
     &:active {
         background: $hp-gradient-active;
     }
+
+    --bs-btn-disabled-color: #{$gray-900};
+    &:disabled {
+        background: #{$gray-200};
+    }
 }
 
 .btn-secondary {
