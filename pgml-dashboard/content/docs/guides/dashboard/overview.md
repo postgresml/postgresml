@@ -1,6 +1,6 @@
 # Dashboard
 
-PostgresML comes with a web app to provide visibility into models and datasets in your database. If you're running [our Docker container](/docs/guides/developer-docs/quick-start-with-docker), you can view it running on [http://localhost:8000/](http://localhost:8000/).
+PostgresML comes with a web app to provide visibility into models and datasets in your database. If you're running [our Docker container](/docs/developer-docs/quick-start-with-docker), you can view it running on [http://localhost:8000/](http://localhost:8000/).
 
 
 ## Generate example data

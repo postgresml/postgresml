@@ -33,7 +33,7 @@ $ sudo pip3 install flax
 
 Models will be downloaded and cached on the database for repeated usage. View the [Transformers installation docs](https://huggingface.co/docs/transformers/installation) for cache management details and offline deployments.
 
-You may also want to [install GPU support](/docs/guides/setup/gpu_support/) when working with larger models.
+You may also want to [install GPU support](/docs/setup/gpu_support/) when working with larger models.
 
 ## Standard Datasets
 Many datasets have been published to stimulate research and benchmark architectures, but also to help demonstrate API usage in the tutorials. The Datasets package provides a way to load published datasets into Postgres:

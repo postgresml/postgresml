@@ -94,7 +94,7 @@ SELECT pgml.transform(
 
 ===
 
-See [text classification documentation](https://huggingface.co/tasks/text-classification) for more options and potential use cases beyond sentiment analysis. You'll notice the outputs are not great in this example. RoBERTa is a breakthrough model, that demonstrated just how important each particular hyperparameter is for the task and particular dataset regardless of how large your model is. We'll show how to [fine tune](/docs/guides/transformers/fine_tuning/) models on your data in the next step.
+See [text classification documentation](https://huggingface.co/tasks/text-classification) for more options and potential use cases beyond sentiment analysis. You'll notice the outputs are not great in this example. RoBERTa is a breakthrough model, that demonstrated just how important each particular hyperparameter is for the task and particular dataset regardless of how large your model is. We'll show how to [fine tune](/docs/transformers/fine_tuning/) models on your data in the next step.
 
 ### Summarization
 Sometimes we need all the nuanced detail, but sometimes it's nice to get to the point. Summarization can reduce a very long and complex document to a few sentences. One studied application is reducing legal bills passed by Congress into a plain english summary. Hollywood may also need some intelligence to reduce a full synopsis down to a pithy blurb for movies like Inception.
@@ -225,4 +225,4 @@ SELECT pgml.transform(
 ===
 
 ### More
-There are many different [tasks](https://huggingface.co/tasks) and tens of thousands of state-of-the-art [models](https://huggingface.co/models) available for you to explore. The possibilities are expanding every day. There can be amazing performance improvements in domain specific versions of these general tasks by fine tuning published models on your dataset. See the next section for [fine tuning](/docs/guides/transformers/fine_tuning/) demonstrations.
+There are many different [tasks](https://huggingface.co/tasks) and tens of thousands of state-of-the-art [models](https://huggingface.co/models) available for you to explore. The possibilities are expanding every day. There can be amazing performance improvements in domain specific versions of these general tasks by fine tuning published models on your dataset. See the next section for [fine tuning](/docs/transformers/fine_tuning/) demonstrations.

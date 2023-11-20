@@ -7,14 +7,14 @@
 - [Upgrading](#upgrading)
 - [Developer setup](#developer-setup)
 - [Roadmap](#roadmap)
-- [Documentation](https://postgresml.org/docs/guides/sdks/overview)
+- [Documentation](https://postgresml.org/docs/sdks/overview)
 - [Examples](./examples/README.md)
 
 # Overview
 
 JavaScript SDK is designed to facilitate the development of scalable vector search applications on PostgreSQL databases. With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
-Documentation: [PostgresML SDK Docs](https://postgresml.org/docs/guides/sdks/overview)
+Documentation: [PostgresML SDK Docs](https://postgresml.org/docs/sdks/overview)
 
 Examples Folder: [Examples](./examples/README.md)
 

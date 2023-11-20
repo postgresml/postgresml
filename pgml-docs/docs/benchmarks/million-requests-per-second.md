@@ -131,11 +131,11 @@ If batching did not work at all, we would see a linear increase in latency and a
 
 <div>
 
-<figure><img src="../.gitbook/assets/1M-RPS-batching-latency (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/1M-RPS-batching-latency%20(1).png" alt=""><figcaption></figcaption></figure>
 
  
 
-<figure><img src="../.gitbook/assets/1M-RPS-batching-throughput (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/1M-RPS-batching-throughput%20(1).png" alt=""><figcaption></figcaption></figure>
 
 </div>
 

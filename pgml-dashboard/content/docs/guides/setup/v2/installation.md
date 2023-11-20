@@ -10,7 +10,7 @@ The extension can be installed by compiling it from source, or if you're using U
 
 !!! tip
 
-If you're just looking to try PostgresML without installing it on your system, take a look at our [Quick Start with Docker](/docs/guides/developer-docs/quick-start-with-docker) guide.
+If you're just looking to try PostgresML without installing it on your system, take a look at our [Quick Start with Docker](/docs/developer-docs/quick-start-with-docker) guide.
 
 !!!
 

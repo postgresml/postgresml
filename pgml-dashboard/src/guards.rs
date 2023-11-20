@@ -1,5 +1,3 @@
-use std::env::var;
-
 use crate::components::sections::footers::marketing_footer::MarketingFooter;
 use crate::templates::components::{StaticNav, StaticNavLink};
 use once_cell::sync::OnceCell;
@@ -10,15 +8,9 @@ use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 
 static POOL: OnceCell<PgPool> = OnceCell::new();
 
+use crate::utils::config;
 use crate::models;
 use crate::Context;
-
-pub fn default_database_url() -> String {
-    match var("DATABASE_URL") {
-        Ok(val) => val,
-        Err(_) => "postgres:///pgml".to_string(),
-    }
-}
 
 #[derive(Debug)]
 pub struct Cluster {
@@ -47,8 +39,8 @@ impl Cluster {
                                 Ok(())
                             })
                         })
-                        .connect_lazy(&default_database_url())
-                        .expect("Default database URL is alformed")
+                        .connect_lazy(&config::database_url())
+                        .expect("Default database URL is malformed")
                 })
                 .clone(),
             ),

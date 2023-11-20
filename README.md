@@ -108,7 +108,7 @@ SELECT pgml.transform(
 ```
 
 ## Tabular data
-- [47+ classification and regression algorithms](https://postgresml.org/docs/guides/training/algorithm_selection)
+- [47+ classification and regression algorithms](https://postgresml.org/docs/training/algorithm_selection)
 - [8 - 40X faster inference than HTTP based model serving](https://postgresml.org/blog/postgresml-is-8x-faster-than-python-http-microservices)
 - [Millions of transactions per second](https://postgresml.org/blog/scaling-postgresml-to-one-million-requests-per-second)
 - [Horizontal scalability](https://github.com/postgresml/pgcat)
@@ -154,7 +154,7 @@ docker run \
     sudo -u postgresml psql -d postgresml
 ```
 
-For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/guides/developer-docs/quick-start-with-docker) documentation.
+For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/developer-docs/quick-start-with-docker) documentation.
 
 # Getting Started
 

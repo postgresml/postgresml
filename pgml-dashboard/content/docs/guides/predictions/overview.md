@@ -51,7 +51,7 @@ LIMIT 25;
 
 ### Example
 
-If you've already been through the [Training Overview](/docs/guides/training/overview/), you can see the results of those efforts:
+If you've already been through the [Training Overview](/docs/training/overview/), you can see the results of those efforts:
 
 === "SQL"
 
@@ -106,7 +106,7 @@ SELECT * FROM pgml.deployed_models;
 
 PostgresML will automatically deploy a model only if it has better metrics than existing ones, so it's safe to experiment with different algorithms and hyperparameters.
 
-Take a look at [Deploying Models](/docs/guides/predictions/deployments/) documentation for more details.
+Take a look at [Deploying Models](/docs/predictions/deployments/) documentation for more details.
 
 ## Specific Models
 

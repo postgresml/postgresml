@@ -1,6 +1,6 @@
 # Snapshots
 
-Snapshots are an artifact of calls to `pgml.train()` that specify the `relation_name` and `y_column_name` parameters. See [Training Overview](/docs/guides/training/overview/) for ways to create new snapshots.
+Snapshots are an artifact of calls to `pgml.train()` that specify the `relation_name` and `y_column_name` parameters. See [Training Overview](/docs/training/overview/) for ways to create new snapshots.
 
 ![Snapshots](/dashboard/static/images/dashboard/snapshot.png)
 

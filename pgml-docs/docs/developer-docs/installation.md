@@ -304,7 +304,7 @@ cargo pgrx install
 
 ## Dashboard
 
-The dashboard is a web app that can be run against any Postgres database which has the extension installed. There is a [Dockerfile](../../../../pgml-dashboard/Dockerfile) included with the source code if you wish to run it as a container.
+The dashboard is a web app that can be run against any Postgres database which has the extension installed. There is a [Dockerfile](../../../pgml-dashboard/Dockerfile) included with the source code if you wish to run it as a container.
 
 ### Get the source code
 

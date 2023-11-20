@@ -278,7 +278,7 @@ The following common machine learning tasks are performed automatically by Postg
 4. Save it into the model store (a Postgres table)
 5. Load it and cache it during inference
 
-Check out our [Training](/docs/guides/training/overview/) and [Predictions](/docs/guides/predictions/overview/) documentation for more details. Some more advanced topics like [hyperparameter search](/docs/guides/training/hyperparameter_search/) and [GPU acceleration](/docs/guides/setup/gpu_support/) are available as well.
+Check out our [Training](/docs/training/overview/) and [Predictions](/docs/predictions/overview/) documentation for more details. Some more advanced topics like [hyperparameter search](/docs/training/hyperparameter_search/) and [GPU acceleration](/docs/setup/gpu_support/) are available as well.
 
 ## Dashboard
 

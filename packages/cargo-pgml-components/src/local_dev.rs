@@ -82,7 +82,7 @@ static PG_PGVECTOR: &str = "
 static PG_PGML: &str = "To install PostgresML into your PostgreSQL database,
 follow the instructions on:
 
-\thttps://postgresml.org/docs/guides/setup/v2/installation
+\thttps://postgresml.org/docs/setup/v2/installation
 ";
 
 #[cfg(target_os = "linux")]

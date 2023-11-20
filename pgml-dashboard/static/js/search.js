@@ -19,7 +19,7 @@ export default class extends Controller {
 
     search(e) {
         const query = e.currentTarget.value
-        this.searchFrame.src = `/docs/search?query=${query}`
+        this.searchFrame.src = `/search?query=${query}`
     }
 
     focusSearchInput = (e) => {
