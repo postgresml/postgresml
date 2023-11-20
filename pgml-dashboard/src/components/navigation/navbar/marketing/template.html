@@ -10,6 +10,27 @@
     StaticNavLink::new("Fraud Detection".to_string(), "/test2".to_string()).icon("e911_emergency").disabled(true),
     StaticNavLink::new("Forecasting".to_string(), "/test2".to_string()).icon("avg_pace").disabled(true),
   ];
+
+  let company_links = vec![
+    StaticNavLink::new("About".to_string(), "/about".to_string()).icon("smart_toy"),
+    StaticNavLink::new("Contact".to_string(), "/contact".to_string()).icon("alternate_email")
+  ];
+
+  struct mobile_navs {
+    collapse: String, 
+    links: Vec<StaticNavLink>
+  }
+
+  let mobile_nav_items = vec![
+    mobile_navs {
+      collapse: "solutions-collapse".to_string(),
+      links: solutions_links.clone()
+    },
+    mobile_navs {
+      collapse: "company-collapse".to_string(),
+      links: company_links.clone()
+    }
+  ];
 %>
 
   <div class="sticky-top-nav" data-controller="navigation-navbar-marketing">
@@ -35,7 +56,7 @@
 
         <div class="collapse navbar-collapse drawer-submenu-container navbarSupportedContent" id="navbarSupportedContent">
           <!-- Main Menu -->
-          <div class="nav-item w-100 d-xl-flex flex-column flex-xl-row align-items-xl-center collapse collapse-horizontal solutions-collapse show drawer-submenu">
+          <div class="nav-item w-100 d-xl-flex flex-column flex-xl-row align-items-xl-center collapse collapse-horizontal show drawer-submenu <% for item in &mobile_nav_items {%> <%- item.collapse %><% } %>">
             <ul class="navbar-nav flex-grow-1 gap-4 me-auto my-4 my-xl-0">
 
               <% if !standalone_dashboard { %>
@@ -55,7 +76,14 @@
               <%+ MarketingLink::new().link(StaticNavLink::new("Blog".to_string(), "/blog/speeding-up-vector-recall-by-5x-with-hnsw".to_string())) %>
 
               <% if !standalone_dashboard { %>
-              <%+ MarketingLink::new().link(StaticNavLink::new("Company".to_string(), "/about".to_string())) %>
+                <div class="d-none d-xl-flex">
+                  <%+ MarketingLink::new()
+                      .name("Company")
+                      .links(company_links.clone()) %>
+                </div>
+                <li class="nav-item d-flex align-items-center d-flex d-xl-none">
+                  <a class="nav-link p-0 fw-semibold" href="#" data-bs-toggle="collapse" data-bs-target=".company-collapse">Company</a>
+                </li>
               <% } %>
 
               <li class="nav-item d-none d-xl-flex align-items-center">
@@ -105,16 +133,17 @@
           </div>
 
 
-          <!-- Solutions nav for less than large screens -->
-          <div class="nav-item collapse-horizontal solutions-collapse collapse drawer-submenu">
+          <!-- subnavs for less than large screens -->
+          <% for item in mobile_nav_items { %>
+          <div class="nav-item collapse-horizontal <%- item.collapse %> collapse drawer-submenu">
             <ul class="sub-menu-dropdown mb-5 d-flex flex-column gap-3">
-              <a class="btn btn-tertiary-web-app" data-bs-toggle="collapse" data-bs-target=".solutions-collapse">
+              <a class="btn btn-tertiary-web-app" data-bs-toggle="collapse" data-bs-target=".<%- item.collapse%>">
                 <span class="material-symbols-outlined icon-back-btn">
                   arrow_back
                 </span>
                 Back
               </a>
-              <% for link in solutions_links { %>
+              <% for link in item.links { %>
                 <%+ MarketingLink::new().link(
                   StaticNavLink::new(link.name.to_string(), link.href.to_string())
                   .disabled(link.disabled)
@@ -122,8 +151,7 @@
               <% } %>
             </ul>
           </div>
-
-
+          <% } %>
         </div>
 
       </div>

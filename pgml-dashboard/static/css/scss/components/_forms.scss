@@ -272,6 +272,10 @@
     --bs-danger-text: #{$error};
 }
 
+.form-control:invalid.form-control:not(:placeholder-shown) {
+    border-color: #{$error};
+}
+
 .hourly-rate {
     display: flex;
     flex-direction: row;
