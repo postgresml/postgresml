@@ -147,6 +147,8 @@ pub fn watch() {
                                 || path.ends_with(".pgml-bundle")
                                 || path.ends_with("modules.js")
                                 || path.contains("bundle.")
+                                || path.ends_with(".rs")
+                                || path.ends_with(".html")
                             {
                                 detected = false;
                             }
