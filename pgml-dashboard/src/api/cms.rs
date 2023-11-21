@@ -1,7 +1,12 @@
 use std::path::{Path, PathBuf};
 
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
-use rocket::{http::Status, route::Route, State};
+use rocket::{
+    fs::NamedFile,
+    http::{uri::Origin, Status},
+    route::Route,
+    State,
+};
 use yaml_rust::YamlLoader;
 
 use crate::{
@@ -24,27 +29,55 @@ async fn search(query: &str, index: &State<markdown::SearchIndex>) -> ResponseOk
     )
 }
 
+struct Content {
+    name: String,
+}
 
-use rocket::fs::NamedFile;
-use rocket::http::uri::Origin;
+impl Content {
+    pub fn gitbook_asset_path(&self, path: &str) -> PathBuf {
+        PathBuf::from(&config::cms_dir())
+            .join(self.name.to_lowercase())
+            .join(".gitbook")
+            .join("assets")
+            .join(path)
+    }
+}
+
+pub async fn get_asset(path: &PathBuf) -> Option<NamedFile> {
+    NamedFile::open(path).await.ok()
+}
 
 #[get("/careers/.gitbook/assets/<path>", rank = 10)]
-pub async fn careers_assets(path: PathBuf) -> Option<NamedFile> {
-    let path = PathBuf::from(&config::docs_dir())
-        .join("careers").join(".gitbook").join("assets")
+pub async fn get_asset_careers(path: &str) -> Option<NamedFile> {
+    let content = Content {
+        name: "Careers".to_owned(),
+    };
+    get_asset(&content.gitbook_asset_path(path)).await
+}
+
+#[get("/docs/.gitbook/assets/<path>", rank = 10)]
+pub async fn get_asset_docs(path: &str) -> Option<NamedFile> {
+    let path = PathBuf::from(&config::cms_dir())
+        .join("docs")
+        .join(".gitbook")
+        .join("assets")
         .join(path);
 
     NamedFile::open(path).await.ok()
 }
 
 #[get("/careers/<path..>", rank = 5)]
-async fn careers_contenthandler(mut path: PathBuf, cluster: &Cluster, origin: &Origin<'_>) -> Result<ResponseOk, Status> {
+async fn careers_handler(
+    mut path: PathBuf,
+    cluster: &Cluster,
+    origin: &Origin<'_>,
+) -> Result<ResponseOk, Status> {
     // Rocket 0.5 began stripping trailing '/' from the path
     if origin.path().ends_with("/") {
         path = path.join("/");
     }
     let root = PathBuf::from("careers/");
-    let index_path = PathBuf::from(&config::docs_dir())
+    let index_path = PathBuf::from(&config::cms_dir())
         .join(&root)
         .join("SUMMARY.md");
     let contents = tokio::fs::read_to_string(&index_path).await.expect(
@@ -52,7 +85,7 @@ async fn careers_contenthandler(mut path: PathBuf, cluster: &Cluster, origin: &O
             "could not read table of contents markdown: {:?}",
             index_path
         )
-            .as_str(),
+        .as_str(),
     );
     let mdast = ::markdown::to_mdast(&contents, &::markdown::ParseOptions::default())
         .expect("could not parse table of contents markdown");
@@ -65,28 +98,24 @@ async fn careers_contenthandler(mut path: PathBuf, cluster: &Cluster, origin: &O
         careers,
         "Careers",
         &Path::new("careers"),
-        &config::docs_dir(),
+        config::cms_dir(),
     )
-        .await
-}
-#[get("/docs/.gitbook/assets/<path>", rank = 10)]
-pub async fn docs_gitbook_assets(path: PathBuf) -> Option<NamedFile> {
-    let path = PathBuf::from(&config::docs_dir())
-        .join("docs/.gitbook/assets/")
-        .join(path);
-
-    NamedFile::open(path).await.ok()
+    .await
 }
 
 #[get("/docs/<path..>", rank = 5)]
-async fn doc_handler(mut path: PathBuf, cluster: &Cluster, origin: &Origin<'_>) -> Result<ResponseOk, Status> {
+async fn docs_handler(
+    mut path: PathBuf,
+    cluster: &Cluster,
+    origin: &Origin<'_>,
+) -> Result<ResponseOk, Status> {
     info!("path: {:?}", path);
     if origin.path().ends_with("/") {
         path = path.join("");
     }
     info!("joined path: {:?}", path);
     let root = PathBuf::from("docs/");
-    let index_path = PathBuf::from(&config::docs_dir())
+    let index_path = PathBuf::from(&config::cms_dir())
         .join(&root)
         .join("SUMMARY.md");
     let contents = tokio::fs::read_to_string(&index_path).await.expect(
@@ -107,7 +136,7 @@ async fn doc_handler(mut path: PathBuf, cluster: &Cluster, origin: &Origin<'_>) 
         guides,
         "Docs",
         &Path::new("docs"),
-        &config::docs_dir(),
+        config::cms_dir(),
     )
     .await
 }
@@ -172,7 +201,7 @@ async fn blog_handler<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk
         ],
         "Blog",
         &Path::new("blog"),
-        &config::blogs_dir(),
+        config::blogs_dir(),
     )
     .await
 }
@@ -183,7 +212,7 @@ async fn render<'a>(
     mut nav_links: Vec<NavLink>,
     nav_title: &'a str,
     folder: &'a Path,
-    content: &'a str,
+    content: &'a Path,
 ) -> Result<ResponseOk, Status> {
     let mut path = path
         .to_str()
@@ -301,7 +330,14 @@ async fn render<'a>(
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![docs_gitbook_assets, doc_handler, blog_handler, careers_handler, careers_gitbook_assets, search]
+    routes![
+        get_asset_careers,
+        get_asset_docs,
+        docs_handler,
+        blog_handler,
+        careers_handler,
+        search
+    ]
 }
 
 #[cfg(test)]

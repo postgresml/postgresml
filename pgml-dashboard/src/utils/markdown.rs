@@ -625,7 +625,10 @@ pub fn get_sub_links(list: &markdown::mdast::List, path: &Path) -> Result<Vec<Na
     Ok(links)
 }
 
-pub fn parse_summary_into_nav_links(root: &markdown::mdast::Node, path: &Path) -> Result<Vec<NavLink>> {
+pub fn parse_summary_into_nav_links(
+    root: &markdown::mdast::Node,
+    path: &Path,
+) -> Result<Vec<NavLink>> {
     for node in root.children().unwrap().iter() {
         match node {
             markdown::mdast::Node::List(list) => {
@@ -1362,9 +1365,16 @@ impl SearchIndex {
     }
 
     pub fn documents() -> Vec<PathBuf> {
-        let guides =
-            glob::glob(&(config::docs_dir() + "/docs/**/*.md")).expect("glob failed");
-        let blogs = glob::glob(&(config::blogs_dir() + "/blog/**/*.md")).expect("glob failed");
+        // TODO imrpove this .display().to_string()
+        let guides = glob::glob(&config::cms_dir().join("docs/**/*.md").display().to_string())
+            .expect("glob failed");
+        let blogs = glob::glob(
+            &config::blogs_dir()
+                .join("/blog/**/*.md")
+                .display()
+                .to_string(),
+        )
+        .expect("glob failed");
         guides
             .chain(blogs)
             .map(|path| path.expect("glob path failed"))
@@ -1431,7 +1441,7 @@ impl SearchIndex {
                 .unwrap()
                 .to_string()
                 .replace("README", "")
-                .replace(&config::docs_dir(), "");
+                .replace(&config::cms_dir().display().to_string(), "");
             let mut doc = Document::default();
             doc.add_text(title_field, &title_text);
             doc.add_text(body_field, &body_text);
@@ -1548,7 +1558,7 @@ impl SearchIndex {
                 .unwrap()
                 .to_string()
                 .replace(".md", "")
-                .replace(&config::static_dir(), "");
+                .replace(&config::static_dir().display().to_string(), "");
 
             // Dedup results from prefix search and full text search.
             let new = dedup.insert(path.clone());
