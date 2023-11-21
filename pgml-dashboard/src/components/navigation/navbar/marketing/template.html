@@ -16,17 +16,17 @@
     StaticNavLink::new("Contact".to_string(), "/contact".to_string()).icon("alternate_email")
   ];
 
-  struct mobile_navs {
+  struct MobileNavs {
     collapse: String, 
     links: Vec<StaticNavLink>
   }
 
   let mobile_nav_items = vec![
-    mobile_navs {
+    MobileNavs {
       collapse: "solutions-collapse".to_string(),
       links: solutions_links.clone()
     },
-    mobile_navs {
+    MobileNavs {
       collapse: "company-collapse".to_string(),
       links: company_links.clone()
     }
