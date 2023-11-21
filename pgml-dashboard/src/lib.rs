@@ -21,7 +21,6 @@ pub mod types;
 pub mod utils;
 
 use guards::{Cluster, ConnectedCluster};
-use pgml_components::Component;
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
     components::{NavLink, StaticNav},
