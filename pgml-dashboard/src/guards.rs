@@ -8,9 +8,7 @@ use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 
 static POOL: OnceCell<PgPool> = OnceCell::new();
 
-use crate::utils::config;
-use crate::models;
-use crate::Context;
+use crate::{models, utils::config, Context};
 
 #[derive(Debug)]
 pub struct Cluster {
@@ -39,7 +37,7 @@ impl Cluster {
                                 Ok(())
                             })
                         })
-                        .connect_lazy(&config::database_url())
+                        .connect_lazy(config::database_url())
                         .expect("Default database URL is malformed")
                 })
                 .clone(),

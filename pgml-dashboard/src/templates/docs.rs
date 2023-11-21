@@ -44,11 +44,13 @@ impl NavLink {
     /// Automatically expand the link and it's parents
     /// when one of the children is visible.
     pub fn should_open(&mut self, path: &str, root: &std::path::Path) -> bool {
-        info!("should_open self: {:?}, path: {:?}, root: {:?}", self, path, root);
+        info!(
+            "should_open self: {:?}, path: {:?}, root: {:?}",
+            self, path, root
+        );
         if path.is_empty() {
             if self.href.as_str() == root.as_os_str() {
                 return true;
-
             } else {
                 return false;
             }
