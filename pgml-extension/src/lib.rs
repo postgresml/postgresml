@@ -25,6 +25,7 @@ extension_sql_file!("../sql/schema.sql", name = "schema");
 #[pg_guard]
 pub extern "C" fn _PG_init() {
     config::set_env();
+    config::init_gucs();
     orm::project::init();
 }
 
