@@ -41,6 +41,7 @@ from transformers import (
     TrainingArguments,
     Trainer,
     TextStreamer,
+    Conversation
 )
 from threading import Thread
 from typing import Optional
@@ -198,8 +199,8 @@ class GGMLPipeline(object):
         self.task = "text-generation"
 
     def stream(self, inputs, **kwargs):
-        output = self.model(inputs[0], stream=True, **kwargs)
-        return ThreadedGeneratorIterator(output, inputs[0])
+        output = self.model(inputs, stream=True, **kwargs)
+        return ThreadedGeneratorIterator(output, inputs)
 
     def __call__(self, inputs, **kwargs):
         outputs = []
@@ -224,6 +225,7 @@ class StandardPipeline(object):
                 "summarization",
                 "translation",
                 "text-generation",
+                "conversational"
             ]
         ):
             self.task = kwargs.pop("task")
@@ -238,7 +240,7 @@ class StandardPipeline(object):
                 )
             elif self.task == "summarization" or self.task == "translation":
                 self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **kwargs)
-            elif self.task == "text-generation":
+            elif self.task == "text-generation" or self.task == "conversational":
                 self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
             else:
                 raise PgMLException(f"Unhandled task: {self.task}")
@@ -266,15 +268,30 @@ class StandardPipeline(object):
             self.tokenizer = self.pipe.tokenizer
 
     def stream(self, inputs, **kwargs):
-        streamer = TextIteratorStreamer(self.tokenizer)
-        inputs = self.tokenizer(inputs, return_tensors="pt").to(self.model.device)
-        generation_kwargs = dict(inputs, streamer=streamer, **kwargs)
+        streamer = None
+        generation_kwargs = None
+        if self.task == "conversational":
+            streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True)
+            inputs = tokenized_chat = self.tokenizer.apply_chat_template(inputs, tokenize=True, add_generation_prompt=True, return_tensors="pt").to(self.model.device)
+            generation_kwargs = dict(inputs=inputs, streamer=streamer, **kwargs)
+        else:
+            streamer = TextIteratorStreamer(self.tokenizer)
+            inputs = self.tokenizer([inputs], return_tensors="pt").to(self.model.device)
+            generation_kwargs = dict(inputs, streamer=streamer, **kwargs)
         thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
         thread.start()
         return streamer
 
     def __call__(self, inputs, **kwargs):
-        return self.pipe(inputs, **kwargs)
+        if self.task == "conversational":
+            outputs = []
+            for conversation in inputs:
+                conversation = Conversation(conversation)
+                conversation = self.pipe(conversation, **kwargs)
+                outputs.append(conversation.generated_responses[-1])
+            return outputs
+        else:
+            return self.pipe(inputs, **kwargs)
 
 
 def get_model_from(task):

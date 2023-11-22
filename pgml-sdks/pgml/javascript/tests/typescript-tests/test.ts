@@ -299,7 +299,29 @@ it("can transformer pipeline stream", async () => {
     output.push(result.value);
     result = await it.next();
   }
-  expect(output.length).toBeGreaterThan(0)
+  expect(output.length).toBeGreaterThan(0);
+});
+
+///////////////////////////////////////////////////
+// Test OpenSourceAI //////////////////////////////
+///////////////////////////////////////////////////
+
+it("can open source ai create", async () => {
+  const client = pgml.newOpenSourceAI();
+  const results = client.chat_completions_create(
+        "mistralai/Mistral-7B-v0.1",
+        [
+            {
+                role: "system",
+                content: "You are a friendly chatbot who always responds in the style of a pirate",
+            },
+            {
+                role: "user",
+                content: "How many helicopters can a human eat in one sitting?",
+            },
+        ],
+  );
+  expect(results.choices.length).toBeGreaterThan(0);
 });
 
 ///////////////////////////////////////////////////
