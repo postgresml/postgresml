@@ -1,3 +1,4 @@
+use anyhow::Context;
 use futures::Stream;
 use rust_bridge::{alias, alias_manual, alias_methods};
 use sqlx::{postgres::PgRow, Row};
@@ -140,16 +141,36 @@ impl TransformerPipeline {
     }
 
     #[instrument(skip(self))]
-    pub async fn transform(&self, inputs: Vec<String>, args: Option<Json>) -> anyhow::Result<Json> {
+    pub async fn transform(&self, inputs: Vec<Json>, args: Option<Json>) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let args = args.unwrap_or_default();
 
-        let results = sqlx::query("SELECT pgml.transform(task => $1, inputs => $2, args => $3)")
-            .bind(&self.task)
-            .bind(inputs)
-            .bind(&args)
-            .fetch_all(&pool)
-            .await?;
+        // We set the task in the new constructor so we can unwrap here
+        let results = if self.task["task"].as_str().unwrap() == "conversational" {
+            let inputs: Vec<serde_json::Value> = inputs.into_iter().map(|j| j.0).collect();
+            sqlx::query("SELECT pgml.transform(task => $1, inputs => $2, args => $3)")
+                .bind(&self.task)
+                .bind(inputs)
+                .bind(&args)
+                .fetch_all(&pool)
+                .await?
+        } else {
+            let inputs: anyhow::Result<Vec<String>> =
+                inputs
+                    .into_iter()
+                    .map(|input| {
+                        input.as_str().context(
+                        "the inputs arg must be strings when not using the conversational task",
+                    ).map(|s| s.to_string())
+                    })
+                    .collect();
+            sqlx::query("SELECT pgml.transform(task => $1, inputs => $2, args => $3)")
+                .bind(&self.task)
+                .bind(inputs?)
+                .bind(&args)
+                .fetch_all(&pool)
+                .await?
+        };
         let results = results.get(0).unwrap().get::<serde_json::Value, _>(0);
         Ok(Json(results))
     }
@@ -197,8 +218,8 @@ mod tests {
         let results = t
             .transform(
                 vec![
-                    "How are you doing today?".to_string(),
-                    "What is a good song?".to_string(),
+                    serde_json::Value::String("How are you doing today?".to_string()).into(),
+                    serde_json::Value::String("How are you doing today?".to_string()).into(),
                 ],
                 None,
             )
@@ -214,8 +235,8 @@ mod tests {
         let results = t
             .transform(
                 vec![
-                    "How are you doing today?".to_string(),
-                    "What is a good song?".to_string(),
+                    serde_json::Value::String("How are you doing today?".to_string()).into(),
+                    serde_json::Value::String("How are you doing today?".to_string()).into(),
                 ],
                 None,
             )

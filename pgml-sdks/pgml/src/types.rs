@@ -42,6 +42,19 @@ impl Serialize for Json {
     }
 }
 
+// This will cause some conflicting trait issue
+// impl<T: Serialize> From<T> for Json {
+//     fn from(v: T) -> Self {
+//         Self(serde_json::to_value(v).unwrap())
+//     }
+// }
+
+impl Json {
+    pub fn from_serializable<T: Serialize>(v: T) -> Self {
+        Self(serde_json::to_value(v).unwrap())
+    }
+}
+
 pub(crate) trait TryToNumeric {
     fn try_to_u64(&self) -> anyhow::Result<u64>;
     fn try_to_i64(&self) -> anyhow::Result<i64> {

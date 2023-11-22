@@ -307,7 +307,8 @@ async def test_order_documents():
 async def test_transformer_pipeline():
     t = pgml.TransformerPipeline("text-generation")
     it = await t.transform(["AI is going to"], {"max_new_tokens": 5})
-    assert (len(it)) > 0
+    assert len(it) > 0
+
 
 @pytest.mark.asyncio
 async def test_transformer_pipeline_stream():
@@ -316,7 +317,31 @@ async def test_transformer_pipeline_stream():
     total = []
     async for c in it:
         total.append(c)
-    assert (len(total)) > 0
+    assert len(total) > 0
+
+
+###################################################
+## Transformer Pipeline Tests #####################
+###################################################
+
+
+def test_open_source_ai_create():
+    client = pgml.OpenSourceAI()
+    results = client.chat_completions_create(
+        "mistralai/Mistral-7B-v0.1",
+        [
+            {
+                "role": "system",
+                "content": "You are a friendly chatbot who always responds in the style of a pirate",
+            },
+            {
+                "role": "user",
+                "content": "How many helicopters can a human eat in one sitting?",
+            },
+        ],
+        temperature=0.85
+    )
+    assert len(results["choices"]) > 0
 
 
 ###################################################

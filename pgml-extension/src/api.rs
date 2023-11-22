@@ -633,6 +633,37 @@ pub fn transform_string(
 }
 
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
+#[pg_extern(immutable, parallel_safe, name = "transform")]
+#[allow(unused_variables)] // cache is maintained for api compatibility
+pub fn transform_conversational_json(
+    task: JsonB,
+    args: default!(JsonB, "'{}'"),
+    inputs: default!(Vec<JsonB>, "ARRAY[]::JSONB[]"),
+    cache: default!(bool, false),
+) -> JsonB {
+    match crate::bindings::transformers::transform(&task.0, &args.0, inputs) {
+        Ok(output) => JsonB(output),
+        Err(e) => error!("{e}"),
+    }
+}
+
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
+#[pg_extern(immutable, parallel_safe, name = "transform")]
+#[allow(unused_variables)] // cache is maintained for api compatibility
+pub fn transform_conversational_string(
+    task: String,
+    args: default!(JsonB, "'{}'"),
+    inputs: default!(Vec<JsonB>, "ARRAY[]::JSONB[]"),
+    cache: default!(bool, false),
+) -> JsonB {
+    let task_json = json!({ "task": task });
+    match crate::bindings::transformers::transform(&task_json, &args.0, inputs) {
+        Ok(output) => JsonB(output),
+        Err(e) => error!("{e}"),
+    }
+}
+
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "transform_stream")]
 #[allow(unused_variables)] // cache is maintained for api compatibility
 pub fn transform_stream_json(
@@ -642,10 +673,13 @@ pub fn transform_stream_json(
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, String> {
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
-    let python_iter =
-        crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, input)
-            .map_err(|e| error!("{e}"))
-            .unwrap();
+    let python_iter = crate::bindings::transformers::transform_stream_iterator(
+        &task.0,
+        &args.0,
+        input.to_string(),
+    )
+    .map_err(|e| error!("{e}"))
+    .unwrap();
     SetOfIterator::new(python_iter)
 }
 
@@ -662,6 +696,51 @@ pub fn transform_stream_string(
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
     let python_iter =
         crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, input)
+            .map_err(|e| error!("{e}"))
+            .unwrap();
+    SetOfIterator::new(python_iter)
+}
+
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
+#[pg_extern(immutable, parallel_safe, name = "transform_stream")]
+#[allow(unused_variables)] // cache is maintained for api compatibility
+pub fn transform_stream_conversational_json(
+    task: JsonB,
+    args: default!(JsonB, "'{}'"),
+    input: default!(JsonB, "'[]'::JSONB"),
+    cache: default!(bool, false),
+) -> SetOfIterator<'static, String> {
+    // If they have Vec<JsonB> inputs lets make sure they have the write task
+    if !task.0["task"]
+        .as_str()
+        .is_some_and(|v| v == "conversational")
+    {
+        error!("ARRAY[]::JSONB inputs for transformer_stream should only be used with a conversational task");
+    }
+    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    let python_iter =
+        crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, input.0)
+            .map_err(|e| error!("{e}"))
+            .unwrap();
+    SetOfIterator::new(python_iter)
+}
+
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
+#[pg_extern(immutable, parallel_safe, name = "transform_stream")]
+#[allow(unused_variables)] // cache is maintained for api compatibility
+pub fn transform_stream_conversational_string(
+    task: String,
+    args: default!(JsonB, "'{}'"),
+    input: default!(JsonB, "'[]'::JSONB"),
+    cache: default!(bool, false),
+) -> SetOfIterator<'static, String> {
+    if task != "conversational" {
+        error!("ARRAY[]::JSONB inputs for transformer_stream should only be used with a conversational task");
+    }
+    let task_json = json!({ "task": task });
+    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    let python_iter =
+        crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, input.0)
             .map_err(|e| error!("{e}"))
             .unwrap();
     SetOfIterator::new(python_iter)
