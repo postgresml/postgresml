@@ -641,6 +641,14 @@ pub fn transform_conversational_json(
     inputs: default!(Vec<JsonB>, "ARRAY[]::JSONB[]"),
     cache: default!(bool, false),
 ) -> JsonB {
+    if !task.0["task"]
+        .as_str()
+        .is_some_and(|v| v == "conversational")
+    {
+        error!(
+            "ARRAY[]::JSONB inputs for transformer should only be used with a conversational task"
+        );
+    }
     match crate::bindings::transformers::transform(&task.0, &args.0, inputs) {
         Ok(output) => JsonB(output),
         Err(e) => error!("{e}"),
@@ -656,6 +664,11 @@ pub fn transform_conversational_string(
     inputs: default!(Vec<JsonB>, "ARRAY[]::JSONB[]"),
     cache: default!(bool, false),
 ) -> JsonB {
+    if task != "conversational" {
+        error!(
+            "ARRAY[]::JSONB inputs for transformer should only be used with a conversational task"
+        );
+    }
     let task_json = json!({ "task": task });
     match crate::bindings::transformers::transform(&task_json, &args.0, inputs) {
         Ok(output) => JsonB(output),
@@ -710,12 +723,13 @@ pub fn transform_stream_conversational_json(
     input: default!(JsonB, "'[]'::JSONB"),
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, String> {
-    // If they have Vec<JsonB> inputs lets make sure they have the write task
     if !task.0["task"]
         .as_str()
         .is_some_and(|v| v == "conversational")
     {
-        error!("ARRAY[]::JSONB inputs for transformer_stream should only be used with a conversational task");
+        error!(
+            "JSONB inputs for transformer_stream should only be used with a conversational task"
+        );
     }
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
     let python_iter =
@@ -735,7 +749,9 @@ pub fn transform_stream_conversational_string(
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, String> {
     if task != "conversational" {
-        error!("ARRAY[]::JSONB inputs for transformer_stream should only be used with a conversational task");
+        error!(
+            "JSONB inputs for transformer_stream should only be used with a conversational task"
+        );
     }
     let task_json = json!({ "task": task });
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
