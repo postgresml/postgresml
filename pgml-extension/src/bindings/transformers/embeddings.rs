@@ -19,6 +19,7 @@ use serde_json::Value;
 
 static EMBEDDINGS: Lazy<Mutex<HashMap<String, Embedding>>> = Lazy::new(Default::default);
 
+/// An embedding model in Python.
 #[derive(Clone)]
 pub struct Embedding {
     ptr: PyObject,
@@ -34,6 +35,10 @@ enum Backend {
 }
 
 impl Embedding {
+    /// Create a new [`Embedding`] model in Python.
+    ///
+    /// # Note
+    /// This function will load or even download the model from the internet.
     pub fn new(transformer: &str, kwargs: &Value) -> Result<Self> {
         if !kwargs.is_object() {
             bail!("`expect `kwargs` to be JSON object");
@@ -157,6 +162,7 @@ impl Backend {
     }
 }
 
+/// Execute an embedding call loading or using a cached [`Embedding`] model.
 pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &Value) -> Result<Vec<Vec<f32>>> {
     crate::bindings::python::activate()?;
 
@@ -175,7 +181,7 @@ pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &Value) -> Result<Vec
     embedding.encode(&inputs)
 }
 
-fn value_to_pydict(v: &Value, py: Python<'py>) -> Result<&'py PyDict> {
+fn value_to_pydict<'py>(v: &Value, py: Python<'py>) -> Result<&'py PyDict> {
     let d = PyDict::new(py);
     for (k, v) in v
         .as_object()
@@ -201,7 +207,7 @@ fn value_to_pydict(v: &Value, py: Python<'py>) -> Result<&'py PyDict> {
 
 #[cfg(test)]
 mod tests {
-    use std::{path::Path, time::Instant};
+    use std::path::Path;
 
     use super::*;
 
