@@ -20,10 +20,47 @@ pub fn default_database_url() -> String {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct Cluster {
     pub pool: Option<PgPool>,
     pub context: Context,
+    pub notifications: Option<Vec<Notification>>
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Notification {
+    pub message: String,
+    pub level: NotificationLevel,
+    pub id: String,
+    pub dismissible: bool,
+    pub viewed: bool,
+    pub link: String,
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub enum NotificationLevel {
+    #[default]
+    News,
+    Blog,
+    Launch,
+    Tip,
+    Level1,
+    Level2,
+    Level3,
+}
+
+impl std::fmt::Display for NotificationLevel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NotificationLevel::News => write!(f, "news"),
+            NotificationLevel::Blog => write!(f, "blog"),
+            NotificationLevel::Launch => write!(f, "launch"),
+            NotificationLevel::Tip => write!(f, "tip"),
+            NotificationLevel::Level1 => write!(f, "level1"),
+            NotificationLevel::Level2 => write!(f, "level2"),
+            NotificationLevel::Level3 => write!(f, "level3"),
+        }
+    }
 }
 
 impl Cluster {
@@ -142,6 +179,7 @@ impl Cluster {
                 lower_left_nav: StaticNav::default(),
                 marketing_footer: MarketingFooter::new().render_once().unwrap(),
             },
+            notifications: None,
         }
     }
 }
