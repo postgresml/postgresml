@@ -42,11 +42,12 @@ impl Embedding {
         let mut kwargs = kwargs.clone();
         let backend = Backend::new(transformer, &mut kwargs)?;
 
-        let ptr = match backend {
-            Backend::Instructor(_) => Self::create_instructor(transformer),
-            Backend::SentenceTransformers => Self::create_sentence_transformer(transformer),
-            Backend::Transformers => Self::create_automodel(transformer, &mut kwargs),
-        }?;
+        // Acquire the GIL to create the model
+        let ptr = Python::with_gil(|py| match backend {
+            Backend::Instructor(_) => Self::create_instructor(transformer, py),
+            Backend::SentenceTransformers => Self::create_sentence_transformer(transformer, py),
+            Backend::Transformers => Self::create_automodel(transformer, &mut kwargs, py),
+        })?;
 
         Ok(Self {
             ptr,
@@ -55,42 +56,58 @@ impl Embedding {
         })
     }
 
-    fn create_instructor(transformer: &str) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            PyModule::import(py, "InstructorEmbedding")?
-                .getattr("INSTRUCTOR")?
-                .call1((transformer,))?
-                .extract()
-        })
+    /// Equivalent to:
+    /// ```python
+    /// from InstructorEmbedding import INSTRUCTOR
+    /// INSTRUCTOR(transformer)
+    /// ```
+    fn create_instructor(transformer: &str, py: Python) -> PyResult<PyObject> {
+        PyModule::import(py, "InstructorEmbedding")?
+            .getattr("INSTRUCTOR")?
+            .call1((transformer,))?
+            .extract()
     }
 
-    fn create_sentence_transformer(transformer: &str) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            PyModule::import(py, "sentence_transformers")?
-                .getattr("SentenceTransformer")?
-                .call1((transformer,))?
-                .extract()
-        })
+    /// Equivalent to:
+    /// ```python
+    /// from sentence_transformers import SentenceTransformers
+    /// SentenceTransformers(transformer)
+    /// ```
+    fn create_sentence_transformer(transformer: &str, py: Python) -> PyResult<PyObject> {
+        PyModule::import(py, "sentence_transformers")?
+            .getattr("SentenceTransformer")?
+            .call1((transformer,))?
+            .extract()
     }
 
-    fn create_automodel(transformer: &str, kwargs: &mut Value) -> PyResult<PyObject> {
+    /// Equivalent to:
+    /// ```python
+    /// from transformers import AutoModel
+    /// AutoModel.from_pretrained(transformer, trust_remote_code=trust_remote_code)
+    /// ```
+    fn create_automodel(transformer: &str, kwargs: &mut Value, py: Python) -> PyResult<PyObject> {
         // take `trust_remote_code` out and use it, if present
         let trust_remote_code = kwargs
             .as_object_mut()
             .is_some_and(|v| matches!(v.remove("trust_remote_code"), Some(Value::Bool(true))));
-        Python::with_gil(|py| {
-            let kwargs = [("trust_remote_code", trust_remote_code)].into_py_dict(py);
-            PyModule::import(py, "transformers")?
-                .getattr("AutoModel")?
-                .getattr("from_pretrained")?
-                .call((transformer,), Some(kwargs))?
-                .extract()
-        })
+
+        let kwargs = [("trust_remote_code", trust_remote_code)].into_py_dict(py);
+
+        PyModule::import(py, "transformers")?
+            .getattr("AutoModel")?
+            .getattr("from_pretrained")?
+            .call((transformer,), Some(kwargs))?
+            .extract()
     }
 
+    /// Equivalent to:
+    /// ```python
+    /// model.encode(inputs, **kwargs)
+    /// ````
     pub fn encode(&self, inputs: &[&str]) -> Result<Vec<Vec<f32>>> {
+        // Acquire the GIL to use the model
         Python::with_gil(|py| {
-            let kwargs = value_to_pydict(&self.kwargs).context("converting Value to PyDict")?;
+            let kwargs = value_to_pydict(&self.kwargs, py).context("converting Value to PyDict")?;
             let inputs: PyObject = match &self.backend {
                 Backend::Instructor(instruction) => inputs
                     .iter()
@@ -107,7 +124,7 @@ impl Embedding {
             Ok(self
                 .ptr
                 .getattr(py, "encode")?
-                .call(py, (inputs,), Some(kwargs.as_ref(py)))?
+                .call(py, (inputs,), Some(kwargs))?
                 .extract(py)?)
         })
     }
@@ -158,30 +175,28 @@ pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &Value) -> Result<Vec
     embedding.encode(&inputs)
 }
 
-fn value_to_pydict(v: &Value) -> Result<Py<PyDict>> {
-    Python::with_gil(|py| -> Result<Py<PyDict>> {
-        let d = PyDict::new(py);
-        for (k, v) in v
-            .as_object()
-            .ok_or_else(|| anyhow!("`kwargs` expected as JSON object"))?
-        {
-            match v {
-                Value::Bool(b) => d.set_item(k, b)?,
-                Value::Number(n) => {
-                    if n.is_i64() {
-                        d.set_item(k, n.as_i64().unwrap())?
-                    } else if n.is_u64() {
-                        d.set_item(k, n.as_u64().unwrap())?
-                    } else {
-                        d.set_item(k, n.as_f64().unwrap())?
-                    }
+fn value_to_pydict(v: &Value, py: Python<'py>) -> Result<&'py PyDict> {
+    let d = PyDict::new(py);
+    for (k, v) in v
+        .as_object()
+        .ok_or_else(|| anyhow!("`kwargs` expected as JSON object"))?
+    {
+        match v {
+            Value::Bool(b) => d.set_item(k, b)?,
+            Value::Number(n) => {
+                if n.is_i64() {
+                    d.set_item(k, n.as_i64().unwrap())?
+                } else if n.is_u64() {
+                    d.set_item(k, n.as_u64().unwrap())?
+                } else {
+                    d.set_item(k, n.as_f64().unwrap())?
                 }
-                Value::String(s) => d.set_item(k, s)?,
-                _ => bail!("`kwargs` contains an unsupported datatype"),
-            };
-        }
-        Ok(d.extract()?)
-    })
+            }
+            Value::String(s) => d.set_item(k, s)?,
+            _ => bail!("`kwargs` contains an unsupported datatype"),
+        };
+    }
+    Ok(d.extract()?)
 }
 
 #[cfg(test)]
