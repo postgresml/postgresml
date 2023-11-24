@@ -1,5 +1,8 @@
-use std::env::var;
-use std::path::{Path, PathBuf};
+use std::{
+    env::var,
+    borrow::Cow,
+    path::{Path, PathBuf}
+};
 
 use lazy_static::lazy_static;
 
@@ -21,8 +24,8 @@ struct Config {
     static_dir: PathBuf,
     search_index_dir: PathBuf,
     render_errors: bool,
-    css_version: String,
-    js_version: String,
+    css_extension: String,
+    js_extension: String,
     assets_domain: Option<String>,
 }
 
@@ -37,6 +40,8 @@ impl Config {
         }
         .to_string();
 
+        let cargo_manifest_dir = env!("CARGO_MANIFEST_DIR");
+
         let github_stars = match var("GITHUB_STARS") {
             Ok(stars) => match stars.parse::<f32>() {
                 Ok(stars) => format!("{:.1}K", (stars / 1000.0)),
@@ -45,7 +50,11 @@ impl Config {
             _ => "2.0K".to_string(),
         };
 
-        let cargo_manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let css_version = env_string_default("CSS_VERSION", "");
+        let js_version = env_string_default("JS_VERSION", "1");
+
+        let css_extension = if dev_mode { "css".to_string() } else { format!("{css_version}.css") };
+        let js_extension = if dev_mode { "js".to_string() } else { format!("{js_version}.js") };
 
         Config {
             dev_mode,
@@ -61,9 +70,9 @@ impl Config {
             signup_url,
             standalone_dashboard: !cargo_manifest_dir.contains("deps")
                 && !cargo_manifest_dir.contains("cloud2"),
-            github_stars: github_stars,
-            css_version: env_string_default("CSS_VERSION", "1"),
-            js_version: env_string_default("JS_VERSION", "1"),
+            github_stars,
+            css_extension,
+            js_extension,
             assets_domain: env_string_optional("ASSETS_DOMAIN"),
         }
     }
@@ -116,29 +125,19 @@ pub fn github_stars<'a>() -> &'a str {
     &CONFIG.github_stars
 }
 
-pub fn css_url() -> String {
-    if CONFIG.dev_mode {
-        return "/dashboard/static/css/style.css".to_string();
-    }
-
-    let path = format!("/dashboard/static/css/style.{}.css", CONFIG.css_version);
-    asset_url(&path)
+pub fn css_url(name: &str) -> String {
+    let path = PathBuf::from(format!("/dashboard/static/css/{name}"));
+    let path = path.with_extension(&CONFIG.css_extension);
+    asset_url(path.to_string_lossy())
 }
 
 pub fn js_url(name: &str) -> String {
-    if CONFIG.dev_mode {
-        return format!("/dashboard/static/js/{name}");
-    }
-
-    let name = name.split(".").collect::<Vec<&str>>();
-    let name = name[0..name.len() - 1].join(".");
-
-    let path = format!("/dashboard/static/js/{name}.{}.js", CONFIG.js_version);
-
-    asset_url(&path)
+    let path = PathBuf::from(format!("/dashboard/static/js/{name}"));
+    let path = path.with_extension(&CONFIG.js_extension);
+    asset_url(path.to_string_lossy())
 }
 
-fn asset_url(path: &str) -> String {
+fn asset_url(path: Cow<str>) -> String {
     match &CONFIG.assets_domain {
         Some(domain) => format!("https://{domain}{path}"),
         None => path.to_string(),
@@ -155,7 +154,7 @@ fn env_is_set(name: &str) -> bool {
 fn env_string_required(name: &str) -> String {
     var(name)
         .expect(&format!(
-            "{} env variable is required for proper configration",
+            "{} env variable is required for proper configuration",
             name
         ))
         .to_string()

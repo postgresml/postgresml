@@ -13,6 +13,9 @@ pub use breadcrumbs::Breadcrumbs;
 pub mod chatbot;
 pub use chatbot::Chatbot;
 
+// src/components/cms
+pub mod cms;
+
 // src/components/confirm_modal
 pub mod confirm_modal;
 pub use confirm_modal::ConfirmModal;
