@@ -29,3 +29,4 @@ pynvml==11.5.0
 transformers-stream-generator==0.0.4
 optimum==1.13.2
 peft==0.6.2
+pyarrow==11.0.0
