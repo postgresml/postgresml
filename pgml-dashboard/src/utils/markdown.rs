@@ -25,7 +25,7 @@ use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
 use url::Url;
 
-use crate::templates::docs::NavLink;
+use crate::components::cms::index_link::IndexLink;
 use std::fmt;
 
 pub struct MarkdownHeadings {
@@ -572,7 +572,7 @@ pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
     });
 }
 
-pub fn get_sub_links(list: &markdown::mdast::List, path: &Path) -> Result<Vec<NavLink>> {
+pub fn get_sub_links(list: &markdown::mdast::List, path: &Path) -> Result<Vec<IndexLink>> {
     let mut links = Vec::new();
     for node in list.children.iter() {
         match node {
@@ -598,7 +598,7 @@ pub fn get_sub_links(list: &markdown::mdast::List, path: &Path) -> Result<Vec<Na
                                                         .into_os_string()
                                                         .into_string()
                                                         .unwrap();
-                                                    let parent = NavLink::new(text.value.as_str())
+                                                    let parent = IndexLink::new(text.value.as_str())
                                                         .href(&url);
                                                     links.push(parent);
                                                 }
@@ -628,7 +628,7 @@ pub fn get_sub_links(list: &markdown::mdast::List, path: &Path) -> Result<Vec<Na
 pub fn parse_summary_into_nav_links(
     root: &markdown::mdast::Node,
     path: &Path,
-) -> Result<Vec<NavLink>> {
+) -> Result<Vec<IndexLink>> {
     for node in root.children().unwrap().iter() {
         match node {
             markdown::mdast::Node::List(list) => {
