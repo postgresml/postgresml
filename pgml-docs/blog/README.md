@@ -6,7 +6,7 @@ description: Our blog posts
 
 * [speeding-up-vector-recall-5x-with-hnsw.md](speeding-up-vector-recall-5x-with-hnsw.md "mention")
 * [how-to-improve-search-results-with-machine-learning.md](how-to-improve-search-results-with-machine-learning.md "mention")
-* [pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots.md](pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots.md "mention")
+* [pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md](pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md "mention")
 * [announcing-support-for-aws-us-east-1-region.md](announcing-support-for-aws-us-east-1-region.md "mention")
 * [how-we-generate-javascript-and-python-sdks-from-our-canonical-rust-sdk.md](how-we-generate-javascript-and-python-sdks-from-our-canonical-rust-sdk.md "mention")
 * [announcing-gptq-and-ggml-quantized-llm-support-for-huggingface-transformers.md](announcing-gptq-and-ggml-quantized-llm-support-for-huggingface-transformers.md "mention")
