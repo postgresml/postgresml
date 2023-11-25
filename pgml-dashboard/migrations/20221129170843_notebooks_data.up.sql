@@ -555,11 +555,11 @@ INSERT INTO pgml.notebook_cells VALUES (153, 6, 3, 18, 1, 'SELECT pgml.normalize
 INSERT INTO pgml.notebook_cells VALUES (63, 1, 1, 58, 1, 'At this point, the primary limitation of our model is the amount of data, the number of examples we have to train it on. Luckily, as time marches on, and data accumulates in the database, we can simply retrain this model with additional calls to `pgml.train` and watch it adjust as new information becomes available.', '<article class="markdown-body"><p>At this point, the primary limitation of our model is the amount of data, the number of examples we have to train it on. Luckily, as time marches on, and data accumulates in the database, we can simply retrain this model with additional calls to <code>pgml.train</code> and watch it adjust as new information becomes available.</p></article>', NULL, NULL);
 INSERT INTO pgml.notebook_cells VALUES (64, 1, 3, 59, 1, '-- If you''d like to start this tutorial over, you can clear out the tables we created.
 -- use Ctrl-/ to comment/uncomment blocks in this editor.
--- DROP TABLE IF EXISTS products CASCADE;
--- DROP TABLE IF EXISTS orders CASCADE;
--- DROP TABLE IF EXISTS line_items CASCADE;
--- DROP TABLE IF EXISTS chargebacks CASCADE;
--- DROP TABLE IF EXISTS payments CASCADE;', NULL, NULL, NULL);
+DROP TABLE IF EXISTS products CASCADE; 
+DROP TABLE IF EXISTS orders CASCADE; 
+DROP TABLE IF EXISTS line_items CASCADE; 
+DROP TABLE IF EXISTS chargebacks CASCADE; 
+DROP TABLE IF EXISTS payments CASCADE;', NULL, NULL, NULL);
 INSERT INTO pgml.notebook_cells VALUES (65, 2, 1, 1, 1, 'Binary classification means categorizing data into 2 categories. Usually these are categories like:
 
 - `True` or `False`
