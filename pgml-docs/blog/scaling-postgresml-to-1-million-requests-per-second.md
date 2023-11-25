@@ -1,6 +1,11 @@
+---
+description: >-
+  Addressing horizontal scalability concerns, we've benchmarked PostgresML and
+  ended up with an incredible 1 million requests per second using commodity
+  hardware.
+---
+
 # Scaling PostgresML to 1 Million Requests per Second
-
-
 
 Lev Kokotov
 

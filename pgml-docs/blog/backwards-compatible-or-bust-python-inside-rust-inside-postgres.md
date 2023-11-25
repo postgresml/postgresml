@@ -1,6 +1,10 @@
+---
+description: >-
+  A story about including Scikit-learn into our Rust extension and preserving
+  backwards compatibility in the process.
+---
+
 # Backwards Compatible or Bust: Python Inside Rust Inside Postgres
-
-
 
 Lev Kokotov
 

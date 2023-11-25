@@ -1,6 +1,10 @@
+---
+description: >-
+  Unlock the Power of Large Language Models (LLM) in Data Pipelines with
+  PostgresML and dbt.
+---
+
 # LLM based pipelines with PostgresML and dbt (data build tool)
-
-
 
 Santi Adavani
 

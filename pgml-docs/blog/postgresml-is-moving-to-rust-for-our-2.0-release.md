@@ -1,6 +1,11 @@
+---
+description: >-
+  In PostgresML 2.0, we'd like to address runtime speed, memory consumption and
+  the overall reliability we've seen for machine learning deployments running at
+  scale.
+---
+
 # PostgresML is Moving to Rust for our 2.0 Release
-
-
 
 Montana Low
 

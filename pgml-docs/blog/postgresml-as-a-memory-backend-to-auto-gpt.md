@@ -1,6 +1,10 @@
+---
+description: >-
+  Auto-GPT is an open-source autonomous AI tool that can use PostgresML as
+  memory backend to store and access data from previous queries or private data.
+---
+
 # PostgresML as a memory backend to Auto-GPT
-
-
 
 Santi Adavani
 

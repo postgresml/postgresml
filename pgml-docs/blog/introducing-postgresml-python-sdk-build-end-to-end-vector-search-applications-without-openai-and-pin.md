@@ -1,6 +1,10 @@
+---
+description: >-
+  The PostgresML Python SDK is designed to facilitate the development of
+  end-to-end vector search applications without OpenAI and Pinecone.
+---
+
 # Introducing PostgresML Python SDK: Build End-to-End Vector Search Applications without OpenAI and Pinecone
-
-
 
 Santi Adavani
 

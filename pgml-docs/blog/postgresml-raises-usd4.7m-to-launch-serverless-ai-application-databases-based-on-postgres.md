@@ -1,8 +1,13 @@
+---
+description: >-
+  With PostgresML, developers can prototype and deploy AI applications quickly
+  and at scale in a matter of minutes — a task that would otherwise have taken
+  weeks.
+---
+
 # PostgresML raises $4.7M to launch serverless AI application databases based on Postgres
 
-
-
-Montana Low, CEO
+Montana Low
 
 May 10, 2023
 

@@ -1,6 +1,10 @@
+---
+description: >-
+  How to personalize results from a vector database generated with open source
+  HuggingFace models using pgvector and PostgresML.
+---
+
 # Personalize embedding results with application data in your database
-
-
 
 Montana Low
 

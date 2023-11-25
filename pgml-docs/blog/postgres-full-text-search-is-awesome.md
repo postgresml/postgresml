@@ -1,6 +1,10 @@
+---
+description: >-
+  If you want to improve your search results, don't rely on expensive O(n*m)
+  word frequency statistics. Get new sources of data instead.
+---
+
 # Postgres Full Text Search is Awesome!
-
-
 
 Montana Low
 

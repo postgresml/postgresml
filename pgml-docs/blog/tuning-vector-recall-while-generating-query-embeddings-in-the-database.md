@@ -1,6 +1,10 @@
+---
+description: >-
+  How to effectively write and tune queries against large embedding collections
+  with significant speed and quality advantages compared to OpenAI + Pinecone.
+---
+
 # Tuning vector recall while generating query embeddings in the database
-
-
 
 Montana Low
 

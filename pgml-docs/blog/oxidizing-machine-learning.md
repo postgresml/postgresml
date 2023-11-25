@@ -1,6 +1,11 @@
+---
+description: >-
+  PostgresML's architecture gives it a huge performance advantage over
+  traditional deployments when it comes to latency, throughput and memory
+  utilization.
+---
+
 # Oxidizing Machine Learning
-
-
 
 Lev Kokotov
 

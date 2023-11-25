@@ -1,6 +1,10 @@
+---
+description: >-
+  How to use the pgml.embed(...) function to generate embeddings with free and
+  open source models in your own database.
+---
+
 # Generating LLM embeddings with open source models in PostgresML
-
-
 
 Montana Low
 

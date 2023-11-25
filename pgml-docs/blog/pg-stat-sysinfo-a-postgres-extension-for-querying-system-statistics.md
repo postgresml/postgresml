@@ -1,6 +1,8 @@
+---
+description: Introducing a Postgres extension which collects system statistics
+---
+
 # PG Stat Sysinfo, a Postgres Extension for Querying System Statistics
-
-
 
 Jason Dusek
 

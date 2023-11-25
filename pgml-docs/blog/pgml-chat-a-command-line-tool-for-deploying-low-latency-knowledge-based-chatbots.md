@@ -1,6 +1,10 @@
-# pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots: Part I
+---
+description: >-
+  pgml-chat: A command-line tool for deploying low-latency knowledge-based
+  chatbots
+---
 
-
+# pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots
 
 Santi Adavani
 

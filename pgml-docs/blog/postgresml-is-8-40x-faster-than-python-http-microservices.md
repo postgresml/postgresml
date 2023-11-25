@@ -1,6 +1,11 @@
+---
+description: >-
+  PostgresML's architecture gives it a huge performance advantage over
+  traditional deployments when it comes to latency, throughput and memory
+  utilization.
+---
+
 # PostgresML is 8-40x faster than Python HTTP microservices
-
-
 
 Lev Kokotov
 

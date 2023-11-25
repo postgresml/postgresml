@@ -1,6 +1,11 @@
+---
+description: >-
+  Choosing a database for your product sounds like a hard problem. These days,
+  we engineers have an abundance of choice, which makes this decision harder
+  than it should be. Let's look at a few options.
+---
+
 # Which Database, That is the Question
-
-
 
 Lev Kokotov
 

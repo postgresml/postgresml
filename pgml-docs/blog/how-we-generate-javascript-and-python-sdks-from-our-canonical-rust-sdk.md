@@ -1,6 +1,10 @@
+---
+description: >-
+  Our story of simultaneously writing multi-language native libraries using
+  Rust.
+---
+
 # How We Generate JavaScript and Python SDKs From Our Canonical Rust SDK
-
-
 
 Silas Marvin
 
