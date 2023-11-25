@@ -1,7 +1,7 @@
 use pgml_components::Component;
 use std::collections::HashMap;
 
-pub use crate::components::{self, NavLink, StaticNav, StaticNavLink, cms::index_link::IndexLink};
+pub use crate::components::{self, cms::index_link::IndexLink, NavLink, StaticNav, StaticNavLink};
 
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;

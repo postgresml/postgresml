@@ -1,7 +1,7 @@
 use std::{
-    env::var,
     borrow::Cow,
-    path::{Path, PathBuf}
+    env::var,
+    path::{Path, PathBuf},
 };
 
 use lazy_static::lazy_static;
@@ -53,8 +53,16 @@ impl Config {
         let css_version = env_string_default("CSS_VERSION", "");
         let js_version = env_string_default("JS_VERSION", "1");
 
-        let css_extension = if dev_mode { "css".to_string() } else { format!("{css_version}.css") };
-        let js_extension = if dev_mode { "js".to_string() } else { format!("{js_version}.js") };
+        let css_extension = if dev_mode {
+            "css".to_string()
+        } else {
+            format!("{css_version}.css")
+        };
+        let js_extension = if dev_mode {
+            "js".to_string()
+        } else {
+            format!("{js_version}.js")
+        };
 
         Config {
             dev_mode,

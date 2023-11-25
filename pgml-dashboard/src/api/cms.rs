@@ -1,21 +1,24 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
 use lazy_static::lazy_static;
+use markdown::mdast::Node;
 use rocket::{
     fs::NamedFile,
     http::{uri::Origin, Status},
     route::Route,
     State,
 };
+use tantivy::HasLen;
 use yaml_rust::YamlLoader;
 
 use crate::{
+    components::cms::index_link::IndexLink,
     guards::Cluster,
     responses::{ResponseOk, Template},
     templates::docs::*,
-    utils::{config, markdown},
-    components::cms::index_link::IndexLink
+    utils::config,
 };
 
 lazy_static! {
@@ -24,91 +27,154 @@ lazy_static! {
     static ref DOCS: Collection = Collection::new("Docs");
 }
 
-
 /// A Gitbook collection of documents
+#[derive(Default)]
 struct Collection {
+    /// The properly capitalized identifier for this collection
     name: String,
+    /// The url & path friendly identifier for this collection
+    slug: String,
+    /// The root location on disk for this collection
+    root_dir: PathBuf,
+    /// The root location for gitbook assets
     asset_dir: PathBuf,
+    /// The base url for this collection
+    url_root: PathBuf,
+    /// A hierarchical list of content in this collection
     index: Vec<IndexLink>,
 }
 
 impl Collection {
     pub fn new(name: &str) -> Collection {
-        info!("Loading content: {name}");
-        let root_dir = PathBuf::from(name.to_string().to_lowercase());
+        info!("Loading collection: {name}");
+        let name = name.to_owned();
+        let slug = name.to_lowercase();
+        let root_dir = config::cms_dir().join(&slug);
+        let asset_dir = root_dir.join(".gitbook").join("assets");
+        let url_root = PathBuf::from("/").join(&slug);
 
-        let index_path = config::cms_dir()
-            .join(&root_dir)
-            .join("SUMMARY.md");
-        let contents = std::fs::read_to_string(&index_path).expect(
-            format!(
-                "could not read table of contents markdown: {:?}",
-                &index_path
-            )
-                .as_str(),
-        );
-        let mdast = ::markdown::to_mdast(&contents, &::markdown::ParseOptions::default())
-            .expect("could not parse table of contents markdown");
-        let url = PathBuf::from("/").join(name.to_lowercase());
-        let index = markdown::parse_summary_into_nav_links(&mdast, &url)
-            .expect("could not extract nav links from table of contents");
-
-        Collection {
-            name: name.to_string(),
-            asset_dir: config::cms_dir()
-                .join(&root_dir)
-                .join(".gitbook")
-                .join("assets"),
-            index
-        }
+        let mut collection = Collection {
+            name,
+            slug,
+            root_dir,
+            asset_dir,
+            url_root,
+            ..Default::default()
+        };
+        collection.build_index();
+        collection
     }
+
     pub async fn get_asset(&self, path: &str) -> Option<NamedFile> {
         info!("get_asset: {} {path}", self.name);
         NamedFile::open(self.asset_dir.join(path)).await.ok()
     }
 
-    pub async fn get_content(&self, mut path: PathBuf, cluster: &Cluster, origin: &Origin<'_>) -> Result<ResponseOk, Status> {
-        info!("get_content: {} {}", self.name, path.display().to_string());
+    pub async fn get_content(
+        &self,
+        mut path: PathBuf,
+        cluster: &Cluster,
+        origin: &Origin<'_>,
+    ) -> Result<ResponseOk, Status> {
+        info!("get_content: {} | {path:?}", self.name);
 
-        // Rocket 0.5 began stripping trailing '/' from the path
         if origin.path().ends_with("/") {
-            path = path.join("/");
+            path = path.join("README");
         }
 
-        self.render(cluster, &path).await
+        let path = self.root_dir.join(path.with_extension("md"));
+
+        self.render(&path, cluster).await
     }
 
-    async fn render<'a>(
-        &self,
-        cluster: &Cluster,
-        path: &'a PathBuf,
-        // mut nav_links: Vec<NavLink>,
-        // nav_title: &'a str,
-        // folder: &'a Path,
-        // content: &'a Path,
-    ) -> Result<ResponseOk, Status> {
-        // &self.index,
-        // &self.name.clone(),
-        // Path::new(&self.name.to_lowercase()),
-        // config::cms_dir()
+    /// Create an index of the Collection based on the SUMMARY.md from Gitbook.
+    /// Summary provides document ordering rather than raw filesystem access,
+    /// in addition to formatted titles and paths.
+    fn build_index(&mut self) {
+        let summary_path = self.root_dir.join("SUMMARY.md");
+        let summary_contents = std::fs::read_to_string(&summary_path)
+            .expect(format!("Could not read summary: {summary_path:?}").as_str());
+        let mdast = markdown::to_mdast(&summary_contents, &::markdown::ParseOptions::default())
+            .expect(format!("Could not parse summary: {summary_path:?}").as_str());
 
-        let mut path = path
-            .to_str()
-            .expect("path must convert to a string")
-            .to_string();
-        let url = path.clone();
-        info!("path: {:?} | folder: {:?}", path, self.name);
-        if path.ends_with("/") || path.is_empty() {
-            path.push_str("README");
+        for node in mdast
+            .children()
+            .expect(format!("Summary has no content: {summary_path:?}").as_str())
+            .iter()
+        {
+            match node {
+                Node::List(list) => {
+                    self.index = self.get_sub_links(&list).expect(
+                        format!("Could not parse list of index links: {summary_path:?}")
+                            .as_str(),
+                    );
+                    break;
+                }
+                _ => {
+                    warn!("Irrelevant content ignored in: {summary_path:?}")
+                }
+            }
         }
 
-        // Get the document content
-        let path = config::cms_dir()
-            .join(self.name.to_lowercase())
-            .join(path.to_string() + ".md");
-        info!("path: {:?}", path);
+        if self.index.is_empty() {
+            error!("Index has no entries for Collection: {}", self.name);
+        }
+    }
 
-        // Read to string
+    pub fn get_sub_links(&self, list: &markdown::mdast::List) -> anyhow::Result<Vec<IndexLink>> {
+        let mut links = Vec::new();
+
+        // SUMMARY.md is a nested List > ListItem > List | Paragraph > Link > Text
+        for node in list.children.iter() {
+            match node {
+                Node::ListItem(list_item) => {
+                    for node in list_item.children.iter() {
+                        match node {
+                            Node::List(list) => {
+                                let mut link: IndexLink = links.pop().unwrap();
+                                link.children = self.get_sub_links(list).unwrap();
+                                links.push(link);
+                            }
+                            Node::Paragraph(paragraph) => {
+                                for node in paragraph.children.iter() {
+                                    match node {
+                                        Node::Link(link) => {
+                                            for node in link.children.iter() {
+                                                match node {
+                                                    Node::Text(text) => {
+                                                        let mut url = Path::new(&link.url)
+                                                            .with_extension("")
+                                                            .to_string_lossy()
+                                                            .to_string();
+                                                        if url.ends_with("README") {
+                                                            url = url.replace("README", "");
+                                                        }
+                                                        let url = self.url_root.join(url);
+                                                        let parent =
+                                                            IndexLink::new(text.value.as_str())
+                                                                .href(&url.to_string_lossy());
+                                                        links.push(parent);
+                                                    }
+                                                    _ => error!("unhandled link child: {node:?}"),
+                                                }
+                                            }
+                                        }
+                                        _ => error!("unhandled paragraph child: {node:?}"),
+                                    }
+                                }
+                            }
+                            _ => error!("unhandled list_item child: {node:?}"),
+                        }
+                    }
+                }
+                _ => error!("unhandled list child: {node:?}"),
+            }
+        }
+        Ok(links)
+    }
+
+    async fn render<'a>(&self, path: &'a PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
+        // Read to string0
         let contents = match tokio::fs::read_to_string(&path).await {
             Ok(contents) => {
                 info!("loading markdown file: '{:?}", path);
@@ -128,7 +194,9 @@ impl Collection {
                         if meta.as_hash().is_none() {
                             ((None, None), contents.to_string())
                         } else {
-                            let description: Option<String> = match meta["description"].is_badvalue() {
+                            let description: Option<String> = match meta["description"]
+                                .is_badvalue()
+                            {
                                 true => None,
                                 false => Some(meta["description"].as_str().unwrap().to_string()),
                             };
@@ -152,32 +220,39 @@ impl Collection {
 
         // Parse Markdown
         let arena = Arena::new();
-        let root = parse_document(&arena, &contents, &markdown::options());
+        let root = parse_document(&arena, &contents, &crate::utils::markdown::options());
 
         // Title of the document is the first (and typically only) <h1>
-        let title = markdown::get_title(&root).unwrap();
-        let toc_links = markdown::get_toc(&root).unwrap();
+        let title = crate::utils::markdown::get_title(&root).unwrap();
+        let toc_links = crate::utils::markdown::get_toc(&root).unwrap();
 
-        markdown::wrap_tables(&root, &arena).unwrap();
+        crate::utils::markdown::wrap_tables(&root, &arena).unwrap();
 
         // MkDocs syntax support, e.g. tabs, notes, alerts, etc.
-        markdown::mkdocs(&root, &arena).unwrap();
+        crate::utils::markdown::mkdocs(&root, &arena).unwrap();
 
         // Style headings like we like them
         let mut plugins = ComrakPlugins::default();
-        let headings = markdown::MarkdownHeadings::new();
+        let headings = crate::utils::markdown::MarkdownHeadings::new();
         plugins.render.heading_adapter = Some(&headings);
-        plugins.render.codefence_syntax_highlighter = Some(&markdown::SyntaxHighlighter {});
+        plugins.render.codefence_syntax_highlighter =
+            Some(&crate::utils::markdown::SyntaxHighlighter {});
 
         // Render
         let mut html = vec![];
-        format_html_with_plugins(root, &markdown::options(), &mut html, &plugins).unwrap();
+        format_html_with_plugins(
+            root,
+            &crate::utils::markdown::options(),
+            &mut html,
+            &plugins,
+        )
+        .unwrap();
         let html = String::from_utf8(html).unwrap();
 
         // Handle navigation
         let index = self.index.clone();
         // into_iter().map(|nav_link| {
-            // nav_link.should_open(&url, Path::new(&self.name.to_lowercase()))
+        // nav_link.should_open(&url, Path::new(&self.name.to_lowercase()))
         //}).collect();
 
         let user = if cluster.context.user.is_anonymous() {
@@ -209,8 +284,14 @@ impl Collection {
     }
 }
 
+struct Document {
+    title: String,
+    path: String,
+    rendered: String,
+}
+
 #[get("/search?<query>", rank = 20)]
-async fn search(query: &str, index: &State<markdown::SearchIndex>) -> ResponseOk {
+async fn search(query: &str, index: &State<crate::utils::markdown::SearchIndex>) -> ResponseOk {
     let results = index.search(query).unwrap();
 
     ResponseOk(
@@ -222,6 +303,11 @@ async fn search(query: &str, index: &State<markdown::SearchIndex>) -> ResponseOk
     )
 }
 
+#[get("/blog/.gitbook/assets/<path>", rank = 10)]
+pub async fn get_blog_asset(path: &str) -> Option<NamedFile> {
+    BLOG.get_asset(path).await
+}
+
 #[get("/careers/.gitbook/assets/<path>", rank = 10)]
 pub async fn get_careers_asset(path: &str) -> Option<NamedFile> {
     CAREERS.get_asset(path).await
@@ -230,6 +316,15 @@ pub async fn get_careers_asset(path: &str) -> Option<NamedFile> {
 #[get("/docs/.gitbook/assets/<path>", rank = 10)]
 pub async fn get_docs_asset(path: &str) -> Option<NamedFile> {
     DOCS.get_asset(path).await
+}
+
+#[get("/blog/<path..>", rank = 5)]
+async fn get_blog(
+    path: PathBuf,
+    cluster: &Cluster,
+    origin: &Origin<'_>,
+) -> Result<ResponseOk, Status> {
+    BLOG.get_content(path, cluster, origin).await
 }
 
 #[get("/careers/<path..>", rank = 5)]
@@ -250,77 +345,10 @@ async fn get_docs(
     DOCS.get_content(path, cluster, origin).await
 }
 
-#[get("/blog/<path..>", rank = 10)]
-async fn get_blog<'a>(path: PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
-    todo!()
-    // render(
-    //     cluster,
-    //     &path,
-    //     vec![
-    //         NavLink::new("Speeding up vector recall by 5x with HNSW")
-    //             .href("/blog/speeding-up-vector-recall-by-5x-with-hnsw"),
-    //         NavLink::new("How-to Improve Search Results with Machine Learning")
-    //             .href("/blog/how-to-improve-search-results-with-machine-learning"),
-    //         NavLink::new("pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots: Part I")
-    //             .href("/blog/pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-I"),
-    //         NavLink::new("Announcing support for AWS us-east-1 region")
-    //             .href("/blog/announcing-support-for-aws-us-east-1-region"),
-    //         NavLink::new("LLM based pipelines with PostgresML and dbt (data build tool)")
-    //             .href("/blog/llm-based-pipelines-with-postgresml-and-dbt"),
-    //         NavLink::new("How we generate JavaScript and Python SDKs from our canonical Rust SDK")
-    //             .href("/blog/how-we-generate-javascript-and-python-sdks-from-our-canonical-rust-sdk"),
-    //         NavLink::new("Announcing GPTQ & GGML Quantized LLM support for Huggingface Transformers")
-    //             .href("/blog/announcing-gptq-and-ggml-quantized-llm-support-for-huggingface-transformers"),
-    //         NavLink::new("Making Postgres 30 Percent Faster in Production")
-    //             .href("/blog/making-postgres-30-percent-faster-in-production"),
-    //         NavLink::new("MindsDB vs PostgresML")
-    //             .href("/blog/mindsdb-vs-postgresml"),
-    //         NavLink::new("Introducing PostgresML Python SDK: Build End-to-End Vector Search Applications without OpenAI and Pinecone")
-    //             .href("/blog/introducing-postgresml-python-sdk-build-end-to-end-vector-search-applications-without-openai-and-pinecone"),
-    //         NavLink::new("PostgresML raises $4.7M to launch serverless AI application databases based on Postgres")
-    //             .href("/blog/postgresml-raises-4.7M-to-launch-serverless-ai-application-databases-based-on-postgres"),
-    //         NavLink::new("PG Stat Sysinfo, a Postgres Extension for Querying System Statistics")
-    //             .href("/blog/pg-stat-sysinfo-a-pg-extension"),
-    //         NavLink::new("PostgresML as a memory backend to Auto-GPT")
-    //             .href("/blog/postgresml-as-a-memory-backend-to-auto-gpt"),
-    //         NavLink::new("Personalize embedding search results with Huggingface and pgvector")
-    //             .href(
-    //             "/blog/personalize-embedding-vector-search-results-with-huggingface-and-pgvector",
-    //         ),
-    //         NavLink::new("Tuning vector recall while generating query embeddings in the database")
-    //             .href(
-    //                 "/blog/tuning-vector-recall-while-generating-query-embeddings-in-the-database",
-    //             ),
-    //         NavLink::new("Generating LLM embeddings with open source models in PostgresML")
-    //             .href("/blog/generating-llm-embeddings-with-open-source-models-in-postgresml"),
-    //         NavLink::new("Scaling PostgresML to 1 Million Requests per Second")
-    //             .href("/blog/scaling-postgresml-to-one-million-requests-per-second"),
-    //         NavLink::new("PostgresML is 8-40x faster than Python HTTP Microservices")
-    //             .href("/blog/postgresml-is-8x-faster-than-python-http-microservices"),
-    //         NavLink::new("Backwards Compatible or Bust: Python Inside Rust Inside Postgres")
-    //             .href("/blog/backwards-compatible-or-bust-python-inside-rust-inside-postgres"),
-    //         NavLink::new("PostresML is Moving to Rust for our 2.0 Release")
-    //             .href("/blog/postgresml-is-moving-to-rust-for-our-2.0-release"),
-    //         NavLink::new("Which Database, That is the Question")
-    //             .href("/blog/which-database-that-is-the-question"),
-    //         NavLink::new("Postgres Full Text Search is Awesome")
-    //             .href("/blog/postgres-full-text-search-is-awesome"),
-    //         NavLink::new("Oxidizing Machine Learning").href("/blog/oxidizing-machine-learning"),
-    //         NavLink::new("Data is Living and Relational")
-    //             .href("/blog/data-is-living-and-relational"),
-    //     ],
-    //     "Blog",
-    //     &Path::new("blog"),
-    //     config::blogs_dir(),
-    // )
-    // .await
-}
-
-
-
 pub fn routes() -> Vec<Route> {
     routes![
         get_blog,
+        get_blog_asset,
         get_careers,
         get_careers_asset,
         get_docs,
@@ -378,7 +406,7 @@ This is the end of the markdown
 
         let plugins = ComrakPlugins::default();
 
-        markdown::wrap_tables(&root, &arena).unwrap();
+        crate::utils::markdown::wrap_tables(&root, &arena).unwrap();
 
         let mut html = vec![];
         format_html_with_plugins(root, &options(), &mut html, &plugins).unwrap();
@@ -410,7 +438,7 @@ This is the end of the markdown
 
         let plugins = ComrakPlugins::default();
 
-        markdown::wrap_tables(&root, &arena).unwrap();
+        crate::utils::markdown::wrap_tables(&root, &arena).unwrap();
 
         let mut html = vec![];
         format_html_with_plugins(root, &options(), &mut html, &plugins).unwrap();
