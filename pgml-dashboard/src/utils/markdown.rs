@@ -25,7 +25,6 @@ use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
 use url::Url;
 
-use crate::components::cms::index_link::IndexLink;
 use std::fmt;
 
 pub struct MarkdownHeadings {
@@ -570,74 +569,6 @@ pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
 
         Ok(())
     });
-}
-
-pub fn get_sub_links(list: &markdown::mdast::List, path: &Path) -> Result<Vec<IndexLink>> {
-    let mut links = Vec::new();
-    for node in list.children.iter() {
-        match node {
-            markdown::mdast::Node::ListItem(list_item) => {
-                for node in list_item.children.iter() {
-                    match node {
-                        markdown::mdast::Node::Paragraph(paragraph) => {
-                            for node in paragraph.children.iter() {
-                                match node {
-                                    markdown::mdast::Node::Link(link) => {
-                                        for node in link.children.iter() {
-                                            match node {
-                                                markdown::mdast::Node::Text(text) => {
-                                                    let mut url = Path::new(&link.url)
-                                                        .with_extension("")
-                                                        .to_string_lossy()
-                                                        .to_string();
-                                                    if url.ends_with("README") {
-                                                        url = url.replace("README", "");
-                                                    }
-                                                    let url = path
-                                                        .join(url)
-                                                        .into_os_string()
-                                                        .into_string()
-                                                        .unwrap();
-                                                    let parent = IndexLink::new(text.value.as_str())
-                                                        .href(&url);
-                                                    links.push(parent);
-                                                }
-                                                _ => error!("unhandled link child: {:?}", node),
-                                            }
-                                        }
-                                    }
-                                    _ => error!("unhandled paragraph child: {:?}", node),
-                                }
-                            }
-                        }
-                        markdown::mdast::Node::List(list) => {
-                            let mut link = links.pop().unwrap();
-                            link.children = get_sub_links(list, path).unwrap();
-                            links.push(link);
-                        }
-                        _ => error!("unhandled list_item child: {:?}", node),
-                    }
-                }
-            }
-            _ => error!("unhandled list child: {:?}", node),
-        }
-    }
-    Ok(links)
-}
-
-pub fn parse_summary_into_nav_links(
-    root: &markdown::mdast::Node,
-    path: &Path,
-) -> Result<Vec<IndexLink>> {
-    for node in root.children().unwrap().iter() {
-        match node {
-            markdown::mdast::Node::List(list) => {
-                return get_sub_links(list, path);
-            }
-            _ => { /* irrelevant */ }
-        }
-    }
-    return Ok(vec![]);
 }
 
 /// Get the title of the article.

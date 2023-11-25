@@ -24,7 +24,7 @@ impl MarketingFooter {
                 StaticNavLink::new("Documentation".into(), "/docs/".into()),
                 StaticNavLink::new(
                     "Blog".into(),
-                    "/blog/speeding-up-vector-recall-by-5x-with-hnsw".into(),
+                    "/blog/".into(),
                 ),
             ],
             company: vec![StaticNavLink::new(
