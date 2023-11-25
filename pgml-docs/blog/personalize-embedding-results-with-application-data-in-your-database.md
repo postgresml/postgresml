@@ -17,9 +17,7 @@ This article is the third in a multipart series that will show you how to build 
 3. Personalizing embedding results with application data
 4. Optimizing semantic results with an XGBoost ranking model - coming soon!
 
-
-
-_Embeddings can be combined into personalized perspectives when stored as vectors in the database._
+<figure><img src=".gitbook/assets/image (24).png" alt=""><figcaption><p>Embeddings can be combined into personalized perspectives when stored as vectors in the database.</p></figcaption></figure>
 
 ## Personalization
 

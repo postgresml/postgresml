@@ -21,9 +21,7 @@ In recent years, embeddings have become an increasingly popular technique in mac
 
 They can also turn natural language into quantitative features for downstream machine learning models and applications.
 
-
-
-_Embeddings show us the relationships between rows in the database._
+<figure><img src=".gitbook/assets/image (27).png" alt=""><figcaption><p>Embeddings show us the relationships between rows in the database.</p></figcaption></figure>
 
 A popular use case driving the adoption of "vector databases" is doing similarity search on embeddings, often referred to as "Semantic Search". This is a powerful technique that allows you to find similar items in large datasets by comparing their vectors. For example, you could use it to find similar products in an e-commerce site, similar songs in a music streaming service, or similar documents given a text query.
 

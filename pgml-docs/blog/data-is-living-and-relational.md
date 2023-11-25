@@ -29,6 +29,8 @@ This eventually leads to expensive maintenance and terminal complexity: new impr
 
 Instead of starting from the academic perspective that data is dead, PostgresML embraces the living and dynamic nature of data produced by modern organizations. It's relational and growing in multiple dimensions.
 
+<figure><img src=".gitbook/assets/image (54).png" alt=""><figcaption></figcaption></figure>
+
 Relational data:
 
 * is normalized for real time performance and correctness considerations

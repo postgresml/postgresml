@@ -22,9 +22,7 @@ Part of our thesis, and the reason why we chose Postgres as our host for machine
 
 Inference speed varies based on the model complexity (e.g. `n_estimators` for XGBoost) and the size of the dataset (how many features the model uses), which is analogous to query complexity and table size in the database world and, as we'll demonstrate further on, scaling the latter is mostly a solved problem.
 
-
-
-_System Architecture_
+<figure><img src=".gitbook/assets/image (28).png" alt=""><figcaption><p>System Architecture</p></figcaption></figure>
 
 | Component | Description                                                                                               |
 | --------- | --------------------------------------------------------------------------------------------------------- |
@@ -75,10 +73,7 @@ Scaling XGBoost predictions is a little bit more interesting. XGBoost cannot ser
 
 PostgresML bypasses that limitation because of how Postgres itself handles concurrency:
 
-\
-
-
-_PostgresML concurrency_
+<figure><img src=".gitbook/assets/image (29).png" alt=""><figcaption><p>PostgresML concurrency</p></figcaption></figure>
 
 PostgreSQL uses the fork/multiprocessing architecture to serve multiple clients concurrently: each new client connection becomes an independent OS process. During connection startup, PostgresML loads all models inside the process' memory space. This means that each connection has its own copy of the XGBoost model and PostgresML ends up serving multiple XGBoost predictions at the same time without any lock contention.
 
@@ -90,6 +85,10 @@ One of the tests we ran used 1,000 clients, which were connected to 1, 2, and 5 
 
 ### Linear Scaling
 
+<figure><img src=".gitbook/assets/image (30).png" alt=""><figcaption></figcaption></figure>
+
+<figure><img src=".gitbook/assets/image (32).png" alt=""><figcaption></figcaption></figure>
+
 Both latency and throughput, the standard measurements of system performance, scale mostly linearly with the number of replicas. Linear scaling is the north star of all horizontally scalable systems, and most are not able to achieve it because of increasing complexity that comes with synchronization.
 
 Our architecture shares nothing and requires no synchronization. The replicas don't talk to each other and the poolers don't either. Every component has the knowledge it needs (through configuration) to do its job, and they do it well.
@@ -97,6 +96,10 @@ Our architecture shares nothing and requires no synchronization. The replicas do
 The most impressive result is serving close to a million predictions with an average latency of less than 1ms. You might notice though that `950160.7` isn't quite one million, and that's true. We couldn't reach one million with 1000 clients, so we increased to 2000 and got our magic number: **1,021,692.7 req/sec**, with an average latency of **1.7ms**.
 
 ### Batching Predictions
+
+<figure><img src=".gitbook/assets/image (33).png" alt=""><figcaption></figcaption></figure>
+
+<figure><img src=".gitbook/assets/image (34).png" alt=""><figcaption></figcaption></figure>
 
 Batching is a proven method to optimize performance. If you need to get several data points, batch the requests into one query, and it will run faster than making individual requests.
 
@@ -108,14 +111,15 @@ If batching did not work at all, we would see a linear increase in latency and a
 
 ### Graceful Degradation and Queuing
 
+<figure><img src=".gitbook/assets/image (35).png" alt=""><figcaption></figcaption></figure>
+
+<figure><img src=".gitbook/assets/image (36).png" alt=""><figcaption></figcaption></figure>
+
 All systems, at some point in their lifetime, will come under more load than they were designed for; what happens then is an important feature (or bug) of their design. Horizontal scaling is never immediate: it takes a bit of time to spin up additional hardware to handle the load. It can take a second, or a minute, depending on availability, but in both cases, existing resources need to serve traffic the best way they can.
 
 We were hoping to test PostgresML to its breaking point, but we couldn't quite get there. As the load (number of clients) increased beyond provisioned capacity, the only thing we saw was a gradual increase in latency. Throughput remained roughly the same. This gradual latency increase was caused by simple queuing: the replicas couldn't serve requests concurrently, so the requests had to patiently wait in the poolers.
 
-\
-
-
-_"What's taking so long over there!?"_
+<figure><img src=".gitbook/assets/image (37).png" alt=""><figcaption><p>"What's taking so long over there!?"</p></figcaption></figure>
 
 Among many others, this is a very important feature of any proxy: it's a FIFO queue (first in, first out). If the system is underutilized, queue size is 0 and all requests are served as quickly as physically possible. If the system is overutilized, the queue size increases, holds as the number of requests stabilizes, and decreases back to 0 as the system is scaled up to accommodate new traffic.
 

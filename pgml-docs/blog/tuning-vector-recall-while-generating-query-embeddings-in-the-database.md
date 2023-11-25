@@ -19,9 +19,7 @@ This article is the second in a multipart series that will show you how to build
 
 The previous article discussed how to generate embeddings that perform better than OpenAI's `text-embedding-ada-002` and save them in a table with a vector index. In this article, we'll show you how to query those embeddings effectively.
 
-
-
-_Embeddings show us the relationships between rows in the database, using natural language._
+<figure><img src=".gitbook/assets/image (25).png" alt=""><figcaption><p>Embeddings show us the relationships between rows in the database, using natural language.</p></figcaption></figure>
 
 Our example data is based on 5 million DVD reviews from Amazon customers submitted over a decade. For reference, that's more data than fits in a Pinecone Pod at the time of writing. Webscale: check. Let's start with a quick refresher on the data in our `pgml.amazon_us_reviews` table:
 
@@ -171,7 +169,7 @@ There's some good stuff happening in those query results, so let's break it down
 
 This seems to actually just work out of the box... but, there is some room for improvement.
 
-_Yeah, well, that's just like, your opinion, man_
+<figure><img src=".gitbook/assets/image (26).png" alt=""><figcaption><p>Yeah, well, that's just like, your opinion, man</p></figcaption></figure>
 
 1. **It's a single persons opinion** - We're searching individual reviews, not all reviews for a movie. The correct answer to this request is undisputedly "Episode V: The Empire Strikes Back". Ok, maybe "Blade Runner", but I really did like "Back to the Future"... Oh no, someone on the internet is wrong, and we need to fix it!
 2. **It's approximate** - There are more than four 80's Sci-Fi movie reviews in this dataset of 5M. It really shouldn't be including results from the 70's. More relevant reviews are not being returned, which is a pretty sneaky optimization for a database to pull, but the disclaimer was in the name.

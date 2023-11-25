@@ -14,8 +14,12 @@ If you've been using our Oregon (`us-west-2`) deployments and decide to switch t
 
 To demonstrate the impact of moving the data closer to your application, we've created two PostgresML deployments: one on the East Coast and one on the West Coast. We then ran `pgbench` from a virtual machine in New York against both deployments. The results speak for themselves.
 
+<figure><img src=".gitbook/assets/image (8).png" alt=""><figcaption></figcaption></figure>
+
 \
 
+
+<figure><img src=".gitbook/assets/image (9).png" alt=""><figcaption></figcaption></figure>
 
 \
 
@@ -23,6 +27,8 @@ To demonstrate the impact of moving the data closer to your application, we've c
 ## Using the New Region
 
 To take advantage of latency savings, you can [deploy a dedicated PostgresML database](https://postgresml.org/signup) in `us-east-1` today. We make it as simple as filling out a very short form and clicking "Create database".
+
+<figure><img src=".gitbook/assets/image (10).png" alt=""><figcaption></figcaption></figure>
 
 ## Performance is Key
 

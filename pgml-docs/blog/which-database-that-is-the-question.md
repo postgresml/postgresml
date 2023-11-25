@@ -32,6 +32,8 @@ If we denormalize this data, by either flattening it into a key-value store or j
 
 ## PostgreSQL
 
+<figure><img src=".gitbook/assets/image (52).png" alt=""><figcaption></figcaption></figure>
+
 Okay, that was a bit of a spoiler.
 
 When looking at our options, one has to wonder, why can't we have our cake and eat it too? That's a bad analogy though, because we're not asking for that much and we certainly can have it.

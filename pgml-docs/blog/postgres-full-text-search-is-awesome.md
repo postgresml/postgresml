@@ -19,7 +19,7 @@ This is good enough for most of the use cases out there, without introducing any
 1. Trying to improve search relevance with statistics like TF-IDF and BM25 is like trying to make a flying car. What you want is a helicopter instead.
 2. Computing Inverse Document Frequency (IDF) for BM25 brutalizes your search indexing performance, which leads to a [host of follow on issues via distributed computation](https://en.wikipedia.org/wiki/Fallacies\_of\_distributed\_computing), for the originally dubious reason.
 
-_What we were promised_
+<figure><img src=".gitbook/assets/image (53).png" alt=""><figcaption><p>What we were promised</p></figcaption></figure>
 
 Academics have spent decades inventing many algorithms that use orders of magnitude more compute eking out marginally better results that often aren't worth it in practice. Not to generally disparage academia, their work has consistently improved our world, but we need to pay attention to tradeoffs. SQL is another acronym similarly pioneered in the 1970's. One difference between SQL and BM25 is that everyone has heard of the former before reading this blog post, for good reason.
 

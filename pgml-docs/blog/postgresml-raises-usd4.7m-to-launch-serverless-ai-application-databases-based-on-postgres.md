@@ -10,7 +10,7 @@ Developing AI-powered applications requires a range of APIs for carrying out tas
 
 With PostgresML, developers can prototype and deploy AI applications quickly and at scale in a matter of minutes — a task that would otherwise have taken weeks. By streamlining the infrastructure requirements, PostgresML allows developers to concentrate on creating intelligent and engaging applications.
 
-
+<figure><img src=".gitbook/assets/image (20).png" alt=""><figcaption></figcaption></figure>
 
 ## Our Serverless AI Cloud
 
@@ -20,7 +20,7 @@ Creating a new database in this cluster takes a few milliseconds. That database 
 
 Even though PgCat is barely a year old, there are already production workloads handling hundreds of thousands of queries per second at companies like Instacart and OneSignal. Our own deployment is already managing hundreds of independent databases, and launching many new ones every day.
 
-
+<figure><img src=".gitbook/assets/image (21).png" alt=""><figcaption></figcaption></figure>
 
 ## Open Source is the Way Forward
 
@@ -32,7 +32,7 @@ By integrating all the leading machine learning libraries like Torch, Tensorflow
 
 Many amazing open and collaborative communities are shaping the future of our industry, and we will continue to innovate and contribute alongside them. If you’d like to see more of the things you can do with an AI application database, check out the latest series of articles.
 
-
+<figure><img src=".gitbook/assets/image (22).png" alt=""><figcaption></figcaption></figure>
 
 ## Thanks to Our Community
 

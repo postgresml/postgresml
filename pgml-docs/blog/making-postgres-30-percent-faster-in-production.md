@@ -20,8 +20,7 @@ This is not only a performance benefit, but also a usability improvement for cli
 
 ## Benchmark
 
-\
-
+<figure><img src=".gitbook/assets/image (15).png" alt=""><figcaption></figcaption></figure>
 
 The benchmark was conducted using `pgbench` with 1, 10, 100 and 1000 clients sending millions of queries to PgCat, which itself was running on a different EC2 machine alongside the database. This is a simple setup often used in production. Another configuration sees a pooler use its own machine, which of course increases latency but improves on availability. The clients were on another EC2 machine to simulate the latency experienced in typical web apps deployed in Kubernetes, ECS, EC2 and others.
 
@@ -36,6 +35,8 @@ An important feature of PgCat's implementation is that all prepared statements a
 ## Metrics
 
 We've added two new metrics to the admin database: `prepare_cache_hit` and `prepare_cache_miss`. Prepare cache hits indicate that the prepared statement requested by the client already exists on the server. That's good because PgCat can just rewrite the messages and send them to the server immediately. Prepare cache misses indicate that PgCat had to issue a prepared statement call to the server, which requires additional time and decreases throughput. In the ideal scenario, the cache hits outnumber the cache misses by an order of magnitude. If they are the same or worse, the prepared statements are not being used correctly by the clients.
+
+<figure><img src=".gitbook/assets/image (16).png" alt=""><figcaption></figcaption></figure>
 
 Our benchmark had a 99.99% cache hit ratio, which is really good, but in production this number is likely to be lower. You can monitor your cache hit/miss ratios through the admin database by querying it with `SHOW SERVERS`.
 

@@ -294,6 +294,8 @@ If you have set up the Slack app correctly, you should see the following output:
 
 Once the slack app is running, you can interact with the chatbot on Slack as shown below. In the example here, name of the bot is `PgBot`. This app responds only to direct messages to the bot.
 
+<figure><img src=".gitbook/assets/image (5).png" alt=""><figcaption></figcaption></figure>
+
 #### Discord
 
 You need DISCORD\_BOT\_TOKEN to run the chatbot on Discord. You can get this token by creating a Discord app. Follow the instructions [here](https://discordpy.readthedocs.io/en/stable/discord.html) to create a Discord app. Include the following environment variables in your .env file:
@@ -316,6 +318,8 @@ If you have set up the Discord app correctly, you should see the following outpu
 
 Once the discord app is running, you can interact with the chatbot on Discord as shown below. In the example here, name of the bot is `pgchat`. This app responds only to direct messages to the bot.
 
+<figure><img src=".gitbook/assets/image (6).png" alt=""><figcaption></figcaption></figure>
+
 ### PostgresML vs. Hugging Face + Pinecone
 
 To evaluate query latency, we performed an experiment with 10,000 Wikipedia documents from the SQuAD dataset. Embeddings were generated using the intfloat/e5-large model.
@@ -327,6 +331,8 @@ By keeping the document dataset, model, and hardware constant, we aimed to evalu
 Our experiments found that PostgresML outperformed HuggingFace + Pinecone in query latency by \~4x. Mean latency was 59ms for PostgresML and 233ms for HuggingFace + Pinecone. Query latency was averaged across 100 queries to account for any outliers. This \~4x improvement in mean latency can be attributed to PostgresML's tight integration of embedding generation, indexing, and querying within the database running on NVIDIA A10G GPUs.
 
 For applications like chatbots that require low latency access to knowledge, PostgresML provides superior performance over combining multiple services. The serverless architecture also provides predictable pricing and scales seamlessly with usage.
+
+<figure><img src=".gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
 
 ## Conclusions
 

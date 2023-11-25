@@ -12,7 +12,7 @@ Python is generally touted as fast enough for machine learning, and is the de fa
 
 ## Ambition Starts With a Simple Benchmark
 
-Rust mascot image by opensource.com
+<figure><img src=".gitbook/assets/image (46).png" alt=""><figcaption><p>Rust mascot image by opensource.com</p></figcaption></figure>
 
 To illustrate our motivation, we'll create a test set of 10,000 random embeddings with 128 dimensions, and store them in a table. Our first benchmark will simulate semantic ranking, by computing the dot product against every member of the test set, sorting the results and returning the top match.
 
@@ -181,13 +181,13 @@ We're building with the Rust [pgrx](https://github.com/tcdi/pgrx/tree/master/pgr
 
 ML isn't just about basic math and a little bit of business logic. It's about all those complicated algorithms beyond linear regression for gradient boosting and deep learning. The good news is that most of these libraries are implemented in C/C++, and just have Python bindings. There are also bindings for Rust ([lightgbm](https://github.com/vaaaaanquish/lightgbm-rs), [xgboost](https://github.com/davechallis/rust-xgboost), [tensorflow](https://github.com/tensorflow/rust), [torch](https://github.com/LaurentMazare/tch-rs)).
 
-Layers of abstraction must remain a good value.
+<figure><img src=".gitbook/assets/image (47).png" alt=""><figcaption><p>Layers of abstraction must remain a good value</p></figcaption></figure>
 
 The results are somewhat staggering. We didn't spend any time intentionally optimizing Rust over Python. Most of the time spent was just trying to get things to compile. 😅 It's hard to believe the difference is this big, but those fringe operations outside of the core machine learning algorithms really do dominate, requiring up to 35x more time in Python during inference. The difference between classification and regression speeds here are related to the dataset size. The scikit learn handwritten image classification dataset effectively has 64 features (pixels) vs the diabetes regression dataset having only 10 features.
 
 **The more data we're dealing with, the bigger the improvement we see in Rust**. We're even giving Python some leeway by warming up the runtime on the connection before the test, which typically takes a second or two to interpret all of PostgresML's dependencies. Since Rust is a compiled language, there is no longer a need to warmup the connection.
 
-> _This language comparison uses in-process data access. Python based machine learning microservices that communicate with other services over HTTP with JSON or gRPC interfaces will look even worse in comparison, especially if they are stateless and rely on yet another database to provide their data over yet another wire._
+<figure><img src=".gitbook/assets/image (48).png" alt=""><figcaption><p>This language comparison uses in-process data access. Python based machine learning microservices that communicate with other services over HTTP with JSON or gRPC interfaces will look even worse in comparison, especially if they are stateless and rely on yet another database to provide their data over yet another wire.</p></figcaption></figure>
 
 ## Preserving Backward Compatibility
 
@@ -212,9 +212,15 @@ The API is identical between v1.0 and v2.0. We take breaking changes seriously a
 
 Besides backwards compatibility, we're building a Python compatibility layer to guarantee we can preserve the full Python model training APIs, when Rust APIs are not at parity in terms of functionality, quality or performance. We started this journey thinking that the older vanilla Python algorithms in Scikit would be the best candidates for replacement in Rust, but that is only partly true. There are high quality efforts in [linfa](https://github.com/rust-ml/linfa) and [smartcore](https://github.com/smartcorelib/smartcore) that also show 10-30x speedup over Scikit, but they still lack some of the deeper functionality like joint regression, some of the more obscure algorithms and hyperparameters, and some of the error handling that has been hardened into Scikit with mass adoption.
 
+<figure><img src=".gitbook/assets/image (49).png" alt=""><figcaption></figcaption></figure>
+
 We see similar speed up in prediction time for the Rust implementations of classic algorithms.
 
+<figure><img src=".gitbook/assets/image (50).png" alt=""><figcaption></figcaption></figure>
+
 The Rust implementations also produce high quality predictions against test sets, although there is not perfect parity in the implementations where different optimizations have been chosen by default.
+
+<figure><img src=".gitbook/assets/image (51).png" alt=""><figcaption></figcaption></figure>
 
 Interestingly, the training times for some of the simplest algorithms are worse in the Rust implementation. Until we can guarantee each Rust algorithm is an upgrade in every way, we'll continue to use the Python compatibility layer on a case by case basis to avoid any unpleasant surprises.
 

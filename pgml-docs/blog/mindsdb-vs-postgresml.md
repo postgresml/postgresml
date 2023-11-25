@@ -10,7 +10,7 @@ June 8, 2023
 
 There are a many ways to do machine learning with data in a SQL database. In this article, we'll compare 2 projects that both aim to provide a SQL interface to machine learning algorithms and the data they require: **MindsDB** and **PostgresML**. We'll look at how they work, what they can do, and how they compare to each other. The **TLDR** is that PostgresML is more opinionated, more scalable, more capable and several times faster than MindsDB. On the other hand, MindsDB is 5 times more mature than PostgresML according to age and GitHub Stars. What are the important factors?
 
-_We're occasionally asked what the difference is between PostgresML and MindsDB. We'd like to answer that question at length, and let you decide if the reasoning is fair._
+<figure><img src=".gitbook/assets/image (17).png" alt=""><figcaption><p>We're occasionally asked what the difference is between PostgresML and MindsDB. We'd like to answer that question at length, and let you decide if the reasoning is fair.</p></figcaption></figure>
 
 ### At a glance
 
@@ -48,9 +48,7 @@ Another difference is that PostgresML also supports embedding models, and closel
 
 The architectural implementations for these projects is significantly different. PostgresML takes a data centric approach with Postgres as the provider for both storage _and_ compute. To provide horizontal scalability for inference, the PostgresML team has also created [PgCat](https://github.com/postgresml/pgcat) to distribute workloads across many Postgres databases. On the other hand, MindsDB takes a service oriented approach that connects to various databases over the network.
 
-\
-\
-
+<figure><img src=".gitbook/assets/image (18).png" alt=""><figcaption></figcaption></figure>
 
 |               | MindsDB       | PostgresML |
 | ------------- | ------------- | ---------- |

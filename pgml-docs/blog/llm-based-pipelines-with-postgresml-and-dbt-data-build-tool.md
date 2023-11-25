@@ -8,7 +8,7 @@ July 13, 2023
 
 In the realm of data analytics and machine learning, text processing and large language models (LLMs) have become pivotal in deriving insights from textual data. Efficient data pipelines play a crucial role in enabling streamlined workflows for processing and analyzing text. This blog explores the synergy between PostgresML and dbt, showcasing how they empower organizations to build efficient data pipelines that leverage large language models for text processing, unlocking valuable insights and driving data-driven decision-making.
 
-
+<figure><img src=".gitbook/assets/image (11).png" alt=""><figcaption></figcaption></figure>
 
 ## PostgresML
 

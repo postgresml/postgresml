@@ -10,7 +10,7 @@ We are excited to introduce a Python SDK for PostgresML that streamlines the dev
 
 With the PostgresML Python SDK, developers now have a unified solution. They can effortlessly manage a single application database where they can handle: document management, embedding generation, indexing, and searching. This eliminates the need for multiple infrastructure components, simplifies maintenance, and reduces query latencies. The SDK offers a comprehensive set of tools for managing database tables related to documents, text chunks, text splitters, LLM models, and embeddings, enabling seamless integration of advanced search functionalities.
 
-
+<figure><img src=".gitbook/assets/image (19).png" alt=""><figcaption></figcaption></figure>
 
 ## Key Features
 

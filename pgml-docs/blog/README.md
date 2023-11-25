@@ -4,7 +4,7 @@ description: Our blog posts
 
 # Home
 
-* [speeding-up-vector-recall-by-5x-with-hnsw.md](speeding-up-vector-recall-by-5x-with-hnsw.md "mention")
+* [speeding-up-vector-recall-5x-with-hnsw.md](speeding-up-vector-recall-5x-with-hnsw.md "mention")
 * [how-to-improve-search-results-with-machine-learning.md](how-to-improve-search-results-with-machine-learning.md "mention")
 * [pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md](pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md "mention")
 * [announcing-support-for-aws-us-east-1-region.md](announcing-support-for-aws-us-east-1-region.md "mention")
@@ -26,5 +26,5 @@ description: Our blog posts
 * [postgresml-is-8-40x-faster-than-python-http-microservices.md](postgresml-is-8-40x-faster-than-python-http-microservices.md "mention")
 * [postgres-full-text-search-is-awesome.md](postgres-full-text-search-is-awesome.md "mention")
 * [oxidizing-machine-learning.md](oxidizing-machine-learning.md "mention")
-* [optimizing-semantic-search-results-with-an-xgboost-model-in-your-database.md](optimizing-semantic-search-results-with-an-xgboost-model-in-your-database.md "mention")
+* [Broken link](broken-reference "mention")
 * [data-is-living-and-relational.md](data-is-living-and-relational.md "mention")

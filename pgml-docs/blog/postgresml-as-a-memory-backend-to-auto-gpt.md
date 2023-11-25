@@ -96,6 +96,8 @@ python -m autogpt -m postgresml
 
 You will see Auto-GPT in action with PostgresML backend as shown below. You should see _Using memory of type: PostgresMLMemory_ in the logs.
 
+<figure><img src=".gitbook/assets/image (23).png" alt=""><figcaption></figcaption></figure>
+
 ## Conclusion
 
 In this blog post, I showed you how to add PostgresML as a memory backend to Auto-GPT. Adding PostgresML as a memory backend can significantly accelerate performance and scalability of Auto-GPT. It can enable you to rapidly prototype with Auto-GPT and build AI-powered applications.
