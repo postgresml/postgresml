@@ -1,6 +1,7 @@
 # Table of contents
 
-* [Speeding up vector recall by 5x with HNSW](README.md)
+* [Home](README.md)
+* [Speeding up vector recall by 5x with HNSW](speeding-up-vector-recall-by-5x-with-hnsw.md)
 * [How-to Improve Search Results with Machine Learning](how-to-improve-search-results-with-machine-learning.md)
 * [pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots: Part I](pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md)
 * [Announcing Support for AWS us-east-1 Region](announcing-support-for-aws-us-east-1-region.md)

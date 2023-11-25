@@ -1,136 +1,30 @@
-# Speeding up vector recall by 5x with HNSW
+---
+description: Our blog posts
+---
 
+# Home
 
-
-Silas Marvin
-
-October 2, 2023
-
-PostgresML makes it easy to use machine learning with your database and to scale workloads horizontally in our cloud. Our SDK makes it even easier.
-
-
-
-_HNSW (hierarchical navigable small worlds) is an indexing method that greatly improves vector recall_
-
-## Introducing HNSW
-
-Underneath the hood our SDK utilizes [pgvector](https://github.com/pgvector/pgvector) to store, index, and recall vectors. Up until this point our SDK used IVFFlat indexing to divide vectors into lists, search a subset of those lists, and return the closest vector matches.
-
-While the IVFFlat indexing method is fast, it is not as fast as HNSW. Thanks to the latest update of [pgvector](https://github.com/pgvector/pgvector) our SDK now utilizes HNSW indexing, creating multi-layer graphs instead of lists and removing the required training step IVFFlat imposed.
-
-The results are not disappointing.
-
-## Comparing HNSW and IVFFlat
-
-In one of our previous posts: Tuning vector recall while generating query embeddings in the database we were working on a dataset with over 5 million Amazon Movie Reviews, and after embedding the reviews, performed semantic similarity search to get the closest 5 reviews.
-
-Let's run that query again:
-
-!!! generic
-
-!!! code\_block time="89.118 ms"
-
-```postgresql
-WITH request AS (
-  SELECT pgml.embed(
-    'intfloat/e5-large',
-    'query: Best 1980''s scifi movie'
-  )::vector(1024) AS embedding
-)
-
-SELECT
-  id,
-  1 - (
-    review_embedding_e5_large <=> (
-      SELECT embedding FROM request
-    )
-  ) AS cosine_similarity
-FROM pgml.amazon_us_reviews
-ORDER BY review_embedding_e5_large <=> (SELECT embedding FROM request)
-LIMIT 5;
-```
-
-!!!
-
-!!! results
-
-| review\_body                                     | product\_title                                                | star\_rating | total\_votes | cosine\_similarity |
-| ------------------------------------------------ | ------------------------------------------------------------- | ------------ | ------------ | ------------------ |
-| best 80s SciFi movie ever                        | The Adventures of Buckaroo Banzai Across the Eighth Dimension | 5            | 1            | 0.9495371273162286 |
-| the best of 80s sci fi horror!                   | The Blob                                                      | 5            | 2            | 0.9097434758143605 |
-| Three of the best sci-fi movies of the seventies | Sci-Fi: Triple Feature (BD) \[Blu-ray]                        | 5            | 0            | 0.9008723412875651 |
-| best sci fi movie ever                           | The Day the Earth Stood Still (Special Edition) \[Blu-ray]    | 5            | 2            | 0.8943620968858654 |
-| Great Science Fiction movie                      | Bloodsport / Timecop (Action Double Feature) \[Blu-ray]       | 5            | 0            | 0.894282454374093  |
-
-!!!
-
-!!!
-
-This query utilized IVFFlat indexing and queried through over 5 million rows in 89.118ms. Pretty fast!
-
-Let's drop our IVFFlat index and create an HNSW index.
-
-!!! generic
-
-!!! code\_block time="10255099.233 ms (02:50:55.099)"
-
-```postgresql
-DROP INDEX index_amazon_us_reviews_on_review_embedding_e5_large;
-CREATE INDEX CONCURRENTLY ON pgml.amazon_us_reviews USING hnsw (review_embedding_e5_large vector_cosine_ops);
-```
-
-!!!
-
-!!! results
-
-!!!
-
-!!!
-
-Now let's try the query again utilizing the new HNSW index we created.
-
-!!! generic
-
-!!! code\_block time="17.465 ms"
-
-```postgresql
-WITH request AS (
-  SELECT pgml.embed(
-    'intfloat/e5-large',
-    'query: Best 1980''s scifi movie'
-  )::vector(1024) AS embedding
-)
-
-SELECT
-  id,
-  1 - (
-    review_embedding_e5_large <=> (
-      SELECT embedding FROM request
-    )
-  ) AS cosine_similarity
-FROM pgml.amazon_us_reviews
-ORDER BY review_embedding_e5_large <=> (SELECT embedding FROM request)
-LIMIT 5;
-```
-
-!!!
-
-!!! results
-
-| review\_body                   | product\_title                                                | star\_rating | total\_votes | cosine\_similarity |
-| ------------------------------ | ------------------------------------------------------------- | ------------ | ------------ | ------------------ |
-| best 80s SciFi movie ever      | The Adventures of Buckaroo Banzai Across the Eighth Dimension | 5            | 1            | 0.9495371273162286 |
-| the best of 80s sci fi horror! | The Blob                                                      | 5            | 2            | 0.9097434758143605 |
-| One of the Better 80's Sci-Fi  | Krull (Special Edition)                                       | 3            | 5            | 0.9093884940741694 |
-| Good 1980s movie               | Can't Buy Me Love                                             | 4            | 0            | 0.9090294438721961 |
-| great 80's movie               | How I Got Into College                                        | 5            | 0            | 0.9016508795301296 |
-
-!!!
-
-!!!
-
-Not only are the results better (the `cosine_similarity` is higher overall), but HNSW is over 5x faster, reducing our search and embedding time to 17.465ms.
-
-This is a massive upgrade to the recall speed utilized by our SDK and greatly improves overall performance.
-
-For a deeper dive into HNSW checkout [Jonathan Katz's excellent article on HNSW in pgvector](https://jkatz05.com/post/postgres/pgvector-hnsw-performance/).
+* [speeding-up-vector-recall-by-5x-with-hnsw.md](speeding-up-vector-recall-by-5x-with-hnsw.md "mention")
+* [how-to-improve-search-results-with-machine-learning.md](how-to-improve-search-results-with-machine-learning.md "mention")
+* [pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md](pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md "mention")
+* [announcing-support-for-aws-us-east-1-region.md](announcing-support-for-aws-us-east-1-region.md "mention")
+* [how-we-generate-javascript-and-python-sdks-from-our-canonical-rust-sdk.md](how-we-generate-javascript-and-python-sdks-from-our-canonical-rust-sdk.md "mention")
+* [announcing-gptq-and-ggml-quantized-llm-support-for-huggingface-transformers.md](announcing-gptq-and-ggml-quantized-llm-support-for-huggingface-transformers.md "mention")
+* [making-postgres-30-percent-faster-in-production.md](making-postgres-30-percent-faster-in-production.md "mention")
+* [mindsdb-vs-postgresml.md](mindsdb-vs-postgresml.md "mention")
+* [introducing-postgresml-python-sdk-build-end-to-end-vector-search-applications-without-openai-and-pin.md](introducing-postgresml-python-sdk-build-end-to-end-vector-search-applications-without-openai-and-pin.md "mention")
+* [postgresml-raises-usd4.7m-to-launch-serverless-ai-application-databases-based-on-postgres.md](postgresml-raises-usd4.7m-to-launch-serverless-ai-application-databases-based-on-postgres.md "mention")
+* [pg-stat-sysinfo-a-postgres-extension-for-querying-system-statistics.md](pg-stat-sysinfo-a-postgres-extension-for-querying-system-statistics.md "mention")
+* [postgresml-as-a-memory-backend-to-auto-gpt.md](postgresml-as-a-memory-backend-to-auto-gpt.md "mention")
+* [which-database-that-is-the-question.md](which-database-that-is-the-question.md "mention")
+* [personalize-embedding-results-with-application-data-in-your-database.md](personalize-embedding-results-with-application-data-in-your-database.md "mention")
+* [tuning-vector-recall-while-generating-query-embeddings-in-the-database.md](tuning-vector-recall-while-generating-query-embeddings-in-the-database.md "mention")
+* [generating-llm-embeddings-with-open-source-models-in-postgresml.md](generating-llm-embeddings-with-open-source-models-in-postgresml.md "mention")
+* [scaling-postgresml-to-1-million-requests-per-second.md](scaling-postgresml-to-1-million-requests-per-second.md "mention")
+* [backwards-compatible-or-bust-python-inside-rust-inside-postgres.md](backwards-compatible-or-bust-python-inside-rust-inside-postgres.md "mention")
+* [postgresml-is-moving-to-rust-for-our-2.0-release.md](postgresml-is-moving-to-rust-for-our-2.0-release.md "mention")
+* [postgresml-is-8-40x-faster-than-python-http-microservices.md](postgresml-is-8-40x-faster-than-python-http-microservices.md "mention")
+* [postgres-full-text-search-is-awesome.md](postgres-full-text-search-is-awesome.md "mention")
+* [oxidizing-machine-learning.md](oxidizing-machine-learning.md "mention")
+* [optimizing-semantic-search-results-with-an-xgboost-model-in-your-database.md](optimizing-semantic-search-results-with-an-xgboost-model-in-your-database.md "mention")
+* [data-is-living-and-relational.md](data-is-living-and-relational.md "mention")
