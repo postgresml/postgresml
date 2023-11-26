@@ -6,6 +6,12 @@ description: >-
 
 # PostgresML as a memory backend to Auto-GPT
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/santi.jpg" alt="Author" width="158"><figcaption></figcaption></figure>
+
+</div>
+
 Santi Adavani
 
 May 3, 2023

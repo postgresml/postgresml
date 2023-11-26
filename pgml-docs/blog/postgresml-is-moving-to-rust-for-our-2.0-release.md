@@ -7,6 +7,12 @@ description: >-
 
 # PostgresML is Moving to Rust for our 2.0 Release
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/montana.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
+
+</div>
+
 Montana Low
 
 September 19, 2022

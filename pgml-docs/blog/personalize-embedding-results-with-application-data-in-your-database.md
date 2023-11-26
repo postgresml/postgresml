@@ -6,6 +6,12 @@ description: >-
 
 # Personalize embedding results with application data in your database
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/montana.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
+
+</div>
+
 Montana Low
 
 May 3, 2023

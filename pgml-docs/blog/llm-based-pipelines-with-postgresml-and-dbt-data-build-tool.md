@@ -6,6 +6,12 @@ description: >-
 
 # LLM based pipelines with PostgresML and dbt (data build tool)
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/santi.jpg" alt="Author" width="158"><figcaption></figcaption></figure>
+
+</div>
+
 Santi Adavani
 
 July 13, 2023

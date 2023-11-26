@@ -6,6 +6,12 @@ description: >-
 
 # Introducing PostgresML Python SDK: Build End-to-End Vector Search Applications without OpenAI and Pinecone
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/santi.jpg" alt="Author" width="158"><figcaption></figcaption></figure>
+
+</div>
+
 Santi Adavani
 
 June 01, 2023

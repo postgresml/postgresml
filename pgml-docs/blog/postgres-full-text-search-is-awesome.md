@@ -6,6 +6,12 @@ description: >-
 
 # Postgres Full Text Search is Awesome!
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/montana.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
+
+</div>
+
 Montana Low
 
 August 31, 2022

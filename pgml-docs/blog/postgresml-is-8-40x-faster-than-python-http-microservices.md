@@ -7,6 +7,12 @@ description: >-
 
 # PostgresML is 8-40x faster than Python HTTP microservices
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/lev.jpg" alt="Author" width="100"><figcaption></figcaption></figure>
+
+</div>
+
 Lev Kokotov
 
 October 18, 2022

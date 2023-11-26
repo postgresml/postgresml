@@ -7,6 +7,12 @@ description: >-
 
 # Announcing GPTQ & GGML Quantized LLM support for Huggingface Transformers
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/montana.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
+
+</div>
+
 Montana Low
 
 June 20, 2023

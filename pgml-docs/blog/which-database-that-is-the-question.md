@@ -7,6 +7,12 @@ description: >-
 
 # Which Database, That is the Question
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/lev.jpg" alt="Author" width="100"><figcaption></figcaption></figure>
+
+</div>
+
 Lev Kokotov
 
 September 1, 2022

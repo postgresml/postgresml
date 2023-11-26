@@ -6,6 +6,12 @@ description: >-
 
 # Generating LLM embeddings with open source models in PostgresML
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/montana.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
+
+</div>
+
 Montana Low
 
 April 21, 2023

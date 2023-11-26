@@ -7,6 +7,12 @@ description: >-
 
 # Oxidizing Machine Learning
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/lev.jpg" alt="Author" width="100"><figcaption></figcaption></figure>
+
+</div>
+
 Lev Kokotov
 
 September 7, 2022

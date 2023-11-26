@@ -6,6 +6,12 @@ description: >-
 
 # How We Generate JavaScript and Python SDKs From Our Canonical Rust SDK
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/silas.jpg" alt="Author" width="128"><figcaption></figcaption></figure>
+
+</div>
+
 Silas Marvin
 
 July 11, 2023

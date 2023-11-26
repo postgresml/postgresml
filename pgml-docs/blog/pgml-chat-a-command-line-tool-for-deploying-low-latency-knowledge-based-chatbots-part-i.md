@@ -6,6 +6,12 @@ description: >-
 
 # pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/santi.jpg" alt="Author" width="158"><figcaption></figcaption></figure>
+
+</div>
+
 Santi Adavani
 
 August 17, 2023

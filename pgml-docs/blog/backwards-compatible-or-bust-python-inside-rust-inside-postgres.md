@@ -6,6 +6,12 @@ description: >-
 
 # Backwards Compatible or Bust: Python Inside Rust Inside Postgres
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/lev.jpg" alt="Author" width="100"><figcaption></figcaption></figure>
+
+</div>
+
 Lev Kokotov
 
 October 3, 2022

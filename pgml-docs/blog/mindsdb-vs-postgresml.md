@@ -6,6 +6,12 @@ description: >-
 
 # MindsDB vs PostgresML
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/montana.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
+
+</div>
+
 Montana Low
 
 June 8, 2023

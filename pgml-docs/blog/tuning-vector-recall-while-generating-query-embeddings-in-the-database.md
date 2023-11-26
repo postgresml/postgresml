@@ -6,6 +6,12 @@ description: >-
 
 # Tuning vector recall while generating query embeddings in the database
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/montana.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
+
+</div>
+
 Montana Low
 
 April 28, 2023

@@ -7,6 +7,12 @@ description: >-
 
 # PostgresML raises $4.7M to launch serverless AI application databases based on Postgres
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/montana.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
+
+</div>
+
 Montana Low
 
 May 10, 2023

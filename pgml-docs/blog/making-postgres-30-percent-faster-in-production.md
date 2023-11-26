@@ -1,6 +1,10 @@
 # Making Postgres 30 Percent Faster in Production
 
+<div align="left">
 
+<figure><img src=".gitbook/assets/lev.jpg" alt="Author" width="100"><figcaption></figcaption></figure>
+
+</div>
 
 Lev Kokotov
 

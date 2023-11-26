@@ -7,6 +7,12 @@ description: >-
 
 # How-to Improve Search Results with Machine Learning
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/montana.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
+
+</div>
+
 Montana Low
 
 September 4, 2023

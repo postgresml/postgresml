@@ -7,6 +7,12 @@ description: >-
 
 # Speeding up vector recall 5x with HNSW
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/silas.jpg" alt="Author" width="128"><figcaption></figcaption></figure>
+
+</div>
+
 Silas Marvin
 
 October 2, 2023

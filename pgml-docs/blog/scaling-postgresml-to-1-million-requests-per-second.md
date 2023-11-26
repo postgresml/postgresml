@@ -7,6 +7,12 @@ description: >-
 
 # Scaling PostgresML to 1 Million Requests per Second
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/lev.jpg" alt="Author" width="100"><figcaption></figcaption></figure>
+
+</div>
+
 Lev Kokotov
 
 November 7, 2022

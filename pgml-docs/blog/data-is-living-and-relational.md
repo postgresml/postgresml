@@ -9,7 +9,7 @@ description: >-
 
 <div align="left">
 
-<figure><img src=".gitbook/assets/montana.jpg" alt="" width="125"><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/montana.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
 
 </div>
 
