@@ -7,6 +7,12 @@ description: >-
 
 # Data is Living and Relational
 
+<div align="left">
+
+<figure><img src=".gitbook/assets/montana.jpg" alt="" width="125"><figcaption></figcaption></figure>
+
+</div>
+
 Montana Low
 
 August 25, 2022
