@@ -100,8 +100,7 @@ impl Collection {
             match node {
                 Node::List(list) => {
                     self.index = self.get_sub_links(&list).expect(
-                        format!("Could not parse list of index links: {summary_path:?}")
-                            .as_str(),
+                        format!("Could not parse list of index links: {summary_path:?}").as_str(),
                     );
                     break;
                 }
@@ -172,7 +171,12 @@ impl Collection {
         Ok(links)
     }
 
-    async fn render<'a>(&self, path: &'a PathBuf, cluster: &Cluster, collection: &Collection) -> Result<ResponseOk, Status> {
+    async fn render<'a>(
+        &self,
+        path: &'a PathBuf,
+        cluster: &Cluster,
+        collection: &Collection,
+    ) -> Result<ResponseOk, Status> {
         // Read to string0
         let contents = match tokio::fs::read_to_string(&path).await {
             Ok(contents) => {
@@ -245,11 +249,16 @@ impl Collection {
 
         // Handle navigation
         // TODO organize this functionality in the collection to cleanup
-        let index: Vec<IndexLink> = self.index.clone().iter_mut().map(|nav_link| {
-            let mut nav_link = nav_link.clone();
-            nav_link.should_open(&path);
-            nav_link
-        }).collect();
+        let index: Vec<IndexLink> = self
+            .index
+            .clone()
+            .iter_mut()
+            .map(|nav_link| {
+                let mut nav_link = nav_link.clone();
+                nav_link.should_open(&path);
+                nav_link
+            })
+            .collect();
 
         let user = if cluster.context.user.is_anonymous() {
             None

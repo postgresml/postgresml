@@ -46,7 +46,9 @@ impl IndexLink {
     pub fn should_open(&mut self, path: &std::path::Path) -> &mut Self {
         let path_prefix = path.with_extension("");
         let path_str = path_prefix.to_str().expect("must be a string");
-        let suffix = path_str.replace(crate::utils::config::cms_dir().to_str().unwrap(), "").replace("README", "");
+        let suffix = path_str
+            .replace(crate::utils::config::cms_dir().to_str().unwrap(), "")
+            .replace("README", "");
         if suffix.is_empty() {
             // special case for the index url that would otherwise match everything
             if self.href.is_empty() {

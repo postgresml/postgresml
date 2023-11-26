@@ -536,31 +536,29 @@ where
 pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
     let _ = iter_mut_all(node, &mut |node| {
         match node {
-            markdown::mdast::Node::Link(ref mut link) => {
-                match Url::parse(&link.url) {
-                    Ok(url) => {
-                        if !url.has_host() {
-                            let mut url_path = url.path().to_string();
-                            let url_path_path = Path::new(&url_path);
-                            match url_path_path.extension() {
-                                Some(ext) => {
-                                    if ext.to_str() == Some(".md") {
-                                        let base = url_path_path.with_extension("");
-                                        url_path = base.into_os_string().into_string().unwrap();
-                                    }
-                                }
-                                _ => {
-                                    warn!("not markdown path: {:?}", path)
+            markdown::mdast::Node::Link(ref mut link) => match Url::parse(&link.url) {
+                Ok(url) => {
+                    if !url.has_host() {
+                        let mut url_path = url.path().to_string();
+                        let url_path_path = Path::new(&url_path);
+                        match url_path_path.extension() {
+                            Some(ext) => {
+                                if ext.to_str() == Some(".md") {
+                                    let base = url_path_path.with_extension("");
+                                    url_path = base.into_os_string().into_string().unwrap();
                                 }
                             }
-                            link.url = path.join(url_path).into_os_string().into_string().unwrap();
+                            _ => {
+                                warn!("not markdown path: {:?}", path)
+                            }
                         }
-                    }
-                    Err(e) => {
-                        warn!("could not parse url in markdown: {}", e)
+                        link.url = path.join(url_path).into_os_string().into_string().unwrap();
                     }
                 }
-            }
+                Err(e) => {
+                    warn!("could not parse url in markdown: {}", e)
+                }
+            },
             _ => (),
         };
 
@@ -623,26 +621,21 @@ pub fn get_title<'a>(root: &'a AstNode<'a>) -> anyhow::Result<String> {
 pub fn get_image<'a>(root: &'a AstNode<'a>) -> Option<String> {
     let re = regex::Regex::new(r#"<img src="([^"]*)" alt="([^"]*)""#).unwrap();
     let mut image = None;
-    iter_nodes(root, &mut |node| {
-        match &node.data.borrow().value {
-            &NodeValue::HtmlBlock(ref html) => {
-                match re.captures(&html.literal) {
-                    Some(c) => {
-                        if &c[2] != "Author" {
-                            image = Some(c[1].to_string());
-                            Ok(false)
-                        } else {
-                            Ok(true)
-                        }
-                    },
-                    None => {
-                        Ok(true)
-                    }
+    iter_nodes(root, &mut |node| match &node.data.borrow().value {
+        &NodeValue::HtmlBlock(ref html) => match re.captures(&html.literal) {
+            Some(c) => {
+                if &c[2] != "Author" {
+                    image = Some(c[1].to_string());
+                    Ok(false)
+                } else {
+                    Ok(true)
                 }
             }
-            _ => Ok(true)
-        }
-    }).ok()?;
+            None => Ok(true),
+        },
+        _ => Ok(true),
+    })
+    .ok()?;
     return image;
 }
 
@@ -1328,13 +1321,8 @@ impl SearchIndex {
         // TODO imrpove this .display().to_string()
         let guides = glob::glob(&config::cms_dir().join("docs/**/*.md").display().to_string())
             .expect("glob failed");
-        let blogs = glob::glob(
-            &config::blogs_dir()
-                .join("/blog/**/*.md")
-                .display()
-                .to_string(),
-        )
-        .expect("glob failed");
+        let blogs = glob::glob(&config::cms_dir().join("blog/**/*.md").display().to_string())
+            .expect("glob failed");
         guides
             .chain(blogs)
             .map(|path| path.expect("glob path failed"))

@@ -22,15 +22,12 @@ impl MarketingFooter {
             ],
             resources: vec![
                 StaticNavLink::new("Documentation".into(), "/docs/".into()),
-                StaticNavLink::new(
-                    "Blog".into(),
-                    "/blog/".into(),
-                ),
+                StaticNavLink::new("Blog".into(), "/blog/".into()),
             ],
-            company: vec![StaticNavLink::new(
-                "Contact".into(),
-                "mailto:team@postgresml.org".into(),
-            )],
+            company: vec![
+                StaticNavLink::new("Careers".into(), "/careers/".into()),
+                StaticNavLink::new("Contact".into(), "mailto:team@postgresml.org".into()),
+            ],
         }
     }
 

@@ -11,7 +11,6 @@ lazy_static! {
 }
 
 struct Config {
-    blogs_dir: PathBuf,
     cms_dir: PathBuf,
     deployment: String,
     dev_mode: bool,
@@ -70,7 +69,6 @@ impl Config {
             git_sha: env_string_required("GIT_SHA"),
             sentry_dsn: env_string_optional("SENTRY_DSN"),
             static_dir: env_path_default("DASHBOARD_STATIC_DIRECTORY", "static"),
-            blogs_dir: env_path_default("DASHBOARD_CONTENT_DIRECTORY", "content"),
             cms_dir: env_path_default("DASHBOARD_CMS_DIRECTORY", "../pgml-docs"),
             search_index_dir: env_path_default("SEARCH_INDEX_DIRECTORY", "search_index"),
             render_errors: env_is_set("RENDER_ERRORS") || dev_mode,
@@ -103,10 +101,6 @@ pub fn sentry_dsn<'a>() -> &'a Option<String> {
 }
 pub fn static_dir<'a>() -> &'a Path {
     &CONFIG.static_dir
-}
-
-pub fn blogs_dir<'a>() -> &'a Path {
-    &CONFIG.blogs_dir
 }
 
 pub fn cms_dir<'a>() -> &'a Path {
