@@ -56,8 +56,10 @@ This will compile all the necessary packages, including Rust bindings to XGBoost
 
 PostgresML uses Python packages to provide support for Hugging Face LLMs and Scikit-learn algorithms and models. To make this work on your system, you have two options: install those packages into a virtual environment (strongly recommended), or install them globally.
 
-\=== "Virtual environment"
 
+
+{% tabs %}
+{% tab title="Virtual environment" %}
 To install the necessary Python packages into a virtual environment, use the `virtualenv` tool installed previously by Homebrew:
 
 ```bash
@@ -66,16 +68,16 @@ source pgml-venv/bin/activate && \
 pip install -r requirements.txt && \
 pip install -r requirements-xformers.txt --no-dependencies
 ```
+{% endtab %}
 
-\=== "Globally"
-
+{% tab title="Globally" %}
 Installing Python packages globally can cause issues with your system. If you wish to proceed nonetheless, you can do so:
 
 ```bash
 pip3 install -r requirements.txt
 ```
-
-\===
+{% endtab %}
+{% endtabs %}
 
 ### Configuration
 

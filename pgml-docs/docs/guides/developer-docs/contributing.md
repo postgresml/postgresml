@@ -114,23 +114,25 @@ CREATE EXTENSION pgml;
 
 That's it, PostgresML is ready. You can validate the installation by running:
 
-\=== "SQL"
 
+
+{% tabs %}
+{% tab title="SQL" %}
 ```sql
 SELECT pgml.version();
 ```
+{% endtab %}
 
-\=== "Output"
-
-```
+{% tab title="Output" %}
+```sql
 postgres=# select pgml.version();
       version
 -------------------
  2.7.4
 (1 row)
 ```
-
-\===
+{% endtab %}
+{% endtabs %}
 
 Basic extension usage:
 

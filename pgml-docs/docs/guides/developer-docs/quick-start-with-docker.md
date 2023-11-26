@@ -10,8 +10,8 @@ If you're looking to get started with PostgresML as quickly as possible, [sign u
 
 ## Get Started
 
-\=== "macOS"
-
+{% tabs %}
+{% tab title="macOS" %}
 ```bash
 docker run \
     -it \
@@ -21,9 +21,9 @@ docker run \
     ghcr.io/postgresml/postgresml:2.7.3 \
     sudo -u postgresml psql -d postgresml
 ```
+{% endtab %}
 
-\=== "Linux with GPUs"
-
+{% tab title="Linux with GPUs" %}
 Make sure you have Cuda, the Cuda container toolkit, and matching graphics drivers installed. You can install everything from [Nvidia](https://developer.nvidia.com/cuda-downloads).
 
 On Ubuntu, you can install everything with:
@@ -48,14 +48,14 @@ docker run \
 ```
 
 If your machine doesn't have a GPU, just omit the `--gpus all` option, and the container will start and use the CPU instead.
+{% endtab %}
 
-\=== "Windows"
-
+{% tab title="Windows" %}
 Install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) and [Docker Desktop](https://www.docker.com/products/docker-desktop/). You can then use **Linux with GPUs** instructions. GPU support is included, make sure to [enable CUDA](https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl).
 
-\===
-
 Once the container is running, setting up PostgresML is as simple as creating the extension and running a few queries to make sure everything is working correctly.
+{% endtab %}
+{% endtabs %}
 
 !!! generic
 
