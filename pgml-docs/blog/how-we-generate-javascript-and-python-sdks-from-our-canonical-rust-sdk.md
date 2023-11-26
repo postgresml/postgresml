@@ -87,6 +87,8 @@ Here is the code augmented to work with [Pyo3](https://github.com/PyO3/pyo3) and
 
 \=== "Pyo3"
 
+{% tabs %}
+{% tab title="Pyo3" %}
 ```rust
 use pyo3::prelude::*;
 
@@ -119,9 +121,9 @@ fn pgml(_py: Python, m: &PyModule) -> PyResult<()> {
      Ok(())
 }
 ```
+{% endtab %}
 
-\=== "Neon"
-
+{% tab title="Neon" %}
 ```rust
 use neon::prelude::*;
 
@@ -193,8 +195,8 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
     Ok(())
 }
 ```
-
-\===
+{% endtab %}
+{% endtabs %}
 
 ## Automatically Converting Vanilla Rust to py03 and Neon compatible Rust
 

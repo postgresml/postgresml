@@ -37,8 +37,8 @@ GROUP BY i % 10000;
 
 Spoiler alert: idiomatic Rust is about 10x faster than native SQL, embedded PL/pgSQL, and pure Python. Rust comes close to the hand-optimized assembly version of the Basic Linear Algebra Subroutines (BLAS) implementation. NumPy is supposed to provide optimizations in cases like this, but it's actually the worst performer. Data movement from Postgres to PL/Python is pretty good; it's even faster than the pure SQL equivalent, but adding the extra conversion from Python list to Numpy array takes almost as much time as everything else. Machine Learning systems that move relatively large quantities of data around can become dominated by these extraneous operations, rather than the ML algorithms that actually generate value.
 
-\=== "SQL"
-
+{% tabs %}
+{% tab title="SQL" %}
 ```sql
 CREATE OR REPLACE FUNCTION dot_product_sql(a FLOAT4[], b FLOAT4[])
 	RETURNS FLOAT4
@@ -59,9 +59,9 @@ FROM embeddings, test
 ORDER BY 1
 LIMIT 1;
 ```
+{% endtab %}
 
-\=== "PL/pgSQL"
-
+{% tab title="PL/pgSQL" %}
 ```sql
 CREATE OR REPLACE FUNCTION dot_product_plpgsql(a FLOAT4[], b FLOAT4[])
 	RETURNS FLOAT4
@@ -84,9 +84,9 @@ FROM embeddings, test
 ORDER BY 1
 LIMIT 1;
 ```
+{% endtab %}
 
-\=== "Python"
-
+{% tab title="Python" %}
 ```sql
 CREATE OR REPLACE FUNCTION dot_product_python(a FLOAT4[], b FLOAT4[])
 	RETURNS FLOAT4
@@ -106,9 +106,9 @@ FROM embeddings, test
 ORDER BY 1
 LIMIT 1;
 ```
+{% endtab %}
 
-\=== "NumPy"
-
+{% tab title="NumPy" %}
 ```sql
 CREATE OR REPLACE FUNCTION dot_product_numpy(a FLOAT4[], b FLOAT4[])
 	RETURNS FLOAT4
@@ -129,9 +129,9 @@ FROM embeddings, test
 ORDER BY 1
 LIMIT 1;
 ```
+{% endtab %}
 
-\=== "Rust"
-
+{% tab title="Rust" %}
 ```rust
 #[pg_extern(immutable, strict, parallel_safe)]
 fn dot_product_rust(vector: Vec<f32>, other: Vec<f32>) -> f32 {
@@ -154,8 +154,10 @@ FROM embeddings, test
 ORDER BY 1
 LIMIT 1;
 ```
+{% endtab %}
 
-\=== "BLAS"
+{% tab title="BLAS" %}
+
 
 ```rust
 #[pg_extern(immutable, strict, parallel_safe)]
@@ -183,8 +185,8 @@ FROM embeddings, test
 ORDER BY 1
 LIMIT 1;
 ```
-
-\===
+{% endtab %}
+{% endtabs %}
 
 We're building with the Rust [pgrx](https://github.com/tcdi/pgrx/tree/master/pgrx) crate that makes our development cycle even nicer than the one we use to manage Python. It really streamlines creating an extension in Rust, so all we have to worry about is writing our functions. It took about an hour to port all of our vector operations to Rust with BLAS support, and another week to port all the "business logic" for maintaining model training and deployment. We've even gained some new capabilities for caching models across connections (independent processes), now that we have access to Postgres shared memory, without having to worry about Python's GIL and GC. This is the dream of Apache's Arrow project, realized for our applications, without having to change the world, just our implementations. 🤩 Single-copy end-to-end machine learning, with parallel processing and shared data access.
 
