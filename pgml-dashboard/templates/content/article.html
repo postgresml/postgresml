@@ -1,7 +1,20 @@
 <% use crate::utils::config::standalone_dashboard; %>
 
 <article class="docs col-12 col-xxl-8 col-xl-9 overflow-x-auto py-4 px-xl-5 order-3 order-xxl-2">
-  <%- content %>
+  <% if let Some(content) = content %>
+    <%- content %>
+  <% else %>
+    <div class="container pt-4 pb-5">
+      <div class="d-flex justify-content-center mt-5 mb-5">
+        <h1 class="mt-5">Page Not Found</h1>
+      </div>
+
+      <div class="d-flex justify-content-center">
+        <p class="text-white fs-5">Looks like the page you're looking for doesn't exist. It may have been moved, or it never existed, we truly don't know.</p>
+        </p>
+      </div>
+    </div>
+  <% end %>
 
   <div class="mt-5">
     <h2 class="h2 mb-3">Have Questions?</h2>

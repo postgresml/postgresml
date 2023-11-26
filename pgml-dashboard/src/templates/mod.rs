@@ -184,7 +184,7 @@ impl<'a> From<WebAppBase<'a>> for String {
 #[derive(TemplateOnce)]
 #[template(path = "content/article.html")]
 pub struct Article {
-    pub content: String,
+    pub content: Option<String>,
 }
 
 #[derive(TemplateOnce)]

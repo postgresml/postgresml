@@ -1,4 +1,4 @@
-# Careers
+# Openings
 
 PostgresML is building a GPU-powered AI application database. You can perform microsecond inference with the world's most capable feature store. It allows you to easily train and deploy online models using only SQL. We're looking for an experienced Engineers to help shape the core product, inside and out. We're generally looking for individual contributors, but everyone be critical in building the future team as well as the core product, while leading efforts toward more efficient and effective Machine Learning workflows for our customers.
 
