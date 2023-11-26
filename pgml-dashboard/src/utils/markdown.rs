@@ -537,17 +537,14 @@ pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
     let _ = iter_mut_all(node, &mut |node| {
         match node {
             markdown::mdast::Node::Link(ref mut link) => {
-                info!("handling link: {:?}", link);
                 match Url::parse(&link.url) {
                     Ok(url) => {
                         if !url.has_host() {
-                            info!("relative: {:?}", link);
                             let mut url_path = url.path().to_string();
                             let url_path_path = Path::new(&url_path);
                             match url_path_path.extension() {
                                 Some(ext) => {
                                     if ext.to_str() == Some(".md") {
-                                        info!("md: {:?}", link);
                                         let base = url_path_path.with_extension("");
                                         url_path = base.into_os_string().into_string().unwrap();
                                     }
@@ -615,6 +612,38 @@ pub fn get_title<'a>(root: &'a AstNode<'a>) -> anyhow::Result<String> {
         None => String::new(),
     };
     Ok(title)
+}
+
+/// Get the social sharing image of the article.
+///
+/// # Arguments
+///
+/// * `root` - The root node of the document tree.
+///
+pub fn get_image<'a>(root: &'a AstNode<'a>) -> Option<String> {
+    let re = regex::Regex::new(r#"<img src="([^"]*)" alt="([^"]*)""#).unwrap();
+    let mut image = None;
+    iter_nodes(root, &mut |node| {
+        match &node.data.borrow().value {
+            &NodeValue::HtmlBlock(ref html) => {
+                match re.captures(&html.literal) {
+                    Some(c) => {
+                        if &c[2] != "Author" {
+                            image = Some(c[1].to_string());
+                            Ok(false)
+                        } else {
+                            Ok(true)
+                        }
+                    },
+                    None => {
+                        Ok(true)
+                    }
+                }
+            }
+            _ => Ok(true)
+        }
+    }).ok()?;
+    return image;
 }
 
 /// Wrap tables in container to allow for x-scroll on overflow.

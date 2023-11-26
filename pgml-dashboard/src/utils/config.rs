@@ -145,7 +145,7 @@ pub fn js_url(name: &str) -> String {
     asset_url(path.to_string_lossy())
 }
 
-fn asset_url(path: Cow<str>) -> String {
+pub fn asset_url(path: Cow<str>) -> String {
     match &CONFIG.assets_domain {
         Some(domain) => format!("https://{domain}{path}"),
         None => path.to_string(),

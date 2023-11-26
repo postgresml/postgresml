@@ -79,7 +79,7 @@ impl Collection {
 
         let path = self.root_dir.join(path.with_extension("md"));
 
-        self.render(&path, cluster).await
+        self.render(&path, cluster, self).await
     }
 
     /// Create an index of the Collection based on the SUMMARY.md from Gitbook.
@@ -172,7 +172,7 @@ impl Collection {
         Ok(links)
     }
 
-    async fn render<'a>(&self, path: &'a PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
+    async fn render<'a>(&self, path: &'a PathBuf, cluster: &Cluster, collection: &Collection) -> Result<ResponseOk, Status> {
         // Read to string0
         let contents = match tokio::fs::read_to_string(&path).await {
             Ok(contents) => {
@@ -185,13 +185,13 @@ impl Collection {
             }
         };
         let parts = contents.split("---").collect::<Vec<&str>>();
-        let ((image, description), contents) = if parts.len() > 1 {
+        let (description, contents) = if parts.len() > 1 {
             match YamlLoader::load_from_str(parts[1]) {
                 Ok(meta) => {
                     if !meta.is_empty() {
                         let meta = meta[0].clone();
                         if meta.as_hash().is_none() {
-                            ((None, None), contents.to_string())
+                            (None, contents.to_string())
                         } else {
                             let description: Option<String> = match meta["description"]
                                 .is_badvalue()
@@ -200,21 +200,16 @@ impl Collection {
                                 false => Some(meta["description"].as_str().unwrap().to_string()),
                             };
 
-                            let image: Option<String> = match meta["image"].is_badvalue() {
-                                true => None,
-                                false => Some(meta["image"].as_str().unwrap().to_string()),
-                            };
-
-                            ((image, description), parts[2..].join("---").to_string())
+                            (description, parts[2..].join("---").to_string())
                         }
                     } else {
-                        ((None, None), contents.to_string())
+                        (None, contents.to_string())
                     }
                 }
-                Err(_) => ((None, None), contents.to_string()),
+                Err(_) => (None, contents.to_string()),
             }
         } else {
-            ((None, None), contents.to_string())
+            (None, contents.to_string())
         };
 
         // Parse Markdown
@@ -224,7 +219,7 @@ impl Collection {
         // Title of the document is the first (and typically only) <h1>
         let title = crate::utils::markdown::get_title(&root).unwrap();
         let toc_links = crate::utils::markdown::get_toc(&root).unwrap();
-
+        let image = crate::utils::markdown::get_image(&root);
         crate::utils::markdown::wrap_tables(&root, &arena).unwrap();
 
         // MkDocs syntax support, e.g. tabs, notes, alerts, etc.
@@ -263,8 +258,11 @@ impl Collection {
         };
 
         let mut layout = crate::templates::Layout::new(&title);
-        if image.is_some() {
-            layout.image(&image.unwrap());
+        if let Some(image) = image {
+            // translate relative url into absolute for head social sharing
+            let parts = image.split(".gitbook/assets/").collect::<Vec<&str>>();
+            let image_path = collection.url_root.join(".gitbook/assets").join(parts[1]);
+            layout.image(config::asset_url(image_path.to_string_lossy()).as_ref());
         }
         if description.is_some() {
             layout.description(&description.unwrap());
