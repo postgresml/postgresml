@@ -14,9 +14,10 @@ use crate::orm::{Task, TextDataset};
 
 use super::TracebackError;
 
-pub mod whitelist;
-
+pub mod embeddings;
 mod transformers;
+pub mod whitelist;
+pub use embeddings::embed;
 pub use transformers::*;
 
 create_pymodule!("/src/bindings/transformers/transformers.py");
@@ -30,36 +31,6 @@ pub fn get_model_from(task: &Value) -> Result<String> {
             .call1(py, PyTuple::new(py, &[task.to_string().into_py(py)]))
             .format_traceback(py)?;
         model.extract(py).format_traceback(py)
-    })
-}
-
-pub fn embed(
-    transformer: &str,
-    inputs: Vec<&str>,
-    kwargs: &serde_json::Value,
-) -> Result<Vec<Vec<f32>>> {
-    crate::bindings::python::activate()?;
-
-    let kwargs = serde_json::to_string(kwargs)?;
-    Python::with_gil(|py| -> Result<Vec<Vec<f32>>> {
-        let embed: Py<PyAny> = get_module!(PY_MODULE)
-            .getattr(py, "embed")
-            .format_traceback(py)?;
-        let output = embed
-            .call1(
-                py,
-                PyTuple::new(
-                    py,
-                    &[
-                        transformer.to_string().into_py(py),
-                        inputs.into_py(py),
-                        kwargs.into_py(py),
-                    ],
-                ),
-            )
-            .format_traceback(py)?;
-
-        output.extract(py).format_traceback(py)
     })
 }
 

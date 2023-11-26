@@ -6,12 +6,10 @@ import queue
 import sys
 
 import datasets
-from InstructorEmbedding import INSTRUCTOR
 import numpy
 import orjson
 from rouge import Rouge
 from sacrebleu.metrics import BLEU
-from sentence_transformers import SentenceTransformer
 from sklearn.metrics import (
     mean_squared_error,
     r2_score,
@@ -46,7 +44,6 @@ from threading import Thread
 from typing import Optional
 
 __cache_transformer_by_model_id = {}
-__cache_sentence_transformer_by_name = {}
 __cache_transform_pipeline_by_task = {}
 
 DTYPE_MAP = {
@@ -347,42 +344,6 @@ def transform(task, args, inputs, stream=False):
     if stream:
         return pipe.stream(inputs, **args)
     return orjson.dumps(pipe(inputs, **args), default=orjson_default).decode()
-
-
-def create_embedding(transformer):
-    instructor = transformer.startswith("hkunlp/instructor")
-    klass = INSTRUCTOR if instructor else SentenceTransformer
-    return klass(transformer)
-
-
-def embed_using(model, transformer, inputs, kwargs):
-    if isinstance(kwargs, str):
-        kwargs = orjson.loads(kwargs)
-
-    instructor = transformer.startswith("hkunlp/instructor")
-    if instructor:
-        texts_with_instructions = []
-        instruction = kwargs.pop("instruction")
-        for text in inputs:
-            texts_with_instructions.append([instruction, text])
-
-        inputs = texts_with_instructions
-
-    return model.encode(inputs, **kwargs)
-
-
-def embed(transformer, inputs, kwargs):
-    kwargs = orjson.loads(kwargs)
-
-    ensure_device(kwargs)
-
-    if transformer not in __cache_sentence_transformer_by_name:
-        __cache_sentence_transformer_by_name[transformer] = create_embedding(
-            transformer
-        )
-    model = __cache_sentence_transformer_by_name[transformer]
-
-    return embed_using(model, transformer, inputs, kwargs)
 
 
 def clear_gpu_cache(memory_usage: None):
