@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
@@ -10,7 +9,6 @@ use rocket::{
     route::Route,
     State,
 };
-use tantivy::HasLen;
 use yaml_rust::YamlLoader;
 
 use crate::{
@@ -22,9 +20,9 @@ use crate::{
 };
 
 lazy_static! {
-    static ref BLOG: Collection = Collection::new("Blog");
-    static ref CAREERS: Collection = Collection::new("Careers");
-    static ref DOCS: Collection = Collection::new("Docs");
+    static ref BLOG: Collection = Collection::new("Blog", true);
+    static ref CAREERS: Collection = Collection::new("Careers", true);
+    static ref DOCS: Collection = Collection::new("Docs", false);
 }
 
 /// A Gitbook collection of documents
@@ -32,8 +30,6 @@ lazy_static! {
 struct Collection {
     /// The properly capitalized identifier for this collection
     name: String,
-    /// The url & path friendly identifier for this collection
-    slug: String,
     /// The root location on disk for this collection
     root_dir: PathBuf,
     /// The root location for gitbook assets
@@ -45,7 +41,7 @@ struct Collection {
 }
 
 impl Collection {
-    pub fn new(name: &str) -> Collection {
+    pub fn new(name: &str, hide_root: bool) -> Collection {
         info!("Loading collection: {name}");
         let name = name.to_owned();
         let slug = name.to_lowercase();
@@ -55,13 +51,12 @@ impl Collection {
 
         let mut collection = Collection {
             name,
-            slug,
             root_dir,
             asset_dir,
             url_root,
             ..Default::default()
         };
-        collection.build_index();
+        collection.build_index(hide_root);
         collection
     }
 
@@ -90,7 +85,7 @@ impl Collection {
     /// Create an index of the Collection based on the SUMMARY.md from Gitbook.
     /// Summary provides document ordering rather than raw filesystem access,
     /// in addition to formatted titles and paths.
-    fn build_index(&mut self) {
+    fn build_index(&mut self, hide_root: bool) {
         let summary_path = self.root_dir.join("SUMMARY.md");
         let summary_contents = std::fs::read_to_string(&summary_path)
             .expect(format!("Could not read summary: {summary_path:?}").as_str());
@@ -118,6 +113,10 @@ impl Collection {
 
         if self.index.is_empty() {
             error!("Index has no entries for Collection: {}", self.name);
+        }
+
+        if hide_root {
+            self.index = self.index[1..].to_vec();
         }
     }
 
@@ -250,10 +249,12 @@ impl Collection {
         let html = String::from_utf8(html).unwrap();
 
         // Handle navigation
-        let index = self.index.clone();
-        // into_iter().map(|nav_link| {
-        // nav_link.should_open(&url, Path::new(&self.name.to_lowercase()))
-        //}).collect();
+        // TODO organize this functionality in the collection to cleanup
+        let index: Vec<IndexLink> = self.index.clone().iter_mut().map(|nav_link| {
+            let mut nav_link = nav_link.clone();
+            nav_link.should_open(&path);
+            nav_link
+        }).collect();
 
         let user = if cluster.context.user.is_anonymous() {
             None
@@ -282,12 +283,6 @@ impl Collection {
             layout.render(crate::templates::Article { content: html }),
         ))
     }
-}
-
-struct Document {
-    title: String,
-    path: String,
-    rendered: String,
 }
 
 #[get("/search?<query>", rank = 20)]

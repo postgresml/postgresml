@@ -1,8 +1,8 @@
 ---
-description: Our blog posts
+description: recent blog posts 
 ---
 
-# Home
+# Recent Posts
 
 * [speeding-up-vector-recall-5x-with-hnsw.md](speeding-up-vector-recall-5x-with-hnsw.md "mention")
 * [how-to-improve-search-results-with-machine-learning.md](how-to-improve-search-results-with-machine-learning.md "mention")

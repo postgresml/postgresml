@@ -1,8 +1,6 @@
 //! Documentation and blog templates.
 use sailfish::TemplateOnce;
 
-use crate::utils::markdown::SearchResult;
-
 /// Documentation and blog link used in the left nav.
 #[derive(TemplateOnce, Debug, Clone)]
 #[template(path = "cms/index_link/template.html")]
@@ -43,22 +41,26 @@ impl IndexLink {
 
     /// Automatically expand the link and it's parents
     /// when one of the children is visible.
-    pub fn should_open(&mut self, path: &str, root: &std::path::Path) -> &mut Self {
-        info!(
-            "should_open self: {:?}, path: {:?}, root: {:?}",
-            self, path, root
-        );
-        // if path.is_empty() {
-        //     if self.href.as_str() == root.as_os_str() {
-        //         return true;
-        //     } else {
-        //         return false;
-        //     }
-        // }
-        self.active = self.href.ends_with(&path);
+    /// TODO all this str/replace logic should happen once to construct cached versions
+    /// that can be more easily checked, during collection construction.
+    pub fn should_open(&mut self, path: &std::path::Path) -> &mut Self {
+        let path_prefix = path.with_extension("");
+        let path_str = path_prefix.to_str().expect("must be a string");
+        let suffix = path_str.replace(crate::utils::config::cms_dir().to_str().unwrap(), "").replace("README", "");
+        if suffix.is_empty() {
+            // special case for the index url that would otherwise match everything
+            if self.href.is_empty() {
+                self.active = true;
+                self.open = false;
+                return self;
+            } else {
+                return self;
+            }
+        }
+        self.active = self.href.ends_with(&suffix);
         self.open = self.active;
         for child in self.children.iter_mut() {
-            if child.should_open(path, root).open {
+            if child.should_open(path).open {
                 self.open = true;
             }
         }
