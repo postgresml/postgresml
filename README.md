@@ -214,7 +214,7 @@ SELECT pgml.transform(
 
 Text classification involves assigning a label or category to a given text. Common use cases include sentiment analysis, natural language inference, and the assessment of grammatical correctness.
 
-![text classification](pgml-docs/docs/images/text-classification.png)
+![text classification](pgml-cms/docs/images/text-classification.png)
 
 ### Sentiment Analysis
 Sentiment analysis is a type of natural language processing technique that involves analyzing a piece of text to determine the sentiment or emotion expressed within it. It can be used to classify a text as positive, negative, or neutral, and has a wide range of applications in fields such as marketing, customer service, and political analysis.
@@ -383,7 +383,7 @@ SELECT pgml.transform(
 ## Zero-Shot Classification
 Zero Shot Classification is a task where the model predicts a class that it hasn't seen during the training phase. This task leverages a pre-trained language model and is a type of transfer learning. Transfer learning involves using a model that was initially trained for one task in a different application. Zero Shot Classification is especially helpful when there is a scarcity of labeled data available for the specific task at hand.
 
-![zero-shot classification](pgml-docs/docs/images/zero-shot-classification.png)
+![zero-shot classification](pgml-cms/docs/images/zero-shot-classification.png)
 
 In the example provided below, we will demonstrate how to classify a given sentence into a class that the model has not encountered before. To achieve this, we make use of `args` in the SQL query, which allows us to provide `candidate_labels`. You can customize these labels to suit the context of your task. We will use `facebook/bart-large-mnli` model.
 
@@ -417,7 +417,7 @@ SELECT pgml.transform(
 ## Token Classification
 Token classification is a task in natural language understanding, where labels are assigned to certain tokens in a text. Some popular subtasks of token classification include Named Entity Recognition (NER) and Part-of-Speech (PoS) tagging. NER models can be trained to identify specific entities in a text, such as individuals, places, and dates. PoS tagging, on the other hand, is used to identify the different parts of speech in a text, such as nouns, verbs, and punctuation marks.
 
-![token classification](pgml-docs/docs/images/token-classification.png)
+![token classification](pgml-cms/docs/images/token-classification.png)
 
 ### Named Entity Recognition
 Named Entity Recognition (NER) is a task that involves identifying named entities in a text. These entities can include the names of people, locations, or organizations. The task is completed by labeling each token with a class for each named entity and a class named "0" for tokens that don't contain any entities. In this task, the input is text, and the output is the annotated text with named entities.
@@ -467,7 +467,7 @@ select pgml.transform(
 ## Translation
 Translation is the task of converting text written in one language into another language.
 
-![translation](pgml-docs/docs/images/translation.png)
+![translation](pgml-cms/docs/images/translation.png)
 
 You have the option to select from over 2000 models available on the Hugging Face <a href="https://huggingface.co/models?pipeline_tag=translation" target="_blank">hub</a> for translation.
 
@@ -490,7 +490,7 @@ select pgml.transform(
 ## Summarization
 Summarization involves creating a condensed version of a document that includes the important information while reducing its length. Different models can be used for this task, with some models extracting the most relevant text from the original document, while other models generate completely new text that captures the essence of the original content.
 
-![summarization](pgml-docs/docs/images/summarization.png)
+![summarization](pgml-cms/docs/images/summarization.png)
 
 ```sql
 select pgml.transform(
@@ -534,7 +534,7 @@ select pgml.transform(
 ## Question Answering
 Question Answering models are designed to retrieve the answer to a question from a given text, which can be particularly useful for searching for information within a document. It's worth noting that some question answering models are capable of generating answers even without any contextual information.
 
-![question answering](pgml-docs/docs/images/question-answering.png)
+![question answering](pgml-cms/docs/images/question-answering.png)
 
 ```sql
 SELECT pgml.transform(
@@ -558,12 +558,12 @@ SELECT pgml.transform(
 }
 ```
 <!-- ## Table Question Answering
-![table question answering](pgml-docs/docs/images/table-question-answering.png) -->
+![table question answering](pgml-cms/docs/images/table-question-answering.png) -->
 
 ## Text Generation
 Text generation is the task of producing new text, such as filling in incomplete sentences or paraphrasing existing text. It has various use cases, including code generation and story generation. Completion generation models can predict the next word in a text sequence, while text-to-text generation models are trained to learn the mapping between pairs of texts, such as translating between languages. Popular models for text generation include GPT-based models, T5, T0, and BART. These models can be trained to accomplish a wide range of tasks, including text classification, summarization, and translation.
 
-![text generation](pgml-docs/docs/images/text-generation.png)
+![text generation](pgml-cms/docs/images/text-generation.png)
 
 ```sql
 SELECT pgml.transform(
@@ -725,7 +725,7 @@ SELECT pgml.transform(
 ```
 ## Text-to-Text Generation
 Text-to-text generation methods, such as T5, are neural network architectures designed to perform various natural language processing tasks, including summarization, translation, and question answering. T5 is a transformer-based architecture pre-trained on a large corpus of text data using denoising autoencoding. This pre-training process enables the model to learn general language patterns and relationships between different tasks, which can be fine-tuned for specific downstream tasks. During fine-tuning, the T5 model is trained on a task-specific dataset to learn how to perform the specific task.
-![text-to-text](pgml-docs/docs/images/text-to-text-generation.png)
+![text-to-text](pgml-cms/docs/images/text-to-text-generation.png)
 
 *Translation*
 ```sql
@@ -762,7 +762,7 @@ SELECT pgml.transform(
 ```
 ## Fill-Mask
 Fill-mask refers to a task where certain words in a sentence are hidden or "masked", and the objective is to predict what words should fill in those masked positions. Such models are valuable when we want to gain statistical insights about the language used to train the model.
-![fill mask](pgml-docs/docs/images/fill-mask.png)
+![fill mask](pgml-cms/docs/images/fill-mask.png)
 
 ```sql
 SELECT pgml.transform(
@@ -859,7 +859,7 @@ SELECT * FROM items, query ORDER BY items.embedding <-> query.embedding LIMIT 5;
 
 <!-- ## Sentence Similarity
 Sentence Similarity involves determining the degree of similarity between two texts. To accomplish this, Sentence similarity models convert the input texts into vectors (embeddings) that encapsulate semantic information, and then measure the proximity (or similarity) between the vectors. This task is especially beneficial for tasks such as information retrieval and clustering/grouping.
-![sentence similarity](pgml-docs/docs/images/sentence-similarity.png)
+![sentence similarity](pgml-cms/docs/images/sentence-similarity.png)
 
 <!-- ## Conversational -->
 <!-- # Regression

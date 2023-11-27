@@ -69,7 +69,7 @@ impl Config {
             git_sha: env_string_required("GIT_SHA"),
             sentry_dsn: env_string_optional("SENTRY_DSN"),
             static_dir: env_path_default("DASHBOARD_STATIC_DIRECTORY", "static"),
-            cms_dir: env_path_default("DASHBOARD_CMS_DIRECTORY", "../pgml-docs"),
+            cms_dir: env_path_default("DASHBOARD_CMS_DIRECTORY", "../pgml-cms"),
             search_index_dir: env_path_default("SEARCH_INDEX_DIRECTORY", "search_index"),
             render_errors: env_is_set("RENDER_ERRORS") || dev_mode,
             deployment: env_string_default("DEPLOYMENT", "localhost"),

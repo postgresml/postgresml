@@ -6,7 +6,7 @@ Our project consists of three (3) applications:
 
 1. Postgres extension (`pgml-extension`)
 2. Dashboard web app (`pgml-dashboard`)
-3. Documentation (`pgml-docs`)
+3. Documentation (`pgml-cms`)
 
 The development environment for each differs slightly, but overall we use Python, Rust, and PostgreSQL, so as long as you have all of those installed, the setup should be straight forward.
 
@@ -212,24 +212,8 @@ cargo test
 cargo watch --exec run
 ```
 
-The dashboard can be packaged for distribution. You'll need to copy the static files along with the `target/release` directory to your server.
+The website can be packaged for distribution. You'll need to copy the static files along with the `target/release` directory to your server.
 
-## Documentation app
-
-The documentation app (you're using it right now) is using MkDocs.
-
-```
-cd pgml-docs/
-```
-
-Once there, you can set up a virtual environment and get going:
-
-```commandline
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python -m mkdocs serve
-```
 
 ## General
 

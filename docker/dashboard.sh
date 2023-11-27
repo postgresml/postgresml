@@ -3,8 +3,7 @@ set -e
 
 export DATABASE_URL=postgres://postgresml:postgresml@127.0.0.1:5432/postgresml
 export DASHBOARD_STATIC_DIRECTORY=/usr/share/pgml-dashboard/dashboard-static
-export DASHBOARD_CONTENT_DIRECTORY=/usr/share/pgml-dashboard/dashboard-content
-export DASHBOARD_DOCS_DIRECTORY=/usr/share/pgml-docs
+export DASHBOARD_CMS_DIRECTORY=/usr/share/pgml-cms
 export SEARCH_INDEX_DIRECTORY=/var/lib/pgml-dashboard/search-index
 export ROCKET_SECRET_KEY=$(openssl rand -hex 32)
 export ROCKET_ADDRESS=0.0.0.0

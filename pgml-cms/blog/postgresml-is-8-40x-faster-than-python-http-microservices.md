@@ -25,7 +25,7 @@ PostgresML is a simpler alternative to that ever-growing complexity. In this pos
 
 To consider Python microservices with every possible advantage, our first benchmark is run with Python and Redis located on the same machine. Our goal is to avoid any additional network latency, which puts it on a more even footing with PostgresML. Our second test takes place on AWS EC2, with Redis and Gunicorn separated by a network; this benchmark proves to be relatively devastating.
 
-The full source code for both benchmarks is available on [Github](https://github.com/postgresml/postgresml/tree/master/pgml-docs/docs/blog/benchmarks/python\_microservices\_vs\_postgresml).
+The full source code for both benchmarks is available on [Github](https://github.com/postgresml/postgresml/tree/master/pgml-cms/docs/blog/benchmarks/python\_microservices\_vs\_postgresml).
 
 ### PostgresML
 
@@ -187,7 +187,7 @@ It had terrible accuracy (as did the Python version), probably because we were m
 
 ### Source code
 
-Benchmark source code can be found on [Github](https://github.com/postgresml/postgresml/tree/master/pgml-docs/docs/blog/benchmarks/python\_microservices\_vs\_postgresml/).
+Benchmark source code can be found on [Github](https://github.com/postgresml/postgresml/tree/master/pgml-cms/docs/blog/benchmarks/python\_microservices\_vs\_postgresml/).
 
 ## Feedback
 
