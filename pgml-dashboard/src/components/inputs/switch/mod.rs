@@ -30,8 +30,8 @@ pub struct Switch {
     target: StimulusTarget,
 }
 
-impl Switch {
-    pub fn new() -> Switch {
+impl Default for Switch {
+    fn default() -> Self {
         Switch {
             left_value: String::from("left"),
             left_icon: String::from(""),
@@ -41,6 +41,12 @@ impl Switch {
             initial_state: State::Left,
             target: StimulusTarget::new(),
         }
+    }
+}
+
+impl Switch {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn left(mut self, value: &str, icon: &str) -> Switch {

@@ -38,7 +38,7 @@ impl FromStr for StimulusEvents {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct StimulusAction {
     pub controller: String,
     pub method: String,
@@ -47,11 +47,7 @@ pub struct StimulusAction {
 
 impl StimulusAction {
     pub fn new() -> Self {
-        Self {
-            controller: String::new(),
-            method: String::new(),
-            action: None,
-        }
+        Self::default()
     }
 
     pub fn controller(mut self, controller: &str) -> Self {
@@ -81,8 +77,8 @@ impl fmt::Display for StimulusAction {
 
 impl Render for StimulusAction {
     fn render(&self, b: &mut Buffer) -> Result<(), sailfish::RenderError> {
-        if self.controller.len() == 0 || self.method.len() == 0 {
-            return format!("").render(b);
+        if self.controller.is_empty() || self.method.is_empty() {
+            return String::new().render(b);
         }
         match &self.action {
             Some(action) => format!("{}->{}#{}", action, self.controller, self.method).render(b),
@@ -95,12 +91,12 @@ impl FromStr for StimulusAction {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, ()> {
-        let cleaned = input.replace(" ", "");
+        let cleaned = input.replace(' ', "");
         let mut out: Vec<&str> = cleaned.split("->").collect();
 
         match out.len() {
             1 => {
-                let mut command: Vec<&str> = out.pop().unwrap().split("#").collect();
+                let mut command: Vec<&str> = out.pop().unwrap().split('#').collect();
                 match command.len() {
                     2 => Ok(StimulusAction::new()
                         .method(command.pop().unwrap())
@@ -110,7 +106,7 @@ impl FromStr for StimulusAction {
                 }
             }
             2 => {
-                let mut command: Vec<&str> = out.pop().unwrap().split("#").collect();
+                let mut command: Vec<&str> = out.pop().unwrap().split('#').collect();
                 match command.len() {
                     2 => Ok(StimulusAction::new()
                         .action(StimulusEvents::from_str(out.pop().unwrap()).unwrap())

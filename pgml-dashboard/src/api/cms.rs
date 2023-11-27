@@ -88,20 +88,20 @@ impl Collection {
     fn build_index(&mut self, hide_root: bool) {
         let summary_path = self.root_dir.join("SUMMARY.md");
         let summary_contents = std::fs::read_to_string(&summary_path)
-            .expect(format!("Could not read summary: {summary_path:?}").as_str());
+            .unwrap_or_else(|_| panic!("Could not read summary: {summary_path:?}"));
         let mdast = markdown::to_mdast(&summary_contents, &::markdown::ParseOptions::default())
-            .expect(format!("Could not parse summary: {summary_path:?}").as_str());
+            .unwrap_or_else(|_| panic!("Could not parse summary: {summary_path:?}"));
 
         for node in mdast
             .children()
-            .expect(format!("Summary has no content: {summary_path:?}").as_str())
+            .unwrap_or_else(|| panic!("Summary has no content: {summary_path:?}"))
             .iter()
         {
             match node {
                 Node::List(list) => {
-                    self.index = self.get_sub_links(&list).expect(
-                        format!("Could not parse list of index links: {summary_path:?}").as_str(),
-                    );
+                    self.index = self.get_sub_links(list).unwrap_or_else(|_| {
+                        panic!("Could not parse list of index links: {summary_path:?}")
+                    });
                     break;
                 }
                 _ => {
@@ -221,13 +221,13 @@ impl Collection {
         let root = parse_document(&arena, &contents, &crate::utils::markdown::options());
 
         // Title of the document is the first (and typically only) <h1>
-        let title = crate::utils::markdown::get_title(&root).unwrap();
-        let toc_links = crate::utils::markdown::get_toc(&root).unwrap();
-        let image = crate::utils::markdown::get_image(&root);
-        crate::utils::markdown::wrap_tables(&root, &arena).unwrap();
+        let title = crate::utils::markdown::get_title(root).unwrap();
+        let toc_links = crate::utils::markdown::get_toc(root).unwrap();
+        let image = crate::utils::markdown::get_image(root);
+        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
 
         // MkDocs syntax support, e.g. tabs, notes, alerts, etc.
-        crate::utils::markdown::mkdocs(&root, &arena).unwrap();
+        crate::utils::markdown::mkdocs(root, &arena).unwrap();
 
         // Style headings like we like them
         let mut plugins = ComrakPlugins::default();
@@ -255,7 +255,7 @@ impl Collection {
             .iter_mut()
             .map(|nav_link| {
                 let mut nav_link = nav_link.clone();
-                nav_link.should_open(&path);
+                nav_link.should_open(path);
                 nav_link
             })
             .collect();
@@ -273,11 +273,11 @@ impl Collection {
             let image_path = collection.url_root.join(".gitbook/assets").join(parts[1]);
             layout.image(config::asset_url(image_path.to_string_lossy()).as_ref());
         }
-        if description.is_some() {
-            layout.description(&description.unwrap());
+        if let Some(description) = &description {
+            layout.description(description);
         }
-        if user.is_some() {
-            layout.user(&user.unwrap());
+        if let Some(user) = &user {
+            layout.user(user);
         }
 
         let layout = layout
@@ -375,7 +375,7 @@ SELECT * FROM test;
         "#;
 
         let arena = Arena::new();
-        let root = parse_document(&arena, &code, &options());
+        let root = parse_document(&arena, code, &options());
 
         // Style headings like we like them
         let mut plugins = ComrakPlugins::default();
@@ -404,11 +404,11 @@ This is the end of the markdown
         "#;
 
         let arena = Arena::new();
-        let root = parse_document(&arena, &markdown, &options());
+        let root = parse_document(&arena, markdown, &options());
 
         let plugins = ComrakPlugins::default();
 
-        crate::utils::markdown::wrap_tables(&root, &arena).unwrap();
+        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
 
         let mut html = vec![];
         format_html_with_plugins(root, &options(), &mut html, &plugins).unwrap();
@@ -436,11 +436,11 @@ This is the end of the markdown
         "#;
 
         let arena = Arena::new();
-        let root = parse_document(&arena, &markdown, &options());
+        let root = parse_document(&arena, markdown, &options());
 
         let plugins = ComrakPlugins::default();
 
-        crate::utils::markdown::wrap_tables(&root, &arena).unwrap();
+        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
 
         let mut html = vec![];
         format_html_with_plugins(root, &options(), &mut html, &plugins).unwrap();
