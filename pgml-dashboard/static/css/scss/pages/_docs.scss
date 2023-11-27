@@ -1,5 +1,4 @@
 .docs {
-
     div.results {
         overflow-x: auto;
         margin: 24px 24px;
@@ -142,4 +141,33 @@
     li:not(.nav-item) {
         margin: 0.8rem 0;
     }
+
+    // Gitbook blog author block
+    h1 {
+        + div:first-of-type[align="left"] {
+            float: left;
+            height: 54px;
+            width: 54px;
+            display: inline-block;
+            margin-right: 1rem;
+
+            figure {
+                margin: 0 !important;
+
+                img {
+                    margin: 0 !important;
+                    border-radius: 50%;
+                }
+            }
+
+            + p {
+                margin: 0;
+            }
+
+            + p + p {
+                margin-bottom: 2rem;
+            }
+        }
+    }
 }
+

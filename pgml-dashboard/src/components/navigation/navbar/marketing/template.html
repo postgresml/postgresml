@@ -13,6 +13,7 @@
 
   let company_links = vec![
     StaticNavLink::new("About".to_string(), "/about".to_string()).icon("smart_toy"),
+    StaticNavLink::new("Careers".to_string(), "/careers/".to_string()).icon("work"),
     StaticNavLink::new("Contact".to_string(), "/contact".to_string()).icon("alternate_email")
   ];
 
@@ -72,8 +73,8 @@
                 <%+ MarketingLink::new().link(StaticNavLink::new("Pricing".to_string(), "/pricing".to_string())) %>
               <% } %>
 
-              <%+ MarketingLink::new().link(StaticNavLink::new("Docs".to_string(), "/docs/guides/".to_string())) %>
-              <%+ MarketingLink::new().link(StaticNavLink::new("Blog".to_string(), "/blog/speeding-up-vector-recall-by-5x-with-hnsw".to_string())) %>
+              <%+ MarketingLink::new().link(StaticNavLink::new("Docs".to_string(), "/docs/".to_string())) %>
+              <%+ MarketingLink::new().link(StaticNavLink::new("Blog".to_string(), "/blog/speeding-up-vector-recall-5x-with-hnsw".to_string())) %>
 
               <% if !standalone_dashboard { %>
                 <div class="d-none d-xl-flex">

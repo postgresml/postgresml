@@ -1,59 +1,6 @@
-//! Documentation and blog templates.
 use sailfish::TemplateOnce;
 
 use crate::utils::markdown::SearchResult;
-
-/// Documentation and blog link used in the left nav.
-#[derive(TemplateOnce, Debug, Clone)]
-#[template(path = "components/link.html")]
-pub struct NavLink {
-    pub id: String,
-    pub title: String,
-    pub href: String,
-    pub children: Vec<NavLink>,
-    pub open: bool,
-    pub active: bool,
-}
-
-impl NavLink {
-    /// Create a new documentation link.
-    pub fn new(title: &str) -> NavLink {
-        NavLink {
-            id: crate::utils::random_string(25),
-            title: title.to_owned(),
-            href: "#".to_owned(),
-            children: vec![],
-            open: false,
-            active: false,
-        }
-    }
-
-    /// Set the link href.
-    pub fn href(mut self, href: &str) -> NavLink {
-        self.href = href.to_owned();
-        self
-    }
-
-    /// Set the link's children which are shown when the link is expanded
-    /// using Bootstrap's collapse.
-    pub fn children(mut self, children: Vec<NavLink>) -> NavLink {
-        self.children = children;
-        self
-    }
-
-    /// Automatically expand the link and it's parents
-    /// when one of the children is visible.
-    pub fn should_open(&mut self, path: &str) -> bool {
-        self.active = self.href.ends_with(&path);
-        self.open = self.active;
-        for child in self.children.iter_mut() {
-            if child.should_open(path) {
-                self.open = true;
-            }
-        }
-        self.open
-    }
-}
 
 /// The search results template.
 #[derive(TemplateOnce)]

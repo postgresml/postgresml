@@ -1,7 +1,7 @@
 use pgml_components::Component;
 use std::collections::HashMap;
 
-pub use crate::components::{self, NavLink, StaticNav, StaticNavLink};
+pub use crate::components::{self, cms::index_link::IndexLink, NavLink, StaticNav, StaticNavLink};
 
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
@@ -33,7 +33,7 @@ pub struct Layout {
     pub content: Option<String>,
     pub user: Option<models::User>,
     pub nav_title: Option<String>,
-    pub nav_links: Vec<docs::NavLink>,
+    pub nav_links: Vec<IndexLink>,
     pub toc_links: Vec<docs::TocLink>,
     pub footer: String,
 }
@@ -71,7 +71,7 @@ impl Layout {
         self
     }
 
-    pub fn nav_links(&mut self, nav_links: &[docs::NavLink]) -> &mut Self {
+    pub fn nav_links(&mut self, nav_links: &[IndexLink]) -> &mut Self {
         self.nav_links = nav_links.to_vec();
         self
     }

@@ -25,7 +25,6 @@ use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
 use url::Url;
 
-use crate::templates::docs::NavLink;
 use std::fmt;
 
 pub struct MarkdownHeadings {
@@ -537,104 +536,34 @@ where
 pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
     let _ = iter_mut_all(node, &mut |node| {
         match node {
-            markdown::mdast::Node::Link(ref mut link) => {
-                info!("handling link: {:?}", link);
-                match Url::parse(&link.url) {
-                    Ok(url) => {
-                        if !url.has_host() {
-                            info!("relative: {:?}", link);
-                            let mut url_path = url.path().to_string();
-                            let url_path_path = Path::new(&url_path);
-                            match url_path_path.extension() {
-                                Some(ext) => {
-                                    if ext.to_str() == Some(".md") {
-                                        info!("md: {:?}", link);
-                                        let base = url_path_path.with_extension("");
-                                        url_path = base.into_os_string().into_string().unwrap();
-                                    }
-                                }
-                                _ => {
-                                    warn!("not markdown path: {:?}", path)
+            markdown::mdast::Node::Link(ref mut link) => match Url::parse(&link.url) {
+                Ok(url) => {
+                    if !url.has_host() {
+                        let mut url_path = url.path().to_string();
+                        let url_path_path = Path::new(&url_path);
+                        match url_path_path.extension() {
+                            Some(ext) => {
+                                if ext.to_str() == Some(".md") {
+                                    let base = url_path_path.with_extension("");
+                                    url_path = base.into_os_string().into_string().unwrap();
                                 }
                             }
-                            link.url = path.join(url_path).into_os_string().into_string().unwrap();
+                            _ => {
+                                warn!("not markdown path: {:?}", path)
+                            }
                         }
-                    }
-                    Err(e) => {
-                        warn!("could not parse url in markdown: {}", e)
+                        link.url = path.join(url_path).into_os_string().into_string().unwrap();
                     }
                 }
-            }
+                Err(e) => {
+                    warn!("could not parse url in markdown: {}", e)
+                }
+            },
             _ => (),
         };
 
         Ok(())
     });
-}
-
-pub fn get_sub_links(list: &markdown::mdast::List) -> Result<Vec<NavLink>> {
-    let mut links = Vec::new();
-    for node in list.children.iter() {
-        match node {
-            markdown::mdast::Node::ListItem(list_item) => {
-                for node in list_item.children.iter() {
-                    match node {
-                        markdown::mdast::Node::Paragraph(paragraph) => {
-                            for node in paragraph.children.iter() {
-                                match node {
-                                    markdown::mdast::Node::Link(link) => {
-                                        for node in link.children.iter() {
-                                            match node {
-                                                markdown::mdast::Node::Text(text) => {
-                                                    let mut url = Path::new(&link.url)
-                                                        .with_extension("")
-                                                        .to_string_lossy()
-                                                        .to_string();
-                                                    if url.ends_with("README") {
-                                                        url = url.replace("README", "");
-                                                    }
-                                                    let url = Path::new("/docs/guides")
-                                                        .join(url)
-                                                        .into_os_string()
-                                                        .into_string()
-                                                        .unwrap();
-                                                    let parent = NavLink::new(text.value.as_str())
-                                                        .href(&url);
-                                                    links.push(parent);
-                                                }
-                                                _ => error!("unhandled link child: {:?}", node),
-                                            }
-                                        }
-                                    }
-                                    _ => error!("unhandled paragraph child: {:?}", node),
-                                }
-                            }
-                        }
-                        markdown::mdast::Node::List(list) => {
-                            let mut link = links.pop().unwrap();
-                            link.children = get_sub_links(list).unwrap();
-                            links.push(link);
-                        }
-                        _ => error!("unhandled list_item child: {:?}", node),
-                    }
-                }
-            }
-            _ => error!("unhandled list child: {:?}", node),
-        }
-    }
-    Ok(links)
-}
-
-pub fn parse_summary_into_nav_links(root: &markdown::mdast::Node) -> Result<Vec<NavLink>> {
-    for node in root.children().unwrap().iter() {
-        match node {
-            markdown::mdast::Node::List(list) => {
-                return get_sub_links(list);
-            }
-            _ => { /* irrelevant */ }
-        }
-    }
-    return Ok(vec![]);
 }
 
 /// Get the title of the article.
@@ -681,6 +610,33 @@ pub fn get_title<'a>(root: &'a AstNode<'a>) -> anyhow::Result<String> {
         None => String::new(),
     };
     Ok(title)
+}
+
+/// Get the social sharing image of the article.
+///
+/// # Arguments
+///
+/// * `root` - The root node of the document tree.
+///
+pub fn get_image<'a>(root: &'a AstNode<'a>) -> Option<String> {
+    let re = regex::Regex::new(r#"<img src="([^"]*)" alt="([^"]*)""#).unwrap();
+    let mut image = None;
+    iter_nodes(root, &mut |node| match &node.data.borrow().value {
+        &NodeValue::HtmlBlock(ref html) => match re.captures(&html.literal) {
+            Some(c) => {
+                if &c[2] != "Author" {
+                    image = Some(c[1].to_string());
+                    Ok(false)
+                } else {
+                    Ok(true)
+                }
+            }
+            None => Ok(true),
+        },
+        _ => Ok(true),
+    })
+    .ok()?;
+    return image;
 }
 
 /// Wrap tables in container to allow for x-scroll on overflow.
@@ -1362,9 +1318,11 @@ impl SearchIndex {
     }
 
     pub fn documents() -> Vec<PathBuf> {
-        let guides =
-            glob::glob(&(config::docs_dir() + "/docs/guides/**/*.md")).expect("glob failed");
-        let blogs = glob::glob(&(config::blogs_dir() + "/blog/**/*.md")).expect("glob failed");
+        // TODO imrpove this .display().to_string()
+        let guides = glob::glob(&config::cms_dir().join("docs/**/*.md").display().to_string())
+            .expect("glob failed");
+        let blogs = glob::glob(&config::cms_dir().join("blog/**/*.md").display().to_string())
+            .expect("glob failed");
         guides
             .chain(blogs)
             .map(|path| path.expect("glob path failed"))
@@ -1431,7 +1389,7 @@ impl SearchIndex {
                 .unwrap()
                 .to_string()
                 .replace("README", "")
-                .replace(&config::docs_dir(), "");
+                .replace(&config::cms_dir().display().to_string(), "");
             let mut doc = Document::default();
             doc.add_text(title_field, &title_text);
             doc.add_text(body_field, &body_text);
@@ -1548,7 +1506,7 @@ impl SearchIndex {
                 .unwrap()
                 .to_string()
                 .replace(".md", "")
-                .replace(&config::static_dir(), "");
+                .replace(&config::static_dir().display().to_string(), "");
 
             // Dedup results from prefix search and full text search.
             let new = dedup.insert(path.clone());

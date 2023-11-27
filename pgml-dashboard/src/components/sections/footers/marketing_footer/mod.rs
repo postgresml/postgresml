@@ -14,23 +14,20 @@ impl MarketingFooter {
     pub fn new() -> MarketingFooter {
         MarketingFooter {
             solutions: vec![
-                StaticNavLink::new("Overview".into(), "/docs/guides/".into()),
+                StaticNavLink::new("Overview".into(), "/docs/".into()),
                 StaticNavLink::new("Chatbot".into(), "/chatbot".into()),
                 StaticNavLink::new("Site Search".into(), "/search".into()).disabled(true),
                 StaticNavLink::new("Fraud Detection".into(), "/fraud".into()).disabled(true),
                 StaticNavLink::new("Forecasting".into(), "/forecasting".into()).disabled(true),
             ],
             resources: vec![
-                StaticNavLink::new("Documentation".into(), "/docs/guides/".into()),
-                StaticNavLink::new(
-                    "Blog".into(),
-                    "/blog/speeding-up-vector-recall-by-5x-with-hnsw".into(),
-                ),
+                StaticNavLink::new("Documentation".into(), "/docs/".into()),
+                StaticNavLink::new("Blog".into(), "/blog/".into()),
             ],
-            company: vec![StaticNavLink::new(
-                "Contact".into(),
-                "mailto:team@postgresml.org".into(),
-            )],
+            company: vec![
+                StaticNavLink::new("Careers".into(), "/careers/".into()),
+                StaticNavLink::new("Contact".into(), "mailto:team@postgresml.org".into()),
+            ],
         }
     }
 
