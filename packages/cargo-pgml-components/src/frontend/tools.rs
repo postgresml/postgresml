@@ -199,6 +199,8 @@ pub fn lint(check: bool) {
     if let Err(err) = result {
         if check {
             error("diff detected");
+        } else {
+            error!("error");
         }
 
         error!("{}", err);
