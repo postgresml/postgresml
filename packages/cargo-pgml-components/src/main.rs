@@ -76,8 +76,11 @@ enum Commands {
     #[command(subcommand)]
     LocalDev(LocalDevCommands),
 
-    /// Watch for local changes,
+    /// Watch for local changes
     Watch,
+
+    /// Lint your code
+    Lint,
 }
 
 #[derive(Subcommand, Debug)]
@@ -118,6 +121,9 @@ fn main() {
                 },
                 Commands::Watch => {
                     frontend::tools::watch();
+                }
+                Commands::Lint => {
+                    frontend::tools::lint();
                 }
             }
         }

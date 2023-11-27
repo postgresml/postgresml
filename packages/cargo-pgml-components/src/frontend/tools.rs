@@ -11,7 +11,7 @@ use std::time::Duration;
 use notify_debouncer_full::{new_debouncer, notify::*, DebounceEventResult};
 
 /// Required tools.
-static TOOLS: &[&str] = &["sass", "rollup"];
+static TOOLS: &[&str] = &["sass", "rollup", "prettier"];
 static ROLLUP_PLUGINS: &[&str] = &["@rollup/plugin-terser", "@rollup/plugin-node-resolve"];
 static NVM_EXEC: &'static str = "/tmp/pgml-components-nvm.sh";
 static NVM_SOURCE: &'static str = "https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh";
@@ -180,6 +180,12 @@ pub fn watch() {
 
     // sleep forever
     std::thread::sleep(std::time::Duration::MAX);
+}
+
+pub fn lint() {
+    unwrap_or_exit!(execute_with_nvm(
+        Command::new("prettier").arg("--write").arg("src/**/*.js")
+    ));
 }
 
 fn rebuild() {
