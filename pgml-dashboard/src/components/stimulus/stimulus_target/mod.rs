@@ -30,7 +30,7 @@ impl Render for StimulusTarget {
             (Some(controller), Some(name)) => {
                 format!("data-{}-target=\"{}\"", controller, name).render(b)
             }
-            _ => format!("").render(b),
+            _ => String::new().render(b),
         }
     }
 }

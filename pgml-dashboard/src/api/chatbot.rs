@@ -298,10 +298,10 @@ pub async fn wrapped_chatbot_get_answer(
     history.reverse();
     let history = history.join("\n");
 
-    let mut pipeline = Pipeline::new("v1", None, None, None);
+    let pipeline = Pipeline::new("v1", None, None, None);
     let context = collection
         .query()
-        .vector_recall(&data.question, &mut pipeline, Some(json!({
+        .vector_recall(&data.question, &pipeline, Some(json!({
             "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
         }).into()))
         .limit(5)
@@ -312,9 +312,8 @@ pub async fn wrapped_chatbot_get_answer(
         .collect::<Vec<String>>()
         .join("\n");
 
-    let answer = match brain {
-        _ => get_openai_chatgpt_answer(knowledge_base, &history, &context, &data.question).await,
-    }?;
+    let answer =
+        get_openai_chatgpt_answer(knowledge_base, &history, &context, &data.question).await?;
 
     let new_history_messages: Vec<pgml::types::Json> = vec![
         serde_json::to_value(user_document).unwrap().into(),

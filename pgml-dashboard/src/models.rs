@@ -381,18 +381,20 @@ impl Cell {
             }
 
             CellType::Markdown => {
-                let mut options = ComrakOptions::default();
-                options.extension = ComrakExtensionOptions {
-                    strikethrough: true,
-                    tagfilter: true,
-                    table: true,
-                    autolink: true,
-                    tasklist: true,
-                    superscript: true,
-                    header_ids: None,
-                    footnotes: true,
-                    description_lists: true,
-                    front_matter_delimiter: None,
+                let options = ComrakOptions {
+                    extension: ComrakExtensionOptions {
+                        strikethrough: true,
+                        tagfilter: true,
+                        table: true,
+                        autolink: true,
+                        tasklist: true,
+                        superscript: true,
+                        header_ids: None,
+                        footnotes: true,
+                        description_lists: true,
+                        front_matter_delimiter: None,
+                    },
+                    ..Default::default()
                 };
 
                 (
@@ -541,19 +543,19 @@ impl Model {
         .await?)
     }
 
-    pub fn metrics<'a>(&'a self) -> &'a serde_json::Map<String, serde_json::Value> {
+    pub fn metrics(&self) -> &serde_json::Map<String, serde_json::Value> {
         self.metrics.as_ref().unwrap().as_object().unwrap()
     }
 
-    pub fn hyperparams<'a>(&'a self) -> &'a serde_json::Map<String, serde_json::Value> {
+    pub fn hyperparams(&self) -> &serde_json::Map<String, serde_json::Value> {
         self.hyperparams.as_object().unwrap()
     }
 
-    pub fn search_params<'a>(&'a self) -> &'a serde_json::Map<String, serde_json::Value> {
+    pub fn search_params(&self) -> &serde_json::Map<String, serde_json::Value> {
         self.search_params.as_object().unwrap()
     }
 
-    pub fn search_results<'a>(&'a self) -> Option<&'a serde_json::Map<String, serde_json::Value>> {
+    pub fn search_results(&self) -> Option<&serde_json::Map<String, serde_json::Value>> {
         match self.metrics().get("search_results") {
             Some(value) => Some(value.as_object().unwrap()),
             None => None,
@@ -676,10 +678,9 @@ impl Snapshot {
 
     pub fn rows(&self) -> Option<i64> {
         match self.analysis.as_ref() {
-            Some(analysis) => match analysis.get("samples") {
-                Some(samples) => Some(samples.as_f64().unwrap() as i64),
-                None => None,
-            },
+            Some(analysis) => analysis
+                .get("samples")
+                .map(|samples| samples.as_f64().unwrap() as i64),
             None => None,
         }
     }
@@ -716,23 +717,17 @@ impl Snapshot {
     }
 
     pub fn feature_size(&self) -> Option<usize> {
-        match self.features() {
-            Some(features) => Some(features.len()),
-            None => None,
-        }
+        self.features().map(|features| features.len())
     }
 
-    pub fn columns<'a>(&'a self) -> Option<Vec<&'a serde_json::Map<String, serde_json::Value>>> {
+    pub fn columns(&self) -> Option<Vec<&serde_json::Map<String, serde_json::Value>>> {
         match self.columns.as_ref() {
-            Some(columns) => match columns.as_array() {
-                Some(columns) => Some(
-                    columns
-                        .iter()
-                        .map(|column| column.as_object().unwrap())
-                        .collect(),
-                ),
-                None => None,
-            },
+            Some(columns) => columns.as_array().map(|columns| {
+                columns
+                    .iter()
+                    .map(|column| column.as_object().unwrap())
+                    .collect()
+            }),
 
             None => None,
         }
@@ -800,7 +795,7 @@ impl Snapshot {
                 let columns = self.columns().unwrap();
                 let column = columns
                     .iter()
-                    .find(|column| &column["name"].as_str().unwrap() == &name);
+                    .find(|column| column["name"].as_str().unwrap() == name);
                 match column {
                     Some(column) => column
                         .get("statistics")
@@ -884,7 +879,7 @@ impl Deployment {
     }
 
     pub fn human_readable_strategy(&self) -> String {
-        self.strategy.as_ref().unwrap().replace("_", " ")
+        self.strategy.as_ref().unwrap().replace('_', " ")
     }
 }
 

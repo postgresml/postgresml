@@ -35,15 +35,21 @@ pub struct EditableHeader {
     id: String,
 }
 
-impl EditableHeader {
-    pub fn new() -> EditableHeader {
-        EditableHeader {
+impl Default for EditableHeader {
+    fn default() -> Self {
+        Self {
             value: String::from("Title Goes Here"),
             header_type: Headers::H3,
             input_target: StimulusTarget::new(),
             input_name: None,
             id: String::from(""),
         }
+    }
+}
+
+impl EditableHeader {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn header_type(mut self, header_type: Headers) -> Self {

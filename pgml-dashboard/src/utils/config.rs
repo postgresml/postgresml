@@ -84,7 +84,7 @@ impl Config {
     }
 }
 
-pub fn dev_mode<'a>() -> bool {
+pub fn dev_mode() -> bool {
     CONFIG.dev_mode
 }
 
@@ -109,7 +109,7 @@ pub fn cms_dir<'a>() -> &'a Path {
 pub fn search_index_dir<'a>() -> &'a Path {
     &CONFIG.search_index_dir
 }
-pub fn render_errors<'a>() -> bool {
+pub fn render_errors() -> bool {
     CONFIG.render_errors
 }
 
@@ -119,7 +119,7 @@ pub fn deployment<'a>() -> &'a str {
 pub fn signup_url<'a>() -> &'a str {
     &CONFIG.signup_url
 }
-pub fn standalone_dashboard<'a>() -> bool {
+pub fn standalone_dashboard() -> bool {
     CONFIG.standalone_dashboard
 }
 
@@ -147,18 +147,12 @@ pub fn asset_url(path: Cow<str>) -> String {
 }
 
 fn env_is_set(name: &str) -> bool {
-    match var(name) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
+    var(name).is_ok()
 }
 
 fn env_string_required(name: &str) -> String {
     var(name)
-        .expect(&format!(
-            "{} env variable is required for proper configuration",
-            name
-        ))
+        .unwrap_or_else(|_| panic!("{} env variable is required for proper configuration", name))
         .to_string()
 }
 

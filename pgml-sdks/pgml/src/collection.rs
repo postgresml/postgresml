@@ -611,7 +611,7 @@ impl Collection {
         let mut document_ids = Vec::new();
         for chunk in documents?.chunks(10) {
             // Need to make it a vec to partition it and must include explicit typing here
-            let mut chunk: Vec<&(uuid::Uuid, Option<String>, Json)> = chunk.into_iter().collect();
+            let mut chunk: Vec<&(uuid::Uuid, Option<String>, Json)> = chunk.iter().collect();
 
             // Split the chunk into two groups, one with text, and one with just metadata
             let split_index = itertools::partition(&mut chunk, |(_, text, _)| text.is_some());
@@ -623,7 +623,7 @@ impl Collection {
             if !metadata_chunk.is_empty() {
                 // Update the metadata
                 // Merge the metadata if the user has specified to do so otherwise replace it
-                if args["metadata"]["merge"].as_bool().unwrap_or(false) == true {
+                if args["metadata"]["merge"].as_bool().unwrap_or(false) {
                     sqlx::query(query_builder!(
                     "UPDATE %s d SET metadata = d.metadata || v.metadata FROM (SELECT UNNEST($1) source_uuid, UNNEST($2) metadata) v WHERE d.source_uuid = v.source_uuid",
                     self.documents_table_name
@@ -1245,7 +1245,7 @@ impl Collection {
         let file_types: Vec<&str> = args["file_types"]
             .as_array()
             .context("file_types must be an array of valid file types. E.G. ['md', 'txt']")?
-            .into_iter()
+            .iter()
             .map(|v| {
                 let v = v.as_str().with_context(|| {
                     format!("file_types must be an array of valid file types. E.G. ['md', 'txt']. Found: {}", v)
@@ -1265,10 +1265,10 @@ impl Collection {
             args["ignore_paths"]
                 .as_array()
                 .map_or(Ok(Vec::new()), |v| {
-                    v.into_iter()
+                    v.iter()
                         .map(|v| {
                             let v = v.as_str().with_context(|| {
-                                format!("ignore_paths must be an array of valid regexes")
+                                "ignore_paths must be an array of valid regexes".to_string()
                             })?;
                             Regex::new(v).with_context(|| format!("Invalid regex: {}", v))
                         })
@@ -1291,7 +1291,7 @@ impl Collection {
                     continue;
                 }
 
-                let contents = utils::get_file_contents(&entry.path())?;
+                let contents = utils::get_file_contents(entry.path())?;
                 documents.push(
                     json!({
                         "id": nice_path,
@@ -1306,7 +1306,7 @@ impl Collection {
                 }
             }
         }
-        if documents.len() > 0 {
+        if !documents.is_empty() {
             self.upsert_documents(documents, None).await?;
         }
         Ok(())
@@ -1315,7 +1315,7 @@ impl Collection {
     pub async fn upsert_file(&mut self, path: &str) -> anyhow::Result<()> {
         self.verify_in_database(false).await?;
         let path = Path::new(path);
-        let contents = utils::get_file_contents(&path)?;
+        let contents = utils::get_file_contents(path)?;
         let document = json!({
             "id": path,
             "text": contents

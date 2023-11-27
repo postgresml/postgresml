@@ -41,7 +41,7 @@ const EXAMPLE_QUESTIONS: ExampleQuestions = [
     ),
 ];
 
-const KNOWLEDGE_BASES: [&'static str; 0] = [
+const KNOWLEDGE_BASES: [&str; 0] = [
     // "Knowledge Base 1",
     // "Knowledge Base 2",
     // "Knowledge Base 3",
@@ -117,14 +117,20 @@ pub struct Chatbot {
     knowledge_bases_with_logo: &'static [KnowledgeBaseWithLogo; 4],
 }
 
-impl Chatbot {
-    pub fn new() -> Chatbot {
+impl Default for Chatbot {
+    fn default() -> Self {
         Chatbot {
             brains: &CHATBOT_BRAINS,
             example_questions: &EXAMPLE_QUESTIONS,
             knowledge_bases: &KNOWLEDGE_BASES,
             knowledge_bases_with_logo: &KNOWLEDGE_BASES_WITH_LOGO,
         }
+    }
+}
+
+impl Chatbot {
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 

@@ -320,7 +320,7 @@ mod tests {
         let mut collection = Collection::new(collection_name, None);
         collection.add_pipeline(&mut pipeline).await?;
         let full_embeddings_table_name = pipeline.create_or_get_embeddings_table().await?;
-        let embeddings_table_name = full_embeddings_table_name.split(".").collect::<Vec<_>>()[1];
+        let embeddings_table_name = full_embeddings_table_name.split('.').collect::<Vec<_>>()[1];
         let pool = get_or_initialize_pool(&None).await?;
         let results: Vec<(String, String)> = sqlx::query_as(&query_builder!(
             "select indexname, indexdef from pg_indexes where tablename = '%d' and schemaname = '%d'",
@@ -346,10 +346,10 @@ mod tests {
         collection.add_pipeline(&mut pipeline).await?;
         let queried_pipeline = &collection.get_pipelines().await?[0];
         assert_eq!(pipeline.name, queried_pipeline.name);
-        collection.disable_pipeline(&mut pipeline).await?;
+        collection.disable_pipeline(&pipeline).await?;
         let queried_pipelines = &collection.get_pipelines().await?;
         assert!(queried_pipelines.is_empty());
-        collection.enable_pipeline(&mut pipeline).await?;
+        collection.enable_pipeline(&pipeline).await?;
         let queried_pipeline = &collection.get_pipelines().await?[0];
         assert_eq!(pipeline.name, queried_pipeline.name);
         collection.archive().await?;
@@ -510,13 +510,13 @@ mod tests {
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
+        let pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
         collection
             .upsert_documents(generate_dummy_documents(4), None)
             .await?;
         let results = collection
             .query()
-            .vector_recall("Here is some query", &mut pipeline, None)
+            .vector_recall("Here is some query", &pipeline, None)
             .limit(3)
             .fetch_all()
             .await?;
@@ -553,7 +553,7 @@ mod tests {
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswqbapmpis_1", None, None, None);
+        let pipeline = Pipeline::new("test_r_p_cvswqbapmpis_1", None, None, None);
         collection
             .upsert_documents(generate_dummy_documents(3), None)
             .await?;
@@ -561,7 +561,7 @@ mod tests {
             .query()
             .vector_recall(
                 "Here is some query",
-                &mut pipeline,
+                &pipeline,
                 Some(
                     json!({
                         "instruction": "Represent the Wikipedia document for retrieval: "
@@ -604,13 +604,13 @@ mod tests {
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
+        let pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
         collection
             .upsert_documents(generate_dummy_documents(4), None)
             .await?;
         let results = collection
             .query()
-            .vector_recall("Here is some query", &mut pipeline, None)
+            .vector_recall("Here is some query", &pipeline, None)
             .limit(3)
             .fetch_all()
             .await?;
@@ -631,7 +631,7 @@ mod tests {
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswqbachesv_1", None, None, None);
+        let pipeline = Pipeline::new("test_r_p_cvswqbachesv_1", None, None, None);
         collection
             .upsert_documents(generate_dummy_documents(3), None)
             .await?;
@@ -639,7 +639,7 @@ mod tests {
             .query()
             .vector_recall(
                 "Here is some query",
-                &mut pipeline,
+                &pipeline,
                 Some(
                     json!({
                         "hnsw": {
@@ -676,7 +676,7 @@ mod tests {
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswqbachesvare_2", None, None, None);
+        let pipeline = Pipeline::new("test_r_p_cvswqbachesvare_2", None, None, None);
         collection
             .upsert_documents(generate_dummy_documents(3), None)
             .await?;
@@ -684,7 +684,7 @@ mod tests {
             .query()
             .vector_recall(
                 "Here is some query",
-                &mut pipeline,
+                &pipeline,
                 Some(
                     json!({
                         "hnsw": {
@@ -754,7 +754,7 @@ mod tests {
         for (expected_result_count, filter) in filters {
             let results = collection
                 .query()
-                .vector_recall("Here is some query", &mut pipeline, None)
+                .vector_recall("Here is some query", &pipeline, None)
                 .filter(filter)
                 .fetch_all()
                 .await?;

@@ -16,8 +16,8 @@ use super::TracebackError;
 
 pub mod whitelist;
 
-mod transformers;
-pub use transformers::*;
+mod transform;
+pub use transform::*;
 
 create_pymodule!("/src/bindings/transformers/transformers.py");
 

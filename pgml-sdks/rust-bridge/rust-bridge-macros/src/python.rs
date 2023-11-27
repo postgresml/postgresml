@@ -219,12 +219,10 @@ pub fn generate_python_methods(
         let some_wrapper_type = match method.receiver.as_ref() {
             Some(r) => {
                 let st = r.to_string();
-                Some(if st.contains("&") {
+                Some(if st.contains('&') {
                     let st = st.replace("self", &wrapped_type_ident.to_string());
-                    let s = syn::parse_str::<syn::Type>(&st).expect(&format!(
-                        "Error converting self type to necessary syn type: {:?}",
-                        r
-                    ));
+                    let s = syn::parse_str::<syn::Type>(&st).unwrap_or_else(|_| panic!("Error converting self type to necessary syn type: {:?}",
+                        r));
                     s.to_token_stream()
                 } else {
                     quote! { #wrapped_type_ident }

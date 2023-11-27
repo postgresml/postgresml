@@ -37,7 +37,7 @@ impl Tab {
     }
 
     pub fn id(&self) -> String {
-        format!("tab-{}", self.name.to_lowercase().replace(" ", "-"))
+        format!("tab-{}", self.name.to_lowercase().replace(' ', "-"))
     }
 
     pub fn selected(&self) -> String {
