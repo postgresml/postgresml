@@ -196,12 +196,16 @@ pub fn lint(check: bool) {
 
     let result = execute_with_nvm(&mut cmd);
 
-    if check && result.is_err() {
-        error("diff detected");
-        error!("{}", result.err().unwrap());
-    } else {
-        info("ok");
+    if let Err(err) = result {
+        if check {
+            error("diff detected");
+        }
+
+        error!("{}", err);
+        exit(1);
     }
+
+    info("ok");
 }
 
 fn rebuild() {
