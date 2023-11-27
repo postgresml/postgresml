@@ -182,10 +182,26 @@ pub fn watch() {
     std::thread::sleep(std::time::Duration::MAX);
 }
 
-pub fn lint() {
-    unwrap_or_exit!(execute_with_nvm(
-        Command::new("prettier").arg("--write").arg("src/**/*.js")
-    ));
+pub fn lint(check: bool) {
+    let mut cmd = Command::new("prettier");
+    if check {
+        cmd.arg("--check");
+    } else {
+        cmd.arg("--write");
+    }
+
+    cmd.arg("src/**/*.js");
+
+    print("linting...");
+
+    let result = execute_with_nvm(&mut cmd);
+
+    if check && result.is_err() {
+        error("diff detected");
+        error!("{}", result.err().unwrap());
+    } else {
+        info("ok");
+    }
 }
 
 fn rebuild() {

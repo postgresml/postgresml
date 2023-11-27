@@ -80,7 +80,10 @@ enum Commands {
     Watch,
 
     /// Lint your code
-    Lint,
+    Lint {
+        #[arg(long, default_value = "false")]
+        check: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -122,8 +125,8 @@ fn main() {
                 Commands::Watch => {
                     frontend::tools::watch();
                 }
-                Commands::Lint => {
-                    frontend::tools::lint();
+                Commands::Lint { check } => {
+                    frontend::tools::lint(check);
                 }
             }
         }
