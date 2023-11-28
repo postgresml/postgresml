@@ -1,5 +1,5 @@
 # Database Credentials
 
-Get your database credentials from the database connectivity tab. If you have `psql` installed on your machine you can copy paste Connecting with psql field at your terminal.
+Get your database credentials from the database **Connectivity** tab:
 
-<figure><img src="../.gitbook/assets/database_connectivity.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/Screenshot from 2023-11-27 23-21-36.png" alt=""><figcaption></figcaption></figure>

@@ -1,5 +1,5 @@
 # Select a plan
 
-Click on **Start Free Project** to get serverless GPU-powered database
+Click on **Get Started** to get a free serverless GPU-powered database:
 
-<figure><img src="../.gitbook/assets/select_plan.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>

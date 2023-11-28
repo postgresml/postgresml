@@ -1,7 +1,5 @@
 # Million Requests per Second
 
-
-
 The question "Does it Scale?" has become somewhat of a meme in software engineering. There is a good reason for it though, because most businesses plan for success. If your app, online store, or SaaS becomes popular, you want to be sure that the system powering it can serve all your new customers.
 
 At PostgresML, we are very concerned with scale. Our engineering background took us through scaling PostgreSQL to 100 TB+, so we're certain that it scales, but could we scale machine learning alongside it?
@@ -12,17 +10,13 @@ If you missed our previous post and are wondering why someone would combine mach
 
 ## Architecture Overview
 
-If you're familiar with how one runs PostgreSQL at scale, you can skip straight to the [results](broken-reference).
+If you're familiar with how one runs PostgreSQL at scale, you can skip straight to the [results](broken-reference/).
 
 Part of our thesis, and the reason why we chose Postgres as our host for machine learning, is that scaling machine learning inference is very similar to scaling read queries in a typical database cluster.
 
 Inference speed varies based on the model complexity (e.g. `n_estimators` for XGBoost) and the size of the dataset (how many features the model uses), which is analogous to query complexity and table size in the database world and, as we'll demonstrate further on, scaling the latter is mostly a solved problem.
 
-
-
 <figure><img src="../.gitbook/assets/scaling-postgresml-3.svg" alt=""><figcaption><p><em>System Architecture</em></p></figcaption></figure>
-
-
 
 | Component | Description                                                                                               |
 | --------- | --------------------------------------------------------------------------------------------------------- |
@@ -73,8 +67,6 @@ Scaling XGBoost predictions is a little bit more interesting. XGBoost cannot ser
 
 PostgresML bypasses that limitation because of how Postgres itself handles concurrency:
 
-
-
 <figure><img src="../.gitbook/assets/postgres-multiprocess-2.png" alt=""><figcaption></figcaption></figure>
 
 _PostgresML concurrency_
@@ -88,8 +80,6 @@ We ran over a 100 different benchmarks, by changing the number of clients, poole
 One of the tests we ran used 1,000 clients, which were connected to 1, 2, and 5 replicas. The results were exactly what we expected.
 
 ### Linear Scaling
-
-
 
 <div>
 
@@ -131,11 +121,11 @@ If batching did not work at all, we would see a linear increase in latency and a
 
 <div>
 
-<figure><img src="../.gitbook/assets/1M-RPS-batching-latency%20(1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/1M-RPS-batching-latency (1) (1).png" alt=""><figcaption></figcaption></figure>
 
  
 
-<figure><img src="../.gitbook/assets/1M-RPS-batching-throughput%20(1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/1M-RPS-batching-throughput (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 </div>
 
