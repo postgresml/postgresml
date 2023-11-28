@@ -77,7 +77,7 @@ impl Collection {
             path = path.join("README");
         }
 
-        let path = self.root_dir.join(path.with_extension("md"));
+        let path = self.root_dir.join(format!("{}.md", path.to_string_lossy()));
 
         self.render(&path, cluster, self).await
     }

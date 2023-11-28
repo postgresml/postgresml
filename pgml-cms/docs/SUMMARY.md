@@ -6,6 +6,7 @@
   * [Select a plan](getting-started/select-a-plan.md)
   * [Database Credentials](getting-started/database-credentials.md)
   * [Connect to the Database](getting-started/connect-to-the-database.md)
+  * [Importing data](getting-started/importing-data.md)
 * [Machine Learning](machine-learning/README.md)
   * [Natural Language Processing](machine-learning/natural-language-processing/README.md)
     * [Embeddings](machine-learning/natural-language-processing/embeddings.md)

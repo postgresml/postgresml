@@ -2,7 +2,7 @@
 
 ### SQL Clients
 
-Use any of these popular tools to connect to PostgresML and write SQL queries
+Use any of these popular tools to connect to PostgresML and write SQL queries:
 
 * [Apache Superset](https://superset.apache.org/)
 * [DBeaver](https://dbeaver.io/)
@@ -16,7 +16,7 @@ Use any of these popular tools to connect to PostgresML and write SQL queries
 
 ### SQL Libraries
 
-Connect directly to the database with your favorite programming language
+Connect directly to the database with your favorite programming language:
 
 * C++: [libpqxx](https://www.tutorialspoint.com/postgresql/postgresql\_c\_cpp.htm)
 * C#: [Npgsql](https://github.com/npgsql/npgsql),[Dapper](https://github.com/DapperLib/Dapper), or [Entity Framework Core](https://github.com/dotnet/efcore)

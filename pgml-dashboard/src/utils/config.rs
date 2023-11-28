@@ -49,8 +49,8 @@ impl Config {
             _ => "2.0K".to_string(),
         };
 
-        let css_version = env_string_default("CSS_VERSION", "");
-        let js_version = env_string_default("JS_VERSION", "1");
+        let css_version = env!("CSS_VERSION");
+        let js_version = env!("JS_VERSION");
 
         let css_extension = if dev_mode {
             "css".to_string()
@@ -66,7 +66,7 @@ impl Config {
         Config {
             dev_mode,
             database_url: env_string_default("DATABASE_URL", "postgres:///pgml"),
-            git_sha: env_string_required("GIT_SHA"),
+            git_sha: env!("GIT_SHA").to_string(),
             sentry_dsn: env_string_optional("SENTRY_DSN"),
             static_dir: env_path_default("DASHBOARD_STATIC_DIRECTORY", "static"),
             cms_dir: env_path_default("DASHBOARD_CMS_DIRECTORY", "../pgml-cms"),
@@ -92,7 +92,7 @@ pub fn database_url<'a>() -> &'a str {
     &CONFIG.database_url
 }
 
-pub fn git_sha<'a>() -> &'a str {
+pub fn git_sha<'a>() -> &'a String {
     &CONFIG.git_sha
 }
 
@@ -148,12 +148,6 @@ pub fn asset_url(path: Cow<str>) -> String {
 
 fn env_is_set(name: &str) -> bool {
     var(name).is_ok()
-}
-
-fn env_string_required(name: &str) -> String {
-    var(name)
-        .unwrap_or_else(|_| panic!("{} env variable is required for proper configuration", name))
-        .to_string()
 }
 
 fn env_string_default(name: &str, default: &str) -> String {

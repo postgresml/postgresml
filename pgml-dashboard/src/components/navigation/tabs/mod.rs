@@ -6,6 +6,5 @@ pub mod tab;
 pub use tab::Tab;
 
 // src/components/navigation/tabs/tabs
-#[allow(clippy::module_inception)]
 pub mod tabs;
 pub use tabs::Tabs;
