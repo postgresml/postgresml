@@ -122,7 +122,7 @@ class TextIteratorStreamer:
         self.text_queue.put(self.stop_signal, self.timeout)
 
     def __iter__(self):
-        self
+        return self
 
     def __next__(self):
         value = self.text_queue.get(timeout=self.timeout)
