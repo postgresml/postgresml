@@ -53,7 +53,7 @@ The version of PostgresML is set in many places, and all of them need to be upda
 
 #### Documentation
 
-Additionally, we mention the version of the extension in our documentation. It would be very helpful to update it there as well, so our users are always instructed to install the latest and greatest version. Our documentation is located in `pgml-docs`. If you search it for the current version number, you should find all the places where we mention it.
+Additionally, we mention the version of the extension in our documentation. It would be very helpful to update it there as well, so our users are always instructed to install the latest and greatest version. Our documentation is located in `pgml-cms`. If you search it for the current version number, you should find all the places where we mention it.
 
 #### Github Actions
 

@@ -292,15 +292,12 @@ fn train_joint(
         warning!("Not deploying newly trained model.");
     }
 
-    TableIterator::new(
-        vec![(
-            project.name,
-            project.task.to_string(),
-            model.algorithm.to_string(),
-            deploy,
-        )]
-        .into_iter(),
-    )
+    TableIterator::new(vec![(
+        project.name,
+        project.task.to_string(),
+        model.algorithm.to_string(),
+        deploy,
+    )])
 }
 
 #[pg_extern]
@@ -383,9 +380,11 @@ fn deploy(
     let project = Project::find(project_id).unwrap();
     project.deploy(model_id);
 
-    TableIterator::new(
-        vec![(project_name.to_string(), strategy.to_string(), algorithm)].into_iter(),
-    )
+    TableIterator::new(vec![(
+        project_name.to_string(),
+        strategy.to_string(),
+        algorithm,
+    )])
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict")]
@@ -433,9 +432,10 @@ fn predict_joint(project_name: &str, features: Vec<f32>) -> Vec<f32> {
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict_batch")]
 fn predict_batch(project_name: &str, features: Vec<f32>) -> SetOfIterator<'static, f32> {
-    SetOfIterator::new(
-        predict_model_batch(Project::get_deployed_model_id(project_name), features).into_iter(),
-    )
+    SetOfIterator::new(predict_model_batch(
+        Project::get_deployed_model_id(project_name),
+        features,
+    ))
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict")]
@@ -503,7 +503,7 @@ fn snapshot(
         true,
         preprocess,
     );
-    TableIterator::new(vec![(relation_name.to_string(), y_column_name.to_string())].into_iter())
+    TableIterator::new(vec![(relation_name.to_string(), y_column_name.to_string())])
 }
 
 #[pg_extern]
@@ -533,7 +533,7 @@ fn load_dataset(
         }
     };
 
-    TableIterator::new(vec![(name, rows)].into_iter())
+    TableIterator::new(vec![(name, rows)])
 }
 
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
@@ -598,7 +598,7 @@ pub fn chunk(
         .map(|(i, chunk)| (i as i64 + 1, chunk))
         .collect::<Vec<(i64, String)>>();
 
-    TableIterator::new(chunks.into_iter())
+    TableIterator::new(chunks)
 }
 
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
@@ -833,15 +833,12 @@ fn tune(
         project.deploy(model.id);
     }
 
-    TableIterator::new(
-        vec![(
-            project.name,
-            project.task.to_string(),
-            model.algorithm.to_string(),
-            deploy,
-        )]
-        .into_iter(),
-    )
+    TableIterator::new(vec![(
+        project.name,
+        project.task.to_string(),
+        model.algorithm.to_string(),
+        deploy,
+    )])
 }
 
 #[cfg(feature = "python")]

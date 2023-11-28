@@ -19,9 +19,7 @@ async fn index() -> Redirect {
 pub async fn error() -> Result<(), BadRequest> {
     info!("This is additional information for the test");
     error!("This is a test");
-    let error: Option<i32> = None;
-    error.unwrap();
-    Ok(())
+    panic!();
 }
 
 #[catch(403)]
@@ -102,14 +100,14 @@ async fn main() {
 
     markdown::SearchIndex::build().await.unwrap();
 
-    pgml_dashboard::migrate(&guards::Cluster::default(None).pool())
+    pgml_dashboard::migrate(guards::Cluster::default(None).pool())
         .await
         .unwrap();
 
     let _ = rocket::build()
         .manage(markdown::SearchIndex::open().unwrap())
         .mount("/", rocket::routes![index, error])
-        .mount("/dashboard/static", FileServer::from(&config::static_dir()))
+        .mount("/dashboard/static", FileServer::from(config::static_dir()))
         .mount("/dashboard", pgml_dashboard::routes())
         .mount("/", pgml_dashboard::api::routes())
         .mount("/", rocket::routes![pgml_dashboard::playground])
@@ -147,9 +145,9 @@ mod test {
         rocket::build()
             .manage(markdown::SearchIndex::open().unwrap())
             .mount("/", rocket::routes![index, error])
-            .mount("/dashboard/static", FileServer::from(&config::static_dir()))
+            .mount("/dashboard/static", FileServer::from(config::static_dir()))
             .mount("/dashboard", pgml_dashboard::routes())
-            .mount("/", pgml_dashboard::api::docs::routes())
+            .mount("/", pgml_dashboard::api::cms::routes())
     }
 
     fn get_href_links(body: &str, pattern: &str) -> Vec<String> {
@@ -285,7 +283,7 @@ mod test {
     #[rocket::async_test]
     async fn test_docs() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/docs/guides/").dispatch().await;
+        let response = client.get("/docs/").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 

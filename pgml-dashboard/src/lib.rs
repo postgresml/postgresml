@@ -23,7 +23,6 @@ pub mod utils;
 
 use components::notifications::banner::Banner;
 use guards::{Cluster, ConnectedCluster};
-use pgml_components::Component;
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
     components::{NavLink, StaticNav},
@@ -157,7 +156,7 @@ pub async fn notebook_index(
 ) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
         templates::Notebooks {
-            notebooks: models::Notebook::all(&cluster.pool()).await?,
+            notebooks: models::Notebook::all(cluster.pool()).await?,
             new: new.is_some(),
         }
         .render_once()
@@ -225,7 +224,7 @@ pub async fn cell_create(
     .await?;
 
     if !cell.contents.is_empty() {
-        let _ = cell.render(cluster.pool()).await?;
+        cell.render(cluster.pool()).await?;
     }
 
     Ok(Redirect::to(format!(
@@ -307,7 +306,7 @@ pub async fn cell_edit(
     cell.update(
         cluster.pool(),
         data.cell_type.parse::<i32>()?,
-        &data.contents,
+        data.contents,
     )
     .await?;
 

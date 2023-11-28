@@ -24,9 +24,8 @@ rm "$deb_dir/release.sh"
 ( cd ${SCRIPT_DIR}/../../pgml-dashboard && \
   cargo build --release && \
   cp target/release/pgml-dashboard "$deb_dir/usr/bin/pgml-dashboard" && \
-  cp -R content "$deb_dir/usr/share/pgml-dashboard/dashboard-content" && \
   cp -R static "$deb_dir/usr/share/pgml-dashboard/dashboard-static" && \
-  cp -R ../pgml-docs "$deb_dir/usr/share/pgml-docs" )
+  cp -R ../pgml-cms "$deb_dir/usr/share/pgml-cms" )
 
 (cat ${SCRIPT_DIR}/DEBIAN/control | envsubst) > "$deb_dir/DEBIAN/control"
 (cat ${SCRIPT_DIR}/etc/systemd/system/pgml-dashboard.service | envsubst) > "$deb_dir/etc/systemd/system/pgml-dashboard.service"

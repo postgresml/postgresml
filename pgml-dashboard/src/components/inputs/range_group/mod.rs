@@ -25,7 +25,7 @@ impl RangeGroup {
     pub fn new(title: &str) -> RangeGroup {
         RangeGroup {
             title: title.to_owned(),
-            identifier: title.replace(" ", "_").to_lowercase(),
+            identifier: title.replace(' ', "_").to_lowercase(),
             min: 0,
             max: 100,
             step: 1.0,
@@ -42,7 +42,7 @@ impl RangeGroup {
     }
 
     pub fn identifier(mut self, identifier: &str) -> Self {
-        self.identifier = identifier.replace(" ", "_").to_owned();
+        self.identifier = identifier.replace(' ', "_").to_owned();
         self
     }
 

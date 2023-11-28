@@ -20,6 +20,7 @@ use crate::{get_or_initialize_pool, types::Json};
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
 
+#[allow(clippy::type_complexity)]
 #[derive(alias_manual)]
 pub struct TransformerStream {
     transaction: Option<Transaction<'static, Postgres>>,
@@ -61,7 +62,7 @@ impl Stream for TransformerStream {
     ) -> Poll<Option<Self::Item>> {
         if self.done {
             if let Some(c) = self.commit.as_mut() {
-                if let Poll::Ready(_) = c.as_mut().poll(cx) {
+                if c.as_mut().poll(cx).is_ready() {
                     self.commit = None;
                 }
             }

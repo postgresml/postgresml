@@ -7,7 +7,7 @@ pub struct ProfileIcon;
 
 impl ProfileIcon {
     pub fn new() -> ProfileIcon {
-        ProfileIcon::default()
+        ProfileIcon
     }
 }
 

@@ -12,7 +12,7 @@ pub struct Star {
     svg: &'static str,
 }
 
-const SVGS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
+static SVGS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     let mut map = HashMap::new();
     map.insert(
         "green",

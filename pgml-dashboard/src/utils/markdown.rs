@@ -25,18 +25,23 @@ use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
 use url::Url;
 
-use crate::templates::docs::NavLink;
 use std::fmt;
 
 pub struct MarkdownHeadings {
     counter: Arc<AtomicUsize>,
 }
 
-impl MarkdownHeadings {
-    pub fn new() -> Self {
+impl Default for MarkdownHeadings {
+    fn default() -> Self {
         Self {
             counter: Arc::new(AtomicUsize::new(0)),
         }
+    }
+}
+
+impl MarkdownHeadings {
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
@@ -76,7 +81,7 @@ fn parser(utf8: &str, item: &str) -> Option<String> {
     let (start, end) = match title_index {
         Some(index) => {
             let start = index + item.len();
-            let title_length = utf8.to_string()[start..].find("\"");
+            let title_length = utf8.to_string()[start..].find('\"');
             match title_length {
                 Some(title_length) => (start, start + title_length),
                 None => (0, 0),
@@ -86,7 +91,7 @@ fn parser(utf8: &str, item: &str) -> Option<String> {
     };
 
     if end - start > 0 {
-        Some(format!("{}", &utf8[start..end]))
+        Some(utf8[start..end].to_string())
     } else {
         None
     }
@@ -164,15 +169,12 @@ impl HighlightLines {
             HighlightColors::OrangeSoft => "highlightOrangeSoft=\"",
         };
 
-        match parser(options, parse_string) {
-            Some(lines) => {
-                let parts = lines.split(",").map(|s| s.to_string());
-                for line in parts {
-                    hash.insert(line, format!("{}", color));
-                }
+        if let Some(lines) = parser(options, parse_string) {
+            let parts = lines.split(',').map(|s| s.to_string());
+            for line in parts {
+                hash.insert(line, format!("{}", color));
             }
-            None => (),
-        };
+        }
     }
 }
 
@@ -218,9 +220,9 @@ pub struct SyntaxHighlighter {}
 
 impl SyntaxHighlighterAdapter for SyntaxHighlighter {
     fn highlight(&self, options: Option<&str>, code: &str) -> String {
-        let code = if options.is_some() {
+        let code = if let Some(options) = options {
             let code = code.to_string();
-            let options = CodeFence::from(options.unwrap());
+            let options = CodeFence::from(options);
 
             let code = match options.lang {
                 "postgresql" | "sql" | "postgresql-line-nums" => {
@@ -418,8 +420,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
 
             // Add line numbers
             let code = if options.enumerate {
-                let mut code = code.split("\n")
-                    .into_iter()
+                let mut code = code.split('\n')
                     .enumerate()
                     .map(|(index, code)| {
                         format!(r#"<span class="code-line-numbers">{}</span><span class="code-enumerate-divider"></span><span class="code-content">{}</span>"#,
@@ -431,7 +432,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                 code.into_iter().join("\n")
             } else {
                 let mut code = code
-                    .split("\n")
+                    .split('\n')
                     .map(|code| format!("<span class=\"code-content\">{}</span>", code))
                     .collect::<Vec<String>>();
                 code.pop();
@@ -440,7 +441,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
 
             // Add line highlighting
             let code = code
-                .split("\n")
+                .split('\n')
                 .enumerate()
                 .map(|(index, code)| {
                     format!(
@@ -459,10 +460,10 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
             code.to_string()
         };
 
-        String::from(format!(
+        format!(
             "<div><div  style=\"display: inline-block; min-width: 100%\">{}</div></div>",
             code
-        ))
+        )
     }
 
     fn build_pre_tag(&self, _attributes: &HashMap<String, String>) -> String {
@@ -481,8 +482,10 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
 pub fn options() -> ComrakOptions {
     let mut options = ComrakOptions::default();
 
-    let mut render_options = ComrakRenderOptions::default();
-    render_options.unsafe_ = true;
+    let render_options = ComrakRenderOptions {
+        unsafe_: true,
+        ..Default::default()
+    };
 
     options.extension = ComrakExtensionOptions {
         strikethrough: true,
@@ -522,13 +525,10 @@ where
     F: FnMut(&mut markdown::mdast::Node) -> Result<()>,
 {
     let _ = f(node);
-    match node.children_mut() {
-        Some(children) => {
-            for child in children {
-                let _ = iter_mut_all(child, f);
-            }
+    if let Some(children) = node.children_mut() {
+        for child in children {
+            let _ = iter_mut_all(child, f);
         }
-        _ => (),
     }
 
     Ok(())
@@ -536,105 +536,34 @@ where
 
 pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
     let _ = iter_mut_all(node, &mut |node| {
-        match node {
-            markdown::mdast::Node::Link(ref mut link) => {
-                info!("handling link: {:?}", link);
-                match Url::parse(&link.url) {
-                    Ok(url) => {
-                        if !url.has_host() {
-                            info!("relative: {:?}", link);
-                            let mut url_path = url.path().to_string();
-                            let url_path_path = Path::new(&url_path);
-                            match url_path_path.extension() {
-                                Some(ext) => {
-                                    if ext.to_str() == Some(".md") {
-                                        info!("md: {:?}", link);
-                                        let base = url_path_path.with_extension("");
-                                        url_path = base.into_os_string().into_string().unwrap();
-                                    }
-                                }
-                                _ => {
-                                    warn!("not markdown path: {:?}", path)
+        if let markdown::mdast::Node::Link(ref mut link) = node {
+            match Url::parse(&link.url) {
+                Ok(url) => {
+                    if !url.has_host() {
+                        let mut url_path = url.path().to_string();
+                        let url_path_path = Path::new(&url_path);
+                        match url_path_path.extension() {
+                            Some(ext) => {
+                                if ext.to_str() == Some(".md") {
+                                    let base = url_path_path.with_extension("");
+                                    url_path = base.into_os_string().into_string().unwrap();
                                 }
                             }
-                            link.url = path.join(url_path).into_os_string().into_string().unwrap();
+                            _ => {
+                                warn!("not markdown path: {:?}", path)
+                            }
                         }
-                    }
-                    Err(e) => {
-                        warn!("could not parse url in markdown: {}", e)
+                        link.url = path.join(url_path).into_os_string().into_string().unwrap();
                     }
                 }
+                Err(e) => {
+                    warn!("could not parse url in markdown: {}", e)
+                }
             }
-            _ => (),
-        };
+        }
 
         Ok(())
     });
-}
-
-pub fn get_sub_links(list: &markdown::mdast::List) -> Result<Vec<NavLink>> {
-    let mut links = Vec::new();
-    for node in list.children.iter() {
-        match node {
-            markdown::mdast::Node::ListItem(list_item) => {
-                for node in list_item.children.iter() {
-                    match node {
-                        markdown::mdast::Node::Paragraph(paragraph) => {
-                            for node in paragraph.children.iter() {
-                                match node {
-                                    markdown::mdast::Node::Link(link) => {
-                                        for node in link.children.iter() {
-                                            match node {
-                                                markdown::mdast::Node::Text(text) => {
-                                                    let mut url = Path::new(&link.url)
-                                                        .with_extension("")
-                                                        .to_string_lossy()
-                                                        .to_string();
-                                                    if url.ends_with("README") {
-                                                        url = url.replace("README", "");
-                                                    }
-                                                    let url = Path::new("/docs/guides")
-                                                        .join(url)
-                                                        .into_os_string()
-                                                        .into_string()
-                                                        .unwrap();
-                                                    let parent = NavLink::new(text.value.as_str())
-                                                        .href(&url);
-                                                    links.push(parent);
-                                                }
-                                                _ => error!("unhandled link child: {:?}", node),
-                                            }
-                                        }
-                                    }
-                                    _ => error!("unhandled paragraph child: {:?}", node),
-                                }
-                            }
-                        }
-                        markdown::mdast::Node::List(list) => {
-                            let mut link = links.pop().unwrap();
-                            link.children = get_sub_links(list).unwrap();
-                            links.push(link);
-                        }
-                        _ => error!("unhandled list_item child: {:?}", node),
-                    }
-                }
-            }
-            _ => error!("unhandled list child: {:?}", node),
-        }
-    }
-    Ok(links)
-}
-
-pub fn parse_summary_into_nav_links(root: &markdown::mdast::Node) -> Result<Vec<NavLink>> {
-    for node in root.children().unwrap().iter() {
-        match node {
-            markdown::mdast::Node::List(list) => {
-                return get_sub_links(list);
-            }
-            _ => { /* irrelevant */ }
-        }
-    }
-    return Ok(vec![]);
 }
 
 /// Get the title of the article.
@@ -651,27 +580,21 @@ pub fn get_title<'a>(root: &'a AstNode<'a>) -> anyhow::Result<String> {
             return Ok(false);
         }
 
-        match &node.data.borrow().value {
-            &NodeValue::Heading(ref header) => {
-                if header.level == 1 {
-                    let content = match node.first_child() {
-                        Some(child) => child,
-                        None => {
-                            warn!("markdown heading has no child");
-                            return Ok(false);
-                        }
-                    };
-                    match &content.data.borrow().value {
-                        &NodeValue::Text(ref text) => {
-                            title = Some(text.to_owned());
-                            return Ok(false);
-                        }
-                        _ => (),
-                    };
+        if let NodeValue::Heading(header) = &node.data.borrow().value {
+            if header.level == 1 {
+                let content = match node.first_child() {
+                    Some(child) => child,
+                    None => {
+                        warn!("markdown heading has no child");
+                        return Ok(false);
+                    }
+                };
+                if let NodeValue::Text(text) = &content.data.borrow().value {
+                    title = Some(text.to_owned());
+                    return Ok(false);
                 }
             }
-            _ => (),
-        };
+        }
 
         Ok(true)
     })?;
@@ -683,22 +606,46 @@ pub fn get_title<'a>(root: &'a AstNode<'a>) -> anyhow::Result<String> {
     Ok(title)
 }
 
+/// Get the social sharing image of the article.
+///
+/// # Arguments
+///
+/// * `root` - The root node of the document tree.
+///
+pub fn get_image<'a>(root: &'a AstNode<'a>) -> Option<String> {
+    let re = regex::Regex::new(r#"<img src="([^"]*)" alt="([^"]*)""#).unwrap();
+    let mut image = None;
+    iter_nodes(root, &mut |node| match &node.data.borrow().value {
+        NodeValue::HtmlBlock(html) => match re.captures(&html.literal) {
+            Some(c) => {
+                if &c[2] != "Author" {
+                    image = Some(c[1].to_string());
+                    Ok(false)
+                } else {
+                    Ok(true)
+                }
+            }
+            None => Ok(true),
+        },
+        _ => Ok(true),
+    })
+    .ok()?;
+    image
+}
+
 /// Wrap tables in container to allow for x-scroll on overflow.
 pub fn wrap_tables<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyhow::Result<()> {
-    let _ = iter_nodes(root, &mut |node| {
-        match &node.data.borrow().value {
-            &NodeValue::Table(ref _table) => {
-                let open_tag = arena.alloc(Node::new(RefCell::new(Ast::new(
-                    NodeValue::HtmlInline(r#"<div class="overflow-auto w-100">"#.to_string()),
-                ))));
-                let close_tag = arena.alloc(Node::new(RefCell::new(Ast::new(
-                    NodeValue::HtmlInline("</div>".to_string()),
-                ))));
-                node.insert_before(open_tag);
-                node.insert_after(close_tag);
-            }
-            _ => (),
-        };
+    iter_nodes(root, &mut |node| {
+        if let NodeValue::Table(_) = &node.data.borrow().value {
+            let open_tag = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                r#"<div class="overflow-auto w-100">"#.to_string(),
+            )))));
+            let close_tag = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                "</div>".to_string(),
+            )))));
+            node.insert_before(open_tag);
+            node.insert_after(close_tag);
+        }
 
         Ok(true)
     })?;
@@ -717,28 +664,22 @@ pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
     let mut header_counter = 0;
 
     iter_nodes(root, &mut |node| {
-        match &node.data.borrow().value {
-            &NodeValue::Heading(ref header) => {
-                header_counter += 1;
-                if header.level != 1 {
-                    let sibling = match node.first_child() {
-                        Some(child) => child,
-                        None => {
-                            warn!("markdown heading has no child");
-                            return Ok(false);
-                        }
-                    };
-                    match &sibling.data.borrow().value {
-                        &NodeValue::Text(ref text) => {
-                            links.push(TocLink::new(text, header_counter - 1).level(header.level));
-                            return Ok(false);
-                        }
-                        _ => (),
-                    };
+        if let NodeValue::Heading(header) = &node.data.borrow().value {
+            header_counter += 1;
+            if header.level != 1 {
+                let sibling = match node.first_child() {
+                    Some(child) => child,
+                    None => {
+                        warn!("markdown heading has no child");
+                        return Ok(false);
+                    }
+                };
+                if let NodeValue::Text(text) = &sibling.data.borrow().value {
+                    links.push(TocLink::new(text, header_counter - 1).level(header.level));
+                    return Ok(false);
                 }
             }
-            _ => (),
-        };
+        }
 
         Ok(true)
     })?;
@@ -756,7 +697,7 @@ pub fn get_text<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<String>> {
     let mut texts = Vec::new();
 
     iter_nodes(root, &mut |node| match &node.data.borrow().value {
-        &NodeValue::Text(ref text) => {
+        NodeValue::Text(text) => {
             // Skip markdown annotations
             if text.starts_with("!!!") || text.starts_with("===") {
                 Ok(true)
@@ -770,12 +711,12 @@ pub fn get_text<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<String>> {
 
         &NodeValue::Image(_) => Ok(false),
 
-        &NodeValue::Code(ref node) => {
+        NodeValue::Code(node) => {
             texts.push(node.literal.to_owned());
             Ok(true)
         }
 
-        &NodeValue::CodeBlock(ref _node) => {
+        NodeValue::CodeBlock(_node) => {
             // Not a good idea to index code yet I think, gets too messy.
             // texts.push(String::from_utf8_lossy(&node.literal).to_string());
             Ok(false)
@@ -903,8 +844,8 @@ struct CodeBlock {
 impl CodeBlock {
     fn html(&self, html_type: &str) -> Option<String> {
         match html_type {
-            "time" => match &self.time {
-                Some(time) => Some(format!(
+            "time" => self.time.as_ref().map(|time| {
+                format!(
                     r#"
                         <div class="execution-time">
                             <span class="material-symbols-outlined">timer</span>
@@ -912,9 +853,8 @@ impl CodeBlock {
                         </div>
                     "#,
                     time
-                )),
-                None => None,
-            },
+                )
+            }),
             "code" => match &self.title {
                 Some(title) => Some(format!(
                     r#"
@@ -925,11 +865,12 @@ impl CodeBlock {
                 "#,
                     title
                 )),
-                None => Some(format!(
+                None => Some(
                     r#"
                     <div class="code-block">
                 "#
-                )),
+                    .to_string(),
+                ),
             },
             "results" => match &self.title {
                 Some(title) => Some(format!(
@@ -941,11 +882,12 @@ impl CodeBlock {
                     "#,
                     title
                 )),
-                None => Some(format!(
+                None => Some(
                     r#"
                     <div class="results">
                 "#
-                )),
+                    .to_string(),
+                ),
             },
             _ => None,
         }
@@ -984,7 +926,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         }
                     };
 
-                    let tab = Tab::new(text.replace("=== ", "").replace("\"", ""));
+                    let tab = Tab::new(text.replace("=== ", "").replace('\"', ""));
 
                     if tabs.is_empty() {
                         let n =
@@ -992,8 +934,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                                 r#"
                                 <ul class="nav nav-tabs">
                             "#
-                                .to_string()
-                                .into(),
+                                .to_string(),
                             )))));
 
                         parent.insert_after(n);
@@ -1008,7 +949,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     };
 
                     parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(
-                        NodeValue::HtmlInline(tabs.last().unwrap().render().into()),
+                        NodeValue::HtmlInline(tabs.last().unwrap().render()),
                     )))));
 
                     // Remove the "===" from the tree.
@@ -1023,7 +964,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
                     if !tabs.is_empty() {
                         let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline("</ul>".to_string().into()),
+                            NodeValue::HtmlInline("</ul>".to_string()),
                         ))));
 
                         parent.insert_after(n);
@@ -1031,10 +972,9 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
                         parent = n;
 
-                        let n =
-                            arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
-                                r#"<div class="tab-content">"#.to_string().into(),
-                            )))));
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
+                            NodeValue::HtmlInline(r#"<div class="tab-content">"#.to_string()),
+                        ))));
 
                         parent.insert_after(n);
 
@@ -1042,20 +982,17 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
                         for tab in tabs.iter() {
                             let r = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(
-                                    format!(
-                                        r#"
+                                NodeValue::HtmlInline(format!(
+                                    r#"
                                                 <div
                                                     class="tab-pane {active} pt-2"
                                                     id="tab-{id}"
                                                     role="tabpanel"
                                                     aria-labelledby="tab-{id}">
                                             "#,
-                                        active = if tab.active { "show active" } else { "" },
-                                        id = tab.id
-                                    )
-                                    .into(),
-                                ),
+                                    active = if tab.active { "show active" } else { "" },
+                                    id = tab.id
+                                )),
                             ))));
 
                             for child in tab.children.iter() {
@@ -1066,7 +1003,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                             parent = r;
 
                             let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(r#"</div>"#.to_string().into()),
+                                NodeValue::HtmlInline(r#"</div>"#.to_string()),
                             ))));
 
                             parent.insert_after(n);
@@ -1074,7 +1011,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         }
 
                         parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline(r#"</div>"#.to_string().into()),
+                            NodeValue::HtmlInline(r#"</div>"#.to_string()),
                         )))));
 
                         tabs.clear();
@@ -1099,8 +1036,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                                 r#"
                                 <ul class="nav nav-tabs">
                             "#
-                                .to_string()
-                                .into(),
+                                .to_string(),
                             )))));
 
                         parent.insert_after(n);
@@ -1115,7 +1051,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     };
 
                     parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(
-                        NodeValue::HtmlInline(tabs.last().unwrap().render().into()),
+                        NodeValue::HtmlInline(tabs.last().unwrap().render()),
                     )))));
 
                     // Remove the "===" from the tree.
@@ -1130,7 +1066,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
                     if !tabs.is_empty() {
                         let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline("</ul>".to_string().into()),
+                            NodeValue::HtmlInline("</ul>".to_string()),
                         ))));
 
                         parent.insert_after(n);
@@ -1138,10 +1074,9 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
                         parent = n;
 
-                        let n =
-                            arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
-                                r#"<div class="tab-content">"#.to_string().into(),
-                            )))));
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
+                            NodeValue::HtmlInline(r#"<div class="tab-content">"#.to_string()),
+                        ))));
 
                         parent.insert_after(n);
 
@@ -1149,20 +1084,17 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
                         for tab in tabs.iter() {
                             let r = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(
-                                    format!(
-                                        r#"
+                                NodeValue::HtmlInline(format!(
+                                    r#"
                                                 <div
                                                     class="tab-pane {active} pt-2"
                                                     id="tab-{id}"
                                                     role="tabpanel"
                                                     aria-labelledby="tab-{id}">
                                             "#,
-                                        active = if tab.active { "show active" } else { "" },
-                                        id = tab.id
-                                    )
-                                    .into(),
-                                ),
+                                    active = if tab.active { "show active" } else { "" },
+                                    id = tab.id
+                                )),
                             ))));
 
                             for child in tab.children.iter() {
@@ -1173,7 +1105,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                             parent = r;
 
                             let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(r#"</div>"#.to_string().into()),
+                                NodeValue::HtmlInline(r#"</div>"#.to_string()),
                             ))));
 
                             parent.insert_after(n);
@@ -1181,7 +1113,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         }
 
                         parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline(r#"</div>"#.to_string().into()),
+                            NodeValue::HtmlInline(r#"</div>"#.to_string()),
                         )))));
 
                         tabs.clear();
@@ -1206,7 +1138,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     let admonition: Admonition = Admonition::from(text.as_ref());
 
                     let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
-                        admonition.html().into(),
+                        admonition.html(),
                     )))));
 
                     info_block_close_items.push(None);
@@ -1219,15 +1151,12 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     let time = parser(text.as_ref(), r#"time=""#);
                     let code_block = CodeBlock { time, title };
 
-                    match code_block.html("code") {
-                        Some(html) => {
-                            let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(html.into()),
-                            ))));
-                            parent.insert_after(n);
-                        }
-                        None => (),
-                    };
+                    if let Some(html) = code_block.html("code") {
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
+                            NodeValue::HtmlInline(html),
+                        ))));
+                        parent.insert_after(n);
+                    }
 
                     // add time ot info block to be appended prior to closing
                     info_block_close_items.push(code_block.html("time"));
@@ -1238,61 +1167,54 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     let title = parser(text.as_ref(), r#"title=""#);
                     let code_block = CodeBlock { time: None, title };
 
-                    match code_block.html("results") {
-                        Some(html) => {
-                            let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(html.into()),
-                            ))));
-                            parent.insert_after(n);
-                        }
-                        None => (),
+                    if let Some(html) = code_block.html("results") {
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
+                            NodeValue::HtmlInline(html),
+                        ))));
+                        parent.insert_after(n);
                     }
 
                     info_block_close_items.push(None);
                     parent.detach();
-                } else if text.starts_with("!!!") {
-                    if info_block_close_items.len() > 0 {
-                        let parent = node.parent().unwrap();
+                } else if text.starts_with("!!!") && !info_block_close_items.is_empty() {
+                    let parent = node.parent().unwrap();
 
-                        match info_block_close_items.pop() {
-                            Some(html) => match html {
-                                Some(html) => {
-                                    let timing = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                        NodeValue::HtmlInline(format!("{html} </div>").into()),
-                                    ))));
-                                    parent.insert_after(timing);
-                                }
-                                None => {
-                                    let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                        NodeValue::HtmlInline(
-                                            r#"
-                                        </div>
-                                        "#
-                                            .to_string()
-                                            .into(),
-                                        ),
-                                    ))));
-
-                                    parent.insert_after(n);
-                                }
-                            },
+                    match info_block_close_items.pop() {
+                        Some(html) => match html {
+                            Some(html) => {
+                                let timing = arena.alloc(Node::new(RefCell::new(Ast::new(
+                                    NodeValue::HtmlInline(format!("{html} </div>")),
+                                ))));
+                                parent.insert_after(timing);
+                            }
                             None => {
                                 let n = arena.alloc(Node::new(RefCell::new(Ast::new(
                                     NodeValue::HtmlInline(
                                         r#"
-                                </div>
-                                "#
-                                        .to_string()
-                                        .into(),
+                                    </div>
+                                    "#
+                                        .to_string(),
                                     ),
                                 ))));
 
                                 parent.insert_after(n);
                             }
-                        }
+                        },
+                        None => {
+                            let n = arena.alloc(Node::new(RefCell::new(Ast::new(
+                                NodeValue::HtmlInline(
+                                    r#"
+                            </div>
+                            "#
+                                    .to_string(),
+                                ),
+                            ))));
 
-                        parent.detach();
+                            parent.insert_after(n);
+                        }
                     }
+
+                    parent.detach();
                 }
 
                 // TODO montana
@@ -1304,11 +1226,11 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
             _ => {
                 if !tabs.is_empty() {
                     let last_tab = tabs.last_mut().unwrap();
-                    let mut ancestors = node.ancestors();
+                    let ancestors = node.ancestors();
                     let mut pushed = false;
 
                     // Check that we haven't pushed it's parent in yet.
-                    while let Some(parent) = ancestors.next() {
+                    for parent in ancestors {
                         pushed = last_tab
                             .children
                             .iter()
@@ -1362,9 +1284,11 @@ impl SearchIndex {
     }
 
     pub fn documents() -> Vec<PathBuf> {
-        let guides =
-            glob::glob(&(config::docs_dir() + "/docs/guides/**/*.md")).expect("glob failed");
-        let blogs = glob::glob(&(config::blogs_dir() + "/blog/**/*.md")).expect("glob failed");
+        // TODO imrpove this .display().to_string()
+        let guides = glob::glob(&config::cms_dir().join("docs/**/*.md").display().to_string())
+            .expect("glob failed");
+        let blogs = glob::glob(&config::cms_dir().join("blog/**/*.md").display().to_string())
+            .expect("glob failed");
         guides
             .chain(blogs)
             .map(|path| path.expect("glob path failed"))
@@ -1396,7 +1320,7 @@ impl SearchIndex {
         std::fs::create_dir(Self::path()).unwrap();
 
         let index = tokio::task::spawn_blocking(move || -> tantivy::Result<Index> {
-            Ok(Index::create_in_dir(&Self::path(), Self::schema())?)
+            Index::create_in_dir(Self::path(), Self::schema())
         })
         .await
         .unwrap()?;
@@ -1413,8 +1337,8 @@ impl SearchIndex {
 
             let arena = Arena::new();
             let root = parse_document(&arena, &text, &options());
-            let title_text = get_title(&root).unwrap();
-            let body_text = get_text(&root).unwrap().into_iter().join(" ");
+            let title_text = get_title(root).unwrap();
+            let body_text = get_text(root).unwrap().into_iter().join(" ");
 
             let title_field = schema.get_field("title").unwrap();
             let body_field = schema.get_field("body").unwrap();
@@ -1431,7 +1355,7 @@ impl SearchIndex {
                 .unwrap()
                 .to_string()
                 .replace("README", "")
-                .replace(&config::docs_dir(), "");
+                .replace(&config::cms_dir().display().to_string(), "");
             let mut doc = Document::default();
             doc.add_text(title_field, &title_text);
             doc.add_text(body_field, &body_text);
@@ -1441,7 +1365,7 @@ impl SearchIndex {
             index_writer.add_document(doc)?;
         }
 
-        tokio::task::spawn_blocking(move || -> tantivy::Result<u64> { Ok(index_writer.commit()?) })
+        tokio::task::spawn_blocking(move || -> tantivy::Result<u64> { index_writer.commit() })
             .await
             .unwrap()?;
 
@@ -1548,7 +1472,7 @@ impl SearchIndex {
                 .unwrap()
                 .to_string()
                 .replace(".md", "")
-                .replace(&config::static_dir(), "");
+                .replace(&config::static_dir().display().to_string(), "");
 
             // Dedup results from prefix search and full text search.
             let new = dedup.insert(path.clone());
@@ -1571,7 +1495,7 @@ impl SearchIndex {
                 .to_string();
 
             let snippet = if snippet.is_empty() {
-                body.split(" ").take(20).collect::<Vec<&str>>().join(" ") + "&nbsp;..."
+                body.split(' ').take(20).collect::<Vec<&str>>().join(" ") + "&nbsp;..."
             } else {
                 "...&nbsp;".to_string() + &snippet.to_html() + "&nbsp;..."
             };
