@@ -150,12 +150,6 @@ fn env_is_set(name: &str) -> bool {
     var(name).is_ok()
 }
 
-fn env_string_required(name: &str) -> String {
-    var(name)
-        .unwrap_or_else(|_| panic!("{} env variable is required for proper configuration", name))
-        .to_string()
-}
-
 fn env_string_default(name: &str, default: &str) -> String {
     match var(name) {
         Ok(value) => value,
