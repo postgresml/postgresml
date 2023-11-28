@@ -292,7 +292,7 @@ mod test {
     #[rocket::async_test]
     async fn test_blogs() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/blog/postgresml-raises-4.7M-to-launch-serverless-ai-application-databases-based-on-postgres").dispatch().await;
+        let response = client.get("/blog/postgresml-raises-usd4.7m-to-launch-serverless-ai-application-databases-based-on-postgres").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 }

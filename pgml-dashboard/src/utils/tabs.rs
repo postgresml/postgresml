@@ -18,12 +18,11 @@ impl<'a> Tabs<'a> {
         active: Option<&'a str>,
     ) -> anyhow::Result<Self> {
         let default = match default {
-            Some(default) => default.clone(),
+            Some(default) => default,
             _ => tabs
                 .get(0)
                 .ok_or(anyhow!("There must be at least one tab."))?
-                .name
-                .clone(),
+                .name,
         };
 
         let active = active
@@ -32,7 +31,7 @@ impl<'a> Tabs<'a> {
                 let just_name = found.map(|tab| tab.name);
                 just_name
             })
-            .unwrap_or(default.clone());
+            .unwrap_or(default);
 
         Ok(Tabs {
             tabs,
