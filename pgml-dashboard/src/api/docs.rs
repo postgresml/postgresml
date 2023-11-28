@@ -227,7 +227,7 @@ async fn render<'a>(
         Some(cluster.context.user.clone())
     };
 
-    let mut layout = crate::templates::Layout::new(&title);
+    let mut layout = crate::templates::Layout::new(&title, Some(cluster.clone()));
     if image.is_some() {
         layout.image(&image.unwrap());
     }

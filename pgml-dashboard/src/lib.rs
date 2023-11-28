@@ -2,6 +2,7 @@
 extern crate rocket;
 
 use rocket::form::Form;
+use rocket::http::{Cookie, CookieJar};
 use rocket::response::Redirect;
 use rocket::route::Route;
 use rocket::serde::json::Json;
@@ -20,6 +21,7 @@ pub mod templates;
 pub mod types;
 pub mod utils;
 
+use components::notifications::banner::Banner;
 use guards::{Cluster, ConnectedCluster};
 use pgml_components::Component;
 use responses::{BadRequest, Error, ResponseOk};
@@ -28,6 +30,9 @@ use templates::{
     *,
 };
 use utils::tabs;
+
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Default, Clone)]
 pub struct ClustersSettings {
@@ -49,6 +54,77 @@ pub struct Context {
     pub upper_left_nav: StaticNav,
     pub lower_left_nav: StaticNav,
     pub marketing_footer: String,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Notification {
+    pub message: String,
+    pub level: NotificationLevel,
+    pub id: String,
+    pub dismissible: bool,
+    pub viewed: bool,
+    pub link: Option<String>,
+}
+impl Notification {
+    pub fn new(message: &str) -> Notification {
+        let mut s = DefaultHasher::new();
+        message.hash(&mut s);
+
+        Notification {
+            message: message.to_string(),
+            level: NotificationLevel::News,
+            id: s.finish().to_string(),
+            dismissible: true,
+            viewed: false,
+            link: None,
+        }
+    }
+
+    pub fn level(mut self, level: &NotificationLevel) -> Notification {
+        self.level = level.clone();
+        self
+    }
+
+    pub fn dismissible(mut self, dismissible: bool) -> Notification {
+        self.dismissible = dismissible;
+        self
+    }
+
+    pub fn link(mut self, link: &str) -> Notification {
+        self.link = Some(link.into());
+        self
+    }
+
+    pub fn viewed(mut self, viewed: bool) -> Notification {
+        self.viewed = viewed;
+        self
+    }
+}
+
+impl std::fmt::Display for NotificationLevel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NotificationLevel::News => write!(f, "news"),
+            NotificationLevel::Blog => write!(f, "blog"),
+            NotificationLevel::Launch => write!(f, "launch"),
+            NotificationLevel::Tip => write!(f, "tip"),
+            NotificationLevel::Level1 => write!(f, "level1"),
+            NotificationLevel::Level2 => write!(f, "level2"),
+            NotificationLevel::Level3 => write!(f, "level3"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub enum NotificationLevel {
+    #[default]
+    News,
+    Blog,
+    Launch,
+    Tip,
+    Level1,
+    Level2,
+    Level3,
 }
 
 #[get("/projects")]
@@ -673,6 +749,46 @@ pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(layout.render(templates::Playground {})))
 }
 
+#[get("/notifications/remove_banner?<id>")]
+pub fn remove_banner(id: String, cookies: &CookieJar<'_>, context: &Cluster) -> ResponseOk {
+    let mut viewed = match cookies.get_private("session") {
+        Some(session) => {
+            match serde_json::from_str::<serde_json::Value>(session.value()).unwrap()
+                ["notifications"]
+                .as_array()
+            {
+                Some(items) => items
+                    .into_iter()
+                    .map(|x| x.as_str().unwrap().to_string())
+                    .collect::<Vec<String>>(),
+                _ => vec![],
+            }
+        }
+        None => vec![],
+    };
+
+    viewed.push(id);
+    let mut cookie = Cookie::new("session", format!(r#"{{"notifications": {:?}}}"#, viewed));
+    cookie.set_max_age(::time::Duration::weeks(4));
+    cookies.add_private(cookie);
+
+    match context.notifications.as_ref() {
+        Some(notifications) => {
+            for notification in notifications {
+                if !viewed.contains(&notification.id) {
+                    return ResponseOk(
+                        Banner::from_notification(notification.clone())
+                            .render_once()
+                            .unwrap(),
+                    );
+                }
+            }
+            return ResponseOk(Banner::new().remove_banner(true).render_once().unwrap());
+        }
+        None => return ResponseOk(Banner::new().remove_banner(true).render_once().unwrap()),
+    }
+}
+
 pub fn routes() -> Vec<Route> {
     routes![
         notebook_index,
@@ -700,6 +816,7 @@ pub fn routes() -> Vec<Route> {
         uploaded_index,
         dashboard,
         notebook_reorder,
+        remove_banner,
     ]
 }
 

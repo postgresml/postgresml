@@ -2,6 +2,7 @@ use pgml_components::Component;
 use std::collections::HashMap;
 
 pub use crate::components::{self, NavLink, StaticNav, StaticNavLink};
+use components::notifications::banner::Banner;
 
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
@@ -36,12 +37,22 @@ pub struct Layout {
     pub nav_links: Vec<docs::NavLink>,
     pub toc_links: Vec<docs::TocLink>,
     pub footer: String,
+    pub banner: Option<Banner>,
 }
 
 impl Layout {
-    pub fn new(title: &str) -> Self {
+    pub fn new(title: &str, context: Option<crate::guards::Cluster>) -> Self {
+        let banner = match context.as_ref() {
+            Some(context) => match &context.notifications {
+                Some(notification) => Some(Banner::from_notification(notification[0].clone())),
+                None => None,
+            },
+            None => None,
+        };
+
         Layout {
             head: Head::new().title(title),
+            banner,
             ..Default::default()
         }
     }

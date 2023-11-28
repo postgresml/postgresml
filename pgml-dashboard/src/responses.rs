@@ -81,9 +81,8 @@ impl<'r> response::Responder<'r, 'r> for Response {
         let body = match self.body {
             Some(body) => body,
             None => match self.status.code {
-                404 => {
-                    templates::Layout::new("Internal Server Error").render(templates::NotFound {})
-                }
+                404 => templates::Layout::new("Internal Server Error", None)
+                    .render(templates::NotFound {}),
                 _ => "".into(),
             },
         };
@@ -134,8 +133,8 @@ impl<'r> response::Responder<'r, 'r> for Error {
             "".into()
         };
 
-        let body =
-            templates::Layout::new("Internal Server Error").render(templates::Error { error });
+        let body = templates::Layout::new("Internal Server Error", None)
+            .render(templates::Error { error });
 
         response::Response::build_from(body.respond_to(request)?)
             .header(ContentType::new("text", "html"))
