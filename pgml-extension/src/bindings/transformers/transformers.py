@@ -226,17 +226,6 @@ class StandardPipeline(object):
         # but that is only possible when the task is passed in, since if you pass the model
         # to the pipeline constructor, the task will no longer be inferred from the default...
 
-        # We want to create a text-generation pipeline if it is a conversational task
-        self.conversational = False
-        if "task" in kwargs and kwargs["task"] == "conversational":
-            self.conversational = True
-            kwargs["task"] = "text-generation"
-
-        # Tokens can either be left or right padded depending on the architecture
-        padding_side = "right"
-        if "padding_side" in kwargs:
-            padding_side = kwargs.pop("padding_side")
-
         if (
             "task" in kwargs
             and model_name is not None
@@ -246,7 +235,8 @@ class StandardPipeline(object):
                 "question-answering",
                 "summarization",
                 "translation",
-                "text-generation"
+                "text-generation",
+                "conversational",
             ]
         ):
             self.task = kwargs.pop("task")
@@ -261,17 +251,17 @@ class StandardPipeline(object):
                 )
             elif self.task == "summarization" or self.task == "translation":
                 self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **kwargs)
-            elif self.task == "text-generation":
+            elif self.task == "text-generation" or self.task == "conversational":
                 self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
             else:
                 raise PgMLException(f"Unhandled task: {self.task}")
 
             if "use_auth_token" in kwargs:
                 self.tokenizer = AutoTokenizer.from_pretrained(
-                    model_name, use_auth_token=kwargs["use_auth_token"], padding_side=padding_side
+                    model_name, use_auth_token=kwargs["use_auth_token"]
                 )
             else:
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side=padding_side)
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
             self.pipe = transformers.pipeline(
                 self.task,
@@ -279,7 +269,7 @@ class StandardPipeline(object):
                 tokenizer=self.tokenizer,
             )
         else:
-            self.pipe = transformers.pipeline(**kwargs, padding_side=padding_side)
+            self.pipe = transformers.pipeline(**kwargs)
             self.tokenizer = self.pipe.tokenizer
             self.task = self.pipe.task
             self.model = self.pipe.model
@@ -288,48 +278,53 @@ class StandardPipeline(object):
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-    def stream(self, inputs, **kwargs):
+    def stream(self, input, **kwargs):
         streamer = None
         generation_kwargs = None
         # Conversational does not work right now with left padded tokenizers. At least for gpt2, the apply_chat_template breaks it
-        if self.conversational:
+        if self.task == "conversational":
             streamer = TextIteratorStreamer(
                 self.tokenizer, skip_prompt=True, skip_special_tokens=True
             )
-            templated_inputs = []
-            for input in inputs:
-                templated_inputs.append(
-                    self.tokenizer.apply_chat_template(
-                        input, add_generation_prompt=True, tokenize=False
-                    )
-                )
-            inputs = self.tokenizer(
-                templated_inputs, return_tensors="pt", padding=True
-            ).to(self.model.device)
-            generation_kwargs = dict(inputs, streamer=streamer, **kwargs)
+            input = self.tokenizer.apply_chat_template(
+                input, add_generation_prompt=True, tokenize=False
+            )
+            input = self.tokenizer(input, return_tensors="pt").to(self.model.device)
+            generation_kwargs = dict(input, streamer=streamer, **kwargs)
         else:
             streamer = TextIteratorStreamer(self.tokenizer, skip_special_tokens=True)
-            inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(
+            input = self.tokenizer(input, return_tensors="pt", padding=True).to(
                 self.model.device
             )
-            generation_kwargs = dict(inputs, streamer=streamer, **kwargs)
-        print("\n\n", file=sys.stderr)
-        print(inputs, file=sys.stderr)
-        print("\n\n", file=sys.stderr)
+            generation_kwargs = dict(input, streamer=streamer, **kwargs)
         thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
         thread.start()
         return streamer
 
     def __call__(self, inputs, **kwargs):
-        if self.conversational:
-            templated_inputs = []
-            for input in inputs:
-                templated_inputs.append(
-                    self.tokenizer.apply_chat_template(
-                        input, add_generation_prompt=True, tokenize=False
-                    )
-                )
-            return self.pipe(templated_inputs, return_full_text=False, **kwargs)
+        if self.task == "conversational":
+            inputs = self.tokenizer.apply_chat_template(
+                inputs, add_generation_prompt=True, tokenize=False
+            )
+            inputs = self.tokenizer(inputs, return_tensors="pt").to(self.model.device)
+            args = dict(inputs, **kwargs)
+            outputs = self.model.generate(**args)
+            # We only want the new ouputs for conversational pipelines
+            outputs = outputs[:, inputs["input_ids"].shape[1] :]
+            outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+            return outputs
+
+            # I don't think conversations support num_responses and/or maybe num_beams
+            # Also this is not processed in parallel / truly batched it seems
+            # num_conversations = 1
+            # if "num_return_sequences" in kwargs:
+            #     num_conversations = kwargs.pop("num_return_sequences")
+            # conversations = [Conversation(inputs) for _ in range(0, num_conversations)]
+            # conversations = self.pipe(conversations, **kwargs)
+            # outputs = []
+            # for conversation in conversations:
+            #     outputs.append(conversation.messages[-1]["content"])
+            # return outputs
         else:
             return self.pipe(inputs, **kwargs)
 

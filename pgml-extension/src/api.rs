@@ -682,12 +682,12 @@ pub fn transform_conversational_string(
 pub fn transform_stream_json(
     task: JsonB,
     args: default!(JsonB, "'{}'"),
-    inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
+    input: default!(&str, "''"),
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, JsonB> {
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
     let python_iter =
-        crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, inputs)
+        crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, input)
             .map_err(|e| error!("{e}"))
             .unwrap();
     SetOfIterator::new(python_iter)
@@ -699,13 +699,13 @@ pub fn transform_stream_json(
 pub fn transform_stream_string(
     task: String,
     args: default!(JsonB, "'{}'"),
-    inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
+    input: default!(&str, "''"),
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, JsonB> {
     let task_json = json!({ "task": task });
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
     let python_iter =
-        crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, inputs)
+        crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, input)
             .map_err(|e| error!("{e}"))
             .unwrap();
     SetOfIterator::new(python_iter)
@@ -725,7 +725,7 @@ pub fn transform_stream_conversational_json(
         .is_some_and(|v| v == "conversational")
     {
         error!(
-            "JSONB inputs for transformer_stream should only be used with a conversational task"
+            "ARRAY[]::JSONB inputs for transformer_stream should only be used with a conversational task"
         );
     }
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
@@ -747,7 +747,7 @@ pub fn transform_stream_conversational_string(
 ) -> SetOfIterator<'static, JsonB> {
     if task != "conversational" {
         error!(
-            "JSONB inputs for transformer_stream should only be used with a conversational task"
+            "ARRAY::JSONB inputs for transformer_stream should only be used with a conversational task"
         );
     }
     let task_json = json!({ "task": task });
