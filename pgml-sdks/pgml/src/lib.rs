@@ -13,6 +13,8 @@ use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
 mod builtins;
+#[cfg(feature = "python")]
+mod cli;
 mod collection;
 mod filter_builder;
 mod languages;
@@ -146,6 +148,7 @@ fn migrate(py: pyo3::Python) -> pyo3::PyResult<&pyo3::PyAny> {
 fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(init_logger, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(migrate, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(cli::cli, m)?)?;
     m.add_class::<pipeline::PipelinePython>()?;
     m.add_class::<collection::CollectionPython>()?;
     m.add_class::<model::ModelPython>()?;

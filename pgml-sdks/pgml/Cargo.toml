@@ -38,6 +38,11 @@ serde = "1.0.181"
 futures = "0.3.28"
 walkdir = "2.4.0"
 lopdf = { version = "0.31.0", features = ["nom_parser"] }
+clap = { version = "4", features = ["derive"]}
+is-terminal = "0.4"
+colored = "2"
+ctrlc = "3"
+inquire = "0.6"
 
 [features]
 default = []

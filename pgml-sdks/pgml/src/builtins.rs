@@ -101,7 +101,7 @@ mod tests {
         let query = "SELECT * from pgml.collections";
         let results = builtins.query(query).fetch_all().await?;
         assert!(results.as_array().is_some());
-       Ok(())
+        Ok(())
     }
 
     #[sqlx::test]
