@@ -1,8 +1,8 @@
 use pgml_components::Component;
 use std::collections::HashMap;
 
-use components::notifications::banner::Banner;
 pub use crate::components::{self, cms::index_link::IndexLink, NavLink, StaticNav, StaticNavLink};
+use components::notifications::banner::Banner;
 
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;

@@ -26,15 +26,15 @@ div[data-controller="notifications-banner"] {
             filter: brightness(1.5);
         }
     }
-    .tips-features {
+    .tip {
         background-color: #{$gray-900};
     }
     .level1 {
-        background-color: yellow;
+        background-color: #FFFF00;
         color: #{$gray-900};
     }
     .level2 {
-        background-color: orange;
+        background-color: #FF6929;
         color: #{$gray-900};
     }
     .level3 {
