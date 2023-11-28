@@ -1,5 +1,4 @@
 use rocket::http::{Cookie, CookieJar};
-use rocket::serde::json::Json;
 
 pub struct Notifications {}
 
@@ -11,7 +10,7 @@ impl Notifications {
     }
 
     pub fn get_viewed(cookies: &CookieJar<'_>) -> Vec<String> {
-        let mut viewed = match cookies.get_private("session") {
+        let viewed = match cookies.get_private("session") {
             Some(session) => {
                 match serde_json::from_str::<serde_json::Value>(session.value()).unwrap()
                     ["notifications"]

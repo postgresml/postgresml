@@ -2,7 +2,7 @@
 extern crate rocket;
 
 use rocket::form::Form;
-use rocket::http::{Cookie, CookieJar};
+use rocket::http::CookieJar;
 use rocket::response::Redirect;
 use rocket::route::Route;
 use rocket::serde::json::Json;
