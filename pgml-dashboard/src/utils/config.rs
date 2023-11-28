@@ -49,8 +49,8 @@ impl Config {
             _ => "2.0K".to_string(),
         };
 
-        let css_version = env_string_default("CSS_VERSION", "");
-        let js_version = env_string_default("JS_VERSION", "1");
+        let css_version = env!("CSS_VERSION");
+        let js_version = env!("JS_VERSION");
 
         let css_extension = if dev_mode {
             "css".to_string()
