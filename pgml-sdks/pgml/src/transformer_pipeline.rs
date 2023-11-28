@@ -54,7 +54,7 @@ impl TransformerStream {
 }
 
 impl Stream for TransformerStream {
-    type Item = Result<String, sqlx::Error>;
+    type Item = Result<Json, sqlx::Error>;
 
     fn poll_next(
         mut self: Pin<&mut Self>,
@@ -105,7 +105,7 @@ impl Stream for TransformerStream {
 
         if !self.results.is_empty() {
             let r = self.results.pop_front().unwrap();
-            Poll::Ready(Some(Ok(r.get::<String, _>(0))))
+            Poll::Ready(Some(Ok(r.get::<Json, _>(0))))
         } else if self.done {
             Poll::Ready(None)
         } else {
@@ -250,10 +250,10 @@ mod tests {
         internal_init_logger(None, None).ok();
         let t = TransformerPipeline::new(
             "text-generation",
-            Some("TheBloke/zephyr-7B-beta-GGUF".to_string()),
+            Some("TheBloke/zephyr-7B-beta-GPTQ".to_string()),
             Some(
                 serde_json::json!({
-                  "model_file": "zephyr-7b-beta.Q5_K_M.gguf", "model_type": "mistral"
+                  "model_type": "mistral", "revision": "main", "device_map": "auto"
                 })
                 .into(),
             ),

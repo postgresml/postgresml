@@ -95,8 +95,10 @@ fn transform_stream_iterate_next(mut cx: FunctionContext) -> JsResult<JsPromise>
             .try_settle_with(&channel, move |mut cx| {
                 let o = cx.empty_object();
                 if let Some(v) = v {
-                    let v: String = v.expect("Error calling next on TransformerStream");
-                    let v = cx.string(v);
+                    let v: Json = v.expect("Error calling next on TransformerStream");
+                    let v = v
+                        .into_js_result(&mut cx)
+                        .expect("Error converting rust Json to JavaScript Object");
                     let d = cx.boolean(false);
                     o.set(&mut cx, "value", v)
                         .expect("Error setting object value in transformer_sream_iterate_next");
