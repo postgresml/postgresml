@@ -1,4 +1,4 @@
-use crate::{Notification, NotificationLevel};
+use crate::Notification;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 
