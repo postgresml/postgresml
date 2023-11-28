@@ -36,4 +36,3 @@ We take care of our team and care about your well being.
 
 You must be eligible to work in the United States.
 
-\

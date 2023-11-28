@@ -917,6 +917,20 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
     iter_nodes(root, &mut |node| {
         match &mut node.data.borrow_mut().value {
+            &mut NodeValue::Link(ref mut link) => {
+                let path = Path::new(link.url.as_str());
+
+                if path.is_relative() {
+                    if link.url.ends_with(".md") {
+                        for _ in 0..".md".len() {
+                            link.url.pop();
+                        }
+                    }
+                }
+
+                Ok(true)
+            }
+
             &mut NodeValue::Text(ref mut text) => {
                 if text.starts_with("=== \"") {
                     let mut parent = {
