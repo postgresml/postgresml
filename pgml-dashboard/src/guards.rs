@@ -8,12 +8,13 @@ use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 
 static POOL: OnceCell<PgPool> = OnceCell::new();
 
-use crate::{models, utils::config, Context};
+use crate::{models, utils::config, Context, Notification};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct Cluster {
     pub pool: Option<PgPool>,
     pub context: Context,
+    pub notifications: Option<Vec<Notification>>,
 }
 
 impl Cluster {
@@ -132,6 +133,7 @@ impl Cluster {
                 lower_left_nav: StaticNav::default(),
                 marketing_footer: MarketingFooter::new().render_once().unwrap(),
             },
+            notifications: None,
         }
     }
 }

@@ -53,6 +53,9 @@ pub use nav_link::NavLink;
 // src/components/navigation
 pub mod navigation;
 
+// src/components/notifications
+pub mod notifications;
+
 // src/components/postgres_logo
 pub mod postgres_logo;
 pub use postgres_logo::PostgresLogo;
