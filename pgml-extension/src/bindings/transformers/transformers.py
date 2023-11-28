@@ -41,7 +41,7 @@ from transformers import (
     TrainingArguments,
     Trainer,
     TextStreamer,
-    Conversation
+    Conversation,
 )
 from threading import Thread
 from typing import Optional
@@ -95,24 +95,34 @@ def ensure_device(kwargs):
         else:
             kwargs["device"] = "cpu"
 
-# A copy of HuggingFace's with small changes in the __next__ to not raise an exception
-class TextIteratorStreamer(TextStreamer):
-    def __init__(
-        self, tokenizer, skip_prompt = False, timeout = None, **decode_kwargs
-    ):
-        super().__init__(tokenizer, skip_prompt, **decode_kwargs)
-        self.text_queue = queue.Queue()
-        self.stop_signal = None
-        self.timeout = timeout
 
-    def on_finalized_text(self, text: str, stream_end: bool = False):
-        """Put the new text in the queue. If the stream is ending, also put a stop signal in the queue."""
-        self.text_queue.put(text, timeout=self.timeout)
-        if stream_end:
-            self.text_queue.put(self.stop_signal, timeout=self.timeout)
+# Follows BaseStreamer template from transformers library
+class TextIteratorStreamer:
+    def __init__(self, tokenizer, skip_prompt=False, timeout=None, **decode_kwargs):
+        self.tokenizer = tokenizer
+        self.skip_prompt = skip_prompt
+        self.timeout = timeout
+        self.decode_kwargs = decode_kwargs
+        self.next_tokens_are_prompt = True
+        self.stop_signal = None
+        self.text_queue = queue.Queue()
+
+    def put(self, value):
+        if self.skip_prompt and self.next_tokens_are_prompt:
+            self.next_tokens_are_prompt = False
+            return
+        # Can't batch this decode
+        decoded_values = []
+        for v in value:
+            decoded_values.append(self.tokenizer.decode(v, **self.decode_kwargs))
+        self.text_queue.put(decoded_values, self.timeout)
+
+    def end(self):
+        self.next_tokens_are_prompt = True
+        self.text_queue.put(self.stop_signal, self.timeout)
 
     def __iter__(self):
-        return self
+        self
 
     def __next__(self):
         value = self.text_queue.get(timeout=self.timeout)
@@ -215,6 +225,18 @@ class StandardPipeline(object):
         # to the model constructor, so we construct the model/tokenizer manually if possible,
         # but that is only possible when the task is passed in, since if you pass the model
         # to the pipeline constructor, the task will no longer be inferred from the default...
+
+        # We want to create a text-generation pipeline if it is a conversational task
+        self.conversational = False
+        if "task" in kwargs and kwargs["task"] == "conversational":
+            self.conversational = True
+            kwargs["task"] = "text-generation"
+
+        # Tokens can either be left or right padded depending on the architecture
+        padding_side = "right"
+        if "padding_side" in kwargs:
+            padding_side = kwargs.pop("padding_side")
+
         if (
             "task" in kwargs
             and model_name is not None
@@ -224,8 +246,7 @@ class StandardPipeline(object):
                 "question-answering",
                 "summarization",
                 "translation",
-                "text-generation",
-                "conversational"
+                "text-generation"
             ]
         ):
             self.task = kwargs.pop("task")
@@ -240,17 +261,17 @@ class StandardPipeline(object):
                 )
             elif self.task == "summarization" or self.task == "translation":
                 self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **kwargs)
-            elif self.task == "text-generation" or self.task == "conversational":
+            elif self.task == "text-generation":
                 self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
             else:
                 raise PgMLException(f"Unhandled task: {self.task}")
 
             if "use_auth_token" in kwargs:
                 self.tokenizer = AutoTokenizer.from_pretrained(
-                    model_name, use_auth_token=kwargs["use_auth_token"]
+                    model_name, use_auth_token=kwargs["use_auth_token"], padding_side=padding_side
                 )
             else:
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side=padding_side)
 
             self.pipe = transformers.pipeline(
                 self.task,
@@ -258,38 +279,57 @@ class StandardPipeline(object):
                 tokenizer=self.tokenizer,
             )
         else:
-            self.pipe = transformers.pipeline(**kwargs)
+            self.pipe = transformers.pipeline(**kwargs, padding_side=padding_side)
+            self.tokenizer = self.pipe.tokenizer
             self.task = self.pipe.task
             self.model = self.pipe.model
-            if self.pipe.tokenizer is None:
-                self.pipe.tokenizer = AutoTokenizer.from_pretrained(
-                    self.model.name_or_path
-                )
-            self.tokenizer = self.pipe.tokenizer
+
+        # Make sure we set the pad token if it does not exist
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
 
     def stream(self, inputs, **kwargs):
         streamer = None
         generation_kwargs = None
-        if self.task == "conversational":
-            streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True)
-            inputs = tokenized_chat = self.tokenizer.apply_chat_template(inputs, tokenize=True, add_generation_prompt=True, return_tensors="pt").to(self.model.device)
-            generation_kwargs = dict(inputs=inputs, streamer=streamer, **kwargs)
-        else:
-            streamer = TextIteratorStreamer(self.tokenizer)
-            inputs = self.tokenizer([inputs], return_tensors="pt").to(self.model.device)
+        # Conversational does not work right now with left padded tokenizers. At least for gpt2, the apply_chat_template breaks it
+        if self.conversational:
+            streamer = TextIteratorStreamer(
+                self.tokenizer, skip_prompt=True, skip_special_tokens=True
+            )
+            templated_inputs = []
+            for input in inputs:
+                templated_inputs.append(
+                    self.tokenizer.apply_chat_template(
+                        input, add_generation_prompt=True, tokenize=False
+                    )
+                )
+            inputs = self.tokenizer(
+                templated_inputs, return_tensors="pt", padding=True
+            ).to(self.model.device)
             generation_kwargs = dict(inputs, streamer=streamer, **kwargs)
+        else:
+            streamer = TextIteratorStreamer(self.tokenizer, skip_special_tokens=True)
+            inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(
+                self.model.device
+            )
+            generation_kwargs = dict(inputs, streamer=streamer, **kwargs)
+        print("\n\n", file=sys.stderr)
+        print(inputs, file=sys.stderr)
+        print("\n\n", file=sys.stderr)
         thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
         thread.start()
         return streamer
 
     def __call__(self, inputs, **kwargs):
-        if self.task == "conversational":
-            outputs = []
-            for conversation in inputs:
-                conversation = Conversation(conversation)
-                conversation = self.pipe(conversation, **kwargs)
-                outputs.append(conversation.generated_responses[-1])
-            return outputs
+        if self.conversational:
+            templated_inputs = []
+            for input in inputs:
+                templated_inputs.append(
+                    self.tokenizer.apply_chat_template(
+                        input, add_generation_prompt=True, tokenize=False
+                    )
+                )
+            return self.pipe(templated_inputs, return_full_text=False, **kwargs)
         else:
             return self.pipe(inputs, **kwargs)
 
@@ -320,7 +360,11 @@ def create_pipeline(task):
         lower = None
     if lower and ("-ggml" in lower or "-gguf" in lower):
         pipe = GGMLPipeline(model_name, **task)
-    elif lower and "-gptq" in lower and not (model_type == "mistral" or model_type == "llama"):
+    elif (
+        lower
+        and "-gptq" in lower
+        and not (model_type == "mistral" or model_type == "llama")
+    ):
         pipe = GPTQPipeline(model_name, **task)
     else:
         try:

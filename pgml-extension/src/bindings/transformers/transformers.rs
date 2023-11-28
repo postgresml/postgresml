@@ -4,7 +4,6 @@ use anyhow::Result;
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyDict, PyTuple};
-use pyo3::AsPyPointer;
 
 create_pymodule!("/src/bindings/transformers/transformers.py");
 
@@ -24,17 +23,17 @@ impl TransformStreamIterator {
 }
 
 impl Iterator for TransformStreamIterator {
-    type Item = String;
+    type Item = JsonB;
     fn next(&mut self) -> Option<Self::Item> {
         // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
-        Python::with_gil(|py| -> Result<Option<String>, PyErr> {
+        Python::with_gil(|py| -> Result<Option<JsonB>, PyErr> {
             let code = "next(python_iter)";
             let res: &PyAny = py.eval(code, Some(self.locals.as_ref(py)), None)?;
             if res.is_none() {
                 Ok(None)
             } else {
-                let res: String = res.extract()?;
-                Ok(Some(res))
+                let res: Vec<String> = res.extract()?;
+                Ok(Some(JsonB(serde_json::to_value(res).unwrap())))
             }
         })
         .map_err(|e| error!("{e}"))
