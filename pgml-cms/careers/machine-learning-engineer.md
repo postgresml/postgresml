@@ -35,5 +35,3 @@ We take care of our team and care about your well being.
 ### Employment Eligibility
 
 You must be eligible to work in the United States.
-
-\
