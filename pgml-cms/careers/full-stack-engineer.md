@@ -32,7 +32,7 @@ We take care of our team and care about your well being.
 * If you live in the Bay Area, we hike and hang out every Wednesday. We prefer that to Zoom, so we’ll offer you a relocation package if you’re interested in the beautiful weather.
 * Unlimited PTO, and we strongly encourage you to use it to stay healthy and happy. It's typical for employees to take 3-4 weeks per year, in addition to holidays.
 
-Employment Eligibility
+### Employment Eligibility
 
 You must be eligible to work in the United States.
 
