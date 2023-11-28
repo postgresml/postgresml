@@ -266,7 +266,7 @@ impl Collection {
             Some(cluster.context.user.clone())
         };
 
-        let mut layout = crate::templates::Layout::new(&title);
+        let mut layout = crate::templates::Layout::new(&title, Some(cluster.clone()));
         if let Some(image) = image {
             // translate relative url into absolute for head social sharing
             let parts = image.split(".gitbook/assets/").collect::<Vec<&str>>();
