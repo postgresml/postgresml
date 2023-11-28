@@ -1,20 +1,26 @@
-# Careers
+# Product Manager
 
-PostgresML is building a GPU-powered AI application database. You can perform microsecond inference with the world's most capable feature store. It allows you to easily train and deploy online models using only SQL. We're looking for an experienced Engineers to help shape the core product, inside and out. We're generally looking for individual contributors, but everyone be critical in building the future team as well as the core product, while leading efforts toward more efficient and effective Machine Learning workflows for our customers.
+PostgresML provides cloud hosted AI application databases, that bring the latest machine learning and vector capabilities to the heart of everyone’s favorite tech stack. We're looking for a Head of Growth, with a Technical Product Manager skill set to help shape the core product, inside and outside the company.&#x20;
 
-[data-scientist.md](careers/data-scientist.md "mention")
+Reach out if you want to:
 
-[machine-learning-engineer.md](careers/machine-learning-engineer.md "mention")
-
-[full-stack-engineer.md](careers/full-stack-engineer.md "mention")
-
-[product-manager.md](careers/product-manager.md "mention")
+* Work on a small team with designers and engineers to create intuitive user experiences
+* Research a rapidly developing market, and design the foundation of next gen data infrastructure
+* Work directly with users to understand their needs and formalize product requirements
+* Develop Sales & Marketing strategy aligned with Research & Development
 
 ### About Us
 
 We're a Seed stage startup with experienced software engineers and designers who specialize broadly across the skillsets required to build machine learning infrastructure. We use Rust to operate within Postgres for memory efficiency and performance at scale with standard supervised learning libraries, such as Torch, Tensorflow and XGBoost, to build a hosted, horizontally scalable platform on top of Postgres.
 
 We bias toward action and course correct based on feedback. We're not afraid of failure, we're always learning. We enjoy working on big problems with a pragmatic approach, participating in the broader open source community.
+
+### Qualifications
+
+* Bachelor’s degree in computer science, human-computer interaction, interaction design, or a related field
+* 7+ years of product management and/or software engineering experience
+* Experience with databases, machine learning, and software development in practice
+* Experience developing GTM strategy and product vision in a 0-1 organization
 
 ### Benefits
 
@@ -29,3 +35,5 @@ We take care of our team and care about your well being.
 ### Employment Eligibility
 
 You must be eligible to work in the United States.
+
+\
