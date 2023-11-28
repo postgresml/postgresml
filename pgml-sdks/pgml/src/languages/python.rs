@@ -72,7 +72,7 @@ impl TransformerStreamPython {
             if let Some(o) = ts.next().await {
                 Ok(Some(Python::with_gil(|py| {
                     o.expect("Error calling next on TransformerStream")
-                        .to_object(py)
+                        .into_py(py)
                 })))
             } else {
                 Err(pyo3::exceptions::PyStopAsyncIteration::new_err(

@@ -49,21 +49,17 @@ impl OpenSourceAI {
         Self { database_url }
     }
 
-    pub async fn chat_completions_create_async(
+    fn create_pipeline_model_name_parameters(
         &self,
         mut model: Json,
-        messages: Json,
-        max_tokens: Option<i32>,
-        temperature: Option<f64>,
-        n: Option<i32>,
-    ) -> anyhow::Result<Json> {
-        let (transformer_pipeline, model_name, model_parameters) = if model.is_object() {
+    ) -> anyhow::Result<(TransformerPipeline, String, Json)> {
+        if model.is_object() {
             let args = model.as_object_mut().unwrap();
             let model_name = args
                 .remove("model")
                 .context("`model` is a required key in the model object")?;
             let model_name = model_name.as_str().context("`model` must be a string")?;
-            (
+            Ok((
                 TransformerPipeline::new(
                     "conversational",
                     Some(model_name.to_string()),
@@ -72,7 +68,7 @@ impl OpenSourceAI {
                 ),
                 model_name.to_string(),
                 model,
-            )
+            ))
         } else {
             let model_name = model
                 .as_str()
@@ -83,7 +79,7 @@ impl OpenSourceAI {
 mistralai/Mistral-7B-v0.1
 "#,
                 )?;
-            (
+            Ok((
                 TransformerPipeline::new(
                     "conversational",
                     Some(real_model_name.to_string()),
@@ -92,28 +88,44 @@ mistralai/Mistral-7B-v0.1
                 ),
                 model_name.to_string(),
                 parameters,
-            )
-        };
+            ))
+        }
+    }
+
+    pub async fn chat_completions_create_stream_async(
+        &self,
+        model: Json,
+        messages: Vec<Json>,
+        max_tokens: Option<i32>,
+        temperature: Option<f64>,
+        n: Option<i32>,
+    ) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    pub async fn chat_completions_create_async(
+        &self,
+        model: Json,
+        messages: Vec<Json>,
+        max_tokens: Option<i32>,
+        temperature: Option<f64>,
+        n: Option<i32>,
+    ) -> anyhow::Result<Json> {
+        let (transformer_pipeline, model_name, model_parameters) =
+            self.create_pipeline_model_name_parameters(model)?;
 
         let max_tokens = max_tokens.unwrap_or(1000);
         let temperature = temperature.unwrap_or(0.8);
         let n = n.unwrap_or(1) as usize;
-        let to_hash = format!(
-            "{}{}{}{}",
-            model_parameters.to_string(),
-            max_tokens,
-            temperature,
-            n
-        );
+        let to_hash = format!("{}{}{}{}", *model_parameters, max_tokens, temperature, n);
         let md5_digest = md5::compute(to_hash.as_bytes());
         let fingerprint = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-        let messages: Vec<Json> = std::iter::repeat(messages).take(n).collect();
         let choices = transformer_pipeline
             .transform(
                 messages,
                 Some(
-                    serde_json::json!({ "max_length": max_tokens, "temperature": temperature })
+                    serde_json::json!({ "max_length": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n })
                         .into(),
                 ),
             )
@@ -121,7 +133,7 @@ mistralai/Mistral-7B-v0.1
         let choices: Vec<Json> = choices
             .as_array()
             .context("Error parsing return from TransformerPipeline")?
-            .into_iter()
+            .iter()
             .enumerate()
             .map(|(i, c)| {
                 serde_json::json!({
@@ -157,7 +169,7 @@ mistralai/Mistral-7B-v0.1
     pub fn chat_completions_create(
         &self,
         model: Json,
-        messages: Json,
+        messages: Vec<Json>,
         max_tokens: Option<i32>,
         temperature: Option<f64>,
         n: Option<i32>,
@@ -177,14 +189,14 @@ mistralai/Mistral-7B-v0.1
 mod tests {
     use super::*;
 
-    #[sqlx::test]
-    async fn can_open_source_ai_create() -> anyhow::Result<()> {
+    #[test]
+    fn can_open_source_ai_create() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let results = client.chat_completions_create(Json::from_serializable("mistralai/Mistral-7B-v0.1"), serde_json::json!([
-          {"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"},
-          {"role": "user", "content": "How many helicopters can a human eat in one sitting?"}
-        ]).into(), Some(1000), None, None)?;
-        assert!(results.as_array().is_some());
+        let results = client.chat_completions_create(Json::from_serializable("mistralai/Mistral-7B-v0.1"), vec![
+          serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
+          serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
+        ], Some(1000), None, Some(3))?;
+        assert!(results["choices"].as_array().is_some());
         Ok(())
     }
 }

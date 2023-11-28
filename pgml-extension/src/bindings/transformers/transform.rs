@@ -32,7 +32,9 @@ impl Iterator for TransformStreamIterator {
             if res.is_none() {
                 Ok(None)
             } else {
+                eprintln!("\nHERE WE ARE!\n");
                 let res: Vec<String> = res.extract()?;
+                eprintln!("\nYUP WE DIDNT GET HERE\n");
                 Ok(Some(JsonB(serde_json::to_value(res).unwrap())))
             }
         })

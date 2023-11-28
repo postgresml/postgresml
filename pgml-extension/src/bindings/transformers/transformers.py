@@ -126,6 +126,7 @@ class TextIteratorStreamer:
 
     def __next__(self):
         value = self.text_queue.get(timeout=self.timeout)
+        print("\n\n", value, "\n\n", file=sys.stderr)
         if value != self.stop_signal:
             return value
 
