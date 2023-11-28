@@ -282,7 +282,6 @@ class StandardPipeline(object):
     def stream(self, input, **kwargs):
         streamer = None
         generation_kwargs = None
-        # Conversational does not work right now with left padded tokenizers. At least for gpt2, the apply_chat_template breaks it
         if self.task == "conversational":
             streamer = TextIteratorStreamer(
                 self.tokenizer, skip_prompt=True, skip_special_tokens=True
