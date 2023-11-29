@@ -74,17 +74,17 @@ impl IntoJsResult for PipelineSyncData {
 }
 
 #[derive(Clone)]
-struct GeneralJsonAsyncIteratorArcMutex(Arc<tokio::sync::Mutex<GeneralJsonAsyncIterator>>);
+struct GeneralJsonAsyncIteratorJavaScript(Arc<tokio::sync::Mutex<GeneralJsonAsyncIterator>>);
 
-impl Finalize for GeneralJsonAsyncIteratorArcMutex {}
+impl Finalize for GeneralJsonAsyncIteratorJavaScript {}
 
 fn transform_stream_iterate_next(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let this = cx.this();
-    let s: Handle<JsBox<GeneralJsonAsyncIteratorArcMutex>> = this
+    let s: Handle<JsBox<GeneralJsonAsyncIteratorJavaScript>> = this
         .get(&mut cx, "s")
         .expect("Error getting self in transformer_stream_iterate_next");
-    let ts: &GeneralJsonAsyncIteratorArcMutex = &s;
-    let ts: GeneralJsonAsyncIteratorArcMutex = ts.clone();
+    let ts: &GeneralJsonAsyncIteratorJavaScript = &s;
+    let ts: GeneralJsonAsyncIteratorJavaScript = ts.clone();
 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -101,13 +101,13 @@ fn transform_stream_iterate_next(mut cx: FunctionContext) -> JsResult<JsPromise>
                         .expect("Error converting rust Json to JavaScript Object");
                     let d = cx.boolean(false);
                     o.set(&mut cx, "value", v)
-                        .expect("Error setting object value in transformer_sream_iterate_next");
+                        .expect("Error setting object value in transform_sream_iterate_next");
                     o.set(&mut cx, "done", d)
-                        .expect("Error setting object value in transformer_sream_iterate_next");
+                        .expect("Error setting object value in transform_sream_iterate_next");
                 } else {
                     let d = cx.boolean(true);
                     o.set(&mut cx, "done", d)
-                        .expect("Error setting object value in transformer_sream_iterate_next");
+                        .expect("Error setting object value in transform_sream_iterate_next");
                 }
                 Ok(o)
             })
@@ -125,7 +125,7 @@ impl IntoJsResult for GeneralJsonAsyncIterator {
         let o = cx.empty_object();
         let f: Handle<JsFunction> = JsFunction::new(cx, transform_stream_iterate_next)?;
         o.set(cx, "next", f)?;
-        let s = cx.boxed(GeneralJsonAsyncIteratorArcMutex(Arc::new(
+        let s = cx.boxed(GeneralJsonAsyncIteratorJavaScript(Arc::new(
             tokio::sync::Mutex::new(self),
         )));
         o.set(cx, "s", s)?;
@@ -141,7 +141,7 @@ fn transform_iterate_next(mut cx: FunctionContext) -> JsResult<JsObject> {
     let this = cx.this();
     let s: Handle<JsBox<GeneralJsonIteratorJavaScript>> = this
         .get(&mut cx, "s")
-        .expect("Error getting self in transformer_stream_iterate_next");
+        .expect("Error getting self in transform_iterate_next");
     let v = s.0.borrow_mut().next();
     let o = cx.empty_object();
     if let Some(v) = v {
@@ -151,13 +151,13 @@ fn transform_iterate_next(mut cx: FunctionContext) -> JsResult<JsObject> {
             .expect("Error converting rust Json to JavaScript Object");
         let d = cx.boolean(false);
         o.set(&mut cx, "value", v)
-            .expect("Error setting object value in transformer_sream_iterate_next");
+            .expect("Error setting object value in transform_iterate_next");
         o.set(&mut cx, "done", d)
-            .expect("Error setting object value in transformer_sream_iterate_next");
+            .expect("Error setting object value in transform_iterate_next");
     } else {
         let d = cx.boolean(true);
         o.set(&mut cx, "done", d)
-            .expect("Error setting object value in transformer_sream_iterate_next");
+            .expect("Error setting object value in transform_iterate_next");
     }
     Ok(o)
 }

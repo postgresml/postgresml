@@ -126,7 +126,6 @@ class TextIteratorStreamer:
 
     def __next__(self):
         value = self.text_queue.get(timeout=self.timeout)
-        print("\n\n", value, "\n\n", file=sys.stderr)
         if value != self.stop_signal:
             return value
 
@@ -286,9 +285,17 @@ class StandardPipeline(object):
             streamer = TextIteratorStreamer(
                 self.tokenizer, skip_prompt=True, skip_special_tokens=True
             )
-            input = self.tokenizer.apply_chat_template(
-                input, add_generation_prompt=True, tokenize=False
-            )
+            if "chat_template" in kwargs:
+                input = self.tokenizer.apply_chat_template(
+                    input,
+                    add_generation_prompt=True,
+                    tokenize=False,
+                    chat_template=kwargs.pop("chat_template"),
+                )
+            else:
+                input = self.tokenizer.apply_chat_template(
+                    input, add_generation_prompt=True, tokenize=False
+                )
             input = self.tokenizer(input, return_tensors="pt").to(self.model.device)
             generation_kwargs = dict(input, streamer=streamer, **kwargs)
         else:
@@ -303,9 +310,17 @@ class StandardPipeline(object):
 
     def __call__(self, inputs, **kwargs):
         if self.task == "conversational":
-            inputs = self.tokenizer.apply_chat_template(
-                inputs, add_generation_prompt=True, tokenize=False
-            )
+            if "chat_template" in kwargs:
+                inputs = self.tokenizer.apply_chat_template(
+                    inputs,
+                    add_generation_prompt=True,
+                    tokenize=False,
+                    chat_template=kwargs.pop("chat_template"),
+                )
+            else:
+                inputs = self.tokenizer.apply_chat_template(
+                    inputs, add_generation_prompt=True, tokenize=False
+                )
             inputs = self.tokenizer(inputs, return_tensors="pt").to(self.model.device)
             args = dict(inputs, **kwargs)
             outputs = self.model.generate(**args)
