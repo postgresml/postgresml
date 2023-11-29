@@ -306,7 +306,7 @@ it("can transformer pipeline stream", async () => {
 // Test OpenSourceAI //////////////////////////////
 ///////////////////////////////////////////////////
 
-it("can open source ai create", async () => {
+it("can open source ai create", () => {
   const client = pgml.newOpenSourceAI();
   const results = client.chat_completions_create(
         "mistralai/Mistral-7B-v0.1",
@@ -322,6 +322,70 @@ it("can open source ai create", async () => {
         ],
   );
   expect(results.choices.length).toBeGreaterThan(0);
+});
+
+
+it("can open source ai create async", async () => {
+  const client = pgml.newOpenSourceAI();
+  const results = await client.chat_completions_create_async(
+        "mistralai/Mistral-7B-v0.1",
+        [
+            {
+                role: "system",
+                content: "You are a friendly chatbot who always responds in the style of a pirate",
+            },
+            {
+                role: "user",
+                content: "How many helicopters can a human eat in one sitting?",
+            },
+        ],
+  );
+  expect(results.choices.length).toBeGreaterThan(0);
+});
+
+
+it("can open source ai create stream", () => {
+  const client = pgml.newOpenSourceAI();
+  const it = client.chat_completions_create_stream(
+        "mistralai/Mistral-7B-v0.1",
+        [
+            {
+                role: "system",
+                content: "You are a friendly chatbot who always responds in the style of a pirate",
+            },
+            {
+                role: "user",
+                content: "How many helicopters can a human eat in one sitting?",
+            },
+        ],
+  );
+  let result = it.next();
+  while (!result.done) {
+    expect(result.value.choices.length).toBeGreaterThan(0);
+    result = it.next();
+  }
+});
+
+it("can open source ai create stream async", async () => {
+  const client = pgml.newOpenSourceAI();
+  const it = await client.chat_completions_create_stream_async(
+        "mistralai/Mistral-7B-v0.1",
+        [
+            {
+                role: "system",
+                content: "You are a friendly chatbot who always responds in the style of a pirate",
+            },
+            {
+                role: "user",
+                content: "How many helicopters can a human eat in one sitting?",
+            },
+        ],
+  );
+  let result = await it.next();
+  while (!result.done) {
+    expect(result.value.choices.length).toBeGreaterThan(0);
+    result = await it.next();
+  }
 });
 
 ///////////////////////////////////////////////////
