@@ -33,7 +33,7 @@ fn try_model_nice_name_to_model_name_and_parameters(
             })
             .into(),
         )),
-        "Llama-2-7b-chat-hf" => Some((
+        "meta-llama/Llama-2-7b-chat-hf" => Some((
             "TheBloke/Llama-2-7B-Chat-GPTQ",
             serde_json::json!({
               "task": "conversational",

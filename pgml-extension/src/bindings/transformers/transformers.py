@@ -195,30 +195,6 @@ class ThreadedGeneratorIterator:
             return v
 
 
-class GGMLPipeline(object):
-    def __init__(self, model_name, **task):
-        import ctransformers
-
-        task.pop("model")
-        task.pop("task")
-        task.pop("device")
-        self.model = ctransformers.AutoModelForCausalLM.from_pretrained(
-            model_name, **task
-        )
-        self.tokenizer = None
-        self.task = "text-generation"
-
-    def stream(self, inputs, **kwargs):
-        output = self.model(inputs, stream=True, **kwargs)
-        return ThreadedGeneratorIterator(output, inputs)
-
-    def __call__(self, inputs, **kwargs):
-        outputs = []
-        for input in inputs:
-            outputs.append(self.model(input, **kwargs))
-        return outputs
-
-
 class StandardPipeline(object):
     def __init__(self, model_name, **kwargs):
         # the default pipeline constructor doesn't pass all the kwargs (particularly load_in_4bit)
@@ -370,12 +346,6 @@ def create_pipeline(task):
         lower = None
     if lower and ("-ggml" in lower or "-gguf" in lower):
         pipe = GGMLPipeline(model_name, **task)
-    elif (
-        lower
-        and "-gptq" in lower
-        and not (model_type == "mistral" or model_type == "llama")
-    ):
-        pipe = GPTQPipeline(model_name, **task)
     else:
         try:
             pipe = StandardPipeline(model_name, **task)
