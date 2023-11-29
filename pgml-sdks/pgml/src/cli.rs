@@ -3,12 +3,15 @@ use colored::Colorize;
 use inquire::Text;
 use is_terminal::IsTerminal;
 use itertools::Itertools;
+#[cfg(feature = "python")]
 use pyo3::exceptions::PyRuntimeError;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use sqlx::{Acquire, Executor};
 use std::io::Write;
 
 /// PostgresML CLI
+// #[cfg(feature = "python")]
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None, name = "pgml", bin_name = "pgml")]
 struct Python {
@@ -17,7 +20,20 @@ struct Python {
     module: Option<String>,
 
     #[command(subcommand)]
-    subcomand: Subcommands,
+    subcommand: Subcommands,
+}
+
+/// PostgresML CLI
+// #[cfg(feature = "python")]
+#[derive(Parser, Debug, Clone)]
+#[command(author, version, about, long_about = None, name = "pgml", bin_name = "pgml")]
+struct Javascript {
+    /// Ignore this argument, we're running as `node`.
+    #[arg(name = "pgmlcli")]
+    pgmlcli: Option<String>,
+
+    #[command(subcommand)]
+    subcommand: Subcommands,
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -77,6 +93,7 @@ enum Level {
     Concerned,
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
 pub fn cli(py: pyo3::Python) -> pyo3::PyResult<&pyo3::PyAny> {
     ctrlc::set_handler(move || {
@@ -93,10 +110,57 @@ pub fn cli(py: pyo3::Python) -> pyo3::PyResult<&pyo3::PyAny> {
     })
 }
 
-async fn cli_internal() -> anyhow::Result<()> {
-    let args = Python::parse();
+#[cfg(feature = "javascript")]
+pub fn cli(
+    mut cx: neon::context::FunctionContext,
+) -> neon::result::JsResult<neon::types::JsPromise> {
+    ctrlc::set_handler(move || {
+        println!("");
+        std::process::exit(1);
+    })
+    .expect("failed to set ctrl-c handler");
 
-    match args.subcomand {
+    use neon::prelude::*;
+    use rust_bridge::javascript::IntoJsResult;
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+    deferred
+        .try_settle_with(&channel, move |mut cx| {
+            let runtime = crate::get_or_set_runtime();
+            let x = runtime.block_on(cli_internal());
+            let x = match x {
+                Ok(x) => x,
+                Err(e) => {
+                    // Node has its own ctrl-c handler, so we need to handle it here.
+                    if e.to_string()
+                        .contains("Operation was interrupted by the user")
+                    {
+                        std::process::exit(1);
+                    } else {
+                        panic!("{e}");
+                    }
+                }
+            };
+            x.into_js_result(&mut cx)
+        })
+        .expect("Error sending js");
+    Ok(promise)
+}
+
+async fn cli_internal() -> anyhow::Result<()> {
+    #[cfg(feature = "python")]
+    let subcommand = {
+        let args = Python::parse();
+        args.subcommand
+    };
+
+    #[cfg(feature = "javascript")]
+    let subcommand = {
+        let args = Javascript::parse();
+        args.subcommand
+    };
+
+    match subcommand {
         Subcommands::Connect {
             name,
             host,
@@ -161,8 +225,8 @@ async fn connect(
     println!("");
 
     if std::env::var("DATABASE_URL").is_err() && database_url.is_none() {
-        println!("Looks like the DATABASE_URL environment variable is not set.");
-        println!("We need it to be able to connect to your PostgresML database.");
+        println!("Required DATABASE_URL environment variable is not set.");
+        println!("We need it to connect to your PostgresML database.");
         println!("");
         let database_url = user_input!(None::<String>, "DATABASE_URL");
         std::env::set_var("DATABASE_URL", database_url);
