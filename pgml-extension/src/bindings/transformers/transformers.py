@@ -40,8 +40,6 @@ from transformers import (
     PegasusTokenizer,
     TrainingArguments,
     Trainer,
-    TextStreamer,
-    Conversation,
 )
 from threading import Thread
 from typing import Optional
