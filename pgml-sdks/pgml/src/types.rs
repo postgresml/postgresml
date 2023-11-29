@@ -1,4 +1,5 @@
 use anyhow::Context;
+use futures::{Stream, StreamExt};
 use itertools::Itertools;
 use rust_bridge::alias_manual;
 use sea_query::Iden;
@@ -120,5 +121,32 @@ impl IntoTableNameAndSchema for String {
             .map(|s| SIden::String(s.to_string()))
             .collect_tuple()
             .expect("Malformed table name in IntoTableNameAndSchema")
+    }
+}
+
+#[derive(alias_manual)]
+pub struct GeneralJsonAsyncIterator(
+    pub std::pin::Pin<Box<dyn Stream<Item = anyhow::Result<Json>> + Send>>,
+);
+
+impl Stream for GeneralJsonAsyncIterator {
+    type Item = anyhow::Result<Json>;
+
+    fn poll_next(
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        self.0.poll_next_unpin(cx)
+    }
+}
+
+#[derive(alias_manual)]
+pub struct GeneralJsonIterator(pub Box<dyn Iterator<Item = anyhow::Result<Json>> + Send>);
+
+impl Iterator for GeneralJsonIterator {
+    type Item = anyhow::Result<Json>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
     }
 }

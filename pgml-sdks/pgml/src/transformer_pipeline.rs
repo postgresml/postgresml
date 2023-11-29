@@ -1,6 +1,6 @@
 use anyhow::Context;
 use futures::Stream;
-use rust_bridge::{alias, alias_manual, alias_methods};
+use rust_bridge::{alias, alias_methods};
 use sqlx::{postgres::PgRow, Row};
 use sqlx::{Postgres, Transaction};
 use std::collections::VecDeque;
@@ -16,13 +16,13 @@ pub struct TransformerPipeline {
     database_url: Option<String>,
 }
 
+use crate::types::GeneralJsonAsyncIterator;
 use crate::{get_or_initialize_pool, types::Json};
 
 #[cfg(feature = "python")]
-use crate::types::JsonPython;
+use crate::types::{GeneralJsonAsyncIteratorPython, JsonPython};
 
-#[derive(alias_manual)]
-pub struct TransformerStream {
+struct TransformerStream {
     transaction: Option<Transaction<'static, Postgres>>,
     future: Option<Pin<Box<dyn Future<Output = Result<Vec<PgRow>, sqlx::Error>> + Send + 'static>>>,
     commit: Option<Pin<Box<dyn Future<Output = Result<(), sqlx::Error>> + Send + 'static>>>,
@@ -54,7 +54,7 @@ impl TransformerStream {
 }
 
 impl Stream for TransformerStream {
-    type Item = Result<Json, sqlx::Error>;
+    type Item = anyhow::Result<Json>;
 
     fn poll_next(
         mut self: Pin<&mut Self>,
@@ -178,25 +178,50 @@ impl TransformerPipeline {
     #[instrument(skip(self))]
     pub async fn transform_stream(
         &self,
-        input: &str,
+        input: Json,
         args: Option<Json>,
         batch_size: Option<i32>,
-    ) -> anyhow::Result<TransformerStream> {
+    ) -> anyhow::Result<GeneralJsonAsyncIterator> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let args = args.unwrap_or_default();
         let batch_size = batch_size.unwrap_or(10);
 
         let mut transaction = pool.begin().await?;
-        sqlx::query(
-            "DECLARE c CURSOR FOR SELECT pgml.transform_stream(task => $1, input => $2, args => $3)",
-        )
-        .bind(&self.task)
-        .bind(input)
-        .bind(&args)
-        .execute(&mut *transaction)
-        .await?;
+        // We set the task in the new constructor so we can unwrap here
+        if self.task["task"].as_str().unwrap() == "conversational" {
+            let inputs = input
+                .as_array()
+                .context("`input` to transformer_stream must be an array of objects")?
+                .to_vec();
+            sqlx::query(
+                "DECLARE c CURSOR FOR SELECT pgml.transform_stream(task => $1, inputs => $2, args => $3)",
+            )
+            .bind(&self.task)
+            .bind(inputs)
+            .bind(&args)
+            .execute(&mut *transaction)
+            .await?;
+        } else {
+            let input = input
+                .as_str()
+                .context(
+                    "`input` to transformer_stream must be a string if task is not conversational",
+                )?
+                .to_string();
+            sqlx::query(
+                "DECLARE c CURSOR FOR SELECT pgml.transform_stream(task => $1, input => $2, args => $3)",
+            )
+            .bind(&self.task)
+            .bind(input)
+            .bind(&args)
+            .execute(&mut *transaction)
+            .await?;
+        }
 
-        Ok(TransformerStream::new(transaction, batch_size))
+        Ok(GeneralJsonAsyncIterator(Box::pin(TransformerStream::new(
+            transaction,
+            batch_size,
+        ))))
     }
 }
 
@@ -261,7 +286,7 @@ mod tests {
         );
         let mut stream = t
             .transform_stream(
-                "AI is going to",
+                serde_json::json!("AI is going to").into(),
                 Some(
                     serde_json::json!({
                         "max_new_tokens": 10
