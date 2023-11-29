@@ -765,7 +765,6 @@ mod tests {
                 .filter(filter)
                 .fetch_all()
                 .await?;
-            println!("{:?}", results);
             assert_eq!(results.len(), expected_result_count);
         }
 
