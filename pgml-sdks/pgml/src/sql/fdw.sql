@@ -7,8 +7,8 @@
     dbname '{database_name}'
   );
 
-  CREATE USER MAPPING
-  FOR CURRENT_USER
+  CREATE USER MAPPING 
+  FOR CURRENT_USER 
   SERVER "{db_name}"
   OPTIONS (
     user '{user}',
