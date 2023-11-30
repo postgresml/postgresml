@@ -39,7 +39,7 @@ These capabilities are primarily provided by two open-source software projects, 
 
 <figure><img src=".gitbook/assets/architecture.png" alt="PostgresML architectural diagram" width="275"><figcaption><p>A PostgresML deployment at scale</p></figcaption></figure>
 
-In addition, PostgresML provides [native language SDKs](https://github.com/postgresml/postgresml/tree/master/pgml-sdks/pgml) to implement best practices for common ML & AI applications. The JavaScript and Python SDKS are generated from the core Rust SDK, to provide the same API, correctness and efficiency across all application runtimes.&#x20;
+In addition, PostgresML provides [native language SDKs](https://github.com/postgresml/postgresml/tree/master/pgml-sdks/pgml) to implement best practices for common ML & AI applications. The JavaScript and Python SDKs are generated from the core Rust SDK, to provide the same API, correctness and efficiency across all application runtimes.&#x20;
 
 SDK clients can perform advanced machine learning tasks in a single SQL request, without having to transfer additional data, models, hardware or dependencies to the client application. For example:
 
@@ -51,6 +51,6 @@ SDK clients can perform advanced machine learning tasks in a single SQL request,
 * Forecasting timeseries data for key metrics with complex metadata
 * Fraud and anomaly detection with application data
 
-Our longoal is to provide access to Open Source AI for everyone. PostgresML is under continuous development to keep up with the rapidly evolving use cases for ML & AI, and we release non breaking changes with minor version updates in accordance with SemVer. We welcome contributions to our [open source code and documentation](https://github.com/postgresml).&#x20;
+Our goal is to provide access to Open Source AI for everyone. PostgresML is under continuous development to keep up with the rapidly evolving use cases for ML & AI, and we release non breaking changes with minor version updates in accordance with SemVer. We welcome contributions to our [open source code and documentation](https://github.com/postgresml).&#x20;
 
-We can host your AI database in our cloud, or we provide a Docker image that has PostgreSQL, pgml, pgvector and NVIDIA drivers to run locally.
+We can host your AI database in our cloud, or you can run our Docker image locally with PostgreSQL, pgml, pgvector and NVIDIA drivers included.
