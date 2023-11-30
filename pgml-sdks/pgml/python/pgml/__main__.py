@@ -2,7 +2,6 @@ import asyncio
 from pgml import cli
 
 async def main():
-	await cli()
+    await cli()
 
 asyncio.run(main())
-

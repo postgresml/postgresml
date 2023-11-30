@@ -11,7 +11,7 @@ use sqlx::{Acquire, Executor};
 use std::io::Write;
 
 /// PostgresML CLI
-// #[cfg(feature = "python")]
+#[cfg(feature = "python")]
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None, name = "pgml", bin_name = "pgml")]
 struct Python {
@@ -24,7 +24,7 @@ struct Python {
 }
 
 /// PostgresML CLI
-// #[cfg(feature = "python")]
+#[cfg(feature = "javascript")]
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None, name = "pgml", bin_name = "pgml")]
 struct Javascript {
