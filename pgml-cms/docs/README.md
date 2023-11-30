@@ -1,5 +1,5 @@
 ---
-description: What is PostgresML?
+description: An introduction to key the concepts that power PostgresML.
 coverY: 0
 layout:
   cover:
@@ -19,52 +19,38 @@ layout:
 
 # Overview
 
-[PostgresML](https://postgresml.org/) is a PostgreSQL extension that enables users to build fast, simple and powerful models right inside your database. Users can build chatbots, search engines, forecasting apps and more with the latest NLP, LLM and ML models using the simplicity and power of SQL (and our SDKs).&#x20;
+PostgresML is a complete MLOps platform built on PostgreSQL.&#x20;
 
-### Problem <a href="#problem" id="problem"></a>
+> _Move the models to the database_, _rather than continuously moving the data to the models._
 
-Today's engineers and product teams are increasingly burdened with data hungry ML & AI apps and complex architecture. Several roundtrip network calls must be made across a web of microservices to return an accurate response. This approach to MLops is slower for users, and it’s more complex to build, manage and scale. &#x20;
+The data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move the models to the database, rather than continuously moving the data to the models_._ PostgresML allows you to take advantage of the fundamental relationship between data and models, by extending the database with the following capabilities and goals:
 
-### Solution <a href="#solution" id="solution"></a>
+* **Model Serving** - _**GPU accelerated**_ inference engine for interactive applications, with no additional networking latency or reliability costs.
+* **Model Store** - Download _**open-source**_ models including state of the art LLMs from HuggingFace, and track changes in performance between versions.
+* **Model Training** - Train models with _**your application data**_ using more than 50 algorithms for regression, classification or clustering tasks. Fine tune pre-trained models like LLaMA and BERT to improve performance.
+* **Feature Store** - _**Scalable**_ access to model inputs, including vector, text, categorical, and numeric data. Vector database, text search, knowledge graph and application data all in one _**low-latency**_ system.&#x20;
 
-PostgresML collocates data and compute, so you can save models and index data right in your Postgres database. When you need to predict or train using machine learning, you don’t have to make requests over the internet or even take your data out of your database - which is both slower and a data safety risk. We’ve even added GPUs to our databases to fully leverage the latest technology and algorithms. You can avoid the complexity and latency of microservices when you have a complete MLops platform right in your database.
+<figure><img src=".gitbook/assets/ml_system.svg" alt="Machine Learning Infrastructure (2.0) by a16z"><figcaption><p>PostgresML handles all of the functions typically performed by a cacophony of services, <a href="https://a16z.com/emerging-architectures-for-modern-data-infrastructure/">described by a16z</a></p></figcaption></figure>
 
-Instead of patching together MongoDB, Databricks, Pinecone, Huggingface, LangChain and more to get the latest algorithms and LLMs in your app – you can add one extension to your Postgres database and get to market quickly.&#x20;
+These capabilities are primarily provided by two open-source software projects, that may be used independently, but are designed to be used with the rest of the Postgres ecosystem, including trusted extensions like pgvector and pg\_partman.&#x20;
 
+* **pgml** is an open source extension for PostgreSQL. It adds support for GPUs and the latest ML & AI algorithms _**inside**_ the database with a SQL API and no additional infrastructure, networking latency, or reliability costs.
+* **PgCat** is an open source proxy pooler for PostgreSQL. It abstracts the scalability and reliability concerns of managing a distributed cluster of Postgres databases. Client applications connect only to the proxy, which handles load balancing and failover, _**outside**_ of any single database.
 
+<figure><img src=".gitbook/assets/architecture.png" alt="PostgresML architectural diagram" width="275"><figcaption><p>A PostgresML deployment at scale</p></figcaption></figure>
 
-![Typical chatbot build without and with PostgresML](https://star-history.com/blog/assets/postgresml/diagram.webp)
+In addition, PostgresML provides [native language SDKs](https://github.com/postgresml/postgresml/tree/master/pgml-sdks/pgml) to implement best practices for common ML & AI applications. The JavaScript and Python SDKS are generated from the core Rust SDK, to provide the same API, correctness and efficiency across all application runtimes.&#x20;
 
+SDK clients can perform advanced machine learning tasks in a single SQL request, without having to transfer additional data, models, hardware or dependencies to the client application. For example:
 
+* Chat with streaming response support from the latest LLMs
+* Search with both keywords and embedding vectors
+* Text Generation with RAG in a single request
+* Translate text between hundreds of language pairs
+* Summarization to distil complex documents
+* Forecasting timeseries data for key metrics with complex metadata
+* Fraud and anomaly detection with application data
 
-Why Postgres? If it’s not broke, don’t fix it. Postgres is old reliable for a reason. It’s highly efficient, scalable and open-source (Just like all of PostgresML). Plus, you can easily build your AI app using simple SQL.
+Our longoal is to provide access to Open Source AI for everyone. PostgresML is under continuous development to keep up with the rapidly evolving use cases for ML & AI, and we release non breaking changes with minor version updates in accordance with SemVer. We welcome contributions to our [open source code and documentation](https://github.com/postgresml).&#x20;
 
-#### ➡️ Scalability <a href="#scalability" id="scalability"></a>
-
-In ML applications, new data is constantly being generated by users and needs to be stored somewhere (feature store). For example, there are long term historical features, short term session level, and real time request level. Postgres can handle both long term with partitioning, table spaces and indexing as well as short term storage, and accept real-time features as parameters in queries, or as additional session level storage already written during the request.
-
-#### ➡️ Efficiency <a href="#efficiency" id="efficiency"></a>
-
-In database-ML minimizes latency and computational cost. Postgres can also handle all types of data efficiently; including vectors, geospatial, JSON, timeseries, tabular and text. Our benchmarks show up to **40x faster** improvement over Python microservices.
-
-#### ➡️ All the latest LLMs, ML + AI algorithms <a href="#all-the-latest-llms-ml-ai-algorithms" id="all-the-latest-llms-ml-ai-algorithms"></a>
-
-* Torch
-* Tensorflow
-* SCikit Learn
-* XGBoost
-* LightGBM
-* Pre-trained deep learning models from Hugging Face
-* LLama 2
-* Falcon LLM
-* OpenAI
-
-#### ➡️ Open-source <a href="#open-source" id="open-source"></a>
-
-We’re a totally open-source project. That includes various ML libraries and the vast Postgres ecosystem.
-
-### Future Development <a href="#future-development" id="future-development"></a>
-
-[PostgresML](https://postgresml.org/) is in early stages of development - but we are moving quickly. It’s our vision to help as many app developers as possible build and scale AI apps without all of the complexity.
-
-If you’d like to stay up-to-date with our progress or contribute to the project (feedback, questions and comments are all welcome) you can check us out on [Github](https://github.com/postgresml/postgresml) or chat with us anytime on our [Discord](https://discord.com/invite/DmyJP3qJ7U).
+We can host your AI database in our cloud, or we provide a Docker image that has PostgreSQL, pgml, pgvector and NVIDIA drivers to run locally.
