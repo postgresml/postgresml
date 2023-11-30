@@ -1,0 +1,24 @@
+
+// Keeps bs fs-1 to fs-6 in sync with our h1 to h6 based on theme
+$font-sizes: (
+  1: var(--h1-font-size),
+  2: var(--h2-font-size),
+  3: var(--h3-font-size),
+  4: var(--h4-font-size),
+  5: var(--h5-font-size),
+  6: var(--h6-font-size)
+);
+
+$utilities: map-merge(
+$utilities,
+(
+  "font-size": map-merge(
+    map-get($utilities, "font-size"),
+    (
+      values: map-merge(
+        map-get(map-get($utilities, "font-size"), "values"),
+        ($font-sizes)),
+      ),
+    ),
+  ),
+);

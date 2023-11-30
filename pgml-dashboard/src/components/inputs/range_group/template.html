@@ -5,10 +5,10 @@
       data-inputs-range-group-target="group"
       <%- group_target %>
       data-action="reset->inputs-range-group#reset">
-  <div class="d-flex flex-column flex-md-row">
+  <div class="d-flex flex-column flex-md-row align-items-start align-items-md-end mb-2">
     <% if show_title { %>
     <div class="flex-grow-1">
-        <h6 class="h6"><%- title %></h6>
+        <h6 class="m-md-0"><%- title %></h6>
     </div>
     <% } %>
     <div <% if !show_value { %> style="display: none"<% } %>>
@@ -25,7 +25,7 @@
   </div>
 
   <div class="range-container">
-    <input class="form-range z-1 <% if options.len() > 0 { %> input-offset <% } %>" 
+    <input class="form-range z-1 overlay-offset <% if options.len() > 0 { %> input-offset <% } %>" 
       type="range"
       name="<%- identifier %>"
       min="<%- min %>"
@@ -60,8 +60,8 @@
           </div>
         <% } %>
       </div>
-      <div class="line w-100" data-inputs-range-group-target="line"></div>
       <% } %>
+      <div class="line w-100" data-inputs-range-group-target="line"></div>
     </div>
     
     <% if cost_rate.is_some() { %>

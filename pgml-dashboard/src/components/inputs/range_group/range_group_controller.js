@@ -59,25 +59,33 @@ export default class extends Controller {
   }
 
   on_grab () {
-    if(!this.hasTickTarget || !this.hasLineTarget ) return;
+    if( this.hasLineTarget ) {
+      this.lineTarget.classList.add("grab-brightness")
+    }
 
-    this.lineTarget.classList.add("grab-brightness")
-    this.tickTargets.forEach((tick, index) => {
-      if( index < this.rangeTarget.value ) {
-        tick.classList.add("grab-brightness")
-      } else {
-        tick.classList.remove("grab-brightness")
-      }})
+    if( this.hasTickTarget ) {
+      this.tickTargets.forEach((tick, index) => {
+        if( index < this.rangeTarget.value ) {
+          tick.classList.add("grab-brightness")
+        } else {
+          tick.classList.remove("grab-brightness")
+        }
+      })
+    }
   }
 
   on_release() {
-    if(!this.hasTickTarget || !this.hasLineTarget ) return;
+    if( this.hasLineTarget ) {
+      this.lineTarget.classList.remove("grab-brightness")
+    }
 
-    this.lineTarget.classList.remove("grab-brightness")
-    this.tickTargets.forEach((tick, index) => {
-      if( index < this.rangeTarget.value ) {
-        tick.classList.remove("grab-brightness")
-      }})
+    if( this.hasTickTarget ) {
+      this.tickTargets.forEach((tick, index) => {
+        if( index < this.rangeTarget.value ) {
+          tick.classList.remove("grab-brightness")
+        }
+      })
+    }
   }
 
   updateTicks(value) {
