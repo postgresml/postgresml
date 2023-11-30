@@ -1,9 +1,10 @@
 ---
-description: recent blog posts 
+description: recent blog posts
 ---
 
-# Recent Posts
+# Home
 
+* [introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md](introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md "mention")
 * [speeding-up-vector-recall-5x-with-hnsw.md](speeding-up-vector-recall-5x-with-hnsw.md "mention")
 * [how-to-improve-search-results-with-machine-learning.md](how-to-improve-search-results-with-machine-learning.md "mention")
 * [pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md](pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md "mention")
@@ -26,5 +27,5 @@ description: recent blog posts
 * [postgresml-is-8-40x-faster-than-python-http-microservices.md](postgresml-is-8-40x-faster-than-python-http-microservices.md "mention")
 * [postgres-full-text-search-is-awesome.md](postgres-full-text-search-is-awesome.md "mention")
 * [oxidizing-machine-learning.md](oxidizing-machine-learning.md "mention")
-* [Broken link](broken-reference "mention")
+* [broken-reference](broken-reference/ "mention")
 * [data-is-living-and-relational.md](data-is-living-and-relational.md "mention")

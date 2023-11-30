@@ -19,7 +19,7 @@ September 4, 2023
 
 PostgresML makes it easy to use machine learning with your database and to scale workloads horizontally in our cloud. One of the most common use cases is to improve search results. In this article, we'll show you how to build a search engine from the ground up, that leverages multiple types of natural language processing (NLP) and machine learning (ML) models to improve search results, including vector search and personalization with embeddings.
 
-<figure><img src=".gitbook/assets/image (2).png" alt=""><figcaption><p>PostgresML is a composition engine that provides advanced AI capabilities.</p></figcaption></figure>
+<figure><img src=".gitbook/assets/image (2) (2).png" alt=""><figcaption><p>PostgresML is a composition engine that provides advanced AI capabilities.</p></figcaption></figure>
 
 ## Keyword Search
 

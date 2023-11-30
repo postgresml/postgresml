@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Home](README.md)
+* [Introducing the OpenAI Switch Kit: Move from closed to open-source AI in minutes](introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md)
 * [Speeding up vector recall 5x with HNSW](speeding-up-vector-recall-5x-with-hnsw.md)
 * [How-to Improve Search Results with Machine Learning](how-to-improve-search-results-with-machine-learning.md)
 * [pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots](pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md)
@@ -10,7 +11,7 @@
 * [Announcing GPTQ & GGML Quantized LLM support for Huggingface Transformers](announcing-gptq-and-ggml-quantized-llm-support-for-huggingface-transformers.md)
 * [Making Postgres 30 Percent Faster in Production](making-postgres-30-percent-faster-in-production.md)
 * [MindsDB vs PostgresML](mindsdb-vs-postgresml.md)
-* [Introducing PostgresML Python SDK: Build End-to-End Vector Search Applications without OpenAI and Pinecone](introducing-postgresml-python-sdk-build-end-to-end-vector-search-applications-without-openai-and-pin.md)
+* [Introducing PostgresML Python SDK: Build End-to-End Vector Search Applications without OpenAI and Pi](introducing-postgresml-python-sdk-build-end-to-end-vector-search-applications-without-openai-and-pin.md)
 * [PostgresML raises $4.7M to launch serverless AI application databases based on Postgres](postgresml-raises-usd4.7m-to-launch-serverless-ai-application-databases-based-on-postgres.md)
 * [PG Stat Sysinfo, a Postgres Extension for Querying System Statistics](pg-stat-sysinfo-a-postgres-extension-for-querying-system-statistics.md)
 * [PostgresML as a memory backend to Auto-GPT](postgresml-as-a-memory-backend-to-auto-gpt.md)

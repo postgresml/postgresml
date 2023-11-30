@@ -19,7 +19,7 @@ October 2, 2023
 
 PostgresML makes it easy to use machine learning with your database and to scale workloads horizontally in our cloud. Our SDK makes it even easier.
 
-<figure><img src=".gitbook/assets/image.png" alt=""><figcaption><p>HNSW (hierarchical navigable small worlds) is an indexing method that greatly improves vector recall</p></figcaption></figure>
+<figure><img src=".gitbook/assets/image (3).png" alt=""><figcaption><p>HNSW (hierarchical navigable small worlds) is an indexing method that greatly improves vector recall</p></figcaption></figure>
 
 ## Introducing HNSW
 
