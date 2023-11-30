@@ -1,7 +1,7 @@
 {
   "name": "pgml-cli",
   "version": "0.10.0",
-  "description": "Open Source Alternative for Building End-to-End Vector Search Applications without OpenAI & Pinecone",
+  "description": "CLI for PostgresML, the GPU-powered AI application database.",
   "keywords": [
     "postgres",
     "machine learning",
