@@ -22,6 +22,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "pgml": "file:../javascript"
+    "pgml": "0.10.0"
   }
 }
