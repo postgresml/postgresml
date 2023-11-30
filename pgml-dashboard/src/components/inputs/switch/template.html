@@ -15,23 +15,23 @@
         State::Right => right_icon.to_string(),
       } %>
     </span>
-    <h5 class="h5 my-0" data-inputs-switch-target="toggleText">
+    <h6 class="my-0" data-inputs-switch-target="toggleText">
       <%- match initial_state {
         State::Left => left_value.to_string(),
         State::Right => right_value.to_string(),
       } %>
-    </h5>
+    </h6>
   </div>
   <div class="label choice">
     <span class="material-symbols-outlined" ><%- left_icon  %></span>
-    <h5 class="h5 my-0">
+    <h6 class="my-0">
       <%- left_value %>
-    </h5>
+    </h6>
   </div>
   <div class="label choice">
     <span class="material-symbols-outlined"><%- right_icon  %></span>
-    <h5 class="h5 my-0">
+    <h6 class="my-0">
       <%- right_value %>
-    </h5>
+    </h6>
   </div>
 </div>
