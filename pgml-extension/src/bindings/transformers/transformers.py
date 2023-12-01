@@ -200,6 +200,11 @@ class StandardPipeline(object):
         # but that is only possible when the task is passed in, since if you pass the model
         # to the pipeline constructor, the task will no longer be inferred from the default...
 
+        # See: https://huggingface.co/docs/hub/security-tokens
+        # This renaming is for backwards compatability
+        if "use_auth_token" in kwargs:
+            kwargs["token"] = kwargs.pop("use_auth_token")
+
         if (
             "task" in kwargs
             and model_name is not None
@@ -230,9 +235,9 @@ class StandardPipeline(object):
             else:
                 raise PgMLException(f"Unhandled task: {self.task}")
 
-            if "use_auth_token" in kwargs:
+            if "token" in kwargs:
                 self.tokenizer = AutoTokenizer.from_pretrained(
-                    model_name, use_auth_token=kwargs["use_auth_token"]
+                    model_name, use_auth_token=kwargs["token"]
                 )
             else:
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -302,18 +307,6 @@ class StandardPipeline(object):
             outputs = outputs[:, inputs["input_ids"].shape[1] :]
             outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
             return outputs
-
-            # I don't think conversations support num_responses and/or maybe num_beams
-            # Also this is not processed in parallel / truly batched it seems
-            # num_conversations = 1
-            # if "num_return_sequences" in kwargs:
-            #     num_conversations = kwargs.pop("num_return_sequences")
-            # conversations = [Conversation(inputs) for _ in range(0, num_conversations)]
-            # conversations = self.pipe(conversations, **kwargs)
-            # outputs = []
-            # for conversation in conversations:
-            #     outputs.append(conversation.messages[-1]["content"])
-            # return outputs
         else:
             return self.pipe(inputs, **kwargs)
 
