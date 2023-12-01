@@ -28,6 +28,7 @@
 * [SDKs](sdks/README.md)
   * [Overview](sdks/overview.md)
   * [Getting Started](sdks/getting-started.md)
+  * [OpenSourceAI](sdks/opensourceai.md)
   * [Collections](sdks/collections.md)
   * [Pipelines](sdks/pipelines.md)
   * [Search](sdks/search.md)
