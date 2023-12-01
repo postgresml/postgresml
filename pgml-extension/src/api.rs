@@ -646,7 +646,7 @@ pub fn transform_conversational_json(
         .is_some_and(|v| v == "conversational")
     {
         error!(
-            "ARRAY[]::JSONB inputs for transformer should only be used with a conversational task"
+            "ARRAY[]::JSONB inputs for transform should only be used with a conversational task"
         );
     }
     match crate::bindings::transformers::transform(&task.0, &args.0, inputs) {
@@ -666,7 +666,7 @@ pub fn transform_conversational_string(
 ) -> JsonB {
     if task != "conversational" {
         error!(
-            "ARRAY[]::JSONB inputs for transformer should only be used with a conversational task"
+            "ARRAY[]::JSONB inputs for transform should only be used with a conversational task"
         );
     }
     let task_json = json!({ "task": task });
@@ -725,7 +725,7 @@ pub fn transform_stream_conversational_json(
         .is_some_and(|v| v == "conversational")
     {
         error!(
-            "ARRAY[]::JSONB inputs for transformer_stream should only be used with a conversational task"
+            "ARRAY[]::JSONB inputs for transform_stream should only be used with a conversational task"
         );
     }
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
@@ -747,7 +747,7 @@ pub fn transform_stream_conversational_string(
 ) -> SetOfIterator<'static, JsonB> {
     if task != "conversational" {
         error!(
-            "ARRAY::JSONB inputs for transformer_stream should only be used with a conversational task"
+            "ARRAY::JSONB inputs for transform_stream should only be used with a conversational task"
         );
     }
     let task_json = json!({ "task": task });
