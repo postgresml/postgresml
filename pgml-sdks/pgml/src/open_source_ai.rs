@@ -22,43 +22,130 @@ fn try_model_nice_name_to_model_name_and_parameters(
     model_name: &str,
 ) -> Option<(&'static str, Json)> {
     match model_name {
-        "mistralai/Mistral-7B-v0.1" => Some((
-            "TheBloke/zephyr-7B-beta-GPTQ",
+        // Not all models will necessarily have the same parameters / naming relation but they happen to now
+        "mistralai/Mistral-7B-Instruct-v0.1" => Some((
+            "mistralai/Mistral-7B-Instruct-v0.1",
             serde_json::json!({
               "task": "conversational",
-              "model": "TheBloke/zephyr-7B-beta-GPTQ",
+              "model": "mistralai/Mistral-7B-Instruct-v0.1",
               "device_map": "auto",
-              "revision": "main",
-              "model_type": "mistral"
+              "torch_dtype": "bfloat16"
             })
             .into(),
         )),
-        "meta-llama/Llama-2-7b-chat-hf" => Some((
+
+        "HuggingFaceH4/zephyr-7b-beta" => Some((
+            "HuggingFaceH4/zephyr-7b-beta",
+            serde_json::json!({
+              "task": "conversational",
+              "model": "HuggingFaceH4/zephyr-7b-beta",
+              "device_map": "auto",
+              "torch_dtype": "bfloat16"
+            })
+            .into(),
+        )),
+
+        "TheBloke/Llama-2-7B-Chat-GPTQ" => Some((
             "TheBloke/Llama-2-7B-Chat-GPTQ",
             serde_json::json!({
               "task": "conversational",
-              "model": "TheBloke/zephyr-7B-beta-GPTQ",
+              "model": "TheBloke/Llama-2-7B-Chat-GPTQ",
               "device_map": "auto",
-              "revision": "main",
-              "model_type": "llama"
+              "revision": "main"
             })
             .into(),
         )),
-        "PygmalionAI/mythalion-13b" => Some((
-            "TheBloke/Mythalion-13B-GPTQ",
+
+        "teknium/OpenHermes-2.5-Mistral-7B" => Some((
+            "teknium/OpenHermes-2.5-Mistral-7B",
             serde_json::json!({
-                "model": "TheBloke/Mythalion-13B-GPTQ",
-                "device_map": "auto",
-                "revision": "main"
+              "task": "conversational",
+              "model": "teknium/OpenHermes-2.5-Mistral-7B",
+              "device_map": "auto",
+              "torch_dtype": "bfloat16"
             })
             .into(),
         )),
+
+        "Open-Orca/Mistral-7B-OpenOrca" => Some((
+            "Open-Orca/Mistral-7B-OpenOrca",
+            serde_json::json!({
+              "task": "conversational",
+              "model": "Open-Orca/Mistral-7B-OpenOrca",
+              "device_map": "auto",
+              "torch_dtype": "bfloat16"
+            })
+            .into(),
+        )),
+
+        "Undi95/Toppy-M-7B" => Some((
+            "Undi95/Toppy-M-7B",
+            serde_json::json!({
+                "model": "Undi95/Toppy-M-7B",
+                "device_map": "auto",
+                "torch_dtype": "bfloat16"
+            })
+            .into(),
+        )),
+
+        "Undi95/ReMM-SLERP-L2-13B" => Some((
+            "Undi95/ReMM-SLERP-L2-13B",
+            serde_json::json!({
+                "model": "Undi95/ReMM-SLERP-L2-13B",
+                "device_map": "auto",
+                "torch_dtype": "bfloat16"
+            })
+            .into(),
+        )),
+
+        "Gryphe/MythoMax-L2-13b" => Some((
+            "Gryphe/MythoMax-L2-13b",
+            serde_json::json!({
+                "model": "Gryphe/MythoMax-L2-13b",
+                "device_map": "auto",
+                "torch_dtype": "bfloat16"
+            })
+            .into(),
+        )),
+
+        "PygmalionAI/mythalion-13b" => Some((
+            "PygmalionAI/mythalion-13b",
+            serde_json::json!({
+                "model": "PygmalionAI/mythalion-13b",
+                "device_map": "auto",
+                "torch_dtype": "bfloat16"
+            })
+            .into(),
+        )),
+
+        "deepseek-ai/deepseek-llm-7b-chat" => Some((
+            "deepseek-ai/deepseek-llm-7b-chat",
+            serde_json::json!({
+                "model": "deepseek-ai/deepseek-llm-7b-chat",
+                "device_map": "auto",
+                "torch_dtype": "bfloat16"
+            })
+            .into(),
+        )),
+
+        "Phind/Phind-CodeLlama-34B-v2" => Some((
+            "Phind/Phind-CodeLlama-34B-v2",
+            serde_json::json!({
+                "model": "Phind/Phind-CodeLlama-34B-v2",
+                "device_map": "auto",
+                "torch_dtype": "bfloat16"
+            })
+            .into(),
+        )),
+
         _ => None,
     }
 }
 
 fn try_get_model_chat_template(model_name: &str) -> Option<&'static str> {
     match model_name {
+        // Any Alpaca instruct tuned model
+        "Undi95/Toppy-M-7B" | "Undi95/ReMM-SLERP-L2-13B" | "Gryphe/MythoMax-L2-13b" | "Phind/Phind-CodeLlama-34B-v2" => Some("{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '### Instruction:\n' + message['content'] + '\n'}}\n{% elif message['role'] == 'system' %}\n{{ message['content'] + '\n'}}\n{% elif message['role'] == 'model' %}\n{{ '### Response:>\n'  + message['content'] + eos_token + '\n'}}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '### Response:' }}\n{% endif %}\n{% endfor %}"),
         "PygmalionAI/mythalion-13b" => Some("{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'model' %}\n{{ '<|model|>\n'  + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|model|>' }}\n{% endif %}\n{% endfor %}"),
         _ => None
     }
@@ -130,6 +217,7 @@ mistralai/Mistral-7B-v0.1
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn chat_completions_create_stream_async(
         &self,
         model: Json,
@@ -191,14 +279,15 @@ mistralai/Mistral-7B-v0.1
         Ok(GeneralJsonAsyncIterator(Box::pin(iter)))
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn chat_completions_create_stream(
         &self,
         model: Json,
         messages: Vec<Json>,
         max_tokens: Option<i32>,
         temperature: Option<f64>,
-        chat_template: Option<String>,
         n: Option<i32>,
+        chat_template: Option<String>,
     ) -> anyhow::Result<GeneralJsonIterator> {
         let runtime = crate::get_or_set_runtime();
         let iter = runtime.block_on(self.chat_completions_create_stream_async(
@@ -214,6 +303,7 @@ mistralai/Mistral-7B-v0.1
         ))))
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn chat_completions_create_async(
         &self,
         model: Json,
@@ -282,6 +372,7 @@ mistralai/Mistral-7B-v0.1
         .into())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn chat_completions_create(
         &self,
         model: Json,
