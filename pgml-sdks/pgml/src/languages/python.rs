@@ -6,7 +6,10 @@ use std::sync::Arc;
 
 use rust_bridge::python::CustomInto;
 
-use crate::{pipeline::PipelineSyncData, transformer_pipeline::TransformerStream, types::Json};
+use crate::{
+    pipeline::PipelineSyncData,
+    types::{GeneralJsonAsyncIterator, GeneralJsonIterator, Json},
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rust to PY //////////////////////////////////////////////////////////////////
@@ -55,12 +58,12 @@ impl IntoPy<PyObject> for PipelineSyncData {
 
 #[pyclass]
 #[derive(Clone)]
-struct TransformerStreamPython {
-    wrapped: Arc<tokio::sync::Mutex<TransformerStream>>,
+struct GeneralJsonAsyncIteratorPython {
+    wrapped: Arc<tokio::sync::Mutex<GeneralJsonAsyncIterator>>,
 }
 
 #[pymethods]
-impl TransformerStreamPython {
+impl GeneralJsonAsyncIteratorPython {
     fn __aiter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
@@ -71,8 +74,8 @@ impl TransformerStreamPython {
             let mut ts = ts.lock().await;
             if let Some(o) = ts.next().await {
                 Ok(Some(Python::with_gil(|py| {
-                    o.expect("Error calling next on TransformerStream")
-                        .to_object(py)
+                    o.expect("Error calling next on GeneralJsonAsyncIterator")
+                        .into_py(py)
                 })))
             } else {
                 Err(pyo3::exceptions::PyStopAsyncIteration::new_err(
@@ -84,15 +87,47 @@ impl TransformerStreamPython {
     }
 }
 
-impl IntoPy<PyObject> for TransformerStream {
+impl IntoPy<PyObject> for GeneralJsonAsyncIterator {
     fn into_py(self, py: Python) -> PyObject {
-        let f: Py<TransformerStreamPython> = Py::new(
+        let f: Py<GeneralJsonAsyncIteratorPython> = Py::new(
             py,
-            TransformerStreamPython {
+            GeneralJsonAsyncIteratorPython {
                 wrapped: Arc::new(tokio::sync::Mutex::new(self)),
             },
         )
-        .expect("Error converting TransformerStream to TransformerStreamPython");
+        .expect("Error converting GeneralJsonAsyncIterator to GeneralJsonAsyncIteratorPython");
+        f.to_object(py)
+    }
+}
+
+#[pyclass]
+struct GeneralJsonIteratorPython {
+    wrapped: GeneralJsonIterator,
+}
+
+#[pymethods]
+impl GeneralJsonIteratorPython {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>, py: Python) -> PyResult<Option<PyObject>> {
+        if let Some(o) = slf.wrapped.next() {
+            let o = o.expect("Error calling next on GeneralJsonIterator");
+            Ok(Some(o.into_py(py)))
+        } else {
+            Err(pyo3::exceptions::PyStopIteration::new_err(
+                "stream exhausted",
+            ))
+        }
+    }
+}
+
+impl IntoPy<PyObject> for GeneralJsonIterator {
+    fn into_py(self, py: Python) -> PyObject {
+        let f: Py<GeneralJsonIteratorPython> =
+            Py::new(py, GeneralJsonIteratorPython { wrapped: self })
+                .expect("Error converting GeneralJsonIterator to GeneralJsonIteratorPython");
         f.to_object(py)
     }
 }
@@ -149,7 +184,13 @@ impl FromPyObject<'_> for PipelineSyncData {
     }
 }
 
-impl FromPyObject<'_> for TransformerStream {
+impl FromPyObject<'_> for GeneralJsonAsyncIterator {
+    fn extract(_ob: &PyAny) -> PyResult<Self> {
+        panic!("We must implement this, but this is impossible to be reached")
+    }
+}
+
+impl FromPyObject<'_> for GeneralJsonIterator {
     fn extract(_ob: &PyAny) -> PyResult<Self> {
         panic!("We must implement this, but this is impossible to be reached")
     }

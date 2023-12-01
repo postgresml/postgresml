@@ -19,6 +19,7 @@ mod languages;
 pub mod migrations;
 mod model;
 pub mod models;
+mod open_source_ai;
 mod order_by_builder;
 mod pipeline;
 mod queries;
@@ -34,6 +35,7 @@ mod utils;
 pub use builtins::Builtins;
 pub use collection::Collection;
 pub use model::Model;
+pub use open_source_ai::OpenSourceAI;
 pub use pipeline::Pipeline;
 pub use splitter::Splitter;
 pub use transformer_pipeline::TransformerPipeline;
@@ -152,6 +154,7 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_class::<splitter::SplitterPython>()?;
     m.add_class::<builtins::BuiltinsPython>()?;
     m.add_class::<transformer_pipeline::TransformerPipelinePython>()?;
+    m.add_class::<open_source_ai::OpenSourceAIPython>()?;
     Ok(())
 }
 
@@ -201,6 +204,10 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
         transformer_pipeline::TransformerPipelineJavascript::new,
     )?;
     cx.export_function("newPipeline", pipeline::PipelineJavascript::new)?;
+    cx.export_function(
+        "newOpenSourceAI",
+        open_source_ai::OpenSourceAIJavascript::new,
+    )?;
     Ok(())
 }
 
@@ -758,7 +765,6 @@ mod tests {
                 .filter(filter)
                 .fetch_all()
                 .await?;
-            println!("{:?}", results);
             assert_eq!(results.len(), expected_result_count);
         }
 

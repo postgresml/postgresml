@@ -4,5 +4,6 @@ export default {
   roots: ['<rootDir>'],
   transform: {
     '^.+\\.tsx?$': 'ts-jest'
-  }
+  },
+  testTimeout: 30000,
 }

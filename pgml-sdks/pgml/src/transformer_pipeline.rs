@@ -1,5 +1,6 @@
+use anyhow::Context;
 use futures::Stream;
-use rust_bridge::{alias, alias_manual, alias_methods};
+use rust_bridge::{alias, alias_methods};
 use sqlx::{postgres::PgRow, Row};
 use sqlx::{Postgres, Transaction};
 use std::collections::VecDeque;
@@ -15,14 +16,14 @@ pub struct TransformerPipeline {
     database_url: Option<String>,
 }
 
+use crate::types::GeneralJsonAsyncIterator;
 use crate::{get_or_initialize_pool, types::Json};
 
 #[cfg(feature = "python")]
-use crate::types::JsonPython;
+use crate::types::{GeneralJsonAsyncIteratorPython, JsonPython};
 
 #[allow(clippy::type_complexity)]
-#[derive(alias_manual)]
-pub struct TransformerStream {
+struct TransformerStream {
     transaction: Option<Transaction<'static, Postgres>>,
     future: Option<Pin<Box<dyn Future<Output = Result<Vec<PgRow>, sqlx::Error>> + Send + 'static>>>,
     commit: Option<Pin<Box<dyn Future<Output = Result<(), sqlx::Error>> + Send + 'static>>>,
@@ -54,7 +55,7 @@ impl TransformerStream {
 }
 
 impl Stream for TransformerStream {
-    type Item = Result<String, sqlx::Error>;
+    type Item = anyhow::Result<Json>;
 
     fn poll_next(
         mut self: Pin<&mut Self>,
@@ -105,7 +106,7 @@ impl Stream for TransformerStream {
 
         if !self.results.is_empty() {
             let r = self.results.pop_front().unwrap();
-            Poll::Ready(Some(Ok(r.get::<String, _>(0))))
+            Poll::Ready(Some(Ok(r.get::<Json, _>(0))))
         } else if self.done {
             Poll::Ready(None)
         } else {
@@ -141,16 +142,36 @@ impl TransformerPipeline {
     }
 
     #[instrument(skip(self))]
-    pub async fn transform(&self, inputs: Vec<String>, args: Option<Json>) -> anyhow::Result<Json> {
+    pub async fn transform(&self, inputs: Vec<Json>, args: Option<Json>) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let args = args.unwrap_or_default();
 
-        let results = sqlx::query("SELECT pgml.transform(task => $1, inputs => $2, args => $3)")
-            .bind(&self.task)
-            .bind(inputs)
-            .bind(&args)
-            .fetch_all(&pool)
-            .await?;
+        // We set the task in the new constructor so we can unwrap here
+        let results = if self.task["task"].as_str().unwrap() == "conversational" {
+            let inputs: Vec<serde_json::Value> = inputs.into_iter().map(|j| j.0).collect();
+            sqlx::query("SELECT pgml.transform(task => $1, inputs => $2, args => $3)")
+                .bind(&self.task)
+                .bind(inputs)
+                .bind(&args)
+                .fetch_all(&pool)
+                .await?
+        } else {
+            let inputs: anyhow::Result<Vec<String>> =
+                inputs
+                    .into_iter()
+                    .map(|input| {
+                        input.as_str().context(
+                        "the inputs arg must be strings when not using the conversational task",
+                    ).map(|s| s.to_string())
+                    })
+                    .collect();
+            sqlx::query("SELECT pgml.transform(task => $1, inputs => $2, args => $3)")
+                .bind(&self.task)
+                .bind(inputs?)
+                .bind(&args)
+                .fetch_all(&pool)
+                .await?
+        };
         let results = results.get(0).unwrap().get::<serde_json::Value, _>(0);
         Ok(Json(results))
     }
@@ -158,25 +179,50 @@ impl TransformerPipeline {
     #[instrument(skip(self))]
     pub async fn transform_stream(
         &self,
-        input: &str,
+        input: Json,
         args: Option<Json>,
         batch_size: Option<i32>,
-    ) -> anyhow::Result<TransformerStream> {
+    ) -> anyhow::Result<GeneralJsonAsyncIterator> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let args = args.unwrap_or_default();
         let batch_size = batch_size.unwrap_or(10);
 
         let mut transaction = pool.begin().await?;
-        sqlx::query(
-            "DECLARE c CURSOR FOR SELECT pgml.transform_stream(task => $1, input => $2, args => $3)",
-        )
-        .bind(&self.task)
-        .bind(input)
-        .bind(&args)
-        .execute(&mut *transaction)
-        .await?;
+        // We set the task in the new constructor so we can unwrap here
+        if self.task["task"].as_str().unwrap() == "conversational" {
+            let inputs = input
+                .as_array()
+                .context("`input` to transformer_stream must be an array of objects")?
+                .to_vec();
+            sqlx::query(
+                "DECLARE c CURSOR FOR SELECT pgml.transform_stream(task => $1, inputs => $2, args => $3)",
+            )
+            .bind(&self.task)
+            .bind(inputs)
+            .bind(&args)
+            .execute(&mut *transaction)
+            .await?;
+        } else {
+            let input = input
+                .as_str()
+                .context(
+                    "`input` to transformer_stream must be a string if task is not conversational",
+                )?
+                .to_string();
+            sqlx::query(
+                "DECLARE c CURSOR FOR SELECT pgml.transform_stream(task => $1, input => $2, args => $3)",
+            )
+            .bind(&self.task)
+            .bind(input)
+            .bind(&args)
+            .execute(&mut *transaction)
+            .await?;
+        }
 
-        Ok(TransformerStream::new(transaction, batch_size))
+        Ok(GeneralJsonAsyncIterator(Box::pin(TransformerStream::new(
+            transaction,
+            batch_size,
+        ))))
     }
 }
 
@@ -198,8 +244,8 @@ mod tests {
         let results = t
             .transform(
                 vec![
-                    "How are you doing today?".to_string(),
-                    "What is a good song?".to_string(),
+                    serde_json::Value::String("How are you doing today?".to_string()).into(),
+                    serde_json::Value::String("How are you doing today?".to_string()).into(),
                 ],
                 None,
             )
@@ -215,8 +261,8 @@ mod tests {
         let results = t
             .transform(
                 vec![
-                    "How are you doing today?".to_string(),
-                    "What is a good song?".to_string(),
+                    serde_json::Value::String("How are you doing today?".to_string()).into(),
+                    serde_json::Value::String("How are you doing today?".to_string()).into(),
                 ],
                 None,
             )
@@ -230,10 +276,10 @@ mod tests {
         internal_init_logger(None, None).ok();
         let t = TransformerPipeline::new(
             "text-generation",
-            Some("TheBloke/zephyr-7B-beta-GGUF".to_string()),
+            Some("TheBloke/zephyr-7B-beta-GPTQ".to_string()),
             Some(
                 serde_json::json!({
-                  "model_file": "zephyr-7b-beta.Q5_K_M.gguf", "model_type": "mistral"
+                  "model_type": "mistral", "revision": "main", "device_map": "auto"
                 })
                 .into(),
             ),
@@ -241,7 +287,7 @@ mod tests {
         );
         let mut stream = t
             .transform_stream(
-                "AI is going to",
+                serde_json::json!("AI is going to").into(),
                 Some(
                     serde_json::json!({
                         "max_new_tokens": 10

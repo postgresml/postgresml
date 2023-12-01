@@ -23,17 +23,17 @@ impl TransformStreamIterator {
 }
 
 impl Iterator for TransformStreamIterator {
-    type Item = String;
+    type Item = JsonB;
     fn next(&mut self) -> Option<Self::Item> {
         // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
-        Python::with_gil(|py| -> Result<Option<String>, PyErr> {
+        Python::with_gil(|py| -> Result<Option<JsonB>, PyErr> {
             let code = "next(python_iter)";
             let res: &PyAny = py.eval(code, Some(self.locals.as_ref(py)), None)?;
             if res.is_none() {
                 Ok(None)
             } else {
-                let res: String = res.extract()?;
-                Ok(Some(res))
+                let res: Vec<String> = res.extract()?;
+                Ok(Some(JsonB(serde_json::to_value(res).unwrap())))
             }
         })
         .map_err(|e| error!("{e}"))
@@ -41,10 +41,10 @@ impl Iterator for TransformStreamIterator {
     }
 }
 
-pub fn transform(
+pub fn transform<T: serde::Serialize>(
     task: &serde_json::Value,
     args: &serde_json::Value,
-    inputs: Vec<&str>,
+    inputs: T,
 ) -> Result<serde_json::Value> {
     crate::bindings::python::activate()?;
     whitelist::verify_task(task)?;
@@ -74,17 +74,17 @@ pub fn transform(
     Ok(serde_json::from_str(&results)?)
 }
 
-pub fn transform_stream(
+pub fn transform_stream<T: serde::Serialize>(
     task: &serde_json::Value,
     args: &serde_json::Value,
-    input: &str,
+    input: T,
 ) -> Result<Py<PyAny>> {
     crate::bindings::python::activate()?;
     whitelist::verify_task(task)?;
 
     let task = serde_json::to_string(task)?;
     let args = serde_json::to_string(args)?;
-    let inputs = serde_json::to_string(&vec![input])?;
+    let input = serde_json::to_string(&input)?;
 
     Python::with_gil(|py| -> Result<Py<PyAny>> {
         let transform: Py<PyAny> = get_module!(PY_MODULE)
@@ -99,7 +99,7 @@ pub fn transform_stream(
                     &[
                         task.into_py(py),
                         args.into_py(py),
-                        inputs.into_py(py),
+                        input.into_py(py),
                         true.into_py(py),
                     ],
                 ),
@@ -110,10 +110,10 @@ pub fn transform_stream(
     })
 }
 
-pub fn transform_stream_iterator(
+pub fn transform_stream_iterator<T: serde::Serialize>(
     task: &serde_json::Value,
     args: &serde_json::Value,
-    input: &str,
+    input: T,
 ) -> Result<TransformStreamIterator> {
     let python_iter = transform_stream(task, args, input)
         .map_err(|e| error!("{e}"))
