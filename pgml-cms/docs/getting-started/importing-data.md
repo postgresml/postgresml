@@ -1,6 +1,8 @@
 # Importing data
 
-PostgresML can easily ingest data from your existing data stores. Depending on how frequently your data changes, different methodologies are preferable.
+Machine learning always depends on input data, whether it's generating text with pretrained LLMs, training a retention model on customer data, or predicting session abandonment in real time. Just like any PostgreSQL database, PostgresML can be configured as the authoritative application data store, a streaming replica from some other primary, or use foreign data wrappers to query another data host on demand. Depending on how frequently your data changes, different methodologies are preferable.
+
+PostgresML can easily ingest data from your existing data stores.&#x20;
 
 ### Static data
 

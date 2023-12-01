@@ -1,22 +1,36 @@
-# Connect to the Database
+---
+description: PostgresML is compatible with all standard PostgreSQL clients
+---
 
-### SQL Clients
+# Connecting
 
-Use any of these popular tools to connect to PostgresML and write SQL queries:
+### Connecting
 
-* [Apache Superset](https://superset.apache.org/)
-* [DBeaver](https://dbeaver.io/)
-* [Data Grip](https://www.jetbrains.com/datagrip/)
-* [Postico 2](https://eggerapps.at/postico2/)
-* [Popsql](https://popsql.com/)
-* [Tableau](https://www.tableau.com/)
-* [PowerBI](https://powerbi.microsoft.com/en-us/)
-* [Jupyter](https://jupyter.org/)
-* [VSCode](https://code.visualstudio.com/)
+You can connect to your database from any Postgres compatible client. PostgresML is intended to serve in the traditional role of an application database, along with it's extended role as an MLOps platform to make it easy to build and maintain AI applications.&#x20;
 
-### SQL Libraries
+#### Application SDKs
 
-Connect directly to the database with your favorite programming language:
+We provide client SDKs for  JavaScript, Python and Rust apps that manage connections to the Postgres database and make it easy to construct efficient queries for AI use cases, like managing a document collection for RAG, or building a chatbot. All of the ML & AI still happens in the database, with centralized operations, hardware and dependency management.
+
+These SDKs are under rapid development to add new features and use cases, but we release non breaking changes with minor version updates in accordance with SemVer. It's easy to install into your existing application.
+
+{% tabs %}
+{% tab title="JavaScript" %}
+```
+npm i pgml
+```
+{% endtab %}
+
+{% tab title="Python " %}
+```bash
+pip install pgml
+```
+{% endtab %}
+{% endtabs %}
+
+#### Native Language Bindings
+
+You can also connect directly to the database with your favorite bindings or ORM:
 
 * C++: [libpqxx](https://www.tutorialspoint.com/postgresql/postgresql\_c\_cpp.htm)
 * C#: [Npgsql](https://github.com/npgsql/npgsql),[Dapper](https://github.com/DapperLib/Dapper), or [Entity Framework Core](https://github.com/dotnet/efcore)
@@ -34,3 +48,17 @@ Connect directly to the database with your favorite programming language:
 * Ruby: [pg](https://github.com/ged/ruby-pg) or [Rails](https://rubyonrails.org/)
 * Rust: [postgres](https://crates.io/crates/postgres), [SQLx](https://github.com/launchbadge/sqlx) or [Diesel](https://github.com/diesel-rs/diesel)
 * Swift: [PostgresNIO](https://github.com/vapor/postgres-nio) or [PostgresClientKit](https://github.com/codewinsdotcom/PostgresClientKit)
+
+#### SQL Editors
+
+Use any of these popular tools to execute SQL queries directly against the database:
+
+* [Apache Superset](https://superset.apache.org/)
+* [DBeaver](https://dbeaver.io/)
+* [Data Grip](https://www.jetbrains.com/datagrip/)
+* [Postico 2](https://eggerapps.at/postico2/)
+* [Popsql](https://popsql.com/)
+* [Tableau](https://www.tableau.com/)
+* [PowerBI](https://powerbi.microsoft.com/en-us/)
+* [Jupyter](https://jupyter.org/)
+* [VSCode](https://code.visualstudio.com/)
