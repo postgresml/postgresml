@@ -16,7 +16,7 @@ These SDKs are under rapid development to add new features and use cases, but we
 
 {% tabs %}
 {% tab title="JavaScript" %}
-```
+```bash
 npm i pgml
 ```
 {% endtab %}
@@ -32,13 +32,13 @@ pip install pgml
 
 {% tabs %}
 {% tab title="JavaScript" %}
-```
+```javascript
 const pgml = require("pgml");
 
-const main = async () => {
+const main = () => {
     const client = pgml.newOpenSourceAI();
     const results = client.chat_completions_create(
-          "mistralai/Mistral-7B-Instruct-v0.1",
+          "HuggingFaceH4/zephyr-7b-beta",
           [
               {
                   role: "system",
@@ -51,17 +51,18 @@ const main = async () => {
           ],
     );
     console.log(results);
+}
 ```
 {% endtab %}
 
 {% tab title="Python" %}
-```
+```python
 import pgml
 
 async def main():
     client = pgml.OpenSourceAI()
     results = client.chat_completions_create(
-        "mistralai/Mistral-7B-Instruct-v0.1",
+        "HuggingFaceH4/zephyr-7b-beta",
         [
             {
                 "role": "system",
