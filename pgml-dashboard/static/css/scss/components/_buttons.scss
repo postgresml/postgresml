@@ -177,10 +177,6 @@
     width: fit-content;
     padding: 0px;
 
-    span {
-        font-size: 2rem;
-    }
-
     &:hover {
         color: #{$slate-tint-400};
         border-bottom-color: #{$slate-tint-400};

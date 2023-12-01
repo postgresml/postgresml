@@ -57,7 +57,7 @@
 
         <div class="collapse navbar-collapse drawer-submenu-container navbarSupportedContent" id="navbarSupportedContent">
           <!-- Main Menu -->
-          <div class="nav-item w-100 d-xl-flex flex-column flex-xl-row align-items-xl-center collapse collapse-horizontal show drawer-submenu <% for item in &mobile_nav_items {%> <%- item.collapse %><% } %>">
+          <div class="nav-item w-100 d-xl-flex flex-column flex-xl-row align-items-xl-center collapse collapse-horizontal drawer-submenu <% for item in &mobile_nav_items {%> <%- item.collapse %><% } %> show">
             <ul class="navbar-nav flex-grow-1 gap-4 me-auto my-4 my-xl-0">
 
               <% if !standalone_dashboard { %>

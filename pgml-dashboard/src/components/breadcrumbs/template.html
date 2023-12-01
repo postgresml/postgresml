@@ -1,6 +1,14 @@
 <nav>
   <nav aria-label="breadcrumb z-1">
     <ol class="breadcrumb">
+      <!-- not quite ready for this yet -->
+      <!-- <li class="breadcrumb-item body-regular-text <% if links.is_empty() {%>active<% } %>">
+        <a class="d-flex" href="/deployments">
+          <span class="material-symbols-outlined">
+            roofing
+          </span>
+        </a>
+      </li> -->
       <% for link in links {
         let active = if link.active {
           "active"
@@ -15,14 +23,14 @@
         };
   
       %>
-        <li class="breadcrumb-item <%= active %> fs-6" <%- area %>>
-          <a class="" href="<%= link.href %>">
-            <%= link.name %>
-          </a>
-          <% if active.is_empty() { %>
-          <div class="vr my-1 ms-2 opacity-100" style="width: 2px"></div>
-          <% } %>
-        </li>
+      <li class="breadcrumb-item body-regular-text <%= active %>" <%- area %>>
+        <a href="<%= link.href %>">
+          <%= link.name %>
+        </a>
+        <% if active.is_empty() { %>
+        <div class="vr my-1 ms-2"></div>
+        <% } %>
+      </li>
       <% } %>
     </ol>
   </nav>

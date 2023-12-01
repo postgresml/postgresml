@@ -48,7 +48,7 @@ h6, .h6 {
     }
 }
 
-.eyebrow {
+.eyebrow-text {
     font-weight: $font-weight-bold; font-size: var(--eyebrow-font-size); line-height: var(--eyebrow-line-height);
     @include media-breakpoint-down(md) {
         font-size: 16px; line-height: 22px;
@@ -60,14 +60,35 @@ h6, .h6 {
     font-size: 18px;
     line-height: 22px;
 }
-.body-text {
-    font-size: 16px;
-    line-height: 20px;
+
+.body-large-text {
+    font-size: var(--body-large-font-size); line-height: var(--body-large-line-height);
+    @include media-breakpoint-down(md) {
+        font-size: 18px; line-height: 24px;
+    }
 }
+
+.body-regular-text {
+    font-size: var(--body-regular-font-size); line-height: var(--body-regular-line-height);
+    @include media-breakpoint-down(md) {
+        font-size: 16px; line-height: 20px;
+    }
+}
+
+.body-small-text {
+    font-size: var(--body-small-font-size); line-height: var(--body-small-line-height);
+    @include media-breakpoint-down(md) {
+        font-size: 14px; line-height: 18px;
+    }
+}
+
 .legal-text {
     font-family: Inter;
-    font-size: 12px;
-    line-height: 16px;
+    font-size: var(--legal-font-size);
+    line-height: var(--legal-line-height);
+    @include media-breakpoint-down(md) {
+        font-size: 12px; line-height: 16px;
+    }
 }
 
 .text-error {
@@ -107,24 +128,4 @@ h6, .h6 {
 }
 .text-gradient-party, .party-time {
     @include text-gradient($gradient-text);
-}
-
-.marketing-body-large {
-    font-size: 20px;
-    line-height: 26px;
-    color: #{$gray-200};
-    @include media-breakpoint-down(md) {
-        font-size: 18px;
-        line-height: 24px;
-    }
-}
-
-.marketing-body {
-    font-size: 18px;
-    line-height: 22px;
-    color: #{$gray-200};
-    @include media-breakpoint-down(md) {
-        font-size: 16px;
-        line-height: 20px;
-    }
 }
