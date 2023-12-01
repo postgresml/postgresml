@@ -22,7 +22,6 @@ fn try_model_nice_name_to_model_name_and_parameters(
     model_name: &str,
 ) -> Option<(&'static str, Json)> {
     match model_name {
-        // Not all models will necessarily have the same parameters / naming relation but they happen to now
         "mistralai/Mistral-7B-Instruct-v0.1" => Some((
             "mistralai/Mistral-7B-Instruct-v0.1",
             serde_json::json!({
