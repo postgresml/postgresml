@@ -104,19 +104,42 @@ class TextIteratorStreamer:
         self.next_tokens_are_prompt = True
         self.stop_signal = None
         self.text_queue = queue.Queue()
+        self.token_cache = []
+        self.text_index_cache = []
 
-    def put(self, value):
+    def put(self, values):
         if self.skip_prompt and self.next_tokens_are_prompt:
             self.next_tokens_are_prompt = False
             return
-        # Can't batch this decode
-        decoded_values = []
-        for v in value:
-            decoded_values.append(self.tokenizer.decode(v, **self.decode_kwargs))
-        self.text_queue.put(decoded_values, self.timeout)
+        output = []
+        for i, v in enumerate(values):
+            if len(self.token_cache) <= i:
+                self.token_cache.append([])
+                self.text_index_cache.append(0)
+            token = v.tolist()  # Returns a list or number
+            if type(token) == list:
+                self.token_cache[i].extend(token)
+            else:
+                self.token_cache[i].append(token)
+            text = self.tokenizer.decode(self.token_cache[i], **self.decode_kwargs)
+            if text.endswith("\n"):
+                output.append(text[self.text_index_cache[i] :])
+                self.token_cache[i] = []
+                self.text_index_cache[i] = 0
+            else:
+                printable_text = text[self.text_index_cache[i] : text.rfind(" ") + 1]
+                self.text_index_cache[i] += len(printable_text)
+                output.append(printable_text)
+        if any(output):
+            self.text_queue.put(output, self.timeout)
 
     def end(self):
         self.next_tokens_are_prompt = True
+        output = []
+        for i, tokens in enumerate(self.token_cache):
+            text = self.tokenizer.decode(tokens, **self.decode_kwargs)
+            output.append(text[self.text_index_cache[i] :])
+        self.text_queue.put(output, self.timeout)
         self.text_queue.put(self.stop_signal, self.timeout)
 
     def __iter__(self):
@@ -126,6 +149,7 @@ class TextIteratorStreamer:
         value = self.text_queue.get(timeout=self.timeout)
         if value != self.stop_signal:
             return value
+
 
 class GGMLPipeline(object):
     def __init__(self, model_name, **task):
@@ -245,7 +269,8 @@ class StandardPipeline(object):
         generation_kwargs = None
         if self.task == "conversational":
             streamer = TextIteratorStreamer(
-                self.tokenizer, skip_prompt=True, skip_special_tokens=True
+                self.tokenizer,
+                skip_prompt=True,
             )
             if "chat_template" in kwargs:
                 input = self.tokenizer.apply_chat_template(
@@ -261,7 +286,7 @@ class StandardPipeline(object):
             input = self.tokenizer(input, return_tensors="pt").to(self.model.device)
             generation_kwargs = dict(input, streamer=streamer, **kwargs)
         else:
-            streamer = TextIteratorStreamer(self.tokenizer, skip_special_tokens=True)
+            streamer = TextIteratorStreamer(self.tokenizer)
             input = self.tokenizer(input, return_tensors="pt", padding=True).to(
                 self.model.device
             )
