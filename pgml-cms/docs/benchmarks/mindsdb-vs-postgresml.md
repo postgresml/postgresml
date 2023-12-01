@@ -42,7 +42,7 @@ The architectural implementations for these projects is significantly different.
 
 \\
 
-<figure><img src="../.gitbook/assets/mindsdb-architecture (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/mindsdb-pgml-architecture.png" alt=""><figcaption></figcaption></figure>
 
 |               | MindsDB       | PostgresML |
 | ------------- | ------------- | ---------- |
