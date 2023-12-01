@@ -453,7 +453,7 @@ results = client.chat_completions_create(
 {% endtab %}
 {% endtabs %}
 
-Notice that we don't specify a model name, but model JSON this time. The JSON keys in the model argument roughly follow the task argument when using our [text-generation.md](../machine-learning/natural-language-processing/text-generation.md "mention")SQL API.
+Notice that we don't specify a model name, but model JSON this time. The JSON keys in the model argument roughly follow the task argument when using our [text-generation SQL API](../machine-learning/natural-language-processing/text-generation.md).
 
 To access a gated repo like `meta-llama/Llama-2-7b-chat-hf` simply provide the necessary hugging face token.
 
