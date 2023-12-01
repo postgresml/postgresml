@@ -41,7 +41,7 @@ The Switch Kit is an open-source AI SDK that provides a drop in replacement for 
 import pgml
 client = pgml.OpenSourceAI()
 results = client.chat_completions_create(
-    "mistralai/Mistral-7B-Instruct-v0.1",
+    "HuggingFaceH4/zephyr-7b-beta",
     [
         {
             "role": "system",
@@ -63,7 +63,7 @@ print(results)
 const pgml = require("pgml");
 const client = pgml.newOpenSourceAI();
 const results = client.chat_completions_create(
-      "mistralai/Mistral-7B-Instruct-v0.1",
+      "HuggingFaceH4/zephyr-7b-beta",
       [
           {
               role: "system",
@@ -93,7 +93,7 @@ console.log(results);
   ],
   "created": 1701291672,
   "id": "abf042d2-9159-49cb-9fd3-eef16feb246c",
-  "model": "mistralai/Mistral-7B-Instruct-v0.1",
+  "model": "HuggingFaceH4/zephyr-7b-beta",
   "object": "chat.completion",
   "system_fingerprint": "eecec9d4-c28b-5a27-f90b-66c3fb6cee46",
   "usage": {
@@ -108,7 +108,7 @@ console.log(results);
 We don't charge per token, so OpenAI “usage” metrics are not particularly relevant. We'll be extending this data with more direct CPU/GPU resource utilization measurements for users who are interested, or need to pass real usage based pricing on to their own customers.
 {% endhint %}
 
-The above is an example using our open-source AI SDK with mistral, an incredibly popular and highly efficient 7 billion parameter model.
+The above is an example using our open-source AI SDK with zephyr-7b-beta, an incredibly popular and highly efficient 7 billion parameter model.
 
 Notice there is near one to one relation between the parameters and return type of OpenAI’s `chat.completions.create` and our `chat_completion_create`.
 
