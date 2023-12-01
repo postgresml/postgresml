@@ -2,8 +2,8 @@
 
 * [Overview](README.md)
 * [Getting Started](getting-started/README.md)
-  * [Create your database](getting-started/sign-up.md)
-  * [Connect your app](getting-started/connect-to-the-database.md)
+  * [Create your database](getting-started/create-your-database.md)
+  * [Connect your app](getting-started/connect-your-app.md)
   * [Import your data](getting-started/import-your-data.md)
 * [Machine Learning](machine-learning/README.md)
   * [Natural Language Processing](machine-learning/natural-language-processing/README.md)
