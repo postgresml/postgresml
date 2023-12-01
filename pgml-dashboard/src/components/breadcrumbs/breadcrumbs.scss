@@ -1,0 +1,36 @@
+
+.breadcrumb {
+  .breadcrumb-item {
+      display: flex; 
+      align-items: center;
+      text-align: center;
+      border: none;
+      
+      &:not(.active) a {
+          @extend .btn-tertiary-web-app;
+          padding: 0px;
+      }
+
+      &.active {
+          a {
+              color: #{$gray-100};
+              border-bottom: none;
+              
+              &:hover {
+                  @include semibold_by_shadow(#{$gray-100});
+              }
+
+              &:active {
+                  @include bold_by_shadow(#{$gray-100});
+              }
+
+          }
+      }
+  }
+
+  .vr {
+    opacity: 1;
+    color: #{$gray-600};
+    width: 2px;
+  }
+}
