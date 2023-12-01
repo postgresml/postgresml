@@ -205,7 +205,7 @@ while (!result.done) {
 We have truncated the output to two items
 {% endhint %}
 
-We also have asynchronous versions of the create and `create_stream` functions relatively named `create_async` and `create_stream_async`. Checkout our documentation for a complete guide of the open-source AI SDK including guides on how to specify custom models.
+We also have asynchronous versions of the create and `create_stream` functions relatively named `create_async` and `create_stream_async`. Checkout [our documentation](http://127.0.0.1:5000/s/B7HH1yMjCs0skMpuwNIR/sdks/opensourceai) for a complete guide of the open-source AI SDK including guides on how to specify custom models.
 
 PostgresML is free and open source. To run the above examples yourself[ create an account](https://postgresml.org/signup), install pgml, and get running!
 
