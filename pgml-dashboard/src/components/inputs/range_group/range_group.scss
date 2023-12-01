@@ -27,6 +27,13 @@ div[data-controller="inputs-range-group"] {
         }
     }
 
+    // This allows line overhang for rounding range edges.
+    .overlay-offset {
+        width: calc(100% - 2px);
+        margin-left: 1px;
+    }
+
+    // Increase offset for ranges with ticks. 
     .input-offset {
         width: 80%;
         margin-left: 3%;
@@ -83,5 +90,10 @@ div[data-controller="inputs-range-group"] {
                 filter: brightness(110%);
             }
         }
+    }
+
+    // Quick resize fix. This may become a global change later.
+    .input-group {
+        padding: 8px; 
     }
 }

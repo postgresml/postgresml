@@ -13,7 +13,7 @@ div[data-controller="inputs-switch"] {
         display: flex;
         justify-content: center;
         align-items: center;
-        @extend .gap-2;
+        @extend .gap-1;
     }
 
     .toggle {
@@ -41,5 +41,9 @@ div[data-controller="inputs-switch"] {
     .right {
         left: 50%;
         transition: all $animation-timer;
+    }
+
+    .material-symbols-outlined {
+        font-size: 22px;
     }
 }

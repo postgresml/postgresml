@@ -6,50 +6,50 @@
 }
 
 .h1-big {
-    font-weight: $font-weight-bold; font-size: 80px; line-height: 84px;
+    font-weight: $font-weight-bold; font-size: var(--h1-big-font-size); line-height: var(--h1-big-line-height);
     @include media-breakpoint-down(md) {
         font-size: 48px; line-height: 52px;
     } 
 }
 h1, .h1 { 
-    font-weight: $font-weight-bold; font-size: 64px; line-height: 72px;
+    font-weight: $font-weight-bold; font-size: var(--h1-font-size); line-height: var(--h1-line-height);
     @include media-breakpoint-down(md) {
-        font-size: 44px; line-height: 48px;
+        font-size: $h1-font-size; line-height: 48px;
     }
 }
 h2, .h2 {
-    font-weight: $font-weight-bold; font-size: 48px; line-height: 54px;
+    font-weight: $font-weight-bold; font-size: var(--h2-font-size); line-height: var(--h2-line-height);
     @include media-breakpoint-down(md) {
         font-size: 40px; line-height: 44px;
     }
 }
 h3, .h3 {
-    font-weight: $font-weight-bold; font-size: 40px; line-height: 46px;
+    font-weight: $font-weight-bold; font-size: var(--h3-font-size); line-height: var(--h3-line-height);
     @include media-breakpoint-down(md) {
         font-size: 32px; line-height: 36px;
     }
 }
 h4, .h4 {
-    font-weight: $font-weight-bold; font-size: 32px; line-height: 40px;
+    font-weight: $font-weight-bold; font-size: var(--h4-font-size); line-height: var(--h4-line-height);
     @include media-breakpoint-down(md) {
         font-size: 28px; line-height: 32px;
     }
 }
 h5, .h5 {
-    font-weight: $font-weight-bold; font-size: 28px; line-height: 34px;
+    font-weight: $font-weight-bold; font-size: var(--h5-font-size); line-height: var(--h5-line-height);
     @include media-breakpoint-down(md) {
         font-size: 24px; line-height: 28px;
     }
 }
 h6, .h6 {
-    font-weight: $font-weight-bold; font-size: 24px; line-height: 30px;
+    font-weight: $font-weight-bold; font-size: var(--h6-font-size); line-height: var(--h6-line-height);
     @include media-breakpoint-down(md) {
         font-size: 20px; line-height: 26px;
     }
 }
 
 .eyebrow {
-    font-weight: $font-weight-bold; font-size: 18px; line-height: 24px;
+    font-weight: $font-weight-bold; font-size: var(--eyebrow-font-size); line-height: var(--eyebrow-line-height);
     @include media-breakpoint-down(md) {
         font-size: 16px; line-height: 22px;
     }
@@ -108,7 +108,6 @@ h6, .h6 {
 .text-gradient-party, .party-time {
     @include text-gradient($gradient-text);
 }
-
 
 .marketing-body-large {
     font-size: 20px;
