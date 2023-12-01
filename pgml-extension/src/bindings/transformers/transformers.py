@@ -127,44 +127,27 @@ class TextIteratorStreamer:
         if value != self.stop_signal:
             return value
 
-
-class GPTQPipeline(object):
+class GGMLPipeline(object):
     def __init__(self, model_name, **task):
-        from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
-        from huggingface_hub import snapshot_download
+        import ctransformers
 
-        model_path = snapshot_download(model_name)
-
-        quantized_config = BaseQuantizeConfig.from_pretrained(model_path)
-        self.model = AutoGPTQForCausalLM.from_quantized(
-            model_path, quantized_config=quantized_config, **task
+        task.pop("model")
+        task.pop("task")
+        task.pop("device")
+        self.model = ctransformers.AutoModelForCausalLM.from_pretrained(
+            model_name, **task
         )
-        if "use_fast_tokenizer" in task:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model_path, use_fast=task.pop("use_fast_tokenizer")
-            )
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.tokenizer = None
         self.task = "text-generation"
 
     def stream(self, inputs, **kwargs):
-        streamer = TextIteratorStreamer(self.tokenizer)
-        inputs = self.tokenizer(inputs, return_tensors="pt").to(self.model.device)
-        generation_kwargs = dict(inputs, streamer=streamer, **kwargs)
-        thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
-        thread.start()
-        return streamer
+        output = self.model(inputs[0], stream=True, **kwargs)
+        return ThreadedGeneratorIterator(output, inputs[0])
 
     def __call__(self, inputs, **kwargs):
         outputs = []
         for input in inputs:
-            tokens = (
-                self.tokenizer(input, return_tensors="pt")
-                .to(self.model.device)
-                .input_ids
-            )
-            token_ids = self.model.generate(input_ids=tokens, **kwargs)[0]
-            outputs.append(self.tokenizer.decode(token_ids))
+            outputs.append(self.model(input, **kwargs))
         return outputs
 
 
