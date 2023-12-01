@@ -101,13 +101,13 @@ fn transform_stream_iterate_next(mut cx: FunctionContext) -> JsResult<JsPromise>
                         .expect("Error converting rust Json to JavaScript Object");
                     let d = cx.boolean(false);
                     o.set(&mut cx, "value", v)
-                        .expect("Error setting object value in transform_sream_iterate_next");
+                        .expect("Error setting object value in transform_stream_iterate_next");
                     o.set(&mut cx, "done", d)
-                        .expect("Error setting object value in transform_sream_iterate_next");
+                        .expect("Error setting object value in transform_stream_iterate_next");
                 } else {
                     let d = cx.boolean(true);
                     o.set(&mut cx, "done", d)
-                        .expect("Error setting object value in transform_sream_iterate_next");
+                        .expect("Error setting object value in transform_stream_iterate_next");
                 }
                 Ok(o)
             })

@@ -361,7 +361,6 @@ async def test_open_source_ai_create_async():
         ],
         temperature=0.85,
     )
-    import json
     assert len(results["choices"]) > 0
 
 

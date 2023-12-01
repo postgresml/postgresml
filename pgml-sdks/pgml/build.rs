@@ -8,6 +8,8 @@ async def migrate() -> None
 
 Json = Any
 DateTime = int
+GeneralJsonIterator = Any
+GeneralJsonAsyncIterator = Any
 "#;
 
 const ADDITIONAL_DEFAULTS_FOR_JAVASCRIPT: &[u8] = br#"
@@ -16,6 +18,8 @@ export function migrate(): Promise<void>;
 
 export type Json = any;
 export type DateTime = Date;
+export type GeneralJsonIterator = any;
+export type GeneralJsonAsyncIterator = any;
 
 export function newCollection(name: string, database_url?: string): Collection;
 export function newModel(name?: string, source?: string, parameters?: Json): Model;
