@@ -104,9 +104,11 @@ console.log(results);
 }
 ```
 
-{% hint style="info" %}
+!!! info
+
 We don't charge per token, so OpenAI “usage” metrics are not particularly relevant. We'll be extending this data with more direct CPU/GPU resource utilization measurements for users who are interested, or need to pass real usage based pricing on to their own customers.
-{% endhint %}
+
+!!!
 
 The above is an example using our open-source AI SDK with zephyr-7b-beta, an incredibly popular and highly efficient 7 billion parameter model.
 
@@ -201,9 +203,11 @@ while (!result.done) {
 }
 ```
 
-{% hint style="info" %}
+!!! info
+
 We have truncated the output to two items
-{% endhint %}
+
+!!!
 
 We also have asynchronous versions of the create and `create_stream` functions relatively named `create_async` and `create_stream_async`. Checkout [our documentation](http://127.0.0.1:5000/s/B7HH1yMjCs0skMpuwNIR/sdks/opensourceai) for a complete guide of the open-source AI SDK including guides on how to specify custom models.
 
