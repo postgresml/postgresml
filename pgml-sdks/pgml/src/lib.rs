@@ -4,7 +4,7 @@
 //!
 //! With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
-use sqlx::PgPool;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::collections::HashMap;
 use std::env;
 use std::sync::RwLock;
@@ -13,6 +13,7 @@ use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
 mod builtins;
+mod cli;
 mod collection;
 mod filter_builder;
 mod languages;
@@ -62,7 +63,15 @@ async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result
     if let Some(pool) = pools.get(url) {
         Ok(pool.clone())
     } else {
-        let pool = PgPool::connect_lazy(url)?;
+        let timeout = std::env::var("PGML_CHECKOUT_TIMEOUT")
+            .unwrap_or_else(|_| "5000".to_string())
+            .parse::<u64>()
+            .expect("Error parsing PGML_CHECKOUT_TIMEOUT, expected an integer");
+
+        let pool = PgPoolOptions::new()
+            .acquire_timeout(std::time::Duration::from_millis(timeout))
+            .connect_lazy(&url)?;
+
         pools.insert(url.to_string(), pool.clone());
         Ok(pool)
     }
@@ -148,6 +157,7 @@ fn migrate(py: pyo3::Python) -> pyo3::PyResult<&pyo3::PyAny> {
 fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(init_logger, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(migrate, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(cli::cli, m)?)?;
     m.add_class::<pipeline::PipelinePython>()?;
     m.add_class::<collection::CollectionPython>()?;
     m.add_class::<model::ModelPython>()?;
@@ -195,6 +205,7 @@ fn migrate(
 fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
     cx.export_function("init_logger", init_logger)?;
     cx.export_function("migrate", migrate)?;
+    cx.export_function("cli", cli::cli)?;
     cx.export_function("newCollection", collection::CollectionJavascript::new)?;
     cx.export_function("newModel", model::ModelJavascript::new)?;
     cx.export_function("newSplitter", splitter::SplitterJavascript::new)?;

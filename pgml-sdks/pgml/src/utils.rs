@@ -49,7 +49,9 @@ pub fn get_file_contents(path: &Path) -> anyhow::Result<String> {
         "pdf" => {
             let doc = Document::load(path)
                 .with_context(|| format!("Error reading PDF file: {}", path.display()))?;
-            doc.get_pages().into_keys().map(|page_number| {
+            doc.get_pages()
+                .into_keys()
+                .map(|page_number| {
                     doc.extract_text(&[page_number]).with_context(|| {
                         format!("Error extracting content from PDF file: {}", path.display())
                     })

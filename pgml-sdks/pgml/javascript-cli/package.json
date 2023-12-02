@@ -1,0 +1,27 @@
+{
+  "name": "pgml-cli",
+  "version": "0.10.0",
+  "description": "CLI for PostgresML, the GPU-powered AI application database.",
+  "keywords": [
+    "postgres",
+    "machine learning",
+    "vector databases",
+    "embeddings"
+  ],
+  "bin": {
+    "pgml": "index.js"
+  },
+  "author": {
+    "name": "PostgresML",
+    "email": "team@postgresml.org",
+    "url": "https://postgresml.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/postgresml/postgresml"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "pgml": "0.10.0"
+  }
+}
