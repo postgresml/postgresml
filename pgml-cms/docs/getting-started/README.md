@@ -7,7 +7,7 @@ description: Setup a database and connect your application to PostgresML
 A PostgresML deployment consists of multiple components working in concert to provide a complete Machine Learning platform. We provide a fully managed solution in our cloud.
 
 * A PostgreSQL database, with pgml and pgvector extensions installed, including backups, metrics, logs, replicas and high availability configurations
-* A PgCat pooler proxy to provide secure access and model load balancing across tens of thousands of clients
+* A PgCat pooling proxy to provide secure access and model load balancing across tens of thousands of clients
 * A web application to manage deployed models and host SQL notebooks
 
 <figure><img src="../.gitbook/assets/architecture.png" alt=""><figcaption></figcaption></figure>
