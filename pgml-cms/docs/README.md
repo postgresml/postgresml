@@ -1,20 +1,5 @@
 ---
-description: An introduction to key the concepts that power PostgresML.
-coverY: 0
-layout:
-  cover:
-    visible: false
-    size: full
-  title:
-    visible: true
-  description:
-    visible: true
-  tableOfContents:
-    visible: true
-  outline:
-    visible: true
-  pagination:
-    visible: true
+description: The key concepts that make up PostgresML.
 ---
 
 # Overview
