@@ -1,7 +1,7 @@
+use std::collections::HashMap;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use std::{collections::HashMap, path::Path};
 
 use anyhow::{anyhow, bail, Context, Result};
 use pgrx::*;
