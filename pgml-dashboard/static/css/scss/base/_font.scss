@@ -85,4 +85,73 @@ $font-family-base: 'silka', 'Roboto', 'sans-serif';
     font-display: swap;
 }
 
+@font-face {
+    font-family: 'inter';
+    src: url('/dashboard/static/fonts/inter-bold.woff2') format('woff2'),
+         url('/dashboard/static/fonts/inter-bold.woff') format('woff'),
+         url('/dashboard/static/fonts/inter-bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'inter';
+    src: url('/dashboard/static/fonts/inter-semibold.woff2') format('woff2'),
+         url('/dashboard/static/fonts/inter-semibold.woff') format('woff'),
+         url('/dashboard/static/fonts/inter-semibold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'inter';
+    src: url('/dashboard/static/fonts/inter-medium.woff2') format('woff2'),
+         url('/dashboard/static/fonts/inter-medium.woff') format('woff'),
+         url('/dashboard/static/fonts/inter-medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'inter';
+    src: url('/dashboard/static/fonts/inter-regular.woff') format('woff'),
+         url('/dashboard/static/fonts/inter-regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'inter';
+    src: url('/dashboard/static/fonts/inter-light.woff2') format('woff2'),
+         url('/dashboard/static/fonts/inter-light.woff') format('woff'),
+         url('/dashboard/static/fonts/inter-light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'inter';
+    src: url('/dashboard/static/fonts/inter-thin.woff2') format('woff2'),
+         url('/dashboard/static/fonts/inter-thin.woff') format('woff'),
+         url('/dashboard/static/fonts/inter-thin.ttf') format('truetype');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'inter';
+    src: url('/dashboard/static/fonts/inter-extralight.woff2') format('woff2'),
+         url('/dashboard/static/fonts/inter-extralight.woff') format('woff'),
+         url('/dashboard/static/fonts/inter-extralight.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&family=Roboto+Mono:wght@100;300;400;500;700&display=swap');

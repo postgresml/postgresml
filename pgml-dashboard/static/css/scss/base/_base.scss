@@ -41,6 +41,10 @@ pre {
     }
 }
 
+pre[data-controller="copy"] {
+    padding-top: 2rem;
+}
+
 // links
 a {
     text-decoration: none; 
@@ -114,4 +118,11 @@ article {
           -ms-user-select: none; /* Internet Explorer/Edge */
               user-select: none; /* Non-prefixed version, currently
                                     supported by Chrome, Edge, Opera and Firefox */
+}
+
+// Smooth scroll does not work in firefox and turbo.  New pages will not scroll to top, so we remove smooth for Firefox. 
+@-moz-document url-prefix() {
+    :root {
+        scroll-behavior: auto;
+    }
 }
