@@ -106,7 +106,6 @@ class TextIteratorStreamer:
         self.text_queue = queue.Queue()
         self.token_cache = []
         self.text_index_cache = []
-        print("\n the python timeout ", timeout, "\n", file=sys.stderr)
 
     def put(self, values):
         if self.skip_prompt and self.next_tokens_are_prompt:
