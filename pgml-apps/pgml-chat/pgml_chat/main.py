@@ -1,5 +1,5 @@
 import asyncio
-from pgml import Collection, Model, Splitter, Pipeline, migrate, init_logger, Builtins
+from pgml import Collection, Model, Splitter, Pipeline, migrate, init_logger, Builtins, OpenSourceAI
 import logging
 from rich.logging import RichHandler
 from rich.progress import track
@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 import glob
 import argparse
 from time import time
-import openai
+from openai import OpenAI
 import signal
 from uuid import uuid4
 import pendulum
@@ -110,6 +110,12 @@ parser.add_argument(
     help="Persona of the bot",
 )
 
+parser.add_argument(
+    "--chat_completion_model",
+    dest="chat_completion_model",
+    type="str",
+    default="gpt-3.5-turbo-16k",
+)
 
 args = parser.parse_args()
 
@@ -160,6 +166,8 @@ chat_history_pipeline = Pipeline(
     chat_history_collection_name + "_pipeline", model, splitter
 )
 
+chat_completion_model = args.chat_completion_model
+
 query_params_instruction = (
     "Represent the %s question for retrieving supporting documents: " % (bot_topic)
 )
@@ -203,6 +211,7 @@ User: {question}
 
 Helpful Answer:"""
 
+
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 
 system_prompt_document = [
@@ -214,6 +223,20 @@ system_prompt_document = [
             "timestamp": pendulum.now().timestamp(),
         }
 ]
+
+def model_type(chat_completion_model: str):
+    model_type = "opensourceai"
+    try:
+        client = OpenAI(api_key=openai_api_key)
+        models = client.models.list().data
+        for model in models:
+            if model["id"] == chat_completion_model:
+                model_type = "openai"
+                break
+    except Exception as e:
+        print(e)
+    
+    return model_type
 
 async def upsert_documents(folder: str) -> int:
     log.info("Scanning " + folder + " for markdown files")
@@ -335,19 +358,32 @@ async def generate_chat_response(
 async def generate_response(
     messages, openai_api_key, temperature=0.7, max_tokens=256, top_p=0.9
 ):
-    openai.api_key = openai_api_key
-    log.debug("Generating response from OpenAI API: " + str(messages))
-    response = openai.ChatCompletion.create(
-        # model="gpt-3.5-turbo-16k",
-        model="gpt-4",
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        top_p=top_p,
-        frequency_penalty=0,
-        presence_penalty=0,
-    )
-    return response["choices"][0]["message"]["content"]
+    model_type = model_type(chat_completion_model)
+    if model_type == "openai":
+        client = OpenAI(api_key=openai_api_key)
+        log.debug("Generating response from OpenAI API: " + str(messages))
+        response = client.chat.completions.create(
+            # model="gpt-3.5-turbo-16k",
+            model=chat_completion_model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=0,
+            presence_penalty=0,
+        )
+        output = response.choices[0].message.content
+    else:
+        client = OpenSourceAI(database_url=database_url)
+        log.debug("Generating response from OpenSourceAI API: " + str(messages))
+        response = client.chat_completions_create(
+            model=chat_completion_model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens        )
+        output = response["choices"][0]["message"]["content"]
+
+    return output
 
 
 async def ingest_documents(folder: str):
