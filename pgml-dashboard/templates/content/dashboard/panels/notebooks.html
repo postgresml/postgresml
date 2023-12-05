@@ -15,18 +15,18 @@
     <div class="row gx-4 gy-4 position-relative">
       <% for notebook in notebooks { %>
       <div class="col-12 col-md-6 col-xxl-4">
-        <div class="card h-100">
+        <div class="card h-100 interactive-card">
           <div class="card-body h-100">
             <div class="d-flex flex-column justify-content-between h-100 gap-4">
               <div>
-                <h6 class="h6 mb-0">
+                <h6 class="subcopy-text fw-semibold mb-0">
                   <%= notebook.name %>
                 </h6>
-                <small class="text-muted">Created by: <%= notebook.created_by() %></small>
+                <small class="legal-text text-muted">Created by: <%= notebook.created_by() %></small>
               </div>
 
               <div>
-                <small class="text-muted">Last modified <%= notebook.updated_at.month() as u32 %>/<%= notebook.updated_at.day() %>/<%= notebook.updated_at.year() %></small>
+                <small class="legal-text text-muted">Last modified <%= notebook.updated_at.month() as u32 %>/<%= notebook.updated_at.day() %>/<%= notebook.updated_at.year() %></small>
               </div>
           </div>
             <a href="/dashboard?tab=Notebook&id=<%= notebook.id %>" data-turbo-frame="_top" class="stretched-link">
@@ -37,21 +37,25 @@
       <% } %>
       <% if new { %>
       <div class="col-12 col-md-6 col-xxl-4">
-        <div class="card h-100">
-          <div class="card-body h-100 pt-1 pe-1">
+        <div class="card h-100 interactive-card">
+          <div class="card-body h-100 pt-2 pe-2">
             <div class="d-flex flex-column h-100">
               <div class="d-flex justify-content-end">
                 <a href="/dashboard/notebooks" class="btn btn-close"></a>
               </div>
-              <div class="d-flex flex-column justify-content-between flex-grow-1">
+              <div class="d-flex flex-column justify-content-between flex-grow-1 gap-4">
                 <div>
                   <form action="/dashboard/notebooks" method="post" data-turbo-frame="_top">
-                    <input class="form-control borderless" placeholder="Create a title" type="text" class="w-100" autofocus required name="name">
+                    <input class="subcopy-text form-control borderless" placeholder="Create a title" type="text" class="w-100" autofocus required name="name">
                   </form>
-                  <small class="text-muted">Created by: User</small>
+                  <small class="legal-text text-muted">Created by: User</small>
                 </div>
-
-                <small class="text-muted">Last modified 8/22/2023</small>
+                <script>
+                  date = new Date();
+                  document.getElementById("todays-date").innerHTML = date.toLocaleDateString();
+                  delete date;
+                </script>
+                <small class="legal-text text-muted">Last modified <span id="todays-date">Today</span></small>
               </div>
             </div>
           </div>
