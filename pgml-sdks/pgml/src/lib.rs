@@ -34,6 +34,7 @@ mod utils;
 
 // Re-export
 pub use builtins::Builtins;
+pub use cli::cli;
 pub use collection::Collection;
 pub use model::Model;
 pub use open_source_ai::OpenSourceAI;

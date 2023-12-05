@@ -160,6 +160,11 @@ pub fn cli(
     Ok(promise)
 }
 
+#[cfg(all(not(feature = "python"), not(feature = "javascript")))]
+pub async fn cli() -> anyhow::Result<()> {
+    cli_internal().await
+}
+
 async fn cli_internal() -> anyhow::Result<()> {
     #[cfg(feature = "python")]
     let subcommand = {
