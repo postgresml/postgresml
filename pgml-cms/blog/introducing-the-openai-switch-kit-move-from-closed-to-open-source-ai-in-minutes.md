@@ -2,6 +2,7 @@
 description: >-
   Quickly and easily transition from the confines of the OpenAI APIs to higher
   quality embeddings and unrestricted text generation models.
+image: https://postgresml.org/dashboard/static/images/open_source_ai_social_share.png
 ---
 
 # Introducing the OpenAI Switch Kit: Move from closed to open-source AI in minutes
