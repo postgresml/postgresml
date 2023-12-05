@@ -154,7 +154,7 @@ docker run \
     sudo -u postgresml psql -d postgresml
 ```
 
-For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/developer-docs/quick-start-with-docker) documentation.
+For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/resources/developer-docs/quick-start-with-docker) documentation.
 
 # Getting Started
 
