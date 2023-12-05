@@ -106,6 +106,7 @@ class TextIteratorStreamer:
         self.text_queue = queue.Queue()
         self.token_cache = []
         self.text_index_cache = []
+        print("\n the python timeout ", timeout, "\n", file=sys.stderr)
 
     def put(self, values):
         if self.skip_prompt and self.next_tokens_are_prompt:
@@ -131,7 +132,7 @@ class TextIteratorStreamer:
                 self.text_index_cache[i] += len(printable_text)
                 output.append(printable_text)
         if any(output):
-            self.text_queue.put(output, self.timeout)
+            self.text_queue.put(output)
 
     def end(self):
         self.next_tokens_are_prompt = True
@@ -139,8 +140,8 @@ class TextIteratorStreamer:
         for i, tokens in enumerate(self.token_cache):
             text = self.tokenizer.decode(tokens, **self.decode_kwargs)
             output.append(text[self.text_index_cache[i] :])
-        self.text_queue.put(output, self.timeout)
-        self.text_queue.put(self.stop_signal, self.timeout)
+        self.text_queue.put(output)
+        self.text_queue.put(self.stop_signal)
 
     def __iter__(self):
         return self
@@ -264,12 +265,13 @@ class StandardPipeline(object):
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-    def stream(self, input, **kwargs):
+    def stream(self, input, timeout=None, **kwargs):
         streamer = None
         generation_kwargs = None
         if self.task == "conversational":
             streamer = TextIteratorStreamer(
                 self.tokenizer,
+                timeout=timeout,
                 skip_prompt=True,
             )
             if "chat_template" in kwargs:
@@ -286,7 +288,10 @@ class StandardPipeline(object):
             input = self.tokenizer(input, return_tensors="pt").to(self.model.device)
             generation_kwargs = dict(input, streamer=streamer, **kwargs)
         else:
-            streamer = TextIteratorStreamer(self.tokenizer)
+            streamer = TextIteratorStreamer(
+                self.tokenizer,
+                timeout=timeout,
+            )
             input = self.tokenizer(input, return_tensors="pt", padding=True).to(
                 self.model.device
             )
@@ -355,7 +360,7 @@ def create_pipeline(task):
     return pipe
 
 
-def transform_using(pipeline, args, inputs, stream=False):
+def transform_using(pipeline, args, inputs, stream=False, timeout=None):
     args = orjson.loads(args)
     inputs = orjson.loads(inputs)
 
@@ -364,7 +369,7 @@ def transform_using(pipeline, args, inputs, stream=False):
     convert_eos_token(pipeline.tokenizer, args)
 
     if stream:
-        return pipeline.stream(inputs, **args)
+        return pipeline.stream(inputs, timeout=timeout, **args)
     return orjson.dumps(pipeline(inputs, **args), default=orjson_default).decode()
 
 
