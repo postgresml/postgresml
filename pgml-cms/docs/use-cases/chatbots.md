@@ -4,7 +4,7 @@ description: CLI tool to build and deploy chatbots
 
 # Chatbots
 
-## Introduction
+Introduction
 
 A command line tool to build and deploy a _**knowledge based**_ chatbot using PostgresML and OpenAI API.
 
@@ -135,7 +135,7 @@ If you have set up the Slack app correctly, you should see the following output:
 
 Once the slack app is running, you can interact with the chatbot on Slack as shown below. In the example here, name of the bot is `PgBot`. This app responds only to direct messages to the bot.
 
-<figure><img src="https://github.com/postgresml/postgresml/raw/master/pgml-apps/pgml-chat/images/slack_screenshot.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/chatbot_slack.png" alt=""><figcaption></figcaption></figure>
 
 #### Discord
 
@@ -159,4 +159,4 @@ If you have set up the Discord app correctly, you should see the following outpu
 
 Once the discord app is running, you can interact with the chatbot on Discord as shown below. In the example here, name of the bot is `pgchat`. This app responds only to direct messages to the bot.
 
-<figure><img src="https://github.com/postgresml/postgresml/raw/master/pgml-apps/pgml-chat/images/discord_screenshot.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/chatbot_discord.png" alt=""><figcaption></figcaption></figure>
