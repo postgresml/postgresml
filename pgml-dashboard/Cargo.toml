@@ -29,7 +29,7 @@ log = "0.4"
 markdown = "1.0.0-alpha.14"
 num-traits = "0.2"
 once_cell = "1.18"
-pgml = { version = "0.10.0", path = "../pgml-sdks/pgml/" }
+pgml = { path = "../pgml-sdks/pgml/" }
 pgml-components = { path = "../packages/pgml-components" }
 pgvector = { version = "0.2.2", features = [ "sqlx", "postgres" ] }
 rand = "0.8"
