@@ -36,6 +36,19 @@ struct Javascript {
     subcommand: Subcommands,
 }
 
+/// PostgresML CLI is Rust by default
+#[cfg(all(not(feature = "python"), not(feature = "javascript")))]
+#[derive(Parser, Debug, Clone)]
+#[command(author, version, about, long_about = None, name = "pgml", bin_name = "pgml")]
+struct Rust {
+    /// TODO comment on the necessity of this argument.
+    #[arg(name = "pgmlcli")]
+    pgmlcli: Option<String>,
+
+    #[command(subcommand)]
+    subcommand: Subcommands,
+}
+
 #[derive(Subcommand, Debug, Clone)]
 enum Subcommands {
     /// Connect your PostgresML database to another PostgreSQL database.
@@ -157,6 +170,13 @@ async fn cli_internal() -> anyhow::Result<()> {
     #[cfg(feature = "javascript")]
     let subcommand = {
         let args = Javascript::parse();
+        args.subcommand
+    };
+
+    // Rust by default
+    #[cfg(all(not(feature = "python"), not(feature = "javascript")))]
+    let subcommand = {
+        let args = Rust::parse();
         args.subcommand
     };
 
