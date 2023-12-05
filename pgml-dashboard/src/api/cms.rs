@@ -92,6 +92,7 @@ impl Collection {
         let mdast = markdown::to_mdast(&summary_contents, &::markdown::ParseOptions::default())
             .unwrap_or_else(|_| panic!("Could not parse summary: {summary_path:?}"));
 
+        let mut index = Vec::new();
         for node in mdast
             .children()
             .unwrap_or_else(|| panic!("Summary has no content: {summary_path:?}"))
@@ -99,16 +100,17 @@ impl Collection {
         {
             match node {
                 Node::List(list) => {
-                    self.index = self.get_sub_links(list).unwrap_or_else(|_| {
+                    let mut links = self.get_sub_links(list).unwrap_or_else(|_| {
                         panic!("Could not parse list of index links: {summary_path:?}")
                     });
-                    break;
+                    index.append(&mut links);
                 }
                 _ => {
                     warn!("Irrelevant content ignored in: {summary_path:?}")
                 }
             }
         }
+        self.index = index;
 
         if self.index.is_empty() {
             error!("Index has no entries for Collection: {}", self.name);
