@@ -236,7 +236,7 @@ mistralai/Mistral-7B-v0.1
         let md5_digest = md5::compute(to_hash.as_bytes());
         let fingerprint = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-        let mut args = serde_json::json!({ "max_length": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n });
+        let mut args = serde_json::json!({ "max_new_tokens": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n });
         if let Some(t) = chat_template
             .or_else(|| try_get_model_chat_template(&model_name).map(|s| s.to_string()))
         {
@@ -322,7 +322,7 @@ mistralai/Mistral-7B-v0.1
         let md5_digest = md5::compute(to_hash.as_bytes());
         let fingerprint = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-        let mut args = serde_json::json!({ "max_length": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n });
+        let mut args = serde_json::json!({ "max_new_tokens": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n });
         if let Some(t) = chat_template
             .or_else(|| try_get_model_chat_template(&model_name).map(|s| s.to_string()))
         {
