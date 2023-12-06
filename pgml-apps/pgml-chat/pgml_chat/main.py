@@ -1,5 +1,14 @@
 import asyncio
-from pgml import Collection, Model, Splitter, Pipeline, migrate, init_logger, Builtins, OpenSourceAI
+from pgml import (
+    Collection,
+    Model,
+    Splitter,
+    Pipeline,
+    migrate,
+    init_logger,
+    Builtins,
+    OpenSourceAI,
+)
 import logging
 from rich.logging import RichHandler
 from rich.progress import track
@@ -113,8 +122,16 @@ parser.add_argument(
 parser.add_argument(
     "--chat_completion_model",
     dest="chat_completion_model",
-    type="str",
+    type=str,
     default="gpt-3.5-turbo-16k",
+)
+
+parser.add_argument(
+    "--max_tokens",
+    dest="max_tokens",
+    type=int,
+    default=256,
+    help="Maximum number of tokens to generate",
 )
 
 args = parser.parse_args()
@@ -167,6 +184,7 @@ chat_history_pipeline = Pipeline(
 )
 
 chat_completion_model = args.chat_completion_model
+max_tokens = args.max_tokens
 
 query_params_instruction = (
     "Represent the %s question for retrieving supporting documents: " % (bot_topic)
@@ -215,28 +233,30 @@ Helpful Answer:"""
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 
 system_prompt_document = [
-        {
-            "text": system_prompt,
-            "id": str(uuid4())[:8],
-            "interface": chat_interface,
-            "role": "system",
-            "timestamp": pendulum.now().timestamp(),
-        }
+    {
+        "text": system_prompt,
+        "id": str(uuid4())[:8],
+        "interface": chat_interface,
+        "role": "system",
+        "timestamp": pendulum.now().timestamp(),
+    }
 ]
 
-def model_type(chat_completion_model: str):
+
+def get_model_type(chat_completion_model: str):
     model_type = "opensourceai"
     try:
         client = OpenAI(api_key=openai_api_key)
-        models = client.models.list().data
+        models = client.models.list()
         for model in models:
-            if model["id"] == chat_completion_model:
+            if model.id == chat_completion_model:
                 model_type = "openai"
                 break
     except Exception as e:
         print(e)
-    
+
     return model_type
+
 
 async def upsert_documents(folder: str) -> int:
     log.info("Scanning " + folder + " for markdown files")
@@ -262,42 +282,34 @@ async def generate_chat_response(
     system_prompt,
     openai_api_key,
     temperature=0.7,
-    max_tokens=256,
+    max_tokens=max_tokens,
     top_p=0.9,
     user_name="",
 ):
     messages = []
     messages.append({"role": "system", "content": system_prompt})
 
-    chat_history_messages = await chat_collection.get_documents( {
-        "limit" : chat_history*2,
-        "order_by": {"timestamp": "desc"},
-        "filter": {
-            "metadata": {
-                "$and" : [
-                    {
-                        "$or": 
-                        [
-                        {"role": {"$eq": "assistant"}},
-                        {"role": {"$eq": "user"}}
-                        ]
-                    },
-                    {
-                        "interface" : {
-                            "$eq" : chat_interface
-                        }
-                    },
-                    {
-                        "user_name" : {
-                            "$eq" : user_name
-                        }
-                    }
-                ]
-            }
-        }
+    chat_history_messages = await chat_collection.get_documents(
+        {
+            "limit": chat_history * 2,
+            "order_by": {"timestamp": "desc"},
+            "filter": {
+                "metadata": {
+                    "$and": [
+                        {
+                            "$or": [
+                                {"role": {"$eq": "assistant"}},
+                                {"role": {"$eq": "user"}},
+                            ]
+                        },
+                        {"interface": {"$eq": chat_interface}},
+                        {"user_name": {"$eq": user_name}},
+                    ]
+                }
+            },
         }
     )
-    
+
     # Reverse the order so that user messages are first
 
     chat_history_messages.reverse()
@@ -325,7 +337,7 @@ async def generate_chat_response(
     history_documents.append(_document)
 
     if user_input:
-        query = await get_prompt(user_input,conversation_history)
+        query = await get_prompt(user_input, conversation_history)
 
     messages.append({"role": "user", "content": query})
 
@@ -342,7 +354,7 @@ async def generate_chat_response(
     _document = {
         "text": response,
         "id": str(uuid4())[:8],
-        "parent_message_id" : user_message_id,
+        "parent_message_id": user_message_id,
         "interface": chat_interface,
         "role": "assistant",
         "timestamp": pendulum.now().timestamp(),
@@ -358,12 +370,11 @@ async def generate_chat_response(
 async def generate_response(
     messages, openai_api_key, temperature=0.7, max_tokens=256, top_p=0.9
 ):
-    model_type = model_type(chat_completion_model)
+    model_type = get_model_type(chat_completion_model)
     if model_type == "openai":
         client = OpenAI(api_key=openai_api_key)
         log.debug("Generating response from OpenAI API: " + str(messages))
         response = client.chat.completions.create(
-            # model="gpt-3.5-turbo-16k",
             model=chat_completion_model,
             messages=messages,
             temperature=temperature,
@@ -380,7 +391,8 @@ async def generate_response(
             model=chat_completion_model,
             messages=messages,
             temperature=temperature,
-            max_tokens=max_tokens        )
+            max_tokens=max_tokens,
+        )
         output = response["choices"][0]["message"]["content"]
 
     return output
@@ -412,7 +424,7 @@ async def get_prompt(user_input: str = "", conversation_history: str = "") -> st
 
     if conversation_history:
         conversation_history = "#### \n Conversation History: \n" + conversation_history
-    
+
     query = base_prompt.format(
         conversation_history=conversation_history,
         context=context,
@@ -466,9 +478,8 @@ async def chat_slack():
                 openai_api_key,
                 max_tokens=512,
                 temperature=0.7,
-                user_name = user,
+                user_name=user,
             )
-            
 
             await say(text=f"<@{user}> {response}")
 
@@ -498,7 +509,12 @@ async def on_message(message):
         print("Discord response in progress ..")
         user_input = message.content
         response = await generate_chat_response(
-            user_input, system_prompt, openai_api_key, max_tokens=512, temperature=0.7,user_name=message.author.name
+            user_input,
+            system_prompt,
+            openai_api_key,
+            max_tokens=512,
+            temperature=0.7,
+            user_name=message.author.name,
         )
         await message.channel.send(response)
 
