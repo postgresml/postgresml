@@ -1,8 +1,10 @@
 ---
+image: https://postgresml.org/dashboard/static/images/open_source_ai_social_share.png
 description: >-
   Quickly and easily transition from the confines of the OpenAI APIs to higher
   quality embeddings and unrestricted text generation models.
-image: https://postgresml.org/dashboard/static/images/open_source_ai_social_share.png
+cover: .gitbook/assets/Screenshot 2023-12-05 at 10.11.54 AM.png
+coverY: 0
 ---
 
 # Introducing the OpenAI Switch Kit: Move from closed to open-source AI in minutes
@@ -210,7 +212,7 @@ We have truncated the output to two items
 
 !!!
 
-We also have asynchronous versions of the create and `create_stream` functions relatively named `create_async` and `create_stream_async`. Checkout [our documentation](http://127.0.0.1:5000/s/B7HH1yMjCs0skMpuwNIR/sdks/opensourceai) for a complete guide of the open-source AI SDK including guides on how to specify custom models.
+We also have asynchronous versions of the create and `create_stream` functions relatively named `create_async` and `create_stream_async`. Checkout [our documentation](https://postgresml.org/docs/introduction/machine-learning/sdks/opensourceai) for a complete guide of the open-source AI SDK including guides on how to specify custom models.
 
 PostgresML is free and open source. To run the above examples yourself[ create an account](https://postgresml.org/signup), install pgml, and get running!
 
