@@ -309,7 +309,7 @@ it("can transformer pipeline stream", async () => {
 it("can open source ai create", () => {
   const client = pgml.newOpenSourceAI();
   const results = client.chat_completions_create(
-        "mistralai/Mistral-7B-v0.1",
+        "HuggingFaceH4/zephyr-7b-beta",
         [
             {
                 role: "system",
@@ -328,7 +328,7 @@ it("can open source ai create", () => {
 it("can open source ai create async", async () => {
   const client = pgml.newOpenSourceAI();
   const results = await client.chat_completions_create_async(
-        "mistralai/Mistral-7B-v0.1",
+        "HuggingFaceH4/zephyr-7b-beta",
         [
             {
                 role: "system",
@@ -347,7 +347,7 @@ it("can open source ai create async", async () => {
 it("can open source ai create stream", () => {
   const client = pgml.newOpenSourceAI();
   const it = client.chat_completions_create_stream(
-        "mistralai/Mistral-7B-v0.1",
+        "HuggingFaceH4/zephyr-7b-beta",
         [
             {
                 role: "system",
@@ -369,7 +369,7 @@ it("can open source ai create stream", () => {
 it("can open source ai create stream async", async () => {
   const client = pgml.newOpenSourceAI();
   const it = await client.chat_completions_create_stream_async(
-        "mistralai/Mistral-7B-v0.1",
+        "HuggingFaceH4/zephyr-7b-beta",
         [
             {
                 role: "system",
