@@ -3,8 +3,6 @@ image: https://postgresml.org/dashboard/static/images/open_source_ai_social_shar
 description: >-
   Quickly and easily transition from the confines of the OpenAI APIs to higher
   quality embeddings and unrestricted text generation models.
-cover: .gitbook/assets/Screenshot 2023-12-05 at 10.11.54 AM.png
-coverY: 0
 ---
 
 # Introducing the OpenAI Switch Kit: Move from closed to open-source AI in minutes
