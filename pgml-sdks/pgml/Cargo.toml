@@ -43,6 +43,7 @@ is-terminal = "0.4"
 colored = "2"
 ctrlc = "3"
 inquire = "0.6"
+parking_lot = "0.12.1"
 
 [features]
 default = []
