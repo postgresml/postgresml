@@ -176,6 +176,13 @@ pub fn watch() {
         .watcher()
         .watch(Path::new("static"), RecursiveMode::Recursive));
 
+    print("building bundle...");
+    if rebuild() {
+        info("ok");
+    } else {
+        error("error");
+    }
+
     info("watching for changes");
 
     // sleep forever
@@ -210,8 +217,8 @@ pub fn lint(check: bool) {
     info("ok");
 }
 
-fn rebuild() {
-    unwrap_or_exit!(execute_command(
+fn rebuild() -> bool {
+    execute_command(
         Command::new("cargo").arg("pgml-components").arg("bundle")
-    ));
+    ).is_ok()
 }
