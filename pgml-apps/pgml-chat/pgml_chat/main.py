@@ -134,6 +134,14 @@ parser.add_argument(
     help="Maximum number of tokens to generate",
 )
 
+parser.add_argument(
+    "--vector_recall_limit",
+    dest="vector_recall_limit",
+    type=int,
+    default=5,
+    help="Maximum number of documents to retrieve from vector recall",
+)
+
 args = parser.parse_args()
 
 FORMAT = "%(message)s"
@@ -175,8 +183,7 @@ splitter = Splitter(splitter_name, splitter_params)
 model_name = "hkunlp/instructor-xl"
 model_embedding_instruction = "Represent the %s document for retrieval: " % (bot_topic)
 model_params = {"instruction": model_embedding_instruction}
-# model_name = "BAAI/bge-large-en-v1.5"
-# model_params = {}
+
 model = Model(model_name, "pgml", model_params)
 pipeline = Pipeline(args.collection_name + "_pipeline", model, splitter)
 chat_history_pipeline = Pipeline(
@@ -185,12 +192,12 @@ chat_history_pipeline = Pipeline(
 
 chat_completion_model = args.chat_completion_model
 max_tokens = args.max_tokens
+vector_recall_limit = args.vector_recall_limit
 
 query_params_instruction = (
     "Represent the %s question for retrieving supporting documents: " % (bot_topic)
 )
 query_params = {"instruction": query_params_instruction}
-# query_params = {}
 
 default_system_prompt_template = """
 You are an assistant to answer questions about {topic}. 
@@ -230,7 +237,7 @@ User: {question}
 Helpful Answer:"""
 
 
-openai_api_key = os.environ.get("OPENAI_API_KEY")
+openai_api_key = os.environ.get("OPENAI_API_KEY","")
 
 system_prompt_document = [
     {
@@ -412,7 +419,7 @@ async def get_prompt(user_input: str = "", conversation_history: str = "") -> st
     vector_results = (
         await collection.query()
         .vector_recall(query_input, pipeline, query_params)
-        .limit(5)
+        .limit(vector_recall_limit)
         .fetch_all()
     )
     log.info(vector_results)
