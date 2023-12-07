@@ -199,30 +199,20 @@ query_params_instruction = (
 )
 query_params = {"instruction": query_params_instruction}
 
-default_system_prompt_template = """
-You are an assistant to answer questions about {topic}. 
-Your name is {name}. You speak like {persona} in {language}. Use the given list of documents to answer user's question.
-Use the conversation history if it is applicable to answer the question. 
-Use the following steps:
+default_system_prompt_template = """Use the following pieces of context to answer the question at the end.
+If you don't know the answer, just say that you don't know, don't try to make up an answer.
+Use three sentences maximum and keep the answer as concise as possible.
+Always say "thanks for asking!" at the end of the answer."""
 
-1. Identify if the user input is really a question. 
-2. If the user input is not related to the {topic} then respond that it is not related to the {topic}.
-3. If the user input is related to the {topic} then first identify relevant documents from the list of documents. 
-4. If the documents that you found relevant have information to completely and accurately answers the question then respond with the answer.
-5. If the documents that you found relevant have code snippets then respond with the code snippets. 
-6. Most importantly, don't make up code snippets that are not present in the documents.
-7. If the user input is generic like Cool, Thanks, Hello, etc. then respond with a generic answer. 
-"""
+system_prompt_template = os.environ.get("SYSTEM_PROMPT_TEMPLATE", default_system_prompt_template)
 
-default_system_prompt = default_system_prompt_template.format(
+system_prompt = system_prompt_template.format(
     topic=bot_topic,
     name=bot_name,
     persona=bot_persona,
     language=bot_language,
     response_programming_language=bot_topic_primary_language,
 )
-
-system_prompt = default_system_prompt
 
 base_prompt = """
 {conversation_history}
@@ -375,7 +365,7 @@ async def generate_chat_response(
 
 
 async def generate_response(
-    messages, openai_api_key, temperature=0.7, max_tokens=256, top_p=0.9
+    messages, openai_api_key, temperature=0.7, max_tokens=max_tokens, top_p=0.9
 ):
     model_type = get_model_type(chat_completion_model)
     if model_type == "openai":
@@ -454,7 +444,7 @@ async def chat_cli():
                 user_input,
                 system_prompt,
                 openai_api_key,
-                max_tokens=512,
+                max_tokens=max_tokens,
                 temperature=0.3,
                 top_p=0.9,
                 user_name=user_name,
@@ -483,7 +473,7 @@ async def chat_slack():
                 user_input,
                 system_prompt,
                 openai_api_key,
-                max_tokens=512,
+                max_tokens=max_tokens,
                 temperature=0.7,
                 user_name=user,
             )
@@ -519,7 +509,7 @@ async def on_message(message):
             user_input,
             system_prompt,
             openai_api_key,
-            max_tokens=512,
+            max_tokens=max_tokens,
             temperature=0.7,
             user_name=message.author.name,
         )
