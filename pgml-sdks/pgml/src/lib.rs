@@ -13,6 +13,7 @@ use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
 mod builtins;
+#[cfg(any(feature = "python", feature = "javascript"))]
 mod cli;
 mod collection;
 mod filter_builder;
