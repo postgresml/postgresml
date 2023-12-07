@@ -37,6 +37,27 @@ We think so. Open-source models have made remarkable strides, not only catching 
 The Switch Kit is an open-source AI SDK that provides a drop in replacement for OpenAI’s chat completion endpoint.
 
 {% tabs %}
+{% tab title="JavaScript" %}
+```javascript
+const pgml = require("pgml");
+const client = pgml.newOpenSourceAI();
+const results = client.chat_completions_create(
+      "HuggingFaceH4/zephyr-7b-beta",
+      [
+          {
+              role: "system",
+              content: "You are a friendly chatbot who always responds in the style of a pirate",
+          },
+          {
+              role: "user",
+              content: "How many helicopters can a human eat in one sitting?",
+          },
+      ],
+);
+console.log(results);
+```
+{% endtab %}
+
 {% tab title="Python" %}
 ```python
 import pgml
@@ -56,27 +77,6 @@ results = client.chat_completions_create(
     temperature=0.85,
 )
 print(results)
-```
-{% endtab %}
-
-{% tab title="JavaScript" %}
-```javascript
-const pgml = require("pgml");
-const client = pgml.newOpenSourceAI();
-const results = client.chat_completions_create(
-      "HuggingFaceH4/zephyr-7b-beta",
-      [
-          {
-              role: "system",
-              content: "You are a friendly chatbot who always responds in the style of a pirate",
-          },
-          {
-              role: "user",
-              content: "How many helicopters can a human eat in one sitting?",
-          },
-      ],
-);
-console.log(results);
 ```
 {% endtab %}
 {% endtabs %}
@@ -120,29 +120,6 @@ The best part of using open-source AI is the flexibility with models. Unlike Ope
 Here is an example of streaming with the popular Mythalion model, an uncensored MythoMax variant designed for chatting.
 
 {% tabs %}
-{% tab title="Python" %}
-```python
-import pgml
-client = pgml.OpenSourceAI()
-results = client.chat_completions_create_stream(
-     "PygmalionAI/mythalion-13b",
-     [
-         {
-             "role": "system",
-             "content": "You are a friendly chatbot who always responds in the style of a pirate",
-         },
-         {
-             "role": "user",
-             "content": "How many helicopters can a human eat in one sitting?",
-         },
-     ],
-     temperature=0.85,
-)
-for c in results:
-    print(c)
-```
-{% endtab %}
-
 {% tab title="JavaScript" %}
 ```javascript
 const pgml = require("pgml");
@@ -165,6 +142,29 @@ while (!result.done) {
   console.log(result.value);
   result = it.next();
 }
+```
+{% endtab %}
+
+{% tab title="Python" %}
+```python
+import pgml
+client = pgml.OpenSourceAI()
+results = client.chat_completions_create_stream(
+     "PygmalionAI/mythalion-13b",
+     [
+         {
+             "role": "system",
+             "content": "You are a friendly chatbot who always responds in the style of a pirate",
+         },
+         {
+             "role": "user",
+             "content": "How many helicopters can a human eat in one sitting?",
+         },
+     ],
+     temperature=0.85,
+)
+for c in results:
+    print(c)
 ```
 {% endtab %}
 {% endtabs %}
