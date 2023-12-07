@@ -1,6 +1,7 @@
 <% use crate::NotificationLevel; %>
 <turbo-frame id="marketing-notifications-banner-feature" class="position-relative z-1">
-  <% if !remove_banner {%>
+  <% if notification.is_some() {%>
+    <% let notification = notification.unwrap(); %>
   <div data-controller="notifications-marketing-feature-banner">
 
     <div class="<%- notification.level.to_string() %> <% if notification.level == NotificationLevel::Feature3 {%>main-gradient-border-card<% } %> rounded-3 W-100">

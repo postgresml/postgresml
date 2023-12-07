@@ -21,7 +21,7 @@ pub mod templates;
 pub mod types;
 pub mod utils;
 
-use components::notifications::{banner::Banner, marketing::FeatureBanner};
+use components::notifications::marketing::{AlertBanner, FeatureBanner};
 use guards::{Cluster, ConnectedCluster};
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
@@ -100,7 +100,7 @@ impl Notification {
         self
     }
 
-    pub fn is_alert(level: NotificationLevel) -> bool {
+    pub fn is_alert(level: &NotificationLevel) -> bool {
         match level {
             NotificationLevel::Level1 => true,
             NotificationLevel::Level2 => true,
@@ -109,16 +109,16 @@ impl Notification {
         }
     }
 
-    pub fn next_alert(context: Option<&crate::guards::Cluster>) -> Option<Notification> {
+    pub fn next_alert(context: Option<&crate::guards::Cluster>) -> Option<&Notification> {
         match context.as_ref() {
             Some(context) => match &context.notifications {
                 Some(notifications) => {
                     match notifications
                         .into_iter()
-                        .filter(|n| Notification::is_alert(n.level.clone()))
+                        .filter(|n| Notification::is_alert(&n.level))
                         .next()
                     {
-                        Some(notification) => return Some(notification.clone()),
+                        Some(notification) => return Some(notification),
                         None => return None,
                     }
                 }
@@ -128,16 +128,16 @@ impl Notification {
         };
     }
 
-    pub fn next_feature(context: Option<&crate::guards::Cluster>) -> Option<Notification> {
+    pub fn next_feature(context: Option<&crate::guards::Cluster>) -> Option<&Notification> {
         match context.as_ref() {
             Some(context) => match &context.notifications {
                 Some(notifications) => {
                     match notifications
                         .into_iter()
-                        .filter(|n| !Notification::is_alert(n.level.clone()))
+                        .filter(|n| !Notification::is_alert(&n.level))
                         .next()
                     {
-                        Some(notification) => return Some(notification.clone()),
+                        Some(notification) => return Some(notification),
                         None => return None,
                     }
                 }
@@ -806,46 +806,39 @@ pub fn remove_banner(
     viewed.push(id);
     Notifications::update_viewed(&viewed, cookies);
 
-    match context.notifications.as_ref() {
+    let notification = match context.notifications.as_ref() {
         Some(notifications) => {
-            for notification in notifications {
-                if !viewed.contains(&notification.id)
-                    && Notification::is_alert(notification.level.clone())
-                    && alert
-                {
-                    return ResponseOk(
-                        Banner::from_notification(Some(notification.clone()))
-                            .render_once()
-                            .unwrap(),
-                    );
-                } else if !viewed.contains(&notification.id)
-                    && !Notification::is_alert(notification.level.clone())
-                    && !alert
-                {
-                    return ResponseOk(
-                        FeatureBanner::from_notification(Some(notification.clone()))
-                            .render_once()
-                            .unwrap(),
-                    );
-                }
+            if alert {
+                notifications
+                    .into_iter()
+                    .filter(|n: &&Notification| -> bool {
+                        Notification::is_alert(&n.level) && !viewed.contains(&n.id)
+                    })
+                    .next()
+            } else {
+                notifications
+                    .into_iter()
+                    .filter(|n: &&Notification| -> bool {
+                        !Notification::is_alert(&n.level) && !viewed.contains(&n.id)
+                    })
+                    .next()
             }
-            return ResponseOk(match alert {
-                true => Banner::new().remove_banner(true).render_once().unwrap(),
-                false => FeatureBanner::new()
-                    .remove_banner(true)
-                    .render_once()
-                    .unwrap(),
-            });
         }
-        None => {
-            return ResponseOk(match alert {
-                true => Banner::new().remove_banner(true).render_once().unwrap(),
-                false => FeatureBanner::new()
-                    .remove_banner(true)
-                    .render_once()
-                    .unwrap(),
-            })
-        }
+        _ => None,
+    };
+
+    if alert {
+        return ResponseOk(
+            AlertBanner::from_notification(notification)
+                .render_once()
+                .unwrap(),
+        );
+    } else {
+        return ResponseOk(
+            FeatureBanner::from_notification(notification)
+                .render_once()
+                .unwrap(),
+        );
     }
 }
 

@@ -3,8 +3,7 @@ use std::collections::HashMap;
 
 pub use crate::components::{self, cms::index_link::IndexLink, NavLink, StaticNav, StaticNavLink};
 use crate::Notification;
-use components::notifications::banner::Banner;
-use components::notifications::marketing::FeatureBanner;
+use components::notifications::marketing::{AlertBanner, FeatureBanner};
 
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
@@ -39,7 +38,7 @@ pub struct Layout {
     pub nav_links: Vec<IndexLink>,
     pub toc_links: Vec<docs::TocLink>,
     pub footer: String,
-    pub banner: Option<Banner>,
+    pub alert_banner: AlertBanner,
     pub feature_banner: FeatureBanner,
 }
 
@@ -47,7 +46,7 @@ impl Layout {
     pub fn new(title: &str, context: Option<&crate::guards::Cluster>) -> Self {
         Layout {
             head: Head::new().title(title),
-            banner: Some(Banner::from_notification(Notification::next_alert(context))),
+            alert_banner: AlertBanner::from_notification(Notification::next_alert(context)),
             feature_banner: FeatureBanner::from_notification(Notification::next_feature(context)),
             ..Default::default()
         }
