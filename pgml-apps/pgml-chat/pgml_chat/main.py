@@ -333,8 +333,8 @@ async def generate_chat_response(
     }
     history_documents.append(_document)
 
-    if user_input:
-        query = await get_prompt(user_input, conversation_history)
+
+    query = await get_prompt(user_input, conversation_history)
 
     messages.append({"role": "user", "content": query})
 
