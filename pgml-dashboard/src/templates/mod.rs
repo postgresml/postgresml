@@ -2,7 +2,9 @@ use pgml_components::Component;
 use std::collections::HashMap;
 
 pub use crate::components::{self, cms::index_link::IndexLink, NavLink, StaticNav, StaticNavLink};
+use crate::Notification;
 use components::notifications::banner::Banner;
+use components::notifications::marketing::FeatureBanner;
 
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
@@ -38,21 +40,15 @@ pub struct Layout {
     pub toc_links: Vec<docs::TocLink>,
     pub footer: String,
     pub banner: Option<Banner>,
+    pub feature_banner: FeatureBanner,
 }
 
 impl Layout {
-    pub fn new(title: &str, context: Option<crate::guards::Cluster>) -> Self {
-        let banner = match context.as_ref() {
-            Some(context) => match &context.notifications {
-                Some(notification) => Some(Banner::from_notification(notification[0].clone())),
-                None => None,
-            },
-            None => None,
-        };
-
+    pub fn new(title: &str, context: Option<&crate::guards::Cluster>) -> Self {
         Layout {
             head: Head::new().title(title),
-            banner,
+            banner: Some(Banner::from_notification(Notification::next_alert(context))),
+            feature_banner: FeatureBanner::from_notification(Notification::next_feature(context)),
             ..Default::default()
         }
     }

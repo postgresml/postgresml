@@ -15,7 +15,10 @@
         <% if banner.is_some() {%><%+ banner.unwrap() %><% } %>
         <%+ MarketingNavbar::new( user ) %>
 
-        <div class="container my-4 my-xxl-5">
+        <div class="container">
+          <div class="pt-4 pb-5">
+            <%+ feature_banner %>
+          </div>
           <div class="row position-relative">
             <% include!("nav/side.html"); %>
 

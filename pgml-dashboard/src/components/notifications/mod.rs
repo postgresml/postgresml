@@ -4,3 +4,6 @@
 // src/components/notifications/banner
 pub mod banner;
 pub use banner::Banner;
+
+// src/components/notifications/marketing
+pub mod marketing;

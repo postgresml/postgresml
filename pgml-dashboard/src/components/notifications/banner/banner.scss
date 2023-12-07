@@ -7,28 +7,6 @@ div[data-controller="notifications-banner"] {
     .btn-tertiary {
         border: 0px;
     }
-    .news {
-        background-color: #{$gray-100};
-        color: #{$gray-900};
-        .btn-tertiary:hover {
-            filter: brightness(0.9);
-        }
-    }
-    .blog {
-        background-color: #{$neon-shade-100};
-        .btn-tertiary {
-            filter: brightness(1.5);
-        }
-    }
-    .launch {
-        background-color: #{$magenta-shade-200};
-        .btn-tertiary {
-            filter: brightness(1.5);
-        }
-    }
-    .tip {
-        background-color: #{$gray-900};
-    }
     .level1 {
         background-color: #FFFF00;
         color: #{$gray-900};
@@ -42,7 +20,7 @@ div[data-controller="notifications-banner"] {
     }
 
     .close-dark {
-        color: #{$gray-900};
+        color: #{$gray-300};
     }
     .close-light {
         color: #{$gray-100};

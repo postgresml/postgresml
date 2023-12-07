@@ -21,7 +21,7 @@ pub mod templates;
 pub mod types;
 pub mod utils;
 
-use components::notifications::banner::Banner;
+use components::notifications::{banner::Banner, marketing::FeatureBanner};
 use guards::{Cluster, ConnectedCluster};
 use responses::{BadRequest, Error, ResponseOk};
 use templates::{
@@ -72,7 +72,7 @@ impl Notification {
 
         Notification {
             message: message.to_string(),
-            level: NotificationLevel::News,
+            level: NotificationLevel::Level1,
             id: s.finish().to_string(),
             dismissible: true,
             viewed: false,
@@ -99,18 +99,64 @@ impl Notification {
         self.viewed = viewed;
         self
     }
+
+    pub fn is_alert(level: NotificationLevel) -> bool {
+        match level {
+            NotificationLevel::Level1 => true,
+            NotificationLevel::Level2 => true,
+            NotificationLevel::Level3 => true,
+            _ => false,
+        }
+    }
+
+    pub fn next_alert(context: Option<&crate::guards::Cluster>) -> Option<Notification> {
+        match context.as_ref() {
+            Some(context) => match &context.notifications {
+                Some(notifications) => {
+                    match notifications
+                        .into_iter()
+                        .filter(|n| Notification::is_alert(n.level.clone()))
+                        .next()
+                    {
+                        Some(notification) => return Some(notification.clone()),
+                        None => return None,
+                    }
+                }
+                None => return None,
+            },
+            None => return None,
+        };
+    }
+
+    pub fn next_feature(context: Option<&crate::guards::Cluster>) -> Option<Notification> {
+        match context.as_ref() {
+            Some(context) => match &context.notifications {
+                Some(notifications) => {
+                    match notifications
+                        .into_iter()
+                        .filter(|n| !Notification::is_alert(n.level.clone()))
+                        .next()
+                    {
+                        Some(notification) => return Some(notification.clone()),
+                        None => return None,
+                    }
+                }
+                None => return None,
+            },
+            None => return None,
+        };
+    }
 }
 
 impl std::fmt::Display for NotificationLevel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NotificationLevel::News => write!(f, "news"),
-            NotificationLevel::Blog => write!(f, "blog"),
-            NotificationLevel::Launch => write!(f, "launch"),
-            NotificationLevel::Tip => write!(f, "tip"),
             NotificationLevel::Level1 => write!(f, "level1"),
             NotificationLevel::Level2 => write!(f, "level2"),
             NotificationLevel::Level3 => write!(f, "level3"),
+            NotificationLevel::Feature1 => write!(f, "feature1"),
+            NotificationLevel::Feature2 => write!(f, "feature2"),
+            NotificationLevel::Feature3 => write!(f, "feature3"),
         }
     }
 }
@@ -118,13 +164,12 @@ impl std::fmt::Display for NotificationLevel {
 #[derive(Debug, Clone, Default, PartialEq)]
 pub enum NotificationLevel {
     #[default]
-    News,
-    Blog,
-    Launch,
-    Tip,
     Level1,
     Level2,
     Level3,
+    Feature1,
+    Feature2,
+    Feature3,
 }
 
 #[get("/projects")]
@@ -749,8 +794,13 @@ pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(layout.render(templates::Playground {})))
 }
 
-#[get("/notifications/remove_banner?<id>")]
-pub fn remove_banner(id: String, cookies: &CookieJar<'_>, context: &Cluster) -> ResponseOk {
+#[get("/notifications/remove_banner?<id>&<alert>")]
+pub fn remove_banner(
+    id: String,
+    alert: bool,
+    cookies: &CookieJar<'_>,
+    context: &Cluster,
+) -> ResponseOk {
     let mut viewed = Notifications::get_viewed(cookies);
 
     viewed.push(id);
@@ -759,17 +809,43 @@ pub fn remove_banner(id: String, cookies: &CookieJar<'_>, context: &Cluster) -> 
     match context.notifications.as_ref() {
         Some(notifications) => {
             for notification in notifications {
-                if !viewed.contains(&notification.id) {
+                if !viewed.contains(&notification.id)
+                    && Notification::is_alert(notification.level.clone())
+                    && alert
+                {
                     return ResponseOk(
-                        Banner::from_notification(notification.clone())
+                        Banner::from_notification(Some(notification.clone()))
+                            .render_once()
+                            .unwrap(),
+                    );
+                } else if !viewed.contains(&notification.id)
+                    && !Notification::is_alert(notification.level.clone())
+                    && !alert
+                {
+                    return ResponseOk(
+                        FeatureBanner::from_notification(Some(notification.clone()))
                             .render_once()
                             .unwrap(),
                     );
                 }
             }
-            return ResponseOk(Banner::new().remove_banner(true).render_once().unwrap());
+            return ResponseOk(match alert {
+                true => Banner::new().remove_banner(true).render_once().unwrap(),
+                false => FeatureBanner::new()
+                    .remove_banner(true)
+                    .render_once()
+                    .unwrap(),
+            });
         }
-        None => return ResponseOk(Banner::new().remove_banner(true).render_once().unwrap()),
+        None => {
+            return ResponseOk(match alert {
+                true => Banner::new().remove_banner(true).render_once().unwrap(),
+                false => FeatureBanner::new()
+                    .remove_banner(true)
+                    .render_once()
+                    .unwrap(),
+            })
+        }
     }
 }
 
