@@ -25,6 +25,43 @@ lazy_static! {
     static ref DOCS: Collection = Collection::new("Docs", false);
 }
 
+struct Document {
+    /// The absolute path on disk
+    path: PathBuf,
+    description: Option<String>,
+    image: Option<String>,
+    html: String,
+}
+
+impl Document {
+    async fn from_path(path: &PathBuf) -> anyhow::Result<Document> {
+        let contents = tokio::fs::read_to_string(&path).await?;
+
+        let parts = contents.split("---").collect::<Vec<&str>>();
+        let (description, contents) = if parts.len() > 1 {
+            match YamlLoader::load_from_str(parts[1]) {
+                Ok(meta) => {
+                    if meta.len() == 0 || meta[0].as_hash().is_none() {
+                        (None, contents)
+                    } else {
+                        (meta[0]["description"].as_str(), parts[2..].join("---").to_string())
+                    }
+                }
+                Err(_) => (None, contents),
+            }
+        } else {
+            (None, contents)
+        };
+
+        let image = None;
+        // unwrap is safe, because to_mdast never errors with default options, because there are no errors in standard Markdown
+        let mdast = markdown::to_mdast(&contents, &::markdown::ParseOptions::default()).unwrap();
+        let html = markdown::to_html(&mdast.to_string());
+        let document = Document { path: path.to_owned(), description, image, html: html };
+        Ok(document)
+    }
+}
+
 /// A Gitbook collection of documents
 #[derive(Default)]
 struct Collection {
@@ -179,7 +216,16 @@ impl Collection {
         cluster: &Cluster,
         collection: &Collection,
     ) -> Result<ResponseOk, Status> {
-        // Read to string0
+
+        let doc= match Document::from_path(path).await {
+            Ok(doc) => doc,
+            Err(err) => {
+                warn!("Error fetching document: '{:?}' {:?}", path, err);
+                return Err(Status::NotFound);
+            }
+        };
+
+        // Read to string
         let contents = match tokio::fs::read_to_string(&path).await {
             Ok(contents) => {
                 info!("loading markdown file: '{:?}", path);
@@ -247,7 +293,8 @@ impl Collection {
             &plugins,
         )
         .unwrap();
-        let html = String::from_utf8(html).unwrap();
+        // let html = String::from_utf8(html).unwrap();
+        let html = doc.html;
 
         // Handle navigation
         // TODO organize this functionality in the collection to cleanup

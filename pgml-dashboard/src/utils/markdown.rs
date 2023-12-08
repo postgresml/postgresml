@@ -800,7 +800,7 @@ impl Admonition {
 
 impl From<&str> for Admonition {
     fn from(utf8: &str) -> Admonition {
-        let (class, icon, title) = if utf8.starts_with("!!! info") {
+        let (class, icon, title) = if utf8.starts_with("!!! info") || utf8.starts_with(r#"{% hint style="info" %}"#) {
             ("admonition-info", "help", "Info")
         } else if utf8.starts_with("!!! note") {
             ("admonition-note", "priority_high", "Note")
@@ -932,6 +932,8 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
             }
 
             &mut NodeValue::Text(ref mut text) => {
+                info!("text node: {text:?}");
+
                 if text.starts_with("=== \"") {
                     let mut parent = {
                         match node.parent() {
@@ -1031,7 +1033,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         tabs.clear();
                         node.detach();
                     }
-                } else if text.starts_with("{% endtab %}") {
+                } else if text.starts_with("{% endtab %}")  {
                     //ignore it
                     node.detach()
                 } else if text.starts_with("{% tab title=\"") {
@@ -1146,6 +1148,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     || text.starts_with("!!! fail")
                     || text.starts_with("!!! danger")
                     || text.starts_with("!!! generic")
+                    || text.starts_with(r#"{% hint style="info" %}"#)
                 {
                     let parent = node.parent().unwrap();
 
@@ -1190,7 +1193,8 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
                     info_block_close_items.push(None);
                     parent.detach();
-                } else if text.starts_with("!!!") && !info_block_close_items.is_empty() {
+                } else if (text.starts_with("!!!") || text.starts_with("{% endhint %}")) && !info_block_close_items.is_empty() {
+                    info!("ending! {info_block_close_items:?}");
                     let parent = node.parent().unwrap();
 
                     match info_block_close_items.pop() {
@@ -1202,6 +1206,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                                 parent.insert_after(timing);
                             }
                             None => {
+                                info!("adding div");
                                 let n = arena.alloc(Node::new(RefCell::new(Ast::new(
                                     NodeValue::HtmlInline(
                                         r#"
@@ -1210,8 +1215,14 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                                         .to_string(),
                                     ),
                                 ))));
-
-                                parent.insert_after(n);
+                                info!("insert_after: {parent:?}");
+                                if  text.starts_with("{% endhint %}") {
+                                    info!("parent");
+                                    parent.insert_after(n);
+                                } else {
+                                    info!("no parent");
+                                    parent.insert_after(n);
+                                }
                             }
                         },
                         None => {
@@ -1228,11 +1239,10 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         }
                     }
 
-                    parent.detach();
+                    if !text.starts_with("{% endhint %}") {
+                        parent.detach();
+                    }
                 }
-
-                // TODO montana
-                // *text = text.as_bytes().to_vec();
 
                 Ok(true)
             }
