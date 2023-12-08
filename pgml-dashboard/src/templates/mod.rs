@@ -112,7 +112,7 @@ impl From<Layout> for String {
 pub struct WebAppBase<'a> {
     pub content: Option<String>,
     pub breadcrumbs: Vec<NavLink<'a>>,
-    pub head: String,
+    pub head: crate::templates::Head,
     pub dropdown_nav: StaticNav,
     pub account_management_nav: StaticNav,
     pub upper_left_nav: StaticNav,
@@ -122,28 +122,18 @@ pub struct WebAppBase<'a> {
 
 impl<'a> WebAppBase<'a> {
     pub fn new(title: &str, context: &crate::Context) -> Self {
+        let mut head = crate::templates::Head::new()
+            .title(title)
+            .context(context.head_items.clone());
+
         WebAppBase {
-            head: crate::templates::head::DefaultHeadTemplate::new(Some(
-                crate::templates::head::Head {
-                    title: title.to_owned(),
-                    description: None,
-                    image: None,
-                    preloads: vec![],
-                },
-            ))
-            .render_once()
-            .unwrap(),
+            head: head,
             dropdown_nav: context.dropdown_nav.clone(),
             account_management_nav: context.account_management_nav.clone(),
             upper_left_nav: context.upper_left_nav.clone(),
             lower_left_nav: context.lower_left_nav.clone(),
             ..Default::default()
         }
-    }
-
-    pub fn head(&mut self, head: String) -> &mut Self {
-        self.head = head.to_owned();
-        self
     }
 
     pub fn breadcrumbs(&mut self, breadcrumbs: Vec<NavLink<'a>>) -> &mut Self {

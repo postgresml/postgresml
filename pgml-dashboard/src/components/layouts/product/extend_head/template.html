@@ -1,0 +1,23 @@
+<% use crate::utils::config; %>
+
+<script type="importmap" data-turbo-track="reload">
+  {
+    "imports": {
+      "@hotwired/stimulus": "/dashboard/static/js/libs/stimulus-3.2.1.min.js",
+      "@lodash/core": "/dashboard/static/js/libs/lodash-4.17.15-core.js",
+      "@postgresml/main": "<%= config::js_url("main.js") %>"
+    }
+  }
+</script>
+
+
+<link rel="stylesheet" data-turbo-track="reload" href="<%- config::css_url("style.css") %>">
+
+<!-- version: <%= config::git_sha() %> -->
+
+
+<script async src="https://data.cloud.hyperparam.ai/script.js" data-website-id="499122fd-f307-4e8d-af4b-88b9f5e9903b"></script>
+
+<script defer src="https://cdn.plot.ly/plotly-2.11.1.min.js"></script>
+
+<script type="module" defer async src="/dashboard/static/js/libs/sortable-1.12.0.min.js"></script>

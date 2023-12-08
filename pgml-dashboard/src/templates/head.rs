@@ -6,6 +6,7 @@ pub struct Head {
     pub description: Option<String>,
     pub image: Option<String>,
     pub preloads: Vec<String>,
+    pub context: String,
 }
 
 impl Head {
@@ -35,6 +36,11 @@ impl Head {
 
     pub fn not_found() -> Head {
         Head::new().title("404 - Not Found")
+    }
+
+    pub fn context(mut self, context: String) -> Head {
+        self.context = context;
+        self
     }
 }
 

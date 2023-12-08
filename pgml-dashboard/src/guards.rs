@@ -1,3 +1,4 @@
+use crate::components::layouts::product::extend_head::ExtendHead;
 use crate::components::sections::footers::marketing_footer::MarketingFooter;
 use crate::templates::components::{StaticNav, StaticNavLink};
 use once_cell::sync::OnceCell;
@@ -132,6 +133,7 @@ impl Cluster {
                 },
                 lower_left_nav: StaticNav::default(),
                 marketing_footer: MarketingFooter::new().render_once().unwrap(),
+                head_items: ExtendHead::new().render_once().unwrap(),
             },
             notifications: None,
         }
