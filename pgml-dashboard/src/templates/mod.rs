@@ -44,8 +44,15 @@ pub struct Layout {
 
 impl Layout {
     pub fn new(title: &str, context: Option<&crate::guards::Cluster>) -> Self {
+        let head = match context.as_ref() {
+            Some(context) => Head::new()
+                .title(title)
+                .context(context.context.head_items.clone()),
+            None => Head::new().title(title),
+        };
+
         Layout {
-            head: Head::new().title(title),
+            head,
             alert_banner: AlertBanner::from_notification(Notification::next_alert(context)),
             feature_banner: FeatureBanner::from_notification(Notification::next_feature(context)),
             ..Default::default()

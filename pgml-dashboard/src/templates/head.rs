@@ -61,12 +61,6 @@ impl DefaultHeadTemplate {
     }
 }
 
-impl From<DefaultHeadTemplate> for String {
-    fn from(layout: DefaultHeadTemplate) -> String {
-        layout.render_once().unwrap()
-    }
-}
-
 #[cfg(test)]
 mod head_tests {
     use crate::templates::Head;

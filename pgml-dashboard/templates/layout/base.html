@@ -1,10 +1,11 @@
 <% 
   use crate::components::navigation::navbar::marketing::Marketing as MarketingNavbar;
+  use crate::templates::head::DefaultHeadTemplate;
 %>
 <!DOCTYPE html>
 <html lang="en-US">
 
-  <% include!("head.html"); %>
+  <%+ DefaultHeadTemplate::new(Some(head)) %>
 
   <body data-bs-theme="dark" data-theme="docs">
     <main>
