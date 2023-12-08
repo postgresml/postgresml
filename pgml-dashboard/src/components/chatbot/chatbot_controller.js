@@ -4,6 +4,10 @@ import autosize from "autosize";
 import DOMPurify from "dompurify";
 import * as marked from "marked";
 
+const getRandomInt = () => {
+  return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+}
+
 const LOADING_MESSAGE = `
 <div class="d-flex align-items-end">
   <div>Loading</div>
@@ -15,36 +19,40 @@ const getBackgroundImageURLForSide = (side, knowledgeBase) => {
   if (side == "user") {
     return "/dashboard/static/images/chatbot_user.webp";
   } else {
-    if (knowledgeBase == 0) {
+    if (knowledgeBase == "postgresml") {
       return "/dashboard/static/images/owl_gradient.svg";
-    } else if (knowledgeBase == 1) {
+    } else if (knowledgeBase == "pytorch") {
       return "/dashboard/static/images/logos/pytorch.svg";
-    } else if (knowledgeBase == 2) {
+    } else if (knowledgeBase == "rust") {
       return "/dashboard/static/images/logos/rust.svg";
-    } else if (knowledgeBase == 3) {
+    } else if (knowledgeBase == "postgresql") {
       return "/dashboard/static/images/logos/postgresql.svg";
     }
   }
 };
 
-const createHistoryMessage = (side, question, id, knowledgeBase) => {
-  id = id || "";
+const createHistoryMessage = (message, knowledgeBase) => {
+  if (message.side == "system") {
+    return `
+      <div class="chatbot-knowledge-base-notice text-center p-3">${message.text}</div>
+    `;
+  }
   return `
-  <div id="${id}" class="chatbot-message-wrapper pt-3 pb-3 ${
-    side == "user" ? "chatbot-user-message" : "chatbot-bot-message"
+  <div id="${message.id}" class="chatbot-message-wrapper pt-3 pb-3 ${
+    message.side == "user" ? "chatbot-user-message" : "chatbot-bot-message"
   }">
       <div class="d-flex gap-1">
         <div>
           <div class="rounded p-1 chatbot-message-avatar-wrapper">
             <div class="chatbot-message-avatar" style="background-image: url('${getBackgroundImageURLForSide(
-              side,
+              message.side,
               knowledgeBase,
             )}')">
           </div>
         </div>
         </div>
-        <div class="chatbot-message ps-1 overflow-hidden">
-          ${question}
+        <div class="chatbot-message ps-1 overflow-hidden" clean="true">
+          ${message.get_html()}
         </div>
       </div>
     </div>
@@ -52,16 +60,28 @@ const createHistoryMessage = (side, question, id, knowledgeBase) => {
 };
 
 const knowledgeBaseIdToName = (knowledgeBase) => {
-  if (knowledgeBase == 0) {
+  if (knowledgeBase == "postgresml") {
     return "PostgresML";
-  } else if (knowledgeBase == 1) {
+  } else if (knowledgeBase == "pytorch") {
     return "PyTorch";
-  } else if (knowledgeBase == 2) {
+  } else if (knowledgeBase == "rust") {
     return "Rust";
-  } else if (knowledgeBase == 3) {
+  } else if (knowledgeBase == "postgresql") {
     return "PostgreSQL";
   }
 };
+
+const brainIdToName = (brain) => {
+  if (brain == "teknium/OpenHermes-2.5-Mistral-7B") {
+    return "OpenHermes"
+  } else if (brain == "Gryphe/MythoMax-L2-13b") {
+    return "MythoMax"
+  } else if (brain == "openchat/openchat_3.5") {
+    return "OpenChat"    
+  } else if (brain == "openai") {
+    return "ChatGPT"
+  }
+}
 
 const createKnowledgeBaseNotice = (knowledgeBase) => {
   return `
@@ -71,21 +91,71 @@ const createKnowledgeBaseNotice = (knowledgeBase) => {
   `;
 };
 
-const getAnswer = async (question, model, knowledgeBase) => {
-  const response = await fetch("/chatbot/get-answer", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ question, model, knowledgeBase }),
-  });
-  return response.json();
-};
+class Message {
+  constructor(id, side, text, is_partial=false) {
+    this.id = id
+    this.text = text
+    this.side = side
+    this.is_partial = is_partial
+  }
+
+  get_html() {
+    return DOMPurify.sanitize(marked.parse(this.text));
+  }
+}
+
+class RawMessage extends Message {
+  constructor(id, side, text, is_partial=false) {
+    super(id, side, text, is_partial);
+  }
+
+  get_html() {
+    return this.text;
+  }
+}
+
+class MessageHistory {
+  constructor() {
+    this.messageHistory = {};
+  }
+
+  add_message(message, knowledgeBase) {
+    console.log("ADDDING", message, knowledgeBase);
+    if (!(knowledgeBase in this.messageHistory)) {
+      this.messageHistory[knowledgeBase] = [];
+    }
+    if (message.is_partial) {
+      let current_message = this.messageHistory[knowledgeBase].find(item => item.id == message.id);     
+      if (!current_message) {
+        this.messageHistory[knowledgeBase].push(message);
+      } else {
+        current_message.text += message.text;
+      }
+    } else {
+      if (this.messageHistory[knowledgeBase].length == 0 || message.side != "system") {
+          this.messageHistory[knowledgeBase].push(message);
+      } else if (this.messageHistory[knowledgeBase][this.messageHistory[knowledgeBase].length -1].side == "system") {
+        this.messageHistory[knowledgeBase][this.messageHistory[knowledgeBase].length -1] = message
+      } else {
+        this.messageHistory[knowledgeBase].push(message);
+      }
+    }
+  }
+
+  get_messages(knowledgeBase) {
+    if (!(knowledgeBase in this.messageHistory)) {
+      return [];
+    } else {
+      return this.messageHistory[knowledgeBase];
+    }
+  }
+}
 
 export default class extends Controller {
   initialize() {
-    this.alertCount = 0;
-    this.gettingAnswer = false;
+    this.messageHistory = new MessageHistory();
+    this.messageIdToKnowledgeBaseId = {};
+    
     this.expanded = false;
     this.chatbot = document.getElementById("chatbot");
     this.expandContractImage = document.getElementById(
@@ -100,55 +170,111 @@ export default class extends Controller {
     this.exampleQuestions = document.getElementsByClassName(
       "chatbot-example-questions",
     );
-    this.handleBrainChange(); // This will set our initial brain
     this.handleKnowledgeBaseChange(); // This will set our initial knowledge base
+    this.handleBrainChange(); // This will set our initial brain
     this.handleResize();
+
+    const url = ((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.hostname + (((window.location.port != 80) && (window.location.port != 443)) ? ":" + window.location.port : "") + window.location.pathname + "/get-answer";
+    this.socket = new WebSocket(url);
+    this.socket.onmessage = (message) => {
+      let result = JSON.parse(message.data);
+      console.log(result);
+
+      if (result.error) {
+        this.showChatbotAlert("Error", "Error getting chatbot answer");
+        console.log(result.error);
+        this.redrawChat(); // This clears any loading messages
+      } else {
+        let message;
+        if (result.partial_result) {
+          message = new Message(result.id, "bot", result.partial_result, true);
+        } else {
+          message = new Message(result.id, "bot", result.result, false);
+        }
+        this.messageHistory.add_message(message, this.messageIdToKnowledgeBaseId[message.id]);
+        this.redrawChat();
+      }
+      this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
+    };
+
+    this.socket.onclose = () => {
+      window.setTimeout(() => this.openConnection(), 500);
+    };
+    this.getHistory();
+  }
+
+  async clearHistory() {
+    // This endpoint clears the chatbot_sesion_id cookie
+    await fetch("/chatbot/clear-history");
+    window.location.reload();
+  }
+
+  async getHistory() {
+    const result = await fetch("/chatbot/get-history");
+    const history = await result.json();
+    if (history.error) {
+      console.log("Error getting chat history", history.error)
+    } else {
+      for (const message of history.result) {
+        const newMessage = new Message(getRandomInt(), message.side, message.content, false);
+        console.log(newMessage);
+        this.messageHistory.add_message(newMessage, message.knowledge_base);
+      }
+    }
+    this.redrawChat();
+  }
+
+  redrawChat() {
+    this.chatHistory.innerHTML = "";
+    const messages = this.messageHistory.get_messages(this.knowledgeBase);
+    for (const message of messages) {
+      console.log("Drawing", message);
+      this.chatHistory.insertAdjacentHTML(
+        "beforeend",
+        createHistoryMessage(
+          message,
+          this.knowledgeBase,
+        ),
+      );
+    }
+
+    // Hide or show example questions
+    this.hideExampleQuestions();
+    if (messages.length == 0 || (messages.length == 1 && messages[0].side == "system")) {
+      document
+        .getElementById(`chatbot-example-questions-${this.knowledgeBase}`)
+        .style.setProperty("display", "flex", "important");
+    }
+    
+    this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
   }
 
   newUserQuestion(question) {
-    this.chatHistory.insertAdjacentHTML(
-      "beforeend",
-      createHistoryMessage("user", question),
-    );
+    const message = new Message(getRandomInt(), "user", question);
+    this.messageHistory.add_message(message, this.knowledgeBase);
+    this.messageIdToKnowledgeBaseId[message.id] = this.knowledgeBase;
+    this.hideExampleQuestions();
+    this.redrawChat();
+
+    let loadingMessage = new Message("loading", "bot", LOADING_MESSAGE);
     this.chatHistory.insertAdjacentHTML(
       "beforeend",
       createHistoryMessage(
-        "bot",
-        LOADING_MESSAGE,
-        "chatbot-loading-message",
+        loadingMessage,
         this.knowledgeBase,
       ),
     );
-    this.hideExampleQuestions();
     this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
-
-    this.gettingAnswer = true;
-    getAnswer(question, this.brain, this.knowledgeBase)
-      .then((answer) => {
-        if (answer.answer) {
-          this.chatHistory.insertAdjacentHTML(
-            "beforeend",
-            createHistoryMessage(
-              "bot",
-              DOMPurify.sanitize(marked.parse(answer.answer)),
-              "",
-              this.knowledgeBase,
-            ),
-          );
-        } else {
-          this.showChatbotAlert("Error", answer.error);
-          console.log(answer.error);
-        }
-      })
-      .catch((error) => {
-        this.showChatbotAlert("Error", "Error getting chatbot answer");
-        console.log(error);
-      })
-      .finally(() => {
-        document.getElementById("chatbot-loading-message").remove();
-        this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
-        this.gettingAnswer = false;
-      });
+    
+    let id = getRandomInt();
+    this.messageIdToKnowledgeBaseId[id] = this.knowledgeBase;
+    let socketData = {
+      id,
+      question,
+      model: this.brain,
+      knowledge_base: this.knowledgeBase
+    };
+    this.socket.send(JSON.stringify(socketData));
   }
 
   handleResize() {
@@ -169,12 +295,10 @@ export default class extends Controller {
   handleEnter(e) {
     // This prevents adding a return
     e.preventDefault();
-
+    // Don't continue if the question is empty
     const question = this.questionInput.value.trim();
-    if (question.length == 0) {
+    if (question.length == 0)
       return;
-    }
-
     // Handle resetting the input
     // There is probably a better way to do this, but this was the best/easiest I found
     this.questionInput.value = "";
@@ -185,105 +309,31 @@ export default class extends Controller {
   }
 
   handleBrainChange() {
-    // Comment this out when we go back to using brains
-    this.brain = 0;
+    let selected = document.querySelector('input[name="chatbot-brain-options"]:checked').value;
+    if (selected == this.brain)
+      return;
+    this.brain = selected;
     this.questionInput.focus();
-
-    // Uncomment this out when we go back to using brains
-    // We could just disable the input, but we would then need to listen for click events so this seems easier
-    // if (this.gettingAnswer) {
-    //   document.querySelector(
-    //     `input[name="chatbot-brain-options"][value="${this.brain}"]`,
-    //   ).checked = true;
-    //   this.showChatbotAlert(
-    //     "Error",
-    //     "Cannot change brain while chatbot is loading answer",
-    //   );
-    //   return;
-    // }
-    // let selected = parseInt(
-    //   document.querySelector('input[name="chatbot-brain-options"]:checked')
-    //     .value,
-    // );
-    // if (selected == this.brain) {
-    //   return;
-    // }
-    // brainToContentMap[this.brain] = this.chatHistory.innerHTML;
-    // this.chatHistory.innerHTML = brainToContentMap[selected] || "";
-    // if (this.chatHistory.innerHTML) {
-    //   this.exampleQuestions.style.setProperty("display", "none", "important");
-    // } else {
-    //   this.exampleQuestions.style.setProperty("display", "flex", "important");
-    // }
-    // this.brain = selected;
-    // this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
-    // this.questionInput.focus();
+    this.addBrainAndKnowledgeBaseChangedSystemMessage();
   }
 
   handleKnowledgeBaseChange() {
-    // Uncomment this when we go back to using brains
-    // let selected = parseInt(
-    //   document.querySelector('input[name="chatbot-knowledge-base-options"]:checked')
-    //     .value,
-    // );
-    // this.knowledgeBase = selected;
-
-    // Comment this out when we go back to using brains
-    // We could just disable the input, but we would then need to listen for click events so this seems easier
-    if (this.gettingAnswer) {
-      document.querySelector(
-        `input[name="chatbot-knowledge-base-options"][value="${this.knowledgeBase}"]`,
-      ).checked = true;
-      this.showChatbotAlert(
-        "Error",
-        "Cannot change knowledge base while chatbot is loading answer",
-      );
+    let selected = document.querySelector('input[name="chatbot-knowledge-base-options"]:checked').value;
+    if (selected == this.knowledgeBase)
       return;
-    }
-    let selected = parseInt(
-      document.querySelector(
-        'input[name="chatbot-knowledge-base-options"]:checked',
-      ).value,
-    );
-    if (selected == this.knowledgeBase) {
-      return;
-    }
-
-    // document.getElementById
-    this.knowledgeBaseToContentMap[this.knowledgeBase] =
-      this.chatHistory.innerHTML;
-    this.chatHistory.innerHTML = this.knowledgeBaseToContentMap[selected] || "";
     this.knowledgeBase = selected;
-
-    // This should be extended to insert the new knowledge base notice in the correct place
-    if (this.chatHistory.childElementCount == 0) {
-      this.chatHistory.insertAdjacentHTML(
-        "beforeend",
-        createKnowledgeBaseNotice(this.knowledgeBase),
-      );
-      this.hideExampleQuestions();
-      document
-        .getElementById(
-          `chatbot-example-questions-${knowledgeBaseIdToName(
-            this.knowledgeBase,
-          )}`,
-        )
-        .style.setProperty("display", "flex", "important");
-    } else if (this.chatHistory.childElementCount == 1) {
-      this.hideExampleQuestions();
-      document
-        .getElementById(
-          `chatbot-example-questions-${knowledgeBaseIdToName(
-            this.knowledgeBase,
-          )}`,
-        )
-        .style.setProperty("display", "flex", "important");
-    } else {
-      this.hideExampleQuestions();
-    }
-
-    this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
+    this.redrawChat();
     this.questionInput.focus();
+    this.addBrainAndKnowledgeBaseChangedSystemMessage();
+  }
+
+  addBrainAndKnowledgeBaseChangedSystemMessage() {
+    let knowledge_base = knowledgeBaseIdToName(this.knowledgeBase);
+    let brain = brainIdToName(this.brain);
+    let content = `Chatting with ${brain} about ${knowledge_base}`;
+    const newMessage = new Message(getRandomInt(), "system", content);
+    this.messageHistory.add_message(newMessage, this.knowledgeBase);
+    this.redrawChat();
   }
 
   handleExampleQuestionClick(e) {
