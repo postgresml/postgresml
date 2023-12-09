@@ -938,7 +938,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                 if text.ends_with(".md") {
                     if let Some(parent) = node.parent() {
                         match parent.data.borrow().value {
-                            NodeValue::Link(ref link) => {
+                            NodeValue::Link(ref _link) => {
                                 for _ in 0..".md".len() {
                                     text.pop();
                                 }
