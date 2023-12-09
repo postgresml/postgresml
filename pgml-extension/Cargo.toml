@@ -19,39 +19,39 @@ python = ["pyo3"]
 cuda = ["xgboost/cuda", "lightgbm/cuda"]
 
 [dependencies]
-pgrx = "=0.11.0"
-pgrx-pg-sys = "=0.11.0"
-xgboost = { git = "https://github.com/postgresml/rust-xgboost.git", branch = "master" }
-once_cell = { version = "1", features = ["parking_lot"] }
-rand = "0.8"
-ndarray = { version = "0.15.6", features = ["serde", "blas"] }
-ndarray-stats = "0.5.1"
+anyhow = { version = "1.0" }
+csv = "1.2"
+flate2 = "1.0"
 blas = { version = "0.22" }
 blas-src = { version = "0.9", features = ["openblas"] }
-openblas-src = { version = "0.10", features = ["cblas", "system"] }
-serde = { version = "1.0" }
-serde_json = { version = "1.0", features = ["preserve_order"] }
-rmp-serde = { version = "1.1" }
-typetag = "0.2"
+indexmap = { version = "1.0", features = ["serde"] }
+itertools = "0.11"
 pyo3 = { version = "0.17", features = ["auto-initialize"], optional = true }
 heapless = "0.7"
 lightgbm = { git = "https://github.com/postgresml/lightgbm-rs", branch = "main" }
-parking_lot = "0.12"
-itertools = "0.11"
 linfa = { path = "deps/linfa" }
 linfa-linear = { path = "deps/linfa/algorithms/linfa-linear", features = [
     "serde",
 ] }
 linfa-logistic = { path = "deps/linfa/algorithms/linfa-logistic" }
 linfa-svm = { path = "deps/linfa/algorithms/linfa-svm", features = ["serde"] }
-anyhow = { version = "1.0" }
-indexmap = { version = "1.0", features = ["serde"] }
+once_cell = { version = "1", features = ["parking_lot"] }
+openblas-src = { version = "0.10", features = ["cblas", "system"] }
+ndarray = { version = "0.15.6", features = ["serde", "blas"] }
+ndarray-stats = "0.5.1"
+parking_lot = "0.12"
+pgrx = "=0.11.2"
+pgrx-pg-sys = "=0.11.2"
+rand = "0.8"
+rmp-serde = { version = "1.1" }
 signal-hook = "0.3"
-flate2 = "1.0"
-csv = "1.2"
+serde = { version = "1.0" }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+typetag = "0.2"
+xgboost = { git = "https://github.com/postgresml/rust-xgboost.git", branch = "master" }
 
 [dev-dependencies]
-pgrx-tests = "=0.11.0"
+pgrx-tests = "=0.11.2"
 
 [build-dependencies]
 vergen = { version = "8", features = ["build", "git", "gitcl"] }
