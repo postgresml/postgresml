@@ -9,12 +9,12 @@ description: >-
 
 ## Open Source Models
 
-PostgresML integrates [🤗 Hugging Face Transformers](https://huggingface.co/transformers) to bring state-of-the-art models into the data layer. There are tens of thousands of pre-trained models with pipelines to turn raw inputs into useful results. Many state of the art deep learning architectures have been published and made available for download. You will want to browse all the [models](https://huggingface.co/models) available to find the perfect solution for your [dataset](https://huggingface.co/dataset) and [task](https://huggingface.co/tasks). The pgml extension provides a few APIs for different use cases:
+PostgresML integrates [🤗 Hugging Face Transformers](https://huggingface.co/transformers) to bring state-of-the-art models into the data layer. There are tens of thousands of pre-trained models with pipelines to turn raw inputs into useful results. Many LLMs have been published and made available for download. You will want to browse all the [models](https://huggingface.co/models) available to find the perfect solution for your [dataset](https://huggingface.co/dataset) and [task](https://huggingface.co/tasks). The pgml extension provides a few APIs for different use cases:
 
 * [pgml.embed.md](pgml.embed.md "mention") returns vector embeddings for nearest neighbor searches and other vector database use cases
 * [pgml.generate.md](pgml.generate.md "mention") returns streaming text responses for chatbots
 * [pgml.transform](pgml.transform/ "mention") allows you to perform dozens of natural language processing (NLP) tasks with thousands of models, like sentiment analysis, question and answering, translation, summarization and text generation
-* [pgml.tune.md](pgml.tune.md "mention")fine tunes an open source model on your own data
+* [pgml.tune.md](pgml.tune.md "mention") fine tunes an open source model on your own data
 
 ## Train & deploy your own models
 

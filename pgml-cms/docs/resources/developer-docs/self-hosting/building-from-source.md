@@ -45,7 +45,7 @@ For a typical deployment in production, you would need to compile and install th
 To install `pgrx`, simply run:
 
 ```
-cargo install cargo-pgrx --version "0.11.2"
+cargo install cargo-pgrx --version "0.10.0"
 ```
 
 Before using `pgrx`, it needs to be initialized against the installed version of PostgreSQL. In this example, we'll be using the Ubuntu 22.04 default PostgreSQL 14 installation:
