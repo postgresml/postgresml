@@ -38,16 +38,15 @@ The default deployment behavior allows any algorithm to qualify. It's automatica
 
 ### Deploying the best score
 
-\=== "SQL"
+#### SQL
 
-```sql
-SELECT * FROM pgml.deploy(
-    'Handwritten Digit Image Classifier',
+<pre class="language-sql"><code class="lang-sql"><strong>SELECT * FROM pgml.deploy(
+</strong>    'Handwritten Digit Image Classifier',
     strategy => 'best_score'
 );
-```
+</code></pre>
 
-\=== "Output"
+#### Output
 
 ```sql
               project               |  strategy  | algorithm
@@ -56,13 +55,11 @@ SELECT * FROM pgml.deploy(
 (1 row)
 ```
 
-\===
-
 ### **Specific Algorithms**
 
 Deployment candidates can be restricted to a specific algorithm by including the `algorithm` parameter. This is useful when you're training multiple algorithms using different hyperparameters and want to restrict the deployment a single algorithm only:
 
-\=== "SQL"
+#### SQL
 
 ```sql
 SELECT * FROM pgml.deploy(
@@ -72,7 +69,7 @@ SELECT * FROM pgml.deploy(
 );
 ```
 
-\=== "Output"
+#### Output
 
 ```sql
             project_name            |    strategy    | algorithm
@@ -81,13 +78,13 @@ SELECT * FROM pgml.deploy(
 (1 row)
 ```
 
-\===
+
 
 ### Rolling Back
 
 In case the new model isn't performing well in production, it's easy to rollback to the previous version. A rollback creates a new deployment for the old model. Multiple rollbacks in a row will oscillate between the two most recently deployed models, making rollbacks a safe and reversible operation.
 
-\=== "Rollback 1"
+#### Rollback
 
 ```sql
 SELECT * FROM pgml.deploy(
@@ -96,7 +93,7 @@ SELECT * FROM pgml.deploy(
 );
 ```
 
-\=== "Output"
+#### Output
 
 ```sql
              project               | strategy | algorithm
@@ -105,7 +102,9 @@ SELECT * FROM pgml.deploy(
 (1 row)
 ```
 
-\=== "Rollback 2"
+#### Rollback again
+
+Rollbacks are actually new deployments, so issuing two rollbacks in a row will leave you back with the original model, making rollback safely undoable.
 
 ```sql
 SELECT * FROM pgml.deploy(
@@ -114,7 +113,7 @@ SELECT * FROM pgml.deploy(
 );
 ```
 
-\=== "Output"
+#### Output
 
 ```sql
               project               | strategy | algorithm
@@ -122,5 +121,3 @@ SELECT * FROM pgml.deploy(
  Handwritten Digit Image Classifier | rollback | xgboost
 (1 row)
 ```
-
-\===
