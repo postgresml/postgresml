@@ -4,77 +4,9 @@ description: A machine learning approach that uses labeled data
 
 # Supervised Learning
 
-PostgresML is a machine learning extension for PostgreSQL that enables you to perform training and inference using SQL queries.&#x20;
-
-## Training
-
-The training function is at the heart of PostgresML. It's a powerful single mechanism that can handle many different training tasks which are configurable with the function parameters.
-
-### API
-
-Most parameters are optional and have configured defaults. The `project_name` parameter is required and is an easily recognizable identifier to organize your work.
-
-```sql
-pgml.train(
-    project_name TEXT,
-    task TEXT DEFAULT NULL,
-    relation_name TEXT DEFAULT NULL,
-    y_column_name TEXT DEFAULT NULL,
-    algorithm TEXT DEFAULT 'linear',
-    hyperparams JSONB DEFAULT '{}'::JSONB,
-    search TEXT DEFAULT NULL,
-    search_params JSONB DEFAULT '{}'::JSONB,
-    search_args JSONB DEFAULT '{}'::JSONB,
-    test_size REAL DEFAULT 0.25,
-    test_sampling TEXT DEFAULT 'random'  
-)
-```
-
-#### Parameters
-
-<table data-full-width="false"><thead><tr><th></th><th></th><th></th></tr></thead><tbody><tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Example</strong></td></tr><tr><td><code>project_name</code></td><td>An easily recognizable identifier to organize your work.</td><td><code>My First PostgresML Project</code></td></tr><tr><td><code>task</code></td><td>The objective of the experiment: <code>regression</code> or <code>classification</code>.</td><td><code>classification</code></td></tr><tr><td><code>relation_name</code></td><td>The Postgres table or view where the training data is stored or defined.</td><td><code>public.users</code></td></tr><tr><td><code>y_column_name</code></td><td>The name of the label (aka "target" or "unknown") column in the training table.</td><td><code>is_bot</code></td></tr><tr><td><code>algorithm</code></td><td>The algorithm to train on the dataset, see <a data-mention href="regression.md">regression.md</a> and <a data-mention href="classification.md">classification.md</a> sections for supported algorithms</td><td><code>xgboost</code></td></tr><tr><td><code>hyperparams</code></td><td>The hyperparameters to pass to the algorithm for training, JSON formatted.</td><td><code>{ "n_estimators": 25 }</code></td></tr><tr><td><code>search</code></td><td>If set, PostgresML will perform a hyperparameter search to find the best hyperparameters for the algorithm. See <a href="../../../../../docs/training/hyperparameter_search">Hyperparameter Search</a> for details.</td><td><code>grid</code></td></tr><tr><td><code>search_params</code></td><td>Search parameters used in the hyperparameter search, using the scikit-learn notation, JSON formatted.</td><td><code>{ "n_estimators": [5, 10, 25, 100] }</code></td></tr><tr><td><code>search_args</code></td><td>Configuration parameters for the search, JSON formatted. Currently only <code>n_iter</code> is supported for <code>random</code> search.</td><td><code>{ "n_iter": 10 }</code></td></tr><tr><td><code>test_size</code></td><td>Fraction of the dataset to use for the test set and algorithm validation.</td><td><code>0.25</code></td></tr><tr><td><code>test_sampling</code></td><td>Algorithm used to fetch test data from the dataset: <code>random</code>, <code>first</code>, or <code>last</code>.</td><td><code>random</code></td></tr></tbody></table>
-
-### Example
-
-```sql
-SELECT * FROM pgml.train(
-    project_name => 'My Classification Project', 
-    task => 'classification', 
-    relation_name => 'pgml.digits',
-    y_column_name => 'target'
-);
-```
-
-This will create a **My Classification Project**, copy the `pgml.digits` table into the `pgml` schema, naming it `pgml.snapshot_{id}` where `id` is the primary key of the snapshot, and train a linear classification model on the snapshot using the `target` column as the label.
-
-
-
-When used for the first time in a project, `pgml.train()` function requires the `task` parameter, which can be either `regression` or `classification`. The task determines the relevant metrics and analysis performed on the data. All models trained within the project will refer to those metrics and analysis for benchmarking and deployment.
-
-The first time it's called, the function will also require a `relation_name` and `y_column_name`. The two arguments will be used to create the first snapshot of training and test data. By default, 25% of the data (specified by the `test_size` parameter) will be randomly sampled to measure the performance of the model after the `algorithm` has been trained on the 75% of the data.
-
-{% hint style="info" %}
-```sql
-SELECT * FROM pgml.train(
-    'My Classification Project',
-    algorithm => 'xgboost'
-);
-```
-{% endhint %}
-
-!
-
-Future calls to `pgml.train()` may restate the same `task` for a project or omit it, but they can't change it. Projects manage their deployed model using the metrics relevant to a particular task (e.g. `r2` or `f1`), so changing it would mean some models in the project are no longer directly comparable. In that case, it's better to start a new project.
-
-{% hint style="info" %}
-If you'd like to train multiple models on the same snapshot, follow up calls to `pgml.train()` may omit the `relation_name`, `y_column_name`, `test_size` and `test_sampling` arguments to reuse identical data with multiple algorithms or hyperparameters.
-{% endhint %}
-
 ### Getting Training Data
 
 A large part of the machine learning workflow is acquiring, cleaning, and preparing data for training algorithms. Naturally, we think Postgres is a great place to store your data. For the purpose of this example, we'll load a toy dataset, the classic handwritten digits image collection, from scikit-learn.
-
-
 
 ```sql
 SELECT * FROM pgml.load_dataset('digits');
@@ -90,8 +22,6 @@ NOTICE:  table "digits" does not exist, skipping
 ```
 
 This `NOTICE` can safely be ignored. PostgresML attempts to do a clean reload by dropping the `pgml.digits` table if it exists. The first time this command is run, the table does not exist.
-
-
 
 PostgresML loaded the Digits dataset into the `pgml.digits` table. You can examine the 2D arrays of image data, as well as the label in the `target` column:
 
@@ -116,7 +46,7 @@ target |                                                                        
 
 ### Training a Model
 
-Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](../../../../../docs/training/algorithm\_selection) for a complete list of available algorithms.
+Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](../../../docs/training/algorithm\_selection/) for a complete list of available algorithms.
 
 ```sql
 SELECT * FROM pgml.train(
@@ -149,7 +79,7 @@ INFO:  Metrics: {
 (1 row)
 ```
 
-The output gives us information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](../../../../../docs/predictions/deployments) for a guide to managing the active model.
+The output gives us information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](../../../docs/predictions/deployments/) for a guide to managing the active model.
 
 ### Inspecting the results
 
@@ -198,8 +128,6 @@ SELECT pgml.predict(
 ) AS prediction;
 ```
 
-
-
 where `ARRAY[0.1, 2.0, 5.0]` is the same type of features used in training, in the same order as in the training data table or view. This score can be used in other regular queries.
 
 !!! example
@@ -224,7 +152,7 @@ LIMIT 25;
 
 ### Example
 
-If you've already been through the [Training Overview](../../../../../docs/training/overview), you can see the results of those efforts:
+If you've already been through the [Training Overview](../../../docs/training/overview/), you can see the results of those efforts:
 
 ```sql
 SELECT
@@ -267,7 +195,7 @@ SELECT * FROM pgml.deployed_models;
 
 PostgresML will automatically deploy a model only if it has better metrics than existing ones, so it's safe to experiment with different algorithms and hyperparameters.
 
-Take a look at [Deploying Models](../../../../../docs/predictions/deployments) documentation for more details.
+Take a look at [Deploying Models](../../../docs/predictions/deployments/) documentation for more details.
 
 ### Specific Models
 

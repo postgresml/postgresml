@@ -16,7 +16,7 @@ Visit [https://postgresml.org/signup](https://postgresml.org/signup)​ to creat
 
 </div>
 
-### Select a plan <a href="#create-a-new-account" id="create-a-new-account"></a>
+## Select a plan <a href="#create-a-new-account" id="create-a-new-account"></a>
 
 Choose the type of GPU powered database deployment that is right for you.
 
@@ -27,7 +27,7 @@ Click on **Get Started** under the plan of your choice.
 
 <figure><img src="../../.gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
 
-### Your database credentials  <a href="#create-a-new-account" id="create-a-new-account"></a>
+## Your database credentials  <a href="#create-a-new-account" id="create-a-new-account"></a>
 
 We'll automatically provision an initial set of database credentials and provide you with the connection string. You can connect to your database if you have `psql` installed on your machine, or any other PostgreSQL client.
 

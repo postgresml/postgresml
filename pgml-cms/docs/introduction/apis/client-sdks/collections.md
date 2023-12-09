@@ -1,7 +1,5 @@
 # Collections
 
-
-
 Collections are the organizational building blocks of the SDK. They manage all documents and related chunks, embeddings, tsvectors, and pipelines.
 
 ## Creating Collections
@@ -11,15 +9,15 @@ By default, collections will read and write to the database specified by `DATABA
 ### **Default `DATABASE_URL`**
 
 {% tabs %}
-{% tab title="Python" %}
-```python
-collection = Collection("test_collection")
-```
-{% endtab %}
-
 {% tab title="JavaScript" %}
 ```javascript
 collection = pgml.newCollection("test_collection")
+```
+{% endtab %}
+
+{% tab title="Python" %}
+```python
+collection = Collection("test_collection")
 ```
 {% endtab %}
 {% endtabs %}
@@ -29,15 +27,15 @@ collection = pgml.newCollection("test_collection")
 Create a Collection that reads from a different database than that set by the environment variable `DATABASE_URL`.
 
 {% tabs %}
-{% tab title="Python" %}
-```python
-collection = Collection("test_collection", CUSTOM_DATABASE_URL)
-```
-{% endtab %}
-
 {% tab title="Javascript" %}
 ```javascript
 collection = pgml.newCollection("test_collection", CUSTOM_DATABASE_URL)
+```
+{% endtab %}
+
+{% tab title="Python" %}
+```python
+collection = Collection("test_collection", CUSTOM_DATABASE_URL)
 ```
 {% endtab %}
 {% endtabs %}
@@ -49,6 +47,22 @@ Documents are dictionaries with two required keys: `id` and `text`. All other ke
 **Upsert documents with metadata**
 
 {% tabs %}
+{% tab title="JavaScript" %}
+```javascript
+const documents = [
+  {
+    id: "Document One",
+    text: "document one contents...",
+  },
+  {
+    id: "Document Two",
+    text: "document two contents...",
+  },
+];
+await collection.upsert_documents(documents);
+```
+{% endtab %}
+
 {% tab title="Python" %}
 ```python
 documents = [
@@ -65,22 +79,6 @@ documents = [
 ]
 collection = Collection("test_collection")
 await collection.upsert_documents(documents)
-```
-{% endtab %}
-
-{% tab title="JavaScript" %}
-```javascript
-  const documents = [
-            {
-              id: "Document One",
-              text: "document one contents...",
-            },
-            {
-              id: "Document Two",
-              text: "document two contents...",
-            },
-    ];
-    await collection.upsert_documents(documents);
 ```
 {% endtab %}
 {% endtabs %}

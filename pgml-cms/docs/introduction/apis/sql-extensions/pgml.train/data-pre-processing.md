@@ -8,12 +8,12 @@ Preprocessing steps are saved after training, and repeated identically for futur
 
 #### `weather_data`
 
-| **month** | **clouds** | **humidity** | **temp** | **rain** |
-| --------- | ---------- | ------------ | -------- | -------- |
-| 'jan'     | 'cumulus'  | 0.8          | 5        | true     |
-| 'jan'     | NULL       | 0.1          | 10       | false    |
-| …         | …          | …            | …        | …        |
-| 'dec'     | 'nimbus'   | 0.9          | -2       | false    |
+| month | clouds    | humidity | temp |       |
+| ----- | --------- | -------- | ---- | ----- |
+| 'jan' | 'cumulus' | 0.8      | 5    | true  |
+| 'jan' | NULL      | 0.1      | 10   | false |
+| …     | …         | …        | …    | …     |
+| 'dec' | 'nimbus'  | 0.9      | -2   | false |
 
 In this example:
 
@@ -25,11 +25,11 @@ In this example:
 
 There are 3 steps to preprocessing data:
 
-* [Encoding](../../../../../pgml-dashboard/content/docs/training/preprocessing.md#categorical-encodings) categorical values into quantitative values
-* [Imputing](../../../../../pgml-dashboard/content/docs/training/preprocessing.md#imputing-missing-values) NULL values to some quantitative value
-* [Scaling](../../../../../pgml-dashboard/content/docs/training/preprocessing.md#scaling-values) quantitative values across all variables to similar ranges
+* [Encoding](../../../../../../pgml-dashboard/content/docs/training/preprocessing.md#categorical-encodings) categorical values into quantitative values
+* [Imputing](../../../../../../pgml-dashboard/content/docs/training/preprocessing.md#imputing-missing-values) NULL values to some quantitative value
+* [Scaling](../../../../../../pgml-dashboard/content/docs/training/preprocessing.md#scaling-values) quantitative values across all variables to similar ranges
 
-These preprocessing steps may be specified on a per-column basis to the [train()](../../../../../docs/training/overview/) function. By default, PostgresML does minimal preprocessing on training data, and will raise an error during analysis if NULL values are encountered without a preprocessor. All types other than `TEXT` are treated as quantitative variables and cast to floating point representations before passing them to the underlying algorithm implementations.
+These preprocessing steps may be specified on a per-column basis to the [train()](../../../../../../docs/training/overview/) function. By default, PostgresML does minimal preprocessing on training data, and will raise an error during analysis if NULL values are encountered without a preprocessor. All types other than `TEXT` are treated as quantitative variables and cast to floating point representations before passing them to the underlying algorithm implementations.
 
 ```sql
 SELECT pgml.train(
@@ -68,7 +68,7 @@ SELECT pgml.predict('preprocessed_model', ('jan', 'nimbus', 0.5, 7));
 
 Encoding categorical variables is an O(N log(M)) where N is the number of rows, and M is the number of distinct categories.
 
-| **name**  | **description**                                                                                                                                 |
+| name      | description                                                                                                                                     |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `none`    | **Default** - Casts the variable to a 32-bit floating point representation compatible with numerics. This is the default for non-`TEXT` values. |
 | `target`  | Encodes the variable as the mean value of the target label for all members of the category. This is the default for `TEXT` variables.           |

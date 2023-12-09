@@ -1,24 +1,20 @@
-# Getting Started
+# Overview
 
 ## Installation
 
 {% tabs %}
-{% tab title="Python " %}
-Python > 3.8.1
+{% tab title="JavaScript " %}
+```bash
+npm i pgml
+```
+{% endtab %}
 
+{% tab title="Python " %}
 ```bash
 pip install pgml
 ```
 {% endtab %}
-
-{% tab title="JavaScript " %}
-```
-npm i pgml
-```
-{% endtab %}
 {% endtabs %}
-
-
 
 ## Example
 
@@ -27,6 +23,15 @@ Once the SDK is installed, you an use the following example to get started.
 ### Create a collection
 
 {% tabs %}
+{% tab title="JavaScript " %}
+```javascript
+const pgml = require("pgml");
+
+const main = async () => {
+  collection = pgml.newCollection("sample_collection");
+```
+{% endtab %}
+
 {% tab title="Python" %}
 ```python
 from pgml import Collection, Model, Splitter, Pipeline
@@ -35,15 +40,6 @@ import asyncio
 async def main():
     # Initialize collection
     collection = Collection("sample_collection")
-```
-{% endtab %}
-
-{% tab title="JavaScript " %}
-```javascript
-const pgml = require("pgml");
-
-const main = async () => {
-    collection = pgml.newCollection("sample_collection");
 ```
 {% endtab %}
 {% endtabs %}
@@ -58,22 +54,23 @@ const main = async () => {
 Continuing with `main`
 
 {% tabs %}
-{% tab title="Python" %}
-```python
-    # Create a pipeline using the default model and splitter
-    model = Model()
-    splitter = Splitter()
-    pipeline = Pipeline("sample_pipeline", model, splitter)
-    await collection.add_pipeline(pipeline)
+{% tab title="JavaScript" %}
+```javascript
+// Create a pipeline using the default model and splitter
+model = pgml.newModel();
+splitter = pgml.newSplitter();
+pipeline = pgml.Pipeline("sample_pipeline", model, splitter);
+await collection.add_pipeline(pipeline);
 ```
 {% endtab %}
 
-{% tab title="JavaScript" %}
-```javascript
-    model = pgml.newModel();
-    splitter = pgml.newSplitter();
-    pipeline = pgml.Pipeline("sample_pipeline", model, splitter);
-    await collection.add_pipeline(pipeline);
+{% tab title="Python" %}
+```python
+# Create a pipeline using the default model and splitter
+model = Model()
+splitter = Splitter()
+pipeline = Pipeline("sample_pipeline", model, splitter)
+await collection.add_pipeline(pipeline)
 ```
 {% endtab %}
 {% endtabs %}
@@ -88,35 +85,35 @@ Continuing with `main`
 Continuing with `main`
 
 {% tabs %}
-{% tab title="Python" %}
-```python
-    documents = [
-            {
-              id: "Document One",
-              text: "document one contents...",
-            },
-            {
-              id: "Document Two",
-              text: "document two contents...",
-            },
-    ];
-    await collection.upsert_documents(documents);
+{% tab title="JavaScript" %}
+```javascript
+const documents = [
+  {
+    id: "Document One",
+    text: "document one contents...",
+  },
+  {
+    id: "Document Two",
+    text: "document two contents...",
+  },
+];
+await collection.upsert_documents(documents);
 ```
 {% endtab %}
 
-{% tab title="JavaScript" %}
-```javascript
-    const documents = [
-            {
-              id: "Document One",
-              text: "document one contents...",
-            },
-            {
-              id: "Document Two",
-              text: "document two contents...",
-            },
-    ];
-    await collection.upsert_documents(documents);
+{% tab title="Python" %}
+```python
+documents = [
+    {
+        id: "Document One",
+        text: "document one contents...",
+    },
+    {
+        id: "Document Two",
+        text: "document two contents...",
+    },
+];
+await collection.upsert_documents(documents);
 ```
 {% endtab %}
 {% endtabs %}
@@ -131,37 +128,37 @@ Continuing with `main`
 Continuing with `main`
 
 {% tabs %}
-{% tab title="Python" %}
-```python
-    # Query
-    query = "Some user query that will match document one first"
-    results = await collection.query().vector_recall(query, pipeline).limit(2).fetch_all()
-    print(results)
-    # Archive collection
-    await collection.archive()
-```
-{% endtab %}
-
 {% tab title="JavaScript" %}
 ```javascript
 const queryResults = await collection
-        .query()
-        .vector_recall("Some user query that will match document one first", pipeline)
-        .limit(2)
-        .fetch_all();
+  .query()
+  .vector_recall("Some user query that will match document one first", pipeline)
+  .limit(2)
+  .fetch_all();
 
-    // Convert the results to an array of objects
-    const results = queryResults.map((result) => {
-      const [similarity, text, metadata] = result;
-      return {
-        similarity,
-        text,
-        metadata,
-      };
-    });
-    console.log(results);
+// Convert the results to an array of objects
+const results = queryResults.map((result) => {
+  const [similarity, text, metadata] = result;
+  return {
+    similarity,
+    text,
+    metadata,
+  };
+});
+console.log(results);
 
-    await collection.archive();
+await collection.archive();
+```
+{% endtab %}
+
+{% tab title="Python" %}
+```python
+# Query
+query = "Some user query that will match document one first"
+results = await collection.query().vector_recall(query, pipeline).limit(2).fetch_all()
+print(results)
+# Archive collection
+await collection.archive()
 ```
 {% endtab %}
 {% endtabs %}
@@ -175,18 +172,18 @@ const queryResults = await collection
 Call `main` function.
 
 {% tabs %}
-{% tab title="Python" %}
-```python
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-{% endtab %}
-
 {% tab title="JavaScript" %}
 ```javascript
 main().then(() => {
   console.log("Done with PostgresML demo");
 });
+```
+{% endtab %}
+
+{% tab title="Python" %}
+```python
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 {% endtab %}
 {% endtabs %}
@@ -198,15 +195,15 @@ Open a terminal or command prompt and navigate to the directory where the file i
 Execute the following command:
 
 {% tabs %}
-{% tab title="Python" %}
-```bash
-python vector_search.py
-```
-{% endtab %}
-
 {% tab title="JavaScript" %}
 ```bash
 node vector_search.js
+```
+{% endtab %}
+
+{% tab title="Python" %}
+```bash
+python vector_search.py
 ```
 {% endtab %}
 {% endtabs %}

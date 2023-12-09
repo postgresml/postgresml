@@ -4,11 +4,11 @@ OpenSourceAI is a drop in replacement for OpenAI's chat completion endpoint.
 
 ### Setup
 
-Follow the instillation section in [getting-started](../../getting-started/ "mention")
+Follow the instillation section in [getting-started.md](getting-started.md "mention")
 
 When done, set the environment variable `DATABASE_URL` to your PostgresML database url.
 
-```
+```bash
 export DATABASE_URL=postgres://user:pass@.db.cloud.postgresml.org:6432/pgml
 ```
 
@@ -453,7 +453,7 @@ results = client.chat_completions_create(
 {% endtab %}
 {% endtabs %}
 
-Notice that we don't specify a model name, but model JSON this time. The JSON keys in the model argument roughly follow the task argument when using our [text-generation SQL API](../natural-language-processing/text-generation.md).
+Notice that we don't specify a model name, but model JSON this time. The JSON keys in the model argument roughly follow the task argument when using our [text-generation SQL API](../sql-extensions/pgml.transform/text-generation.md).
 
 To access a gated repo like `meta-llama/Llama-2-7b-chat-hf` simply provide the necessary hugging face token.
 

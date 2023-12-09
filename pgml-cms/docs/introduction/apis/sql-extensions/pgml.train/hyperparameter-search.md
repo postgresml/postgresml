@@ -12,8 +12,6 @@ The parameters passed to `pgml.train()` easily allow one to perform hyperparamet
 | `search_params` | `{"alpha": [0.1, 0.2, 0.5] }` |
 | `search_args`   | `{"n_iter": 10 }`             |
 
-
-
 ```sql
 SELECT * FROM pgml.train(
     'Handwritten Digit Image Classifier', 
@@ -26,9 +24,7 @@ SELECT * FROM pgml.train(
 );
 ```
 
-
-
-You may pass any of the arguments listed in the algorithms documentation as hyperparameters. See [Algorithms](../../../../../docs/training/algorithm\_selection) for the complete list of algorithms and their associated hyperparameters.
+You may pass any of the arguments listed in the algorithms documentation as hyperparameters. See [Algorithms](../../../../../../docs/training/algorithm\_selection/) for the complete list of algorithms and their associated hyperparameters.
 
 ### Search Algorithms
 
@@ -45,8 +41,6 @@ PostgresML automatically selects the optimal set of hyperparameters for the mode
 
 The impact of each hyperparameter is measured against the key metric (`r2` for regression and `f1` for classification), as well as the training and test times.
 
-[![Hyperparameter Analysis](https://github.com/postgresml/postgresml/raw/master/dashboard/static/images/dashboard/hyperparams.png)](../../../../../dashboard/static/images/dashboard/hyperparams.png)
-
 {% hint style="info" %}
 In our example case, it's interesting that as \`max\_depth\` increases, the "Test Score" on the key metric trends lower, so the smallest value of max\_depth is chosen to maximize the "Test Score".
 
@@ -60,8 +54,6 @@ It's a little less obvious how the different values \`n\_estimators\` and `learn
 In our example above, the grid search will train `len(max_depth) * len(n_estimators) * len(learning_rate) = 6 * 4 * 4 = 96` combinations to compare all possible permutations of `search_params`.
 
 It only took about a minute on my computer because we're using optimized Rust/C++ XGBoost bindings, but you can delete some values if you want to speed things up even further. I like to watch all cores operate at 100% utilization in a separate terminal with `htop`:
-
-[![htop](https://github.com/postgresml/postgresml/raw/master/dashboard/static/images/demos/htop.png)](../../../../../dashboard/static/images/demos/htop.png)
 
 In the end, we get the following output:
 
