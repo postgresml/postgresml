@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_macros, unused_imports)]
 //! A basic UI component. Any other component can accept this
 //! as a parameter and render it.
 
