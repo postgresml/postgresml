@@ -1,3 +1,5 @@
+#![allow(renamed_and_removed_lints)]
+
 #[macro_use]
 extern crate rocket;
 
