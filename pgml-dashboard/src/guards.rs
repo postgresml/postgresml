@@ -1,4 +1,4 @@
-use crate::components::layouts::product::extend_head::ExtendHead;
+use crate::components::layouts::extend_head::ExtendHead;
 use crate::components::sections::footers::marketing_footer::MarketingFooter;
 use crate::templates::components::{StaticNav, StaticNavLink};
 use once_cell::sync::OnceCell;

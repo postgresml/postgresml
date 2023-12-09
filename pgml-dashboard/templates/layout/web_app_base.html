@@ -5,7 +5,6 @@
     };
     use crate::components::navigation::navbar::web_app::WebApp as WebAppNavbar;
     use crate::components::navigation::left_nav::web_app::WebApp as WebAppLeftNav;
-    use crate::templates::head::DefaultHeadTemplate;
 %>
 
 <%
@@ -17,7 +16,7 @@
 
 <!DOCTYPE html>
 <html lang="en-US">
-    <%+ DefaultHeadTemplate::new(Some(head)) %>
+    <%+ head %>
     <body data-bs-theme="dark" data-theme="product">
         <% for component in body_components { %>
         <%+ component %>

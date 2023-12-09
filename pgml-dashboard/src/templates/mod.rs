@@ -14,9 +14,8 @@ use crate::models;
 use crate::utils::tabs;
 
 pub mod docs;
-pub mod head;
 
-pub use head::*;
+use crate::components::layouts::Head;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "content/not_found.html")]
@@ -47,7 +46,7 @@ impl Layout {
         let head = match context.as_ref() {
             Some(context) => Head::new()
                 .title(title)
-                .context(context.context.head_items.clone()),
+                .context(&context.context.head_items),
             None => Head::new().title(title),
         };
 
@@ -119,7 +118,7 @@ impl From<Layout> for String {
 pub struct WebAppBase<'a> {
     pub content: Option<String>,
     pub breadcrumbs: Vec<NavLink<'a>>,
-    pub head: crate::templates::Head,
+    pub head: Head,
     pub dropdown_nav: StaticNav,
     pub account_management_nav: StaticNav,
     pub upper_left_nav: StaticNav,
@@ -129,12 +128,10 @@ pub struct WebAppBase<'a> {
 
 impl<'a> WebAppBase<'a> {
     pub fn new(title: &str, context: &crate::Context) -> Self {
-        let mut head = crate::templates::Head::new()
-            .title(title)
-            .context(context.head_items.clone());
+        let head = Head::new().title(title).context(&context.head_items);
 
         WebAppBase {
-            head: head,
+            head,
             dropdown_nav: context.dropdown_nav.clone(),
             account_management_nav: context.account_management_nav.clone(),
             upper_left_nav: context.upper_left_nav.clone(),
