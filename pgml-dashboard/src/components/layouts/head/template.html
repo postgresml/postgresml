@@ -58,6 +58,10 @@
   
     <!-- version: <%= config::git_sha() %> -->
   <% } %>
+  
+  <% for link in preloads { %>
+    <link rel="preload" fetchpriority="high" as="image" href=<%= link %> type="image/webp">
+  <% };  %>
 
   <link rel="icon" href="/dashboard/static/images/owl.ico">
   
