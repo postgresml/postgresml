@@ -54,7 +54,7 @@ pub struct Context {
     pub upper_left_nav: StaticNav,
     pub lower_left_nav: StaticNav,
     pub marketing_footer: String,
-    pub head_items: String,
+    pub head_items: Option<String>,
 }
 
 #[derive(Debug, Clone, Default)]
