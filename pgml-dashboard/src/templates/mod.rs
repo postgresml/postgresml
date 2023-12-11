@@ -14,9 +14,8 @@ use crate::models;
 use crate::utils::tabs;
 
 pub mod docs;
-pub mod head;
 
-pub use head::*;
+use crate::components::layouts::Head;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "content/not_found.html")]
@@ -44,8 +43,15 @@ pub struct Layout {
 
 impl Layout {
     pub fn new(title: &str, context: Option<&crate::guards::Cluster>) -> Self {
+        let head = match context.as_ref() {
+            Some(context) => Head::new()
+                .title(title)
+                .context(&context.context.head_items),
+            None => Head::new().title(title),
+        };
+
         Layout {
-            head: Head::new().title(title),
+            head,
             alert_banner: AlertBanner::from_notification(Notification::next_alert(context)),
             feature_banner: FeatureBanner::from_notification(Notification::next_feature(context)),
             ..Default::default()
@@ -112,7 +118,7 @@ impl From<Layout> for String {
 pub struct WebAppBase<'a> {
     pub content: Option<String>,
     pub breadcrumbs: Vec<NavLink<'a>>,
-    pub head: String,
+    pub head: Head,
     pub dropdown_nav: StaticNav,
     pub account_management_nav: StaticNav,
     pub upper_left_nav: StaticNav,
@@ -122,28 +128,16 @@ pub struct WebAppBase<'a> {
 
 impl<'a> WebAppBase<'a> {
     pub fn new(title: &str, context: &crate::Context) -> Self {
+        let head = Head::new().title(title).context(&context.head_items);
+
         WebAppBase {
-            head: crate::templates::head::DefaultHeadTemplate::new(Some(
-                crate::templates::head::Head {
-                    title: title.to_owned(),
-                    description: None,
-                    image: None,
-                    preloads: vec![],
-                },
-            ))
-            .render_once()
-            .unwrap(),
+            head,
             dropdown_nav: context.dropdown_nav.clone(),
             account_management_nav: context.account_management_nav.clone(),
             upper_left_nav: context.upper_left_nav.clone(),
             lower_left_nav: context.lower_left_nav.clone(),
             ..Default::default()
         }
-    }
-
-    pub fn head(&mut self, head: String) -> &mut Self {
-        self.head = head.to_owned();
-        self
     }
 
     pub fn breadcrumbs(&mut self, breadcrumbs: Vec<NavLink<'a>>) -> &mut Self {

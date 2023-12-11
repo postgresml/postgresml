@@ -1,11 +1,14 @@
+use pgml_components::component;
 use sailfish::TemplateOnce;
 
-#[derive(Clone, Default)]
+#[derive(TemplateOnce, Default, Clone)]
+#[template(path = "layouts/head/template.html")]
 pub struct Head {
     pub title: String,
     pub description: Option<String>,
     pub image: Option<String>,
     pub preloads: Vec<String>,
+    pub context: Option<String>,
 }
 
 impl Head {
@@ -13,7 +16,7 @@ impl Head {
         Head::default()
     }
 
-    pub fn add_preload(&mut self, preload: &str) -> &mut Self {
+    pub fn add_preload(mut self, preload: &str) -> Head {
         self.preloads.push(preload.to_owned());
         self
     }
@@ -36,30 +39,14 @@ impl Head {
     pub fn not_found() -> Head {
         Head::new().title("404 - Not Found")
     }
-}
 
-#[derive(TemplateOnce, Default, Clone)]
-#[template(path = "layout/head.html")]
-pub struct DefaultHeadTemplate {
-    pub head: Head,
-}
-
-impl DefaultHeadTemplate {
-    pub fn new(head: Option<Head>) -> DefaultHeadTemplate {
-        let head = match head {
-            Some(head) => head,
-            None => Head::new(),
-        };
-
-        DefaultHeadTemplate { head }
+    pub fn context(mut self, context: &Option<String>) -> Head {
+        self.context = context.to_owned();
+        self
     }
 }
 
-impl From<DefaultHeadTemplate> for String {
-    fn from(layout: DefaultHeadTemplate) -> String {
-        layout.render_once().unwrap()
-    }
-}
+component!(Head);
 
 #[cfg(test)]
 mod head_tests {

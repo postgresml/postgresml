@@ -31,6 +31,9 @@ pub use github_icon::GithubIcon;
 // src/components/inputs
 pub mod inputs;
 
+// src/components/layouts
+pub mod layouts;
+
 // src/components/left_nav_menu
 pub mod left_nav_menu;
 pub use left_nav_menu::LeftNavMenu;

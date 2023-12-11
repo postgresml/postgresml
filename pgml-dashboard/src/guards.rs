@@ -132,6 +132,7 @@ impl Cluster {
                 },
                 lower_left_nav: StaticNav::default(),
                 marketing_footer: MarketingFooter::new().render_once().unwrap(),
+                head_items: None,
             },
             notifications: None,
         }
