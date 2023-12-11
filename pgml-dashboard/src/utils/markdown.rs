@@ -933,7 +933,6 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
             }
 
             &mut NodeValue::Text(ref mut text) => {
-
                 // Strip .md extensions that gitbook includes in page link text
                 if text.ends_with(".md") {
                     if let Some(parent) = node.parent() {
