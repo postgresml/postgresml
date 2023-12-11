@@ -29,8 +29,6 @@ rm "$deb_dir/release.sh"
 (cat ${SCRIPT_DIR}/DEBIAN/postrm | envsubst '${PGVERSION}') > "$deb_dir/DEBIAN/postrm"
 
 cp ${SCRIPT_DIR}/../../pgml-extension/requirements.txt "$deb_dir/etc/postgresml-python/requirements.txt"
-cp ${SCRIPT_DIR}/../../pgml-extension/requirements-autogptq.txt "$deb_dir/etc/postgresml-python/requirements-autogptq.txt"
-cp ${SCRIPT_DIR}/../../pgml-extension/requirements-xformers.txt "$deb_dir/etc/postgresml-python/requirements-xformers.txt"
 
 virtualenv --python="python$PYTHON_VERSION" "$deb_dir/var/lib/postgresml-python/pgml-venv"
 source "$deb_dir/var/lib/postgresml-python/pgml-venv/bin/activate"

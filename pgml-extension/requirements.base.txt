@@ -1,0 +1,41 @@
+# The immediate dependencies of PostgresML are maintained here.
+
+# Locked because newer versions have bugs
+transformers-stream-generator==0.0.4
+optimum==1.13.2
+peft==0.6.2
+pyarrow==11.0.0
+torch==2.0.1 # 2.1.1 breaks sentence-transformers==2.2.2
+
+# ML
+catboost
+lightgbm
+torchaudio
+torchvision
+xgboost
+
+# Transformers
+accelerate
+auto-gptq; sys_platform == 'linux'
+bitsandbytes
+ctransformers
+huggingface-hub
+deepspeed
+einops
+tokenizers
+transformers
+xformers; sys_platform == 'linux'
+
+# Embeddings
+InstructorEmbedding
+sentence-transformers
+
+# Ratings
+rouge
+sacrebleu
+sacremoses
+
+# Utils
+datasets
+orjson
+langchain
