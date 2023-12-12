@@ -123,7 +123,7 @@ parser.add_argument(
     "--chat_completion_model",
     dest="chat_completion_model",
     type=str,
-    default="gpt-3.5-turbo-16k",
+    default="HuggingFaceH4/zephyr-7b-beta",
 )
 
 parser.add_argument(
@@ -135,10 +135,25 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--temperature",
+    dest="temperature",
+    type=float,
+    default=0.7,
+    help="Temperature for generating response",
+)
+
+parser.add_argument(
+    "--top_p",
+    dest="top_p",
+    type=float,
+    default=0.9,
+    help="Top p for generating response",
+)
+parser.add_argument(
     "--vector_recall_limit",
     dest="vector_recall_limit",
     type=int,
-    default=5,
+    default=1,
     help="Maximum number of documents to retrieve from vector recall",
 )
 
@@ -192,6 +207,7 @@ chat_history_pipeline = Pipeline(
 
 chat_completion_model = args.chat_completion_model
 max_tokens = args.max_tokens
+temperature = args.temperature
 vector_recall_limit = args.vector_recall_limit
 
 query_params_instruction = (
@@ -242,21 +258,19 @@ system_prompt_document = [
 
 def get_model_type(chat_completion_model: str):
     model_type = "opensourceai"
-    output_chat_completion_model = "HuggingFaceH4/zephyr-7b-beta"
     try:
         client = OpenAI(api_key=openai_api_key)
         models = client.models.list()
         for model in models:
             if model.id == chat_completion_model:
                 model_type = "openai"
-                output_chat_completion_model = chat_completion_model
                 break
     except Exception as e:
         log.debug(e)
 
-    log.info("Setting model type to " + model_type + " and chat completion model to " + output_chat_completion_model)
+    log.info("Setting model type to " + model_type)
 
-    return model_type, output_chat_completion_model
+    return model_type
 
 
 async def upsert_documents(folder: str) -> int:
@@ -282,7 +296,7 @@ async def generate_chat_response(
     user_input,
     system_prompt,
     openai_api_key,
-    temperature=0.7,
+    temperature=temperature,
     max_tokens=max_tokens,
     top_p=0.9,
     user_name="",
@@ -369,14 +383,14 @@ async def generate_chat_response(
 
 
 async def generate_response(
-    messages, openai_api_key, temperature=0.7, max_tokens=max_tokens, top_p=0.9
+    messages, openai_api_key, temperature=temperature, max_tokens=max_tokens, top_p=0.9
 ):
-    model_type, output_chat_completion_model = get_model_type(chat_completion_model)
+    model_type = get_model_type(chat_completion_model)
     if model_type == "openai":
         client = OpenAI(api_key=openai_api_key)
         log.debug("Generating response from OpenAI API: " + str(messages))
         response = client.chat.completions.create(
-            model=output_chat_completion_model,
+            model=chat_completion_model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -389,7 +403,7 @@ async def generate_response(
         client = OpenSourceAI(database_url=database_url)
         log.debug("Generating response from OpenSourceAI API: " + str(messages))
         response = client.chat_completions_create(
-            model=output_chat_completion_model,
+            model=chat_completion_model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -449,7 +463,7 @@ async def chat_cli():
                 system_prompt,
                 openai_api_key,
                 max_tokens=max_tokens,
-                temperature=0.3,
+                temperature=temperature,
                 top_p=0.9,
                 user_name=user_name,
             )
@@ -478,7 +492,7 @@ async def chat_slack():
                 system_prompt,
                 openai_api_key,
                 max_tokens=max_tokens,
-                temperature=0.7,
+                temperature=temperature,
                 user_name=user,
             )
 
@@ -514,7 +528,7 @@ async def on_message(message):
             system_prompt,
             openai_api_key,
             max_tokens=max_tokens,
-            temperature=0.7,
+            temperature=temperature,
             user_name=message.author.name,
         )
         await message.channel.send(response)
