@@ -242,17 +242,21 @@ system_prompt_document = [
 
 def get_model_type(chat_completion_model: str):
     model_type = "opensourceai"
+    output_chat_completion_model = "HuggingFaceH4/zephyr-7b-beta"
     try:
         client = OpenAI(api_key=openai_api_key)
         models = client.models.list()
         for model in models:
             if model.id == chat_completion_model:
                 model_type = "openai"
+                output_chat_completion_model = chat_completion_model
                 break
     except Exception as e:
-        print(e)
+        log.debug(e)
 
-    return model_type
+    log.info("Setting model type to " + model_type + " and chat completion model to " + output_chat_completion_model)
+
+    return model_type, output_chat_completion_model
 
 
 async def upsert_documents(folder: str) -> int:
@@ -367,12 +371,12 @@ async def generate_chat_response(
 async def generate_response(
     messages, openai_api_key, temperature=0.7, max_tokens=max_tokens, top_p=0.9
 ):
-    model_type = get_model_type(chat_completion_model)
+    model_type, output_chat_completion_model = get_model_type(chat_completion_model)
     if model_type == "openai":
         client = OpenAI(api_key=openai_api_key)
         log.debug("Generating response from OpenAI API: " + str(messages))
         response = client.chat.completions.create(
-            model=chat_completion_model,
+            model=output_chat_completion_model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -385,7 +389,7 @@ async def generate_response(
         client = OpenSourceAI(database_url=database_url)
         log.debug("Generating response from OpenSourceAI API: " + str(messages))
         response = client.chat_completions_create(
-            model=chat_completion_model,
+            model=output_chat_completion_model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
