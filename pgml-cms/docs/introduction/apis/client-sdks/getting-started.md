@@ -57,9 +57,9 @@ Continuing with `main`
 {% tab title="JavaScript" %}
 ```javascript
 // Create a pipeline using the default model and splitter
-model = pgml.newModel();
-splitter = pgml.newSplitter();
-pipeline = pgml.Pipeline("sample_pipeline", model, splitter);
+const model = pgml.newModel();
+const splitter = pgml.newSplitter();
+const pipeline = pgml.newPipeline("sample_pipeline", model, splitter);
 await collection.add_pipeline(pipeline);
 ```
 {% endtab %}
@@ -87,6 +87,7 @@ Continuing with `main`
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
+// Create and upsert documents
 const documents = [
   {
     id: "Document One",
@@ -130,6 +131,7 @@ Continuing with `main`
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
+// Query
 const queryResults = await collection
   .query()
   .vector_recall("Some user query that will match document one first", pipeline)
