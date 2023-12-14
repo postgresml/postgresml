@@ -48,7 +48,7 @@ impl ChatRole {
             ChatRole::Bot => match brain {
                 ChatbotBrain::OpenAIGPT4
                 | ChatbotBrain::TekniumOpenHermes25Mistral7B
-                | ChatbotBrain::Openchat35 => "assistant",
+                | ChatbotBrain::Starling7b => "assistant",
                 ChatbotBrain::GrypheMythoMaxL213b => "model",
             },
             ChatRole::System => "system",
@@ -61,7 +61,7 @@ enum ChatbotBrain {
     OpenAIGPT4,
     TekniumOpenHermes25Mistral7B,
     GrypheMythoMaxL213b,
-    Openchat35,
+    Starling7b,
 }
 
 impl ChatbotBrain {
@@ -104,13 +104,12 @@ impl ChatbotBrain {
                 "revision": "main",
                 "device_map": "auto"
             }),
-            // Self::GrypheMythoMaxL213b => serde_json::json!("Gryphe/MythoMax-L2-13b"),
             Self::GrypheMythoMaxL213b => serde_json::json!({
                 "model": "TheBloke/MythoMax-L2-13B-GPTQ",
                 "revision": "main",
                 "device_map": "auto"
             }),
-            Self::Openchat35 => serde_json::json!({
+            Self::Starling7b => serde_json::json!({
                 "model": "TheBloke/Starling-LM-7B-alpha-GPTQ",
                 "revision": "main",
                 "device_map": "auto"
@@ -136,7 +135,7 @@ impl TryFrom<&str> for ChatbotBrain {
             "teknium/OpenHermes-2.5-Mistral-7B" => Ok(ChatbotBrain::TekniumOpenHermes25Mistral7B),
             "Gryphe/MythoMax-L2-13b" => Ok(ChatbotBrain::GrypheMythoMaxL213b),
             "openai" => Ok(ChatbotBrain::OpenAIGPT4),
-            "openchat/openchat_3.5" => Ok(ChatbotBrain::Openchat35),
+            "berkeley-nest/Starling-LM-7B-alpha" => Ok(ChatbotBrain::Starling7b),
             _ => Err(anyhow::anyhow!("Invalid brain id")),
         }
     }
@@ -148,7 +147,7 @@ impl From<ChatbotBrain> for &'static str {
             ChatbotBrain::TekniumOpenHermes25Mistral7B => "teknium/OpenHermes-2.5-Mistral-7B",
             ChatbotBrain::GrypheMythoMaxL213b => "Gryphe/MythoMax-L2-13b",
             ChatbotBrain::OpenAIGPT4 => "openai",
-            ChatbotBrain::Openchat35 => "openchat/openchat_3.5",
+            ChatbotBrain::Starling7b => "berkeley-nest/Starling-LM-7B-alpha",
         }
     }
 }
@@ -375,7 +374,7 @@ struct HistoryMessage {
     side: String,
     content: String,
     knowledge_base: String,
-    model: String,
+    brain: String,
 }
 
 #[get("/chatbot/get-history")]
@@ -448,7 +447,7 @@ async fn do_chatbot_get_history(user: &User, limit: usize) -> anyhow::Result<Vec
             Ok(HistoryMessage {
                 side,
                 content,
-                model: model.to_string(),
+                brain: model.to_string(),
                 knowledge_base: knowledge_base.to_string(),
             })
         })
@@ -525,7 +524,6 @@ async fn process_message(
         let collection = Collection::new(
             collection,
             Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
-            // Some(std::env::var("CHATBOT_DATABASE_URL_TWO").expect("CHATBOT_DATABASE_URL not set")),
         );
         let context = collection
         .query()
@@ -541,7 +539,7 @@ async fn process_message(
         .join("\n");
         // let context = "".to_string();
 
-        let mut history_collection = Collection::new(
+        let history_collection = Collection::new(
             "ChatHistory",
             Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
         );

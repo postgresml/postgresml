@@ -77,13 +77,13 @@ const CHATBOT_BRAINS: [ChatbotBrain; 4] = [
         "teknium/OpenHermes-2.5-Mistral-7B",
         "OpenHermes",
         "teknium/OpenHermes-2.5-Mistral-7B",
-        "/dashboard/static/images/owl_gradient.svg",
+        "/dashboard/static/images/logos/openhermes.webp",
     ),
     ChatbotBrain::new(
         "Gryphe/MythoMax-L2-13b",
         "MythoMax",
         "Gryphe/MythoMax-L2-13b",
-        "/dashboard/static/images/owl_gradient.svg",
+        "/dashboard/static/images/logos/mythomax.webp",
     ),
     ChatbotBrain::new(
         "openai",
@@ -92,10 +92,10 @@ const CHATBOT_BRAINS: [ChatbotBrain; 4] = [
         "/dashboard/static/images/logos/openai.webp",
     ),
     ChatbotBrain::new(
-        "openchat/openchat_3.5",
-        "OpenChat",
-        "openchat/openchat_3.5",
-        "/dashboard/static/images/logos/meta.webp",
+        "berkeley-nest/Starling-LM-7B-alpha",
+        "Starling",
+        "berkeley-nest/Starling-LM-7B-alpha",
+        "/dashboard/static/images/logos/starling.webp",
     ),
 ];
 

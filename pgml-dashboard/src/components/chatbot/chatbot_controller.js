@@ -15,23 +15,23 @@ const LOADING_MESSAGE = `
 </div>
 `;
 
-const getBackgroundImageURLForSide = (side, knowledgeBase) => {
+const getBackgroundImageURLForSide = (side, brain) => {
   if (side == "user") {
     return "/dashboard/static/images/chatbot_user.webp";
   } else {
-    if (knowledgeBase == "postgresml") {
-      return "/dashboard/static/images/owl_gradient.svg";
-    } else if (knowledgeBase == "pytorch") {
-      return "/dashboard/static/images/logos/pytorch.svg";
-    } else if (knowledgeBase == "rust") {
-      return "/dashboard/static/images/logos/rust.svg";
-    } else if (knowledgeBase == "postgresql") {
-      return "/dashboard/static/images/logos/postgresql.svg";
+    if (brain == "teknium/OpenHermes-2.5-Mistral-7B") {
+      return "/dashboard/static/images/logos/openhermes.webp"
+    } else if (brain == "Gryphe/MythoMax-L2-13b") {
+      return "/dashboard/static/images/logos/mythomax.webp"
+    } else if (brain == "berkeley-nest/Starling-LM-7B-alpha") {
+      return "/dashboard/static/images/logos/starling.webp"    
+    } else if (brain == "openai") {
+      return "/dashboard/static/images/logos/openai.webp"
     }
   }
 };
 
-const createHistoryMessage = (message, knowledgeBase) => {
+const createHistoryMessage = (message) => {
   if (message.side == "system") {
     return `
       <div class="chatbot-knowledge-base-notice text-center p-3">${message.text}</div>
@@ -46,7 +46,7 @@ const createHistoryMessage = (message, knowledgeBase) => {
           <div class="rounded p-1 chatbot-message-avatar-wrapper">
             <div class="chatbot-message-avatar" style="background-image: url('${getBackgroundImageURLForSide(
               message.side,
-              knowledgeBase,
+              message.brain,
             )}')">
           </div>
         </div>
@@ -76,8 +76,8 @@ const brainIdToName = (brain) => {
     return "OpenHermes"
   } else if (brain == "Gryphe/MythoMax-L2-13b") {
     return "MythoMax"
-  } else if (brain == "openchat/openchat_3.5") {
-    return "OpenChat"    
+  } else if (brain == "berkeley-nest/Starling-LM-7B-alpha") {
+    return "Starling"    
   } else if (brain == "openai") {
     return "ChatGPT"
   }
@@ -92,10 +92,11 @@ const createKnowledgeBaseNotice = (knowledgeBase) => {
 };
 
 class Message {
-  constructor(id, side, text, is_partial=false) {
+  constructor(id, side, brain, text, is_partial=false) {
     this.id = id
-    this.text = text
     this.side = side
+    this.brain = brain
+    this.text = text
     this.is_partial = is_partial
   }
 
@@ -187,9 +188,9 @@ export default class extends Controller {
       } else {
         let message;
         if (result.partial_result) {
-          message = new Message(result.id, "bot", result.partial_result, true);
+          message = new Message(result.id, "bot", this.brain, result.partial_result, true);
         } else {
-          message = new Message(result.id, "bot", result.result, false);
+          message = new Message(result.id, "bot", this.brain, result.result);
         }
         this.messageHistory.add_message(message, this.messageIdToKnowledgeBaseId[message.id]);
         this.redrawChat();
@@ -216,7 +217,7 @@ export default class extends Controller {
       console.log("Error getting chat history", history.error)
     } else {
       for (const message of history.result) {
-        const newMessage = new Message(getRandomInt(), message.side, message.content, false);
+        const newMessage = new Message(getRandomInt(), message.side, message.brain, message.content, false);
         console.log(newMessage);
         this.messageHistory.add_message(newMessage, message.knowledge_base);
       }
@@ -231,10 +232,7 @@ export default class extends Controller {
       console.log("Drawing", message);
       this.chatHistory.insertAdjacentHTML(
         "beforeend",
-        createHistoryMessage(
-          message,
-          this.knowledgeBase,
-        ),
+        createHistoryMessage(message),
       );
     }
 
@@ -250,19 +248,16 @@ export default class extends Controller {
   }
 
   newUserQuestion(question) {
-    const message = new Message(getRandomInt(), "user", question);
+    const message = new Message(getRandomInt(), "user", this.brain, question);
     this.messageHistory.add_message(message, this.knowledgeBase);
     this.messageIdToKnowledgeBaseId[message.id] = this.knowledgeBase;
     this.hideExampleQuestions();
     this.redrawChat();
 
-    let loadingMessage = new Message("loading", "bot", LOADING_MESSAGE);
+    let loadingMessage = new Message("loading", "bot", this.brain, LOADING_MESSAGE);
     this.chatHistory.insertAdjacentHTML(
       "beforeend",
-      createHistoryMessage(
-        loadingMessage,
-        this.knowledgeBase,
-      ),
+      createHistoryMessage(loadingMessage),
     );
     this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
     
@@ -331,7 +326,7 @@ export default class extends Controller {
     let knowledge_base = knowledgeBaseIdToName(this.knowledgeBase);
     let brain = brainIdToName(this.brain);
     let content = `Chatting with ${brain} about ${knowledge_base}`;
-    const newMessage = new Message(getRandomInt(), "system", content);
+    const newMessage = new Message(getRandomInt(), "system", this.brain, content);
     this.messageHistory.add_message(newMessage, this.knowledgeBase);
     this.redrawChat();
   }
