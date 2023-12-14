@@ -6,3 +6,5 @@ PostgresML integrates [🤗 Hugging Face Transformers](https://huggingface.co/tr
 * Access 1000s of state-of-the-art language models like GPT-2, GPT-J, GPT-Neo from :hugs: HuggingFace model hub
 * Fine tune large language models (LLMs) on your own text data for different tasks
 * Use your existing PostgreSQL database as a vector database by generating embeddings from text stored in the database.
+
+See [pgml.transform](../introduction/apis/sql-extensions/pgml.transform/ "mention") for examples of using transformers or [pgml.tune.md](../introduction/apis/sql-extensions/pgml.tune.md "mention") for fine tuning.
