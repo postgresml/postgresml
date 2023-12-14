@@ -36,7 +36,6 @@
     * [pgml.tune()](introduction/apis/sql-extensions/pgml.tune.md)
   * [Client SDKs](introduction/apis/client-sdks/README.md)
     * [Overview](introduction/apis/client-sdks/getting-started.md)
-    * [OpenSourceAI](introduction/apis/client-sdks/opensourceai.md)
     * [Collections](introduction/apis/client-sdks/collections.md)
     * [Pipelines](introduction/apis/client-sdks/pipelines.md)
     * [Search](introduction/apis/client-sdks/search.md)
@@ -60,6 +59,7 @@
 
 ## Use Cases
 
+* [OpenSourceAI](use-cases/opensourceai.md)
 * [Chatbots](use-cases/chatbots.md)
 * [Search](use-cases/improve-search-results-with-machine-learning.md)
 * [Embeddings](use-cases/embeddings/README.md)
