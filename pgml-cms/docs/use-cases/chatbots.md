@@ -135,7 +135,7 @@ If you have set up the Slack app correctly, you should see the following output:
 
 Once the slack app is running, you can interact with the chatbot on Slack as shown below. In the example here, name of the bot is `PgBot`. This app responds only to direct messages to the bot.
 
-<figure><img src="../../.gitbook/assets/chatbot_slack.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/chatbot_slack.png" alt=""><figcaption></figcaption></figure>
 
 #### Discord
 
@@ -159,4 +159,4 @@ If you have set up the Discord app correctly, you should see the following outpu
 
 Once the discord app is running, you can interact with the chatbot on Discord as shown below. In the example here, name of the bot is `pgchat`. This app responds only to direct messages to the bot.
 
-<figure><img src="../../.gitbook/assets/chatbot_discord.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/chatbot_discord.png" alt=""><figcaption></figcaption></figure>

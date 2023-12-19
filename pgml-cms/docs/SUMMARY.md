@@ -36,7 +36,7 @@
     * [pgml.tune()](introduction/apis/sql-extensions/pgml.tune.md)
   * [Client SDKs](introduction/apis/client-sdks/README.md)
     * [Overview](introduction/apis/client-sdks/getting-started.md)
-    * [Collections](introduction/apis/client-sdks/collections.md)
+    * [Collections](../../pgml-docs/docs/guides/sdks/collections.md)
     * [Pipelines](introduction/apis/client-sdks/pipelines.md)
     * [Search](introduction/apis/client-sdks/search.md)
     * [Tutorials](introduction/apis/client-sdks/tutorials/README.md)
@@ -61,7 +61,7 @@
 
 * [OpenSourceAI](use-cases/opensourceai.md)
 * [Chatbots](use-cases/chatbots/README.md)
-  * [Example Application](use-cases/chatbots/chatbots.md)
+  * [Example Application](use-cases/chatbots.md)
 * [Search](use-cases/improve-search-results-with-machine-learning.md)
 * [Embeddings](use-cases/embeddings/README.md)
   * [Generating LLM embeddings with open source models](use-cases/embeddings/generating-llm-embeddings-with-open-source-models-in-postgresml.md)
