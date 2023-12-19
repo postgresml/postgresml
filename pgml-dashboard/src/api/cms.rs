@@ -288,15 +288,11 @@ impl Collection {
             layout.user(user);
         }
 
-
-
         let layout = layout
             .nav_title(&self.name)
             .nav_links(&index)
             .toc_links(&doc.toc_links)
             .footer(cluster.context.marketing_footer.to_string());
-
-
 
         Ok(ResponseOk(
             layout.render(crate::templates::Article { content: doc.html }),

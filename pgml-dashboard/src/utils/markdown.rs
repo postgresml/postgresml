@@ -1696,19 +1696,4 @@ mod test {
         let result = parser(to_parse, r#"time=""#);
         assert_eq!(result, None);
     }
-
-    #[test]
-    fn tabs_test() {
-        let to_clean = r#"
-{% tabs %}
-
-{% tab title="Windows" %} Here are the instructions for Windows {% endtab %}
-
-{% tab title="OSX" %} Here are the instructions for macOS {% endtab %}
-
-{% tab title="Linux" %} Here are the instructions for Linux {% endtab %}
-
-{% endtabs %}
-        "#;
-    }
 }
