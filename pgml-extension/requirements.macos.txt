@@ -62,7 +62,7 @@ portalocker==2.8.2
 protobuf==4.25.1
 psutil==5.9.7
 py-cpuinfo==9.0.0
-pyarrow==11.0.0
+pyarrow==14.0.1
 pyarrow-hotfix==0.6
 pydantic==2.5.2
 pydantic_core==2.14.5
