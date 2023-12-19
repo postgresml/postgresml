@@ -1,6 +1,10 @@
 # The immediate dependencies of PostgresML are maintained here.
 # See requirements.linux.txt or requirements.macos.txt for complete and locked versions.
 
+# Python 3.12 can't currently resolve all dependencies:
+# catboost fails to build
+# virtualenv -p python3.11 pgml-venv
+
 # Specifically locked to avoid known bugs
 pyarrow==11.0.0 # newer versions cause Postgres segfaults on OOM
 
@@ -14,7 +18,7 @@ xgboost
 
 # Transformers
 accelerate
-auto-gptq; sys_platform == 'linux'
+auto-gptq; sys_platform == 'linux' # only runs on nvidia hardware
 bitsandbytes
 ctransformers
 huggingface-hub
@@ -25,7 +29,7 @@ peft
 tokenizers
 transformers
 transformers-stream-generator
-xformers; sys_platform == 'linux'
+xformers; sys_platform == 'linux' # only runs on nvidia hardware
 
 # Embeddings
 InstructorEmbedding
