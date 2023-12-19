@@ -9,7 +9,7 @@ fn main() {
     // of symbols into the previous opened .so file, but the others will use a
     // relative offset in pgml.so, and will cause a null-pointer crash.
     //
-    // hid all symbol to avoid symbol conflicts.
+    // hide all symbol to avoid symbol conflicts.
     //
     // append mode (link-args) only works with clang ld (lld)
     println!(

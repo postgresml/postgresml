@@ -26,7 +26,6 @@ blas = { version = "0.22" }
 blas-src = { version = "0.9", features = ["openblas"] }
 indexmap = { version = "1.0", features = ["serde"] }
 itertools = "0.11"
-pyo3 = { version = "0.17", features = ["auto-initialize"], optional = true }
 heapless = "0.7"
 lightgbm = { git = "https://github.com/postgresml/lightgbm-rs", branch = "main" }
 linfa = { path = "deps/linfa" }
@@ -42,6 +41,7 @@ ndarray-stats = "0.5.1"
 parking_lot = "0.12"
 pgrx = "=0.11.2"
 pgrx-pg-sys = "=0.11.2"
+pyo3 = { version = "0.20.0", features = ["auto-initialize"], optional = true }
 rand = "0.8"
 rmp-serde = { version = "1.1" }
 signal-hook = "0.3"
