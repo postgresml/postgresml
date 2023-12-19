@@ -60,7 +60,8 @@
 ## Use Cases
 
 * [OpenSourceAI](use-cases/opensourceai.md)
-* [Chatbots](use-cases/chatbots.md)
+* [Chatbots](use-cases/chatbots/README.md)
+  * [Example Application](use-cases/chatbots/chatbots.md)
 * [Search](use-cases/improve-search-results-with-machine-learning.md)
 * [Embeddings](use-cases/embeddings/README.md)
   * [Generating LLM embeddings with open source models](use-cases/embeddings/generating-llm-embeddings-with-open-source-models-in-postgresml.md)
