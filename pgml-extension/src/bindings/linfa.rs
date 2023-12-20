@@ -16,7 +16,7 @@ pub struct LinearRegression {
 }
 
 impl LinearRegression {
-    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>
+    pub fn fit(dataset: &Dataset<f32>, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
@@ -92,7 +92,7 @@ pub struct LogisticRegression {
 }
 
 impl LogisticRegression {
-    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>
+    pub fn fit(dataset: &Dataset<f32>, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
@@ -243,7 +243,7 @@ pub struct Svm {
 }
 
 impl Svm {
-    pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
+    pub fn fit(dataset: &Dataset<f32>, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
         let records = ArrayView2::from_shape(
             (dataset.num_train_rows, dataset.num_features),
             &dataset.x_train,

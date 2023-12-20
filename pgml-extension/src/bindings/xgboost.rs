@@ -139,12 +139,15 @@ fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
     params.build().unwrap()
 }
 
-pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
+pub fn fit_regression(
+    dataset: &Dataset<f32>,
+    hyperparams: &Hyperparams,
+) -> Result<Box<dyn Bindings>> {
     fit(dataset, hyperparams, learning::Objective::RegLinear)
 }
 
 pub fn fit_classification(
-    dataset: &Dataset,
+    dataset: &Dataset<f32>,
     hyperparams: &Hyperparams,
 ) -> Result<Box<dyn Bindings>> {
     fit(
@@ -201,7 +204,7 @@ fn objective_from_string(name: &str, dataset: &Dataset) -> learning::Objective {
 }
 
 fn fit(
-    dataset: &Dataset,
+    dataset: &Dataset<f32>,
     hyperparams: &Hyperparams,
     objective: learning::Objective,
 ) -> Result<Box<dyn Bindings>> {

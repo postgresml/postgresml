@@ -50,7 +50,7 @@ pub mod sklearn;
 pub mod transformers;
 pub mod xgboost;
 
-pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>;
+pub type Fit = fn(dataset: &Dataset<f32>, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>;
 
 /// The Bindings trait that has to be implemented by all algorithm
 /// providers we use in PostgresML. We don't rely on Serde serialization,

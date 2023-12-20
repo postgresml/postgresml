@@ -24,18 +24,21 @@ impl std::fmt::Debug for Estimator {
     }
 }
 
-pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
+pub fn fit_regression(
+    dataset: &Dataset<f32>,
+    hyperparams: &Hyperparams,
+) -> Result<Box<dyn Bindings>> {
     fit(dataset, hyperparams, Task::regression)
 }
 
 pub fn fit_classification(
-    dataset: &Dataset,
+    dataset: &Dataset<f32>,
     hyperparams: &Hyperparams,
 ) -> Result<Box<dyn Bindings>> {
     fit(dataset, hyperparams, Task::classification)
 }
 
-fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Result<Box<dyn Bindings>> {
+fn fit(dataset: &Dataset<f32>, hyperparams: &Hyperparams, task: Task) -> Result<Box<dyn Bindings>> {
     let mut hyperparams = hyperparams.clone();
     match task {
         Task::regression => {
