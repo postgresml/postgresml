@@ -33,7 +33,7 @@ jobs:
               python3-pip \
               python3 \
               lld
-          sudo pip3 install -r requirements.txt
+          sudo pip3 install -r requirements.linux.txt
       - name: Cache dependencies
         uses: buildjet/cache@v3
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'

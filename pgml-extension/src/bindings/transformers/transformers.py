@@ -314,6 +314,7 @@ class StandardPipeline(object):
                 self.tokenizer,
                 timeout=timeout,
                 skip_prompt=True,
+                skip_special_tokens=True
             )
             if "chat_template" in kwargs:
                 input = self.tokenizer.apply_chat_template(
@@ -338,6 +339,7 @@ class StandardPipeline(object):
             streamer = TextIteratorStreamer(
                 self.tokenizer,
                 timeout=timeout,
+                skip_special_tokens=True
             )
             input = self.tokenizer(input, return_tensors="pt", padding=True).to(
                 self.model.device
