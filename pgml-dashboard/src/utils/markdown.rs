@@ -26,9 +26,6 @@ use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
 use url::Url;
 
-use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
-
 use std::fmt;
 
 pub struct MarkdownHeadings {
@@ -1611,56 +1608,6 @@ impl SearchIndex {
         }
 
         Ok(results)
-    }
-}
-
-pub struct CmsParse {}
-
-impl CmsParse {
-    pub async fn build() {
-        let docs = Self::documents();
-
-        for document in docs {
-            let path = document.clone().with_extension("json");
-            let path = path
-                .strip_prefix(config::cms_dir().display().to_string())
-                .expect(&format!("{:?} is not a prefic of path", config::cms_dir()));
-            let path = Path::new("cms").join(path);
-
-            let doc = crate::api::cms::Document::from_path(&document)
-                .await
-                .unwrap();
-            let data = serde_json::to_string(&doc).expect("Failed to convert document to json.");
-
-            let _ = tokio::fs::create_dir_all(path.parent().unwrap().display().to_string()).await;
-            let mut file = File::create(path.display().to_string())
-                .await
-                .expect("Failed to create document File.");
-
-            file.write_all(data.as_bytes())
-                .await
-                .expect("Failed to write file.");
-        }
-    }
-
-    pub fn documents() -> Vec<PathBuf> {
-        // TODO imrpove this .display().to_string()
-        let guides = glob::glob(&config::cms_dir().join("docs/**/*.md").display().to_string())
-            .expect("glob failed");
-        let blogs = glob::glob(&config::cms_dir().join("blog/**/*.md").display().to_string())
-            .expect("glob failed");
-        let careers = glob::glob(
-            &config::cms_dir()
-                .join("careers/**/*.md")
-                .display()
-                .to_string(),
-        )
-        .expect("glob failed");
-        guides
-            .chain(blogs)
-            .chain(careers)
-            .map(|path| path.expect("glob path failed"))
-            .collect()
     }
 }
 

@@ -151,17 +151,18 @@ impl Collection {
     pub async fn get_content(
         &self,
         mut path: PathBuf,
-        doc_type: &str,
+        cluster: &Cluster,
         origin: &Origin<'_>,
-    ) -> Document {
+    ) -> Result<ResponseOk, Status> {
+        info!("get_content: {} | {path:?}", self.name);
+
         if origin.path().ends_with("/") {
             path = path.join("README");
         }
 
-        let path = PathBuf::from(format!("cms/{}/{}.json", doc_type, path.display()));
+        let path = self.root_dir.join(format!("{}.md", path.to_string_lossy()));
 
-        let content = std::fs::read_to_string(path).unwrap();
-        serde_json::from_str(&content).unwrap()
+        self.render(&path, cluster).await
     }
 
     /// Create an index of the Collection based on the SUMMARY.md from Gitbook.
@@ -256,7 +257,7 @@ impl Collection {
     }
 
     // Sets specified index as currently viewed.
-    pub fn open_index(&self, path: PathBuf) -> Vec<IndexLink> {
+    fn open_index(&self, path: PathBuf) -> Vec<IndexLink> {
         self.index
             .clone()
             .iter_mut()
@@ -268,7 +269,9 @@ impl Collection {
             .collect()
     }
 
-    async fn render<'a>(&self, doc: Document, cluster: &Cluster) -> Result<ResponseOk, Status> {
+    // renders document in layout
+    async fn render<'a>(&self, path: &'a PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
+        let doc = Document::from_path(&path).await.unwrap();
         let index = self.open_index(doc.path);
 
         let user = if cluster.context.user.is_anonymous() {
@@ -334,8 +337,7 @@ async fn get_blog(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, Status> {
-    let doc = BLOG.get_content(path.clone(), "blog", origin).await;
-    BLOG.render(doc, cluster).await
+    BLOG.get_content(path, cluster, origin).await
 }
 
 #[get("/careers/<path..>", rank = 5)]
@@ -344,8 +346,7 @@ async fn get_careers(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, Status> {
-    let doc = CAREERS.get_content(path, "careers", origin).await;
-    CAREERS.render(doc, cluster).await
+    CAREERS.get_content(path, cluster, origin).await
 }
 
 #[get("/docs/<path..>", rank = 5)]
@@ -354,8 +355,7 @@ async fn get_docs(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, Status> {
-    let doc = DOCS.get_content(path.clone(), "docs", origin).await;
-    DOCS.render(doc, cluster).await
+    DOCS.get_content(path, cluster, origin).await
 }
 
 pub fn routes() -> Vec<Route> {
@@ -374,6 +374,10 @@ pub fn routes() -> Vec<Route> {
 mod test {
     use super::*;
     use crate::utils::markdown::{options, MarkdownHeadings, SyntaxHighlighter};
+    use regex::Regex;
+    use rocket::http::{ContentType, Cookie, Status};
+    use rocket::local::asynchronous::Client;
+    use rocket::{Build, Rocket};
 
     #[test]
     fn test_syntax_highlighting() {
@@ -460,5 +464,74 @@ This is the end of the markdown
         assert!(
             !html.contains(r#"<div class="overflow-auto w-100">"#) || !html.contains(r#"</div>"#)
         );
+    }
+
+    async fn rocket() -> Rocket<Build> {
+        dotenv::dotenv().ok();
+        rocket::build()
+            .manage(crate::utils::markdown::SearchIndex::open().unwrap())
+            .mount("/", crate::api::cms::routes())
+    }
+
+    fn gitbook_test(html: String) -> Option<String> {
+        // all gitbook expresions should be removed, this catches {%  %} nonsupported expressions.
+        let re = Regex::new(r"[{][%][^{]*[%][}]").unwrap();
+        let rsp = re.find(&html);
+        if rsp.is_some() {
+            return Some(rsp.unwrap().as_str().to_string());
+        }
+
+        // gitbook TeX block not supported yet
+        let re = Regex::new(r"(\$\$).*(\$\$)").unwrap();
+        let rsp = re.find(&html);
+        if rsp.is_some() {
+            return Some(rsp.unwrap().as_str().to_string());
+        }
+
+        None
+    }
+
+    // Ensure blogs render and there are no unparsed gitbook components.
+    #[sqlx::test]
+    async fn render_blogs_test() {
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let blog: Collection = Collection::new("Blog", true);
+
+        for path in blog.index {
+            let req = client.get(path.clone().href);
+            let rsp = req.dispatch().await;
+            let body = rsp.into_string().await.unwrap();
+
+            let test = gitbook_test(body);
+
+            assert!(
+                test.is_none(),
+                "bad html parse in {:?}. This feature is not supported {:?}",
+                path.href,
+                test.unwrap()
+            )
+        }
+    }
+
+    // Ensure Docs render and ther are no unparsed gitbook compnents.
+    #[sqlx::test]
+    async fn render_guides_test() {
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let docs: Collection = Collection::new("Docs", true);
+
+        for path in docs.index {
+            let req = client.get(path.clone().href);
+            let rsp = req.dispatch().await;
+            let body = rsp.into_string().await.unwrap();
+
+            let test = gitbook_test(body);
+
+            assert!(
+                test.is_none(),
+                "bad html parse in {:?}. This feature is not supported {:?}",
+                path.href,
+                test.unwrap()
+            )
+        }
     }
 }
