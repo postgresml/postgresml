@@ -40,7 +40,10 @@ pub struct Document {
 
 impl Document {
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
-        let contents = tokio::fs::read_to_string(&path).await?;
+        let contents = match tokio::fs::read_to_string(&path).await {
+            Ok(contents) => contents,
+            Err(_) => String::from("<h3>Failed to find your requested document!</h3>"),
+        };
 
         let parts = contents.split("---").collect::<Vec<&str>>();
 
