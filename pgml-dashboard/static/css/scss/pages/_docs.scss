@@ -169,5 +169,14 @@
             }
         }
     }
+
+    figure {
+        display: flex;
+        flex-direction: column;
+        img, figcaption {
+            margin-left: auto;
+            margin-right: auto;
+        }
+    }
 }
 

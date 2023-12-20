@@ -446,7 +446,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
                 .enumerate()
                 .map(|(index, code)| {
                     format!(
-                        r#"<div class="code-line-highlight-{}">{}</div>"#,
+                        r#"<div class="code-line-highlight-{} d-inline-block" style="line-height: 20px;">{}</div>"#,
                         match options.highlight.get(&(index + 1).to_string()) {
                             Some(color) => color,
                             _ => "none",
