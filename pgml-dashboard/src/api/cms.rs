@@ -39,7 +39,7 @@ pub struct Document {
 }
 
 impl Document {
-    pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document> {
+    pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
         let contents = tokio::fs::read_to_string(&path).await?;
 
         let parts = contents.split("---").collect::<Vec<&str>>();
@@ -271,35 +271,40 @@ impl Collection {
 
     // renders document in layout
     async fn render<'a>(&self, path: &'a PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
-        let doc = Document::from_path(&path).await.unwrap();
-        let index = self.open_index(doc.path);
+        match Document::from_path(&path).await {
+            Ok(doc) => {
+                let index = self.open_index(doc.path);
 
-        let user = if cluster.context.user.is_anonymous() {
-            None
-        } else {
-            Some(cluster.context.user.clone())
-        };
+                let user = if cluster.context.user.is_anonymous() {
+                    None
+                } else {
+                    Some(cluster.context.user.clone())
+                };
 
-        let mut layout = crate::templates::Layout::new(&doc.title, Some(cluster));
-        if let Some(image) = doc.image {
-            layout.image(&config::asset_url(image.into()));
+                let mut layout = crate::templates::Layout::new(&doc.title, Some(cluster));
+                if let Some(image) = doc.image {
+                    layout.image(&config::asset_url(image.into()));
+                }
+                if let Some(description) = &doc.description {
+                    layout.description(description);
+                }
+                if let Some(user) = &user {
+                    layout.user(user);
+                }
+
+                let layout = layout
+                    .nav_title(&self.name)
+                    .nav_links(&index)
+                    .toc_links(&doc.toc_links)
+                    .footer(cluster.context.marketing_footer.to_string());
+
+                Ok(ResponseOk(
+                    layout.render(crate::templates::Article { content: doc.html }),
+                ))
+            }
+            // Return page not found on bad path
+            _ => Err(Status::NotFound),
         }
-        if let Some(description) = &doc.description {
-            layout.description(description);
-        }
-        if let Some(user) = &user {
-            layout.user(user);
-        }
-
-        let layout = layout
-            .nav_title(&self.name)
-            .nav_links(&index)
-            .toc_links(&doc.toc_links)
-            .footer(cluster.context.marketing_footer.to_string());
-
-        Ok(ResponseOk(
-            layout.render(crate::templates::Article { content: doc.html }),
-        ))
     }
 }
 
@@ -533,5 +538,18 @@ This is the end of the markdown
                 test.unwrap()
             )
         }
+    }
+
+    #[sqlx::test]
+    async fn doc_not_found() {
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let req = client.get("/docs/not_a_doc");
+        let rsp = req.dispatch().await;
+
+        assert!(
+            rsp.status() == Status::NotFound,
+            "Returned status {:?}",
+            rsp.status()
+        );
     }
 }

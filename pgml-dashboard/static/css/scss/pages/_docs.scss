@@ -172,8 +172,11 @@
 
     figure {
         display: flex;
-        align-content: center;
         flex-direction: column;
+        img, figcaption {
+            margin-left: auto;
+            margin-right: auto;
+        }
     }
 }
 
