@@ -4,15 +4,16 @@
 //!
 //! With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
+use parking_lot::RwLock;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::collections::HashMap;
 use std::env;
-use std::sync::RwLock;
 use tokio::runtime::Runtime;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
 mod builtins;
+#[cfg(any(feature = "python", feature = "javascript"))]
 mod cli;
 mod collection;
 mod filter_builder;
@@ -34,7 +35,6 @@ mod utils;
 
 // Re-export
 pub use builtins::Builtins;
-pub use cli::cli;
 pub use collection::Collection;
 pub use model::Model;
 pub use open_source_ai::OpenSourceAI;
@@ -52,9 +52,7 @@ static DATABASE_POOLS: RwLock<Option<HashMap<String, PgPool>>> = RwLock::new(Non
 // Even though this function does not use async anywhere, for whatever reason it must be async or
 // sqlx's connect_lazy will throw an error
 async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result<PgPool> {
-    let mut pools = DATABASE_POOLS
-        .write()
-        .expect("Error getting DATABASE_POOLS for writing");
+    let mut pools = DATABASE_POOLS.write();
     let pools = pools.get_or_insert_with(HashMap::new);
     let environment_url = std::env::var("DATABASE_URL");
     let environment_url = environment_url.as_deref();

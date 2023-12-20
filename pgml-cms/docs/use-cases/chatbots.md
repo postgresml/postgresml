@@ -2,7 +2,7 @@
 description: CLI tool to build and deploy chatbots
 ---
 
-# Chatbots
+# Example Application
 
 Introduction
 

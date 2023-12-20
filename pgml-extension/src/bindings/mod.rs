@@ -17,9 +17,11 @@ macro_rules! create_pymodule {
             pyo3::Python::with_gil(|py| -> anyhow::Result<pyo3::Py<pyo3::types::PyModule>> {
                 use $crate::bindings::TracebackError;
                 let src = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), $pyfile));
-                Ok(pyo3::types::PyModule::from_code(py, src, "", "")
-                    .format_traceback(py)?
-                    .into())
+                Ok(
+                    pyo3::types::PyModule::from_code(py, src, "transformers.py", "__main__")
+                        .format_traceback(py)?
+                        .into(),
+                )
             })
         });
     };

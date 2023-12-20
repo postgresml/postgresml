@@ -1,0 +1,100 @@
+<% use crate::utils::config; %>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="turbo-cache-control" content="no-cache">
+  <meta name="author" content="PostgresML">
+  <title><%= title %> – PostgresML</title>
+
+  <% if description.is_some() { %>
+  <meta name="description" content="<%= description.clone().unwrap() %>">
+  <meta property="og:description" content="<%= description.clone().unwrap() %>">
+  <meta name="twitter:description" content="<%= description.clone().unwrap() %>">
+  <% } else { %>
+  <meta name="description" content="Train and deploy models to make online predictions using only SQL, with an open source Postgres extension.">
+  <meta property="og:description" content="Train and deploy models to make online predictions using only SQL, with an open source Postgres extension.">
+  <meta name="twitter:description" content="Train and deploy models to make online predictions using only SQL, with an open source Postgres extension.">
+  <% } %>
+
+  <% if image.is_some() { %>
+  <meta property="og:image" content="<%= image.clone().unwrap() %>">
+  <meta name="twitter:image" content="<%= image.clone().unwrap() %>">
+  <% } else { %>
+  <meta property="og:image" content="https://postgresml.org/dashboard/static/images/owl_gradient.png">
+  <meta name="twitter:image" content="https://postgresml.org/dashboard/static/images/owl_gradient.png">
+  <% } %>
+
+  <meta property="og:site_name" content="PostgresML">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="<%= title %> – PostgresML">
+  <meta property="og:url" content="http://www.postgresML.org">
+  <meta property="og:locale" content="en_US">
+
+  <meta name="twitter:site" content="@postgresml">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:creator" content="@postgresml">
+  <meta name="twitter:title" content="<%= title %> – PostgresML">
+
+  <% if context.is_some() { %>
+    <%- context.unwrap() %>
+  <% } else { %>
+    
+  <script type="importmap" data-turbo-track="reload">
+    {
+      "imports": {
+        "@hotwired/stimulus": "/dashboard/static/js/libs/stimulus-3.2.1.min.js",
+        "@lodash/core": "/dashboard/static/js/libs/lodash-4.17.15-core.js",
+        "@postgresml/main": "<%= config::js_url("main.js") %>"
+      }
+    }
+  </script>
+  
+  <link rel="stylesheet" data-turbo-track="reload" href="<%- config::css_url("style.css") %>">
+  <script async src="https://data.cloud.hyperparam.ai/script.js" data-website-id="499122fd-f307-4e8d-af4b-88b9f5e9903b"></script>
+  <script defer src="https://cdn.plot.ly/plotly-2.11.1.min.js"></script>
+  <script data-turbo-trace="reload" type="module" src="<%= config::js_url("bundle.js") %>" async defer></script>
+  
+    <!-- version: <%= config::git_sha() %> -->
+  <% } %>
+  
+  <script type="module" defer async src="/dashboard/static/js/libs/sortable-1.12.0.min.js"></script>
+  
+  <% for link in preloads { %>
+    <link rel="preload" fetchpriority="high" as="image" href=<%= link %> type="image/webp">
+  <% };  %>
+
+  <link rel="icon" href="/dashboard/static/images/owl.ico">
+  
+  <script defer src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=swap">
+
+  <script async type="nomodule" src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+  <script defer type="module" src="/dashboard/static/js/libs/turbo-7.3.0.min.js"></script>
+
+  <!-- Code Mirror -->
+  <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+  <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/sql-hint.min.js" integrity="sha512-O7YCIZwiyJYc9d/iPOSgEzhhlonTMGcmM1HmgYFffj5cGwVu2PLSzTaLvD9HSk8rSSf9rIpdhJPk8Yhu6wJBtA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/sql/sql.min.js" integrity="sha512-JOURLWZEM9blfKvYn1pKWvUZJeFwrkn77cQLJOS6M/7MVIRdPacZGNm2ij5xtDV/fpuhorOswIiJF3x/woe5fw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/show-hint.min.js" integrity="sha512-yhmeAerubMLaGAsyS7sE8Oqub6GeTkBDQpkXo2JKHgg7JOCudQvcbDQc5rPxdl7MqcDusTJzSy+ODlyzAwETfQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer type="module" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/comment/comment.min.js" integrity="sha512-UaJ8Lcadz5cc5mkWmdU8cJr0wMn7d8AZX5A24IqVGUd1MZzPJTq9dLLW6I102iljTcdB39YvVcCgBhM0raGAZQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <link rel="stylesheet" href="/dashboard/static/css/codemirror.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/show-hint.min.css" integrity="sha512-OmcLQEy8iGiD7PSm85s06dnR7G7C9C0VqahIPAj/KHk5RpOCmnC6R2ob1oK4/uwYhWa9BF1GC6tzxsC8TIx7Jg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <% if config::dev_mode() { %>
+  <!-- dev only - save page position after reload -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function(event) {
+        var scrollpos = localStorage.getItem('scrollpos');
+        if (scrollpos) window.scrollTo(0, scrollpos);
+    });
+
+    window.onbeforeunload = function(e) {
+        localStorage.setItem('scrollpos', window.scrollY);
+    };
+  </script>
+  <% } %>
+</head>

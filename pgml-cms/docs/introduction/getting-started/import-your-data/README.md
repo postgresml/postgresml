@@ -4,7 +4,7 @@ Machine learning always depends on input data, whether it's generating text with
 
 PostgresML can easily ingest data from your existing data stores.&#x20;
 
-### Static data
+## Static data
 
 Data that changes infrequently can be easily imported into PostgresML using `COPY`. All you have to do is export your data as a CSV file, create a table in Postgres to store it, and import it using the command line.
 
@@ -12,7 +12,7 @@ Data that changes infrequently can be easily imported into PostgresML using `COP
 [csv.md](csv.md)
 {% endcontent-ref %}
 
-### Live data
+## Live data
 
 Importing data from online databases can be done with foreign data wrappers. Hosted PostgresML databases come with both `postgres_fdw` and `dblink` extensions pre-installed, so you can import data from any of your existing Postgres databases, and export machine learning artifacts from PostgresML using just a few lines of SQL.
 

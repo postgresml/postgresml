@@ -33,14 +33,14 @@ UPDATE
 SET embedding = pgml.embed('intfloat/e5-small', "Address");
 ```
 
-```
+```sql
 UPDATE 5000
 ```
 
 That's it. We just embedding 5,000 "Address" values with a single SQL query. Let's take a look at what we got:
 
-```
-postgresml=# SELECT
+```sql
+SELECT
     "Address",
     (embedding::real[])[1:5] 
 FROM usa_house_prices
@@ -79,7 +79,7 @@ ORDER BY
 LIMIT 3;
 ```
 
-```
+```sql
                 Address                 
 ----------------------------------------
  1 Infinite Loop, Cupertino, California
@@ -104,8 +104,8 @@ When searching for a nearest neighbor match, `pgvector` picks the closest centro
 
 The number of lists in an IVFFlat index is configurable when creating the index. The more lists are created, the faster you can search it, but the nearest neighbor approximation becomes less precise. The best number of lists for a dataset is typically its square root, e.g. if a dataset has 5,000,000 vectors, the number of lists should be:
 
-```
-postgresml=# SELECT round(sqrt(5000000)) AS lists;
+```sql
+SELECT round(sqrt(5000000)) AS lists;
  lists 
 -------
   2236
@@ -124,8 +124,8 @@ WITH (lists = 71);
 
 71 is the approximate square root of 5,000 rows we have in that table. With the index created, if we `EXPLAIN` the query we just ran, we'll get an "Index Scan" on the cosine distance index:
 
-```
-postgresml=# EXPLAIN SELECT
+```sql
+EXPLAIN SELECT
     "Address"
 FROM usa_house_prices
 ORDER BY 

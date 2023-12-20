@@ -132,6 +132,8 @@ pub fn debug() {
 }
 
 pub fn watch() {
+    rebuild();
+
     let mut debouncer = unwrap_or_exit!(new_debouncer(
         Duration::from_secs(1),
         None,
@@ -156,9 +158,7 @@ pub fn watch() {
                     }
 
                     if detected {
-                        print("changes detected, rebuilding...");
                         rebuild();
-                        info("done");
                     }
                 }
 
@@ -211,7 +211,12 @@ pub fn lint(check: bool) {
 }
 
 fn rebuild() {
-    unwrap_or_exit!(execute_command(
-        Command::new("cargo").arg("pgml-components").arg("bundle")
-    ));
+    print("changes detected, rebuilding...");
+    match execute_command(Command::new("cargo").arg("pgml-components").arg("bundle")) {
+        Ok(_) => info("ok"),
+        Err(err) => {
+            error("error");
+            error!("{}", err);
+        }
+    }
 }

@@ -917,6 +917,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
     iter_nodes(root, &mut |node| {
         match &mut node.data.borrow_mut().value {
+            // Strip .md extensions that gitbook includes in page link urls
             &mut NodeValue::Link(ref mut link) => {
                 let path = Path::new(link.url.as_str());
 
@@ -932,6 +933,20 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
             }
 
             &mut NodeValue::Text(ref mut text) => {
+                // Strip .md extensions that gitbook includes in page link text
+                if text.ends_with(".md") {
+                    if let Some(parent) = node.parent() {
+                        match parent.data.borrow().value {
+                            NodeValue::Link(ref _link) => {
+                                for _ in 0..".md".len() {
+                                    text.pop();
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+
                 if text.starts_with("=== \"") {
                     let mut parent = {
                         match node.parent() {

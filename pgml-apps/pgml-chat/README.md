@@ -3,7 +3,7 @@ A command line tool to build and deploy a **_knowledge based_** chatbot using Po
 
 There are two stages in building a knowledge based chatbot:
 - Build a knowledge base by ingesting documents, chunking documents, generating embeddings and indexing these embeddings for fast query
-- Generate responses to user queries by retrieving relevant documents and generating responses using OpenAI API
+- Generate responses to user queries by retrieving relevant documents and generating responses using OpenAI and [OpenSourceAI API](https://postgresml.org/docs/introduction/apis/client-sdks/opensourceai)
 
 This tool automates the above two stages and provides a command line interface to build and deploy a knowledge based chatbot.
 
@@ -12,7 +12,7 @@ Before you begin, make sure you have the following:
 
 - PostgresML Database: Sign up for a free [GPU-powered database](https://postgresml.org/signup)
 - Python version >=3.8
-- OpenAI API key
+- (Optional) OpenAI API key
 
 
 # Getting started
@@ -30,10 +30,10 @@ wget https://raw.githubusercontent.com/postgresml/postgresml/master/pgml-apps/pg
 ```
 3. Copy the template file to `.env`
 
-4. Update environment variables with your OpenAI API key and PostgresML database credentials.
+4. Update environment variables with your PostgresML database credentials and OpenAI API key (optional).
 ```bash
-OPENAI_API_KEY=<OPENAI_API_KEY>
 DATABASE_URL=<POSTGRES_DATABASE_URL starts with postgres://>
+OPENAI_API_KEY=<OPENAI_API_KEY> # Optional
 ```
 
 # Usage
@@ -41,13 +41,13 @@ You can get help on the command line interface by running:
 
 ```bash
 (pgml-bot-builder-py3.9) pgml-chat % pgml-chat % pgml-chat --help
-usage: pgml-chat [-h] --collection_name COLLECTION_NAME [--root_dir ROOT_DIR] [--stage {ingest,chat}] [--chat_interface {cli,slack,discord}]
-                 [--chat_history CHAT_HISTORY] [--bot_name BOT_NAME] [--bot_language BOT_LANGUAGE] [--bot_topic BOT_TOPIC]
-                 [--bot_topic_primary_language BOT_TOPIC_PRIMARY_LANGUAGE] [--bot_persona BOT_PERSONA]
+usage: pgml-chat [-h] --collection_name COLLECTION_NAME [--root_dir ROOT_DIR] [--stage {ingest,chat}] [--chat_interface {cli,slack,discord}] [--chat_history CHAT_HISTORY] [--bot_name BOT_NAME]
+                 [--bot_language BOT_LANGUAGE] [--bot_topic BOT_TOPIC] [--bot_topic_primary_language BOT_TOPIC_PRIMARY_LANGUAGE] [--bot_persona BOT_PERSONA]
+                 [--chat_completion_model CHAT_COMPLETION_MODEL] [--max_tokens MAX_TOKENS] [--vector_recall_limit VECTOR_RECALL_LIMIT]
 
 PostgresML Chatbot Builder
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --collection_name COLLECTION_NAME
                         Name of the collection (schema) to store the data in PostgresML database (default: None)
@@ -57,16 +57,21 @@ optional arguments:
   --chat_interface {cli,slack,discord}
                         Chat interface to use (default: cli)
   --chat_history CHAT_HISTORY
-                        Number of messages from history used for generating response (default: 1)
+                        Number of messages from history used for generating response (default: 0)
   --bot_name BOT_NAME   Name of the bot (default: PgBot)
   --bot_language BOT_LANGUAGE
                         Language of the bot (default: English)
   --bot_topic BOT_TOPIC
                         Topic of the bot (default: PostgresML)
   --bot_topic_primary_language BOT_TOPIC_PRIMARY_LANGUAGE
-                        Primary programming language of the topic (default: )
+                        Primary programming language of the topic (default: SQL)
   --bot_persona BOT_PERSONA
                         Persona of the bot (default: Engineer)
+  --chat_completion_model CHAT_COMPLETION_MODEL
+  --max_tokens MAX_TOKENS
+                        Maximum number of tokens to generate (default: 256)
+  --vector_recall_limit VECTOR_RECALL_LIMIT
+                        Maximum number of documents to retrieve from vector recall (default: 1)
 ```
 ## Ingest
 In this step, we ingest documents, chunk documents, generate embeddings and index these embeddings for fast query.
@@ -145,6 +150,32 @@ If you have set up the Discord app correctly, you should see the following outpu
 Once the discord app is running, you can interact with the chatbot on Discord as shown below. In the example here, name of the bot is `pgchat`. This app responds only to direct messages to the bot.
 
 ![Discord Chatbot](./images/discord_screenshot.png)
+
+# Prompt Engineering
+In addition to relevant context retrieved from vector search, system prompt to generate accurate responses with minimum hallucinations requires prompt engineering. 
+Different chat completion models require different system prompts. Since the prompts including the context are long, they suffer from **lost in the middle** problem described in [this paper](https://arxiv.org/pdf/2307.03172.pdf). Below are some of the prompts that we have used for different chat completion models.
+
+## Default prompt (GPT-3.5 and open source models)
+```text
+Use the following pieces of context to answer the question at the end.
+If you don't know the answer, just say that you don't know, don't try to make up an answer.
+Use three sentences maximum and keep the answer as concise as possible.
+Always say "thanks for asking!" at the end of the answer.
+```
+
+## GPT-4 System prompt
+```text
+You are an assistant to answer questions about {topic}.\ 
+Your name is {name}. You speak like {persona} in {language}. Use the given list of documents to answer user's question.\
+Use the conversation history if it is applicable to answer the question. \n Use the following steps:\n \
+1. Identify if the user input is really a question. \n \
+2. If the user input is not related to the {topic} then respond that it is not related to the {topic}.\n \
+3. If the user input is related to the {topic} then first identify relevant documents from the list of documents. \n \
+4. If the documents that you found relevant have information to completely and accurately answers the question then respond with the answer.\n \
+5. If the documents that you found relevant have code snippets then respond with the code snippets. \n \
+6. Most importantly, don't make up code snippets that are not present in the documents.\n \
+7. If the user input is generic like Cool, Thanks, Hello, etc. then respond with a generic answer. \n"
+```
 
 # Developer Guide
 

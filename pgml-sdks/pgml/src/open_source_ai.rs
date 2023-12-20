@@ -236,7 +236,7 @@ mistralai/Mistral-7B-v0.1
         let md5_digest = md5::compute(to_hash.as_bytes());
         let fingerprint = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-        let mut args = serde_json::json!({ "max_length": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n });
+        let mut args = serde_json::json!({ "max_new_tokens": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n });
         if let Some(t) = chat_template
             .or_else(|| try_get_model_chat_template(&model_name).map(|s| s.to_string()))
         {
@@ -322,7 +322,7 @@ mistralai/Mistral-7B-v0.1
         let md5_digest = md5::compute(to_hash.as_bytes());
         let fingerprint = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-        let mut args = serde_json::json!({ "max_length": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n });
+        let mut args = serde_json::json!({ "max_new_tokens": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n });
         if let Some(t) = chat_template
             .or_else(|| try_get_model_chat_template(&model_name).map(|s| s.to_string()))
         {
@@ -401,7 +401,7 @@ mod tests {
     #[test]
     fn can_open_source_ai_create() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let results = client.chat_completions_create(Json::from_serializable("mistralai/Mistral-7B-v0.1"), vec![
+        let results = client.chat_completions_create(Json::from_serializable("HuggingFaceH4/zephyr-7b-beta"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None)?;
@@ -412,7 +412,7 @@ mod tests {
     #[sqlx::test]
     fn can_open_source_ai_create_async() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let results = client.chat_completions_create_async(Json::from_serializable("mistralai/Mistral-7B-v0.1"), vec![
+        let results = client.chat_completions_create_async(Json::from_serializable("HuggingFaceH4/zephyr-7b-beta"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None).await?;
@@ -423,7 +423,7 @@ mod tests {
     #[sqlx::test]
     fn can_open_source_ai_create_stream_async() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let mut stream = client.chat_completions_create_stream_async(Json::from_serializable("mistralai/Mistral-7B-v0.1"), vec![
+        let mut stream = client.chat_completions_create_stream_async(Json::from_serializable("HuggingFaceH4/zephyr-7b-beta"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None).await?;
@@ -436,7 +436,7 @@ mod tests {
     #[test]
     fn can_open_source_ai_create_stream() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let iterator = client.chat_completions_create_stream(Json::from_serializable("mistralai/Mistral-7B-v0.1"), vec![
+        let iterator = client.chat_completions_create_stream(Json::from_serializable("HuggingFaceH4/zephyr-7b-beta"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None)?;

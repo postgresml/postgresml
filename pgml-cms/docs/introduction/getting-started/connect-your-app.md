@@ -6,13 +6,13 @@ description: PostgresML is compatible with all standard PostgreSQL clients
 
 You can connect to your database from any Postgres compatible client. PostgresML is intended to serve in the traditional role of an application database, along with it's extended role as an MLOps platform to make it easy to build and maintain AI applications.&#x20;
 
-### Application SDKs
+## Application SDKs
 
 We provide client SDKs for JavaScript, Python and Rust apps that manage connections to the Postgres database and make it easy to construct efficient queries for AI use cases, like managing a document collection for RAG, or building a chatbot. All of the ML & AI still happens in the database, with centralized operations, hardware and dependency management.
 
 These SDKs are under rapid development to add new features and use cases, but we release non breaking changes with minor version updates in accordance with SemVer. It's easy to install into your existing application.
 
-#### Installation
+### Installation
 
 {% tabs %}
 {% tab title="JavaScript" %}
@@ -28,7 +28,7 @@ pip install pgml
 {% endtab %}
 {% endtabs %}
 
-#### Test the connection
+### Test the connection
 
 {% tabs %}
 {% tab title="JavaScript" %}
@@ -80,7 +80,7 @@ async def main():
 {% endtab %}
 {% endtabs %}
 
-### Native Language Bindings
+## Native Language Bindings
 
 You can also connect directly to the database with your favorite bindings or ORM:
 
@@ -101,7 +101,7 @@ You can also connect directly to the database with your favorite bindings or ORM
 * Rust: [postgres](https://crates.io/crates/postgres), [SQLx](https://github.com/launchbadge/sqlx) or [Diesel](https://github.com/diesel-rs/diesel)
 * Swift: [PostgresNIO](https://github.com/vapor/postgres-nio) or [PostgresClientKit](https://github.com/codewinsdotcom/PostgresClientKit)
 
-### SQL Editors
+## SQL Editors
 
 Use any of these popular tools to execute SQL queries directly against the database:
 

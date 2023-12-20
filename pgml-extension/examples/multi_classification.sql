@@ -31,9 +31,9 @@ LIMIT 10;
 
 -- linear models
 SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'ridge');
-SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'stochastic_gradient_descent');
-SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'perceptron');
-SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'passive_aggressive');
+--SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'stochastic_gradient_descent');
+--SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'perceptron');
+--SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'passive_aggressive');
 
 -- support vector machines
 SELECT * FROM pgml.train('Iris Flower Types', algorithm => 'svm');

@@ -1,0 +1,39 @@
+#notifications-banner {
+    margin-left: calc(var(--bs-gutter-x) * -0.5);
+    margin-right: calc(var(--bs-gutter-x) * -0.5);
+}
+
+div[data-controller="notifications-marketing-alert-banner"] {
+    .btn-tertiary {
+        border: 0px;
+    }
+    .level1 {
+        background-color: #FFFF00;
+        color: #{$gray-900};
+    }
+    .level2 {
+        background-color: #FF6929;
+        color: #{$gray-900};
+    }
+    .level3 {
+        background-color: #{$peach-shade-200};
+    }
+
+    .close-dark {
+        color: #{$gray-300};
+    }
+    .close-light {
+        color: #{$gray-100};
+    }
+    .close-dark, .close-light {
+        margin-left: -100%;
+    }
+
+    .message-area {
+        max-width: 75vw;
+    }
+
+    .banner {
+        min-height: 2rem;
+    }
+}

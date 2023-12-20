@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html lang="en-US">
 
-  <% include!("head.html"); %>
+  <%+ head %>
 
   <body data-bs-theme="dark" data-theme="docs">
     <main>
@@ -12,10 +12,13 @@
         <div class="ellipse-container position-absolute" style="margin: -2rem; height: 100vh; width: 100vw;">
           <div class="ellipse-21" style="width: 35vw; height: 35vh; top: 0vh; left: -7vw"></div>
         </div>
-        <% if banner.is_some() {%><%+ banner.unwrap() %><% } %>
+        <%+ alert_banner %>
         <%+ MarketingNavbar::new( user ) %>
 
-        <div class="container my-4 my-xxl-5">
+        <div class="container">
+          <div class="pt-4 pb-5">
+            <%+ feature_banner %>
+          </div>
           <div class="row position-relative">
             <% include!("nav/side.html"); %>
 

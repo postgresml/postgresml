@@ -1455,6 +1455,7 @@ dependencies = [
  "lopdf",
  "md5",
  "neon",
+ "parking_lot 0.12.1",
  "pyo3",
  "pyo3-asyncio",
  "regex",

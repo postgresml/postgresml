@@ -328,7 +328,7 @@ async def test_transformer_pipeline_stream():
 def test_open_source_ai_create():
     client = pgml.OpenSourceAI()
     results = client.chat_completions_create(
-        "mistralai/Mistral-7B-v0.1",
+        "HuggingFaceH4/zephyr-7b-beta",
         [
             {
                 "role": "system",
@@ -348,7 +348,7 @@ def test_open_source_ai_create():
 async def test_open_source_ai_create_async():
     client = pgml.OpenSourceAI()
     results = await client.chat_completions_create_async(
-        "mistralai/Mistral-7B-v0.1",
+        "HuggingFaceH4/zephyr-7b-beta",
         [
             {
                 "role": "system",
@@ -367,7 +367,7 @@ async def test_open_source_ai_create_async():
 def test_open_source_ai_create_stream():
     client = pgml.OpenSourceAI()
     results = client.chat_completions_create_stream(
-        "mistralai/Mistral-7B-v0.1",
+        "HuggingFaceH4/zephyr-7b-beta",
         [
             {
                 "role": "system",
@@ -389,7 +389,7 @@ def test_open_source_ai_create_stream():
 async def test_open_source_ai_create_stream_async():
     client = pgml.OpenSourceAI()
     results = await client.chat_completions_create_stream_async(
-        "mistralai/Mistral-7B-v0.1",
+        "HuggingFaceH4/zephyr-7b-beta",
         [
             {
                 "role": "system",

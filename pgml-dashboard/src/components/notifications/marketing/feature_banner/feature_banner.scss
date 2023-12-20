@@ -1,0 +1,65 @@
+div[data-controller="notifications-marketing-feature-banner"] {
+    .btn-tertiary {
+        border: 0px;
+        &:hover {
+            .more-info {
+                left: 0.5rem;
+            }
+        }
+        .more-info {
+            transition-duration: 0.5s;
+            transition-property: left;
+            left: 0rem;
+        }
+    }
+    .feature1 {
+        background-color: #{$slate-shade-100};
+        margin: 2px 0px; 
+        .btn-tertiary {
+            color: #{$gray-900};
+            --bs-btn-color: #{$gray-900};
+        }
+        .close {
+            color: #{$slate-shade-600};
+        }
+        .more-info {
+            color: #{$gray-100}
+        }
+    }
+    .feature2 {
+        background-color: #{$violet-shade-100};
+        margin: 2px 0px;
+        .btn-tertiary {
+            color: #{$gray-100};
+        }
+        .close {
+            color: #{$gray-200};
+        }
+        .more-info {
+            color: #{$gray-100}
+        }
+    }
+    .feature3 {
+        background-color: #{$gray-900};
+        .btn-tertiary {
+            color: #{$gray-100};
+        }
+        .close {
+            color: #{$gray-300};
+        }
+        .more-info {
+            color: #{$slate-shade-100}
+        }
+    }
+    
+    .feature1, .feature2, .feature3 {
+        border-radius: $border-radius-xl;
+    }
+
+    .message-area {
+        max-width: 75vw;
+    }
+    .banner {
+        min-height: 2rem;
+    }
+}

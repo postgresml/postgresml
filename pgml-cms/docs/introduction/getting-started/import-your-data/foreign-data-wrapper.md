@@ -1,6 +1,6 @@
 # Foreign Data Wrapper
 
-#### Setting up
+## Setting up
 
 Before you get started with foreign data wrappers, log into your current database hosting provider and grab the following connection details:
 
@@ -12,7 +12,7 @@ Before you get started with foreign data wrappers, log into your current databas
 
 Once you have them, we can setup our live foreign data wrapper connection. All following commands should be executed on your PostgesML database. You don't need to perform any additional steps on your production database.
 
-#### Connecting
+### Connecting
 
 To connect to your database from PostgresML, first create a corresponding `SERVER`:
 
@@ -51,7 +51,7 @@ SELECT * FROM dblink(
 
 You can now execute any query you want on your live database from inside your PostgresML database.
 
-#### Working with your tables
+### Working with your tables
 
 Instead of creating temporary tables for each query, you can import your entire schema into PostgresML using foreign data wrappers:
 
@@ -71,7 +71,7 @@ SELECT * FROM live_db_tables.users LIMIT 1;
 
 That's it, your PostgresML database is directly connected to your production database and you can start your machine learning journey.
 
-#### Accelerating bulk access
+### Accelerating bulk access
 
 To speed up access to your data, you can cache it in PostgresML by copying it from a foreign table into a regular table. Taking the example of the `users` table:
 
@@ -82,6 +82,6 @@ INSERT INTO public.users SELECT * FROM live_db_tables.users;
 
 This will copy all rows from your `users` table into PostgresML. You'll be able to access them much quicker if you need to perform a batch job like generating embeddings or training a supervised model.
 
-#### Exporting ML artifacts
+### Exporting ML artifacts
 
 If you want to export some artifacts you've created with PostresML to your live database, you can do so with foreign data wrappers as well. Simply copy them using the same mechanism as above, except instead of copying data from the foreign schema, copy data into the foreign schema from the regular table.
