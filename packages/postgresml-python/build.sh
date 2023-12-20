@@ -28,12 +28,16 @@ rm "$deb_dir/release.sh"
 (cat ${SCRIPT_DIR}/DEBIAN/prerm | envsubst '${PGVERSION}') > "$deb_dir/DEBIAN/prerm"
 (cat ${SCRIPT_DIR}/DEBIAN/postrm | envsubst '${PGVERSION}') > "$deb_dir/DEBIAN/postrm"
 
-cp ${SCRIPT_DIR}/../../pgml-extension/requirements.linux.txt "$deb_dir/etc/postgresml-python/requirements.linux.txt"
+if [[ $(arch) == "x86_64" ]]; then
+  cp ${SCRIPT_DIR}/../../pgml-extension/requirements.linux.txt "$deb_dir/etc/postgresml-python/requirements.txt"
+else
+  cp ${SCRIPT_DIR}/../../pgml-extension/requirements.macos.txt "$deb_dir/etc/postgresml-python/requirements.txt"
+fi
 
 virtualenv --python="python$PYTHON_VERSION" "$deb_dir/var/lib/postgresml-python/pgml-venv"
 source "$deb_dir/var/lib/postgresml-python/pgml-venv/bin/activate"
 
-python -m pip install -r "${deb_dir}/etc/postgresml-python/requirements.linux.txt"
+python -m pip install -r "${deb_dir}/etc/postgresml-python/requirements.txt"
 
 deactivate
 
