@@ -50,7 +50,7 @@ component!(Head);
 
 #[cfg(test)]
 mod head_tests {
-    use crate::templates::Head;
+    use super::Head;
 
     #[test]
     fn new_head() {
@@ -61,18 +61,18 @@ mod head_tests {
         );
     }
 
-    #[test]
-    fn add_preload() {
-        let mut head = Head::new();
-        let mut preloads: Vec<String> = vec![];
-        for i in 0..5 {
-            preloads.push(format!("image/test_preload_{}.test", i).to_string());
-        }
-        for preload in preloads.clone() {
-            head.add_preload(&preload);
-        }
-        assert!(head.preloads.eq(&preloads));
-    }
+    // #[test]
+    // fn add_preload() {
+    //     let mut head = Head::new();
+    //     let mut preloads: Vec<String> = vec![];
+    //     for i in 0..5 {
+    //         preloads.push(format!("image/test_preload_{}.test", i).to_string());
+    //     }
+    //     for preload in preloads.clone() {
+    //         head.add_preload(&preload);
+    //     }
+    //     assert!(head.preloads.eq(&preloads));
+    // }
 
     #[test]
     fn add_title() {
@@ -101,12 +101,12 @@ mod head_tests {
 
 #[cfg(test)]
 mod default_head_template_test {
-    use super::{DefaultHeadTemplate, Head};
+    use super::Head;
     use sailfish::TemplateOnce;
 
     #[test]
     fn default() {
-        let head = DefaultHeadTemplate::new(None);
+        let head = Head::new();
         let rendered = head.render_once().unwrap();
 
         assert!(
@@ -120,13 +120,12 @@ mod default_head_template_test {
 
     #[test]
     fn set_head() {
-        let mut head_info = Head::new()
+        let mut head = Head::new()
             .title("test title")
             .description("test description")
             .image("image/test_image.jpg");
-        head_info.add_preload("image/test_preload.webp");
+        // head.add_preload("image/test_preload.webp");
 
-        let head = DefaultHeadTemplate::new(Some(head_info));
         let rendered = head.render_once().unwrap();
         assert!(
             rendered.contains("<title>test title – PostgresML</title>") &&

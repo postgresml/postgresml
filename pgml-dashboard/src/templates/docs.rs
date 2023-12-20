@@ -1,4 +1,5 @@
 use sailfish::TemplateOnce;
+use serde::{Deserialize, Serialize};
 
 use crate::utils::markdown::SearchResult;
 
@@ -11,7 +12,7 @@ pub struct Search {
 }
 
 /// Table of contents link.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TocLink {
     pub title: String,
     pub id: String,
