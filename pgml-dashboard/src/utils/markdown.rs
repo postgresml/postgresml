@@ -18,6 +18,7 @@ use comrak::{
 };
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use regex::Regex;
 use tantivy::collector::TopDocs;
 use tantivy::query::{QueryParser, RegexQuery};
 use tantivy::schema::*;
@@ -800,7 +801,9 @@ impl Admonition {
 
 impl From<&str> for Admonition {
     fn from(utf8: &str) -> Admonition {
-        let (class, icon, title) = if utf8.starts_with("!!! info") {
+        let (class, icon, title) = if utf8.starts_with("!!! info")
+            || utf8.starts_with(r#"{% hint style="info" %}"#)
+        {
             ("admonition-info", "help", "Info")
         } else if utf8.starts_with("!!! note") {
             ("admonition-note", "priority_high", "Note")
@@ -812,17 +815,22 @@ impl From<&str> for Admonition {
             ("admonition-question", "help", "Question")
         } else if utf8.starts_with("!!! example") {
             ("admonition-example", "code", "Example")
-        } else if utf8.starts_with("!!! success") {
+        } else if utf8.starts_with("!!! success")
+            || utf8.starts_with(r#"{% hint style="success" %}"#)
+        {
             ("admonition-success", "check_circle", "Success")
         } else if utf8.starts_with("!!! quote") {
             ("admonition-quote", "format_quote", "Quote")
         } else if utf8.starts_with("!!! bug") {
             ("admonition-bug", "bug_report", "Bug")
-        } else if utf8.starts_with("!!! warning") {
+        } else if utf8.starts_with("!!! warning")
+            || utf8.starts_with(r#"{% hint style="warning" %}"#)
+        {
             ("admonition-warning", "warning", "Warning")
         } else if utf8.starts_with("!!! fail") {
             ("admonition-fail", "dangerous", "Fail")
-        } else if utf8.starts_with("!!! danger") {
+        } else if utf8.starts_with("!!! danger") || utf8.starts_with(r#"{% hint style="danger" %}"#)
+        {
             ("admonition-danger", "gpp_maybe", "Danger")
         } else {
             ("admonition-generic", "", "")
@@ -892,6 +900,26 @@ impl CodeBlock {
             _ => None,
         }
     }
+}
+
+// Buffer gitbook items with spacing.
+pub fn gitbook_preprocess(item: &str) -> String {
+    let re = Regex::new(r"[{][%][^{]*[%][}]").unwrap();
+    let mut rsp = item.to_string();
+    let mut offset = 0;
+
+    re.find_iter(item).for_each(|m| {
+        rsp.insert(m.start() + offset, '\n');
+        offset = offset + 1;
+        rsp.insert(m.start() + offset, '\n');
+        offset = offset + 1;
+        rsp.insert(m.end() + offset, '\n');
+        offset = offset + 1;
+        rsp.insert(m.end() + offset, '\n');
+        offset = offset + 1;
+    });
+
+    return rsp;
 }
 
 /// Convert MkDocs to Bootstrap.
@@ -1046,8 +1074,11 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         tabs.clear();
                         node.detach();
                     }
+                } else if text.starts_with("{% tabs %}") {
+                    // remove it
+                    node.detach();
                 } else if text.starts_with("{% endtab %}") {
-                    //ignore it
+                    //remove it
                     node.detach()
                 } else if text.starts_with("{% tab title=\"") {
                     let mut parent = {
@@ -1149,17 +1180,21 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         node.detach();
                     }
                 } else if text.starts_with("!!! info")
+                    || text.starts_with(r#"{% hint style="info" %}"#)
                     || text.starts_with("!!! bug")
                     || text.starts_with("!!! tip")
                     || text.starts_with("!!! note")
                     || text.starts_with("!!! abstract")
                     || text.starts_with("!!! example")
                     || text.starts_with("!!! warning")
+                    || text.starts_with(r#"{% hint style="warning" %}"#)
                     || text.starts_with("!!! question")
                     || text.starts_with("!!! success")
+                    || text.starts_with(r#"{% hint style="success" %}"#)
                     || text.starts_with("!!! quote")
                     || text.starts_with("!!! fail")
                     || text.starts_with("!!! danger")
+                    || text.starts_with(r#"{% hint style="danger" %}"#)
                     || text.starts_with("!!! generic")
                 {
                     let parent = node.parent().unwrap();
@@ -1173,7 +1208,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     info_block_close_items.push(None);
                     parent.insert_after(n);
                     parent.detach();
-                } else if text.starts_with("!!! code_block") {
+                } else if text.starts_with("!!! code_block") || text.starts_with("{% code ") {
                     let parent = node.parent().unwrap();
 
                     let title = parser(text.as_ref(), r#"title=""#);
@@ -1187,7 +1222,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         parent.insert_after(n);
                     }
 
-                    // add time ot info block to be appended prior to closing
+                    // add time to info block to be appended prior to closing
                     info_block_close_items.push(code_block.html("time"));
                     parent.detach();
                 } else if text.starts_with("!!! results") {
@@ -1205,7 +1240,28 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
                     info_block_close_items.push(None);
                     parent.detach();
-                } else if text.starts_with("!!!") && !info_block_close_items.is_empty() {
+                } else if text.contains("{% content-ref url=") {
+                    let url = parser(text.as_ref(), r#"url=""#);
+
+                    let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                        format!(
+                            r#"<div>
+                                <a href="{}">
+                                    <div>"#,
+                            url.unwrap(),
+                        ),
+                    )))));
+
+                    let parent = node.parent().unwrap();
+
+                    info_block_close_items.push(None);
+                    parent.insert_after(n);
+                    parent.detach();
+                } else if (text.starts_with("!!!")
+                    || text.starts_with("{% endhint %}")
+                    || text.starts_with("{% endcode %}"))
+                    && !info_block_close_items.is_empty()
+                {
                     let parent = node.parent().unwrap();
 
                     match info_block_close_items.pop() {
@@ -1244,6 +1300,20 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     }
 
                     parent.detach();
+                } else if text.starts_with("{% endcontent-ref %}") {
+                    let parent = node.parent().unwrap();
+
+                    let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                        r#"
+                                </div>
+                            </a>
+                        </div>
+                        "#
+                        .to_string(),
+                    )))));
+
+                    parent.insert_after(n);
+                    parent.detach()
                 }
 
                 // TODO montana
@@ -1543,6 +1613,7 @@ impl SearchIndex {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::utils::markdown::parser;
 
     #[test]

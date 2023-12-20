@@ -19,10 +19,92 @@ use crate::{
     utils::config,
 };
 
+use serde::{Deserialize, Serialize};
+
 lazy_static! {
     static ref BLOG: Collection = Collection::new("Blog", true);
     static ref CAREERS: Collection = Collection::new("Careers", true);
     static ref DOCS: Collection = Collection::new("Docs", false);
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Document {
+    /// The absolute path on disk
+    pub path: PathBuf,
+    pub description: Option<String>,
+    pub image: Option<String>,
+    pub title: String,
+    pub toc_links: Vec<TocLink>,
+    pub html: String,
+}
+
+impl Document {
+    pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document> {
+        let contents = tokio::fs::read_to_string(&path).await?;
+
+        let parts = contents.split("---").collect::<Vec<&str>>();
+
+        let (description, contents) = if parts.len() > 1 {
+            match YamlLoader::load_from_str(parts[1]) {
+                Ok(meta) => {
+                    if meta.len() == 0 || meta[0].as_hash().is_none() {
+                        (None, contents)
+                    } else {
+                        let description: Option<String> = match meta[0]["description"].is_badvalue()
+                        {
+                            true => None,
+                            false => Some(meta[0]["description"].as_str().unwrap().to_string()),
+                        };
+                        (description, parts[2..].join("---").to_string())
+                    }
+                }
+                Err(_) => (None, contents),
+            }
+        } else {
+            (None, contents)
+        };
+
+        // Parse Markdown
+        let arena = Arena::new();
+        let spaced_contents = crate::utils::markdown::gitbook_preprocess(&contents);
+        let root = parse_document(&arena, &spaced_contents, &crate::utils::markdown::options());
+
+        // Title of the document is the first (and typically only) <h1>
+        let title = crate::utils::markdown::get_title(root).unwrap();
+        let toc_links = crate::utils::markdown::get_toc(root).unwrap();
+        let image = crate::utils::markdown::get_image(root);
+        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
+
+        // MkDocs, gitbook syntax support, e.g. tabs, notes, alerts, etc.
+        crate::utils::markdown::mkdocs(root, &arena).unwrap();
+
+        // Style headings like we like them
+        let mut plugins = ComrakPlugins::default();
+        let headings = crate::utils::markdown::MarkdownHeadings::new();
+        plugins.render.heading_adapter = Some(&headings);
+        plugins.render.codefence_syntax_highlighter =
+            Some(&crate::utils::markdown::SyntaxHighlighter {});
+
+        let mut html = vec![];
+        format_html_with_plugins(
+            root,
+            &crate::utils::markdown::options(),
+            &mut html,
+            &plugins,
+        )
+        .unwrap();
+        let html = String::from_utf8(html).unwrap();
+
+        let document = Document {
+            path: path.to_owned(),
+            description,
+            image,
+            title,
+            toc_links,
+            html,
+        };
+        Ok(document)
+    }
 }
 
 /// A Gitbook collection of documents
@@ -62,6 +144,7 @@ impl Collection {
 
     pub async fn get_asset(&self, path: &str) -> Option<NamedFile> {
         info!("get_asset: {} {path}", self.name);
+
         NamedFile::open(self.asset_dir.join(path)).await.ok()
     }
 
@@ -79,7 +162,7 @@ impl Collection {
 
         let path = self.root_dir.join(format!("{}.md", path.to_string_lossy()));
 
-        self.render(&path, cluster, self).await
+        self.render(&path, cluster).await
     }
 
     /// Create an index of the Collection based on the SUMMARY.md from Gitbook.
@@ -173,94 +256,23 @@ impl Collection {
         Ok(links)
     }
 
-    async fn render<'a>(
-        &self,
-        path: &'a PathBuf,
-        cluster: &Cluster,
-        collection: &Collection,
-    ) -> Result<ResponseOk, Status> {
-        // Read to string0
-        let contents = match tokio::fs::read_to_string(&path).await {
-            Ok(contents) => {
-                info!("loading markdown file: '{:?}", path);
-                contents
-            }
-            Err(err) => {
-                warn!("Error parsing markdown file: '{:?}' {:?}", path, err);
-                return Err(Status::NotFound);
-            }
-        };
-        let parts = contents.split("---").collect::<Vec<&str>>();
-        let (description, contents) = if parts.len() > 1 {
-            match YamlLoader::load_from_str(parts[1]) {
-                Ok(meta) => {
-                    if !meta.is_empty() {
-                        let meta = meta[0].clone();
-                        if meta.as_hash().is_none() {
-                            (None, contents.to_string())
-                        } else {
-                            let description: Option<String> = match meta["description"]
-                                .is_badvalue()
-                            {
-                                true => None,
-                                false => Some(meta["description"].as_str().unwrap().to_string()),
-                            };
-
-                            (description, parts[2..].join("---").to_string())
-                        }
-                    } else {
-                        (None, contents.to_string())
-                    }
-                }
-                Err(_) => (None, contents.to_string()),
-            }
-        } else {
-            (None, contents.to_string())
-        };
-
-        // Parse Markdown
-        let arena = Arena::new();
-        let root = parse_document(&arena, &contents, &crate::utils::markdown::options());
-
-        // Title of the document is the first (and typically only) <h1>
-        let title = crate::utils::markdown::get_title(root).unwrap();
-        let toc_links = crate::utils::markdown::get_toc(root).unwrap();
-        let image = crate::utils::markdown::get_image(root);
-        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
-
-        // MkDocs syntax support, e.g. tabs, notes, alerts, etc.
-        crate::utils::markdown::mkdocs(root, &arena).unwrap();
-
-        // Style headings like we like them
-        let mut plugins = ComrakPlugins::default();
-        let headings = crate::utils::markdown::MarkdownHeadings::new();
-        plugins.render.heading_adapter = Some(&headings);
-        plugins.render.codefence_syntax_highlighter =
-            Some(&crate::utils::markdown::SyntaxHighlighter {});
-
-        // Render
-        let mut html = vec![];
-        format_html_with_plugins(
-            root,
-            &crate::utils::markdown::options(),
-            &mut html,
-            &plugins,
-        )
-        .unwrap();
-        let html = String::from_utf8(html).unwrap();
-
-        // Handle navigation
-        // TODO organize this functionality in the collection to cleanup
-        let index: Vec<IndexLink> = self
-            .index
+    // Sets specified index as currently viewed.
+    fn open_index(&self, path: PathBuf) -> Vec<IndexLink> {
+        self.index
             .clone()
             .iter_mut()
             .map(|nav_link| {
                 let mut nav_link = nav_link.clone();
-                nav_link.should_open(path);
+                nav_link.should_open(&path);
                 nav_link
             })
-            .collect();
+            .collect()
+    }
+
+    // renders document in layout
+    async fn render<'a>(&self, path: &'a PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
+        let doc = Document::from_path(&path).await.unwrap();
+        let index = self.open_index(doc.path);
 
         let user = if cluster.context.user.is_anonymous() {
             None
@@ -268,14 +280,11 @@ impl Collection {
             Some(cluster.context.user.clone())
         };
 
-        let mut layout = crate::templates::Layout::new(&title, Some(cluster));
-        if let Some(image) = image {
-            // translate relative url into absolute for head social sharing
-            let parts = image.split(".gitbook/assets/").collect::<Vec<&str>>();
-            let image_path = collection.url_root.join(".gitbook/assets").join(parts[1]);
-            layout.image(config::asset_url(image_path.to_string_lossy()).as_ref());
+        let mut layout = crate::templates::Layout::new(&doc.title, Some(cluster));
+        if let Some(image) = doc.image {
+            layout.image(&config::asset_url(image.into()));
         }
-        if let Some(description) = &description {
+        if let Some(description) = &doc.description {
             layout.description(description);
         }
         if let Some(user) = &user {
@@ -285,11 +294,11 @@ impl Collection {
         let layout = layout
             .nav_title(&self.name)
             .nav_links(&index)
-            .toc_links(&toc_links)
+            .toc_links(&doc.toc_links)
             .footer(cluster.context.marketing_footer.to_string());
 
         Ok(ResponseOk(
-            layout.render(crate::templates::Article { content: html }),
+            layout.render(crate::templates::Article { content: doc.html }),
         ))
     }
 }
@@ -365,6 +374,10 @@ pub fn routes() -> Vec<Route> {
 mod test {
     use super::*;
     use crate::utils::markdown::{options, MarkdownHeadings, SyntaxHighlighter};
+    use regex::Regex;
+    use rocket::http::{ContentType, Cookie, Status};
+    use rocket::local::asynchronous::Client;
+    use rocket::{Build, Rocket};
 
     #[test]
     fn test_syntax_highlighting() {
@@ -451,5 +464,74 @@ This is the end of the markdown
         assert!(
             !html.contains(r#"<div class="overflow-auto w-100">"#) || !html.contains(r#"</div>"#)
         );
+    }
+
+    async fn rocket() -> Rocket<Build> {
+        dotenv::dotenv().ok();
+        rocket::build()
+            .manage(crate::utils::markdown::SearchIndex::open().unwrap())
+            .mount("/", crate::api::cms::routes())
+    }
+
+    fn gitbook_test(html: String) -> Option<String> {
+        // all gitbook expresions should be removed, this catches {%  %} nonsupported expressions.
+        let re = Regex::new(r"[{][%][^{]*[%][}]").unwrap();
+        let rsp = re.find(&html);
+        if rsp.is_some() {
+            return Some(rsp.unwrap().as_str().to_string());
+        }
+
+        // gitbook TeX block not supported yet
+        let re = Regex::new(r"(\$\$).*(\$\$)").unwrap();
+        let rsp = re.find(&html);
+        if rsp.is_some() {
+            return Some(rsp.unwrap().as_str().to_string());
+        }
+
+        None
+    }
+
+    // Ensure blogs render and there are no unparsed gitbook components.
+    #[sqlx::test]
+    async fn render_blogs_test() {
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let blog: Collection = Collection::new("Blog", true);
+
+        for path in blog.index {
+            let req = client.get(path.clone().href);
+            let rsp = req.dispatch().await;
+            let body = rsp.into_string().await.unwrap();
+
+            let test = gitbook_test(body);
+
+            assert!(
+                test.is_none(),
+                "bad html parse in {:?}. This feature is not supported {:?}",
+                path.href,
+                test.unwrap()
+            )
+        }
+    }
+
+    // Ensure Docs render and ther are no unparsed gitbook compnents.
+    #[sqlx::test]
+    async fn render_guides_test() {
+        let client = Client::tracked(rocket().await).await.unwrap();
+        let docs: Collection = Collection::new("Docs", true);
+
+        for path in docs.index {
+            let req = client.get(path.clone().href);
+            let rsp = req.dispatch().await;
+            let body = rsp.into_string().await.unwrap();
+
+            let test = gitbook_test(body);
+
+            assert!(
+                test.is_none(),
+                "bad html parse in {:?}. This feature is not supported {:?}",
+                path.href,
+                test.unwrap()
+            )
+        }
     }
 }
