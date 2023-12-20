@@ -550,7 +550,7 @@ This is the end of the markdown
         let rsp = req.dispatch().await;
 
         assert!(
-            rsp.status() == Status::NotFound,
+            rsp.status() == Status::Ok,
             "Returned status {:?}",
             rsp.status()
         );
