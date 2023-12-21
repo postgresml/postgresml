@@ -46,34 +46,22 @@ pub trait RemoteEmbeddings<'a> {
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
-        splitter_id: i64,
-        chunk_ids: &Option<Vec<i64>>,
+        chunk_ids: &Vec<i64>,
         pool: &PgPool,
         limit: Option<i64>,
     ) -> anyhow::Result<Vec<models::Chunk>> {
         let limit = limit.unwrap_or(1000);
 
-        match chunk_ids {
-            Some(cids) => sqlx::query_as(&query_builder!(
-                "SELECT * FROM %s WHERE splitter_id = $1 AND id NOT IN (SELECT chunk_id FROM %s) AND id = ANY ($2) LIMIT $3",
-                chunks_table_name,
-                embeddings_table_name
-            ))
-            .bind(splitter_id)
-            .bind(cids)
-            .bind(limit)
-            .fetch_all(pool)
-            .await,
-            None => sqlx::query_as(&query_builder!(
-                "SELECT * FROM %s WHERE splitter_id = $1 AND id NOT IN (SELECT chunk_id FROM %s) LIMIT $2",
-                chunks_table_name,
-                embeddings_table_name
-            ))
-            .bind(splitter_id)
-            .bind(limit)
-            .fetch_all(pool)
-            .await
-        }.map_err(|e| anyhow::anyhow!(e))
+        sqlx::query_as(&query_builder!(
+            "SELECT * FROM %s WHERE id NOT IN (SELECT chunk_id FROM %s) AND id = ANY ($2) LIMIT $3",
+            chunks_table_name,
+            embeddings_table_name
+        ))
+        .bind(chunk_ids)
+        .bind(limit)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| anyhow::anyhow!(e))
     }
 
     #[instrument(skip(self, response))]
@@ -104,8 +92,7 @@ pub trait RemoteEmbeddings<'a> {
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
-        splitter_id: i64,
-        chunk_ids: Option<Vec<i64>>,
+        chunk_ids: &Vec<i64>,
         pool: &PgPool,
     ) -> anyhow::Result<()> {
         loop {
@@ -113,8 +100,7 @@ pub trait RemoteEmbeddings<'a> {
                 .get_chunks(
                     embeddings_table_name,
                     chunks_table_name,
-                    splitter_id,
-                    &chunk_ids,
+                    chunk_ids,
                     pool,
                     None,
                 )

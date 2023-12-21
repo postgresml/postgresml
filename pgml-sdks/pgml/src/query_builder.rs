@@ -124,98 +124,98 @@ impl QueryBuilder {
         pipeline: &Pipeline,
         query_parameters: Option<Json>,
     ) -> Self {
-        // Save these in case of failure
-        self.pipeline = Some(pipeline.clone());
-        self.query_string = Some(query.to_owned());
-        self.query_parameters = query_parameters.clone();
+        unimplemented!()
+        // // Save these in case of failure
+        // self.pipeline = Some(pipeline.clone());
+        // self.query_string = Some(query.to_owned());
+        // self.query_parameters = query_parameters.clone();
 
-        let mut query_parameters = query_parameters.unwrap_or_default().0;
-        // If they did set hnsw, remove it before we pass it to the model
-        query_parameters
-            .as_object_mut()
-            .expect("Query parameters must be a Json object")
-            .remove("hnsw");
-        let embeddings_table_name =
-            format!("{}.{}_embeddings", self.collection.name, pipeline.name);
+        // let mut query_parameters = query_parameters.unwrap_or_default().0;
+        // // If they did set hnsw, remove it before we pass it to the model
+        // query_parameters
+        //     .as_object_mut()
+        //     .expect("Query parameters must be a Json object")
+        //     .remove("hnsw");
+        // let embeddings_table_name =
+        //     format!("{}.{}_embeddings", self.collection.name, pipeline.name);
 
-        // Build the pipeline CTE
-        let mut pipeline_cte = Query::select();
-        pipeline_cte
-            .from_as(
-                self.collection.pipelines_table_name.to_table_tuple(),
-                SIden::Str("pipeline"),
-            )
-            .columns([models::PipelineIden::ModelId])
-            .and_where(Expr::col(models::PipelineIden::Name).eq(&pipeline.name));
-        let mut pipeline_cte = CommonTableExpression::from_select(pipeline_cte);
-        pipeline_cte.table_name(Alias::new("pipeline"));
+        // // Build the pipeline CTE
+        // let mut pipeline_cte = Query::select();
+        // pipeline_cte
+        //     .from_as(
+        //         self.collection.pipelines_table_name.to_table_tuple(),
+        //         SIden::Str("pipeline"),
+        //     )
+        //     .columns([models::PipelineIden::ModelId])
+        //     .and_where(Expr::col(models::PipelineIden::Name).eq(&pipeline.name));
+        // let mut pipeline_cte = CommonTableExpression::from_select(pipeline_cte);
+        // pipeline_cte.table_name(Alias::new("pipeline"));
 
-        // Build the model CTE
-        let mut model_cte = Query::select();
-        model_cte
-            .from_as(
-                (SIden::Str("pgml"), SIden::Str("models")),
-                SIden::Str("model"),
-            )
-            .columns([models::ModelIden::Hyperparams])
-            .and_where(Expr::cust("id = (SELECT model_id FROM pipeline)"));
-        let mut model_cte = CommonTableExpression::from_select(model_cte);
-        model_cte.table_name(Alias::new("model"));
+        // // Build the model CTE
+        // let mut model_cte = Query::select();
+        // model_cte
+        //     .from_as(
+        //         (SIden::Str("pgml"), SIden::Str("models")),
+        //         SIden::Str("model"),
+        //     )
+        //     .columns([models::ModelIden::Hyperparams])
+        //     .and_where(Expr::cust("id = (SELECT model_id FROM pipeline)"));
+        // let mut model_cte = CommonTableExpression::from_select(model_cte);
+        // model_cte.table_name(Alias::new("model"));
 
-        // Build the embedding CTE
-        let mut embedding_cte = Query::select();
-        embedding_cte.expr_as(
-            Func::cast_as(
-                Func::cust(SIden::Str("pgml.embed")).args([
-                    Expr::cust("transformer => (SELECT hyperparams->>'name' FROM model)"),
-                    Expr::cust_with_values("text => $1", [query]),
-                    Expr::cust_with_values("kwargs => $1", [query_parameters]),
-                ]),
-                Alias::new("vector"),
-            ),
-            Alias::new("embedding"),
-        );
-        let mut embedding_cte = CommonTableExpression::from_select(embedding_cte);
-        embedding_cte.table_name(Alias::new("embedding"));
+        // // Build the embedding CTE
+        // let mut embedding_cte = Query::select();
+        // embedding_cte.expr_as(
+        //     Func::cast_as(
+        //         Func::cust(SIden::Str("pgml.embed")).args([
+        //             Expr::cust("transformer => (SELECT hyperparams->>'name' FROM model)"),
+        //             Expr::cust_with_values("text => $1", [query]),
+        //             Expr::cust_with_values("kwargs => $1", [query_parameters]),
+        //         ]),
+        //         Alias::new("vector"),
+        //     ),
+        //     Alias::new("embedding"),
+        // );
+        // let mut embedding_cte = CommonTableExpression::from_select(embedding_cte);
+        // embedding_cte.table_name(Alias::new("embedding"));
 
-        // Build the where clause
-        let mut with_clause = WithClause::new();
-        self.with = with_clause
-            .cte(pipeline_cte)
-            .cte(model_cte)
-            .cte(embedding_cte)
-            .to_owned();
+        // // Build the where clause
+        // let mut with_clause = WithClause::new();
+        // self.with = with_clause
+        //     .cte(pipeline_cte)
+        //     .cte(model_cte)
+        //     .cte(embedding_cte)
+        //     .to_owned();
 
-        // Build the query
-        self.query
-            .expr(Expr::cust(
-                "(embeddings.embedding <=> (SELECT embedding from embedding)) score",
-            ))
-            .columns([
-                (SIden::Str("chunks"), SIden::Str("chunk")),
-                (SIden::Str("documents"), SIden::Str("metadata")),
-            ])
-            .from_as(
-                embeddings_table_name.to_table_tuple(),
-                SIden::Str("embeddings"),
-            )
-            .join_as(
-                JoinType::InnerJoin,
-                self.collection.chunks_table_name.to_table_tuple(),
-                Alias::new("chunks"),
-                Expr::col((SIden::Str("chunks"), SIden::Str("id")))
-                    .equals((SIden::Str("embeddings"), SIden::Str("chunk_id"))),
-            )
-            .join_as(
-                JoinType::InnerJoin,
-                self.collection.documents_table_name.to_table_tuple(),
-                Alias::new("documents"),
-                Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
-            )
-            .order_by(SIden::Str("score"), Order::Asc);
-
-        self
+        // // Build the query
+        // self.query
+        //     .expr(Expr::cust(
+        //         "(embeddings.embedding <=> (SELECT embedding from embedding)) score",
+        //     ))
+        //     .columns([
+        //         (SIden::Str("chunks"), SIden::Str("chunk")),
+        //         (SIden::Str("documents"), SIden::Str("metadata")),
+        //     ])
+        //     .from_as(
+        //         embeddings_table_name.to_table_tuple(),
+        //         SIden::Str("embeddings"),
+        //     )
+        //     .join_as(
+        //         JoinType::InnerJoin,
+        //         self.collection.chunks_table_name.to_table_tuple(),
+        //         Alias::new("chunks"),
+        //         Expr::col((SIden::Str("chunks"), SIden::Str("id")))
+        //             .equals((SIden::Str("embeddings"), SIden::Str("chunk_id"))),
+        //     )
+        //     .join_as(
+        //         JoinType::InnerJoin,
+        //         self.collection.documents_table_name.to_table_tuple(),
+        //         Alias::new("documents"),
+        //         Expr::col((SIden::Str("documents"), SIden::Str("id")))
+        //             .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+        //     )
+        //     .order_by(SIden::Str("score"), Order::Asc);
+        // self
     }
 
     #[instrument(skip(self))]
