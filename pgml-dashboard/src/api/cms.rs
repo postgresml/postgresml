@@ -34,17 +34,6 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn new(content: &str) -> Document {
-        Document {
-            path: PathBuf::new(),
-            description: None,
-            image: None,
-            title: "404".to_string(),
-            toc_links: Vec::new(),
-            html: content.to_string(),
-        }
-    }
-
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
         let contents = tokio::fs::read_to_string(&path).await?;
 
@@ -314,9 +303,9 @@ impl Collection {
             }
             // Return page not found on bad path
             _ => {
-                let mut layout = crate::templates::Layout::new("404", None);
+                let mut layout = crate::templates::Layout::new("404", Some(cluster));
 
-                let doc = crate::api::cms::Document::new(
+                let doc = String::from(
                     r#"
                 <div style='height: 80vh'>
                     <h2>Oops, document not found!</h2>
@@ -333,7 +322,7 @@ impl Collection {
                     .nav_title(&self.name)
                     .footer(cluster.context.marketing_footer.to_string());
 
-                layout.render(crate::templates::Article { content: doc.html });
+                layout.render(crate::templates::Article { content: doc });
 
                 Err(crate::responses::NotFound(layout.into()))
             }
