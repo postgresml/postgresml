@@ -3,12 +3,7 @@ use std::path::{Path, PathBuf};
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
 use lazy_static::lazy_static;
 use markdown::mdast::Node;
-use rocket::{
-    fs::NamedFile,
-    http::{uri::Origin, Status},
-    route::Route,
-    State,
-};
+use rocket::{fs::NamedFile, http::uri::Origin, route::Route, State};
 use yaml_rust::YamlLoader;
 
 use crate::{
@@ -39,6 +34,17 @@ pub struct Document {
 }
 
 impl Document {
+    pub fn new(content: &str) -> Document {
+        Document {
+            path: PathBuf::new(),
+            description: None,
+            image: None,
+            title: "404".to_string(),
+            toc_links: Vec::new(),
+            html: content.to_string(),
+        }
+    }
+
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
         let contents = tokio::fs::read_to_string(&path).await?;
 
@@ -153,7 +159,7 @@ impl Collection {
         mut path: PathBuf,
         cluster: &Cluster,
         origin: &Origin<'_>,
-    ) -> Result<ResponseOk, Status> {
+    ) -> Result<ResponseOk, crate::responses::NotFound> {
         info!("get_content: {} | {path:?}", self.name);
 
         if origin.path().ends_with("/") {
@@ -270,16 +276,20 @@ impl Collection {
     }
 
     // renders document in layout
-    async fn render<'a>(&self, path: &'a PathBuf, cluster: &Cluster) -> Result<ResponseOk, Status> {
+    async fn render<'a>(
+        &self,
+        path: &'a PathBuf,
+        cluster: &Cluster,
+    ) -> Result<ResponseOk, crate::responses::NotFound> {
+        let user = if cluster.context.user.is_anonymous() {
+            None
+        } else {
+            Some(cluster.context.user.clone())
+        };
+
         match Document::from_path(&path).await {
             Ok(doc) => {
                 let index = self.open_index(doc.path);
-
-                let user = if cluster.context.user.is_anonymous() {
-                    None
-                } else {
-                    Some(cluster.context.user.clone())
-                };
 
                 let mut layout = crate::templates::Layout::new(&doc.title, Some(cluster));
                 if let Some(image) = doc.image {
@@ -303,7 +313,30 @@ impl Collection {
                 ))
             }
             // Return page not found on bad path
-            _ => Err(Status::NotFound),
+            _ => {
+                let mut layout = crate::templates::Layout::new("404", None);
+
+                let doc = crate::api::cms::Document::new(
+                    r#"
+                <div style='height: 80vh'>
+                    <h2>Oops, document not found!</h2>
+                    <p>The document you are searching for may have been moved or replaced with better content.</p>
+                </div>"#,
+                );
+
+                if let Some(user) = &user {
+                    layout.user(user);
+                }
+
+                layout
+                    .nav_links(&self.index)
+                    .nav_title(&self.name)
+                    .footer(cluster.context.marketing_footer.to_string());
+
+                layout.render(crate::templates::Article { content: doc.html });
+
+                Err(crate::responses::NotFound(layout.into()))
+            }
         }
     }
 }
@@ -341,7 +374,7 @@ async fn get_blog(
     path: PathBuf,
     cluster: &Cluster,
     origin: &Origin<'_>,
-) -> Result<ResponseOk, Status> {
+) -> Result<ResponseOk, crate::responses::NotFound> {
     BLOG.get_content(path, cluster, origin).await
 }
 
@@ -350,7 +383,7 @@ async fn get_careers(
     path: PathBuf,
     cluster: &Cluster,
     origin: &Origin<'_>,
-) -> Result<ResponseOk, Status> {
+) -> Result<ResponseOk, crate::responses::NotFound> {
     CAREERS.get_content(path, cluster, origin).await
 }
 
@@ -359,7 +392,7 @@ async fn get_docs(
     path: PathBuf,
     cluster: &Cluster,
     origin: &Origin<'_>,
-) -> Result<ResponseOk, Status> {
+) -> Result<ResponseOk, crate::responses::NotFound> {
     DOCS.get_content(path, cluster, origin).await
 }
 
@@ -547,7 +580,7 @@ This is the end of the markdown
         let rsp = req.dispatch().await;
 
         assert!(
-            rsp.status() == Status::Ok,
+            rsp.status() == Status::NotFound,
             "Returned status {:?}",
             rsp.status()
         );
