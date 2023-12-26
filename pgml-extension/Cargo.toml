@@ -32,7 +32,7 @@ linfa = { path = "deps/linfa" }
 linfa-linear = { path = "deps/linfa/algorithms/linfa-linear", features = [
     "serde",
 ] }
-linfa-logistic = { path = "deps/linfa/algorithms/linfa-logistic" }
+linfa-logistic = { path = "deps/linfa/algorithms/linfa-logistic", features = ["serde"] }
 linfa-svm = { path = "deps/linfa/algorithms/linfa-svm", features = ["serde"] }
 once_cell = { version = "1", features = ["parking_lot"] }
 openblas-src = { version = "0.10", features = ["cblas", "system"] }
