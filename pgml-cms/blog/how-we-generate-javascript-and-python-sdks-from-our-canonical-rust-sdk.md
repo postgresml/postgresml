@@ -85,8 +85,6 @@ impl Database {
 
 Here is the code augmented to work with [Pyo3](https://github.com/PyO3/pyo3) and [Neon](https://neon-bindings.com/):
 
-\=== "Pyo3"
-
 {% tabs %}
 {% tab title="Pyo3" %}
 ```rust
