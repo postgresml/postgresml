@@ -145,7 +145,7 @@ pgml_test=# SELECT pgml.version();
 We like and use pgvector a lot, as documented in our blog posts and examples, to store and search embeddings. You can install pgvector from source pretty easily:
 
 ```bash
-git clone --branch v0.4.4 https://github.com/pgvector/pgvector && \
+git clone --branch v0.5.0 https://github.com/pgvector/pgvector && \
 cd pgvector && \
 echo "trusted = true" >> vector.control && \
 make && \
