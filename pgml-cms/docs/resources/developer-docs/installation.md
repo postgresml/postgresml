@@ -63,8 +63,7 @@ To install the necessary Python packages into a virtual environment, use the `vi
 ```bash
 virtualenv pgml-venv && \
 source pgml-venv/bin/activate && \
-pip install -r requirements.txt && \
-pip install -r requirements-xformers.txt --no-dependencies
+pip install -r requirements.txt
 ```
 {% endtab %}
 
