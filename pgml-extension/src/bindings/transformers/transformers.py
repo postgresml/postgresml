@@ -187,10 +187,9 @@ def streaming_worker(worker_threads, model, **kwargs):
         worker_threads.update_thread(thread_id, "Error setting data")
     try:
         model.generate(**kwargs)
-    except BaseException as error:
-        print(f"Error in streaming_worker: {error}", file=sys.stderr)
-    finally:
         worker_threads.delete_thread(thread_id)
+    except BaseException as error:
+        worker_threads.update_thread(thread_id, f"Error in streaming_worker: {error}")
 
 
 class GGMLPipeline(object):
