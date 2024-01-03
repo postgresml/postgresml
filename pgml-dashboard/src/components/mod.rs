@@ -16,6 +16,10 @@ pub use chatbot::Chatbot;
 // src/components/cms
 pub mod cms;
 
+// src/components/code_block
+pub mod code_block;
+pub use code_block::CodeBlock;
+
 // src/components/confirm_modal
 pub mod confirm_modal;
 pub use confirm_modal::ConfirmModal;
