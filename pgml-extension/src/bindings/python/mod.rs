@@ -16,8 +16,7 @@ create_pymodule!("/src/bindings/python/python.py");
 pub fn activate_venv(venv: &str) -> Result<bool> {
     Python::with_gil(|py| {
         let activate_venv: Py<PyAny> = get_module!(PY_MODULE).getattr(py, "activate_venv")?;
-        let result: Py<PyAny> =
-            activate_venv.call1(py, PyTuple::new(py, &[venv.to_string().into_py(py)]))?;
+        let result: Py<PyAny> = activate_venv.call1(py, PyTuple::new(py, &[venv.to_string().into_py(py)]))?;
 
         Ok(result.extract(py)?)
     })
@@ -39,9 +38,7 @@ pub fn pip_freeze() -> Result<TableIterator<'static, (name!(package, String),)>>
         Ok(result.extract(py)?)
     })?;
 
-    Ok(TableIterator::new(
-        packages.into_iter().map(|package| (package,)),
-    ))
+    Ok(TableIterator::new(packages.into_iter().map(|package| (package,))))
 }
 
 pub fn validate_dependencies() -> Result<bool> {
@@ -54,9 +51,7 @@ pub fn validate_dependencies() -> Result<bool> {
             match py.import(module) {
                 Ok(_) => (),
                 Err(e) => {
-                    panic!(
-                        "The {module} package is missing. Install it with `sudo pip3 install {module}`\n{e}"
-                    );
+                    panic!("The {module} package is missing. Install it with `sudo pip3 install {module}`\n{e}");
                 }
             }
         }

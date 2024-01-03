@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       packageVersion:
-        default: "2.8.1"
+        default: "2.8.2"
 
 jobs:
   postgresml-python:

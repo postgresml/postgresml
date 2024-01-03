@@ -50,3 +50,5 @@ tokio = { version = "1", features = ["full"] }
 url = "2.4"
 yaml-rust = "0.4"
 zoomies = { git="https://github.com/HyperparamAI/zoomies.git", branch="master" }
+ws = { package = "rocket_ws", git = "https://github.com/SergioBenitez/Rocket" }
+futures = "0.3.29"

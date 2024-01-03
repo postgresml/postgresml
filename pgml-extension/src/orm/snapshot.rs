@@ -163,13 +163,10 @@ impl Column {
     pub(crate) fn scale(&self, value: f32) -> f32 {
         match self.preprocessor.scale {
             Scale::standard => (value - self.statistics.mean) / self.statistics.std_dev,
-            Scale::min_max => {
-                (value - self.statistics.min) / (self.statistics.max - self.statistics.min)
-            }
+            Scale::min_max => (value - self.statistics.min) / (self.statistics.max - self.statistics.min),
             Scale::max_abs => value / self.statistics.max_abs,
             Scale::robust => {
-                (value - self.statistics.median)
-                    / (self.statistics.ventiles[15] - self.statistics.ventiles[5])
+                (value - self.statistics.median) / (self.statistics.ventiles[15] - self.statistics.ventiles[5])
             }
             Scale::preserve => value,
         }
@@ -456,10 +453,7 @@ impl Snapshot {
                     LIMIT 1;
                     ",
                     Some(1),
-                    Some(vec![(
-                        PgBuiltInOids::INT8OID.oid(),
-                        project_id.into_datum(),
-                    )]),
+                    Some(vec![(PgBuiltInOids::INT8OID.oid(), project_id.into_datum())]),
                 )
                 .unwrap()
                 .first();
@@ -467,8 +461,7 @@ impl Snapshot {
                 let jsonb: JsonB = result.get(7).unwrap().unwrap();
                 let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
                 let jsonb: JsonB = result.get(8).unwrap().unwrap();
-                let analysis: Option<IndexMap<String, f32>> =
-                    Some(serde_json::from_value(jsonb.0).unwrap());
+                let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
 
                 let mut s = Snapshot {
                     id: result.get(1).unwrap().unwrap(),
@@ -505,8 +498,7 @@ impl Snapshot {
         // Validate table exists.
         let (schema_name, table_name) = Self::fully_qualified_table(relation_name);
 
-        let preprocessors: HashMap<String, Preprocessor> =
-            serde_json::from_value(preprocess.0).expect("is valid");
+        let preprocessors: HashMap<String, Preprocessor> = serde_json::from_value(preprocess.0).expect("is valid");
 
         Spi::connect(|mut client| {
             let mut columns: Vec<Column> = Vec::new();
@@ -674,9 +666,7 @@ impl Snapshot {
     }
 
     pub(crate) fn first_label(&self) -> &Column {
-        self.labels()
-            .find(|l| l.name == self.y_column_name[0])
-            .unwrap()
+        self.labels().find(|l| l.name == self.y_column_name[0]).unwrap()
     }
 
     pub(crate) fn num_classes(&self) -> usize {
@@ -716,9 +706,12 @@ impl Snapshot {
 
         match schema_name {
             None => {
-                let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'public'", vec![
-                    (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
-                ]).unwrap().unwrap();
+                let table_count = Spi::get_one_with_args::<i64>(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'public'",
+                    vec![(PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())],
+                )
+                .unwrap()
+                .unwrap();
 
                 let error = format!("Relation \"{}\" could not be found in the public schema. Please specify the table schema, e.g. pgml.{}", table_name, table_name);
 
@@ -730,18 +723,19 @@ impl Snapshot {
             }
 
             Some(schema_name) => {
-                let exists = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = $2", vec![
-                    (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum()),
-                    (PgBuiltInOids::TEXTOID.oid(), schema_name.clone().into_datum()),
-                ]).unwrap();
+                let exists = Spi::get_one_with_args::<i64>(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = $2",
+                    vec![
+                        (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum()),
+                        (PgBuiltInOids::TEXTOID.oid(), schema_name.clone().into_datum()),
+                    ],
+                )
+                .unwrap();
 
                 if exists == Some(1) {
                     (schema_name, table_name)
                 } else {
-                    error!(
-                        "Relation \"{}\".\"{}\" doesn't exist",
-                        schema_name, table_name
-                    );
+                    error!("Relation \"{}\".\"{}\" doesn't exist", schema_name, table_name);
                 }
             }
         }
@@ -818,12 +812,10 @@ impl Snapshot {
                     };
 
                     match column.pg_type.as_str() {
-                        "bpchar" | "text" | "varchar" => {
-                            match row[column.position].value::<String>().unwrap() {
-                                Some(text) => vector.push(text),
-                                None => error!("NULL training text is not handled"),
-                            }
-                        }
+                        "bpchar" | "text" | "varchar" => match row[column.position].value::<String>().unwrap() {
+                            Some(text) => vector.push(text),
+                            None => error!("NULL training text is not handled"),
+                        },
                         _ => error!("only text type columns are supported"),
                     }
                 }
@@ -906,24 +898,15 @@ impl Snapshot {
         }
 
         let mut analysis = IndexMap::new();
-        analysis.insert(
-            "samples".to_string(),
-            numeric_encoded_dataset.num_rows as f32,
-        );
+        analysis.insert("samples".to_string(), numeric_encoded_dataset.num_rows as f32);
         self.analysis = Some(analysis);
 
         // Record the analysis
         Spi::run_with_args(
             "UPDATE pgml.snapshots SET analysis = $1, columns = $2 WHERE id = $3",
             Some(vec![
-                (
-                    PgBuiltInOids::JSONBOID.oid(),
-                    JsonB(json!(self.analysis)).into_datum(),
-                ),
-                (
-                    PgBuiltInOids::JSONBOID.oid(),
-                    JsonB(json!(self.columns)).into_datum(),
-                ),
+                (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.analysis)).into_datum()),
+                (PgBuiltInOids::JSONBOID.oid(), JsonB(json!(self.columns)).into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
             ]),
         )
@@ -1001,14 +984,19 @@ impl Snapshot {
                         // Categorical encoding types
                         Some(categories) => {
                             let key = match column.pg_type.as_str() {
-                                "bool" => row[column.position].value::<bool>().unwrap().map(|v| v.to_string() ),
-                                "int2" => row[column.position].value::<i16>().unwrap().map(|v| v.to_string() ),
-                                "int4" => row[column.position].value::<i32>().unwrap().map(|v| v.to_string() ),
-                                "int8" => row[column.position].value::<i64>().unwrap().map(|v| v.to_string() ),
-                                "float4" => row[column.position].value::<f32>().unwrap().map(|v| v.to_string() ),
-                                "float8" => row[column.position].value::<f64>().unwrap().map(|v| v.to_string() ),
-                                "bpchar" | "text" | "varchar" => row[column.position].value::<String>().unwrap().map(|v| v.to_string() ),
-                                _ => error!("Unhandled type for categorical variable: {} {:?}", column.name, column.pg_type)
+                                "bool" => row[column.position].value::<bool>().unwrap().map(|v| v.to_string()),
+                                "int2" => row[column.position].value::<i16>().unwrap().map(|v| v.to_string()),
+                                "int4" => row[column.position].value::<i32>().unwrap().map(|v| v.to_string()),
+                                "int8" => row[column.position].value::<i64>().unwrap().map(|v| v.to_string()),
+                                "float4" => row[column.position].value::<f32>().unwrap().map(|v| v.to_string()),
+                                "float8" => row[column.position].value::<f64>().unwrap().map(|v| v.to_string()),
+                                "bpchar" | "text" | "varchar" => {
+                                    row[column.position].value::<String>().unwrap().map(|v| v.to_string())
+                                }
+                                _ => error!(
+                                    "Unhandled type for categorical variable: {} {:?}",
+                                    column.name, column.pg_type
+                                ),
                             };
                             let key = key.unwrap_or_else(|| NULL_CATEGORY_KEY.to_string());
                             if i < num_train_rows {
@@ -1018,16 +1006,18 @@ impl Snapshot {
                                         NULL_CATEGORY_KEY => 0_f32, // NULL values are always Category 0
                                         _ => match &column.preprocessor.encode {
                                             Encode::target | Encode::native | Encode::one_hot { .. } => len as f32,
-                                            Encode::ordinal(values) => match values.iter().position(|v| v == key.as_str()) {
-                                                Some(i) => (i + 1) as f32,
-                                                None => error!("value is not present in ordinal: {:?}. Valid values: {:?}", key, values),
+                                            Encode::ordinal(values) => {
+                                                match values.iter().position(|v| v == key.as_str()) {
+                                                    Some(i) => (i + 1) as f32,
+                                                    None => error!(
+                                                        "value is not present in ordinal: {:?}. Valid values: {:?}",
+                                                        key, values
+                                                    ),
+                                                }
                                             }
-                                        }
+                                        },
                                     };
-                                    Category {
-                                        value,
-                                        members: 0
-                                    }
+                                    Category { value, members: 0 }
                                 });
                                 category.members += 1;
                                 vector.push(category.value);
@@ -1088,9 +1078,13 @@ impl Snapshot {
                                             vector.push(j as f32)
                                         }
                                     }
-                                    _ => error!("Unhandled type for quantitative array column: {} {:?}", column.name, column.pg_type)
+                                    _ => error!(
+                                        "Unhandled type for quantitative array column: {} {:?}",
+                                        column.name, column.pg_type
+                                    ),
                                 }
-                            } else { // scalar
+                            } else {
+                                // scalar
                                 let float = match column.pg_type.as_str() {
                                     "bool" => row[column.position].value::<bool>().unwrap().map(|v| v as u8 as f32),
                                     "int2" => row[column.position].value::<i16>().unwrap().map(|v| v as f32),
@@ -1098,7 +1092,10 @@ impl Snapshot {
                                     "int8" => row[column.position].value::<i64>().unwrap().map(|v| v as f32),
                                     "float4" => row[column.position].value::<f32>().unwrap(),
                                     "float8" => row[column.position].value::<f64>().unwrap().map(|v| v as f32),
-                                    _ => error!("Unhandled type for quantitative scalar column: {} {:?}", column.name, column.pg_type)
+                                    _ => error!(
+                                        "Unhandled type for quantitative scalar column: {} {:?}",
+                                        column.name, column.pg_type
+                                    ),
                                 };
                                 match float {
                                     Some(f) => vector.push(f),
@@ -1114,7 +1111,7 @@ impl Snapshot {
             let num_features = self.num_features();
             let num_labels = self.num_labels();
 
-            data = Some(Dataset{
+            data = Some(Dataset {
                 x_train,
                 y_train,
                 x_test,
@@ -1129,7 +1126,8 @@ impl Snapshot {
             });
 
             Ok::<std::option::Option<()>, i64>(Some(())) // this return type is nonsense
-        }).unwrap();
+        })
+        .unwrap();
 
         let data = data.unwrap();
 

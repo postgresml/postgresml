@@ -8,10 +8,8 @@ use pgrx::*;
 
 use crate::orm::*;
 
-static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 1024>> =
-    PgLwLock::new();
-static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
+static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 1024>> = PgLwLock::new();
+static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// Initialize shared memory.
 /// # Note
@@ -56,23 +54,12 @@ impl Project {
                 );
                 let (project_id, model_id) = match result {
                     Ok(o) => o,
-                    Err(_) => error!(
-                        "No deployed model exists for the project named: `{}`",
-                        project_name
-                    ),
+                    Err(_) => error!("No deployed model exists for the project named: `{}`", project_name),
                 };
-                let project_id = project_id.unwrap_or_else(|| {
-                    error!(
-                        "No deployed model exists for the project named: `{}`",
-                        project_name
-                    )
-                });
-                let model_id = model_id.unwrap_or_else(|| {
-                    error!(
-                        "No deployed model exists for the project named: `{}`",
-                        project_name
-                    )
-                });
+                let project_id = project_id
+                    .unwrap_or_else(|| error!("No deployed model exists for the project named: `{}`", project_name));
+                let model_id = model_id
+                    .unwrap_or_else(|| error!("No deployed model exists for the project named: `{}`", project_name));
                 projects.insert(project_name.to_string(), project_id);
                 let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
                 if projects.len() == 1024 {
@@ -83,20 +70,17 @@ impl Project {
                 project_id
             }
         };
-        *PROJECT_ID_TO_DEPLOYED_MODEL_ID
-            .share()
-            .get(&project_id)
-            .unwrap()
+        *PROJECT_ID_TO_DEPLOYED_MODEL_ID.share().get(&project_id).unwrap()
     }
 
-    pub fn deploy(&self, model_id: i64) {
+    pub fn deploy(&self, model_id: i64, strategy: Strategy) {
         info!("Deploying model id: {:?}", model_id);
         Spi::get_one_with_args::<i64>(
             "INSERT INTO pgml.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml.strategy) RETURNING id",
             vec![
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
-                (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
+                (PgBuiltInOids::TEXTOID.oid(), strategy.to_string().into_datum()),
             ],
         ).unwrap();
         let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
@@ -111,12 +95,14 @@ impl Project {
         let mut project: Option<Project> = None;
 
         Spi::connect(|client| {
-            let result = client.select("SELECT id, name, task::TEXT, created_at, updated_at FROM pgml.projects WHERE id = $1 LIMIT 1;",
-                Some(1),
-                Some(vec![
-                    (PgBuiltInOids::INT8OID.oid(), id.into_datum()),
-                ])
-            ).unwrap().first();
+            let result = client
+                .select(
+                    "SELECT id, name, task::TEXT, created_at, updated_at FROM pgml.projects WHERE id = $1 LIMIT 1;",
+                    Some(1),
+                    Some(vec![(PgBuiltInOids::INT8OID.oid(), id.into_datum())]),
+                )
+                .unwrap()
+                .first();
             if !result.is_empty() {
                 project = Some(Project {
                     id: result.get(1).unwrap().unwrap(),
@@ -135,12 +121,14 @@ impl Project {
         let mut project = None;
 
         Spi::connect(|client| {
-            let result = client.select("SELECT id, name, task::TEXT, created_at, updated_at FROM pgml.projects WHERE name = $1 LIMIT 1;",
-                Some(1),
-                Some(vec![
-                    (PgBuiltInOids::TEXTOID.oid(), name.into_datum()),
-                ])
-            ).unwrap().first();
+            let result = client
+                .select(
+                    "SELECT id, name, task::TEXT, created_at, updated_at FROM pgml.projects WHERE name = $1 LIMIT 1;",
+                    Some(1),
+                    Some(vec![(PgBuiltInOids::TEXTOID.oid(), name.into_datum())]),
+                )
+                .unwrap()
+                .first();
             if !result.is_empty() {
                 project = Some(Project {
                     id: result.get(1).unwrap().unwrap(),

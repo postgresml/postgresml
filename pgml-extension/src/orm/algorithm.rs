@@ -122,9 +122,7 @@ impl std::string::ToString for Algorithm {
             Algorithm::lasso_least_angle => "lasso_least_angle".to_string(),
             Algorithm::orthogonal_matching_pursuit => "orthogonal_matching_pursuit".to_string(),
             Algorithm::bayesian_ridge => "bayesian_ridge".to_string(),
-            Algorithm::automatic_relevance_determination => {
-                "automatic_relevance_determination".to_string()
-            }
+            Algorithm::automatic_relevance_determination => "automatic_relevance_determination".to_string(),
             Algorithm::stochastic_gradient_descent => "stochastic_gradient_descent".to_string(),
             Algorithm::perceptron => "perceptron".to_string(),
             Algorithm::passive_aggressive => "passive_aggressive".to_string(),
@@ -143,7 +141,7 @@ impl std::string::ToString for Algorithm {
             Algorithm::linear_svm => "linear_svm".to_string(),
             Algorithm::lightgbm => "lightgbm".to_string(),
             Algorithm::transformers => "transformers".to_string(),
-            Algorithm::affinity_propagation => "transformers".to_string(),
+            Algorithm::affinity_propagation => "affinity_propagation".to_string(),
             Algorithm::birch => "birch".to_string(),
             Algorithm::feature_agglomeration => "feature_agglomeration".to_string(),
             Algorithm::mini_batch_kmeans => "mini_batch_kmeans".to_string(),

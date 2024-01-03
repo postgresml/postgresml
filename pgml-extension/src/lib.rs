@@ -57,7 +57,9 @@ pub mod pg_test {
             let option = format!("pgml.venv = '{venv}'");
             options.push(Box::leak(option.into_boxed_str()));
         } else {
-            println!("If using virtualenv for Python depenencies, set the `PGML_VENV` environment variable for testing");
+            println!(
+                "If using virtualenv for Python depenencies, set the `PGML_VENV` environment variable for testing"
+            );
         }
         options
     }

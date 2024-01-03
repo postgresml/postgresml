@@ -19,6 +19,7 @@ div[data-controller="chatbot"] {
 
     #chatbot-change-the-brain-title,
     #knowledge-base-title {
+        font-size: 1.25rem;
         padding: 0.5rem;
         padding-top: 0.85rem;
         margin-bottom: 1rem;
@@ -30,6 +31,7 @@ div[data-controller="chatbot"] {
         margin-top: calc($spacer * 4);
     }
 
+    div[data-chatbot-target="clear"],
     .chatbot-brain-option-label,
     .chatbot-knowledge-base-option-label {
         cursor: pointer;
@@ -37,7 +39,7 @@ div[data-controller="chatbot"] {
         transition: all 0.1s;
     }
 
-    .chatbot-brain-option-label:hover {
+    .chatbot-brain-option-label:hover, div[data-chatbot-target="clear"]:hover {
         background-color: #{$gray-800};
     }
 
@@ -59,8 +61,8 @@ div[data-controller="chatbot"] {
     }
 
     .chatbot-brain-option-logo {
-        height: 30px;
         width: 30px;
+        height: 30px;
         background-position: center;
         background-repeat: no-repeat;
         background-size: contain;
@@ -68,6 +70,14 @@ div[data-controller="chatbot"] {
 
     #chatbot-chatbot-title {
         padding-left: 2rem;
+    }
+
+    #brain-knowledge-base-divider-line {
+        height: 0.15rem;
+        width: 100%;
+        background-color: #{$gray-500};        
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
     }
 
     .chatbot-example-questions {
@@ -298,5 +308,11 @@ div[data-controller="chatbot"].chatbot-full {
     }
     #knowledge-base-wrapper {
         display: block;
+    }
+    #brain-knowledge-base-divider-line {
+        display: none;
+    }
+    #clear-history-text {
+        display: block !important;
     }
 }

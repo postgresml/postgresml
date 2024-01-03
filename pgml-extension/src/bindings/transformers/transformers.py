@@ -41,6 +41,7 @@ from transformers import (
     PegasusTokenizer,
     TrainingArguments,
     Trainer,
+    GPTQConfig
 )
 import threading
 
@@ -187,10 +188,9 @@ def streaming_worker(worker_threads, model, **kwargs):
         worker_threads.update_thread(thread_id, "Error setting data")
     try:
         model.generate(**kwargs)
-    except BaseException as error:
-        print(f"Error in streaming_worker: {error}", file=sys.stderr)
-    finally:
         worker_threads.delete_thread(thread_id)
+    except BaseException as error:
+        worker_threads.update_thread(thread_id, f"Error in streaming_worker: {error}")
 
 
 class GGMLPipeline(object):
@@ -280,7 +280,13 @@ class StandardPipeline(object):
             elif self.task == "summarization" or self.task == "translation":
                 self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **kwargs)
             elif self.task == "text-generation" or self.task == "conversational":
-                self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
+                # See: https://huggingface.co/docs/transformers/main/quantization
+                if "quantization_config" in kwargs:
+                    quantization_config = kwargs.pop("quantization_config")
+                    quantization_config = GPTQConfig(**quantization_config)
+                    self.model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=quantization_config, **kwargs)
+                else:
+                    self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
             else:
                 raise PgMLException(f"Unhandled task: {self.task}")
 
@@ -410,10 +416,13 @@ def create_pipeline(task):
     else:
         try:
             pipe = StandardPipeline(model_name, **task)
-        except TypeError:
-            # some models fail when given "device" kwargs, remove and try again
-            task.pop("device")
-            pipe = StandardPipeline(model_name, **task)
+        except TypeError as error:
+            if "device" in task:
+                # some models fail when given "device" kwargs, remove and try again
+                task.pop("device")
+                pipe = StandardPipeline(model_name, **task)
+            else:
+                raise error
     return pipe
 
 

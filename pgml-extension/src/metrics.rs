@@ -47,11 +47,7 @@ impl ConfusionMatrix {
     /// and the predictions.
     /// `num_classes` is passed it to ensure that all classes
     /// were present in the test set.
-    pub fn new(
-        ground_truth: &ArrayView1<usize>,
-        y_hat: &ArrayView1<usize>,
-        num_classes: usize,
-    ) -> ConfusionMatrix {
+    pub fn new(ground_truth: &ArrayView1<usize>, y_hat: &ArrayView1<usize>, num_classes: usize) -> ConfusionMatrix {
         // Distinct classes.
         let mut classes = ground_truth.iter().collect::<BTreeSet<_>>();
         classes.extend(&mut y_hat.iter().collect::<BTreeSet<_>>().into_iter());
@@ -115,22 +111,14 @@ impl ConfusionMatrix {
 
     /// Average recall.
     pub fn recall(&self) -> f32 {
-        let recalls = self
-            .metrics
-            .iter()
-            .map(|m| m.tp / (m.tp + m.fn_))
-            .collect::<Vec<f32>>();
+        let recalls = self.metrics.iter().map(|m| m.tp / (m.tp + m.fn_)).collect::<Vec<f32>>();
 
         recalls.iter().sum::<f32>() / recalls.len() as f32
     }
 
     /// Average precision.
     pub fn precision(&self) -> f32 {
-        let precisions = self
-            .metrics
-            .iter()
-            .map(|m| m.tp / (m.tp + m.fp))
-            .collect::<Vec<f32>>();
+        let precisions = self.metrics.iter().map(|m| m.tp / (m.tp + m.fp)).collect::<Vec<f32>>();
 
         precisions.iter().sum::<f32>() / precisions.len() as f32
     }
@@ -162,16 +150,8 @@ impl ConfusionMatrix {
     /// Calculate f1 using the average of class f1's.
     /// This gives equal opportunity to each class to impact the overall score.
     fn f1_macro(&self) -> f32 {
-        let recalls = self
-            .metrics
-            .iter()
-            .map(|m| m.tp / (m.tp + m.fn_))
-            .collect::<Vec<f32>>();
-        let precisions = self
-            .metrics
-            .iter()
-            .map(|m| m.tp / (m.tp + m.fp))
-            .collect::<Vec<f32>>();
+        let recalls = self.metrics.iter().map(|m| m.tp / (m.tp + m.fn_)).collect::<Vec<f32>>();
+        let precisions = self.metrics.iter().map(|m| m.tp / (m.tp + m.fp)).collect::<Vec<f32>>();
 
         let mut f1s = Vec::new();
 
@@ -194,11 +174,7 @@ mod test {
         let ground_truth = array![1, 2, 3, 4, 4];
         let y_hat = array![1, 2, 3, 4, 4];
 
-        let mat = ConfusionMatrix::new(
-            &ArrayView1::from(&ground_truth),
-            &ArrayView1::from(&y_hat),
-            4,
-        );
+        let mat = ConfusionMatrix::new(&ArrayView1::from(&ground_truth), &ArrayView1::from(&y_hat), 4);
 
         let f1 = mat.f1(Average::Macro);
         let f1_micro = mat.f1(Average::Micro);

@@ -17,8 +17,7 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
     };
     let whitelisted_models = config_csv_list(CONFIG_HF_WHITELIST);
 
-    let model_is_allowed =
-        whitelisted_models.is_empty() || whitelisted_models.contains(&task_model);
+    let model_is_allowed = whitelisted_models.is_empty() || whitelisted_models.contains(&task_model);
     if !model_is_allowed {
         bail!("model {task_model} is not whitelisted. Consider adding to {CONFIG_HF_WHITELIST} in postgresql.conf");
     }
@@ -45,13 +44,7 @@ fn config_csv_list(name: &str) -> Vec<String> {
         Some(value) => value
             .trim_matches('"')
             .split(',')
-            .filter_map(|s| {
-                if s.is_empty() {
-                    None
-                } else {
-                    Some(s.to_string())
-                }
-            })
+            .filter_map(|s| if s.is_empty() { None } else { Some(s.to_string()) })
             .collect(),
         None => vec![],
     }
@@ -76,13 +69,10 @@ fn get_trust_remote_code(task: &Value) -> Option<bool> {
     // The JSON key for the trust remote code flag
     static TASK_REMOTE_CODE_KEY: &str = "trust_remote_code";
     match task {
-        Value::Object(map) => map.get(TASK_REMOTE_CODE_KEY).and_then(|v| {
-            if let Value::Bool(trust) = v {
-                Some(*trust)
-            } else {
-                None
-            }
-        }),
+        Value::Object(map) => {
+            map.get(TASK_REMOTE_CODE_KEY)
+                .and_then(|v| if let Value::Bool(trust) = v { Some(*trust) } else { None })
+        }
         _ => None,
     }
 }

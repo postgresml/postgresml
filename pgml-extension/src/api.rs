@@ -163,21 +163,30 @@ fn train_joint(
     let task = task.map(|t| Task::from_str(t).unwrap());
     let project = match Project::find_by_name(project_name) {
         Some(project) => project,
-        None => Project::create(project_name, match task {
-            Some(task) => task,
-            None => error!("Project `{}` does not exist. To create a new project, you must specify a `task`.", project_name),
-        }),
+        None => Project::create(
+            project_name,
+            match task {
+                Some(task) => task,
+                None => error!(
+                    "Project `{}` does not exist. To create a new project, you must specify a `task`.",
+                    project_name
+                ),
+            },
+        ),
     };
 
     if task.is_some() && task.unwrap() != project.task {
-        error!("Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.", project.name, project.task);
+        error!(
+            "Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.",
+            project.name, project.task
+        );
     }
 
     let mut snapshot = match relation_name {
         None => {
-            let snapshot = project
-                .last_snapshot()
-                .expect("You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.");
+            let snapshot = project.last_snapshot().expect(
+                "You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.",
+            );
 
             info!("Using existing snapshot from {}", snapshot.snapshot_name(),);
 
@@ -287,7 +296,7 @@ fn train_joint(
     };
 
     if deploy {
-        project.deploy(model.id);
+        project.deploy(model.id, Strategy::new_score);
     } else {
         warning!("Not deploying newly trained model.");
     }
@@ -300,8 +309,39 @@ fn train_joint(
     )])
 }
 
-#[pg_extern]
-fn deploy(
+#[pg_extern(name = "deploy")]
+fn deploy_model(
+    model_id: i64,
+) -> TableIterator<
+    'static,
+    (
+        name!(project, String),
+        name!(strategy, String),
+        name!(algorithm, String),
+    ),
+> {
+    let model = unwrap_or_error!(Model::find_cached(model_id));
+
+    let project_id = Spi::get_one_with_args::<i64>(
+        "SELECT projects.id from pgml.projects JOIN pgml.models ON models.project_id = projects.id WHERE models.id = $1",
+        vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
+    )
+        .unwrap();
+
+    let project_id = project_id.unwrap_or_else(|| error!("Project does not exist."));
+
+    let project = Project::find(project_id).unwrap();
+    project.deploy(model_id, Strategy::specific);
+
+    TableIterator::new(vec![(
+        project.name,
+        Strategy::specific.to_string(),
+        model.algorithm.to_string(),
+    )])
+}
+
+#[pg_extern(name = "deploy")]
+fn deploy_strategy(
     project_name: &str,
     strategy: Strategy,
     algorithm: default!(Option<Algorithm>, "NULL"),
@@ -319,8 +359,7 @@ fn deploy(
     )
     .unwrap();
 
-    let project_id =
-        project_id.unwrap_or_else(|| error!("Project named `{}` does not exist.", project_name));
+    let project_id = project_id.unwrap_or_else(|| error!("Project named `{}` does not exist.", project_name));
 
     let task = Task::from_str(&task.unwrap()).unwrap();
 
@@ -335,11 +374,7 @@ fn deploy(
     }
     match strategy {
         Strategy::best_score => {
-            let _ = write!(
-                sql,
-                "{predicate}\n{}",
-                task.default_target_metric_sql_order()
-            );
+            let _ = write!(sql, "{predicate}\n{}", task.default_target_metric_sql_order());
         }
 
         Strategy::most_recent => {
@@ -369,22 +404,16 @@ fn deploy(
         _ => error!("invalid strategy"),
     }
     sql += "\nLIMIT 1";
-    let (model_id, algorithm) = Spi::get_two_with_args::<i64, String>(
-        &sql,
-        vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
-    )
-    .unwrap();
+    let (model_id, algorithm) =
+        Spi::get_two_with_args::<i64, String>(&sql, vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())])
+            .unwrap();
     let model_id = model_id.expect("No qualified models exist for this deployment.");
     let algorithm = algorithm.expect("No qualified models exist for this deployment.");
 
     let project = Project::find(project_id).unwrap();
-    project.deploy(model_id);
+    project.deploy(model_id, strategy);
 
-    TableIterator::new(vec![(
-        project_name.to_string(),
-        strategy.to_string(),
-        algorithm,
-    )])
+    TableIterator::new(vec![(project_name.to_string(), strategy.to_string(), algorithm)])
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict")]
@@ -414,10 +443,7 @@ fn predict_i64(project_name: &str, features: Vec<i64>) -> f32 {
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_bool(project_name: &str, features: Vec<bool>) -> f32 {
-    predict_f32(
-        project_name,
-        features.iter().map(|&i| i as u8 as f32).collect(),
-    )
+    predict_f32(project_name, features.iter().map(|&i| i as u8 as f32).collect())
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict_proba")]
@@ -475,8 +501,7 @@ fn predict_model_row(model_id: i64, row: pgrx::datum::AnyElement) -> f32 {
     let features_width = snapshot.features_width();
     let mut processed = vec![0_f32; features_width];
 
-    let feature_data =
-        ndarray::ArrayView2::from_shape((1, features_width), &numeric_encoded_features).unwrap();
+    let feature_data = ndarray::ArrayView2::from_shape((1, features_width), &numeric_encoded_features).unwrap();
 
     Zip::from(feature_data.columns())
         .and(&snapshot.feature_positions)
@@ -523,12 +548,10 @@ fn load_dataset(
         "linnerud" => dataset::load_linnerud(limit),
         "wine" => dataset::load_wine(limit),
         _ => {
-            let rows =
-                match crate::bindings::transformers::load_dataset(source, subset, limit, &kwargs.0)
-                {
-                    Ok(rows) => rows,
-                    Err(e) => error!("{e}"),
-                };
+            let rows = match crate::bindings::transformers::load_dataset(source, subset, limit, &kwargs.0) {
+                Ok(rows) => rows,
+                Err(e) => error!("{e}"),
+            };
             (source.into(), rows as i64)
         }
     };
@@ -547,11 +570,7 @@ pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> 
 
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "embed")]
-pub fn embed_batch(
-    transformer: &str,
-    inputs: Vec<&str>,
-    kwargs: default!(JsonB, "'{}'"),
-) -> Vec<Vec<f32>> {
+pub fn embed_batch(transformer: &str, inputs: Vec<&str>, kwargs: default!(JsonB, "'{}'")) -> Vec<Vec<f32>> {
     match crate::bindings::transformers::embed(transformer, inputs, &kwargs.0) {
         Ok(output) => output,
         Err(e) => error!("{e}"),
@@ -641,13 +660,8 @@ pub fn transform_conversational_json(
     inputs: default!(Vec<JsonB>, "ARRAY[]::JSONB[]"),
     cache: default!(bool, false),
 ) -> JsonB {
-    if !task.0["task"]
-        .as_str()
-        .is_some_and(|v| v == "conversational")
-    {
-        error!(
-            "ARRAY[]::JSONB inputs for transform should only be used with a conversational task"
-        );
+    if !task.0["task"].as_str().is_some_and(|v| v == "conversational") {
+        error!("ARRAY[]::JSONB inputs for transform should only be used with a conversational task");
     }
     match crate::bindings::transformers::transform(&task.0, &args.0, inputs) {
         Ok(output) => JsonB(output),
@@ -665,9 +679,7 @@ pub fn transform_conversational_string(
     cache: default!(bool, false),
 ) -> JsonB {
     if task != "conversational" {
-        error!(
-            "ARRAY[]::JSONB inputs for transform should only be used with a conversational task"
-        );
+        error!("ARRAY[]::JSONB inputs for transform should only be used with a conversational task");
     }
     let task_json = json!({ "task": task });
     match crate::bindings::transformers::transform(&task_json, &args.0, inputs) {
@@ -686,10 +698,9 @@ pub fn transform_stream_json(
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, JsonB> {
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
-    let python_iter =
-        crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, input)
-            .map_err(|e| error!("{e}"))
-            .unwrap();
+    let python_iter = crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, input)
+        .map_err(|e| error!("{e}"))
+        .unwrap();
     SetOfIterator::new(python_iter)
 }
 
@@ -704,10 +715,9 @@ pub fn transform_stream_string(
 ) -> SetOfIterator<'static, JsonB> {
     let task_json = json!({ "task": task });
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
-    let python_iter =
-        crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, input)
-            .map_err(|e| error!("{e}"))
-            .unwrap();
+    let python_iter = crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, input)
+        .map_err(|e| error!("{e}"))
+        .unwrap();
     SetOfIterator::new(python_iter)
 }
 
@@ -720,19 +730,13 @@ pub fn transform_stream_conversational_json(
     inputs: default!(Vec<JsonB>, "ARRAY[]::JSONB[]"),
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, JsonB> {
-    if !task.0["task"]
-        .as_str()
-        .is_some_and(|v| v == "conversational")
-    {
-        error!(
-            "ARRAY[]::JSONB inputs for transform_stream should only be used with a conversational task"
-        );
+    if !task.0["task"].as_str().is_some_and(|v| v == "conversational") {
+        error!("ARRAY[]::JSONB inputs for transform_stream should only be used with a conversational task");
     }
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
-    let python_iter =
-        crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, inputs)
-            .map_err(|e| error!("{e}"))
-            .unwrap();
+    let python_iter = crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, inputs)
+        .map_err(|e| error!("{e}"))
+        .unwrap();
     SetOfIterator::new(python_iter)
 }
 
@@ -746,16 +750,13 @@ pub fn transform_stream_conversational_string(
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, JsonB> {
     if task != "conversational" {
-        error!(
-            "ARRAY::JSONB inputs for transform_stream should only be used with a conversational task"
-        );
+        error!("ARRAY::JSONB inputs for transform_stream should only be used with a conversational task");
     }
     let task_json = json!({ "task": task });
     // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
-    let python_iter =
-        crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, inputs)
-            .map_err(|e| error!("{e}"))
-            .unwrap();
+    let python_iter = crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, inputs)
+        .map_err(|e| error!("{e}"))
+        .unwrap();
     SetOfIterator::new(python_iter)
 }
 
@@ -770,16 +771,8 @@ fn generate(project_name: &str, inputs: &str, config: default!(JsonB, "'{}'")) -
 
 #[cfg(feature = "python")]
 #[pg_extern(immutable, parallel_safe, name = "generate")]
-fn generate_batch(
-    project_name: &str,
-    inputs: Vec<&str>,
-    config: default!(JsonB, "'{}'"),
-) -> Vec<String> {
-    match crate::bindings::transformers::generate(
-        Project::get_deployed_model_id(project_name),
-        inputs,
-        config,
-    ) {
+fn generate_batch(project_name: &str, inputs: Vec<&str>, config: default!(JsonB, "'{}'")) -> Vec<String> {
+    match crate::bindings::transformers::generate(Project::get_deployed_model_id(project_name), inputs, config) {
         Ok(output) => output,
         Err(e) => error!("{e}"),
     }
@@ -825,14 +818,17 @@ fn tune(
     };
 
     if task.is_some() && task.unwrap() != project.task {
-        error!("Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.", project.name, project.task);
+        error!(
+            "Project `{:?}` already exists with a different task: `{:?}`. Create a new project instead.",
+            project.name, project.task
+        );
     }
 
     let mut snapshot = match relation_name {
         None => {
-            let snapshot = project
-                .last_snapshot()
-                .expect("You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.");
+            let snapshot = project.last_snapshot().expect(
+                "You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.",
+            );
 
             info!("Using existing snapshot from {}", snapshot.snapshot_name(),);
 
@@ -922,7 +918,7 @@ fn tune(
     };
 
     if deploy {
-        project.deploy(model.id);
+        project.deploy(model.id, Strategy::new_score);
     }
 
     TableIterator::new(vec![(
@@ -948,20 +944,13 @@ pub fn sklearn_r2_score(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> f32 {
 #[cfg(feature = "python")]
 #[pg_extern(name = "sklearn_regression_metrics")]
 pub fn sklearn_regression_metrics(ground_truth: Vec<f32>, y_hat: Vec<f32>) -> JsonB {
-    let metrics = unwrap_or_error!(crate::bindings::sklearn::regression_metrics(
-        &ground_truth,
-        &y_hat,
-    ));
+    let metrics = unwrap_or_error!(crate::bindings::sklearn::regression_metrics(&ground_truth, &y_hat,));
     JsonB(json!(metrics))
 }
 
 #[cfg(feature = "python")]
 #[pg_extern(name = "sklearn_classification_metrics")]
-pub fn sklearn_classification_metrics(
-    ground_truth: Vec<f32>,
-    y_hat: Vec<f32>,
-    num_classes: i64,
-) -> JsonB {
+pub fn sklearn_classification_metrics(ground_truth: Vec<f32>, y_hat: Vec<f32>, num_classes: i64) -> JsonB {
     let metrics = unwrap_or_error!(crate::bindings::sklearn::classification_metrics(
         &ground_truth,
         &y_hat,
@@ -974,32 +963,16 @@ pub fn sklearn_classification_metrics(
 #[pg_extern]
 pub fn dump_all(path: &str) {
     let p = std::path::Path::new(path).join("projects.csv");
-    Spi::run(&format!(
-        "COPY pgml.projects TO '{}' CSV HEADER",
-        p.to_str().unwrap()
-    ))
-    .unwrap();
+    Spi::run(&format!("COPY pgml.projects TO '{}' CSV HEADER", p.to_str().unwrap())).unwrap();
 
     let p = std::path::Path::new(path).join("snapshots.csv");
-    Spi::run(&format!(
-        "COPY pgml.snapshots TO '{}' CSV HEADER",
-        p.to_str().unwrap()
-    ))
-    .unwrap();
+    Spi::run(&format!("COPY pgml.snapshots TO '{}' CSV HEADER", p.to_str().unwrap())).unwrap();
 
     let p = std::path::Path::new(path).join("models.csv");
-    Spi::run(&format!(
-        "COPY pgml.models TO '{}' CSV HEADER",
-        p.to_str().unwrap()
-    ))
-    .unwrap();
+    Spi::run(&format!("COPY pgml.models TO '{}' CSV HEADER", p.to_str().unwrap())).unwrap();
 
     let p = std::path::Path::new(path).join("files.csv");
-    Spi::run(&format!(
-        "COPY pgml.files TO '{}' CSV HEADER",
-        p.to_str().unwrap()
-    ))
-    .unwrap();
+    Spi::run(&format!("COPY pgml.files TO '{}' CSV HEADER", p.to_str().unwrap())).unwrap();
 
     let p = std::path::Path::new(path).join("deployments.csv");
     Spi::run(&format!(
@@ -1012,11 +985,7 @@ pub fn dump_all(path: &str) {
 #[pg_extern]
 pub fn load_all(path: &str) {
     let p = std::path::Path::new(path).join("projects.csv");
-    Spi::run(&format!(
-        "COPY pgml.projects FROM '{}' CSV HEADER",
-        p.to_str().unwrap()
-    ))
-    .unwrap();
+    Spi::run(&format!("COPY pgml.projects FROM '{}' CSV HEADER", p.to_str().unwrap())).unwrap();
 
     let p = std::path::Path::new(path).join("snapshots.csv");
     Spi::run(&format!(
@@ -1026,18 +995,10 @@ pub fn load_all(path: &str) {
     .unwrap();
 
     let p = std::path::Path::new(path).join("models.csv");
-    Spi::run(&format!(
-        "COPY pgml.models FROM '{}' CSV HEADER",
-        p.to_str().unwrap()
-    ))
-    .unwrap();
+    Spi::run(&format!("COPY pgml.models FROM '{}' CSV HEADER", p.to_str().unwrap())).unwrap();
 
     let p = std::path::Path::new(path).join("files.csv");
-    Spi::run(&format!(
-        "COPY pgml.files FROM '{}' CSV HEADER",
-        p.to_str().unwrap()
-    ))
-    .unwrap();
+    Spi::run(&format!("COPY pgml.files FROM '{}' CSV HEADER", p.to_str().unwrap())).unwrap();
 
     let p = std::path::Path::new(path).join("deployments.csv");
     Spi::run(&format!(
@@ -1598,9 +1559,7 @@ mod tests {
 
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
         // to test deployments.
-        let setting =
-            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'")
-                .unwrap();
+        let setting = Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
 
         info!("Data directory: {}", setting.unwrap());
 
@@ -1638,9 +1597,7 @@ mod tests {
 
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
         // to test deployments.
-        let setting =
-            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'")
-                .unwrap();
+        let setting = Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
 
         info!("Data directory: {}", setting.unwrap());
 
@@ -1678,9 +1635,7 @@ mod tests {
 
         // Modify postgresql.conf and add shared_preload_libraries = 'pgml'
         // to test deployments.
-        let setting =
-            Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'")
-                .unwrap();
+        let setting = Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
 
         info!("Data directory: {}", setting.unwrap());
 

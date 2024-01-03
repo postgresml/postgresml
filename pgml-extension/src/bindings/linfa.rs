@@ -20,11 +20,7 @@ impl LinearRegression {
     where
         Self: Sized,
     {
-        let records = ArrayView2::from_shape(
-            (dataset.num_train_rows, dataset.num_features),
-            &dataset.x_train,
-        )
-        .unwrap();
+        let records = ArrayView2::from_shape((dataset.num_train_rows, dataset.num_features), &dataset.x_train).unwrap();
 
         let targets = ArrayView1::from_shape(dataset.num_train_rows, &dataset.y_train).unwrap();
 
@@ -34,8 +30,7 @@ impl LinearRegression {
         for (key, value) in hyperparams {
             match key.as_str() {
                 "fit_intercept" => {
-                    estimator = estimator
-                        .with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
+                    estimator = estimator.with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
                 }
                 _ => bail!("Unknown {}: {:?}", key.as_str(), value),
             };
@@ -52,14 +47,8 @@ impl LinearRegression {
 
 impl Bindings for LinearRegression {
     /// Predict a novel datapoint.
-    fn predict(
-        &self,
-        features: &[f32],
-        num_features: usize,
-        _num_classes: usize,
-    ) -> Result<Vec<f32>> {
-        let records =
-            ArrayView2::from_shape((features.len() / num_features, num_features), features)?;
+    fn predict(&self, features: &[f32], num_features: usize, _num_classes: usize) -> Result<Vec<f32>> {
+        let records = ArrayView2::from_shape((features.len() / num_features, num_features), features)?;
         Ok(self.estimator.predict(records).targets.into_raw_vec())
     }
 
@@ -96,11 +85,7 @@ impl LogisticRegression {
     where
         Self: Sized,
     {
-        let records = ArrayView2::from_shape(
-            (dataset.num_train_rows, dataset.num_features),
-            &dataset.x_train,
-        )
-        .unwrap();
+        let records = ArrayView2::from_shape((dataset.num_train_rows, dataset.num_features), &dataset.x_train).unwrap();
 
         // Copy to convert to i32 because LogisticRegression doesn't continuous targets.
         let y_train: Vec<i32> = dataset.y_train.iter().map(|x| *x as i32).collect();
@@ -114,22 +99,16 @@ impl LogisticRegression {
             for (key, value) in hyperparams {
                 match key.as_str() {
                     "fit_intercept" => {
-                        estimator = estimator
-                            .with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
+                        estimator = estimator.with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
                     }
-                    "alpha" => {
-                        estimator =
-                            estimator.alpha(value.as_f64().expect("alpha must be a float") as f32)
-                    }
+                    "alpha" => estimator = estimator.alpha(value.as_f64().expect("alpha must be a float") as f32),
                     "max_iterations" => {
-                        estimator = estimator.max_iterations(
-                            value.as_i64().expect("max_iterations must be an integer") as u64,
-                        )
+                        estimator =
+                            estimator.max_iterations(value.as_i64().expect("max_iterations must be an integer") as u64)
                     }
                     "gradient_tolerance" => {
-                        estimator = estimator.gradient_tolerance(
-                            value.as_f64().expect("gradient_tolerance must be a float") as f32,
-                        )
+                        estimator = estimator
+                            .gradient_tolerance(value.as_f64().expect("gradient_tolerance must be a float") as f32)
                     }
                     _ => bail!("Unknown {}: {:?}", key.as_str(), value),
                 };
@@ -149,22 +128,16 @@ impl LogisticRegression {
             for (key, value) in hyperparams {
                 match key.as_str() {
                     "fit_intercept" => {
-                        estimator = estimator
-                            .with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
+                        estimator = estimator.with_intercept(value.as_bool().expect("fit_intercept must be boolean"))
                     }
-                    "alpha" => {
-                        estimator =
-                            estimator.alpha(value.as_f64().expect("alpha must be a float") as f32)
-                    }
+                    "alpha" => estimator = estimator.alpha(value.as_f64().expect("alpha must be a float") as f32),
                     "max_iterations" => {
-                        estimator = estimator.max_iterations(
-                            value.as_i64().expect("max_iterations must be an integer") as u64,
-                        )
+                        estimator =
+                            estimator.max_iterations(value.as_i64().expect("max_iterations must be an integer") as u64)
                     }
                     "gradient_tolerance" => {
-                        estimator = estimator.gradient_tolerance(
-                            value.as_f64().expect("gradient_tolerance must be a float") as f32,
-                        )
+                        estimator = estimator
+                            .gradient_tolerance(value.as_f64().expect("gradient_tolerance must be a float") as f32)
                     }
                     _ => bail!("Unknown {}: {:?}", key.as_str(), value),
                 };
@@ -187,16 +160,8 @@ impl Bindings for LogisticRegression {
         bail!("predict_proba is currently only supported by the Python runtime.")
     }
 
-    fn predict(
-        &self,
-        features: &[f32],
-        _num_features: usize,
-        _num_classes: usize,
-    ) -> Result<Vec<f32>> {
-        let records = ArrayView2::from_shape(
-            (features.len() / self.num_features, self.num_features),
-            features,
-        )?;
+    fn predict(&self, features: &[f32], _num_features: usize, _num_classes: usize) -> Result<Vec<f32>> {
+        let records = ArrayView2::from_shape((features.len() / self.num_features, self.num_features), features)?;
 
         Ok(if self.num_distinct_labels > 2 {
             self.estimator_multi
@@ -244,11 +209,7 @@ pub struct Svm {
 
 impl Svm {
     pub fn fit(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
-        let records = ArrayView2::from_shape(
-            (dataset.num_train_rows, dataset.num_features),
-            &dataset.x_train,
-        )
-        .unwrap();
+        let records = ArrayView2::from_shape((dataset.num_train_rows, dataset.num_features), &dataset.x_train).unwrap();
 
         let targets = ArrayView1::from_shape(dataset.num_train_rows, &dataset.y_train).unwrap();
 
@@ -264,13 +225,8 @@ impl Svm {
 
         for (key, value) in hyperparams {
             match key.as_str() {
-                "eps" => {
-                    estimator = estimator.eps(value.as_f64().expect("eps must be a float") as f32)
-                }
-                "shrinking" => {
-                    estimator =
-                        estimator.shrinking(value.as_bool().expect("shrinking must be a bool"))
-                }
+                "eps" => estimator = estimator.eps(value.as_f64().expect("eps must be a float") as f32),
+                "shrinking" => estimator = estimator.shrinking(value.as_bool().expect("shrinking must be a bool")),
                 "kernel" => {
                     match value.as_str().expect("kernel must be a string") {
                         "poli" => estimator = estimator.polynomial_kernel(3.0, 1.0), // degree = 3, c = 1.0 as per Scikit
@@ -298,14 +254,8 @@ impl Bindings for Svm {
     }
 
     /// Predict a novel datapoint.
-    fn predict(
-        &self,
-        features: &[f32],
-        num_features: usize,
-        _num_classes: usize,
-    ) -> Result<Vec<f32>> {
-        let records =
-            ArrayView2::from_shape((features.len() / num_features, num_features), features)?;
+    fn predict(&self, features: &[f32], num_features: usize, _num_classes: usize) -> Result<Vec<f32>> {
+        let records = ArrayView2::from_shape((features.len() / num_features, num_features), features)?;
 
         Ok(self.estimator.predict(records).targets.into_raw_vec())
     }

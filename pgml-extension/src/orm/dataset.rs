@@ -94,9 +94,12 @@ impl Display for TextDataset {
 
 fn drop_table_if_exists(table_name: &str) {
     // Avoid the existence for DROP TABLE IF EXISTS warning by checking the schema for the table first
-    let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'", vec![
-        (PgBuiltInOids::TEXTOID.oid(), table_name.into_datum())
-    ]).unwrap().unwrap();
+    let table_count = Spi::get_one_with_args::<i64>(
+        "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'",
+        vec![(PgBuiltInOids::TEXTOID.oid(), table_name.into_datum())],
+    )
+    .unwrap()
+    .unwrap();
     if table_count == 1 {
         Spi::run(&format!(r#"DROP TABLE pgml.{table_name} CASCADE"#)).unwrap();
     }
@@ -476,15 +479,9 @@ pub fn load_iris(limit: Option<usize>) -> (String, i64) {
         VALUES ($1, $2, $3, $4, $5)
         ",
             Some(vec![
-                (
-                    PgBuiltInOids::FLOAT4OID.oid(),
-                    row.sepal_length.into_datum(),
-                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.sepal_length.into_datum()),
                 (PgBuiltInOids::FLOAT4OID.oid(), row.sepal_width.into_datum()),
-                (
-                    PgBuiltInOids::FLOAT4OID.oid(),
-                    row.petal_length.into_datum(),
-                ),
+                (PgBuiltInOids::FLOAT4OID.oid(), row.petal_length.into_datum()),
                 (PgBuiltInOids::FLOAT4OID.oid(), row.petal_width.into_datum()),
                 (PgBuiltInOids::INT4OID.oid(), row.target.into_datum()),
             ]),

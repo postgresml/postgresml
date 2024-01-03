@@ -18,10 +18,7 @@ pub fn chunk(splitter: &str, text: &str, kwargs: &serde_json::Value) -> Result<V
         Ok(chunk
             .call1(
                 py,
-                PyTuple::new(
-                    py,
-                    &[splitter.into_py(py), text.into_py(py), kwargs.into_py(py)],
-                ),
+                PyTuple::new(py, &[splitter.into_py(py), text.into_py(py), kwargs.into_py(py)]),
             )?
             .extract(py)?)
     })

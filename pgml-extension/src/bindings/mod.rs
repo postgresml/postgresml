@@ -11,19 +11,18 @@ use crate::orm::*;
 #[macro_export]
 macro_rules! create_pymodule {
     ($pyfile:literal) => {
-        pub static PY_MODULE: once_cell::sync::Lazy<
-            anyhow::Result<pyo3::Py<pyo3::types::PyModule>>,
-        > = once_cell::sync::Lazy::new(|| {
-            pyo3::Python::with_gil(|py| -> anyhow::Result<pyo3::Py<pyo3::types::PyModule>> {
-                use $crate::bindings::TracebackError;
-                let src = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), $pyfile));
-                Ok(
-                    pyo3::types::PyModule::from_code(py, src, "transformers.py", "__main__")
-                        .format_traceback(py)?
-                        .into(),
-                )
-            })
-        });
+        pub static PY_MODULE: once_cell::sync::Lazy<anyhow::Result<pyo3::Py<pyo3::types::PyModule>>> =
+            once_cell::sync::Lazy::new(|| {
+                pyo3::Python::with_gil(|py| -> anyhow::Result<pyo3::Py<pyo3::types::PyModule>> {
+                    use $crate::bindings::TracebackError;
+                    let src = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), $pyfile));
+                    Ok(
+                        pyo3::types::PyModule::from_code(py, src, "transformers.py", "__main__")
+                            .format_traceback(py)?
+                            .into(),
+                    )
+                })
+            });
     };
 }
 
@@ -59,12 +58,7 @@ pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dy
 /// implement serde.
 pub trait Bindings: Send + Sync + Debug {
     /// Predict a set of datapoints.
-    fn predict(
-        &self,
-        features: &[f32],
-        num_features: usize,
-        num_classes: usize,
-    ) -> Result<Vec<f32>>;
+    fn predict(&self, features: &[f32], num_features: usize, num_classes: usize) -> Result<Vec<f32>>;
 
     /// Predict the probability of each class.
     fn predict_proba(&self, features: &[f32], num_features: usize) -> Result<Vec<f32>>;

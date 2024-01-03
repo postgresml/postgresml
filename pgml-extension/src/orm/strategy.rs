@@ -8,6 +8,7 @@ pub enum Strategy {
     best_score,
     most_recent,
     rollback,
+    specific,
 }
 
 impl std::str::FromStr for Strategy {
@@ -19,6 +20,7 @@ impl std::str::FromStr for Strategy {
             "best_score" => Ok(Strategy::best_score),
             "most_recent" => Ok(Strategy::most_recent),
             "rollback" => Ok(Strategy::rollback),
+            "specific" => Ok(Strategy::rollback),
             _ => Err(()),
         }
     }
@@ -31,6 +33,7 @@ impl std::string::ToString for Strategy {
             Strategy::best_score => "best_score".to_string(),
             Strategy::most_recent => "most_recent".to_string(),
             Strategy::rollback => "rollback".to_string(),
+            Strategy::specific => "specific".to_string(),
         }
     }
 }
