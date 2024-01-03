@@ -128,9 +128,7 @@ fn get_tree_params(hyperparams: &Hyperparams) -> tree::TreeBoosterParameters {
             },
             "max_leaves" => params.max_leaves(value.as_u64().unwrap() as u32),
             "max_bin" => params.max_bin(value.as_u64().unwrap() as u32),
-            "booster" | "n_estimators" | "boost_rounds" | "eval_metric" | "objective" => {
-                &mut params
-            } // Valid but not relevant to this section
+            "booster" | "n_estimators" | "boost_rounds" | "eval_metric" | "objective" => &mut params, // Valid but not relevant to this section
             "nthread" => &mut params,
             "random_state" => &mut params,
             _ => panic!("Unknown hyperparameter {:?}: {:?}", key, value),
@@ -143,10 +141,7 @@ pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Bo
     fit(dataset, hyperparams, learning::Objective::RegLinear)
 }
 
-pub fn fit_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Result<Box<dyn Bindings>> {
+pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
     fit(
         dataset,
         hyperparams,
@@ -187,12 +182,8 @@ fn objective_from_string(name: &str, dataset: &Dataset) -> learning::Objective {
         "gpu:binary:logitraw" => learning::Objective::GpuBinaryLogisticRaw,
         "count:poisson" => learning::Objective::CountPoisson,
         "survival:cox" => learning::Objective::SurvivalCox,
-        "multi:softmax" => {
-            learning::Objective::MultiSoftmax(dataset.num_distinct_labels.try_into().unwrap())
-        }
-        "multi:softprob" => {
-            learning::Objective::MultiSoftprob(dataset.num_distinct_labels.try_into().unwrap())
-        }
+        "multi:softmax" => learning::Objective::MultiSoftmax(dataset.num_distinct_labels.try_into().unwrap()),
+        "multi:softprob" => learning::Objective::MultiSoftprob(dataset.num_distinct_labels.try_into().unwrap()),
         "rank:pairwise" => learning::Objective::RankPairwise,
         "reg:gamma" => learning::Objective::RegGamma,
         "reg:tweedie" => learning::Objective::RegTweedie(Some(dataset.num_distinct_labels as f32)),
@@ -200,11 +191,7 @@ fn objective_from_string(name: &str, dataset: &Dataset) -> learning::Objective {
     }
 }
 
-fn fit(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-    objective: learning::Objective,
-) -> Result<Box<dyn Bindings>> {
+fn fit(dataset: &Dataset, hyperparams: &Hyperparams, objective: learning::Objective) -> Result<Box<dyn Bindings>> {
     // split the train/test data into DMatrix
     let mut dtrain = DMatrix::from_dense(&dataset.x_train, dataset.num_train_rows).unwrap();
     let mut dtest = DMatrix::from_dense(&dataset.x_test, dataset.num_test_rows).unwrap();
@@ -230,9 +217,7 @@ fn fit(
                         .collect(),
                 )
             } else {
-                learning::Metrics::Custom(Vec::from([eval_metric_from_string(
-                    metrics.as_str().unwrap(),
-                )]))
+                learning::Metrics::Custom(Vec::from([eval_metric_from_string(metrics.as_str().unwrap())]))
             }
         }
         None => learning::Metrics::Auto,
@@ -314,21 +299,13 @@ unsafe impl Send for Estimator {}
 unsafe impl Sync for Estimator {}
 
 impl std::fmt::Debug for Estimator {
-    fn fmt(
-        &self,
-        formatter: &mut std::fmt::Formatter<'_>,
-    ) -> std::result::Result<(), std::fmt::Error> {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         formatter.debug_struct("Estimator").finish()
     }
 }
 
 impl Bindings for Estimator {
-    fn predict(
-        &self,
-        features: &[f32],
-        num_features: usize,
-        num_classes: usize,
-    ) -> Result<Vec<f32>> {
+    fn predict(&self, features: &[f32], num_features: usize, num_classes: usize) -> Result<Vec<f32>> {
         let x = DMatrix::from_dense(features, features.len() / num_features)?;
         let y = self.estimator.predict(&x)?;
         Ok(match num_classes {

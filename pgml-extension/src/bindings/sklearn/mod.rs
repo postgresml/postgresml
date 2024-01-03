@@ -33,10 +33,7 @@ wrap_fit!(elastic_net_regression, "elastic_net_regression");
 wrap_fit!(ridge_regression, "ridge_regression");
 wrap_fit!(random_forest_regression, "random_forest_regression");
 wrap_fit!(xgboost_regression, "xgboost_regression");
-wrap_fit!(
-    xgboost_random_forest_regression,
-    "xgboost_random_forest_regression"
-);
+wrap_fit!(xgboost_random_forest_regression, "xgboost_random_forest_regression");
 wrap_fit!(
     orthogonal_matching_persuit_regression,
     "orthogonal_matching_persuit_regression"
@@ -50,10 +47,7 @@ wrap_fit!(
     stochastic_gradient_descent_regression,
     "stochastic_gradient_descent_regression"
 );
-wrap_fit!(
-    passive_aggressive_regression,
-    "passive_aggressive_regression"
-);
+wrap_fit!(passive_aggressive_regression, "passive_aggressive_regression");
 wrap_fit!(ransac_regression, "ransac_regression");
 wrap_fit!(theil_sen_regression, "theil_sen_regression");
 wrap_fit!(huber_regression, "huber_regression");
@@ -64,14 +58,8 @@ wrap_fit!(nu_svm_regression, "nu_svm_regression");
 wrap_fit!(ada_boost_regression, "ada_boost_regression");
 wrap_fit!(bagging_regression, "bagging_regression");
 wrap_fit!(extra_trees_regression, "extra_trees_regression");
-wrap_fit!(
-    gradient_boosting_trees_regression,
-    "gradient_boosting_trees_regression"
-);
-wrap_fit!(
-    hist_gradient_boosting_regression,
-    "hist_gradient_boosting_regression"
-);
+wrap_fit!(gradient_boosting_trees_regression, "gradient_boosting_trees_regression");
+wrap_fit!(hist_gradient_boosting_regression, "hist_gradient_boosting_regression");
 wrap_fit!(least_angle_regression, "least_angle_regression");
 wrap_fit!(lasso_least_angle_regression, "lasso_least_angle_regression");
 wrap_fit!(linear_svm_regression, "linear_svm_regression");
@@ -91,10 +79,7 @@ wrap_fit!(
     "stochastic_gradient_descent_classification"
 );
 wrap_fit!(perceptron_classification, "perceptron_classification");
-wrap_fit!(
-    passive_aggressive_classification,
-    "passive_aggressive_classification"
-);
+wrap_fit!(passive_aggressive_classification, "passive_aggressive_classification");
 wrap_fit!(gaussian_process, "gaussian_process");
 wrap_fit!(nu_svm_classification, "nu_svm_classification");
 wrap_fit!(ada_boost_classification, "ada_boost_classification");
@@ -124,47 +109,41 @@ wrap_fit!(spectral, "spectral_clustering");
 wrap_fit!(spectral_bi, "spectral_biclustering");
 wrap_fit!(spectral_co, "spectral_coclustering");
 
-fn fit(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-    algorithm_task: &'static str,
-) -> Result<Box<dyn Bindings>> {
+fn fit(dataset: &Dataset, hyperparams: &Hyperparams, algorithm_task: &'static str) -> Result<Box<dyn Bindings>> {
     let hyperparams = serde_json::to_string(hyperparams).unwrap();
 
-    let (estimator, predict, predict_proba) =
-        Python::with_gil(|py| -> Result<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
-            let module = get_module!(PY_MODULE);
+    let (estimator, predict, predict_proba) = Python::with_gil(|py| -> Result<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
+        let module = get_module!(PY_MODULE);
 
-            let estimator: Py<PyAny> = module.getattr(py, "estimator")?;
+        let estimator: Py<PyAny> = module.getattr(py, "estimator")?;
 
-            let train: Py<PyAny> = estimator.call1(
+        let train: Py<PyAny> = estimator.call1(
+            py,
+            PyTuple::new(
                 py,
-                PyTuple::new(
-                    py,
-                    &[
-                        String::from(algorithm_task).into_py(py),
-                        dataset.num_features.into_py(py),
-                        dataset.num_labels.into_py(py),
-                        hyperparams.into_py(py),
-                    ],
-                ),
-            )?;
+                &[
+                    String::from(algorithm_task).into_py(py),
+                    dataset.num_features.into_py(py),
+                    dataset.num_labels.into_py(py),
+                    hyperparams.into_py(py),
+                ],
+            ),
+        )?;
 
-            let estimator: Py<PyAny> =
-                train.call1(py, PyTuple::new(py, [&dataset.x_train, &dataset.y_train]))?;
+        let estimator: Py<PyAny> = train.call1(py, PyTuple::new(py, [&dataset.x_train, &dataset.y_train]))?;
 
-            let predict: Py<PyAny> = module
-                .getattr(py, "predictor")?
-                .call1(py, PyTuple::new(py, [&estimator]))?
-                .extract(py)?;
+        let predict: Py<PyAny> = module
+            .getattr(py, "predictor")?
+            .call1(py, PyTuple::new(py, [&estimator]))?
+            .extract(py)?;
 
-            let predict_proba: Py<PyAny> = module
-                .getattr(py, "predictor_proba")?
-                .call1(py, PyTuple::new(py, [&estimator]))?
-                .extract(py)?;
+        let predict_proba: Py<PyAny> = module
+            .getattr(py, "predictor_proba")?
+            .call1(py, PyTuple::new(py, [&estimator]))?
+            .extract(py)?;
 
-            Ok((estimator, predict, predict_proba))
-        })?;
+        Ok((estimator, predict, predict_proba))
+    })?;
 
     Ok(Box::new(Estimator {
         estimator,
@@ -183,28 +162,15 @@ unsafe impl Send for Estimator {}
 unsafe impl Sync for Estimator {}
 
 impl std::fmt::Debug for Estimator {
-    fn fmt(
-        &self,
-        formatter: &mut std::fmt::Formatter<'_>,
-    ) -> std::result::Result<(), std::fmt::Error> {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         formatter.debug_struct("Estimator").finish()
     }
 }
 
 impl Bindings for Estimator {
     /// Predict a novel datapoint.
-    fn predict(
-        &self,
-        features: &[f32],
-        _num_features: usize,
-        _num_classes: usize,
-    ) -> Result<Vec<f32>> {
-        Python::with_gil(|py| {
-            Ok(self
-                .predict
-                .call1(py, PyTuple::new(py, [features]))?
-                .extract(py)?)
-        })
+    fn predict(&self, features: &[f32], _num_features: usize, _num_classes: usize) -> Result<Vec<f32>> {
+        Python::with_gil(|py| Ok(self.predict.call1(py, PyTuple::new(py, [features]))?.extract(py)?))
     }
 
     fn predict_proba(&self, features: &[f32], _num_features: usize) -> Result<Vec<f32>> {
@@ -220,9 +186,7 @@ impl Bindings for Estimator {
     fn to_bytes(&self) -> Result<Vec<u8>> {
         Python::with_gil(|py| {
             let save = get_module!(PY_MODULE).getattr(py, "save")?;
-            Ok(save
-                .call1(py, PyTuple::new(py, [&self.estimator]))?
-                .extract(py)?)
+            Ok(save.call1(py, PyTuple::new(py, [&self.estimator]))?.extract(py)?)
         })
     }
 
@@ -258,12 +222,8 @@ impl Bindings for Estimator {
 
 fn sklearn_metric(name: &str, ground_truth: &[f32], y_hat: &[f32]) -> Result<f32> {
     Python::with_gil(|py| {
-        let calculate_metric = get_module!(PY_MODULE)
-            .getattr(py, "calculate_metric")
-            .unwrap();
-        let wrapper: Py<PyAny> = calculate_metric
-            .call1(py, PyTuple::new(py, [name]))?
-            .extract(py)?;
+        let calculate_metric = get_module!(PY_MODULE).getattr(py, "calculate_metric").unwrap();
+        let wrapper: Py<PyAny> = calculate_metric.call1(py, PyTuple::new(py, [name]))?.extract(py)?;
 
         let score: f32 = wrapper
             .call1(py, PyTuple::new(py, [ground_truth, y_hat]))?
@@ -315,11 +275,7 @@ pub fn regression_metrics(ground_truth: &[f32], y_hat: &[f32]) -> Result<HashMap
     })
 }
 
-pub fn classification_metrics(
-    ground_truth: &[f32],
-    y_hat: &[f32],
-    num_classes: usize,
-) -> Result<HashMap<String, f32>> {
+pub fn classification_metrics(ground_truth: &[f32], y_hat: &[f32], num_classes: usize) -> Result<HashMap<String, f32>> {
     let mut scores = Python::with_gil(|py| -> Result<HashMap<String, f32>> {
         let calculate_metric = get_module!(PY_MODULE).getattr(py, "classification_metrics")?;
         let scores: HashMap<String, f32> = calculate_metric
@@ -337,11 +293,7 @@ pub fn classification_metrics(
     Ok(scores)
 }
 
-pub fn cluster_metrics(
-    num_features: usize,
-    inputs: &[f32],
-    labels: &[f32],
-) -> Result<HashMap<String, f32>> {
+pub fn cluster_metrics(num_features: usize, inputs: &[f32], labels: &[f32]) -> Result<HashMap<String, f32>> {
     Python::with_gil(|py| {
         let calculate_metric = get_module!(PY_MODULE).getattr(py, "cluster_metrics")?;
 

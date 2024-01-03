@@ -115,18 +115,12 @@ fn divide_vector_d(vector: Array<f64>, dividend: Array<f64>) -> Vec<f64> {
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_l0")]
 fn norm_l0_s(vector: Array<f32>) -> f32 {
-    vector
-        .iter_deny_null()
-        .map(|a| if a == 0.0 { 0.0 } else { 1.0 })
-        .sum()
+    vector.iter_deny_null().map(|a| if a == 0.0 { 0.0 } else { 1.0 }).sum()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_l0")]
 fn norm_l0_d(vector: Array<f64>) -> f64 {
-    vector
-        .iter_deny_null()
-        .map(|a| if a == 0.0 { 0.0 } else { 1.0 })
-        .sum()
+    vector.iter_deny_null().map(|a| if a == 0.0 { 0.0 } else { 1.0 }).sum()
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "norm_l1")]
@@ -334,11 +328,7 @@ impl Aggregate for SumS {
     type Finalize = Vec<f32>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state<'a>(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn state<'a>(mut current: Self::State, arg: Self::Args, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match arg {
             None => {}
             Some(arg) => match current {
@@ -356,11 +346,7 @@ impl Aggregate for SumS {
     }
 
     #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn combine(mut first: Self::State, second: Self::State, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
             (Some(_), None) => first,
@@ -397,11 +383,7 @@ impl Aggregate for SumD {
     type Finalize = Vec<f64>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn state(mut current: Self::State, arg: Self::Args, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match arg {
             None => {}
             Some(arg) => match current {
@@ -419,11 +401,7 @@ impl Aggregate for SumD {
     }
 
     #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn combine(mut first: Self::State, second: Self::State, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
             (Some(_), None) => first,
@@ -460,11 +438,7 @@ impl Aggregate for MaxAbsS {
     type Finalize = Vec<f32>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn state(mut current: Self::State, arg: Self::Args, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match arg {
             None => {}
             Some(arg) => match current {
@@ -484,11 +458,7 @@ impl Aggregate for MaxAbsS {
     }
 
     #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn combine(mut first: Self::State, second: Self::State, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
             (Some(_), None) => first,
@@ -527,11 +497,7 @@ impl Aggregate for MaxAbsD {
     type Finalize = Vec<f64>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn state(mut current: Self::State, arg: Self::Args, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match arg {
             None => {}
             Some(arg) => match current {
@@ -551,11 +517,7 @@ impl Aggregate for MaxAbsD {
     }
 
     #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn combine(mut first: Self::State, second: Self::State, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
             (Some(_), None) => first,
@@ -594,11 +556,7 @@ impl Aggregate for MaxS {
     type Finalize = Vec<f32>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn state(mut current: Self::State, arg: Self::Args, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match arg {
             None => {}
             Some(arg) => match current {
@@ -618,11 +576,7 @@ impl Aggregate for MaxS {
     }
 
     #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn combine(mut first: Self::State, second: Self::State, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
             (Some(_), None) => first,
@@ -661,11 +615,7 @@ impl Aggregate for MaxD {
     type Finalize = Vec<f64>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn state(mut current: Self::State, arg: Self::Args, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match arg {
             None => {}
             Some(arg) => match current {
@@ -685,11 +635,7 @@ impl Aggregate for MaxD {
     }
 
     #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn combine(mut first: Self::State, second: Self::State, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
             (Some(_), None) => first,
@@ -728,11 +674,7 @@ impl Aggregate for MinS {
     type Finalize = Vec<f32>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn state(mut current: Self::State, arg: Self::Args, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match arg {
             None => {}
             Some(arg) => match current {
@@ -752,11 +694,7 @@ impl Aggregate for MinS {
     }
 
     #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn combine(mut first: Self::State, second: Self::State, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
             (Some(_), None) => first,
@@ -795,11 +733,7 @@ impl Aggregate for MinD {
     type Finalize = Vec<f64>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn state(mut current: Self::State, arg: Self::Args, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match arg {
             None => {}
             Some(arg) => match current {
@@ -819,11 +753,7 @@ impl Aggregate for MinD {
     }
 
     #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn combine(mut first: Self::State, second: Self::State, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
             (Some(_), None) => first,
@@ -862,11 +792,7 @@ impl Aggregate for MinAbsS {
     type Finalize = Vec<f32>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn state(mut current: Self::State, arg: Self::Args, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match arg {
             None => {}
             Some(arg) => match current {
@@ -886,11 +812,7 @@ impl Aggregate for MinAbsS {
     }
 
     #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn combine(mut first: Self::State, second: Self::State, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
             (Some(_), None) => first,
@@ -929,11 +851,7 @@ impl Aggregate for MinAbsD {
     type Finalize = Vec<f64>;
 
     #[pgrx(immutable, parallel_safe)]
-    fn state(
-        mut current: Self::State,
-        arg: Self::Args,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn state(mut current: Self::State, arg: Self::Args, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match arg {
             None => {}
             Some(arg) => match current {
@@ -953,11 +871,7 @@ impl Aggregate for MinAbsD {
     }
 
     #[pgrx(immutable, parallel_safe)]
-    fn combine(
-        mut first: Self::State,
-        second: Self::State,
-        _fcinfo: pg_sys::FunctionCallInfo,
-    ) -> Self::State {
+    fn combine(mut first: Self::State, second: Self::State, _fcinfo: pg_sys::FunctionCallInfo) -> Self::State {
         match (&mut first, &second) {
             (None, None) => None,
             (Some(_), None) => first,
@@ -1043,65 +957,57 @@ mod tests {
 
     #[pg_test]
     fn test_add_vector_s() {
-        let result = Spi::get_one::<Vec<f32>>(
-            "SELECT pgml.add(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])",
-        );
+        let result =
+            Spi::get_one::<Vec<f32>>("SELECT pgml.add(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])");
         assert_eq!(result, Ok(Some([2.0, 4.0, 6.0].to_vec())));
     }
 
     #[pg_test]
     fn test_add_vector_d() {
-        let result = Spi::get_one::<Vec<f64>>(
-            "SELECT pgml.add(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])",
-        );
+        let result =
+            Spi::get_one::<Vec<f64>>("SELECT pgml.add(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])");
         assert_eq!(result, Ok(Some([2.0, 4.0, 6.0].to_vec())));
     }
 
     #[pg_test]
     fn test_subtract_vector_s() {
-        let result = Spi::get_one::<Vec<f32>>(
-            "SELECT pgml.subtract(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])",
-        );
+        let result =
+            Spi::get_one::<Vec<f32>>("SELECT pgml.subtract(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])");
         assert_eq!(result, Ok(Some([0.0, 0.0, 0.0].to_vec())));
     }
 
     #[pg_test]
     fn test_subtract_vector_d() {
-        let result = Spi::get_one::<Vec<f64>>(
-            "SELECT pgml.subtract(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])",
-        );
+        let result =
+            Spi::get_one::<Vec<f64>>("SELECT pgml.subtract(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])");
         assert_eq!(result, Ok(Some([0.0, 0.0, 0.0].to_vec())));
     }
 
     #[pg_test]
     fn test_multiply_vector_s() {
-        let result = Spi::get_one::<Vec<f32>>(
-            "SELECT pgml.subtract(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])",
-        );
+        let result =
+            Spi::get_one::<Vec<f32>>("SELECT pgml.subtract(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])");
         assert_eq!(result, Ok(Some([0.0, 0.0, 0.0].to_vec())));
     }
 
     #[pg_test]
     fn test_multiply_vector_d() {
-        let result = Spi::get_one::<Vec<f64>>(
-            "SELECT pgml.multiply(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])",
-        );
+        let result =
+            Spi::get_one::<Vec<f64>>("SELECT pgml.multiply(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])");
         assert_eq!(result, Ok(Some([1.0, 4.0, 9.0].to_vec())));
     }
 
     #[pg_test]
     fn test_divide_vector_s() {
-        let result = Spi::get_one::<Vec<f32>>(
-            "SELECT pgml.divide(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])",
-        );
+        let result =
+            Spi::get_one::<Vec<f32>>("SELECT pgml.divide(ARRAY[1,2,3]::float4[], ARRAY[1.0, 2.0, 3.0]::float4[])");
         assert_eq!(result, Ok(Some([1.0, 1.0, 1.0].to_vec())));
     }
 
     #[pg_test]
     fn test_divide_vector_d() {
-        let result = Spi::get_one::<Vec<f64>>(
-            "SELECT pgml.divide(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])",
-        );
+        let result =
+            Spi::get_one::<Vec<f64>>("SELECT pgml.divide(ARRAY[1,2,3]::float8[], ARRAY[1.0, 2.0, 3.0]::float8[])");
         assert_eq!(result, Ok(Some([1.0, 1.0, 1.0].to_vec())));
     }
 
@@ -1178,9 +1084,7 @@ mod tests {
         let result = Spi::get_one::<Vec<f64>>("SELECT pgml.normalize_l1(ARRAY[1,2,3]::float8[])");
         assert_eq!(
             result,
-            Ok(Some(
-                [0.16666666666666666, 0.3333333333333333, 0.5].to_vec()
-            ))
+            Ok(Some([0.16666666666666666, 0.3333333333333333, 0.5].to_vec()))
         );
     }
 
@@ -1217,67 +1121,48 @@ mod tests {
     #[pg_test]
     fn test_normalize_max_d() {
         let result = Spi::get_one::<Vec<f64>>("SELECT pgml.normalize_max(ARRAY[1,2,3]::float8[])");
-        assert_eq!(
-            result,
-            Ok(Some([0.3333333333333333, 0.6666666666666666, 1.0].to_vec()))
-        );
+        assert_eq!(result, Ok(Some([0.3333333333333333, 0.6666666666666666, 1.0].to_vec())));
     }
 
     #[pg_test]
     fn test_distance_l1_s() {
-        let result = Spi::get_one::<f32>(
-            "SELECT pgml.distance_l1(ARRAY[1,2,3]::float4[],ARRAY[1,2,3]::float4[])",
-        );
+        let result = Spi::get_one::<f32>("SELECT pgml.distance_l1(ARRAY[1,2,3]::float4[],ARRAY[1,2,3]::float4[])");
         assert_eq!(result, Ok(Some(0.0)));
     }
 
     #[pg_test]
     fn test_distance_l1_d() {
-        let result = Spi::get_one::<f64>(
-            "SELECT pgml.distance_l1(ARRAY[1,2,3]::float8[],ARRAY[1,2,3]::float8[])",
-        );
+        let result = Spi::get_one::<f64>("SELECT pgml.distance_l1(ARRAY[1,2,3]::float8[],ARRAY[1,2,3]::float8[])");
         assert_eq!(result, Ok(Some(0.0)));
     }
 
     #[pg_test]
     fn test_distance_l2_s() {
-        let result = Spi::get_one::<f32>(
-            "SELECT pgml.distance_l2(ARRAY[1,2,3]::float4[],ARRAY[1,2,3]::float4[])",
-        );
+        let result = Spi::get_one::<f32>("SELECT pgml.distance_l2(ARRAY[1,2,3]::float4[],ARRAY[1,2,3]::float4[])");
         assert_eq!(result, Ok(Some(0.0)));
     }
 
     #[pg_test]
     fn test_distance_l2_d() {
-        let result = Spi::get_one::<f64>(
-            "SELECT pgml.distance_l2(ARRAY[1,2,3]::float8[],ARRAY[1,2,3]::float8[])",
-        );
+        let result = Spi::get_one::<f64>("SELECT pgml.distance_l2(ARRAY[1,2,3]::float8[],ARRAY[1,2,3]::float8[])");
         assert_eq!(result, Ok(Some(0.0)));
     }
 
     #[pg_test]
     fn test_dot_product_s() {
-        let result = Spi::get_one::<f32>(
-            "SELECT pgml.dot_product(ARRAY[1,2,3]::float4[],ARRAY[1,2,3]::float4[])",
-        );
+        let result = Spi::get_one::<f32>("SELECT pgml.dot_product(ARRAY[1,2,3]::float4[],ARRAY[1,2,3]::float4[])");
         assert_eq!(result, Ok(Some(14.0)));
 
-        let result = Spi::get_one::<f32>(
-            "SELECT pgml.dot_product(ARRAY[1,2,3]::float4[],ARRAY[2,3,4]::float4[])",
-        );
+        let result = Spi::get_one::<f32>("SELECT pgml.dot_product(ARRAY[1,2,3]::float4[],ARRAY[2,3,4]::float4[])");
         assert_eq!(result, Ok(Some(20.0)));
     }
 
     #[pg_test]
     fn test_dot_product_d() {
-        let result = Spi::get_one::<f64>(
-            "SELECT pgml.dot_product(ARRAY[1,2,3]::float8[],ARRAY[1,2,3]::float8[])",
-        );
+        let result = Spi::get_one::<f64>("SELECT pgml.dot_product(ARRAY[1,2,3]::float8[],ARRAY[1,2,3]::float8[])");
         assert_eq!(result, Ok(Some(14.0)));
 
-        let result = Spi::get_one::<f64>(
-            "SELECT pgml.dot_product(ARRAY[1,2,3]::float8[],ARRAY[2,3,4]::float8[])",
-        );
+        let result = Spi::get_one::<f64>("SELECT pgml.dot_product(ARRAY[1,2,3]::float8[],ARRAY[2,3,4]::float8[])");
         assert_eq!(result, Ok(Some(20.0)));
     }
 
@@ -1299,7 +1184,10 @@ mod tests {
         let want = 0.9925833;
         assert!((got - want).abs() < F32_TOLERANCE);
 
-        let got = Spi::get_one::<f32>("SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float4[], ARRAY[0,0,1,1,0,1,1]::float4[])").unwrap()
+        let got = Spi::get_one::<f32>(
+            "SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float4[], ARRAY[0,0,1,1,0,1,1]::float4[])",
+        )
+        .unwrap()
         .unwrap();
         let want = 0.4472136;
         assert!((got - want).abs() < F32_TOLERANCE);
@@ -1323,7 +1211,11 @@ mod tests {
         let want = 0.9925833339709303;
         assert!((got - want).abs() < F64_TOLERANCE);
 
-        let got = Spi::get_one::<f64>("SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float8[], ARRAY[0,0,1,1,0,1,1]::float8[])").unwrap().unwrap();
+        let got = Spi::get_one::<f64>(
+            "SELECT pgml.cosine_similarity(ARRAY[1,1,1,1,1,0,0]::float8[], ARRAY[0,0,1,1,0,1,1]::float8[])",
+        )
+        .unwrap()
+        .unwrap();
         let want = 0.4472135954999579;
         assert!((got - want).abs() < F64_TOLERANCE);
     }
