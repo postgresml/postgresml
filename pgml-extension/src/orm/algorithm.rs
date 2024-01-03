@@ -143,7 +143,7 @@ impl std::string::ToString for Algorithm {
             Algorithm::linear_svm => "linear_svm".to_string(),
             Algorithm::lightgbm => "lightgbm".to_string(),
             Algorithm::transformers => "transformers".to_string(),
-            Algorithm::affinity_propagation => "transformers".to_string(),
+            Algorithm::affinity_propagation => "affinity_propagation".to_string(),
             Algorithm::birch => "birch".to_string(),
             Algorithm::feature_agglomeration => "feature_agglomeration".to_string(),
             Algorithm::mini_batch_kmeans => "mini_batch_kmeans".to_string(),
