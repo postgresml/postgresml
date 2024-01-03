@@ -26,11 +26,11 @@ pgml.deploy(
 
 There are 3 different deployment strategies available:
 
-| Strategy      | Description                                                                                                           |
-| ------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `most_recent` | The most recently trained model for this project is immediately deployed, regardless of metrics.                      |
-| `best_score`  | The model that achieved the best key metric score is immediately deployed.                                            |
-| `rollback`    | The model that was last deployed for this project is immediately redeployed, overriding the currently deployed model. |
+| Strategy      | Description                                                                                      |
+| ------------- |--------------------------------------------------------------------------------------------------|
+| `most_recent` | The most recently trained model for this project is immediately deployed, regardless of metrics. |
+| `best_score`  | The model that achieved the best key metric score is immediately deployed.                       |
+| `rollback`    | The model that was deployed before to the current one is deployed.                               |
 
 The default deployment behavior allows any algorithm to qualify. It's automatically used during training, but can be manually executed as well:
 
@@ -40,11 +40,12 @@ The default deployment behavior allows any algorithm to qualify. It's automatica
 
 #### SQL
 
-<pre class="language-sql"><code class="lang-sql"><strong>SELECT * FROM pgml.deploy(
-</strong>    'Handwritten Digit Image Classifier',
+```sql
+SELECT * FROM pgml.deploy(
+   'Handwritten Digit Image Classifier',
     strategy => 'best_score'
 );
-</code></pre>
+```
 
 #### Output
 
@@ -119,5 +120,24 @@ SELECT * FROM pgml.deploy(
               project               | strategy | algorithm
 ------------------------------------+----------+-----------
  Handwritten Digit Image Classifier | rollback | xgboost
+(1 row)
+```
+
+### Specific Model IDs
+
+In the case you need to deploy an exact model that is not the `most_recent` or `best_score`, you may deploy a model by id. Model id's can be found in the `pgml.models` table. 
+
+#### SQL
+
+```sql
+SELECT * FROM pgml.deploy(12);
+```
+
+#### Output
+
+```sql
+              project               | strategy | algorithm
+------------------------------------+----------+-----------
+ Handwritten Digit Image Classifier | specific | xgboost
 (1 row)
 ```
