@@ -102,17 +102,29 @@ impl ChatbotBrain {
             Self::TekniumOpenHermes25Mistral7B => serde_json::json!({
                 "model": "TheBloke/OpenHermes-2.5-Mistral-7B-GPTQ",
                 "revision": "main",
-                "device_map": "auto"
+                "device_map": "auto",
+                "quantization_config": {
+                    "bits": 4,
+                    "max_input_length": 10000
+                }
             }),
             Self::GrypheMythoMaxL213b => serde_json::json!({
                 "model": "TheBloke/MythoMax-L2-13B-GPTQ",
                 "revision": "main",
-                "device_map": "auto"
+                "device_map": "auto",
+                "quantization_config": {
+                    "bits": 4,
+                    "max_input_length": 10000
+                }
             }),
             Self::Starling7b => serde_json::json!({
                 "model": "TheBloke/Starling-LM-7B-alpha-GPTQ",
                 "revision": "main",
-                "device_map": "auto"
+                "device_map": "auto",
+                "quantization_config": {
+                    "bits": 4,
+                    "max_input_length": 10000
+                }
             }),
             _ => unimplemented!(),
         }
@@ -537,7 +549,6 @@ async fn process_message(
         .map(|(_, context, metadata)| format!("\n\n#### Document {}: \n{}\n\n", metadata["id"], context))
         .collect::<Vec<String>>()
         .join("\n");
-        // let context = "".to_string();
 
         let history_collection = Collection::new(
             "ChatHistory",
