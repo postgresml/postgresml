@@ -287,7 +287,7 @@ fn train_joint(
     };
 
     if deploy {
-        project.deploy(model.id);
+        project.deploy(model.id, Strategy::new_score);
     } else {
         warning!("Not deploying newly trained model.");
     }
@@ -300,8 +300,40 @@ fn train_joint(
     )])
 }
 
-#[pg_extern]
-fn deploy(
+#[pg_extern(name = "deploy")]
+fn deploy_model(
+    model_id: i64
+) -> TableIterator<
+    'static,
+    (
+        name!(project, String),
+        name!(strategy, String),
+        name!(algorithm, String),
+    ),
+> {
+    let model = unwrap_or_error!(Model::find_cached(model_id));
+
+    let project_id = Spi::get_one_with_args::<i64>(
+        "SELECT projects.id from pgml.projects JOIN pgml.models ON models.project_id = projects.id WHERE models.id = $1",
+        vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())],
+    )
+        .unwrap();
+
+    let project_id =
+        project_id.unwrap_or_else(|| error!("Project does not exist."));
+
+    let project = Project::find(project_id).unwrap();
+    project.deploy(model_id, Strategy::specific);
+
+    TableIterator::new(vec![(
+        project.name,
+        Strategy::specific.to_string(),
+        model.algorithm.to_string(),
+    )])
+}
+
+#[pg_extern(name = "deploy")]
+fn deploy_strategy(
     project_name: &str,
     strategy: Strategy,
     algorithm: default!(Option<Algorithm>, "NULL"),
@@ -378,7 +410,7 @@ fn deploy(
     let algorithm = algorithm.expect("No qualified models exist for this deployment.");
 
     let project = Project::find(project_id).unwrap();
-    project.deploy(model_id);
+    project.deploy(model_id, strategy);
 
     TableIterator::new(vec![(
         project_name.to_string(),
@@ -922,7 +954,7 @@ fn tune(
     };
 
     if deploy {
-        project.deploy(model.id);
+        project.deploy(model.id, Strategy::new_score);
     }
 
     TableIterator::new(vec![(
