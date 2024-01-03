@@ -21,8 +21,7 @@ use crate::bindings::*;
 use crate::orm::*;
 
 #[allow(clippy::type_complexity)]
-static DEPLOYED_MODELS_BY_ID: Lazy<Mutex<HashMap<i64, Arc<Model>>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
+static DEPLOYED_MODELS_BY_ID: Lazy<Mutex<HashMap<i64, Arc<Model>>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug)]
 pub struct Model {
@@ -197,10 +196,7 @@ impl Model {
                     hyperparams: result.get(6).unwrap().unwrap(),
                     status: Status::from_str(result.get(7).unwrap().unwrap()).unwrap(),
                     metrics: result.get(8).unwrap(),
-                    search: result
-                        .get(9)
-                        .unwrap()
-                        .map(|search| Search::from_str(search).unwrap()),
+                    search: result.get(9).unwrap().map(|search| Search::from_str(search).unwrap()),
                     search_params: result.get(10).unwrap().unwrap(),
                     search_args: result.get(11).unwrap().unwrap(),
                     created_at: result.get(12).unwrap().unwrap(),
@@ -251,11 +247,15 @@ impl Model {
                     "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, $2, $3, $4) RETURNING id",
                     vec![
                         (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
-                        (PgBuiltInOids::TEXTOID.oid(), path.file_name().unwrap().to_str().into_datum()),
+                        (
+                            PgBuiltInOids::TEXTOID.oid(),
+                            path.file_name().unwrap().to_str().into_datum(),
+                        ),
                         (PgBuiltInOids::INT8OID.oid(), (i as i64).into_datum()),
                         (PgBuiltInOids::BYTEAOID.oid(), chunk.into_datum()),
                     ],
-                ).unwrap();
+                )
+                .unwrap();
             }
         }
 
@@ -360,10 +360,7 @@ impl Model {
                     hyperparams: result.get(6).unwrap().unwrap(),
                     status: Status::from_str(result.get(7).unwrap().unwrap()).unwrap(),
                     metrics: result.get(8).unwrap(),
-                    search: result
-                        .get(9)
-                        .unwrap()
-                        .map(|search| Search::from_str(search).unwrap()),
+                    search: result.get(9).unwrap().map(|search| Search::from_str(search).unwrap()),
                     search_params: result.get(10).unwrap().unwrap(),
                     search_args: result.get(11).unwrap().unwrap(),
                     created_at: result.get(12).unwrap().unwrap(),
@@ -379,12 +376,7 @@ impl Model {
             Ok(())
         })?;
 
-        model.ok_or_else(|| {
-            anyhow!(
-                "pgml.models WHERE id = {:?} could not be loaded. Does it exist?",
-                id
-            )
-        })
+        model.ok_or_else(|| anyhow!("pgml.models WHERE id = {:?} could not be loaded. Does it exist?", id))
     }
 
     pub fn find_cached(id: i64) -> Result<Arc<Model>> {
@@ -443,16 +435,12 @@ impl Model {
                     Algorithm::random_forest => sklearn::random_forest_regression,
                     Algorithm::xgboost => sklearn::xgboost_regression,
                     Algorithm::xgboost_random_forest => sklearn::xgboost_random_forest_regression,
-                    Algorithm::orthogonal_matching_pursuit => {
-                        sklearn::orthogonal_matching_persuit_regression
-                    }
+                    Algorithm::orthogonal_matching_pursuit => sklearn::orthogonal_matching_persuit_regression,
                     Algorithm::bayesian_ridge => sklearn::bayesian_ridge_regression,
                     Algorithm::automatic_relevance_determination => {
                         sklearn::automatic_relevance_determination_regression
                     }
-                    Algorithm::stochastic_gradient_descent => {
-                        sklearn::stochastic_gradient_descent_regression
-                    }
+                    Algorithm::stochastic_gradient_descent => sklearn::stochastic_gradient_descent_regression,
                     Algorithm::passive_aggressive => sklearn::passive_aggressive_regression,
                     Algorithm::ransac => sklearn::ransac_regression,
                     Algorithm::theil_sen => sklearn::theil_sen_regression,
@@ -464,9 +452,7 @@ impl Model {
                     Algorithm::ada_boost => sklearn::ada_boost_regression,
                     Algorithm::bagging => sklearn::bagging_regression,
                     Algorithm::extra_trees => sklearn::extra_trees_regression,
-                    Algorithm::gradient_boosting_trees => {
-                        sklearn::gradient_boosting_trees_regression
-                    }
+                    Algorithm::gradient_boosting_trees => sklearn::gradient_boosting_trees_regression,
                     Algorithm::hist_gradient_boosting => sklearn::hist_gradient_boosting_regression,
                     Algorithm::least_angle => sklearn::least_angle_regression,
                     Algorithm::lasso_least_angle => sklearn::lasso_least_angle_regression,
@@ -481,12 +467,8 @@ impl Model {
                     Algorithm::ridge => sklearn::ridge_classification,
                     Algorithm::random_forest => sklearn::random_forest_classification,
                     Algorithm::xgboost => sklearn::xgboost_classification,
-                    Algorithm::xgboost_random_forest => {
-                        sklearn::xgboost_random_forest_classification
-                    }
-                    Algorithm::stochastic_gradient_descent => {
-                        sklearn::stochastic_gradient_descent_classification
-                    }
+                    Algorithm::xgboost_random_forest => sklearn::xgboost_random_forest_classification,
+                    Algorithm::stochastic_gradient_descent => sklearn::stochastic_gradient_descent_classification,
                     Algorithm::perceptron => sklearn::perceptron_classification,
                     Algorithm::passive_aggressive => sklearn::passive_aggressive_classification,
                     Algorithm::gaussian_process => sklearn::gaussian_process,
@@ -494,12 +476,8 @@ impl Model {
                     Algorithm::ada_boost => sklearn::ada_boost_classification,
                     Algorithm::bagging => sklearn::bagging_classification,
                     Algorithm::extra_trees => sklearn::extra_trees_classification,
-                    Algorithm::gradient_boosting_trees => {
-                        sklearn::gradient_boosting_trees_classification
-                    }
-                    Algorithm::hist_gradient_boosting => {
-                        sklearn::hist_gradient_boosting_classification
-                    }
+                    Algorithm::gradient_boosting_trees => sklearn::gradient_boosting_trees_classification,
+                    Algorithm::hist_gradient_boosting => sklearn::hist_gradient_boosting_classification,
                     Algorithm::linear_svm => sklearn::linear_svm_classification,
                     Algorithm::lightgbm => sklearn::lightgbm_classification,
                     Algorithm::catboost => sklearn::catboost_classification,
@@ -531,17 +509,17 @@ impl Model {
         }
         for (key, values) in self.search_params.0.as_object().unwrap() {
             if all_hyperparam_names.contains(key) {
-                error!("`{key}` cannot be present in both hyperparams and search_params. Please choose one or the other.");
+                error!(
+                    "`{key}` cannot be present in both hyperparams and search_params. Please choose one or the other."
+                );
             }
             all_hyperparam_names.push(key.to_string());
             all_hyperparam_values.push(values.as_array().unwrap().to_vec());
         }
 
         // The search space is all possible combinations
-        let all_hyperparam_values: Vec<Vec<serde_json::Value>> = all_hyperparam_values
-            .into_iter()
-            .multi_cartesian_product()
-            .collect();
+        let all_hyperparam_values: Vec<Vec<serde_json::Value>> =
+            all_hyperparam_values.into_iter().multi_cartesian_product().collect();
         let mut all_hyperparam_values = match self.search {
             Some(Search::random) => {
                 // TODO support things like ranges to be random sampled
@@ -587,17 +565,10 @@ impl Model {
             Task::regression => {
                 #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
                 {
-                    let sklearn_metrics =
-                        crate::bindings::sklearn::regression_metrics(y_test, &y_hat).unwrap();
+                    let sklearn_metrics = crate::bindings::sklearn::regression_metrics(y_test, &y_hat).unwrap();
                     metrics.insert("sklearn_r2".to_string(), sklearn_metrics["r2"]);
-                    metrics.insert(
-                        "sklearn_mean_absolute_error".to_string(),
-                        sklearn_metrics["mae"],
-                    );
-                    metrics.insert(
-                        "sklearn_mean_squared_error".to_string(),
-                        sklearn_metrics["mse"],
-                    );
+                    metrics.insert("sklearn_mean_absolute_error".to_string(), sklearn_metrics["mae"]);
+                    metrics.insert("sklearn_mean_squared_error".to_string(), sklearn_metrics["mse"]);
                 }
 
                 let y_test = ArrayView1::from(&y_test);
@@ -616,12 +587,9 @@ impl Model {
             Task::classification => {
                 #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
                 {
-                    let sklearn_metrics = crate::bindings::sklearn::classification_metrics(
-                        y_test,
-                        &y_hat,
-                        dataset.num_distinct_labels,
-                    )
-                    .unwrap();
+                    let sklearn_metrics =
+                        crate::bindings::sklearn::classification_metrics(y_test, &y_hat, dataset.num_distinct_labels)
+                            .unwrap();
 
                     if dataset.num_distinct_labels == 2 {
                         metrics.insert("sklearn_roc_auc".to_string(), sklearn_metrics["roc_auc"]);
@@ -629,10 +597,7 @@ impl Model {
 
                     metrics.insert("sklearn_f1".to_string(), sklearn_metrics["f1"]);
                     metrics.insert("sklearn_f1_micro".to_string(), sklearn_metrics["f1_micro"]);
-                    metrics.insert(
-                        "sklearn_precision".to_string(),
-                        sklearn_metrics["precision"],
-                    );
+                    metrics.insert("sklearn_precision".to_string(), sklearn_metrics["precision"]);
                     metrics.insert("sklearn_recall".to_string(), sklearn_metrics["recall"]);
                     metrics.insert("sklearn_accuracy".to_string(), sklearn_metrics["accuracy"]);
                     metrics.insert("sklearn_mcc".to_string(), sklearn_metrics["mcc"]);
@@ -646,10 +611,7 @@ impl Model {
                     let y_hat = ArrayView1::from(&y_hat).mapv(Pr::new);
                     let y_test: Vec<bool> = y_test.iter().map(|&i| i == 1.).collect();
 
-                    metrics.insert(
-                        "roc_auc".to_string(),
-                        y_hat.roc(&y_test).unwrap().area_under_curve(),
-                    );
+                    metrics.insert("roc_auc".to_string(), y_hat.roc(&y_test).unwrap().area_under_curve());
                     metrics.insert("log_loss".to_string(), y_hat.log_loss(&y_test).unwrap());
                 }
 
@@ -662,11 +624,8 @@ impl Model {
                 let confusion_matrix = y_hat.confusion_matrix(y_test).unwrap();
 
                 // This has to be identical to Scikit.
-                let pgml_confusion_matrix = crate::metrics::ConfusionMatrix::new(
-                    &y_test,
-                    &y_hat,
-                    dataset.num_distinct_labels,
-                );
+                let pgml_confusion_matrix =
+                    crate::metrics::ConfusionMatrix::new(&y_test, &y_hat, dataset.num_distinct_labels);
 
                 // These are validated against Scikit and seem to be correct.
                 metrics.insert(
@@ -683,12 +642,9 @@ impl Model {
             Task::cluster => {
                 #[cfg(feature = "python")]
                 {
-                    let sklearn_metrics = crate::bindings::sklearn::cluster_metrics(
-                        dataset.num_features,
-                        &dataset.x_test,
-                        &y_hat,
-                    )
-                    .unwrap();
+                    let sklearn_metrics =
+                        crate::bindings::sklearn::cluster_metrics(dataset.num_features, &dataset.x_test, &y_hat)
+                            .unwrap();
                     metrics.insert("silhouette".to_string(), sklearn_metrics["silhouette"]);
                 }
             }
@@ -703,10 +659,7 @@ impl Model {
         dataset: &Dataset,
         hyperparams: &Hyperparams,
     ) -> (Box<dyn Bindings>, IndexMap<String, f32>) {
-        info!(
-            "Hyperparams: {}",
-            serde_json::to_string_pretty(hyperparams).unwrap()
-        );
+        info!("Hyperparams: {}", serde_json::to_string_pretty(hyperparams).unwrap());
 
         let fit = self.get_fit_function();
         let now = Instant::now();
@@ -749,25 +702,11 @@ impl Model {
     }
 
     pub fn f1(&self) -> f32 {
-        self.metrics
-            .as_ref()
-            .unwrap()
-            .0
-            .get("f1")
-            .unwrap()
-            .as_f64()
-            .unwrap() as f32
+        self.metrics.as_ref().unwrap().0.get("f1").unwrap().as_f64().unwrap() as f32
     }
 
     pub fn r2(&self) -> f32 {
-        self.metrics
-            .as_ref()
-            .unwrap()
-            .0
-            .get("r2")
-            .unwrap()
-            .as_f64()
-            .unwrap() as f32
+        self.metrics.as_ref().unwrap().0.get("r2").unwrap().as_f64().unwrap() as f32
     }
 
     fn fit(&mut self, dataset: &Dataset) {
@@ -955,9 +894,13 @@ impl Model {
             "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, 'estimator.rmp', 0, $2) RETURNING id",
             vec![
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
-                (PgBuiltInOids::BYTEAOID.oid(), self.bindings.as_ref().unwrap().to_bytes().into_datum()),
+                (
+                    PgBuiltInOids::BYTEAOID.oid(),
+                    self.bindings.as_ref().unwrap().to_bytes().into_datum(),
+                ),
             ],
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     pub fn numeric_encode_features(&self, rows: &[pgrx::datum::AnyElement]) -> Vec<f32> {
@@ -976,68 +919,47 @@ impl Model {
                                     pgrx_pg_sys::UNKNOWNOID => {
                                         error!("Type information missing for column: {:?}. If this is intended to be a TEXT or other categorical column, you will need to explicitly cast it, e.g. change `{:?}` to `CAST({:?} AS TEXT)`.", column.name, column.name, column.name);
                                     }
-                                    pgrx_pg_sys::TEXTOID
-                                    | pgrx_pg_sys::VARCHAROID
-                                    | pgrx_pg_sys::BPCHAROID => {
+                                    pgrx_pg_sys::TEXTOID | pgrx_pg_sys::VARCHAROID | pgrx_pg_sys::BPCHAROID => {
                                         let element: Result<Option<String>, TryFromDatumError> =
                                             tuple.get_by_index(index);
-                                        element
-                                            .unwrap()
-                                            .unwrap_or(snapshot::NULL_CATEGORY_KEY.to_string())
+                                        element.unwrap().unwrap_or(snapshot::NULL_CATEGORY_KEY.to_string())
                                     }
                                     pgrx_pg_sys::BOOLOID => {
                                         let element: Result<Option<bool>, TryFromDatumError> =
                                             tuple.get_by_index(index);
                                         element
                                             .unwrap()
-                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
-                                                k.to_string()
-                                            })
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
                                     }
                                     pgrx_pg_sys::INT2OID => {
-                                        let element: Result<Option<i16>, TryFromDatumError> =
-                                            tuple.get_by_index(index);
+                                        let element: Result<Option<i16>, TryFromDatumError> = tuple.get_by_index(index);
                                         element
                                             .unwrap()
-                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
-                                                k.to_string()
-                                            })
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
                                     }
                                     pgrx_pg_sys::INT4OID => {
-                                        let element: Result<Option<i32>, TryFromDatumError> =
-                                            tuple.get_by_index(index);
+                                        let element: Result<Option<i32>, TryFromDatumError> = tuple.get_by_index(index);
                                         element
                                             .unwrap()
-                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
-                                                k.to_string()
-                                            })
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
                                     }
                                     pgrx_pg_sys::INT8OID => {
-                                        let element: Result<Option<i64>, TryFromDatumError> =
-                                            tuple.get_by_index(index);
+                                        let element: Result<Option<i64>, TryFromDatumError> = tuple.get_by_index(index);
                                         element
                                             .unwrap()
-                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
-                                                k.to_string()
-                                            })
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
                                     }
                                     pgrx_pg_sys::FLOAT4OID => {
-                                        let element: Result<Option<f32>, TryFromDatumError> =
-                                            tuple.get_by_index(index);
+                                        let element: Result<Option<f32>, TryFromDatumError> = tuple.get_by_index(index);
                                         element
                                             .unwrap()
-                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
-                                                k.to_string()
-                                            })
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
                                     }
                                     pgrx_pg_sys::FLOAT8OID => {
-                                        let element: Result<Option<f64>, TryFromDatumError> =
-                                            tuple.get_by_index(index);
+                                        let element: Result<Option<f64>, TryFromDatumError> = tuple.get_by_index(index);
                                         element
                                             .unwrap()
-                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| {
-                                                k.to_string()
-                                            })
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
                                     }
                                     _ => error!(
                                         "Unsupported type for categorical column: {:?}. oid: {:?}",
@@ -1055,38 +977,27 @@ impl Model {
                                     pgrx_pg_sys::BOOLOID => {
                                         let element: Result<Option<bool>, TryFromDatumError> =
                                             tuple.get_by_index(index);
-                                        features.push(
-                                            element.unwrap().map_or(f32::NAN, |v| v as u8 as f32),
-                                        );
+                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as u8 as f32));
                                     }
                                     pgrx_pg_sys::INT2OID => {
-                                        let element: Result<Option<i16>, TryFromDatumError> =
-                                            tuple.get_by_index(index);
-                                        features
-                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        let element: Result<Option<i16>, TryFromDatumError> = tuple.get_by_index(index);
+                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgrx_pg_sys::INT4OID => {
-                                        let element: Result<Option<i32>, TryFromDatumError> =
-                                            tuple.get_by_index(index);
-                                        features
-                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        let element: Result<Option<i32>, TryFromDatumError> = tuple.get_by_index(index);
+                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgrx_pg_sys::INT8OID => {
-                                        let element: Result<Option<i64>, TryFromDatumError> =
-                                            tuple.get_by_index(index);
-                                        features
-                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        let element: Result<Option<i64>, TryFromDatumError> = tuple.get_by_index(index);
+                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgrx_pg_sys::FLOAT4OID => {
-                                        let element: Result<Option<f32>, TryFromDatumError> =
-                                            tuple.get_by_index(index);
+                                        let element: Result<Option<f32>, TryFromDatumError> = tuple.get_by_index(index);
                                         features.push(element.unwrap().map_or(f32::NAN, |v| v));
                                     }
                                     pgrx_pg_sys::FLOAT8OID => {
-                                        let element: Result<Option<f64>, TryFromDatumError> =
-                                            tuple.get_by_index(index);
-                                        features
-                                            .push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                        let element: Result<Option<f64>, TryFromDatumError> = tuple.get_by_index(index);
+                                        features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     // TODO handle NULL to NaN for arrays
                                     pgrx_pg_sys::BOOLARRAYOID => {
@@ -1140,9 +1051,7 @@ impl Model {
                         }
                     }
                 }
-                _ => error!(
-                    "This preprocessing requires Postgres `record` types created with `row()`."
-                ),
+                _ => error!("This preprocessing requires Postgres `record` types created with `row()`."),
             }
         }
         features
@@ -1166,11 +1075,11 @@ impl Model {
 
     pub fn predict_joint(&self, features: &[f32]) -> Result<Vec<f32>> {
         match self.project.task {
-            Task::regression => self.bindings.as_ref().unwrap().predict(
-                features,
-                self.num_features,
-                self.num_classes,
-            ),
+            Task::regression => self
+                .bindings
+                .as_ref()
+                .unwrap()
+                .predict(features, self.num_features, self.num_classes),
             Task::classification => {
                 bail!("You can't predict joint probabilities for a classification model")
             }

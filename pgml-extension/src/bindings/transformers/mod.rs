@@ -33,18 +33,12 @@ pub fn get_model_from(task: &Value) -> Result<String> {
     })
 }
 
-pub fn embed(
-    transformer: &str,
-    inputs: Vec<&str>,
-    kwargs: &serde_json::Value,
-) -> Result<Vec<Vec<f32>>> {
+pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -> Result<Vec<Vec<f32>>> {
     crate::bindings::python::activate()?;
 
     let kwargs = serde_json::to_string(kwargs)?;
     Python::with_gil(|py| -> Result<Vec<Vec<f32>>> {
-        let embed: Py<PyAny> = get_module!(PY_MODULE)
-            .getattr(py, "embed")
-            .format_traceback(py)?;
+        let embed: Py<PyAny> = get_module!(PY_MODULE).getattr(py, "embed").format_traceback(py)?;
         let output = embed
             .call1(
                 py,
@@ -63,21 +57,14 @@ pub fn embed(
     })
 }
 
-pub fn tune(
-    task: &Task,
-    dataset: TextDataset,
-    hyperparams: &JsonB,
-    path: &Path,
-) -> Result<HashMap<String, f64>> {
+pub fn tune(task: &Task, dataset: TextDataset, hyperparams: &JsonB, path: &Path) -> Result<HashMap<String, f64>> {
     crate::bindings::python::activate()?;
 
     let task = task.to_string();
     let hyperparams = serde_json::to_string(&hyperparams.0)?;
 
     Python::with_gil(|py| -> Result<HashMap<String, f64>> {
-        let tune = get_module!(PY_MODULE)
-            .getattr(py, "tune")
-            .format_traceback(py)?;
+        let tune = get_module!(PY_MODULE).getattr(py, "tune").format_traceback(py)?;
         let path = path.to_string_lossy();
         let output = tune
             .call1(
@@ -102,9 +89,7 @@ pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Result<Vec<S
     crate::bindings::python::activate()?;
 
     Python::with_gil(|py| -> Result<Vec<String>> {
-        let generate = get_module!(PY_MODULE)
-            .getattr(py, "generate")
-            .format_traceback(py)?;
+        let generate = get_module!(PY_MODULE).getattr(py, "generate").format_traceback(py)?;
         let config = serde_json::to_string(&config.0)?;
         // cloning inputs in case we have to re-call on error is rather unfortunate here
         // similarly, using a json string to pass kwargs is also unfortunate extra parsing
@@ -130,14 +115,10 @@ pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Result<Vec<S
                     .ok_or(anyhow!("task query returned None"))?;
 
                     let load = get_module!(PY_MODULE).getattr(py, "load_model")?;
-                    let task = Task::from_str(&task)
-                        .map_err(|_| anyhow!("could not make a Task from {task}"))?;
-                    load.call1(py, (model_id, task.to_string(), dir))
-                        .format_traceback(py)?;
+                    let task = Task::from_str(&task).map_err(|_| anyhow!("could not make a Task from {task}"))?;
+                    load.call1(py, (model_id, task.to_string(), dir)).format_traceback(py)?;
 
-                    generate
-                        .call1(py, (model_id, inputs, config))
-                        .format_traceback(py)?
+                    generate.call1(py, (model_id, inputs, config)).format_traceback(py)?
                 } else {
                     return Err(e.into());
                 }
@@ -154,25 +135,19 @@ fn dump_model(model_id: i64, dir: PathBuf) -> Result<()> {
     }
     std::fs::create_dir_all(&dir).context("failed to create directory while dumping model")?;
     Spi::connect(|client| -> Result<()> {
-        let result = client.select("SELECT path, part, data FROM pgml.files WHERE model_id = $1 ORDER BY path ASC, part ASC",
-               None,
-                Some(vec![
-                    (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
-                ])
-            )?;
+        let result = client.select(
+            "SELECT path, part, data FROM pgml.files WHERE model_id = $1 ORDER BY path ASC, part ASC",
+            None,
+            Some(vec![(PgBuiltInOids::INT8OID.oid(), model_id.into_datum())]),
+        )?;
         for row in result {
             let mut path = dir.clone();
             path.push(
                 row.get::<String>(1)?
                     .ok_or(anyhow!("row get ordinal 1 returned None"))?,
             );
-            let data: Vec<u8> = row
-                .get(3)?
-                .ok_or(anyhow!("row get ordinal 3 returned None"))?;
-            let mut file = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(path)?;
+            let data: Vec<u8> = row.get(3)?.ok_or(anyhow!("row get ordinal 3 returned None"))?;
+            let mut file = std::fs::OpenOptions::new().create(true).append(true).open(path)?;
 
             let _num_bytes = file.write(&data)?;
             file.flush()?;
@@ -217,9 +192,7 @@ pub fn load_dataset(
 
     // Columns are a (name: String, values: Vec<Value>) pair
     let json: serde_json::Value = serde_json::from_str(&dataset)?;
-    let json = json
-        .as_object()
-        .ok_or(anyhow!("dataset json is not object"))?;
+    let json = json.as_object().ok_or(anyhow!("dataset json is not object"))?;
     let types = json
         .get("types")
         .ok_or(anyhow!("dataset json missing `types` key"))?
@@ -238,9 +211,7 @@ pub fn load_dataset(
     let column_types = types
         .iter()
         .map(|(name, type_)| -> Result<String> {
-            let type_ = type_
-                .as_str()
-                .ok_or(anyhow!("expected {type_} to be a json string"))?;
+            let type_ = type_.as_str().ok_or(anyhow!("expected {type_} to be a json string"))?;
             let type_ = match type_ {
                 "string" => "TEXT",
                 "dict" | "list" => "JSONB",
@@ -276,16 +247,17 @@ pub fn load_dataset(
         .len();
 
     // Avoid the existence warning by checking the schema for the table first
-    let table_count = Spi::get_one_with_args::<i64>("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'", vec![
-        (PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())
-    ])?.ok_or(anyhow!("table count query returned None"))?;
+    let table_count = Spi::get_one_with_args::<i64>(
+        "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = $1 AND table_schema = 'pgml'",
+        vec![(PgBuiltInOids::TEXTOID.oid(), table_name.clone().into_datum())],
+    )?
+    .ok_or(anyhow!("table count query returned None"))?;
     if table_count == 1 {
         Spi::run(&format!(r#"DROP TABLE IF EXISTS {table_name}"#))?;
     }
 
     Spi::run(&format!(r#"CREATE TABLE {table_name} ({column_types})"#))?;
-    let insert =
-        format!(r#"INSERT INTO {table_name} ({column_names}) VALUES ({column_placeholders})"#);
+    let insert = format!(r#"INSERT INTO {table_name} ({column_names}) VALUES ({column_placeholders})"#);
     for i in 0..num_rows {
         let mut row = Vec::with_capacity(num_cols);
         for (name, values) in data {
@@ -307,10 +279,7 @@ pub fn load_dataset(
                         .ok_or_else(|| anyhow!("expected {value} to be string"))?
                         .into_datum(),
                 )),
-                "dict" | "list" => row.push((
-                    PgBuiltInOids::JSONBOID.oid(),
-                    JsonB(value.clone()).into_datum(),
-                )),
+                "dict" | "list" => row.push((PgBuiltInOids::JSONBOID.oid(), JsonB(value.clone()).into_datum())),
                 "int64" | "int32" | "int16" => row.push((
                     PgBuiltInOids::INT8OID.oid(),
                     value

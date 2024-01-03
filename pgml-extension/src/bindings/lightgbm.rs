@@ -16,10 +16,7 @@ unsafe impl Send for Estimator {}
 unsafe impl Sync for Estimator {}
 
 impl std::fmt::Debug for Estimator {
-    fn fmt(
-        &self,
-        formatter: &mut std::fmt::Formatter<'_>,
-    ) -> std::result::Result<(), std::fmt::Error> {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         formatter.debug_struct("Estimator").finish()
     }
 }
@@ -28,10 +25,7 @@ pub fn fit_regression(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Bo
     fit(dataset, hyperparams, Task::regression)
 }
 
-pub fn fit_classification(
-    dataset: &Dataset,
-    hyperparams: &Hyperparams,
-) -> Result<Box<dyn Bindings>> {
+pub fn fit_classification(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>> {
     fit(dataset, hyperparams, Task::classification)
 }
 
@@ -39,17 +33,11 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Result<Box<d
     let mut hyperparams = hyperparams.clone();
     match task {
         Task::regression => {
-            hyperparams.insert(
-                "objective".to_string(),
-                serde_json::Value::from("regression"),
-            );
+            hyperparams.insert("objective".to_string(), serde_json::Value::from("regression"));
         }
         Task::classification => {
             if dataset.num_distinct_labels > 2 {
-                hyperparams.insert(
-                    "objective".to_string(),
-                    serde_json::Value::from("multiclass"),
-                );
+                hyperparams.insert("objective".to_string(), serde_json::Value::from("multiclass"));
                 hyperparams.insert(
                     "num_class".to_string(),
                     serde_json::Value::from(dataset.num_distinct_labels),
@@ -61,12 +49,7 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Result<Box<d
         _ => error!("lightgbm only supports `regression` and `classification` tasks."),
     };
 
-    let data = lightgbm::Dataset::from_vec(
-        &dataset.x_train,
-        &dataset.y_train,
-        dataset.num_features as i32,
-    )
-    .unwrap();
+    let data = lightgbm::Dataset::from_vec(&dataset.x_train, &dataset.y_train, dataset.num_features as i32).unwrap();
 
     let estimator = lightgbm::Booster::train(data, &json! {hyperparams}).unwrap();
 
@@ -75,12 +58,7 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, task: Task) -> Result<Box<d
 
 impl Bindings for Estimator {
     /// Predict a set of datapoints.
-    fn predict(
-        &self,
-        features: &[f32],
-        num_features: usize,
-        num_classes: usize,
-    ) -> Result<Vec<f32>> {
+    fn predict(&self, features: &[f32], num_features: usize, num_classes: usize) -> Result<Vec<f32>> {
         let results = self.predict_proba(features, num_features)?;
         Ok(match num_classes {
             // TODO make lightgbm predict both classes like scikit and xgboost

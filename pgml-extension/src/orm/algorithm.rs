@@ -122,9 +122,7 @@ impl std::string::ToString for Algorithm {
             Algorithm::lasso_least_angle => "lasso_least_angle".to_string(),
             Algorithm::orthogonal_matching_pursuit => "orthogonal_matching_pursuit".to_string(),
             Algorithm::bayesian_ridge => "bayesian_ridge".to_string(),
-            Algorithm::automatic_relevance_determination => {
-                "automatic_relevance_determination".to_string()
-            }
+            Algorithm::automatic_relevance_determination => "automatic_relevance_determination".to_string(),
             Algorithm::stochastic_gradient_descent => "stochastic_gradient_descent".to_string(),
             Algorithm::perceptron => "perceptron".to_string(),
             Algorithm::passive_aggressive => "passive_aggressive".to_string(),

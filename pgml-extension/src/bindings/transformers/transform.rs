@@ -54,17 +54,12 @@ pub fn transform<T: serde::Serialize>(
     let inputs = serde_json::to_string(&inputs)?;
 
     let results = Python::with_gil(|py| -> Result<String> {
-        let transform: Py<PyAny> = get_module!(PY_MODULE)
-            .getattr(py, "transform")
-            .format_traceback(py)?;
+        let transform: Py<PyAny> = get_module!(PY_MODULE).getattr(py, "transform").format_traceback(py)?;
 
         let output = transform
             .call1(
                 py,
-                PyTuple::new(
-                    py,
-                    &[task.into_py(py), args.into_py(py), inputs.into_py(py)],
-                ),
+                PyTuple::new(py, &[task.into_py(py), args.into_py(py), inputs.into_py(py)]),
             )
             .format_traceback(py)?;
 
@@ -87,21 +82,14 @@ pub fn transform_stream<T: serde::Serialize>(
     let input = serde_json::to_string(&input)?;
 
     Python::with_gil(|py| -> Result<Py<PyAny>> {
-        let transform: Py<PyAny> = get_module!(PY_MODULE)
-            .getattr(py, "transform")
-            .format_traceback(py)?;
+        let transform: Py<PyAny> = get_module!(PY_MODULE).getattr(py, "transform").format_traceback(py)?;
 
         let output = transform
             .call1(
                 py,
                 PyTuple::new(
                     py,
-                    &[
-                        task.into_py(py),
-                        args.into_py(py),
-                        input.into_py(py),
-                        true.into_py(py),
-                    ],
+                    &[task.into_py(py), args.into_py(py), input.into_py(py), true.into_py(py)],
                 ),
             )
             .format_traceback(py)?;
@@ -115,8 +103,6 @@ pub fn transform_stream_iterator<T: serde::Serialize>(
     args: &serde_json::Value,
     input: T,
 ) -> Result<TransformStreamIterator> {
-    let python_iter = transform_stream(task, args, input)
-        .map_err(|e| error!("{e}"))
-        .unwrap();
+    let python_iter = transform_stream(task, args, input).map_err(|e| error!("{e}")).unwrap();
     Ok(TransformStreamIterator::new(python_iter))
 }
