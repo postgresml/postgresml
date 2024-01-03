@@ -89,14 +89,14 @@ impl Project {
             .unwrap()
     }
 
-    pub fn deploy(&self, model_id: i64) {
+    pub fn deploy(&self, model_id: i64, strategy: Strategy) {
         info!("Deploying model id: {:?}", model_id);
         Spi::get_one_with_args::<i64>(
             "INSERT INTO pgml.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml.strategy) RETURNING id",
             vec![
                 (PgBuiltInOids::INT8OID.oid(), self.id.into_datum()),
                 (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
-                (PgBuiltInOids::TEXTOID.oid(), Strategy::most_recent.to_string().into_datum()),
+                (PgBuiltInOids::TEXTOID.oid(), strategy.to_string().into_datum()),
             ],
         ).unwrap();
         let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
