@@ -4,7 +4,7 @@ use sailfish::TemplateOnce;
 type ExampleQuestions = [(&'static str, [(&'static str, &'static str); 4]); 4];
 const EXAMPLE_QUESTIONS: ExampleQuestions = [
     (
-        "PostgresML",
+        "postgresml",
         [
             ("How do I", "use pgml.transform()?"),
             ("Show me", "a query to train a model"),
@@ -13,7 +13,7 @@ const EXAMPLE_QUESTIONS: ExampleQuestions = [
         ],
     ),
     (
-        "PyTorch",
+        "pytorch",
         [
             ("What are", "tensors?"),
             ("How do I", "train a model?"),
@@ -22,7 +22,7 @@ const EXAMPLE_QUESTIONS: ExampleQuestions = [
         ],
     ),
     (
-        "Rust",
+        "rust",
         [
             ("What is", "a lifetime?"),
             ("How do I", "use a for loop?"),
@@ -31,7 +31,7 @@ const EXAMPLE_QUESTIONS: ExampleQuestions = [
         ],
     ),
     (
-        "PostgreSQL",
+        "postgresql",
         [
             ("How do I", "join two tables?"),
             ("What is", "a GIN index?"),
@@ -41,79 +41,92 @@ const EXAMPLE_QUESTIONS: ExampleQuestions = [
     ),
 ];
 
-const KNOWLEDGE_BASES: [&str; 0] = [
-    // "Knowledge Base 1",
-    // "Knowledge Base 2",
-    // "Knowledge Base 3",
-    // "Knowledge Base 4",
-];
-
 const KNOWLEDGE_BASES_WITH_LOGO: [KnowledgeBaseWithLogo; 4] = [
-    KnowledgeBaseWithLogo::new("PostgresML", "/dashboard/static/images/owl_gradient.svg"),
-    KnowledgeBaseWithLogo::new("PyTorch", "/dashboard/static/images/logos/pytorch.svg"),
-    KnowledgeBaseWithLogo::new("Rust", "/dashboard/static/images/logos/rust.svg"),
     KnowledgeBaseWithLogo::new(
+        "postgresml",
+        "PostgresML",
+        "/dashboard/static/images/owl_gradient.svg",
+    ),
+    KnowledgeBaseWithLogo::new(
+        "pytorch",
+        "PyTorch",
+        "/dashboard/static/images/logos/pytorch.svg",
+    ),
+    KnowledgeBaseWithLogo::new("rust", "Rust", "/dashboard/static/images/logos/rust.svg"),
+    KnowledgeBaseWithLogo::new(
+        "postgresql",
         "PostgreSQL",
         "/dashboard/static/images/logos/postgresql.svg",
     ),
 ];
 
 struct KnowledgeBaseWithLogo {
+    id: &'static str,
     name: &'static str,
     logo: &'static str,
 }
 
 impl KnowledgeBaseWithLogo {
-    const fn new(name: &'static str, logo: &'static str) -> Self {
-        Self { name, logo }
+    const fn new(id: &'static str, name: &'static str, logo: &'static str) -> Self {
+        Self { id, name, logo }
     }
 }
 
-const CHATBOT_BRAINS: [ChatbotBrain; 0] = [
-    // ChatbotBrain::new(
-    //     "PostgresML",
-    //     "Falcon 180b",
-    //     "/dashboard/static/images/owl_gradient.svg",
-    // ),
-    // ChatbotBrain::new(
-    //     "OpenAI",
-    //     "ChatGPT",
-    //     "/dashboard/static/images/logos/openai.webp",
-    // ),
-    // ChatbotBrain::new(
-    //     "Anthropic",
-    //     "Claude",
-    //     "/dashboard/static/images/logos/anthropic.webp",
-    // ),
-    // ChatbotBrain::new(
-    //     "Meta",
-    //     "Llama2 70b",
-    //     "/dashboard/static/images/logos/meta.webp",
-    // ),
+const CHATBOT_BRAINS: [ChatbotBrain; 4] = [
+    ChatbotBrain::new(
+        "teknium/OpenHermes-2.5-Mistral-7B",
+        "OpenHermes",
+        "teknium/OpenHermes-2.5-Mistral-7B",
+        "/dashboard/static/images/logos/openhermes.webp",
+    ),
+    ChatbotBrain::new(
+        "Gryphe/MythoMax-L2-13b",
+        "MythoMax",
+        "Gryphe/MythoMax-L2-13b",
+        "/dashboard/static/images/logos/mythomax.webp",
+    ),
+    ChatbotBrain::new(
+        "openai",
+        "OpenAI",
+        "ChatGPT",
+        "/dashboard/static/images/logos/openai.webp",
+    ),
+    ChatbotBrain::new(
+        "berkeley-nest/Starling-LM-7B-alpha",
+        "Starling",
+        "berkeley-nest/Starling-LM-7B-alpha",
+        "/dashboard/static/images/logos/starling.webp",
+    ),
 ];
 
 struct ChatbotBrain {
+    id: &'static str,
     provider: &'static str,
     model: &'static str,
     logo: &'static str,
 }
 
-// impl ChatbotBrain {
-//     const fn new(provider: &'static str, model: &'static str, logo: &'static str) -> Self {
-//         Self {
-//             provider,
-//             model,
-//             logo,
-//         }
-//     }
-// }
+impl ChatbotBrain {
+    const fn new(
+        id: &'static str,
+        provider: &'static str,
+        model: &'static str,
+        logo: &'static str,
+    ) -> Self {
+        Self {
+            id,
+            provider,
+            model,
+            logo,
+        }
+    }
+}
 
 #[derive(TemplateOnce)]
 #[template(path = "chatbot/template.html")]
 pub struct Chatbot {
-    brains: &'static [ChatbotBrain; 0],
+    brains: &'static [ChatbotBrain; 4],
     example_questions: &'static ExampleQuestions,
-    knowledge_bases: &'static [&'static str; 0],
     knowledge_bases_with_logo: &'static [KnowledgeBaseWithLogo; 4],
 }
 
@@ -122,7 +135,6 @@ impl Default for Chatbot {
         Chatbot {
             brains: &CHATBOT_BRAINS,
             example_questions: &EXAMPLE_QUESTIONS,
-            knowledge_bases: &KNOWLEDGE_BASES,
             knowledge_bases_with_logo: &KNOWLEDGE_BASES_WITH_LOGO,
         }
     }
