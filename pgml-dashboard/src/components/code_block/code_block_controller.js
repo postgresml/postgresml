@@ -7,8 +7,9 @@ import { rust } from "@codemirror/lang-rust";
 import { json } from "@codemirror/lang-json";
 import { EditorView, ViewPlugin, Decoration } from "@codemirror/view";
 import { RangeSetBuilder, Facet} from "@codemirror/state";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 
-import buildCustomTheme from "../../../static/js/utilities/code_mirror_theme";
+import { highlightStyle, editorTheme } from "../../../static/js/utilities/code_mirror_theme";
 
 const buildEditorView = (target, content, languageExtension, classes) => {
   let editorView = new EditorView({
@@ -16,7 +17,8 @@ const buildEditorView = (target, content, languageExtension, classes) => {
     extensions: [
       basicSetup,
       languageExtension !== null ? languageExtension() : [], // if no language chosen do not highlight syntax
-      buildCustomTheme(),
+      EditorView.theme(editorTheme), 
+      syntaxHighlighting(HighlightStyle.define(highlightStyle)),
       EditorView.contentAttributes.of({ contenteditable: false }),
       addClasses.of(classes),
       highlight
