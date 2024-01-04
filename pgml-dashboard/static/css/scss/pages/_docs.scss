@@ -178,5 +178,33 @@
             margin-right: auto;
         }
     }
+
+    // Codemirror overrideds
+    .cm-editor {
+        background: inherit;
+
+        // default no line numbers. 
+        .cm-gutters {
+            display: none;
+        }
+    }
+
+    .cm-gutters {
+        background: inherit;
+    }
+    
+    .code-highlight {
+        background: blue;
+    }
+
+    .cm-activeLine {
+        background-color: transparent;
+    }
+
+    .line-numbers {
+        .cm-gutters {
+            display: contents !important;
+        }
+    }
 }
 

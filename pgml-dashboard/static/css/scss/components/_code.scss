@@ -64,7 +64,7 @@ pre {
         display: inline-block; 
         width: 100%;
         @if $color {
-            background-color: $color;
+            background-color: $color !important;
         }
     }
 
@@ -110,7 +110,7 @@ pre {
     }
     .code-line-highlight-none {
         @include code-line-highlight(null);
-    } 
+    }
 
     .code-line-numbers {
         @extend .noselect;

@@ -407,32 +407,6 @@ mod test {
     use rocket::{Build, Rocket};
 
     #[test]
-    fn test_syntax_highlighting() {
-        let code = r#"
-# Hello
-
-```postgresql
-SELECT * FROM test;
-```
-        "#;
-
-        let arena = Arena::new();
-        let root = parse_document(&arena, code, &options());
-
-        // Style headings like we like them
-        let mut plugins = ComrakPlugins::default();
-        let binding = MarkdownHeadings::new();
-        plugins.render.heading_adapter = Some(&binding);
-        plugins.render.codefence_syntax_highlighter = Some(&SyntaxHighlighter {});
-
-        let mut html = vec![];
-        format_html_with_plugins(root, &options(), &mut html, &plugins).unwrap();
-        let html = String::from_utf8(html).unwrap();
-
-        assert!(html.contains("<span class=\"syntax-highlight\">SELECT</span>"));
-    }
-
-    #[test]
     fn test_wrapping_tables() {
         let markdown = r#"
 This is some markdown with a table
@@ -573,5 +547,78 @@ This is the end of the markdown
             "Returned status {:?}",
             rsp.status()
         );
+    }
+
+    // Test backend for line highlights and line numbers added
+    #[test]
+    fn gitbook_codeblock_test() {
+        let contents = r#"
+{% code title="Test name for html" lineNumbers="true" %}
+```javascript-highlightGreen="1"
+    import something
+    let a = 1
+```
+{% endcode %}
+"#;
+
+        let expected = r#"
+<div class="code-block with-title line-numbers">
+    <div class="title">
+        Test name for html
+    </div>
+    <pre data-controller="copy">
+        <div class="code-toolbar">
+            <span data-action="click->copy#codeCopy" class="material-symbols-outlined btn-code-toolbar">content_copy</span>
+            <span class="material-symbols-outlined btn-code-toolbar" disabled>link</span>
+            <span class="material-symbols-outlined btn-code-toolbar" disabled>edit</span>
+        </div>
+        <code language='javascript' data-controller="code-block">
+            <div class="highlight code-line-highlight-green">importsomething</div>
+            <div class="highlight code-line-highlight-none">leta=1</div>
+            <div class="highlight code-line-highlight-none"></div>
+        </code>
+    </pre>          
+</div>"#;
+
+        // Parse Markdown
+        let arena = Arena::new();
+        let spaced_contents = crate::utils::markdown::gitbook_preprocess(contents);
+        let root = parse_document(&arena, &spaced_contents, &crate::utils::markdown::options());
+
+        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
+
+        // MkDocs, gitbook syntax support, e.g. tabs, notes, alerts, etc.
+        crate::utils::markdown::mkdocs(root, &arena).unwrap();
+
+        // Style headings like we like them
+        let mut plugins = ComrakPlugins::default();
+        let headings = crate::utils::markdown::MarkdownHeadings::new();
+        plugins.render.heading_adapter = Some(&headings);
+        plugins.render.codefence_syntax_highlighter =
+            Some(&crate::utils::markdown::SyntaxHighlighter {});
+
+        let mut html = vec![];
+        format_html_with_plugins(
+            root,
+            &crate::utils::markdown::options(),
+            &mut html,
+            &plugins,
+        )
+        .unwrap();
+        let html = String::from_utf8(html).unwrap();
+
+        println!("expected: {}", expected);
+
+        println!("response: {}", html);
+
+        assert!(
+            html.chars()
+                .filter(|c| !c.is_whitespace())
+                .collect::<String>()
+                == expected
+                    .chars()
+                    .filter(|c| !c.is_whitespace())
+                    .collect::<String>()
+        )
     }
 }

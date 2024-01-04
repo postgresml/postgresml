@@ -8,7 +8,6 @@ use std::sync::{
     Arc,
 };
 
-use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
 use anyhow::Result;
 use comrak::{
     adapters::{HeadingAdapter, HeadingMeta, SyntaxHighlighterAdapter},
@@ -17,7 +16,6 @@ use comrak::{
     parse_document, Arena, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions,
 };
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use regex::Regex;
 use tantivy::collector::TopDocs;
 use tantivy::query::{QueryParser, RegexQuery};
@@ -183,7 +181,7 @@ impl HighlightLines {
 struct CodeFence<'a> {
     lang: &'a str,
     highlight: HashMap<String, String>,
-    enumerate: bool,
+    line_numbers: bool,
 }
 
 impl<'a> From<&str> for CodeFence<'a> {
@@ -194,12 +192,16 @@ impl<'a> From<&str> for CodeFence<'a> {
             "bash"
         } else if options.starts_with("python") {
             "python"
+        } else if options.starts_with("javascript") {
+            "javascript"
         } else if options.starts_with("postgresql") {
             "postgresql"
         } else if options.starts_with("postgresql-line-nums") {
             "postgresql-line-nums"
         } else if options.starts_with("rust") {
             "rust"
+        } else if options.starts_with("json") {
+            "json"
         } else {
             "code"
         };
@@ -212,7 +214,7 @@ impl<'a> From<&str> for CodeFence<'a> {
         CodeFence {
             lang,
             highlight,
-            enumerate: options.contains("enumerate"),
+            line_numbers: options.contains("lineNumbers"),
         }
     }
 }
@@ -225,228 +227,13 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
             let code = code.to_string();
             let options = CodeFence::from(options);
 
-            let code = match options.lang {
-                "postgresql" | "sql" | "postgresql-line-nums" => {
-                    lazy_static! {
-                        static ref SQL_KEYS: [&'static str; 69] = [
-                            "PARTITION OF",
-                            "PARTITION BY",
-                            "CASCADE",
-                            "INNER ",
-                            "ON ",
-                            "WITH",
-                            "SELECT",
-                            "UPDATE",
-                            "DELETE",
-                            "WHERE",
-                            "AS",
-                            "HAVING",
-                            "ORDER BY",
-                            "ASC",
-                            "DESC",
-                            "LIMIT",
-                            "FROM",
-                            "CREATE",
-                            "REPLACE",
-                            "DROP",
-                            "VIEW",
-                            "EXTENSION",
-                            "SERVER",
-                            "FOREIGN DATA WRAPPER",
-                            "OPTIONS",
-                            "IMPORT FOREIGN SCHEMA",
-                            "CREATE USER MAPPING",
-                            "INTO",
-                            "PUBLICATION",
-                            "FOR",
-                            "ALL",
-                            "TABLES",
-                            "CONNECTION",
-                            "SUBSCRIPTION",
-                            "JOIN",
-                            "INTO",
-                            "INSERT",
-                            "BEGIN",
-                            "ALTER",
-                            "SCHEMA",
-                            "RENAME",
-                            "COMMIT",
-                            "AND ",
-                            "ADD COLUMN",
-                            "ALTER TABLE",
-                            "PRIMARY KEY",
-                            "DO",
-                            "END",
-                            "BETWEEN",
-                            "SET",
-                            "REINDEX",
-                            "INDEX",
-                            "USING",
-                            "GROUP BY",
-                            "CREATE TABLE",
-                            "pgml.embed",
-                            "pgml.sum",
-                            "pgml.norm_l2",
-                            "CONCURRENTLY",
-                            "ON\n",
-                            "VALUES",
-                            "@@",
-                            "=>",
-                            "GENERATED ALWAYS AS",
-                            "STORED",
-                            "IF NOT EXISTS",
-                            "pgml.train",
-                            "pgml.predict",
-                            "pgml.transform",
-                        ];
-                        static ref SQL_KEYS_REPLACEMENTS: [&'static str; 69] = [
-                            r#"<span class="syntax-highlight">PARTITION OF</span>"#,
-                            r#"<span class="syntax-highlight">PARTITION BY</span>"#,
-                            "<span class=\"syntax-highlight\">CASCADE</span>",
-                            "<span class=\"syntax-highlight\">INNER </span>",
-                            "<span class=\"syntax-highlight\">ON </span>",
-                            "<span class=\"syntax-highlight\">WITH</span>",
-                            "<span class=\"syntax-highlight\">SELECT</span>",
-                            "<span class=\"syntax-highlight\">UPDATE</span>",
-                            "<span class=\"syntax-highlight\">DELETE</span>",
-                            "<span class=\"syntax-highlight\">WHERE</span>",
-                            "<span class=\"syntax-highlight\">AS</span>",
-                            "<span class=\"syntax-highlight\">HAVING</span>",
-                            "<span class=\"syntax-highlight\">ORDER BY</span>",
-                            "<span class=\"syntax-highlight\">ASC</span>",
-                            "<span class=\"syntax-highlight\">DESC</span>",
-                            "<span class=\"syntax-highlight\">LIMIT</span>",
-                            "<span class=\"syntax-highlight\">FROM</span>",
-                            "<span class=\"syntax-highlight\">CREATE</span>",
-                            "<span class=\"syntax-highlight\">REPLACE</span>",
-                            "<span class=\"syntax-highlight\">DROP</span>",
-                            "<span class=\"syntax-highlight\">VIEW</span>",
-                            "<span class=\"syntax-highlight\">EXTENSION</span>",
-                            "<span class=\"syntax-highlight\">SERVER</span>",
-                            "<span class=\"syntax-highlight\">FOREIGN DATA WRAPPER</span>",
-                            "<span class=\"syntax-highlight\">OPTIONS</span>",
-                            "<span class=\"syntax-highlight\">IMPORT FOREIGN SCHEMA</span>",
-                            "<span class=\"syntax-highlight\">CREATE USER MAPPING</span>",
-                            "<span class=\"syntax-highlight\">INTO</span>",
-                            "<span class=\"syntax-highlight\">PUBLICATION</span>",
-                            "<span class=\"syntax-highlight\">FOR</span>",
-                            "<span class=\"syntax-highlight\">ALL</span>",
-                            "<span class=\"syntax-highlight\">TABLES</span>",
-                            "<span class=\"syntax-highlight\">CONNECTION</span>",
-                            "<span class=\"syntax-highlight\">SUBSCRIPTION</span>",
-                            "<span class=\"syntax-highlight\">JOIN</span>",
-                            "<span class=\"syntax-highlight\">INTO</span>",
-                            "<span class=\"syntax-highlight\">INSERT</span>",
-                            "<span class=\"syntax-highlight\">BEGIN</span>",
-                            "<span class=\"syntax-highlight\">ALTER</span>",
-                            "<span class=\"syntax-highlight\">SCHEMA</span>",
-                            "<span class=\"syntax-highlight\">RENAME</span>",
-                            "<span class=\"syntax-highlight\">COMMIT</span>",
-                            "<span class=\"syntax-highlight\">AND </span>",
-                            "<span class=\"syntax-highlight\">ADD COLUMN</span>",
-                            "<span class=\"syntax-highlight\">ALTER TABLE</span>",
-                            "<span class=\"syntax-highlight\">PRIMARY KEY</span>",
-                            "<span class=\"syntax-highlight\">DO</span>",
-                            "<span class=\"syntax-highlight\">END</span>",
-                            "<span class=\"syntax-highlight\">BETWEEN</span>",
-                            "<span class=\"syntax-highlight\">SET</span>",
-                            "<span class=\"syntax-highlight\">REINDEX</span>",
-                            "<span class=\"syntax-highlight\">INDEX</span>",
-                            "<span class=\"syntax-highlight\">USING</span>",
-                            "<span class=\"syntax-highlight\">GROUP BY</span>",
-                            "<span class=\"syntax-highlight\">CREATE TABLE</span>",
-                            "<strong>pgml.embed</strong>",
-                            "<strong>pgml.sum</strong>",
-                            "<strong>pgml.norm_l2</strong>",
-                            "<span class=\"syntax-highlight\">CONCURRENTLY</span>",
-                            "<span class=\"syntax-highlight\">ON</span>\n",
-                            "<span class=\"syntax-highlight\">VALUES</span>",
-                            "<span class=\"syntax-highlight\">@@</span>",
-                            "<span class=\"syntax-highlight\">=></span>",
-                            "<span class=\"syntax-highlight\">GENERATED ALWAYS AS</span>",
-                            "<span class=\"syntax-highlight\">STORED</span>",
-                            "<span class=\"syntax-highlight\">IF NOT EXISTS</span>",
-                            "<strong>pgml.train</strong>",
-                            "<strong>pgml.predict</strong>",
-                            "<strong>pgml.transform</strong>",
-                        ];
-                        static ref AHO_SQL: AhoCorasick = AhoCorasickBuilder::new()
-                            .match_kind(MatchKind::LeftmostLongest)
-                            .build(SQL_KEYS.iter());
-                    }
-
-                    AHO_SQL
-                        .replace_all(&code, &SQL_KEYS_REPLACEMENTS[..])
-                        .to_string()
-                }
-
-                "bash" => {
-                    lazy_static! {
-                        static ref RE_BASH: regex::Regex = regex::Regex::new(r"(cd)").unwrap();
-                    }
-
-                    RE_BASH
-                        .replace_all(&code, r#"<span class="syntax-highlight">$1</span>"#)
-                        .to_string()
-                }
-
-                "python" => {
-                    lazy_static! {
-                        static ref RE_PYTHON: regex::Regex = regex::Regex::new(
-                            r"(import |def |return |if |else|class |async |await )"
-                        )
-                        .unwrap();
-                    }
-
-                    RE_PYTHON
-                        .replace_all(&code, r#"<span class="syntax-highlight">$1</span>"#)
-                        .to_string()
-                }
-
-                "rust" => {
-                    lazy_static! {
-                        static ref RE_RUST: regex::Regex = regex::Regex::new(
-                            r"(struct |let |pub |fn |await |impl |const |use |type |move |if |else| |match |for |enum)"
-                        )
-                        .unwrap();
-                    }
-
-                    RE_RUST
-                        .replace_all(&code, r#"<span class="syntax-highlight">$1</span>"#)
-                        .to_string()
-                }
-
-                _ => code,
-            };
-
-            // Add line numbers
-            let code = if options.enumerate {
-                let mut code = code.split('\n')
-                    .enumerate()
-                    .map(|(index, code)| {
-                        format!(r#"<span class="code-line-numbers">{}</span><span class="code-enumerate-divider"></span><span class="code-content">{}</span>"#,
-                                if index < 9 {format!(" {}", index+1)} else { format!("{}", index+1)},
-                                code)
-                    })
-                    .collect::<Vec<String>>();
-                code.pop();
-                code.into_iter().join("\n")
-            } else {
-                let mut code = code
-                    .split('\n')
-                    .map(|code| format!("<span class=\"code-content\">{}</span>", code))
-                    .collect::<Vec<String>>();
-                code.pop();
-                code.into_iter().join("\n")
-            };
-
             // Add line highlighting
             let code = code
                 .split('\n')
                 .enumerate()
                 .map(|(index, code)| {
                     format!(
-                        r#"<div class="code-line-highlight-{} d-inline-block" style="line-height: 20px;">{}</div>"#,
+                        r#"<div class="highlight code-line-highlight-{}">{}</div>"#,
                         match options.highlight.get(&(index + 1).to_string()) {
                             Some(color) => color,
                             _ => "none",
@@ -461,10 +248,7 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
             code.to_string()
         };
 
-        format!(
-            "<div><div  style=\"display: inline-block; min-width: 100%\">{}</div></div>",
-            code
-        )
+        code
     }
 
     fn build_pre_tag(&self, _attributes: &HashMap<String, String>) -> String {
@@ -475,8 +259,24 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
             </div>")
     }
 
-    fn build_code_tag(&self, _attributes: &HashMap<String, String>) -> String {
-        String::from("<code>")
+    fn build_code_tag(&self, attributes: &HashMap<String, String>) -> String {
+        let data = match attributes.get("class") {
+            Some(lang) => lang.replace("language-", ""),
+            _ => "".to_string(),
+        };
+
+        let parsed_data = CodeFence::from(data.as_str());
+
+        // code-block web component uses codemirror to add syntax highlighting
+        format!(
+            "<code {} language='{}' data-controller=\"code-block\">",
+            if parsed_data.line_numbers {
+                "class='line-numbers'"
+            } else {
+                ""
+            },
+            parsed_data.lang,
+        )
     }
 }
 
@@ -847,10 +647,19 @@ impl From<&str> for Admonition {
 struct CodeBlock {
     time: Option<String>,
     title: Option<String>,
+    line_numbers: Option<String>,
 }
 
 impl CodeBlock {
     fn html(&self, html_type: &str) -> Option<String> {
+        let line_numbers: bool = match &self.line_numbers {
+            Some(val) => match val.as_str() {
+                "true" => true,
+                _ => false,
+            },
+            _ => false,
+        };
+
         match html_type {
             "time" => self.time.as_ref().map(|time| {
                 format!(
@@ -866,19 +675,20 @@ impl CodeBlock {
             "code" => match &self.title {
                 Some(title) => Some(format!(
                     r#"
-                    <div class="code-block with-title">
+                    <div class="code-block with-title {}">
                         <div class="title">
                             {}
                         </div>
                 "#,
+                    if line_numbers { "line-numbers" } else { "" },
                     title
                 )),
-                None => Some(
+                None => Some(format!(
                     r#"
-                    <div class="code-block">
-                "#
-                    .to_string(),
-                ),
+                    <div class="code-block {}">
+                    "#,
+                    if line_numbers { "line-numbers" } else { "" },
+                )),
             },
             "results" => match &self.title {
                 Some(title) => Some(format!(
@@ -940,7 +750,7 @@ pub fn gitbook_preprocess(item: &str) -> String {
 pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyhow::Result<()> {
     let mut tabs = Vec::new();
 
-    // tracks open !!! blocks and holds items to apppend prior to closing
+    // tracks openning tags and holds items to apppend prior to closing
     let mut info_block_close_items: Vec<Option<String>> = vec![];
 
     iter_nodes(root, &mut |node| {
@@ -1213,7 +1023,12 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
                     let title = parser(text.as_ref(), r#"title=""#);
                     let time = parser(text.as_ref(), r#"time=""#);
-                    let code_block = CodeBlock { time, title };
+                    let line_numbers = parser(text.as_ref(), r#"lineNumbers=""#);
+                    let code_block = CodeBlock {
+                        time,
+                        title,
+                        line_numbers,
+                    };
 
                     if let Some(html) = code_block.html("code") {
                         let n = arena.alloc(Node::new(RefCell::new(Ast::new(
@@ -1229,7 +1044,11 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     let parent = node.parent().unwrap();
 
                     let title = parser(text.as_ref(), r#"title=""#);
-                    let code_block = CodeBlock { time: None, title };
+                    let code_block = CodeBlock {
+                        time: None,
+                        title,
+                        line_numbers: None,
+                    };
 
                     if let Some(html) = code_block.html("results") {
                         let n = arena.alloc(Node::new(RefCell::new(Ast::new(
