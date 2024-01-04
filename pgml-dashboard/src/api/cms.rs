@@ -611,6 +611,14 @@ This is the end of the markdown
 
         println!("response: {}", html);
 
-        assert!(html.chars().filter(|c| !c.is_whitespace()).collect::<String>() == expected.chars().filter(|c| !c.is_whitespace()).collect::<String>())
+        assert!(
+            html.chars()
+                .filter(|c| !c.is_whitespace())
+                .collect::<String>()
+                == expected
+                    .chars()
+                    .filter(|c| !c.is_whitespace())
+                    .collect::<String>()
+        )
     }
 }

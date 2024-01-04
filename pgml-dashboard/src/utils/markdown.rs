@@ -8,7 +8,6 @@ use std::sync::{
     Arc,
 };
 
-use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
 use anyhow::Result;
 use comrak::{
     adapters::{HeadingAdapter, HeadingMeta, SyntaxHighlighterAdapter},
@@ -17,7 +16,6 @@ use comrak::{
     parse_document, Arena, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions,
 };
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use regex::Regex;
 use tantivy::collector::TopDocs;
 use tantivy::query::{QueryParser, RegexQuery};
@@ -201,7 +199,7 @@ impl<'a> From<&str> for CodeFence<'a> {
         } else if options.starts_with("postgresql-line-nums") {
             "postgresql-line-nums"
         } else if options.starts_with("rust") {
-            "rust"        
+            "rust"
         } else if options.starts_with("json") {
             "json"
         } else {
@@ -224,7 +222,6 @@ impl<'a> From<&str> for CodeFence<'a> {
 pub struct SyntaxHighlighter {}
 
 impl SyntaxHighlighterAdapter for SyntaxHighlighter {
-
     fn highlight(&self, options: Option<&str>, code: &str) -> String {
         let code = if let Some(options) = options {
             let code = code.to_string();
@@ -265,13 +262,21 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
     fn build_code_tag(&self, attributes: &HashMap<String, String>) -> String {
         let data = match attributes.get("class") {
             Some(lang) => lang.replace("language-", ""),
-            _ => "".to_string()
+            _ => "".to_string(),
         };
 
         let parsed_data = CodeFence::from(data.as_str());
 
         // code-block web component uses codemirror to add syntax highlighting
-        format!("<code {} language='{}' data-controller=\"code-block\">", if parsed_data.line_numbers { "class='line-numbers'"} else {""},  parsed_data.lang, )
+        format!(
+            "<code {} language='{}' data-controller=\"code-block\">",
+            if parsed_data.line_numbers {
+                "class='line-numbers'"
+            } else {
+                ""
+            },
+            parsed_data.lang,
+        )
     }
 }
 
@@ -650,9 +655,9 @@ impl CodeBlock {
         let line_numbers: bool = match &self.line_numbers {
             Some(val) => match val.as_str() {
                 "true" => true,
-                _ => false
+                _ => false,
             },
-            _ => false
+            _ => false,
         };
 
         match html_type {
@@ -675,16 +680,15 @@ impl CodeBlock {
                             {}
                         </div>
                 "#,
-                    if line_numbers {"line-numbers" } else {""},
+                    if line_numbers { "line-numbers" } else { "" },
                     title
                 )),
                 None => Some(format!(
                     r#"
                     <div class="code-block {}">
                     "#,
-                    if line_numbers {"line-numbers" } else {""},
-                )
-                ),
+                    if line_numbers { "line-numbers" } else { "" },
+                )),
             },
             "results" => match &self.title {
                 Some(title) => Some(format!(
@@ -1020,7 +1024,11 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     let title = parser(text.as_ref(), r#"title=""#);
                     let time = parser(text.as_ref(), r#"time=""#);
                     let line_numbers = parser(text.as_ref(), r#"lineNumbers=""#);
-                    let code_block = CodeBlock { time, title, line_numbers };
+                    let code_block = CodeBlock {
+                        time,
+                        title,
+                        line_numbers,
+                    };
 
                     if let Some(html) = code_block.html("code") {
                         let n = arena.alloc(Node::new(RefCell::new(Ast::new(
@@ -1036,7 +1044,11 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     let parent = node.parent().unwrap();
 
                     let title = parser(text.as_ref(), r#"title=""#);
-                    let code_block = CodeBlock { time: None, title, line_numbers: None };
+                    let code_block = CodeBlock {
+                        time: None,
+                        title,
+                        line_numbers: None,
+                    };
 
                     if let Some(html) = code_block.html("results") {
                         let n = arena.alloc(Node::new(RefCell::new(Ast::new(
