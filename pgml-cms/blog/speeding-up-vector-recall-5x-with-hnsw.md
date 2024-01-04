@@ -79,20 +79,12 @@ This query utilized IVFFlat indexing and queried through over 5 million rows in 
 
 Let's drop our IVFFlat index and create an HNSW index.
 
-!!! generic
-
 !!! code\_block time="10255099.233 ms (02:50:55.099)"
 
 ```postgresql
 DROP INDEX index_amazon_us_reviews_on_review_embedding_e5_large;
 CREATE INDEX CONCURRENTLY ON pgml.amazon_us_reviews USING hnsw (review_embedding_e5_large vector_cosine_ops);
 ```
-
-!!!
-
-!!! results
-
-!!!
 
 !!!
 
