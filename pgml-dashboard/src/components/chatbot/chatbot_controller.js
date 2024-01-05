@@ -174,13 +174,15 @@ export default class extends Controller {
     this.handleKnowledgeBaseChange(); // This will set our initial knowledge base
     this.handleBrainChange(); // This will set our initial brain
     this.handleResize();
+    this.openConnection();
+    this.getHistory();
+  }
 
+  openConnection() {
     const url = ((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.hostname + (((window.location.port != 80) && (window.location.port != 443)) ? ":" + window.location.port : "") + window.location.pathname + "/get-answer";
     this.socket = new WebSocket(url);
     this.socket.onmessage = (message) => {
       let result = JSON.parse(message.data);
-      console.log(result);
-
       if (result.error) {
         this.showChatbotAlert("Error", "Error getting chatbot answer");
         console.log(result.error);
@@ -201,7 +203,6 @@ export default class extends Controller {
     this.socket.onclose = () => {
       window.setTimeout(() => this.openConnection(), 500);
     };
-    this.getHistory();
   }
 
   async clearHistory() {
