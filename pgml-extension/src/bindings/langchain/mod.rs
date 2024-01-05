@@ -8,8 +8,6 @@ use crate::create_pymodule;
 create_pymodule!("/src/bindings/langchain/langchain.py");
 
 pub fn chunk(splitter: &str, text: &str, kwargs: &serde_json::Value) -> Result<Vec<String>> {
-    crate::bindings::python::activate()?;
-
     let kwargs = serde_json::to_string(kwargs).unwrap();
 
     Python::with_gil(|py| -> Result<Vec<String>> {

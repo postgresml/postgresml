@@ -88,10 +88,6 @@ impl Model {
             },
         };
 
-        if runtime == Runtime::python {
-            let _ = crate::bindings::python::activate();
-        }
-
         let dataset = snapshot.tabular_dataset();
         let status = Status::in_progress;
         // Create the model record.
@@ -334,10 +330,7 @@ impl Model {
                     }
 
                     #[cfg(feature = "python")]
-                    Runtime::python => {
-                        let _ = crate::bindings::python::activate();
-                        crate::bindings::sklearn::Estimator::from_bytes(&data)?
-                    }
+                    Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data)?,
 
                     #[cfg(not(feature = "python"))]
                     Runtime::python => {
