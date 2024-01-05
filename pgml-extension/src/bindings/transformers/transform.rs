@@ -46,7 +46,6 @@ pub fn transform<T: serde::Serialize>(
     args: &serde_json::Value,
     inputs: T,
 ) -> Result<serde_json::Value> {
-    crate::bindings::python::activate()?;
     whitelist::verify_task(task)?;
 
     let task = serde_json::to_string(task)?;
@@ -74,7 +73,6 @@ pub fn transform_stream<T: serde::Serialize>(
     args: &serde_json::Value,
     input: T,
 ) -> Result<Py<PyAny>> {
-    crate::bindings::python::activate()?;
     whitelist::verify_task(task)?;
 
     let task = serde_json::to_string(task)?;

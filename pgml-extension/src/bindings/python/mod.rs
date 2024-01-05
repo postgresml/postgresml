@@ -30,7 +30,6 @@ pub fn activate() -> Result<bool> {
 }
 
 pub fn pip_freeze() -> Result<TableIterator<'static, (name!(package, String),)>> {
-    activate()?;
     let packages = Python::with_gil(|py| -> Result<Vec<String>> {
         let freeze = get_module!(PY_MODULE).getattr(py, "freeze")?;
         let result = freeze.call0(py)?;
@@ -42,7 +41,6 @@ pub fn pip_freeze() -> Result<TableIterator<'static, (name!(package, String),)>>
 }
 
 pub fn validate_dependencies() -> Result<bool> {
-    activate()?;
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys").unwrap();
         let version: String = sys.getattr("version").unwrap().extract().unwrap();
@@ -68,7 +66,6 @@ pub fn validate_dependencies() -> Result<bool> {
 }
 
 pub fn version() -> Result<String> {
-    activate()?;
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys").unwrap();
         let version: String = sys.getattr("version").unwrap().extract().unwrap();
@@ -77,7 +74,6 @@ pub fn version() -> Result<String> {
 }
 
 pub fn package_version(name: &str) -> Result<String> {
-    activate()?;
     Python::with_gil(|py| {
         let package = py.import(name)?;
         Ok(package.getattr("__version__")?.extract()?)
