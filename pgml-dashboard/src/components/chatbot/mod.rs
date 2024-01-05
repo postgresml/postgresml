@@ -72,31 +72,31 @@ impl KnowledgeBaseWithLogo {
     }
 }
 
-const CHATBOT_BRAINS: [ChatbotBrain; 4] = [
-    ChatbotBrain::new(
-        "teknium/OpenHermes-2.5-Mistral-7B",
-        "OpenHermes",
-        "teknium/OpenHermes-2.5-Mistral-7B",
-        "/dashboard/static/images/logos/openhermes.webp",
-    ),
-    ChatbotBrain::new(
-        "Gryphe/MythoMax-L2-13b",
-        "MythoMax",
-        "Gryphe/MythoMax-L2-13b",
-        "/dashboard/static/images/logos/mythomax.webp",
-    ),
+const CHATBOT_BRAINS: [ChatbotBrain; 1] = [
+    // ChatbotBrain::new(
+    //     "teknium/OpenHermes-2.5-Mistral-7B",
+    //     "OpenHermes",
+    //     "teknium/OpenHermes-2.5-Mistral-7B",
+    //     "/dashboard/static/images/logos/openhermes.webp",
+    // ),
+    // ChatbotBrain::new(
+    //     "Gryphe/MythoMax-L2-13b",
+    //     "MythoMax",
+    //     "Gryphe/MythoMax-L2-13b",
+    //     "/dashboard/static/images/logos/mythomax.webp",
+    // ),
     ChatbotBrain::new(
         "openai",
         "OpenAI",
         "ChatGPT",
         "/dashboard/static/images/logos/openai.webp",
     ),
-    ChatbotBrain::new(
-        "berkeley-nest/Starling-LM-7B-alpha",
-        "Starling",
-        "berkeley-nest/Starling-LM-7B-alpha",
-        "/dashboard/static/images/logos/starling.webp",
-    ),
+    // ChatbotBrain::new(
+    //     "berkeley-nest/Starling-LM-7B-alpha",
+    //     "Starling",
+    //     "berkeley-nest/Starling-LM-7B-alpha",
+    //     "/dashboard/static/images/logos/starling.webp",
+    // ),
 ];
 
 struct ChatbotBrain {
@@ -125,7 +125,7 @@ impl ChatbotBrain {
 #[derive(TemplateOnce)]
 #[template(path = "chatbot/template.html")]
 pub struct Chatbot {
-    brains: &'static [ChatbotBrain; 4],
+    brains: &'static [ChatbotBrain; 1],
     example_questions: &'static ExampleQuestions,
     knowledge_bases_with_logo: &'static [KnowledgeBaseWithLogo; 4],
 }
