@@ -36,7 +36,7 @@
     * [pgml.tune()](introduction/apis/sql-extensions/pgml.tune.md)
   * [Client SDKs](introduction/apis/client-sdks/README.md)
     * [Overview](introduction/apis/client-sdks/getting-started.md)
-    * [Collections](introduction/apis/client-sdks/collections.md)
+    * [Collections](../../pgml-docs/docs/guides/sdks/collections.md)
     * [Pipelines](introduction/apis/client-sdks/pipelines.md)
     * [Search](introduction/apis/client-sdks/search.md)
     * [Tutorials](introduction/apis/client-sdks/tutorials/README.md)

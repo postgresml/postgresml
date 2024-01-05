@@ -36,7 +36,7 @@ brew bundle
 PostgresML is written in Rust, so you'll need to install the latest compiler from [rust-lang.org](https://rust-lang.org). Additionally, we use the Rust PostgreSQL extension framework `pgrx`, which requires some initialization steps:
 
 ```bash
-cargo install cargo-pgrx --version 0.11.2 && \
+cargo install cargo-pgrx --version 0.9.8 && \
 cargo pgrx init
 ```
 
@@ -63,7 +63,8 @@ To install the necessary Python packages into a virtual environment, use the `vi
 ```bash
 virtualenv pgml-venv && \
 source pgml-venv/bin/activate && \
-pip install -r requirements.txt
+pip install -r requirements.txt && \
+pip install -r requirements-xformers.txt --no-dependencies
 ```
 {% endtab %}
 
@@ -145,7 +146,7 @@ pgml_test=# SELECT pgml.version();
 We like and use pgvector a lot, as documented in our blog posts and examples, to store and search embeddings. You can install pgvector from source pretty easily:
 
 ```bash
-git clone --branch v0.5.0 https://github.com/pgvector/pgvector && \
+git clone --branch v0.4.4 https://github.com/pgvector/pgvector && \
 cd pgvector && \
 echo "trusted = true" >> vector.control && \
 make && \
@@ -287,7 +288,7 @@ We use the `pgrx` Postgres Rust extension framework, which comes with its own in
 
 ```bash
 cd pgml-extension && \
-cargo install cargo-pgrx --version 0.11.2 && \
+cargo install cargo-pgrx --version 0.9.8 && \
 cargo pgrx init
 ```
 
