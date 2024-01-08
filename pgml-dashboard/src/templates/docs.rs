@@ -1,5 +1,6 @@
 use sailfish::TemplateOnce;
 use serde::{Deserialize, Serialize};
+use convert_case;
 
 use crate::utils::markdown::SearchResult;
 
@@ -27,7 +28,10 @@ impl TocLink {
     /// * `title` - The title of the link.
     ///
     pub fn new(title: &str, counter: usize) -> TocLink {
-        let id = format!("header-{}", counter);
+
+        let conv = convert_case::Converter::new().to_case(convert_case::Case::Kebab);
+        let id = conv.convert(title.to_string());
+        let id = format!("{}{}", id, if counter > 0 { format!("-{counter}")} else {String::new()});
 
         TocLink {
             title: title.to_string(),

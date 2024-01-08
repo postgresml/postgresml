@@ -22,18 +22,20 @@ use tantivy::query::{QueryParser, RegexQuery};
 use tantivy::schema::*;
 use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
-use url::Url;
+use convert_case;
+
+use std::sync::Mutex;
 
 use std::fmt;
 
 pub struct MarkdownHeadings {
-    counter: Arc<AtomicUsize>,
+    header_map: Arc<Mutex<HashMap<String, usize>>>,
 }
 
 impl Default for MarkdownHeadings {
     fn default() -> Self {
         Self {
-            counter: Arc::new(AtomicUsize::new(0)),
+            header_map: Arc::new(Mutex::new(HashMap::new()))
         }
     }
 }
@@ -46,9 +48,17 @@ impl MarkdownHeadings {
 
 impl HeadingAdapter for MarkdownHeadings {
     fn enter(&self, meta: &HeadingMeta) -> String {
-        // let id = meta.content.to_case(convert_case::Case::Kebab);
-        let id = self.counter.fetch_add(1, Ordering::SeqCst);
-        let id = format!("header-{}", id);
+        let conv = convert_case::Converter::new().to_case(convert_case::Case::Kebab);
+        let id = conv.convert(meta.content.to_string());
+
+        let index = match self.header_map.lock().unwrap().get(&id) {
+            Some(value) => value + 1,
+            _ => 0
+        };
+
+        let id = TocLink::new(&id, index).id;
+
+        self.header_map.lock().unwrap().insert(id.clone(), index);
 
         match meta.level {
             1 => format!(r#"<h1 class="h1 mb-5" id="{id}">"#),
@@ -335,37 +345,38 @@ where
     Ok(())
 }
 
-pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
-    let _ = iter_mut_all(node, &mut |node| {
-        if let markdown::mdast::Node::Link(ref mut link) = node {
-            match Url::parse(&link.url) {
-                Ok(url) => {
-                    if !url.has_host() {
-                        let mut url_path = url.path().to_string();
-                        let url_path_path = Path::new(&url_path);
-                        match url_path_path.extension() {
-                            Some(ext) => {
-                                if ext.to_str() == Some(".md") {
-                                    let base = url_path_path.with_extension("");
-                                    url_path = base.into_os_string().into_string().unwrap();
-                                }
-                            }
-                            _ => {
-                                warn!("not markdown path: {:?}", path)
-                            }
-                        }
-                        link.url = path.join(url_path).into_os_string().into_string().unwrap();
-                    }
-                }
-                Err(e) => {
-                    warn!("could not parse url in markdown: {}", e)
-                }
-            }
-        }
+// pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
+//     let _ = iter_mut_all(node, &mut |node| {
+//         println!("link node: {:?}", node);
+//         if let markdown::mdast::Node::Link(ref mut link) = node {
+//             match Url::parse(&link.url) {
+//                 Ok(url) => {
+//                     if !url.has_host() {
+//                         let mut url_path = url.path().to_string();
+//                         let url_path_path = Path::new(&url_path);
+//                         match url_path_path.extension() {
+//                             Some(ext) => {
+//                                 if ext.to_str() == Some(".md") {
+//                                     let base = url_path_path.with_extension("");
+//                                     url_path = base.into_os_string().into_string().unwrap();
+//                                 }
+//                             }
+//                             _ => {
+//                                 warn!("not markdown path: {:?}", path)
+//                             }
+//                         }
+//                         link.url = path.join(url_path).into_os_string().into_string().unwrap();
+//                     }
+//                 }
+//                 Err(e) => {
+//                     warn!("could not parse url in markdown: {}", e)
+//                 }
+//             }
+//         }
 
-        Ok(())
-    });
-}
+//         Ok(())
+//     });
+// }
 
 /// Get the title of the article.
 ///
@@ -462,11 +473,10 @@ pub fn wrap_tables<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> 
 ///
 pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
     let mut links = Vec::new();
-    let mut header_counter = 0;
+    let mut header_count: HashMap<String, usize> = HashMap::new();
 
     iter_nodes(root, &mut |node| {
         if let NodeValue::Heading(header) = &node.data.borrow().value {
-            header_counter += 1;
             if header.level != 1 {
                 let sibling = match node.first_child() {
                     Some(child) => child,
@@ -476,7 +486,14 @@ pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
                     }
                 };
                 if let NodeValue::Text(text) = &sibling.data.borrow().value {
-                    links.push(TocLink::new(text, header_counter - 1).level(header.level));
+                    let index = match header_count.get(text) {
+                        Some(index) => index + 1,
+                        _ => 0
+                    };
+
+                    header_count.insert(text.clone(), index);
+
+                    links.push(TocLink::new(text, index).level(header.level));
                     return Ok(false);
                 }
             }
@@ -760,10 +777,23 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                 let path = Path::new(link.url.as_str());
 
                 if path.is_relative() {
+                    let fragment = match link.url.find("#") {
+                        Some(index) => link.url[index..link.url.len()].to_string(),
+                        _ => "".to_string()
+                    };
+
+                    for _ in 0..fragment.len() {
+                        link.url.pop();
+                    }
+
                     if link.url.ends_with(".md") {
                         for _ in 0..".md".len() {
                             link.url.pop();
                         }
+                    }
+
+                    for c in fragment.chars() {
+                        link.url.push(c)
                     }
                 }
 
