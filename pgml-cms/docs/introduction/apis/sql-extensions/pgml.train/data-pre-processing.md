@@ -25,7 +25,7 @@ In this example:
 
 There are 3 steps to preprocessing data:
 
-* [Encoding](data-pre-processing.md#ordinal-encoding) categorical values into quantitative values
+* [Encoding](data-pre-processing.md#categorical-encodings) categorical values into quantitative values
 * [Imputing](data-pre-processing.md#imputing-missing-values) NULL values to some quantitative value
 * [Scaling](data-pre-processing.md#scaling-values) quantitative values across all variables to similar ranges
 
