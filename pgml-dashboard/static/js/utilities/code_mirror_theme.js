@@ -12,7 +12,7 @@ const ivory = "#abb2bf";
 const stone = "#7d8799";
 const malibu = "#61afef";
 const sage = "#0F0"; // Set
-const whiskey = "#d19a66";
+const whiskey = "#ffb500";
 const violet = "#F3F"; // Set
 const darkBackground = "#17181A"; // Set
 const highlightBackground = "#2c313a";
@@ -91,12 +91,24 @@ const editorTheme = {
 }
 
 const highlightStyle = [
-  { tag: t.keyword, color: violet },
-  {
-    tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName],
-    color: salmon,
+  { tag: [
+      t.keyword,
+      t.annotation,
+      t.modifier,
+      t.special(t.string),
+      t.operatorKeyword,
+    ],
+    color: violet
   },
-  { tag: [t.function(t.variableName), t.labelName], color: malibu },
+  {
+    tag: [t.name, t.propertyName, t.deleted, t.character, t.macroName, t.function(t.variableName)],
+    color: blue,
+  },
+  {
+    tag: [],
+    color: cyan,
+  },
+  { tag: [t.labelName], color: whiskey },
   { tag: [t.color, t.constant(t.name), t.standard(t.name)], color: whiskey },
   { tag: [t.definition(t.name), t.separator], color: ivory },
   {
@@ -105,24 +117,23 @@ const highlightStyle = [
       t.className,
       t.number,
       t.changed,
-      t.annotation,
-      t.modifier,
       t.self,
       t.namespace,
+      t.bool,
     ],
     color: chalky,
   },
-  {
-    tag: [
-      t.operator,
-      t.operatorKeyword,
+  { tag: [t.operator], color: whiskey },
+  { tag: [
+      t.processingInstruction,
+      t.string,
+      t.inserted,
       t.url,
       t.escape,
       t.regexp,
       t.link,
-      t.special(t.string),
     ],
-    color: blue,
+    color: sage
   },
   { tag: [t.meta, t.comment], color: stone },
   { tag: t.strong, fontWeight: "bold" },
@@ -130,8 +141,7 @@ const highlightStyle = [
   { tag: t.strikethrough, textDecoration: "line-through" },
   { tag: t.link, color: stone, textDecoration: "underline" },
   { tag: t.heading, fontWeight: "bold", color: salmon },
-  { tag: [t.atom, t.bool, t.special(t.variableName)], color: whiskey },
-  { tag: [t.processingInstruction, t.string, t.inserted], color: sage },
+  { tag: [t.atom, t.special(t.variableName)], color: whiskey },
   { tag: t.invalid, color: invalid },
 ]
 
