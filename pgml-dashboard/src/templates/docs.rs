@@ -89,10 +89,3 @@ impl TocLink {
         }
     }
 }
-
-/// Table of contents template.
-#[derive(TemplateOnce)]
-#[template(path = "components/toc.html")]
-pub struct Toc {
-    pub links: Vec<TocLink>,
-}

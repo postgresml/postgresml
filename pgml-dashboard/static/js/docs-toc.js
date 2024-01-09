@@ -8,12 +8,6 @@ export default class extends Controller {
   }
 
   scrollSpyAppend(e) {
-    // intercept click event callback so we can set the url
-    if( e && e.type == "click") {
-      console.log("append click")
-      this.clicked(e)
-    }
-
     const spy = new bootstrap.ScrollSpy(document.body, {
       target: '#toc-nav',
       smoothScroll: true,
@@ -22,9 +16,7 @@ export default class extends Controller {
     })
   }
 
-  clicked(e) {
-    
-    console.log("clicked clicked")
+  setUrlFragment(e) {
     let href = e.target.attributes.href.nodeValue;
     if (href) {
       if (href.startsWith("#")) {
