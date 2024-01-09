@@ -208,6 +208,16 @@
     }
 
     h1, h2, h3, h4, h5, h6 {
+        scroll-margin-top: 108px;
+
+        &:hover {
+            &:after {
+                content: '#';
+                margin-left: 0.2em;
+                position: absolute;
+            }
+        }
+
         a {
             color: inherit !important;
         }

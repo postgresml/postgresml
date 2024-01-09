@@ -56,10 +56,9 @@ impl HeadingAdapter for MarkdownHeadings {
             Some(value) => value + 1,
             _ => 0,
         };
+        self.header_map.lock().unwrap().insert(id.clone(), index);
 
         let id = TocLink::new(&id, index).id;
-
-        self.header_map.lock().unwrap().insert(id.clone(), index);
 
         match meta.level {
             1 => format!(r##"<h1 class="h1 mb-5" id="{id}"><a href="#{id}">"##),
