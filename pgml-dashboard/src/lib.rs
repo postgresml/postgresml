@@ -192,17 +192,12 @@ pub async fn project_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<Respo
     let models = models::Model::get_by_project_id(cluster.pool(), id).await?;
 
     Ok(ResponseOk(
-        templates::Project { project, models }
-            .render_once()
-            .unwrap(),
+        templates::Project { project, models }.render_once().unwrap(),
     ))
 }
 
 #[get("/notebooks?<new>")]
-pub async fn notebook_index(
-    cluster: ConnectedCluster<'_>,
-    new: Option<&str>,
-) -> Result<ResponseOk, Error> {
+pub async fn notebook_index(cluster: ConnectedCluster<'_>, new: Option<&str>) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
         templates::Notebooks {
             notebooks: models::Notebook::all(cluster.pool()).await?,
@@ -214,47 +209,30 @@ pub async fn notebook_index(
 }
 
 #[post("/notebooks", data = "<data>")]
-pub async fn notebook_create(
-    cluster: &Cluster,
-    data: Form<forms::Notebook<'_>>,
-) -> Result<Redirect, Error> {
+pub async fn notebook_create(cluster: &Cluster, data: Form<forms::Notebook<'_>>) -> Result<Redirect, Error> {
     let notebook = crate::models::Notebook::create(cluster.pool(), data.name).await?;
 
     models::Cell::create(cluster.pool(), &notebook, models::CellType::Sql as i32, "").await?;
 
-    Ok(Redirect::to(format!(
-        "/dashboard?tab=Notebook&id={}",
-        notebook.id
-    )))
+    Ok(Redirect::to(format!("/dashboard?tab=Notebook&id={}", notebook.id)))
 }
 
 #[get("/notebooks/<notebook_id>")]
-pub async fn notebook_get(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-) -> Result<ResponseOk, Error> {
+pub async fn notebook_get(cluster: ConnectedCluster<'_>, notebook_id: i64) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cells = notebook.cells(cluster.pool()).await?;
 
     Ok(ResponseOk(
-        templates::Notebook { cells, notebook }
-            .render_once()
-            .unwrap(),
+        templates::Notebook { cells, notebook }.render_once().unwrap(),
     ))
 }
 
 #[post("/notebooks/<notebook_id>/reset")]
-pub async fn notebook_reset(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-) -> Result<Redirect, Error> {
+pub async fn notebook_reset(cluster: ConnectedCluster<'_>, notebook_id: i64) -> Result<Redirect, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     notebook.reset(cluster.pool()).await?;
 
-    Ok(Redirect::to(format!(
-        "/dashboard/notebooks/{}",
-        notebook_id
-    )))
+    Ok(Redirect::to(format!("/dashboard/notebooks/{}", notebook_id)))
 }
 
 #[post("/notebooks/<notebook_id>/cell", data = "<cell>")]
@@ -264,22 +242,14 @@ pub async fn cell_create(
     cell: Form<forms::Cell<'_>>,
 ) -> Result<Redirect, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
-    let mut cell = models::Cell::create(
-        cluster.pool(),
-        &notebook,
-        cell.cell_type.parse::<i32>()?,
-        cell.contents,
-    )
-    .await?;
+    let mut cell =
+        models::Cell::create(cluster.pool(), &notebook, cell.cell_type.parse::<i32>()?, cell.contents).await?;
 
     if !cell.contents.is_empty() {
         cell.render(cluster.pool()).await?;
     }
 
-    Ok(Redirect::to(format!(
-        "/dashboard/notebooks/{}",
-        notebook_id
-    )))
+    Ok(Redirect::to(format!("/dashboard/notebooks/{}", notebook_id)))
 }
 
 #[post("/notebooks/<notebook_id>/reorder", data = "<cells>")]
@@ -301,18 +271,11 @@ pub async fn notebook_reorder(
 
     transaction.commit().await?;
 
-    Ok(Redirect::to(format!(
-        "/dashboard/notebooks/{}",
-        notebook_id
-    )))
+    Ok(Redirect::to(format!("/dashboard/notebooks/{}", notebook_id)))
 }
 
 #[get("/notebooks/<notebook_id>/cell/<cell_id>")]
-pub async fn cell_get(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-    cell_id: i64,
-) -> Result<ResponseOk, Error> {
+pub async fn cell_get(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
@@ -329,11 +292,7 @@ pub async fn cell_get(
 }
 
 #[post("/notebooks/<notebook_id>/cell/<cell_id>/cancel")]
-pub async fn cell_cancel(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-    cell_id: i64,
-) -> Result<Redirect, Error> {
+pub async fn cell_cancel(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<Redirect, Error> {
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     cell.cancel(cluster.pool()).await?;
     Ok(Redirect::to(format!(
@@ -352,12 +311,8 @@ pub async fn cell_edit(
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let mut cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
-    cell.update(
-        cluster.pool(),
-        data.cell_type.parse::<i32>()?,
-        data.contents,
-    )
-    .await?;
+    cell.update(cluster.pool(), data.cell_type.parse::<i32>()?, data.contents)
+        .await?;
 
     debug!("Rendering cell id={}", cell.id);
     cell.render(cluster.pool()).await?;
@@ -397,11 +352,7 @@ pub async fn cell_trigger_edit(
 }
 
 #[post("/notebooks/<notebook_id>/cell/<cell_id>/play")]
-pub async fn cell_play(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-    cell_id: i64,
-) -> Result<ResponseOk, Error> {
+pub async fn cell_play(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let mut cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     cell.render(cluster.pool()).await?;
@@ -419,11 +370,7 @@ pub async fn cell_play(
 }
 
 #[post("/notebooks/<notebook_id>/cell/<cell_id>/remove")]
-pub async fn cell_remove(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-    cell_id: i64,
-) -> Result<ResponseOk, Error> {
+pub async fn cell_remove(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     let bust_cache = std::time::SystemTime::now()
@@ -442,11 +389,7 @@ pub async fn cell_remove(
 }
 
 #[post("/notebooks/<notebook_id>/cell/<cell_id>/delete")]
-pub async fn cell_delete(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-    cell_id: i64,
-) -> Result<Redirect, Error> {
+pub async fn cell_delete(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<Redirect, Error> {
     let _notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
@@ -518,9 +461,7 @@ pub async fn models_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<Respon
 pub async fn snapshots_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let snapshots = models::Snapshot::all(cluster.pool()).await?;
 
-    Ok(ResponseOk(
-        templates::Snapshots { snapshots }.render_once().unwrap(),
-    ))
+    Ok(ResponseOk(templates::Snapshots { snapshots }.render_once().unwrap()))
 }
 
 #[get("/snapshots/<id>")]
@@ -560,12 +501,7 @@ pub async fn deployments_index(cluster: ConnectedCluster<'_>) -> Result<Response
     }
 
     Ok(ResponseOk(
-        templates::Deployments {
-            projects,
-            deployments,
-        }
-        .render_once()
-        .unwrap(),
+        templates::Deployments { projects, deployments }.render_once().unwrap(),
     ))
 }
 
@@ -618,12 +554,9 @@ pub async fn uploader_upload(
 
 #[get("/uploader/done?<table_name>")]
 pub async fn uploaded_index(cluster: ConnectedCluster<'_>, table_name: &str) -> ResponseOk {
-    let sql = templates::Sql::new(
-        cluster.pool(),
-        &format!("SELECT * FROM {} LIMIT 10", table_name),
-    )
-    .await
-    .unwrap();
+    let sql = templates::Sql::new(cluster.pool(), &format!("SELECT * FROM {} LIMIT 10", table_name))
+        .await
+        .unwrap();
     ResponseOk(
         templates::Uploaded {
             table_name: table_name.to_string(),
@@ -636,11 +569,7 @@ pub async fn uploaded_index(cluster: ConnectedCluster<'_>, table_name: &str) -> 
 }
 
 #[get("/?<tab>&<id>")]
-pub async fn dashboard(
-    cluster: ConnectedCluster<'_>,
-    tab: Option<&str>,
-    id: Option<i64>,
-) -> Result<ResponseOk, Error> {
+pub async fn dashboard(cluster: ConnectedCluster<'_>, tab: Option<&str>, id: Option<i64>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
 
     let mut breadcrumbs = vec![NavLink::new("Dashboard", "/dashboard")];
@@ -672,13 +601,8 @@ pub async fn dashboard(
         "Project" => {
             let project = models::Project::get_by_id(cluster.pool(), id.unwrap()).await?;
             breadcrumbs.push(NavLink::new("Projects", "/dashboard?tab=Projects"));
-            breadcrumbs.push(
-                NavLink::new(
-                    &project.name,
-                    &format!("/dashboard?tab=Project&id={}", project.id),
-                )
-                .active(),
-            );
+            breadcrumbs
+                .push(NavLink::new(&project.name, &format!("/dashboard?tab=Project&id={}", project.id)).active());
         }
 
         "Models" => {
@@ -694,13 +618,7 @@ pub async fn dashboard(
                 &project.name,
                 &format!("/dashboard?tab=Project&id={}", project.id),
             ));
-            breadcrumbs.push(
-                NavLink::new(
-                    &model.algorithm,
-                    &format!("/dashboard?tab=Model&id={}", model.id),
-                )
-                .active(),
-            );
+            breadcrumbs.push(NavLink::new(&model.algorithm, &format!("/dashboard?tab=Model&id={}", model.id)).active());
         }
 
         "Snapshots" => {
@@ -756,11 +674,7 @@ pub async fn dashboard(
 
         "Model" => vec![tabs::Tab {
             name: "Model",
-            content: ModelTab {
-                model_id: id.unwrap(),
-            }
-            .render_once()
-            .unwrap(),
+            content: ModelTab { model_id: id.unwrap() }.render_once().unwrap(),
         }],
 
         "Snapshots" => vec![tabs::Tab {
@@ -786,9 +700,7 @@ pub async fn dashboard(
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Notebooks"), Some(tab))?;
 
-    Ok(ResponseOk(
-        layout.render(templates::Dashboard { tabs: nav_tabs }),
-    ))
+    Ok(ResponseOk(layout.render(templates::Dashboard { tabs: nav_tabs })))
 }
 
 #[get("/playground")]
@@ -798,12 +710,7 @@ pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
 }
 
 #[get("/notifications/remove_banner?<id>&<alert>")]
-pub fn remove_banner(
-    id: String,
-    alert: bool,
-    cookies: &CookieJar<'_>,
-    context: &Cluster,
-) -> ResponseOk {
+pub fn remove_banner(id: String, alert: bool, cookies: &CookieJar<'_>, context: &Cluster) -> ResponseOk {
     let mut viewed = Notifications::get_viewed(cookies);
 
     viewed.push(id);
@@ -814,9 +721,7 @@ pub fn remove_banner(
             if alert {
                 notifications
                     .into_iter()
-                    .filter(|n: &&Notification| -> bool {
-                        Notification::is_alert(&n.level) && !viewed.contains(&n.id)
-                    })
+                    .filter(|n: &&Notification| -> bool { Notification::is_alert(&n.level) && !viewed.contains(&n.id) })
                     .next()
             } else {
                 notifications
@@ -831,17 +736,9 @@ pub fn remove_banner(
     };
 
     if alert {
-        return ResponseOk(
-            AlertBanner::from_notification(notification)
-                .render_once()
-                .unwrap(),
-        );
+        return ResponseOk(AlertBanner::from_notification(notification).render_once().unwrap());
     } else {
-        return ResponseOk(
-            FeatureBanner::from_notification(notification)
-                .render_once()
-                .unwrap(),
-        );
+        return ResponseOk(FeatureBanner::from_notification(notification).render_once().unwrap());
     }
 }
 

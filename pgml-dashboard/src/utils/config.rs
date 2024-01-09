@@ -74,8 +74,7 @@ impl Config {
             render_errors: env_is_set("RENDER_ERRORS") || dev_mode,
             deployment: env_string_default("DEPLOYMENT", "localhost"),
             signup_url,
-            standalone_dashboard: !cargo_manifest_dir.contains("deps")
-                && !cargo_manifest_dir.contains("cloud2"),
+            standalone_dashboard: !cargo_manifest_dir.contains("deps") && !cargo_manifest_dir.contains("cloud2"),
             github_stars,
             css_extension,
             js_extension,

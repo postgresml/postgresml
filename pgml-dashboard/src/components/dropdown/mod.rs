@@ -54,10 +54,7 @@ impl Dropdown {
     }
 
     pub fn nav(links: Vec<StaticNavLink>) -> Self {
-        let binding = links
-            .iter()
-            .filter(|link| link.active)
-            .collect::<Vec<&StaticNavLink>>();
+        let binding = links.iter().filter(|link| link.active).collect::<Vec<&StaticNavLink>>();
 
         let active = binding.first();
         let value = if let Some(active) = active {

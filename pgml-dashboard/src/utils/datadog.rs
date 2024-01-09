@@ -74,11 +74,7 @@ pub async fn timing(metric: &str, millis: f32, tags: Option<&HashMap<String, Str
 }
 
 #[allow(dead_code)]
-pub async fn time<T>(
-    metric: &str,
-    tags: Option<&HashMap<String, String>>,
-    f: impl FnOnce() -> T,
-) -> T {
+pub async fn time<T>(metric: &str, tags: Option<&HashMap<String, String>>, f: impl FnOnce() -> T) -> T {
     let start = Instant::now();
     let result = f();
     send(

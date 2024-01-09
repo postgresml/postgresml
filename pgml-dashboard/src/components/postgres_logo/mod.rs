@@ -9,9 +9,7 @@ pub struct PostgresLogo {
 
 impl PostgresLogo {
     pub fn new(link: &str) -> PostgresLogo {
-        PostgresLogo {
-            link: link.to_owned(),
-        }
+        PostgresLogo { link: link.to_owned() }
     }
 }
 

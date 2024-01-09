@@ -12,18 +12,10 @@ pub struct Tabs<'a> {
 }
 
 impl<'a> Tabs<'a> {
-    pub fn new(
-        tabs: Vec<Tab<'a>>,
-        default: Option<&'a str>,
-        active: Option<&'a str>,
-    ) -> anyhow::Result<Self> {
+    pub fn new(tabs: Vec<Tab<'a>>, default: Option<&'a str>, active: Option<&'a str>) -> anyhow::Result<Self> {
         let default = match default {
             Some(default) => default,
-            _ => {
-                tabs.get(0)
-                    .ok_or(anyhow!("There must be at least one tab."))?
-                    .name
-            }
+            _ => tabs.get(0).ok_or(anyhow!("There must be at least one tab."))?.name,
         };
 
         let active = active
@@ -34,10 +26,6 @@ impl<'a> Tabs<'a> {
             })
             .unwrap_or(default);
 
-        Ok(Tabs {
-            tabs,
-            default,
-            active,
-        })
+        Ok(Tabs { tabs, default, active })
     }
 }
