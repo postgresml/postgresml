@@ -742,16 +742,24 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         _ => "".to_string(),
                     };
 
-                    for _ in 0..fragment.len() + 1 {
+                    // Remove fragment and the fragment identifier #.
+                    for _ in 0..fragment.len()
+                        + match fragment.len() {
+                            0 => 0,
+                            _ => 1,
+                        }
+                    {
                         link.url.pop();
                     }
 
+                    // Remove file path to make this a relative url.
                     if link.url.ends_with(".md") {
                         for _ in 0..".md".len() {
                             link.url.pop();
                         }
                     }
 
+                    // Add fragment path that matches toc links.
                     let header_id = TocLink::from_fragment(fragment).id;
                     for c in header_id.chars() {
                         link.url.push(c)
@@ -1041,15 +1049,9 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     info_block_close_items.push(None);
                     parent.detach();
                 } else if text.contains("{% content-ref url=") {
-                    let url = parser(text.as_ref(), r#"url=""#);
-
                     let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(format!(
-                        r#"<div>
-                                <a href="{}">
-                                    <div>"#,
-                        url.unwrap(),
+                        r#"<div>"#,
                     ))))));
-
                     let parent = node.parent().unwrap();
 
                     info_block_close_items.push(None);
@@ -1096,14 +1098,8 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     parent.detach();
                 } else if text.starts_with("{% endcontent-ref %}") {
                     let parent = node.parent().unwrap();
-
                     let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
-                        r#"
-                                </div>
-                            </a>
-                        </div>
-                        "#
-                        .to_string(),
+                        r#"</div>"#.to_string(),
                     )))));
 
                     parent.insert_after(n);
