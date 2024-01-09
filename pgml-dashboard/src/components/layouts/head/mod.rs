@@ -9,6 +9,7 @@ pub struct Head {
     pub image: Option<String>,
     pub preloads: Vec<String>,
     pub context: Option<String>,
+    pub canonical: Option<String>,
 }
 
 impl Head {
@@ -28,6 +29,11 @@ impl Head {
 
     pub fn description(mut self, description: &str) -> Head {
         self.description = Some(description.to_owned());
+        self
+    }
+
+    pub fn canonical(mut self, canonical: &str) -> Head {
+        self.canonical = Some(canonical.to_owned());
         self
     }
 

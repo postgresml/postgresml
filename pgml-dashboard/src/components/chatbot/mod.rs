@@ -42,16 +42,8 @@ const EXAMPLE_QUESTIONS: ExampleQuestions = [
 ];
 
 const KNOWLEDGE_BASES_WITH_LOGO: [KnowledgeBaseWithLogo; 4] = [
-    KnowledgeBaseWithLogo::new(
-        "postgresml",
-        "PostgresML",
-        "/dashboard/static/images/owl_gradient.svg",
-    ),
-    KnowledgeBaseWithLogo::new(
-        "pytorch",
-        "PyTorch",
-        "/dashboard/static/images/logos/pytorch.svg",
-    ),
+    KnowledgeBaseWithLogo::new("postgresml", "PostgresML", "/dashboard/static/images/owl_gradient.svg"),
+    KnowledgeBaseWithLogo::new("pytorch", "PyTorch", "/dashboard/static/images/logos/pytorch.svg"),
     KnowledgeBaseWithLogo::new("rust", "Rust", "/dashboard/static/images/logos/rust.svg"),
     KnowledgeBaseWithLogo::new(
         "postgresql",
@@ -107,12 +99,7 @@ struct ChatbotBrain {
 }
 
 impl ChatbotBrain {
-    const fn new(
-        id: &'static str,
-        provider: &'static str,
-        model: &'static str,
-        logo: &'static str,
-    ) -> Self {
+    const fn new(id: &'static str, provider: &'static str, model: &'static str, logo: &'static str) -> Self {
         Self {
             id,
             provider,

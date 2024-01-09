@@ -44,9 +44,7 @@ pub struct Layout {
 impl Layout {
     pub fn new(title: &str, context: Option<&crate::guards::Cluster>) -> Self {
         let head = match context.as_ref() {
-            Some(context) => Head::new()
-                .title(title)
-                .context(&context.context.head_items),
+            Some(context) => Head::new().title(title).context(&context.context.head_items),
             None => Head::new().title(title),
         };
 
@@ -65,6 +63,11 @@ impl Layout {
 
     pub fn image(&mut self, image: &str) -> &mut Self {
         self.head.image = Some(image.to_owned());
+        self
+    }
+
+    pub fn canonical(&mut self, canonical: &str) -> &mut Self {
+        self.head.canonical = Some(canonical.to_string());
         self
     }
 
@@ -346,10 +349,7 @@ impl Sql {
                         let (hour, minute, second, milli) = value.as_hms_milli();
                         let (year, month, day) = value.to_calendar_date();
 
-                        format!(
-                            "{}-{}-{} {}:{}:{}.{}",
-                            year, month, day, hour, minute, second, milli
-                        )
+                        format!("{}-{}-{} {}:{}:{}.{}", year, month, day, hour, minute, second, milli)
                     }
 
                     "MONEY" => {

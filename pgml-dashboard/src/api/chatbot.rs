@@ -46,9 +46,9 @@ impl ChatRole {
         match self {
             ChatRole::User => "user",
             ChatRole::Bot => match brain {
-                ChatbotBrain::OpenAIGPT4
-                | ChatbotBrain::TekniumOpenHermes25Mistral7B
-                | ChatbotBrain::Starling7b => "assistant",
+                ChatbotBrain::OpenAIGPT4 | ChatbotBrain::TekniumOpenHermes25Mistral7B | ChatbotBrain::Starling7b => {
+                    "assistant"
+                }
                 ChatbotBrain::GrypheMythoMaxL213b => "model",
             },
             ChatRole::System => "system",
@@ -69,11 +69,7 @@ impl ChatbotBrain {
         !matches!(self, Self::OpenAIGPT4)
     }
 
-    fn get_system_message(
-        &self,
-        knowledge_base: &KnowledgeBase,
-        context: &str,
-    ) -> anyhow::Result<serde_json::Value> {
+    fn get_system_message(&self, knowledge_base: &KnowledgeBase, context: &str) -> anyhow::Result<serde_json::Value> {
         match self {
             Self::OpenAIGPT4 => {
                 let system_prompt = std::env::var("CHATBOT_CHATGPT_SYSTEM_PROMPT")?;
@@ -242,10 +238,7 @@ impl Document {
             .take(32)
             .map(char::from)
             .collect();
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis();
+        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
         Document {
             id,
             text: text.to_string(),
@@ -275,9 +268,7 @@ async fn get_openai_chatgpt_answer<M: Serialize>(messages: M) -> anyhow::Result<
         .json::<serde_json::Value>()
         .await?;
 
-    let response = response["choices"]
-        .as_array()
-        .context("No data returned from OpenAI")?[0]["message"]["content"]
+    let response = response["choices"].as_array().context("No data returned from OpenAI")?[0]["message"]["content"]
         .as_str()
         .context("The reponse content from OpenAI was not a string")?
         .to_string();
@@ -449,12 +440,11 @@ async fn do_chatbot_get_history(user: &User, limit: usize) -> anyhow::Result<Vec
                 .as_str()
                 .context("Error parsing text")?
                 .to_string();
-            let model: ChatbotBrain = serde_json::from_value(m["document"]["model"].to_owned())
-                .context("Error parsing model")?;
+            let model: ChatbotBrain =
+                serde_json::from_value(m["document"]["model"].to_owned()).context("Error parsing model")?;
             let model: &str = model.into();
-            let knowledge_base: KnowledgeBase =
-                serde_json::from_value(m["document"]["knowledge_base"].to_owned())
-                    .context("Error parsing knowledge_base")?;
+            let knowledge_base: KnowledgeBase = serde_json::from_value(m["document"]["knowledge_base"].to_owned())
+                .context("Error parsing knowledge_base")?;
             let knowledge_base: &str = knowledge_base.into();
             Ok(HistoryMessage {
                 side,
@@ -538,17 +528,24 @@ async fn process_message(
             Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
         );
         let context = collection
-        .query()
-        .vector_recall(&data.question, &pipeline, Some(json!({
-            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
-        }).into()))
-        .limit(5)
-        .fetch_all()
-        .await?
-        .into_iter()
-        .map(|(_, context, metadata)| format!("\n\n#### Document {}: \n{}\n\n", metadata["id"], context))
-        .collect::<Vec<String>>()
-        .join("\n");
+            .query()
+            .vector_recall(
+                &data.question,
+                &pipeline,
+                Some(
+                    json!({
+                        "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+                    })
+                    .into(),
+                ),
+            )
+            .limit(5)
+            .fetch_all()
+            .await?
+            .into_iter()
+            .map(|(_, context, metadata)| format!("\n\n#### Document {}: \n{}\n\n", metadata["id"], context))
+            .collect::<Vec<String>>()
+            .join("\n");
 
         let history_collection = Collection::new(
             "ChatHistory",
@@ -590,49 +587,47 @@ async fn process_message(
             .await?;
         messages.reverse();
 
-        let (mut history, _) =
-            messages
-                .into_iter()
-                .fold((Vec::new(), None), |(mut new_history, role), value| {
-                    let current_role: ChatRole =
-                        serde_json::from_value(value["document"]["role"].to_owned())
-                            .expect("Error parsing chat role");
-                    if let Some(role) = role {
-                        if role == current_role {
-                            match role {
-                                ChatRole::User => new_history.push(
-                                    serde_json::json!({
-                                        "role": ChatRole::Bot.to_model_specific_role(&brain),
-                                        "content": "*no response due to error*"
-                                    })
-                                    .into(),
-                                ),
-                                ChatRole::Bot => new_history.push(
-                                    serde_json::json!({
-                                        "role": ChatRole::User.to_model_specific_role(&brain),
-                                        "content": "*no response due to error*"
-                                    })
-                                    .into(),
-                                ),
-                                _ => panic!("Too many system messages"),
-                            }
+        let (mut history, _) = messages
+            .into_iter()
+            .fold((Vec::new(), None), |(mut new_history, role), value| {
+                let current_role: ChatRole =
+                    serde_json::from_value(value["document"]["role"].to_owned()).expect("Error parsing chat role");
+                if let Some(role) = role {
+                    if role == current_role {
+                        match role {
+                            ChatRole::User => new_history.push(
+                                serde_json::json!({
+                                    "role": ChatRole::Bot.to_model_specific_role(&brain),
+                                    "content": "*no response due to error*"
+                                })
+                                .into(),
+                            ),
+                            ChatRole::Bot => new_history.push(
+                                serde_json::json!({
+                                    "role": ChatRole::User.to_model_specific_role(&brain),
+                                    "content": "*no response due to error*"
+                                })
+                                .into(),
+                            ),
+                            _ => panic!("Too many system messages"),
                         }
-                        let new_message: pgml::types::Json = serde_json::json!({
-                            "role": current_role.to_model_specific_role(&brain),
-                            "content": value["document"]["text"]
-                        })
-                        .into();
-                        new_history.push(new_message);
-                    } else if matches!(current_role, ChatRole::User) {
-                        let new_message: pgml::types::Json = serde_json::json!({
-                            "role": current_role.to_model_specific_role(&brain),
-                            "content": value["document"]["text"]
-                        })
-                        .into();
-                        new_history.push(new_message);
                     }
-                    (new_history, Some(current_role))
-                });
+                    let new_message: pgml::types::Json = serde_json::json!({
+                        "role": current_role.to_model_specific_role(&brain),
+                        "content": value["document"]["text"]
+                    })
+                    .into();
+                    new_history.push(new_message);
+                } else if matches!(current_role, ChatRole::User) {
+                    let new_message: pgml::types::Json = serde_json::json!({
+                        "role": current_role.to_model_specific_role(&brain),
+                        "content": value["document"]["text"]
+                    })
+                    .into();
+                    new_history.push(new_message);
+                }
+                (new_history, Some(current_role))
+            });
 
         let system_message = brain.get_system_message(&knowledge_base, &context)?;
         history.insert(0, system_message.into());
@@ -657,8 +652,7 @@ async fn process_message(
             .into(),
         );
 
-        let update_history =
-            UpdateHistory::new(history_collection, user_document, brain, knowledge_base);
+        let update_history = UpdateHistory::new(history_collection, user_document, brain, knowledge_base);
 
         if brain.is_open_source() {
             let op = OpenSourceAI::new(Some(

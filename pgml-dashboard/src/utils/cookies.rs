@@ -12,10 +12,7 @@ impl Notifications {
     pub fn get_viewed(cookies: &CookieJar<'_>) -> Vec<String> {
         let viewed = match cookies.get_private("session") {
             Some(session) => {
-                match serde_json::from_str::<serde_json::Value>(session.value()).unwrap()
-                    ["notifications"]
-                    .as_array()
-                {
+                match serde_json::from_str::<serde_json::Value>(session.value()).unwrap()["notifications"].as_array() {
                     Some(items) => items
                         .into_iter()
                         .map(|x| x.as_str().unwrap().to_string())

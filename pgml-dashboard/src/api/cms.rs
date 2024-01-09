@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
 use lazy_static::lazy_static;
@@ -17,9 +20,45 @@ use crate::{
 use serde::{Deserialize, Serialize};
 
 lazy_static! {
-    static ref BLOG: Collection = Collection::new("Blog", true);
-    static ref CAREERS: Collection = Collection::new("Careers", true);
-    static ref DOCS: Collection = Collection::new("Docs", false);
+    static ref BLOG: Collection = Collection::new(
+        "Blog",
+        true,
+        HashMap::from([
+            ("announcing-hnsw-support-in-our-sdk", "speeding-up-vector-recall-5x-with-hnsw"),
+            ("backwards-compatible-or-bust-python-inside-rust-inside-postgres/", "backwards-compatible-or-bust-python-inside-rust-inside-postgres"),
+            ("data-is-living-and-relational/", "data-is-living-and-relational"),
+            ("data-is-living-and-relational/", "data-is-living-and-relational"),
+            ("generating-llm-embeddings-with-open-source-models-in-postgresml/", "generating-llm-embeddings-with-open-source-models-in-postgresml"),
+            ("introducing-postgresml-python-sdk-build-end-to-end-vector-search-applications-without-openai-and-pinecone", "introducing-postgresml-python-sdk-build-end-to-end-vector-search-applications-without-openai-and-pin"),
+            ("llm-based-pipelines-with-postgresml-and-dbt", "llm-based-pipelines-with-postgresml-and-dbt-data-build-tool"),
+            ("oxidizing-machine-learning/", "oxidizing-machine-learning"),
+            ("personalize-embedding-vector-search-results-with-huggingface-and-pgvector", "personalize-embedding-results-with-application-data-in-your-database"),
+            ("pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-I", "pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i"),
+            ("postgres-full-text-search-is-awesome/", "postgres-full-text-search-is-awesome"),
+            ("postgresml-is-8x-faster-than-python-http-microservices/", "postgresml-is-8-40x-faster-than-python-http-microservices"),
+            ("postgresml-is-8x-faster-than-python-http-microservices", "postgresml-is-8-40x-faster-than-python-http-microservices"),
+            ("postgresml-is-moving-to-rust-for-our-2.0-release/", "postgresml-is-moving-to-rust-for-our-2.0-release"),
+            ("postgresml-raises-4.7m-to-launch-serverless-ai-application-databases-based-on-postgres/", "postgresml-raises-usd4.7m-to-launch-serverless-ai-application-databases-based-on-postgres"),
+            ("postgresml-raises-4.7m-to-launch-serverless-ai-application-databases-based-on-postgres", "postgresml-raises-usd4.7m-to-launch-serverless-ai-application-databases-based-on-postgres"),
+            ("scaling-postgresml-to-one-million-requests-per-second/", "scaling-postgresml-to-1-million-requests-per-second"),
+            ("scaling-postgresml-to-one-million-requests-per-second", "scaling-postgresml-to-1-million-requests-per-second"),
+            ("which-database-that-is-the-question/", "which-database-that-is-the-question"),
+        ])
+    );
+    static ref CAREERS: Collection = Collection::new("Careers", true, HashMap::from([("a", "b")]));
+    static ref DOCS: Collection = Collection::new(
+        "Docs",
+        false,
+        HashMap::from([
+            ("sdks/tutorials/semantic-search-using-instructor-model", "introduction/apis/client-sdks/tutorials/semantic-search-using-instructor-model"),
+            ("data-storage-and-retrieval/documents", "resources/data-storage-and-retrieval/documents"),
+            ("guides/setup/quick_start_with_docker", "resources/developer-docs/quick-start-with-docker"),
+            ("guides/transformers/setup", "resources/developer-docs/quick-start-with-docker"),
+            ("transformers/fine_tuning/", "introduction/apis/sql-extensions/pgml.tune"),
+            ("guides/predictions/overview", "introduction/apis/sql-extensions/pgml.predict/"),
+            ("machine-learning/supervised-learning/data-pre-processing", "introduction/apis/sql-extensions/pgml.train/data-pre-processing"),
+        ])
+    );
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,6 +74,7 @@ pub struct Document {
 
 impl Document {
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
+        warn!("path: {:?}", path);
         let contents = tokio::fs::read_to_string(&path).await?;
 
         let parts = contents.split("---").collect::<Vec<&str>>();
@@ -45,8 +85,7 @@ impl Document {
                     if meta.len() == 0 || meta[0].as_hash().is_none() {
                         (None, contents)
                     } else {
-                        let description: Option<String> = match meta[0]["description"].is_badvalue()
-                        {
+                        let description: Option<String> = match meta[0]["description"].is_badvalue() {
                             true => None,
                             false => Some(meta[0]["description"].as_str().unwrap().to_string()),
                         };
@@ -77,17 +116,10 @@ impl Document {
         let mut plugins = ComrakPlugins::default();
         let headings = crate::utils::markdown::MarkdownHeadings::new();
         plugins.render.heading_adapter = Some(&headings);
-        plugins.render.codefence_syntax_highlighter =
-            Some(&crate::utils::markdown::SyntaxHighlighter {});
+        plugins.render.codefence_syntax_highlighter = Some(&crate::utils::markdown::SyntaxHighlighter {});
 
         let mut html = vec![];
-        format_html_with_plugins(
-            root,
-            &crate::utils::markdown::options(),
-            &mut html,
-            &plugins,
-        )
-        .unwrap();
+        format_html_with_plugins(root, &crate::utils::markdown::options(), &mut html, &plugins).unwrap();
         let html = String::from_utf8(html).unwrap();
 
         let document = Document {
@@ -115,10 +147,12 @@ struct Collection {
     url_root: PathBuf,
     /// A hierarchical list of content in this collection
     index: Vec<IndexLink>,
+    /// A list of old paths to new paths in this collection
+    redirects: HashMap<&'static str, &'static str>,
 }
 
 impl Collection {
-    pub fn new(name: &str, hide_root: bool) -> Collection {
+    pub fn new(name: &str, hide_root: bool, redirects: HashMap<&'static str, &'static str>) -> Collection {
         info!("Loading collection: {name}");
         let name = name.to_owned();
         let slug = name.to_lowercase();
@@ -131,6 +165,7 @@ impl Collection {
             root_dir,
             asset_dir,
             url_root,
+            redirects,
             ..Default::default()
         };
         collection.build_index(hide_root);
@@ -151,13 +186,30 @@ impl Collection {
     ) -> Result<ResponseOk, crate::responses::NotFound> {
         info!("get_content: {} | {path:?}", self.name);
 
-        if origin.path().ends_with("/") {
+        let mut redirected = false;
+        match self
+            .redirects
+            .get(path.as_os_str().to_str().expect("needs to be a well formed path"))
+        {
+            Some(redirect) => {
+                warn!("found redirect: {} <- {:?}", redirect, path);
+                redirected = true; // reserved for some fallback path
+                path = PathBuf::from(redirect);
+            }
+            None => {}
+        };
+
+        let canonical = format!(
+            "https://postgresml.org{}/{}",
+            self.url_root.to_string_lossy(),
+            path.to_string_lossy()
+        );
+        if origin.path().ends_with("/") && !redirected {
             path = path.join("README");
         }
-
         let path = self.root_dir.join(format!("{}.md", path.to_string_lossy()));
 
-        self.render(&path, cluster).await
+        self.render(&path, &canonical, cluster).await
     }
 
     /// Create an index of the Collection based on the SUMMARY.md from Gitbook.
@@ -178,9 +230,9 @@ impl Collection {
         {
             match node {
                 Node::List(list) => {
-                    let mut links = self.get_sub_links(list).unwrap_or_else(|_| {
-                        panic!("Could not parse list of index links: {summary_path:?}")
-                    });
+                    let mut links = self
+                        .get_sub_links(list)
+                        .unwrap_or_else(|_| panic!("Could not parse list of index links: {summary_path:?}"));
                     index.append(&mut links);
                 }
                 _ => {
@@ -228,9 +280,8 @@ impl Collection {
                                                             url = url.replace("README", "");
                                                         }
                                                         let url = self.url_root.join(url);
-                                                        let parent =
-                                                            IndexLink::new(text.value.as_str())
-                                                                .href(&url.to_string_lossy());
+                                                        let parent = IndexLink::new(text.value.as_str())
+                                                            .href(&url.to_string_lossy());
                                                         links.push(parent);
                                                     }
                                                     _ => error!("unhandled link child: {node:?}"),
@@ -268,6 +319,7 @@ impl Collection {
     async fn render<'a>(
         &self,
         path: &'a PathBuf,
+        canonical: &str,
         cluster: &Cluster,
     ) -> Result<ResponseOk, crate::responses::NotFound> {
         let user = if cluster.context.user.is_anonymous() {
@@ -292,6 +344,7 @@ impl Collection {
                 }
 
                 let layout = layout
+                    .canonical(canonical)
                     .nav_title(&self.name)
                     .nav_links(&index)
                     .toc_links(&doc.toc_links)
@@ -385,6 +438,15 @@ async fn get_docs(
     DOCS.get_content(path, cluster, origin).await
 }
 
+#[get("/user_guides/<path..>", rank = 5)]
+async fn get_user_guides(
+    path: PathBuf,
+    cluster: &Cluster,
+    origin: &Origin<'_>,
+) -> Result<ResponseOk, crate::responses::NotFound> {
+    DOCS.get_content(path, cluster, origin).await
+}
+
 pub fn routes() -> Vec<Route> {
     routes![
         get_blog,
@@ -393,6 +455,7 @@ pub fn routes() -> Vec<Route> {
         get_careers_asset,
         get_docs,
         get_docs_asset,
+        get_user_guides,
         search
     ]
 }
@@ -462,9 +525,7 @@ This is the end of the markdown
         format_html_with_plugins(root, &options(), &mut html, &plugins).unwrap();
         let html = String::from_utf8(html).unwrap();
 
-        assert!(
-            !html.contains(r#"<div class="overflow-auto w-100">"#) || !html.contains(r#"</div>"#)
-        );
+        assert!(!html.contains(r#"<div class="overflow-auto w-100">"#) || !html.contains(r#"</div>"#));
     }
 
     async fn rocket() -> Rocket<Build> {
@@ -542,11 +603,7 @@ This is the end of the markdown
         let req = client.get("/docs/not_a_doc");
         let rsp = req.dispatch().await;
 
-        assert!(
-            rsp.status() == Status::NotFound,
-            "Returned status {:?}",
-            rsp.status()
-        );
+        assert!(rsp.status() == Status::NotFound, "Returned status {:?}", rsp.status());
     }
 
     // Test backend for line highlights and line numbers added
@@ -594,17 +651,10 @@ This is the end of the markdown
         let mut plugins = ComrakPlugins::default();
         let headings = crate::utils::markdown::MarkdownHeadings::new();
         plugins.render.heading_adapter = Some(&headings);
-        plugins.render.codefence_syntax_highlighter =
-            Some(&crate::utils::markdown::SyntaxHighlighter {});
+        plugins.render.codefence_syntax_highlighter = Some(&crate::utils::markdown::SyntaxHighlighter {});
 
         let mut html = vec![];
-        format_html_with_plugins(
-            root,
-            &crate::utils::markdown::options(),
-            &mut html,
-            &plugins,
-        )
-        .unwrap();
+        format_html_with_plugins(root, &crate::utils::markdown::options(), &mut html, &plugins).unwrap();
         let html = String::from_utf8(html).unwrap();
 
         println!("expected: {}", expected);
@@ -612,13 +662,8 @@ This is the end of the markdown
         println!("response: {}", html);
 
         assert!(
-            html.chars()
-                .filter(|c| !c.is_whitespace())
-                .collect::<String>()
-                == expected
-                    .chars()
-                    .filter(|c| !c.is_whitespace())
-                    .collect::<String>()
+            html.chars().filter(|c| !c.is_whitespace()).collect::<String>()
+                == expected.chars().filter(|c| !c.is_whitespace()).collect::<String>()
         )
     }
 }
