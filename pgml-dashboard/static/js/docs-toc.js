@@ -7,7 +7,7 @@ export default class extends Controller {
     this.scrollSpyAppend();
   }
 
-  scrollSpyAppend(e) {
+  scrollSpyAppend() {
     const spy = new bootstrap.ScrollSpy(document.body, {
       target: '#toc-nav',
       smoothScroll: true,

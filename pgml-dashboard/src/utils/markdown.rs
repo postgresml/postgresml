@@ -3,10 +3,7 @@ use crate::{templates::docs::TocLink, utils::config};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::sync::{
-    atomic::{AtomicUsize, Ordering},
-    Arc,
-};
+use std::sync::Arc;
 
 use anyhow::Result;
 use comrak::{
@@ -15,6 +12,7 @@ use comrak::{
     nodes::{Ast, AstNode, NodeValue},
     parse_document, Arena, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions,
 };
+use convert_case;
 use itertools::Itertools;
 use regex::Regex;
 use tantivy::collector::TopDocs;
@@ -22,7 +20,6 @@ use tantivy::query::{QueryParser, RegexQuery};
 use tantivy::schema::*;
 use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
-use convert_case;
 
 use std::sync::Mutex;
 
@@ -35,7 +32,7 @@ pub struct MarkdownHeadings {
 impl Default for MarkdownHeadings {
     fn default() -> Self {
         Self {
-            header_map: Arc::new(Mutex::new(HashMap::new()))
+            header_map: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 }
@@ -47,9 +44,9 @@ impl MarkdownHeadings {
 }
 
 /// Sets the document headers
-/// 
+///
 /// uses toclink to ensure header id matches what the TOC expects
-/// 
+///
 impl HeadingAdapter for MarkdownHeadings {
     fn enter(&self, meta: &HeadingMeta) -> String {
         let conv = convert_case::Converter::new().to_case(convert_case::Case::Kebab);
@@ -57,7 +54,7 @@ impl HeadingAdapter for MarkdownHeadings {
 
         let index = match self.header_map.lock().unwrap().get(&id) {
             Some(value) => value + 1,
-            _ => 0
+            _ => 0,
         };
 
         let id = TocLink::new(&id, index).id;
@@ -459,7 +456,7 @@ pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
                 if let NodeValue::Text(text) = &sibling.data.borrow().value {
                     let index = match header_count.get(text) {
                         Some(index) => index + 1,
-                        _ => 0
+                        _ => 0,
                     };
 
                     header_count.insert(text.clone(), index);
@@ -743,7 +740,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                 if path.is_relative() {
                     let fragment = match link.url.find("#") {
                         Some(index) => link.url[index + 1..link.url.len()].to_string(),
-                        _ => "".to_string()
+                        _ => "".to_string(),
                     };
 
                     for _ in 0..fragment.len() + 1 {
