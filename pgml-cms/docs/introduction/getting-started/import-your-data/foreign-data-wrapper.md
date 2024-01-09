@@ -16,7 +16,7 @@ Once you have them, we can setup our live foreign data wrapper connection. All f
 
 To connect to your database from PostgresML, first create a corresponding `SERVER`:
 
-```
+```sql
 CREATE SERVER live_db
 FOREIGN DATA WRAPPER postgres_fdw
 OPTIONS (
@@ -30,7 +30,7 @@ Replace `Host`, `Port` and `Database name` with details you've collected in the 
 
 Once you have a `SERVER`, let's authenticate to your database:
 
-```
+```sql
 CREATE USER MAPPING
 FOR CURRENT_USER
 SERVER live_db
@@ -42,7 +42,7 @@ OPTIONS (
 
 Replace `Postgres user` and `Postgres password` with details collected in the previous step. If everything went well, we'll be able to validate that everything is working with just one query:
 
-```
+```sql
 SELECT * FROM dblink(
   'live_db',
   'SELECT 1 AS one'
@@ -55,7 +55,7 @@ You can now execute any query you want on your live database from inside your Po
 
 Instead of creating temporary tables for each query, you can import your entire schema into PostgresML using foreign data wrappers:
 
-```
+```sql
 CREATE SCHEMA live_db_tables;
 
 IMPORT FOREIGN SCHEMA public
@@ -65,7 +65,7 @@ INTO live_db_tables;
 
 All your tables from your `public` schema are now available in the `live_db_tables` schema. You can read and write to those tables as if they were hosted in PostgresML. For example, if you have a table called `users`, you could access it with:
 
-```
+```sql
 SELECT * FROM live_db_tables.users LIMIT 1;
 ```
 
@@ -75,7 +75,7 @@ That's it, your PostgresML database is directly connected to your production dat
 
 To speed up access to your data, you can cache it in PostgresML by copying it from a foreign table into a regular table. Taking the example of the `users` table:
 
-```
+```sql
 CREATE TABLE public.users (LIKE live_db_tables.users);
 INSERT INTO public.users SELECT * FROM live_db_tables.users;
 ```

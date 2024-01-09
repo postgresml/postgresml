@@ -20,13 +20,13 @@ If you're using a Postgres database already, you can export any table as CSV wit
 psql -c "\copy your_table TO '~/Desktop/your_table.csv' CSV HEADER"
 ```
 
-If you're using another  data store, it should almost always provide a CSV export functionality, since CSV is the most commonly used data format in machine learning.
+If you're using another data store, it should almost always provide a CSV export functionality, since CSV is the most commonly used data format in machine learning.
 
 ### Create table in Postgres
 
 Creating a table in Postgres with the correct schema is as easy as:
 
-```
+```sql
 CREATE TABLE your_table (
   name TEXT,
   age INTEGER,
@@ -48,6 +48,6 @@ We took our export command and changed `TO` to `FROM`, and that's it. Make sure 
 
 If your data changed, repeat this process again. To avoid duplicate entries in your table, you can truncate (or delete) all rows beforehand:
 
-```
+```sql
 TRUNCATE your_table;
 ```

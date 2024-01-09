@@ -2,15 +2,15 @@
 
 ## Introduction
 
-PostgresML adds extensions to the PostgreSQL database, as well as providing separate Client SDKs in JavaScript and Python that leverage the database to implement common ML & AI use cases.&#x20;
+PostgresML adds extensions to the PostgreSQL database, as well as providing separate Client SDKs in JavaScript and Python that leverage the database to implement common ML & AI use cases.
 
-The extensions provide all of the ML & AI functionality via SQL APIs, like training and inference. They are designed to be used directly for all ML practitioners who implement dozens of different use cases on their own machine learning models.&#x20;
+The extensions provide all of the ML & AI functionality via SQL APIs, like training and inference. They are designed to be used directly for all ML practitioners who implement dozens of different use cases on their own machine learning models.
 
 We also provide Client SDKs that implement the best practices on top of the SQL APIs, to ease adoption and implement common application use cases in applications, like chatbots or search engines.
 
 ## SQL Extensions
 
-Postgres is designed to be _**extensible**_. This has created a rich open-source ecosystem of additional functionality built around the core project. Some [extensions](https://www.postgresql.org/docs/current/contrib.html) are include in the base Postgres distribution, but others are also available via the [PostgreSQL Extension Network](https://pgxn.org/). \
+Postgres is designed to be _**extensible**_. This has created a rich open-source ecosystem of additional functionality built around the core project. Some [extensions](https://www.postgresql.org/docs/current/contrib.html) are include in the base Postgres distribution, but others are also available via the [PostgreSQL Extension Network](https://pgxn.org/).\
 \
 There are 2 foundational extensions included in a PostgresML deployment that provide functionality inside the database through SQL APIs.
 
@@ -27,8 +27,3 @@ These SDKs delegate all work to the extensions running in the database, which mi
 
 Learn more about developing with the [client-sdks](client-sdks/ "mention")
 
-
-
-
-
-##

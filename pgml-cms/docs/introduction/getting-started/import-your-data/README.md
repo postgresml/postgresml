@@ -2,7 +2,7 @@
 
 Machine learning always depends on input data, whether it's generating text with pretrained LLMs, training a retention model on customer data, or predicting session abandonment in real time. Just like any PostgreSQL database, PostgresML can be configured as the authoritative application data store, a streaming replica from some other primary, or use foreign data wrappers to query another data host on demand. Depending on how frequently your data changes and where your authoritative data resides, different methodologies imply different tradeoffs.
 
-PostgresML can easily ingest data from your existing data stores.&#x20;
+PostgresML can easily ingest data from your existing data stores.
 
 ## Static data
 
@@ -20,4 +20,3 @@ Importing data from online databases can be done with foreign data wrappers. Hos
 [foreign-data-wrapper.md](foreign-data-wrapper.md)
 {% endcontent-ref %}
 
-####
