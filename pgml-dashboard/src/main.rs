@@ -1,8 +1,6 @@
 use log::{error, info, warn};
 
-use rocket::{
-    catch, catchers, fs::FileServer, get, http::Status, request::Request, response::Redirect,
-};
+use rocket::{catch, catchers, fs::FileServer, get, http::Status, request::Request, response::Redirect};
 
 use pgml_dashboard::{
     guards,
@@ -33,10 +31,7 @@ async fn not_found_handler(_status: Status, _request: &Request<'_>) -> Response 
 }
 
 #[catch(default)]
-async fn error_catcher(
-    status: Status,
-    request: &Request<'_>,
-) -> Result<BadRequest, responses::Error> {
+async fn error_catcher(status: Status, request: &Request<'_>) -> Result<BadRequest, responses::Error> {
     Err(responses::Error(anyhow::anyhow!(
         "{} {}\n{:?}",
         status.code,
@@ -59,8 +54,7 @@ async fn configure_reporting() -> Option<sentry::ClientInitGuard> {
             log::set_boxed_logger(Box::new(logger)).unwrap();
             log::set_max_level(level);
 
-            let name =
-                sentry::release_name!().unwrap_or_else(|| std::borrow::Cow::Borrowed("cloud2"));
+            let name = sentry::release_name!().unwrap_or_else(|| std::borrow::Cow::Borrowed("cloud2"));
             let sha = env!("GIT_SHA");
             let release = format!("{name}+{sha}");
             let result = sentry::init((
@@ -111,10 +105,7 @@ async fn main() {
         .mount("/dashboard", pgml_dashboard::routes())
         .mount("/", pgml_dashboard::api::routes())
         .mount("/", rocket::routes![pgml_dashboard::playground])
-        .register(
-            "/",
-            catchers![error_catcher, not_authorized_catcher, not_found_handler],
-        )
+        .register("/", catchers![error_catcher, not_authorized_catcher, not_found_handler])
         .attach(pgml_dashboard::fairings::RequestMonitor::new())
         .ignite()
         .await
@@ -138,9 +129,7 @@ mod test {
     async fn rocket() -> Rocket<Build> {
         dotenv::dotenv().ok();
 
-        pgml_dashboard::migrate(Cluster::default(None).pool())
-            .await
-            .unwrap();
+        pgml_dashboard::migrate(Cluster::default(None).pool()).await.unwrap();
 
         rocket::build()
             .manage(markdown::SearchIndex::open().unwrap())
@@ -290,7 +279,10 @@ mod test {
     #[rocket::async_test]
     async fn test_blogs() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/blog/postgresml-raises-usd4.7m-to-launch-serverless-ai-application-databases-based-on-postgres").dispatch().await;
+        let response = client
+            .get("/blog/postgresml-raises-usd4.7m-to-launch-serverless-ai-application-databases-based-on-postgres")
+            .dispatch()
+            .await;
         assert_eq!(response.status().code, 200);
     }
 }

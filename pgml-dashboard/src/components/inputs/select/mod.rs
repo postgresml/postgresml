@@ -31,11 +31,7 @@ impl Select {
             name: "input_name".to_owned(),
             ..Default::default()
         }
-        .options(vec![
-            "option1".to_owned(),
-            "option2".to_owned(),
-            "option3".to_owned(),
-        ])
+        .options(vec!["option1".to_owned(), "option2".to_owned(), "option3".to_owned()])
     }
 
     pub fn options<S: ToString>(mut self, values: Vec<S>) -> Self {

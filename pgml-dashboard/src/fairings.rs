@@ -34,9 +34,7 @@ impl Fairing for RequestMonitor {
     }
 
     async fn on_response<'r>(&self, request: &'r Request<'_>, response: &mut Response<'r>) {
-        let start = request
-            .local_cache(|| RequestMonitorStart(std::time::Instant::now()))
-            .0;
+        let start = request.local_cache(|| RequestMonitorStart(std::time::Instant::now())).0;
         let elapsed = start.elapsed().as_micros() as f32 / 1000.0;
         let status = response.status().code;
         let method = request.method().as_str();

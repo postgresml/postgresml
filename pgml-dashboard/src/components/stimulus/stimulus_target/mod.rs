@@ -8,9 +8,7 @@ pub struct StimulusTarget {
 
 impl StimulusTarget {
     pub fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
+        Self { ..Default::default() }
     }
 
     pub fn controller(mut self, controller: &str) -> Self {
@@ -27,9 +25,7 @@ impl StimulusTarget {
 impl Render for StimulusTarget {
     fn render(&self, b: &mut Buffer) -> Result<(), sailfish::RenderError> {
         match (self.controller.as_ref(), self.name.as_ref()) {
-            (Some(controller), Some(name)) => {
-                format!("data-{}-target=\"{}\"", controller, name).render(b)
-            }
+            (Some(controller), Some(name)) => format!("data-{}-target=\"{}\"", controller, name).render(b),
             _ => String::new().render(b),
         }
     }

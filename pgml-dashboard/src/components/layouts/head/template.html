@@ -49,7 +49,11 @@
       }
     }
   </script>
-  
+
+  <% if canonical.is_some() { %>
+  <link rel="canonical" href="<%- canonical.unwrap() %>">
+  <% } %>
+
   <link rel="stylesheet" data-turbo-track="reload" href="<%- config::css_url("style.css") %>">
   <script async src="https://data.cloud.hyperparam.ai/script.js" data-website-id="499122fd-f307-4e8d-af4b-88b9f5e9903b"></script>
   <script defer src="https://cdn.plot.ly/plotly-2.11.1.min.js"></script>

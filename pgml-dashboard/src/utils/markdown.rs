@@ -589,9 +589,7 @@ impl Admonition {
 
 impl From<&str> for Admonition {
     fn from(utf8: &str) -> Admonition {
-        let (class, icon, title) = if utf8.starts_with("!!! info")
-            || utf8.starts_with(r#"{% hint style="info" %}"#)
-        {
+        let (class, icon, title) = if utf8.starts_with("!!! info") || utf8.starts_with(r#"{% hint style="info" %}"#) {
             ("admonition-info", "help", "Info")
         } else if utf8.starts_with("!!! note") {
             ("admonition-note", "priority_high", "Note")
@@ -603,22 +601,17 @@ impl From<&str> for Admonition {
             ("admonition-question", "help", "Question")
         } else if utf8.starts_with("!!! example") {
             ("admonition-example", "code", "Example")
-        } else if utf8.starts_with("!!! success")
-            || utf8.starts_with(r#"{% hint style="success" %}"#)
-        {
+        } else if utf8.starts_with("!!! success") || utf8.starts_with(r#"{% hint style="success" %}"#) {
             ("admonition-success", "check_circle", "Success")
         } else if utf8.starts_with("!!! quote") {
             ("admonition-quote", "format_quote", "Quote")
         } else if utf8.starts_with("!!! bug") {
             ("admonition-bug", "bug_report", "Bug")
-        } else if utf8.starts_with("!!! warning")
-            || utf8.starts_with(r#"{% hint style="warning" %}"#)
-        {
+        } else if utf8.starts_with("!!! warning") || utf8.starts_with(r#"{% hint style="warning" %}"#) {
             ("admonition-warning", "warning", "Warning")
         } else if utf8.starts_with("!!! fail") {
             ("admonition-fail", "dangerous", "Fail")
-        } else if utf8.starts_with("!!! danger") || utf8.starts_with(r#"{% hint style="danger" %}"#)
-        {
+        } else if utf8.starts_with("!!! danger") || utf8.starts_with(r#"{% hint style="danger" %}"#) {
             ("admonition-danger", "gpp_maybe", "Danger")
         } else {
             ("admonition-generic", "", "")
@@ -798,13 +791,12 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     let tab = Tab::new(text.replace("=== ", "").replace('\"', ""));
 
                     if tabs.is_empty() {
-                        let n =
-                            arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
-                                r#"
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                            r#"
                                 <ul class="nav nav-tabs">
                             "#
-                                .to_string(),
-                            )))));
+                            .to_string(),
+                        )))));
 
                         parent.insert_after(n);
                         parent.detach();
@@ -817,9 +809,9 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         tabs.push(tab);
                     };
 
-                    parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(
-                        NodeValue::HtmlInline(tabs.last().unwrap().render()),
-                    )))));
+                    parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                        tabs.last().unwrap().render(),
+                    ))))));
 
                     // Remove the "===" from the tree.
                     node.detach();
@@ -832,37 +824,35 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     };
 
                     if !tabs.is_empty() {
-                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline("</ul>".to_string()),
-                        ))));
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                            "</ul>".to_string(),
+                        )))));
 
                         parent.insert_after(n);
                         parent.detach();
 
                         parent = n;
 
-                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline(r#"<div class="tab-content">"#.to_string()),
-                        ))));
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                            r#"<div class="tab-content">"#.to_string(),
+                        )))));
 
                         parent.insert_after(n);
 
                         parent = n;
 
                         for tab in tabs.iter() {
-                            let r = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(format!(
-                                    r#"
+                            let r = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(format!(
+                                r#"
                                                 <div
                                                     class="tab-pane {active} pt-2"
                                                     id="tab-{id}"
                                                     role="tabpanel"
                                                     aria-labelledby="tab-{id}">
                                             "#,
-                                    active = if tab.active { "show active" } else { "" },
-                                    id = tab.id
-                                )),
-                            ))));
+                                active = if tab.active { "show active" } else { "" },
+                                id = tab.id
+                            ))))));
 
                             for child in tab.children.iter() {
                                 r.append(child);
@@ -871,17 +861,17 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                             parent.append(r);
                             parent = r;
 
-                            let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(r#"</div>"#.to_string()),
-                            ))));
+                            let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                                r#"</div>"#.to_string(),
+                            )))));
 
                             parent.insert_after(n);
                             parent = n;
                         }
 
-                        parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline(r#"</div>"#.to_string()),
-                        )))));
+                        parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                            r#"</div>"#.to_string(),
+                        ))))));
 
                         tabs.clear();
                         node.detach();
@@ -903,13 +893,12 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     let tab = Tab::new(text.replace("{% tab title=\"", "").replace("\" %}", ""));
 
                     if tabs.is_empty() {
-                        let n =
-                            arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
-                                r#"
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                            r#"
                                 <ul class="nav nav-tabs">
                             "#
-                                .to_string(),
-                            )))));
+                            .to_string(),
+                        )))));
 
                         parent.insert_after(n);
                         parent.detach();
@@ -922,9 +911,9 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         tabs.push(tab);
                     };
 
-                    parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(
-                        NodeValue::HtmlInline(tabs.last().unwrap().render()),
-                    )))));
+                    parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                        tabs.last().unwrap().render(),
+                    ))))));
 
                     // Remove the "===" from the tree.
                     node.detach();
@@ -937,37 +926,35 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     };
 
                     if !tabs.is_empty() {
-                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline("</ul>".to_string()),
-                        ))));
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                            "</ul>".to_string(),
+                        )))));
 
                         parent.insert_after(n);
                         parent.detach();
 
                         parent = n;
 
-                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline(r#"<div class="tab-content">"#.to_string()),
-                        ))));
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                            r#"<div class="tab-content">"#.to_string(),
+                        )))));
 
                         parent.insert_after(n);
 
                         parent = n;
 
                         for tab in tabs.iter() {
-                            let r = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(format!(
-                                    r#"
+                            let r = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(format!(
+                                r#"
                                                 <div
                                                     class="tab-pane {active} pt-2"
                                                     id="tab-{id}"
                                                     role="tabpanel"
                                                     aria-labelledby="tab-{id}">
                                             "#,
-                                    active = if tab.active { "show active" } else { "" },
-                                    id = tab.id
-                                )),
-                            ))));
+                                active = if tab.active { "show active" } else { "" },
+                                id = tab.id
+                            ))))));
 
                             for child in tab.children.iter() {
                                 r.append(child);
@@ -976,17 +963,17 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                             parent.append(r);
                             parent = r;
 
-                            let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(r#"</div>"#.to_string()),
-                            ))));
+                            let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                                r#"</div>"#.to_string(),
+                            )))));
 
                             parent.insert_after(n);
                             parent = n;
                         }
 
-                        parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline(r#"</div>"#.to_string()),
-                        )))));
+                        parent.insert_after(arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                            r#"</div>"#.to_string(),
+                        ))))));
 
                         tabs.clear();
                         node.detach();
@@ -1033,9 +1020,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     };
 
                     if let Some(html) = code_block.html("code") {
-                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline(html),
-                        ))));
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(html)))));
                         parent.insert_after(n);
                     }
 
@@ -1053,9 +1038,7 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     };
 
                     if let Some(html) = code_block.html("results") {
-                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                            NodeValue::HtmlInline(html),
-                        ))));
+                        let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(html)))));
                         parent.insert_after(n);
                     }
 
@@ -1064,14 +1047,12 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                 } else if text.contains("{% content-ref url=") {
                     let url = parser(text.as_ref(), r#"url=""#);
 
-                    let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
-                        format!(
-                            r#"<div>
+                    let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(format!(
+                        r#"<div>
                                 <a href="{}">
                                     <div>"#,
-                            url.unwrap(),
-                        ),
-                    )))));
+                        url.unwrap(),
+                    ))))));
 
                     let parent = node.parent().unwrap();
 
@@ -1088,33 +1069,29 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                     match info_block_close_items.pop() {
                         Some(html) => match html {
                             Some(html) => {
-                                let timing = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                    NodeValue::HtmlInline(format!("{html} </div>")),
-                                ))));
+                                let timing = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                                    format!("{html} </div>"),
+                                )))));
                                 parent.insert_after(timing);
                             }
                             None => {
-                                let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                    NodeValue::HtmlInline(
-                                        r#"
+                                let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                                    r#"
                                     </div>
                                     "#
-                                        .to_string(),
-                                    ),
-                                ))));
+                                    .to_string(),
+                                )))));
 
                                 parent.insert_after(n);
                             }
                         },
                         None => {
-                            let n = arena.alloc(Node::new(RefCell::new(Ast::new(
-                                NodeValue::HtmlInline(
-                                    r#"
+                            let n = arena.alloc(Node::new(RefCell::new(Ast::new(NodeValue::HtmlInline(
+                                r#"
                             </div>
                             "#
-                                    .to_string(),
-                                ),
-                            ))));
+                                .to_string(),
+                            )))));
 
                             parent.insert_after(n);
                         }
@@ -1205,10 +1182,8 @@ impl SearchIndex {
 
     pub fn documents() -> Vec<PathBuf> {
         // TODO imrpove this .display().to_string()
-        let guides = glob::glob(&config::cms_dir().join("docs/**/*.md").display().to_string())
-            .expect("glob failed");
-        let blogs = glob::glob(&config::cms_dir().join("blog/**/*.md").display().to_string())
-            .expect("glob failed");
+        let guides = glob::glob(&config::cms_dir().join("docs/**/*.md").display().to_string()).expect("glob failed");
+        let blogs = glob::glob(&config::cms_dir().join("blog/**/*.md").display().to_string()).expect("glob failed");
         guides
             .chain(blogs)
             .map(|path| path.expect("glob path failed"))
@@ -1296,8 +1271,7 @@ impl SearchIndex {
         let path = Self::path();
 
         if !path.exists() {
-            std::fs::create_dir(&path)
-                .expect("failed to create search_index directory, is the filesystem writable?");
+            std::fs::create_dir(&path).expect("failed to create search_index directory, is the filesystem writable?");
         }
 
         let index = match tantivy::Index::open_in_dir(&path) {
@@ -1350,14 +1324,13 @@ impl SearchIndex {
 
         // If that's not enough, search using prefix search on the title.
         if top_docs.len() < 10 {
-            let query =
-                match RegexQuery::from_pattern(&format!("{}.*", query_string), title_regex_field) {
-                    Ok(query) => query,
-                    Err(err) => {
-                        warn!("Query regex error: {}", err);
-                        return Ok(Vec::new());
-                    }
-                };
+            let query = match RegexQuery::from_pattern(&format!("{}.*", query_string), title_regex_field) {
+                Ok(query) => query,
+                Err(err) => {
+                    warn!("Query regex error: {}", err);
+                    return Ok(Vec::new());
+                }
+            };
 
             let more_results = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
             top_docs.extend(more_results);
