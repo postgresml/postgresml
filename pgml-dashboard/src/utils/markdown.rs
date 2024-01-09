@@ -46,6 +46,10 @@ impl MarkdownHeadings {
     }
 }
 
+/// Sets the document headers
+/// 
+/// uses toclink to ensure header id matches what the TOC expects
+/// 
 impl HeadingAdapter for MarkdownHeadings {
     fn enter(&self, meta: &HeadingMeta) -> String {
         let conv = convert_case::Converter::new().to_case(convert_case::Case::Kebab);
@@ -61,24 +65,24 @@ impl HeadingAdapter for MarkdownHeadings {
         self.header_map.lock().unwrap().insert(id.clone(), index);
 
         match meta.level {
-            1 => format!(r#"<h1 class="h1 mb-5" id="{id}">"#),
-            2 => format!(r#"<h2 class="h2 mb-4 mt-5" id="{id}">"#),
-            3 => format!(r#"<h3 class="h3 mb-4 mt-5" id="{id}">"#),
-            4 => format!(r#"<h4 class="h5 mb-3 mt-3" id="{id}">"#),
-            5 => format!(r#"<h5 class="h6 mb-2 mt-4" id="{id}">"#),
-            6 => format!(r#"<h6 class="h6 mb-1 mt-1" id="{id}">"#),
+            1 => format!(r##"<h1 class="h1 mb-5" id="{id}"><a href="#{id}">"##),
+            2 => format!(r##"<h2 class="h2 mb-4 mt-5" id="{id}"><a href="#{id}">"##),
+            3 => format!(r##"<h3 class="h3 mb-4 mt-5" id="{id}"><a href="#{id}">"##),
+            4 => format!(r##"<h4 class="h5 mb-3 mt-3" id="{id}"><a href="#{id}">"##),
+            5 => format!(r##"<h5 class="h6 mb-2 mt-4" id="{id}"><a href="#{id}">"##),
+            6 => format!(r##"<h6 class="h6 mb-1 mt-1" id="{id}"><a href="#{id}">"##),
             _ => unreachable!(),
         }
     }
 
     fn exit(&self, meta: &HeadingMeta) -> String {
         match meta.level {
-            1 => r#"</h1>"#,
-            2 => r#"</h2>"#,
-            3 => r#"</h3>"#,
-            4 => r#"</h4>"#,
-            5 => r#"</h5>"#,
-            6 => r#"</h6>"#,
+            1 => r#"</a></h1>"#,
+            2 => r#"</a></h2>"#,
+            3 => r#"</a></h3>"#,
+            4 => r#"</a></h4>"#,
+            5 => r#"</a></h5>"#,
+            6 => r#"</a></h6>"#,
             _ => unreachable!(),
         }
         .into()
@@ -344,39 +348,6 @@ where
 
     Ok(())
 }
-
-// pub fn nest_relative_links(node: &mut markdown::mdast::Node, path: &PathBuf) {
-//     let _ = iter_mut_all(node, &mut |node| {
-//         println!("link node: {:?}", node);
-//         if let markdown::mdast::Node::Link(ref mut link) = node {
-//             match Url::parse(&link.url) {
-//                 Ok(url) => {
-//                     if !url.has_host() {
-//                         let mut url_path = url.path().to_string();
-//                         let url_path_path = Path::new(&url_path);
-//                         match url_path_path.extension() {
-//                             Some(ext) => {
-//                                 if ext.to_str() == Some(".md") {
-//                                     let base = url_path_path.with_extension("");
-//                                     url_path = base.into_os_string().into_string().unwrap();
-//                                 }
-//                             }
-//                             _ => {
-//                                 warn!("not markdown path: {:?}", path)
-//                             }
-//                         }
-//                         link.url = path.join(url_path).into_os_string().into_string().unwrap();
-//                     }
-//                 }
-//                 Err(e) => {
-//                     warn!("could not parse url in markdown: {}", e)
-//                 }
-//             }
-//         }
-
-//         Ok(())
-//     });
-// }
 
 /// Get the title of the article.
 ///
@@ -778,11 +749,11 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
                 if path.is_relative() {
                     let fragment = match link.url.find("#") {
-                        Some(index) => link.url[index..link.url.len()].to_string(),
+                        Some(index) => link.url[index + 1..link.url.len()].to_string(),
                         _ => "".to_string()
                     };
 
-                    for _ in 0..fragment.len() {
+                    for _ in 0..fragment.len() + 1 {
                         link.url.pop();
                     }
 
@@ -792,7 +763,8 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         }
                     }
 
-                    for c in fragment.chars() {
+                    let header_id = TocLink::from_fragment(fragment).id;
+                    for c in header_id.chars() {
                         link.url.push(c)
                     }
                 }
