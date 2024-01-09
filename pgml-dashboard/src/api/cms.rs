@@ -557,7 +557,7 @@ This is the end of the markdown
     #[sqlx::test]
     async fn render_blogs_test() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let blog: Collection = Collection::new("Blog", true);
+        let blog: Collection = Collection::new("Blog", true, HashMap::new());
 
         for path in blog.index {
             let req = client.get(path.clone().href);
@@ -579,7 +579,7 @@ This is the end of the markdown
     #[sqlx::test]
     async fn render_guides_test() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let docs: Collection = Collection::new("Docs", true);
+        let docs: Collection = Collection::new("Docs", true, HashMap::new());
 
         for path in docs.index {
             let req = client.get(path.clone().href);

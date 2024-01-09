@@ -1,5 +1,9 @@
+use convert_case;
+use lazy_static::lazy_static;
 use sailfish::TemplateOnce;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 use crate::utils::markdown::SearchResult;
 
@@ -9,6 +13,26 @@ use crate::utils::markdown::SearchResult;
 pub struct Search {
     pub query: String,
     pub results: Vec<SearchResult>,
+}
+
+lazy_static! {
+    static ref CMS_IDENTIFIER: CmsIdentifier = CmsIdentifier::new();
+}
+
+// Prevent css collisions in cms header ids.
+pub struct CmsIdentifier {
+    pub id: String,
+}
+
+impl CmsIdentifier {
+    pub fn new() -> CmsIdentifier {
+        let mut s = DefaultHasher::new();
+        "cms header".hash(&mut s);
+
+        CmsIdentifier {
+            id: s.finish().to_string(),
+        }
+    }
 }
 
 /// Table of contents link.
@@ -25,9 +49,23 @@ impl TocLink {
     /// # Arguments
     ///
     /// * `title` - The title of the link.
+    /// * `counter` - The number of times that header is in the document
     ///
     pub fn new(title: &str, counter: usize) -> TocLink {
-        let id = format!("header-{}", counter);
+        let conv = convert_case::Converter::new().to_case(convert_case::Case::Kebab);
+        let id = conv.convert(title.to_string());
+
+        // gitbook style id's
+        let id = format!(
+            "{}{}-{}",
+            id,
+            if counter > 0 {
+                format!("-{counter}")
+            } else {
+                String::new()
+            },
+            CMS_IDENTIFIER.id
+        );
 
         TocLink {
             title: title.to_string(),
@@ -43,11 +81,20 @@ impl TocLink {
         self.level = level;
         self
     }
-}
 
-/// Table of contents template.
-#[derive(TemplateOnce)]
-#[template(path = "components/toc.html")]
-pub struct Toc {
-    pub links: Vec<TocLink>,
+    /// Converts gitbook link fragment to toc header
+    pub fn from_fragment(link: String) -> TocLink {
+        match link.is_empty() {
+            true => TocLink {
+                title: String::new(),
+                id: String::new(),
+                level: 0,
+            },
+            _ => TocLink {
+                title: link.clone(),
+                id: format!("#{}-{}", link.clone(), CMS_IDENTIFIER.id),
+                level: 0,
+            },
+        }
+    }
 }

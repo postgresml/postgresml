@@ -10,7 +10,7 @@
         <div id="toc-nav" class="d-xxl-flex pt-2 flex-column collapse border-top" aria-orientation="vertical" data-controller="docs-toc">
           <% for link in toc_links.iter() { %>
             <div style="padding-left: <%= link.level as f32 * 0.7 - 1.4 %>rem;">
-              <a  class="nav-link px-0 text-break" href="#<%= link.id %>" role="button" data-action="docs-toc#scrollSpyAppend" >
+              <a  class="nav-link px-0 text-break" href="#<%= link.id %>" role="button" data-action="click->docs-toc#setUrlFragment">
                 <%= link.title %>
               </a>
             </div>
