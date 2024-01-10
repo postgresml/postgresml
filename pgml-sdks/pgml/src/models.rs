@@ -12,10 +12,19 @@ pub struct Pipeline {
     pub id: i64,
     pub name: String,
     pub created_at: DateTime,
-    pub model_id: i64,
-    pub splitter_id: i64,
+    pub schema: Json,
     pub active: bool,
-    pub parameters: Json,
+}
+
+// A multi field pipeline
+#[enum_def]
+#[derive(FromRow)]
+pub struct MultiFieldPipeline {
+    pub id: i64,
+    pub name: String,
+    pub created_at: DateTime,
+    pub active: bool,
+    pub schema: Json,
 }
 
 // A model used to perform some task
@@ -65,18 +74,16 @@ pub struct Document {
     #[serde(with = "uuid::serde::compact")]
     // See: https://docs.rs/uuid/latest/uuid/serde/index.html
     pub source_uuid: Uuid,
-    pub metadata: Json,
-    pub text: String,
+    pub document: Json,
 }
 
 impl Document {
     pub fn into_user_friendly_json(mut self) -> Json {
-        self.metadata["text"] = self.text.into();
         serde_json::json!({
             "row_id": self.id,
             "created_at": self.created_at,
             "source_uuid": self.source_uuid,
-            "document": self.metadata,
+            "document": self.document,
         })
         .into()
     }
@@ -109,7 +116,14 @@ pub struct Chunk {
     pub id: i64,
     pub created_at: DateTime,
     pub document_id: i64,
-    pub splitter_id: i64,
     pub chunk_index: i64,
     pub chunk: String,
+}
+
+// A tsvector of a document
+#[derive(FromRow)]
+pub struct TSVector {
+    pub id: i64,
+    pub created_at: DateTime,
+    pub document_id: i64,
 }
