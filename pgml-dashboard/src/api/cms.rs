@@ -470,8 +470,15 @@ impl Collection {
 }
 
 #[get("/search?<query>", rank = 20)]
-async fn search(query: &str, index: &State<crate::utils::markdown::SearchIndex>) -> ResponseOk {
-    let results = index.search(query).unwrap();
+async fn search(
+    query: &str,
+    site_search: &State<crate::utils::markdown::SiteSearch>,
+) -> ResponseOk {
+    eprintln!("\n\nWE IN HERE\n\n");
+    let results = site_search
+        .search(query)
+        .await
+        .expect("Error performing search");
 
     ResponseOk(
         Template(Search {
@@ -632,7 +639,7 @@ This is the end of the markdown
     async fn rocket() -> Rocket<Build> {
         dotenv::dotenv().ok();
         rocket::build()
-            .manage(crate::utils::markdown::SearchIndex::open().unwrap())
+            // .manage(crate::utils::markdown::SearchIndex::open().unwrap())
             .mount("/", crate::api::cms::routes())
     }
 

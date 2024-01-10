@@ -15,6 +15,7 @@ use comrak::{
 use convert_case;
 use itertools::Itertools;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use tantivy::collector::TopDocs;
 use tantivy::query::{QueryParser, RegexQuery};
 use tantivy::schema::*;
@@ -1212,6 +1213,7 @@ pub async fn get_document(path: &PathBuf) -> anyhow::Result<String> {
     Ok(tokio::fs::read_to_string(path).await?)
 }
 
+#[derive(Deserialize)]
 pub struct SearchResult {
     pub title: String,
     pub body: String,
@@ -1219,20 +1221,33 @@ pub struct SearchResult {
     pub snippet: String,
 }
 
-pub struct SearchIndex {
-    // The index.
-    pub index: Arc<Index>,
-
-    // Index schema (fields).
-    pub schema: Arc<Schema>,
-
-    // The index reader, supports concurrent access.
-    pub reader: Arc<IndexReader>,
+#[derive(Serialize)]
+struct Document {
+    id: String,
+    title: String,
+    body: String,
+    path: String,
 }
 
-impl SearchIndex {
-    pub fn path() -> PathBuf {
-        Path::new(&config::search_index_dir()).to_owned()
+impl Document {
+    fn new(id: String, title: String, body: String, path: String) -> Self {
+        Self { id, title, body, path }
+    }
+}
+
+pub struct SiteSearch {
+    collection: pgml::Collection,
+    pipeline: pgml::MultiFieldPipeline,
+}
+
+impl SiteSearch {
+    pub async fn new() -> anyhow::Result<Self> {
+        let collection = pgml::Collection::new(
+            "hypercloud-site-search-c-1",
+            Some(std::env::var("SITE_SEARCH_DATABASE_URL")?),
+        );
+        let pipeline = pgml::MultiFieldPipeline::new("hypercloud-site-search-p-1", serde_json::json!({}).into());
+        Ok(Self { collection, pipeline })
     }
 
     pub fn documents() -> Vec<PathBuf> {
@@ -1245,23 +1260,59 @@ impl SearchIndex {
             .collect()
     }
 
-    pub fn schema() -> Schema {
-        // TODO: Make trigram title index
-        // and full text body index, and use trigram only if body gets nothing.
-        let mut schema_builder = Schema::builder();
-        let title_field_indexing = TextFieldIndexing::default()
-            .set_tokenizer("ngram3")
-            .set_index_option(IndexRecordOption::WithFreqsAndPositions);
-        let title_options = TextOptions::default()
-            .set_indexing_options(title_field_indexing)
-            .set_stored();
+    pub async fn search(&self, query: &str) -> anyhow::Result<Vec<SearchResult>> {
+        self.collection
+            .search(
+                serde_json::json!({
+                    "query": {
+                        "semantic_search": {
+                            "title": {
+                                "query": query,
+                                "boost": 2.0,
+                            },
+                            "body": {
+                                "query": query,
+                            }
+                        }
+                    }
+                })
+                .into(),
+                &self.pipeline,
+            )
+            .await?
+            .into_iter()
+            .map(|r| serde_json::from_value(r.0).map_err(anyhow::Error::msg))
+    }
 
-        schema_builder.add_text_field("title", title_options.clone());
-        schema_builder.add_text_field("title_regex", TEXT | STORED);
-        schema_builder.add_text_field("body", TEXT | STORED);
-        schema_builder.add_text_field("path", STORED);
+    pub async fn build(&mut self) -> anyhow::Result<()> {
+        let documents: Vec<Document> =
+            futures::future::try_join_all(Self::get_document_paths()?.into_iter().map(|path| async move {
+                let text = get_document(&path).await?;
 
-        schema_builder.build()
+                let arena = Arena::new();
+                let root = parse_document(&arena, &text, &options());
+                let title_text = get_title(root)?;
+                let body_text = get_text(root)?.into_iter().join(" ");
+
+                let path = path
+                    .to_str()
+                    .unwrap()
+                    .to_string()
+                    .split("content")
+                    .last()
+                    .unwrap()
+                    .to_string()
+                    .replace("README", "")
+                    .replace(&config::cms_dir().display().to_string(), "");
+
+                anyhow::Ok(Document::new(path.clone(), title_text, body_text, path))
+            }))
+            .await?;
+        let documents: Vec<pgml::types::Json> = documents
+            .into_iter()
+            .map(|d| serde_json::to_value(d).unwrap().into())
+            .collect();
+        self.collection.upsert_documents(documents, None).await
     }
 
     pub async fn build() -> tantivy::Result<()> {
@@ -1458,7 +1509,262 @@ impl SearchIndex {
 
         Ok(results)
     }
+
+    fn get_document_paths() -> anyhow::Result<Vec<PathBuf>> {
+        // TODO imrpove this .display().to_string()
+        let guides = glob::glob(&config::cms_dir().join("docs/**/*.md").display().to_string())?;
+        let blogs = glob::glob(&config::cms_dir().join("blog/**/*.md").display().to_string())?;
+        Ok(guides
+            .chain(blogs)
+            .map(|path| path.expect("glob path failed"))
+            .collect())
+    }
 }
+
+// pub struct SearchIndex {
+//     // The index.
+//     pub index: Arc<Index>,
+
+//     // Index schema (fields).
+//     pub schema: Arc<Schema>,
+
+//     // The index reader, supports concurrent access.
+//     pub reader: Arc<IndexReader>,
+// }
+
+// impl SearchIndex {
+//     pub fn path() -> PathBuf {
+//         Path::new(&config::search_index_dir()).to_owned()
+//     }
+
+//     pub fn documents() -> Vec<PathBuf> {
+//         // TODO imrpove this .display().to_string()
+//         let guides = glob::glob(&config::cms_dir().join("docs/**/*.md").display().to_string())
+//             .expect("glob failed");
+//         let blogs = glob::glob(&config::cms_dir().join("blog/**/*.md").display().to_string())
+//             .expect("glob failed");
+//         guides
+//             .chain(blogs)
+//             .map(|path| path.expect("glob path failed"))
+//             .collect()
+//     }
+
+//     pub fn schema() -> Schema {
+//         // TODO: Make trigram title index
+//         // and full text body index, and use trigram only if body gets nothing.
+//         let mut schema_builder = Schema::builder();
+//         let title_field_indexing = TextFieldIndexing::default()
+//             .set_tokenizer("ngram3")
+//             .set_index_option(IndexRecordOption::WithFreqsAndPositions);
+//         let title_options = TextOptions::default()
+//             .set_indexing_options(title_field_indexing)
+//             .set_stored();
+
+//         schema_builder.add_text_field("title", title_options.clone());
+//         schema_builder.add_text_field("title_regex", TEXT | STORED);
+//         schema_builder.add_text_field("body", TEXT | STORED);
+//         schema_builder.add_text_field("path", STORED);
+
+//         schema_builder.build()
+//     }
+
+//     pub async fn build() -> tantivy::Result<()> {
+//         // Remove existing index.
+//         let _ = std::fs::remove_dir_all(Self::path());
+//         std::fs::create_dir(Self::path()).unwrap();
+
+//         let index = tokio::task::spawn_blocking(move || -> tantivy::Result<Index> {
+//             Index::create_in_dir(Self::path(), Self::schema())
+//         })
+//         .await
+//         .unwrap()?;
+
+//         let ngram = TextAnalyzer::from(NgramTokenizer::new(3, 3, false)).filter(LowerCaser);
+
+//         index.tokenizers().register("ngram3", ngram);
+
+//         let schema = Self::schema();
+//         let mut index_writer = index.writer(50_000_000)?;
+
+//         for path in Self::documents().into_iter() {
+//             let text = get_document(&path).await.unwrap();
+
+//             let arena = Arena::new();
+//             let root = parse_document(&arena, &text, &options());
+//             let title_text = get_title(root).unwrap();
+//             let body_text = get_text(root).unwrap().into_iter().join(" ");
+
+//             let title_field = schema.get_field("title").unwrap();
+//             let body_field = schema.get_field("body").unwrap();
+//             let path_field = schema.get_field("path").unwrap();
+//             let title_regex_field = schema.get_field("title_regex").unwrap();
+
+//             info!("found path: {path}", path = path.display());
+//             let path = path
+//                 .to_str()
+//                 .unwrap()
+//                 .to_string()
+//                 .split("content")
+//                 .last()
+//                 .unwrap()
+//                 .to_string()
+//                 .replace("README", "")
+//                 .replace(&config::cms_dir().display().to_string(), "");
+//             let mut doc = Document::default();
+//             doc.add_text(title_field, &title_text);
+//             doc.add_text(body_field, &body_text);
+//             doc.add_text(path_field, &path);
+//             doc.add_text(title_regex_field, &title_text);
+
+//             index_writer.add_document(doc)?;
+//         }
+
+//         tokio::task::spawn_blocking(move || -> tantivy::Result<u64> { index_writer.commit() })
+//             .await
+//             .unwrap()?;
+
+//         Ok(())
+//     }
+
+//     pub fn open() -> tantivy::Result<SearchIndex> {
+//         let path = Self::path();
+
+//         if !path.exists() {
+//             std::fs::create_dir(&path)
+//                 .expect("failed to create search_index directory, is the filesystem writable?");
+//         }
+
+//         let index = match tantivy::Index::open_in_dir(&path) {
+//             Ok(index) => index,
+//             Err(err) => {
+//                 warn!(
+//                     "Failed to open Tantivy index in '{}', creating an empty one, error: {}",
+//                     path.display(),
+//                     err
+//                 );
+//                 Index::create_in_dir(&path, Self::schema())?
+//             }
+//         };
+
+//         let reader = index.reader_builder().try_into()?;
+
+//         let ngram = TextAnalyzer::from(NgramTokenizer::new(3, 3, false)).filter(LowerCaser);
+
+//         index.tokenizers().register("ngram3", ngram);
+
+//         Ok(SearchIndex {
+//             index: Arc::new(index),
+//             schema: Arc::new(Self::schema()),
+//             reader: Arc::new(reader),
+//         })
+//     }
+
+//     pub fn search(&self, query_string: &str) -> tantivy::Result<Vec<SearchResult>> {
+//         let mut results = Vec::new();
+//         let searcher = self.reader.searcher();
+//         let title_field = self.schema.get_field("title").unwrap();
+//         let body_field = self.schema.get_field("body").unwrap();
+//         let path_field = self.schema.get_field("path").unwrap();
+//         let title_regex_field = self.schema.get_field("title_regex").unwrap();
+
+//         // Search using:
+//         //
+//         // 1. Full text search on the body
+//         // 2. Trigrams on the title
+//         let query_parser = QueryParser::for_index(&self.index, vec![title_field, body_field]);
+//         let query = match query_parser.parse_query(query_string) {
+//             Ok(query) => query,
+//             Err(err) => {
+//                 warn!("Query parse error: {}", err);
+//                 return Ok(Vec::new());
+//             }
+//         };
+
+//         let mut top_docs = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
+
+//         // If that's not enough, search using prefix search on the title.
+//         if top_docs.len() < 10 {
+//             let query =
+//                 match RegexQuery::from_pattern(&format!("{}.*", query_string), title_regex_field) {
+//                     Ok(query) => query,
+//                     Err(err) => {
+//                         warn!("Query regex error: {}", err);
+//                         return Ok(Vec::new());
+//                     }
+//                 };
+
+//             let more_results = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
+//             top_docs.extend(more_results);
+//         }
+
+//         // Oh jeez ok
+//         if top_docs.len() < 10 {
+//             let query = match RegexQuery::from_pattern(&format!("{}.*", query_string), body_field) {
+//                 Ok(query) => query,
+//                 Err(err) => {
+//                     warn!("Query regex error: {}", err);
+//                     return Ok(Vec::new());
+//                 }
+//             };
+
+//             let more_results = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
+//             top_docs.extend(more_results);
+//         }
+
+//         // Generate snippets for the FTS query.
+//         let snippet_generator = SnippetGenerator::create(&searcher, &*query, body_field)?;
+
+//         let mut dedup = HashSet::new();
+
+//         for (_score, doc_address) in top_docs {
+//             let retrieved_doc = searcher.doc(doc_address)?;
+//             let snippet = snippet_generator.snippet_from_doc(&retrieved_doc);
+//             let path = retrieved_doc
+//                 .get_first(path_field)
+//                 .unwrap()
+//                 .as_text()
+//                 .unwrap()
+//                 .to_string()
+//                 .replace(".md", "")
+//                 .replace(&config::static_dir().display().to_string(), "");
+
+//             // Dedup results from prefix search and full text search.
+//             let new = dedup.insert(path.clone());
+
+//             if !new {
+//                 continue;
+//             }
+
+//             let title = retrieved_doc
+//                 .get_first(title_field)
+//                 .unwrap()
+//                 .as_text()
+//                 .unwrap()
+//                 .to_string();
+//             let body = retrieved_doc
+//                 .get_first(body_field)
+//                 .unwrap()
+//                 .as_text()
+//                 .unwrap()
+//                 .to_string();
+
+//             let snippet = if snippet.is_empty() {
+//                 body.split(' ').take(20).collect::<Vec<&str>>().join(" ") + "&nbsp;..."
+//             } else {
+//                 "...&nbsp;".to_string() + &snippet.to_html() + "&nbsp;..."
+//             };
+
+//             results.push(SearchResult {
+//                 title,
+//                 body,
+//                 path,
+//                 snippet,
+//             });
+//         }
+
+//         Ok(results)
+//     }
+// }
 
 #[cfg(test)]
 mod test {
