@@ -18,7 +18,9 @@ use walkdir::WalkDir;
 use crate::{
     filter_builder, get_or_initialize_pool,
     model::ModelRuntime,
-    models, order_by_builder,
+    models,
+    multi_field_pipeline::MultiFieldPipeline,
+    order_by_builder,
     pipeline::Pipeline,
     queries, query_builder,
     query_builder::QueryBuilder,
@@ -104,7 +106,6 @@ pub struct Collection {
     pub database_url: Option<String>,
     pub pipelines_table_name: String,
     pub documents_table_name: String,
-    pub transforms_table_name: String,
     pub chunks_table_name: String,
     pub documents_tsvectors_table_name: String,
     pub(crate) database_data: Option<CollectionDatabaseData>,
@@ -147,7 +148,6 @@ impl Collection {
         let (
             pipelines_table_name,
             documents_table_name,
-            transforms_table_name,
             chunks_table_name,
             documents_tsvectors_table_name,
         ) = Self::generate_table_names(name);
@@ -156,7 +156,6 @@ impl Collection {
             database_url,
             pipelines_table_name,
             documents_table_name,
-            transforms_table_name,
             chunks_table_name,
             documents_tsvectors_table_name,
             database_data: None,
@@ -233,16 +232,14 @@ impl Collection {
                     },
                 };
 
+                // Splitters table is not unique to a collection or pipeline. It exists in the pgml schema
                 Splitter::create_splitters_table(&mut transaction).await?;
-                Pipeline::create_pipelines_table(
+                self.create_documents_table(&mut transaction).await?;
+                MultiFieldPipeline::create_multi_field_pipelines_table(
                     &collection_database_data.project_info,
                     &mut transaction,
                 )
                 .await?;
-                self.create_documents_table(&mut transaction).await?;
-                self.create_chunks_table(&mut transaction).await?;
-                self.create_documents_tsvectors_table(&mut transaction)
-                    .await?;
 
                 transaction.commit().await?;
                 Some(collection_database_data)
@@ -272,9 +269,15 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn add_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
+    pub async fn add_pipeline(&mut self, pipeline: &mut MultiFieldPipeline) -> anyhow::Result<()> {
         self.verify_in_database(false).await?;
-        pipeline.set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
+        let project_info = &self
+            .database_data
+            .as_ref()
+            .context("Database data must be set to add a pipeline to a collection")?
+            .project_info;
+        pipeline.set_project_info(project_info.clone());
+        pipeline.verify_in_database(true).await?;
         let mp = MultiProgress::new();
         mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
         pipeline.execute(&None, mp).await?;
@@ -301,65 +304,35 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn remove_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
+    pub async fn remove_pipeline(
+        &mut self,
+        pipeline: &mut MultiFieldPipeline,
+    ) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(false).await?;
-        pipeline.set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
-        pipeline.verify_in_database(false).await?;
-
-        let database_data = pipeline
+        let project_info = &self
             .database_data
             .as_ref()
-            .context("Pipeline must be verified to remove it")?;
+            .context("Database data must be set to remove pipeline from collection")?
+            .project_info;
+        pipeline.set_project_info(project_info.clone());
+        pipeline.verify_in_database(false).await?;
 
-        let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
-
-        let parameters = pipeline
-            .parameters
-            .as_ref()
-            .context("Pipeline must be verified to remove it")?;
+        let pipeline_schema = format!("{}_{}", project_info.name, pipeline.name);
 
         let mut transaction = pool.begin().await?;
-
-        // Need to delete from chunks table only if no other pipelines use the same splitter
-        sqlx::query(&query_builder!(
-                "DELETE FROM %s WHERE splitter_id = $1 AND NOT EXISTS (SELECT 1 FROM %s WHERE splitter_id = $1 AND id != $2)",
-                self.chunks_table_name,
-                self.pipelines_table_name
-            ))
-            .bind(database_data.splitter_id)
-            .bind(database_data.id)
-            .execute(&mut *transaction)
+        transaction
+            .execute(query_builder!("DROP SCHEMA IF EXISTS %s CASCADE", pipeline_schema).as_str())
             .await?;
-
-        // Drop the embeddings table
         sqlx::query(&query_builder!(
-            "DROP TABLE IF EXISTS %s",
-            embeddings_table_name
-        ))
-        .execute(&mut *transaction)
-        .await?;
-
-        // Need to delete from the tsvectors table only if no other pipelines use the
-        // same tsvector configuration
-        sqlx::query(&query_builder!(
-                    "DELETE FROM %s WHERE configuration = $1 AND NOT EXISTS (SELECT 1 FROM %s WHERE parameters->'full_text_search'->>'configuration' = $1 AND id != $2)", 
-                    self.documents_tsvectors_table_name,
-                    self.pipelines_table_name))
-                .bind(parameters["full_text_search"]["configuration"].as_str())
-                .bind(database_data.id)
-                .execute(&mut *transaction)
-                .await?;
-
-        sqlx::query(&query_builder!(
-            "DELETE FROM %s WHERE id = $1",
+            "UPDATE %s SET active = FALSE WHERE name = $1",
             self.pipelines_table_name
         ))
-        .bind(database_data.id)
+        .bind(&pipeline.name)
         .execute(&mut *transaction)
         .await?;
-
         transaction.commit().await?;
+
         Ok(())
     }
 
@@ -431,108 +404,11 @@ impl Collection {
         .await?;
         conn.execute(
             query_builder!(
-                queries::CREATE_INDEX,
-                "",
-                "created_at_index",
-                self.documents_table_name,
-                "created_at"
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
                 queries::CREATE_INDEX_USING_GIN,
                 "",
-                "metadata_index",
+                "documents_document_index",
                 self.documents_table_name,
-                "metadata jsonb_path_ops"
-            )
-            .as_str(),
-        )
-        .await?;
-        Ok(())
-    }
-
-    #[instrument(skip(self, conn))]
-    async fn create_chunks_table(&mut self, conn: &mut PgConnection) -> anyhow::Result<()> {
-        conn.execute(
-            query_builder!(
-                queries::CREATE_CHUNKS_TABLE,
-                self.chunks_table_name,
-                self.documents_table_name
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "",
-                "created_at_index",
-                self.chunks_table_name,
-                "created_at"
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "",
-                "document_id_index",
-                self.chunks_table_name,
-                "document_id"
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "",
-                "splitter_id_index",
-                self.chunks_table_name,
-                "splitter_id"
-            )
-            .as_str(),
-        )
-        .await?;
-        Ok(())
-    }
-
-    #[instrument(skip(self, conn))]
-    async fn create_documents_tsvectors_table(
-        &mut self,
-        conn: &mut PgConnection,
-    ) -> anyhow::Result<()> {
-        conn.execute(
-            query_builder!(
-                queries::CREATE_DOCUMENTS_TSVECTORS_TABLE,
-                self.documents_tsvectors_table_name,
-                self.documents_table_name
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "",
-                "configuration_index",
-                self.documents_tsvectors_table_name,
-                "configuration"
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
-                queries::CREATE_INDEX_USING_GIN,
-                "",
-                "tsvector_index",
-                self.documents_tsvectors_table_name,
-                "ts"
+                "document jsonb_path_ops"
             )
             .as_str(),
         )
@@ -562,6 +438,7 @@ impl Collection {
     ///    Ok(())
     /// }
     /// ```
+    // TODO: Make it so if we upload the same documen twice it doesn't do anything
     #[instrument(skip(self, documents))]
     pub async fn upsert_documents(
         &mut self,
@@ -571,111 +448,31 @@ impl Collection {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(false).await?;
 
+        // TODO: Work on this
         let args = args.unwrap_or_default();
+
+        let mut document_ids = vec![];
 
         let progress_bar = utils::default_progress_bar(documents.len() as u64);
         progress_bar.println("Upserting Documents...");
 
-        let documents: anyhow::Result<Vec<_>> = documents
-            .into_iter()
-            .map(|mut document| {
-                let document = document
-                    .as_object_mut()
-                    .context("Documents must be a vector of objects")?;
+        let mut transaction = pool.begin().await?;
+        for document in documents {
+            let id = document
+                .get("id")
+                .context("`id` must be a key in document")?
+                .to_string();
+            let md5_digest = md5::compute(id.as_bytes());
+            let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-                // We don't want the text included in the document metadata, but everything else
-                // should be in there
-                let text = document.remove("text").map(|t| {
-                    t.as_str()
-                        .expect("`text` must be a string in document")
-                        .to_string()
-                });
-                let metadata = serde_json::to_value(&document)?.into();
-
-                let id = document
-                    .get("id")
-                    .context("`id` must be a key in document")?
-                    .to_string();
-                let md5_digest = md5::compute(id.as_bytes());
-                let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
-
-                Ok((source_uuid, text, metadata))
-            })
-            .collect();
-
-        // We could continue chaining the above iterators but types become super annoying to
-        // deal with, especially because we are dealing with async functions. This is much easier to read
-        // Also, we may want to use a variant of chunks that is owned, I'm not 100% sure of what
-        // cloning happens when passing values into sqlx bind. itertools variants will not work as
-        // it is not thread safe and pyo3 will get upset
-        let mut document_ids = Vec::new();
-        for chunk in documents?.chunks(10) {
-            // Need to make it a vec to partition it and must include explicit typing here
-            let mut chunk: Vec<&(uuid::Uuid, Option<String>, Json)> = chunk.iter().collect();
-
-            // Split the chunk into two groups, one with text, and one with just metadata
-            let split_index = itertools::partition(&mut chunk, |(_, text, _)| text.is_some());
-            let (text_chunk, metadata_chunk) = chunk.split_at(split_index);
-
-            // Start the transaction
-            let mut transaction = pool.begin().await?;
-
-            if !metadata_chunk.is_empty() {
-                // Update the metadata
-                // Merge the metadata if the user has specified to do so otherwise replace it
-                if args["metadata"]["merge"].as_bool().unwrap_or(false) {
-                    sqlx::query(query_builder!(
-                    "UPDATE %s d SET metadata = d.metadata || v.metadata FROM (SELECT UNNEST($1) source_uuid, UNNEST($2) metadata) v WHERE d.source_uuid = v.source_uuid",
-                    self.documents_table_name
-                ).as_str()).bind(metadata_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>())
-                    .bind(metadata_chunk.iter().map(|(_, _, metadata)| metadata.0.clone()).collect::<Vec<_>>())
-                    .execute(&mut *transaction).await?;
-                } else {
-                    sqlx::query(query_builder!(
-                "UPDATE %s d SET metadata = v.metadata FROM (SELECT UNNEST($1) source_uuid, UNNEST($2) metadata) v WHERE d.source_uuid = v.source_uuid",
-                self.documents_table_name
-            ).as_str()).bind(metadata_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>())
-                .bind(metadata_chunk.iter().map(|(_, _, metadata)| metadata.0.clone()).collect::<Vec<_>>())
-                .execute(&mut *transaction).await?;
-                }
-            }
-
-            if !text_chunk.is_empty() {
-                // First delete any documents that already have the same UUID as documents in
-                // text_chunk, then insert the new ones.
-                // We are essentially upserting in two steps
-                sqlx::query(&query_builder!(
-                "DELETE FROM %s WHERE source_uuid IN (SELECT source_uuid FROM %s WHERE source_uuid = ANY($1::uuid[]))",
-                self.documents_table_name,
-                self.documents_table_name
-            )).
-                bind(&text_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>()).
-                execute(&mut *transaction).await?;
-                let query_string_values = (0..text_chunk.len())
-                    .map(|i| format!("(${}, ${}, ${})", i * 3 + 1, i * 3 + 2, i * 3 + 3))
-                    .collect::<Vec<String>>()
-                    .join(",");
-                let query_string = format!(
-                "INSERT INTO %s (source_uuid, text, metadata) VALUES {} ON CONFLICT (source_uuid) DO UPDATE SET text = $2, metadata = $3 RETURNING id",
-                query_string_values
-            );
-                let query = query_builder!(query_string, self.documents_table_name);
-                let mut query = sqlx::query_scalar(&query);
-                for (source_uuid, text, metadata) in text_chunk.iter() {
-                    query = query.bind(source_uuid).bind(text).bind(metadata);
-                }
-                let ids: Vec<i64> = query.fetch_all(&mut *transaction).await?;
-                document_ids.extend(ids);
-                progress_bar.inc(chunk.len() as u64);
-            }
-
-            transaction.commit().await?;
+            let id: i64 = sqlx::query_scalar(&query_builder!("INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = $2 RETURNING id", self.documents_table_name)).bind(source_uuid).bind(document).fetch_one(&mut *transaction).await?;
+            document_ids.push(id);
         }
-        progress_bar.finish();
-        eprintln!("Done Upserting Documents\n");
+        transaction.commit().await?;
 
-        self.sync_pipelines(Some(document_ids)).await?;
-        Ok(())
+        progress_bar.println("Done Upserting Documents\n");
+        progress_bar.finish();
+        self.sync_pipelines(Some(document_ids)).await
     }
 
     /// Gets the documents on a [Collection]
@@ -696,104 +493,107 @@ impl Collection {
     /// }
     #[instrument(skip(self))]
     pub async fn get_documents(&self, args: Option<Json>) -> anyhow::Result<Vec<Json>> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
+        // TODO: If we want to filter on full text this needs to be part of a pipeline
+        unimplemented!()
 
-        let mut args = args.unwrap_or_default().0;
-        let args = args.as_object_mut().context("args must be an object")?;
+        // let pool = get_or_initialize_pool(&self.database_url).await?;
 
-        // Get limit or set it to 1000
-        let limit = args
-            .remove("limit")
-            .map(|l| l.try_to_u64())
-            .unwrap_or(Ok(1000))?;
+        // let mut args = args.unwrap_or_default().0;
+        // let args = args.as_object_mut().context("args must be an object")?;
 
-        let mut query = Query::select();
-        query
-            .from_as(
-                self.documents_table_name.to_table_tuple(),
-                SIden::Str("documents"),
-            )
-            .expr(Expr::cust("*")) // Adds the * in SELECT * FROM
-            .limit(limit);
+        // // Get limit or set it to 1000
+        // let limit = args
+        //     .remove("limit")
+        //     .map(|l| l.try_to_u64())
+        //     .unwrap_or(Ok(1000))?;
 
-        if let Some(order_by) = args.remove("order_by") {
-            let order_by_builder =
-                order_by_builder::OrderByBuilder::new(order_by, "documents", "metadata").build()?;
-            for (order_by, order) in order_by_builder {
-                query.order_by_expr_with_nulls(order_by, order, NullOrdering::Last);
-            }
-        }
-        query.order_by((SIden::Str("documents"), SIden::Str("id")), Order::Asc);
+        // let mut query = Query::select();
+        // query
+        //     .from_as(
+        //         self.documents_table_name.to_table_tuple(),
+        //         SIden::Str("documents"),
+        //     )
+        //     .expr(Expr::cust("*")) // Adds the * in SELECT * FROM
+        //     .limit(limit);
 
-        // TODO: Make keyset based pagination work with custom order by
-        if let Some(last_row_id) = args.remove("last_row_id") {
-            let last_row_id = last_row_id
-                .try_to_u64()
-                .context("last_row_id must be an integer")?;
-            query.and_where(Expr::col((SIden::Str("documents"), SIden::Str("id"))).gt(last_row_id));
-        }
+        // if let Some(order_by) = args.remove("order_by") {
+        //     let order_by_builder =
+        //         order_by_builder::OrderByBuilder::new(order_by, "documents", "metadata").build()?;
+        //     for (order_by, order) in order_by_builder {
+        //         query.order_by_expr_with_nulls(order_by, order, NullOrdering::Last);
+        //     }
+        // }
+        // query.order_by((SIden::Str("documents"), SIden::Str("id")), Order::Asc);
 
-        if let Some(offset) = args.remove("offset") {
-            let offset = offset.try_to_u64().context("offset must be an integer")?;
-            query.offset(offset);
-        }
+        // // TODO: Make keyset based pagination work with custom order by
+        // if let Some(last_row_id) = args.remove("last_row_id") {
+        //     let last_row_id = last_row_id
+        //         .try_to_u64()
+        //         .context("last_row_id must be an integer")?;
+        //     query.and_where(Expr::col((SIden::Str("documents"), SIden::Str("id"))).gt(last_row_id));
+        // }
 
-        if let Some(mut filter) = args.remove("filter") {
-            let filter = filter
-                .as_object_mut()
-                .context("filter must be a Json object")?;
+        // if let Some(offset) = args.remove("offset") {
+        //     let offset = offset.try_to_u64().context("offset must be an integer")?;
+        //     query.offset(offset);
+        // }
 
-            if let Some(f) = filter.remove("metadata") {
-                query.cond_where(
-                    filter_builder::FilterBuilder::new(f, "documents", "metadata").build(),
-                );
-            }
-            if let Some(f) = filter.remove("full_text_search") {
-                let f = f
-                    .as_object()
-                    .context("Full text filter must be a Json object")?;
-                let configuration = f
-                    .get("configuration")
-                    .context("In full_text_search `configuration` is required")?
-                    .as_str()
-                    .context("In full_text_search `configuration` must be a string")?;
-                let filter_text = f
-                    .get("text")
-                    .context("In full_text_search `text` is required")?
-                    .as_str()
-                    .context("In full_text_search `text` must be a string")?;
-                query
-                    .join_as(
-                        JoinType::InnerJoin,
-                        self.documents_tsvectors_table_name.to_table_tuple(),
-                        Alias::new("documents_tsvectors"),
-                        Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                            .equals((SIden::Str("documents_tsvectors"), SIden::Str("document_id"))),
-                    )
-                    .and_where(
-                        Expr::col((
-                            SIden::Str("documents_tsvectors"),
-                            SIden::Str("configuration"),
-                        ))
-                        .eq(configuration),
-                    )
-                    .and_where(Expr::cust_with_values(
-                        format!(
-                            "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
-                            configuration
-                        ),
-                        [filter_text],
-                    ));
-            }
-        }
+        // if let Some(mut filter) = args.remove("filter") {
+        //     let filter = filter
+        //         .as_object_mut()
+        //         .context("filter must be a Json object")?;
 
-        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-        let documents: Vec<models::Document> =
-            sqlx::query_as_with(&sql, values).fetch_all(&pool).await?;
-        Ok(documents
-            .into_iter()
-            .map(|d| d.into_user_friendly_json())
-            .collect())
+        //     if let Some(f) = filter.remove("metadata") {
+        //         query.cond_where(
+        //             filter_builder::FilterBuilder::new(f, "documents", "metadata").build(),
+        //         );
+        //     }
+        //     if let Some(f) = filter.remove("full_text_search") {
+        //         let f = f
+        //             .as_object()
+        //             .context("Full text filter must be a Json object")?;
+        //         let configuration = f
+        //             .get("configuration")
+        //             .context("In full_text_search `configuration` is required")?
+        //             .as_str()
+        //             .context("In full_text_search `configuration` must be a string")?;
+        //         let filter_text = f
+        //             .get("text")
+        //             .context("In full_text_search `text` is required")?
+        //             .as_str()
+        //             .context("In full_text_search `text` must be a string")?;
+        //         query
+        //             .join_as(
+        //                 JoinType::InnerJoin,
+        //                 self.documents_tsvectors_table_name.to_table_tuple(),
+        //                 Alias::new("documents_tsvectors"),
+        //                 Expr::col((SIden::Str("documents"), SIden::Str("id")))
+        //                     .equals((SIden::Str("documents_tsvectors"), SIden::Str("document_id"))),
+        //             )
+        //             .and_where(
+        //                 Expr::col((
+        //                     SIden::Str("documents_tsvectors"),
+        //                     SIden::Str("configuration"),
+        //                 ))
+        //                 .eq(configuration),
+        //             )
+        //             .and_where(Expr::cust_with_values(
+        //                 format!(
+        //                     "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
+        //                     configuration
+        //                 ),
+        //                 [filter_text],
+        //             ));
+        //     }
+        // }
+
+        // let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
+        // let documents: Vec<models::Document> =
+        //     sqlx::query_as_with(&sql, values).fetch_all(&pool).await?;
+        // Ok(documents
+        //     .into_iter()
+        //     .map(|d| d.into_user_friendly_json())
+        //     .collect())
     }
 
     /// Deletes documents in a [Collection]
@@ -820,64 +620,67 @@ impl Collection {
     /// }
     #[instrument(skip(self))]
     pub async fn delete_documents(&self, mut filter: Json) -> anyhow::Result<()> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
+        // TODO: If we want to filter on full text this needs to be part of a pipeline
+        unimplemented!()
 
-        let mut query = Query::delete();
-        query.from_table(self.documents_table_name.to_table_tuple());
+        // let pool = get_or_initialize_pool(&self.database_url).await?;
 
-        let filter = filter
-            .as_object_mut()
-            .context("filter must be a Json object")?;
+        // let mut query = Query::delete();
+        // query.from_table(self.documents_table_name.to_table_tuple());
 
-        if let Some(f) = filter.remove("metadata") {
-            query
-                .cond_where(filter_builder::FilterBuilder::new(f, "documents", "metadata").build());
-        }
+        // let filter = filter
+        //     .as_object_mut()
+        //     .context("filter must be a Json object")?;
 
-        if let Some(mut f) = filter.remove("full_text_search") {
-            let f = f
-                .as_object_mut()
-                .context("Full text filter must be a Json object")?;
-            let configuration = f
-                .get("configuration")
-                .context("In full_text_search `configuration` is required")?
-                .as_str()
-                .context("In full_text_search `configuration` must be a string")?;
-            let filter_text = f
-                .get("text")
-                .context("In full_text_search `text` is required")?
-                .as_str()
-                .context("In full_text_search `text` must be a string")?;
-            let mut inner_select_query = Query::select();
-            inner_select_query
-                .from_as(
-                    self.documents_tsvectors_table_name.to_table_tuple(),
-                    SIden::Str("documents_tsvectors"),
-                )
-                .column(SIden::Str("document_id"))
-                .and_where(Expr::cust_with_values(
-                    format!(
-                        "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
-                        configuration
-                    ),
-                    [filter_text],
-                ))
-                .and_where(
-                    Expr::col((
-                        SIden::Str("documents_tsvectors"),
-                        SIden::Str("configuration"),
-                    ))
-                    .eq(configuration),
-                );
-            query.and_where(
-                Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .in_subquery(inner_select_query),
-            );
-        }
+        // if let Some(f) = filter.remove("metadata") {
+        //     query
+        //         .cond_where(filter_builder::FilterBuilder::new(f, "documents", "metadata").build());
+        // }
 
-        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-        sqlx::query_with(&sql, values).fetch_all(&pool).await?;
-        Ok(())
+        // if let Some(mut f) = filter.remove("full_text_search") {
+        //     let f = f
+        //         .as_object_mut()
+        //         .context("Full text filter must be a Json object")?;
+        //     let configuration = f
+        //         .get("configuration")
+        //         .context("In full_text_search `configuration` is required")?
+        //         .as_str()
+        //         .context("In full_text_search `configuration` must be a string")?;
+        //     let filter_text = f
+        //         .get("text")
+        //         .context("In full_text_search `text` is required")?
+        //         .as_str()
+        //         .context("In full_text_search `text` must be a string")?;
+        //     let mut inner_select_query = Query::select();
+        //     inner_select_query
+        //         .from_as(
+        //             self.documents_tsvectors_table_name.to_table_tuple(),
+        //             SIden::Str("documents_tsvectors"),
+        //         )
+        //         .column(SIden::Str("document_id"))
+        //         .and_where(Expr::cust_with_values(
+        //             format!(
+        //                 "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
+        //                 configuration
+        //             ),
+        //             [filter_text],
+        //         ))
+        //         .and_where(
+        //             Expr::col((
+        //                 SIden::Str("documents_tsvectors"),
+        //                 SIden::Str("configuration"),
+        //             ))
+        //             .eq(configuration),
+        //         );
+        //     query.and_where(
+        //         Expr::col((SIden::Str("documents"), SIden::Str("id")))
+        //             .in_subquery(inner_select_query),
+        //     );
+        // }
+
+        // let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
+        // sqlx::query_with(&sql, values).fetch_all(&pool).await?;
+        // Ok(())
     }
 
     #[instrument(skip(self))]
@@ -901,9 +704,23 @@ impl Collection {
                         .expect("Failed to execute pipeline");
                 })
                 .await;
-            eprintln!("Done Syncing Pipelines\n");
+            mp.println("Done Syncing Pipelines\n")?;
         }
         Ok(())
+    }
+
+    #[instrument(skip(self))]
+    pub async fn search(
+        &self,
+        query: Json,
+        pipeline: &MultiFieldPipeline,
+    ) -> anyhow::Result<Vec<Json>> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let (query, values) =
+            crate::search_query_builder::build_search_query(self, query, pipeline).await?;
+        println!("\n\n{query}\n\n");
+        let results: Vec<(Json,)> = sqlx::query_as_with(&query, values).fetch_all(&pool).await?;
+        Ok(results.into_iter().map(|r| r.0).collect())
     }
 
     /// Performs vector search on the [Collection]
@@ -932,7 +749,7 @@ impl Collection {
     pub async fn vector_search(
         &mut self,
         query: &str,
-        pipeline: &mut Pipeline,
+        pipeline: &mut MultiFieldPipeline,
         query_parameters: Option<Json>,
         top_k: Option<i64>,
     ) -> anyhow::Result<Vec<(f64, String, Json)>> {
@@ -942,66 +759,80 @@ impl Collection {
         let top_k = top_k.unwrap_or(5);
 
         // With this system, we only do the wrong type of vector search once
-        let runtime = if pipeline.model.is_some() {
-            pipeline.model.as_ref().unwrap().runtime
-        } else {
-            ModelRuntime::Python
-        };
-        match runtime {
-            ModelRuntime::Python => {
-                let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
+        // let runtime = if pipeline.model.is_some() {
+        //     pipeline.model.as_ref().unwrap().runtime
+        // } else {
+        //     ModelRuntime::Python
+        // };
 
-                let result = sqlx::query_as(&query_builder!(
-                    queries::EMBED_AND_VECTOR_SEARCH,
-                    self.pipelines_table_name,
-                    embeddings_table_name,
-                    self.chunks_table_name,
-                    self.documents_table_name
-                ))
-                .bind(&pipeline.name)
-                .bind(query)
-                .bind(&query_parameters)
-                .bind(top_k)
-                .fetch_all(&pool)
-                .await;
+        unimplemented!()
 
-                match result {
-                    Ok(r) => Ok(r),
-                    Err(e) => match e.as_database_error() {
-                        Some(d) => {
-                            if d.code() == Some(Cow::from("XX000")) {
-                                self.vector_search_with_remote_embeddings(
-                                    query,
-                                    pipeline,
-                                    query_parameters,
-                                    top_k,
-                                    &pool,
-                                )
-                                .await
-                            } else {
-                                Err(anyhow::anyhow!(e))
-                            }
-                        }
-                        None => Err(anyhow::anyhow!(e)),
-                    },
-                }
-            }
-            _ => {
-                self.vector_search_with_remote_embeddings(
-                    query,
-                    pipeline,
-                    query_parameters,
-                    top_k,
-                    &pool,
-                )
-                .await
-            }
-        }
-        .map(|r| {
-            r.into_iter()
-                .map(|(score, id, metadata)| (1. - score, id, metadata))
-                .collect()
-        })
+        // let pool = get_or_initialize_pool(&self.database_url).await?;
+
+        // let query_parameters = query_parameters.unwrap_or_default();
+        // let top_k = top_k.unwrap_or(5);
+
+        // // With this system, we only do the wrong type of vector search once
+        // let runtime = if pipeline.model.is_some() {
+        //     pipeline.model.as_ref().unwrap().runtime
+        // } else {
+        //     ModelRuntime::Python
+        // };
+        // match runtime {
+        //     ModelRuntime::Python => {
+        //         let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
+
+        //         let result = sqlx::query_as(&query_builder!(
+        //             queries::EMBED_AND_VECTOR_SEARCH,
+        //             self.pipelines_table_name,
+        //             embeddings_table_name,
+        //             self.chunks_table_name,
+        //             self.documents_table_name
+        //         ))
+        //         .bind(&pipeline.name)
+        //         .bind(query)
+        //         .bind(&query_parameters)
+        //         .bind(top_k)
+        //         .fetch_all(&pool)
+        //         .await;
+
+        //         match result {
+        //             Ok(r) => Ok(r),
+        //             Err(e) => match e.as_database_error() {
+        //                 Some(d) => {
+        //                     if d.code() == Some(Cow::from("XX000")) {
+        //                         self.vector_search_with_remote_embeddings(
+        //                             query,
+        //                             pipeline,
+        //                             query_parameters,
+        //                             top_k,
+        //                             &pool,
+        //                         )
+        //                         .await
+        //                     } else {
+        //                         Err(anyhow::anyhow!(e))
+        //                     }
+        //                 }
+        //                 None => Err(anyhow::anyhow!(e)),
+        //             },
+        //         }
+        //     }
+        //     _ => {
+        //         self.vector_search_with_remote_embeddings(
+        //             query,
+        //             pipeline,
+        //             query_parameters,
+        //             top_k,
+        //             &pool,
+        //         )
+        //         .await
+        //     }
+        // }
+        // .map(|r| {
+        //     r.into_iter()
+        //         .map(|(score, id, metadata)| (1. - score, id, metadata))
+        //         .collect()
+        // })
     }
 
     #[instrument(skip(self, pool))]
@@ -1014,45 +845,48 @@ impl Collection {
         top_k: i64,
         pool: &PgPool,
     ) -> anyhow::Result<Vec<(f64, String, Json)>> {
-        self.verify_in_database(false).await?;
+        // TODO: Make this actually work maybe an alias for the new search or something idk
+        unimplemented!()
 
-        // Have to set the project info before we can get and set the model
-        pipeline.set_project_info(
-            self.database_data
-                .as_ref()
-                .context(
-                    "Collection must be verified to perform vector search with remote embeddings",
-                )?
-                .project_info
-                .clone(),
-        );
-        // Verify to get and set the model if we don't have it set on the pipeline yet
-        pipeline.verify_in_database(false).await?;
-        let model = pipeline
-            .model
-            .as_ref()
-            .context("Pipeline must be verified to perform vector search with remote embeddings")?;
+        // self.verify_in_database(false).await?;
 
-        // We need to make sure we are not mutably and immutably borrowing the same things
-        let embedding = {
-            let remote_embeddings =
-                build_remote_embeddings(model.runtime, &model.name, &query_parameters)?;
-            let mut embeddings = remote_embeddings.embed(vec![query.to_string()]).await?;
-            std::mem::take(&mut embeddings[0])
-        };
+        // // Have to set the project info before we can get and set the model
+        // pipeline.set_project_info(
+        //     self.database_data
+        //         .as_ref()
+        //         .context(
+        //             "Collection must be verified to perform vector search with remote embeddings",
+        //         )?
+        //         .project_info
+        //         .clone(),
+        // );
+        // // Verify to get and set the model if we don't have it set on the pipeline yet
+        // pipeline.verify_in_database(false).await?;
+        // let model = pipeline
+        //     .model
+        //     .as_ref()
+        //     .context("Pipeline must be verified to perform vector search with remote embeddings")?;
 
-        let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
-        sqlx::query_as(&query_builder!(
-            queries::VECTOR_SEARCH,
-            embeddings_table_name,
-            self.chunks_table_name,
-            self.documents_table_name
-        ))
-        .bind(embedding)
-        .bind(top_k)
-        .fetch_all(pool)
-        .await
-        .map_err(|e| anyhow::anyhow!(e))
+        // // We need to make sure we are not mutably and immutably borrowing the same things
+        // let embedding = {
+        //     let remote_embeddings =
+        //         build_remote_embeddings(model.runtime, &model.name, &query_parameters)?;
+        //     let mut embeddings = remote_embeddings.embed(vec![query.to_string()]).await?;
+        //     std::mem::take(&mut embeddings[0])
+        // };
+
+        // let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
+        // sqlx::query_as(&query_builder!(
+        //     queries::VECTOR_SEARCH,
+        //     embeddings_table_name,
+        //     self.chunks_table_name,
+        //     self.documents_table_name
+        // ))
+        // .bind(embedding)
+        // .bind(top_k)
+        // .fetch_all(pool)
+        // .await
+        // .map_err(|e| anyhow::anyhow!(e))
     }
 
     #[instrument(skip(self))]
@@ -1099,53 +933,29 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn get_pipelines(&mut self) -> anyhow::Result<Vec<Pipeline>> {
+    pub async fn get_pipelines(&mut self) -> anyhow::Result<Vec<MultiFieldPipeline>> {
         self.verify_in_database(false).await?;
+        let project_info = &self
+            .database_data
+            .as_ref()
+            .context("Database data must be set to get collection pipelines")?
+            .project_info;
         let pool = get_or_initialize_pool(&self.database_url).await?;
+        let pipelines: Vec<models::Pipeline> = sqlx::query_as(&query_builder!(
+            "SELECT * FROM %s WHERE active = TRUE",
+            self.pipelines_table_name
+        ))
+        .fetch_all(&pool)
+        .await?;
 
-        let pipelines_with_models_and_splitters: Vec<models::PipelineWithModelAndSplitter> =
-            sqlx::query_as(&query_builder!(
-                r#"SELECT 
-              p.id as pipeline_id, 
-              p.name as pipeline_name, 
-              p.created_at as pipeline_created_at, 
-              p.active as pipeline_active, 
-              p.parameters as pipeline_parameters, 
-              m.id as model_id, 
-              m.created_at as model_created_at, 
-              m.runtime::TEXT as model_runtime, 
-              m.hyperparams as model_hyperparams, 
-              s.id as splitter_id, 
-              s.created_at as splitter_created_at, 
-              s.name as splitter_name, 
-              s.parameters as splitter_parameters 
-            FROM 
-              %s p 
-              INNER JOIN pgml.models m ON p.model_id = m.id 
-              INNER JOIN pgml.splitters s ON p.splitter_id = s.id 
-            WHERE 
-              p.active = TRUE
-            "#,
-                self.pipelines_table_name
-            ))
-            .fetch_all(&pool)
-            .await?;
-
-        let pipelines: Vec<Pipeline> = pipelines_with_models_and_splitters
+        pipelines
             .into_iter()
             .map(|p| {
-                let mut pipeline: Pipeline = p.into();
-                pipeline.set_project_info(
-                    self.database_data
-                        .as_ref()
-                        .expect("Collection must be verified to get all pipelines")
-                        .project_info
-                        .clone(),
-                );
-                pipeline
+                let mut p: MultiFieldPipeline = p.try_into()?;
+                p.set_project_info(project_info.clone());
+                Ok(p)
             })
-            .collect();
-        Ok(pipelines)
+            .collect()
     }
 
     /// Gets a [Pipeline] by name
@@ -1162,42 +972,23 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn get_pipeline(&mut self, name: &str) -> anyhow::Result<Pipeline> {
+    pub async fn get_pipeline(&mut self, name: &str) -> anyhow::Result<MultiFieldPipeline> {
         self.verify_in_database(false).await?;
+        let project_info = &self
+            .database_data
+            .as_ref()
+            .context("Database data must be set to get collection pipelines")?
+            .project_info;
         let pool = get_or_initialize_pool(&self.database_url).await?;
-
-        let pipeline_with_model_and_splitter: models::PipelineWithModelAndSplitter =
-            sqlx::query_as(&query_builder!(
-                r#"SELECT 
-              p.id as pipeline_id, 
-              p.name as pipeline_name, 
-              p.created_at as pipeline_created_at, 
-              p.active as pipeline_active, 
-              p.parameters as pipeline_parameters, 
-              m.id as model_id, 
-              m.created_at as model_created_at, 
-              m.runtime::TEXT as model_runtime, 
-              m.hyperparams as model_hyperparams, 
-              s.id as splitter_id, 
-              s.created_at as splitter_created_at, 
-              s.name as splitter_name, 
-              s.parameters as splitter_parameters 
-            FROM 
-              %s p 
-              INNER JOIN pgml.models m ON p.model_id = m.id 
-              INNER JOIN pgml.splitters s ON p.splitter_id = s.id 
-            WHERE 
-              p.active = TRUE
-              AND p.name = $1
-            "#,
-                self.pipelines_table_name
-            ))
-            .bind(name)
-            .fetch_one(&pool)
-            .await?;
-
-        let mut pipeline: Pipeline = pipeline_with_model_and_splitter.into();
-        pipeline.set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
+        let pipeline: models::Pipeline = sqlx::query_as(&query_builder!(
+            "SELECT * FROM %s WHERE name = $1 AND active = TRUE LIMIT 1",
+            self.pipelines_table_name
+        ))
+        .bind(name)
+        .fetch_one(&pool)
+        .await?;
+        let mut pipeline: MultiFieldPipeline = pipeline.try_into()?;
+        pipeline.set_project_info(project_info.clone());
         Ok(pipeline)
     }
 
@@ -1312,6 +1103,125 @@ impl Collection {
         Ok(())
     }
 
+    pub async fn generate_er_diagram(
+        &mut self,
+        pipeline: &mut MultiFieldPipeline,
+    ) -> anyhow::Result<String> {
+        self.verify_in_database(false).await?;
+        pipeline.verify_in_database(false).await?;
+
+        let parsed_schema = pipeline
+            .parsed_schema
+            .as_ref()
+            .context("Pipeline must have schema to generate er diagram")?;
+
+        let mut uml_entites = format!(
+            r#"
+@startuml
+' hide the spot
+' hide circle
+
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+entity "pgml.collections" as pgmlc {{
+    id : bigint
+    --
+    created_at : timestamp without time zone                
+    name : text
+    active : boolean
+    project_id : bigint
+    sdk_version : text
+}}
+
+entity "{}.documents" as documents {{
+    id : bigint              
+    --
+    created_at : timestamp without time zone
+    source_uuid : uuid
+    document : jsonb
+}}
+
+entity "{}.pipelines" as pipelines {{
+    id : bigint
+    --
+    created_at : timestamp without time zone
+    name : text
+    active : boolean
+    schema : jsonb
+}}
+        "#,
+            self.name, self.name
+        );
+
+        let schema = format!("{}_{}", self.name, pipeline.name);
+
+        let mut uml_relations = r#"
+pgmlc ||..|| pipelines
+        "#
+        .to_string();
+
+        for (key, field_action) in parsed_schema.iter() {
+            let nice_name_key = key.replace(' ', "_");
+            if let Some(_embed_action) = &field_action.embed {
+                let entites = format!(
+                    r#"
+entity "{schema}.{key}_chunks" as {nice_name_key}_chunks {{
+    id : bigint
+    --
+    created_at : timestamp without time zone
+    documnt_id : bigint
+    chunk_index : bigint
+    chunk : text
+}}
+
+entity "{schema}.{key}_embeddings" as {nice_name_key}_embeddings {{
+    id : bigint
+    --
+    created_at : timestamp without time zone
+    chunk_id : bigint
+    embedding : vector
+}}
+                        "#
+                );
+                uml_entites.push_str(&entites);
+
+                let relations = format!(
+                    r#"
+documents ||..|{{ {nice_name_key}_chunks
+{nice_name_key}_chunks ||.|| {nice_name_key}_embeddings
+                    "#
+                );
+                uml_relations.push_str(&relations);
+            }
+
+            if let Some(_full_text_search_action) = &field_action.full_text_search {
+                let entites = format!(
+                    r#"
+entity "{schema}.{key}_tsvectors" as {nice_name_key}_tsvectors {{
+    id : bigint
+    --
+    created_at : timestamp without time zone
+    documnt_id : bigint
+    tsvectors : tsvector
+}}
+                        "#
+                );
+                uml_entites.push_str(&entites);
+
+                let relations = format!(
+                    r#"
+documents ||..|| {nice_name_key}_tsvectors
+                    "#
+                );
+                uml_relations.push_str(&relations);
+            }
+        }
+
+        uml_entites.push_str(&uml_relations);
+        Ok(uml_entites)
+    }
+
     pub async fn upsert_file(&mut self, path: &str) -> anyhow::Result<()> {
         self.verify_in_database(false).await?;
         let path = Path::new(path);
@@ -1323,11 +1233,10 @@ impl Collection {
         self.upsert_documents(vec![document.into()], None).await
     }
 
-    fn generate_table_names(name: &str) -> (String, String, String, String, String) {
+    fn generate_table_names(name: &str) -> (String, String, String, String) {
         [
             ".pipelines",
             ".documents",
-            ".transforms",
             ".chunks",
             ".documents_tsvectors",
         ]

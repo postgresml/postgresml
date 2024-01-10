@@ -26,13 +26,23 @@ CREATE TABLE IF NOT EXISTS %s (
 );
 "#;
 
+pub const CREATE_MULTI_FIELD_PIPELINES_TABLE: &str = r#"
+CREATE TABLE IF NOT EXISTS %s (
+  id serial8 PRIMARY KEY,
+  name text NOT NULL,
+  created_at timestamp NOT NULL DEFAULT now(), 
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  schema jsonb NOT NULL,
+  UNIQUE (name)
+);
+"#;
+
 pub const CREATE_DOCUMENTS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY,
   created_at timestamp NOT NULL DEFAULT now(),
   source_uuid uuid NOT NULL,
-  metadata jsonb NOT NULL DEFAULT '{}',
-  text text NOT NULL,
+  document jsonb NOT NULL,
   UNIQUE (source_uuid)
 );
 "#;
@@ -50,10 +60,9 @@ CREATE TABLE IF NOT EXISTS pgml.splitters (
 pub const CREATE_CHUNKS_TABLE: &str = r#"CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, created_at timestamp NOT NULL DEFAULT now(), 
   document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  splitter_id int8 NOT NULL REFERENCES pgml.splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   chunk_index int8 NOT NULL, 
   chunk text NOT NULL,
-  UNIQUE (document_id, splitter_id, chunk_index)
+  UNIQUE (document_id, chunk_index)
 );
 "#;
 
@@ -72,9 +81,8 @@ CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
   created_at timestamp NOT NULL DEFAULT now(), 
   document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  configuration text NOT NULL, 
   ts tsvector,
-  UNIQUE (configuration, document_id)
+  UNIQUE (document_id)
 );
 "#;
 
@@ -97,26 +105,24 @@ CREATE INDEX %d IF NOT EXISTS %s on %s using hnsw (%d) %d;
 // Other Big Queries ////////
 /////////////////////////////
 pub const GENERATE_TSVECTORS: &str = r#"
-INSERT INTO %s (document_id, configuration, ts) 
+INSERT INTO %s (document_id, ts) 
 SELECT 
   id, 
-  '%d' configuration, 
-  to_tsvector('%d', text) ts 
+  to_tsvector('%d', %d) ts 
 FROM 
   %s
-ON CONFLICT (document_id, configuration) DO UPDATE SET ts = EXCLUDED.ts;
+ON CONFLICT (document_id) DO NOTHING;
 "#;
 
 pub const GENERATE_TSVECTORS_FOR_DOCUMENT_IDS: &str = r#"
-INSERT INTO %s (document_id, configuration, ts) 
+INSERT INTO %s (document_id, ts) 
 SELECT 
   id, 
-  '%d' configuration, 
-  to_tsvector('%d', text) ts 
+  to_tsvector('%d', %d) ts 
 FROM 
   %s
 WHERE id = ANY ($1)
-ON CONFLICT (document_id, configuration) DO NOTHING;
+ON CONFLICT (document_id) DO NOTHING;
 "#;
 
 pub const GENERATE_EMBEDDINGS: &str = r#"
@@ -153,8 +159,7 @@ SELECT
 FROM 
   %s 
 WHERE 
-  splitter_id = $3 
-  AND id = ANY ($4)
+  id = ANY ($3)
   AND id NOT IN (
     SELECT 
       chunk_id 
@@ -229,12 +234,10 @@ WITH splitter as (
       id = $1
 )
 INSERT INTO %s(
-  document_id, splitter_id, chunk_index, 
-  chunk
+  document_id, chunk_index, chunk
 ) 
 SELECT 
   document_id, 
-  $1, 
   (chunk).chunk_index, 
   (chunk).chunk 
 FROM 
@@ -250,7 +253,7 @@ FROM
       (
         SELECT 
           id, 
-          text 
+          %d as text 
         FROM 
           %s 
         WHERE 
@@ -259,12 +262,10 @@ FROM
               document_id 
             FROM 
               %s 
-            WHERE 
-              splitter_id = $1 
           )
       ) AS documents
   ) chunks 
-ON CONFLICT (document_id, splitter_id, chunk_index) DO NOTHING 
+ON CONFLICT (document_id, chunk_index) DO NOTHING 
 RETURNING id
 "#;
 
@@ -279,12 +280,10 @@ WITH splitter as (
       id = $1
 )
 INSERT INTO %s(
-  document_id, splitter_id, chunk_index, 
-  chunk
+  document_id, chunk_index, chunk
 )
 SELECT 
   document_id, 
-  $1, 
   (chunk).chunk_index, 
   (chunk).chunk 
 FROM 
@@ -300,7 +299,7 @@ FROM
       (
         SELECT 
           id, 
-          text 
+          %d AS text 
         FROM 
           %s 
         WHERE 
@@ -310,11 +309,9 @@ FROM
               document_id 
             FROM 
               %s 
-            WHERE 
-              splitter_id = $1 
           )
       ) AS documents
   ) chunks
-ON CONFLICT (document_id, splitter_id, chunk_index) DO NOTHING 
+ON CONFLICT (document_id, chunk_index) DO NOTHING 
 RETURNING id
 "#;
