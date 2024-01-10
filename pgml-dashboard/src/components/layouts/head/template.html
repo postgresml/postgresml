@@ -36,10 +36,13 @@
   <meta name="twitter:creator" content="@postgresml">
   <meta name="twitter:title" content="<%= title %> – PostgresML">
 
+  <% if canonical.is_some() { %>
+  <link rel="canonical" href="<%- canonical.unwrap() %>">
+  <% } %>
+
   <% if context.is_some() { %>
     <%- context.unwrap() %>
   <% } else { %>
-    
   <script type="importmap" data-turbo-track="reload">
     {
       "imports": {
@@ -49,10 +52,6 @@
       }
     }
   </script>
-
-  <% if canonical.is_some() { %>
-  <link rel="canonical" href="<%- canonical.unwrap() %>">
-  <% } %>
 
   <link rel="stylesheet" data-turbo-track="reload" href="<%- config::css_url("style.css") %>">
   <script async src="https://data.cloud.hyperparam.ai/script.js" data-website-id="499122fd-f307-4e8d-af4b-88b9f5e9903b"></script>

@@ -67,7 +67,7 @@ impl Layout {
     }
 
     pub fn canonical(&mut self, canonical: &str) -> &mut Self {
-        self.head.canonical = Some(canonical.to_string());
+        self.head.canonical = Some(canonical.to_owned());
         self
     }
 
