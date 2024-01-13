@@ -71,7 +71,9 @@ impl QueryBuilder {
 
     #[instrument(skip(self))]
     fn filter_metadata(mut self, filter: serde_json::Value) -> Self {
-        let filter = filter_builder::FilterBuilder::new(filter, "documents", "metadata").build();
+        let filter = filter_builder::FilterBuilder::new(filter, "documents", "metadata")
+            .build()
+            .expect("Error building filter");
         self.query.cond_where(filter);
         self
     }
