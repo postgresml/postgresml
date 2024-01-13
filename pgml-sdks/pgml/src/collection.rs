@@ -15,6 +15,7 @@ use std::time::SystemTime;
 use tracing::{instrument, warn};
 use walkdir::WalkDir;
 
+use crate::vector_search_query_builder::build_vector_search_query;
 use crate::{
     filter_builder, get_or_initialize_pool,
     model::ModelRuntime,
@@ -718,7 +719,6 @@ impl Collection {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let (query, values) =
             crate::search_query_builder::build_search_query(self, query, pipeline).await?;
-        println!("\n\n{query}\n\n");
         let results: Vec<(Json,)> = sqlx::query_as_with(&query, values).fetch_all(&pool).await?;
         Ok(results.into_iter().map(|r| r.0).collect())
     }
@@ -755,8 +755,9 @@ impl Collection {
     ) -> anyhow::Result<Vec<(f64, String, Json)>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
-        let query_parameters = query_parameters.unwrap_or_default();
-        let top_k = top_k.unwrap_or(5);
+        let (query, sqlx_values) =
+            build_vector_search_query(query, self, query_parameters.unwrap_or_default(), pipeline)
+                .await?;
 
         // With this system, we only do the wrong type of vector search once
         // let runtime = if pipeline.model.is_some() {
@@ -1163,6 +1164,15 @@ pgmlc ||..|| pipelines
 
         for (key, field_action) in parsed_schema.iter() {
             let nice_name_key = key.replace(' ', "_");
+
+            let relations = format!(
+                r#"
+documents ||..|{{ {nice_name_key}_chunks
+{nice_name_key}_chunks ||.|| {nice_name_key}_embeddings
+                    "#
+            );
+            uml_relations.push_str(&relations);
+
             if let Some(_embed_action) = &field_action.embed {
                 let entites = format!(
                     r#"
@@ -1170,7 +1180,7 @@ entity "{schema}.{key}_chunks" as {nice_name_key}_chunks {{
     id : bigint
     --
     created_at : timestamp without time zone
-    documnt_id : bigint
+    document_id : bigint
     chunk_index : bigint
     chunk : text
 }}
@@ -1180,19 +1190,12 @@ entity "{schema}.{key}_embeddings" as {nice_name_key}_embeddings {{
     --
     created_at : timestamp without time zone
     chunk_id : bigint
+    document_id : bigint
     embedding : vector
 }}
                         "#
                 );
                 uml_entites.push_str(&entites);
-
-                let relations = format!(
-                    r#"
-documents ||..|{{ {nice_name_key}_chunks
-{nice_name_key}_chunks ||.|| {nice_name_key}_embeddings
-                    "#
-                );
-                uml_relations.push_str(&relations);
             }
 
             if let Some(_full_text_search_action) = &field_action.full_text_search {
@@ -1202,7 +1205,8 @@ entity "{schema}.{key}_tsvectors" as {nice_name_key}_tsvectors {{
     id : bigint
     --
     created_at : timestamp without time zone
-    documnt_id : bigint
+    chunk_id : bigint
+    document_id : bigint
     tsvectors : tsvector
 }}
                         "#
@@ -1211,7 +1215,7 @@ entity "{schema}.{key}_tsvectors" as {nice_name_key}_tsvectors {{
 
                 let relations = format!(
                     r#"
-documents ||..|| {nice_name_key}_tsvectors
+{nice_name_key}_chunks ||..|| {nice_name_key}_tsvectors
                     "#
                 );
                 uml_relations.push_str(&relations);

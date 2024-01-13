@@ -34,6 +34,7 @@ mod splitter;
 pub mod transformer_pipeline;
 pub mod types;
 mod utils;
+mod vector_search_query_builder;
 
 // Re-export
 pub use builtins::Builtins;
@@ -238,7 +239,138 @@ mod tests {
             {
                 "id": i,
                 "title": format!("Test document: {}", i),
-                "body": format!("Here is the body for test document {}", i),
+                "body": format!(r#"
+Here is the body for test document {}
+
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+Here is some more text this is rather interesting honestly but I am unsure what to say bout this blah blah blah filler filler filler
+
+                        {}
+                        
+                        "#, i, i),
                 "notes": format!("Here are some notes or something for test document {}", i),
                 "metadata": {
                     "uuid": i * 10,
@@ -285,7 +417,7 @@ mod tests {
         internal_init_logger(None, None).ok();
         let mut pipeline1 = MultiFieldPipeline::new("test_r_p_carps_1", Some(json!({}).into()))?;
         let mut pipeline2 = MultiFieldPipeline::new("test_r_p_carps_2", Some(json!({}).into()))?;
-        let mut collection = Collection::new("test_r_c_carps_7", None);
+        let mut collection = Collection::new("test_r_c_carps_8", None);
         collection.add_pipeline(&mut pipeline1).await?;
         collection.add_pipeline(&mut pipeline2).await?;
         let pipelines = collection.get_pipelines().await?;
@@ -301,7 +433,7 @@ mod tests {
     #[sqlx::test]
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_capaud_33";
+        let collection_name = "test_r_c_capaud_36";
         let pipeline_name = "test_r_p_capaud_6";
         let mut pipeline = MultiFieldPipeline::new(
             pipeline_name,
@@ -313,9 +445,11 @@ mod tests {
                         }
                     },
                     "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
                         "embed": {
                             "model": "intfloat/e5-small",
-                            "splitter": "recursive_character"
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -364,7 +498,7 @@ mod tests {
     #[sqlx::test]
     async fn can_upsert_documents_and_add_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cudaap_34";
+        let collection_name = "test_r_c_cudaap_35";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(2);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -379,9 +513,11 @@ mod tests {
                         }
                     },
                     "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
                         "embed": {
                             "model": "intfloat/e5-small",
-                            "splitter": "recursive_character"
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -414,23 +550,23 @@ mod tests {
                 .fetch_all(&pool)
                 .await?;
         assert!(body_chunks.len() == 2);
-        collection.archive().await?;
         let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name);
         let tsvectors: Vec<models::TSVector> =
             sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
                 .fetch_all(&pool)
                 .await?;
         assert!(tsvectors.len() == 2);
+        collection.archive().await?;
         Ok(())
     }
 
     #[sqlx::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cs_44";
+        let collection_name = "test_r_c_cs_61";
         let mut collection = Collection::new(collection_name, None);
-        let documents = generate_dummy_documents(10000);
-        collection.upsert_documents(documents.clone(), None).await?;
+        // let documents = generate_dummy_documents(10000);
+        // collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cs_7";
         let mut pipeline = MultiFieldPipeline::new(
             pipeline_name,
@@ -462,35 +598,41 @@ mod tests {
                 .into(),
             ),
         )?;
-        collection.add_pipeline(&mut pipeline).await?;
+        // collection.add_pipeline(&mut pipeline).await?;
         let results = collection
             .search(
                 json!({
                     "query": {
-                        // "full_text_search": {
-                        //     "title": {
-                        //         "query": "test",
-                        //         "boost": 4.0
-                        //     },
-                        //     "body": {
-                        //         "query": "Test",
-                        //         "boost": 1.2
-                        //     }
-                        // },
+                        "full_text_search": {
+                            "title": {
+                                "query": "test",
+                                "boost": 4.0
+                            },
+                            "body": {
+                                "query": "Test",
+                                "boost": 1.2
+                            }
+                        },
                         "semantic_search": {
                             "title": {
                                 "query": "This is a test",
                                 "boost": 2.0
                             },
-                            // "body": {
-                            //     "query": "This is the body test",
-                            //     "boost": 1.01
-                            // },
-                            // "notes": {
-                            //     "query": "This is the notes test",
-                            //     "boost": 1.01
-                            // }
+                            "body": {
+                                "query": "This is the body test",
+                                "boost": 1.01
+                            },
+                            "notes": {
+                                "query": "This is the notes test",
+                                "boost": 1.01
+                            }
+                        },
+                        "filter": {
+                           "id": {
+                                "$gt": 1
+                            }
                         }
+
                     },
                     "limit": 5
                 })
@@ -505,20 +647,17 @@ mod tests {
             .collect();
         assert_eq!(ids, vec![1, 2, 0, 3, 7]);
         collection.archive().await?;
-        // results.into_iter().for_each(|r| {
-        //     println!("{}", serde_json::to_string_pretty(&r.0).unwrap());
-        // });
         Ok(())
     }
 
     #[sqlx::test]
     async fn can_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswre_47";
+        let collection_name = "test_r_c_cswre_50";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
-        let pipeline_name = "test_r_p_cswre_7";
+        let pipeline_name = "test_r_p_cswre_8";
         let mut pipeline = MultiFieldPipeline::new(
             pipeline_name,
             Some(
@@ -562,6 +701,11 @@ mod tests {
                                 "query": "This is the body test",
                                 "boost": 1.01
                             },
+                        },
+                        "filter": {
+                           "id": {
+                                "$gt": 1
+                            }
                         }
                     },
                     "limit": 5
@@ -575,18 +719,15 @@ mod tests {
             .into_iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids, vec![1, 2, 3, 4, 0]);
+        assert_eq!(ids, vec![2, 3, 0, 1, 4]);
         collection.archive().await?;
-        // results.into_iter().for_each(|r| {
-        //     println!("{}", serde_json::to_string_pretty(&r.0).unwrap());
-        // });
         Ok(())
     }
 
     #[sqlx::test]
     async fn can_vector_search() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cvs_0";
+        let collection_name = "test_r_c_cvs_2";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -599,6 +740,9 @@ mod tests {
                         "embed": {
                             "model": "intfloat/e5-small"
                         },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
                     },
                     "body": {
                         "embed": {
@@ -613,13 +757,24 @@ mod tests {
         collection.add_pipeline(&mut pipeline).await?;
         let results = collection
             .vector_search(
-                "Test query string",
+                "Test document: 2",
                 &mut pipeline,
                 Some(
                     json!({
-                        "fields": [
-                            "title", "body"
-                        ]
+                        "query": {
+                            "fields": {
+                                "title": {
+                                    "full_text_search": "test",
+                                },
+                                "body": {},
+                            },
+                            "filter": {
+                                "id": {
+                                    "$lt": 100
+                                }
+                            }
+                        },
+                        "limit": 5
                     })
                     .into(),
                 ),
@@ -648,9 +803,11 @@ mod tests {
                             }
                         },
                         "body": {
+                            "splitter": {
+                                "model": "recursive_character"
+                            },
                             "embed": {
-                                "model": "intfloat/e5-small",
-                                "splitter": "recursive_character"
+                                "model": "intfloat/e5-small"
                             },
                             "full_text_search": {
                                 "configuration": "english"
@@ -665,10 +822,11 @@ mod tests {
                 .into(),
             ),
         )?;
-        let mut collection = Collection::new("test_r_c_ged_1", None);
+        let mut collection = Collection::new("test_r_c_ged_2", None);
         collection.add_pipeline(&mut pipeline).await?;
         let diagram = collection.generate_er_diagram(&mut pipeline).await?;
         assert!(!diagram.is_empty());
+        println!("{diagram}");
         collection.archive().await?;
         Ok(())
     }
