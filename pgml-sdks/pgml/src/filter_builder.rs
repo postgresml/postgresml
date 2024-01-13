@@ -1,49 +1,8 @@
-use sea_query::{
-    extension::postgres::PgExpr, value::ArrayType, Condition, Expr, IntoCondition, SimpleExpr,
-};
-
-fn get_sea_query_array_type(value: &serde_json::Value) -> ArrayType {
-    if value.is_null() {
-        panic!("Invalid metadata filter configuration")
-    } else if value.is_string() {
-        ArrayType::String
-    } else if value.is_i64() || value.is_u64() {
-        ArrayType::BigInt
-    } else if value.is_f64() {
-        ArrayType::Double
-    } else if value.is_boolean() {
-        ArrayType::Bool
-    } else if value.is_array() {
-        let value = value
-            .as_array()
-            .expect("Invalid metadata filter configuration");
-        get_sea_query_array_type(&value[0])
-    } else {
-        panic!("Invalid metadata filter configuration")
-    }
-}
+use anyhow::Context;
+use sea_query::{extension::postgres::PgExpr, Condition, Expr, IntoCondition, SimpleExpr};
 
 fn serde_value_to_sea_query_value(value: &serde_json::Value) -> sea_query::Value {
-    if value.is_string() {
-        sea_query::Value::String(Some(Box::new(value.as_str().unwrap().to_string())))
-    } else if value.is_i64() {
-        sea_query::Value::BigInt(Some(value.as_i64().unwrap()))
-    } else if value.is_f64() {
-        sea_query::Value::Double(Some(value.as_f64().unwrap()))
-    } else if value.is_boolean() {
-        sea_query::Value::Bool(Some(value.as_bool().unwrap()))
-    } else if value.is_array() {
-        let value = value.as_array().unwrap();
-        let ty = get_sea_query_array_type(&value[0]);
-        let value = Some(Box::new(
-            value.iter().map(serde_value_to_sea_query_value).collect(),
-        ));
-        sea_query::Value::Array(ty, value)
-    } else if value.is_object() {
-        sea_query::Value::Json(Some(Box::new(value.clone())))
-    } else {
-        panic!("Invalid metadata filter configuration")
-    }
+    sea_query::Value::Json(Some(Box::new(value.clone())))
 }
 
 fn reconstruct_json(path: Vec<String>, value: serde_json::Value) -> serde_json::Value {
@@ -102,36 +61,13 @@ fn value_is_object_and_is_comparison_operator(value: &serde_json::Value) -> bool
         })
 }
 
-fn get_value_type(value: &serde_json::Value) -> String {
-    if value.is_object() {
-        let (_, value) = value
-            .as_object()
-            .expect("Invalid metadata filter configuration")
-            .iter()
-            .next()
-            .unwrap();
-        get_value_type(value)
-    } else if value.is_array() {
-        let value = &value.as_array().unwrap()[0];
-        get_value_type(value)
-    } else if value.is_string() {
-        "text".to_string()
-    } else if value.is_i64() || value.is_f64() {
-        "float8".to_string()
-    } else if value.is_boolean() {
-        "bool".to_string()
-    } else {
-        panic!("Invalid metadata filter configuration")
-    }
-}
-
 fn build_recursive<'a>(
     table_name: &'a str,
     column_name: &'a str,
     path: Vec<String>,
     filter: serde_json::Value,
     condition: Option<Condition>,
-) -> Condition {
+) -> anyhow::Result<Condition> {
     if filter.is_object() {
         let mut condition = condition.unwrap_or(Condition::all());
         for (key, value) in filter.as_object().unwrap() {
@@ -180,41 +116,38 @@ fn build_recursive<'a>(
                                     .contains(Expr::val(serde_value_to_sea_query_value(&json)))
                             }
                         } else {
-                            // If we are not checking whether two values are equal or not equal, we need to cast it to the correct type before doing the comparison
-                            let ty = get_value_type(value);
                             let expression = Expr::cust(
                                 format!(
-                                    "(\"{}\".\"{}\"#>>'{{{}}}')::{}",
+                                    "\"{}\".\"{}\"#>'{{{}}}'",
                                     table_name,
                                     column_name,
-                                    local_path.join(","),
-                                    ty
+                                    local_path.join(",")
                                 )
                                 .as_str(),
                             );
                             let expression = Expr::expr(expression);
                             build_expression(expression, value.clone())
                         };
-                        expression.into_condition()
+                        Ok(expression.into_condition())
                     } else {
                         build_recursive(table_name, column_name, local_path, value.clone(), None)
                     }
                 }
-            };
+            }?;
             condition = condition.add(sub_condition);
         }
-        condition
+        Ok(condition)
     } else if filter.is_array() {
-        let mut condition = condition.expect("Invalid metadata filter configuration");
+        let mut condition = condition.context("Invalid metadata filter configuration")?;
         for value in filter.as_array().unwrap() {
             let local_path = path.clone();
             let new_condition =
-                build_recursive(table_name, column_name, local_path, value.clone(), None);
+                build_recursive(table_name, column_name, local_path, value.clone(), None)?;
             condition = condition.add(new_condition);
         }
-        condition
+        Ok(condition)
     } else {
-        panic!("Invalid metadata filter configuration")
+        anyhow::bail!("Invalid metadata filter configuration")
     }
 }
 
@@ -233,7 +166,7 @@ impl<'a> FilterBuilder<'a> {
         }
     }
 
-    pub fn build(self) -> Condition {
+    pub fn build(self) -> anyhow::Result<Condition> {
         build_recursive(
             self.table_name,
             self.column_name,
@@ -276,39 +209,41 @@ mod tests {
     }
 
     #[test]
-    fn eq_operator() {
+    fn eq_operator() -> anyhow::Result<()> {
         let sql = construct_filter_builder_with_json(json!({
             "id": {"$eq": 1},
             "id2": {"id3": {"$eq": "test"}},
             "id4": {"id5": {"id6": {"$eq": true}}},
             "id7": {"id8": {"id9": {"id10": {"$eq": [1, 2, 3]}}}}
         }))
-        .build()
+        .build()?
         .to_valid_sql_query();
         assert_eq!(
             sql,
             r#"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"id\":1}' AND "test_table"."metadata" @> E'{\"id2\":{\"id3\":\"test\"}}' AND "test_table"."metadata" @> E'{\"id4\":{\"id5\":{\"id6\":true}}}' AND "test_table"."metadata" @> E'{\"id7\":{\"id8\":{\"id9\":{\"id10\":[1,2,3]}}}}'"#
         );
+        Ok(())
     }
 
     #[test]
-    fn ne_operator() {
+    fn ne_operator() -> anyhow::Result<()> {
         let sql = construct_filter_builder_with_json(json!({
             "id": {"$ne": 1},
             "id2": {"id3": {"$ne": "test"}},
             "id4": {"id5": {"id6": {"$ne": true}}},
             "id7": {"id8": {"id9": {"id10": {"$ne": [1, 2, 3]}}}}
         }))
-        .build()
+        .build()?
         .to_valid_sql_query();
         assert_eq!(
             sql,
             r#"SELECT "id" FROM "test_table" WHERE NOT "test_table"."metadata" @> E'{\"id\":1}' AND NOT "test_table"."metadata" @> E'{\"id2\":{\"id3\":\"test\"}}' AND NOT "test_table"."metadata" @> E'{\"id4\":{\"id5\":{\"id6\":true}}}' AND NOT "test_table"."metadata" @> E'{\"id7\":{\"id8\":{\"id9\":{\"id10\":[1,2,3]}}}}'"#
         );
+        Ok(())
     }
 
     #[test]
-    fn numeric_comparison_operators() {
+    fn numeric_comparison_operators() -> anyhow::Result<()> {
         let basic_comparison_operators = vec![">", ">=", "<", "<="];
         let basic_comparison_operators_names = vec!["$gt", "$gte", "$lt", "$lte"];
         for (operator, name) in basic_comparison_operators
@@ -319,20 +254,22 @@ mod tests {
                 "id": {name: 1},
                 "id2": {"id3": {name: 1}}
             }))
-            .build()
+            .build()?
             .to_valid_sql_query();
+            println!("{sql}");
             assert_eq!(
                 sql,
                 format!(
-                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>>'{{id}}')::float8 {} 1 AND ("test_table"."metadata"#>>'{{id2,id3}}')::float8 {} 1"##,
+                    r##"SELECT "id" FROM "test_table" WHERE "test_table"."metadata"#>'{{id}}' {} '1' AND "test_table"."metadata"#>'{{id2,id3}}' {} '1'"##,
                     operator, operator
                 )
             );
         }
+        Ok(())
     }
 
     #[test]
-    fn array_comparison_operators() {
+    fn array_comparison_operators() -> anyhow::Result<()> {
         let array_comparison_operators = vec!["IN", "NOT IN"];
         let array_comparison_operators_names = vec!["$in", "$nin"];
         for (operator, name) in array_comparison_operators
@@ -343,68 +280,72 @@ mod tests {
                 "id": {name: [1]},
                 "id2": {"id3": {name: [1]}}
             }))
-            .build()
+            .build()?
             .to_valid_sql_query();
             assert_eq!(
                 sql,
                 format!(
-                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>>'{{id}}')::float8 {} (1) AND ("test_table"."metadata"#>>'{{id2,id3}}')::float8 {} (1)"##,
+                    r##"SELECT "id" FROM "test_table" WHERE "test_table"."metadata"#>'{{id}}' {} ('1') AND "test_table"."metadata"#>'{{id2,id3}}' {} ('1')"##,
                     operator, operator
                 )
             );
         }
+        Ok(())
     }
 
     #[test]
-    fn and_operator() {
+    fn and_operator() -> anyhow::Result<()> {
         let sql = construct_filter_builder_with_json(json!({
             "$and": [
                 {"id": {"$eq": 1}},
                 {"id2": {"id3": {"$eq": 1}}}
             ]
         }))
-        .build()
+        .build()?
         .to_valid_sql_query();
         assert_eq!(
             sql,
             r#"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"id\":1}' AND "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}'"#
         );
+        Ok(())
     }
 
     #[test]
-    fn or_operator() {
+    fn or_operator() -> anyhow::Result<()> {
         let sql = construct_filter_builder_with_json(json!({
             "$or": [
                 {"id": {"$eq": 1}},
                 {"id2": {"id3": {"$eq": 1}}}
             ]
         }))
-        .build()
+        .build()?
         .to_valid_sql_query();
         assert_eq!(
             sql,
             r#"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"id\":1}' OR "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}'"#
         );
+        Ok(())
     }
 
     #[test]
-    fn not_operator() {
+    fn not_operator() -> anyhow::Result<()> {
         let sql = construct_filter_builder_with_json(json!({
         "$not": [
                 {"id": {"$eq": 1}},
                 {"id2": {"id3": {"$eq": 1}}}
             ]
         }))
-        .build()
+        .build()?
         .to_valid_sql_query();
         assert_eq!(
             sql,
             r#"SELECT "id" FROM "test_table" WHERE NOT ("test_table"."metadata" @> E'{\"id\":1}' AND "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}')"#
         );
+        Ok(())
     }
 
     #[test]
-    fn random_difficult_tests() {
+    fn random_difficult_tests() -> anyhow::Result<()> {
         let sql = construct_filter_builder_with_json(json!({
             "$and": [
                 {"$or": [
@@ -415,7 +356,7 @@ mod tests {
                 {"id4": {"$eq": 1}}
             ]
         }))
-        .build()
+        .build()?
         .to_valid_sql_query();
         assert_eq!(
             sql,
@@ -431,7 +372,7 @@ mod tests {
                 {"id4": {"$eq": 1}}
             ]
         }))
-        .build()
+        .build()?
         .to_valid_sql_query();
         assert_eq!(
             sql,
@@ -443,11 +384,12 @@ mod tests {
                 {"uuid2": {"$eq": "2"}}
             ]}
         }))
-        .build()
+        .build()?
         .to_valid_sql_query();
         assert_eq!(
             sql,
             r#"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"metadata\":{\"uuid\":\"1\"}}' OR "test_table"."metadata" @> E'{\"metadata\":{\"uuid2\":\"2\"}}'"#
         );
+        Ok(())
     }
 }

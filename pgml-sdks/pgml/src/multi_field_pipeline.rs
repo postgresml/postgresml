@@ -25,12 +25,16 @@ use crate::{model::ModelPython, splitter::SplitterPython, types::JsonPython};
 type ParsedSchema = HashMap<String, FieldAction>;
 
 #[derive(Deserialize)]
+struct ValidSplitterAction {
+    model: Option<String>,
+    parameters: Option<Json>,
+}
+
+#[derive(Deserialize)]
 struct ValidEmbedAction {
     model: String,
     source: Option<String>,
-    model_parameters: Option<Json>,
-    splitter: Option<String>,
-    splitter_parameters: Option<Json>,
+    parameters: Option<Json>,
     hnsw: Option<Json>,
 }
 
@@ -41,6 +45,7 @@ pub struct FullTextSearchAction {
 
 #[derive(Deserialize)]
 struct ValidFieldAction {
+    splitter: Option<ValidSplitterAction>,
     embed: Option<ValidEmbedAction>,
     full_text_search: Option<FullTextSearchAction>,
 }
@@ -82,14 +87,19 @@ impl TryFrom<Json> for HNSW {
 }
 
 #[derive(Debug, Clone)]
+pub struct SplitterAction {
+    pub model: Splitter,
+}
+
+#[derive(Debug, Clone)]
 pub struct EmbedAction {
-    pub splitter: Option<Splitter>,
     pub model: Model,
     pub hnsw: HNSW,
 }
 
 #[derive(Debug, Clone)]
 pub struct FieldAction {
+    pub splitter: Option<SplitterAction>,
     pub embed: Option<EmbedAction>,
     pub full_text_search: Option<FullTextSearchAction>,
 }
@@ -100,22 +110,23 @@ impl TryFrom<ValidFieldAction> for FieldAction {
         let embed = value
             .embed
             .map(|v| {
-                let model = Model::new(Some(v.model), v.source, v.model_parameters);
-                let splitter = v
-                    .splitter
-                    .map(|v2| Splitter::new(Some(v2), v.splitter_parameters));
+                let model = Model::new(Some(v.model), v.source, v.parameters);
                 let hnsw = v
                     .hnsw
                     .map(|v2| HNSW::try_from(v2))
                     .unwrap_or_else(|| Ok(HNSW::default()))?;
-                anyhow::Ok(EmbedAction {
-                    model,
-                    splitter,
-                    hnsw,
-                })
+                anyhow::Ok(EmbedAction { model, hnsw })
+            })
+            .transpose()?;
+        let splitter = value
+            .splitter
+            .map(|v| {
+                let splitter = Splitter::new(v.model, v.parameters);
+                anyhow::Ok(SplitterAction { model: splitter })
             })
             .transpose()?;
         Ok(Self {
+            splitter,
             embed,
             full_text_search: value.full_text_search,
         })
@@ -138,15 +149,6 @@ pub struct MultiFieldPipeline {
     database_data: Option<MultiFieldPipelineDatabaseData>,
 }
 
-pub enum PipelineTableTypes {
-    Embedding,
-    TSVector,
-}
-
-fn validate_schema(schema: &Json) -> anyhow::Result<()> {
-    Ok(())
-}
-
 fn json_to_schema(schema: &Json) -> anyhow::Result<ParsedSchema> {
     schema
         .as_object()
@@ -167,7 +169,7 @@ fn json_to_schema(schema: &Json) -> anyhow::Result<ParsedSchema> {
 
 impl MultiFieldPipeline {
     pub fn new(name: &str, schema: Option<Json>) -> anyhow::Result<Self> {
-        let parsed_schema = schema.as_ref().map(|s| json_to_schema(&s)).transpose()?;
+        let parsed_schema = schema.as_ref().map(|s| json_to_schema(s)).transpose()?;
         Ok(Self {
             name: name.to_string(),
             schema,
@@ -203,13 +205,13 @@ impl MultiFieldPipeline {
                 let mut parsed_schema = json_to_schema(&pipeline.schema)?;
 
                 for (_key, value) in parsed_schema.iter_mut() {
+                    if let Some(splitter) = &mut value.splitter {
+                        splitter.model.set_project_info(project_info.clone());
+                        splitter.model.verify_in_database(false).await?;
+                    }
                     if let Some(embed) = &mut value.embed {
                         embed.model.set_project_info(project_info.clone());
                         embed.model.verify_in_database(false).await?;
-                        if let Some(splitter) = &mut embed.splitter {
-                            splitter.set_project_info(project_info.clone());
-                            splitter.verify_in_database(false).await?;
-                        }
                     }
                 }
                 self.schema = Some(pipeline.schema.clone());
@@ -224,13 +226,13 @@ impl MultiFieldPipeline {
                 let mut parsed_schema = json_to_schema(schema)?;
 
                 for (_key, value) in parsed_schema.iter_mut() {
+                    if let Some(splitter) = &mut value.splitter {
+                        splitter.model.set_project_info(project_info.clone());
+                        splitter.model.verify_in_database(false).await?;
+                    }
                     if let Some(embed) = &mut value.embed {
                         embed.model.set_project_info(project_info.clone());
                         embed.model.verify_in_database(false).await?;
-                        if let Some(splitter) = &mut embed.splitter {
-                            splitter.set_project_info(project_info.clone());
-                            splitter.verify_in_database(false).await?;
-                        }
                     }
                 }
                 self.parsed_schema = Some(parsed_schema);
@@ -277,6 +279,32 @@ impl MultiFieldPipeline {
             .context("Pipeline must have schema to create_tables")?;
 
         for (key, value) in parsed_schema.iter() {
+            // Create the chunks table
+            let chunks_table_name = format!("{}.{}_chunks", schema, key);
+            transaction
+                .execute(
+                    query_builder!(
+                        queries::CREATE_CHUNKS_TABLE,
+                        chunks_table_name,
+                        documents_table_name
+                    )
+                    .as_str(),
+                )
+                .await?;
+            let index_name = format!("{}_pipeline_chunk_document_id_index", key);
+            transaction
+                .execute(
+                    query_builder!(
+                        queries::CREATE_INDEX,
+                        "",
+                        index_name,
+                        chunks_table_name,
+                        "document_id"
+                    )
+                    .as_str(),
+                )
+                .await?;
+
             if let Some(embed) = &value.embed {
                 let embeddings_table_name = format!("{}.{}_embeddings", schema, key);
                 let exists: bool = sqlx::query_scalar(
@@ -305,43 +333,17 @@ impl MultiFieldPipeline {
                         }
                     };
 
-                    let chunks_table_name = format!("{}.{}_chunks", schema, key);
-
-                    // Create the chunks table
-                    transaction
-                        .execute(
-                            query_builder!(
-                                queries::CREATE_CHUNKS_TABLE,
-                                chunks_table_name,
-                                documents_table_name
-                            )
-                            .as_str(),
-                        )
-                        .await?;
-                    let index_name = format!("{}_pipeline_chunk_document_id_index", key);
-                    transaction
-                        .execute(
-                            query_builder!(
-                                queries::CREATE_INDEX,
-                                "",
-                                index_name,
-                                chunks_table_name,
-                                "document_id"
-                            )
-                            .as_str(),
-                        )
-                        .await?;
-
                     // Create the embeddings table
                     sqlx::query(&query_builder!(
                         queries::CREATE_EMBEDDINGS_TABLE,
                         &embeddings_table_name,
                         chunks_table_name,
+                        documents_table_name,
                         embedding_length
                     ))
                     .execute(&mut *transaction)
                     .await?;
-                    let index_name = format!("{}_pipeline_chunk_id_index", key);
+                    let index_name = format!("{}_pipeline_embedding_chunk_id_index", key);
                     transaction
                         .execute(
                             query_builder!(
@@ -354,11 +356,24 @@ impl MultiFieldPipeline {
                             .as_str(),
                         )
                         .await?;
+                    let index_name = format!("{}_pipeline_embedding_document_id_index", key);
+                    transaction
+                        .execute(
+                            query_builder!(
+                                queries::CREATE_INDEX,
+                                "",
+                                index_name,
+                                &embeddings_table_name,
+                                "document_id"
+                            )
+                            .as_str(),
+                        )
+                        .await?;
                     let index_with_parameters = format!(
                         "WITH (m = {}, ef_construction = {})",
                         embed.hnsw.m, embed.hnsw.ef_construction
                     );
-                    let index_name = format!("{}_pipeline_hnsw_vector_index", key);
+                    let index_name = format!("{}_pipeline_embedding_hnsw_vector_index", key);
                     transaction
                         .execute(
                             query_builder!(
@@ -381,14 +396,41 @@ impl MultiFieldPipeline {
                 transaction
                     .execute(
                         query_builder!(
-                            queries::CREATE_DOCUMENTS_TSVECTORS_TABLE,
+                            queries::CREATE_CHUNKS_TSVECTORS_TABLE,
                             tsvectors_table_name,
+                            chunks_table_name,
                             documents_table_name
                         )
                         .as_str(),
                     )
                     .await?;
-                let index_name = format!("{}_tsvector_index", key);
+                let index_name = format!("{}_pipeline_tsvector_chunk_id_index", key);
+                transaction
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_INDEX,
+                            "",
+                            index_name,
+                            tsvectors_table_name,
+                            "chunk_id"
+                        )
+                        .as_str(),
+                    )
+                    .await?;
+                let index_name = format!("{}_pipeline_tsvector_document_id_index", key);
+                transaction
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_INDEX,
+                            "",
+                            index_name,
+                            tsvectors_table_name,
+                            "document_id"
+                        )
+                        .as_str(),
+                    )
+                    .await?;
+                let index_name = format!("{}_pipeline_tsvector_index", key);
                 transaction
                     .execute(
                         query_builder!(
@@ -423,15 +465,20 @@ impl MultiFieldPipeline {
             .context("Pipeline must have schema to execute")?;
 
         for (key, value) in parsed_schema.iter() {
+            let chunk_ids = self
+                .sync_chunks(
+                    key,
+                    value.splitter.as_ref().map(|v| &v.model),
+                    document_ids,
+                    &mp,
+                )
+                .await?;
             if let Some(embed) = &value.embed {
-                let chunk_ids = self
-                    .sync_chunks(key, &embed.splitter, document_ids, &mp)
-                    .await?;
                 self.sync_embeddings(key, &embed.model, &chunk_ids, &mp)
                     .await?;
             }
             if let Some(full_text_search) = &value.full_text_search {
-                self.sync_tsvectors(key, &full_text_search.configuration, document_ids, &mp)
+                self.sync_tsvectors(key, &full_text_search.configuration, &chunk_ids, &mp)
                     .await?;
             }
         }
@@ -442,7 +489,7 @@ impl MultiFieldPipeline {
     async fn sync_chunks(
         &self,
         key: &str,
-        splitter: &Option<Splitter>,
+        splitter: Option<&Splitter>,
         document_ids: &Option<Vec<i64>>,
         mp: &MultiProgress,
     ) -> anyhow::Result<Vec<i64>> {
@@ -627,7 +674,7 @@ impl MultiFieldPipeline {
         &self,
         key: &str,
         configuration: &str,
-        document_ids: &Option<Vec<i64>>,
+        chunk_ids: &Vec<i64>,
         mp: &MultiProgress,
     ) -> anyhow::Result<()> {
         let pool = self.get_pool().await?;
@@ -642,34 +689,20 @@ impl MultiFieldPipeline {
             .with_prefix(self.name.clone())
             .with_message("Syncing TSVectors for full text search");
 
-        let documents_table_name = format!("{}.documents", project_info.name);
+        let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let tsvectors_table_name = format!("{}_{}.{}_tsvectors", project_info.name, self.name, key);
-        let json_key_query = format!("document->>'{}'", key);
 
         let is_done = AtomicBool::new(false);
         let work = async {
-            let res = if document_ids.is_some() {
-                sqlx::query(&query_builder!(
-                    queries::GENERATE_TSVECTORS_FOR_DOCUMENT_IDS,
-                    tsvectors_table_name,
-                    configuration,
-                    json_key_query,
-                    documents_table_name
-                ))
-                .bind(document_ids)
-                .execute(&pool)
-                .await
-            } else {
-                sqlx::query(&query_builder!(
-                    queries::GENERATE_TSVECTORS,
-                    tsvectors_table_name,
-                    configuration,
-                    json_key_query,
-                    documents_table_name
-                ))
-                .execute(&pool)
-                .await
-            };
+            let res = sqlx::query(&query_builder!(
+                queries::GENERATE_TSVECTORS_FOR_CHUNK_IDS,
+                tsvectors_table_name,
+                configuration,
+                chunks_table_name
+            ))
+            .bind(chunk_ids)
+            .execute(&pool)
+            .await;
             is_done.store(true, Relaxed);
             res.map(|_t| ()).map_err(|e| anyhow::anyhow!(e))
         };
@@ -700,11 +733,11 @@ impl MultiFieldPipeline {
     pub(crate) fn set_project_info(&mut self, project_info: ProjectInfo) {
         if let Some(parsed_schema) = &mut self.parsed_schema {
             for (_key, value) in parsed_schema.iter_mut() {
+                if let Some(splitter) = &mut value.splitter {
+                    splitter.model.set_project_info(project_info.clone());
+                }
                 if let Some(embed) = &mut value.embed {
                     embed.model.set_project_info(project_info.clone());
-                    if let Some(splitter) = &mut embed.splitter {
-                        splitter.set_project_info(project_info.clone());
-                    }
                 }
             }
         }

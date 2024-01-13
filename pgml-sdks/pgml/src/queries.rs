@@ -71,18 +71,20 @@ CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
   created_at timestamp NOT NULL DEFAULT now(), 
   chunk_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
+  document_id int8 NOT NULL REFERENCES %s,
   embedding vector(%d) NOT NULL,
   UNIQUE (chunk_id)
 );
 "#;
 
-pub const CREATE_DOCUMENTS_TSVECTORS_TABLE: &str = r#"
+pub const CREATE_CHUNKS_TSVECTORS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
   created_at timestamp NOT NULL DEFAULT now(), 
-  document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
+  chunk_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
+  document_id int8 NOT NULL REFERENCES %s, 
   ts tsvector,
-  UNIQUE (document_id)
+  UNIQUE (chunk_id)
 );
 "#;
 
@@ -104,53 +106,23 @@ CREATE INDEX %d IF NOT EXISTS %s on %s using hnsw (%d) %d;
 /////////////////////////////
 // Other Big Queries ////////
 /////////////////////////////
-pub const GENERATE_TSVECTORS: &str = r#"
-INSERT INTO %s (document_id, ts) 
+pub const GENERATE_TSVECTORS_FOR_CHUNK_IDS: &str = r#"
+INSERT INTO %s (chunk_id, document_id, ts) 
 SELECT 
   id, 
-  to_tsvector('%d', %d) ts 
-FROM 
-  %s
-ON CONFLICT (document_id) DO NOTHING;
-"#;
-
-pub const GENERATE_TSVECTORS_FOR_DOCUMENT_IDS: &str = r#"
-INSERT INTO %s (document_id, ts) 
-SELECT 
-  id, 
-  to_tsvector('%d', %d) ts 
+  document_id,
+  to_tsvector('%d', chunk) ts 
 FROM 
   %s
 WHERE id = ANY ($1)
-ON CONFLICT (document_id) DO NOTHING;
-"#;
-
-pub const GENERATE_EMBEDDINGS: &str = r#"
-INSERT INTO %s (chunk_id, embedding) 
-SELECT 
-  id, 
-  pgml.embed(
-    text => chunk, 
-    transformer => $1, 
-    kwargs => $2 
-  ) 
-FROM 
-  %s 
-WHERE 
-  splitter_id = $3 
-  AND id NOT IN (
-    SELECT 
-      chunk_id 
-    from 
-      %s
-  )
 ON CONFLICT (chunk_id) DO NOTHING;
 "#;
 
 pub const GENERATE_EMBEDDINGS_FOR_CHUNK_IDS: &str = r#"
-INSERT INTO %s (chunk_id, embedding) 
+INSERT INTO %s (chunk_id, document_id, embedding) 
 SELECT 
   id, 
+  document_id,
   pgml.embed(
     text => chunk, 
     transformer => $1, 
@@ -266,7 +238,7 @@ FROM
       ) AS documents
   ) chunks 
 ON CONFLICT (document_id, chunk_index) DO NOTHING 
-RETURNING id
+RETURNING id, document_id
 "#;
 
 pub const GENERATE_CHUNKS_FOR_DOCUMENT_IDS: &str = r#"
