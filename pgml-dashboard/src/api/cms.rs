@@ -16,7 +16,6 @@ use crate::{
     templates::docs::*,
     utils::config,
 };
-
 use serde::{Deserialize, Serialize};
 
 lazy_static! {
@@ -66,51 +65,144 @@ pub struct Document {
     /// The absolute path on disk
     pub path: PathBuf,
     pub description: Option<String>,
+    pub author: Option<String>,
+    pub author_image: Option<String>,
+    pub featured: bool, 
+    pub date: Option<String>,
+    pub tags: Vec<String>,
     pub image: Option<String>,
     pub title: String,
     pub toc_links: Vec<TocLink>,
-    pub html: String,
+    pub content: String,
 }
 
+// Gets document markdown
 impl Document {
-    pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
-        warn!("path: {:?}", path);
+    pub async fn contents(path: &PathBuf) -> Result<String, std::io::Error> {
         let contents = tokio::fs::read_to_string(&path).await?;
 
         let parts = contents.split("---").collect::<Vec<&str>>();
 
-        let (description, contents) = if parts.len() > 1 {
+        let contents = if parts.len() > 1 {
             match YamlLoader::load_from_str(parts[1]) {
                 Ok(meta) => {
                     if meta.len() == 0 || meta[0].as_hash().is_none() {
-                        (None, contents)
+                        contents
                     } else {
-                        let description: Option<String> = match meta[0]["description"].is_badvalue() {
-                            true => None,
-                            false => Some(meta[0]["description"].as_str().unwrap().to_string()),
-                        };
-                        (description, parts[2..].join("---").to_string())
+                        parts[2..].join("---").to_string()
                     }
                 }
-                Err(_) => (None, contents),
+                Err(_) => contents,
             }
         } else {
-            (None, contents)
+            contents
         };
+
+        Ok(contents)
+    }
+
+    pub async fn meta(path: &PathBuf) -> (Option<String>, Option<String>, Option<String>, Option<String>, bool, Vec<String>, String, Vec<TocLink>, Option<String>){
+        let contents = tokio::fs::read_to_string(&path).await.unwrap_or_else(|_| "".to_string());
+
+        let parts = contents.split("---").collect::<Vec<&str>>();
 
         // Parse Markdown
         let arena = Arena::new();
         let spaced_contents = crate::utils::markdown::gitbook_preprocess(&contents);
         let root = parse_document(&arena, &spaced_contents, &crate::utils::markdown::options());
 
-        // Title of the document is the first (and typically only) <h1>
+        let meta = if parts.len() > 1 {
+            match YamlLoader::load_from_str(parts[1]) {
+                Ok(meta) => {
+                    if meta.len() == 0 || meta[0].as_hash().is_none() {
+                        None
+                    } else {
+                        Some(meta[0].clone())
+                    }
+                }
+                Err(_) => None,
+            }
+        } else {
+            None
+        };
+
+        let (description, author, date, image, featured, tags) = match meta {
+            Some(meta) => {
+                let description = if meta["description"].is_badvalue() {
+                    None
+                } else {
+                    Some(meta["description"].as_str().unwrap().to_string())
+                };
+                let author = if meta["author"].is_badvalue() {
+                    None
+                } else {
+                    Some(meta["author"].as_str().unwrap().to_string())
+                };
+                let date = if meta["date"].is_badvalue() {
+                    None
+                } else {
+                    Some(meta["date"].as_str().unwrap().to_string())
+                };
+                let image = if meta["image"].is_badvalue() {
+                    crate::utils::markdown::get_image(root)
+                } else {
+                    Some(meta["image"].as_str().unwrap().to_string())
+                };
+                let featured = if meta["featured"].is_badvalue() {
+                    false
+                } else {
+                    meta["featured"].as_bool().unwrap()
+                };
+                let tags = if meta["tags"].is_badvalue() {
+                    Vec::new()
+                } else {
+                    let mut tags = Vec::new();
+                    for tag in meta["tags"].as_vec().unwrap() {
+                        tags.push(tag.as_str().unwrap_or_else(|| "").to_string());
+                    }
+                    tags
+                };
+
+                (description, author, date, image, featured, tags)
+            }, 
+            None => (None, None, None, None, false, Vec::new())
+        };
+
         let title = crate::utils::markdown::get_title(root).unwrap();
         let toc_links = crate::utils::markdown::get_toc(root).unwrap();
-        let image = crate::utils::markdown::get_image(root);
-        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
+        let author_image = crate::utils::markdown::get_author_image(root);
 
-        // MkDocs, gitbook syntax support, e.g. tabs, notes, alerts, etc.
-        crate::utils::markdown::mkdocs(root, &arena).unwrap();
+        (description, author, date, image, featured, tags, title, toc_links, author_image)
+    }
+
+    pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
+        warn!("path: {:?}", path);
+        let (description, author, date, image, featured, tags, title, toc_links, author_image) = Document::meta(path).await;
+        let content = Document::contents(path).await?;
+
+        let document = Document {
+            path: path.to_owned(),
+            description,
+            author,
+            author_image,
+            date,
+            featured,
+            tags,
+            image,
+            title,
+            toc_links,
+            content
+        };
+        Ok(document)
+    }
+
+    pub fn html(self) -> String {
+        let contents = self.content;
+
+        // Parse Markdown
+        let arena = Arena::new();
+        let spaced_contents = crate::utils::markdown::gitbook_preprocess(&contents);
+        let root = parse_document(&arena, &spaced_contents, &crate::utils::markdown::options());
 
         // Style headings like we like them
         let mut plugins = ComrakPlugins::default();
@@ -122,31 +214,23 @@ impl Document {
         format_html_with_plugins(root, &crate::utils::markdown::options(), &mut html, &plugins).unwrap();
         let html = String::from_utf8(html).unwrap();
 
-        let document = Document {
-            path: path.to_owned(),
-            description,
-            image,
-            title,
-            toc_links,
-            html,
-        };
-        Ok(document)
+        html
     }
 }
 
 /// A Gitbook collection of documents
 #[derive(Default)]
-struct Collection {
+pub struct Collection {
     /// The properly capitalized identifier for this collection
     name: String,
     /// The root location on disk for this collection
-    root_dir: PathBuf,
+    pub root_dir: PathBuf,
     /// The root location for gitbook assets
-    asset_dir: PathBuf,
+    pub asset_dir: PathBuf,
     /// The base url for this collection
     url_root: PathBuf,
     /// A hierarchical list of content in this collection
-    index: Vec<IndexLink>,
+    pub index: Vec<IndexLink>,
     /// A list of old paths to new paths in this collection
     redirects: HashMap<&'static str, &'static str>,
 }
@@ -186,6 +270,8 @@ impl Collection {
     ) -> Result<ResponseOk, crate::responses::NotFound> {
         info!("get_content: {} | {path:?}", self.name);
 
+        println!("path: {:?}", path);
+
         let mut redirected = false;
         match self
             .redirects
@@ -208,6 +294,8 @@ impl Collection {
             path = path.join("README");
         }
         let path = self.root_dir.join(format!("{}.md", path.to_string_lossy()));
+
+        println!("path: {:?}", path);
 
         self.render(&path, &canonical, cluster).await
     }
@@ -303,7 +391,7 @@ impl Collection {
     }
 
     // Sets specified index as currently viewed.
-    fn open_index(&self, path: PathBuf) -> Vec<IndexLink> {
+    fn open_index(&self, path: &PathBuf) -> Vec<IndexLink> {
         self.index
             .clone()
             .iter_mut()
@@ -330,10 +418,10 @@ impl Collection {
 
         match Document::from_path(&path).await {
             Ok(doc) => {
-                let index = self.open_index(doc.path);
+                let index = self.open_index(&doc.path);
 
                 let mut layout = crate::templates::Layout::new(&doc.title, Some(cluster));
-                if let Some(image) = doc.image {
+                if let Some(image) = &doc.image {
                     layout.image(&config::asset_url(image.into()));
                 }
                 if let Some(description) = &doc.description {
@@ -351,7 +439,7 @@ impl Collection {
                     .footer(cluster.context.marketing_footer.to_string());
 
                 Ok(ResponseOk(
-                    layout.render(crate::templates::Article { content: doc.html }),
+                    layout.render(crate::templates::Article { content: doc.html() }),
                 ))
             }
             // Return page not found on bad path
@@ -398,6 +486,7 @@ async fn search(query: &str, index: &State<crate::utils::markdown::SearchIndex>)
 
 #[get("/blog/.gitbook/assets/<path>", rank = 10)]
 pub async fn get_blog_asset(path: &str) -> Option<NamedFile> {
+    println!("getting aset: {}", path);
     BLOG.get_asset(path).await
 }
 
@@ -417,6 +506,7 @@ async fn get_blog(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, crate::responses::NotFound> {
+    println!("path: {:?}", path);
     BLOG.get_content(path, cluster, origin).await
 }
 
@@ -438,6 +528,21 @@ async fn get_docs(
     DOCS.get_content(path, cluster, origin).await
 }
 
+#[get("/blog")]
+async fn blog_landing_page(
+    cluster: &Cluster,
+) -> Result<ResponseOk, crate::responses::NotFound> {
+    let layout = crate::components::layouts::marketing::Base::new("Blog landing page", Some(cluster))
+        .footer(cluster.context.marketing_footer.to_string());
+
+    Ok(ResponseOk(
+        layout.render(
+            crate::components::pages::blog::LandingPage::new(cluster)
+            .index(&BLOG).await
+        ),
+    ))
+}
+
 #[get("/user_guides/<path..>", rank = 5)]
 async fn get_user_guides(
     path: PathBuf,
@@ -449,6 +554,7 @@ async fn get_user_guides(
 
 pub fn routes() -> Vec<Route> {
     routes![
+        blog_landing_page,
         get_blog,
         get_blog_asset,
         get_careers,

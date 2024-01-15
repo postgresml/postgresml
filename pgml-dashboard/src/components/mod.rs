@@ -9,6 +9,10 @@ pub use accordian::Accordian;
 pub mod breadcrumbs;
 pub use breadcrumbs::Breadcrumbs;
 
+// src/components/carousel
+pub mod carousel;
+pub use carousel::Carousel;
+
 // src/components/chatbot
 pub mod chatbot;
 pub use chatbot::Chatbot;
@@ -62,6 +66,9 @@ pub mod navigation;
 
 // src/components/notifications
 pub mod notifications;
+
+// src/components/pages
+pub mod pages;
 
 // src/components/postgres_logo
 pub mod postgres_logo;

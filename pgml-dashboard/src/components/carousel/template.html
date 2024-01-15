@@ -1,0 +1,21 @@
+<div data-controller="carousel">
+  <% for item in items {%>
+    <template>
+      <div class="item-1 w-100 d-inline-block carousel-item">
+        <div class="m-auto" style="width: fit-content" data-action="mouseenter->pages-blog-landing-page#testPause mouseleave->pages-blog-landing-page#testResume">
+          item
+        </div>
+      </div>
+    </template>
+    <% } %>
+
+    <div class="carousel w-100 overflow-hidden" style="height: fit-content; white-space: nowrap" data-pages-blog-landing-page-target="carousel">
+    </div>
+    <div class="carousel-indicator w-100">
+      <% for index in docs {%>
+      <div class="timer-container" data-pages-blog-landing-page-target="carouselTimer">
+        <div class="timer" ></div>
+      </div>
+      <% } %>
+    </div>
+</div>

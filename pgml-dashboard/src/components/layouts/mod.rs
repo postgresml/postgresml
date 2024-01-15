@@ -4,3 +4,6 @@
 // src/components/layouts/head
 pub mod head;
 pub use head::Head;
+
+// src/components/layouts/marketing
+pub mod marketing;
