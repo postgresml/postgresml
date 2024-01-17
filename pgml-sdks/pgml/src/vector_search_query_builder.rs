@@ -26,6 +26,7 @@ struct ValidFullTextSearchAction {
 
 #[derive(Debug, Deserialize)]
 struct ValidField {
+    query: String,
     model_parameters: Option<Json>,
     full_text_search: Option<String>,
 }
@@ -43,9 +44,8 @@ struct ValidQuery {
 }
 
 pub async fn build_vector_search_query(
-    query_text: &str,
-    collection: &Collection,
     query: Json,
+    collection: &Collection,
     pipeline: &MultiFieldPipeline,
 ) -> anyhow::Result<(String, SqlxValues)> {
     let valid_query: ValidQuery = serde_json::from_value(query.0)?;
@@ -107,7 +107,7 @@ pub async fn build_vector_search_query(
                         Expr::cust(format!(
                             "transformer => (SELECT schema #>> '{{{key},embed,model}}' FROM pipeline)",
                         )),
-                        Expr::cust_with_values("text => $1", [query_text]),
+                        Expr::cust_with_values("text => $1", [vf.query]),
                         Expr::cust(format!("kwargs => COALESCE((SELECT schema #> '{{{key},embed,model_parameters}}' FROM pipeline), '{{}}'::jsonb)")),
                     ]),
                     Alias::new("embedding"),
@@ -144,9 +144,8 @@ pub async fn build_vector_search_query(
                         &model.name,
                         vf.model_parameters.as_ref(),
                     )?;
-                    let mut embeddings = remote_embeddings
-                        .embed(vec![query_text.to_string()])
-                        .await?;
+                    let mut embeddings =
+                        remote_embeddings.embed(vec![vf.query.to_string()]).await?;
                     std::mem::take(&mut embeddings[0])
                 };
 

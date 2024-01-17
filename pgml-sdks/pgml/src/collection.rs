@@ -776,20 +776,14 @@ impl Collection {
     #[allow(clippy::type_complexity)]
     pub async fn vector_search(
         &mut self,
-        query: &str,
+        query: Json,
         pipeline: &mut MultiFieldPipeline,
-        query_parameters: Option<Json>,
         top_k: Option<i64>,
     ) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
-        let (built_query, values) = build_vector_search_query(
-            query,
-            self,
-            query_parameters.clone().unwrap_or_default(),
-            pipeline,
-        )
-        .await?;
+        let (built_query, values) =
+            build_vector_search_query(query.clone(), self, pipeline).await?;
         let results: Result<Vec<(Json, String, f64)>, _> =
             sqlx::query_as_with(&built_query, values)
                 .fetch_all(&pool)
@@ -817,13 +811,8 @@ impl Collection {
                             .project_info;
                         pipeline.set_project_info(project_info.to_owned());
                         pipeline.verify_in_database(false).await?;
-                        let (built_query, values) = build_vector_search_query(
-                            query,
-                            self,
-                            query_parameters.clone().unwrap_or_default(),
-                            pipeline,
-                        )
-                        .await?;
+                        let (built_query, values) =
+                            build_vector_search_query(query, self, pipeline).await?;
                         let results: Vec<(Json, String, f64)> =
                             sqlx::query_as_with(&built_query, values)
                                 .fetch_all(&pool)
@@ -862,6 +851,7 @@ impl Collection {
             .bind(&self.name)
             .execute(&mut *transaciton)
             .await?;
+        // TODO: Alter pipeline schema
         sqlx::query(&query_builder!(
             "ALTER SCHEMA %s RENAME TO %s",
             &self.name,
