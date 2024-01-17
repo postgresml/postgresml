@@ -100,7 +100,7 @@ fn train(
     search_params: default!(JsonB, "'{}'"),
     search_args: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
-    test_sampling: default!(Sampling, "'last'"),
+    test_sampling: default!(Sampling, "'stratified_random'"),
     runtime: default!(Option<Runtime>, "NULL"),
     automatic_deploy: default!(Option<bool>, true),
     materialize_snapshot: default!(bool, false),
@@ -146,7 +146,7 @@ fn train_joint(
     search_params: default!(JsonB, "'{}'"),
     search_args: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
-    test_sampling: default!(Sampling, "'last'"),
+    test_sampling: default!(Sampling, "'stratified_random'"),
     runtime: default!(Option<Runtime>, "NULL"),
     automatic_deploy: default!(Option<bool>, true),
     materialize_snapshot: default!(bool, false),
@@ -535,7 +535,7 @@ fn snapshot(
     relation_name: &str,
     y_column_name: &str,
     test_size: default!(f32, 0.25),
-    test_sampling: default!(Sampling, "'last'"),
+    test_sampling: default!(Sampling, "'stratified_random'"),
     preprocess: default!(JsonB, "'{}'"),
 ) -> TableIterator<'static, (name!(relation, String), name!(y_column_name, String))> {
     Snapshot::create(
@@ -807,7 +807,7 @@ fn tune(
     model_name: default!(Option<&str>, "NULL"),
     hyperparams: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
-    test_sampling: default!(Sampling, "'last'"),
+    test_sampling: default!(Sampling, "'stratified_random'"),
     automatic_deploy: default!(Option<bool>, true),
     materialize_snapshot: default!(bool, false),
 ) -> TableIterator<
