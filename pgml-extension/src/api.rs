@@ -266,7 +266,7 @@ fn train_joint(
     let mut deploy = true;
 
     match automatic_deploy {
-        // Deploy only if metrics are better than previous model.
+        // Deploy only if metrics are better than previous model, or if its the first model
         Some(true) | None => {
             if let Ok(Some(deployed_metrics)) = deployed_metrics {
                 if let Some(deployed_metrics_obj) = deployed_metrics.0.as_object() {
@@ -297,12 +297,9 @@ fn train_joint(
                         deploy = false;
                     }
                 } else {
-                    warning!("Failed to parse deployed model metrics. Ensure train/test split results in both positive and negative label records.");
+                    warning!("Failed to parse deployed model metrics. Check data types of model metadata on pgml.models.metrics");
                     deploy = false;
                 }
-            } else {
-                warning!("Failed to obtain currently deployed model metrics. Check if the deployed model metrics are available and correctly formatted.");
-                deploy = false;
             }
         }
         Some(false) => {
