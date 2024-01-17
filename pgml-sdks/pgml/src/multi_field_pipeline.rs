@@ -2,10 +2,12 @@ use anyhow::Context;
 use indicatif::MultiProgress;
 use rust_bridge::{alias, alias_manual, alias_methods};
 use serde::Deserialize;
-use sqlx::{Executor, PgConnection, PgPool};
+use sqlx::{Executor, PgConnection, PgPool, Postgres, Transaction};
 use std::sync::atomic::Ordering::Relaxed;
+use std::sync::Arc;
 use std::{collections::HashMap, sync::atomic::AtomicBool};
 use tokio::join;
+use tokio::sync::Mutex;
 use tracing::instrument;
 
 use crate::{
@@ -453,11 +455,10 @@ impl MultiFieldPipeline {
     #[instrument(skip(self))]
     pub(crate) async fn execute(
         &mut self,
-        document_ids: &Option<Vec<i64>>,
-        mp: MultiProgress,
+        document_id: Option<i64>,
+        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
     ) -> anyhow::Result<()> {
-        self.verify_in_database(false).await?;
-        self.create_tables().await?;
+        // We are assuming we have manually verified the pipeline before doing this
 
         let parsed_schema = self
             .parsed_schema
@@ -469,17 +470,22 @@ impl MultiFieldPipeline {
                 .sync_chunks(
                     key,
                     value.splitter.as_ref().map(|v| &v.model),
-                    document_ids,
-                    &mp,
+                    document_id,
+                    transaction.clone(),
                 )
                 .await?;
             if let Some(embed) = &value.embed {
-                self.sync_embeddings(key, &embed.model, &chunk_ids, &mp)
+                self.sync_embeddings(key, &embed.model, &chunk_ids, transaction.clone())
                     .await?;
             }
             if let Some(full_text_search) = &value.full_text_search {
-                self.sync_tsvectors(key, &full_text_search.configuration, &chunk_ids, &mp)
-                    .await?;
+                self.sync_tsvectors(
+                    key,
+                    &full_text_search.configuration,
+                    &chunk_ids,
+                    transaction.clone(),
+                )
+                .await?;
             }
         }
         Ok(())
@@ -490,11 +496,9 @@ impl MultiFieldPipeline {
         &self,
         key: &str,
         splitter: Option<&Splitter>,
-        document_ids: &Option<Vec<i64>>,
-        mp: &MultiProgress,
+        document_id: Option<i64>,
+        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
     ) -> anyhow::Result<Vec<i64>> {
-        let pool = self.get_pool().await?;
-
         let project_info = self
             .project_info
             .as_ref()
@@ -510,60 +514,37 @@ impl MultiFieldPipeline {
                 .as_ref()
                 .context("Splitter must be verified to sync chunks")?;
 
-            let progress_bar = mp
-                .add(utils::default_progress_spinner(1))
-                .with_prefix(format!("{} - {}", self.name.clone(), key))
-                .with_message("Generating chunks");
-
-            let is_done = AtomicBool::new(false);
-            let work = async {
-                let chunk_ids: Result<Vec<i64>, _> = if document_ids.is_some() {
-                    sqlx::query(&query_builder!(
-                        queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS,
-                        &chunks_table_name,
-                        &json_key_query,
-                        documents_table_name,
-                        &chunks_table_name
-                    ))
-                    .bind(splitter_database_data.id)
-                    .bind(document_ids)
-                    .execute(&pool)
-                    .await
-                    .map_err(|e| {
-                        is_done.store(true, Relaxed);
-                        e
-                    })?;
-                    sqlx::query_scalar(&query_builder!(
-                        "SELECT id FROM %s WHERE document_id = ANY($1)",
-                        &chunks_table_name
-                    ))
-                    .bind(document_ids)
-                    .fetch_all(&pool)
-                    .await
-                } else {
-                    sqlx::query_scalar(&query_builder!(
-                        queries::GENERATE_CHUNKS,
-                        &chunks_table_name,
-                        &json_key_query,
-                        documents_table_name,
-                        &chunks_table_name
-                    ))
-                    .bind(splitter_database_data.id)
-                    .fetch_all(&pool)
-                    .await
-                };
-                is_done.store(true, Relaxed);
-                chunk_ids
+            let chunk_ids: Result<Vec<i64>, _> = if document_id.is_some() {
+                sqlx::query(&query_builder!(
+                    queries::GENERATE_CHUNKS_FOR_DOCUMENT_ID,
+                    &chunks_table_name,
+                    &json_key_query,
+                    documents_table_name,
+                    &chunks_table_name
+                ))
+                .bind(splitter_database_data.id)
+                .bind(document_id)
+                .execute(&mut *transaction.lock().await)
+                .await?;
+                sqlx::query_scalar(&query_builder!(
+                    "SELECT id FROM %s WHERE document_id = $1",
+                    &chunks_table_name
+                ))
+                .bind(document_id)
+                .fetch_all(&mut *transaction.lock().await)
+                .await
+            } else {
+                sqlx::query_scalar(&query_builder!(
+                    queries::GENERATE_CHUNKS,
+                    &chunks_table_name,
+                    &json_key_query,
+                    documents_table_name,
+                    &chunks_table_name
+                ))
+                .bind(splitter_database_data.id)
+                .fetch_all(&mut *transaction.lock().await)
+                .await
             };
-            let progress_work = async {
-                while !is_done.load(Relaxed) {
-                    progress_bar.inc(1);
-                    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-                }
-            };
-            let (chunk_ids, _) = join!(work, progress_work);
-            progress_bar.set_message("Done generating chunks");
-            progress_bar.finish();
             chunk_ids.map_err(anyhow::Error::msg)
         } else {
             sqlx::query_scalar(&query_builder!(
@@ -583,7 +564,7 @@ impl MultiFieldPipeline {
                 &json_key_query,
                 &documents_table_name
             ))
-            .fetch_all(&pool)
+            .fetch_all(&mut *transaction.lock().await)
             .await
             .map_err(anyhow::Error::msg)
         }
@@ -595,10 +576,8 @@ impl MultiFieldPipeline {
         key: &str,
         model: &Model,
         chunk_ids: &Vec<i64>,
-        mp: &MultiProgress,
+        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
     ) -> anyhow::Result<()> {
-        let pool = self.get_pool().await?;
-
         // Remove the stored name from the parameters
         let mut parameters = model.parameters.clone();
         parameters
@@ -611,22 +590,13 @@ impl MultiFieldPipeline {
             .as_ref()
             .context("Pipeline must have project info to sync chunks")?;
 
-        let progress_bar = mp
-            .add(utils::default_progress_spinner(1))
-            .with_prefix(self.name.clone())
-            .with_message("Generating emmbeddings");
-
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let embeddings_table_name =
             format!("{}_{}.{}_embeddings", project_info.name, self.name, key);
 
-        let is_done = AtomicBool::new(false);
-        // We need to be careful about how we handle errors here. We do not want to return an error
-        // from the async block before setting is_done to true. If we do, the progress bar will
-        // will load forever. We also want to make sure to propogate any errors we have
-        let work = async {
-            let res = match model.runtime {
-                ModelRuntime::Python => sqlx::query(&query_builder!(
+        match model.runtime {
+            ModelRuntime::Python => {
+                sqlx::query(&query_builder!(
                     queries::GENERATE_EMBEDDINGS_FOR_CHUNK_IDS,
                     embeddings_table_name,
                     chunks_table_name,
@@ -635,37 +605,21 @@ impl MultiFieldPipeline {
                 .bind(&model.name)
                 .bind(&parameters)
                 .bind(chunk_ids)
-                .execute(&pool)
-                .await
-                .map_err(|e| anyhow::anyhow!(e))
-                .map(|_t| ()),
-                r => {
-                    let remote_embeddings =
-                        build_remote_embeddings(r, &model.name, Some(&parameters))?;
-                    remote_embeddings
-                        .generate_embeddings(
-                            &embeddings_table_name,
-                            &chunks_table_name,
-                            chunk_ids,
-                            &pool,
-                        )
-                        .await
-                        .map(|_t| ())
-                }
-            };
-            is_done.store(true, Relaxed);
-            res
-        };
-        let progress_work = async {
-            while !is_done.load(Relaxed) {
-                progress_bar.inc(1);
-                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                .execute(&mut *transaction.lock().await)
+                .await?;
             }
-        };
-        let (res, _) = join!(work, progress_work);
-        res?;
-        progress_bar.set_message("done generating embeddings");
-        progress_bar.finish();
+            r => {
+                let remote_embeddings = build_remote_embeddings(r, &model.name, Some(&parameters))?;
+                remote_embeddings
+                    .generate_embeddings(
+                        &embeddings_table_name,
+                        &chunks_table_name,
+                        chunk_ids,
+                        transaction,
+                    )
+                    .await?;
+            }
+        }
         Ok(())
     }
 
@@ -675,48 +629,25 @@ impl MultiFieldPipeline {
         key: &str,
         configuration: &str,
         chunk_ids: &Vec<i64>,
-        mp: &MultiProgress,
+        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
     ) -> anyhow::Result<()> {
-        let pool = self.get_pool().await?;
-
         let project_info = self
             .project_info
             .as_ref()
             .context("Pipeline must have project info to sync TSVectors")?;
 
-        let progress_bar = mp
-            .add(utils::default_progress_spinner(1))
-            .with_prefix(self.name.clone())
-            .with_message("Syncing TSVectors for full text search");
-
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let tsvectors_table_name = format!("{}_{}.{}_tsvectors", project_info.name, self.name, key);
 
-        let is_done = AtomicBool::new(false);
-        let work = async {
-            let res = sqlx::query(&query_builder!(
-                queries::GENERATE_TSVECTORS_FOR_CHUNK_IDS,
-                tsvectors_table_name,
-                configuration,
-                chunks_table_name
-            ))
-            .bind(chunk_ids)
-            .execute(&pool)
-            .await;
-            is_done.store(true, Relaxed);
-            res.map(|_t| ()).map_err(|e| anyhow::anyhow!(e))
-        };
-        let progress_work = async {
-            while !is_done.load(Relaxed) {
-                progress_bar.inc(1);
-                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-            }
-        };
-        let (res, _) = join!(work, progress_work);
-        res?;
-        progress_bar.set_message("Done syncing TSVectors for full text search");
-        progress_bar.finish();
-
+        sqlx::query(&query_builder!(
+            queries::GENERATE_TSVECTORS_FOR_CHUNK_IDS,
+            tsvectors_table_name,
+            configuration,
+            chunks_table_name
+        ))
+        .bind(chunk_ids)
+        .execute(&mut *transaction.lock().await)
+        .await?;
         Ok(())
     }
 

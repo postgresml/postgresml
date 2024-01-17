@@ -241,7 +241,7 @@ ON CONFLICT (document_id, chunk_index) DO NOTHING
 RETURNING id, document_id
 "#;
 
-pub const GENERATE_CHUNKS_FOR_DOCUMENT_IDS: &str = r#"
+pub const GENERATE_CHUNKS_FOR_DOCUMENT_ID: &str = r#"
 WITH splitter as (
     SELECT
       name,
@@ -275,7 +275,7 @@ FROM
         FROM 
           %s 
         WHERE 
-          id = ANY($2)
+          id = $2
           AND id NOT IN (
             SELECT 
               document_id 
