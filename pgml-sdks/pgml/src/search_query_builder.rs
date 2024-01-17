@@ -119,6 +119,9 @@ pub async fn build_search_query(
                     .expr(Expr::cust(format!(
                         r#"MIN(embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector) AS score"#
                     )))
+                    .order_by_expr(Expr::cust(format!(
+                        r#"embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector"#
+                    )), Order::Asc )
             }
             ModelRuntime::OpenAI => {
                 // We can unwrap here as we know this is all set from above
@@ -149,8 +152,15 @@ pub async fn build_search_query(
                     .column((SIden::Str("embeddings"), SIden::Str("document_id")))
                     .expr(Expr::cust_with_values(
                         r#"MIN(embeddings.embedding <=> $1::vector) AS score"#,
-                        [embedding],
+                        [embedding.clone()],
                     ))
+                    .order_by_expr(
+                        Expr::cust_with_values(
+                            r#"embeddings.embedding <=> $1::vector"#,
+                            [embedding],
+                        ),
+                        Order::Asc,
+                    )
             }
         };
 
@@ -217,7 +227,21 @@ pub async fn build_search_query(
                 [&vma.query],
             ))
             .group_by_col(SIden::Str("document_id"))
+            .order_by(SIden::Str("score"), Order::Desc)
             .limit(limit);
+
+        if let Some(filter) = &valid_query.query.filter {
+            let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
+            score_cte.cond_where(filter);
+            score_cte.join_as(
+                JoinType::InnerJoin,
+                documents_table.to_table_tuple(),
+                Alias::new("documents"),
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .equals((SIden::Str("tsvectors"), SIden::Str("document_id"))),
+            );
+        }
+
         let mut score_cte = CommonTableExpression::from_select(score_cte);
         score_cte.table_name(Alias::new(&cte_name));
         with_clause.cte(score_cte);
@@ -257,7 +281,11 @@ pub async fn build_search_query(
         let sum_expression = sum_expression
             .context("query requires some scoring through full_text_search or semantic_search")?;
         query
-            .expr_as(id_select_expression, Alias::new("id"))
+            // .expr_as(id_select_expression.clone(), Alias::new("id"))
+            .expr(Expr::cust_with_expr(
+                "DISTINCT ON ($1) $1 as id",
+                id_select_expression.clone(),
+            ))
             .expr_as(sum_expression, Alias::new("score"))
             .column(SIden::Str("document"))
             .from(SIden::String(select_from.to_string()))
@@ -265,15 +293,26 @@ pub async fn build_search_query(
                 JoinType::InnerJoin,
                 documents_table.to_table_tuple(),
                 Alias::new("documents"),
-                Expr::col((SIden::Str("documents"), SIden::Str("id"))).equals(SIden::Str("id")),
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .eq(id_select_expression.clone()),
             )
-            .limit(limit)
-            .order_by(SIden::Str("score"), Order::Desc);
+            .order_by_expr(
+                Expr::cust_with_expr("$1, score", id_select_expression),
+                Order::Desc,
+            );
+        // .order_by(SIden::Str("score"), Order::Desc);
+
+        let mut re_ordered_query = Query::select();
+        re_ordered_query
+            .expr(Expr::cust("*"))
+            .from_subquery(query, Alias::new("q1"))
+            .order_by(SIden::Str("score"), Order::Desc)
+            .limit(5);
 
         let mut combined_query = Query::select();
         combined_query
-            .expr(Expr::cust("json_array_elements(json_agg(q))"))
-            .from_subquery(query, Alias::new("q"));
+            .expr(Expr::cust("json_array_elements(json_agg(q2))"))
+            .from_subquery(re_ordered_query, Alias::new("q2"));
         combined_query
     } else {
         // TODO: Maybe let users filter documents only here?
