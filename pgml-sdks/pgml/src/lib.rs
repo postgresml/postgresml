@@ -293,7 +293,7 @@ mod tests {
         internal_init_logger(None, None).ok();
         let mut pipeline1 = MultiFieldPipeline::new("test_r_p_carps_1", Some(json!({}).into()))?;
         let mut pipeline2 = MultiFieldPipeline::new("test_r_p_carps_2", Some(json!({}).into()))?;
-        let mut collection = Collection::new("test_r_c_carps_9", None);
+        let mut collection = Collection::new("test_r_c_carps_10", None);
         collection.add_pipeline(&mut pipeline1).await?;
         collection.add_pipeline(&mut pipeline2).await?;
         let pipelines = collection.get_pipelines().await?;
@@ -309,7 +309,7 @@ mod tests {
     #[sqlx::test]
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_capaud_36";
+        let collection_name = "test_r_c_capaud_44";
         let pipeline_name = "test_r_p_capaud_6";
         let mut pipeline = MultiFieldPipeline::new(
             pipeline_name,
@@ -360,25 +360,25 @@ mod tests {
             sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
                 .fetch_all(&pool)
                 .await?;
-        assert!(body_chunks.len() == 2);
+        assert!(body_chunks.len() == 4);
         collection.archive().await?;
         let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name);
         let tsvectors: Vec<models::TSVector> =
             sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
                 .fetch_all(&pool)
                 .await?;
-        assert!(tsvectors.len() == 2);
+        assert!(tsvectors.len() == 4);
         Ok(())
     }
 
     #[sqlx::test]
     async fn can_upsert_documents_and_add_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cudaap_38";
+        let collection_name = "test_r_c_cudaap_42";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(2);
         collection.upsert_documents(documents.clone(), None).await?;
-        let pipeline_name = "test_r_p_cudaap_6";
+        let pipeline_name = "test_r_p_cudaap_9";
         let mut pipeline = MultiFieldPipeline::new(
             pipeline_name,
             Some(
@@ -432,6 +432,158 @@ mod tests {
                 .fetch_all(&pool)
                 .await?;
         assert!(tsvectors.len() == 4);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn random_pipelines_documents_test() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_rpdt_3";
+        let mut collection = Collection::new(collection_name, None);
+        let documents = generate_dummy_documents(6);
+        collection
+            .upsert_documents(documents[..2].to_owned(), None)
+            .await?;
+        let pipeline_name1 = "test_r_p_rpdt1_0";
+        let mut pipeline = MultiFieldPipeline::new(
+            pipeline_name1,
+            Some(
+                json!({
+                    "title": {
+                        "embed": {
+                            "model": "intfloat/e5-small"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "embed": {
+                            "model": "intfloat/e5-small",
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+
+        collection
+            .upsert_documents(documents[2..4].to_owned(), None)
+            .await?;
+
+        let pool = get_or_initialize_pool(&None).await?;
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name1);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 4);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name1);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 8);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name1);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 8);
+
+        let pipeline_name2 = "test_r_p_rpdt2_0";
+        let mut pipeline = MultiFieldPipeline::new(
+            pipeline_name2,
+            Some(
+                json!({
+                    "title": {
+                        "embed": {
+                            "model": "intfloat/e5-small"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "embed": {
+                            "model": "intfloat/e5-small",
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name2);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 4);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name2);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 8);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name2);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 8);
+
+        collection
+            .upsert_documents(documents[4..6].to_owned(), None)
+            .await?;
+
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name2);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 6);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name2);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 12);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name2);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 12);
+
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name1);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 6);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name1);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 12);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name1);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 12);
+
         collection.archive().await?;
         Ok(())
     }
@@ -530,7 +682,7 @@ mod tests {
     #[sqlx::test]
     async fn can_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswre_51";
+        let collection_name = "test_r_c_cswre_52";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -784,15 +936,6 @@ mod tests {
         collection.archive().await?;
         Ok(())
     }
-
-    // TODO: Test
-    // - remote embeddings
-    // - some kind of simlutaneous upload with async threads and join
-    // - test the splitting is working correctly
-    // - test that different splitters and models are working correctly
-
-    // TODO: DO
-    // - update upsert_documents to not re run pipeline if it is not part of the schema
 
     // #[sqlx::test]
     // async fn can_specify_custom_hnsw_parameters_for_pipelines() -> anyhow::Result<()> {
