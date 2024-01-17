@@ -284,7 +284,7 @@ fn train_joint(
                     ) {
                         if project.task.value_is_better(deployed_metric_value, new_metric_value) {
                             warning!(
-                                "New model's {} is not better than old model: {} is not better than {}",
+                                "New model's {} is not better than current model. New: {}, Current {}",
                                 &project.task.default_target_metric(),
                                 new_metric_value,
                                 deployed_metric_value
