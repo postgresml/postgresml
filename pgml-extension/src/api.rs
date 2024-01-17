@@ -278,23 +278,29 @@ fn train_joint(
                         "Comparing to deployed model {}: {:?}",
                         default_target_metric, deployed_metric
                     );
-                    if let (Some(deployed_metric_value), Some(new_metric_value)) = (
-                        deployed_metric,
-                        new_metrics.get(&default_target_metric).and_then(|v| v.as_f64()),
-                    ) {
-                        if project.task.value_is_better(deployed_metric_value, new_metric_value) {
-                            warning!(
-                                "New model's {} is not better than current model. New: {}, Current {}",
-                                &project.task.default_target_metric(),
-                                new_metric_value,
-                                deployed_metric_value
-                            );
+                    let new_metric = new_metrics.get(&default_target_metric).and_then(|v| v.as_f64());
+
+                    match (deployed_metric, new_metric) {
+                        (Some(deployed), Some(new)) => {
+                            // only compare metrics when both new and old model have metrics to compare
+                            if project.task.value_is_better(deployed, new) {
+                                warning!(
+                                    "New model's {} is not better than current model. New: {}, Current {}",
+                                    &default_target_metric,
+                                    new,
+                                    deployed
+                                );
+                                deploy = false;
+                            }
+                        }
+                        (None, None) => {
+                            warning!("No metrics available for both deployed and new model. Deploying new model.")
+                        }
+                        (Some(_deployed), None) => {
+                            warning!("No metrics for new model. Retaining old model.");
                             deploy = false;
                         }
-                    } else {
-                        warning!("Failed to retrieve or parse deployed/new metrics for {}. Ensure train/test split results in both positive and negative label records.", 
-                                 &project.task.default_target_metric());
-                        deploy = false;
+                        (None, Some(_new)) => warning!("No metrics for deployed model. Deploying new model."),
                     }
                 } else {
                     warning!("Failed to parse deployed model metrics. Check data types of model metadata on pgml.models.metrics");
