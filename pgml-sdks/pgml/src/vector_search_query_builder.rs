@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use sea_query::{
     Alias, CommonTableExpression, Expr, Func, JoinType, Order, PostgresQueryBuilder, Query,
-    QueryStatementWriter, SimpleExpr, WithClause,
+    QueryStatementWriter, WithClause,
 };
 use sea_query_binder::{SqlxBinder, SqlxValues};
 
@@ -169,6 +169,7 @@ pub async fn build_vector_search_query(
         query
             .column((SIden::Str("embeddings"), SIden::Str("document_id")))
             .column((SIden::Str("chunks"), SIden::Str("chunk")))
+            .column((SIden::Str("documents"), SIden::Str("document")))
             .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
             .join_as(
                 JoinType::InnerJoin,
@@ -177,18 +178,18 @@ pub async fn build_vector_search_query(
                 Expr::col((SIden::Str("chunks"), SIden::Str("id")))
                     .equals((SIden::Str("embeddings"), SIden::Str("chunk_id"))),
             )
-            .limit(limit);
-
-        if let Some(filter) = &valid_query.query.filter {
-            let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
-            query.cond_where(filter);
-            query.join_as(
+            .join_as(
                 JoinType::InnerJoin,
                 documents_table.to_table_tuple(),
                 Alias::new("documents"),
                 Expr::col((SIden::Str("documents"), SIden::Str("id")))
                     .equals((SIden::Str("embeddings"), SIden::Str("document_id"))),
-            );
+            )
+            .limit(limit);
+
+        if let Some(filter) = &valid_query.query.filter {
+            let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
+            query.cond_where(filter);
         }
 
         if let Some(full_text_search) = &vf.full_text_search {
@@ -213,7 +214,7 @@ pub async fn build_vector_search_query(
         let mut wrapper_query = Query::select();
         wrapper_query
             .columns([
-                SIden::Str("document_id"),
+                SIden::Str("document"),
                 SIden::Str("chunk"),
                 SIden::Str("score"),
             ])
