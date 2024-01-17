@@ -15,6 +15,7 @@ use std::time::SystemTime;
 use tracing::{instrument, warn};
 use walkdir::WalkDir;
 
+use crate::search_query_builder::build_search_query;
 use crate::vector_search_query_builder::build_vector_search_query;
 use crate::{
     filter_builder, get_or_initialize_pool,
@@ -712,15 +713,42 @@ impl Collection {
 
     #[instrument(skip(self))]
     pub async fn search(
-        &self,
+        &mut self,
         query: Json,
-        pipeline: &MultiFieldPipeline,
+        pipeline: &mut MultiFieldPipeline,
     ) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
-        let (query, values) =
-            crate::search_query_builder::build_search_query(self, query, pipeline).await?;
-        let results: Vec<(Json,)> = sqlx::query_as_with(&query, values).fetch_all(&pool).await?;
-        Ok(results.into_iter().map(|r| r.0).collect())
+        let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
+        let results: Result<Vec<(Json,)>, _> = sqlx::query_as_with(&built_query, values)
+            .fetch_all(&pool)
+            .await;
+
+        match results {
+            Ok(r) => Ok(r.into_iter().map(|r| r.0).collect()),
+            Err(e) => match e.as_database_error() {
+                Some(d) => {
+                    if d.code() == Some(Cow::from("XX000")) {
+                        self.verify_in_database(false).await?;
+                        let project_info = &self
+                            .database_data
+                            .as_ref()
+                            .context("Database data must be set to do remote embeddings search")?
+                            .project_info;
+                        pipeline.set_project_info(project_info.to_owned());
+                        pipeline.verify_in_database(false).await?;
+                        let (built_query, values) =
+                            build_search_query(self, query, pipeline).await?;
+                        let results: Vec<(Json,)> = sqlx::query_as_with(&built_query, values)
+                            .fetch_all(&pool)
+                            .await?;
+                        Ok(results.into_iter().map(|r| r.0).collect())
+                    } else {
+                        Err(anyhow::anyhow!(e))
+                    }
+                }
+                None => Err(anyhow::anyhow!(e)),
+            },
+        }
     }
 
     /// Performs vector search on the [Collection]
@@ -752,142 +780,72 @@ impl Collection {
         pipeline: &mut MultiFieldPipeline,
         query_parameters: Option<Json>,
         top_k: Option<i64>,
-    ) -> anyhow::Result<Vec<(f64, String, Json)>> {
+    ) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
-        let (query, sqlx_values) =
-            build_vector_search_query(query, self, query_parameters.unwrap_or_default(), pipeline)
-                .await?;
-
-        // With this system, we only do the wrong type of vector search once
-        // let runtime = if pipeline.model.is_some() {
-        //     pipeline.model.as_ref().unwrap().runtime
-        // } else {
-        //     ModelRuntime::Python
-        // };
-
-        unimplemented!()
-
-        // let pool = get_or_initialize_pool(&self.database_url).await?;
-
-        // let query_parameters = query_parameters.unwrap_or_default();
-        // let top_k = top_k.unwrap_or(5);
-
-        // // With this system, we only do the wrong type of vector search once
-        // let runtime = if pipeline.model.is_some() {
-        //     pipeline.model.as_ref().unwrap().runtime
-        // } else {
-        //     ModelRuntime::Python
-        // };
-        // match runtime {
-        //     ModelRuntime::Python => {
-        //         let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
-
-        //         let result = sqlx::query_as(&query_builder!(
-        //             queries::EMBED_AND_VECTOR_SEARCH,
-        //             self.pipelines_table_name,
-        //             embeddings_table_name,
-        //             self.chunks_table_name,
-        //             self.documents_table_name
-        //         ))
-        //         .bind(&pipeline.name)
-        //         .bind(query)
-        //         .bind(&query_parameters)
-        //         .bind(top_k)
-        //         .fetch_all(&pool)
-        //         .await;
-
-        //         match result {
-        //             Ok(r) => Ok(r),
-        //             Err(e) => match e.as_database_error() {
-        //                 Some(d) => {
-        //                     if d.code() == Some(Cow::from("XX000")) {
-        //                         self.vector_search_with_remote_embeddings(
-        //                             query,
-        //                             pipeline,
-        //                             query_parameters,
-        //                             top_k,
-        //                             &pool,
-        //                         )
-        //                         .await
-        //                     } else {
-        //                         Err(anyhow::anyhow!(e))
-        //                     }
-        //                 }
-        //                 None => Err(anyhow::anyhow!(e)),
-        //             },
-        //         }
-        //     }
-        //     _ => {
-        //         self.vector_search_with_remote_embeddings(
-        //             query,
-        //             pipeline,
-        //             query_parameters,
-        //             top_k,
-        //             &pool,
-        //         )
-        //         .await
-        //     }
-        // }
-        // .map(|r| {
-        //     r.into_iter()
-        //         .map(|(score, id, metadata)| (1. - score, id, metadata))
-        //         .collect()
-        // })
-    }
-
-    #[instrument(skip(self, pool))]
-    #[allow(clippy::type_complexity)]
-    async fn vector_search_with_remote_embeddings(
-        &mut self,
-        query: &str,
-        pipeline: &mut Pipeline,
-        query_parameters: Json,
-        top_k: i64,
-        pool: &PgPool,
-    ) -> anyhow::Result<Vec<(f64, String, Json)>> {
-        // TODO: Make this actually work maybe an alias for the new search or something idk
-        unimplemented!()
-
-        // self.verify_in_database(false).await?;
-
-        // // Have to set the project info before we can get and set the model
-        // pipeline.set_project_info(
-        //     self.database_data
-        //         .as_ref()
-        //         .context(
-        //             "Collection must be verified to perform vector search with remote embeddings",
-        //         )?
-        //         .project_info
-        //         .clone(),
-        // );
-        // // Verify to get and set the model if we don't have it set on the pipeline yet
-        // pipeline.verify_in_database(false).await?;
-        // let model = pipeline
-        //     .model
-        //     .as_ref()
-        //     .context("Pipeline must be verified to perform vector search with remote embeddings")?;
-
-        // // We need to make sure we are not mutably and immutably borrowing the same things
-        // let embedding = {
-        //     let remote_embeddings =
-        //         build_remote_embeddings(model.runtime, &model.name, &query_parameters)?;
-        //     let mut embeddings = remote_embeddings.embed(vec![query.to_string()]).await?;
-        //     std::mem::take(&mut embeddings[0])
-        // };
-
-        // let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
-        // sqlx::query_as(&query_builder!(
-        //     queries::VECTOR_SEARCH,
-        //     embeddings_table_name,
-        //     self.chunks_table_name,
-        //     self.documents_table_name
-        // ))
-        // .bind(embedding)
-        // .bind(top_k)
-        // .fetch_all(pool)
-        // .await
-        // .map_err(|e| anyhow::anyhow!(e))
+        let (built_query, values) = build_vector_search_query(
+            query,
+            self,
+            query_parameters.clone().unwrap_or_default(),
+            pipeline,
+        )
+        .await?;
+        let results: Result<Vec<(Json, String, f64)>, _> =
+            sqlx::query_as_with(&built_query, values)
+                .fetch_all(&pool)
+                .await;
+        match results {
+            Ok(r) => Ok(r
+                .into_iter()
+                .map(|v| {
+                    serde_json::json!({
+                        "document": v.0,
+                        "chunk": v.1,
+                        "score": v.2
+                    })
+                    .into()
+                })
+                .collect()),
+            Err(e) => match e.as_database_error() {
+                Some(d) => {
+                    if d.code() == Some(Cow::from("XX000")) {
+                        self.verify_in_database(false).await?;
+                        let project_info = &self
+                            .database_data
+                            .as_ref()
+                            .context("Database data must be set to do remote embeddings search")?
+                            .project_info;
+                        pipeline.set_project_info(project_info.to_owned());
+                        pipeline.verify_in_database(false).await?;
+                        let (built_query, values) = build_vector_search_query(
+                            query,
+                            self,
+                            query_parameters.clone().unwrap_or_default(),
+                            pipeline,
+                        )
+                        .await?;
+                        let results: Vec<(Json, String, f64)> =
+                            sqlx::query_as_with(&built_query, values)
+                                .fetch_all(&pool)
+                                .await?;
+                        Ok(results
+                            .into_iter()
+                            .map(|v| {
+                                serde_json::json!({
+                                    "document": v.0,
+                                    "chunk": v.1,
+                                    "score": v.2
+                                })
+                                .into()
+                            })
+                            .collect())
+                    } else {
+                        Err(anyhow::anyhow!(e))
+                    }
+                }
+                None => Err(anyhow::anyhow!(e)),
+            },
+        }
     }
 
     #[instrument(skip(self))]
