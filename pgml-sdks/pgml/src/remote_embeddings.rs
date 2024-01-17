@@ -1,6 +1,8 @@
 use reqwest::{Client, RequestBuilder};
-use sqlx::postgres::PgPool;
+use sqlx::{postgres::PgPool, Postgres, Transaction};
 use std::env;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tracing::instrument;
 
 use crate::{model::ModelRuntime, models, query_builder, types::Json};
@@ -41,13 +43,13 @@ pub trait RemoteEmbeddings<'a> {
         self.parse_response(response)
     }
 
-    #[instrument(skip(self, pool))]
+    #[instrument(skip(self, transaction))]
     async fn get_chunks(
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
         chunk_ids: &Vec<i64>,
-        pool: &PgPool,
+        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
         limit: Option<i64>,
     ) -> anyhow::Result<Vec<models::Chunk>> {
         let limit = limit.unwrap_or(1000);
@@ -59,7 +61,7 @@ pub trait RemoteEmbeddings<'a> {
         ))
         .bind(chunk_ids)
         .bind(limit)
-        .fetch_all(pool)
+        .fetch_all(&mut *transaction.lock().await)
         .await
         .map_err(|e| anyhow::anyhow!(e))
     }
@@ -87,13 +89,13 @@ pub trait RemoteEmbeddings<'a> {
         Ok(embeddings)
     }
 
-    #[instrument(skip(self, pool))]
+    #[instrument(skip(self, transaction))]
     async fn generate_embeddings(
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
         chunk_ids: &Vec<i64>,
-        pool: &PgPool,
+        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
     ) -> anyhow::Result<()> {
         loop {
             let chunks = self
@@ -101,7 +103,7 @@ pub trait RemoteEmbeddings<'a> {
                     embeddings_table_name,
                     chunks_table_name,
                     chunk_ids,
-                    pool,
+                    transaction.clone(),
                     None,
                 )
                 .await?;
@@ -138,7 +140,7 @@ pub trait RemoteEmbeddings<'a> {
                 query = query.bind(chunk_ids[i]).bind(&embeddings[i]);
             }
 
-            query.execute(pool).await?;
+            query.execute(&mut *transaction.lock().await).await?;
         }
         Ok(())
     }

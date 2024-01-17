@@ -11,7 +11,9 @@ use sqlx::Executor;
 use sqlx::PgConnection;
 use std::borrow::Cow;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::SystemTime;
+use tokio::sync::Mutex;
 use tracing::{instrument, warn};
 use walkdir::WalkDir;
 
@@ -282,7 +284,7 @@ impl Collection {
         pipeline.verify_in_database(true).await?;
         let mp = MultiProgress::new();
         mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
-        pipeline.execute(&None, mp).await?;
+        self.sync_pipeline(pipeline).await?;
         eprintln!("Done Syncing {}\n", pipeline.name);
         Ok(())
     }
@@ -445,21 +447,20 @@ impl Collection {
     pub async fn upsert_documents(
         &mut self,
         documents: Vec<Json>,
-        args: Option<Json>,
+        _args: Option<Json>,
     ) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(false).await?;
-
-        // TODO: Work on this
-        let args = args.unwrap_or_default();
-
-        let mut document_ids = vec![];
+        let mut pipelines = self.get_pipelines().await?;
+        for pipeline in &mut pipelines {
+            pipeline.create_tables().await?;
+        }
 
         let progress_bar = utils::default_progress_bar(documents.len() as u64);
         progress_bar.println("Upserting Documents...");
 
-        let mut transaction = pool.begin().await?;
         for document in documents {
+            let mut transaction = pool.begin().await?;
             let id = document
                 .get("id")
                 .context("`id` must be a key in document")?
@@ -467,14 +468,33 @@ impl Collection {
             let md5_digest = md5::compute(id.as_bytes());
             let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-            let id: i64 = sqlx::query_scalar(&query_builder!("INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = $2 RETURNING id", self.documents_table_name)).bind(source_uuid).bind(document).fetch_one(&mut *transaction).await?;
-            document_ids.push(id);
+            let document_id: i64 = sqlx::query_scalar(&query_builder!("INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = $2 RETURNING id", self.documents_table_name)).bind(source_uuid).bind(document).fetch_one(&mut *transaction).await?;
+
+            let transaction = Arc::new(Mutex::new(transaction));
+            if !pipelines.is_empty() {
+                use futures::stream::StreamExt;
+                futures::stream::iter(&mut pipelines)
+                    // Need this map to get around moving the transaction
+                    .map(|pipeline| (pipeline, transaction.clone()))
+                    .for_each_concurrent(10, |(pipeline, transaction)| async move {
+                        pipeline
+                            .execute(Some(document_id), transaction)
+                            .await
+                            .expect("Failed to execute pipeline");
+                    })
+                    .await;
+            }
+
+            Arc::into_inner(transaction)
+                .context("Error transaction dangling")?
+                .into_inner()
+                .commit()
+                .await?;
         }
-        transaction.commit().await?;
 
         progress_bar.println("Done Upserting Documents\n");
         progress_bar.finish();
-        self.sync_pipelines(Some(document_ids)).await
+        Ok(())
     }
 
     /// Gets the documents on a [Collection]
@@ -686,28 +706,26 @@ impl Collection {
     }
 
     #[instrument(skip(self))]
-    pub(crate) async fn sync_pipelines(
-        &mut self,
-        document_ids: Option<Vec<i64>>,
-    ) -> anyhow::Result<()> {
+    async fn sync_pipeline(&mut self, pipeline: &mut MultiFieldPipeline) -> anyhow::Result<()> {
         self.verify_in_database(false).await?;
-        let pipelines = self.get_pipelines().await?;
-        if !pipelines.is_empty() {
-            let mp = MultiProgress::new();
-            mp.println("Syncing Pipelines...")?;
-            use futures::stream::StreamExt;
-            futures::stream::iter(pipelines)
-                // Need this map to get around moving the document_ids and mp
-                .map(|pipeline| (pipeline, document_ids.clone(), mp.clone()))
-                .for_each_concurrent(10, |(mut pipeline, document_ids, mp)| async move {
-                    pipeline
-                        .execute(&document_ids, mp)
-                        .await
-                        .expect("Failed to execute pipeline");
-                })
-                .await;
-            mp.println("Done Syncing Pipelines\n")?;
-        }
+        let project_info = &self
+            .database_data
+            .as_ref()
+            .context("Database data must be set to get collection pipelines")?
+            .project_info;
+        pipeline.set_project_info(project_info.clone());
+        pipeline.create_tables().await?;
+
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let transaction = pool.begin().await?;
+        let transaction = Arc::new(Mutex::new(transaction));
+        pipeline.execute(None, transaction.clone()).await?;
+
+        Arc::into_inner(transaction)
+            .context("Error transaction dangling")?
+            .into_inner()
+            .commit()
+            .await?;
         Ok(())
     }
 
@@ -840,22 +858,34 @@ impl Collection {
     #[instrument(skip(self))]
     pub async fn archive(&mut self) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
+        let pipelines = self.get_pipelines().await?;
         let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .expect("Error getting system time")
             .as_secs();
-        let archive_table_name = format!("{}_archive_{}", &self.name, timestamp);
+        let collection_archive_name = format!("{}_archive_{}", &self.name, timestamp);
         let mut transaciton = pool.begin().await?;
+        // Change name in pgml.collections
         sqlx::query("UPDATE pgml.collections SET name = $1, active = FALSE where name = $2")
-            .bind(&archive_table_name)
+            .bind(&collection_archive_name)
             .bind(&self.name)
             .execute(&mut *transaciton)
             .await?;
-        // TODO: Alter pipeline schema
+        // Change collection_pipeline schema
+        for pipeline in pipelines {
+            sqlx::query(&query_builder!(
+                "ALTER SCHEMA %s RENAME TO %s",
+                format!("{}_{}", self.name, pipeline.name),
+                format!("{}_{}", collection_archive_name, pipeline.name)
+            ))
+            .execute(&mut *transaciton)
+            .await?;
+        }
+        // Change collection schema
         sqlx::query(&query_builder!(
             "ALTER SCHEMA %s RENAME TO %s",
             &self.name,
-            archive_table_name
+            collection_archive_name
         ))
         .execute(&mut *transaciton)
         .await?;
