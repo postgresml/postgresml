@@ -606,11 +606,11 @@ mod tests {
     #[sqlx::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cvs_3";
+        let collection_name = "test_r_c_cvswle_3";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
-        let pipeline_name = "test_r_p_cvs_0";
+        let pipeline_name = "test_r_p_cvswle_0";
         let mut pipeline = MultiFieldPipeline::new(
             pipeline_name,
             Some(
@@ -638,27 +638,27 @@ mod tests {
         collection.add_pipeline(&mut pipeline).await?;
         let results = collection
             .vector_search(
-                "Test document: 2",
-                &mut pipeline,
-                Some(
-                    json!({
-                        "query": {
-                            "fields": {
-                                "title": {
-                                    "full_text_search": "test",
-                                },
-                                "body": {},
+                json!({
+                    "query": {
+                        "fields": {
+                            "title": {
+                                "query": "Test document: 2",
+                                "full_text_search": "test"
                             },
-                            "filter": {
-                                "id": {
-                                    "$gt": 3
-                                }
-                            }
+                            "body": {
+                                "query": "Test document: 2"
+                            },
                         },
-                        "limit": 5
-                    })
-                    .into(),
-                ),
+                        "filter": {
+                            "id": {
+                                "$gt": 3
+                            }
+                        }
+                    },
+                    "limit": 5
+                })
+                .into(),
+                &mut pipeline,
                 None,
             )
             .await?;
@@ -674,11 +674,11 @@ mod tests {
     #[sqlx::test]
     async fn can_vector_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cvs_4";
+        let collection_name = "test_r_c_cvswre_4";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
-        let pipeline_name = "test_r_p_cvs_0";
+        let pipeline_name = "test_r_p_cvswre_0";
         let mut pipeline = MultiFieldPipeline::new(
             pipeline_name,
             Some(
@@ -708,27 +708,27 @@ mod tests {
         let mut pipeline = MultiFieldPipeline::new(pipeline_name, None)?;
         let results = collection
             .vector_search(
-                "Test document: 2",
-                &mut pipeline,
-                Some(
-                    json!({
-                        "query": {
-                            "fields": {
-                                "title": {
-                                    "full_text_search": "test",
-                                },
-                                "body": {},
+                json!({
+                    "query": {
+                        "fields": {
+                            "title": {
+                                "full_text_search": "test",
+                                "query": "Test document: 2"
                             },
-                            "filter": {
-                                "id": {
-                                    "$gt": 3
-                                }
-                            }
+                            "body": {
+                                "query": "Test document: 2"
+                            },
                         },
-                        "limit": 5
-                    })
-                    .into(),
-                ),
+                        "filter": {
+                            "id": {
+                                "$gt": 3
+                            }
+                        }
+                    },
+                    "limit": 5
+                })
+                .into(),
+                &mut pipeline,
                 None,
             )
             .await?;
