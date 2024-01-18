@@ -9,7 +9,6 @@ use serde_json::json;
 use sqlx::postgres::PgPool;
 use sqlx::Executor;
 use sqlx::PgConnection;
-use sqlx::Postgres;
 use sqlx::Transaction;
 use std::borrow::Cow;
 use std::path::Path;
@@ -376,7 +375,7 @@ impl Collection {
         // 1. Set ACTIVE = TRUE for the pipeline in collection.pipelines
         // 2. Resync the pipeline
         sqlx::query(&query_builder!(
-            "UPDATE %s SET active = FALSE WHERE name = $1",
+            "UPDATE %s SET active = TRUE WHERE name = $1",
             self.pipelines_table_name
         ))
         .bind(&pipeline.name)
