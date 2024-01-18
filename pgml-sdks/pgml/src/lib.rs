@@ -437,6 +437,64 @@ mod tests {
     }
 
     #[sqlx::test]
+    async fn disable_enable_pipeline() -> anyhow::Result<()> {
+        let mut pipeline = MultiFieldPipeline::new("test_p_dep_1", Some(json!({}).into()))?;
+        let mut collection = Collection::new("test_r_c_dep_1", None);
+        collection.add_pipeline(&mut pipeline).await?;
+        let queried_pipeline = &collection.get_pipelines().await?[0];
+        assert_eq!(pipeline.name, queried_pipeline.name);
+        collection.disable_pipeline(&pipeline).await?;
+        let queried_pipelines = &collection.get_pipelines().await?;
+        assert!(queried_pipelines.is_empty());
+        collection.enable_pipeline(&mut pipeline).await?;
+        let queried_pipeline = &collection.get_pipelines().await?[0];
+        assert_eq!(pipeline.name, queried_pipeline.name);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn can_upsert_documents_and_enable_pipeline() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_cudaap_43";
+        let mut collection = Collection::new(collection_name, None);
+        let pipeline_name = "test_r_p_cudaap_9";
+        let mut pipeline = MultiFieldPipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "title": {
+                        "embed": {
+                            "model": "intfloat/e5-small"
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        collection.disable_pipeline(&pipeline).await?;
+        let documents = generate_dummy_documents(2);
+        collection.upsert_documents(documents, None).await?;
+        let pool = get_or_initialize_pool(&None).await?;
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 0);
+        collection.enable_pipeline(&mut pipeline).await?;
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 2);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
     async fn random_pipelines_documents_test() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_rpdt_3";
@@ -587,6 +645,10 @@ mod tests {
         collection.archive().await?;
         Ok(())
     }
+
+    ///////////////////////////////
+    // Searches ///////////////////
+    ///////////////////////////////
 
     #[sqlx::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
@@ -755,6 +817,10 @@ mod tests {
         Ok(())
     }
 
+    ///////////////////////////////
+    // Vector Searches /////////////
+    ///////////////////////////////
+
     #[sqlx::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
@@ -893,50 +959,6 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
-    async fn generate_er_diagram() -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let mut pipeline = MultiFieldPipeline::new(
-            "test_p_ged_57",
-            Some(
-                json!({
-                        "title": {
-                            "embed": {
-                                "model": "intfloat/e5-small"
-                            },
-                            "full_text_search": {
-                                "configuration": "english"
-                            }
-                        },
-                        "body": {
-                            "splitter": {
-                                "model": "recursive_character"
-                            },
-                            "embed": {
-                                "model": "intfloat/e5-small"
-                            },
-                            "full_text_search": {
-                                "configuration": "english"
-                            }
-                        },
-                        "notes": {
-                           "embed": {
-                                "model": "intfloat/e5-small"
-                            }
-                        }
-                })
-                .into(),
-            ),
-        )?;
-        let mut collection = Collection::new("test_r_c_ged_2", None);
-        collection.add_pipeline(&mut pipeline).await?;
-        let diagram = collection.generate_er_diagram(&mut pipeline).await?;
-        assert!(!diagram.is_empty());
-        println!("{diagram}");
-        collection.archive().await?;
-        Ok(())
-    }
-
     // #[sqlx::test]
     // async fn can_specify_custom_hnsw_parameters_for_pipelines() -> anyhow::Result<()> {
     //     internal_init_logger(None, None).ok();
@@ -974,25 +996,6 @@ mod tests {
     //         .collect::<Vec<_>>();
     //     assert!(names.contains(&&format!("{}_pipeline_hnsw_vector_index", pipeline.name)));
     //     assert!(definitions.contains(&&format!("CREATE INDEX {}_pipeline_hnsw_vector_index ON {} USING hnsw (embedding vector_cosine_ops) WITH (m='100', ef_construction='200')", pipeline.name, full_embeddings_table_name)));
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // async fn disable_enable_pipeline() -> anyhow::Result<()> {
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new("test_p_dep_0", Some(model), Some(splitter), None);
-    //     let mut collection = Collection::new("test_r_c_dep_1", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-    //     let queried_pipeline = &collection.get_pipelines().await?[0];
-    //     assert_eq!(pipeline.name, queried_pipeline.name);
-    //     collection.disable_pipeline(&pipeline).await?;
-    //     let queried_pipelines = &collection.get_pipelines().await?;
-    //     assert!(queried_pipelines.is_empty());
-    //     collection.enable_pipeline(&pipeline).await?;
-    //     let queried_pipeline = &collection.get_pipelines().await?[0];
-    //     assert_eq!(pipeline.name, queried_pipeline.name);
-    //     collection.archive().await?;
     //     Ok(())
     // }
 
@@ -1045,362 +1048,6 @@ mod tests {
     //         status_2.chunks_status.synced == status_2.chunks_status.total
     //             && status_2.chunks_status.not_synced == 0
     //     );
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    // ///////////////////////////////
-    // // Various Searches ///////////
-    // ///////////////////////////////
-
-    // #[sqlx::test]
-    // async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cvswle_1",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "active": true,
-    //                     "configuration": "english"
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let mut collection = Collection::new("test_r_c_cvswle_28", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-
-    //     // Recreate the pipeline to replicate a more accurate example
-    //     let mut pipeline = Pipeline::new("test_r_p_cvswle_1", None, None, None);
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(3), None)
-    //         .await?;
-    //     let results = collection
-    //         .vector_search("Here is some query", &mut pipeline, None, None)
-    //         .await?;
-    //     assert!(results.len() == 3);
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // async fn can_vector_search_with_remote_embeddings() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::new(
-    //         Some("text-embedding-ada-002".to_string()),
-    //         Some("openai".to_string()),
-    //         None,
-    //     );
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cvswre_1",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "active": true,
-    //                     "configuration": "english"
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let mut collection = Collection::new("test_r_c_cvswre_21", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-
-    //     // Recreate the pipeline to replicate a more accurate example
-    //     let mut pipeline = Pipeline::new("test_r_p_cvswre_1", None, None, None);
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(3), None)
-    //         .await?;
-    //     let results = collection
-    //         .vector_search("Here is some query", &mut pipeline, None, Some(10))
-    //         .await?;
-    //     assert!(results.len() == 3);
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // async fn can_vector_search_with_query_builder() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cvswqb_1",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "active": true,
-    //                     "configuration": "english"
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let mut collection = Collection::new("test_r_c_cvswqb_4", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-
-    //     // Recreate the pipeline to replicate a more accurate example
-    //     let pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(4), None)
-    //         .await?;
-    //     let results = collection
-    //         .query()
-    //         .vector_recall("Here is some query", &pipeline, None)
-    //         .limit(3)
-    //         .fetch_all()
-    //         .await?;
-    //     assert!(results.len() == 3);
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // async fn can_vector_search_with_query_builder_and_pass_model_parameters_in_search(
-    // ) -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::new(
-    //         Some("hkunlp/instructor-base".to_string()),
-    //         Some("python".to_string()),
-    //         Some(json!({"instruction": "Represent the Wikipedia document for retrieval: "}).into()),
-    //     );
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cvswqbapmpis_1",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "active": true,
-    //                     "configuration": "english"
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let mut collection = Collection::new("test_r_c_cvswqbapmpis_4", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-
-    //     // Recreate the pipeline to replicate a more accurate example
-    //     let pipeline = Pipeline::new("test_r_p_cvswqbapmpis_1", None, None, None);
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(3), None)
-    //         .await?;
-    //     let results = collection
-    //         .query()
-    //         .vector_recall(
-    //             "Here is some query",
-    //             &pipeline,
-    //             Some(
-    //                 json!({
-    //                     "instruction": "Represent the Wikipedia document for retrieval: "
-    //                 })
-    //                 .into(),
-    //             ),
-    //         )
-    //         .limit(10)
-    //         .fetch_all()
-    //         .await?;
-    //     assert!(results.len() == 3);
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // async fn can_vector_search_with_query_builder_with_remote_embeddings() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::new(
-    //         Some("text-embedding-ada-002".to_string()),
-    //         Some("openai".to_string()),
-    //         None,
-    //     );
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cvswqbwre_1",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "active": true,
-    //                     "configuration": "english"
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let mut collection = Collection::new("test_r_c_cvswqbwre_5", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-
-    //     // Recreate the pipeline to replicate a more accurate example
-    //     let pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(4), None)
-    //         .await?;
-    //     let results = collection
-    //         .query()
-    //         .vector_recall("Here is some query", &pipeline, None)
-    //         .limit(3)
-    //         .fetch_all()
-    //         .await?;
-    //     assert!(results.len() == 3);
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // async fn can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value(
-    // ) -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline =
-    //         Pipeline::new("test_r_p_cvswqbachesv_1", Some(model), Some(splitter), None);
-    //     let mut collection = Collection::new("test_r_c_cvswqbachesv_3", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-
-    //     // Recreate the pipeline to replicate a more accurate example
-    //     let pipeline = Pipeline::new("test_r_p_cvswqbachesv_1", None, None, None);
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(3), None)
-    //         .await?;
-    //     let results = collection
-    //         .query()
-    //         .vector_recall(
-    //             "Here is some query",
-    //             &pipeline,
-    //             Some(
-    //                 json!({
-    //                     "hnsw": {
-    //                         "ef_search": 2
-    //                     }
-    //                 })
-    //                 .into(),
-    //             ),
-    //         )
-    //         .fetch_all()
-    //         .await?;
-    //     assert!(results.len() == 3);
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // async fn can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value_and_remote_embeddings(
-    // ) -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::new(
-    //         Some("text-embedding-ada-002".to_string()),
-    //         Some("openai".to_string()),
-    //         None,
-    //     );
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cvswqbachesvare_2",
-    //         Some(model),
-    //         Some(splitter),
-    //         None,
-    //     );
-    //     let mut collection = Collection::new("test_r_c_cvswqbachesvare_7", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-
-    //     // Recreate the pipeline to replicate a more accurate example
-    //     let pipeline = Pipeline::new("test_r_p_cvswqbachesvare_2", None, None, None);
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(3), None)
-    //         .await?;
-    //     let results = collection
-    //         .query()
-    //         .vector_recall(
-    //             "Here is some query",
-    //             &pipeline,
-    //             Some(
-    //                 json!({
-    //                     "hnsw": {
-    //                         "ef_search": 2
-    //                     }
-    //                 })
-    //                 .into(),
-    //             ),
-    //         )
-    //         .fetch_all()
-    //         .await?;
-    //     assert!(results.len() == 3);
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // async fn can_filter_vector_search() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cfd_1",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //             "full_text_search": {
-    //                 "active": true,
-    //                 "configuration": "english"
-    //             }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let mut collection = Collection::new("test_r_c_cfd_2", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(5), None)
-    //         .await?;
-
-    //     let filters = vec![
-    //         (5, json!({}).into()),
-    //         (
-    //             3,
-    //             json!({
-    //                 "metadata": {
-    //                     "id": {
-    //                         "$lt": 3
-    //                     }
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //         (
-    //             1,
-    //             json!({
-    //                 "full_text_search": {
-    //                     "configuration": "english",
-    //                     "text": "1",
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     ];
-
-    //     for (expected_result_count, filter) in filters {
-    //         let results = collection
-    //             .query()
-    //             .vector_recall("Here is some query", &pipeline, None)
-    //             .filter(filter)
-    //             .fetch_all()
-    //             .await?;
-    //         assert_eq!(results.len(), expected_result_count);
-    //     }
-
     //     collection.archive().await?;
     //     Ok(())
     // }
@@ -1881,6 +1528,54 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![(0, 1, 10), (1, 2, 11), (2, 3, 12)]
         );
+        collection.archive().await?;
+        Ok(())
+    }
+
+    ///////////////////////////////
+    // ER Diagram /////////////////
+    ///////////////////////////////
+
+    #[sqlx::test]
+    async fn generate_er_diagram() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut pipeline = MultiFieldPipeline::new(
+            "test_p_ged_57",
+            Some(
+                json!({
+                        "title": {
+                            "embed": {
+                                "model": "intfloat/e5-small"
+                            },
+                            "full_text_search": {
+                                "configuration": "english"
+                            }
+                        },
+                        "body": {
+                            "splitter": {
+                                "model": "recursive_character"
+                            },
+                            "embed": {
+                                "model": "intfloat/e5-small"
+                            },
+                            "full_text_search": {
+                                "configuration": "english"
+                            }
+                        },
+                        "notes": {
+                           "embed": {
+                                "model": "intfloat/e5-small"
+                            }
+                        }
+                })
+                .into(),
+            ),
+        )?;
+        let mut collection = Collection::new("test_r_c_ged_2", None);
+        collection.add_pipeline(&mut pipeline).await?;
+        let diagram = collection.generate_er_diagram(&mut pipeline).await?;
+        assert!(!diagram.is_empty());
+        println!("{diagram}");
         collection.archive().await?;
         Ok(())
     }
