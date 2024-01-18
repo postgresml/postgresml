@@ -309,7 +309,7 @@ mod tests {
     #[sqlx::test]
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_capaud_44";
+        let collection_name = "test_r_c_capaud_46";
         let pipeline_name = "test_r_p_capaud_6";
         let mut pipeline = MultiFieldPipeline::new(
             pipeline_name,
@@ -361,13 +361,13 @@ mod tests {
                 .fetch_all(&pool)
                 .await?;
         assert!(body_chunks.len() == 4);
-        collection.archive().await?;
         let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name);
         let tsvectors: Vec<models::TSVector> =
             sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
                 .fetch_all(&pool)
                 .await?;
         assert!(tsvectors.len() == 4);
+        collection.archive().await?;
         Ok(())
     }
 
@@ -585,6 +585,18 @@ mod tests {
         assert!(tsvectors.len() == 12);
 
         collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn can_update_documents() -> anyhow::Result<()> {
+        let collection_name = "test_r_c_cud_0";
+        let mut collection = Collection::new(collection_name, None);
+        let mut documents = generate_dummy_documents(1);
+        collection.upsert_documents(documents.clone(), None).await?;
+        documents[0]["body"] = json!("new body");
+        collection.upsert_documents(documents, None).await?;
+        // collection.archive().await?;
         Ok(())
     }
 

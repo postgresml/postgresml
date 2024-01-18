@@ -270,185 +270,194 @@ impl MultiFieldPipeline {
 
         let schema = format!("{}_{}", collection_name, self.name);
 
-        let mut transaction = pool.begin().await?;
-        transaction
-            .execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", schema).as_str())
-            .await?;
+        // If the schema already exists we don't want recreate all of the tables
+        let exists: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT schema_name FROM information_schema.schemata WHERE schema_name = $1)",
+        )
+        .bind(&schema)
+        .fetch_one(&pool)
+        .await?;
 
-        let parsed_schema = self
-            .parsed_schema
-            .as_ref()
-            .context("Pipeline must have schema to create_tables")?;
-
-        for (key, value) in parsed_schema.iter() {
-            // Create the chunks table
-            let chunks_table_name = format!("{}.{}_chunks", schema, key);
+        if !exists {
+            let mut transaction = pool.begin().await?;
             transaction
-                .execute(
-                    query_builder!(
-                        queries::CREATE_CHUNKS_TABLE,
-                        chunks_table_name,
-                        documents_table_name
-                    )
-                    .as_str(),
-                )
-                .await?;
-            let index_name = format!("{}_pipeline_chunk_document_id_index", key);
-            transaction
-                .execute(
-                    query_builder!(
-                        queries::CREATE_INDEX,
-                        "",
-                        index_name,
-                        chunks_table_name,
-                        "document_id"
-                    )
-                    .as_str(),
-                )
+                .execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", schema).as_str())
                 .await?;
 
-            if let Some(embed) = &value.embed {
-                let embeddings_table_name = format!("{}.{}_embeddings", schema, key);
-                let exists: bool = sqlx::query_scalar(
-                        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2)"
-                    )
-                    .bind(&schema)
-                    .bind(&embeddings_table_name).fetch_one(&pool).await?;
+            let parsed_schema = self
+                .parsed_schema
+                .as_ref()
+                .context("Pipeline must have schema to create_tables")?;
 
-                if !exists {
-                    let embedding_length = match &embed.model.runtime {
-                        ModelRuntime::Python => {
-                            let embedding: (Vec<f32>,) = sqlx::query_as(
-                                "SELECT embedding from pgml.embed(transformer => $1, text => 'Hello, World!', kwargs => $2) as embedding")
-                                .bind(&embed.model.name)
-                                .bind(&embed.model.parameters)
-                                .fetch_one(&pool).await?;
-                            embedding.0.len() as i64
-                        }
-                        t => {
-                            let remote_embeddings = build_remote_embeddings(
-                                t.to_owned(),
-                                &embed.model.name,
-                                Some(&embed.model.parameters),
-                            )?;
-                            remote_embeddings.get_embedding_size().await?
-                        }
-                    };
-
-                    // Create the embeddings table
-                    sqlx::query(&query_builder!(
-                        queries::CREATE_EMBEDDINGS_TABLE,
-                        &embeddings_table_name,
-                        chunks_table_name,
-                        documents_table_name,
-                        embedding_length
-                    ))
-                    .execute(&mut *transaction)
-                    .await?;
-                    let index_name = format!("{}_pipeline_embedding_chunk_id_index", key);
-                    transaction
-                        .execute(
-                            query_builder!(
-                                queries::CREATE_INDEX,
-                                "",
-                                index_name,
-                                &embeddings_table_name,
-                                "chunk_id"
-                            )
-                            .as_str(),
-                        )
-                        .await?;
-                    let index_name = format!("{}_pipeline_embedding_document_id_index", key);
-                    transaction
-                        .execute(
-                            query_builder!(
-                                queries::CREATE_INDEX,
-                                "",
-                                index_name,
-                                &embeddings_table_name,
-                                "document_id"
-                            )
-                            .as_str(),
-                        )
-                        .await?;
-                    let index_with_parameters = format!(
-                        "WITH (m = {}, ef_construction = {})",
-                        embed.hnsw.m, embed.hnsw.ef_construction
-                    );
-                    let index_name = format!("{}_pipeline_embedding_hnsw_vector_index", key);
-                    transaction
-                        .execute(
-                            query_builder!(
-                                queries::CREATE_INDEX_USING_HNSW,
-                                "",
-                                index_name,
-                                &embeddings_table_name,
-                                "embedding vector_cosine_ops",
-                                index_with_parameters
-                            )
-                            .as_str(),
-                        )
-                        .await?;
-                }
-            }
-
-            // Create the tsvectors table
-            if value.full_text_search.is_some() {
-                let tsvectors_table_name = format!("{}.{}_tsvectors", schema, key);
+            for (key, value) in parsed_schema.iter() {
+                // Create the chunks table
+                let chunks_table_name = format!("{}.{}_chunks", schema, key);
                 transaction
                     .execute(
                         query_builder!(
-                            queries::CREATE_CHUNKS_TSVECTORS_TABLE,
-                            tsvectors_table_name,
+                            queries::CREATE_CHUNKS_TABLE,
                             chunks_table_name,
                             documents_table_name
                         )
                         .as_str(),
                     )
                     .await?;
-                let index_name = format!("{}_pipeline_tsvector_chunk_id_index", key);
+                let index_name = format!("{}_pipeline_chunk_document_id_index", key);
                 transaction
                     .execute(
                         query_builder!(
                             queries::CREATE_INDEX,
                             "",
                             index_name,
-                            tsvectors_table_name,
-                            "chunk_id"
-                        )
-                        .as_str(),
-                    )
-                    .await?;
-                let index_name = format!("{}_pipeline_tsvector_document_id_index", key);
-                transaction
-                    .execute(
-                        query_builder!(
-                            queries::CREATE_INDEX,
-                            "",
-                            index_name,
-                            tsvectors_table_name,
+                            chunks_table_name,
                             "document_id"
                         )
                         .as_str(),
                     )
                     .await?;
-                let index_name = format!("{}_pipeline_tsvector_index", key);
-                transaction
-                    .execute(
-                        query_builder!(
-                            queries::CREATE_INDEX_USING_GIN,
-                            "",
-                            index_name,
-                            tsvectors_table_name,
-                            "ts"
-                        )
-                        .as_str(),
-                    )
-                    .await?;
-            }
-        }
-        transaction.commit().await?;
 
+                if let Some(embed) = &value.embed {
+                    let embeddings_table_name = format!("{}.{}_embeddings", schema, key);
+                    let exists: bool = sqlx::query_scalar(
+                            "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2)"
+                        )
+                        .bind(&schema)
+                        .bind(&embeddings_table_name).fetch_one(&pool).await?;
+
+                    if !exists {
+                        let embedding_length = match &embed.model.runtime {
+                            ModelRuntime::Python => {
+                                let embedding: (Vec<f32>,) = sqlx::query_as(
+                                    "SELECT embedding from pgml.embed(transformer => $1, text => 'Hello, World!', kwargs => $2) as embedding")
+                                    .bind(&embed.model.name)
+                                    .bind(&embed.model.parameters)
+                                    .fetch_one(&pool).await?;
+                                embedding.0.len() as i64
+                            }
+                            t => {
+                                let remote_embeddings = build_remote_embeddings(
+                                    t.to_owned(),
+                                    &embed.model.name,
+                                    Some(&embed.model.parameters),
+                                )?;
+                                remote_embeddings.get_embedding_size().await?
+                            }
+                        };
+
+                        // Create the embeddings table
+                        sqlx::query(&query_builder!(
+                            queries::CREATE_EMBEDDINGS_TABLE,
+                            &embeddings_table_name,
+                            chunks_table_name,
+                            documents_table_name,
+                            embedding_length
+                        ))
+                        .execute(&mut *transaction)
+                        .await?;
+                        let index_name = format!("{}_pipeline_embedding_chunk_id_index", key);
+                        transaction
+                            .execute(
+                                query_builder!(
+                                    queries::CREATE_INDEX,
+                                    "",
+                                    index_name,
+                                    &embeddings_table_name,
+                                    "chunk_id"
+                                )
+                                .as_str(),
+                            )
+                            .await?;
+                        let index_name = format!("{}_pipeline_embedding_document_id_index", key);
+                        transaction
+                            .execute(
+                                query_builder!(
+                                    queries::CREATE_INDEX,
+                                    "",
+                                    index_name,
+                                    &embeddings_table_name,
+                                    "document_id"
+                                )
+                                .as_str(),
+                            )
+                            .await?;
+                        let index_with_parameters = format!(
+                            "WITH (m = {}, ef_construction = {})",
+                            embed.hnsw.m, embed.hnsw.ef_construction
+                        );
+                        let index_name = format!("{}_pipeline_embedding_hnsw_vector_index", key);
+                        transaction
+                            .execute(
+                                query_builder!(
+                                    queries::CREATE_INDEX_USING_HNSW,
+                                    "",
+                                    index_name,
+                                    &embeddings_table_name,
+                                    "embedding vector_cosine_ops",
+                                    index_with_parameters
+                                )
+                                .as_str(),
+                            )
+                            .await?;
+                    }
+                }
+
+                // Create the tsvectors table
+                if value.full_text_search.is_some() {
+                    let tsvectors_table_name = format!("{}.{}_tsvectors", schema, key);
+                    transaction
+                        .execute(
+                            query_builder!(
+                                queries::CREATE_CHUNKS_TSVECTORS_TABLE,
+                                tsvectors_table_name,
+                                chunks_table_name,
+                                documents_table_name
+                            )
+                            .as_str(),
+                        )
+                        .await?;
+                    let index_name = format!("{}_pipeline_tsvector_chunk_id_index", key);
+                    transaction
+                        .execute(
+                            query_builder!(
+                                queries::CREATE_INDEX,
+                                "",
+                                index_name,
+                                tsvectors_table_name,
+                                "chunk_id"
+                            )
+                            .as_str(),
+                        )
+                        .await?;
+                    let index_name = format!("{}_pipeline_tsvector_document_id_index", key);
+                    transaction
+                        .execute(
+                            query_builder!(
+                                queries::CREATE_INDEX,
+                                "",
+                                index_name,
+                                tsvectors_table_name,
+                                "document_id"
+                            )
+                            .as_str(),
+                        )
+                        .await?;
+                    let index_name = format!("{}_pipeline_tsvector_index", key);
+                    transaction
+                        .execute(
+                            query_builder!(
+                                queries::CREATE_INDEX_USING_GIN,
+                                "",
+                                index_name,
+                                tsvectors_table_name,
+                                "ts"
+                            )
+                            .as_str(),
+                        )
+                        .await?;
+                }
+            }
+            transaction.commit().await?;
+        }
         Ok(())
     }
 
@@ -474,18 +483,20 @@ impl MultiFieldPipeline {
                     transaction.clone(),
                 )
                 .await?;
-            if let Some(embed) = &value.embed {
-                self.sync_embeddings(key, &embed.model, &chunk_ids, transaction.clone())
+            if !chunk_ids.is_empty() {
+                if let Some(embed) = &value.embed {
+                    self.sync_embeddings(key, &embed.model, &chunk_ids, transaction.clone())
+                        .await?;
+                }
+                if let Some(full_text_search) = &value.full_text_search {
+                    self.sync_tsvectors(
+                        key,
+                        &full_text_search.configuration,
+                        &chunk_ids,
+                        transaction.clone(),
+                    )
                     .await?;
-            }
-            if let Some(full_text_search) = &value.full_text_search {
-                self.sync_tsvectors(
-                    key,
-                    &full_text_search.configuration,
-                    &chunk_ids,
-                    transaction.clone(),
-                )
-                .await?;
+                }
             }
         }
         Ok(())
@@ -519,8 +530,7 @@ impl MultiFieldPipeline {
                     queries::GENERATE_CHUNKS_FOR_DOCUMENT_ID,
                     &chunks_table_name,
                     &json_key_query,
-                    documents_table_name,
-                    &chunks_table_name
+                    documents_table_name
                 ))
                 .bind(splitter_database_data.id)
                 .bind(document_id)
@@ -547,26 +557,52 @@ impl MultiFieldPipeline {
             };
             chunk_ids.map_err(anyhow::Error::msg)
         } else {
-            sqlx::query_scalar(&query_builder!(
-                r#"
-                    INSERT INTO %s(
-                        document_id, chunk_index, chunk
-                    )
-                    SELECT 
-                        id,
-                        1,
-                        %d
-                    FROM %s
-                    ON CONFLICT (document_id, chunk_index) DO NOTHING 
-                    RETURNING id
-                "#,
-                &chunks_table_name,
-                &json_key_query,
-                &documents_table_name
-            ))
-            .fetch_all(&mut *transaction.lock().await)
-            .await
-            .map_err(anyhow::Error::msg)
+            match document_id {
+                Some(document_id) => sqlx::query_scalar(&query_builder!(
+                    r#"
+                        INSERT INTO %s(
+                            document_id, chunk_index, chunk
+                        )
+                        SELECT 
+                            id,
+                            1,
+                            %d
+                        FROM %s
+                        WHERE id = $1
+                        ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
+                        RETURNING id
+                    "#,
+                    &chunks_table_name,
+                    &json_key_query,
+                    &documents_table_name
+                ))
+                .bind(document_id)
+                .fetch_all(&mut *transaction.lock().await)
+                .await
+                .map_err(anyhow::Error::msg),
+                None => sqlx::query_scalar(&query_builder!(
+                    r#"
+                        INSERT INTO %s(
+                            document_id, chunk_index, chunk
+                        )
+                        SELECT 
+                            id,
+                            1,
+                            %d
+                        FROM %s
+                        WHERE id NOT IN (SELECT document_id FROM %s)
+                        ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
+                        RETURNING id
+                    "#,
+                    &chunks_table_name,
+                    &json_key_query,
+                    &documents_table_name,
+                    &chunks_table_name
+                ))
+                .fetch_all(&mut *transaction.lock().await)
+                .await
+                .map_err(anyhow::Error::msg),
+            }
         }
     }
 
@@ -599,8 +635,7 @@ impl MultiFieldPipeline {
                 sqlx::query(&query_builder!(
                     queries::GENERATE_EMBEDDINGS_FOR_CHUNK_IDS,
                     embeddings_table_name,
-                    chunks_table_name,
-                    embeddings_table_name
+                    chunks_table_name
                 ))
                 .bind(&model.name)
                 .bind(&parameters)
