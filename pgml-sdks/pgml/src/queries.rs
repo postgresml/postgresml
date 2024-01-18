@@ -118,6 +118,24 @@ WHERE id = ANY ($1)
 ON CONFLICT (chunk_id) DO UPDATE SET ts = EXCLUDED.ts;
 "#;
 
+pub const GENERATE_TSVECTORS: &str = r#"
+INSERT INTO %s (chunk_id, document_id, ts) 
+SELECT 
+  id, 
+  document_id,
+  to_tsvector('%d', chunk) ts 
+FROM 
+  %s
+WHERE 
+  id NOT IN (
+    SELECT 
+      chunk_id 
+    FROM 
+      %s
+  )
+ON CONFLICT (chunk_id) DO NOTHING;
+"#;
+
 pub const GENERATE_EMBEDDINGS_FOR_CHUNK_IDS: &str = r#"
 INSERT INTO %s (chunk_id, document_id, embedding) 
 SELECT 
@@ -135,58 +153,26 @@ WHERE
 ON CONFLICT (chunk_id) DO UPDATE SET embedding = EXCLUDED.embedding
 "#;
 
-pub const EMBED_AND_VECTOR_SEARCH: &str = r#"
-WITH pipeline AS (
-    SELECT
-      model_id
-    FROM
+pub const GENERATE_EMBEDDINGS: &str = r#"
+INSERT INTO %s (chunk_id, document_id, embedding) 
+SELECT 
+  id, 
+  document_id,
+  pgml.embed(
+    text => chunk, 
+    transformer => $1, 
+    kwargs => $2 
+  ) 
+FROM 
+  %s 
+WHERE 
+  id NOT IN (
+    SELECT 
+      chunk_id 
+    FROM 
       %s
-    WHERE
-      name = $1
-),
-model AS (
-    SELECT
-      hyperparams 
-    FROM
-      pgml.models 
-    WHERE
-      id = (SELECT model_id FROM pipeline)
-),
-embedding AS (
-  SELECT 
-    pgml.embed(
-      transformer => (SELECT hyperparams->>'name' FROM model),
-      text => $2,
-      kwargs => $3
-    )::vector AS embedding
-) 
-SELECT 
-  embeddings.embedding <=> (SELECT embedding FROM embedding) score, 
-  chunks.chunk, 
-  documents.metadata 
-FROM 
-  %s embeddings
-  INNER JOIN %s chunks ON chunks.id = embeddings.chunk_id 
-  INNER JOIN %s documents ON documents.id = chunks.document_id 
-  ORDER BY 
-  score ASC 
-  LIMIT 
-  $4;
-"#;
-
-pub const VECTOR_SEARCH: &str = r#"
-SELECT 
-  embeddings.embedding <=> $1::vector score,
-  chunks.chunk, 
-  documents.metadata 
-FROM 
-  %s embeddings
-  INNER JOIN %s chunks ON chunks.id = embeddings.chunk_id 
-  INNER JOIN %s documents ON documents.id = chunks.document_id 
-  ORDER BY 
-  score ASC 
-  LIMIT 
-  $2;
+  )
+ON CONFLICT (chunk_id) DO NOTHING;
 "#;
 
 pub const GENERATE_CHUNKS: &str = r#"
@@ -232,7 +218,6 @@ FROM
       ) AS documents
   ) chunks 
 ON CONFLICT (document_id, chunk_index) DO NOTHING 
-RETURNING id, document_id
 "#;
 
 pub const GENERATE_CHUNKS_FOR_DOCUMENT_ID: &str = r#"
