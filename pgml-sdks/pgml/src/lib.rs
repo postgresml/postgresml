@@ -309,7 +309,7 @@ mod tests {
     #[sqlx::test]
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_capaud_46";
+        let collection_name = "test_r_c_capaud_47";
         let pipeline_name = "test_r_p_capaud_6";
         let mut pipeline = MultiFieldPipeline::new(
             pipeline_name,
@@ -374,7 +374,7 @@ mod tests {
     #[sqlx::test]
     async fn can_upsert_documents_and_add_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cudaap_42";
+        let collection_name = "test_r_c_cudaap_43";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(2);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -585,18 +585,6 @@ mod tests {
         assert!(tsvectors.len() == 12);
 
         collection.archive().await?;
-        Ok(())
-    }
-
-    #[sqlx::test]
-    async fn can_update_documents() -> anyhow::Result<()> {
-        let collection_name = "test_r_c_cud_0";
-        let mut collection = Collection::new(collection_name, None);
-        let mut documents = generate_dummy_documents(1);
-        collection.upsert_documents(documents.clone(), None).await?;
-        documents[0]["body"] = json!("new body");
-        collection.upsert_documents(documents, None).await?;
-        // collection.archive().await?;
         Ok(())
     }
 
@@ -1417,550 +1405,483 @@ mod tests {
     //     Ok(())
     // }
 
-    // ///////////////////////////////
-    // // Working With Documents /////
-    // ///////////////////////////////
+    ///////////////////////////////
+    // Working With Documents /////
+    ///////////////////////////////
 
-    // #[sqlx::test]
-    // async fn can_upsert_and_filter_get_documents() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cuafgd_1",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "active": true,
-    //                     "configuration": "english"
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
+    #[sqlx::test]
+    async fn can_upsert_and_filter_get_documents() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cuafgd_1", None);
 
-    //     let mut collection = Collection::new("test_r_c_cuagd_2", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
+        let documents = vec![
+            serde_json::json!({"id": 1, "random_key": 10, "text": "hello world 1"}).into(),
+            serde_json::json!({"id": 2, "random_key": 11, "text": "hello world 2"}).into(),
+            serde_json::json!({"id": 3, "random_key": 12, "text": "hello world 3"}).into(),
+        ];
+        collection.upsert_documents(documents.clone(), None).await?;
+        let document = &collection.get_documents(None).await?[0];
+        assert_eq!(document["document"]["text"], "hello world 1");
 
-    //     // Test basic upsert
-    //     let documents = vec![
-    //         serde_json::json!({"id": 1, "random_key": 10, "text": "hello world 1"}).into(),
-    //         serde_json::json!({"id": 2, "random_key": 11, "text": "hello world 2"}).into(),
-    //         serde_json::json!({"id": 3, "random_key": 12, "text": "hello world 3"}).into(),
-    //     ];
-    //     collection.upsert_documents(documents.clone(), None).await?;
-    //     let document = &collection.get_documents(None).await?[0];
-    //     assert_eq!(document["document"]["text"], "hello world 1");
+        let documents = vec![
+            serde_json::json!({"id": 1, "text": "hello world new"}).into(),
+            serde_json::json!({"id": 2, "random_key": 12}).into(),
+            serde_json::json!({"id": 3, "random_key": 13}).into(),
+        ];
+        collection.upsert_documents(documents.clone(), None).await?;
 
-    //     // Test upsert of text and metadata
-    //     let documents = vec![
-    //         serde_json::json!({"id": 1, "text": "hello world new"}).into(),
-    //         serde_json::json!({"id": 2, "random_key": 12}).into(),
-    //         serde_json::json!({"id": 3, "random_key": 13}).into(),
-    //     ];
-    //     collection.upsert_documents(documents.clone(), None).await?;
+        let documents = collection
+            .get_documents(Some(
+                serde_json::json!({
+                    "filter": {
+                        "random_key": {
+                            "$eq": 12
+                        }
+                    }
+                })
+                .into(),
+            ))
+            .await?;
+        assert_eq!(documents[0]["document"]["random_key"], 12);
 
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             serde_json::json!({
-    //                 "filter": {
-    //                     "metadata": {
-    //                         "random_key": {
-    //                             "$eq": 12
-    //                         }
-    //                     }
-    //                 }
-    //             })
-    //             .into(),
-    //         ))
-    //         .await?;
-    //     assert_eq!(documents[0]["document"]["text"], "hello world 2");
+        let documents = collection
+            .get_documents(Some(
+                serde_json::json!({
+                    "filter": {
+                        "random_key": {
+                            "$gte": 13
+                        }
+                    }
+                })
+                .into(),
+            ))
+            .await?;
+        assert_eq!(documents[0]["document"]["random_key"], 13);
 
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             serde_json::json!({
-    //                 "filter": {
-    //                     "metadata": {
-    //                         "random_key": {
-    //                             "$gte": 13
-    //                         }
-    //                     }
-    //                 }
-    //             })
-    //             .into(),
-    //         ))
-    //         .await?;
-    //     assert_eq!(documents[0]["document"]["text"], "hello world 3");
+        collection.archive().await?;
+        Ok(())
+    }
 
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             serde_json::json!({
-    //                 "filter": {
-    //                     "full_text_search": {
-    //                         "configuration": "english",
-    //                         "text": "new"
-    //                     }
-    //                 }
-    //             })
-    //             .into(),
-    //         ))
-    //         .await?;
-    //     assert_eq!(documents[0]["document"]["text"], "hello world new");
-    //     assert_eq!(documents[0]["document"]["id"].as_i64().unwrap(), 1);
+    #[sqlx::test]
+    async fn can_paginate_get_documents() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cpgd_2", None);
+        collection
+            .upsert_documents(generate_dummy_documents(10), None)
+            .await?;
 
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
+        let documents = collection
+            .get_documents(Some(
+                serde_json::json!({
+                    "limit": 5,
+                    "offset": 0
+                })
+                .into(),
+            ))
+            .await?;
+        assert_eq!(
+            documents
+                .into_iter()
+                .map(|d| d["row_id"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![1, 2, 3, 4, 5]
+        );
 
-    // #[sqlx::test]
-    // async fn can_paginate_get_documents() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let mut collection = Collection::new("test_r_c_cpgd_2", None);
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(10), None)
-    //         .await?;
+        let documents = collection
+            .get_documents(Some(
+                serde_json::json!({
+                    "limit": 2,
+                    "offset": 5
+                })
+                .into(),
+            ))
+            .await?;
+        let last_row_id = documents.last().unwrap()["row_id"].as_i64().unwrap();
+        assert_eq!(
+            documents
+                .into_iter()
+                .map(|d| d["row_id"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![6, 7]
+        );
 
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             serde_json::json!({
-    //                 "limit": 5,
-    //                 "offset": 0
-    //             })
-    //             .into(),
-    //         ))
-    //         .await?;
-    //     assert_eq!(
-    //         documents
-    //             .into_iter()
-    //             .map(|d| d["row_id"].as_i64().unwrap())
-    //             .collect::<Vec<_>>(),
-    //         vec![1, 2, 3, 4, 5]
-    //     );
+        let documents = collection
+            .get_documents(Some(
+                serde_json::json!({
+                    "limit": 2,
+                    "last_row_id": last_row_id
+                })
+                .into(),
+            ))
+            .await?;
+        let last_row_id = documents.last().unwrap()["row_id"].as_i64().unwrap();
+        assert_eq!(
+            documents
+                .into_iter()
+                .map(|d| d["row_id"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![8, 9]
+        );
 
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             serde_json::json!({
-    //                 "limit": 2,
-    //                 "offset": 5
-    //             })
-    //             .into(),
-    //         ))
-    //         .await?;
-    //     let last_row_id = documents.last().unwrap()["row_id"].as_i64().unwrap();
-    //     assert_eq!(
-    //         documents
-    //             .into_iter()
-    //             .map(|d| d["row_id"].as_i64().unwrap())
-    //             .collect::<Vec<_>>(),
-    //         vec![6, 7]
-    //     );
+        let documents = collection
+            .get_documents(Some(
+                serde_json::json!({
+                    "limit": 1,
+                    "last_row_id": last_row_id
+                })
+                .into(),
+            ))
+            .await?;
+        assert_eq!(
+            documents
+                .into_iter()
+                .map(|d| d["row_id"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![10]
+        );
 
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             serde_json::json!({
-    //                 "limit": 2,
-    //                 "last_row_id": last_row_id
-    //             })
-    //             .into(),
-    //         ))
-    //         .await?;
-    //     let last_row_id = documents.last().unwrap()["row_id"].as_i64().unwrap();
-    //     assert_eq!(
-    //         documents
-    //             .into_iter()
-    //             .map(|d| d["row_id"].as_i64().unwrap())
-    //             .collect::<Vec<_>>(),
-    //         vec![8, 9]
-    //     );
+        collection.archive().await?;
+        Ok(())
+    }
 
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             serde_json::json!({
-    //                 "limit": 1,
-    //                 "last_row_id": last_row_id
-    //             })
-    //             .into(),
-    //         ))
-    //         .await?;
-    //     assert_eq!(
-    //         documents
-    //             .into_iter()
-    //             .map(|d| d["row_id"].as_i64().unwrap())
-    //             .collect::<Vec<_>>(),
-    //         vec![10]
-    //     );
+    #[sqlx::test]
+    async fn can_filter_and_paginate_get_documents() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cfapgd_1", None);
 
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
+        collection
+            .upsert_documents(generate_dummy_documents(10), None)
+            .await?;
 
-    // #[sqlx::test]
-    // async fn can_filter_and_paginate_get_documents() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cfapgd_1",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "active": true,
-    //                     "configuration": "english"
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
+        let documents = collection
+            .get_documents(Some(
+                serde_json::json!({
+                    "filter": {
+                        "id": {
+                            "$gte": 2
+                        }
+                    },
+                    "limit": 2,
+                    "offset": 0
+                })
+                .into(),
+            ))
+            .await?;
+        assert_eq!(
+            documents
+                .into_iter()
+                .map(|d| d["document"]["id"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![2, 3]
+        );
 
-    //     let mut collection = Collection::new("test_r_c_cfapgd_1", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
+        let documents = collection
+            .get_documents(Some(
+                serde_json::json!({
+                    "filter": {
+                        "id": {
+                            "$lte": 5
+                        }
+                    },
+                    "limit": 100,
+                    "offset": 4
+                })
+                .into(),
+            ))
+            .await?;
+        assert_eq!(
+            documents
+                .into_iter()
+                .map(|d| d["document"]["id"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![4, 5]
+        );
 
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(10), None)
-    //         .await?;
+        collection.archive().await?;
+        Ok(())
+    }
 
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             serde_json::json!({
-    //                 "filter": {
-    //                     "metadata": {
-    //                         "id": {
-    //                             "$gte": 2
-    //                         }
-    //                     }
-    //                 },
-    //                 "limit": 2,
-    //                 "offset": 0
-    //             })
-    //             .into(),
-    //         ))
-    //         .await?;
-    //     assert_eq!(
-    //         documents
-    //             .into_iter()
-    //             .map(|d| d["document"]["id"].as_i64().unwrap())
-    //             .collect::<Vec<_>>(),
-    //         vec![2, 3]
-    //     );
+    #[sqlx::test]
+    async fn can_filter_and_delete_documents() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cfadd_1", None);
+        collection
+            .upsert_documents(generate_dummy_documents(10), None)
+            .await?;
 
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             serde_json::json!({
-    //                 "filter": {
-    //                     "metadata": {
-    //                         "id": {
-    //                             "$lte": 5
-    //                         }
-    //                     }
-    //                 },
-    //                 "limit": 100,
-    //                 "offset": 4
-    //             })
-    //             .into(),
-    //         ))
-    //         .await?;
-    //     let last_row_id = documents.last().unwrap()["row_id"].as_i64().unwrap();
-    //     assert_eq!(
-    //         documents
-    //             .into_iter()
-    //             .map(|d| d["document"]["id"].as_i64().unwrap())
-    //             .collect::<Vec<_>>(),
-    //         vec![4, 5]
-    //     );
+        collection
+            .delete_documents(
+                serde_json::json!({
+                    "id": {
+                        "$lt": 2
+                    }
+                })
+                .into(),
+            )
+            .await?;
+        let documents = collection.get_documents(None).await?;
+        assert_eq!(documents.len(), 8);
+        assert!(documents
+            .iter()
+            .all(|d| d["document"]["id"].as_i64().unwrap() >= 2));
 
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             serde_json::json!({
-    //                 "filter": {
-    //                     "full_text_search": {
-    //                         "configuration": "english",
-    //                         "text": "document"
-    //                     }
-    //                 },
-    //                 "limit": 100,
-    //                 "last_row_id": last_row_id
-    //             })
-    //             .into(),
-    //         ))
-    //         .await?;
-    //     assert_eq!(
-    //         documents
-    //             .into_iter()
-    //             .map(|d| d["document"]["id"].as_i64().unwrap())
-    //             .collect::<Vec<_>>(),
-    //         vec![6, 7, 8, 9]
-    //     );
+        collection
+            .delete_documents(
+                serde_json::json!({
+                    "id": {
+                        "$gte": 6
+                    }
+                })
+                .into(),
+            )
+            .await?;
+        let documents = collection.get_documents(None).await?;
+        assert_eq!(documents.len(), 4);
+        assert!(documents
+            .iter()
+            .all(|d| d["document"]["id"].as_i64().unwrap() < 6));
 
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
+        collection.archive().await?;
+        Ok(())
+    }
 
-    // #[sqlx::test]
-    // async fn can_filter_and_delete_documents() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cfadd_1",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "active": true,
-    //                     "configuration": "english"
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
+    #[sqlx::test]
+    fn can_order_documents() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cod_1", None);
+        collection
+            .upsert_documents(
+                vec![
+                    json!({
+                        "id": 1,
+                        "text": "Test Document 1",
+                        "number": 99,
+                        "nested_number": {
+                            "number": 3
+                        },
 
-    //     let mut collection = Collection::new("test_r_c_cfadd_1", None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(10), None)
-    //         .await?;
+                        "tie": 2,
+                    })
+                    .into(),
+                    json!({
+                        "id": 2,
+                        "text": "Test Document 1",
+                        "number": 98,
+                        "nested_number": {
+                            "number": 2
+                        },
+                        "tie": 2,
+                    })
+                    .into(),
+                    json!({
+                        "id": 3,
+                        "text": "Test Document 1",
+                        "number": 97,
+                        "nested_number": {
+                            "number": 1
+                        },
+                        "tie": 2
+                    })
+                    .into(),
+                ],
+                None,
+            )
+            .await?;
+        let documents = collection
+            .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| d["document"]["number"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![97, 98, 99]
+        );
+        let documents = collection
+            .get_documents(Some(
+                json!({"order_by": {"nested_number": {"number": "asc"}}}).into(),
+            ))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| d["document"]["nested_number"]["number"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![1, 2, 3]
+        );
+        let documents = collection
+            .get_documents(Some(
+                json!({"order_by": {"nested_number": {"number": "asc"}, "tie": "desc"}}).into(),
+            ))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| d["document"]["nested_number"]["number"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![1, 2, 3]
+        );
+        collection.archive().await?;
+        Ok(())
+    }
 
-    //     collection
-    //         .delete_documents(
-    //             serde_json::json!({
-    //                 "metadata": {
-    //                     "id": {
-    //                         "$lt": 2
-    //                     }
-    //                 }
-    //             })
-    //             .into(),
-    //         )
-    //         .await?;
-    //     let documents = collection.get_documents(None).await?;
-    //     assert_eq!(documents.len(), 8);
-    //     assert!(documents
-    //         .iter()
-    //         .all(|d| d["document"]["id"].as_i64().unwrap() >= 2));
+    #[sqlx::test]
+    async fn can_update_documents() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cud_5", None);
+        collection
+            .upsert_documents(
+                vec![
+                    json!({
+                        "id": 1,
+                        "text": "Test Document 1"
+                    })
+                    .into(),
+                    json!({
+                        "id": 2,
+                        "text": "Test Document 1"
+                    })
+                    .into(),
+                    json!({
+                        "id": 3,
+                        "text": "Test Document 1"
+                    })
+                    .into(),
+                ],
+                None,
+            )
+            .await?;
+        collection
+            .upsert_documents(
+                vec![
+                    json!({
+                        "id": 1,
+                        "number": 0,
+                    })
+                    .into(),
+                    json!({
+                        "id": 2,
+                        "number": 1,
+                    })
+                    .into(),
+                    json!({
+                        "id": 3,
+                        "number": 2,
+                    })
+                    .into(),
+                ],
+                None,
+            )
+            .await?;
+        let documents = collection
+            .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| d["document"]["number"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![0, 1, 2]
+        );
+        for document in documents {
+            assert!(document["document"]["text"].as_str().is_none());
+        }
+        collection.archive().await?;
+        Ok(())
+    }
 
-    //     collection
-    //         .delete_documents(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "configuration": "english",
-    //                     "text": "2"
-    //                 }
-    //             })
-    //             .into(),
-    //         )
-    //         .await?;
-    //     let documents = collection.get_documents(None).await?;
-    //     assert_eq!(documents.len(), 7);
-    //     assert!(documents
-    //         .iter()
-    //         .all(|d| d["document"]["id"].as_i64().unwrap() > 2));
+    #[sqlx::test]
+    fn can_merge_metadata() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cmm_5", None);
+        collection
+            .upsert_documents(
+                vec![
+                    json!({
+                        "id": 1,
+                        "text": "Test Document 1",
+                        "number": 99,
+                        "second_number": 10,
+                    })
+                    .into(),
+                    json!({
+                        "id": 2,
+                        "text": "Test Document 1",
+                        "number": 98,
+                        "second_number": 11,
+                    })
+                    .into(),
+                    json!({
+                        "id": 3,
+                        "text": "Test Document 1",
+                        "number": 97,
+                        "second_number": 12,
+                    })
+                    .into(),
+                ],
+                None,
+            )
+            .await?;
+        let documents = collection
+            .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| (
+                    d["document"]["number"].as_i64().unwrap(),
+                    d["document"]["second_number"].as_i64().unwrap()
+                ))
+                .collect::<Vec<_>>(),
+            vec![(97, 12), (98, 11), (99, 10)]
+        );
 
-    //     collection
-    //         .delete_documents(
-    //             serde_json::json!({
-    //                 "metadata": {
-    //                     "id": {
-    //                         "$gte": 6
-    //                     }
-    //                 },
-    //                 "full_text_search": {
-    //                     "configuration": "english",
-    //                     "text": "6"
-    //                 }
-    //             })
-    //             .into(),
-    //         )
-    //         .await?;
-    //     let documents = collection.get_documents(None).await?;
-    //     assert_eq!(documents.len(), 6);
-    //     assert!(documents
-    //         .iter()
-    //         .all(|d| d["document"]["id"].as_i64().unwrap() != 6));
+        collection
+            .upsert_documents(
+                vec![
+                    json!({
+                        "id": 1,
+                        "number": 0,
+                        "another_number": 1
+                    })
+                    .into(),
+                    json!({
+                        "id": 2,
+                        "number": 1,
+                        "another_number": 2
+                    })
+                    .into(),
+                    json!({
+                        "id": 3,
+                        "number": 2,
+                        "another_number": 3
+                    })
+                    .into(),
+                ],
+                Some(
+                    json!({
+                        "merge": true
+                    })
+                    .into(),
+                ),
+            )
+            .await?;
+        let documents = collection
+            .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
+            .await?;
 
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // fn can_order_documents() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let mut collection = Collection::new("test_r_c_cod_1", None);
-    //     collection
-    //         .upsert_documents(
-    //             vec![
-    //                 json!({
-    //                     "id": 1,
-    //                     "text": "Test Document 1",
-    //                     "number": 99,
-    //                     "nested_number": {
-    //                         "number": 3
-    //                     },
-
-    //                     "tie": 2,
-    //                 })
-    //                 .into(),
-    //                 json!({
-    //                     "id": 2,
-    //                     "text": "Test Document 1",
-    //                     "number": 98,
-    //                     "nested_number": {
-    //                         "number": 2
-    //                     },
-    //                     "tie": 2,
-    //                 })
-    //                 .into(),
-    //                 json!({
-    //                     "id": 3,
-    //                     "text": "Test Document 1",
-    //                     "number": 97,
-    //                     "nested_number": {
-    //                         "number": 1
-    //                     },
-    //                     "tie": 2
-    //                 })
-    //                 .into(),
-    //             ],
-    //             None,
-    //         )
-    //         .await?;
-    //     let documents = collection
-    //         .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
-    //         .await?;
-    //     assert_eq!(
-    //         documents
-    //             .iter()
-    //             .map(|d| d["document"]["number"].as_i64().unwrap())
-    //             .collect::<Vec<_>>(),
-    //         vec![97, 98, 99]
-    //     );
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             json!({"order_by": {"nested_number": {"number": "asc"}}}).into(),
-    //         ))
-    //         .await?;
-    //     assert_eq!(
-    //         documents
-    //             .iter()
-    //             .map(|d| d["document"]["nested_number"]["number"].as_i64().unwrap())
-    //             .collect::<Vec<_>>(),
-    //         vec![1, 2, 3]
-    //     );
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             json!({"order_by": {"nested_number": {"number": "asc"}, "tie": "desc"}}).into(),
-    //         ))
-    //         .await?;
-    //     assert_eq!(
-    //         documents
-    //             .iter()
-    //             .map(|d| d["document"]["nested_number"]["number"].as_i64().unwrap())
-    //             .collect::<Vec<_>>(),
-    //         vec![1, 2, 3]
-    //     );
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // fn can_merge_metadata() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let mut collection = Collection::new("test_r_c_cmm_4", None);
-    //     collection
-    //         .upsert_documents(
-    //             vec![
-    //                 json!({
-    //                     "id": 1,
-    //                     "text": "Test Document 1",
-    //                     "number": 99,
-    //                     "second_number": 10,
-    //                 })
-    //                 .into(),
-    //                 json!({
-    //                     "id": 2,
-    //                     "text": "Test Document 1",
-    //                     "number": 98,
-    //                     "second_number": 11,
-    //                 })
-    //                 .into(),
-    //                 json!({
-    //                     "id": 3,
-    //                     "text": "Test Document 1",
-    //                     "number": 97,
-    //                     "second_number": 12,
-    //                 })
-    //                 .into(),
-    //             ],
-    //             None,
-    //         )
-    //         .await?;
-    //     let documents = collection
-    //         .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
-    //         .await?;
-    //     assert_eq!(
-    //         documents
-    //             .iter()
-    //             .map(|d| (
-    //                 d["document"]["number"].as_i64().unwrap(),
-    //                 d["document"]["second_number"].as_i64().unwrap()
-    //             ))
-    //             .collect::<Vec<_>>(),
-    //         vec![(97, 12), (98, 11), (99, 10)]
-    //     );
-    //     collection
-    //         .upsert_documents(
-    //             vec![
-    //                 json!({
-    //                     "id": 1,
-    //                     "number": 0,
-    //                     "another_number": 1
-    //                 })
-    //                 .into(),
-    //                 json!({
-    //                     "id": 2,
-    //                     "number": 1,
-    //                     "another_number": 2
-    //                 })
-    //                 .into(),
-    //                 json!({
-    //                     "id": 3,
-    //                     "number": 2,
-    //                     "another_number": 3
-    //                 })
-    //                 .into(),
-    //             ],
-    //             Some(
-    //                 json!({
-    //                     "metadata": {
-    //                         "merge": true
-    //                     }
-    //                 })
-    //                 .into(),
-    //             ),
-    //         )
-    //         .await?;
-    //     let documents = collection
-    //         .get_documents(Some(
-    //             json!({"order_by": {"number": {"number": "asc"}}}).into(),
-    //         ))
-    //         .await?;
-
-    //     assert_eq!(
-    //         documents
-    //             .iter()
-    //             .map(|d| (
-    //                 d["document"]["number"].as_i64().unwrap(),
-    //                 d["document"]["another_number"].as_i64().unwrap(),
-    //                 d["document"]["second_number"].as_i64().unwrap()
-    //             ))
-    //             .collect::<Vec<_>>(),
-    //         vec![(0, 1, 10), (1, 2, 11), (2, 3, 12)]
-    //     );
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| (
+                    d["document"]["number"].as_i64().unwrap(),
+                    d["document"]["another_number"].as_i64().unwrap(),
+                    d["document"]["second_number"].as_i64().unwrap()
+                ))
+                .collect::<Vec<_>>(),
+            vec![(0, 1, 10), (1, 2, 11), (2, 3, 12)]
+        );
+        collection.archive().await?;
+        Ok(())
+    }
 }
