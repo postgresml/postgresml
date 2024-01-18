@@ -9,6 +9,8 @@ use serde_json::json;
 use sqlx::postgres::PgPool;
 use sqlx::Executor;
 use sqlx::PgConnection;
+use sqlx::Postgres;
+use sqlx::Transaction;
 use std::borrow::Cow;
 use std::path::Path;
 use std::sync::Arc;
@@ -274,6 +276,14 @@ impl Collection {
     /// ```
     #[instrument(skip(self))]
     pub async fn add_pipeline(&mut self, pipeline: &mut MultiFieldPipeline) -> anyhow::Result<()> {
+        // The flow for this function:
+        // 1. Create collection if it does not exists
+        // 2. Create the pipeline if it does not exist and add it to the collection.pipelines table with ACTIVE = FALSE
+        // 3. Create the tables for the collection_pipeline schema
+        // 4. Start a transaction
+        // 5. Sync the pipeline
+        // 6. Set the pipeline ACTIVE = TRUE
+        // 7. Commit the transaction
         self.verify_in_database(false).await?;
         let project_info = &self
             .database_data
@@ -281,11 +291,28 @@ impl Collection {
             .context("Database data must be set to add a pipeline to a collection")?
             .project_info;
         pipeline.set_project_info(project_info.clone());
-        pipeline.verify_in_database(true).await?;
+        pipeline.verify_in_database(false).await?;
+        pipeline.create_tables().await?;
+
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let transaction = pool.begin().await?;
+        let transaction = Arc::new(Mutex::new(transaction));
+
         let mp = MultiProgress::new();
         mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
-        self.sync_pipeline(pipeline).await?;
-        eprintln!("Done Syncing {}\n", pipeline.name);
+        pipeline.execute(None, transaction.clone()).await?;
+        let mut transaction = Arc::into_inner(transaction)
+            .context("Error transaction dangling")?
+            .into_inner();
+        sqlx::query(&query_builder!(
+            "UPDATE %s SET active = TRUE WHERE name = $1",
+            self.pipelines_table_name
+        ))
+        .bind(&pipeline.name)
+        .execute(&mut *transaction)
+        .await?;
+        transaction.commit().await?;
+        mp.println(format!("Done Syncing {}\n", pipeline.name))?;
         Ok(())
     }
 
@@ -308,20 +335,20 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn remove_pipeline(
-        &mut self,
-        pipeline: &mut MultiFieldPipeline,
-    ) -> anyhow::Result<()> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
+    pub async fn remove_pipeline(&mut self, pipeline: &MultiFieldPipeline) -> anyhow::Result<()> {
+        // The flow for this function:
+        // Create collection if it does not exist
+        // Begin a transaction
+        // Drop the collection_pipeline schema
+        // Delete the pipeline from the collection.pipelines table
+        // Commit the transaction
         self.verify_in_database(false).await?;
         let project_info = &self
             .database_data
             .as_ref()
-            .context("Database data must be set to remove pipeline from collection")?
+            .context("Database data must be set to remove a pipeline from a collection")?
             .project_info;
-        pipeline.set_project_info(project_info.clone());
-        pipeline.verify_in_database(false).await?;
-
+        let pool = get_or_initialize_pool(&self.database_url).await?;
         let pipeline_schema = format!("{}_{}", project_info.name, pipeline.name);
 
         let mut transaction = pool.begin().await?;
@@ -329,7 +356,7 @@ impl Collection {
             .execute(query_builder!("DROP SCHEMA IF EXISTS %s CASCADE", pipeline_schema).as_str())
             .await?;
         sqlx::query(&query_builder!(
-            "UPDATE %s SET active = FALSE WHERE name = $1",
+            "DELETE FROM %s WHERE name = $1",
             self.pipelines_table_name
         ))
         .bind(&pipeline.name)
@@ -344,7 +371,7 @@ impl Collection {
     ///
     /// # Arguments
     ///
-    /// * `pipeline` - The [Pipeline] to remove.
+    /// * `pipeline` - The [Pipeline] to enable
     ///
     /// # Example
     ///
@@ -359,22 +386,18 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn enable_pipeline(&self, pipeline: &Pipeline) -> anyhow::Result<()> {
-        sqlx::query(&query_builder!(
-            "UPDATE %s SET active = TRUE WHERE name = $1",
-            self.pipelines_table_name
-        ))
-        .bind(&pipeline.name)
-        .execute(&get_or_initialize_pool(&self.database_url).await?)
-        .await?;
-        Ok(())
+    pub async fn enable_pipeline(
+        &mut self,
+        pipeline: &mut MultiFieldPipeline,
+    ) -> anyhow::Result<()> {
+        self.add_pipeline(pipeline).await
     }
 
     /// Disables a [Pipeline] on the [Collection]
     ///
     /// # Arguments
     ///
-    /// * `pipeline` - The [Pipeline] to remove.
+    /// * `pipeline` - The [Pipeline] to disable
     ///
     /// # Example
     ///
@@ -389,14 +412,38 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn disable_pipeline(&self, pipeline: &Pipeline) -> anyhow::Result<()> {
+    pub async fn disable_pipeline(&mut self, pipeline: &MultiFieldPipeline) -> anyhow::Result<()> {
+        // Our current system for keeping documents, chunks, embeddings, and tsvectors in sync
+        // does not play nice with disabling and then re-enabling pipelines.
+        // For now, when disabling a pipeline, simply delete its schema and remake it later
+        // The flow for this function:
+        // 1. Create the collection if it does not exist
+        // 2. Begin a transaction
+        // 3. Set the pipelines ACTIVE = FALSE in the collection.pipelines table
+        // 4. Drop the collection_pipeline schema (this will get remade if they enable it again)
+        // 5. Commit the transaction
+        self.verify_in_database(false).await?;
+        let project_info = &self
+            .database_data
+            .as_ref()
+            .context("Database data must be set to remove a pipeline from a collection")?
+            .project_info;
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let pipeline_schema = format!("{}_{}", project_info.name, pipeline.name);
+
+        let mut transaction = pool.begin().await?;
         sqlx::query(&query_builder!(
             "UPDATE %s SET active = FALSE WHERE name = $1",
             self.pipelines_table_name
         ))
         .bind(&pipeline.name)
-        .execute(&get_or_initialize_pool(&self.database_url).await?)
+        .execute(&mut *transaction)
         .await?;
+        transaction
+            .execute(query_builder!("DROP SCHEMA IF EXISTS %s CASCADE", pipeline_schema).as_str())
+            .await?;
+        transaction.commit().await?;
+
         Ok(())
     }
 
@@ -442,13 +489,21 @@ impl Collection {
     ///    Ok(())
     /// }
     /// ```
-    // TODO: Make it so if we upload the same documen twice it doesn't do anything
     #[instrument(skip(self, documents))]
     pub async fn upsert_documents(
         &mut self,
         documents: Vec<Json>,
         _args: Option<Json>,
     ) -> anyhow::Result<()> {
+        // The flow for this function
+        // 1. Create the collection if it does not exist
+        // 2. Get all pipelines where ACTIVE = TRUE
+        // 3. Create each pipeline and the collection_pipeline schema and tables if they don't already exist
+        // 4. Foreach document
+        // -> Begin a transaction returning the old document if it existed
+        // -> Insert the document
+        // -> Foreach pipeline check if we need to resync the document and if so sync the document
+        // -> Commit the transaction
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(false).await?;
         let mut pipelines = self.get_pipelines().await?;
@@ -468,20 +523,55 @@ impl Collection {
             let md5_digest = md5::compute(id.as_bytes());
             let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-            let document_id: i64 = sqlx::query_scalar(&query_builder!("INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = $2 RETURNING id", self.documents_table_name)).bind(source_uuid).bind(document).fetch_one(&mut *transaction).await?;
+            let (document_id, previous_document): (i64, Option<Json>) = sqlx::query_as(&query_builder!(
+                "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = EXCLUDED.document RETURNING id, (SELECT document FROM prev)",
+                self.documents_table_name,
+                self.documents_table_name
+            ))
+            .bind(&source_uuid)
+            .bind(&document)
+            .fetch_one(&mut *transaction)
+            .await?;
 
             let transaction = Arc::new(Mutex::new(transaction));
             if !pipelines.is_empty() {
                 use futures::stream::StreamExt;
                 futures::stream::iter(&mut pipelines)
                     // Need this map to get around moving the transaction
-                    .map(|pipeline| (pipeline, transaction.clone()))
-                    .for_each_concurrent(10, |(pipeline, transaction)| async move {
-                        pipeline
-                            .execute(Some(document_id), transaction)
-                            .await
-                            .expect("Failed to execute pipeline");
+                    .map(|pipeline| {
+                        (
+                            pipeline,
+                            previous_document.clone(),
+                            document.clone(),
+                            transaction.clone(),
+                        )
                     })
+                    .for_each_concurrent(
+                        10,
+                        |(pipeline, previous_document, document, transaction)| async move {
+                            // Can unwrap here as we know it has parsed schema from the create_table call above
+                            match previous_document {
+                                Some(previous_document) => {
+                                    let should_run =
+                                        pipeline.parsed_schema.as_ref().unwrap().iter().any(
+                                            |(key, _)| document[key] != previous_document[key],
+                                        );
+                                    if should_run {
+                                        pipeline
+                                            .execute(Some(document_id), transaction)
+                                            .await
+                                            .expect("Failed to execute pipeline");
+                                    }
+                                }
+                                None => {
+                                    pipeline
+                                        .execute(Some(document_id), transaction)
+                                        .await
+                                        .expect("Failed to execute pipeline");
+                                }
+                            }
+                        },
+                    )
                     .await;
             }
 
@@ -705,29 +795,30 @@ impl Collection {
         // Ok(())
     }
 
-    #[instrument(skip(self))]
-    async fn sync_pipeline(&mut self, pipeline: &mut MultiFieldPipeline) -> anyhow::Result<()> {
-        self.verify_in_database(false).await?;
-        let project_info = &self
-            .database_data
-            .as_ref()
-            .context("Database data must be set to get collection pipelines")?
-            .project_info;
-        pipeline.set_project_info(project_info.clone());
-        pipeline.create_tables().await?;
+    // #[instrument(skip(self))]
+    // async fn sync_pipeline(
+    //     &mut self,
+    //     pipeline: &mut MultiFieldPipeline,
+    //     transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
+    // ) -> anyhow::Result<()> {
+    //     self.verify_in_database(false).await?;
+    //     let project_info = &self
+    //         .database_data
+    //         .as_ref()
+    //         .context("Database data must be set to get collection pipelines")?
+    //         .project_info;
+    //     pipeline.set_project_info(project_info.clone());
+    //     pipeline.create_tables().await?;
 
-        let pool = get_or_initialize_pool(&self.database_url).await?;
-        let transaction = pool.begin().await?;
-        let transaction = Arc::new(Mutex::new(transaction));
-        pipeline.execute(None, transaction.clone()).await?;
+    //     pipeline.execute(None, transaction).await?;
 
-        Arc::into_inner(transaction)
-            .context("Error transaction dangling")?
-            .into_inner()
-            .commit()
-            .await?;
-        Ok(())
-    }
+    //     Arc::into_inner(transaction)
+    //         .context("Error transaction dangling")?
+    //         .into_inner()
+    //         .commit()
+    //         .await?;
+    //     Ok(())
+    // }
 
     #[instrument(skip(self))]
     pub async fn search(
