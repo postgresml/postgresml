@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS %s (
   created_at timestamp NOT NULL DEFAULT now(), 
   model_id int8 NOT NULL REFERENCES pgml.models ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
   splitter_id int8 NOT NULL REFERENCES pgml.splitters ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
-  active BOOLEAN NOT NULL DEFAULT TRUE,
+  active BOOLEAN NOT NULL DEFAULT FALSE,
   parameters jsonb NOT NULL DEFAULT '{}',
   UNIQUE (name)
 );
@@ -115,7 +115,7 @@ SELECT
 FROM 
   %s
 WHERE id = ANY ($1)
-ON CONFLICT (chunk_id) DO NOTHING;
+ON CONFLICT (chunk_id) DO UPDATE SET ts = EXCLUDED.ts;
 "#;
 
 pub const GENERATE_EMBEDDINGS_FOR_CHUNK_IDS: &str = r#"
@@ -132,13 +132,7 @@ FROM
   %s 
 WHERE 
   id = ANY ($3)
-  AND id NOT IN (
-    SELECT 
-      chunk_id 
-    from 
-      %s
-  )
-ON CONFLICT (chunk_id) DO NOTHING;
+ON CONFLICT (chunk_id) DO UPDATE SET embedding = EXCLUDED.embedding
 "#;
 
 pub const EMBED_AND_VECTOR_SEARCH: &str = r#"
@@ -260,30 +254,16 @@ SELECT
   (chunk).chunk 
 FROM 
   (
-    select 
+    SELECT 
       id AS document_id, 
       pgml.chunk(
         (SELECT name FROM splitter), 
-        text, 
+        %d, 
         (SELECT parameters FROM splitter)
       ) AS chunk 
     FROM 
-      (
-        SELECT 
-          id, 
-          %d AS text 
-        FROM 
-          %s 
-        WHERE 
-          id = $2
-          AND id NOT IN (
-            SELECT 
-              document_id 
-            FROM 
-              %s 
-          )
-      ) AS documents
+      %s WHERE id = $2
   ) chunks
-ON CONFLICT (document_id, chunk_index) DO NOTHING 
+ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
 RETURNING id
 "#;
