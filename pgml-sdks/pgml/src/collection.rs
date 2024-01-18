@@ -19,6 +19,7 @@ use tokio::sync::Mutex;
 use tracing::{instrument, warn};
 use walkdir::WalkDir;
 
+use crate::filter_builder::FilterBuilder;
 use crate::search_query_builder::build_search_query;
 use crate::vector_search_query_builder::build_vector_search_query;
 use crate::{
@@ -278,12 +279,8 @@ impl Collection {
     pub async fn add_pipeline(&mut self, pipeline: &mut MultiFieldPipeline) -> anyhow::Result<()> {
         // The flow for this function:
         // 1. Create collection if it does not exists
-        // 2. Create the pipeline if it does not exist and add it to the collection.pipelines table with ACTIVE = FALSE
-        // 3. Create the tables for the collection_pipeline schema
-        // 4. Start a transaction
-        // 5. Sync the pipeline
-        // 6. Set the pipeline ACTIVE = TRUE
-        // 7. Commit the transaction
+        // 2. Create the pipeline if it does not exist and add it to the collection.pipelines table with ACTIVE = TRUE
+        // 3. Sync the pipeline - this will delete all previous chunks, embeddings, and tsvectors
         self.verify_in_database(false).await?;
         let project_info = &self
             .database_data
@@ -291,27 +288,13 @@ impl Collection {
             .context("Database data must be set to add a pipeline to a collection")?
             .project_info;
         pipeline.set_project_info(project_info.clone());
-        pipeline.verify_in_database(false).await?;
-        pipeline.create_tables().await?;
-
-        let pool = get_or_initialize_pool(&self.database_url).await?;
-        let transaction = pool.begin().await?;
-        let transaction = Arc::new(Mutex::new(transaction));
+        // We want to intentially throw an error if they have already added this piepline
+        // as we don't want to casually resync
+        pipeline.verify_in_database(true).await?;
 
         let mp = MultiProgress::new();
         mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
-        pipeline.execute(None, transaction.clone()).await?;
-        let mut transaction = Arc::into_inner(transaction)
-            .context("Error transaction dangling")?
-            .into_inner();
-        sqlx::query(&query_builder!(
-            "UPDATE %s SET active = TRUE WHERE name = $1",
-            self.pipelines_table_name
-        ))
-        .bind(&pipeline.name)
-        .execute(&mut *transaction)
-        .await?;
-        transaction.commit().await?;
+        pipeline.resync().await?;
         mp.println(format!("Done Syncing {}\n", pipeline.name))?;
         Ok(())
     }
@@ -337,11 +320,11 @@ impl Collection {
     #[instrument(skip(self))]
     pub async fn remove_pipeline(&mut self, pipeline: &MultiFieldPipeline) -> anyhow::Result<()> {
         // The flow for this function:
-        // Create collection if it does not exist
-        // Begin a transaction
-        // Drop the collection_pipeline schema
-        // Delete the pipeline from the collection.pipelines table
-        // Commit the transaction
+        // 1. Create collection if it does not exist
+        // 2. Begin a transaction
+        // 3. Drop the collection_pipeline schema
+        // 4. Delete the pipeline from the collection.pipelines table
+        // 5. Commit the transaction
         self.verify_in_database(false).await?;
         let project_info = &self
             .database_data
@@ -363,7 +346,6 @@ impl Collection {
         .execute(&mut *transaction)
         .await?;
         transaction.commit().await?;
-
         Ok(())
     }
 
@@ -390,7 +372,17 @@ impl Collection {
         &mut self,
         pipeline: &mut MultiFieldPipeline,
     ) -> anyhow::Result<()> {
-        self.add_pipeline(pipeline).await
+        // The flow for this function:
+        // 1. Set ACTIVE = TRUE for the pipeline in collection.pipelines
+        // 2. Resync the pipeline
+        sqlx::query(&query_builder!(
+            "UPDATE %s SET active = FALSE WHERE name = $1",
+            self.pipelines_table_name
+        ))
+        .bind(&pipeline.name)
+        .execute(&get_or_initialize_pool(&self.database_url).await?)
+        .await?;
+        pipeline.resync().await
     }
 
     /// Disables a [Pipeline] on the [Collection]
@@ -412,38 +404,16 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn disable_pipeline(&mut self, pipeline: &MultiFieldPipeline) -> anyhow::Result<()> {
-        // Our current system for keeping documents, chunks, embeddings, and tsvectors in sync
-        // does not play nice with disabling and then re-enabling pipelines.
-        // For now, when disabling a pipeline, simply delete its schema and remake it later
+    pub async fn disable_pipeline(&self, pipeline: &MultiFieldPipeline) -> anyhow::Result<()> {
         // The flow for this function:
-        // 1. Create the collection if it does not exist
-        // 2. Begin a transaction
-        // 3. Set the pipelines ACTIVE = FALSE in the collection.pipelines table
-        // 4. Drop the collection_pipeline schema (this will get remade if they enable it again)
-        // 5. Commit the transaction
-        self.verify_in_database(false).await?;
-        let project_info = &self
-            .database_data
-            .as_ref()
-            .context("Database data must be set to remove a pipeline from a collection")?
-            .project_info;
-        let pool = get_or_initialize_pool(&self.database_url).await?;
-        let pipeline_schema = format!("{}_{}", project_info.name, pipeline.name);
-
-        let mut transaction = pool.begin().await?;
+        // 1. Set ACTIVE = FALSE for the pipeline in collection.pipelines
         sqlx::query(&query_builder!(
             "UPDATE %s SET active = FALSE WHERE name = $1",
             self.pipelines_table_name
         ))
         .bind(&pipeline.name)
-        .execute(&mut *transaction)
+        .execute(&get_or_initialize_pool(&self.database_url).await?)
         .await?;
-        transaction
-            .execute(query_builder!("DROP SCHEMA IF EXISTS %s CASCADE", pipeline_schema).as_str())
-            .await?;
-        transaction.commit().await?;
-
         Ok(())
     }
 
@@ -493,12 +463,11 @@ impl Collection {
     pub async fn upsert_documents(
         &mut self,
         documents: Vec<Json>,
-        _args: Option<Json>,
+        args: Option<Json>,
     ) -> anyhow::Result<()> {
         // The flow for this function
         // 1. Create the collection if it does not exist
         // 2. Get all pipelines where ACTIVE = TRUE
-        // 3. Create each pipeline and the collection_pipeline schema and tables if they don't already exist
         // 4. Foreach document
         // -> Begin a transaction returning the old document if it existed
         // -> Insert the document
@@ -507,9 +476,9 @@ impl Collection {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(false).await?;
         let mut pipelines = self.get_pipelines().await?;
-        for pipeline in &mut pipelines {
-            pipeline.create_tables().await?;
-        }
+
+        let args = args.unwrap_or_default();
+        let args = args.as_object().context("args must be a JSON object")?;
 
         let progress_bar = utils::default_progress_bar(documents.len() as u64);
         progress_bar.println("Upserting Documents...");
@@ -523,15 +492,29 @@ impl Collection {
             let md5_digest = md5::compute(id.as_bytes());
             let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-            let (document_id, previous_document): (i64, Option<Json>) = sqlx::query_as(&query_builder!(
+            let query = if args
+                .get("merge")
+                .map(|v| v.as_bool().unwrap_or(false))
+                .unwrap_or(false)
+            {
+                query_builder!(
+                "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = %s.document || EXCLUDED.document RETURNING id, (SELECT document FROM prev)",
+                self.documents_table_name,
+                self.documents_table_name,
+                self.documents_table_name
+            )
+            } else {
+                query_builder!(
                 "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = EXCLUDED.document RETURNING id, (SELECT document FROM prev)",
                 self.documents_table_name,
                 self.documents_table_name
-            ))
-            .bind(&source_uuid)
-            .bind(&document)
-            .fetch_one(&mut *transaction)
-            .await?;
+            )
+            };
+            let (document_id, previous_document): (i64, Option<Json>) = sqlx::query_as(&query)
+                .bind(&source_uuid)
+                .bind(&document)
+                .fetch_one(&mut *transaction)
+                .await?;
 
             let transaction = Arc::new(Mutex::new(transaction));
             if !pipelines.is_empty() {
@@ -549,23 +532,23 @@ impl Collection {
                     .for_each_concurrent(
                         10,
                         |(pipeline, previous_document, document, transaction)| async move {
-                            // Can unwrap here as we know it has parsed schema from the create_table call above
                             match previous_document {
                                 Some(previous_document) => {
+                                    // Can unwrap here as we know it has parsed schema from the create_table call above
                                     let should_run =
                                         pipeline.parsed_schema.as_ref().unwrap().iter().any(
                                             |(key, _)| document[key] != previous_document[key],
                                         );
                                     if should_run {
                                         pipeline
-                                            .execute(Some(document_id), transaction)
+                                            .sync_document(document_id, transaction)
                                             .await
                                             .expect("Failed to execute pipeline");
                                     }
                                 }
                                 None => {
                                     pipeline
-                                        .execute(Some(document_id), transaction)
+                                        .sync_document(document_id, transaction)
                                         .await
                                         .expect("Failed to execute pipeline");
                                 }
@@ -574,12 +557,12 @@ impl Collection {
                     )
                     .await;
             }
-
             Arc::into_inner(transaction)
                 .context("Error transaction dangling")?
                 .into_inner()
                 .commit()
                 .await?;
+            progress_bar.inc(1);
         }
 
         progress_bar.println("Done Upserting Documents\n");
@@ -605,107 +588,60 @@ impl Collection {
     /// }
     #[instrument(skip(self))]
     pub async fn get_documents(&self, args: Option<Json>) -> anyhow::Result<Vec<Json>> {
-        // TODO: If we want to filter on full text this needs to be part of a pipeline
-        unimplemented!()
+        let pool = get_or_initialize_pool(&self.database_url).await?;
 
-        // let pool = get_or_initialize_pool(&self.database_url).await?;
+        let mut args = args.unwrap_or_default();
+        let args = args.as_object_mut().context("args must be an object")?;
 
-        // let mut args = args.unwrap_or_default().0;
-        // let args = args.as_object_mut().context("args must be an object")?;
+        // Get limit or set it to 1000
+        let limit = args
+            .remove("limit")
+            .map(|l| l.try_to_u64())
+            .unwrap_or(Ok(1000))?;
 
-        // // Get limit or set it to 1000
-        // let limit = args
-        //     .remove("limit")
-        //     .map(|l| l.try_to_u64())
-        //     .unwrap_or(Ok(1000))?;
+        let mut query = Query::select();
+        query
+            .from_as(
+                self.documents_table_name.to_table_tuple(),
+                SIden::Str("documents"),
+            )
+            .expr(Expr::cust("*")) // Adds the * in SELECT * FROM
+            .limit(limit);
 
-        // let mut query = Query::select();
-        // query
-        //     .from_as(
-        //         self.documents_table_name.to_table_tuple(),
-        //         SIden::Str("documents"),
-        //     )
-        //     .expr(Expr::cust("*")) // Adds the * in SELECT * FROM
-        //     .limit(limit);
+        if let Some(order_by) = args.remove("order_by") {
+            let order_by_builder =
+                order_by_builder::OrderByBuilder::new(order_by, "documents", "document").build()?;
+            for (order_by, order) in order_by_builder {
+                query.order_by_expr_with_nulls(order_by, order, NullOrdering::Last);
+            }
+        }
+        query.order_by((SIden::Str("documents"), SIden::Str("id")), Order::Asc);
 
-        // if let Some(order_by) = args.remove("order_by") {
-        //     let order_by_builder =
-        //         order_by_builder::OrderByBuilder::new(order_by, "documents", "metadata").build()?;
-        //     for (order_by, order) in order_by_builder {
-        //         query.order_by_expr_with_nulls(order_by, order, NullOrdering::Last);
-        //     }
-        // }
-        // query.order_by((SIden::Str("documents"), SIden::Str("id")), Order::Asc);
+        // TODO: Make keyset based pagination work with custom order by
+        if let Some(last_row_id) = args.remove("last_row_id") {
+            let last_row_id = last_row_id
+                .try_to_u64()
+                .context("last_row_id must be an integer")?;
+            query.and_where(Expr::col((SIden::Str("documents"), SIden::Str("id"))).gt(last_row_id));
+        }
 
-        // // TODO: Make keyset based pagination work with custom order by
-        // if let Some(last_row_id) = args.remove("last_row_id") {
-        //     let last_row_id = last_row_id
-        //         .try_to_u64()
-        //         .context("last_row_id must be an integer")?;
-        //     query.and_where(Expr::col((SIden::Str("documents"), SIden::Str("id"))).gt(last_row_id));
-        // }
+        if let Some(offset) = args.remove("offset") {
+            let offset = offset.try_to_u64().context("offset must be an integer")?;
+            query.offset(offset);
+        }
 
-        // if let Some(offset) = args.remove("offset") {
-        //     let offset = offset.try_to_u64().context("offset must be an integer")?;
-        //     query.offset(offset);
-        // }
+        if let Some(filter) = args.remove("filter") {
+            let filter = FilterBuilder::new(filter, "documents", "document").build()?;
+            query.cond_where(filter);
+        }
 
-        // if let Some(mut filter) = args.remove("filter") {
-        //     let filter = filter
-        //         .as_object_mut()
-        //         .context("filter must be a Json object")?;
-
-        //     if let Some(f) = filter.remove("metadata") {
-        //         query.cond_where(
-        //             filter_builder::FilterBuilder::new(f, "documents", "metadata").build(),
-        //         );
-        //     }
-        //     if let Some(f) = filter.remove("full_text_search") {
-        //         let f = f
-        //             .as_object()
-        //             .context("Full text filter must be a Json object")?;
-        //         let configuration = f
-        //             .get("configuration")
-        //             .context("In full_text_search `configuration` is required")?
-        //             .as_str()
-        //             .context("In full_text_search `configuration` must be a string")?;
-        //         let filter_text = f
-        //             .get("text")
-        //             .context("In full_text_search `text` is required")?
-        //             .as_str()
-        //             .context("In full_text_search `text` must be a string")?;
-        //         query
-        //             .join_as(
-        //                 JoinType::InnerJoin,
-        //                 self.documents_tsvectors_table_name.to_table_tuple(),
-        //                 Alias::new("documents_tsvectors"),
-        //                 Expr::col((SIden::Str("documents"), SIden::Str("id")))
-        //                     .equals((SIden::Str("documents_tsvectors"), SIden::Str("document_id"))),
-        //             )
-        //             .and_where(
-        //                 Expr::col((
-        //                     SIden::Str("documents_tsvectors"),
-        //                     SIden::Str("configuration"),
-        //                 ))
-        //                 .eq(configuration),
-        //             )
-        //             .and_where(Expr::cust_with_values(
-        //                 format!(
-        //                     "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
-        //                     configuration
-        //                 ),
-        //                 [filter_text],
-        //             ));
-        //     }
-        // }
-
-        // let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-        // let documents: Vec<models::Document> =
-        //     sqlx::query_as_with(&sql, values).fetch_all(&pool).await?;
-        // Ok(documents
-        //     .into_iter()
-        //     .map(|d| d.into_user_friendly_json())
-        //     .collect())
+        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
+        let documents: Vec<models::Document> =
+            sqlx::query_as_with(&sql, values).fetch_all(&pool).await?;
+        Ok(documents
+            .into_iter()
+            .map(|d| d.into_user_friendly_json())
+            .collect())
     }
 
     /// Deletes documents in a [Collection]
@@ -722,103 +658,26 @@ impl Collection {
     /// async fn example() -> anyhow::Result<()> {
     ///     let mut collection = Collection::new("my_collection", None);
     ///     let documents = collection.delete_documents(serde_json::json!({
-    ///         "metadata": {
-    ///             "id": {
-    ///                 "eq": 1
-    ///             }
+    ///         "id": {
+    ///             "eq": 1
     ///         }
     ///     }).into()).await?;
     ///     Ok(())
     /// }
     #[instrument(skip(self))]
-    pub async fn delete_documents(&self, mut filter: Json) -> anyhow::Result<()> {
-        // TODO: If we want to filter on full text this needs to be part of a pipeline
-        unimplemented!()
+    pub async fn delete_documents(&self, filter: Json) -> anyhow::Result<()> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
 
-        // let pool = get_or_initialize_pool(&self.database_url).await?;
+        let mut query = Query::delete();
+        query.from_table(self.documents_table_name.to_table_tuple());
 
-        // let mut query = Query::delete();
-        // query.from_table(self.documents_table_name.to_table_tuple());
+        let filter = FilterBuilder::new(filter.0, "documents", "document").build()?;
+        query.cond_where(filter);
 
-        // let filter = filter
-        //     .as_object_mut()
-        //     .context("filter must be a Json object")?;
-
-        // if let Some(f) = filter.remove("metadata") {
-        //     query
-        //         .cond_where(filter_builder::FilterBuilder::new(f, "documents", "metadata").build());
-        // }
-
-        // if let Some(mut f) = filter.remove("full_text_search") {
-        //     let f = f
-        //         .as_object_mut()
-        //         .context("Full text filter must be a Json object")?;
-        //     let configuration = f
-        //         .get("configuration")
-        //         .context("In full_text_search `configuration` is required")?
-        //         .as_str()
-        //         .context("In full_text_search `configuration` must be a string")?;
-        //     let filter_text = f
-        //         .get("text")
-        //         .context("In full_text_search `text` is required")?
-        //         .as_str()
-        //         .context("In full_text_search `text` must be a string")?;
-        //     let mut inner_select_query = Query::select();
-        //     inner_select_query
-        //         .from_as(
-        //             self.documents_tsvectors_table_name.to_table_tuple(),
-        //             SIden::Str("documents_tsvectors"),
-        //         )
-        //         .column(SIden::Str("document_id"))
-        //         .and_where(Expr::cust_with_values(
-        //             format!(
-        //                 "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
-        //                 configuration
-        //             ),
-        //             [filter_text],
-        //         ))
-        //         .and_where(
-        //             Expr::col((
-        //                 SIden::Str("documents_tsvectors"),
-        //                 SIden::Str("configuration"),
-        //             ))
-        //             .eq(configuration),
-        //         );
-        //     query.and_where(
-        //         Expr::col((SIden::Str("documents"), SIden::Str("id")))
-        //             .in_subquery(inner_select_query),
-        //     );
-        // }
-
-        // let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-        // sqlx::query_with(&sql, values).fetch_all(&pool).await?;
-        // Ok(())
+        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
+        sqlx::query_with(&sql, values).fetch_all(&pool).await?;
+        Ok(())
     }
-
-    // #[instrument(skip(self))]
-    // async fn sync_pipeline(
-    //     &mut self,
-    //     pipeline: &mut MultiFieldPipeline,
-    //     transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
-    // ) -> anyhow::Result<()> {
-    //     self.verify_in_database(false).await?;
-    //     let project_info = &self
-    //         .database_data
-    //         .as_ref()
-    //         .context("Database data must be set to get collection pipelines")?
-    //         .project_info;
-    //     pipeline.set_project_info(project_info.clone());
-    //     pipeline.create_tables().await?;
-
-    //     pipeline.execute(None, transaction).await?;
-
-    //     Arc::into_inner(transaction)
-    //         .context("Error transaction dangling")?
-    //         .into_inner()
-    //         .commit()
-    //         .await?;
-    //     Ok(())
-    // }
 
     #[instrument(skip(self))]
     pub async fn search(

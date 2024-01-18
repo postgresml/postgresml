@@ -7,6 +7,12 @@ use tracing::instrument;
 
 use crate::{model::ModelRuntime, models, query_builder, types::Json};
 
+#[derive(Clone, Debug)]
+pub enum PoolOrArcMutextTransaction {
+    Pool(PgPool),
+    ArcMutextTransaction(Arc<Mutex<Transaction<'static, Postgres>>>),
+}
+
 pub fn build_remote_embeddings<'a>(
     source: ModelRuntime,
     model_name: &'a str,
@@ -43,26 +49,46 @@ pub trait RemoteEmbeddings<'a> {
         self.parse_response(response)
     }
 
-    #[instrument(skip(self, transaction))]
+    #[instrument(skip(self))]
     async fn get_chunks(
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
-        chunk_ids: &Vec<i64>,
-        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
+        chunk_ids: Option<&Vec<i64>>,
+        mut db_executor: PoolOrArcMutextTransaction,
         limit: Option<i64>,
     ) -> anyhow::Result<Vec<models::Chunk>> {
         let limit = limit.unwrap_or(1000);
 
-        sqlx::query_as(&query_builder!(
-            "SELECT * FROM %s WHERE id NOT IN (SELECT chunk_id FROM %s) AND id = ANY ($1) LIMIT $2",
-            chunks_table_name,
-            embeddings_table_name
-        ))
-        .bind(chunk_ids)
-        .bind(limit)
-        .fetch_all(&mut *transaction.lock().await)
-        .await
+        // Requires _query_text be declared out here so it lives long enough
+        let mut _query_text = "".to_string();
+        let query = match chunk_ids {
+            Some(chunk_ids) => {
+                _query_text = query_builder!(
+                    "SELECT * FROM %s WHERE id = ANY ($1) LIMIT $2",
+                    chunks_table_name,
+                    embeddings_table_name
+                );
+                sqlx::query_as(_query_text.as_str())
+                    .bind(chunk_ids)
+                    .bind(limit)
+            }
+            None => {
+                _query_text = query_builder!(
+                    "SELECT * FROM %s WHERE id NOT IN (SELECT chunk_id FROM %s) LIMIT $1",
+                    chunks_table_name,
+                    embeddings_table_name
+                );
+                sqlx::query_as(_query_text.as_str()).bind(limit)
+            }
+        };
+
+        match &mut db_executor {
+            PoolOrArcMutextTransaction::Pool(pool) => query.fetch_all(&*pool).await,
+            PoolOrArcMutextTransaction::ArcMutextTransaction(transaction) => {
+                query.fetch_all(&mut *transaction.lock().await).await
+            }
+        }
         .map_err(|e| anyhow::anyhow!(e))
     }
 
@@ -89,13 +115,13 @@ pub trait RemoteEmbeddings<'a> {
         Ok(embeddings)
     }
 
-    #[instrument(skip(self, transaction))]
+    #[instrument(skip(self))]
     async fn generate_embeddings(
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
-        chunk_ids: &Vec<i64>,
-        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
+        chunk_ids: Option<&Vec<i64>>,
+        mut db_executor: PoolOrArcMutextTransaction,
     ) -> anyhow::Result<()> {
         loop {
             let chunks = self
@@ -103,7 +129,7 @@ pub trait RemoteEmbeddings<'a> {
                     embeddings_table_name,
                     chunks_table_name,
                     chunk_ids,
-                    transaction.clone(),
+                    db_executor.clone(),
                     None,
                 )
                 .await?;
@@ -140,7 +166,13 @@ pub trait RemoteEmbeddings<'a> {
                 query = query.bind(chunk_ids[i]).bind(&embeddings[i]);
             }
 
-            query.execute(&mut *transaction.lock().await).await?;
+            // query.execute(&mut *transaction.lock().await).await?;
+            match &mut db_executor {
+                PoolOrArcMutextTransaction::Pool(pool) => query.execute(&*pool).await,
+                PoolOrArcMutextTransaction::ArcMutextTransaction(transaction) => {
+                    query.execute(&mut *transaction.lock().await).await
+                }
+            }?;
         }
         Ok(())
     }
