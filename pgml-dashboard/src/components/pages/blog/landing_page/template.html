@@ -1,4 +1,15 @@
-<% use rand::prelude::*; %>
+<% 
+  use crate::components::Carousel;
+  use crate::components::cards::blog::ArticlePreview;
+  use crate::components::pages::blog::LandingPage;
+
+  let mut featured = Vec::new();
+  for doc in &index {
+    if doc.featured {
+      featured.push(ArticlePreview::new(doc).featured().render_once().unwrap())
+    }
+  }
+%>
 
 <div data-controller="pages-blog-landing-page" class="overflow-hidden tuck-under-navbar">
   <div class="container-fluid">
@@ -7,267 +18,30 @@
         <div class="position-absolute red-1"></div>
       </div>
 
-      <div class="pt-4 pb-5">
+      <div class="pt-0 pb-2 pt-xxl-4 pb-xxl-5">
         <%+ feature_banner %>
       </div>
-      <div class="text-center d-flex flex-column gap-3">
+      <div class="text-center d-flex flex-column gap-xxl-3 gap-1">
         <h1 class="h1-big">Keep up with <span class="text-gradient-blue">our blog</span></h1>
-        <p class="m-auto" style="max-width: 55rem;">Keep up with all our articles and news, here we upload news about PostgresML, features improvements, general content about machine learning and much more. Join our newsletter and stay up to date!</p>
+        <p class="m-auto body-large-text" style="max-width: 55rem;">Keep up with all our articles and news, here we upload news about PostgresML, features improvements, general content about machine learning and much more. Join our newsletter and stay up to date!</p>
+      </div>
+
+      <div class="d-flex justify-content-center my-5">
+        <div class="w-100  my-1 pt-1 my-xxl-4 pt-xxl-5">
+          <%+ Carousel::new((featured).to_vec()) %>
+        </div>
       </div>
 
       <div class="d-flex flex-wrap gap-3 justify-content-center">
-        <%
-          let doc = &index[1];
-          let doc2 = &index[2];
-          let doc3 = &index[3];
-          let doc4 = &index[4];
-
-          let docs = [doc, doc2, doc3];
-        %>
-
-        <% for doc in docs {%>
-        <template>
-          <div class="item-1 w-100 d-inline-block carousel-item">
-            <div class="m-auto" style="width: fit-content" data-action="mouseenter->pages-blog-landing-page#testPause mouseleave->pages-blog-landing-page#testResume">
-              <a class="doc-card feature-card d-flex flex-row" href="<%- doc.path %>">
-                <img class="cover-image" src="blog/<%- doc.image.clone().unwrap_or_else(|| String::new())%>">
-                <div class="type-default h-100 d-flex align-items-center">
-                  <div class="meta-layout" style="height: fit-content">
-                    <% if doc.tags.len() > 0 {%><div class="eyebrow-text"><%- doc.tags[0].clone().to_uppercase() %></div><% } %>
-                    <h2 style="color: inherit"><%- doc.title %></h2>
-                    <% if doc.description.is_some() {%>
-                    <div class="description">
-                      <%- doc.description.clone().unwrap() %>
-                    </div>
-                    <% } %>
-                    <div class="d-flex w-100 mt-auto gap-2">
-                      <% if doc.author_image.is_some() {%>
-                      <img src="blog/<%- doc.author_image.clone().unwrap() %>"class="rounded-circle me-1 author-image" style="height: 3rem;">
-                      <% } %>
-                      <div class="d-flex justify-content-between flex-grow-1 align-items-center foot">
-                        <div>
-                          <% if doc.author.is_some() {%>
-                          <span class="text-small-body">By </span>
-                          <span class="fw-bold foot-name"><%- doc.author.clone().unwrap() %></span>
-                          <% } %>
-                        </div>
-                        <div class="text-small-body"><%- doc.date.clone().unwrap_or_else(|| String::new()) %></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
-        </template>
+        <% for item in featured {%>
+          <%- item %>
         <% } %>
+      </div>
 
-        <div class="carousel w-100 overflow-hidden" style="height: fit-content; white-space: nowrap" data-pages-blog-landing-page-target="carousel">
-        </div>
-        <div class="carousel-indicator w-100">
-          <% for index in docs {%>
-          <div class="timer-container" data-pages-blog-landing-page-target="carouselTimer">
-            <div class="timer" ></div>
-          </div>
-          <% } %>
-        </div>
-
-        <a class="doc-card feature-card d-flex flex-row" href="<%- doc2.path %>">
-          <img class="cover-image" src="blog/<%- doc2.image.clone().unwrap_or_else(|| String::new())%>">
-          <div class="type-default h-100 d-flex align-items-center">
-            <div class="meta-layout" style="height: fit-content">
-              <% if doc2.tags.len() > 0 {%><div class="eyebrow-text"><%- doc2.tags[0].clone().to_uppercase() %></div><% } %>
-              <h2 style="color: inherit"><%- doc2.title %></h2>
-              <% if doc2.description.is_some() {%>
-              <div class="description">
-                <%- doc2.description.clone().unwrap() %>
-              </div>
-              <% } %>
-              <div class="d-flex w-100 mt-auto gap-2">
-                <% if doc2.author_image.is_some() {%>
-                <img src="blog/<%- doc2.author_image.clone().unwrap() %>"class="rounded-circle me-1 author-image" style="height: 3rem;">
-                <% } %>
-                <div class="d-flex justify-content-between flex-grow-1 align-items-center foot">
-                  <div>
-                    <% if doc2.author.is_some() {%>
-                    <span class="text-small-body">By </span>
-                    <span class="fw-bold foot-name"><%- doc2.author.clone().unwrap() %></span>
-                    <% } %>
-                  </div>
-                  <div class="text-small-body"><%- doc2.date.clone().unwrap_or_else(|| String::new()) %></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </a>
-
-        <a class="doc-card feature-card d-flex flex-row" href="<%- doc.path %>">
-          <img class="cover-image" src="blog/<%- doc.image.clone().unwrap_or_else(|| String::new())%>">
-          <div class="type-default h-100 d-flex align-items-center">
-            <div class="meta-layout" style="height: fit-content">
-              <% if doc.tags.len() > 0 {%><div class="eyebrow-text"><%- doc.tags[0].clone().to_uppercase() %></div><% } %>
-              <h2 style="color: inherit"><%- doc.title %></h2>
-              <% if doc.description.is_some() {%>
-              <div class="description">
-                <%- doc.description.clone().unwrap() %>
-              </div>
-              <% } %>
-              <div class="d-flex w-100 mt-auto gap-2">
-                <% if doc.author_image.is_some() {%>
-                <img src="blog/<%- doc.author_image.clone().unwrap() %>"class="rounded-circle me-1 author-image" style="height: 3rem;">
-                <% } %>
-                <div class="d-flex justify-content-between flex-grow-1 align-items-center foot">
-                  <div>
-                    <% if doc.author.is_some() {%>
-                    <span class="text-small-body">By </span>
-                    <span class="fw-bold foot-name"><%- doc.author.clone().unwrap() %></span>
-                    <% } %>
-                  </div>
-                  <div class="text-small-body"><%- doc.date.clone().unwrap_or_else(|| String::new()) %></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </a>
-
-        <a class="doc-card small-card" style="background-image: url('blog/<%- doc.image.clone().unwrap_or_else(|| String::new())%>')" href="<%- doc.path %>">
-          <div class="meta-layout type-show-image">
-            <% if doc.tags.len() > 0 {%><div class="eyebrow-text"><%- doc.tags[0].clone().to_uppercase() %></div><% }%>
-            <h6 style="color: inherit"><%- doc.title %></h6>
-            <div class="d-flex w-100 mt-auto gap-2">
-              <% if doc.author_image.is_some() {%>
-              <img src="blog/<%- doc.author_image.clone().unwrap() %>"class="rounded-circle me-1 author-image" style="height: 3rem;">
-              <% } %>
-              <div class="d-flex justify-content-between flex-grow-1 align-items-center foot">
-                <div>
-                  <% if doc.author.is_some() {%>
-                  <span class="text-small-body">By </span>
-                  <span class="fw-bold foot-name"><%- doc.author.clone().unwrap() %></span>
-                  <% } %>
-                </div>
-                <div class="text-small-body"><%- doc.date.clone().unwrap_or_else(|| String::new()) %></div>
-              </div>
-            </div>
-          </div>
-        </a>
-
-        <a class="doc-card long-card" href="<%- doc.path %>">
-          <img class="cover-image" src="blog/<%- doc.image.clone().unwrap_or_else(|| String::new())%>">
-          <div class="meta-layout meta-container">
-            <% if doc.tags.len() > 0 {%><div class="eyebrow-text"><%- doc.tags[0].clone().to_uppercase() %></div><% }%>
-            <h6 style="color: inherit"><%- doc.title.clone() %></h6>
-            <div class="d-flex w-100 mt-auto gap-2">
-              <% if doc.author_image.is_some() {%>
-              <img src="blog/<%- doc.author_image.clone().unwrap() %>"class="rounded-circle me-1 author-image" style="height: 3rem;">
-              <% } %>
-              <div class="d-flex justify-content-between flex-grow-1 align-items-center foot">
-                <div>
-                  <% if doc.author.is_some() {%>
-                  <span class="text-small-body">By </span>
-                  <span class="fw-bold foot-name"><%- doc.author.clone().unwrap() %></span>
-                  <% } %>
-                </div>
-                <div class="text-small-body"><%- doc.date.clone().unwrap_or_else(|| String::new()) %></div>
-              </div>
-            </div>
-          </div>
-        </a>
-
-        <div class="d-flex gap-3">
-          <a class="doc-card big-card" style="background-image: url('blog/<%- doc.image.clone().unwrap_or_else(|| String::new())%>')" href="<%- doc.path %>">
-            <div class="type-show-image h-100 align-items-center">
-              <div class="meta-layout" style="height: fit-content">
-                <% if doc.tags.len() > 0 {%><div class="eyebrow-text"><%- doc.tags[0].clone().to_uppercase() %></div><% } %>
-                <h2 style="color: inherit"><%- doc.title %></h2>
-                <% if doc.description.is_some() {%>
-                <div class="description">
-                  <%- doc.description.clone().unwrap() %>
-                </div>
-                <% } %>
-                <div class="d-flex w-100 mt-auto gap-2">
-                  <% if doc.author_image.is_some() {%>
-                  <img src="blog/<%- doc.author_image.clone().unwrap() %>"class="rounded-circle me-1 author-image" style="height: 3rem;">
-                  <% } %>
-                  <div class="d-flex justify-content-between flex-grow-1 align-items-center foot">
-                    <div>
-                      <% if doc.author.is_some() {%>
-                      <span class="text-small-body">By </span>
-                      <span class="fw-bold foot-name"><%- doc.author.clone().unwrap() %></span>
-                      <% } %>
-                    </div>
-                    <div class="text-small-body"><%- doc.date.clone().unwrap_or_else(|| String::new()) %></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </a>
-
-          <div class="d-flex flex-column gap-3">
-            <a class="doc-card small-card" style="background-image: url('blog/<%- doc.image.clone().unwrap_or_else(|| String::new())%>')" href="<%- doc.path %>">
-              <div class="meta-layout type-show-image">
-                <% if doc.tags.len() > 0 {%><div class="eyebrow-text"><%- doc.tags[0].clone().to_uppercase() %></div><% }%>
-                <h6 style="color: inherit"><%- doc.title %></h6>
-                <div class="d-flex w-100 mt-auto gap-2">
-                  <% if doc.author_image.is_some() {%>
-                  <img src="blog/<%- doc.author_image.clone().unwrap() %>"class="rounded-circle me-1 author-image" style="height: 3rem;">
-                  <% } %>
-                  <div class="d-flex justify-content-between flex-grow-1 align-items-center foot">
-                    <div>
-                      <% if doc.author.is_some() {%>
-                      <span class="text-small-body">By </span>
-                      <span class="fw-bold foot-name"><%- doc.author.clone().unwrap() %></span>
-                      <% } %>
-                    </div>
-                    <div class="text-small-body"><%- doc.date.clone().unwrap_or_else(|| String::new()) %></div>
-                  </div>
-                </div>
-              </div>
-            </a>
-
-            <a class="doc-card small-card" style="background-image: url('blog/<%- doc.image.clone().unwrap_or_else(|| String::new())%>')" href="<%- doc.path %>">
-              <div class="meta-layout type-default">
-                <% if doc.tags.len() > 0 {%><div class="eyebrow-text"><%- doc.tags[0].clone().to_uppercase() %></div><% }%>
-                <h6 style="color: inherit"><%- doc.title.clone() %></h6>
-                <div class="d-flex w-100 mt-auto gap-2">
-                  <% if doc.author_image.is_some() {%>
-                  <img src="blog/<%- doc.author_image.clone().unwrap() %>"class="rounded-circle me-1 author-image" style="height: 3rem;">
-                  <% } %>
-                  <div class="d-flex justify-content-between flex-grow-1 align-items-center foot">
-                    <div>
-                      <% if doc.author.is_some() {%>
-                      <span class="text-small-body">By </span>
-                      <span class="fw-bold foot-name"><%- doc.author.clone().unwrap() %></span>
-                      <% } %>
-                    </div>
-                    <div class="text-small-body"><%- doc.date.clone().unwrap_or_else(|| String::new()) %></div>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
-
-        <a class="doc-card small-card" style="background-image: url('blog/<%- doc.image.clone().unwrap_or_else(|| String::new())%>')" href="<%- doc.path %>">
-          <div class="meta-layout type-default">
-            <% if doc.tags.len() > 0 {%><div class="eyebrow-text"><%- doc.tags[0].clone().to_uppercase() %></div><% }%>
-            <h6 style="color: inherit"><%- doc.title.clone() %></h6>
-            <div class="d-flex w-100 mt-auto gap-2">
-              <% if doc.author_image.is_some() {%>
-              <img src="blog/<%- doc.author_image.clone().unwrap() %>"class="rounded-circle me-1 author-image" style="height: 3rem;">
-              <% } %>
-              <div class="d-flex justify-content-between flex-grow-1 align-items-center foot">
-                <div>
-                  <% if doc.author.is_some() {%>
-                  <span class="text-small-body">By </span>
-                  <span class="fw-bold foot-name"><%- doc.author.clone().unwrap() %></span>
-                  <% } %>
-                </div>
-                <div class="text-small-body"><%- doc.date.clone().unwrap_or_else(|| String::new()) %></div>
-              </div>
-            </div>
-          </div>
-        </a>
-        
+      <div class="d-flex flex-wrap gap-3 justify-content-center">
+        <% for doc in LandingPage::pattern(index.clone(), is_search) {%>
+          <%- doc %>
+        <% } %>
       </div>
     </div>
   </div>

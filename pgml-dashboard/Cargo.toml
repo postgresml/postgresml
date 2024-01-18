@@ -15,7 +15,7 @@ anyhow = "1"
 aho-corasick = "0.7"
 base64 = "0.21"
 comrak = "0.17"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 csv-async = "1"
 console-subscriber = "*"
 convert_case = "0.6"

@@ -1,10 +1,10 @@
-use sailfish::TemplateOnce;
-use pgml_components::component;
 use crate::components::layouts::Head;
 use crate::components::notifications::marketing::AlertBanner;
-use crate::Notification;
 use crate::guards::Cluster;
 use crate::models::User;
+use crate::Notification;
+use pgml_components::component;
+use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default, Clone)]
 #[template(path = "layouts/marketing/base/template.html")]
@@ -22,11 +22,9 @@ impl Base {
 
         let (head, footer, user) = match context.as_ref() {
             Some(context) => (
-                Head::new()
-                    .title(&title)
-                    .context(&context.context.head_items),
+                Head::new().title(&title).context(&context.context.head_items),
                 Some(context.context.marketing_footer.clone()),
-                Some(context.context.user.clone())
+                Some(context.context.user.clone()),
             ),
             None => (Head::new().title(&title), None, None),
         };
@@ -40,10 +38,7 @@ impl Base {
         }
     }
 
-    pub fn from_head(
-        head: Head,
-        context: Option<&Cluster>,
-    ) -> Self {
+    pub fn from_head(head: Head, context: Option<&Cluster>) -> Self {
         let mut rsp = Base::new("", context);
 
         let head = match context.as_ref() {

@@ -9,6 +9,9 @@ pub use accordian::Accordian;
 pub mod breadcrumbs;
 pub use breadcrumbs::Breadcrumbs;
 
+// src/components/cards
+pub mod cards;
+
 // src/components/carousel
 pub mod carousel;
 pub use carousel::Carousel;

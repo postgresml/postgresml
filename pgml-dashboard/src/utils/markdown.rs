@@ -412,16 +412,18 @@ pub fn get_image<'a>(root: &'a AstNode<'a>) -> Option<String> {
     image
 }
 
-/// Get the image of the articles author.
+/// Get the articles author image, name, and publish date.
 ///
 /// # Arguments
 ///
 /// * `root` - The root node of the document tree.
 ///
-pub fn get_author_image<'a>(root: &'a AstNode<'a>) -> Option<String> {
+pub fn get_author<'a>(root: &'a AstNode<'a>) -> (Option<String>, Option<String>, Option<String>) {
     let re = regex::Regex::new(r#"<img src="([^"]*)" alt="([^"]*)""#).unwrap();
     let mut image = None;
-    iter_nodes(root, &mut |node| match &node.data.borrow().value {
+    let mut name = None;
+    let mut date = None;
+    match iter_nodes(root, &mut |node| match &node.data.borrow().value {
         NodeValue::HtmlBlock(html) => match re.captures(&html.literal) {
             Some(c) => {
                 if &c[2] == "Author" {
@@ -433,10 +435,19 @@ pub fn get_author_image<'a>(root: &'a AstNode<'a>) -> Option<String> {
             }
             None => Ok(true),
         },
+        NodeValue::Text(text) => {
+            if image.is_some() && name.is_none() && date.is_none() {
+                name = Some(text.clone());
+            } else if image.is_some() && name.is_some() && date.is_none() {
+                date = Some(text.clone());
+            }
+            Ok(true)
+        }
         _ => Ok(true),
-    })
-    .ok()?;
-    image
+    }) {
+        Ok(_) => (name, date, image),
+        _ => (None, None, None),
+    }
 }
 
 /// Wrap tables in container to allow for x-scroll on overflow.

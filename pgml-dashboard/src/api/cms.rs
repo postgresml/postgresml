@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use std::str::FromStr;
+
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
 use lazy_static::lazy_static;
 use markdown::mdast::Node;
@@ -60,6 +62,26 @@ lazy_static! {
     );
 }
 
+#[derive(PartialEq, Debug, Serialize, Deserialize)]
+pub enum DocType {
+    Blog,
+    Docs,
+    Careers,
+}
+
+impl FromStr for DocType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<DocType, Self::Err> {
+        match s {
+            "blog" => Ok(DocType::Blog),
+            "Doc" => Ok(DocType::Docs),
+            "Careers" => Ok(DocType::Careers),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Document {
     /// The absolute path on disk
@@ -67,92 +89,68 @@ pub struct Document {
     pub description: Option<String>,
     pub author: Option<String>,
     pub author_image: Option<String>,
-    pub featured: bool, 
-    pub date: Option<String>,
+    pub featured: bool,
+    pub date: Option<chrono::NaiveDate>,
     pub tags: Vec<String>,
     pub image: Option<String>,
     pub title: String,
     pub toc_links: Vec<TocLink>,
-    pub content: String,
+    pub contents: String,
+    pub doc_type: Option<DocType>,
 }
 
 // Gets document markdown
 impl Document {
-    pub async fn contents(path: &PathBuf) -> Result<String, std::io::Error> {
+    pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
+        warn!("path: {:?}", path);
+
+        let regex = regex::Regex::new(r#".*/pgml-cms/([^"]*)/(.*)\.md"#).unwrap();
+
+        let doc_type = match regex.captures(&path.clone().display().to_string()) {
+            Some(c) => DocType::from_str(&c[1]).ok(),
+            _ => None,
+        };
+
         let contents = tokio::fs::read_to_string(&path).await?;
 
         let parts = contents.split("---").collect::<Vec<&str>>();
 
-        let contents = if parts.len() > 1 {
+        let (meta, contents) = if parts.len() > 1 {
             match YamlLoader::load_from_str(parts[1]) {
                 Ok(meta) => {
                     if meta.len() == 0 || meta[0].as_hash().is_none() {
-                        contents
+                        (None, contents)
                     } else {
-                        parts[2..].join("---").to_string()
+                        (Some(meta[0].clone()), parts[2..].join("---").to_string())
                     }
                 }
-                Err(_) => contents,
+                Err(_) => (None, contents),
             }
         } else {
-            contents
+            (None, contents)
         };
 
-        Ok(contents)
-    }
-
-    pub async fn meta(path: &PathBuf) -> (Option<String>, Option<String>, Option<String>, Option<String>, bool, Vec<String>, String, Vec<TocLink>, Option<String>){
-        let contents = tokio::fs::read_to_string(&path).await.unwrap_or_else(|_| "".to_string());
-
-        let parts = contents.split("---").collect::<Vec<&str>>();
-
-        // Parse Markdown
-        let arena = Arena::new();
-        let spaced_contents = crate::utils::markdown::gitbook_preprocess(&contents);
-        let root = parse_document(&arena, &spaced_contents, &crate::utils::markdown::options());
-
-        let meta = if parts.len() > 1 {
-            match YamlLoader::load_from_str(parts[1]) {
-                Ok(meta) => {
-                    if meta.len() == 0 || meta[0].as_hash().is_none() {
-                        None
-                    } else {
-                        Some(meta[0].clone())
-                    }
-                }
-                Err(_) => None,
-            }
-        } else {
-            None
-        };
-
-        let (description, author, date, image, featured, tags) = match meta {
+        // parse meta section
+        let (description, image, featured, tags) = match meta {
             Some(meta) => {
                 let description = if meta["description"].is_badvalue() {
                     None
                 } else {
                     Some(meta["description"].as_str().unwrap().to_string())
                 };
-                let author = if meta["author"].is_badvalue() {
-                    None
-                } else {
-                    Some(meta["author"].as_str().unwrap().to_string())
-                };
-                let date = if meta["date"].is_badvalue() {
-                    None
-                } else {
-                    Some(meta["date"].as_str().unwrap().to_string())
-                };
+
                 let image = if meta["image"].is_badvalue() {
-                    crate::utils::markdown::get_image(root)
+                    Some(".gitbook/assets/blog_image_placeholder.png".to_string())
                 } else {
                     Some(meta["image"].as_str().unwrap().to_string())
                 };
+
                 let featured = if meta["featured"].is_badvalue() {
                     false
                 } else {
                     meta["featured"].as_bool().unwrap()
                 };
+
                 let tags = if meta["tags"].is_badvalue() {
                     Vec::new()
                 } else {
@@ -163,22 +161,38 @@ impl Document {
                     tags
                 };
 
-                (description, author, date, image, featured, tags)
-            }, 
-            None => (None, None, None, None, false, Vec::new())
+                (description, image, featured, tags)
+            }
+            None => (
+                None,
+                Some(".gitbook/assets/blog_image_placeholder.png".to_string()),
+                false,
+                Vec::new(),
+            ),
         };
 
+        // Parse Markdown
+        let arena = Arena::new();
+        let root = parse_document(&arena, &contents, &crate::utils::markdown::options());
         let title = crate::utils::markdown::get_title(root).unwrap();
         let toc_links = crate::utils::markdown::get_toc(root).unwrap();
-        let author_image = crate::utils::markdown::get_author_image(root);
+        let (author, date_s, author_image) = crate::utils::markdown::get_author(root);
 
-        (description, author, date, image, featured, tags, title, toc_links, author_image)
-    }
-
-    pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
-        warn!("path: {:?}", path);
-        let (description, author, date, image, featured, tags, title, toc_links, author_image) = Document::meta(path).await;
-        let content = Document::contents(path).await?;
+        let date: Option<chrono::NaiveDate> = match &date_s {
+            Some(date) => {
+                let date_s = date.replace(",", "");
+                let date_v = date_s.split(" ").collect::<Vec<&str>>();
+                let (month, day, year) = (date_v[0], date_v[1], date_v[2]);
+                match month.parse::<chrono::Month>() {
+                    Ok(month) => {
+                        let date = format!("{}-{}-{}", month.number_from_month(), day, year);
+                        chrono::NaiveDate::parse_from_str(&date, "%m-%e-%Y").ok()
+                    }
+                    _ => None,
+                }
+            }
+            _ => None,
+        };
 
         let document = Document {
             path: path.to_owned(),
@@ -191,18 +205,22 @@ impl Document {
             image,
             title,
             toc_links,
-            content
+            contents,
+            doc_type,
         };
         Ok(document)
     }
 
     pub fn html(self) -> String {
-        let contents = self.content;
+        let contents = self.contents;
 
         // Parse Markdown
         let arena = Arena::new();
         let spaced_contents = crate::utils::markdown::gitbook_preprocess(&contents);
         let root = parse_document(&arena, &spaced_contents, &crate::utils::markdown::options());
+
+        // MkDocs, gitbook syntax support, e.g. tabs, notes, alerts, etc.
+        crate::utils::markdown::mkdocs(root, &arena).unwrap();
 
         // Style headings like we like them
         let mut plugins = ComrakPlugins::default();
@@ -270,8 +288,6 @@ impl Collection {
     ) -> Result<ResponseOk, crate::responses::NotFound> {
         info!("get_content: {} | {path:?}", self.name);
 
-        println!("path: {:?}", path);
-
         let mut redirected = false;
         match self
             .redirects
@@ -294,8 +310,6 @@ impl Collection {
             path = path.join("README");
         }
         let path = self.root_dir.join(format!("{}.md", path.to_string_lossy()));
-
-        println!("path: {:?}", path);
 
         self.render(&path, &canonical, cluster).await
     }
@@ -486,7 +500,6 @@ async fn search(query: &str, index: &State<crate::utils::markdown::SearchIndex>)
 
 #[get("/blog/.gitbook/assets/<path>", rank = 10)]
 pub async fn get_blog_asset(path: &str) -> Option<NamedFile> {
-    println!("getting aset: {}", path);
     BLOG.get_asset(path).await
 }
 
@@ -506,7 +519,6 @@ async fn get_blog(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, crate::responses::NotFound> {
-    println!("path: {:?}", path);
     BLOG.get_content(path, cluster, origin).await
 }
 
@@ -529,16 +541,15 @@ async fn get_docs(
 }
 
 #[get("/blog")]
-async fn blog_landing_page(
-    cluster: &Cluster,
-) -> Result<ResponseOk, crate::responses::NotFound> {
+async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
     let layout = crate::components::layouts::marketing::Base::new("Blog landing page", Some(cluster))
         .footer(cluster.context.marketing_footer.to_string());
 
     Ok(ResponseOk(
         layout.render(
             crate::components::pages::blog::LandingPage::new(cluster)
-            .index(&BLOG).await
+                .index(&BLOG)
+                .await,
         ),
     ))
 }
