@@ -1,6 +1,5 @@
 ---
 description: >-
-description: >-
   How to use the pgml.embed(...) function to generate embeddings with free and
   open source models in your own database.
 image: ".gitbook/assets/blog_image_generating_llm_embeddings.png"
