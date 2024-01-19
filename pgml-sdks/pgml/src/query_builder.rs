@@ -12,7 +12,7 @@ use crate::{
     filter_builder, get_or_initialize_pool,
     model::ModelRuntime,
     models,
-    pipeline::Pipeline,
+    multi_field_pipeline::MultiFieldPipeline,
     query_builder,
     remote_embeddings::build_remote_embeddings,
     types::{IntoTableNameAndSchema, Json, SIden, TryToNumeric},
@@ -20,7 +20,7 @@ use crate::{
 };
 
 #[cfg(feature = "python")]
-use crate::{pipeline::PipelinePython, types::JsonPython};
+use crate::{multi_field_pipeline::MultiFieldPipelinePython, types::JsonPython};
 
 #[derive(Clone, Debug)]
 struct QueryBuilderState {}
@@ -31,7 +31,7 @@ pub struct QueryBuilder {
     with: WithClause,
     collection: Collection,
     query_string: Option<String>,
-    pipeline: Option<Pipeline>,
+    pipeline: Option<MultiFieldPipeline>,
     query_parameters: Option<Json>,
 }
 
@@ -123,7 +123,7 @@ impl QueryBuilder {
     pub fn vector_recall(
         mut self,
         query: &str,
-        pipeline: &Pipeline,
+        pipeline: &MultiFieldPipeline,
         query_parameters: Option<Json>,
     ) -> Self {
         unimplemented!()
@@ -148,8 +148,8 @@ impl QueryBuilder {
         //         self.collection.pipelines_table_name.to_table_tuple(),
         //         SIden::Str("pipeline"),
         //     )
-        //     .columns([models::PipelineIden::ModelId])
-        //     .and_where(Expr::col(models::PipelineIden::Name).eq(&pipeline.name));
+        //     .columns([models::MultiFieldPipelineIden::ModelId])
+        //     .and_where(Expr::col(models::MultiFieldPipelineIden::Name).eq(&pipeline.name));
         // let mut pipeline_cte = CommonTableExpression::from_select(pipeline_cte);
         // pipeline_cte.table_name(Alias::new("pipeline"));
 
@@ -222,114 +222,115 @@ impl QueryBuilder {
 
     #[instrument(skip(self))]
     pub async fn fetch_all(mut self) -> anyhow::Result<Vec<(f64, String, Json)>> {
-        let pool = get_or_initialize_pool(&self.collection.database_url).await?;
+        unimplemented!()
+        // let pool = get_or_initialize_pool(&self.collection.database_url).await?;
 
-        let mut query_parameters = self.query_parameters.unwrap_or_default();
+        // let mut query_parameters = self.query_parameters.unwrap_or_default();
 
-        let (sql, values) = self
-            .query
-            .clone()
-            .with(self.with.clone())
-            .build_sqlx(PostgresQueryBuilder);
+        // let (sql, values) = self
+        //     .query
+        //     .clone()
+        //     .with(self.with.clone())
+        //     .build_sqlx(PostgresQueryBuilder);
 
-        let result: Result<Vec<(f64, String, Json)>, _> =
-            if !query_parameters["hnsw"]["ef_search"].is_null() {
-                let mut transaction = pool.begin().await?;
-                let ef_search = query_parameters["hnsw"]["ef_search"]
-                    .try_to_i64()
-                    .context("ef_search must be an integer")?;
-                sqlx::query(&query_builder!("SET LOCAL hnsw.ef_search = %d", ef_search))
-                    .execute(&mut *transaction)
-                    .await?;
-                let results = sqlx::query_as_with(&sql, values)
-                    .fetch_all(&mut *transaction)
-                    .await;
-                transaction.commit().await?;
-                results
-            } else {
-                sqlx::query_as_with(&sql, values).fetch_all(&pool).await
-            };
+        // let result: Result<Vec<(f64, String, Json)>, _> =
+        //     if !query_parameters["hnsw"]["ef_search"].is_null() {
+        //         let mut transaction = pool.begin().await?;
+        //         let ef_search = query_parameters["hnsw"]["ef_search"]
+        //             .try_to_i64()
+        //             .context("ef_search must be an integer")?;
+        //         sqlx::query(&query_builder!("SET LOCAL hnsw.ef_search = %d", ef_search))
+        //             .execute(&mut *transaction)
+        //             .await?;
+        //         let results = sqlx::query_as_with(&sql, values)
+        //             .fetch_all(&mut *transaction)
+        //             .await;
+        //         transaction.commit().await?;
+        //         results
+        //     } else {
+        //         sqlx::query_as_with(&sql, values).fetch_all(&pool).await
+        //     };
 
-        match result {
-            Ok(r) => Ok(r),
-            Err(e) => match e.as_database_error() {
-                Some(d) => {
-                    if d.code() == Some(Cow::from("XX000")) {
-                        // Explicitly get and set the model
-                        let project_info = self.collection.get_project_info().await?;
-                        let pipeline = self
-                            .pipeline
-                            .as_mut()
-                            .context("Need pipeline to call fetch_all on query builder with remote embeddings")?;
-                        pipeline.set_project_info(project_info);
-                        pipeline.verify_in_database(false).await?;
-                        let model = pipeline
-                            .model
-                            .as_ref()
-                            .context("Pipeline must be verified to perform vector search with remote embeddings")?;
+        // match result {
+        //     Ok(r) => Ok(r),
+        //     Err(e) => match e.as_database_error() {
+        //         Some(d) => {
+        //             if d.code() == Some(Cow::from("XX000")) {
+        //                 // Explicitly get and set the model
+        //                 let project_info = self.collection.get_project_info().await?;
+        //                 let pipeline = self
+        //                     .pipeline
+        //                     .as_mut()
+        //                     .context("Need pipeline to call fetch_all on query builder with remote embeddings")?;
+        //                 pipeline.set_project_info(project_info);
+        //                 pipeline.verify_in_database(false).await?;
+        //                 let model = pipeline
+        //                     .model
+        //                     .as_ref()
+        //                     .context("MultiFieldPipeline must be verified to perform vector search with remote embeddings")?;
 
-                        // If the model runtime is python, the error was not caused by an unsupported runtime
-                        if model.runtime == ModelRuntime::Python {
-                            return Err(anyhow::anyhow!(e));
-                        }
+        //                 // If the model runtime is python, the error was not caused by an unsupported runtime
+        //                 if model.runtime == ModelRuntime::Python {
+        //                     return Err(anyhow::anyhow!(e));
+        //                 }
 
-                        let hnsw_parameters = query_parameters
-                            .as_object_mut()
-                            .context("Query parameters must be a Json object")?
-                            .remove("hnsw");
+        //                 let hnsw_parameters = query_parameters
+        //                     .as_object_mut()
+        //                     .context("Query parameters must be a Json object")?
+        //                     .remove("hnsw");
 
-                        let remote_embeddings =
-                            build_remote_embeddings(model.runtime, &model.name, Some(&query_parameters))?;
-                        let mut embeddings = remote_embeddings
-                            .embed(vec![self
-                                .query_string
-                                .to_owned()
-                                .context("Must have query_string to call fetch_all on query_builder with remote embeddings")?])
-                            .await?;
-                        let embedding = std::mem::take(&mut embeddings[0]);
+        //                 let remote_embeddings =
+        //                     build_remote_embeddings(model.runtime, &model.name, Some(&query_parameters))?;
+        //                 let mut embeddings = remote_embeddings
+        //                     .embed(vec![self
+        //                         .query_string
+        //                         .to_owned()
+        //                         .context("Must have query_string to call fetch_all on query_builder with remote embeddings")?])
+        //                     .await?;
+        //                 let embedding = std::mem::take(&mut embeddings[0]);
 
-                        let mut embedding_cte = Query::select();
-                        embedding_cte
-                            .expr(Expr::cust_with_values("$1::vector embedding", [embedding]));
+        //                 let mut embedding_cte = Query::select();
+        //                 embedding_cte
+        //                     .expr(Expr::cust_with_values("$1::vector embedding", [embedding]));
 
-                        let mut embedding_cte = CommonTableExpression::from_select(embedding_cte);
-                        embedding_cte.table_name(Alias::new("embedding"));
-                        let mut with_clause = WithClause::new();
-                        with_clause.cte(embedding_cte);
+        //                 let mut embedding_cte = CommonTableExpression::from_select(embedding_cte);
+        //                 embedding_cte.table_name(Alias::new("embedding"));
+        //                 let mut with_clause = WithClause::new();
+        //                 with_clause.cte(embedding_cte);
 
-                        let (sql, values) = self
-                            .query
-                            .clone()
-                            .with(with_clause)
-                            .build_sqlx(PostgresQueryBuilder);
+        //                 let (sql, values) = self
+        //                     .query
+        //                     .clone()
+        //                     .with(with_clause)
+        //                     .build_sqlx(PostgresQueryBuilder);
 
-                        if let Some(parameters) = hnsw_parameters {
-                            let mut transaction = pool.begin().await?;
-                            let ef_search = parameters["ef_search"]
-                                .try_to_i64()
-                                .context("ef_search must be an integer")?;
-                            sqlx::query(&query_builder!(
-                                "SET LOCAL hnsw.ef_search = %d",
-                                ef_search
-                            ))
-                            .execute(&mut *transaction)
-                            .await?;
-                            let results = sqlx::query_as_with(&sql, values)
-                                .fetch_all(&mut *transaction)
-                                .await;
-                            transaction.commit().await?;
-                            results
-                        } else {
-                            sqlx::query_as_with(&sql, values).fetch_all(&pool).await
-                        }
-                        .map_err(|e| anyhow::anyhow!(e))
-                    } else {
-                        Err(anyhow::anyhow!(e))
-                    }
-                }
-                None => Err(anyhow::anyhow!(e)),
-            },
-        }.map(|r| r.into_iter().map(|(score, id, metadata)| (1. - score, id, metadata)).collect())
+        //                 if let Some(parameters) = hnsw_parameters {
+        //                     let mut transaction = pool.begin().await?;
+        //                     let ef_search = parameters["ef_search"]
+        //                         .try_to_i64()
+        //                         .context("ef_search must be an integer")?;
+        //                     sqlx::query(&query_builder!(
+        //                         "SET LOCAL hnsw.ef_search = %d",
+        //                         ef_search
+        //                     ))
+        //                     .execute(&mut *transaction)
+        //                     .await?;
+        //                     let results = sqlx::query_as_with(&sql, values)
+        //                         .fetch_all(&mut *transaction)
+        //                         .await;
+        //                     transaction.commit().await?;
+        //                     results
+        //                 } else {
+        //                     sqlx::query_as_with(&sql, values).fetch_all(&pool).await
+        //                 }
+        //                 .map_err(|e| anyhow::anyhow!(e))
+        //             } else {
+        //                 Err(anyhow::anyhow!(e))
+        //             }
+        //         }
+        //         None => Err(anyhow::anyhow!(e)),
+        //     },
+        // }.map(|r| r.into_iter().map(|(score, id, metadata)| (1. - score, id, metadata)).collect())
     }
 
     // This is mostly so our SDKs in other languages have some way to debug
