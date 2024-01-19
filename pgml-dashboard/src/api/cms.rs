@@ -176,23 +176,7 @@ impl Document {
         let root = parse_document(&arena, &contents, &crate::utils::markdown::options());
         let title = crate::utils::markdown::get_title(root).unwrap();
         let toc_links = crate::utils::markdown::get_toc(root).unwrap();
-        let (author, date_s, author_image) = crate::utils::markdown::get_author(root);
-
-        let date: Option<chrono::NaiveDate> = match &date_s {
-            Some(date) => {
-                let date_s = date.replace(",", "");
-                let date_v = date_s.split(" ").collect::<Vec<&str>>();
-                let (month, day, year) = (date_v[0], date_v[1], date_v[2]);
-                match month.parse::<chrono::Month>() {
-                    Ok(month) => {
-                        let date = format!("{}-{}-{}", month.number_from_month(), day, year);
-                        chrono::NaiveDate::parse_from_str(&date, "%m-%e-%Y").ok()
-                    }
-                    _ => None,
-                }
-            }
-            _ => None,
-        };
+        let (author, date, author_image) = crate::utils::markdown::get_author(root);
 
         let document = Document {
             path: path.to_owned(),

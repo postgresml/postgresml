@@ -33,7 +33,6 @@ impl LandingPage {
             let root = collection.root_dir.clone();
             let file = root.join(format!("{}.md", path));
 
-            // let (description, author, date, mut image, featured, tags, title, _, author_image) = crate::api::cms::Document::meta(&PathBuf::from(file)).await;
             let doc = crate::api::cms::Document::from_path(&PathBuf::from(file))
                 .await
                 .unwrap();
