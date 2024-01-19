@@ -1,3 +1,9 @@
+---
+description: >-
+  We added aws us east 1 to our list of support aws regions.
+featured: false
+tags: [product]
+---
 # Announcing Support for AWS us-east-1 Region
 
 <div align="left">

@@ -1,0 +1,19 @@
+div[data-controller="pages-blog-landing-page"] {
+  .glow-1 {
+    z-index: -1;
+    top: -10rem;
+    left: -5%;
+
+    @include media-breakpoint-down(md) {
+      top: -5rem;
+      left: 0%;
+    }
+  }
+
+  .red-1 {
+    width: 40rem;
+    height: 20rem;
+    background: radial-gradient(45.01% 45.01% at 22.72% 36.9%, rgba(57, 210, 231, 0.6) 26.4%, rgba(174, 110, 255, 0.6) 100%);
+    filter: blur(192.705px);
+  }
+}

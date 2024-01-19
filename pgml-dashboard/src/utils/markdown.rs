@@ -412,6 +412,70 @@ pub fn get_image<'a>(root: &'a AstNode<'a>) -> Option<String> {
     image
 }
 
+/// Get the articles author image, name, and publish date.
+///
+/// # Arguments
+///
+/// * `root` - The root node of the document tree.
+///
+pub fn get_author<'a>(root: &'a AstNode<'a>) -> (Option<String>, Option<chrono::NaiveDate>, Option<String>) {
+    let re = regex::Regex::new(r#"<img src="([^"]*)" alt="([^"]*)""#).unwrap();
+    let mut image = None;
+    let mut name = None;
+    let mut date = None;
+    match iter_nodes(root, &mut |node| match &node.data.borrow().value {
+        NodeValue::HtmlBlock(html) => match re.captures(&html.literal) {
+            Some(c) => {
+                if &c[2] == "Author" {
+                    image = Some(c[1].to_string());
+                    Ok(true)
+                } else {
+                    Ok(false)
+                }
+            }
+            None => Ok(true),
+        },
+        // author and name are assumed to be the next two lines of text after the author image. 
+        NodeValue::Text(text) => {
+            if image.is_some() && name.is_none() && date.is_none() {
+                name = Some(text.clone());
+            } else if image.is_some() && name.is_some() && date.is_none() {
+                date = Some(text.clone());
+            }
+            Ok(true)
+        }
+        _ => Ok(true),
+    }) {
+        Ok(_) => {
+            let date: Option<chrono::NaiveDate> = match &date {
+                Some(date) => {
+                    let date_s = date.replace(",", "");
+                    let date_v = date_s.split(" ").collect::<Vec<&str>>();
+                    let month = date_v[0];
+                    match month.parse::<chrono::Month>() {
+                        Ok(month) => {
+                            let (day, year) = (date_v[1], date_v[2]);
+                            let date = format!("{}-{}-{}", month.number_from_month(), day, year);
+                            chrono::NaiveDate::parse_from_str(&date, "%m-%e-%Y").ok()
+                        }
+                        _ => None,
+                    }
+                }
+                _ => None,
+            };
+
+            // if date is not the correct form assume the date and author did not get parsed correctly. 
+            if date.is_none() {
+                (None, None, image)
+            } else {
+                (name, date, image)
+            }
+ 
+        },
+        _ => (None, None, None),
+    }
+}
+
 /// Wrap tables in container to allow for x-scroll on overflow.
 pub fn wrap_tables<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyhow::Result<()> {
     iter_nodes(root, &mut |node| {
