@@ -142,9 +142,8 @@ pub struct MultiFieldPipelineDatabaseData {
     pub created_at: DateTime,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MultiFieldPipeline {
-    // TODO: Make the schema and parsed_schema optional fields only required if they try to save a new pipeline that does not exist
     pub name: String,
     pub schema: Option<Json>,
     pub parsed_schema: Option<ParsedSchema>,
