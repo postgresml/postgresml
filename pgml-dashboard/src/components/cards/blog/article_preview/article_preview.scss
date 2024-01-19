@@ -104,12 +104,15 @@ div[data-controller="cards-blog-article-preview"] {
     width: calc(3 * $base-x + $spacer + $spacer);
 
     .cover-image {
-      width: 33%;
       object-fit: cover;
     }
 
+    .cover-image-container {
+      width: 36%;
+    }
+
     .meta-container {
-      width: 66%;
+      width: 63%;
       background: #{$gray-800};
     }
     .foot-name {
@@ -135,6 +138,11 @@ div[data-controller="cards-blog-article-preview"] {
       height: 38rem;
     
       .cover-image {
+        width: 100%;
+      }
+
+      .cover-image-container {
+        height: 35%;
         width: 100%;
       }
     

@@ -44,8 +44,10 @@ if meta.author.is_some() {
 <div data-controller="cards-blog-article-preview">
   <% if card_type == String::from("featured") {%>
   <a class="doc-card feature-card d-flex flex-column flex-xxl-row" href="<%- meta.path %>">
-    <img class="cover-image " src="<%- meta.image.clone().unwrap_or_else(|| String::new())%>" >
-    <div class="type-default h-100 d-flex align-items-center">
+    <div class="cover-image-container">
+      <img class="cover-image w-100 h-100" src="<%- meta.image.clone().unwrap_or_else(|| String::new())%>" >
+    </div>
+    <div class="type-default d-flex align-items-center" style="flex: 2">
       <div class="meta-layout">
         <% if meta.tags.len() > 0 {%><div class="eyebrow-text"><%- meta.tags[0].clone().to_uppercase() %></div><% } %>
         <h2 style="color: inherit"><%- meta.title %></h2>
