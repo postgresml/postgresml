@@ -8,7 +8,7 @@ use super::snapshot::Column;
 pub enum Sampling {
     random,
     last,
-    stratified_random,
+    stratified,
 }
 
 impl std::str::FromStr for Sampling {
@@ -18,7 +18,7 @@ impl std::str::FromStr for Sampling {
         match input {
             "random" => Ok(Sampling::random),
             "last" => Ok(Sampling::last),
-            "stratified_random" => Ok(Sampling::stratified_random),
+            "stratified" => Ok(Sampling::stratified),
             _ => Err(()),
         }
     }
@@ -29,7 +29,7 @@ impl std::string::ToString for Sampling {
         match *self {
             Sampling::random => "random".to_string(),
             Sampling::last => "last".to_string(),
-            Sampling::stratified_random => "stratified_random".to_string(),
+            Sampling::stratified => "stratified".to_string(),
         }
     }
 }
@@ -52,7 +52,7 @@ impl Sampling {
             Sampling::last => {
                 format!("SELECT * FROM {relation_name}")
             }
-            Sampling::stratified_random => {
+            Sampling::stratified => {
                 format!(
                     "
                     SELECT *
@@ -120,8 +120,8 @@ mod tests {
     }
 
     #[test]
-    fn test_get_sql_stratified_random_sampling() {
-        let sampling = Sampling::stratified_random;
+    fn test_get_sql_stratified_sampling() {
+        let sampling = Sampling::stratified;
         let columns = get_column_fixtures();
         let sql = sampling.get_sql("my_table", columns);
         let expected_sql = "
