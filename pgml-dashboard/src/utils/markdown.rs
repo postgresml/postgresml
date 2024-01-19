@@ -435,7 +435,7 @@ pub fn get_author<'a>(root: &'a AstNode<'a>) -> (Option<String>, Option<chrono::
             }
             None => Ok(true),
         },
-        // author and name are assumed to be the next two lines of text after the author image. 
+        // author and name are assumed to be the next two lines of text after the author image.
         NodeValue::Text(text) => {
             if image.is_some() && name.is_none() && date.is_none() {
                 name = Some(text.clone());
@@ -464,14 +464,13 @@ pub fn get_author<'a>(root: &'a AstNode<'a>) -> (Option<String>, Option<chrono::
                 _ => None,
             };
 
-            // if date is not the correct form assume the date and author did not get parsed correctly. 
+            // if date is not the correct form assume the date and author did not get parsed correctly.
             if date.is_none() {
                 (None, None, image)
             } else {
                 (name, date, image)
             }
- 
-        },
+        }
         _ => (None, None, None),
     }
 }
