@@ -264,37 +264,55 @@ fn train_joint(
     );
 
     let mut deploy = true;
+
     match automatic_deploy {
-        // Deploy only if metrics are better than previous model.
+        // Deploy only if metrics are better than previous model, or if its the first model
         Some(true) | None => {
             if let Ok(Some(deployed_metrics)) = deployed_metrics {
-                let deployed_metrics = deployed_metrics.0.as_object().unwrap();
-                let deployed_metric = deployed_metrics
-                    .get(&project.task.default_target_metric())
-                    .unwrap()
-                    .as_f64()
-                    .unwrap();
-                info!(
-                    "Comparing to deployed model {}: {:?}",
-                    project.task.default_target_metric(),
-                    deployed_metric
-                );
-                if project.task.value_is_better(
-                    deployed_metric,
-                    new_metrics
-                        .get(&project.task.default_target_metric())
-                        .unwrap()
-                        .as_f64()
-                        .unwrap(),
-                ) {
+                if let Some(deployed_metrics_obj) = deployed_metrics.0.as_object() {
+                    let default_target_metric = project.task.default_target_metric();
+                    let deployed_metric = deployed_metrics_obj
+                        .get(&default_target_metric)
+                        .and_then(|v| v.as_f64());
+                    info!(
+                        "Comparing to deployed model {}: {:?}",
+                        default_target_metric, deployed_metric
+                    );
+                    let new_metric = new_metrics.get(&default_target_metric).and_then(|v| v.as_f64());
+
+                    match (deployed_metric, new_metric) {
+                        (Some(deployed), Some(new)) => {
+                            // only compare metrics when both new and old model have metrics to compare
+                            if project.task.value_is_better(deployed, new) {
+                                warning!(
+                                    "New model's {} is not better than current model. New: {}, Current {}",
+                                    &default_target_metric,
+                                    new,
+                                    deployed
+                                );
+                                deploy = false;
+                            }
+                        }
+                        (None, None) => {
+                            warning!("No metrics available for both deployed and new model. Deploying new model.")
+                        }
+                        (Some(_deployed), None) => {
+                            warning!("No metrics for new model. Retaining old model.");
+                            deploy = false;
+                        }
+                        (None, Some(_new)) => warning!("No metrics for deployed model. Deploying new model."),
+                    }
+                } else {
+                    warning!("Failed to parse deployed model metrics. Check data types of model metadata on pgml.models.metrics");
                     deploy = false;
                 }
             }
         }
-
-        Some(false) => deploy = false,
+        Some(false) => {
+            warning!("Automatic deployment disabled via configuration.");
+            deploy = false;
+        }
     };
-
     if deploy {
         project.deploy(model.id, Strategy::new_score);
     } else {
