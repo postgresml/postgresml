@@ -47,10 +47,10 @@ impl Sampling {
             .join(", ");
         match *self {
             Sampling::random => {
-                format!("SELECT {col_string} FROM {relation_name} ORDER BY RANDOM()")
+                format!("SELECT * FROM {relation_name} ORDER BY RANDOM()")
             }
             Sampling::last => {
-                format!("SELECT {col_string} FROM {relation_name}")
+                format!("SELECT * FROM {relation_name}")
             }
             Sampling::stratified_random => {
                 format!(
@@ -108,7 +108,7 @@ mod tests {
         let sampling = Sampling::random;
         let columns = get_column_fixtures();
         let sql = sampling.get_sql("my_table", columns);
-        assert_eq!(sql, "SELECT \"col1\", \"col2\" FROM my_table ORDER BY RANDOM()");
+        assert_eq!(sql, "SELECT * FROM my_table ORDER BY RANDOM()");
     }
 
     #[test]
@@ -116,7 +116,7 @@ mod tests {
         let sampling = Sampling::last;
         let columns = get_column_fixtures();
         let sql = sampling.get_sql("my_table", columns);
-        assert_eq!(sql, "SELECT \"col1\", \"col2\" FROM my_table");
+        assert_eq!(sql, "SELECT * FROM my_table");
     }
 
     #[test]

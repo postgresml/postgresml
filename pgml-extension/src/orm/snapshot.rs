@@ -737,7 +737,20 @@ impl Snapshot {
     }
 
     fn select_sql(&self) -> String {
-        self.test_sampling.get_sql(&self.relation_name(), self.columns.clone())
+        match self.materialized {
+            true => {
+                format!(
+                    "SELECT {} FROM {}",
+                    self.columns
+                        .iter()
+                        .map(|c| c.quoted_name())
+                        .collect::<Vec<String>>()
+                        .join(", "),
+                    self.relation_name()
+                )
+            }
+            false => self.test_sampling.get_sql(&self.relation_name(), self.columns.clone()),
+        }
     }
 
     fn train_test_split(&self, num_rows: usize) -> (usize, usize) {
