@@ -4,7 +4,7 @@
   use crate::components::pages::blog::LandingPage;
   use crate::components::cards::blog::article_preview::DocMeta;
 
-  let featured_cards = &index
+  let featured_cards = index
     .clone()
     .into_iter()
     .filter(|x| x
@@ -33,7 +33,7 @@
 
       <div class="d-flex justify-content-center my-5">
         <div class="w-100  my-1 pt-1 my-xxl-4 pt-xxl-5">
-          <%+ Carousel::new((featured_cards).to_vec()) %>
+          <%+ Carousel::new(featured_cards) %>
         </div>
       </div>
 

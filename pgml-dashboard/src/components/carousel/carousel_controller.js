@@ -12,7 +12,10 @@ export default class extends Controller {
   }
 
   connect() {
-    this.cycle()
+    // dont cycle carousel if it only hase one item. 
+    if ( this.templateTargets.length > 1 ) {
+      this.cycle()
+    }
   }
 
   changeFeatured(next) {
