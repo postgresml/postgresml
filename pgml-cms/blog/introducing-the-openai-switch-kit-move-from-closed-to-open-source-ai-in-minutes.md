@@ -1,8 +1,10 @@
 ---
-image: https://postgresml.org/dashboard/static/images/open_source_ai_social_share.png
+featured: true
+tags: [engineering, product]
 description: >-
   Quickly and easily transition from the confines of the OpenAI APIs to higher
   quality embeddings and unrestricted text generation models.
+image: ".gitbook/assets/blog_image_switch_kit.png"
 ---
 
 # Introducing the OpenAI Switch Kit: Move from closed to open-source AI in minutes
