@@ -1,4 +1,12 @@
-<% use crate::utils::config; %>
+<% 
+  use crate::utils::config;
+
+  let thumbnail = image
+    .unwrap_or_else(|| format!(r#"{}/static/images/homepage-social-share.webp"#, config::site_domain()));
+
+  let description = description
+    .unwrap_or_else(|| String::from("Train and deploy models to make online predictions using only SQL, with an open source Postgres extension."));
+%>
 
 <head>
   <meta charset="utf-8">
@@ -7,23 +15,12 @@
   <meta name="author" content="PostgresML">
   <title><%= title %> – PostgresML</title>
 
-  <% if description.is_some() { %>
-  <meta name="description" content="<%= description.clone().unwrap() %>">
-  <meta property="og:description" content="<%= description.clone().unwrap() %>">
-  <meta name="twitter:description" content="<%= description.clone().unwrap() %>">
-  <% } else { %>
-  <meta name="description" content="Train and deploy models to make online predictions using only SQL, with an open source Postgres extension.">
-  <meta property="og:description" content="Train and deploy models to make online predictions using only SQL, with an open source Postgres extension.">
-  <meta name="twitter:description" content="Train and deploy models to make online predictions using only SQL, with an open source Postgres extension.">
-  <% } %>
+  <meta name="description" content="<%- description %>">
+  <meta property="og:description" content="<%- description %>">
+  <meta name="twitter:description" content="<%- description %>">
 
-  <% if image.is_some() { %>
-  <meta property="og:image" content="<%= image.clone().unwrap() %>">
-  <meta name="twitter:image" content="<%= image.clone().unwrap() %>">
-  <% } else { %>
-  <meta property="og:image" content="https://postgresml.org/dashboard/static/images/owl_gradient.png">
-  <meta name="twitter:image" content="https://postgresml.org/dashboard/static/images/owl_gradient.png">
-  <% } %>
+  <meta property="og:image" content="<%- thumbnail %>">
+  <meta name="twitter:image" content="<%- thumbnail %>">
 
   <meta property="og:site_name" content="PostgresML">
   <meta property="og:type" content="website">

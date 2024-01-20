@@ -19,6 +19,7 @@ use crate::{
     utils::config,
 };
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 lazy_static! {
     static ref BLOG: Collection = Collection::new(
@@ -62,11 +63,21 @@ lazy_static! {
     );
 }
 
-#[derive(PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DocType {
     Blog,
     Docs,
     Careers,
+}
+
+impl fmt::Display for DocType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DocType::Blog => write!(f, "blog"),
+            DocType::Docs => write!(f, "docs"),
+            DocType::Careers => write!(f, "careers")
+        }
+    }
 }
 
 impl FromStr for DocType {
@@ -97,12 +108,14 @@ pub struct Document {
     pub toc_links: Vec<TocLink>,
     pub contents: String,
     pub doc_type: Option<DocType>,
+    // url to thumbnail for social share
+    pub thumbnail: Option<String>
 }
 
 // Gets document markdown
 impl Document {
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
-        warn!("path: {:?}", path);
+        debug!("path: {:?}", path);
 
         let regex = regex::Regex::new(r#".*/pgml-cms/([^"]*)/(.*)\.md"#).unwrap();
 
@@ -130,6 +143,8 @@ impl Document {
             (None, contents)
         };
 
+        let default_image = ".gitbook/assets/blog_image_placeholder.png";
+
         // parse meta section
         let (description, image, featured, tags) = match meta {
             Some(meta) => {
@@ -140,9 +155,9 @@ impl Document {
                 };
 
                 let image = if meta["image"].is_badvalue() {
-                    Some(".gitbook/assets/blog_image_placeholder.png".to_string())
+                    Some(format!("/{}/{}", doc_type.clone().unwrap().to_string(), default_image))
                 } else {
-                    Some(meta["image"].as_str().unwrap().to_string())
+                    Some(format!("/{}/{}", doc_type.clone().unwrap().to_string().to_string(), meta["image"].as_str().unwrap()))
                 };
 
                 let featured = if meta["featured"].is_badvalue() {
@@ -165,10 +180,19 @@ impl Document {
             }
             None => (
                 None,
-                Some(".gitbook/assets/blog_image_placeholder.png".to_string()),
+                Some(format!("/{}/{}", doc_type.clone().unwrap().to_string(), default_image)),
                 false,
                 Vec::new(),
             ),
+        };
+
+        let thumbnail = match &image {
+            Some(image) => if image.contains(default_image) {
+                None
+            } else {
+                Some(format!("{}{}", config::site_domain(), image))
+            }, 
+            None => None
         };
 
         // Parse Markdown
@@ -191,6 +215,7 @@ impl Document {
             toc_links,
             contents,
             doc_type,
+            thumbnail
         };
         Ok(document)
     }
@@ -419,8 +444,8 @@ impl Collection {
                 let index = self.open_index(&doc.path);
 
                 let mut layout = crate::templates::Layout::new(&doc.title, Some(cluster));
-                if let Some(image) = &doc.image {
-                    layout.image(&config::asset_url(image.into()));
+                if let Some(image) = &doc.thumbnail {
+                    layout.image(&image);
                 }
                 if let Some(description) = &doc.description {
                     layout.description(description);

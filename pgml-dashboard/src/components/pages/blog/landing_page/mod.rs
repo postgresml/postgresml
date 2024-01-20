@@ -37,14 +37,12 @@ impl LandingPage {
                 .await
                 .unwrap();
 
-            let image = Some(format!("blog/{}", doc.image.unwrap()));
-
             let meta = DocMeta {
                 description: doc.description,
                 author: doc.author,
                 author_image: doc.author_image,
                 date: doc.date,
-                image,
+                image: doc.image,
                 featured: doc.featured,
                 tags: doc.tags,
                 title: doc.title,
