@@ -56,7 +56,7 @@ export default class extends Controller {
   }
 
   cycle() {
-    setInterval(() => {
+    this.interval = setInterval(() => {
       // maintain paused state through entire loop
       let paused = this.paused
 
@@ -86,5 +86,9 @@ export default class extends Controller {
         this.runtime++
       }
     }, 1000)
+  }
+
+  disconnect() {
+    clearInterval(this.interval);
   }
 }

@@ -5,6 +5,25 @@ use crate::models::User;
 use crate::Notification;
 use pgml_components::component;
 use sailfish::TemplateOnce;
+use std::fmt;
+
+#[derive(Default, Clone)]
+pub enum Theme {
+    #[default]
+    Marketing,
+    Docs,
+    Product,
+}
+
+impl fmt::Display for Theme {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Theme::Marketing => write!(f, "marketing"),
+            Theme::Docs => write!(f, "docs"),
+            Theme::Product => write!(f, "product"),
+        }
+    }
+}
 
 #[derive(TemplateOnce, Default, Clone)]
 #[template(path = "layouts/marketing/base/template.html")]
@@ -14,6 +33,7 @@ pub struct Base {
     pub footer: Option<String>,
     pub alert_banner: AlertBanner,
     pub user: Option<User>,
+    pub theme: Theme,
 }
 
 impl Base {
@@ -62,6 +82,11 @@ impl Base {
 
     pub fn user(mut self, user: User) -> Self {
         self.user = Some(user);
+        self
+    }
+
+    pub fn theme(mut self, theme: Theme) -> Self {
+        self.theme = theme;
         self
     }
 
