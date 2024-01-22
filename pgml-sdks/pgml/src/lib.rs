@@ -646,6 +646,158 @@ mod tests {
         Ok(())
     }
 
+    #[sqlx::test]
+    async fn pipeline_sync_status() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_pss_5";
+        let mut collection = Collection::new(collection_name, None);
+        let pipeline_name = "test_r_p_pss_0";
+        let mut pipeline = MultiFieldPipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "title": {
+                        "embed": {
+                            "model": "intfloat/e5-small"
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        },
+                        "splitter": {
+                            "model": "recursive_character"
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let documents = generate_dummy_documents(4);
+        collection
+            .upsert_documents(documents[..2].to_owned(), None)
+            .await?;
+        let status = pipeline.get_status().await?;
+        assert_eq!(
+            status.0,
+            json!({
+                "title": {
+                    "chunks": {
+                        "not_synced": 0,
+                        "synced": 2,
+                        "total": 2
+                    },
+                    "embeddings": {
+                        "not_synced": 0,
+                        "synced": 2,
+                        "total": 2
+                    },
+                    "tsvectors": {
+                        "not_synced": 0,
+                        "synced": 2,
+                        "total": 2
+                    },
+                }
+            })
+        );
+        collection.disable_pipeline(&mut pipeline).await?;
+        collection
+            .upsert_documents(documents[2..4].to_owned(), None)
+            .await?;
+        let status = pipeline.get_status().await?;
+        assert_eq!(
+            status.0,
+            json!({
+                "title": {
+                    "chunks": {
+                        "not_synced": 2,
+                        "synced": 2,
+                        "total": 4
+                    },
+                    "embeddings": {
+                        "not_synced": 0,
+                        "synced": 2,
+                        "total": 2
+                    },
+                    "tsvectors": {
+                        "not_synced": 0,
+                        "synced": 2,
+                        "total": 2
+                    },
+                }
+            })
+        );
+        collection.enable_pipeline(&mut pipeline).await?;
+        let status = pipeline.get_status().await?;
+        assert_eq!(
+            status.0,
+            json!({
+                "title": {
+                    "chunks": {
+                        "not_synced": 0,
+                        "synced": 4,
+                        "total": 4
+                    },
+                    "embeddings": {
+                        "not_synced": 0,
+                        "synced": 4,
+                        "total": 4
+                    },
+                    "tsvectors": {
+                        "not_synced": 0,
+                        "synced": 4,
+                        "total": 4
+                    },
+                }
+            })
+        );
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn can_specify_custom_hnsw_parameters_for_pipelines() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_cschpfp_4";
+        let mut collection = Collection::new(collection_name, None);
+        let pipeline_name = "test_r_p_cschpfp_0";
+        let mut pipeline = MultiFieldPipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "title": {
+                        "embed": {
+                            "model": "intfloat/e5-small",
+                            "hnsw": {
+                                "m": 100,
+                                "ef_construction": 200
+                            }
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let schema = format!("{collection_name}_{pipeline_name}");
+        let full_embeddings_table_name = format!("{schema}.title_embeddings");
+        let embeddings_table_name = full_embeddings_table_name.split('.').collect::<Vec<_>>()[1];
+        let pool = get_or_initialize_pool(&None).await?;
+        let results: Vec<(String, String)> = sqlx::query_as(&query_builder!(
+            "select indexname, indexdef from pg_indexes where tablename = '%d' and schemaname = '%d'",
+            embeddings_table_name,
+            schema
+        )).fetch_all(&pool).await?;
+        let names = results.iter().map(|(name, _)| name).collect::<Vec<_>>();
+        let definitions = results
+            .iter()
+            .map(|(_, definition)| definition)
+            .collect::<Vec<_>>();
+        assert!(names.contains(&&"title_pipeline_embedding_hnsw_vector_index".to_string()));
+        assert!(definitions.contains(&&format!("CREATE INDEX title_pipeline_embedding_hnsw_vector_index ON {full_embeddings_table_name} USING hnsw (embedding vector_cosine_ops) WITH (m='100', ef_construction='200')")));
+        collection.archive().await?;
+        Ok(())
+    }
+
     ///////////////////////////////
     // Searches ///////////////////
     ///////////////////////////////
@@ -958,99 +1110,6 @@ mod tests {
         collection.archive().await?;
         Ok(())
     }
-
-    // #[sqlx::test]
-    // async fn can_specify_custom_hnsw_parameters_for_pipelines() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cschpfp_0",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //                 "hnsw": {
-    //                     "m": 100,
-    //                     "ef_construction": 200
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let collection_name = "test_r_c_cschpfp_1";
-    //     let mut collection = Collection::new(collection_name, None);
-    //     collection.add_pipeline(&mut pipeline).await?;
-    //     let full_embeddings_table_name = pipeline.create_or_get_embeddings_table().await?;
-    //     let embeddings_table_name = full_embeddings_table_name.split('.').collect::<Vec<_>>()[1];
-    //     let pool = get_or_initialize_pool(&None).await?;
-    //     let results: Vec<(String, String)> = sqlx::query_as(&query_builder!(
-    //         "select indexname, indexdef from pg_indexes where tablename = '%d' and schemaname = '%d'",
-    //         embeddings_table_name,
-    //         collection_name
-    //     )).fetch_all(&pool).await?;
-    //     let names = results.iter().map(|(name, _)| name).collect::<Vec<_>>();
-    //     let definitions = results
-    //         .iter()
-    //         .map(|(_, definition)| definition)
-    //         .collect::<Vec<_>>();
-    //     assert!(names.contains(&&format!("{}_pipeline_hnsw_vector_index", pipeline.name)));
-    //     assert!(definitions.contains(&&format!("CREATE INDEX {}_pipeline_hnsw_vector_index ON {} USING hnsw (embedding vector_cosine_ops) WITH (m='100', ef_construction='200')", pipeline.name, full_embeddings_table_name)));
-    //     Ok(())
-    // }
-
-    // #[sqlx::test]
-    // async fn sync_multiple_pipelines() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline1 = Pipeline::new(
-    //         "test_r_p_smp_0",
-    //         Some(model.clone()),
-    //         Some(splitter.clone()),
-    //         Some(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "active": true,
-    //                     "configuration": "english"
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let mut pipeline2 = Pipeline::new(
-    //         "test_r_p_smp_1",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(
-    //             serde_json::json!({
-    //                 "full_text_search": {
-    //                     "active": true,
-    //                     "configuration": "english"
-    //                 }
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let mut collection = Collection::new("test_r_c_smp_3", None);
-    //     collection.add_pipeline(&mut pipeline1).await?;
-    //     collection.add_pipeline(&mut pipeline2).await?;
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(3), None)
-    //         .await?;
-    //     let status_1 = pipeline1.get_status().await?;
-    //     let status_2 = pipeline2.get_status().await?;
-    //     assert!(
-    //         status_1.chunks_status.synced == status_1.chunks_status.total
-    //             && status_1.chunks_status.not_synced == 0
-    //     );
-    //     assert!(
-    //         status_2.chunks_status.synced == status_2.chunks_status.total
-    //             && status_2.chunks_status.not_synced == 0
-    //     );
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
 
     ///////////////////////////////
     // Working With Documents /////
@@ -1529,6 +1588,74 @@ mod tests {
             vec![(0, 1, 10), (1, 2, 11), (2, 3, 12)]
         );
         collection.archive().await?;
+        Ok(())
+    }
+
+    ///////////////////////////////
+    // Pipeline -> MultiFieldPIpeline
+    ///////////////////////////////
+
+    #[test]
+    fn pipeline_to_multi_field_pipeline() -> anyhow::Result<()> {
+        let model = Model::new(
+            Some("test_model".to_string()),
+            Some("pgml".to_string()),
+            Some(
+                json!({
+                    "test_parameter": 10
+                })
+                .into(),
+            ),
+        );
+        let splitter = Splitter::new(
+            Some("test_splitter".to_string()),
+            Some(
+                json!({
+                "test_parameter": 11
+                })
+                .into(),
+            ),
+        );
+        let parameters = json!({
+            "full_text_search": {
+                "active": true,
+                "configuration": "test_configuration"
+            },
+            "hnsw": {
+                "m": 16,
+                "ef_construction": 64
+            }
+        });
+        let multi_field_pipeline = Pipeline::new(
+            "test_name",
+            Some(model),
+            Some(splitter),
+            Some(parameters.into()),
+        );
+        let schema = json!({
+            "text": {
+                "splitter": {
+                    "model": "test_splitter",
+                    "parameters": {
+                        "test_parameter": 11
+                    }
+                },
+                "embed": {
+                    "model": "test_model",
+                    "parameters": {
+                        "test_parameter": 10
+                    },
+                    "hnsw": {
+                        "m": 16,
+                        "ef_construction": 64
+                    }
+                },
+                "full_text_search": {
+                    "configuration": "test_configuration"
+                }
+            }
+        });
+        assert_eq!(schema, multi_field_pipeline.schema.unwrap().0);
         Ok(())
     }
 
