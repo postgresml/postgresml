@@ -470,16 +470,8 @@ impl Collection {
 }
 
 #[get("/search?<query>", rank = 20)]
-async fn search(
-    query: &str,
-    site_search: &State<crate::utils::markdown::SiteSearch>,
-) -> ResponseOk {
-    eprintln!("\n\nWE IN HERE\n\n");
-    let results = site_search
-        .search(query)
-        .await
-        .expect("Error performing search");
-
+async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
+    let results = site_search.search(query, None).await.expect("Error performing search");
     ResponseOk(
         Template(Search {
             query: query.to_string(),
@@ -571,9 +563,9 @@ pub fn routes() -> Vec<Route> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::utils::markdown::{options, MarkdownHeadings, SyntaxHighlighter};
+    use crate::utils::markdown::options;
     use regex::Regex;
-    use rocket::http::{ContentType, Cookie, Status};
+    use rocket::http::Status;
     use rocket::local::asynchronous::Client;
     use rocket::{Build, Rocket};
 
