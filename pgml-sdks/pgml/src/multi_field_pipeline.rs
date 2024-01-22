@@ -2,6 +2,7 @@ use anyhow::Context;
 use indicatif::MultiProgress;
 use rust_bridge::{alias, alias_manual, alias_methods};
 use serde::Deserialize;
+use serde_json::json;
 use sqlx::{Executor, PgConnection, PgPool, Postgres, Transaction};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::Arc;
@@ -71,15 +72,15 @@ impl Default for HNSW {
 impl TryFrom<Json> for HNSW {
     type Error = anyhow::Error;
     fn try_from(value: Json) -> anyhow::Result<Self> {
-        let m = if !value["hnsw"]["m"].is_null() {
-            value["hnsw"]["m"]
+        let m = if !value["m"].is_null() {
+            value["m"]
                 .try_to_u64()
                 .context("hnsw.m must be an integer")?
         } else {
             16
         };
-        let ef_construction = if !value["hnsw"]["ef_construction"].is_null() {
-            value["hnsw"]["ef_construction"]
+        let ef_construction = if !value["ef_construction"].is_null() {
+            value["ef_construction"]
                 .try_to_u64()
                 .context("hnsw.ef_construction must be an integer")?
         } else {
@@ -137,6 +138,40 @@ impl TryFrom<ValidFieldAction> for FieldAction {
 }
 
 #[derive(Debug, Clone)]
+pub struct InvividualSyncStatus {
+    pub synced: i64,
+    pub not_synced: i64,
+    pub total: i64,
+}
+
+impl From<InvividualSyncStatus> for Json {
+    fn from(value: InvividualSyncStatus) -> Self {
+        serde_json::json!({
+            "synced": value.synced,
+            "not_synced": value.not_synced,
+            "total": value.total,
+        })
+        .into()
+    }
+}
+
+impl From<Json> for InvividualSyncStatus {
+    fn from(value: Json) -> Self {
+        Self {
+            synced: value["synced"]
+                .as_i64()
+                .expect("The synced field is not an integer"),
+            not_synced: value["not_synced"]
+                .as_i64()
+                .expect("The not_synced field is not an integer"),
+            total: value["total"]
+                .as_i64()
+                .expect("The total field is not an integer"),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct MultiFieldPipelineDatabaseData {
     pub id: i64,
     pub created_at: DateTime,
@@ -181,6 +216,94 @@ impl MultiFieldPipeline {
         })
     }
 
+    /// Gets the status of the [Pipeline]
+    /// This includes the status of the chunks, embeddings, and tsvectors
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pgml::Collection;
+    ///
+    /// async fn example() -> anyhow::Result<()> {
+    ///     let mut collection = Collection::new("my_collection", None);
+    ///     let mut pipeline = collection.get_pipeline("my_pipeline").await?;
+    ///     let status = pipeline.get_status().await?;
+    ///     Ok(())
+    /// }
+    /// ```
+    #[instrument(skip(self))]
+    pub async fn get_status(&mut self) -> anyhow::Result<Json> {
+        self.verify_in_database(false).await?;
+        let parsed_schema = self
+            .parsed_schema
+            .as_ref()
+            .context("Pipeline must have schema to get status")?;
+        let project_info = self
+            .project_info
+            .as_ref()
+            .context("Pipeline must have project info to get status")?;
+        let pool = self.get_pool().await?;
+
+        let mut results = json!({});
+
+        let schema = format!("{}_{}", project_info.name, self.name);
+        let documents_table_name = format!("{}.documents", project_info.name);
+        for (key, value) in parsed_schema.iter() {
+            let chunks_table_name = format!("{schema}.{key}_chunks");
+
+            results[key] = json!({});
+
+            if let Some(_) = value.splitter {
+                let chunks_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
+                    "SELECT (SELECT COUNT(DISTINCT document_id) FROM %s), COUNT(id) FROM %s",
+                    chunks_table_name,
+                    documents_table_name
+                ))
+                .fetch_one(&pool)
+                .await?;
+                results[key]["chunks"] = json!({
+                    "synced": chunks_status.0.unwrap_or(0),
+                    "not_synced": chunks_status.1.unwrap_or(0) - chunks_status.0.unwrap_or(0),
+                    "total": chunks_status.1.unwrap_or(0),
+                });
+            }
+
+            if let Some(_) = value.embed {
+                let embeddings_table_name = format!("{schema}.{key}_embeddings");
+                let embeddings_status: (Option<i64>, Option<i64>) =
+                    sqlx::query_as(&query_builder!(
+                        "SELECT (SELECT count(*) FROM %s), (SELECT count(*) FROM %s)",
+                        embeddings_table_name,
+                        chunks_table_name
+                    ))
+                    .fetch_one(&pool)
+                    .await?;
+                results[key]["embeddings"] = json!({
+                    "synced": embeddings_status.0.unwrap_or(0),
+                    "not_synced": embeddings_status.1.unwrap_or(0) - embeddings_status.0.unwrap_or(0),
+                    "total": embeddings_status.1.unwrap_or(0),
+                });
+            }
+
+            if let Some(_) = value.full_text_search {
+                let tsvectors_table_name = format!("{schema}.{key}_tsvectors");
+                let tsvectors_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
+                    "SELECT (SELECT count(*) FROM %s), (SELECT count(*) FROM %s)",
+                    tsvectors_table_name,
+                    chunks_table_name
+                ))
+                .fetch_one(&pool)
+                .await?;
+                results[key]["tsvectors"] = json!({
+                    "synced": tsvectors_status.0.unwrap_or(0),
+                    "not_synced": tsvectors_status.1.unwrap_or(0) - tsvectors_status.0.unwrap_or(0),
+                    "total": tsvectors_status.1.unwrap_or(0),
+                });
+            }
+        }
+        Ok(results.into())
+    }
+
     #[instrument(skip(self))]
     pub(crate) async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
         if self.database_data.is_none() {
@@ -189,7 +312,7 @@ impl MultiFieldPipeline {
             let project_info = self
                 .project_info
                 .as_ref()
-                .context("Cannot verify pipeline wihtout project info")?;
+                .context("Cannot verify pipeline without project info")?;
 
             let pipeline: Option<models::MultiFieldPipeline> = sqlx::query_as(&query_builder!(
                 "SELECT * FROM %s WHERE name = $1",
@@ -643,7 +766,7 @@ impl MultiFieldPipeline {
     }
 
     #[instrument(skip(self))]
-    pub async fn resync(&mut self) -> anyhow::Result<()> {
+    pub(crate) async fn resync(&mut self) -> anyhow::Result<()> {
         self.verify_in_database(false).await?;
 
         // We are assuming we have manually verified the pipeline before doing this
