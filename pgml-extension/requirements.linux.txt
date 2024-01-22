@@ -73,7 +73,7 @@ orjson==3.9.10
 packaging==23.2
 pandas==2.1.4
 peft==0.7.1
-Pillow==10.1.0
+Pillow==10.2.0
 plotly==5.18.0
 portalocker==2.8.2
 protobuf==4.25.1
