@@ -29,7 +29,7 @@ if meta.author.is_some() {
   <a class="doc-card small-card d-flex" href="{}">
     <div class="meta-layout type-default">
       {}
-      <h6 style="color: inherit">{}</h6>
+      <h4 style="color: inherit">{}</h4>
       {}
     </div>
   </a>
@@ -65,7 +65,7 @@ if meta.author.is_some() {
   <a class="doc-card small-card d-xxl-flex d-none" style="background-image: url('<%- meta.image.clone().unwrap_or_else(|| String::new())%>')" href="<%- meta.path %>">
     <div class="meta-layout type-show-image">
       <% if meta.tags.len() > 0 {%><div class="eyebrow-text"><%- meta.tags[0].clone().to_uppercase() %></div><% }%>
-      <h6 style="color: inherit"><%- meta.title %></h6>
+      <h4 style="color: inherit"><%- meta.title %></h4>
       <%- foot %>
     </div>
   </a>
@@ -97,7 +97,7 @@ if meta.author.is_some() {
     <img class="cover-image" src="<%- meta.image.clone().unwrap_or_else(|| String::new())%>">
     <div class="meta-layout meta-container">
       <% if meta.tags.len() > 0 {%><div class="eyebrow-text"><%- meta.tags[0].clone().to_uppercase() %></div><% }%>
-      <h6 style="color: inherit"><%- meta.title.clone() %></h6>
+      <h4 style="color: inherit"><%- meta.title.clone() %></h4>
       <%- foot %>
     </div>
   </a>

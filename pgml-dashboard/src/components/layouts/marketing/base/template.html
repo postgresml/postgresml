@@ -4,7 +4,7 @@
 
     <%+ head %>
 
-    <body data-bs-theme="dark" data-theme="marketing">
+    <body data-bs-theme="dark" data-theme="<%- theme.to_string() %>">
         <!-- No smooth scroll on initial page visit -->
         <script>
             window.scroll({

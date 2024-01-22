@@ -12,7 +12,11 @@ use rocket::{fs::NamedFile, http::uri::Origin, route::Route, State};
 use yaml_rust::YamlLoader;
 
 use crate::{
-    components::cms::index_link::IndexLink,
+    components::{
+        cms::index_link::IndexLink,
+        layouts::marketing::Base,
+        layouts::marketing::base::Theme
+    },
     guards::Cluster,
     responses::{ResponseOk, Template},
     templates::docs::*,
@@ -86,8 +90,8 @@ impl FromStr for DocType {
     fn from_str(s: &str) -> Result<DocType, Self::Err> {
         match s {
             "blog" => Ok(DocType::Blog),
-            "Doc" => Ok(DocType::Docs),
-            "Careers" => Ok(DocType::Careers),
+            "docs" => Ok(DocType::Docs),
+            "careers" => Ok(DocType::Careers),
             _ => Err(()),
         }
     }
@@ -551,7 +555,8 @@ async fn get_docs(
 
 #[get("/blog")]
 async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
-    let layout = crate::components::layouts::marketing::Base::new("Blog landing page", Some(cluster))
+    let layout = Base::new("Blog landing page", Some(cluster))
+        .theme(Theme::Docs)
         .footer(cluster.context.marketing_footer.to_string());
 
     Ok(ResponseOk(
