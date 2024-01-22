@@ -10,9 +10,9 @@ use std::fmt;
 #[derive(Default, Clone)]
 pub enum Theme {
     #[default]
-    Marketing, 
-    Docs, 
-    Product
+    Marketing,
+    Docs,
+    Product,
 }
 
 impl fmt::Display for Theme {
@@ -20,7 +20,7 @@ impl fmt::Display for Theme {
         match self {
             Theme::Marketing => write!(f, "marketing"),
             Theme::Docs => write!(f, "docs"),
-            Theme::Product => write!(f, "product")
+            Theme::Product => write!(f, "product"),
         }
     }
 }
@@ -86,7 +86,7 @@ impl Base {
     }
 
     pub fn theme(mut self, theme: Theme) -> Self {
-        self.theme = theme; 
+        self.theme = theme;
         self
     }
 

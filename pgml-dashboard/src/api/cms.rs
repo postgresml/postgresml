@@ -12,11 +12,7 @@ use rocket::{fs::NamedFile, http::uri::Origin, route::Route, State};
 use yaml_rust::YamlLoader;
 
 use crate::{
-    components::{
-        cms::index_link::IndexLink,
-        layouts::marketing::Base,
-        layouts::marketing::base::Theme
-    },
+    components::{cms::index_link::IndexLink, layouts::marketing::base::Theme, layouts::marketing::Base},
     guards::Cluster,
     responses::{ResponseOk, Template},
     templates::docs::*,
@@ -79,7 +75,7 @@ impl fmt::Display for DocType {
         match self {
             DocType::Blog => write!(f, "blog"),
             DocType::Docs => write!(f, "docs"),
-            DocType::Careers => write!(f, "careers")
+            DocType::Careers => write!(f, "careers"),
         }
     }
 }
@@ -113,7 +109,7 @@ pub struct Document {
     pub contents: String,
     pub doc_type: Option<DocType>,
     // url to thumbnail for social share
-    pub thumbnail: Option<String>
+    pub thumbnail: Option<String>,
 }
 
 // Gets document markdown
@@ -161,7 +157,11 @@ impl Document {
                 let image = if meta["image"].is_badvalue() {
                     Some(format!("/{}/{}", doc_type.clone().unwrap().to_string(), default_image))
                 } else {
-                    Some(format!("/{}/{}", doc_type.clone().unwrap().to_string().to_string(), meta["image"].as_str().unwrap()))
+                    Some(format!(
+                        "/{}/{}",
+                        doc_type.clone().unwrap().to_string().to_string(),
+                        meta["image"].as_str().unwrap()
+                    ))
                 };
 
                 let featured = if meta["featured"].is_badvalue() {
@@ -191,12 +191,14 @@ impl Document {
         };
 
         let thumbnail = match &image {
-            Some(image) => if image.contains(default_image) {
-                None
-            } else {
-                Some(format!("{}{}", config::site_domain(), image))
-            }, 
-            None => None
+            Some(image) => {
+                if image.contains(default_image) {
+                    None
+                } else {
+                    Some(format!("{}{}", config::site_domain(), image))
+                }
+            }
+            None => None,
         };
 
         // Parse Markdown
@@ -219,7 +221,7 @@ impl Document {
             toc_links,
             contents,
             doc_type,
-            thumbnail
+            thumbnail,
         };
         Ok(document)
     }
@@ -555,9 +557,12 @@ async fn get_docs(
 
 #[get("/blog")]
 async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
-    let layout = Base::new("Blog landing page", Some(cluster))
-        .theme(Theme::Docs)
-        .footer(cluster.context.marketing_footer.to_string());
+    let layout = Base::new(
+        "PostgresML blog landing page, home of technical tutorials, general updates and all things AI/ML.",
+        Some(cluster),
+    )
+    .theme(Theme::Docs)
+    .footer(cluster.context.marketing_footer.to_string());
 
     Ok(ResponseOk(
         layout.render(
