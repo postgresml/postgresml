@@ -92,11 +92,10 @@ async fn main() {
     // it's important to hang on to sentry so it isn't dropped and stops reporting
     let _sentry = configure_reporting().await;
 
-    // markdown::SearchIndex::build().await.unwrap();
-
-    let site_search = markdown::SiteSearch::new()
+    let mut site_search = markdown::SiteSearch::new()
         .await
         .expect("Error initializing site search");
+    site_search.build().await.expect("Error building site search");
 
     pgml_dashboard::migrate(guards::Cluster::default(None).pool())
         .await
@@ -135,8 +134,13 @@ mod test {
 
         pgml_dashboard::migrate(Cluster::default(None).pool()).await.unwrap();
 
+        let mut site_search = markdown::SiteSearch::new()
+            .await
+            .expect("Error initializing site search");
+        site_search.build().await.expect("Error building site search");
+
         rocket::build()
-            .manage(markdown::SearchIndex::open().unwrap())
+            .manage(site_search)
             .mount("/", rocket::routes![index, error])
             .mount("/dashboard/static", FileServer::from(config::static_dir()))
             .mount("/dashboard", pgml_dashboard::routes())
