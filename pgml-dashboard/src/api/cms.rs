@@ -115,9 +115,9 @@ pub struct Document {
 // Gets document markdown
 impl Document {
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
-        debug!("path: {:?}", path);
+        debug!("path: {path:?}");
 
-        let regex = regex::Regex::new(r#".*/pgml-cms/([^"]*)/(.*)\.md"#).unwrap();
+        let regex = regex::Regex::new(r#".*/pgml-cms/([^\/"]*)/(.*)(\.md)"#).unwrap();
 
         let doc_type = match regex.captures(&path.clone().display().to_string()) {
             Some(c) => DocType::from_str(&c[1]).ok(),
@@ -195,7 +195,7 @@ impl Document {
                 if image.contains(default_image) {
                     None
                 } else {
-                    Some(format!("{}{}", config::site_domain(), image))
+                    Some(format!("{}/{}", config::site_domain(), image))
                 }
             }
             None => None,
