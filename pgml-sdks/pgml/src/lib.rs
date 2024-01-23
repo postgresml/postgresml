@@ -247,6 +247,7 @@ mod tests {
                 "id": i,
                 "title": format!("Test document: {}", i),
                 "body": body_text,
+                "text": "here is some test text",
                 "notes": format!("Here are some notes or something for test document {}", i),
                 "metadata": {
                     "uuid": i * 10,
@@ -262,7 +263,7 @@ mod tests {
     // Collection & Pipelines /////
     ///////////////////////////////
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_create_collection() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_ccc_0", None);
@@ -273,10 +274,10 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_add_remove_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut pipeline = MultiFieldPipeline::new("test_p_cap_57", Some(json!({}).into()))?;
+        let mut pipeline = MultiFieldPipeline::new("test_p_cap_58", Some(json!({}).into()))?;
         let mut collection = Collection::new("test_r_c_carp_1", None);
         assert!(collection.database_data.is_none());
         collection.add_pipeline(&mut pipeline).await?;
@@ -288,12 +289,12 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_add_remove_pipelines() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut pipeline1 = MultiFieldPipeline::new("test_r_p_carps_1", Some(json!({}).into()))?;
         let mut pipeline2 = MultiFieldPipeline::new("test_r_p_carps_2", Some(json!({}).into()))?;
-        let mut collection = Collection::new("test_r_c_carps_10", None);
+        let mut collection = Collection::new("test_r_c_carps_11", None);
         collection.add_pipeline(&mut pipeline1).await?;
         collection.add_pipeline(&mut pipeline2).await?;
         let pipelines = collection.get_pipelines().await?;
@@ -306,7 +307,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_capaud_47";
@@ -316,7 +317,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         }
                     },
@@ -324,7 +325,7 @@ mod tests {
                         "splitter": {
                             "model": "recursive_character"
                         },
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small",
                         },
                         "full_text_search": {
@@ -371,10 +372,10 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_upsert_documents_and_add_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cudaap_43";
+        let collection_name = "test_r_c_cudaap_44";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(2);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -384,7 +385,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         }
                     },
@@ -392,7 +393,7 @@ mod tests {
                         "splitter": {
                             "model": "recursive_character"
                         },
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small",
                         },
                         "full_text_search": {
@@ -436,7 +437,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn disable_enable_pipeline() -> anyhow::Result<()> {
         let mut pipeline = MultiFieldPipeline::new("test_p_dep_1", Some(json!({}).into()))?;
         let mut collection = Collection::new("test_r_c_dep_1", None);
@@ -453,7 +454,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_upsert_documents_and_enable_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cudaap_43";
@@ -464,7 +465,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         }
                     }
@@ -494,7 +495,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn random_pipelines_documents_test() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_rpdt_3";
@@ -509,7 +510,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         }
                     },
@@ -517,7 +518,7 @@ mod tests {
                         "splitter": {
                             "model": "recursive_character"
                         },
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small",
                         },
                         "full_text_search": {
@@ -560,7 +561,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         }
                     },
@@ -568,7 +569,7 @@ mod tests {
                         "splitter": {
                             "model": "recursive_character"
                         },
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small",
                         },
                         "full_text_search": {
@@ -646,7 +647,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn pipeline_sync_status() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_pss_5";
@@ -657,7 +658,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         },
                         "full_text_search": {
@@ -754,7 +755,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_specify_custom_hnsw_parameters_for_pipelines() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cschpfp_4";
@@ -765,7 +766,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small",
                             "hnsw": {
                                 "m": 100,
@@ -802,7 +803,7 @@ mod tests {
     // Searches ///////////////////
     ///////////////////////////////
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cs_67";
@@ -815,7 +816,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         },
                         "full_text_search": {
@@ -826,7 +827,7 @@ mod tests {
                         "splitter": {
                             "model": "recursive_character"
                         },
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         },
                         "full_text_search": {
@@ -834,7 +835,7 @@ mod tests {
                         }
                     },
                     "notes": {
-                       "embed": {
+                       "semantic_search": {
                             "model": "intfloat/e5-small"
                         }
                     }
@@ -893,7 +894,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cswre_52";
@@ -906,7 +907,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         }
                     },
@@ -914,7 +915,7 @@ mod tests {
                         "splitter": {
                             "model": "recursive_character"
                         },
-                        "embed": {
+                        "semantic_search": {
                             "model": "text-embedding-ada-002",
                             "source": "openai",
                         },
@@ -973,7 +974,7 @@ mod tests {
     // Vector Searches ////////////
     ///////////////////////////////
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cvswle_3";
@@ -986,7 +987,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         },
                         "full_text_search": {
@@ -997,7 +998,7 @@ mod tests {
                         "splitter": {
                             "model": "recursive_character"
                         },
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         },
                     },
@@ -1029,7 +1030,6 @@ mod tests {
                 })
                 .into(),
                 &mut pipeline,
-                None,
             )
             .await?;
         let ids: Vec<u64> = results
@@ -1041,7 +1041,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_vector_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cvswre_4";
@@ -1054,7 +1054,7 @@ mod tests {
             Some(
                 json!({
                     "title": {
-                        "embed": {
+                        "semantic_search": {
                             "model": "intfloat/e5-small"
                         },
                         "full_text_search": {
@@ -1065,7 +1065,7 @@ mod tests {
                         "splitter": {
                             "model": "recursive_character"
                         },
-                        "embed": {
+                        "semantic_search": {
                             "source": "openai",
                             "model": "text-embedding-ada-002"
                         },
@@ -1082,7 +1082,7 @@ mod tests {
                     "query": {
                         "fields": {
                             "title": {
-                                "full_text_search": "test",
+                                "full_text_filter": "test",
                                 "query": "Test document: 2"
                             },
                             "body": {
@@ -1099,7 +1099,6 @@ mod tests {
                 })
                 .into(),
                 &mut pipeline,
-                None,
             )
             .await?;
         let ids: Vec<u64> = results
@@ -1111,11 +1110,64 @@ mod tests {
         Ok(())
     }
 
+    #[tokio::test]
+    async fn can_vector_search_with_query_builder() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cvswqb_7", None);
+        let mut pipeline = MultiFieldPipeline::new(
+            "test_r_p_cvswqb_0",
+            Some(
+                json!({
+                    "text": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    },
+                })
+                .into(),
+            ),
+        )?;
+        collection
+            .upsert_documents(generate_dummy_documents(10), None)
+            .await?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let results = collection
+            .query()
+            .vector_recall("test query", &pipeline, None)
+            .limit(3)
+            .filter(
+                json!({
+                    "metadata": {
+                        "id": {
+                            "$gt": 3
+                        }
+                    },
+                    "full_text": {
+                        "configuration": "english",
+                        "text": "test"
+                    }
+                })
+                .into(),
+            )
+            .fetch_all()
+            .await?;
+        let ids: Vec<u64> = results
+            .into_iter()
+            .map(|r| r.2["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids, vec![4, 5, 6]);
+        collection.archive().await?;
+        Ok(())
+    }
+
     ///////////////////////////////
     // Working With Documents /////
     ///////////////////////////////
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_upsert_and_filter_get_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cuafgd_1", None);
@@ -1168,7 +1220,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_paginate_get_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cpgd_2", None);
@@ -1250,7 +1302,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_filter_and_paginate_get_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cfapgd_1", None);
@@ -1307,7 +1359,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_filter_and_delete_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cfadd_1", None);
@@ -1351,8 +1403,8 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
-    fn can_order_documents() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn can_order_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cod_1", None);
         collection
@@ -1431,7 +1483,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_update_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cud_5", None);
@@ -1496,8 +1548,8 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
-    fn can_merge_metadata() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn can_merge_metadata() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cmm_5", None);
         collection
@@ -1640,7 +1692,7 @@ mod tests {
                         "test_parameter": 11
                     }
                 },
-                "embed": {
+                "semantic_search": {
                     "model": "test_model",
                     "parameters": {
                         "test_parameter": 10
@@ -1663,7 +1715,7 @@ mod tests {
     // ER Diagram /////////////////
     ///////////////////////////////
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn generate_er_diagram() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut pipeline = MultiFieldPipeline::new(
@@ -1671,7 +1723,7 @@ mod tests {
             Some(
                 json!({
                         "title": {
-                            "embed": {
+                            "semantic_search": {
                                 "model": "intfloat/e5-small"
                             },
                             "full_text_search": {
@@ -1682,7 +1734,7 @@ mod tests {
                             "splitter": {
                                 "model": "recursive_character"
                             },
-                            "embed": {
+                            "semantic_search": {
                                 "model": "intfloat/e5-small"
                             },
                             "full_text_search": {
@@ -1690,7 +1742,7 @@ mod tests {
                             }
                         },
                         "notes": {
-                           "embed": {
+                           "semantic_search": {
                                 "model": "intfloat/e5-small"
                             }
                         }

@@ -78,7 +78,7 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn into_user_friendly_json(mut self) -> Json {
+    pub fn into_user_friendly_json(self) -> Json {
         serde_json::json!({
             "row_id": self.id,
             "created_at": self.created_at,
