@@ -45,6 +45,7 @@ impl From<&ModelRuntime> for &'static str {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub(crate) struct ModelDatabaseData {
     pub id: i64,

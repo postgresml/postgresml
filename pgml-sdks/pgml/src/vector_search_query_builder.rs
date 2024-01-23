@@ -19,16 +19,10 @@ use crate::{
 };
 
 #[derive(Debug, Deserialize)]
-struct ValidFullTextSearchAction {
-    configuration: String,
-    text: String,
-}
-
-#[derive(Debug, Deserialize)]
 struct ValidField {
     query: String,
     model_parameters: Option<Json>,
-    full_text_search: Option<String>,
+    full_text_filter: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -81,10 +75,10 @@ pub async fn build_vector_search_query(
                     s.get(&key)
                         .as_ref()
                         .context(format!("Bad query - {key} does not exist in schema"))?
-                        .embed
+                        .semantic_search
                         .as_ref()
                         .context(format!(
-                            "Bad query - {key} does not have any directive to embed"
+                            "Bad query - {key} does not have any directive to semantic_search"
                         ))?
                         .model
                         .runtime,
@@ -105,10 +99,10 @@ pub async fn build_vector_search_query(
                 embedding_cte.expr_as(
                     Func::cust(SIden::Str("pgml.embed")).args([
                         Expr::cust(format!(
-                            "transformer => (SELECT schema #>> '{{{key},embed,model}}' FROM pipeline)",
+                            "transformer => (SELECT schema #>> '{{{key},semantic_search,model}}' FROM pipeline)",
                         )),
                         Expr::cust_with_values("text => $1", [vf.query]),
-                        Expr::cust(format!("kwargs => COALESCE((SELECT schema #> '{{{key},embed,model_parameters}}' FROM pipeline), '{{}}'::jsonb)")),
+                        Expr::cust(format!("kwargs => COALESCE((SELECT schema #> '{{{key},semantic_search,model_parameters}}' FROM pipeline), '{{}}'::jsonb)")),
                     ]),
                     Alias::new("embedding"),
                 );
@@ -132,7 +126,7 @@ pub async fn build_vector_search_query(
                     .unwrap()
                     .get(&key)
                     .unwrap()
-                    .embed
+                    .semantic_search
                     .as_ref()
                     .unwrap()
                     .model;
@@ -191,7 +185,7 @@ pub async fn build_vector_search_query(
             query.cond_where(filter);
         }
 
-        if let Some(full_text_search) = &vf.full_text_search {
+        if let Some(full_text_search) = &vf.full_text_filter {
             let full_text_table =
                 format!("{}_{}.{}_tsvectors", collection.name, pipeline.name, key);
             query
