@@ -6,10 +6,7 @@ use std::sync::Arc;
 
 use rust_bridge::python::CustomInto;
 
-use crate::{
-    pipeline::PipelineSyncData,
-    types::{GeneralJsonAsyncIterator, GeneralJsonIterator, Json},
-};
+use crate::types::{GeneralJsonAsyncIterator, GeneralJsonIterator, Json};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rust to PY //////////////////////////////////////////////////////////////////
@@ -47,12 +44,6 @@ impl IntoPy<PyObject> for Json {
             }
             serde_json::Value::Null => py.None(),
         }
-    }
-}
-
-impl IntoPy<PyObject> for PipelineSyncData {
-    fn into_py(self, py: Python) -> PyObject {
-        Json::from(self).into_py(py)
     }
 }
 
@@ -177,13 +168,6 @@ impl FromPyObject<'_> for Json {
     }
 }
 
-impl FromPyObject<'_> for PipelineSyncData {
-    fn extract(ob: &PyAny) -> PyResult<Self> {
-        let json = Json::extract(ob)?;
-        Ok(json.into())
-    }
-}
-
 impl FromPyObject<'_> for GeneralJsonAsyncIterator {
     fn extract(_ob: &PyAny) -> PyResult<Self> {
         panic!("We must implement this, but this is impossible to be reached")
@@ -199,9 +183,3 @@ impl FromPyObject<'_> for GeneralJsonIterator {
 ////////////////////////////////////////////////////////////////////////////////
 // Rust to Rust //////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
-impl CustomInto<Json> for PipelineSyncData {
-    fn custom_into(self) -> Json {
-        Json::from(self)
-    }
-}

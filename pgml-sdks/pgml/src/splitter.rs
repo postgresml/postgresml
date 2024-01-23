@@ -12,6 +12,7 @@ use crate::{
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub(crate) struct SplitterDatabaseData {
     pub id: i64,

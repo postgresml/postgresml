@@ -1,13 +1,10 @@
 use anyhow::Context;
-use indicatif::MultiProgress;
-use rust_bridge::{alias, alias_manual, alias_methods};
+use rust_bridge::{alias, alias_methods};
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::{Executor, PgConnection, PgPool, Postgres, Transaction};
-use std::sync::atomic::Ordering::Relaxed;
+use std::collections::HashMap;
 use std::sync::Arc;
-use std::{collections::HashMap, sync::atomic::AtomicBool};
-use tokio::join;
 use tokio::sync::Mutex;
 use tracing::instrument;
 
@@ -20,7 +17,6 @@ use crate::{
     remote_embeddings::build_remote_embeddings,
     splitter::Splitter,
     types::{DateTime, Json, TryToNumeric},
-    utils,
 };
 
 #[cfg(feature = "python")]
@@ -50,7 +46,7 @@ pub struct FullTextSearchAction {
 #[derive(Deserialize)]
 struct ValidFieldAction {
     splitter: Option<ValidSplitterAction>,
-    embed: Option<ValidEmbedAction>,
+    semantic_search: Option<ValidEmbedAction>,
     full_text_search: Option<FullTextSearchAction>,
 }
 
@@ -96,7 +92,7 @@ pub struct SplitterAction {
 }
 
 #[derive(Debug, Clone)]
-pub struct EmbedAction {
+pub struct SemanticSearchAction {
     pub model: Model,
     pub hnsw: HNSW,
 }
@@ -104,7 +100,7 @@ pub struct EmbedAction {
 #[derive(Debug, Clone)]
 pub struct FieldAction {
     pub splitter: Option<SplitterAction>,
-    pub embed: Option<EmbedAction>,
+    pub semantic_search: Option<SemanticSearchAction>,
     pub full_text_search: Option<FullTextSearchAction>,
 }
 
@@ -112,14 +108,14 @@ impl TryFrom<ValidFieldAction> for FieldAction {
     type Error = anyhow::Error;
     fn try_from(value: ValidFieldAction) -> Result<Self, Self::Error> {
         let embed = value
-            .embed
+            .semantic_search
             .map(|v| {
                 let model = Model::new(Some(v.model), v.source, v.parameters);
                 let hnsw = v
                     .hnsw
                     .map(|v2| HNSW::try_from(v2))
                     .unwrap_or_else(|| Ok(HNSW::default()))?;
-                anyhow::Ok(EmbedAction { model, hnsw })
+                anyhow::Ok(SemanticSearchAction { model, hnsw })
             })
             .transpose()?;
         let splitter = value
@@ -131,7 +127,7 @@ impl TryFrom<ValidFieldAction> for FieldAction {
             .transpose()?;
         Ok(Self {
             splitter,
-            embed,
+            semantic_search: embed,
             full_text_search: value.full_text_search,
         })
     }
@@ -177,7 +173,7 @@ pub struct MultiFieldPipelineDatabaseData {
     pub created_at: DateTime,
 }
 
-#[derive(Debug, Clone)]
+#[derive(alias, Debug, Clone)]
 pub struct MultiFieldPipeline {
     pub name: String,
     pub schema: Option<Json>,
@@ -204,6 +200,7 @@ fn json_to_schema(schema: &Json) -> anyhow::Result<ParsedSchema> {
         })
 }
 
+#[alias_methods(new, get_status)]
 impl MultiFieldPipeline {
     pub fn new(name: &str, schema: Option<Json>) -> anyhow::Result<Self> {
         let parsed_schema = schema.as_ref().map(|s| json_to_schema(s)).transpose()?;
@@ -268,7 +265,7 @@ impl MultiFieldPipeline {
                 });
             }
 
-            if let Some(_) = value.embed {
+            if let Some(_) = value.semantic_search {
                 let embeddings_table_name = format!("{schema}.{key}_embeddings");
                 let embeddings_status: (Option<i64>, Option<i64>) =
                     sqlx::query_as(&query_builder!(
@@ -334,7 +331,7 @@ impl MultiFieldPipeline {
                         splitter.model.set_project_info(project_info.clone());
                         splitter.model.verify_in_database(false).await?;
                     }
-                    if let Some(embed) = &mut value.embed {
+                    if let Some(embed) = &mut value.semantic_search {
                         embed.model.set_project_info(project_info.clone());
                         embed.model.verify_in_database(false).await?;
                     }
@@ -355,7 +352,7 @@ impl MultiFieldPipeline {
                         splitter.model.set_project_info(project_info.clone());
                         splitter.model.verify_in_database(false).await?;
                     }
-                    if let Some(embed) = &mut value.embed {
+                    if let Some(embed) = &mut value.semantic_search {
                         embed.model.set_project_info(project_info.clone());
                         embed.model.verify_in_database(false).await?;
                     }
@@ -435,7 +432,7 @@ impl MultiFieldPipeline {
                 )
                 .await?;
 
-            if let Some(embed) = &value.embed {
+            if let Some(embed) = &value.semantic_search {
                 let embeddings_table_name = format!("{}.{}_embeddings", schema, key);
                 let embedding_length = match &embed.model.runtime {
                     ModelRuntime::Python => {
@@ -594,7 +591,7 @@ impl MultiFieldPipeline {
                 )
                 .await?;
             if !chunk_ids.is_empty() {
-                if let Some(embed) = &value.embed {
+                if let Some(embed) = &value.semantic_search {
                     self.sync_embeddings_for_chunks(
                         key,
                         &embed.model,
@@ -790,7 +787,7 @@ impl MultiFieldPipeline {
         for (key, value) in parsed_schema.iter() {
             self.resync_chunks(key, value.splitter.as_ref().map(|v| &v.model))
                 .await?;
-            if let Some(embed) = &value.embed {
+            if let Some(embed) = &value.semantic_search {
                 self.resync_embeddings(key, &embed.model).await?;
             }
             if let Some(full_text_search) = &value.full_text_search {
@@ -944,7 +941,7 @@ impl MultiFieldPipeline {
                 if let Some(splitter) = &mut value.splitter {
                     splitter.model.set_project_info(project_info.clone());
                 }
-                if let Some(embed) = &mut value.embed {
+                if let Some(embed) = &mut value.semantic_search {
                     embed.model.set_project_info(project_info.clone());
                 }
             }

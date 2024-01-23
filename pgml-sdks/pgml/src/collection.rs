@@ -3,13 +3,11 @@ use indicatif::MultiProgress;
 use itertools::Itertools;
 use regex::Regex;
 use rust_bridge::{alias, alias_methods};
-use sea_query::{Alias, Expr, JoinType, NullOrdering, Order, PostgresQueryBuilder, Query};
+use sea_query::{Expr, NullOrdering, Order, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde_json::json;
-use sqlx::postgres::PgPool;
 use sqlx::Executor;
 use sqlx::PgConnection;
-use sqlx::Transaction;
 use std::borrow::Cow;
 use std::path::Path;
 use std::sync::Arc;
@@ -22,22 +20,20 @@ use crate::filter_builder::FilterBuilder;
 use crate::search_query_builder::build_search_query;
 use crate::vector_search_query_builder::build_vector_search_query;
 use crate::{
-    filter_builder, get_or_initialize_pool,
-    model::ModelRuntime,
-    models,
+    get_or_initialize_pool, models,
     multi_field_pipeline::MultiFieldPipeline,
-    order_by_builder,
-    pipeline::Pipeline,
-    queries, query_builder,
+    order_by_builder, queries, query_builder,
     query_builder::QueryBuilder,
-    remote_embeddings::build_remote_embeddings,
     splitter::Splitter,
     types::{DateTime, IntoTableNameAndSchema, Json, SIden, TryToNumeric},
     utils,
 };
 
 #[cfg(feature = "python")]
-use crate::{pipeline::PipelinePython, query_builder::QueryBuilderPython, types::JsonPython};
+use crate::{
+    multi_field_pipeline::MultiFieldPipelinePython, query_builder::QueryBuilderPython,
+    types::JsonPython,
+};
 
 /// Our project tasks
 #[derive(Debug, Clone)]
@@ -738,7 +734,6 @@ impl Collection {
     /// * `query` - The query to search for
     /// * `pipeline` - The [Pipeline] used for the search
     /// * `query_paramaters` - The query parameters passed to the model for search
-    /// * `top_k` - How many results to limit on.
     ///
     /// # Example
     ///
@@ -758,7 +753,6 @@ impl Collection {
         &mut self,
         query: Json,
         pipeline: &mut MultiFieldPipeline,
-        top_k: Option<i64>,
     ) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
@@ -1113,7 +1107,7 @@ documents ||..|{{ {nice_name_key}_chunks
             );
             uml_relations.push_str(&relations);
 
-            if let Some(_embed_action) = &field_action.embed {
+            if let Some(_embed_action) = &field_action.semantic_search {
                 let entites = format!(
                     r#"
 entity "{schema}.{key}_chunks" as {nice_name_key}_chunks {{

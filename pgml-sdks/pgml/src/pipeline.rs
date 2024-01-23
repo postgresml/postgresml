@@ -1,27 +1,15 @@
-use anyhow::Context;
-use indicatif::MultiProgress;
-use rust_bridge::{alias, alias_manual, alias_methods};
+use rust_bridge::{alias, alias_methods};
 use serde_json::json;
-use sqlx::{Executor, PgConnection, PgPool};
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering::Relaxed;
-use tokio::join;
-use tracing::instrument;
 
 use crate::{
-    collection::ProjectInfo,
-    get_or_initialize_pool,
-    model::{Model, ModelRuntime},
-    multi_field_pipeline::MultiFieldPipeline,
-    queries, query_builder,
-    remote_embeddings::build_remote_embeddings,
-    splitter::Splitter,
-    types::{DateTime, Json, TryToNumeric},
-    utils,
+    model::Model, multi_field_pipeline::MultiFieldPipeline, splitter::Splitter, types::Json,
 };
 
 #[cfg(feature = "python")]
-use crate::{model::ModelPython, splitter::SplitterPython, types::JsonPython};
+use crate::{
+    model::ModelPython, multi_field_pipeline::MultiFieldPipelinePython, splitter::SplitterPython,
+    types::JsonPython,
+};
 
 /// A pipeline that processes documents
 /// This has been deprecated in favor of [MultiFieldPipeline]
@@ -33,7 +21,7 @@ pub struct Pipeline {
     pub parameters: Option<Json>,
 }
 
-#[alias_methods(new, get_status, to_dict)]
+#[alias_methods(new)]
 impl Pipeline {
     /// Creates a new [Pipeline]
     ///
