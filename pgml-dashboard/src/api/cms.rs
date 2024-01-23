@@ -443,6 +443,49 @@ impl Collection {
         Ok(links)
     }
 
+    // Convert a IndexLink from summary to a file path.
+    pub fn url_to_path(&self, url: &str) -> PathBuf {
+        let url = if url.ends_with('/') {
+            format!("{url}README.md")
+        } else {
+            format!("{url}.md")
+        };
+
+        let mut path = PathBuf::from(url);
+        if path.has_root() {
+            path = path.strip_prefix("/").unwrap().to_owned();
+        }
+        
+        let mut path_v = path.components().collect::<Vec<_>>();
+        path_v.remove(0);
+
+        let path_pb = PathBuf::from_iter(path_v.iter());
+
+        self.root_dir.join(path_pb)
+    }
+
+    // get all urls in the collection and preserve order.
+    pub fn get_all_urls(&self) -> Vec<String> {
+        let mut urls: Vec<String> = Vec::new();
+        let mut children: Vec<&IndexLink> = Vec::new();
+        for item in &self.index {
+            children.push(item);
+        }
+
+        children.reverse();
+
+        while children.len() > 0 {
+            let current = children.pop().unwrap();
+            urls.push(current.href.clone());
+
+            for i in (0..current.children.len()).rev() {
+                children.push(&current.children[i])
+            }
+        }
+
+        urls
+    }
+
     // Sets specified index as currently viewed.
     fn open_index(&self, path: &PathBuf) -> Vec<IndexLink> {
         self.index
@@ -825,5 +868,44 @@ This is the end of the markdown
             html.chars().filter(|c| !c.is_whitespace()).collect::<String>()
                 == expected.chars().filter(|c| !c.is_whitespace()).collect::<String>()
         )
+    }
+
+    // Test we can parse doc meta with out issue. 
+    #[sqlx::test]
+    async fn docs_meta_parse() {
+        let collection = &crate::api::cms::DOCS;
+
+        let urls = collection.get_all_urls();
+
+        for url in urls {
+            let path = collection.url_to_path(url.as_ref());
+            crate::api::cms::Document::from_path(&path).await.unwrap();
+        }
+    }
+
+    // Test we can parse blog meta with out issue. 
+    #[sqlx::test]
+    async fn blog_meta_parse() {
+        let collection = &crate::api::cms::BLOG;
+
+        let urls = collection.get_all_urls();
+
+        for url in urls {
+            let path = collection.url_to_path(url.as_ref());
+            crate::api::cms::Document::from_path(&path).await.unwrap();
+        }
+    }
+
+    // Test we can parse career meta with out issue. 
+    #[sqlx::test]
+    async fn career_meta_parse() {
+        let collection = &crate::api::cms::CAREERS;
+
+        let urls = collection.get_all_urls();
+
+        for url in urls {
+            let path = collection.url_to_path(url.as_ref());
+            crate::api::cms::Document::from_path(&path).await.unwrap();
+        }
     }
 }
