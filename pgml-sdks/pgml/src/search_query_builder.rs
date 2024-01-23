@@ -307,7 +307,7 @@ pub async fn build_search_query(
             .expr(Expr::cust("*"))
             .from_subquery(query, Alias::new("q1"))
             .order_by(SIden::Str("score"), Order::Desc)
-            .limit(5);
+            .limit(limit);
 
         let mut combined_query = Query::select();
         combined_query

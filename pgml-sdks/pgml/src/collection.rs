@@ -718,6 +718,19 @@ impl Collection {
         }
     }
 
+    #[instrument(skip(self))]
+    pub async fn search_local(
+        &self,
+        query: Json,
+        pipeline: &MultiFieldPipeline,
+    ) -> anyhow::Result<Vec<Json>> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
+        let results: Vec<(Json,)> = sqlx::query_as_with(&built_query, values)
+            .fetch_all(&pool)
+            .await?;
+        Ok(results.into_iter().map(|v| v.0).collect())
+    }
     /// Performs vector search on the [Collection]
     ///
     /// # Arguments
