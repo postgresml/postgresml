@@ -63,7 +63,7 @@ lazy_static! {
     );
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum DocType {
     Blog,
     Docs,
@@ -115,14 +115,26 @@ pub struct Document {
 // Gets document markdown
 impl Document {
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
-        debug!("path: {:?}", path);
-
-        let regex = regex::Regex::new(r#".*/pgml-cms/([^"]*)/(.*)\.md"#).unwrap();
-
-        let doc_type = match regex.captures(&path.clone().display().to_string()) {
-            Some(c) => DocType::from_str(&c[1]).ok(),
+        let doc_type = match path.strip_prefix(config::cms_dir()) {
+            Ok(path) => {
+                match path.into_iter().next() {
+                    Some(dir) => {
+                        match &PathBuf::from(dir).display().to_string()[..] {
+                            "blog" => Some(DocType::Blog),
+                            "docs" => Some(DocType::Docs),
+                            "careers" => Some(DocType::Careers),
+                            _ => None
+                        }
+                    },
+                    _ => None
+                } 
+            }, 
             _ => None,
         };
+
+        if doc_type.is_none() {
+            warn!("doc_type not parsed from path: {path:?}");
+        }
 
         let contents = tokio::fs::read_to_string(&path).await?;
 
@@ -143,7 +155,7 @@ impl Document {
             (None, contents)
         };
 
-        let default_image = ".gitbook/assets/blog_image_placeholder.png";
+        let default_image_path = BLOG.asset_url_root.join("blog_image_placeholder.png").display().to_string();
 
         // parse meta section
         let (description, image, featured, tags) = match meta {
@@ -154,14 +166,22 @@ impl Document {
                     Some(meta["description"].as_str().unwrap().to_string())
                 };
 
+                // For now the only images shown are blog images TODO: use doc_type to set asset path when working.
                 let image = if meta["image"].is_badvalue() {
-                    Some(format!("/{}/{}", doc_type.clone().unwrap().to_string(), default_image))
+                    Some(default_image_path.clone())
                 } else {
-                    Some(format!(
-                        "/{}/{}",
-                        doc_type.clone().unwrap().to_string().to_string(),
-                        meta["image"].as_str().unwrap()
-                    ))
+                    match PathBuf::from_str(meta["image"].as_str().unwrap()) {
+                        Ok(image_path) => {
+                            match image_path.file_name() {
+                                Some(file_name) => {
+                                    let file = PathBuf::from(file_name).display().to_string();
+                                    Some(BLOG.asset_url_root.join(file).display().to_string())
+                                }, 
+                                _ => Some(default_image_path.clone())
+                            }
+                        },
+                        _ => Some(default_image_path.clone())
+                    }
                 };
 
                 let featured = if meta["featured"].is_badvalue() {
@@ -184,7 +204,7 @@ impl Document {
             }
             None => (
                 None,
-                Some(format!("/{}/{}", doc_type.clone().unwrap().to_string(), default_image)),
+                Some(default_image_path.clone()),
                 false,
                 Vec::new(),
             ),
@@ -192,7 +212,7 @@ impl Document {
 
         let thumbnail = match &image {
             Some(image) => {
-                if image.contains(default_image) {
+                if image.contains(&default_image_path) || doc_type != Some(DocType::Blog) {
                     None
                 } else {
                     Some(format!("{}{}", config::site_domain(), image))
@@ -266,6 +286,8 @@ pub struct Collection {
     pub index: Vec<IndexLink>,
     /// A list of old paths to new paths in this collection
     redirects: HashMap<&'static str, &'static str>,
+    /// Url to assets for this collection
+    pub asset_url_root: PathBuf
 }
 
 impl Collection {
@@ -276,6 +298,7 @@ impl Collection {
         let root_dir = config::cms_dir().join(&slug);
         let asset_dir = root_dir.join(".gitbook").join("assets");
         let url_root = PathBuf::from("/").join(&slug);
+        let asset_url_root = PathBuf::from("/").join(&slug).join(".gitbook").join("assets");
 
         let mut collection = Collection {
             name,
@@ -283,6 +306,7 @@ impl Collection {
             asset_dir,
             url_root,
             redirects,
+            asset_url_root,
             ..Default::default()
         };
         collection.build_index(hide_root);
@@ -417,6 +441,49 @@ impl Collection {
             }
         }
         Ok(links)
+    }
+
+    // Convert a IndexLink from summary to a file path.
+    pub fn url_to_path(&self, url: &str) -> PathBuf {
+        let url = if url.ends_with('/') {
+            format!("{url}README.md")
+        } else {
+            format!("{url}.md")
+        };
+
+        let mut path = PathBuf::from(url);
+        if path.has_root() {
+            path = path.strip_prefix("/").unwrap().to_owned();
+        }
+        
+        let mut path_v = path.components().collect::<Vec<_>>();
+        path_v.remove(0);
+
+        let path_pb = PathBuf::from_iter(path_v.iter());
+
+        self.root_dir.join(path_pb)
+    }
+
+    // get all urls in the collection and preserve order.
+    pub fn get_all_urls(&self) -> Vec<String> {
+        let mut urls: Vec<String> = Vec::new();
+        let mut children: Vec<&IndexLink> = Vec::new();
+        for item in &self.index {
+            children.push(item);
+        }
+
+        children.reverse();
+
+        while children.len() > 0 {
+            let current = children.pop().unwrap();
+            urls.push(current.href.clone());
+
+            for i in (0..current.children.len()).rev() {
+                children.push(&current.children[i])
+            }
+        }
+
+        urls
     }
 
     // Sets specified index as currently viewed.
@@ -801,5 +868,44 @@ This is the end of the markdown
             html.chars().filter(|c| !c.is_whitespace()).collect::<String>()
                 == expected.chars().filter(|c| !c.is_whitespace()).collect::<String>()
         )
+    }
+
+    // Test we can parse doc meta with out issue. 
+    #[sqlx::test]
+    async fn docs_meta_parse() {
+        let collection = &crate::api::cms::DOCS;
+
+        let urls = collection.get_all_urls();
+
+        for url in urls {
+            let path = collection.url_to_path(url.as_ref());
+            crate::api::cms::Document::from_path(&path).await.unwrap();
+        }
+    }
+
+    // Test we can parse blog meta with out issue. 
+    #[sqlx::test]
+    async fn blog_meta_parse() {
+        let collection = &crate::api::cms::BLOG;
+
+        let urls = collection.get_all_urls();
+
+        for url in urls {
+            let path = collection.url_to_path(url.as_ref());
+            crate::api::cms::Document::from_path(&path).await.unwrap();
+        }
+    }
+
+    // Test we can parse career meta with out issue. 
+    #[sqlx::test]
+    async fn career_meta_parse() {
+        let collection = &crate::api::cms::CAREERS;
+
+        let urls = collection.get_all_urls();
+
+        for url in urls {
+            let path = collection.url_to_path(url.as_ref());
+            crate::api::cms::Document::from_path(&path).await.unwrap();
+        }
     }
 }

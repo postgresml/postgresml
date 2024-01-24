@@ -6,7 +6,6 @@ use crate::guards::Cluster;
 use crate::Notification;
 use pgml_components::component;
 use sailfish::TemplateOnce;
-use std::path::PathBuf;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "pages/blog/landing_page/template.html")]
@@ -26,14 +25,12 @@ impl LandingPage {
     }
 
     pub async fn index(mut self, collection: &Collection) -> Self {
-        let index = &collection.index;
+        let urls = collection.get_all_urls();
 
-        for item in index {
-            let path = &item.href.replace("/blog/", "");
-            let root = collection.root_dir.clone();
-            let file = root.join(format!("{}.md", path));
+        for url in urls {
+            let file = collection.url_to_path(url.as_ref());
 
-            let doc = crate::api::cms::Document::from_path(&PathBuf::from(file))
+            let doc = crate::api::cms::Document::from_path(&file)
                 .await
                 .unwrap();
 
@@ -46,7 +43,7 @@ impl LandingPage {
                 featured: doc.featured,
                 tags: doc.tags,
                 title: doc.title,
-                path: item.href.clone(),
+                path: url,
             };
 
             self.index.push(meta)
@@ -58,7 +55,7 @@ impl LandingPage {
         let mut cycle = 0;
         let mut html: Vec<String> = Vec::new();
 
-        // blogs are in cms Readme order, make the first post the big card and second long card.
+        // blogs are in cms Summary order, make the first post the big card and second long card.
         let big_index = index.remove(0);
         let long_index = index.remove(0);
         let small_image_index = index.remove(0);
