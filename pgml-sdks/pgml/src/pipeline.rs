@@ -13,7 +13,7 @@ use crate::{
 
 /// A pipeline that processes documents
 /// This has been deprecated in favor of [MultiFieldPipeline]
-#[derive(alias, Debug, Clone)]
+// #[derive(alias, Debug, Clone)]
 pub struct Pipeline {
     pub name: String,
     pub model: Option<Model>,
@@ -21,7 +21,7 @@ pub struct Pipeline {
     pub parameters: Option<Json>,
 }
 
-#[alias_methods(new)]
+// #[alias_methods(new)]
 impl Pipeline {
     /// Creates a new [Pipeline]
     ///
