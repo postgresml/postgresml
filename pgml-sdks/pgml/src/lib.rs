@@ -47,7 +47,9 @@ pub use splitter::Splitter;
 pub use transformer_pipeline::TransformerPipeline;
 
 // This is use when inserting collections to set the sdk_version used during creation
-static SDK_VERSION: &str = "0.9.2";
+// This doesn't actually mean the verion of the SDK it was created on, it means the
+// version it is compatible with
+static SDK_VERSION: &str = "0.11.0";
 
 // Store the database(s) in a global variable so that we can access them from anywhere
 // This is not necessarily idiomatic Rust, but it is a good way to acomplish what we need
@@ -161,7 +163,8 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(init_logger, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(migrate, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(cli::cli, m)?)?;
-    m.add_class::<pipeline::PipelinePython>()?;
+    // m.add_class::<pipeline::PipelinePython>()?;
+    m.add_class::<multi_field_pipeline::MultiFieldPipelinePython>()?;
     m.add_class::<collection::CollectionPython>()?;
     m.add_class::<model::ModelPython>()?;
     m.add_class::<splitter::SplitterPython>()?;

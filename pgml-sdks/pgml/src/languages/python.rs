@@ -4,8 +4,6 @@ use pyo3::types::{PyDict, PyFloat, PyInt, PyList, PyString};
 use pyo3::{prelude::*, types::PyBool};
 use std::sync::Arc;
 
-use rust_bridge::python::CustomInto;
-
 use crate::types::{GeneralJsonAsyncIterator, GeneralJsonIterator, Json};
 
 ////////////////////////////////////////////////////////////////////////////////
