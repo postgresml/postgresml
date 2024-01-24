@@ -133,7 +133,7 @@ impl Document {
         };
 
         if doc_type.is_none() {
-            warn!("doc_type not parsed from path: {:?}", path);
+            warn!("doc_type not parsed from path: {path:?}");
         }
 
         let contents = tokio::fs::read_to_string(&path).await?;
