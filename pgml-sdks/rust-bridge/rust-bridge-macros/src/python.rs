@@ -221,8 +221,9 @@ pub fn generate_python_methods(
                 let st = r.to_string();
                 Some(if st.contains('&') {
                     let st = st.replace("self", &wrapped_type_ident.to_string());
-                    let s = syn::parse_str::<syn::Type>(&st).unwrap_or_else(|_| panic!("Error converting self type to necessary syn type: {:?}",
-                        r));
+                    let s = syn::parse_str::<syn::Type>(&st).unwrap_or_else(|_| {
+                        panic!("Error converting self type to necessary syn type: {:?}", r)
+                    });
                     s.to_token_stream()
                 } else {
                     quote! { #wrapped_type_ident }
@@ -265,6 +266,7 @@ pub fn generate_python_methods(
         };
 
         // The new function for pyO3 requires some unique syntax
+        // The way we use the #convert_from assumes that new has a return type
         let (signature, middle) = if method_ident == "new" {
             let signature = quote! {
                 #[new]
@@ -296,7 +298,7 @@ pub fn generate_python_methods(
                 use rust_bridge::python::CustomInto;
                 #prepared_wrapper_arguments
                 #middle
-                let x: Self = x.custom_into();
+                let x: #convert_from = x.custom_into();
                 Ok(x)
             };
             (signature, middle)

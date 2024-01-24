@@ -66,6 +66,11 @@ def test_can_create_pipeline():
     assert pipeline is not None
 
 
+def test_can_create_multi_field_pipeline():
+    pipeline = pgml.MultiFieldPipeline("test_p_p_tccmfp_0", {})
+    assert pipeline is not None
+
+
 def test_can_create_builtins():
     builtins = pgml.Builtins()
     assert builtins is not None

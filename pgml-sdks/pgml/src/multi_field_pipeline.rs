@@ -20,7 +20,7 @@ use crate::{
 };
 
 #[cfg(feature = "python")]
-use crate::{model::ModelPython, splitter::SplitterPython, types::JsonPython};
+use crate::types::JsonPython;
 
 type ParsedSchema = HashMap<String, FieldAction>;
 
