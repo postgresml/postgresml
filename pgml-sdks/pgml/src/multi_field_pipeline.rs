@@ -50,6 +50,7 @@ struct ValidFieldAction {
     full_text_search: Option<FullTextSearchAction>,
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone)]
 pub struct HNSW {
     m: u64,
@@ -113,7 +114,7 @@ impl TryFrom<ValidFieldAction> for FieldAction {
                 let model = Model::new(Some(v.model), v.source, v.parameters);
                 let hnsw = v
                     .hnsw
-                    .map(|v2| HNSW::try_from(v2))
+                    .map(HNSW::try_from)
                     .unwrap_or_else(|| Ok(HNSW::default()))?;
                 anyhow::Ok(SemanticSearchAction { model, hnsw })
             })
@@ -203,7 +204,7 @@ fn json_to_schema(schema: &Json) -> anyhow::Result<ParsedSchema> {
 #[alias_methods(new, get_status, to_dict)]
 impl MultiFieldPipeline {
     pub fn new(name: &str, schema: Option<Json>) -> anyhow::Result<Self> {
-        let parsed_schema = schema.as_ref().map(|s| json_to_schema(s)).transpose()?;
+        let parsed_schema = schema.as_ref().map(json_to_schema).transpose()?;
         Ok(Self {
             name: name.to_string(),
             schema,
@@ -250,7 +251,7 @@ impl MultiFieldPipeline {
 
             results[key] = json!({});
 
-            if let Some(_) = value.splitter {
+            if value.splitter.is_some() {
                 let chunks_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
                     "SELECT (SELECT COUNT(DISTINCT document_id) FROM %s), COUNT(id) FROM %s",
                     chunks_table_name,
@@ -265,7 +266,7 @@ impl MultiFieldPipeline {
                 });
             }
 
-            if let Some(_) = value.semantic_search {
+            if value.semantic_search.is_some() {
                 let embeddings_table_name = format!("{schema}.{key}_embeddings");
                 let embeddings_status: (Option<i64>, Option<i64>) =
                     sqlx::query_as(&query_builder!(
@@ -282,7 +283,7 @@ impl MultiFieldPipeline {
                 });
             }
 
-            if let Some(_) = value.full_text_search {
+            if value.full_text_search.is_some() {
                 let tsvectors_table_name = format!("{schema}.{key}_tsvectors");
                 let tsvectors_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
                     "SELECT (SELECT count(*) FROM %s), (SELECT count(*) FROM %s)",

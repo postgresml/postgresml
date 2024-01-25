@@ -21,7 +21,7 @@ use crate::{
 #[derive(Debug, Deserialize)]
 struct ValidSemanticSearchAction {
     query: String,
-    model_parameters: Option<Json>,
+    parameters: Option<Json>,
     boost: Option<f32>,
 }
 
@@ -107,7 +107,7 @@ pub async fn build_search_query(
                             "transformer => (SELECT schema #>> '{{{key},semantic_search,model}}' FROM pipeline)",
                         )),
                         Expr::cust_with_values("text => $1", [&vsa.query]),
-                        Expr::cust(format!("kwargs => COALESCE((SELECT schema #> '{{{key},semantic_search,model_parameters}}' FROM pipeline), '{{}}'::jsonb)")),
+                        Expr::cust_with_values("kwargs => $1", [vsa.parameters.unwrap_or_default().0]),
                     ]),
                     Alias::new("embedding"),
                 );
@@ -143,7 +143,7 @@ pub async fn build_search_query(
                     let remote_embeddings = build_remote_embeddings(
                         model.runtime,
                         &model.name,
-                        vsa.model_parameters.as_ref(),
+                        vsa.parameters.as_ref(),
                     )?;
                     let mut embeddings = remote_embeddings.embed(vec![vsa.query]).await?;
                     std::mem::take(&mut embeddings[0])

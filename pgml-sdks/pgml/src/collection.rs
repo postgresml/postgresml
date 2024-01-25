@@ -507,7 +507,7 @@ impl Collection {
             )
             };
             let (document_id, previous_document): (i64, Option<Json>) = sqlx::query_as(&query)
-                .bind(&source_uuid)
+                .bind(source_uuid)
                 .bind(&document)
                 .fetch_one(&mut *transaction)
                 .await?;
