@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS pgml.collections (
 );
 "#;
 
-pub const CREATE_MULTI_FIELD_PIPELINES_TABLE: &str = r#"
+pub const PIPELINES_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY,
   name text NOT NULL,
@@ -207,7 +207,7 @@ FROM
 ON CONFLICT (document_id, chunk_index) DO NOTHING 
 "#;
 
-pub const GENERATE_CHUNKS_FOR_DOCUMENT_ID: &str = r#"
+pub const GENERATE_CHUNKS_FOR_DOCUMENT_IDS: &str = r#"
 WITH splitter as (
     SELECT
       name,
@@ -234,7 +234,7 @@ FROM
         (SELECT parameters FROM splitter)
       ) AS chunk 
     FROM 
-      %s WHERE id = $2
+      %s WHERE id = ANY($2)
   ) chunks
 ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
 RETURNING id

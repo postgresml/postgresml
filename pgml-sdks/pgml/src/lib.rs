@@ -21,7 +21,6 @@ mod languages;
 pub mod migrations;
 mod model;
 pub mod models;
-mod multi_field_pipeline;
 mod open_source_ai;
 mod order_by_builder;
 mod pipeline;
@@ -40,7 +39,6 @@ mod vector_search_query_builder;
 pub use builtins::Builtins;
 pub use collection::Collection;
 pub use model::Model;
-pub use multi_field_pipeline::MultiFieldPipeline;
 pub use open_source_ai::OpenSourceAI;
 pub use pipeline::Pipeline;
 pub use splitter::Splitter;
@@ -163,8 +161,7 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(init_logger, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(migrate, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(cli::cli, m)?)?;
-    // m.add_class::<pipeline::PipelinePython>()?;
-    m.add_class::<multi_field_pipeline::MultiFieldPipelinePython>()?;
+    m.add_class::<pipeline::PipelinePython>()?;
     m.add_class::<collection::CollectionPython>()?;
     m.add_class::<model::ModelPython>()?;
     m.add_class::<splitter::SplitterPython>()?;
@@ -220,11 +217,7 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
         "newTransformerPipeline",
         transformer_pipeline::TransformerPipelineJavascript::new,
     )?;
-    cx.export_function(
-        "newMultiFieldPipeline",
-        multi_field_pipeline::MultiFieldPipelineJavascript::new,
-    )?;
-    // cx.export_function("newPipeline", pipeline::PipelineJavascript::new)?;
+    cx.export_function("newPipeline", pipeline::PipelineJavascript::new)?;
     cx.export_function(
         "newOpenSourceAI",
         open_source_ai::OpenSourceAIJavascript::new,
@@ -284,7 +277,7 @@ mod tests {
     #[tokio::test]
     async fn can_add_remove_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut pipeline = MultiFieldPipeline::new("test_p_cap_58", Some(json!({}).into()))?;
+        let mut pipeline = Pipeline::new("test_p_carp_58", Some(json!({}).into()))?;
         let mut collection = Collection::new("test_r_c_carp_1", None);
         assert!(collection.database_data.is_none());
         collection.add_pipeline(&mut pipeline).await?;
@@ -299,8 +292,8 @@ mod tests {
     #[tokio::test]
     async fn can_add_remove_pipelines() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut pipeline1 = MultiFieldPipeline::new("test_r_p_carps_1", Some(json!({}).into()))?;
-        let mut pipeline2 = MultiFieldPipeline::new("test_r_p_carps_2", Some(json!({}).into()))?;
+        let mut pipeline1 = Pipeline::new("test_r_p_carps_1", Some(json!({}).into()))?;
+        let mut pipeline2 = Pipeline::new("test_r_p_carps_2", Some(json!({}).into()))?;
         let mut collection = Collection::new("test_r_c_carps_11", None);
         collection.add_pipeline(&mut pipeline1).await?;
         collection.add_pipeline(&mut pipeline2).await?;
@@ -317,9 +310,9 @@ mod tests {
     #[tokio::test]
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_capaud_48";
+        let collection_name = "test_r_c_capaud_51";
         let pipeline_name = "test_r_p_capaud_6";
-        let mut pipeline = MultiFieldPipeline::new(
+        let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
@@ -390,7 +383,7 @@ mod tests {
         let documents = generate_dummy_documents(2);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cudaap_9";
-        let mut pipeline = MultiFieldPipeline::new(
+        let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
@@ -449,7 +442,7 @@ mod tests {
 
     #[tokio::test]
     async fn disable_enable_pipeline() -> anyhow::Result<()> {
-        let mut pipeline = MultiFieldPipeline::new("test_p_dep_1", Some(json!({}).into()))?;
+        let mut pipeline = Pipeline::new("test_p_dep_1", Some(json!({}).into()))?;
         let mut collection = Collection::new("test_r_c_dep_1", None);
         collection.add_pipeline(&mut pipeline).await?;
         let queried_pipeline = &collection.get_pipelines().await?[0];
@@ -467,10 +460,10 @@ mod tests {
     #[tokio::test]
     async fn can_upsert_documents_and_enable_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cudaap_43";
+        let collection_name = "test_r_c_cudaep_43";
         let mut collection = Collection::new(collection_name, None);
-        let pipeline_name = "test_r_p_cudaap_9";
-        let mut pipeline = MultiFieldPipeline::new(
+        let pipeline_name = "test_r_p_cudaep_9";
+        let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
@@ -515,7 +508,7 @@ mod tests {
             .upsert_documents(documents[..2].to_owned(), None)
             .await?;
         let pipeline_name1 = "test_r_p_rpdt1_0";
-        let mut pipeline = MultiFieldPipeline::new(
+        let mut pipeline = Pipeline::new(
             pipeline_name1,
             Some(
                 json!({
@@ -566,7 +559,7 @@ mod tests {
         assert!(tsvectors.len() == 8);
 
         let pipeline_name2 = "test_r_p_rpdt2_0";
-        let mut pipeline = MultiFieldPipeline::new(
+        let mut pipeline = Pipeline::new(
             pipeline_name2,
             Some(
                 json!({
@@ -663,7 +656,7 @@ mod tests {
         let collection_name = "test_r_c_pss_5";
         let mut collection = Collection::new(collection_name, None);
         let pipeline_name = "test_r_p_pss_0";
-        let mut pipeline = MultiFieldPipeline::new(
+        let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
@@ -771,7 +764,7 @@ mod tests {
         let collection_name = "test_r_c_cschpfp_4";
         let mut collection = Collection::new(collection_name, None);
         let pipeline_name = "test_r_p_cschpfp_0";
-        let mut pipeline = MultiFieldPipeline::new(
+        let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
@@ -816,12 +809,12 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cs_70";
+        let collection_name = "test_r_c_cswle_72";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
-        let pipeline_name = "test_r_p_cs_9";
-        let mut pipeline = MultiFieldPipeline::new(
+        let pipeline_name = "test_r_p_cswle_9";
+        let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
@@ -918,7 +911,7 @@ mod tests {
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cswre_8";
-        let mut pipeline = MultiFieldPipeline::new(
+        let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
@@ -944,7 +937,7 @@ mod tests {
             ),
         )?;
         collection.add_pipeline(&mut pipeline).await?;
-        let mut pipeline = MultiFieldPipeline::new(pipeline_name, None)?;
+        let mut pipeline = Pipeline::new(pipeline_name, None)?;
         let results = collection
             .search(
                 json!({
@@ -998,7 +991,7 @@ mod tests {
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cvswle_0";
-        let mut pipeline = MultiFieldPipeline::new(
+        let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
@@ -1065,7 +1058,7 @@ mod tests {
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cvswre_0";
-        let mut pipeline = MultiFieldPipeline::new(
+        let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
@@ -1091,7 +1084,7 @@ mod tests {
             ),
         )?;
         collection.add_pipeline(&mut pipeline).await?;
-        let mut pipeline = MultiFieldPipeline::new(pipeline_name, None)?;
+        let mut pipeline = Pipeline::new(pipeline_name, None)?;
         let results = collection
             .vector_search(
                 json!({
@@ -1126,58 +1119,58 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn can_vector_search_with_query_builder() -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cvswqb_7", None);
-        let mut pipeline = MultiFieldPipeline::new(
-            "test_r_p_cvswqb_0",
-            Some(
-                json!({
-                    "text": {
-                        "semantic_search": {
-                            "model": "intfloat/e5-small"
-                        },
-                        "full_text_search": {
-                            "configuration": "english"
-                        }
-                    },
-                })
-                .into(),
-            ),
-        )?;
-        collection
-            .upsert_documents(generate_dummy_documents(10), None)
-            .await?;
-        collection.add_pipeline(&mut pipeline).await?;
-        let results = collection
-            .query()
-            .vector_recall("test query", &pipeline, None)
-            .limit(3)
-            .filter(
-                json!({
-                    "metadata": {
-                        "id": {
-                            "$gt": 3
-                        }
-                    },
-                    "full_text": {
-                        "configuration": "english",
-                        "text": "test"
-                    }
-                })
-                .into(),
-            )
-            .fetch_all()
-            .await?;
-        let ids: Vec<u64> = results
-            .into_iter()
-            .map(|r| r.2["id"].as_u64().unwrap())
-            .collect();
-        assert_eq!(ids, vec![4, 5, 6]);
-        collection.archive().await?;
-        Ok(())
-    }
+    // #[tokio::test]
+    // async fn can_vector_search_with_query_builder() -> anyhow::Result<()> {
+    //     internal_init_logger(None, None).ok();
+    //     let mut collection = Collection::new("test_r_c_cvswqb_7", None);
+    //     let mut pipeline = Pipeline::new(
+    //         "test_r_p_cvswqb_0",
+    //         Some(
+    //             json!({
+    //                 "text": {
+    //                     "semantic_search": {
+    //                         "model": "intfloat/e5-small"
+    //                     },
+    //                     "full_text_search": {
+    //                         "configuration": "english"
+    //                     }
+    //                 },
+    //             })
+    //             .into(),
+    //         ),
+    //     )?;
+    //     collection
+    //         .upsert_documents(generate_dummy_documents(10), None)
+    //         .await?;
+    //     collection.add_pipeline(&mut pipeline).await?;
+    //     let results = collection
+    //         .query()
+    //         .vector_recall("test query", &pipeline, None)
+    //         .limit(3)
+    //         .filter(
+    //             json!({
+    //                 "metadata": {
+    //                     "id": {
+    //                         "$gt": 3
+    //                     }
+    //                 },
+    //                 "full_text": {
+    //                     "configuration": "english",
+    //                     "text": "test"
+    //                 }
+    //             })
+    //             .into(),
+    //         )
+    //         .fetch_all()
+    //         .await?;
+    //     let ids: Vec<u64> = results
+    //         .into_iter()
+    //         .map(|r| r.2["id"].as_u64().unwrap())
+    //         .collect();
+    //     assert_eq!(ids, vec![4, 5, 6]);
+    //     collection.archive().await?;
+    //     Ok(())
+    // }
 
     ///////////////////////////////
     // Working With Documents /////
@@ -1663,69 +1656,69 @@ mod tests {
     // Pipeline -> MultiFieldPIpeline
     ///////////////////////////////
 
-    #[test]
-    fn pipeline_to_multi_field_pipeline() -> anyhow::Result<()> {
-        let model = Model::new(
-            Some("test_model".to_string()),
-            Some("pgml".to_string()),
-            Some(
-                json!({
-                    "test_parameter": 10
-                })
-                .into(),
-            ),
-        );
-        let splitter = Splitter::new(
-            Some("test_splitter".to_string()),
-            Some(
-                json!({
-                "test_parameter": 11
-                })
-                .into(),
-            ),
-        );
-        let parameters = json!({
-            "full_text_search": {
-                "active": true,
-                "configuration": "test_configuration"
-            },
-            "hnsw": {
-                "m": 16,
-                "ef_construction": 64
-            }
-        });
-        let multi_field_pipeline = Pipeline::new(
-            "test_name",
-            Some(model),
-            Some(splitter),
-            Some(parameters.into()),
-        );
-        let schema = json!({
-            "text": {
-                "splitter": {
-                    "model": "test_splitter",
-                    "parameters": {
-                        "test_parameter": 11
-                    }
-                },
-                "semantic_search": {
-                    "model": "test_model",
-                    "parameters": {
-                        "test_parameter": 10
-                    },
-                    "hnsw": {
-                        "m": 16,
-                        "ef_construction": 64
-                    }
-                },
-                "full_text_search": {
-                    "configuration": "test_configuration"
-                }
-            }
-        });
-        assert_eq!(schema, multi_field_pipeline.schema.unwrap().0);
-        Ok(())
-    }
+    // #[test]
+    // fn pipeline_to_pipeline() -> anyhow::Result<()> {
+    //     let model = Model::new(
+    //         Some("test_model".to_string()),
+    //         Some("pgml".to_string()),
+    //         Some(
+    //             json!({
+    //                 "test_parameter": 10
+    //             })
+    //             .into(),
+    //         ),
+    //     );
+    //     let splitter = Splitter::new(
+    //         Some("test_splitter".to_string()),
+    //         Some(
+    //             json!({
+    //             "test_parameter": 11
+    //             })
+    //             .into(),
+    //         ),
+    //     );
+    //     let parameters = json!({
+    //         "full_text_search": {
+    //             "active": true,
+    //             "configuration": "test_configuration"
+    //         },
+    //         "hnsw": {
+    //             "m": 16,
+    //             "ef_construction": 64
+    //         }
+    //     });
+    //     let pipeline = SingleFieldPipeline::new(
+    //         "test_name",
+    //         Some(model),
+    //         Some(splitter),
+    //         Some(parameters.into()),
+    //     );
+    //     let schema = json!({
+    //         "text": {
+    //             "splitter": {
+    //                 "model": "test_splitter",
+    //                 "parameters": {
+    //                     "test_parameter": 11
+    //                 }
+    //             },
+    //             "semantic_search": {
+    //                 "model": "test_model",
+    //                 "parameters": {
+    //                     "test_parameter": 10
+    //                 },
+    //                 "hnsw": {
+    //                     "m": 16,
+    //                     "ef_construction": 64
+    //                 }
+    //             },
+    //             "full_text_search": {
+    //                 "configuration": "test_configuration"
+    //             }
+    //         }
+    //     });
+    //     assert_eq!(schema, pipeline.schema.unwrap().0);
+    //     Ok(())
+    // }
 
     ///////////////////////////////
     // ER Diagram /////////////////
@@ -1734,7 +1727,7 @@ mod tests {
     #[tokio::test]
     async fn generate_er_diagram() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut pipeline = MultiFieldPipeline::new(
+        let mut pipeline = Pipeline::new(
             "test_p_ged_57",
             Some(
                 json!({

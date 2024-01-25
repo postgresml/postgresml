@@ -5,21 +5,10 @@ use sqlx::FromRow;
 
 use crate::types::{DateTime, Json};
 
-// A pipeline
-#[enum_def]
-#[derive(FromRow)]
-pub struct Pipeline {
-    pub id: i64,
-    pub name: String,
-    pub created_at: DateTime,
-    pub schema: Json,
-    pub active: bool,
-}
-
 // A multi field pipeline
 #[enum_def]
 #[derive(FromRow)]
-pub struct MultiFieldPipeline {
+pub struct Pipeline {
     pub id: i64,
     pub name: String,
     pub created_at: DateTime,
@@ -45,24 +34,6 @@ pub struct Splitter {
     pub created_at: DateTime,
     pub name: String,
     pub parameters: Json,
-}
-
-// A pipeline with its model and splitter
-#[derive(FromRow, Clone)]
-pub struct PipelineWithModelAndSplitter {
-    pub pipeline_id: i64,
-    pub pipeline_name: String,
-    pub pipeline_created_at: DateTime,
-    pub pipeline_active: bool,
-    pub pipeline_parameters: Json,
-    pub model_id: i64,
-    pub model_created_at: DateTime,
-    pub model_runtime: String,
-    pub model_hyperparams: Json,
-    pub splitter_id: i64,
-    pub splitter_created_at: DateTime,
-    pub splitter_name: String,
-    pub splitter_parameters: Json,
 }
 
 // A document

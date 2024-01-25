@@ -7,16 +7,16 @@ use rust_bridge::{alias, alias_methods};
 use serde_json::json;
 use tracing::instrument;
 
-use crate::{multi_field_pipeline::MultiFieldPipeline, types::Json, Collection};
+use crate::{pipeline::Pipeline, types::Json, Collection};
 
 #[cfg(feature = "python")]
-use crate::{multi_field_pipeline::MultiFieldPipelinePython, types::JsonPython};
+use crate::{pipeline::PipelinePython, types::JsonPython};
 
 #[derive(alias, Clone, Debug)]
 pub struct QueryBuilder {
     collection: Collection,
     query: Json,
-    pipeline: Option<MultiFieldPipeline>,
+    pipeline: Option<Pipeline>,
 }
 
 #[alias_methods(limit, filter, vector_recall, to_full_string, fetch_all)]
@@ -65,7 +65,7 @@ impl QueryBuilder {
     pub fn vector_recall(
         mut self,
         query: &str,
-        pipeline: &MultiFieldPipeline,
+        pipeline: &Pipeline,
         query_parameters: Option<Json>,
     ) -> Self {
         self.pipeline = Some(pipeline.clone());

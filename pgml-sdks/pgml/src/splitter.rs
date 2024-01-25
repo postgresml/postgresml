@@ -140,20 +140,6 @@ impl Splitter {
     }
 }
 
-impl From<models::PipelineWithModelAndSplitter> for Splitter {
-    fn from(x: models::PipelineWithModelAndSplitter) -> Self {
-        Self {
-            name: x.splitter_name,
-            parameters: x.splitter_parameters,
-            project_info: None,
-            database_data: Some(SplitterDatabaseData {
-                id: x.splitter_id,
-                created_at: x.splitter_created_at,
-            }),
-        }
-    }
-}
-
 impl From<models::Splitter> for Splitter {
     fn from(splitter: models::Splitter) -> Self {
         Self {

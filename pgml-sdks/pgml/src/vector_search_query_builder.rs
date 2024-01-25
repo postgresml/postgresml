@@ -13,12 +13,13 @@ use crate::{
     filter_builder::FilterBuilder,
     model::ModelRuntime,
     models,
-    multi_field_pipeline::MultiFieldPipeline,
+    pipeline::Pipeline,
     remote_embeddings::build_remote_embeddings,
     types::{IntoTableNameAndSchema, Json, SIden},
 };
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ValidField {
     query: String,
     model_parameters: Option<Json>,
@@ -26,12 +27,14 @@ struct ValidField {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ValidQueryActions {
     fields: Option<HashMap<String, ValidField>>,
     filter: Option<Json>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ValidQuery {
     query: ValidQueryActions,
     // Need this when coming from JavaScript as everything is an f64 from JS
@@ -42,7 +45,7 @@ struct ValidQuery {
 pub async fn build_vector_search_query(
     query: Json,
     collection: &Collection,
-    pipeline: &MultiFieldPipeline,
+    pipeline: &Pipeline,
 ) -> anyhow::Result<(String, SqlxValues)> {
     let valid_query: ValidQuery = serde_json::from_value(query.0)?;
     let limit = valid_query.limit.unwrap_or(10);

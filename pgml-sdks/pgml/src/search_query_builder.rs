@@ -13,12 +13,13 @@ use crate::{
     filter_builder::FilterBuilder,
     model::ModelRuntime,
     models,
-    multi_field_pipeline::MultiFieldPipeline,
+    pipeline::Pipeline,
     remote_embeddings::build_remote_embeddings,
     types::{IntoTableNameAndSchema, Json, SIden},
 };
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ValidSemanticSearchAction {
     query: String,
     parameters: Option<Json>,
@@ -26,12 +27,14 @@ struct ValidSemanticSearchAction {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ValidFullTextSearchAction {
     query: String,
     boost: Option<f32>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ValidQueryActions {
     full_text_search: Option<HashMap<String, ValidFullTextSearchAction>>,
     semantic_search: Option<HashMap<String, ValidSemanticSearchAction>>,
@@ -39,6 +42,7 @@ struct ValidQueryActions {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ValidQuery {
     query: ValidQueryActions,
     // Need this when coming from JavaScript as everything is an f64 from JS
@@ -49,7 +53,7 @@ struct ValidQuery {
 pub async fn build_search_query(
     collection: &Collection,
     query: Json,
-    pipeline: &MultiFieldPipeline,
+    pipeline: &Pipeline,
 ) -> anyhow::Result<(String, SqlxValues)> {
     let valid_query: ValidQuery = serde_json::from_value(query.0)?;
     let limit = valid_query.limit.unwrap_or(10);
