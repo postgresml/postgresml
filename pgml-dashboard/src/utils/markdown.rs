@@ -20,6 +20,7 @@ use tantivy::query::{QueryParser, RegexQuery};
 use tantivy::schema::*;
 use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Index, IndexReader, SnippetGenerator};
+use url::Url;
 
 use std::sync::Mutex;
 
@@ -795,11 +796,18 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
     iter_nodes(root, &mut |node| {
         match &mut node.data.borrow_mut().value {
-            // Strip .md extensions that gitbook includes in page link urls
+            // Strip .md extensions that gitbook includes in page link urls.
             &mut NodeValue::Link(ref mut link) => {
                 let path = Path::new(link.url.as_str());
+                let url = Url::parse(link.url.as_str());
 
-                if path.is_relative() {
+                // Ignore absolute urls that are not site domain, github has .md endpoints
+                if url.is_err()
+                    || url?.host_str().unwrap_or_else(|| "")
+                        == Url::parse(&config::site_domain())?
+                            .host_str()
+                            .unwrap_or_else(|| "postgresml.org")
+                {
                     let fragment = match link.url.find("#") {
                         Some(index) => link.url[index + 1..link.url.len()].to_string(),
                         _ => "".to_string(),
@@ -822,10 +830,13 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
                         }
                     }
 
-                    // Add fragment path that matches toc links.
+                    // Reappend the path fragment.
                     let header_id = TocLink::from_fragment(fragment).id;
-                    for c in header_id.chars() {
-                        link.url.push(c)
+                    if header_id.len() > 0 {
+                        link.url.push('#');
+                        for c in header_id.chars() {
+                            link.url.push(c)
+                        }
                     }
                 }
 
