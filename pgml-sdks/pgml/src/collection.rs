@@ -124,6 +124,7 @@ pub struct Collection {
     remove_pipeline,
     enable_pipeline,
     disable_pipeline,
+    search,
     vector_search,
     query,
     exists,

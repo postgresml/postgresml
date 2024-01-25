@@ -200,7 +200,7 @@ fn json_to_schema(schema: &Json) -> anyhow::Result<ParsedSchema> {
         })
 }
 
-#[alias_methods(new, get_status)]
+#[alias_methods(new, get_status, to_dict)]
 impl MultiFieldPipeline {
     pub fn new(name: &str, schema: Option<Json>) -> anyhow::Result<Self> {
         let parsed_schema = schema.as_ref().map(|s| json_to_schema(s)).transpose()?;
@@ -923,6 +923,15 @@ impl MultiFieldPipeline {
         .execute(&pool)
         .await?;
         Ok(())
+    }
+
+    #[instrument(skip(self))]
+    pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
+        self.verify_in_database(false).await?;
+        self.schema
+            .as_ref()
+            .context("Pipeline must have schema set to call to_dict")
+            .map(|v| v.to_owned())
     }
 
     async fn get_pool(&self) -> anyhow::Result<PgPool> {

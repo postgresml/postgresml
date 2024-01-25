@@ -28,6 +28,8 @@ def generate_dummy_documents(count: int) -> List[Dict[str, Any]]:
         dummy_documents.append(
             {
                 "id": i,
+                "title": "Test Document {}".format(i),
+                "body": "Test body {}".format(i),
                 "text": "This is a test document: {}".format(i),
                 "project": "a10",
                 "floating_uuid": i * 1.01,
@@ -77,33 +79,89 @@ def test_can_create_builtins():
 
 
 ###################################################
+## Test searches ##################################
+###################################################
+
+
+@pytest.mark.asyncio
+async def test_can_search():
+    pipeline = pgml.MultiFieldPipeline(
+        "test_p_p_tcs_0",
+        {
+            "title": {"semantic_search": {"model": "intfloat/e5-small"}},
+            "body": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {
+                    "model": "text-embedding-ada-002",
+                    "source": "openai",
+                },
+                "full_text_search": {"configuration": "english"},
+            },
+        },
+    )
+    collection = pgml.Collection("test_p_c_tsc_13")
+    await collection.add_pipeline(pipeline)
+    await collection.upsert_documents(generate_dummy_documents(5))
+    results = await collection.search(
+        {
+            "query": {
+                "full_text_search": {"body": {"query": "Test", "boost": 1.2}},
+                "semantic_search": {
+                    "title": {"query": "This is a test", "boost": 2.0},
+                    "body": {"query": "This is the body test", "boost": 1.01},
+                },
+                "filter": {"id": {"$gt": 1}},
+            },
+            "limit": 5,
+        },
+        pipeline,
+    )
+    ids = [result["id"] for result in results]
+    assert ids == [5, 4, 3]
+    await collection.archive()
+
+
+###################################################
 ## Test various vector searches ###################
 ###################################################
 
 
 @pytest.mark.asyncio
-async def test_can_vector_search_with_local_embeddings():
-    model = pgml.Model()
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline("test_p_p_tcvs_0", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tcvs_4")
-    await collection.upsert_documents(generate_dummy_documents(3))
+async def test_can_vector_search():
+    pipeline = pgml.MultiFieldPipeline(
+        "test_p_p_tcvs_0",
+        {
+            "title": {
+                "semantic_search": {"model": "intfloat/e5-small"},
+                "full_text_search": {"configuration": "english"},
+            },
+            "body": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {
+                    "model": "text-embedding-ada-002",
+                    "source": "openai",
+                },
+            },
+        },
+    )
+    collection = pgml.Collection("test_p_c_tcvs_2")
     await collection.add_pipeline(pipeline)
-    results = await collection.vector_search("Here is some query", pipeline)
-    assert len(results) == 3
-    await collection.archive()
-
-
-@pytest.mark.asyncio
-async def test_can_vector_search_with_remote_embeddings():
-    model = pgml.Model(name="text-embedding-ada-002", source="openai")
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline("test_p_p_tcvswre_0", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tcvswre_3")
-    await collection.upsert_documents(generate_dummy_documents(3))
-    await collection.add_pipeline(pipeline)
-    results = await collection.vector_search("Here is some query", pipeline)
-    assert len(results) == 3
+    await collection.upsert_documents(generate_dummy_documents(5))
+    results = await collection.vector_search(
+        {
+            "query": {
+                "fields": {
+                    "title": {"query": "Test document: 2", "full_text_filter": "test"},
+                    "body": {"query": "Test document: 2"},
+                },
+                "filter": {"id": {"$gt": 2}},
+            },
+            "limit": 5,
+        },
+        pipeline,
+    )
+    ids = [result["document"]["id"] for result in results]
+    assert ids == [3, 4, 4, 3]
     await collection.archive()
 
 
@@ -121,88 +179,10 @@ async def test_can_vector_search_with_query_builder():
         .limit(10)
         .fetch_all()
     )
-    assert len(results) == 3
-    await collection.archive()
-
-
-@pytest.mark.asyncio
-async def test_can_vector_search_with_query_builder_with_remote_embeddings():
-    model = pgml.Model(name="text-embedding-ada-002", source="openai")
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline("test_p_p_tcvswqbwre_1", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tcvswqbwre_1")
-    await collection.upsert_documents(generate_dummy_documents(3))
-    await collection.add_pipeline(pipeline)
-    results = (
-        await collection.query()
-        .vector_recall("Here is some query", pipeline)
-        .limit(10)
-        .fetch_all()
-    )
-    assert len(results) == 3
-    await collection.archive()
-
-
-@pytest.mark.asyncio
-async def test_can_vector_search_with_query_builder_and_metadata_filtering():
-    model = pgml.Model()
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline("test_p_p_tcvswqbamf_1", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tcvswqbamf_2")
-    await collection.upsert_documents(generate_dummy_documents(3))
-    await collection.add_pipeline(pipeline)
-    results = (
-        await collection.query()
-        .vector_recall("Here is some query", pipeline)
-        .filter(
-            {
-                "metadata": {
-                    "$or": [{"uuid": {"$eq": 0}}, {"floating_uuid": {"$lt": 2}}],
-                    "project": {"$eq": "a10"},
-                },
-            }
-        )
-        .limit(10)
-        .fetch_all()
-    )
-    assert len(results) == 2
-    await collection.archive()
-
-
-@pytest.mark.asyncio
-async def test_can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value():
-    model = pgml.Model()
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline("test_p_p_tcvswqbachesv_0", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tcvswqbachesv_0")
-    await collection.upsert_documents(generate_dummy_documents(3))
-    await collection.add_pipeline(pipeline)
-    results = (
-        await collection.query()
-        .vector_recall("Here is some query", pipeline)
-        .filter({"hnsw": {"ef_search": 2}})
-        .limit(10)
-        .fetch_all()
-    )
-    assert len(results) == 3
-    await collection.archive()
-
-
-@pytest.mark.asyncio
-async def test_can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value_and_remote_embeddings():
-    model = pgml.Model(name="text-embedding-ada-002", source="openai")
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline("test_p_p_tcvswqbachesvare_0", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tcvswqbachesvare_0")
-    await collection.upsert_documents(generate_dummy_documents(3))
-    await collection.add_pipeline(pipeline)
-    results = (
-        await collection.query()
-        .vector_recall("Here is some query", pipeline)
-        .filter({"hnsw": {"ef_search": 2}})
-        .limit(10)
-        .fetch_all()
-    )
+    for result in results:
+        print()
+        print(result)
+        print()
     assert len(results) == 3
     await collection.archive()
 
@@ -214,14 +194,24 @@ async def test_can_vector_search_with_query_builder_and_custom_hnsw_ef_search_va
 
 @pytest.mark.asyncio
 async def test_pipeline_to_dict():
-    model = pgml.Model(name="text-embedding-ada-002", source="openai")
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline("test_p_p_tptd_1", model, splitter)
-    collection = pgml.Collection(name="test_p_c_tptd_1")
+    pipeline_schema = {
+        "title": {
+            "semantic_search": {"model": "intfloat/e5-small"},
+            "full_text_search": {"configuration": "english"},
+        },
+        "body": {
+            "splitter": {"model": "recursive_character"},
+            "semantic_search": {
+                "model": "text-embedding-ada-002",
+                "source": "openai",
+            },
+        },
+    }
+    pipeline = pgml.MultiFieldPipeline("test_p_p_tptd_0", pipeline_schema)
+    collection = pgml.Collection("test_p_c_tptd_3")
     await collection.add_pipeline(pipeline)
     pipeline_dict = await pipeline.to_dict()
-    assert pipeline_dict["name"] == "test_p_p_tptd_1"
-    await collection.remove_pipeline(pipeline)
+    assert pipeline_schema == pipeline_dict
     await collection.archive()
 
 
@@ -232,64 +222,38 @@ async def test_pipeline_to_dict():
 
 @pytest.mark.asyncio
 async def test_upsert_and_get_documents():
-    model = pgml.Model()
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline(
-        "test_p_p_tuagd_0",
-        model,
-        splitter,
-        {"full_text_search": {"active": True, "configuration": "english"}},
-    )
-    collection = pgml.Collection(name="test_p_c_tuagd_2")
-    await collection.add_pipeline(
-        pipeline,
-    )
+    collection = pgml.Collection("test_p_c_tuagd_2")
     await collection.upsert_documents(generate_dummy_documents(10))
-
     documents = await collection.get_documents()
     assert len(documents) == 10
-
     documents = await collection.get_documents(
-        {"offset": 1, "limit": 2, "filter": {"metadata": {"id": {"$gt": 0}}}}
+        {"offset": 1, "limit": 2, "filter": {"id": {"$gt": 0}}}
     )
     assert len(documents) == 2 and documents[0]["document"]["id"] == 2
     last_row_id = documents[-1]["row_id"]
-
     documents = await collection.get_documents(
         {
             "filter": {
-                "metadata": {"id": {"$gt": 3}},
-                "full_text_search": {"configuration": "english", "text": "4"},
+                "id": {"$lt": 7},
             },
             "last_row_id": last_row_id,
         }
     )
-    assert len(documents) == 1 and documents[0]["document"]["id"] == 4
-
+    assert len(documents) == 3 and documents[0]["document"]["id"] == 4
     await collection.archive()
 
 
 @pytest.mark.asyncio
 async def test_delete_documents():
-    model = pgml.Model()
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline(
-        "test_p_p_tdd_0",
-        model,
-        splitter,
-        {"full_text_search": {"active": True, "configuration": "english"}},
-    )
     collection = pgml.Collection("test_p_c_tdd_1")
-    await collection.add_pipeline(pipeline)
     await collection.upsert_documents(generate_dummy_documents(3))
     await collection.delete_documents(
         {
-            "metadata": {"id": {"$gte": 0}},
-            "full_text_search": {"configuration": "english", "text": "0"},
+            "id": {"$gte": 2},
         }
     )
     documents = await collection.get_documents()
-    assert len(documents) == 2 and documents[0]["document"]["id"] == 1
+    assert len(documents) == 2 and documents[0]["document"]["id"] == 0
     await collection.archive()
 
 
@@ -462,30 +426,3 @@ async def test_migrate():
 #             assert len(x) == 3
 #
 #     await collection.archive()
-
-
-###################################################
-## Manual tests ###################################
-###################################################
-
-
-# async def test_add_pipeline():
-#     model = pgml.Model()
-#     splitter = pgml.Splitter()
-#     pipeline = pgml.Pipeline("silas_test_p_1", model, splitter)
-#     collection = pgml.Collection(name="silas_test_c_10")
-#     await collection.add_pipeline(pipeline)
-#
-# async def test_upsert_documents():
-#     collection = pgml.Collection(name="silas_test_c_9")
-#     await collection.upsert_documents(generate_dummy_documents(10))
-#
-# async def test_vector_search():
-#     pipeline = pgml.Pipeline("silas_test_p_1")
-#     collection = pgml.Collection(name="silas_test_c_9")
-#     results = await collection.vector_search("Here is some query", pipeline)
-#     print(results)
-
-# asyncio.run(test_add_pipeline())
-# asyncio.run(test_upsert_documents())
-# asyncio.run(test_vector_search())

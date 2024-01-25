@@ -220,7 +220,11 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
         "newTransformerPipeline",
         transformer_pipeline::TransformerPipelineJavascript::new,
     )?;
-    cx.export_function("newPipeline", pipeline::PipelineJavascript::new)?;
+    cx.export_function(
+        "newMultiFieldPipeline",
+        multi_field_pipeline::MultiFieldPipelineJavascript::new,
+    )?;
+    // cx.export_function("newPipeline", pipeline::PipelineJavascript::new)?;
     cx.export_function(
         "newOpenSourceAI",
         open_source_ai::OpenSourceAIJavascript::new,
