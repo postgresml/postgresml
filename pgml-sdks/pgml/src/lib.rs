@@ -29,6 +29,7 @@ mod query_builder;
 mod query_runner;
 mod remote_embeddings;
 mod search_query_builder;
+mod single_field_pipeline;
 mod splitter;
 pub mod transformer_pipeline;
 pub mod types;
@@ -161,6 +162,10 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(init_logger, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(migrate, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(cli::cli, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(
+        single_field_pipeline::SingleFieldPipeline,
+        m
+    )?)?;
     m.add_class::<pipeline::PipelinePython>()?;
     m.add_class::<collection::CollectionPython>()?;
     m.add_class::<model::ModelPython>()?;
@@ -208,6 +213,10 @@ fn migrate(
 fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
     cx.export_function("init_logger", init_logger)?;
     cx.export_function("migrate", migrate)?;
+    cx.export_function(
+        "newSingleFieldPipeline",
+        single_field_pipeline::SingleFieldPipeline,
+    )?;
     cx.export_function("cli", cli::cli)?;
     cx.export_function("newCollection", collection::CollectionJavascript::new)?;
     cx.export_function("newModel", model::ModelJavascript::new)?;
@@ -1651,74 +1660,6 @@ mod tests {
         collection.archive().await?;
         Ok(())
     }
-
-    ///////////////////////////////
-    // Pipeline -> MultiFieldPIpeline
-    ///////////////////////////////
-
-    // #[test]
-    // fn pipeline_to_pipeline() -> anyhow::Result<()> {
-    //     let model = Model::new(
-    //         Some("test_model".to_string()),
-    //         Some("pgml".to_string()),
-    //         Some(
-    //             json!({
-    //                 "test_parameter": 10
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let splitter = Splitter::new(
-    //         Some("test_splitter".to_string()),
-    //         Some(
-    //             json!({
-    //             "test_parameter": 11
-    //             })
-    //             .into(),
-    //         ),
-    //     );
-    //     let parameters = json!({
-    //         "full_text_search": {
-    //             "active": true,
-    //             "configuration": "test_configuration"
-    //         },
-    //         "hnsw": {
-    //             "m": 16,
-    //             "ef_construction": 64
-    //         }
-    //     });
-    //     let pipeline = SingleFieldPipeline::new(
-    //         "test_name",
-    //         Some(model),
-    //         Some(splitter),
-    //         Some(parameters.into()),
-    //     );
-    //     let schema = json!({
-    //         "text": {
-    //             "splitter": {
-    //                 "model": "test_splitter",
-    //                 "parameters": {
-    //                     "test_parameter": 11
-    //                 }
-    //             },
-    //             "semantic_search": {
-    //                 "model": "test_model",
-    //                 "parameters": {
-    //                     "test_parameter": 10
-    //                 },
-    //                 "hnsw": {
-    //                     "m": 16,
-    //                     "ef_construction": 64
-    //                 }
-    //             },
-    //             "full_text_search": {
-    //                 "configuration": "test_configuration"
-    //             }
-    //         }
-    //     });
-    //     assert_eq!(schema, pipeline.schema.unwrap().0);
-    //     Ok(())
-    // }
 
     ///////////////////////////////
     // ER Diagram /////////////////

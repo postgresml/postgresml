@@ -62,14 +62,14 @@ def test_can_create_splitter():
 
 
 def test_can_create_pipeline():
-    model = pgml.Model()
-    splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline("test_p_p_tccp_0", model, splitter)
+    pipeline = pgml.Pipeline("test_p_p_tccp_0", {})
     assert pipeline is not None
 
-
-def test_can_create_multi_field_pipeline():
-    pipeline = pgml.MultiFieldPipeline("test_p_p_tccmfp_0", {})
+    
+def test_can_create_single_field_pipeline():
+    model = pgml.Model()
+    splitter = pgml.Splitter()
+    pipeline = pgml.SingleFieldPipeline("test_p_p_tccsfp_0", model, splitter, {})
     assert pipeline is not None
 
 
@@ -85,7 +85,7 @@ def test_can_create_builtins():
 
 @pytest.mark.asyncio
 async def test_can_search():
-    pipeline = pgml.MultiFieldPipeline(
+    pipeline = pgml.Pipeline(
         "test_p_p_tcs_0",
         {
             "title": {"semantic_search": {"model": "intfloat/e5-small"}},
@@ -128,19 +128,12 @@ async def test_can_search():
 
 @pytest.mark.asyncio
 async def test_can_vector_search():
-    pipeline = pgml.MultiFieldPipeline(
+    pipeline = pgml.Pipeline(
         "test_p_p_tcvs_0",
         {
-            "title": {
-                "semantic_search": {"model": "intfloat/e5-small"},
-                "full_text_search": {"configuration": "english"},
-            },
-            "body": {
+            "text": {
                 "splitter": {"model": "recursive_character"},
-                "semantic_search": {
-                    "model": "text-embedding-ada-002",
-                    "source": "openai",
-                },
+                "semantic_search": {"model": "intfloat/e5-small"},
             },
         },
     )
@@ -169,7 +162,7 @@ async def test_can_vector_search():
 async def test_can_vector_search_with_query_builder():
     model = pgml.Model()
     splitter = pgml.Splitter()
-    pipeline = pgml.Pipeline("test_p_p_tcvswqb_1", model, splitter)
+    pipeline = pgml.SingleFieldPipeline("test_p_p_tcvswqb_1", model, splitter)
     collection = pgml.Collection(name="test_p_c_tcvswqb_5")
     await collection.upsert_documents(generate_dummy_documents(3))
     await collection.add_pipeline(pipeline)
@@ -179,11 +172,8 @@ async def test_can_vector_search_with_query_builder():
         .limit(10)
         .fetch_all()
     )
-    for result in results:
-        print()
-        print(result)
-        print()
-    assert len(results) == 3
+    ids = [document["id"] for (_, _, document) in results]
+    assert ids == [2, 1, 0]
     await collection.archive()
 
 
@@ -207,7 +197,7 @@ async def test_pipeline_to_dict():
             },
         },
     }
-    pipeline = pgml.MultiFieldPipeline("test_p_p_tptd_0", pipeline_schema)
+    pipeline = pgml.Pipeline("test_p_p_tptd_0", pipeline_schema)
     collection = pgml.Collection("test_p_c_tptd_3")
     await collection.add_pipeline(pipeline)
     pipeline_dict = await pipeline.to_dict()
