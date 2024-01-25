@@ -798,7 +798,6 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
         match &mut node.data.borrow_mut().value {
             // Strip .md extensions that gitbook includes in page link urls.
             &mut NodeValue::Link(ref mut link) => {
-                let path = Path::new(link.url.as_str());
                 let url = Url::parse(link.url.as_str());
 
                 // Ignore absolute urls that are not site domain, github has .md endpoints
