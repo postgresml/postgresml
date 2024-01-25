@@ -20,9 +20,9 @@ use crate::filter_builder::FilterBuilder;
 use crate::search_query_builder::build_search_query;
 use crate::vector_search_query_builder::build_vector_search_query;
 use crate::{
-    get_or_initialize_pool, models,
-    multi_field_pipeline::MultiFieldPipeline,
-    order_by_builder, queries, query_builder,
+    get_or_initialize_pool, models, order_by_builder,
+    pipeline::Pipeline,
+    queries, query_builder,
     query_builder::QueryBuilder,
     splitter::Splitter,
     types::{DateTime, IntoTableNameAndSchema, Json, SIden, TryToNumeric},
@@ -30,10 +30,7 @@ use crate::{
 };
 
 #[cfg(feature = "python")]
-use crate::{
-    multi_field_pipeline::MultiFieldPipelinePython, query_builder::QueryBuilderPython,
-    types::JsonPython,
-};
+use crate::{pipeline::PipelinePython, query_builder::QueryBuilderPython, types::JsonPython};
 
 /// Our project tasks
 #[derive(Debug, Clone)]
@@ -238,7 +235,7 @@ impl Collection {
                 // Splitters table is not unique to a collection or pipeline. It exists in the pgml schema
                 Splitter::create_splitters_table(&mut transaction).await?;
                 self.create_documents_table(&mut transaction).await?;
-                MultiFieldPipeline::create_multi_field_pipelines_table(
+                Pipeline::create_pipelines_table(
                     &collection_database_data.project_info,
                     &mut transaction,
                 )
@@ -272,7 +269,7 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn add_pipeline(&mut self, pipeline: &mut MultiFieldPipeline) -> anyhow::Result<()> {
+    pub async fn add_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
         // 1. Create collection if it does not exists
         // 2. Create the pipeline if it does not exist and add it to the collection.pipelines table with ACTIVE = TRUE
@@ -314,7 +311,7 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn remove_pipeline(&mut self, pipeline: &MultiFieldPipeline) -> anyhow::Result<()> {
+    pub async fn remove_pipeline(&mut self, pipeline: &Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
         // 1. Create collection if it does not exist
         // 2. Begin a transaction
@@ -364,10 +361,7 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn enable_pipeline(
-        &mut self,
-        pipeline: &mut MultiFieldPipeline,
-    ) -> anyhow::Result<()> {
+    pub async fn enable_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
         // 1. Set ACTIVE = TRUE for the pipeline in collection.pipelines
         // 2. Resync the pipeline
@@ -400,7 +394,7 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn disable_pipeline(&self, pipeline: &MultiFieldPipeline) -> anyhow::Result<()> {
+    pub async fn disable_pipeline(&self, pipeline: &Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
         // 1. Set ACTIVE = FALSE for the pipeline in collection.pipelines
         sqlx::query(&query_builder!(
@@ -464,7 +458,7 @@ impl Collection {
         // The flow for this function
         // 1. Create the collection if it does not exist
         // 2. Get all pipelines where ACTIVE = TRUE
-        // 4. Foreach document
+        // 4. Foreach n documents
         // -> Begin a transaction returning the old document if it existed
         // -> Insert the document
         // -> Foreach pipeline check if we need to resync the document and if so sync the document
@@ -479,80 +473,78 @@ impl Collection {
         let progress_bar = utils::default_progress_bar(documents.len() as u64);
         progress_bar.println("Upserting Documents...");
 
-        for document in documents {
-            let mut transaction = pool.begin().await?;
-            let id = document
-                .get("id")
-                .context("`id` must be a key in document")?
-                .to_string();
-            let md5_digest = md5::compute(id.as_bytes());
-            let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
+        let batch_size = args
+            .get("batch_size")
+            .map(TryToNumeric::try_to_u64)
+            .unwrap_or(Ok(10))?;
 
-            let query = if args
-                .get("merge")
-                .map(|v| v.as_bool().unwrap_or(false))
-                .unwrap_or(false)
-            {
-                query_builder!(
-                "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = %s.document || EXCLUDED.document RETURNING id, (SELECT document FROM prev)",
-                self.documents_table_name,
-                self.documents_table_name,
-                self.documents_table_name
-            )
-            } else {
-                query_builder!(
-                "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = EXCLUDED.document RETURNING id, (SELECT document FROM prev)",
-                self.documents_table_name,
-                self.documents_table_name
-            )
-            };
-            let (document_id, previous_document): (i64, Option<Json>) = sqlx::query_as(&query)
-                .bind(source_uuid)
-                .bind(&document)
-                .fetch_one(&mut *transaction)
-                .await?;
+        for batch in documents.chunks(batch_size as usize) {
+            let mut transaction = pool.begin().await?;
+
+            let mut dp = vec![];
+            for document in batch {
+                let id = document
+                    .get("id")
+                    .context("`id` must be a key in document")?
+                    .to_string();
+                let md5_digest = md5::compute(id.as_bytes());
+                let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
+
+                let query = if args
+                    .get("merge")
+                    .map(|v| v.as_bool().unwrap_or(false))
+                    .unwrap_or(false)
+                {
+                    query_builder!(
+                    "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = %s.document || EXCLUDED.document RETURNING id, (SELECT document FROM prev)",
+                    self.documents_table_name,
+                    self.documents_table_name,
+                    self.documents_table_name
+                )
+                } else {
+                    query_builder!(
+                    "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = EXCLUDED.document RETURNING id, (SELECT document FROM prev)",
+                    self.documents_table_name,
+                    self.documents_table_name
+                )
+                };
+                let (document_id, previous_document): (i64, Option<Json>) = sqlx::query_as(&query)
+                    .bind(source_uuid)
+                    .bind(document)
+                    .fetch_one(&mut *transaction)
+                    .await?;
+                dp.push((document_id, document, previous_document));
+            }
 
             let transaction = Arc::new(Mutex::new(transaction));
             if !pipelines.is_empty() {
                 use futures::stream::StreamExt;
                 futures::stream::iter(&mut pipelines)
                     // Need this map to get around moving the transaction
-                    .map(|pipeline| {
-                        (
-                            pipeline,
-                            previous_document.clone(),
-                            document.clone(),
-                            transaction.clone(),
-                        )
+                    .map(|pipeline| (pipeline, dp.clone(), transaction.clone()))
+                    .for_each_concurrent(10, |(pipeline, db, transaction)| async move {
+                        let parsed_schema = pipeline
+                            .get_parsed_schema()
+                            .await
+                            .expect("Error getting parsed schema for pipeline");
+                        let ids_to_run_on: Vec<i64> = db
+                            .into_iter()
+                            .filter(|(_, document, previous_document)| match previous_document {
+                                Some(previous_document) => parsed_schema
+                                    .iter()
+                                    .any(|(key, _)| document[key] != previous_document[key]),
+                                None => true,
+                            })
+                            .map(|(document_id, _, _)| document_id)
+                            .collect();
+                        pipeline
+                            .sync_documents(ids_to_run_on, transaction)
+                            .await
+                            .expect("Failed to execute pipeline");
                     })
-                    .for_each_concurrent(
-                        10,
-                        |(pipeline, previous_document, document, transaction)| async move {
-                            match previous_document {
-                                Some(previous_document) => {
-                                    // Can unwrap here as we know it has parsed schema from the create_table call above
-                                    let should_run =
-                                        pipeline.parsed_schema.as_ref().unwrap().iter().any(
-                                            |(key, _)| document[key] != previous_document[key],
-                                        );
-                                    if should_run {
-                                        pipeline
-                                            .sync_document(document_id, transaction)
-                                            .await
-                                            .expect("Failed to execute pipeline");
-                                    }
-                                }
-                                None => {
-                                    pipeline
-                                        .sync_document(document_id, transaction)
-                                        .await
-                                        .expect("Failed to execute pipeline");
-                                }
-                            }
-                        },
-                    )
                     .await;
             }
+
             Arc::into_inner(transaction)
                 .context("Error transaction dangling")?
                 .into_inner()
@@ -560,7 +552,6 @@ impl Collection {
                 .await?;
             progress_bar.inc(1);
         }
-
         progress_bar.println("Done Upserting Documents\n");
         progress_bar.finish();
         Ok(())
@@ -679,7 +670,7 @@ impl Collection {
     pub async fn search(
         &mut self,
         query: Json,
-        pipeline: &mut MultiFieldPipeline,
+        pipeline: &mut Pipeline,
     ) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
@@ -719,7 +710,7 @@ impl Collection {
     pub async fn search_local(
         &self,
         query: Json,
-        pipeline: &MultiFieldPipeline,
+        pipeline: &Pipeline,
     ) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
@@ -753,7 +744,7 @@ impl Collection {
     pub async fn vector_search(
         &mut self,
         query: Json,
-        pipeline: &mut MultiFieldPipeline,
+        pipeline: &mut Pipeline,
     ) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
@@ -869,7 +860,7 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn get_pipelines(&mut self) -> anyhow::Result<Vec<MultiFieldPipeline>> {
+    pub async fn get_pipelines(&mut self) -> anyhow::Result<Vec<Pipeline>> {
         self.verify_in_database(false).await?;
         let project_info = &self
             .database_data
@@ -887,7 +878,7 @@ impl Collection {
         pipelines
             .into_iter()
             .map(|p| {
-                let mut p: MultiFieldPipeline = p.try_into()?;
+                let mut p: Pipeline = p.try_into()?;
                 p.set_project_info(project_info.clone());
                 Ok(p)
             })
@@ -908,7 +899,7 @@ impl Collection {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn get_pipeline(&mut self, name: &str) -> anyhow::Result<MultiFieldPipeline> {
+    pub async fn get_pipeline(&mut self, name: &str) -> anyhow::Result<Pipeline> {
         self.verify_in_database(false).await?;
         let project_info = &self
             .database_data
@@ -923,7 +914,7 @@ impl Collection {
         .bind(name)
         .fetch_one(&pool)
         .await?;
-        let mut pipeline: MultiFieldPipeline = pipeline.try_into()?;
+        let mut pipeline: Pipeline = pipeline.try_into()?;
         pipeline.set_project_info(project_info.clone());
         Ok(pipeline)
     }
@@ -1039,10 +1030,7 @@ impl Collection {
         Ok(())
     }
 
-    pub async fn generate_er_diagram(
-        &mut self,
-        pipeline: &mut MultiFieldPipeline,
-    ) -> anyhow::Result<String> {
+    pub async fn generate_er_diagram(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<String> {
         self.verify_in_database(false).await?;
         pipeline.verify_in_database(false).await?;
 
