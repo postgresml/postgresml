@@ -183,21 +183,6 @@ impl Model {
     }
 }
 
-impl From<models::PipelineWithModelAndSplitter> for Model {
-    fn from(x: models::PipelineWithModelAndSplitter) -> Self {
-        Self {
-            name: x.model_hyperparams["name"].as_str().unwrap().to_string(),
-            runtime: x.model_runtime.as_str().into(),
-            parameters: x.model_hyperparams,
-            project_info: None,
-            database_data: Some(ModelDatabaseData {
-                id: x.model_id,
-                created_at: x.model_created_at,
-            }),
-        }
-    }
-}
-
 impl From<models::Model> for Model {
     fn from(model: models::Model) -> Self {
         Self {
