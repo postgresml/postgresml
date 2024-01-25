@@ -58,22 +58,18 @@ pub trait RemoteEmbeddings<'a> {
         mut db_executor: PoolOrArcMutextTransaction,
         limit: Option<i64>,
     ) -> anyhow::Result<Vec<models::Chunk>> {
-        let limit = limit.unwrap_or(1000);
-
         // Requires _query_text be declared out here so it lives long enough
         let mut _query_text = "".to_string();
         let query = match chunk_ids {
             Some(chunk_ids) => {
-                _query_text = query_builder!(
-                    "SELECT * FROM %s WHERE id = ANY ($1) LIMIT $2",
-                    chunks_table_name,
-                    embeddings_table_name
-                );
+                _query_text =
+                    query_builder!("SELECT * FROM %s WHERE id = ANY ($1)", chunks_table_name);
                 sqlx::query_as(_query_text.as_str())
                     .bind(chunk_ids)
                     .bind(limit)
             }
             None => {
+                let limit = limit.unwrap_or(1000);
                 _query_text = query_builder!(
                     "SELECT * FROM %s WHERE id NOT IN (SELECT chunk_id FROM %s) LIMIT $1",
                     chunks_table_name,
@@ -120,7 +116,7 @@ pub trait RemoteEmbeddings<'a> {
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
-        chunk_ids: Option<&Vec<i64>>,
+        mut chunk_ids: Option<&Vec<i64>>,
         mut db_executor: PoolOrArcMutextTransaction,
     ) -> anyhow::Result<()> {
         loop {
@@ -136,7 +132,7 @@ pub trait RemoteEmbeddings<'a> {
             if chunks.is_empty() {
                 break;
             }
-            let (chunk_ids, chunk_texts): (Vec<i64>, Vec<String>) = chunks
+            let (retrieved_chunk_ids, chunk_texts): (Vec<i64>, Vec<String>) = chunks
                 .into_iter()
                 .map(|chunk| (chunk.id, chunk.chunk))
                 .unzip();
@@ -163,7 +159,7 @@ pub trait RemoteEmbeddings<'a> {
             let mut query = sqlx::query(&query);
 
             for i in 0..embeddings.len() {
-                query = query.bind(chunk_ids[i]).bind(&embeddings[i]);
+                query = query.bind(retrieved_chunk_ids[i]).bind(&embeddings[i]);
             }
 
             // query.execute(&mut *transaction.lock().await).await?;
@@ -173,6 +169,9 @@ pub trait RemoteEmbeddings<'a> {
                     query.execute(&mut *transaction.lock().await).await
                 }
             }?;
+
+            // Set it to none so if it is not None, we don't just retrived the same chunks over and over
+            chunk_ids = None;
         }
         Ok(())
     }

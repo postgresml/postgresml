@@ -41,6 +41,8 @@ struct ValidQueryActions {
 #[derive(Debug, Deserialize)]
 struct ValidQuery {
     query: ValidQueryActions,
+    // Need this when coming from JavaScript as everything is an f64 from JS
+    #[serde(default, deserialize_with = "crate::utils::deserialize_u64")]
     limit: Option<u64>,
 }
 
