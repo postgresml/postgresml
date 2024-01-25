@@ -116,19 +116,15 @@ pub struct Document {
 impl Document {
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
         let doc_type = match path.strip_prefix(config::cms_dir()) {
-            Ok(path) => {
-                match path.into_iter().next() {
-                    Some(dir) => {
-                        match &PathBuf::from(dir).display().to_string()[..] {
-                            "blog" => Some(DocType::Blog),
-                            "docs" => Some(DocType::Docs),
-                            "careers" => Some(DocType::Careers),
-                            _ => None
-                        }
-                    },
-                    _ => None
-                } 
-            }, 
+            Ok(path) => match path.into_iter().next() {
+                Some(dir) => match &PathBuf::from(dir).display().to_string()[..] {
+                    "blog" => Some(DocType::Blog),
+                    "docs" => Some(DocType::Docs),
+                    "careers" => Some(DocType::Careers),
+                    _ => None,
+                },
+                _ => None,
+            },
             _ => None,
         };
 
@@ -155,7 +151,11 @@ impl Document {
             (None, contents)
         };
 
-        let default_image_path = BLOG.asset_url_root.join("blog_image_placeholder.png").display().to_string();
+        let default_image_path = BLOG
+            .asset_url_root
+            .join("blog_image_placeholder.png")
+            .display()
+            .to_string();
 
         // parse meta section
         let (description, image, featured, tags) = match meta {
@@ -171,16 +171,14 @@ impl Document {
                     Some(default_image_path.clone())
                 } else {
                     match PathBuf::from_str(meta["image"].as_str().unwrap()) {
-                        Ok(image_path) => {
-                            match image_path.file_name() {
-                                Some(file_name) => {
-                                    let file = PathBuf::from(file_name).display().to_string();
-                                    Some(BLOG.asset_url_root.join(file).display().to_string())
-                                }, 
-                                _ => Some(default_image_path.clone())
+                        Ok(image_path) => match image_path.file_name() {
+                            Some(file_name) => {
+                                let file = PathBuf::from(file_name).display().to_string();
+                                Some(BLOG.asset_url_root.join(file).display().to_string())
                             }
+                            _ => Some(default_image_path.clone()),
                         },
-                        _ => Some(default_image_path.clone())
+                        _ => Some(default_image_path.clone()),
                     }
                 };
 
@@ -202,12 +200,7 @@ impl Document {
 
                 (description, image, featured, tags)
             }
-            None => (
-                None,
-                Some(default_image_path.clone()),
-                false,
-                Vec::new(),
-            ),
+            None => (None, Some(default_image_path.clone()), false, Vec::new()),
         };
 
         let thumbnail = match &image {
@@ -287,7 +280,7 @@ pub struct Collection {
     /// A list of old paths to new paths in this collection
     redirects: HashMap<&'static str, &'static str>,
     /// Url to assets for this collection
-    pub asset_url_root: PathBuf
+    pub asset_url_root: PathBuf,
 }
 
 impl Collection {
@@ -455,7 +448,7 @@ impl Collection {
         if path.has_root() {
             path = path.strip_prefix("/").unwrap().to_owned();
         }
-        
+
         let mut path_v = path.components().collect::<Vec<_>>();
         path_v.remove(0);
 
@@ -870,7 +863,7 @@ This is the end of the markdown
         )
     }
 
-    // Test we can parse doc meta with out issue. 
+    // Test we can parse doc meta with out issue.
     #[sqlx::test]
     async fn docs_meta_parse() {
         let collection = &crate::api::cms::DOCS;
@@ -883,7 +876,7 @@ This is the end of the markdown
         }
     }
 
-    // Test we can parse blog meta with out issue. 
+    // Test we can parse blog meta with out issue.
     #[sqlx::test]
     async fn blog_meta_parse() {
         let collection = &crate::api::cms::BLOG;
@@ -896,7 +889,7 @@ This is the end of the markdown
         }
     }
 
-    // Test we can parse career meta with out issue. 
+    // Test we can parse career meta with out issue.
     #[sqlx::test]
     async fn career_meta_parse() {
         let collection = &crate::api::cms::CAREERS;

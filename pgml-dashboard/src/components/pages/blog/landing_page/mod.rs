@@ -30,9 +30,7 @@ impl LandingPage {
         for url in urls {
             let file = collection.url_to_path(url.as_ref());
 
-            let doc = crate::api::cms::Document::from_path(&file)
-                .await
-                .unwrap();
+            let doc = crate::api::cms::Document::from_path(&file).await.unwrap();
 
             let meta = DocMeta {
                 description: doc.description,

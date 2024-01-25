@@ -1,9 +1,6 @@
 use convert_case;
-use lazy_static::lazy_static;
 use sailfish::TemplateOnce;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 
 use crate::utils::markdown::SearchResult;
 
@@ -13,26 +10,6 @@ use crate::utils::markdown::SearchResult;
 pub struct Search {
     pub query: String,
     pub results: Vec<SearchResult>,
-}
-
-lazy_static! {
-    static ref CMS_IDENTIFIER: CmsIdentifier = CmsIdentifier::new();
-}
-
-// Prevent css collisions in cms header ids.
-pub struct CmsIdentifier {
-    pub id: String,
-}
-
-impl CmsIdentifier {
-    pub fn new() -> CmsIdentifier {
-        let mut s = DefaultHasher::new();
-        "cms header".hash(&mut s);
-
-        CmsIdentifier {
-            id: s.finish().to_string(),
-        }
-    }
 }
 
 /// Table of contents link.
@@ -57,14 +34,12 @@ impl TocLink {
 
         // gitbook style id's
         let id = format!(
-            "{}{}-{}",
-            id,
+            "{id}{}",
             if counter > 0 {
                 format!("-{counter}")
             } else {
                 String::new()
-            },
-            CMS_IDENTIFIER.id
+            }
         );
 
         TocLink {
@@ -92,7 +67,7 @@ impl TocLink {
             },
             _ => TocLink {
                 title: link.clone(),
-                id: format!("#{}-{}", link.clone(), CMS_IDENTIFIER.id),
+                id: format!("{}", link.clone()),
                 level: 0,
             },
         }
