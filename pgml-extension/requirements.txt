@@ -12,7 +12,7 @@
 # virtualenv -p python3.11 pgml-venv
 
 # These packages are specifically locked to avoid known bugs
-pyarrow==11.0.0 # newer versions cause Postgres segfaults on OOM
+pyarrow==14.0.1 # newer versions cause Postgres segfaults on OOM
 
 # ML
 catboost
