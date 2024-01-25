@@ -146,11 +146,7 @@ pub fn asset_url(path: Cow<str>) -> String {
 }
 
 pub fn site_domain() -> String {
-    if CONFIG.dev_mode {
-        String::from("https://localhost")
-    } else {
-        String::from("https://postgresml.org")
-    }
+    String::from("https://postgresml.org")
 }
 
 fn env_is_set(name: &str) -> bool {
