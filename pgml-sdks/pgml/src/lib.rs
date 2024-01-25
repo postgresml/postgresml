@@ -75,7 +75,7 @@ async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result
 
         let pool = PgPoolOptions::new()
             .acquire_timeout(std::time::Duration::from_millis(timeout))
-            .connect_lazy(&url)?;
+            .connect_lazy(url)?;
 
         pools.insert(url.to_string(), pool.clone());
         Ok(pool)
@@ -289,7 +289,7 @@ mod tests {
         assert!(collection.database_data.is_none());
         collection.add_pipeline(&mut pipeline).await?;
         assert!(collection.database_data.is_some());
-        collection.remove_pipeline(&mut pipeline).await?;
+        collection.remove_pipeline(&pipeline).await?;
         let pipelines = collection.get_pipelines().await?;
         assert!(pipelines.is_empty());
         collection.archive().await?;
@@ -306,7 +306,7 @@ mod tests {
         collection.add_pipeline(&mut pipeline2).await?;
         let pipelines = collection.get_pipelines().await?;
         assert!(pipelines.len() == 2);
-        collection.remove_pipeline(&mut pipeline1).await?;
+        collection.remove_pipeline(&pipeline1).await?;
         let pipelines = collection.get_pipelines().await?;
         assert!(pipelines.len() == 1);
         assert!(collection.get_pipeline("test_r_p_carps_1").await.is_err());
@@ -317,7 +317,7 @@ mod tests {
     #[tokio::test]
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_capaud_47";
+        let collection_name = "test_r_c_capaud_48";
         let pipeline_name = "test_r_p_capaud_6";
         let mut pipeline = MultiFieldPipeline::new(
             pipeline_name,
@@ -333,7 +333,10 @@ mod tests {
                             "model": "recursive_character"
                         },
                         "semantic_search": {
-                            "model": "intfloat/e5-small",
+                            "model": "hkunlp/instructor-base",
+                            "parameters": {
+                                "instruction": "Represent the Wikipedia document for retrieval"
+                            }
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -490,7 +493,7 @@ mod tests {
             sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
                 .fetch_all(&pool)
                 .await?;
-        assert!(title_chunks.len() == 0);
+        assert!(title_chunks.is_empty());
         collection.enable_pipeline(&mut pipeline).await?;
         let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name);
         let title_chunks: Vec<models::Chunk> =
@@ -707,7 +710,7 @@ mod tests {
                 }
             })
         );
-        collection.disable_pipeline(&mut pipeline).await?;
+        collection.disable_pipeline(&pipeline).await?;
         collection
             .upsert_documents(documents[2..4].to_owned(), None)
             .await?;
@@ -813,7 +816,7 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cs_67";
+        let collection_name = "test_r_c_cs_70";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -835,7 +838,10 @@ mod tests {
                             "model": "recursive_character"
                         },
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "hkunlp/instructor-base",
+                            "parameters": {
+                                "instruction": "Represent the Wikipedia document for retrieval"
+                            }
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -872,6 +878,9 @@ mod tests {
                             },
                             "body": {
                                 "query": "This is the body test",
+                                "parameters": {
+                                    "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                                },
                                 "boost": 1.01
                             },
                             "notes": {
@@ -896,7 +905,7 @@ mod tests {
             .into_iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids, vec![3, 8, 2, 7, 4]);
+        assert_eq!(ids, vec![7, 8, 2, 3, 4]);
         collection.archive().await?;
         Ok(())
     }
