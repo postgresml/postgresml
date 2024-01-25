@@ -52,14 +52,14 @@ it("can create splitter", () => {
 });
 
 it("can create pipeline", () => {
-  let model = pgml.newModel();
-  let splitter = pgml.newSplitter();
-  let pipeline = pgml.newPipeline("test_j_p_ccc_0", model, splitter);
+  let pipeline = pgml.newPipeline("test_j_p_ccp");
   expect(pipeline).toBeTruthy();
 });
 
-it("can create multi_field_pipeline", () => {
-  let pipeline = pgml.newMultiFieldPipeline("test_j_p_ccmfp", {});
+it("can create single field pipeline", () => {
+  let model = pgml.newModel();
+  let splitter = pgml.newSplitter();
+  let pipeline = pgml.newSingleFieldPipeline("test_j_p_ccsfp", model, splitter);
   expect(pipeline).toBeTruthy();
 });
 
@@ -73,7 +73,7 @@ it("can create builtins", () => {
 ///////////////////////////////////////////////////
 
 it("can search", async () => {
-  let pipeline = pgml.newMultiFieldPipeline("test_j_p_cs", {
+  let pipeline = pgml.newPipeline("test_j_p_cs", {
     title: { semantic_search: { model: "intfloat/e5-small" } },
     body: {
       splitter: { model: "recursive_character" },
@@ -96,7 +96,7 @@ it("can search", async () => {
           body: { query: "This is the body test", boost: 1.01 },
         },
         filter: { id: { $gt: 1 } },
-      },
+  },
       limit: 10
     },
     pipeline,
@@ -112,7 +112,7 @@ it("can search", async () => {
 
 
 it("can vector search", async () => {
-  let pipeline = pgml.newMultiFieldPipeline("test_j_p_cvs_0", {
+  let pipeline = pgml.newPipeline("test_j_p_cvs_0", {
     title: {
       semantic_search: { model: "intfloat/e5-small" },
       full_text_search: { configuration: "english" },
@@ -146,21 +146,22 @@ it("can vector search", async () => {
   await collection.archive();
 });
 
-// it("can vector search with query builder", async () => {
-//   let model = pgml.newModel();
-//   let splitter = pgml.newSplitter();
-//   let pipeline = pgml.newPipeline("test_j_p_cvswqb_0", model, splitter);
-//   let collection = pgml.newCollection("test_j_c_cvswqb_1");
-//   await collection.upsert_documents(generate_dummy_documents(3));
-//   await collection.add_pipeline(pipeline);
-//   let results = await collection
-//     .query()
-//     .vector_recall("Here is some query", pipeline)
-//     .limit(10)
-//     .fetch_all();
-//   expect(results).toHaveLength(3);
-//   await collection.archive();
-// });
+it("can vector search with query builder", async () => {
+  let model = pgml.newModel();
+  let splitter = pgml.newSplitter();
+  let pipeline = pgml.newSingleFieldPipeline("test_j_p_cvswqb_0", model, splitter);
+  let collection = pgml.newCollection("test_j_c_cvswqb_2");
+  await collection.upsert_documents(generate_dummy_documents(3));
+  await collection.add_pipeline(pipeline);
+  let results = await collection
+    .query()
+    .vector_recall("Here is some query", pipeline)
+    .limit(10)
+    .fetch_all();
+  let ids = results.map(r => r[2]["id"]);
+  expect(ids).toEqual([2, 1, 0]);
+  await collection.archive();
+});
 
 ///////////////////////////////////////////////////
 // Test user output facing functions //////////////
@@ -180,7 +181,7 @@ it("pipeline to dict", async () => {
       },
     },
   }
-  let pipeline = pgml.newMultiFieldPipeline("test_j_p_ptd_0", pipeline_schema);
+  let pipeline = pgml.newPipeline("test_j_p_ptd_0", pipeline_schema);
   let collection = pgml.newCollection("test_j_c_ptd_2");
   await collection.add_pipeline(pipeline);
   let pipeline_dict = await pipeline.to_dict();
