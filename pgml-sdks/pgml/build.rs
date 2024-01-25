@@ -26,6 +26,7 @@ export function newModel(name?: string, source?: string, parameters?: Json): Mod
 export function newSplitter(name?: string, parameters?: Json): Splitter;
 export function newBuiltins(database_url?: string): Builtins;
 export function newPipeline(name: string, model?: Model, splitter?: Splitter, parameters?: Json): Pipeline;
+export function newMultiFieldPipeline(name: string, schema?: Json): MultiFieldPipeline;
 export function newTransformerPipeline(task: string, model?: string, args?: Json, database_url?: string): TransformerPipeline;
 export function newOpenSourceAI(database_url?: string): OpenSourceAI;
 "#;
