@@ -63,7 +63,7 @@ pub async fn build_search_query(
 
     let mut query = Query::select();
     let mut score_table_names = Vec::new();
-    let mut with_clause = WithClause::new();
+    let mut with_clause = WithClause::new().recursive(true).to_owned();
     let mut sum_expression: Option<SimpleExpr> = None;
 
     let mut pipeline_cte = Query::select();
@@ -73,7 +73,7 @@ pub async fn build_search_query(
         .and_where(Expr::col(models::PipelineIden::Name).eq(&pipeline.name));
     let mut pipeline_cte = CommonTableExpression::from_select(pipeline_cte);
     pipeline_cte.table_name(Alias::new("pipeline"));
-    with_clause.cte(pipeline_cte);
+    // with_clause.cte(pipeline_cte);
 
     for (key, vsa) in valid_query.query.semantic_search.unwrap_or_default() {
         let model_runtime = pipeline
@@ -100,7 +100,8 @@ pub async fn build_search_query(
         // Build the CTE we actually use later
         let embeddings_table = format!("{}_{}.{}_embeddings", collection.name, pipeline.name, key);
         let cte_name = format!("{key}_embedding_score");
-        let mut score_cte = Query::select();
+        let mut score_cte_non_recursive = Query::select();
+        let mut score_cte_recurisive = Query::select();
         match model_runtime {
             ModelRuntime::Python => {
                 // Build the embedding CTE
@@ -117,77 +118,108 @@ pub async fn build_search_query(
                 );
                 let mut embedding_cte = CommonTableExpression::from_select(embedding_cte);
                 embedding_cte.table_name(Alias::new(format!("{key}_embedding")));
-                with_clause.cte(embedding_cte);
+                // with_clause.cte(embedding_cte);
 
                 // Build the score CTE
-                score_cte
+                // score_cte
+                //     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
+                //     .column((SIden::Str("embeddings"), SIden::Str("document_id")))
+                //     .expr(Expr::cust(r#"ARRAY[embeddings.document_id] as previous_document_ids"#))
+                //     .expr(Expr::cust(format!(
+                //         r#"MIN(embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector) AS score"#
+                //     )))
+                //     .order_by_expr(Expr::cust(format!(
+                //         r#"embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector"#
+                //     )), Order::Asc )
+                //     .limit(1)
+            }
+            ModelRuntime::OpenAI => {
+                unimplemented!()
+                // We can unwrap here as we know this is all set from above
+                //     let model = &pipeline
+                //         .parsed_schema
+                //         .as_ref()
+                //         .unwrap()
+                //         .get(&key)
+                //         .unwrap()
+                //         .semantic_search
+                //         .as_ref()
+                //         .unwrap()
+                //         .model;
+
+                //     // Get the remote embedding
+                //     let embedding = {
+                //         let remote_embeddings = build_remote_embeddings(
+                //             model.runtime,
+                //             &model.name,
+                //             vsa.parameters.as_ref(),
+                //         )?;
+                //         let mut embeddings = remote_embeddings.embed(vec![vsa.query]).await?;
+                //         std::mem::take(&mut embeddings[0])
+                //     };
+
+                //     // Build the score CTE
+                //     score_cte
+                //         .column((SIden::Str("embeddings"), SIden::Str("document_id")))
+                //         .expr(Expr::cust_with_values(
+                //             r#"MIN(embeddings.embedding <=> $1::vector) AS score"#,
+                //             [embedding.clone()],
+                //         ))
+                //         .order_by_expr(
+                //             Expr::cust_with_values(
+                //                 r#"embeddings.embedding <=> $1::vector"#,
+                //                 [embedding],
+                //             ),
+                //             Order::Asc,
+                //         )
+            }
+        };
+
+        score_cte_non_recursive
+                    .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
                     .column((SIden::Str("embeddings"), SIden::Str("document_id")))
+                    .expr(Expr::cust(r#"ARRAY[embeddings.document_id] as previous_document_ids"#))
                     .expr(Expr::cust(format!(
-                        r#"MIN(embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector) AS score"#
+                        r#"(embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector) AS score"#
                     )))
                     .order_by_expr(Expr::cust(format!(
                         r#"embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector"#
                     )), Order::Asc )
-            }
-            ModelRuntime::OpenAI => {
-                // We can unwrap here as we know this is all set from above
-                let model = &pipeline
-                    .parsed_schema
-                    .as_ref()
-                    .unwrap()
-                    .get(&key)
-                    .unwrap()
-                    .semantic_search
-                    .as_ref()
-                    .unwrap()
-                    .model;
+                    .limit(1);
 
-                // Get the remote embedding
-                let embedding = {
-                    let remote_embeddings = build_remote_embeddings(
-                        model.runtime,
-                        &model.name,
-                        vsa.parameters.as_ref(),
-                    )?;
-                    let mut embeddings = remote_embeddings.embed(vec![vsa.query]).await?;
-                    std::mem::take(&mut embeddings[0])
-                };
-
-                // Build the score CTE
-                score_cte
+        score_cte_recurisive
+                    .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
                     .column((SIden::Str("embeddings"), SIden::Str("document_id")))
-                    .expr(Expr::cust_with_values(
-                        r#"MIN(embeddings.embedding <=> $1::vector) AS score"#,
-                        [embedding.clone()],
-                    ))
-                    .order_by_expr(
-                        Expr::cust_with_values(
-                            r#"embeddings.embedding <=> $1::vector"#,
-                            [embedding],
-                        ),
-                        Order::Asc,
-                    )
-            }
-        };
+                    .expr(Expr::cust(format!(r#""{cte_name}".previous_document_ids || embeddings.document_id"#)))
+                    .expr(Expr::cust(format!(
+                        r#"(embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector) AS score"#
+                    )))
+                    .and_where(Expr::cust(format!(r#"NOT embeddings.document_id = ANY("{cte_name}".previous_document_ids)"#)))
+                    .order_by_expr(Expr::cust(format!(
+                        r#"embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector"#
+                    )), Order::Asc )
+                    .limit(1);
 
-        score_cte
-            .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
-            .group_by_col((SIden::Str("embeddings"), SIden::Str("id")))
-            .limit(limit);
+        score_cte_non_recursive.union(sea_query::UnionType::All, score_cte_recurisive);
 
-        if let Some(filter) = &valid_query.query.filter {
-            let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
-            score_cte.cond_where(filter);
-            score_cte.join_as(
-                JoinType::InnerJoin,
-                documents_table.to_table_tuple(),
-                Alias::new("documents"),
-                Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .equals((SIden::Str("embeddings"), SIden::Str("document_id"))),
-            );
-        }
+        // score_cte
+        //     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
+        //     .group_by_col((SIden::Str("embeddings"), SIden::Str("id")))
+        //     .limit(limit);
 
-        let mut score_cte = CommonTableExpression::from_select(score_cte);
+        // if let Some(filter) = &valid_query.query.filter {
+        //     let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
+        //     score_cte.cond_where(filter);
+        //     score_cte.join_as(
+        //         JoinType::InnerJoin,
+        //         documents_table.to_table_tuple(),
+        //         Alias::new("documents"),
+        //         Expr::col((SIden::Str("documents"), SIden::Str("id")))
+        //             .equals((SIden::Str("embeddings"), SIden::Str("document_id"))),
+        //     );
+        // }
+
+        let mut score_cte = CommonTableExpression::from_select(score_cte_non_recursive);
         score_cte.table_name(Alias::new(&cte_name));
         with_clause.cte(score_cte);
 
