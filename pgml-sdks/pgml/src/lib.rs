@@ -48,7 +48,7 @@ pub use transformer_pipeline::TransformerPipeline;
 // This is use when inserting collections to set the sdk_version used during creation
 // This doesn't actually mean the verion of the SDK it was created on, it means the
 // version it is compatible with
-static SDK_VERSION: &str = "0.11.0";
+static SDK_VERSION: &str = "1.0.0";
 
 // Store the database(s) in a global variable so that we can access them from anywhere
 // This is not necessarily idiomatic Rust, but it is a good way to acomplish what we need
@@ -818,77 +818,80 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswle_72";
+        let collection_name = "test_r_c_cswle_78";
         let mut collection = Collection::new(collection_name, None);
-        let documents = generate_dummy_documents(10);
-        collection.upsert_documents(documents.clone(), None).await?;
+        // let documents = generate_dummy_documents(10000);
+        // collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cswle_9";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
-                    "title": {
-                        "semantic_search": {
-                            "model": "intfloat/e5-small"
-                        },
-                        "full_text_search": {
-                            "configuration": "english"
-                        }
-                    },
+                    // "title": {
+                    //     "semantic_search": {
+                    //         "model": "intfloat/e5-small"
+                    //     },
+                    //     "full_text_search": {
+                    //         "configuration": "english"
+                    //     }
+                    // },
                     "body": {
                         "splitter": {
                             "model": "recursive_character"
                         },
                         "semantic_search": {
-                            "model": "hkunlp/instructor-base",
-                            "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval"
-                            }
+                            "model": "intfloat/e5-small"
                         },
+                        // "semantic_search": {
+                        //     "model": "hkunlp/instructor-base",
+                        //     "parameters": {
+                        //         "instruction": "Represent the Wikipedia document for retrieval"
+                        //     }
+                        // },
                         "full_text_search": {
                             "configuration": "english"
                         }
                     },
-                    "notes": {
-                       "semantic_search": {
-                            "model": "intfloat/e5-small"
-                        }
-                    }
+                    // "notes": {
+                    //    "semantic_search": {
+                    //         "model": "intfloat/e5-small"
+                    //     }
+                    // }
                 })
                 .into(),
             ),
         )?;
-        collection.add_pipeline(&mut pipeline).await?;
+        // collection.add_pipeline(&mut pipeline).await?;
         let results = collection
             .search(
                 json!({
                     "query": {
-                        "full_text_search": {
-                            "title": {
-                                "query": "test 9",
-                                "boost": 4.0
-                            },
-                            "body": {
-                                "query": "Test",
-                                "boost": 1.2
-                            }
-                        },
+                        // "full_text_search": {
+                        //     "title": {
+                        //         "query": "test 9",
+                        //         "boost": 4.0
+                        //     },
+                        //     "body": {
+                        //         "query": "Test",
+                        //         "boost": 1.2
+                        //     }
+                        // },
                         "semantic_search": {
-                            "title": {
-                                "query": "This is a test",
-                                "boost": 2.0
-                            },
+                            // "title": {
+                            //     "query": "This is a test",
+                            //     "boost": 2.0
+                            // },
                             "body": {
                                 "query": "This is the body test",
-                                "parameters": {
-                                    "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
-                                },
+                                // "parameters": {
+                                //     "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                                // },
                                 "boost": 1.01
                             },
-                            "notes": {
-                                "query": "This is the notes test",
-                                "boost": 1.01
-                            }
+                            // "notes": {
+                            //     "query": "This is the notes test",
+                            //     "boost": 1.01
+                            // }
                         },
                         "filter": {
                            "id": {
@@ -1128,58 +1131,58 @@ mod tests {
         Ok(())
     }
 
-    // #[tokio::test]
-    // async fn can_vector_search_with_query_builder() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let mut collection = Collection::new("test_r_c_cvswqb_7", None);
-    //     let mut pipeline = Pipeline::new(
-    //         "test_r_p_cvswqb_0",
-    //         Some(
-    //             json!({
-    //                 "text": {
-    //                     "semantic_search": {
-    //                         "model": "intfloat/e5-small"
-    //                     },
-    //                     "full_text_search": {
-    //                         "configuration": "english"
-    //                     }
-    //                 },
-    //             })
-    //             .into(),
-    //         ),
-    //     )?;
-    //     collection
-    //         .upsert_documents(generate_dummy_documents(10), None)
-    //         .await?;
-    //     collection.add_pipeline(&mut pipeline).await?;
-    //     let results = collection
-    //         .query()
-    //         .vector_recall("test query", &pipeline, None)
-    //         .limit(3)
-    //         .filter(
-    //             json!({
-    //                 "metadata": {
-    //                     "id": {
-    //                         "$gt": 3
-    //                     }
-    //                 },
-    //                 "full_text": {
-    //                     "configuration": "english",
-    //                     "text": "test"
-    //                 }
-    //             })
-    //             .into(),
-    //         )
-    //         .fetch_all()
-    //         .await?;
-    //     let ids: Vec<u64> = results
-    //         .into_iter()
-    //         .map(|r| r.2["id"].as_u64().unwrap())
-    //         .collect();
-    //     assert_eq!(ids, vec![4, 5, 6]);
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
+    #[tokio::test]
+    async fn can_vector_search_with_query_builder() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cvswqb_7", None);
+        let mut pipeline = Pipeline::new(
+            "test_r_p_cvswqb_0",
+            Some(
+                json!({
+                    "text": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    },
+                })
+                .into(),
+            ),
+        )?;
+        collection
+            .upsert_documents(generate_dummy_documents(10), None)
+            .await?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let results = collection
+            .query()
+            .vector_recall("test query", &pipeline, None)
+            .limit(3)
+            .filter(
+                json!({
+                    "metadata": {
+                        "id": {
+                            "$gt": 3
+                        }
+                    },
+                    "full_text": {
+                        "configuration": "english",
+                        "text": "test"
+                    }
+                })
+                .into(),
+            )
+            .fetch_all()
+            .await?;
+        let ids: Vec<u64> = results
+            .into_iter()
+            .map(|r| r.2["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids, vec![4, 5, 6]);
+        collection.archive().await?;
+        Ok(())
+    }
 
     ///////////////////////////////
     // Working With Documents /////
