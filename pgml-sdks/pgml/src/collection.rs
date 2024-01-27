@@ -476,7 +476,7 @@ impl Collection {
         let batch_size = args
             .get("batch_size")
             .map(TryToNumeric::try_to_u64)
-            .unwrap_or(Ok(10))?;
+            .unwrap_or(Ok(100))?;
 
         for batch in documents.chunks(batch_size as usize) {
             let mut transaction = pool.begin().await?;
@@ -550,7 +550,7 @@ impl Collection {
                 .into_inner()
                 .commit()
                 .await?;
-            progress_bar.inc(1);
+            progress_bar.inc(batch_size);
         }
         progress_bar.println("Done Upserting Documents\n");
         progress_bar.finish();
