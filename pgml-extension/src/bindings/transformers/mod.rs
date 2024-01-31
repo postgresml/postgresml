@@ -60,7 +60,7 @@ pub fn tune(task: &Task, dataset: TextDataset, hyperparams: &JsonB, path: &Path)
     let hyperparams = serde_json::to_string(&hyperparams.0)?;
 
     Python::with_gil(|py| -> Result<HashMap<String, f64>> {
-        let tune = get_module!(PY_MODULE).getattr(py, "tune").format_traceback(py)?;
+        let tune = get_module!(PY_MODULE).getattr(py, "finetune").format_traceback(py)?;
         let path = path.to_string_lossy();
         let output = tune
             .call1(

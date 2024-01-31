@@ -46,6 +46,20 @@ from transformers import (
     PegasusTokenizer,
 )
 import threading
+import logging
+from rich.logging import RichHandler
+
+transformers.logging.set_verbosity_info()
+
+
+FORMAT = "%(message)s"
+logging.basicConfig(
+    level=os.environ.get("LOG_LEVEL", "INFO"),
+    format="%(asctime)s - %(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler()],
+)
+log = logging.getLogger("rich")
 
 __cache_transformer_by_model_id = {}
 __cache_sentence_transformer_by_name = {}
@@ -983,3 +997,86 @@ def generate(model_id, data, config):
             )
             all_preds.extend(decoded_preds)
     return all_preds
+
+
+#######################
+# LLM Fine-Tuning
+#######################
+def finetune(task, hyperparams, path, x_train, x_test, y_train, y_test):
+    # Get model and tokenizer
+    hyperparams = orjson.loads(hyperparams)
+    model_name = hyperparams.pop("model_name")
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    classes = list(set(y_train))
+    num_classes = len(classes)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        model_name, num_labels=num_classes
+    )
+    id2label = {}
+    label2id = {}
+    for id, label in enumerate(classes):
+        label2id[label] = float(id)
+        id2label[id] = label
+    
+    model.config.id2label = id2label
+    model.config.label2id = label2id
+   
+    y_train_label = [label2id[_class] for _class in y_train]
+    y_test_label = [label2id[_class] for _class in y_test]
+    
+    # Prepare dataset
+    train_dataset = datasets.Dataset.from_dict(
+        {
+            "text": x_train,
+            "label": y_train_label,
+        }
+    )
+    test_dataset = datasets.Dataset.from_dict(
+        {
+            "text": x_test,
+            "label": y_test_label,
+        }
+    )
+    # tokenization function
+    def tokenize_function(example):
+        tokenized_example = tokenizer(
+            example["text"],
+            padding=True,
+            truncation=True,
+            return_tensors="pt"
+        )
+        return tokenized_example
+
+    # Generate tokens
+    train_tokenized_datasets = train_dataset.map(tokenize_function, batched=True)
+    test_tokenized_datasets = test_dataset.map(tokenize_function, batched=True)
+    log.info("Tokenization done")
+    log.info("Train dataset")
+    log.info(train_tokenized_datasets[0:2])
+    log.info("Test dataset")
+    log.info(test_tokenized_datasets[0:2])
+    # Data collator
+    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+
+    # Training Args
+    log.info("Training args setup started path=%s"%path)
+    training_args=TrainingArguments(output_dir="/tmp/postgresml/models/", **hyperparams)
+    log.info("Trainer setup done")
+    # Trainer
+    try:
+        trainer = Trainer(
+            model=model.to("cpu"),
+            args=training_args,
+            train_dataset=train_tokenized_datasets,
+            eval_dataset=test_tokenized_datasets,
+            tokenizer=tokenizer,
+            data_collator=data_collator,
+        )
+    except Exception as e:
+        log.error(e)
+    log.info("Training started")
+
+    # Train
+    trainer.train()
+    metrics = {"loss" : 0.0}
+    return metrics
