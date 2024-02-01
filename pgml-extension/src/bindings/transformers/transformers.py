@@ -1060,9 +1060,15 @@ def finetune(task, hyperparams, path, x_train, x_test, y_train, y_test):
 
     # Training Args
     log.info("Training args setup started path=%s"%path)
-    training_args=TrainingArguments(output_dir="/tmp/postgresml/models/", **hyperparams)
+    training_args=TrainingArguments(output_dir="/tmp/postgresml/models/", logging_dir="/tmp/postgresml/runs", **hyperparams)
     log.info("Trainer setup done")
     # Trainer
+    log.info(model)
+    log.info(training_args)
+    log.info(train_tokenized_datasets)
+    log.info(test_tokenized_datasets)
+    log.info(tokenizer)
+    log.info(data_collator)
     try:
         trainer = Trainer(
             model=model.to("cpu"),
