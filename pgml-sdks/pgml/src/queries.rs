@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS %s (
   created_at timestamp NOT NULL DEFAULT now(),
   source_uuid uuid NOT NULL,
   document jsonb NOT NULL,
+  version jsonb NOT NULL DEFAULT '{}'::jsonb,
   UNIQUE (source_uuid)
 );
 "#;
@@ -72,6 +73,31 @@ CREATE TABLE IF NOT EXISTS %s (
   document_id int8 NOT NULL REFERENCES %s, 
   ts tsvector,
   UNIQUE (chunk_id)
+);
+"#;
+
+pub const CREATE_PIPELINES_SEARCHES_TABLE: &str = r#"
+CREATE TABLE IF NOT EXISTS %s (
+  id serial8 PRIMARY KEY,
+  query jsonb
+);
+"#;
+
+pub const CREATE_PIPELINES_SEARCH_RESULTS_TABLE: &str = r#"
+CREATE TABLE IF NOT EXISTS %s (
+  id serial8 PRIMARY KEY,
+  search_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE,
+  document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE,
+  scores jsonb NOT NULL,
+  rank integer NOT NULL
+);
+"#;
+
+pub const CREATE_PIPELINES_SEARCH_EVENTS_TABLE: &str = r#"
+CREATE TABLE IF NOT EXISTS %s (
+  id serial8 PRIMARY KEY,
+  search_result int8 NOT NULL REFERENCES %s ON DELETE CASCADE,
+  event jsonb NOT NULL
 );
 "#;
 
@@ -216,26 +242,31 @@ WITH splitter as (
       pgml.splitters 
     WHERE
       id = $1
-)
-INSERT INTO %s(
-  document_id, chunk_index, chunk
-)
-SELECT 
-  document_id, 
-  (chunk).chunk_index, 
-  (chunk).chunk 
-FROM 
-  (
-    SELECT 
-      id AS document_id, 
-      pgml.chunk(
-        (SELECT name FROM splitter), 
-        %d, 
-        (SELECT parameters FROM splitter)
-      ) AS chunk 
-    FROM 
-      %s WHERE id = ANY($2)
-  ) chunks
-ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
-RETURNING id
+), new as (
+  SELECT 
+    document_id, 
+    (chunk).chunk_index, 
+    (chunk).chunk 
+  FROM 
+    (
+      SELECT 
+        id AS document_id, 
+        pgml.chunk(
+          (SELECT name FROM splitter), 
+          %d, 
+          (SELECT parameters FROM splitter)
+        ) AS chunk 
+      FROM 
+        %s WHERE id = ANY($2)
+    ) chunks
+), ins as (
+  INSERT INTO %s(
+    document_id, chunk_index, chunk
+  ) SELECT * FROM new
+  WHERE new.chunk <> COALESCE((SELECT chunk FROM %s chunks WHERE chunks.document_id = new.document_id AND chunks.chunk_index = new.chunk_index), '')
+  ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
+  RETURNING id
+), del as (
+  DELETE FROM %s chunks WHERE chunk_index < (SELECT MAX(new.chunk_index) FROM new WHERE new.document_id = chunks.document_id GROUP BY new.document_id)
+) SELECT id FROM ins;
 "#;
