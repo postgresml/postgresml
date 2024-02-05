@@ -9,9 +9,11 @@ use serde_json::json;
 use sqlx::Executor;
 use sqlx::PgConnection;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 use tokio::sync::Mutex;
 use tracing::{instrument, warn};
 use walkdir::WalkDir;
@@ -490,20 +492,44 @@ impl Collection {
                 let md5_digest = md5::compute(id.as_bytes());
                 let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
 
+                // Compute the md5 of each of the fields
+                let start = SystemTime::now();
+                let timestamp = start
+                    .duration_since(UNIX_EPOCH)
+                    .expect("Time went backwards")
+                    .as_millis();
+
+                let versions: HashMap<String, serde_json::Value> = document
+                    .as_object()
+                    .context("document must be an object")?
+                    .iter()
+                    .try_fold(HashMap::new(), |mut acc, (key, value)| {
+                        let md5_digest = md5::compute(serde_json::to_string(value)?.as_bytes());
+                        let md5_digest = format!("{md5_digest:x}");
+                        acc.insert(
+                            key.to_owned(),
+                            serde_json::json!({
+                                "last_updated": timestamp,
+                                "md5": md5_digest
+                            }),
+                        );
+                        anyhow::Ok(acc)
+                    })?;
+
                 let query = if args
                     .get("merge")
                     .map(|v| v.as_bool().unwrap_or(false))
                     .unwrap_or(false)
                 {
                     query_builder!(
-                    "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = %s.document || EXCLUDED.document RETURNING id, (SELECT document FROM prev)",
+                    "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document, version) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET document = %s.document || EXCLUDED.document, version = EXCLUDED.version RETURNING id, (SELECT document FROM prev)",
                     self.documents_table_name,
                     self.documents_table_name,
                     self.documents_table_name
                 )
                 } else {
                     query_builder!(
-                    "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document) VALUES ($1, $2) ON CONFLICT (source_uuid) DO UPDATE SET document = EXCLUDED.document RETURNING id, (SELECT document FROM prev)",
+                    "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document, version) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET document = EXCLUDED.document, version = EXCLUDED.version RETURNING id, (SELECT document FROM prev)",
                     self.documents_table_name,
                     self.documents_table_name
                 )
@@ -511,6 +537,7 @@ impl Collection {
                 let (document_id, previous_document): (i64, Option<Json>) = sqlx::query_as(&query)
                     .bind(source_uuid)
                     .bind(document)
+                    .bind(serde_json::to_value(versions)?)
                     .fetch_one(&mut *transaction)
                     .await?;
                 dp.push((document_id, document, previous_document));
