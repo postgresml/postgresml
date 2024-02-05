@@ -818,23 +818,23 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswle_78";
+        let collection_name = "test_r_c_cswle_80";
         let mut collection = Collection::new(collection_name, None);
-        // let documents = generate_dummy_documents(10000);
-        // collection.upsert_documents(documents.clone(), None).await?;
+        let documents = generate_dummy_documents(10);
+        collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cswle_9";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
-                    // "title": {
-                    //     "semantic_search": {
-                    //         "model": "intfloat/e5-small"
-                    //     },
-                    //     "full_text_search": {
-                    //         "configuration": "english"
-                    //     }
-                    // },
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    },
                     "body": {
                         "splitter": {
                             "model": "recursive_character"
@@ -842,56 +842,56 @@ mod tests {
                         "semantic_search": {
                             "model": "intfloat/e5-small"
                         },
-                        // "semantic_search": {
-                        //     "model": "hkunlp/instructor-base",
-                        //     "parameters": {
-                        //         "instruction": "Represent the Wikipedia document for retrieval"
-                        //     }
-                        // },
+                        "semantic_search": {
+                            "model": "hkunlp/instructor-base",
+                            "parameters": {
+                                "instruction": "Represent the Wikipedia document for retrieval"
+                            }
+                        },
                         "full_text_search": {
                             "configuration": "english"
                         }
                     },
-                    // "notes": {
-                    //    "semantic_search": {
-                    //         "model": "intfloat/e5-small"
-                    //     }
-                    // }
+                    "notes": {
+                       "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        }
+                    }
                 })
                 .into(),
             ),
         )?;
-        // collection.add_pipeline(&mut pipeline).await?;
+        collection.add_pipeline(&mut pipeline).await?;
         let results = collection
             .search(
                 json!({
                     "query": {
-                        // "full_text_search": {
-                        //     "title": {
-                        //         "query": "test 9",
-                        //         "boost": 4.0
-                        //     },
-                        //     "body": {
-                        //         "query": "Test",
-                        //         "boost": 1.2
-                        //     }
-                        // },
+                        "full_text_search": {
+                            "title": {
+                                "query": "test 9",
+                                "boost": 4.0
+                            },
+                            "body": {
+                                "query": "Test",
+                                "boost": 1.2
+                            }
+                        },
                         "semantic_search": {
-                            // "title": {
-                            //     "query": "This is a test",
-                            //     "boost": 2.0
-                            // },
+                            "title": {
+                                "query": "This is a test",
+                                "boost": 2.0
+                            },
                             "body": {
                                 "query": "This is the body test",
-                                // "parameters": {
-                                //     "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
-                                // },
+                                "parameters": {
+                                    "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                                },
                                 "boost": 1.01
                             },
-                            // "notes": {
-                            //     "query": "This is the notes test",
-                            //     "boost": 1.01
-                            // }
+                            "notes": {
+                                "query": "This is the notes test",
+                                "boost": 1.01
+                            }
                         },
                         "filter": {
                            "id": {
@@ -910,7 +910,7 @@ mod tests {
             .into_iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids, vec![7, 8, 2, 3, 4]);
+        assert_eq!(ids, vec![9, 2, 7, 8, 3]);
         collection.archive().await?;
         Ok(())
     }
@@ -918,7 +918,7 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswre_52";
+        let collection_name = "test_r_c_cswre_62";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
