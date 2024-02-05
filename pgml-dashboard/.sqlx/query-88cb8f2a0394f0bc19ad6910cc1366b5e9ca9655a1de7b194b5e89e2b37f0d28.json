@@ -1,0 +1,70 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE pgml.notebook_cells\n            SET deleted_at = NOW()\n            WHERE id = $1\n            RETURNING id,\n                    notebook_id,\n                    cell_type,\n                    contents,\n                    rendering,\n                    execution_time,\n                    cell_number,\n                    version,\n                    deleted_at",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "notebook_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "cell_type",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "contents",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "rendering",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "execution_time",
+        "type_info": "Interval"
+      },
+      {
+        "ordinal": 6,
+        "name": "cell_number",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "version",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "88cb8f2a0394f0bc19ad6910cc1366b5e9ca9655a1de7b194b5e89e2b37f0d28"
+}

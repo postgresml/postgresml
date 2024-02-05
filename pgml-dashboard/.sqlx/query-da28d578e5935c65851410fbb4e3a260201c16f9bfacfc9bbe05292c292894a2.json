@@ -1,0 +1,100 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n                    id,\n                    project_id,\n                    snapshot_id,\n                    num_features,\n                    algorithm,\n                    runtime::TEXT,\n                    hyperparams,\n                    status,\n                    metrics,\n                    search,\n                    search_params,\n                    search_args,\n                    created_at,\n                    updated_at\n                FROM pgml.models\n                WHERE id = $1\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "project_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "snapshot_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "num_features",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "algorithm",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "runtime",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "hyperparams",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "metrics",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 9,
+        "name": "search",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "search_params",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 11,
+        "name": "search_args",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 13,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      null,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "da28d578e5935c65851410fbb4e3a260201c16f9bfacfc9bbe05292c292894a2"
+}
