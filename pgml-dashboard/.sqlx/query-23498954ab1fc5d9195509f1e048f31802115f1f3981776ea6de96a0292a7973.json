@@ -1,0 +1,71 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE pgml.notebook_cells\n            SET cell_number = $1\n            WHERE id = $2\n            RETURNING *\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "notebook_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "cell_type",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "cell_number",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "version",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "contents",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "rendering",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "execution_time",
+        "type_info": "Interval"
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "23498954ab1fc5d9195509f1e048f31802115f1f3981776ea6de96a0292a7973"
+}

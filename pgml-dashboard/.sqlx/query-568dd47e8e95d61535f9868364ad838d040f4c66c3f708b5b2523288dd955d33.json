@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id,\n                    relation_name,\n                    y_column_name,\n                    test_size,\n                    test_sampling::TEXT,\n                    status,\n                    columns,\n                    analysis,\n                    created_at,\n                    updated_at,\n                    CASE \n                        WHEN EXISTS (\n                                SELECT 1\n                                FROM pg_class c\n                                WHERE c.oid::regclass::text = relation_name\n                            ) THEN pg_size_pretty(pg_total_relation_size(relation_name::regclass))\n                        ELSE '0 Bytes'\n                    END AS \"table_size!\", \n                    EXISTS (\n                        SELECT 1\n                        FROM pg_class c\n                        WHERE c.oid::regclass::text = relation_name\n                    ) AS \"exists!\"\n                    FROM pgml.snapshots WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "relation_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "y_column_name",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 3,
+        "name": "test_size",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 4,
+        "name": "test_sampling",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "columns",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "analysis",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 9,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "table_size!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 11,
+        "name": "exists!",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      null,
+      false,
+      true,
+      true,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "568dd47e8e95d61535f9868364ad838d040f4c66c3f708b5b2523288dd955d33"
+}
