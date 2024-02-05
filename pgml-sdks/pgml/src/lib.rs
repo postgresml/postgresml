@@ -319,7 +319,7 @@ mod tests {
     #[tokio::test]
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_capaud_51";
+        let collection_name = "test_r_c_capaud_73";
         let pipeline_name = "test_r_p_capaud_6";
         let mut pipeline = Pipeline::new(
             pipeline_name,

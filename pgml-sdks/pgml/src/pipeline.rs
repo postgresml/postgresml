@@ -411,6 +411,42 @@ impl Pipeline {
             .as_ref()
             .context("Pipeline must have schema to create_tables")?;
 
+        let searches_table_name = format!("{schema}.searches");
+        transaction
+            .execute(
+                query_builder!(
+                    queries::CREATE_PIPELINES_SEARCHES_TABLE,
+                    searches_table_name
+                )
+                .as_str(),
+            )
+            .await?;
+
+        let search_results_table_name = format!("{schema}.search_results");
+        transaction
+            .execute(
+                query_builder!(
+                    queries::CREATE_PIPELINES_SEARCH_RESULTS_TABLE,
+                    search_results_table_name,
+                    &searches_table_name,
+                    &documents_table_name
+                )
+                .as_str(),
+            )
+            .await?;
+
+        let search_events_table_name = format!("{schema}.search_events");
+        transaction
+            .execute(
+                query_builder!(
+                    queries::CREATE_PIPELINES_SEARCH_EVENTS_TABLE,
+                    search_events_table_name,
+                    &searches_table_name
+                )
+                .as_str(),
+            )
+            .await?;
+
         for (key, value) in parsed_schema.iter() {
             let chunks_table_name = format!("{}.{}_chunks", schema, key);
             transaction
@@ -642,21 +678,15 @@ impl Pipeline {
                 .as_ref()
                 .context("Splitter must be verified to sync chunks")?;
 
-            sqlx::query(&query_builder!(
-                queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS,
-                &chunks_table_name,
-                &json_key_query,
-                documents_table_name
-            ))
-            .bind(splitter_database_data.id)
-            .bind(document_ids)
-            .execute(&mut *transaction.lock().await)
-            .await?;
-
             sqlx::query_scalar(&query_builder!(
-                "SELECT id FROM %s WHERE document_id = ANY($1)",
+                queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS,
+                &json_key_query,
+                documents_table_name,
+                &chunks_table_name,
+                &chunks_table_name,
                 &chunks_table_name
             ))
+            .bind(splitter_database_data.id)
             .bind(document_ids)
             .fetch_all(&mut *transaction.lock().await)
             .await
@@ -664,21 +694,24 @@ impl Pipeline {
         } else {
             sqlx::query_scalar(&query_builder!(
                 r#"
-                        INSERT INTO %s(
-                            document_id, chunk_index, chunk
-                        )
-                        SELECT 
-                            id,
-                            1,
-                            %d
-                        FROM %s
-                        WHERE id = ANY($1)
-                        ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
-                        RETURNING id
-                    "#,
+                    INSERT INTO %s(
+                        document_id, chunk_index, chunk
+                    )
+                    SELECT 
+                        id,
+                        1,
+                        %d
+                    FROM %s documents
+                    WHERE id = ANY($1)
+                    AND %d <> COALESCE((SELECT chunk FROM %s chunks WHERE chunks.document_id = documents.id AND chunks.chunk_index = 1), '') 
+                    ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
+                    RETURNING id
+                "#,
                 &chunks_table_name,
                 &json_key_query,
-                &documents_table_name
+                &documents_table_name,
+                &json_key_query,
+                &chunks_table_name
             ))
             .bind(document_ids)
             .fetch_all(&mut *transaction.lock().await)
