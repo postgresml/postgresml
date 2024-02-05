@@ -63,7 +63,8 @@ pub async fn build_search_query(
 
     let mut query = Query::select();
     let mut score_table_names = Vec::new();
-    let mut with_clause = WithClause::new().recursive(true).to_owned();
+    // let mut with_clause = WithClause::new().recursive(true).to_owned();
+    let mut with_clause = WithClause::new();
     let mut sum_expression: Option<SimpleExpr> = None;
 
     let mut pipeline_cte = Query::select();
@@ -73,7 +74,7 @@ pub async fn build_search_query(
         .and_where(Expr::col(models::PipelineIden::Name).eq(&pipeline.name));
     let mut pipeline_cte = CommonTableExpression::from_select(pipeline_cte);
     pipeline_cte.table_name(Alias::new("pipeline"));
-    // with_clause.cte(pipeline_cte);
+    with_clause.cte(pipeline_cte);
 
     for (key, vsa) in valid_query.query.semantic_search.unwrap_or_default() {
         let model_runtime = pipeline
@@ -118,64 +119,9 @@ pub async fn build_search_query(
                 );
                 let mut embedding_cte = CommonTableExpression::from_select(embedding_cte);
                 embedding_cte.table_name(Alias::new(format!("{key}_embedding")));
-                // with_clause.cte(embedding_cte);
+                with_clause.cte(embedding_cte);
 
-                // Build the score CTE
-                // score_cte
-                //     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
-                //     .column((SIden::Str("embeddings"), SIden::Str("document_id")))
-                //     .expr(Expr::cust(r#"ARRAY[embeddings.document_id] as previous_document_ids"#))
-                //     .expr(Expr::cust(format!(
-                //         r#"MIN(embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector) AS score"#
-                //     )))
-                //     .order_by_expr(Expr::cust(format!(
-                //         r#"embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector"#
-                //     )), Order::Asc )
-                //     .limit(1)
-            }
-            ModelRuntime::OpenAI => {
-                unimplemented!()
-                // We can unwrap here as we know this is all set from above
-                //     let model = &pipeline
-                //         .parsed_schema
-                //         .as_ref()
-                //         .unwrap()
-                //         .get(&key)
-                //         .unwrap()
-                //         .semantic_search
-                //         .as_ref()
-                //         .unwrap()
-                //         .model;
-
-                //     // Get the remote embedding
-                //     let embedding = {
-                //         let remote_embeddings = build_remote_embeddings(
-                //             model.runtime,
-                //             &model.name,
-                //             vsa.parameters.as_ref(),
-                //         )?;
-                //         let mut embeddings = remote_embeddings.embed(vec![vsa.query]).await?;
-                //         std::mem::take(&mut embeddings[0])
-                //     };
-
-                //     // Build the score CTE
-                //     score_cte
-                //         .column((SIden::Str("embeddings"), SIden::Str("document_id")))
-                //         .expr(Expr::cust_with_values(
-                //             r#"MIN(embeddings.embedding <=> $1::vector) AS score"#,
-                //             [embedding.clone()],
-                //         ))
-                //         .order_by_expr(
-                //             Expr::cust_with_values(
-                //                 r#"embeddings.embedding <=> $1::vector"#,
-                //                 [embedding],
-                //             ),
-                //             Order::Asc,
-                //         )
-            }
-        };
-
-        score_cte_non_recursive
+                score_cte_non_recursive
                     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
                     .column((SIden::Str("embeddings"), SIden::Str("document_id")))
                     .expr(Expr::cust(r#"ARRAY[embeddings.document_id] as previous_document_ids"#))
@@ -187,8 +133,13 @@ pub async fn build_search_query(
                     )), Order::Asc )
                     .limit(1);
 
-        score_cte_recurisive
+                score_cte_recurisive
                     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
+                    .join(
+                        JoinType::Join,
+                        SIden::String(cte_name.clone()),
+                        Expr::cust("1 = 1"),
+                    )
                     .column((SIden::Str("embeddings"), SIden::Str("document_id")))
                     .expr(Expr::cust(format!(r#""{cte_name}".previous_document_ids || embeddings.document_id"#)))
                     .expr(Expr::cust(format!(
@@ -199,27 +150,106 @@ pub async fn build_search_query(
                         r#"embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector"#
                     )), Order::Asc )
                     .limit(1);
+            }
+            ModelRuntime::OpenAI => {
+                // We can unwrap here as we know this is all set from above
+                let model = &pipeline
+                    .parsed_schema
+                    .as_ref()
+                    .unwrap()
+                    .get(&key)
+                    .unwrap()
+                    .semantic_search
+                    .as_ref()
+                    .unwrap()
+                    .model;
 
-        score_cte_non_recursive.union(sea_query::UnionType::All, score_cte_recurisive);
+                // Get the remote embedding
+                let embedding = {
+                    let remote_embeddings = build_remote_embeddings(
+                        model.runtime,
+                        &model.name,
+                        vsa.parameters.as_ref(),
+                    )?;
+                    let mut embeddings = remote_embeddings.embed(vec![vsa.query]).await?;
+                    std::mem::take(&mut embeddings[0])
+                };
 
-        // score_cte
-        //     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
-        //     .group_by_col((SIden::Str("embeddings"), SIden::Str("id")))
-        //     .limit(limit);
+                score_cte_non_recursive
+                    .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
+                    .column((SIden::Str("embeddings"), SIden::Str("document_id")))
+                    .expr(Expr::cust(
+                        "ARRAY[embeddings.document_id] as previous_document_ids",
+                    ))
+                    .expr(Expr::cust_with_values(
+                        "embeddings.embedding <=> $1::vector AS score",
+                        [embedding.clone()],
+                    ))
+                    .order_by_expr(
+                        Expr::cust_with_values(
+                            "embeddings.embedding <=> $1::vector",
+                            [embedding.clone()],
+                        ),
+                        Order::Asc,
+                    )
+                    .limit(1);
 
-        // if let Some(filter) = &valid_query.query.filter {
-        //     let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
-        //     score_cte.cond_where(filter);
-        //     score_cte.join_as(
-        //         JoinType::InnerJoin,
-        //         documents_table.to_table_tuple(),
-        //         Alias::new("documents"),
-        //         Expr::col((SIden::Str("documents"), SIden::Str("id")))
-        //             .equals((SIden::Str("embeddings"), SIden::Str("document_id"))),
-        //     );
-        // }
+                score_cte_recurisive
+                    .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
+                    .join(
+                        JoinType::Join,
+                        SIden::String(cte_name.clone()),
+                        Expr::cust("1 = 1"),
+                    )
+                    .column((SIden::Str("embeddings"), SIden::Str("document_id")))
+                    .expr(Expr::cust(format!(
+                        r#""{cte_name}".previous_document_ids || embeddings.document_id"#
+                    )))
+                    .expr(Expr::cust_with_values(
+                        "embeddings.embedding <=> $1::vector AS score",
+                        [embedding.clone()],
+                    ))
+                    .and_where(Expr::cust(format!(
+                        r#"NOT embeddings.document_id = ANY("{cte_name}".previous_document_ids)"#
+                    )))
+                    .order_by_expr(
+                        Expr::cust_with_values(
+                            "embeddings.embedding <=> $1::vector",
+                            [embedding.clone()],
+                        ),
+                        Order::Asc,
+                    )
+                    .limit(1);
+            }
+        }
 
-        let mut score_cte = CommonTableExpression::from_select(score_cte_non_recursive);
+        if let Some(filter) = &valid_query.query.filter {
+            let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
+            score_cte_non_recursive.cond_where(filter.clone());
+            score_cte_recurisive.cond_where(filter);
+            score_cte_non_recursive.join_as(
+                JoinType::InnerJoin,
+                documents_table.to_table_tuple(),
+                Alias::new("documents"),
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .equals((SIden::Str("embeddings"), SIden::Str("document_id"))),
+            );
+            score_cte_recurisive.join_as(
+                JoinType::InnerJoin,
+                documents_table.to_table_tuple(),
+                Alias::new("documents"),
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .equals((SIden::Str("embeddings"), SIden::Str("document_id"))),
+            );
+        }
+
+        let score_cte = Query::select()
+            .expr(Expr::cust("*"))
+            .from_subquery(score_cte_non_recursive, Alias::new("non_recursive"))
+            .union(sea_query::UnionType::All, score_cte_recurisive)
+            .to_owned();
+
+        let mut score_cte = CommonTableExpression::from_select(score_cte);
         score_cte.table_name(Alias::new(&cte_name));
         with_clause.cte(score_cte);
 
@@ -242,18 +272,21 @@ pub async fn build_search_query(
 
         // Build the score CTE
         let cte_name = format!("{key}_tsvectors_score");
-        let mut score_cte = Query::select();
-        score_cte
-            .column(SIden::Str("document_id"))
+
+        let mut score_cte_non_recursive = Query::select()
+            .column((SIden::Str("tsvectors"), SIden::Str("document_id")))
             .expr_as(
                 Expr::cust_with_values(
                     format!(
-                        r#"MAX(ts_rank(tsvectors.ts, plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1), 32))"#,
+                        r#"ts_rank(tsvectors.ts, plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1), 32)"#,
                     ),
                     [&vma.query],
                 ),
                 Alias::new("score")
             )
+            .expr(Expr::cust(
+                "ARRAY[tsvectors.document_id] as previous_document_ids",
+            ))
             .from_as(
                 full_text_table.to_table_tuple(),
                 Alias::new("tsvectors"),
@@ -264,14 +297,58 @@ pub async fn build_search_query(
                 ),
                 [&vma.query],
             ))
-            .group_by_col(SIden::Str("document_id"))
             .order_by(SIden::Str("score"), Order::Desc)
-            .limit(limit);
+            .limit(limit).
+            to_owned();
+
+        let mut score_cte_recursive = Query::select()
+            .column((SIden::Str("tsvectors"), SIden::Str("document_id")))
+            .expr_as(
+                Expr::cust_with_values(
+                    format!(
+                        r#"ts_rank(tsvectors.ts, plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1), 32)"#,
+                    ),
+                    [&vma.query],
+                ),
+                Alias::new("score")
+            )
+            .expr(Expr::cust(format!(
+                r#""{cte_name}".previous_document_ids || tsvectors.document_id"#
+            )))
+            .from_as(
+                full_text_table.to_table_tuple(),
+                Alias::new("tsvectors"),
+            )
+            .join(
+                JoinType::Join,
+                SIden::String(cte_name.clone()),
+                Expr::cust("1 = 1"),
+            )
+            .and_where(Expr::cust(format!(
+                r#"NOT tsvectors.document_id = ANY("{cte_name}".previous_document_ids)"#
+            )))
+            .and_where(Expr::cust_with_values(
+                format!(
+                    r#"tsvectors.ts @@ plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1)"#,
+                ),
+                [&vma.query],
+            ))
+            .order_by(SIden::Str("score"), Order::Desc)
+            .limit(limit)
+            .to_owned();
 
         if let Some(filter) = &valid_query.query.filter {
             let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
-            score_cte.cond_where(filter);
-            score_cte.join_as(
+            score_cte_recursive.cond_where(filter.clone());
+            score_cte_non_recursive.cond_where(filter);
+            score_cte_recursive.join_as(
+                JoinType::InnerJoin,
+                documents_table.to_table_tuple(),
+                Alias::new("documents"),
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .equals((SIden::Str("tsvectors"), SIden::Str("document_id"))),
+            );
+            score_cte_non_recursive.join_as(
                 JoinType::InnerJoin,
                 documents_table.to_table_tuple(),
                 Alias::new("documents"),
@@ -279,6 +356,12 @@ pub async fn build_search_query(
                     .equals((SIden::Str("tsvectors"), SIden::Str("document_id"))),
             );
         }
+
+        let score_cte = Query::select()
+            .expr(Expr::cust("*"))
+            .from_subquery(score_cte_non_recursive, Alias::new("non_recursive"))
+            .union(sea_query::UnionType::All, score_cte_recursive)
+            .to_owned();
 
         let mut score_cte = CommonTableExpression::from_select(score_cte);
         score_cte.table_name(Alias::new(&cte_name));
@@ -319,7 +402,6 @@ pub async fn build_search_query(
         let sum_expression = sum_expression
             .context("query requires some scoring through full_text_search or semantic_search")?;
         query
-            // .expr_as(id_select_expression.clone(), Alias::new("id"))
             .expr(Expr::cust_with_expr(
                 "DISTINCT ON ($1) $1 as id",
                 id_select_expression.clone(),
@@ -338,7 +420,6 @@ pub async fn build_search_query(
                 Expr::cust_with_expr("$1, score", id_select_expression),
                 Order::Desc,
             );
-        // .order_by(SIden::Str("score"), Order::Desc);
 
         let mut re_ordered_query = Query::select();
         re_ordered_query
@@ -362,8 +443,11 @@ pub async fn build_search_query(
         .clone()
         .with(with_clause.clone())
         .to_string(PostgresQueryBuilder);
+    let query_string = query_string.replace("WITH ", "WITH RECURSIVE ");
     println!("\nTHE QUERY: \n{query_string}\n");
 
+    // For whatever reason, sea query does not like ctes if the cte is recursive
     let (sql, values) = query.with(with_clause).build_sqlx(PostgresQueryBuilder);
+    let sql = sql.replace("WITH ", "WITH RECURSIVE ");
     Ok((sql, values))
 }
