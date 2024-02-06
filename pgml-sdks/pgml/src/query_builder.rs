@@ -175,7 +175,12 @@ impl QueryBuilder {
             .columns([models::EmbeddingIden::ChunkId])
             .expr(Expr::cust(
                 "1 - (embeddings.embedding <=> (select embedding from embedding)) as score",
-            ));
+            ))
+            .order_by_expr(
+                Expr::cust("embeddings.embedding <=> (select embedding from embedding)"),
+                Order::Asc,
+            );
+
         let mut comparison_cte = CommonTableExpression::from_select(comparison_cte);
         comparison_cte.table_name(Alias::new("comparison"));
 
@@ -209,15 +214,14 @@ impl QueryBuilder {
                 Alias::new("documents"),
                 Expr::col((SIden::Str("documents"), SIden::Str("id")))
                     .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
-            )
-            .order_by((SIden::Str("comparison"), SIden::Str("score")), Order::Desc);
+            );
+        // .order_by((SIden::Str("comparison"), SIden::Str("score")), Order::Desc);
 
         self
     }
 
     pub async fn fetch_all(mut self) -> anyhow::Result<Vec<(f64, String, Json)>> {
         let pool = get_or_initialize_pool(&self.collection.database_url).await?;
-
         let (sql, values) = self
             .query
             .clone()
@@ -275,8 +279,15 @@ impl QueryBuilder {
                             .columns([models::EmbeddingIden::ChunkId])
                             .expr(Expr::cust_with_values(
                                 "1 - (embeddings.embedding <=> $1::vector) as score",
-                                [embedding],
-                            ));
+                                [embedding.clone()],
+                            ))
+                            .order_by_expr(
+                                Expr::cust_with_values(
+                                    "embeddings.embedding <=> $1::vector",
+                                    [embedding],
+                                ),
+                                Order::Asc,
+                            );
 
                         let mut comparison_cte = CommonTableExpression::from_select(comparison_cte);
                         comparison_cte.table_name(Alias::new("comparison"));

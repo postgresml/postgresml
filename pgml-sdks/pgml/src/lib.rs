@@ -354,18 +354,21 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswle_28", None);
+        let mut collection = Collection::new("test_r_c_cvswle_33", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswle_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(5))
             .await?;
         let results = collection
             .vector_search("Here is some query", &mut pipeline, None, None)
             .await?;
-        assert!(results.len() == 3);
+
+        println!("\n{results:?}\n");
+
+        assert!(results.len() == 5);
         collection.archive().await?;
         Ok(())
     }
@@ -380,7 +383,7 @@ mod tests {
         );
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
-            "test_r_p_cvswre_1",
+            "test_r_p_cvswre_2",
             Some(model),
             Some(splitter),
             Some(
@@ -393,18 +396,21 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswre_20", None);
+        let mut collection = Collection::new("test_r_c_cvswre_38", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswre_1", None, None, None);
+        let mut pipeline = Pipeline::new("test_r_p_cvswre_2", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(5))
             .await?;
         let results = collection
             .vector_search("Here is some query", &mut pipeline, None, None)
             .await?;
-        assert!(results.len() == 3);
+
+        println!("\n{results:?}\n");
+
+        assert!(results.len() == 5);
         collection.archive().await?;
         Ok(())
     }
@@ -434,7 +440,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(1000))
             .await?;
         let results = collection
             .query()
@@ -475,7 +481,7 @@ mod tests {
         // Recreate the pipeline to replicate a more accurate example
         let mut pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(3))
+            .upsert_documents(generate_dummy_documents(5))
             .await?;
         let results = collection
             .query()

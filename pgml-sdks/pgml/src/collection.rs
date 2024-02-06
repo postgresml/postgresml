@@ -926,6 +926,7 @@ impl Collection {
                     self.pipelines_table_name,
                     embeddings_table_name,
                     embeddings_table_name,
+                    embeddings_table_name,
                     self.chunks_table_name,
                     self.documents_table_name
                 ))
@@ -935,6 +936,8 @@ impl Collection {
                 .bind(top_k)
                 .fetch_all(&pool)
                 .await;
+
+                println!("\n\n{result:?}\n\n");
 
                 match result {
                     Ok(r) => Ok(r),
@@ -1007,10 +1010,11 @@ impl Collection {
             std::mem::take(&mut embeddings[0])
         };
 
+        println!("\n{embedding:?}\n");
+
         let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
         sqlx::query_as(&query_builder!(
             queries::VECTOR_SEARCH,
-            embeddings_table_name,
             embeddings_table_name,
             self.chunks_table_name,
             self.documents_table_name

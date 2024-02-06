@@ -134,8 +134,10 @@ WHERE
   AND id NOT IN (
     SELECT 
       chunk_id 
-    from 
+    FROM 
       %s
+    WHERE
+      chunk_id = id
   )
 ON CONFLICT (chunk_id) DO NOTHING;
 "#;
@@ -157,8 +159,10 @@ WHERE
   AND id NOT IN (
     SELECT 
       chunk_id 
-    from 
+    FROM 
       %s
+    WHERE
+      chunk_id = id
   )
 ON CONFLICT (chunk_id) DO NOTHING;
 "#;
@@ -196,6 +200,9 @@ comparison AS (
     ) AS score 
   FROM 
     %s 
+  ORDER BY
+    %s.embedding <=> (SELECT embedding FROM embedding)
+  LIMIT $4
 ) 
 SELECT 
   comparison.score, 
@@ -207,31 +214,20 @@ FROM
   INNER JOIN %s documents ON documents.id = chunks.document_id 
   ORDER BY 
   comparison.score DESC 
-  LIMIT 
-  $4;
 "#;
 
 pub const VECTOR_SEARCH: &str = r#"
-WITH comparison AS (
-  SELECT 
-    chunk_id, 
-    1 - (
-      %s.embedding <=> $1::vector 
-    ) AS score 
-  FROM 
-    %s 
-) 
 SELECT 
-  comparison.score, 
+  1 - (embeddings.embedding <=> $1::vector) score,
   chunks.chunk, 
   documents.metadata 
 FROM 
-  comparison 
-  INNER JOIN %s chunks ON chunks.id = comparison.chunk_id 
-  INNER JOIN %s documents ON documents.id = chunks.document_id 
-  ORDER BY 
-  comparison.score DESC 
-  LIMIT 
+  %s embeddings
+INNER JOIN %s chunks ON chunks.id = embeddings.chunk_id 
+INNER JOIN %s documents ON documents.id = chunks.document_id 
+ORDER BY 
+  embeddings.embedding <=> $1::vector ASC 
+LIMIT 
   $2;
 "#;
 
@@ -256,7 +252,7 @@ SELECT
   (chunk).chunk 
 FROM 
   (
-    select 
+    SELECT 
       id AS document_id, 
       pgml.chunk(
         (SELECT name FROM splitter), 
@@ -278,6 +274,7 @@ FROM
               %s 
             WHERE 
               splitter_id = $1 
+              AND document_id = id
           )
       ) AS documents
   ) chunks 
@@ -306,7 +303,7 @@ SELECT
   (chunk).chunk 
 FROM 
   (
-    select 
+    SELECT 
       id AS document_id, 
       pgml.chunk(
         (SELECT name FROM splitter), 
@@ -329,6 +326,7 @@ FROM
               %s 
             WHERE 
               splitter_id = $1 
+              AND document_id = id
           )
       ) AS documents
   ) chunks

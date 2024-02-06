@@ -661,36 +661,39 @@ impl Pipeline {
             ))
             .execute(&mut *transaction)
             .await?;
+            let index_name = format!("{}_pipeline_created_at_index", self.name);
             transaction
                 .execute(
                     query_builder!(
                         queries::CREATE_INDEX,
                         "",
-                        "created_at_index",
+                        index_name,
                         &embeddings_table_name,
                         "created_at"
                     )
                     .as_str(),
                 )
                 .await?;
+            let index_name = format!("{}_pipeline_chunk_id_index", self.name);
             transaction
                 .execute(
                     query_builder!(
                         queries::CREATE_INDEX,
                         "",
-                        "chunk_id_index",
+                        index_name,
                         &embeddings_table_name,
                         "chunk_id"
                     )
                     .as_str(),
                 )
                 .await?;
+            let index_name = format!("{}_pipeline_ivfflat_vector_index", self.name);
             transaction
                 .execute(
                     query_builder!(
                         queries::CREATE_INDEX_USING_IVFFLAT,
                         "",
-                        "vector_index",
+                        index_name,
                         &embeddings_table_name,
                         "embedding vector_cosine_ops"
                     )
