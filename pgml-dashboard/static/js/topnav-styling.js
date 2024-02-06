@@ -3,13 +3,19 @@ import {
 } from '@hotwired/stimulus'
 
 export default class extends Controller {
+    static values = {
+        altStyling: Boolean
+      }
+
     initialize() {
         this.pinned_to_top = false;
     }
     
     connect() {
-        this.act_when_scrolled();
-        this.act_when_expanded();
+        if( !this.altStylingValue ) {
+            this.act_when_scrolled();
+            this.act_when_expanded();
+        }
     }
 
     act_when_scrolled() {

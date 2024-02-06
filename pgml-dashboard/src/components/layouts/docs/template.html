@@ -1,0 +1,43 @@
+<% 
+  use crate::components::navigation::navbar::marketing::Marketing as MarketingNavbar;
+  use crate::components::navigation::left_nav::Docs as IndexNav;
+  use crate::components::navigation::left_nav::Blog as MobileIndexNav;
+%>
+
+<!DOCTYPE html>
+<html lang="en-US">
+    <%+ head %>
+    <body data-bs-theme="dark" data-theme="docs">
+      <div data-controller="layouts-docs">
+
+        <div style="position: sticky; top: 0px; z-index: 1">
+          <div>
+            <%+ MarketingNavbar::new(user).style_alt() %>
+          </div>
+        </div>
+
+        <div class="d-flex">
+          <%+ IndexNav::new(&index) %>
+  
+          <div class="content-container flex-grow-1">
+            <div class="d-flex flex-xl-row-reverse flex-column justify-content-end">
+              <div class="d-block d-xl-none">
+                <%+ MobileIndexNav::new(&index).title("Docs") %>
+              </div>
+
+              <div class="h-100 position-sticky" style="top: 88px; background: blue;">
+                Toc
+                <a href="/docs">test</a>
+              </div>
+  
+              <%- content.unwrap_or_else(|| String::new()) %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="position-relative">
+        <%- footer.unwrap_or_default() %>
+      </div>
+    </body>
+</html>

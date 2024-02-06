@@ -12,10 +12,13 @@
 @import "../../src/components/inputs/select/select.scss";
 @import "../../src/components/inputs/switch/switch.scss";
 @import "../../src/components/inputs/text/editable_header/editable_header.scss";
+@import "../../src/components/layouts/docs/docs.scss";
 @import "../../src/components/layouts/marketing/base/base.scss";
 @import "../../src/components/left_nav_menu/left_nav_menu.scss";
 @import "../../src/components/modal/modal.scss";
 @import "../../src/components/navigation/dropdown_link/dropdown_link.scss";
+@import "../../src/components/navigation/left_nav/blog/blog.scss";
+@import "../../src/components/navigation/left_nav/docs/docs.scss";
 @import "../../src/components/navigation/left_nav/web_app/web_app.scss";
 @import "../../src/components/navigation/navbar/marketing/marketing.scss";
 @import "../../src/components/navigation/navbar/marketing_link/marketing_link.scss";
@@ -25,6 +28,7 @@
 @import "../../src/components/notifications/marketing/alert_banner/alert_banner.scss";
 @import "../../src/components/notifications/marketing/feature_banner/feature_banner.scss";
 @import "../../src/components/pages/blog/landing_page/landing_page.scss";
+@import "../../src/components/pages/docs/landing_page/landing_page.scss";
 @import "../../src/components/postgres_logo/postgres_logo.scss";
 @import "../../src/components/sections/footers/marketing_footer/marketing_footer.scss";
 @import "../../src/components/star/star.scss";

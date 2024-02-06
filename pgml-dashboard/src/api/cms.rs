@@ -18,6 +18,7 @@ use crate::{
     templates::docs::*,
     utils::config,
 };
+use sailfish::TemplateOnce;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -633,6 +634,16 @@ async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
     ))
 }
 
+#[get("/docs")]
+async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
+    let doc_layout = crate::components::layouts::Docs::new("PostgresML documentation landing page.", Some(cluster))
+        .index(&DOCS.index);
+
+    let page = crate::components::pages::docs::LandingPage::new();
+
+    Ok(ResponseOk(doc_layout.render(page)))
+}
+
 #[get("/user_guides/<path..>", rank = 5)]
 async fn get_user_guides(
     path: PathBuf,
@@ -645,6 +656,7 @@ async fn get_user_guides(
 pub fn routes() -> Vec<Route> {
     routes![
         blog_landing_page,
+        docs_landing_page,
         get_blog,
         get_blog_asset,
         get_careers,

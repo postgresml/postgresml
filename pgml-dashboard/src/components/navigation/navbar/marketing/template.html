@@ -35,8 +35,8 @@
 %>
 
   <div class="sticky-top-nav" data-controller="navigation-navbar-marketing">
-    <nav class="navbar-marketing-site horizontal navbar-expand-xl" data-controller="search topnav-styling">
-      <div class="container column-gap-4">
+    <nav class='navbar-marketing-site horizontal navbar-expand-xl <% if style_alt {%><%- "alt-color"%><% } %>' data-controller='search topnav-styling' data-topnav-styling-alt-styling-value="<%- style_alt %>">
+      <div class='container<% if style_alt {%><%- "-fluid p-0" %><%} %> column-gap-4'>
         <div class="controls">
           <%+ PostgresLogo::new("/") %>
 

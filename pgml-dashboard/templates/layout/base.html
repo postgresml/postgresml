@@ -1,5 +1,6 @@
 <% 
   use crate::components::navigation::navbar::marketing::Marketing as MarketingNavbar;
+  use crate::components::navigation::left_nav::Blog as LeftNav;
 %>
 <!DOCTYPE html>
 <html lang="en-US">
@@ -20,7 +21,7 @@
             <%+ feature_banner %>
           </div>
           <div class="row position-relative">
-            <% include!("nav/side.html"); %>
+            <%+ LeftNav::new(&nav_links).title(&nav_title.unwrap_or_default()) %>
 
             <%- content.unwrap_or_default() %>
 

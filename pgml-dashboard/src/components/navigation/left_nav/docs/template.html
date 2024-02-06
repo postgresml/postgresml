@@ -1,0 +1,16 @@
+<div class="doc-leftnav-container py-4" data-controller="navigation-left-nav-docs">
+  <nav class="doc-leftnav" data-action="scroll->navigation-left-nav-docs#showScrollbar">
+    <div class="d-flex flex-column justify-content-between">
+      <div class="d-xl-flex flex-column">
+        <div class="mb-4">
+          <div>Button to landing page</div>
+        </div>
+        <div style="font-size: 1rem;" class="border-top pt-2" id="guides">
+          <% for doc_link in index.clone().into_iter() { %>
+            <%- doc_link.render_once().unwrap() %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>
