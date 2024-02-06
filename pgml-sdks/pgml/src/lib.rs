@@ -366,8 +366,6 @@ mod tests {
             .vector_search("Here is some query", &mut pipeline, None, None)
             .await?;
 
-        println!("\n{results:?}\n");
-
         assert!(results.len() == 5);
         collection.archive().await?;
         Ok(())

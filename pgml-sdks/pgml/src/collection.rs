@@ -937,8 +937,6 @@ impl Collection {
                 .fetch_all(&pool)
                 .await;
 
-                println!("\n\n{result:?}\n\n");
-
                 match result {
                     Ok(r) => Ok(r),
                     Err(e) => match e.as_database_error() {
@@ -1009,8 +1007,6 @@ impl Collection {
             let mut embeddings = remote_embeddings.embed(vec![query.to_string()]).await?;
             std::mem::take(&mut embeddings[0])
         };
-
-        println!("\n{embedding:?}\n");
 
         let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
         sqlx::query_as(&query_builder!(
