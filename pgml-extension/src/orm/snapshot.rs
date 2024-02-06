@@ -11,7 +11,8 @@ use serde_json::json;
 
 use crate::orm::Sampling;
 use crate::orm::Status;
-use crate::orm::{Dataset, TextDataset};
+use crate::orm::{Dataset, TextClassificationDataset};
+
 
 // Categories use a designated string to represent NULL categorical values,
 // rather than Option<String> = None, because the JSONB serialization schema
@@ -773,7 +774,7 @@ impl Snapshot {
         (num_train_rows, num_test_rows)
     }
 
-    pub fn text_dataset(&mut self) -> TextDataset {
+    pub fn text_classification_dataset(&mut self, dataset_args: default!(JsonB, "'{}'")) -> TextClassificationDataset {
         let mut data = None;
 
         Spi::connect(|client| {
@@ -783,23 +784,41 @@ impl Snapshot {
             let num_features = self.num_features();
             let num_labels = self.num_labels();
 
-            let mut x_train: Vec<String> = Vec::with_capacity(num_train_rows * num_features);
-            let mut y_train: Vec<String> = Vec::with_capacity(num_train_rows * num_labels);
-            let mut x_test: Vec<String> = Vec::with_capacity(num_test_rows * num_features);
-            let mut y_test: Vec<String> = Vec::with_capacity(num_test_rows * num_labels);
+            let mut text_train: Vec<String> = Vec::with_capacity(num_train_rows);
+            let mut class_train: Vec<String> = Vec::with_capacity(num_train_rows);
+            let mut text_test: Vec<String> = Vec::with_capacity(num_test_rows);
+            let mut class_test: Vec<String> = Vec::with_capacity(num_test_rows);
+
+            let class_column_value = dataset_args.0
+                .get("class_column")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "class".to_string());
+
+            let text_column_value = dataset_args.0
+                .get("text_column")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "text".to_string());
 
             result.enumerate().for_each(|(i, row)| {
                 for column in &mut self.columns {
-                    let vector = if column.label {
+                    let vector = if column.name == class_column_value {
                         if i < num_train_rows {
-                            &mut y_train
+                            &mut class_train
                         } else {
-                            &mut y_test
+                            &mut class_test
                         }
-                    } else if i < num_train_rows {
-                        &mut x_train
+                    } else if column.name == text_column_value {
+                        if i < num_train_rows {
+                            &mut text_train
+                        } else {
+                            &mut text_test
+                        }
                     } else {
-                        &mut x_test
+                        // Handle the case when neither "class_column" nor "text_column" is present
+                        // You might want to provide a default value or raise an error.
+                        panic!("Neither 'class_column' nor 'text_column' found in dataset_args");
                     };
 
                     match column.pg_type.as_str() {
@@ -812,11 +831,11 @@ impl Snapshot {
                 }
             });
 
-            data = Some(TextDataset {
-                x_train,
-                y_train,
-                x_test,
-                y_test,
+            data = Some(TextClassificationDataset {
+                text_train,
+                class_train,
+                text_test,
+                class_test,
                 num_features,
                 num_labels,
                 num_rows,

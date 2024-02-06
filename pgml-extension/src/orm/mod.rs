@@ -13,7 +13,7 @@ pub mod task;
 
 pub use algorithm::Algorithm;
 pub use dataset::Dataset;
-pub use dataset::TextDataset;
+pub use dataset::TextClassificationDataset;
 pub use model::Model;
 pub use project::Project;
 pub use runtime::Runtime;

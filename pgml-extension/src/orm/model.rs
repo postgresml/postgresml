@@ -157,10 +157,14 @@ impl Model {
         model
     }
 
+
     #[allow(clippy::too_many_arguments)]
-    pub fn tune(project: &Project, snapshot: &mut Snapshot, hyperparams: &JsonB) -> Model {
+    pub fn finetune(project: &Project, snapshot: &mut Snapshot, hyperparams: &JsonB) -> Model {
         let mut model: Option<Model> = None;
-        let dataset = snapshot.text_dataset();
+
+        let dataset_args = JsonB(json!(hyperparams.0.get("dataset_args").unwrap()));
+
+        let dataset = snapshot.text_classification_dataset(dataset_args);
 
         // Create the model record.
         Spi::connect(|mut client| {
@@ -211,7 +215,7 @@ impl Model {
         let path = std::path::PathBuf::from(format!("/tmp/postgresml/models/{id}"));
 
         info!("Tuning {}", model);
-        let metrics = match transformers::tune(&project.task, dataset, &model.hyperparams, &path) {
+        let metrics = match transformers::finetune(&project.task, dataset, &model.hyperparams, &path) {
             Ok(metrics) => metrics,
             Err(e) => error!("{e}"),
         };

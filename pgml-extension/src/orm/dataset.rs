@@ -68,12 +68,12 @@ impl Dataset {
     }
 }
 
-#[derive(Debug)]
-pub struct TextDataset {
-    pub x_train: Vec<String>,
-    pub y_train: Vec<String>,
-    pub x_test: Vec<String>,
-    pub y_test: Vec<String>,
+// TextClassificationDataset
+pub struct TextClassificationDataset {
+    pub text_train: Vec<String>,
+    pub class_train: Vec<String>,
+    pub text_test: Vec<String>,
+    pub class_test: Vec<String>,
     pub num_features: usize,
     pub num_labels: usize,
     pub num_rows: usize,
@@ -82,11 +82,11 @@ pub struct TextDataset {
     pub num_distinct_labels: usize,
 }
 
-impl Display for TextDataset {
+impl Display for TextClassificationDataset {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
-            "TextDataset {{ num_features: {}, num_labels: {}, num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            "TextClassificationDataset {{ num_features: {}, num_labels: {}, num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
             self.num_features, self.num_labels, self.num_distinct_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
         )
     }

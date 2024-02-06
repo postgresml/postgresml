@@ -803,7 +803,7 @@ fn tune(
     project_name: &str,
     task: default!(Option<&str>, "NULL"),
     relation_name: default!(Option<&str>, "NULL"),
-    y_column_name: default!(Option<&str>, "NULL"),
+    _y_column_name: default!(Option<&str>, "NULL"),
     model_name: default!(Option<&str>, "NULL"),
     hyperparams: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
@@ -861,9 +861,7 @@ fn tune(
 
             let snapshot = Snapshot::create(
                 relation_name,
-                Some(vec![y_column_name
-                    .expect("You must pass a `y_column_name` when you pass a `relation_name`")
-                    .to_string()]),
+                None,
                 test_size,
                 test_sampling,
                 materialize_snapshot,
@@ -891,7 +889,7 @@ fn tune(
     // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);
     // if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
     //     hyperparams["random_state"] = 0
-    let model = Model::tune(&project, &mut snapshot, &hyperparams);
+    let model = Model::finetune(&project, &mut snapshot, &hyperparams);
     let new_metrics: &serde_json::Value = &model.metrics.unwrap().0;
     let new_metrics = new_metrics.as_object().unwrap();
 
@@ -946,6 +944,7 @@ fn tune(
         deploy,
     )])
 }
+
 
 #[cfg(feature = "python")]
 #[pg_extern(name = "sklearn_f1_score")]

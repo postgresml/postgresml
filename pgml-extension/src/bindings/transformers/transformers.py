@@ -1009,15 +1009,17 @@ def finetune(task, hyperparams, path, x_train, x_test, y_train, y_test):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     classes = list(set(y_train))
     num_classes = len(classes)
-    model = AutoModelForSequenceClassification.from_pretrained(
-        model_name, num_labels=num_classes
-    )
+
     id2label = {}
     label2id = {}
     for id, label in enumerate(classes):
-        label2id[label] = float(id)
+        label2id[label] = id
         id2label[id] = label
-    
+
+    model = AutoModelForSequenceClassification.from_pretrained(
+        model_name, num_labels=num_classes, id2label=id2label, label2id=label2id
+    )
+
     model.config.id2label = id2label
     model.config.label2id = label2id
    
@@ -1060,7 +1062,7 @@ def finetune(task, hyperparams, path, x_train, x_test, y_train, y_test):
 
     # Training Args
     log.info("Training args setup started path=%s"%path)
-    training_args=TrainingArguments(output_dir="/tmp/postgresml/models/", logging_dir="/tmp/postgresml/runs", **hyperparams)
+    training_args=TrainingArguments(output_dir="/tmp/postgresml/models/", logging_dir="/tmp/postgresml/runs", **hyperparams["training_args"])
     log.info("Trainer setup done")
     # Trainer
     log.info(model)
