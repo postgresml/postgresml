@@ -222,7 +222,7 @@ WITH splitter as (
     WHERE id = $1
 ), chunks AS (
     SELECT
-      id AS document_id,
+      documents.id AS document_id,
       pgml.chunk(
         (SELECT name FROM splitter),
         text,
@@ -247,7 +247,7 @@ WITH splitter as (
     WHERE id = $1
 ), chunks AS (
     SELECT
-      id AS document_id,
+      documents.id AS document_id,
       pgml.chunk(
         (SELECT name FROM splitter),
         text,
