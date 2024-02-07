@@ -10,6 +10,12 @@ pub struct Docs {
 
 impl Docs {
     pub fn new(index: &Vec<IndexLink>) -> Docs {
+        for item in index.clone() {
+            if item.children.is_empty() {
+                println!("no children");
+            }
+            println!("index header: {:?}\n", item);
+        }
         Docs { index: index.clone() }
     }
 }

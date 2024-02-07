@@ -24,11 +24,6 @@
               <div class="d-block d-xl-none">
                 <%+ MobileIndexNav::new(&index).title("Docs") %>
               </div>
-
-              <div class="h-100 position-sticky" style="top: 88px; background: blue;">
-                Toc
-                <a href="/docs">test</a>
-              </div>
   
               <%- content.unwrap_or_else(|| String::new()) %>
             </div>

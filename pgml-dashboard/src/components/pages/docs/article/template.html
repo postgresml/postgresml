@@ -1,4 +1,10 @@
-<div data-controller="pages-docs-landing-page">
+<% use crate::components::navigation::Toc; %>
+
+<div class="h-100 position-sticky" style="top: 88px;">
+  <%+ Toc::new(&toc_links) %>
+</div>
+
+<div data-controller="pages-docs-article">
   <div class="glow-container">
     <div style="margin-left: -20vw; margin-top: -40vh;">
       <div class="glow-1"></div>

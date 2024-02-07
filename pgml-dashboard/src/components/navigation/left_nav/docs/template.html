@@ -1,13 +1,37 @@
-<div class="doc-leftnav-container py-4" data-controller="navigation-left-nav-docs">
-  <nav class="doc-leftnav" data-action="scroll->navigation-left-nav-docs#showScrollbar">
+<% 
+  use std::collections::HashMap; 
+
+  let icon_map = HashMap::from([
+    ("apis", "sdk"),
+    ("product", "dashboard"),
+    ("use case", "account_circle"),
+    ("resources", "school"),
+  ]);
+%>
+<div class="doc-leftnav-container" data-controller="navigation-left-nav-docs">
+  <nav class="doc-leftnav py-4" data-action="scroll->navigation-left-nav-docs#showScrollbar">
     <div class="d-flex flex-column justify-content-between">
       <div class="d-xl-flex flex-column">
-        <div class="mb-4">
-          <div>Button to landing page</div>
+        <div>
+          <a class="btn btn-primary-web-app btn-primary-alterations" href="/docs" >
+            Doc Home
+          </a>
         </div>
-        <div style="font-size: 1rem;" class="border-top pt-2" id="guides">
+        <div class="pt-2 ps-2 d-flex flex-column gap-4_5">
           <% for doc_link in index.clone().into_iter() { %>
-            <%- doc_link.render_once().unwrap() %>
+            <% if doc_link.children.is_empty() {%>
+              <%- doc_link.render_once().unwrap() %>
+            <% } else { %>
+              <div class="d-flex flex-column">
+                <div class="border-bottom legal-text link-section d-flex align-items-center gap-1 pb-2">
+                  <span class="material-symbols-outlined"><%- icon_map.get(&doc_link.title.to_lowercase() as &str).unwrap_or_else(|| &"dashboard") %></span>
+                  <%- doc_link.title %>
+                </div>
+                  <% for item in doc_link.children {%>
+                    <%- item.render_once().unwrap() %>
+                  <% } %>
+              </div>
+            <% } %>
           <% } %>
         </div>
       </div>

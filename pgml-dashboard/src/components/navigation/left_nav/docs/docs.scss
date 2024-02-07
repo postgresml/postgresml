@@ -1,5 +1,6 @@
 div[data-controller="navigation-left-nav-docs"] {
     $collapsed-left-nav-height: 40px;
+    --bs-border-color: #{$gray-600};
 
     &.doc-leftnav-container {
         background-color: #{$gray-800};
@@ -21,6 +22,7 @@ div[data-controller="navigation-left-nav-docs"] {
     
     .doc-leftnav {
         @extend .navbar;
+
         max-width: $docs-left-nav-w;
     
         border: none;
@@ -48,5 +50,26 @@ div[data-controller="navigation-left-nav-docs"] {
         @-moz-document url-prefix() {
         padding-right: 20px;
         }
+    }
+
+    .btn-primary-alterations {
+        justify-content: start;
+        padding: 8px 0px 8px 8px;
+        border-radius: 4px;
+    }
+
+    .link-section {
+        color: #{$gray-300};
+        text-transform: capitalize;
+
+        .material-symbols-outlined {
+            color: #{$slate-shade-100};
+            font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+            font-size: 18px;
+        }
+    }
+    
+    .nav-link {
+        padding: 8px;
     }
 }

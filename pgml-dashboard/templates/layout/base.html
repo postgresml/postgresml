@@ -1,6 +1,7 @@
 <% 
   use crate::components::navigation::navbar::marketing::Marketing as MarketingNavbar;
   use crate::components::navigation::left_nav::Blog as LeftNav;
+  use crate::components::navigation::Toc;
 %>
 <!DOCTYPE html>
 <html lang="en-US">
@@ -21,11 +22,21 @@
             <%+ feature_banner %>
           </div>
           <div class="row position-relative">
-            <%+ LeftNav::new(&nav_links).title(&nav_title.unwrap_or_default()) %>
+
+            <% if !nav_links.is_empty() {%>
+              <div class="col-12 col-xxl-2 col-xl-3 order-1 order-xl-2 order-xxl-1">
+                <%+ LeftNav::new(&nav_links).title(&nav_title.unwrap_or_default()) %>
+              </div>
+            <% } %>
 
             <%- content.unwrap_or_default() %>
 
-            <% include!("nav/toc.html"); %>
+            <% if !toc_links.is_empty() { %>
+              <div class="d-xxl-block col-xxl-2 col-xl-12 order-2 order-xl-1 order-xxl-3">
+                <%+ Toc::new(&toc_links)%>
+              </div>
+            <% } %>
+            
           </div>
         </div>
         <%- footer %>

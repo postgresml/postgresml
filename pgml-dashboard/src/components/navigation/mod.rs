@@ -13,3 +13,7 @@ pub mod navbar;
 
 // src/components/navigation/tabs
 pub mod tabs;
+
+// src/components/navigation/toc
+pub mod toc;
+pub use toc::Toc;
