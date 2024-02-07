@@ -121,49 +121,33 @@ ON CONFLICT (document_id, configuration) DO NOTHING;
 pub const GENERATE_EMBEDDINGS: &str = r#"
 INSERT INTO %s (chunk_id, embedding) 
 SELECT 
-  id, 
+  chunks.id,
   pgml.embed(
     text => chunk, 
     transformer => $1, 
     kwargs => $2 
   ) 
-FROM 
-  %s 
-WHERE 
-  splitter_id = $3 
-  AND id NOT IN (
-    SELECT 
-      chunk_id 
-    FROM 
-      %s
-    WHERE
-      chunk_id = id
-  )
+FROM %s AS chunks
+LEFT JOIN %s AS embeddings ON embeddings.chunk_id = chunks.id
+WHERE splitter_id = $3
+  AND embeddings.id IS NULL
 ON CONFLICT (chunk_id) DO NOTHING;
 "#;
 
 pub const GENERATE_EMBEDDINGS_FOR_CHUNK_IDS: &str = r#"
 INSERT INTO %s (chunk_id, embedding) 
 SELECT 
-  id, 
+  chunks.id,
   pgml.embed(
     text => chunk, 
     transformer => $1, 
     kwargs => $2 
   ) 
-FROM 
-  %s 
-WHERE 
-  splitter_id = $3 
-  AND id = ANY ($4)
-  AND id NOT IN (
-    SELECT 
-      chunk_id 
-    FROM 
-      %s
-    WHERE
-      chunk_id = id
-  )
+FROM %s AS chunks
+LEFT JOIN %s AS embeddings ON embeddings.chunk_id = chunks.id
+WHERE splitter_id = $3
+  AND chunks.id = ANY ($4)
+  AND embeddings.id IS NULL
 ON CONFLICT (chunk_id) DO NOTHING;
 "#;
 
