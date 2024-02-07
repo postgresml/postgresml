@@ -1062,7 +1062,7 @@ def finetune_text_classification(task, hyperparams, path, x_train, x_test, y_tra
 
     # Training Args
     log.info("Training args setup started path=%s"%path)
-    training_args=TrainingArguments(output_dir="/tmp/postgresml/models/", logging_dir="/tmp/postgresml/runs", **hyperparams["training_args"])
+    training_args=TrainingArguments(output_dir=path, logging_dir=path, **hyperparams["training_args"])
     log.info("Trainer setup done")
     # Trainer
     log.info(model)
@@ -1086,6 +1086,10 @@ def finetune_text_classification(task, hyperparams, path, x_train, x_test, y_tra
 
     # Train
     trainer.train()
+
+    # Save model
+    trainer.save_model()
+
     metrics = {"loss" : 0.0}
     return metrics
 
@@ -1152,7 +1156,7 @@ def finetune_text_pair_classification(task, hyperparams, path, text1_train, text
 
     # Training Args
     log.info("Training args setup started path=%s"%path)
-    training_args=TrainingArguments(output_dir="/tmp/postgresml/models/", logging_dir="/tmp/postgresml/runs", **hyperparams["training_args"])
+    training_args=TrainingArguments(output_dir=path, logging_dir=path, **hyperparams["training_args"])
     log.info("Trainer setup done")
     # Trainer
     log.info(model)
@@ -1176,5 +1180,8 @@ def finetune_text_pair_classification(task, hyperparams, path, text1_train, text
 
     # Train
     trainer.train()
+
+    # Save model
+    trainer.save_model()
     metrics = {"loss" : 0.0}
     return metrics
