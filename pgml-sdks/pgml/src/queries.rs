@@ -217,103 +217,51 @@ LIMIT
 
 pub const GENERATE_CHUNKS: &str = r#"
 WITH splitter as (
+    SELECT name, parameters
+    FROM pgml.splitters
+    WHERE id = $1
+), chunks AS (
     SELECT
-      name,
-      parameters
-    FROM
-      pgml.splitters 
-    WHERE
-      id = $1
-)
-INSERT INTO %s(
-  document_id, splitter_id, chunk_index, 
-  chunk
-) 
-SELECT 
-  document_id, 
-  $1, 
-  (chunk).chunk_index, 
-  (chunk).chunk 
-FROM 
-  (
-    SELECT 
-      id AS document_id, 
+      id AS document_id,
       pgml.chunk(
-        (SELECT name FROM splitter), 
-        text, 
+        (SELECT name FROM splitter),
+        text,
         (SELECT parameters FROM splitter)
-      ) AS chunk 
-    FROM 
-      (
-        SELECT 
-          id, 
-          text 
-        FROM 
-          %s 
-        WHERE 
-          id NOT IN (
-            SELECT 
-              document_id 
-            FROM 
-              %s 
-            WHERE 
-              splitter_id = $1 
-              AND document_id = id
-          )
-      ) AS documents
-  ) chunks 
-ON CONFLICT (document_id, splitter_id, chunk_index) DO NOTHING 
+      ) AS chunk
+    FROM %s AS documents
+    LEFT OUTER JOIN %s AS chunks ON chunks.splitter_id = $1
+      AND chunks.document_id = documents.id
+    WHERE chunks.id IS NULL
+)
+INSERT INTO %s(document_id, splitter_id, chunk_index, chunk)
+SELECT document_id, $1, (chunk).chunk_index, (chunk).chunk
+FROM chunks
+ON CONFLICT (document_id, splitter_id, chunk_index) DO NOTHING
 RETURNING id
 "#;
 
 pub const GENERATE_CHUNKS_FOR_DOCUMENT_IDS: &str = r#"
 WITH splitter as (
+    SELECT name, parameters
+    FROM pgml.splitters
+    WHERE id = $1
+), chunks AS (
     SELECT
-      name,
-      parameters
-    FROM
-      pgml.splitters 
-    WHERE
-      id = $1
-)
-INSERT INTO %s(
-  document_id, splitter_id, chunk_index, 
-  chunk
-)
-SELECT 
-  document_id, 
-  $1, 
-  (chunk).chunk_index, 
-  (chunk).chunk 
-FROM 
-  (
-    SELECT 
-      id AS document_id, 
+      id AS document_id,
       pgml.chunk(
-        (SELECT name FROM splitter), 
-        text, 
+        (SELECT name FROM splitter),
+        text,
         (SELECT parameters FROM splitter)
-      ) AS chunk 
-    FROM 
-      (
-        SELECT 
-          id, 
-          text 
-        FROM 
-          %s 
-        WHERE 
-          id = ANY($2)
-          AND id NOT IN (
-            SELECT 
-              document_id 
-            FROM 
-              %s 
-            WHERE 
-              splitter_id = $1 
-              AND document_id = id
-          )
-      ) AS documents
-  ) chunks
-ON CONFLICT (document_id, splitter_id, chunk_index) DO NOTHING 
+      ) AS chunk
+    FROM %s AS documents
+    LEFT OUTER JOIN %s AS chunks ON chunks.splitter_id = $1
+      AND chunks.document_id = documents.id
+    WHERE chunks.id IS NULL
+      AND documents.id = any($2)
+)
+INSERT INTO %s(document_id, splitter_id, chunk_index, chunk)
+SELECT document_id, $1, (chunk).chunk_index, (chunk).chunk
+FROM chunks
+ON CONFLICT (document_id, splitter_id, chunk_index) DO NOTHING
 RETURNING id
 "#;
