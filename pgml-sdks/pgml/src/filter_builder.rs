@@ -175,9 +175,9 @@ fn build_recursive<'a>(
                                 expression
                                     .contains(Expr::val(serde_value_to_sea_query_value(&json)))
                             } else {
-                                expression
-                                    .not()
-                                    .contains(Expr::val(serde_value_to_sea_query_value(&json)))
+                                let expression = expression
+                                    .contains(Expr::val(serde_value_to_sea_query_value(&json)));
+                                Expr::expr(expression).not()
                             }
                         } else {
                             // If we are not checking whether two values are equal or not equal, we need to cast it to the correct type before doing the comparison
