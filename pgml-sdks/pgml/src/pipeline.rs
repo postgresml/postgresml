@@ -371,8 +371,8 @@ impl Pipeline {
             let chunk_ids: Result<Option<Vec<i64>>, _> = if document_ids.is_some() {
                 sqlx::query(&query_builder!(
                     queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS,
-                    &format!("{}.chunks", project_info.name),
                     &format!("{}.documents", project_info.name),
+                    &format!("{}.chunks", project_info.name),
                     &format!("{}.chunks", project_info.name)
                 ))
                 .bind(database_data.splitter_id)
@@ -394,8 +394,8 @@ impl Pipeline {
             } else {
                 sqlx::query(&query_builder!(
                     queries::GENERATE_CHUNKS,
-                    &format!("{}.chunks", project_info.name),
                     &format!("{}.documents", project_info.name),
+                    &format!("{}.chunks", project_info.name),
                     &format!("{}.chunks", project_info.name)
                 ))
                 .bind(database_data.splitter_id)
