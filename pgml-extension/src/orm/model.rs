@@ -167,8 +167,10 @@ impl Model {
         // let dataset = snapshot.text_classification_dataset(dataset_args);
         let dataset = if project.task == Task::text_classification {
             TextDatasetType::TextClassification(snapshot.text_classification_dataset(dataset_args))
+        } else if project.task == Task::text_pair_classification {
+            TextDatasetType::TextPairClassification(snapshot.text_pair_classification_dataset(dataset_args))
         } else {
-            TextDatasetType::TextClassification(snapshot.text_classification_dataset(dataset_args))
+            panic!("Unsupported task for finetuning")
         };
 
         // Create the model record.
@@ -224,6 +226,13 @@ impl Model {
         match dataset {
             TextDatasetType::TextClassification(dataset) => {
                 metrics = match transformers::finetune_text_classification(&project.task, dataset, &model.hyperparams, &path) {
+                Ok(metrics) => metrics,
+                Err(e) => error!("{e}"),
+                };
+                
+            }
+            TextDatasetType::TextPairClassification(dataset) => {
+                metrics = match transformers::finetune_text_pair_classification(&project.task, dataset, &model.hyperparams, &path) {
                 Ok(metrics) => metrics,
                 Err(e) => error!("{e}"),
                 };

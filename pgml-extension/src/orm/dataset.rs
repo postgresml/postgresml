@@ -68,6 +68,20 @@ impl Dataset {
     }
 }
 
+pub enum TextDatasetType {
+    TextClassification(TextClassificationDataset),
+    TextPairClassification(TextPairClassificationDataset),
+}
+
+impl TextDatasetType {
+    pub fn num_features(&self) -> usize {
+        match self {
+            TextDatasetType::TextClassification(dataset) => dataset.num_features,
+            TextDatasetType::TextPairClassification(dataset) => dataset.num_features,
+        }
+    }
+}
+
 // TextClassificationDataset
 pub struct TextClassificationDataset {
     pub text_train: Vec<String>,
@@ -86,23 +100,37 @@ impl Display for TextClassificationDataset {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
-            "TextClassificationDataset {{ num_features: {}, num_labels: {}, num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
-            self.num_features, self.num_labels, self.num_distinct_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
+            "TextClassificationDataset {{ num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            self.num_distinct_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
         )
     }
 }
 
-pub enum TextDatasetType {
-    TextClassification(TextClassificationDataset),
+pub struct TextPairClassificationDataset {
+    pub text1_train: Vec<String>,
+    pub text2_train: Vec<String>,
+    pub class_train: Vec<String>,
+    pub text1_test: Vec<String>,
+    pub text2_test: Vec<String>,
+    pub class_test: Vec<String>,
+    pub num_features: usize,
+    pub num_labels: usize,
+    pub num_rows: usize,
+    pub num_train_rows: usize,
+    pub num_test_rows: usize,
+    pub num_distinct_labels: usize,
 }
 
-impl TextDatasetType {
-    pub fn num_features(&self) -> usize {
-        match self {
-            TextDatasetType::TextClassification(dataset) => dataset.num_features,
-        }
+impl Display for TextPairClassificationDataset {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "TextPairClassificationDataset {{ num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            self.num_distinct_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
+        )
     }
 }
+
 
 fn drop_table_if_exists(table_name: &str) {
     // Avoid the existence for DROP TABLE IF EXISTS warning by checking the schema for the table first

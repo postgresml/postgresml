@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
 
@@ -11,7 +11,7 @@ use serde_json::json;
 
 use crate::orm::Sampling;
 use crate::orm::Status;
-use crate::orm::{Dataset, TextClassificationDataset};
+use crate::orm::{Dataset, TextClassificationDataset, TextPairClassificationDataset};
 
 
 // Categories use a designated string to represent NULL categorical values,
@@ -803,22 +803,115 @@ impl Snapshot {
 
             result.enumerate().for_each(|(i, row)| {
                 for column in &mut self.columns {
-                    let vector = if column.name == class_column_value {
-                        if i < num_train_rows {
-                            &mut class_train
-                        } else {
-                            &mut class_test
-                        }
-                    } else if column.name == text_column_value {
+                    let vector = if column.name == text_column_value {
                         if i < num_train_rows {
                             &mut text_train
                         } else {
                             &mut text_test
                         }
+                    } else if column.name == class_column_value {
+                        if i < num_train_rows {
+                            &mut class_train
+                        } else {
+                            &mut class_test
+                        }
                     } else {
-                        // Handle the case when neither "class_column" nor "text_column" is present
-                        // You might want to provide a default value or raise an error.
-                        panic!("Neither 'class_column' nor 'text_column' found in dataset_args");
+                        continue;
+                    };
+
+                    match column.pg_type.as_str() {
+                        "bpchar" | "text" | "varchar" => match row[column.position].value::<String>().unwrap() {
+                            Some(text) => vector.push(text),
+                            None => error!("NULL training text is not handled"),
+                        },
+                        _ => error!("only text type columns are supported"),
+                    }
+                }
+            });
+            let num_distinct_labels = class_train.iter().cloned().collect::<HashSet<_>>().len();
+            data = Some(TextClassificationDataset {
+                text_train,
+                class_train,
+                text_test,
+                class_test,
+                num_features,
+                num_labels,
+                num_rows,
+                num_test_rows,
+                num_train_rows,
+                // TODO rename and audit this
+                num_distinct_labels,
+            });
+
+            Ok::<std::option::Option<()>, i64>(Some(())) // this return type is nonsense
+        })
+        .unwrap();
+
+        let data = data.unwrap();
+
+        info!("{}", data);
+
+        data
+    }
+
+    pub fn text_pair_classification_dataset(&mut self, dataset_args: default!(JsonB, "'{}'")) -> TextPairClassificationDataset {
+        let mut data = None;
+
+        Spi::connect(|client| {
+            let result = client.select(&self.select_sql(), None, None).unwrap();
+            let num_rows = result.len();
+            let (num_train_rows, num_test_rows) = self.train_test_split(num_rows);
+            let num_features = 2;
+            let num_labels = self.num_labels();
+
+            let mut text1_train: Vec<String> = Vec::with_capacity(num_train_rows);
+            let mut text2_train: Vec<String> = Vec::with_capacity(num_train_rows);
+            let mut class_train: Vec<String> = Vec::with_capacity(num_train_rows);
+            let mut text1_test: Vec<String> = Vec::with_capacity(num_test_rows);
+            let mut text2_test: Vec<String> = Vec::with_capacity(num_test_rows);
+            let mut class_test: Vec<String> = Vec::with_capacity(num_test_rows);
+
+
+            let text1_column_value = dataset_args.0
+                .get("text1_column")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "text1".to_string());
+
+            let text2_column_value = dataset_args.0
+                .get("text2_column")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "text2".to_string());
+
+            let class_column_value = dataset_args.0
+                .get("class_column")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "class".to_string());
+
+            result.enumerate().for_each(|(i, row)| {
+                for column in &mut self.columns {
+                    let vector = if column.name == text1_column_value {
+                        if i < num_train_rows {
+                            &mut text1_train
+                        } else {
+                            &mut text1_test
+                        }
+                    } else if column.name == text2_column_value {
+                        if i < num_train_rows {
+                            &mut text2_train
+                        } else {
+                            &mut text2_test
+                        }
+                    } else if column.name == class_column_value {
+                        if i < num_train_rows {
+                            &mut class_train
+                        } else {
+                            &mut class_test
+                        }
+                    } else {
+                        continue;
                     };
 
                     match column.pg_type.as_str() {
@@ -831,10 +924,13 @@ impl Snapshot {
                 }
             });
 
-            data = Some(TextClassificationDataset {
-                text_train,
+            let num_distinct_labels = class_train.iter().cloned().collect::<HashSet<_>>().len();
+            data = Some(TextPairClassificationDataset {
+                text1_train,
+                text2_train,
                 class_train,
-                text_test,
+                text1_test,
+                text2_test,
                 class_test,
                 num_features,
                 num_labels,
@@ -842,7 +938,7 @@ impl Snapshot {
                 num_test_rows,
                 num_train_rows,
                 // TODO rename and audit this
-                num_distinct_labels: self.num_classes(),
+                num_distinct_labels,
             });
 
             Ok::<std::option::Option<()>, i64>(Some(())) // this return type is nonsense

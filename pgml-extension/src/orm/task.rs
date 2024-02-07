@@ -14,6 +14,7 @@ pub enum Task {
     text2text,
     cluster,
     embedding,
+    text_pair_classification,
 }
 
 // unfortunately the pgrx macro expands the enum names to underscore, but huggingface uses dash
@@ -30,6 +31,7 @@ impl Task {
             Task::text2text => "text2text".to_string(),
             Task::cluster => "cluster".to_string(),
             Task::embedding => "embedding".to_string(),
+            Task::text_pair_classification => "text_pair_classification".to_string(),
         }
     }
 
@@ -49,6 +51,7 @@ impl Task {
             Task::text2text => "perplexity",
             Task::cluster => "silhouette",
             Task::embedding => error!("No default target metric for embedding task"),
+            Task::text_pair_classification => "f1",
         }
         .to_string()
     }
@@ -65,6 +68,7 @@ impl Task {
             Task::text2text => false,
             Task::cluster => true,
             Task::embedding => error!("No default target metric positive for embedding task"),
+            Task::text_pair_classification => true,
         }
     }
 
@@ -104,6 +108,7 @@ impl std::str::FromStr for Task {
             "text-generation" | "text_generation" => Ok(Task::text_generation),
             "text2text" => Ok(Task::text2text),
             "cluster" => Ok(Task::cluster),
+            "text-pair-classification" | "text_pair_classification" => Ok(Task::text_pair_classification),
             _ => Err(()),
         }
     }
@@ -122,6 +127,7 @@ impl std::string::ToString for Task {
             Task::text2text => "text2text".to_string(),
             Task::cluster => "cluster".to_string(),
             Task::embedding => "embedding".to_string(),
+            Task::text_pair_classification => "text-pair-classification".to_string(),
         }
     }
 }

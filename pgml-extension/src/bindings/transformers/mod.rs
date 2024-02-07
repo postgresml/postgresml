@@ -10,7 +10,7 @@ use pyo3::types::PyTuple;
 use serde_json::Value;
 
 use crate::create_pymodule;
-use crate::orm::{Task, TextClassificationDataset};
+use crate::orm::{Task, TextClassificationDataset, TextPairClassificationDataset};
 
 use super::TracebackError;
 
@@ -106,6 +106,35 @@ pub fn finetune_text_classification(task: &Task, dataset: TextClassificationData
         output.extract(py).format_traceback(py)
     })
 }
+
+pub fn finetune_text_pair_classification(task: &Task, dataset: TextPairClassificationDataset, hyperparams: &JsonB, path: &Path) -> Result<HashMap<String, f64>> {
+    let task = task.to_string();
+    let hyperparams = serde_json::to_string(&hyperparams.0)?;
+
+    Python::with_gil(|py| -> Result<HashMap<String, f64>> {
+        let tune = get_module!(PY_MODULE).getattr(py, "finetune_text_pair_classification").format_traceback(py)?;
+        let path = path.to_string_lossy();
+        let output = tune
+            .call1(
+                py,
+                (
+                    &task,
+                    &hyperparams,
+                    path.as_ref(),
+                    dataset.text1_train,
+                    dataset.text1_test,
+                    dataset.text2_train,
+                    dataset.text2_test,
+                    dataset.class_train,
+                    dataset.class_test,
+                ),
+            )
+            .format_traceback(py)?;
+
+        output.extract(py).format_traceback(py)
+    })
+}
+
 pub fn generate(model_id: i64, inputs: Vec<&str>, config: JsonB) -> Result<Vec<String>> {
     Python::with_gil(|py| -> Result<Vec<String>> {
         let generate = get_module!(PY_MODULE).getattr(py, "generate").format_traceback(py)?;
