@@ -1073,7 +1073,7 @@ def finetune_text_classification(task, hyperparams, path, x_train, x_test, y_tra
     log.info(data_collator)
     try:
         trainer = Trainer(
-            model=model.to("cpu"),
+            model=model,
             args=training_args,
             train_dataset=train_tokenized_datasets,
             eval_dataset=test_tokenized_datasets,
@@ -1167,7 +1167,7 @@ def finetune_text_pair_classification(task, hyperparams, path, text1_train, text
     log.info(data_collator)
     try:
         trainer = Trainer(
-            model=model.to("cpu"),
+            model=model,
             args=training_args,
             train_dataset=train_tokenized_datasets,
             eval_dataset=test_tokenized_datasets,
