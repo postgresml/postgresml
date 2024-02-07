@@ -5,10 +5,10 @@ jobs:
   build-javascript-sdk:
     strategy:
       matrix:
-        os: ["ubuntu-20.04", "buildjet-4vcpu-ubuntu-2204-arm", "macos-latest", "windows-latest"]
+        os: ["ubuntu-18.04", "buildjet-4vcpu-ubuntu-2204-arm", "macos-latest", "windows-latest"]
         include:
           - neon-out-name: "x86_64-unknown-linux-gnu-index.node"
-            os: "ubuntu-20.04"
+            os: "ubuntu-18.04"
           - neon-out-name: "aarch64-unknown-linux-gnu-index.node"
             os: "buildjet-4vcpu-ubuntu-2204-arm"
           - neon-out-name: "x86_64-apple-darwin-index.node"
