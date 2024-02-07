@@ -81,12 +81,12 @@ pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -
 //     })
 // }
 
-pub fn finetune(task: &Task, dataset: TextClassificationDataset, hyperparams: &JsonB, path: &Path) -> Result<HashMap<String, f64>> {
+pub fn finetune_text_classification(task: &Task, dataset: TextClassificationDataset, hyperparams: &JsonB, path: &Path) -> Result<HashMap<String, f64>> {
     let task = task.to_string();
     let hyperparams = serde_json::to_string(&hyperparams.0)?;
 
     Python::with_gil(|py| -> Result<HashMap<String, f64>> {
-        let tune = get_module!(PY_MODULE).getattr(py, "finetune").format_traceback(py)?;
+        let tune = get_module!(PY_MODULE).getattr(py, "finetune_text_classification").format_traceback(py)?;
         let path = path.to_string_lossy();
         let output = tune
             .call1(

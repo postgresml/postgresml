@@ -164,7 +164,12 @@ impl Model {
 
         let dataset_args = JsonB(json!(hyperparams.0.get("dataset_args").unwrap()));
 
-        let dataset = snapshot.text_classification_dataset(dataset_args);
+        // let dataset = snapshot.text_classification_dataset(dataset_args);
+        let dataset = if project.task == Task::text_classification {
+            TextDatasetType::TextClassification(snapshot.text_classification_dataset(dataset_args))
+        } else {
+            TextDatasetType::TextClassification(snapshot.text_classification_dataset(dataset_args))
+        };
 
         // Create the model record.
         Spi::connect(|mut client| {
@@ -183,7 +188,7 @@ impl Model {
                                            (PgBuiltInOids::TEXTOID.oid(), None::<Option<Search>>.into_datum()),
                                            (PgBuiltInOids::JSONBOID.oid(), JsonB(serde_json::from_str("{}").unwrap()).into_datum()),
                                            (PgBuiltInOids::JSONBOID.oid(), JsonB(serde_json::from_str("{}").unwrap()).into_datum()),
-                                           (PgBuiltInOids::INT8OID.oid(), (dataset.num_features as i64).into_datum()),
+                                           (PgBuiltInOids::INT8OID.oid(), (dataset.num_features() as i64).into_datum()),
                                        ]),
             ).unwrap().first();
             if !result.is_empty() {
@@ -215,12 +220,25 @@ impl Model {
         let path = std::path::PathBuf::from(format!("/tmp/postgresml/models/{id}"));
 
         info!("Tuning {}", model);
-        let metrics = match transformers::finetune(&project.task, dataset, &model.hyperparams, &path) {
-            Ok(metrics) => metrics,
-            Err(e) => error!("{e}"),
+        let metrics: HashMap<String, f64>;
+        match dataset {
+            TextDatasetType::TextClassification(dataset) => {
+                metrics = match transformers::finetune_text_classification(&project.task, dataset, &model.hyperparams, &path) {
+                Ok(metrics) => metrics,
+                Err(e) => error!("{e}"),
+                };
+                
+            }
         };
+
         model.metrics = Some(JsonB(json!(metrics)));
         info!("Metrics: {:?}", &metrics);
+        // let metrics = match transformers::finetune(&project.task, dataset, &model.hyperparams, &path) {
+        //     Ok(metrics) => metrics,
+        //     Err(e) => error!("{e}"),
+        // };
+        // model.metrics = Some(JsonB(json!(metrics)));
+        // info!("Metrics: {:?}", &metrics);
 
         Spi::get_one_with_args::<i64>(
             "UPDATE pgml.models SET hyperparams = $1, metrics = $2 WHERE id = $3 RETURNING id",

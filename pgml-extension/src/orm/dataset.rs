@@ -92,6 +92,18 @@ impl Display for TextClassificationDataset {
     }
 }
 
+pub enum TextDatasetType {
+    TextClassification(TextClassificationDataset),
+}
+
+impl TextDatasetType {
+    pub fn num_features(&self) -> usize {
+        match self {
+            TextDatasetType::TextClassification(dataset) => dataset.num_features,
+        }
+    }
+}
+
 fn drop_table_if_exists(table_name: &str) {
     // Avoid the existence for DROP TABLE IF EXISTS warning by checking the schema for the table first
     let table_count = Spi::get_one_with_args::<i64>(

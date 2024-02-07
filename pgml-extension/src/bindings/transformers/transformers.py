@@ -1002,7 +1002,7 @@ def generate(model_id, data, config):
 #######################
 # LLM Fine-Tuning
 #######################
-def finetune(task, hyperparams, path, x_train, x_test, y_train, y_test):
+def finetune_text_classification(task, hyperparams, path, x_train, x_test, y_train, y_test):
     # Get model and tokenizer
     hyperparams = orjson.loads(hyperparams)
     model_name = hyperparams.pop("model_name")
