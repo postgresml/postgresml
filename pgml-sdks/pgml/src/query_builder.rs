@@ -166,23 +166,23 @@ impl QueryBuilder {
         embedding_cte.table_name(Alias::new("embedding"));
 
         // Build the comparison CTE
-        let mut comparison_cte = Query::select();
-        comparison_cte
-            .from_as(
-                embeddings_table_name.to_table_tuple(),
-                SIden::Str("embeddings"),
-            )
-            .columns([models::EmbeddingIden::ChunkId])
-            .expr(Expr::cust(
-                "1 - (embeddings.embedding <=> (select embedding from embedding)) as score",
-            ))
-            .order_by_expr(
-                Expr::cust("embeddings.embedding <=> (select embedding from embedding)"),
-                Order::Asc,
-            );
+        // let mut comparison_cte = Query::select();
+        // comparison_cte
+        //     .from_as(
+        //         embeddings_table_name.to_table_tuple(),
+        //         SIden::Str("embeddings"),
+        //     )
+        //     .columns([models::EmbeddingIden::ChunkId])
+        //     .expr(Expr::cust(
+        //         "1 - (embeddings.embedding <=> (select embedding from embedding)) as score",
+        //     ))
+        //     .order_by_expr(
+        //         Expr::cust("embeddings.embedding <=> (select embedding from embedding)"),
+        //         Order::Asc,
+        //     );
 
-        let mut comparison_cte = CommonTableExpression::from_select(comparison_cte);
-        comparison_cte.table_name(Alias::new("comparison"));
+        // let mut comparison_cte = CommonTableExpression::from_select(comparison_cte);
+        // comparison_cte.table_name(Alias::new("comparison"));
 
         // Build the where clause
         let mut with_clause = WithClause::new();
@@ -190,23 +190,27 @@ impl QueryBuilder {
             .cte(pipeline_cte)
             .cte(model_cte)
             .cte(embedding_cte)
-            .cte(comparison_cte)
+            // .cte(comparison_cte)
             .to_owned();
 
-        // Build the query
         self.query
+            .expr(Expr::cust(
+                "1 - (embeddings.embedding <=> (select embedding from embedding)) as score",
+            ))
             .columns([
-                (SIden::Str("comparison"), SIden::Str("score")),
                 (SIden::Str("chunks"), SIden::Str("chunk")),
                 (SIden::Str("documents"), SIden::Str("metadata")),
             ])
-            .from(SIden::Str("comparison"))
+            .from_as(
+                embeddings_table_name.to_table_tuple(),
+                SIden::Str("embeddings"),
+            )
             .join_as(
                 JoinType::InnerJoin,
                 self.collection.chunks_table_name.to_table_tuple(),
                 Alias::new("chunks"),
                 Expr::col((SIden::Str("chunks"), SIden::Str("id")))
-                    .equals((SIden::Str("comparison"), SIden::Str("chunk_id"))),
+                    .equals((SIden::Str("embeddings"), SIden::Str("chunk_id"))),
             )
             .join_as(
                 JoinType::InnerJoin,
@@ -214,7 +218,34 @@ impl QueryBuilder {
                 Alias::new("documents"),
                 Expr::col((SIden::Str("documents"), SIden::Str("id")))
                     .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+            )
+            .order_by_expr(
+                Expr::cust("embeddings.embedding <=> (select embedding from embedding)"),
+                Order::Asc,
             );
+
+        // Build the query
+        // self.query
+        //     .columns([
+        //         (SIden::Str("comparison"), SIden::Str("score")),
+        //         (SIden::Str("chunks"), SIden::Str("chunk")),
+        //         (SIden::Str("documents"), SIden::Str("metadata")),
+        //     ])
+        //     .from(SIden::Str("comparison"))
+        //     .join_as(
+        //         JoinType::InnerJoin,
+        //         self.collection.chunks_table_name.to_table_tuple(),
+        //         Alias::new("chunks"),
+        //         Expr::col((SIden::Str("chunks"), SIden::Str("id")))
+        //             .equals((SIden::Str("comparison"), SIden::Str("chunk_id"))),
+        //     )
+        //     .join_as(
+        //         JoinType::InnerJoin,
+        //         self.collection.documents_table_name.to_table_tuple(),
+        //         Alias::new("documents"),
+        //         Expr::col((SIden::Str("documents"), SIden::Str("id")))
+        //             .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+        //     );
         // .order_by((SIden::Str("comparison"), SIden::Str("score")), Order::Desc);
 
         self
@@ -222,6 +253,7 @@ impl QueryBuilder {
 
     pub async fn fetch_all(mut self) -> anyhow::Result<Vec<(f64, String, Json)>> {
         let pool = get_or_initialize_pool(&self.collection.database_url).await?;
+
         let (sql, values) = self
             .query
             .clone()
@@ -235,74 +267,75 @@ impl QueryBuilder {
             Err(e) => match e.as_database_error() {
                 Some(d) => {
                     if d.code() == Some(Cow::from("XX000")) {
+                        anyhow::bail!("Hot fix for query is not compatible with remote embeddings")
                         // Explicitly get and set the model
-                        let project_info = self.collection.get_project_info().await?;
-                        let pipeline = self
-                            .pipeline
-                            .as_mut()
-                            .context("Need pipeline to call fetch_all on query builder with remote embeddings")?;
-                        pipeline.set_project_info(project_info);
-                        pipeline.verify_in_database(false).await?;
-                        let model = pipeline
-                            .model
-                            .as_ref()
-                            .context("Pipeline must be verified to perform vector search with remote embeddings")?;
+                        // let project_info = self.collection.get_project_info().await?;
+                        // let pipeline = self
+                        //     .pipeline
+                        //     .as_mut()
+                        //     .context("Need pipeline to call fetch_all on query builder with remote embeddings")?;
+                        // pipeline.set_project_info(project_info);
+                        // pipeline.verify_in_database(false).await?;
+                        // let model = pipeline
+                        //     .model
+                        //     .as_ref()
+                        //     .context("Pipeline must be verified to perform vector search with remote embeddings")?;
 
-                        // If the model runtime is python, the error was not caused by an unsupported runtime
-                        if model.runtime == ModelRuntime::Python {
-                            return Err(anyhow::anyhow!(e));
-                        }
+                        // // If the model runtime is python, the error was not caused by an unsupported runtime
+                        // if model.runtime == ModelRuntime::Python {
+                        //     return Err(anyhow::anyhow!(e));
+                        // }
 
-                        let query_parameters = self.query_parameters.to_owned().unwrap_or_default();
+                        // let query_parameters = self.query_parameters.to_owned().unwrap_or_default();
 
-                        let remote_embeddings =
-                            build_remote_embeddings(model.runtime, &model.name, &query_parameters)?;
-                        let mut embeddings = remote_embeddings
-                            .embed(vec![self
-                                .query_string
-                                .to_owned()
-                                .context("Must have query_string to call fetch_all on query_builder with remote embeddings")?])
-                            .await?;
-                        let embedding = std::mem::take(&mut embeddings[0]);
+                        // let remote_embeddings =
+                        //     build_remote_embeddings(model.runtime, &model.name, &query_parameters)?;
+                        // let mut embeddings = remote_embeddings
+                        //     .embed(vec![self
+                        //         .query_string
+                        //         .to_owned()
+                        //         .context("Must have query_string to call fetch_all on query_builder with remote embeddings")?])
+                        //     .await?;
+                        // let embedding = std::mem::take(&mut embeddings[0]);
 
-                        // Explicit drop required here or we can't borrow the pipeline immutably
-                        drop(remote_embeddings);
-                        let embeddings_table_name =
-                            format!("{}.{}_embeddings", self.collection.name, pipeline.name);
+                        // // Explicit drop required here or we can't borrow the pipeline immutably
+                        // drop(remote_embeddings);
+                        // let embeddings_table_name =
+                        //     format!("{}.{}_embeddings", self.collection.name, pipeline.name);
 
-                        let mut comparison_cte = Query::select();
-                        comparison_cte
-                            .from_as(
-                                embeddings_table_name.to_table_tuple(),
-                                SIden::Str("embeddings"),
-                            )
-                            .columns([models::EmbeddingIden::ChunkId])
-                            .expr(Expr::cust_with_values(
-                                "1 - (embeddings.embedding <=> $1::vector) as score",
-                                [embedding.clone()],
-                            ))
-                            .order_by_expr(
-                                Expr::cust_with_values(
-                                    "embeddings.embedding <=> $1::vector",
-                                    [embedding],
-                                ),
-                                Order::Asc,
-                            );
+                        // let mut comparison_cte = Query::select();
+                        // comparison_cte
+                        //     .from_as(
+                        //         embeddings_table_name.to_table_tuple(),
+                        //         SIden::Str("embeddings"),
+                        //     )
+                        //     .columns([models::EmbeddingIden::ChunkId])
+                        //     .expr(Expr::cust_with_values(
+                        //         "1 - (embeddings.embedding <=> $1::vector) as score",
+                        //         [embedding.clone()],
+                        //     ))
+                        //     .order_by_expr(
+                        //         Expr::cust_with_values(
+                        //             "embeddings.embedding <=> $1::vector",
+                        //             [embedding],
+                        //         ),
+                        //         Order::Asc,
+                        //     );
 
-                        let mut comparison_cte = CommonTableExpression::from_select(comparison_cte);
-                        comparison_cte.table_name(Alias::new("comparison"));
-                        let mut with_clause = WithClause::new();
-                        with_clause.cte(comparison_cte);
+                        // let mut comparison_cte = CommonTableExpression::from_select(comparison_cte);
+                        // comparison_cte.table_name(Alias::new("comparison"));
+                        // let mut with_clause = WithClause::new();
+                        // with_clause.cte(comparison_cte);
 
-                        let (sql, values) = self
-                            .query
-                            .clone()
-                            .with(with_clause)
-                            .build_sqlx(PostgresQueryBuilder);
-                        sqlx::query_as_with(&sql, values)
-                            .fetch_all(&pool)
-                            .await
-                            .map_err(|e| anyhow::anyhow!(e))
+                        // let (sql, values) = self
+                        //     .query
+                        //     .clone()
+                        //     .with(with_clause)
+                        //     .build_sqlx(PostgresQueryBuilder);
+                        // sqlx::query_as_with(&sql, values)
+                        //     .fetch_all(&pool)
+                        //     .await
+                        //     .map_err(|e| anyhow::anyhow!(e))
                     } else {
                         Err(anyhow::anyhow!(e))
                     }

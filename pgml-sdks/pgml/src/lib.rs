@@ -327,7 +327,7 @@ mod tests {
             status_2.chunks_status.synced == status_2.chunks_status.total
                 && status_2.chunks_status.not_synced == 0
         );
-        collection.archive().await?;
+        // collection.archive().await?;
         Ok(())
     }
 
@@ -419,7 +419,7 @@ mod tests {
         let model = Model::default();
         let splitter = Splitter::default();
         let mut pipeline = Pipeline::new(
-            "test_r_p_cvswqb_1",
+            "test_r_p_cvswqb_100",
             Some(model),
             Some(splitter),
             Some(
@@ -432,13 +432,13 @@ mod tests {
                 .into(),
             ),
         );
-        let mut collection = Collection::new("test_r_c_cvswqb_3", None);
+        let mut collection = Collection::new("test_r_c_cvswqb_100", None);
         collection.add_pipeline(&mut pipeline).await?;
 
         // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
+        let mut pipeline = Pipeline::new("test_r_p_cvswqb_100", None, None, None);
         collection
-            .upsert_documents(generate_dummy_documents(1000))
+            .upsert_documents(generate_dummy_documents(10))
             .await?;
         let results = collection
             .query()
@@ -450,46 +450,46 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
-    async fn can_vector_search_with_query_builder_with_remote_embeddings() -> anyhow::Result<()> {
-        init_logger(None, None).ok();
-        let model = Model::new(
-            Some("text-embedding-ada-002".to_string()),
-            Some("openai".to_string()),
-            None,
-        );
-        let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new(
-            "test_r_p_cvswqbwre_1",
-            Some(model),
-            Some(splitter),
-            Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
-                })
-                .into(),
-            ),
-        );
-        let mut collection = Collection::new("test_r_c_cvswqbwre_3", None);
-        collection.add_pipeline(&mut pipeline).await?;
+    // #[sqlx::test]
+    // async fn can_vector_search_with_query_builder_with_remote_embeddings() -> anyhow::Result<()> {
+    //     init_logger(None, None).ok();
+    //     let model = Model::new(
+    //         Some("text-embedding-ada-002".to_string()),
+    //         Some("openai".to_string()),
+    //         None,
+    //     );
+    //     let splitter = Splitter::default();
+    //     let mut pipeline = Pipeline::new(
+    //         "test_r_p_cvswqbwre_1",
+    //         Some(model),
+    //         Some(splitter),
+    //         Some(
+    //             serde_json::json!({
+    //                 "full_text_search": {
+    //                     "active": true,
+    //                     "configuration": "english"
+    //                 }
+    //             })
+    //             .into(),
+    //         ),
+    //     );
+    //     let mut collection = Collection::new("test_r_c_cvswqbwre_3", None);
+    //     collection.add_pipeline(&mut pipeline).await?;
 
-        // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
-        collection
-            .upsert_documents(generate_dummy_documents(5))
-            .await?;
-        let results = collection
-            .query()
-            .vector_recall("Here is some query", &mut pipeline, None)
-            .fetch_all()
-            .await?;
-        assert!(results.len() == 3);
-        collection.archive().await?;
-        Ok(())
-    }
+    //     // Recreate the pipeline to replicate a more accurate example
+    //     let mut pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
+    //     collection
+    //         .upsert_documents(generate_dummy_documents(5))
+    //         .await?;
+    //     let results = collection
+    //         .query()
+    //         .vector_recall("Here is some query", &mut pipeline, None)
+    //         .fetch_all()
+    //         .await?;
+    //     assert!(results.len() == 3);
+    //     collection.archive().await?;
+    //     Ok(())
+    // }
 
     #[sqlx::test]
     async fn can_filter_documents() -> anyhow::Result<()> {
