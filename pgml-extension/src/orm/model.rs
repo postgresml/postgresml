@@ -242,12 +242,6 @@ impl Model {
 
         model.metrics = Some(JsonB(json!(metrics)));
         info!("Metrics: {:?}", &metrics);
-        // let metrics = match transformers::finetune(&project.task, dataset, &model.hyperparams, &path) {
-        //     Ok(metrics) => metrics,
-        //     Err(e) => error!("{e}"),
-        // };
-        // model.metrics = Some(JsonB(json!(metrics)));
-        // info!("Metrics: {:?}", &metrics);
 
         Spi::get_one_with_args::<i64>(
             "UPDATE pgml.models SET hyperparams = $1, metrics = $2 WHERE id = $3 RETURNING id",
@@ -266,26 +260,31 @@ impl Model {
         .unwrap();
 
         // Save the bindings.
-        /*for entry in std::fs::read_dir(&path).unwrap() {
+        for entry in std::fs::read_dir(&path).unwrap() {
             let path = entry.unwrap().path();
-            let bytes = std::fs::read(&path).unwrap();
-            for (i, chunk) in bytes.chunks(100_000_000).enumerate() {
-                Spi::get_one_with_args::<i64>(
-                    "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, $2, $3, $4) RETURNING id",
-                    vec![
-                        (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
-                        (
-                            PgBuiltInOids::TEXTOID.oid(),
-                            path.file_name().unwrap().to_str().into_datum(),
-                        ),
-                        (PgBuiltInOids::INT8OID.oid(), (i as i64).into_datum()),
-                        (PgBuiltInOids::BYTEAOID.oid(), chunk.into_datum()),
-                    ],
-                )
-                .unwrap();
-            }
-        }*/
 
+            if path.is_file() {
+
+                let bytes = std::fs::read(&path).unwrap();
+                
+                for (i, chunk) in bytes.chunks(100_000_000).enumerate() {
+                    Spi::get_one_with_args::<i64>(
+                        "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, $2, $3, $4) RETURNING id",
+                        vec![
+                            (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+                            (
+                                PgBuiltInOids::TEXTOID.oid(),
+                                path.file_name().unwrap().to_str().into_datum(),
+                            ),
+                            (PgBuiltInOids::INT8OID.oid(), (i as i64).into_datum()),
+                            (PgBuiltInOids::BYTEAOID.oid(), chunk.into_datum()),
+                        ],
+                    )
+                    .unwrap();
+                }
+            }
+        }
+        
         Spi::run_with_args(
             "UPDATE pgml.models SET status = $1::pgml.status WHERE id = $2",
             Some(vec![
@@ -297,6 +296,7 @@ impl Model {
             ]),
         )
         .unwrap();
+        
         model
     }
 

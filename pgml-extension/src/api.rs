@@ -906,25 +906,27 @@ fn tune(
         LIMIT 1;",
         vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
     );
-
+    
     let mut deploy = true;
     match automatic_deploy {
         // Deploy only if metrics are better than previous model.
         Some(true) | None => {
             if let Ok(Some(deployed_metrics)) = deployed_metrics {
                 let deployed_metrics = deployed_metrics.0.as_object().unwrap();
-                if project.task.value_is_better(
-                    deployed_metrics
-                        .get(&project.task.default_target_metric())
-                        .unwrap()
-                        .as_f64()
-                        .unwrap(),
-                    new_metrics
-                        .get(&project.task.default_target_metric())
-                        .unwrap()
-                        .as_f64()
-                        .unwrap(),
-                ) {
+
+                let deployed_value = deployed_metrics
+                    .get(&project.task.default_target_metric())
+                    .and_then(|value| value.as_f64())
+                    .unwrap_or_default(); // Default to 0.0 if the key is not present or conversion fails
+
+                // Get the value for the default target metric from new_metrics or provide a default value
+                let new_value = new_metrics
+                    .get(&project.task.default_target_metric())
+                    .and_then(|value| value.as_f64())
+                    .unwrap_or_default(); // Default to 0.0 if the key is not present or conversion fails
+
+
+                if project.task.value_is_better(deployed_value, new_value){
                     deploy = false;
                 }
             }
