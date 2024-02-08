@@ -1012,9 +1012,9 @@ def finetune_text_classification(task, hyperparams, path, x_train, x_test, y_tra
 
     id2label = {}
     label2id = {}
-    for id, label in enumerate(classes):
-        label2id[label] = id
-        id2label[id] = label
+    for _id, label in enumerate(classes):
+        label2id[label] = _id
+        id2label[_id] = label
 
     model = AutoModelForSequenceClassification.from_pretrained(
         model_name, num_labels=num_classes, id2label=id2label, label2id=label2id
@@ -1063,6 +1063,7 @@ def finetune_text_classification(task, hyperparams, path, x_train, x_test, y_tra
     # Training Args
     log.info("Training args setup started path=%s"%path)
     training_args=TrainingArguments(output_dir=path, logging_dir=path, **hyperparams["training_args"])
+
     log.info("Trainer setup done")
     # Trainer
     log.info(model)

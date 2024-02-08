@@ -266,7 +266,7 @@ impl Model {
         .unwrap();
 
         // Save the bindings.
-        for entry in std::fs::read_dir(&path).unwrap() {
+        /*for entry in std::fs::read_dir(&path).unwrap() {
             let path = entry.unwrap().path();
             let bytes = std::fs::read(&path).unwrap();
             for (i, chunk) in bytes.chunks(100_000_000).enumerate() {
@@ -284,7 +284,7 @@ impl Model {
                 )
                 .unwrap();
             }
-        }
+        }*/
 
         Spi::run_with_args(
             "UPDATE pgml.models SET status = $1::pgml.status WHERE id = $2",
