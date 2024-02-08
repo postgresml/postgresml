@@ -15,7 +15,7 @@ div[data-controller="navigation-left-nav-docs"] {
         @include media-breakpoint-up(xl) {
             height: calc(100vh - $navbar-height);
             position: sticky; 
-            top: 88px;
+            top: $navbar-height;
             display: block;
         }
     }

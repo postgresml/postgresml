@@ -110,6 +110,28 @@
     --bs-offcanvas-padding-x: 0;
 }
 
+// If the icon is the controller 
+.rotate-on-aria-expanded {
+    transition: transform .1s;
+
+    &[aria-expanded=false] {
+        transform: rotate(-90deg);
+    }
+}
+
+// If the icon is a child of the controller
+[data-bs-toggle="collapse"] {
+    span.rotate-on-aria-expanded {
+        transition: transform .1s;
+    }
+
+    &[aria-expanded=false] {
+        span.rotate-on-aria-expanded {
+            transform: rotate(-90deg);
+        }
+    }
+}
+
 .toc, .guides {
     --bs-border-color: #{$gray-500};
     .nav-link {
@@ -123,11 +145,6 @@
 
         &:focus:not(:hover) {
             color: #{$gray-100}
-        }
-    }
-    [aria-expanded=false] {
-        span.material-symbols-outlined {
-            transform: rotate(-90deg);
         }
     }
     @include media-breakpoint-down(xxl) {

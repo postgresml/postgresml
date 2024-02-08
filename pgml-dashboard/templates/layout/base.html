@@ -10,7 +10,7 @@
 
   <body data-bs-theme="dark" data-theme="docs">
     <main>
-      <div class="container-fluid bg-primary pb-4 min-vh-100">
+      <div class="bg-primary min-vh-100">
         <div class="ellipse-container position-absolute" style="margin: -2rem; height: 100vh; width: 100vw;">
           <div class="ellipse-21" style="width: 35vw; height: 35vh; top: 0vh; left: -7vw"></div>
         </div>
@@ -32,7 +32,7 @@
             <%- content.unwrap_or_default() %>
 
             <% if !toc_links.is_empty() { %>
-              <div class="d-xxl-block col-xxl-2 col-xl-12 order-2 order-xl-1 order-xxl-3">
+              <div class="d-xxl-block col-xxl-2 col-xl-12 order-2 order-xl-1 order-xxl-3 position-sticky stick-under-topnav h-100 z-1">
                 <%+ Toc::new(&toc_links)%>
               </div>
             <% } %>
