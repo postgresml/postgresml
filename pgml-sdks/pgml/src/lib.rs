@@ -822,9 +822,9 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswle_84";
+        let collection_name = "test_r_c_cswle_102";
         let mut collection = Collection::new(collection_name, None);
-        let documents = generate_dummy_documents(11);
+        let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cswle_9";
         let mut pipeline = Pipeline::new(
@@ -866,49 +866,46 @@ mod tests {
             ),
         )?;
         collection.add_pipeline(&mut pipeline).await?;
-        let results = collection
-            .search(
-                json!({
-                    "query": {
-                        "full_text_search": {
-                            "title": {
-                                "query": "test 9",
-                                "boost": 4.0
-                            },
-                            "body": {
-                                "query": "Test",
-                                "boost": 1.2
-                            }
-                        },
-                        "semantic_search": {
-                            "title": {
-                                "query": "This is a test",
-                                "boost": 2.0
-                            },
-                            "body": {
-                                "query": "This is the body test",
-                                "parameters": {
-                                    "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
-                                },
-                                "boost": 1.01
-                            },
-                            "notes": {
-                                "query": "This is the notes test",
-                                "boost": 1.01
-                            }
-                        },
-                        "filter": {
-                           "id": {
-                                "$gt": 1
-                            }
-                        }
-
+        let query = json!({
+            "query": {
+                "full_text_search": {
+                    "title": {
+                        "query": "test 9",
+                        "boost": 4.0
                     },
-                    "limit": 5
-                })
-                .into(),
-                &mut pipeline,
-            )
+                    "body": {
+                        "query": "Test",
+                        "boost": 1.2
+                    }
+                },
+                "semantic_search": {
+                    "title": {
+                        "query": "This is a test",
+                        "boost": 2.0
+                    },
+                    "body": {
+                        "query": "This is the body test",
+                        "parameters": {
+                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                        },
+                        "boost": 1.01
+                    },
+                    "notes": {
+                        "query": "This is the notes test",
+                        "boost": 1.01
+                    }
+                },
+                "filter": {
+                   "id": {
+                        "$gt": 1
+                    }
+                }
+
+            },
+            "limit": 5
+        });
+        let results = collection
+            .search(query.clone().into(), &mut pipeline)
             .await?;
         let ids: Vec<u64> = results
             .into_iter()
@@ -916,7 +913,31 @@ mod tests {
             .collect();
         assert_eq!(ids, vec![9, 2, 7, 8, 3]);
 
-        // Do some checks on the search results tables
+        let pool = get_or_initialize_pool(&None).await?;
+
+        let searches_table = format!("{}_{}.searches", collection_name, pipeline_name);
+        let searches: Vec<(i64, serde_json::Value)> =
+            sqlx::query_as(&query_builder!("SELECT id, query FROM %s", searches_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(searches.len() == 1);
+        assert!(searches[0].0 == 1);
+        assert!(searches[0].1 == query);
+
+        let search_results_table = format!("{}_{}.search_results", collection_name, pipeline_name);
+        let search_results: Vec<(i64, i64, i64, serde_json::Value, i64)> =
+            sqlx::query_as(&query_builder!(
+                "SELECT id, search_id, document_id, scores, rank FROM %s ORDER BY rank ASC",
+                search_results_table
+            ))
+            .fetch_all(&pool)
+            .await?;
+        assert!(search_results.len() == 5);
+        // Document ids are 1 based in the db not 0 based like they are here
+        assert_eq!(
+            search_results.iter().map(|sr| sr.2).collect::<Vec<i64>>(),
+            vec![10, 3, 7, 8, 4]
+        );
 
         collection.archive().await?;
         Ok(())

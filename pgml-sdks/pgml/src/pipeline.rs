@@ -908,8 +908,7 @@ impl Pipeline {
                 let query = query_builder!(
                     queries::GENERATE_EMBEDDINGS,
                     embeddings_table_name,
-                    chunks_table_name,
-                    embeddings_table_name
+                    chunks_table_name
                 );
                 debug_sqlx_query!(GENERATE_EMBEDDINGS, query, model.name, parameters.0);
                 sqlx::query(&query)
