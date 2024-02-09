@@ -18,6 +18,7 @@ use tokio::sync::Mutex;
 use tracing::{instrument, warn};
 use walkdir::WalkDir;
 
+use crate::debug_sqlx_query;
 use crate::filter_builder::FilterBuilder;
 use crate::search_query_builder::build_search_query;
 use crate::vector_search_query_builder::build_vector_search_query;
@@ -515,29 +516,39 @@ impl Collection {
                         );
                         anyhow::Ok(acc)
                     })?;
-
+                let versions = serde_json::to_value(versions)?;
                 let query = if args
                     .get("merge")
                     .map(|v| v.as_bool().unwrap_or(false))
                     .unwrap_or(false)
                 {
-                    query_builder!(
-                    "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document, version) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET document = %s.document || EXCLUDED.document, version = EXCLUDED.version RETURNING id, (SELECT document FROM prev)",
-                    self.documents_table_name,
-                    self.documents_table_name,
-                    self.documents_table_name
-                )
+                    let query = query_builder!(
+                        queries::UPSERT_DOCUMENT_AND_MERGE_METADATA,
+                        self.documents_table_name,
+                        self.documents_table_name,
+                        self.documents_table_name
+                    );
+                    debug_sqlx_query!(
+                        UPSERT_DOCUMENT_AND_MERGE_METADATA,
+                        query,
+                        source_uuid,
+                        document.0,
+                        versions
+                    );
+                    query
                 } else {
-                    query_builder!(
-                    "WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document, version) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET document = EXCLUDED.document, version = EXCLUDED.version RETURNING id, (SELECT document FROM prev)",
-                    self.documents_table_name,
-                    self.documents_table_name
-                )
+                    let query = query_builder!(
+                        queries::UPSERT_DOCUMENT,
+                        self.documents_table_name,
+                        self.documents_table_name
+                    );
+                    debug_sqlx_query!(UPSERT_DOCUMENT, query, source_uuid, document.0, versions);
+                    query
                 };
                 let (document_id, previous_document): (i64, Option<Json>) = sqlx::query_as(&query)
                     .bind(source_uuid)
                     .bind(document)
-                    .bind(serde_json::to_value(versions)?)
+                    .bind(versions)
                     .fetch_one(&mut *transaction)
                     .await?;
                 dp.push((document_id, document, previous_document));

@@ -1,6 +1,7 @@
 /////////////////////////////
 // CREATE TABLE QUERIES /////
 /////////////////////////////
+
 pub const CREATE_COLLECTIONS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS pgml.collections (
   id serial8 PRIMARY KEY, 
@@ -104,6 +105,7 @@ CREATE TABLE IF NOT EXISTS %s (
 /////////////////////////////
 // CREATE INDICES ///////////
 /////////////////////////////
+
 pub const CREATE_INDEX: &str = r#"
 CREATE INDEX %d IF NOT EXISTS %s ON %s (%d);
 "#;
@@ -117,8 +119,39 @@ CREATE INDEX %d IF NOT EXISTS %s on %s using hnsw (%d) %d;
 "#;
 
 /////////////////////////////
-// Other Big Queries ////////
+// Upserting Documents //////
 /////////////////////////////
+
+// Tag: CRITICAL_QUERY
+// Checked: True
+// Trigger: Runs whenever a user upserts a document
+// Required indexes:
+// documents table | - "documents_source_uuid_key" UNIQUE CONSTRAINT, btree (source_uuid)
+// Used to upsert a document and merge the previous metadata on conflict
+pub const UPSERT_DOCUMENT_AND_MERGE_METADATA: &str = r#"
+WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document, version) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET document = %s.document || EXCLUDED.document, version = EXCLUDED.version RETURNING id, (SELECT document FROM prev)
+"#;
+
+// Tag: CRITICAL_QUERY
+// Checked: True
+// Trigger: Runs whenever a user upserts a document
+// Required indexes:
+// - documents table | "documents_source_uuid_key" UNIQUE CONSTRAINT, btree (source_uuid)
+// Used to upsert a document and over the previous document on conflict
+pub const UPSERT_DOCUMENT: &str = r#"
+WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document, version) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET document = EXCLUDED.document, version = EXCLUDED.version RETURNING id, (SELECT document FROM prev)
+"#;
+
+/////////////////////////////
+// Generaiting TSVectors ////
+/////////////////////////////
+
+// Tag: CRITICAL_QUERY
+// Checked: True
+// Trigger: Runs whenever a pipeline is syncing documents and does full_text_search
+// Required indexes:
+// - chunks table | "{key}_tsvectors_pkey" PRIMARY KEY, btree (id)
+// Used to generate tsvectors for specific chunks
 pub const GENERATE_TSVECTORS_FOR_CHUNK_IDS: &str = r#"
 INSERT INTO %s (chunk_id, document_id, ts) 
 SELECT 
@@ -131,6 +164,11 @@ WHERE id = ANY ($1)
 ON CONFLICT (chunk_id) DO UPDATE SET ts = EXCLUDED.ts;
 "#;
 
+// Tag: CRITICAL_QUERY
+// Checked: True
+// Trigger: Runs whenever a pipeline is resyncing and does full_text_search
+// Required indexes: None
+// Used to generate tsvectors for an entire collection
 pub const GENERATE_TSVECTORS: &str = r#"
 INSERT INTO %s (chunk_id, document_id, ts) 
 SELECT 
@@ -138,17 +176,20 @@ SELECT
   document_id,
   to_tsvector('%d', chunk) ts 
 FROM 
-  %s
-WHERE 
-  id NOT IN (
-    SELECT 
-      chunk_id 
-    FROM 
-      %s
-  )
-ON CONFLICT (chunk_id) DO NOTHING;
+  %s chunks
+ON CONFLICT (chunk_id) DO UPDATE SET ts = EXCLUDED.ts;
 "#;
 
+/////////////////////////////
+// Generaiting Embeddings ///
+/////////////////////////////
+
+// Tag: CRITICAL_QUERY
+// Checked: True
+// Trigger: Runs whenver a pipeline is syncing documents and does semantic_search
+// Required indexes:
+// - chunks table | "{key}_chunks_pkey" PRIMARY KEY, btree (id)
+// Used to generate embeddings for specific chunks
 pub const GENERATE_EMBEDDINGS_FOR_CHUNK_IDS: &str = r#"
 INSERT INTO %s (chunk_id, document_id, embedding) 
 SELECT 
@@ -166,6 +207,11 @@ WHERE
 ON CONFLICT (chunk_id) DO UPDATE SET embedding = EXCLUDED.embedding
 "#;
 
+// Tag: CRITICAL_QUERY
+// Checked: True
+// Trigger: Runs whenever a pipeline is resyncing and does semantic_search
+// Required indexes: None
+// Used to generate embeddings for an entire collection
 pub const GENERATE_EMBEDDINGS: &str = r#"
 INSERT INTO %s (chunk_id, document_id, embedding) 
 SELECT 
@@ -178,95 +224,166 @@ SELECT
   ) 
 FROM 
   %s 
-WHERE 
-  id NOT IN (
-    SELECT 
-      chunk_id 
-    FROM 
-      %s
-  )
-ON CONFLICT (chunk_id) DO NOTHING;
+ON CONFLICT (chunk_id) DO UPDATE set embedding = EXCLUDED.embedding;
 "#;
 
-pub const GENERATE_CHUNKS: &str = r#"
-WITH splitter as (
+/////////////////////////////
+// Generating Chunks ///////
+/////////////////////////////
+
+// Tag: CRITICAL_QUERY
+// Checked: False
+// Used to generate chunks for a specific documents with a splitter
+pub const GENERATE_CHUNKS_FOR_DOCUMENT_IDS_WITH_SPLITTER: &str = r#"
+WITH splitter AS (
     SELECT
-      name,
-      parameters
+        name,
+        parameters
     FROM
-      pgml.splitters 
+        pgml.splitters
     WHERE
-      id = $1
-)
-INSERT INTO %s(
-  document_id, chunk_index, chunk
-) 
-SELECT 
-  document_id, 
-  (chunk).chunk_index, 
-  (chunk).chunk 
-FROM 
-  (
-    select 
-      id AS document_id, 
-      pgml.chunk(
-        (SELECT name FROM splitter), 
-        text, 
-        (SELECT parameters FROM splitter)
-      ) AS chunk 
-    FROM 
-      (
-        SELECT 
-          id, 
-          %d as text 
-        FROM 
-          %s 
-        WHERE 
-          id NOT IN (
-            SELECT 
-              document_id 
-            FROM 
-              %s 
-          )
-      ) AS documents
-  ) chunks 
-ON CONFLICT (document_id, chunk_index) DO NOTHING 
+        id = $1
+),
+new AS (
+    SELECT
+        documents.id AS document_id,
+        pgml.chunk ((
+            SELECT
+                name
+            FROM splitter), %d, (
+            SELECT
+                parameters
+            FROM splitter)) AS chunk_t
+FROM
+    %s AS documents
+    WHERE
+        id = ANY ($2)
+),
+del AS (
+    DELETE FROM %s chunks
+    WHERE chunk_index > (
+            SELECT
+                MAX((chunk_t).chunk_index)
+            FROM
+                new
+            WHERE
+                new.document_id = chunks.document_id
+            GROUP BY
+                new.document_id)
+        AND chunks.document_id = ANY (
+            SELECT
+                document_id
+            FROM
+                new))
+    INSERT INTO %s (document_id, chunk_index, chunk)
+SELECT
+    new.document_id,
+    (chunk_t).chunk_index,
+    (chunk_t).chunk
+FROM
+    new
+    LEFT OUTER JOIN %s chunks ON chunks.document_id = new.document_id
+    AND chunks.chunk_index = (chunk_t).chunk_index
+WHERE (chunk_t).chunk <> COALESCE(chunks.chunk, '')
+ON CONFLICT (document_id, chunk_index)
+    DO UPDATE SET
+        chunk = EXCLUDED.chunk
+RETURNING
+    id;
 "#;
 
+// Tag: CRITICAL_QUERY
+// Checked: True
+// Trigger: Runs whenver a pipeline is syncing documents and the key does not have a splitter
+// Required indexes:
+// - documents table | "documents_pkey" PRIMARY KEY, btree (id)
+// - chunks table | "{key}_pipeline_chunk_document_id_index" btree (document_id)
+// Used to generate chunks for a specific documents without a splitter
+// This query just copies the document key into the chunk
 pub const GENERATE_CHUNKS_FOR_DOCUMENT_IDS: &str = r#"
-WITH splitter as (
-    SELECT
-      name,
-      parameters
-    FROM
-      pgml.splitters 
-    WHERE
-      id = $1
-), new as (
-  SELECT 
-    document_id, 
-    (chunk).chunk_index, 
-    (chunk).chunk 
-  FROM 
-    (
-      SELECT 
-        id AS document_id, 
-        pgml.chunk(
-          (SELECT name FROM splitter), 
-          %d, 
-          (SELECT parameters FROM splitter)
-        ) AS chunk 
-      FROM 
-        %s WHERE id = ANY($2)
-    ) chunks
-), ins as (
-  INSERT INTO %s(
+INSERT INTO %s(
     document_id, chunk_index, chunk
-  ) SELECT * FROM new
-  WHERE new.chunk <> COALESCE((SELECT chunk FROM %s chunks WHERE chunks.document_id = new.document_id AND chunks.chunk_index = new.chunk_index), '')
-  ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
-  RETURNING id
-), del as (
-  DELETE FROM %s chunks WHERE chunk_index < (SELECT MAX(new.chunk_index) FROM new WHERE new.document_id = chunks.document_id GROUP BY new.document_id)
-) SELECT id FROM ins;
+)
+SELECT 
+    documents.id,
+    1,
+    %d
+FROM %s documents
+LEFT OUTER JOIN %s chunks ON chunks.document_id = documents.id
+WHERE documents.%d <> COALESCE(chunks.chunk, '')
+  AND documents.id = ANY($1)
+ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
+RETURNING id
+"#;
+
+// Tag: CRITICAL_QUERY
+// Checked: False
+// Used to generate chunks for an entire collection with a splitter
+pub const GENERATE_CHUNKS_WITH_SPLITTER: &str = r#"
+WITH splitter AS (
+    SELECT
+        name,
+        parameters
+    FROM
+        pgml.splitters
+    WHERE
+        id = $1
+),
+new AS (
+    SELECT
+        documents.id AS document_id,
+        pgml.chunk ((
+            SELECT
+                name
+            FROM splitter), %d, (
+            SELECT
+                parameters
+            FROM splitter)) AS chunk_t
+FROM
+    %s AS documents
+),
+del AS (
+    DELETE FROM %s chunks
+    WHERE chunk_index > (
+            SELECT
+                MAX((chunk_t).chunk_index)
+            FROM
+                new
+            WHERE
+                new.document_id = chunks.document_id
+            GROUP BY
+                new.document_id)
+        AND chunks.document_id = ANY (
+            SELECT
+                document_id
+            FROM
+                new))
+INSERT INTO %s (document_id, chunk_index, chunk)
+SELECT
+    new.document_id,
+    (chunk_t).chunk_index,
+    (chunk_t).chunk
+FROM
+    new
+ON CONFLICT (document_id, chunk_index)
+    DO UPDATE SET
+        chunk = EXCLUDED.chunk;
+"#;
+
+// Tag: CRITICAL_QUERY
+// Trigger: Runs whenever a pipeline is resyncing
+// Required indexes: None
+// Checked: True
+// Used to generate chunks for an entire collection
+pub const GENERATE_CHUNKS: &str = r#"
+INSERT INTO %s (
+    document_id, chunk_index, chunk
+)
+SELECT
+    id,
+    1,
+    %d
+FROM %s
+ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk
+RETURNING id
 "#;
