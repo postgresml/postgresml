@@ -822,7 +822,7 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswle_102";
+        let collection_name = "test_r_c_cswle_112";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -907,8 +907,10 @@ mod tests {
         let results = collection
             .search(query.clone().into(), &mut pipeline)
             .await?;
-        let ids: Vec<u64> = results
-            .into_iter()
+        let ids: Vec<u64> = results["results"]
+            .as_array()
+            .unwrap()
+            .iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
         assert_eq!(ids, vec![9, 2, 7, 8, 3]);
@@ -921,11 +923,11 @@ mod tests {
                 .fetch_all(&pool)
                 .await?;
         assert!(searches.len() == 1);
-        assert!(searches[0].0 == 1);
+        assert!(searches[0].0 == results["search_id"].as_i64().unwrap());
         assert!(searches[0].1 == query);
 
         let search_results_table = format!("{}_{}.search_results", collection_name, pipeline_name);
-        let search_results: Vec<(i64, i64, i64, serde_json::Value, i64)> =
+        let search_results: Vec<(i64, i64, i64, serde_json::Value, i32)> =
             sqlx::query_as(&query_builder!(
                 "SELECT id, search_id, document_id, scores, rank FROM %s ORDER BY rank ASC",
                 search_results_table
@@ -936,7 +938,7 @@ mod tests {
         // Document ids are 1 based in the db not 0 based like they are here
         assert_eq!(
             search_results.iter().map(|sr| sr.2).collect::<Vec<i64>>(),
-            vec![10, 3, 7, 8, 4]
+            vec![10, 3, 8, 9, 4]
         );
 
         collection.archive().await?;
@@ -1010,8 +1012,10 @@ mod tests {
                 &mut pipeline,
             )
             .await?;
-        let ids: Vec<u64> = results
-            .into_iter()
+        let ids: Vec<u64> = results["results"]
+            .as_array()
+            .unwrap()
+            .iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
         assert_eq!(ids, vec![2, 3, 7, 4, 8]);

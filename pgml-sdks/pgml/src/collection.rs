@@ -705,19 +705,15 @@ impl Collection {
     }
 
     #[instrument(skip(self))]
-    pub async fn search(
-        &mut self,
-        query: Json,
-        pipeline: &mut Pipeline,
-    ) -> anyhow::Result<Vec<Json>> {
+    pub async fn search(&mut self, query: Json, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
-        let results: Result<Vec<(Json,)>, _> = sqlx::query_as_with(&built_query, values)
-            .fetch_all(&pool)
+        let results: Result<(Json,), _> = sqlx::query_as_with(&built_query, values)
+            .fetch_one(&pool)
             .await;
 
         match results {
-            Ok(r) => Ok(r.into_iter().map(|r| r.0).collect()),
+            Ok(r) => Ok(r.0),
             Err(e) => match e.as_database_error() {
                 Some(d) => {
                     if d.code() == Some(Cow::from("XX000")) {
@@ -731,10 +727,10 @@ impl Collection {
                         pipeline.verify_in_database(false).await?;
                         let (built_query, values) =
                             build_search_query(self, query, pipeline).await?;
-                        let results: Vec<(Json,)> = sqlx::query_as_with(&built_query, values)
-                            .fetch_all(&pool)
+                        let results: (Json,) = sqlx::query_as_with(&built_query, values)
+                            .fetch_one(&pool)
                             .await?;
-                        Ok(results.into_iter().map(|r| r.0).collect())
+                        Ok(results.0)
                     } else {
                         Err(anyhow::anyhow!(e))
                     }
@@ -745,17 +741,13 @@ impl Collection {
     }
 
     #[instrument(skip(self))]
-    pub async fn search_local(
-        &self,
-        query: Json,
-        pipeline: &Pipeline,
-    ) -> anyhow::Result<Vec<Json>> {
+    pub async fn search_local(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
-        let results: Vec<(Json,)> = sqlx::query_as_with(&built_query, values)
-            .fetch_all(&pool)
+        let results: (Json,) = sqlx::query_as_with(&built_query, values)
+            .fetch_one(&pool)
             .await?;
-        Ok(results.into_iter().map(|v| v.0).collect())
+        Ok(results.0)
     }
     /// Performs vector search on the [Collection]
     ///
