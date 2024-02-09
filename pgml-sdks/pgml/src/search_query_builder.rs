@@ -465,11 +465,13 @@ pub async fn build_search_query(
         let mut search_results_insert_query = CommonTableExpression::new()
             .query(search_results_insert_query)
             .to_owned();
-        search_results_insert_query.table_name(Alias::new("search_results"));
+        search_results_insert_query.table_name(Alias::new("search_results_insert"));
         with_clause.cte(search_results_insert_query);
 
         Query::select()
-            .expr(Expr::cust("json_array_elements(json_agg(main.*))"))
+            .expr(Expr::cust(
+                "JSONB_BUILD_OBJECT('search_id', (SELECT id FROM searches_insert), 'results', JSON_AGG(main.*))",
+            ))
             .from(SIden::Str("main"))
             .to_owned()
     } else {
@@ -477,7 +479,7 @@ pub async fn build_search_query(
         anyhow::bail!("If you are only looking to filter documents checkout the `get_documents` method on the Collection")
     };
 
-    // For whatever reason, sea query does not like ctes if the cte is recursive
+    // For whatever reason, sea query does not like multiple ctes if the cte is recursive
     let (sql, values) = query.with(with_clause).build_sqlx(PostgresQueryBuilder);
     let sql = sql.replace("WITH ", "WITH RECURSIVE ");
     debug_sea_query!(DOCUMENT_SEARCH, sql, values);
