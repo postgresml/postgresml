@@ -8,6 +8,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::instrument;
 
+use crate::debug_sqlx_query;
 use crate::remote_embeddings::PoolOrArcMutextTransaction;
 use crate::{
     collection::ProjectInfo,
@@ -391,7 +392,7 @@ impl Pipeline {
     #[instrument(skip(self))]
     async fn create_tables(
         &mut self,
-        transaction: &mut Transaction<'static, Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<()> {
         let project_info = self
             .project_info
@@ -481,7 +482,7 @@ impl Pipeline {
                                     "SELECT embedding from pgml.embed(transformer => $1, text => 'Hello, World!', kwargs => $2) as embedding")
                                     .bind(&embed.model.name)
                                     .bind(&embed.model.parameters)
-                                    .fetch_one(&mut *transaction).await?;
+                                    .fetch_one(&mut **transaction).await?;
                         embedding.0.len() as i64
                     }
                     t => {
@@ -502,7 +503,7 @@ impl Pipeline {
                     documents_table_name,
                     embedding_length
                 ))
-                .execute(&mut *transaction)
+                .execute(&mut **transaction)
                 .await?;
                 let index_name = format!("{}_pipeline_embedding_chunk_id_index", key);
                 transaction
@@ -677,46 +678,41 @@ impl Pipeline {
                 .database_data
                 .as_ref()
                 .context("Splitter must be verified to sync chunks")?;
-
-            sqlx::query_scalar(&query_builder!(
-                queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS,
+            let query = query_builder!(
+                queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS_WITH_SPLITTER,
                 &json_key_query,
                 documents_table_name,
                 &chunks_table_name,
                 &chunks_table_name,
                 &chunks_table_name
-            ))
-            .bind(splitter_database_data.id)
-            .bind(document_ids)
-            .fetch_all(&mut *transaction.lock().await)
-            .await
-            .map_err(anyhow::Error::msg)
+            );
+            debug_sqlx_query!(
+                GENERATE_CHUNKS_FOR_DOCUMENT_IDS_WITH_SPLITTER,
+                query,
+                splitter_database_data.id,
+                document_ids
+            );
+            sqlx::query_scalar(&query)
+                .bind(splitter_database_data.id)
+                .bind(document_ids)
+                .fetch_all(&mut **transaction.lock().await)
+                .await
+                .map_err(anyhow::Error::msg)
         } else {
-            sqlx::query_scalar(&query_builder!(
-                r#"
-                    INSERT INTO %s(
-                        document_id, chunk_index, chunk
-                    )
-                    SELECT 
-                        id,
-                        1,
-                        %d
-                    FROM %s documents
-                    WHERE id = ANY($1)
-                    AND %d <> COALESCE((SELECT chunk FROM %s chunks WHERE chunks.document_id = documents.id AND chunks.chunk_index = 1), '') 
-                    ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk 
-                    RETURNING id
-                "#,
+            let query = query_builder!(
+                queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS,
                 &chunks_table_name,
                 &json_key_query,
                 &documents_table_name,
-                &json_key_query,
-                &chunks_table_name
-            ))
-            .bind(document_ids)
-            .fetch_all(&mut *transaction.lock().await)
-            .await
-            .map_err(anyhow::Error::msg)
+                &chunks_table_name,
+                &json_key_query
+            );
+            debug_sqlx_query!(GENERATE_CHUNKS_FOR_DOCUMENT_IDS, query, document_ids);
+            sqlx::query_scalar(&query)
+                .bind(document_ids)
+                .fetch_all(&mut **transaction.lock().await)
+                .await
+                .map_err(anyhow::Error::msg)
         }
     }
 
@@ -746,16 +742,24 @@ impl Pipeline {
 
         match model.runtime {
             ModelRuntime::Python => {
-                sqlx::query(&query_builder!(
+                let query = query_builder!(
                     queries::GENERATE_EMBEDDINGS_FOR_CHUNK_IDS,
                     embeddings_table_name,
                     chunks_table_name
-                ))
-                .bind(&model.name)
-                .bind(&parameters)
-                .bind(chunk_ids)
-                .execute(&mut *transaction.lock().await)
-                .await?;
+                );
+                debug_sqlx_query!(
+                    GENERATE_EMBEDDINGS_FOR_CHUNK_IDS,
+                    query,
+                    model.name,
+                    parameters.0,
+                    chunk_ids
+                );
+                sqlx::query(&query)
+                    .bind(&model.name)
+                    .bind(&parameters)
+                    .bind(chunk_ids)
+                    .execute(&mut **transaction.lock().await)
+                    .await?;
             }
             r => {
                 let remote_embeddings = build_remote_embeddings(r, &model.name, Some(&parameters))?;
@@ -784,26 +788,25 @@ impl Pipeline {
             .project_info
             .as_ref()
             .context("Pipeline must have project info to sync TSVectors")?;
-
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let tsvectors_table_name = format!("{}_{}.{}_tsvectors", project_info.name, self.name, key);
-
-        sqlx::query(&query_builder!(
+        let query = query_builder!(
             queries::GENERATE_TSVECTORS_FOR_CHUNK_IDS,
             tsvectors_table_name,
             configuration,
             chunks_table_name
-        ))
-        .bind(chunk_ids)
-        .execute(&mut *transaction.lock().await)
-        .await?;
+        );
+        debug_sqlx_query!(GENERATE_TSVECTORS_FOR_CHUNK_IDS, query, chunk_ids);
+        sqlx::query(&query)
+            .bind(chunk_ids)
+            .execute(&mut **transaction.lock().await)
+            .await?;
         Ok(())
     }
 
     #[instrument(skip(self))]
     pub(crate) async fn resync(&mut self) -> anyhow::Result<()> {
         self.verify_in_database(false).await?;
-
         // We are assuming we have manually verified the pipeline before doing this
         let project_info = self
             .project_info
@@ -813,7 +816,6 @@ impl Pipeline {
             .parsed_schema
             .as_ref()
             .context("Pipeline must have schema to execute")?;
-
         // Before doing any syncing, delete all old and potentially outdated documents
         let pool = self.get_pool().await?;
         for (key, _value) in parsed_schema.iter() {
@@ -821,7 +823,6 @@ impl Pipeline {
             pool.execute(query_builder!("DELETE FROM %s CASCADE", chunks_table_name).as_str())
                 .await?;
         }
-
         for (key, value) in parsed_schema.iter() {
             self.resync_chunks(key, value.splitter.as_ref().map(|v| &v.model))
                 .await?;
@@ -842,7 +843,6 @@ impl Pipeline {
             .project_info
             .as_ref()
             .context("Pipeline must have project info to sync chunks")?;
-
         let pool = self.get_pool().await?;
 
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
@@ -854,39 +854,31 @@ impl Pipeline {
                 .database_data
                 .as_ref()
                 .context("Splitter must be verified to sync chunks")?;
-
-            sqlx::query(&query_builder!(
+            let query = query_builder!(
+                queries::GENERATE_CHUNKS_WITH_SPLITTER,
+                &json_key_query,
+                &documents_table_name,
+                &chunks_table_name,
+                &chunks_table_name
+            );
+            debug_sqlx_query!(
+                GENERATE_CHUNKS_WITH_SPLITTER,
+                query,
+                splitter_database_data.id
+            );
+            sqlx::query(&query)
+                .bind(splitter_database_data.id)
+                .execute(&pool)
+                .await?;
+        } else {
+            let query = query_builder!(
                 queries::GENERATE_CHUNKS,
                 &chunks_table_name,
                 &json_key_query,
-                documents_table_name,
-                &chunks_table_name
-            ))
-            .bind(splitter_database_data.id)
-            .execute(&pool)
-            .await?;
-        } else {
-            sqlx::query(&query_builder!(
-                r#"
-                    INSERT INTO %s(
-                        document_id, chunk_index, chunk
-                    )
-                    SELECT
-                        id,
-                        1,
-                        %d
-                    FROM %s
-                    WHERE id NOT IN (SELECT document_id FROM %s)
-                    ON CONFLICT (document_id, chunk_index) DO UPDATE SET chunk = EXCLUDED.chunk
-                    RETURNING id
-                "#,
-                &chunks_table_name,
-                &json_key_query,
-                &documents_table_name,
-                &chunks_table_name
-            ))
-            .execute(&pool)
-            .await?;
+                &documents_table_name
+            );
+            debug_sqlx_query!(GENERATE_CHUNKS, query);
+            sqlx::query(&query).execute(&pool).await?;
         }
         Ok(())
     }
@@ -913,16 +905,18 @@ impl Pipeline {
 
         match model.runtime {
             ModelRuntime::Python => {
-                sqlx::query(&query_builder!(
+                let query = query_builder!(
                     queries::GENERATE_EMBEDDINGS,
                     embeddings_table_name,
                     chunks_table_name,
                     embeddings_table_name
-                ))
-                .bind(&model.name)
-                .bind(&parameters)
-                .execute(&pool)
-                .await?;
+                );
+                debug_sqlx_query!(GENERATE_EMBEDDINGS, query, model.name, parameters.0);
+                sqlx::query(&query)
+                    .bind(&model.name)
+                    .bind(&parameters)
+                    .execute(&pool)
+                    .await?;
             }
             r => {
                 let remote_embeddings = build_remote_embeddings(r, &model.name, Some(&parameters))?;
@@ -951,15 +945,14 @@ impl Pipeline {
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let tsvectors_table_name = format!("{}_{}.{}_tsvectors", project_info.name, self.name, key);
 
-        sqlx::query(&query_builder!(
+        let query = query_builder!(
             queries::GENERATE_TSVECTORS,
             tsvectors_table_name,
             configuration,
-            chunks_table_name,
-            tsvectors_table_name
-        ))
-        .execute(&pool)
-        .await?;
+            chunks_table_name
+        );
+        debug_sqlx_query!(GENERATE_TSVECTORS, query);
+        sqlx::query(&query).execute(&pool).await?;
         Ok(())
     }
 

@@ -8,7 +8,7 @@ use parking_lot::RwLock;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::collections::HashMap;
 use std::env;
-use tokio::runtime::Runtime;
+use tokio::runtime::{Builder, Runtime};
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
@@ -133,7 +133,11 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
         if let Some(r) = &RUNTIME {
             r
         } else {
-            let runtime = Runtime::new().unwrap();
+            // TODO: Have some discussion about whether we want single or multi thread here
+            let runtime = Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("Error creating tokio runtime");
             RUNTIME = Some(runtime);
             get_or_set_runtime()
         }
@@ -319,7 +323,7 @@ mod tests {
     #[tokio::test]
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_capaud_73";
+        let collection_name = "test_r_c_capaud_106";
         let pipeline_name = "test_r_p_capaud_6";
         let mut pipeline = Pipeline::new(
             pipeline_name,
@@ -387,9 +391,9 @@ mod tests {
     #[tokio::test]
     async fn can_upsert_documents_and_add_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cudaap_44";
+        let collection_name = "test_r_c_cudaap_49";
         let mut collection = Collection::new(collection_name, None);
-        let documents = generate_dummy_documents(2);
+        let documents = generate_dummy_documents(100);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cudaap_9";
         let mut pipeline = Pipeline::new(
@@ -445,7 +449,7 @@ mod tests {
                 .fetch_all(&pool)
                 .await?;
         assert!(tsvectors.len() == 4);
-        collection.archive().await?;
+        // collection.archive().await?;
         Ok(())
     }
 
@@ -462,7 +466,7 @@ mod tests {
         collection.enable_pipeline(&mut pipeline).await?;
         let queried_pipeline = &collection.get_pipelines().await?[0];
         assert_eq!(pipeline.name, queried_pipeline.name);
-        collection.archive().await?;
+        // collection.archive().await?;
         Ok(())
     }
 
@@ -818,9 +822,9 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswle_80";
+        let collection_name = "test_r_c_cswle_84";
         let mut collection = Collection::new(collection_name, None);
-        let documents = generate_dummy_documents(10);
+        let documents = generate_dummy_documents(11);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cswle_9";
         let mut pipeline = Pipeline::new(
@@ -911,6 +915,9 @@ mod tests {
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
         assert_eq!(ids, vec![9, 2, 7, 8, 3]);
+
+        // Do some checks on the search results tables
+
         collection.archive().await?;
         Ok(())
     }
@@ -998,7 +1005,7 @@ mod tests {
     #[tokio::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cvswle_3";
+        let collection_name = "test_r_c_cvswle_5";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -1035,7 +1042,7 @@ mod tests {
                         "fields": {
                             "title": {
                                 "query": "Test document: 2",
-                                "full_text_search": "test"
+                                "full_text_filter": "test"
                             },
                             "body": {
                                 "query": "Test document: 2"

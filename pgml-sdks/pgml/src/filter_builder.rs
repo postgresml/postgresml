@@ -111,9 +111,9 @@ fn build_recursive<'a>(
                                 expression
                                     .contains(Expr::val(serde_value_to_sea_query_value(&json)))
                             } else {
-                                expression
-                                    .not()
-                                    .contains(Expr::val(serde_value_to_sea_query_value(&json)))
+                                let expression = expression
+                                    .contains(Expr::val(serde_value_to_sea_query_value(&json)));
+                                expression.not()
                             }
                         } else {
                             let expression = Expr::cust(

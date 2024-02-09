@@ -4,12 +4,13 @@ use std::collections::HashMap;
 
 use sea_query::{
     Alias, CommonTableExpression, Expr, Func, JoinType, Order, PostgresQueryBuilder, Query,
-    QueryStatementWriter, SimpleExpr, WithClause,
+    SimpleExpr, WithClause,
 };
 use sea_query_binder::{SqlxBinder, SqlxValues};
 
 use crate::{
     collection::Collection,
+    debug_sea_query,
     filter_builder::FilterBuilder,
     model::ModelRuntime,
     models,
@@ -55,15 +56,13 @@ pub async fn build_search_query(
     query: Json,
     pipeline: &Pipeline,
 ) -> anyhow::Result<(String, SqlxValues)> {
-    let valid_query: ValidQuery = serde_json::from_value(query.0)?;
+    let valid_query: ValidQuery = serde_json::from_value(query.0.clone())?;
     let limit = valid_query.limit.unwrap_or(10);
 
     let pipeline_table = format!("{}.pipelines", collection.name);
     let documents_table = format!("{}.documents", collection.name);
 
-    let mut query = Query::select();
     let mut score_table_names = Vec::new();
-    // let mut with_clause = WithClause::new().recursive(true).to_owned();
     let mut with_clause = WithClause::new();
     let mut sum_expression: Option<SimpleExpr> = None;
 
@@ -387,8 +386,9 @@ pub async fn build_search_query(
             .into_iter()
             .map(|t| Expr::col((SIden::String(t), SIden::Str("document_id"))).into())
             .collect();
+        let mut main_query = Query::select();
         for i in 1..score_table_names_e.len() {
-            query.full_outer_join(
+            main_query.full_outer_join(
                 SIden::String(score_table_names[i].to_string()),
                 Expr::col((
                     SIden::String(score_table_names[i].to_string()),
@@ -401,7 +401,7 @@ pub async fn build_search_query(
 
         let sum_expression = sum_expression
             .context("query requires some scoring through full_text_search or semantic_search")?;
-        query
+        main_query
             .expr(Expr::cust_with_expr(
                 "DISTINCT ON ($1) $1 as id",
                 id_select_expression.clone(),
@@ -424,30 +424,46 @@ pub async fn build_search_query(
         let mut re_ordered_query = Query::select();
         re_ordered_query
             .expr(Expr::cust("*"))
-            .from_subquery(query, Alias::new("q1"))
+            .from_subquery(main_query, Alias::new("q1"))
             .order_by(SIden::Str("score"), Order::Desc)
             .limit(limit);
 
-        let mut combined_query = Query::select();
-        combined_query
-            .expr(Expr::cust("json_array_elements(json_agg(q2))"))
-            .from_subquery(re_ordered_query, Alias::new("q2"));
-        combined_query
+        let mut re_ordered_query = CommonTableExpression::from_select(re_ordered_query);
+        re_ordered_query.table_name(Alias::new("main"));
+        with_clause.cte(re_ordered_query);
+
+        // Insert into searchs table
+        let searches_table = format!("{}_{}.searches", collection.name, pipeline.name);
+        let searches_insert_query = Query::insert()
+            .into_table(searches_table.to_table_tuple())
+            .columns([SIden::Str("query")])
+            .values([query.0.into()])?
+            .returning_col(SIden::Str("id"))
+            .to_owned();
+        let mut searches_insert_query = CommonTableExpression::new()
+            .query(searches_insert_query)
+            .to_owned();
+        searches_insert_query.table_name(Alias::new("searches_insert"));
+        with_clause.cte(searches_insert_query);
+
+        Query::select()
+            .expr(Expr::cust("json_array_elements(json_agg(main.*))"))
+            .from(SIden::Str("main"))
+            .to_owned()
+
+        // let mut combined_query = Query::select();
+        // combined_query
+        //     .expr(Expr::cust("json_array_elements(json_agg(q2))"))
+        //     .from_subquery(re_ordered_query, Alias::new("q2"));
+        // combined_query
     } else {
         // TODO: Maybe let users filter documents only here?
         anyhow::bail!("If you are only looking to filter documents checkout the `get_documents` method on the Collection")
     };
 
-    // TODO: Remove this
-    let query_string = query
-        .clone()
-        .with(with_clause.clone())
-        .to_string(PostgresQueryBuilder);
-    let query_string = query_string.replace("WITH ", "WITH RECURSIVE ");
-    println!("\nTHE QUERY: \n{query_string}\n");
-
     // For whatever reason, sea query does not like ctes if the cte is recursive
     let (sql, values) = query.with(with_clause).build_sqlx(PostgresQueryBuilder);
     let sql = sql.replace("WITH ", "WITH RECURSIVE ");
+    debug_sea_query!(DOCUMENT_SEARCH, sql, values);
     Ok((sql, values))
 }

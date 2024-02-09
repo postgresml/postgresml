@@ -4,12 +4,13 @@ use std::collections::HashMap;
 
 use sea_query::{
     Alias, CommonTableExpression, Expr, Func, JoinType, Order, PostgresQueryBuilder, Query,
-    QueryStatementWriter, WithClause,
+    WithClause,
 };
 use sea_query_binder::{SqlxBinder, SqlxValues};
 
 use crate::{
     collection::Collection,
+    debug_sea_query,
     filter_builder::FilterBuilder,
     model::ModelRuntime,
     models,
@@ -232,13 +233,11 @@ pub async fn build_vector_search_query(
         .order_by(SIden::Str("score"), Order::Desc)
         .limit(limit);
 
-    // TODO: Remove this
-    let query_string = query
-        .clone()
-        .with(with_clause.clone())
-        .to_string(PostgresQueryBuilder);
-    println!("\nTHE QUERY: \n{query_string}\n");
-
     let (sql, values) = query.with(with_clause).build_sqlx(PostgresQueryBuilder);
+
+    // Tag: CRITICAL_QUERY
+    // Checked: FALSE
+    // Used to do vector search
+    debug_sea_query!(VECTOR_SEARCH, sql, values);
     Ok((sql, values))
 }
