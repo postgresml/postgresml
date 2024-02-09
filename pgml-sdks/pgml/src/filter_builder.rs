@@ -220,7 +220,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r#"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"id\":1}' AND "test_table"."metadata" @> E'{\"id2\":{\"id3\":\"test\"}}' AND "test_table"."metadata" @> E'{\"id4\":{\"id5\":{\"id6\":true}}}' AND "test_table"."metadata" @> E'{\"id7\":{\"id8\":{\"id9\":{\"id10\":[1,2,3]}}}}'"#
+            r#"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata") @> E'{\"id\":1}' AND ("test_table"."metadata") @> E'{\"id2\":{\"id3\":\"test\"}}' AND ("test_table"."metadata") @> E'{\"id4\":{\"id5\":{\"id6\":true}}}' AND ("test_table"."metadata") @> E'{\"id7\":{\"id8\":{\"id9\":{\"id10\":[1,2,3]}}}}'"#
         );
         Ok(())
     }
@@ -237,7 +237,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r#"SELECT "id" FROM "test_table" WHERE NOT "test_table"."metadata" @> E'{\"id\":1}' AND NOT "test_table"."metadata" @> E'{\"id2\":{\"id3\":\"test\"}}' AND NOT "test_table"."metadata" @> E'{\"id4\":{\"id5\":{\"id6\":true}}}' AND NOT "test_table"."metadata" @> E'{\"id7\":{\"id8\":{\"id9\":{\"id10\":[1,2,3]}}}}'"#
+            r#"SELECT "id" FROM "test_table" WHERE (NOT ("test_table"."metadata") @> E'{\"id\":1}') AND (NOT ("test_table"."metadata") @> E'{\"id2\":{\"id3\":\"test\"}}') AND (NOT ("test_table"."metadata") @> E'{\"id4\":{\"id5\":{\"id6\":true}}}') AND (NOT ("test_table"."metadata") @> E'{\"id7\":{\"id8\":{\"id9\":{\"id10\":[1,2,3]}}}}')"#
         );
         Ok(())
     }
@@ -260,7 +260,7 @@ mod tests {
             assert_eq!(
                 sql,
                 format!(
-                    r##"SELECT "id" FROM "test_table" WHERE "test_table"."metadata"#>'{{id}}' {} '1' AND "test_table"."metadata"#>'{{id2,id3}}' {} '1'"##,
+                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>'{{id}}') {} '1' AND ("test_table"."metadata"#>'{{id2,id3}}') {} '1'"##,
                     operator, operator
                 )
             );
@@ -285,7 +285,7 @@ mod tests {
             assert_eq!(
                 sql,
                 format!(
-                    r##"SELECT "id" FROM "test_table" WHERE "test_table"."metadata"#>'{{id}}' {} ('1') AND "test_table"."metadata"#>'{{id2,id3}}' {} ('1')"##,
+                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>'{{id}}') {} ('1') AND ("test_table"."metadata"#>'{{id2,id3}}') {} ('1')"##,
                     operator, operator
                 )
             );
@@ -305,7 +305,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r#"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"id\":1}' AND "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}'"#
+            r#"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata") @> E'{\"id\":1}' AND ("test_table"."metadata") @> E'{\"id2\":{\"id3\":1}}'"#
         );
         Ok(())
     }
@@ -322,7 +322,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r#"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"id\":1}' OR "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}'"#
+            r#"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata") @> E'{\"id\":1}' OR ("test_table"."metadata") @> E'{\"id2\":{\"id3\":1}}'"#
         );
         Ok(())
     }
@@ -339,13 +339,13 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r#"SELECT "id" FROM "test_table" WHERE NOT ("test_table"."metadata" @> E'{\"id\":1}' AND "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}')"#
+            r#"SELECT "id" FROM "test_table" WHERE NOT (("test_table"."metadata") @> E'{\"id\":1}' AND ("test_table"."metadata") @> E'{\"id2\":{\"id3\":1}}')"#
         );
         Ok(())
     }
 
     #[test]
-    fn random_difficult_tests() -> anyhow::Result<()> {
+    fn filter_builder_random_difficult_tests() -> anyhow::Result<()> {
         let sql = construct_filter_builder_with_json(json!({
             "$and": [
                 {"$or": [
@@ -360,7 +360,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r#"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata" @> E'{\"id\":1}' OR "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}') AND "test_table"."metadata" @> E'{\"id4\":1}'"#
+            r#"SELECT "id" FROM "test_table" WHERE (("test_table"."metadata") @> E'{\"id\":1}' OR ("test_table"."metadata") @> E'{\"id2\":{\"id3\":1}}') AND ("test_table"."metadata") @> E'{\"id4\":1}'"#
         );
         let sql = construct_filter_builder_with_json(json!({
             "$or": [
@@ -376,7 +376,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r#"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata" @> E'{\"id\":1}' AND "test_table"."metadata" @> E'{\"id2\":{\"id3\":1}}') OR "test_table"."metadata" @> E'{\"id4\":1}'"#
+            r#"SELECT "id" FROM "test_table" WHERE (("test_table"."metadata") @> E'{\"id\":1}' AND ("test_table"."metadata") @> E'{\"id2\":{\"id3\":1}}') OR ("test_table"."metadata") @> E'{\"id4\":1}'"#
         );
         let sql = construct_filter_builder_with_json(json!({
             "metadata": {"$or": [
@@ -388,7 +388,7 @@ mod tests {
         .to_valid_sql_query();
         assert_eq!(
             sql,
-            r#"SELECT "id" FROM "test_table" WHERE "test_table"."metadata" @> E'{\"metadata\":{\"uuid\":\"1\"}}' OR "test_table"."metadata" @> E'{\"metadata\":{\"uuid2\":\"2\"}}'"#
+            r#"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata") @> E'{\"metadata\":{\"uuid\":\"1\"}}' OR ("test_table"."metadata") @> E'{\"metadata\":{\"uuid2\":\"2\"}}'"#
         );
         Ok(())
     }
