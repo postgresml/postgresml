@@ -82,7 +82,7 @@ pub trait RemoteEmbeddings<'a> {
         match &mut db_executor {
             PoolOrArcMutextTransaction::Pool(pool) => query.fetch_all(&*pool).await,
             PoolOrArcMutextTransaction::ArcMutextTransaction(transaction) => {
-                query.fetch_all(&mut *transaction.lock().await).await
+                query.fetch_all(&mut **transaction.lock().await).await
             }
         }
         .map_err(|e| anyhow::anyhow!(e))
@@ -162,11 +162,10 @@ pub trait RemoteEmbeddings<'a> {
                 query = query.bind(retrieved_chunk_ids[i]).bind(&embeddings[i]);
             }
 
-            // query.execute(&mut *transaction.lock().await).await?;
             match &mut db_executor {
                 PoolOrArcMutextTransaction::Pool(pool) => query.execute(&*pool).await,
                 PoolOrArcMutextTransaction::ArcMutextTransaction(transaction) => {
-                    query.execute(&mut *transaction.lock().await).await
+                    query.execute(&mut **transaction.lock().await).await
                 }
             }?;
 

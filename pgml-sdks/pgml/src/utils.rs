@@ -29,6 +29,43 @@ macro_rules! query_builder {
     }};
 }
 
+/// Used to debug sqlx queries
+#[macro_export]
+macro_rules! debug_sqlx_query {
+    ($name:expr, $query:expr) => {{
+        let name = stringify!($name);
+        let sql = $query.to_string();
+        let sql = sea_query::Query::select().expr(sea_query::Expr::cust(sql)).to_string(sea_query::PostgresQueryBuilder);
+        let sql = sql.replacen("SELECT", "", 1);
+        let span = tracing::span!(tracing::Level::DEBUG, "debug_query");
+        tracing::event!(parent: &span, tracing::Level::DEBUG, %name,  %sql);
+    }};
+
+     ($name:expr, $query:expr, $( $x:expr ),*) => {{
+        let name = stringify!($name);
+        let sql = $query.to_string();
+        let sql = sea_query::Query::select().expr(sea_query::Expr::cust_with_values(sql, [$(
+           sea_query::Value::from($x.clone()),
+        )*])).to_string(sea_query::PostgresQueryBuilder);
+        let sql = sql.replacen("SELECT", "", 1);
+        let span = tracing::span!(tracing::Level::DEBUG, "debug_query");
+        tracing::event!(parent: &span, tracing::Level::DEBUG, %name, %sql);
+     }};
+}
+
+/// Used to debug sea_query queries
+#[macro_export]
+macro_rules! debug_sea_query {
+    ($name:expr, $query:expr, $values:expr) => {{
+        let name = stringify!($name);
+        let sql = $query.to_string();
+        let sql = sea_query::Query::select().expr(sea_query::Expr::cust_with_values(sql, $values.clone().0)).to_string(sea_query::PostgresQueryBuilder);
+        let sql = sql.replacen("SELECT", "", 1);
+        let span = tracing::span!(tracing::Level::DEBUG, "debug_query");
+        tracing::event!(parent: &span, tracing::Level::DEBUG, %name,  %sql);
+    }};
+}
+
 pub fn default_progress_bar(size: u64) -> ProgressBar {
     ProgressBar::new(size).with_style(
         ProgressStyle::with_template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} ")

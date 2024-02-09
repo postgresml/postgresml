@@ -74,7 +74,7 @@ impl Stream for TransformerStream {
                     let s: *mut Self = s;
                     let s = Box::leak(Box::from_raw(s));
                     s.future = Some(Box::pin(
-                        sqlx::query(&s.query).fetch_all(s.transaction.as_mut().unwrap()),
+                        sqlx::query(&s.query).fetch_all(&mut **s.transaction.as_mut().unwrap()),
                     ));
                 }
             }
@@ -94,7 +94,7 @@ impl Stream for TransformerStream {
                         let s: *mut Self = s;
                         let s = Box::leak(Box::from_raw(s));
                         s.future = Some(Box::pin(
-                            sqlx::query(&s.query).fetch_all(s.transaction.as_mut().unwrap()),
+                            sqlx::query(&s.query).fetch_all(&mut **s.transaction.as_mut().unwrap()),
                         ));
                     }
                 }
