@@ -100,6 +100,7 @@ pub async fn build_search_query(
         // Build the CTE we actually use later
         let embeddings_table = format!("{}_{}.{}_embeddings", collection.name, pipeline.name, key);
         let cte_name = format!("{key}_embedding_score");
+        let boost = vsa.boost.unwrap_or(1.);
         let mut score_cte_non_recursive = Query::select();
         let mut score_cte_recurisive = Query::select();
         match model_runtime {
@@ -125,7 +126,7 @@ pub async fn build_search_query(
                     .column((SIden::Str("embeddings"), SIden::Str("document_id")))
                     .expr(Expr::cust(r#"ARRAY[embeddings.document_id] as previous_document_ids"#))
                     .expr(Expr::cust(format!(
-                        r#"(embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector) AS score"#
+                        r#"(1 - (embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector)) * {boost} AS score"#
                     )))
                     .order_by_expr(Expr::cust(format!(
                         r#"embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector"#
@@ -142,7 +143,7 @@ pub async fn build_search_query(
                     .column((SIden::Str("embeddings"), SIden::Str("document_id")))
                     .expr(Expr::cust(format!(r#""{cte_name}".previous_document_ids || embeddings.document_id"#)))
                     .expr(Expr::cust(format!(
-                        r#"(embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector) AS score"#
+                        r#"(1 - (embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector)) * {boost} AS score"#
                     )))
                     .and_where(Expr::cust(format!(r#"NOT embeddings.document_id = ANY("{cte_name}".previous_document_ids)"#)))
                     .order_by_expr(Expr::cust(format!(
@@ -181,7 +182,7 @@ pub async fn build_search_query(
                         "ARRAY[embeddings.document_id] as previous_document_ids",
                     ))
                     .expr(Expr::cust_with_values(
-                        "embeddings.embedding <=> $1::vector AS score",
+                        "(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score",
                         [embedding.clone()],
                     ))
                     .order_by_expr(
@@ -205,7 +206,7 @@ pub async fn build_search_query(
                         r#""{cte_name}".previous_document_ids || embeddings.document_id"#
                     )))
                     .expr(Expr::cust_with_values(
-                        "embeddings.embedding <=> $1::vector AS score",
+                        "(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score",
                         [embedding.clone()],
                     ))
                     .and_where(Expr::cust(format!(
@@ -253,21 +254,17 @@ pub async fn build_search_query(
         with_clause.cte(score_cte);
 
         // Add to the sum expression
-        let boost = vsa.boost.unwrap_or(1.);
         sum_expression = if let Some(expr) = sum_expression {
-            Some(expr.add(Expr::cust(format!(
-                r#"COALESCE((1 - "{cte_name}".score) * {boost}, 0.0)"#
-            ))))
+            Some(expr.add(Expr::cust(format!(r#"COALESCE("{cte_name}".score, 0.0)"#))))
         } else {
-            Some(Expr::cust(format!(
-                r#"COALESCE((1 - "{cte_name}".score) * {boost}, 0.0)"#
-            )))
+            Some(Expr::cust(format!(r#"COALESCE("{cte_name}".score, 0.0)"#)))
         };
         score_table_names.push(cte_name);
     }
 
     for (key, vma) in valid_query.query.full_text_search.unwrap_or_default() {
         let full_text_table = format!("{}_{}.{}_tsvectors", collection.name, pipeline.name, key);
+        let boost = vma.boost.unwrap_or(1.0);
 
         // Build the score CTE
         let cte_name = format!("{key}_tsvectors_score");
@@ -277,7 +274,7 @@ pub async fn build_search_query(
             .expr_as(
                 Expr::cust_with_values(
                     format!(
-                        r#"ts_rank(tsvectors.ts, plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1), 32)"#,
+                        r#"ts_rank(tsvectors.ts, plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1), 32) * {boost}"#,
                     ),
                     [&vma.query],
                 ),
@@ -305,7 +302,7 @@ pub async fn build_search_query(
             .expr_as(
                 Expr::cust_with_values(
                     format!(
-                        r#"ts_rank(tsvectors.ts, plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1), 32)"#,
+                        r#"ts_rank(tsvectors.ts, plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1), 32) * {boost}"#,
                     ),
                     [&vma.query],
                 ),
@@ -367,15 +364,10 @@ pub async fn build_search_query(
         with_clause.cte(score_cte);
 
         // Add to the sum expression
-        let boost = vma.boost.unwrap_or(1.0);
         sum_expression = if let Some(expr) = sum_expression {
-            Some(expr.add(Expr::cust(format!(
-                r#"COALESCE("{cte_name}".score * {boost}, 0.0)"#
-            ))))
+            Some(expr.add(Expr::cust(format!(r#"COALESCE("{cte_name}".score, 0.0)"#))))
         } else {
-            Some(Expr::cust(format!(
-                r#"COALESCE("{cte_name}".score * {boost}, 0.0)"#
-            )))
+            Some(Expr::cust(format!(r#"COALESCE("{cte_name}".score, 0.0)"#)))
         };
         score_table_names.push(cte_name);
     }
@@ -432,7 +424,7 @@ pub async fn build_search_query(
         re_ordered_query.table_name(Alias::new("main"));
         with_clause.cte(re_ordered_query);
 
-        // Insert into searchs table
+        // Insert into searches table
         let searches_table = format!("{}_{}.searches", collection.name, pipeline.name);
         let searches_insert_query = Query::insert()
             .into_table(searches_table.to_table_tuple())
@@ -446,16 +438,40 @@ pub async fn build_search_query(
         searches_insert_query.table_name(Alias::new("searches_insert"));
         with_clause.cte(searches_insert_query);
 
+        // Insert into search_results table
+        let search_results_table = format!("{}_{}.search_results", collection.name, pipeline.name);
+        let jsonb_builder = score_table_names.iter().fold(String::new(), |acc, t| {
+            format!("{acc}, '{t}', (SELECT score FROM {t} WHERE document_id = main.id)")
+        });
+        let jsonb_builder = format!("JSONB_BUILD_OBJECT('total', score{jsonb_builder})");
+        let search_results_insert_query = Query::insert()
+            .into_table(search_results_table.to_table_tuple())
+            .columns([
+                SIden::Str("search_id"),
+                SIden::Str("document_id"),
+                SIden::Str("scores"),
+                SIden::Str("rank"),
+            ])
+            .select_from(
+                Query::select()
+                    .expr(Expr::cust("(SELECT id FROM searches_insert)"))
+                    .column(SIden::Str("id"))
+                    .expr(Expr::cust(jsonb_builder))
+                    .expr(Expr::cust("row_number() over()"))
+                    .from(SIden::Str("main"))
+                    .to_owned(),
+            )?
+            .to_owned();
+        let mut search_results_insert_query = CommonTableExpression::new()
+            .query(search_results_insert_query)
+            .to_owned();
+        search_results_insert_query.table_name(Alias::new("search_results"));
+        with_clause.cte(search_results_insert_query);
+
         Query::select()
             .expr(Expr::cust("json_array_elements(json_agg(main.*))"))
             .from(SIden::Str("main"))
             .to_owned()
-
-        // let mut combined_query = Query::select();
-        // combined_query
-        //     .expr(Expr::cust("json_array_elements(json_agg(q2))"))
-        //     .from_subquery(re_ordered_query, Alias::new("q2"));
-        // combined_query
     } else {
         // TODO: Maybe let users filter documents only here?
         anyhow::bail!("If you are only looking to filter documents checkout the `get_documents` method on the Collection")

@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS %s (
 pub const CREATE_PIPELINES_SEARCHES_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY,
+  created_at timestamp NOT NULL DEFAULT now(), 
   query jsonb
 );
 "#;
@@ -97,6 +98,7 @@ CREATE TABLE IF NOT EXISTS %s (
 pub const CREATE_PIPELINES_SEARCH_EVENTS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY,
+  created_at timestamp NOT NULL DEFAULT now(), 
   search_result int8 NOT NULL REFERENCES %s ON DELETE CASCADE,
   event jsonb NOT NULL
 );
