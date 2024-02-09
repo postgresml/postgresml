@@ -883,6 +883,7 @@ fn tune(
     // algorithm will be transformers, stash the model_name in a hyperparam for v1 compatibility.
     let mut hyperparams = hyperparams.0.as_object().unwrap().clone();
     hyperparams.insert(String::from("model_name"), json!(model_name));
+    hyperparams.insert(String::from("project_name"), json!(project_name));
     let hyperparams = JsonB(json!(hyperparams));
 
     // # Default repeatable random state when possible

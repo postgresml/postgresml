@@ -45,9 +45,13 @@ from transformers import (
     PegasusForConditionalGeneration,
     PegasusTokenizer,
 )
+
 import threading
 import logging
 from rich.logging import RichHandler
+import evaluate
+import torch.nn.functional as F
+import wandb
 
 transformers.logging.set_verbosity_info()
 
@@ -1002,10 +1006,21 @@ def generate(model_id, data, config):
 #######################
 # LLM Fine-Tuning
 #######################
-def finetune_text_classification(task, hyperparams, path, x_train, x_test, y_train, y_test):
+def finetune_text_classification(
+    task, hyperparams, path, x_train, x_test, y_train, y_test
+):
     # Get model and tokenizer
     hyperparams = orjson.loads(hyperparams)
     model_name = hyperparams.pop("model_name")
+
+    if "project_name" in hyperparams.keys():
+        project_name = "_".join(hyperparams.pop("project_name").split())
+        hyperparams["training_args"]["hub_model_id"] = project_name
+
+    if "wandb_key" in hyperparams["training_args"].keys():
+        wandb_key = hyperparams["training_args"].pop("wandb_key")
+        wandb.login(key=wandb_key)
+
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     classes = list(set(y_train))
     num_classes = len(classes)
@@ -1022,10 +1037,10 @@ def finetune_text_classification(task, hyperparams, path, x_train, x_test, y_tra
 
     model.config.id2label = id2label
     model.config.label2id = label2id
-   
+
     y_train_label = [label2id[_class] for _class in y_train]
     y_test_label = [label2id[_class] for _class in y_test]
-    
+
     # Prepare dataset
     train_dataset = datasets.Dataset.from_dict(
         {
@@ -1039,13 +1054,11 @@ def finetune_text_classification(task, hyperparams, path, x_train, x_test, y_tra
             "label": y_test_label,
         }
     )
+
     # tokenization function
     def tokenize_function(example):
         tokenized_example = tokenizer(
-            example["text"],
-            padding=True,
-            truncation=True,
-            return_tensors="pt"
+            example["text"], padding=True, truncation=True, return_tensors="pt"
         )
         return tokenized_example
 
@@ -1056,37 +1069,76 @@ def finetune_text_classification(task, hyperparams, path, x_train, x_test, y_tra
     # Data collator
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
+    # Metric
+    f1_metric = evaluate.load("f1")
+    accuracy_metric = evaluate.load("accuracy")
+
+    def compute_metrics(eval_pred):
+        logits, labels = eval_pred
+        probabilities = F.softmax(torch.from_numpy(logits), dim=1)
+        predictions = torch.argmax(probabilities, dim=1)
+        f1 = f1_metric.compute(predictions=predictions, references=labels, average="macro")["f1"]
+        accuracy = accuracy_metric.compute(predictions=predictions, references=labels)["accuracy"]
+        return {"f1" : f1, "accuracy" : accuracy}
+
     # Training Args
-    training_args=TrainingArguments(output_dir=path, logging_dir=path, **hyperparams["training_args"])
+    training_args = TrainingArguments(
+        output_dir=path, logging_dir=path, **hyperparams["training_args"]
+    )
 
     # Trainer
-    try:
-        trainer = Trainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_tokenized_datasets,
-            eval_dataset=test_tokenized_datasets,
-            tokenizer=tokenizer,
-            data_collator=data_collator,
-        )
-    except Exception as e:
-        log.error(e)
-    
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_tokenized_datasets,
+        eval_dataset=test_tokenized_datasets,
+        tokenizer=tokenizer,
+        data_collator=data_collator,
+        compute_metrics=compute_metrics,
+    )
+
     # Train
     trainer.train()
 
     # Save model
     trainer.save_model()
 
-    # TODO: compute real metrics
-    metrics = {"loss" : 0.0, "f1": 1.0}
+    # Metrics
+    metrics = trainer.evaluate()
+
+    # Update the keys to match hardcoded metrics in Task definition
+    if "eval_f1" in metrics.keys():
+        metrics["f1"] = metrics.pop("eval_f1")
+
+    if "eval_accuracy" in metrics.keys():
+        metrics["accuracy"] = metrics.pop("eval_accuracy")
 
     return metrics
 
-def finetune_text_pair_classification(task, hyperparams, path, text1_train, text1_test, text2_train, text2_test, class_train, class_test):
+
+def finetune_text_pair_classification(
+    task,
+    hyperparams,
+    path,
+    text1_train,
+    text1_test,
+    text2_train,
+    text2_test,
+    class_train,
+    class_test,
+):
     # Get model and tokenizer
     hyperparams = orjson.loads(hyperparams)
     model_name = hyperparams.pop("model_name")
+    
+    if "project_name" in hyperparams.keys():
+        project_name = "_".join(hyperparams.pop("project_name").split())
+        hyperparams["training_args"]["hub_model_id"] = project_name
+
+    if "wandb_key" in hyperparams["training_args"].keys():
+        wandb_key = hyperparams["training_args"].pop("wandb_key")
+        wandb.login(key=wandb_key)
+
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     classes = list(set(class_train))
     num_classes = len(classes)
@@ -1103,15 +1155,15 @@ def finetune_text_pair_classification(task, hyperparams, path, text1_train, text
 
     model.config.id2label = id2label
     model.config.label2id = label2id
-   
+
     y_train_label = [label2id[_class] for _class in class_train]
     y_test_label = [label2id[_class] for _class in class_test]
-    
+
     # Prepare dataset
     train_dataset = datasets.Dataset.from_dict(
         {
             "text1": text1_train,
-            "text2" : text2_train,
+            "text2": text2_train,
             "label": y_train_label,
         }
     )
@@ -1122,6 +1174,7 @@ def finetune_text_pair_classification(task, hyperparams, path, text1_train, text
             "label": y_test_label,
         }
     )
+
     # tokenization function
     def tokenize_function(example):
         tokenized_example = tokenizer(
@@ -1129,7 +1182,7 @@ def finetune_text_pair_classification(task, hyperparams, path, text1_train, text
             example["text2"],
             padding=True,
             truncation=True,
-            return_tensors="pt"
+            return_tensors="pt",
         )
         return tokenized_example
 
@@ -1140,8 +1193,21 @@ def finetune_text_pair_classification(task, hyperparams, path, text1_train, text
     # Data collator
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
+    f1_metric = evaluate.load("f1")
+    accuracy_metric = evaluate.load("accuracy")
+
+    def compute_metrics(eval_pred):
+        logits, labels = eval_pred
+        probabilities = F.softmax(torch.from_numpy(logits), dim=1)
+        predictions = torch.argmax(probabilities, dim=1)
+        f1 = f1_metric.compute(predictions=predictions, references=labels, average="macro")["f1"]
+        accuracy = accuracy_metric.compute(predictions=predictions, references=labels)["accuracy"]
+        return {"f1" : f1, "accuracy" : accuracy}
+    
     # Training Args
-    training_args=TrainingArguments(output_dir=path, logging_dir=path, **hyperparams["training_args"])
+    training_args = TrainingArguments(
+        output_dir=path, logging_dir=path, **hyperparams["training_args"]
+    )
 
     # Trainer
     trainer = Trainer(
@@ -1151,6 +1217,7 @@ def finetune_text_pair_classification(task, hyperparams, path, text1_train, text
         eval_dataset=test_tokenized_datasets,
         tokenizer=tokenizer,
         data_collator=data_collator,
+        compute_metrics=compute_metrics,
     )
 
     # Train
@@ -1159,7 +1226,13 @@ def finetune_text_pair_classification(task, hyperparams, path, text1_train, text
     # Save model
     trainer.save_model()
 
-    # TODO: Get real metrics
-    metrics = {"loss" : 0.0, "f1": 1.0}
+    # metrics
+    metrics = trainer.evaluate()
 
+    # Update the keys to match hardcoded metrics in Task definition
+    if "eval_f1" in metrics.keys():
+        metrics["f1"] = metrics.pop("eval_f1")
+
+    if "eval_accuracy" in metrics.keys():
+        metrics["accuracy"] = metrics.pop("eval_accuracy")
     return metrics
