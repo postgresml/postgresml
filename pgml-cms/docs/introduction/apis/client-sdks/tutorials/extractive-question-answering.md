@@ -1,3 +1,7 @@
+---
+description: >-
+  JavaScript and Python code snippets for end-to-end question answering.
+---
 # Extractive Question Answering
 
 Here is the documentation for the JavaScript and Python code snippets performing end-to-end question answering:

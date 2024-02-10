@@ -1,3 +1,7 @@
+---
+description: >-
+  JavaScript and Python code snippets for using instructor models in more advanced search use cases.
+---
 # Semantic Search using Instructor model
 
 This shows using instructor models in the `pgml` SDK for more advanced use cases.

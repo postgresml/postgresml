@@ -1,3 +1,7 @@
+---
+description: >-
+  Pipelines are composed of a model, splitter, and additional optional arguments. 
+---
 # Pipelines
 
 Pipelines are composed of a Model, Splitter, and additional optional arguments. Collections can have any number of Pipelines. Each Pipeline is ran everytime documents are upserted.

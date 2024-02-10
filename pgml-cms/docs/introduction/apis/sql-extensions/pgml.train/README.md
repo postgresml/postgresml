@@ -1,8 +1,6 @@
 ---
 description: >-
-  The training function is at the heart of PostgresML. It's a powerful single
-  mechanism that can handle many different training tasks which are configurable
-  with the function parameters.
+  Pre-process and pull data to train a model using any of 50 different ML algorithms.
 ---
 
 # pgml.train()

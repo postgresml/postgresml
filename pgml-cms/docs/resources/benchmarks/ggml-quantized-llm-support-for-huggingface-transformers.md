@@ -1,3 +1,7 @@
+---
+description: >-
+  Quantization allows PostgresML to fit larger models in less RAM.
+---
 # GGML Quantized LLM support for Huggingface Transformers
 
 
