@@ -12,7 +12,7 @@ div[data-controller="layouts-docs"] {
     z-index: -1; 
     overflow: hidden;
     height: 100%;
-    width: calc(100vw - 8px); 
+    width: calc(100vw - 8px);
     
     @include media-breakpoint-up(xl) {
       width: calc(100vw - $docs-left-nav-w - 8px);

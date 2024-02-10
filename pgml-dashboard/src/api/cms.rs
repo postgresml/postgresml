@@ -49,7 +49,7 @@ lazy_static! {
         ])
     );
     static ref CAREERS: Collection = Collection::new("Careers", true, HashMap::from([("a", "b")]));
-    static ref DOCS: Collection = Collection::new(
+    pub static ref DOCS: Collection = Collection::new(
         "Docs",
         false,
         HashMap::from([
@@ -357,6 +357,7 @@ impl Collection {
         let mdast = markdown::to_mdast(&summary_contents, &::markdown::ParseOptions::default())
             .unwrap_or_else(|_| panic!("Could not parse summary: {summary_path:?}"));
 
+        let mut parent_folder: Option<String> = None;
         let mut index = Vec::new();
         for node in mdast
             .children()
@@ -365,10 +366,26 @@ impl Collection {
         {
             match node {
                 Node::List(list) => {
-                    let mut links = self
+                    let mut links: Vec<IndexLink> = self
                         .get_sub_links(list)
                         .unwrap_or_else(|_| panic!("Could not parse list of index links: {summary_path:?}"));
-                    index.append(&mut links);
+
+                    let mut out = match parent_folder.as_ref() {
+                        Some(parent_folder) => {
+                            let mut parent = IndexLink::new(parent_folder.as_ref());
+                            parent.children = links.clone();
+                            Vec::from([parent])
+                        }
+                        None => links,
+                    };
+
+                    index.append(&mut out);
+                    parent_folder = None;
+                }
+                Node::Heading(heading) => {
+                    if heading.depth == 2 {
+                        parent_folder = Some(heading.children[0].to_string());
+                    }
                 }
                 _ => {
                     warn!("Irrelevant content ignored in: {summary_path:?}")
@@ -639,7 +656,9 @@ async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
     let doc_layout = crate::components::layouts::Docs::new("PostgresML documentation landing page.", Some(cluster))
         .index(&DOCS.index);
 
-    let page = crate::components::pages::docs::LandingPage::new();
+    let page = crate::components::pages::docs::LandingPage::new()
+        .parse_sections(DOCS.index.clone())
+        .await;
 
     Ok(ResponseOk(doc_layout.render(page)))
 }

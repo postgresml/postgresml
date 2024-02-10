@@ -7,4 +7,45 @@ div[data-controller="pages-docs-landing-page"] {
         background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(57, 210, 231, 0.30) 26.4%, rgba(174, 110, 255, 0.30) 100%);
         filter: blur(252.66856384277344px);
     }
+
+    .card {
+        border-radius: 8px;
+        background: #{$gray-800};
+        box-shadow: 16px 20px 24px 0px rgba(6, 20, 37, 0.04);
+        backdrop-filter: blur(8px);
+        padding: 24px;
+
+        .alt_title {
+            color: #{$gray-100};
+        }
+
+        .card-arrow {
+            position: relative;
+            transition: left 0.3s;
+            left: 0rem;
+        }
+
+        &:hover {
+            .card-title, .alt_title {
+                color: #{$purple};
+                text-decoration: underline;
+                text-underline-offset: .3rem;
+            }
+
+            background: #{$gray-700};
+
+            .card-arrow {
+                left: 0.5rem;
+                
+            }
+        }
+    }
+
+    .language-logos {
+        background-color: #{$gray-700};
+    }
+
+    .eyebrow-text {
+        color: #{$gray-400};
+    }
 }

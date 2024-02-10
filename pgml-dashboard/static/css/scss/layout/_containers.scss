@@ -147,7 +147,7 @@
     }
 }
 
-.webapp-content-max-width-container {
+.webapp-content-max-width-container, .docs-content-max-width-container {
     max-width: $webapp-content-max-width;
     margin: 0px 20px;
     min-height: calc(100vh - $navbar-height - $breadcrumb-height - 1px);
