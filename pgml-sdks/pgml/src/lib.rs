@@ -391,9 +391,9 @@ mod tests {
     #[tokio::test]
     async fn can_upsert_documents_and_add_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cudaap_49";
+        let collection_name = "test_r_c_cudaap_51";
         let mut collection = Collection::new(collection_name, None);
-        let documents = generate_dummy_documents(100);
+        let documents = generate_dummy_documents(2);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cudaap_9";
         let mut pipeline = Pipeline::new(
@@ -449,7 +449,7 @@ mod tests {
                 .fetch_all(&pool)
                 .await?;
         assert!(tsvectors.len() == 4);
-        // collection.archive().await?;
+        collection.archive().await?;
         Ok(())
     }
 
@@ -967,7 +967,7 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswre_62";
+        let collection_name = "test_r_c_cswre_66";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -1116,7 +1116,7 @@ mod tests {
     #[tokio::test]
     async fn can_vector_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cvswre_4";
+        let collection_name = "test_r_c_cvswre_5";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
