@@ -182,7 +182,7 @@ pub async fn build_search_query(
                         "ARRAY[embeddings.document_id] as previous_document_ids",
                     ))
                     .expr(Expr::cust_with_values(
-                        "(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score",
+                        format!("(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score"),
                         [embedding.clone()],
                     ))
                     .order_by_expr(
@@ -206,7 +206,7 @@ pub async fn build_search_query(
                         r#""{cte_name}".previous_document_ids || embeddings.document_id"#
                     )))
                     .expr(Expr::cust_with_values(
-                        "(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score",
+                        format!("(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score"),
                         [embedding.clone()],
                     ))
                     .and_where(Expr::cust(format!(
