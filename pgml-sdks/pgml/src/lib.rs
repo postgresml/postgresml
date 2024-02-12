@@ -466,7 +466,7 @@ mod tests {
         collection.enable_pipeline(&mut pipeline).await?;
         let queried_pipeline = &collection.get_pipelines().await?[0];
         assert_eq!(pipeline.name, queried_pipeline.name);
-        // collection.archive().await?;
+        collection.archive().await?;
         Ok(())
     }
 
@@ -822,7 +822,7 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswle_112";
+        let collection_name = "test_r_c_cswle_117";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -940,6 +940,25 @@ mod tests {
             search_results.iter().map(|sr| sr.2).collect::<Vec<i64>>(),
             vec![10, 3, 8, 9, 4]
         );
+
+        let event = json!({"clicked": true});
+        collection
+            .add_search_event(
+                results["search_id"].as_i64().unwrap(),
+                2,
+                event.clone().into(),
+                &pipeline,
+            )
+            .await?;
+        let search_events_table = format!("{}_{}.search_events", collection_name, pipeline_name);
+        let (search_result, retrieved_event): (i64, Json) = sqlx::query_as(&query_builder!(
+            "SELECT search_result, event FROM %s LIMIT 1",
+            search_events_table
+        ))
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(search_result, 2);
+        assert_eq!(event, retrieved_event.0);
 
         collection.archive().await?;
         Ok(())

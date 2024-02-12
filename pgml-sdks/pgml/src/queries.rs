@@ -121,6 +121,20 @@ CREATE INDEX %d IF NOT EXISTS %s on %s using hnsw (%d) %d;
 "#;
 
 /////////////////////////////
+// Inserting Search Events //
+/////////////////////////////
+
+// Tag: CRITICAL_QUERY
+// Checked: True
+// Trigger: Runs whenever a user calls collection.add_search_event
+// Required indexes:
+// search_results table | "search_results_search_id_rank_index" btree (search_id, rank)
+// Used to insert a search event
+pub const INSERT_SEARCH_EVENT: &str = r#"
+INSERT INTO %s (search_result, event) VALUES ((SELECT id FROM %s WHERE search_id = $1 AND rank = $2), $3)
+"#;
+
+/////////////////////////////
 // Upserting Documents //////
 /////////////////////////////
 

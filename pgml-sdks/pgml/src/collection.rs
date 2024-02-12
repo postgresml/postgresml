@@ -125,6 +125,7 @@ pub struct Collection {
     enable_pipeline,
     disable_pipeline,
     search,
+    add_search_event,
     vector_search,
     query,
     exists,
@@ -749,6 +750,40 @@ impl Collection {
             .await?;
         Ok(results.0)
     }
+
+    #[instrument(skip(self))]
+    pub async fn add_search_event(
+        &self,
+        search_id: i64,
+        search_result: i64,
+        event: Json,
+        pipeline: &Pipeline,
+    ) -> anyhow::Result<()> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let search_events_table = format!("{}_{}.search_events", self.name, pipeline.name);
+        let search_results_table = format!("{}_{}.search_results", self.name, pipeline.name);
+
+        let query = query_builder!(
+            queries::INSERT_SEARCH_EVENT,
+            search_events_table,
+            search_results_table
+        );
+        debug_sqlx_query!(
+            INSERT_SEARCH_EVENT,
+            query,
+            search_id,
+            search_result,
+            event.0
+        );
+        sqlx::query(&query)
+            .bind(search_id)
+            .bind(search_result)
+            .bind(event.0)
+            .execute(&pool)
+            .await?;
+        Ok(())
+    }
+
     /// Performs vector search on the [Collection]
     ///
     /// # Arguments
