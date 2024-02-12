@@ -435,6 +435,18 @@ impl Pipeline {
                 .as_str(),
             )
             .await?;
+        transaction
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "",
+                    "search_results_search_id_rank_index",
+                    search_results_table_name,
+                    "search_id, rank"
+                )
+                .as_str(),
+            )
+            .await?;
 
         let search_events_table_name = format!("{schema}.search_events");
         transaction
@@ -442,7 +454,7 @@ impl Pipeline {
                 query_builder!(
                     queries::CREATE_PIPELINES_SEARCH_EVENTS_TABLE,
                     search_events_table_name,
-                    &searches_table_name
+                    &search_results_table_name
                 )
                 .as_str(),
             )
