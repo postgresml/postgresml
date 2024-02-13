@@ -285,14 +285,30 @@ impl Collection {
             .context("Database data must be set to add a pipeline to a collection")?
             .project_info;
         pipeline.set_project_info(project_info.clone());
-        // We want to intentially throw an error if they have already added this piepline
-        // as we don't want to casually resync
-        pipeline.verify_in_database(true).await?;
 
-        let mp = MultiProgress::new();
-        mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
-        pipeline.resync().await?;
-        mp.println(format!("Done Syncing {}\n", pipeline.name))?;
+        // Let's check if we already have it enabled
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let pipelines_table_name = format!("{}.pipelines", project_info.name);
+        let exists: bool = sqlx::query_scalar(&query_builder!(
+            "SELECT EXISTS (SELECT id FROM %s WHERE name = $1 AND active = TRUE)",
+            pipelines_table_name
+        ))
+        .bind(&pipeline.name)
+        .fetch_one(&pool)
+        .await?;
+
+        if exists {
+            warn!("Pipeline {} already exists not adding", pipeline.name);
+        } else {
+            // We want to intentially throw an error if they have already added this pipeline
+            // as we don't want to casually resync
+            pipeline.verify_in_database(true).await?;
+
+            let mp = MultiProgress::new();
+            mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
+            pipeline.resync().await?;
+            mp.println(format!("Done Syncing {}\n", pipeline.name))?;
+        }
         Ok(())
     }
 
@@ -477,6 +493,27 @@ impl Collection {
         let progress_bar = utils::default_progress_bar(documents.len() as u64);
         progress_bar.println("Upserting Documents...");
 
+        let query = if args
+            .get("merge")
+            .map(|v| v.as_bool().unwrap_or(false))
+            .unwrap_or(false)
+        {
+            query_builder!(
+                queries::UPSERT_DOCUMENT_AND_MERGE_METADATA,
+                self.documents_table_name,
+                self.documents_table_name,
+                self.documents_table_name,
+                self.documents_table_name
+            )
+        } else {
+            query_builder!(
+                queries::UPSERT_DOCUMENT,
+                self.documents_table_name,
+                self.documents_table_name,
+                self.documents_table_name
+            )
+        };
+
         let batch_size = args
             .get("batch_size")
             .map(TryToNumeric::try_to_u64)
@@ -485,7 +522,30 @@ impl Collection {
         for batch in documents.chunks(batch_size as usize) {
             let mut transaction = pool.begin().await?;
 
-            let mut dp = vec![];
+            let mut query_values = String::new();
+            let mut binding_parameter_counter = 1;
+            for _ in 0..batch.len() {
+                query_values = format!(
+                    "{query_values}, (${}, ${}, ${})",
+                    binding_parameter_counter,
+                    binding_parameter_counter + 1,
+                    binding_parameter_counter + 2
+                );
+                binding_parameter_counter += 3;
+            }
+
+            let query = query.replace(
+                "{values_parameters}",
+                &query_values.chars().skip(1).collect::<String>(),
+            );
+            let query = query.replace(
+                "{binding_parameter}",
+                &format!("${binding_parameter_counter}"),
+            );
+
+            let mut query = sqlx::query_as(&query);
+
+            let mut source_uuids = vec![];
             for document in batch {
                 let id = document
                     .get("id")
@@ -493,8 +553,8 @@ impl Collection {
                     .to_string();
                 let md5_digest = md5::compute(id.as_bytes());
                 let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
+                source_uuids.push(source_uuid);
 
-                // Compute the md5 of each of the fields
                 let start = SystemTime::now();
                 let timestamp = start
                     .duration_since(UNIX_EPOCH)
@@ -518,42 +578,21 @@ impl Collection {
                         anyhow::Ok(acc)
                     })?;
                 let versions = serde_json::to_value(versions)?;
-                let query = if args
-                    .get("merge")
-                    .map(|v| v.as_bool().unwrap_or(false))
-                    .unwrap_or(false)
-                {
-                    let query = query_builder!(
-                        queries::UPSERT_DOCUMENT_AND_MERGE_METADATA,
-                        self.documents_table_name,
-                        self.documents_table_name,
-                        self.documents_table_name
-                    );
-                    debug_sqlx_query!(
-                        UPSERT_DOCUMENT_AND_MERGE_METADATA,
-                        query,
-                        source_uuid,
-                        document.0,
-                        versions
-                    );
-                    query
-                } else {
-                    let query = query_builder!(
-                        queries::UPSERT_DOCUMENT,
-                        self.documents_table_name,
-                        self.documents_table_name
-                    );
-                    debug_sqlx_query!(UPSERT_DOCUMENT, query, source_uuid, document.0, versions);
-                    query
-                };
-                let (document_id, previous_document): (i64, Option<Json>) = sqlx::query_as(&query)
-                    .bind(source_uuid)
-                    .bind(document)
-                    .bind(versions)
-                    .fetch_one(&mut *transaction)
-                    .await?;
-                dp.push((document_id, document, previous_document));
+
+                query = query.bind(source_uuid).bind(document).bind(versions);
             }
+
+            let results: Vec<(i64, Option<Json>)> = query
+                .bind(source_uuids)
+                .fetch_all(&mut *transaction)
+                .await?;
+            let dp: Vec<(i64, Json, Option<Json>)> = results
+                .into_iter()
+                .zip(batch)
+                .map(|((id, previous_document), document)| {
+                    (id, document.to_owned(), previous_document)
+                })
+                .collect();
 
             let transaction = Arc::new(Mutex::new(transaction));
             if !pipelines.is_empty() {
