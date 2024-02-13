@@ -4,7 +4,11 @@
     <% for i in 0..html_contents.len() { %>
       <div class="accordian-item">
         <div class="accordian-header <% if i == selected { %> selected <% } %>" data-action="click->accordian#titleClick" data-value="accordian-body<%= i %>">
-          <%- html_titles[i] %>
+          <div class="d-flex justify-content-between align-items-center w-100">
+            <h4 class="mb-0"><%- html_titles[i] %></h4>
+            <span class="add material-symbols-outlined">add</span>
+            <span class="remove material-symbols-outlined">remove</span>
+          </div>
         </div>
         <div class="accordian-body <% if i == selected { %> selected <% } %>" data-accordian-target="accordian-body<%= i %>">
           <%- html_contents[i] %>
