@@ -72,4 +72,8 @@ div[data-controller="navigation-left-nav-docs"] {
     .nav-link {
         padding: 8px;
     }
+
+    .purple {
+        color: #{$purple};
+    }
 }

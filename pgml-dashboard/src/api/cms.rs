@@ -356,6 +356,14 @@ impl Collection {
 
         let mut parent_folder: Option<String> = None;
         let mut index = Vec::new();
+        
+        // Docs gets a home link added to the index
+        match self.name.as_str() {
+            "Docs" => {
+                index.push(IndexLink::new("Docs Home").href("/docs"));
+            }
+            _ => {}
+        }
         for node in mdast
             .children()
             .unwrap_or_else(|| panic!("Summary has no content: {summary_path:?}"))
@@ -619,7 +627,6 @@ async fn get_docs(
 ) -> Result<ResponseOk, crate::responses::NotFound> {
     let (doc_file_path, canonical) = DOCS.get_content_path(path.clone(), origin).await;
 
-
     match Document::from_path(&doc_file_path).await {
         Ok(doc) => {
             let index = DOCS.open_index(&doc.path);
@@ -669,9 +676,13 @@ async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
 }
 
 #[get("/docs")]
-async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
+async fn docs_landing_page(
+    cluster: &Cluster
+) -> Result<ResponseOk, crate::responses::NotFound> {
+    let index = DOCS.open_index(&PathBuf::from("/docs"));
+
     let doc_layout = crate::components::layouts::Docs::new("PostgresML documentation landing page.", Some(cluster))
-        .index(&DOCS.index);
+        .index(&index);
 
     let page = crate::components::pages::docs::LandingPage::new()
         .parse_sections(DOCS.index.clone())
