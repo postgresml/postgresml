@@ -52,6 +52,9 @@ from rich.logging import RichHandler
 import evaluate
 import torch.nn.functional as F
 import wandb
+from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
+from trl.trainer import ConstantLengthDataset
+from peft import LoraConfig, get_peft_model
 
 transformers.logging.set_verbosity_info()
 
@@ -1077,9 +1080,13 @@ def finetune_text_classification(
         logits, labels = eval_pred
         probabilities = F.softmax(torch.from_numpy(logits), dim=1)
         predictions = torch.argmax(probabilities, dim=1)
-        f1 = f1_metric.compute(predictions=predictions, references=labels, average="macro")["f1"]
-        accuracy = accuracy_metric.compute(predictions=predictions, references=labels)["accuracy"]
-        return {"f1" : f1, "accuracy" : accuracy}
+        f1 = f1_metric.compute(
+            predictions=predictions, references=labels, average="macro"
+        )["f1"]
+        accuracy = accuracy_metric.compute(predictions=predictions, references=labels)[
+            "accuracy"
+        ]
+        return {"f1": f1, "accuracy": accuracy}
 
     # Training Args
     training_args = TrainingArguments(
@@ -1130,7 +1137,7 @@ def finetune_text_pair_classification(
     # Get model and tokenizer
     hyperparams = orjson.loads(hyperparams)
     model_name = hyperparams.pop("model_name")
-    
+
     if "project_name" in hyperparams.keys():
         project_name = "_".join(hyperparams.pop("project_name").split())
         hyperparams["training_args"]["hub_model_id"] = project_name
@@ -1200,10 +1207,14 @@ def finetune_text_pair_classification(
         logits, labels = eval_pred
         probabilities = F.softmax(torch.from_numpy(logits), dim=1)
         predictions = torch.argmax(probabilities, dim=1)
-        f1 = f1_metric.compute(predictions=predictions, references=labels, average="macro")["f1"]
-        accuracy = accuracy_metric.compute(predictions=predictions, references=labels)["accuracy"]
-        return {"f1" : f1, "accuracy" : accuracy}
-    
+        f1 = f1_metric.compute(
+            predictions=predictions, references=labels, average="macro"
+        )["f1"]
+        accuracy = accuracy_metric.compute(predictions=predictions, references=labels)[
+            "accuracy"
+        ]
+        return {"f1": f1, "accuracy": accuracy}
+
     # Training Args
     training_args = TrainingArguments(
         output_dir=path, logging_dir=path, **hyperparams["training_args"]
@@ -1238,6 +1249,36 @@ def finetune_text_pair_classification(
     return metrics
 
 
+def print_number_of_trainable_model_parameters(model):
+    """Prints the number of trainable parameters in the model.
+
+    This function traverses all the parameters of a given PyTorch model to
+    count the total number of parameters as well as the number of trainable
+    (i.e., requires gradient) parameters.
+
+    Args:
+        model: A PyTorch model whose parameters you want to count.
+    """
+
+    # Initialize counters for trainable and total parameters
+    trainable_model_params = 0
+    all_model_params = 0
+
+    # Loop through all named parameters in the model
+    for _, param in model.named_parameters():
+        # Update the total number of parameters
+        all_model_params += param.numel()
+
+        # Check if the parameter requires gradient and update the trainable parameter counter
+        if param.requires_grad:
+            trainable_model_params += param.numel()
+
+    # Calculate and print the number and percentage of trainable parameters
+    print(f"Trainable model parameters: {trainable_model_params}", file=sys.stderr)
+    print(f"All model parameters: {all_model_params}", file=sys.stderr)
+    print(f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%", file=sys.stderr)
+
+## Conversation
 def finetune_conversation(
     task,
     hyperparams,
@@ -1249,7 +1290,125 @@ def finetune_conversation(
     user_train,
     assistant_test,
 ):
+
+    hyperparams = orjson.loads(hyperparams)
+    model_name = hyperparams.pop("model_name")
+
+    if "project_name" in hyperparams.keys():
+        project_name = "_".join(hyperparams.pop("project_name").split())
+        hyperparams["training_args"]["hub_model_id"] = project_name
+
+    if "wandb_key" in hyperparams["training_args"].keys():
+        wandb_key = hyperparams["training_args"].pop("wandb_key")
+        wandb.login(key=wandb_key)
     
-    metrics = {"bleu" : 1.0}
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    # dataset
+    train_dataset = datasets.Dataset.from_dict(
+        {
+            "system": system_train,
+            "user": user_train,
+            "assistant": assistant_train,
+        }
+    )
+
+    test_dataset = datasets.Dataset.from_dict(
+        {
+            "system": system_test,
+            "user": user_test,
+            "assistant": assistant_test,
+        }
+    )
+    
+    
+    def formatting_prompts_func(example):
+
+        system_content = example["system"]
+        user_content = example["user"]
+        assistant_content = example["assistant"]
+
+        if "prompt_template" in hyperparams.keys():
+            prompt_template = hyperparams.pop("prompt_template")
+            text = prompt_template.format(
+                system=system_content,
+                user=user_content,
+                assistant=assistant_content,
+                eos_token=tokenizer.eos_token,
+            )
+        elif hasattr(tokenizer, "apply_chat_template"):
+            messages = [
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": user_content},
+                {"role": "assistant", "content": assistant_content},
+            ]
+            text = tokenizer.apply_chat_template(messages, tokenize=False)
+        else:
+            raise ValueError(
+                "Tokenizer doesn't have a chat template. Please pass a template in hyperparameters"
+            )
+
+        return text
+
+    # max sequence length
+    if "max_seq_length" in hyperparams.keys():
+        max_seq_length = hyperparams.pop("max_seq_length")
+    elif hasattr(tokenizer,"model_max_length"):
+        max_seq_length = tokenizer.model_max_length
+    else:
+        max_seq_length = 512
+    
+    # response template
+    collator = None
+    if "response_template" in hyperparams.keys():
+        response_template = hyperparams.pop("response_template")
+        collator = DataCollatorForCompletionOnlyLM(
+            response_template, tokenizer=tokenizer
+        )
+
+    
+    # Training arguments
+    training_args = TrainingArguments(
+        output_dir=path, logging_dir=path, **hyperparams["training_args"]
+    )
+
+    if "load_in_8bit" in hyperparams.keys():
+        load_in_8bit = hyperparams.pop("load_in_8bit")
+        model = AutoModelForCausalLM.from_pretrained(model_name,load_in_8bit=load_in_8bit, device_map="auto")
+    else:
+        model = AutoModelForCausalLM.from_pretrained(model_name,torch_dtype=torch.bfloat16)
+    
+    lora_config = None
+    if "lora_config" in hyperparams.keys():
+        lora_config = LoraConfig(**hyperparams.pop("lora_config"))
+        model.add_adapter(lora_config)
+        peft_model = get_peft_model(model, lora_config)
+        print_number_of_trainable_model_parameters(peft_model)
+
+
+
+    # SFT Trainer
+    trainer = SFTTrainer(
+            model,
+            args = training_args,
+            train_dataset=train_dataset,
+            eval_dataset=test_dataset,
+            formatting_func=formatting_prompts_func,
+            packing=True,
+    )
+
+    if collator:
+        trainer.data_collator = collator
+    
+    # Train
+    try:
+        trainer.train()
+    except Exception as e:
+        print(str(e), file=sys.stderr)
+
+    # Save the model
+    trainer.save_model()
+
+    metrics = trainer.evaluate()
 
     return metrics
