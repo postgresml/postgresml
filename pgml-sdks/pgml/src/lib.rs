@@ -133,8 +133,8 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
         if let Some(r) = &RUNTIME {
             r
         } else {
-            // TODO: Have some discussion about whether we want single or multi thread here
-            let runtime = Builder::new_current_thread()
+            // Need to use multi thread for JavaScript
+            let runtime = Builder::new_multi_thread()
                 .enable_all()
                 .build()
                 .expect("Error creating tokio runtime");
