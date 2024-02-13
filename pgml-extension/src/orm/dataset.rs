@@ -71,6 +71,7 @@ impl Dataset {
 pub enum TextDatasetType {
     TextClassification(TextClassificationDataset),
     TextPairClassification(TextPairClassificationDataset),
+    Conversation(ConversationDataset),
 }
 
 impl TextDatasetType {
@@ -78,6 +79,7 @@ impl TextDatasetType {
         match self {
             TextDatasetType::TextClassification(dataset) => dataset.num_features,
             TextDatasetType::TextPairClassification(dataset) => dataset.num_features,
+            TextDatasetType::Conversation(dataset) => dataset.num_features,
         }
     }
 }
@@ -131,7 +133,28 @@ impl Display for TextPairClassificationDataset {
     }
 }
 
+pub struct ConversationDataset {
+    pub system_train: Vec<String>,
+    pub user_train: Vec<String>,
+    pub assistant_train: Vec<String>,
+    pub system_test: Vec<String>,
+    pub user_test: Vec<String>,
+    pub assistant_test: Vec<String>,
+    pub num_features: usize,
+    pub num_rows: usize,
+    pub num_train_rows: usize,
+    pub num_test_rows: usize,
+}
 
+impl Display for ConversationDataset {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "TextPairClassificationDataset {{ num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            self.num_rows, self.num_train_rows, self.num_test_rows,
+        )
+    }
+}
 fn drop_table_if_exists(table_name: &str) {
     // Avoid the existence for DROP TABLE IF EXISTS warning by checking the schema for the table first
     let table_count = Spi::get_one_with_args::<i64>(

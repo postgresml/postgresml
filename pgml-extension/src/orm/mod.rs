@@ -16,6 +16,7 @@ pub use dataset::Dataset;
 pub use dataset::TextDatasetType;
 pub use dataset::TextClassificationDataset;
 pub use dataset::TextPairClassificationDataset;
+pub use dataset::ConversationDataset;
 pub use model::Model;
 pub use project::Project;
 pub use runtime::Runtime;

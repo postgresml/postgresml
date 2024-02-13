@@ -169,7 +169,10 @@ impl Model {
             TextDatasetType::TextClassification(snapshot.text_classification_dataset(dataset_args))
         } else if project.task == Task::text_pair_classification {
             TextDatasetType::TextPairClassification(snapshot.text_pair_classification_dataset(dataset_args))
-        } else {
+        } else if project.task == Task::conversation {
+            TextDatasetType::Conversation(snapshot.conversation_dataset(dataset_args))
+        }
+        else {
             panic!("Unsupported task for finetuning")
         };
 
@@ -238,6 +241,12 @@ impl Model {
                 };
                 
             }
+            TextDatasetType::Conversation(dataset) => {
+                metrics = match transformers::finetune_conversation(&project.task, dataset, &model.hyperparams, &path) {
+                    Ok(metrics) => metrics,
+                    Err(e) => error!("{e}"),
+                };
+            }
         };
 
         model.metrics = Some(JsonB(json!(metrics)));
@@ -260,29 +269,33 @@ impl Model {
         .unwrap();
 
         // Save the bindings.
-        for entry in std::fs::read_dir(&path).unwrap() {
-            let path = entry.unwrap().path();
+        if path.is_dir() {
+            for entry in std::fs::read_dir(&path).unwrap() {
+                let path = entry.unwrap().path();
 
-            if path.is_file() {
+                if path.is_file() {
 
-                let bytes = std::fs::read(&path).unwrap();
-                
-                for (i, chunk) in bytes.chunks(100_000_000).enumerate() {
-                    Spi::get_one_with_args::<i64>(
-                        "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, $2, $3, $4) RETURNING id",
-                        vec![
-                            (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
-                            (
-                                PgBuiltInOids::TEXTOID.oid(),
-                                path.file_name().unwrap().to_str().into_datum(),
-                            ),
-                            (PgBuiltInOids::INT8OID.oid(), (i as i64).into_datum()),
-                            (PgBuiltInOids::BYTEAOID.oid(), chunk.into_datum()),
-                        ],
-                    )
-                    .unwrap();
+                    let bytes = std::fs::read(&path).unwrap();
+                    
+                    for (i, chunk) in bytes.chunks(100_000_000).enumerate() {
+                        Spi::get_one_with_args::<i64>(
+                            "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, $2, $3, $4) RETURNING id",
+                            vec![
+                                (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+                                (
+                                    PgBuiltInOids::TEXTOID.oid(),
+                                    path.file_name().unwrap().to_str().into_datum(),
+                                ),
+                                (PgBuiltInOids::INT8OID.oid(), (i as i64).into_datum()),
+                                (PgBuiltInOids::BYTEAOID.oid(), chunk.into_datum()),
+                            ],
+                        )
+                        .unwrap();
+                    }
                 }
             }
+        } else {
+            error!("Model checkpoint folder does not exist!")
         }
         
         Spi::run_with_args(

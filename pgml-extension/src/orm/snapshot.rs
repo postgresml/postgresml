@@ -11,7 +11,7 @@ use serde_json::json;
 
 use crate::orm::Sampling;
 use crate::orm::Status;
-use crate::orm::{Dataset, TextClassificationDataset, TextPairClassificationDataset};
+use crate::orm::{Dataset, TextClassificationDataset, TextPairClassificationDataset, ConversationDataset};
 
 
 // Categories use a designated string to represent NULL categorical values,
@@ -939,6 +939,99 @@ impl Snapshot {
                 num_train_rows,
                 // TODO rename and audit this
                 num_distinct_labels,
+            });
+
+            Ok::<std::option::Option<()>, i64>(Some(())) // this return type is nonsense
+        })
+        .unwrap();
+
+        let data = data.unwrap();
+
+        info!("{}", data);
+
+        data
+    }
+
+    pub fn conversation_dataset(&mut self, dataset_args: default!(JsonB, "'{}'")) -> ConversationDataset {
+        let mut data = None;
+
+        Spi::connect(|client| {
+            let result = client.select(&self.select_sql(), None, None).unwrap();
+            let num_rows = result.len();
+            let (num_train_rows, num_test_rows) = self.train_test_split(num_rows);
+            let num_features = 2;
+
+            let mut system_train: Vec<String> = Vec::with_capacity(num_train_rows);
+            let mut user_train: Vec<String> = Vec::with_capacity(num_train_rows);
+            let mut assistant_train: Vec<String> = Vec::with_capacity(num_train_rows);
+            let mut system_test: Vec<String> = Vec::with_capacity(num_test_rows);
+            let mut user_test: Vec<String> = Vec::with_capacity(num_test_rows);
+            let mut assistant_test: Vec<String> = Vec::with_capacity(num_test_rows);
+
+
+            let system_column_value = dataset_args.0
+                .get("system_column")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "system".to_string());
+
+            let user_column_value = dataset_args.0
+                .get("user_column")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "user".to_string());
+
+            let assistant_column_value = dataset_args.0
+                .get("assistant_column")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "assistant".to_string());
+
+            result.enumerate().for_each(|(i, row)| {
+                for column in &mut self.columns {
+                    let vector = if column.name == system_column_value {
+                        if i < num_train_rows {
+                            &mut system_train
+                        } else {
+                            &mut system_test
+                        }
+                    } else if column.name == user_column_value {
+                        if i < num_train_rows {
+                            &mut user_train
+                        } else {
+                            &mut user_test
+                        }
+                    } else if column.name == assistant_column_value {
+                        if i < num_train_rows {
+                            &mut assistant_train
+                        } else {
+                            &mut assistant_test
+                        }
+                    } else {
+                        continue;
+                    };
+
+                    match column.pg_type.as_str() {
+                        "bpchar" | "text" | "varchar" => match row[column.position].value::<String>().unwrap() {
+                            Some(text) => vector.push(text),
+                            None => error!("NULL training text is not handled"),
+                        },
+                        _ => error!("only text type columns are supported"),
+                    }
+                }
+            });
+
+            data = Some(ConversationDataset {
+                system_train,
+                user_train,
+                assistant_train,
+                system_test,
+                user_test,
+                assistant_test,
+                num_features,
+                num_rows,
+                num_test_rows,
+                num_train_rows,
             });
 
             Ok::<std::option::Option<()>, i64>(Some(())) // this return type is nonsense
