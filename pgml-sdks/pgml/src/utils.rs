@@ -3,6 +3,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use lopdf::Document;
 use std::fs;
 use std::path::Path;
+use std::time::Duration;
 
 use serde::de::{self, Visitor};
 use serde::Deserializer;
@@ -67,10 +68,12 @@ macro_rules! debug_sea_query {
 }
 
 pub fn default_progress_bar(size: u64) -> ProgressBar {
-    ProgressBar::new(size).with_style(
+    let bar = ProgressBar::new(size).with_style(
         ProgressStyle::with_template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} ")
             .unwrap(),
-    )
+    );
+    bar.enable_steady_tick(Duration::from_millis(100));
+    bar
 }
 
 pub fn get_file_contents(path: &Path) -> anyhow::Result<String> {
