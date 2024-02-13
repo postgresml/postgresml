@@ -23,7 +23,7 @@ use crate::{
 #[serde(deny_unknown_fields)]
 struct ValidField {
     query: String,
-    model_parameters: Option<Json>,
+    parameters: Option<Json>,
     full_text_filter: Option<String>,
 }
 
@@ -108,7 +108,7 @@ pub async fn build_vector_search_query(
                             "transformer => (SELECT schema #>> '{{{key},semantic_search,model}}' FROM pipeline)",
                         )),
                         Expr::cust_with_values("text => $1", [vf.query]),
-                        Expr::cust(format!("kwargs => COALESCE((SELECT schema #> '{{{key},semantic_search,model_parameters}}' FROM pipeline), '{{}}'::jsonb)")),
+                        Expr::cust_with_values("kwargs => $1", [vf.parameters.unwrap_or_default().0]),
                     ]),
                     Alias::new("embedding"),
                 );
@@ -142,7 +142,7 @@ pub async fn build_vector_search_query(
                     let remote_embeddings = build_remote_embeddings(
                         model.runtime,
                         &model.name,
-                        vf.model_parameters.as_ref(),
+                        vf.parameters.as_ref(),
                     )?;
                     let mut embeddings =
                         remote_embeddings.embed(vec![vf.query.to_string()]).await?;

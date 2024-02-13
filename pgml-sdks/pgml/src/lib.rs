@@ -822,7 +822,7 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswle_117";
+        let collection_name = "test_r_c_cswle_118";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -1049,7 +1049,7 @@ mod tests {
     #[tokio::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cvswle_5";
+        let collection_name = "test_r_c_cvswle_7";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -1060,7 +1060,10 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "hkunlp/instructor-base",
+                            "parameters": {
+                                "instruction": "Represent the Wikipedia document for retrieval"
+                            }
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -1086,6 +1089,9 @@ mod tests {
                         "fields": {
                             "title": {
                                 "query": "Test document: 2",
+                                "parameters": {
+                                    "instruction": "Represent the Wikipedia document for retrieval"
+                                },
                                 "full_text_filter": "test"
                             },
                             "body": {
@@ -1108,7 +1114,7 @@ mod tests {
             .into_iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids, vec![4, 5, 6, 7, 9]);
+        assert_eq!(ids, vec![8, 4, 7, 6, 9]);
         collection.archive().await?;
         Ok(())
     }

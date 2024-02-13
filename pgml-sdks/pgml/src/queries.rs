@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
   created_at timestamp NOT NULL DEFAULT now(), 
   chunk_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  document_id int8 NOT NULL REFERENCES %s,
+  document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
   embedding vector(%d) NOT NULL,
   UNIQUE (chunk_id)
 );
@@ -140,22 +140,34 @@ INSERT INTO %s (search_result, event) VALUES ((SELECT id FROM %s WHERE search_id
 
 // Tag: CRITICAL_QUERY
 // Checked: True
-// Trigger: Runs whenever a user upserts a document
+// Trigger: Runs whenever a user upserts documents
 // Required indexes:
 // documents table | - "documents_source_uuid_key" UNIQUE CONSTRAINT, btree (source_uuid)
 // Used to upsert a document and merge the previous metadata on conflict
+// The values of the query and the source_uuid binding are built when used
 pub const UPSERT_DOCUMENT_AND_MERGE_METADATA: &str = r#"
-WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document, version) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET document = %s.document || EXCLUDED.document, version = EXCLUDED.version RETURNING id, (SELECT document FROM prev)
+WITH prev AS (
+  SELECT id, document FROM %s WHERE source_uuid = ANY({binding_parameter})
+) INSERT INTO %s (source_uuid, document, version) 
+VALUES {values_parameters} 
+ON CONFLICT (source_uuid) DO UPDATE SET document = %s.document || EXCLUDED.document, version = EXCLUDED.version 
+RETURNING id, (SELECT document FROM prev WHERE prev.id = %s.id) 
 "#;
 
 // Tag: CRITICAL_QUERY
 // Checked: True
-// Trigger: Runs whenever a user upserts a document
+// Trigger: Runs whenever a user upserts documents
 // Required indexes:
 // - documents table | "documents_source_uuid_key" UNIQUE CONSTRAINT, btree (source_uuid)
 // Used to upsert a document and over the previous document on conflict
+// The values of the query and the source_uuid binding are built when used
 pub const UPSERT_DOCUMENT: &str = r#"
-WITH prev AS (SELECT document FROM %s WHERE source_uuid = $1) INSERT INTO %s (source_uuid, document, version) VALUES ($1, $2, $3) ON CONFLICT (source_uuid) DO UPDATE SET document = EXCLUDED.document, version = EXCLUDED.version RETURNING id, (SELECT document FROM prev)
+WITH prev AS (
+  SELECT id, document FROM %s WHERE source_uuid = ANY({binding_parameter})
+) INSERT INTO %s (source_uuid, document, version) 
+VALUES {values_parameters} 
+ON CONFLICT (source_uuid) DO UPDATE SET document = EXCLUDED.document, version = EXCLUDED.version 
+RETURNING id, (SELECT document FROM prev WHERE prev.id = %s.id) 
 "#;
 
 /////////////////////////////
