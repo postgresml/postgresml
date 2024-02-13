@@ -150,7 +150,7 @@ impl Display for ConversationDataset {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
-            "TextPairClassificationDataset {{ num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            "ConversationDataset {{ num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
             self.num_rows, self.num_train_rows, self.num_test_rows,
         )
     }
