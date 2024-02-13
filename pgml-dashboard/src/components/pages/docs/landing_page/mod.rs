@@ -99,7 +99,7 @@ impl LandingPage {
             }
         }
 
-        let mut find_targets = |links: Vec<IndexLink>, targets: &Vec<String>| -> Vec<IndexLink> {
+        let find_targets = |links: Vec<IndexLink>, targets: &Vec<String>| -> Vec<IndexLink> {
             let mut children: Vec<IndexLink> = links.clone();
             let mut out: Vec<IndexLink> = Vec::new();
 

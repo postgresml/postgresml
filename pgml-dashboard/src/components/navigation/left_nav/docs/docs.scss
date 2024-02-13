@@ -6,7 +6,7 @@ div[data-controller="navigation-left-nav-docs"] {
         background-color: #{$gray-800};
         padding-top: 0px;
         border-right: none;
-        max-width: $docs-left-nav-w;
+        width: $docs-left-nav-w;
         position: relative;
         z-index: 0;
         display: none;

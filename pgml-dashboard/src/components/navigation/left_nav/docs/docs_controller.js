@@ -3,10 +3,6 @@ import { Controller } from '@hotwired/stimulus'
 export default class extends Controller {
   static targets = []
   static outlets = []
-
-  initialize() {
-    console.log('Initialized navigation-left-nav-docs')
-  }
   
   showScrollbar(e) {
     let element = e.target;

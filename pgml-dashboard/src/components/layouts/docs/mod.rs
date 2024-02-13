@@ -34,8 +34,20 @@ impl Docs {
         }
     }
 
-    pub fn index(mut self, index: &Vec<IndexLink>) -> Self {
+    pub fn index(mut self, index: &Vec<IndexLink>) -> Docs {
         self.index = index.clone();
+        self
+    }
+
+    pub fn image(mut self, image: &Option<String>) -> Docs {
+        if let Some(image) = image {
+            self.head = self.head.image(image.as_str());
+        }
+        self
+    }
+
+    pub fn canonical(mut self, canonical: &str) -> Docs {
+        self.head = self.head.canonical(canonical);
         self
     }
 

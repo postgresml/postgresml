@@ -1,6 +1,5 @@
 <%
   use crate::components::pages::docs::landing_page::AltDocCard;
-  use crate::api::cms::{Document, DOCS};
 
   fn section_title(title: &str, paragraph: &str) -> String {
     format!(r#"
@@ -11,7 +10,7 @@
       title,
       if paragraph.len() > 0 {format!(r#"<p class="text-center w-75">{}</p>"#, paragraph)} else {"".to_string()}
     )
-  };
+  }
 
   fn section_links(items: Vec<DocCard>) -> String {
     format!(r#"

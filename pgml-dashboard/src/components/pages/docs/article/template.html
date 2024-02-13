@@ -1,56 +1,32 @@
 <% use crate::components::navigation::Toc; %>
 
-<div class="h-100 position-sticky stick-under-topnav">
-  <%+ Toc::new(&toc_links) %>
-</div>
 
-<div data-controller="pages-docs-article">
-  <div class="glow-container">
+<div class="d-flex flex-xxl-row-reverse h-100 flex-column justify-content-end" data-controller="pages-docs-article" >
+  <% if !toc_links.is_empty() {%>
+  <div class="h-100 position-sticky stick-under-topnav">
+    <%+ Toc::new(&toc_links) %>
+  </div>
+  <% } %>
+
+  <div class="glow-container w-100">
     <div style="margin-left: -20vw; margin-top: -40vh;">
       <div class="glow-1"></div>
     </div>
   </div>
-  <div class="d-flex flex-column align-items-center">
-    <div>content new 1</div>
-    <a href="/blog">test</a>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new 2</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new</div>
-    <div>content new last</div>
+
+  <div class="p-5" style="overflow: auto; max-width: 880px;">
+
+    <article class="docs">
+      <% if document_not_found {%>
+        <div>
+          <h2>Oops, document not found!</h2>
+          <p>The document you are searching for may have been moved or replaced with better content.</p>
+        </div>
+      <% } else {%>
+        <%- content %>
+      <% } %>
+    </article>
   </div>
+
+
 </div>
