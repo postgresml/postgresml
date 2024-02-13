@@ -10,16 +10,12 @@
     <body data-bs-theme="dark" data-theme="docs">
       <div data-controller="layouts-docs">
 
-        <div style="position: sticky; top: 0px; z-index: 1">
-          <div>
-            <%+ MarketingNavbar::new(user).style_alt() %>
-          </div>
-        </div>
+        <%+ MarketingNavbar::new(user).style_alt() %>
 
         <div class="d-flex w-100">
           <%+ IndexNav::new(&index) %>
   
-          <div class="content-container flex-grow-1">
+          <div class="page-container flex-grow-1">
             <div class="d-flex flex-column">
               <div class="d-block d-xl-none">
                 <%+ MobileIndexNav::new(&index).title("Docs") %>

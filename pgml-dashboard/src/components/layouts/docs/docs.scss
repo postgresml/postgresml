@@ -1,7 +1,7 @@
 div[data-controller="layouts-docs"] {
   $collapsed-left-nav-height: 40px;
 
-  .content-container {
+  .page-container {
     position: relative;
     min-height: calc(100vh - $navbar-height);
   }

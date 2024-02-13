@@ -14,7 +14,7 @@ use yaml_rust::YamlLoader;
 use crate::{
     components::{cms::index_link::IndexLink, layouts::marketing::base::Theme, layouts::marketing::Base},
     guards::Cluster,
-    responses::{ResponseOk, Template, Response},
+    responses::{Response, ResponseOk, Template},
     templates::docs::*,
     utils::config,
 };
@@ -312,11 +312,7 @@ impl Collection {
         NamedFile::open(self.asset_dir.join(path)).await.ok()
     }
 
-    pub async fn get_content_path(
-        &self,
-        mut path: PathBuf,
-        origin: &Origin<'_>,
-    ) ->  (PathBuf, String) {
+    pub async fn get_content_path(&self, mut path: PathBuf, origin: &Origin<'_>) -> (PathBuf, String) {
         info!("get_content: {} | {path:?}", self.name);
 
         let mut redirected = false;
@@ -356,7 +352,7 @@ impl Collection {
 
         let mut parent_folder: Option<String> = None;
         let mut index = Vec::new();
-        
+
         // Docs gets a home link added to the index
         match self.name.as_str() {
             "Docs" => {
@@ -524,7 +520,6 @@ impl Collection {
         canonical: &str,
         cluster: &Cluster,
     ) -> Result<ResponseOk, crate::responses::NotFound> {
-
         match Document::from_path(&path).await {
             Ok(doc) => {
                 let index = self.open_index(&doc.path);
@@ -559,9 +554,7 @@ impl Collection {
                 </div>"#,
                 );
 
-                layout
-                    .nav_links(&self.index)
-                    .nav_title(&self.name);
+                layout.nav_links(&self.index).nav_title(&self.name);
 
                 layout.render(crate::templates::Article { content: doc });
 
@@ -636,21 +629,17 @@ async fn get_docs(
                 .image(&doc.thumbnail)
                 .canonical(&canonical);
 
-
-            let page = crate::components::pages::docs::Article::new()
+            let page = crate::components::pages::docs::Article::new(&cluster)
                 .toc_links(&doc.toc_links)
                 .content(&doc.html());
 
-            Ok(ResponseOk(
-                layout.render(page),
-            ))
+            Ok(ResponseOk(layout.render(page)))
         }
         // Return page not found on bad path
         _ => {
-            let layout = crate::components::layouts::Docs::new("404", Some(cluster))
-                .index(&DOCS.index);
+            let layout = crate::components::layouts::Docs::new("404", Some(cluster)).index(&DOCS.index);
 
-            let page = crate::components::pages::docs::Article::new().document_not_found();
+            let page = crate::components::pages::docs::Article::new(&cluster).document_not_found();
 
             Err(crate::responses::NotFound(layout.render(page)))
         }
@@ -676,13 +665,11 @@ async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
 }
 
 #[get("/docs")]
-async fn docs_landing_page(
-    cluster: &Cluster
-) -> Result<ResponseOk, crate::responses::NotFound> {
+async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
     let index = DOCS.open_index(&PathBuf::from("/docs"));
 
-    let doc_layout = crate::components::layouts::Docs::new("PostgresML documentation landing page.", Some(cluster))
-        .index(&index);
+    let doc_layout =
+        crate::components::layouts::Docs::new("PostgresML documentation landing page.", Some(cluster)).index(&index);
 
     let page = crate::components::pages::docs::LandingPage::new()
         .parse_sections(DOCS.index.clone())
@@ -692,9 +679,7 @@ async fn docs_landing_page(
 }
 
 #[get("/user_guides/<path..>", rank = 5)]
-async fn get_user_guides(
-    path: PathBuf,
-) -> Result<Response, crate::responses::NotFound> {
+async fn get_user_guides(path: PathBuf) -> Result<Response, crate::responses::NotFound> {
     Ok(Response::redirect(format!("/docs/{}", path.display().to_string())))
 }
 

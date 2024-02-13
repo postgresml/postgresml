@@ -1,4 +1,7 @@
+use crate::components::notifications::marketing::FeatureBanner;
 use crate::docs::TocLink;
+use crate::guards::Cluster;
+use crate::Notification;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 
@@ -8,11 +11,15 @@ pub struct Article {
     toc_links: Vec<TocLink>,
     content: String,
     document_not_found: bool,
+    feature_banner: FeatureBanner,
 }
 
 impl Article {
-    pub fn new() -> Article {
-        Article { ..Default::default() }
+    pub fn new(context: &Cluster) -> Article {
+        Article {
+            feature_banner: FeatureBanner::from_notification(Notification::next_feature(Some(context))),
+            ..Default::default()
+        }
     }
 
     pub fn toc_links(mut self, toc_links: &Vec<TocLink>) -> Self {
@@ -25,7 +32,7 @@ impl Article {
         self
     }
 
-    pub fn document_not_found(mut self ) -> Self {
+    pub fn document_not_found(mut self) -> Self {
         self.document_not_found = true;
         self
     }
