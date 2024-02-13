@@ -1,12 +1,13 @@
 <% 
-  use std::collections::HashMap; 
-
-  let icon_map = HashMap::from([
-    ("apis", "sdk"),
-    ("product", "dashboard"),
-    ("use cases", "account_circle"),
-    ("resources", "school"),
-  ]);
+  fn icon_map(title: &str) -> &str {
+    match title.to_lowercase().as_str() {
+      "apis" => "sdk",
+      "product" => "dashboard",
+      "use cases" => "account_circle",
+      "resources" => "school",
+      _ => "dashboard",
+    }
+  }
 %>
 <div class="doc-leftnav-container" data-controller="navigation-left-nav-docs">
   <nav class="doc-leftnav" data-action="scroll->navigation-left-nav-docs#showScrollbar">
@@ -24,7 +25,7 @@
             <% } else { %>
               <div class="d-flex flex-column">
                 <div class="border-bottom legal-text link-section d-flex align-items-center gap-1 pb-2">
-                  <span class="material-symbols-outlined"><%- icon_map.get(&doc_link.title.to_lowercase() as &str).unwrap_or_else(|| &"dashboard") %></span>
+                  <span class="material-symbols-outlined"><%- icon_map(&doc_link.title) %></span>
                   <%- doc_link.title %>
                 </div>
                   <% for item in doc_link.children {%>
