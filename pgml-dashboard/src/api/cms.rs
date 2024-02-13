@@ -249,6 +249,7 @@ impl Document {
 
         // MkDocs, gitbook syntax support, e.g. tabs, notes, alerts, etc.
         crate::utils::markdown::mkdocs(root, &arena).unwrap();
+        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
 
         // Style headings like we like them
         let mut plugins = ComrakPlugins::default();
