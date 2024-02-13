@@ -1,6 +1,7 @@
 <%
   use crate::components::pages::docs::landing_page::AltDocCard;
   use crate::components::Accordian;
+  use crate::components::sections::HaveQuestions;
 
   fn section_title(title: &str, paragraph: &str) -> String {
     format!(r#"
@@ -142,5 +143,7 @@
         </div>
       </div>
     </div>
+
+    <%+ HaveQuestions::new() %>
   </div>
 </div>
