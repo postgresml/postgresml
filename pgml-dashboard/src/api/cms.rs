@@ -671,7 +671,7 @@ async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
     let doc_layout =
         crate::components::layouts::Docs::new("PostgresML documentation landing page.", Some(cluster)).index(&index);
 
-    let page = crate::components::pages::docs::LandingPage::new()
+    let page = crate::components::pages::docs::LandingPage::new(&cluster)
         .parse_sections(DOCS.index.clone())
         .await;
 

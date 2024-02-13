@@ -4,6 +4,9 @@ use lazy_static::lazy_static;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 use std::collections::HashMap;
+use crate::components::notifications::marketing::FeatureBanner;
+use crate::guards::Cluster;
+use crate::Notification;
 
 lazy_static! {
     static ref ICON_MAP: HashMap<String, String> = HashMap::from([
@@ -68,11 +71,15 @@ pub struct LandingPage {
     benchmarks: Vec<DocCard>,
     client_sdks_overview: Vec<DocCard>,
     client_sdks_tutorials: Vec<DocCard>,
+    feature_banner: FeatureBanner,
 }
 
 impl LandingPage {
-    pub fn new() -> LandingPage {
-        LandingPage { ..Default::default() }
+    pub fn new(context: &Cluster) -> LandingPage {
+        LandingPage {
+            feature_banner: FeatureBanner::from_notification(Notification::next_feature(Some(context))),
+            ..Default::default()
+        }
     }
 
     pub async fn parse_sections(mut self, links: Vec<IndexLink>) -> Self {

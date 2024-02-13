@@ -9,7 +9,6 @@
     <%+ head %>
     <body data-bs-theme="dark" data-theme="docs">
       <div data-controller="layouts-docs">
-
         <%+ MarketingNavbar::new(user).style_alt() %>
 
         <div class="d-flex w-100">
@@ -17,10 +16,16 @@
   
           <div class="page-container flex-grow-1">
             <div class="d-flex flex-column">
+              <div class="glow-container">
+                <div style="margin-left: -20vw; margin-top: -40vh;">
+                  <div class="glow-1"></div>
+                </div>
+              </div>
+
               <div class="d-block d-xl-none">
                 <%+ MobileIndexNav::new(&index).title("Docs") %>
               </div>
-  
+
               <%- content.unwrap_or_else(|| String::new()) %>
             </div>
           </div>
