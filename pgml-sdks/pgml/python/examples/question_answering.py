@@ -1,4 +1,4 @@
-from pgml import Collection, Model, Splitter, Pipeline
+from pgml import Collection, Pipeline
 from datasets import load_dataset
 from time import time
 from dotenv import load_dotenv
@@ -13,10 +13,16 @@ async def main():
     # Initialize collection
     collection = Collection("squad_collection")
 
-    # Create a pipeline using the default model and splitter
-    model = Model()
-    splitter = Splitter()
-    pipeline = Pipeline("squadv1", model, splitter)
+    # Create and add pipeline
+    pipeline = Pipeline(
+        "squadv1",
+        {
+            "text": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {"model": "intfloat/e5-small"},
+            }
+        },
+    )
     await collection.add_pipeline(pipeline)
 
     # Prep documents for upserting
@@ -31,12 +37,12 @@ async def main():
     # Upsert documents
     await collection.upsert_documents(documents[:200])
 
-    # Query
-    query = "Who won 20 grammy awards?"
-    console.print("Querying for %s..." % query)
+    # Query for answer
+    query = "Who won more than 20 grammy awards?"
+    console.print("Querying for context ...")
     start = time()
-    results = (
-        await collection.query().vector_recall(query, pipeline).limit(5).fetch_all()
+    results = await collection.vector_search(
+        {"query": {"fields": {"text": {"query": query}}}, "limit": 5}, pipeline
     )
     end = time()
     console.print("\n Results for '%s' " % (query), style="bold")
