@@ -14,10 +14,16 @@ async def main():
     # Initialize collection
     collection = Collection("squad_collection")
 
-    # Create a pipeline using the default model and splitter
-    model = Model()
-    splitter = Splitter()
-    pipeline = Pipeline("squadv1", model, splitter)
+    # Create and add pipeline
+    pipeline = Pipeline(
+        "squadv1",
+        {
+            "text": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {"model": "intfloat/e5-small"},
+            }
+        },
+    )
     await collection.add_pipeline(pipeline)
 
     # Prep documents for upserting
@@ -32,12 +38,12 @@ async def main():
     # Upsert documents
     await collection.upsert_documents(documents[:200])
 
-    # Query for context
+    # Query for answer
     query = "Who won more than 20 grammy awards?"
     console.print("Querying for context ...")
     start = time()
-    results = (
-        await collection.query().vector_recall(query, pipeline).limit(5).fetch_all()
+    results = await collection.vector_search(
+        {"query": {"fields": {"text": {"query": query}}}, "limit": 3}, pipeline
     )
     end = time()
     console.print("\n Results for '%s' " % (query), style="bold")
@@ -45,8 +51,8 @@ async def main():
     console.print("Query time = %0.3f" % (end - start))
 
     # Construct context from results
-    context = " ".join(results[0][1].strip().split())
-    context = context.replace('"', '\\"').replace("'", "''")
+    chunks = [r["chunk"] for r in results]
+    context = "\n\n".join(chunks)
 
     # Query for summary
     builtins = Builtins()
