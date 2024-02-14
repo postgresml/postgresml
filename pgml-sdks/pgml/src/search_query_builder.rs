@@ -294,7 +294,7 @@ pub async fn build_search_query(
                 [&vma.query],
             ))
             .order_by(SIden::Str("score"), Order::Desc)
-            .limit(limit).
+            .limit(1).
             to_owned();
 
         let mut score_cte_recursive = Query::select()
@@ -330,7 +330,7 @@ pub async fn build_search_query(
                 [&vma.query],
             ))
             .order_by(SIden::Str("score"), Order::Desc)
-            .limit(limit)
+            .limit(1)
             .to_owned();
 
         if let Some(filter) = &valid_query.query.filter {
@@ -394,10 +394,7 @@ pub async fn build_search_query(
         let sum_expression = sum_expression
             .context("query requires some scoring through full_text_search or semantic_search")?;
         main_query
-            .expr(Expr::cust_with_expr(
-                "DISTINCT ON ($1) $1 as id",
-                id_select_expression.clone(),
-            ))
+            .expr_as(Expr::expr(id_select_expression.clone()), Alias::new("id"))
             .expr_as(sum_expression, Alias::new("score"))
             .column(SIden::Str("document"))
             .from(SIden::String(select_from.to_string()))
@@ -405,24 +402,14 @@ pub async fn build_search_query(
                 JoinType::InnerJoin,
                 documents_table.to_table_tuple(),
                 Alias::new("documents"),
-                Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .eq(id_select_expression.clone()),
+                Expr::col((SIden::Str("documents"), SIden::Str("id"))).eq(id_select_expression),
             )
-            .order_by_expr(
-                Expr::cust_with_expr("$1, score", id_select_expression),
-                Order::Desc,
-            );
-
-        let mut re_ordered_query = Query::select();
-        re_ordered_query
-            .expr(Expr::cust("*"))
-            .from_subquery(main_query, Alias::new("q1"))
             .order_by(SIden::Str("score"), Order::Desc)
             .limit(limit);
 
-        let mut re_ordered_query = CommonTableExpression::from_select(re_ordered_query);
-        re_ordered_query.table_name(Alias::new("main"));
-        with_clause.cte(re_ordered_query);
+        let mut main_query = CommonTableExpression::from_select(main_query);
+        main_query.table_name(Alias::new("main"));
+        with_clause.cte(main_query);
 
         // Insert into searches table
         let searches_table = format!("{}_{}.searches", collection.name, pipeline.name);
