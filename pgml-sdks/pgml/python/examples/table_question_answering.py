@@ -15,11 +15,17 @@ async def main():
     # Initialize collection
     collection = Collection("ott_qa_20k_collection")
 
-    # Create a pipeline using deepset/all-mpnet-base-v2-table
-    # A SentenceTransformer model trained specifically for embedding tabular data for retrieval
-    model = Model(name="deepset/all-mpnet-base-v2-table")
-    splitter = Splitter()
-    pipeline = Pipeline("ott_qa_20kv1", model, splitter)
+    # Create and add pipeline
+    pipeline = Pipeline(
+        "ott_qa_20kv1",
+        {
+            "text": {
+                "splitter": {"model": "recursive_character"},
+                # A SentenceTransformer model trained specifically for embedding tabular data for retrieval
+                "semantic_search": {"model": "deepset/all-mpnet-base-v2-table"},
+            }
+        },
+    )
     await collection.add_pipeline(pipeline)
 
     # Prep documents for upserting
