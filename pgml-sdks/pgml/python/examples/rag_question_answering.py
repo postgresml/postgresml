@@ -1,10 +1,13 @@
-from pgml import Collection, Model, Splitter, Pipeline, Builtins, OpenSourceAI
+from pgml import Collection, Pipeline, OpenSourceAI, init_logger
 import json
 from datasets import load_dataset
 from time import time
 from dotenv import load_dotenv
 from rich.console import Console
 import asyncio
+
+
+init_logger()
 
 
 async def main():
@@ -14,10 +17,16 @@ async def main():
     # Initialize collection
     collection = Collection("squad_collection")
 
-    # Create a pipeline using the default model and splitter
-    model = Model()
-    splitter = Splitter()
-    pipeline = Pipeline("squadv1", model, splitter)
+    # Create and add pipeline
+    pipeline = Pipeline(
+        "squadv1",
+        {
+            "text": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {"model": "intfloat/e5-small"},
+            }
+        },
+    )
     await collection.add_pipeline(pipeline)
 
     # Prep documents for upserting
@@ -34,22 +43,19 @@ async def main():
 
     # Query for context
     query = "Who won more than 20 grammy awards?"
-
-    console.print("Question: %s"%query)
     console.print("Querying for context ...")
-
     start = time()
-    results = (
-        await collection.query().vector_recall(query, pipeline).limit(5).fetch_all()
+    results = await collection.vector_search(
+        {"query": {"fields": {"text": {"query": query}}}, "limit": 10}, pipeline
     )
     end = time()
-    
-    #console.print("Query time = %0.3f" % (end - start))
+    console.print("\n Results for '%s' " % (query), style="bold")
+    console.print(results)
+    console.print("Query time = %0.3f" % (end - start))
 
     # Construct context from results
-    context = " ".join(results[0][1].strip().split())
-    context = context.replace('"', '\\"').replace("'", "''")
-    console.print("Context is ready...")
+    chunks = [r["chunk"] for r in results]
+    context = "\n\n".join(chunks)
 
     # Query for answer
     system_prompt = """Use the following pieces of context to answer the question at the end.
