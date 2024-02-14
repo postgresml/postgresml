@@ -84,7 +84,7 @@ it("can search", async () => {
       full_text_search: { configuration: "english" },
     },
   });
-  let collection = pgml.newCollection("test_j_c_tsc_12")
+  let collection = pgml.newCollection("test_j_c_tsc_15")
   await collection.add_pipeline(pipeline)
   await collection.upsert_documents(generate_dummy_documents(5))
   let results = await collection.search(
@@ -101,7 +101,7 @@ it("can search", async () => {
     },
     pipeline,
   );
-  let ids = results.map(r => r["id"]);
+  let ids = results["results"].map((r: any) => r["id"]);
   expect(ids).toEqual([5, 4, 3]);
   await collection.archive();
 });
