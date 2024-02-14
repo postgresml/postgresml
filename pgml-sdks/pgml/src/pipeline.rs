@@ -343,7 +343,7 @@ impl Pipeline {
                     }
                 }
                 self.schema = Some(pipeline.schema.clone());
-                self.parsed_schema = Some(parsed_schema.clone());
+                self.parsed_schema = Some(parsed_schema);
 
                 pipeline
             } else {
