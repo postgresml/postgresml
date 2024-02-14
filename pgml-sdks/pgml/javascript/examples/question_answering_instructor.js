@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const main = async () => {
   // Initialize the collection
-  const collection = pgml.newCollection("my_javascript_qai_collection");
+  const collection = pgml.newCollection("qa_pipeline");
 
   // Add a pipeline
   const pipeline = pgml.newPipeline("qa_pipeline", {
