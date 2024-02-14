@@ -1,6 +1,6 @@
 use crate::api::cms::{DocType, Document};
 use crate::{templates::docs::TocLink, utils::config};
-
+use anyhow::Context;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -1222,25 +1222,28 @@ pub struct SearchResult {
 
 pub struct SiteSearch {
     collection: pgml::Collection,
-    pipeline: pgml::MultiFieldPipeline,
+    pipeline: pgml::Pipeline,
 }
 
 impl SiteSearch {
     pub async fn new() -> anyhow::Result<Self> {
         let collection = pgml::Collection::new(
-            "hypercloud-site-search-c-4",
+            "hypercloud-site-search-c-2",
             Some(std::env::var("SITE_SEARCH_DATABASE_URL")?),
         );
-        let pipeline = pgml::MultiFieldPipeline::new(
-            "hypercloud-site-search-p-1",
+        let pipeline = pgml::Pipeline::new(
+            "hypercloud-site-search-p-0",
             Some(
                 serde_json::json!({
                     "title": {
                         "full_text_search": {
                             "configuration": "english"
                         },
-                        "embed": {
-                            "model": "intfloat/e5-small"
+                        "semantic_search": {
+                            "model": "hkunlp/instructor-base",
+                            "parameters": {
+                                "instruction": "Represent the Wikipedia document for retrieval: "
+                            },
                         }
                     },
                     "contents": {
@@ -1250,8 +1253,11 @@ impl SiteSearch {
                         "full_text_search": {
                             "configuration": "english"
                         },
-                        "embed": {
-                            "model": "intfloat/e5-small"
+                        "semantic_search": {
+                            "model": "hkunlp/instructor-base",
+                            "parameters": {
+                                "instruction": "Represent the Wikipedia document for retrieval: "
+                            },
                         }
                     }
                 })
@@ -1277,7 +1283,6 @@ impl SiteSearch {
                 "full_text_search": {
                     "title": {
                         "query": query,
-                        "boost": 2.
                     },
                     "contents": {
                         "query": query
@@ -1286,10 +1291,15 @@ impl SiteSearch {
                 "semantic_search": {
                     "title": {
                         "query": query,
-                        "boost": 2.0,
+                        "parameters": {
+                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+                        },
                     },
                     "contents": {
                         "query": query,
+                        "parameters": {
+                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+                        },
                     }
                 }
             },
@@ -1302,9 +1312,11 @@ impl SiteSearch {
                 }
             });
         }
-        self.collection
-            .search_local(search.into(), &self.pipeline)
-            .await?
+        let results = self.collection.search_local(search.into(), &self.pipeline).await?;
+
+        results["results"]
+            .as_array()
+            .context("Error getting results from search")?
             .into_iter()
             .map(|r| {
                 let SearchResultWithoutSnippet { title, contents, path } =
@@ -1322,7 +1334,7 @@ impl SiteSearch {
     }
 
     pub async fn build(&mut self) -> anyhow::Result<()> {
-        self.collection.add_pipeline(&mut self.pipeline).await.ok();
+        self.collection.add_pipeline(&mut self.pipeline).await?;
         let documents: Vec<Document> = futures::future::try_join_all(
             Self::get_document_paths()?
                 .into_iter()
