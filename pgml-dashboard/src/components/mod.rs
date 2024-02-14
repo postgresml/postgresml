@@ -81,6 +81,9 @@ pub use postgres_logo::PostgresLogo;
 pub mod profile_icon;
 pub use profile_icon::ProfileIcon;
 
+// src/components/search
+pub mod search;
+
 // src/components/sections
 pub mod sections;
 

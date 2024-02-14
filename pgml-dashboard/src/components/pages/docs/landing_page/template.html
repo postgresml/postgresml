@@ -2,6 +2,7 @@
   use crate::components::pages::docs::landing_page::AltDocCard;
   use crate::components::Accordian;
   use crate::components::sections::HaveQuestions;
+  use crate::components::search::Button as SearchButton;
 
   fn section_title(title: &str, paragraph: &str) -> String {
     format!(r#"
@@ -33,6 +34,10 @@
     <div class="w-100 d-flex flex-column align-items-center">
       <h1 class="text-center">PostgresML</br><span class="text-gradient-green">Documentation</span></h1>
       <p class="w-75 text-center">PostgresML is a open-source database extension that turns Postgres into an end-to-end machine learning platform. Build, train, and deploy ML/AI models directly within your Postgres database without moving data between systems.</p>
+    </div>
+
+    <div class="w-100 mx-auto" style="max-width: 40rem;">
+        <%+ SearchButton::new() %>
     </div>
 
     <div class="row gy-4">
