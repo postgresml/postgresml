@@ -1,6 +1,6 @@
 [package]
 name = "pgml"
-version = "0.11.0"
+version = "1.0.0"
 edition = "2021"
 authors = ["PosgresML <team@postgresml.org>"]
 homepage = "https://postgresml.org/"
@@ -18,7 +18,7 @@ rust_bridge = {path = "../rust-bridge/rust-bridge", version = "0.1.0"}
 sqlx = { version = "0.7.3", features = [ "runtime-tokio-rustls", "postgres", "json", "time", "uuid"] }
 serde_json = "1.0.9"
 anyhow = "1.0.9"
-tokio = { version = "1.28.2", features = [ "macros" ] }
+tokio = { version = "1.28.2", features = [ "macros", "rt-multi-thread" ] }
 chrono = "0.4.9"
 pyo3 = { version = "0.18.3", optional = true, features = ["extension-module", "anyhow"] }
 pyo3-asyncio = { version = "0.18", features = ["attributes", "tokio-runtime"], optional = true }
