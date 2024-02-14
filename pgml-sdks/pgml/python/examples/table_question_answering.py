@@ -52,8 +52,8 @@ async def main():
     query = "Which country has the highest GDP in 2020?"
     console.print("Querying for %s..." % query)
     start = time()
-    results = (
-        await collection.query().vector_recall(query, pipeline).limit(5).fetch_all()
+    results = await collection.vector_search(
+        {"query": {"fields": {"text": {"query": query}}}, "limit": 5}, pipeline
     )
     end = time()
     console.print("\n Results for '%s' " % (query), style="bold")
