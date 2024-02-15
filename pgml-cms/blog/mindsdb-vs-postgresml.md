@@ -2,7 +2,6 @@
 description: >-
   PostgresML is more opinionated, more scalable, more capable and several times
   faster than MindsDB.
-image: ".gitbook/assets/image (17).png"
 ---
 
 # MindsDB vs PostgresML
