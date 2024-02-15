@@ -88,7 +88,7 @@ All of this happens inside PostgresML. Our Django app doesn't need to implement 
 
 Before going forward, make sure you have the app running either locally or in a cloud provider of your choice. If hosting it somewhere, replace `localhost:8000` with the URL and port of your service.
 
-The simplest way to interact with it is to use cURL or an HTTP client of your preference. If running in debug mode locally, the Rest Framework provides a nice web UI which you can access on [http://localhost:8000/api/todos/](http://localhost:8000/api/todo/) using a browser.
+The simplest way to interact with it is to use cURL or your preferred HTTP client. If running in debug mode locally, the Rest Framework provides a nice web UI which you can access on [http://localhost:8000/api/todo/](http://localhost:8000/api/todo/) using a browser.
 
 To create a to-do item with cURL, you can just run this:
 
@@ -115,13 +115,13 @@ In return, you'll get your to-do item alongside the embedding of the `descriptio
 
 The embedding contains 384 floating point numbers; we removed most of them in this blog post to make sure it fits on the page.
 
-You can try creating multiple to-do items for fun and profit. If the description is changed, so will the embedding, demonstrating how the `intfloat/e5-small` model is understanding the semantic meaning of your text.
+You can try creating multiple to-do items for fun and profit. If the description is changed, so will the embedding, demonstrating how the `intfloat/e5-small` model understands the semantic meaning of your text.
 
 ### Searching
 
 Once you have a few embeddings and to-dos stored in your database, the fun part of searching can begin. In a typical search example with PostgreSQL, you'd now be using `tsvector` to keyword match your to-dos to the search query with term frequency. That's a good technique, but semantic search is better.
 
-We've created a simple search endpoint that accepts a query, a completed to-do filter, and a limit. To use it, you can just do this:
+Our search endpoint accepts a query, a completed to-do filter, and a limit. To use it, you can just run this:
 
 ```bash
 curl \
@@ -134,7 +134,7 @@ curl \
 If you've created a bunch of different to-do items, you should get only one search result back, and exactly the one you were expecting:
 
 ```json
-"Make a New Year resolution list"
+"Make a New Year resolution"
 ```
 
 You can increase the `limit` to something larger and you should get more documents, in decreasing order of relevance.
