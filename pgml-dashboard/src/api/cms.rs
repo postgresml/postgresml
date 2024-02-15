@@ -353,11 +353,12 @@ impl Collection {
 
         let mut parent_folder: Option<String> = None;
         let mut index = Vec::new();
+        let indent_level = 1;
 
         // Docs gets a home link added to the index
         match self.name.as_str() {
             "Docs" => {
-                index.push(IndexLink::new("Docs Home").href("/docs"));
+                index.push(IndexLink::new("Docs Home", indent_level).href("/docs"));
             }
             _ => {}
         }
@@ -369,12 +370,12 @@ impl Collection {
             match node {
                 Node::List(list) => {
                     let links: Vec<IndexLink> = self
-                        .get_sub_links(list)
+                        .get_sub_links(list, indent_level)
                         .unwrap_or_else(|_| panic!("Could not parse list of index links: {summary_path:?}"));
 
                     let mut out = match parent_folder.as_ref() {
                         Some(parent_folder) => {
-                            let mut parent = IndexLink::new(parent_folder.as_ref()).href("");
+                            let mut parent = IndexLink::new(parent_folder.as_ref(), 0).href("");
                             parent.children = links.clone();
                             Vec::from([parent])
                         }
@@ -405,7 +406,7 @@ impl Collection {
         }
     }
 
-    pub fn get_sub_links(&self, list: &markdown::mdast::List) -> anyhow::Result<Vec<IndexLink>> {
+    pub fn get_sub_links(&self, list: &markdown::mdast::List, indent_level: i32) -> anyhow::Result<Vec<IndexLink>> {
         let mut links = Vec::new();
 
         // SUMMARY.md is a nested List > ListItem > List | Paragraph > Link > Text
@@ -416,7 +417,7 @@ impl Collection {
                         match node {
                             Node::List(list) => {
                                 let mut link: IndexLink = links.pop().unwrap();
-                                link.children = self.get_sub_links(list).unwrap();
+                                link.children = self.get_sub_links(list, indent_level + 1).unwrap();
                                 links.push(link);
                             }
                             Node::Paragraph(paragraph) => {
@@ -434,7 +435,7 @@ impl Collection {
                                                             url = url.replace("README", "");
                                                         }
                                                         let url = self.url_root.join(url);
-                                                        let parent = IndexLink::new(text.value.as_str())
+                                                        let parent = IndexLink::new(text.value.as_str(), indent_level)
                                                             .href(&url.to_string_lossy());
                                                         links.push(parent);
                                                     }

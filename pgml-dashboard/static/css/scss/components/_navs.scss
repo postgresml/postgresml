@@ -204,7 +204,7 @@
         }
     }
     
-    &:active, :focus, :target, .active {
+    &:active, &:focus, &:target, .active {
         background-color: #{$neon-tint-100};
         color: #{$gray-100};
         border-radius: calc($border-radius / 2);

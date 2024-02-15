@@ -1,6 +1,6 @@
-<div class="nav flex-column" role="tablist" aria-orientation="vertical">
-    <%
 
+<div class="nav flex-column" role="tablist" aria-orientation="vertical" data-controller="cms-index-link">
+    <%
     let color = if active {
     "purple"
     } else {
@@ -9,7 +9,18 @@
 
     if children.is_empty() {
     %>
-    <a class="nav-link px-0 text-break <%- color %>" href="<%- href %>"><%- title %></a>
+    <% if level == 1 {%>
+    <div class="d-flex flex-row gap-2 align-items-center">
+        <div class="menu-item flex-grow-1">
+            <a class='d-block p-2 <% if active {%><%- String::from("active") %><% } %>' href="<%- href %>">
+                <span class="text-wrap"><%- title %></span>
+            </a>
+        </div>
+    </div>
+    <% } else {%>
+    <a class="nav-link ps-1 text-break <%- color %>" href="<%- href %>"><%- title %></a>
+    <% } %>
+
     <% } else {
     let aria = if open {
     "true"
@@ -24,12 +35,27 @@
     };
     %>
 
-    <span class="px-0 d-flex justify-content-between align-items-center text-break" >
-    <a class="nav-link px-0 text-break <%- color %>" href="<%- href %>"><%- title %></a>
-    <span class="material-symbols-outlined rotate-on-aria-expanded" data-bs-toggle="collapse" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>">expand_more</span>
-  </span>
-    <div class="collapse <%- show %> ps-3" id="doc-<%= id %>">
-        <div class="nav flex-column" role="tablist" aria-orentation="vertical">
+    <% let max_width = 200 - level*23; %>
+    <% if level == 1 {%>
+    <div class="menu-item flex-grow-1 d-flex flex-row align-items-center">
+        <div class='w-100 d-flex flex-row gap-2 align-items-center <% if active || open {%><%- String::from("active") %><% } %>'>
+            <a class='d-block p-2' href="<%- href %>" style='max-width: <%- max_width %>px; overflow: hidden; text-overflow: ellipsis;'>
+                <span class="text-wrap"><%- title %></span>
+            </a>
+            <span class="material-symbols-outlined rotate-on-aria-expanded text-white" data-bs-toggle="collapse" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>">expand_more</span>
+        </div>
+    </div>
+    <% } else {%>
+    <span class="ps-1 py-0 d-flex justify-content-between align-items-center text-break" >
+        <a class="nav-link px-0 text-break <%- color %>" href="<%- href %>" style='max-width: <%- max_width %>px; overflow: hidden; text-overflow: ellipsis;'>
+            <span class="text-nowrap"><%- title %></span>
+        </a>
+        <span class="material-symbols-outlined rotate-on-aria-expanded" data-bs-toggle="collapse" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>">expand_more</span>
+    </span>
+    <% } %>
+
+    <div class="collapse <%- show %>" id="doc-<%= id %>">
+        <div class='nav flex-column level-<%- level %>-list' role="tablist" aria-orentation="vertical">
             <% for child in children.into_iter() { %>
             <%- child.render_once().unwrap() %>
             <% } %>

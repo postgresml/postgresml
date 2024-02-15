@@ -1,5 +1,5 @@
-use sailfish::TemplateOnce;
 use pgml_components::component;
+use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "sections/have_questions/template.html")]

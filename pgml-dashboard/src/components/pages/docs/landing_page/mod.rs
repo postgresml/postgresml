@@ -1,12 +1,12 @@
 use crate::api::cms::{Document, DOCS};
 use crate::components::cms::IndexLink;
+use crate::components::notifications::marketing::FeatureBanner;
+use crate::guards::Cluster;
+use crate::Notification;
 use lazy_static::lazy_static;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 use std::collections::HashMap;
-use crate::components::notifications::marketing::FeatureBanner;
-use crate::guards::Cluster;
-use crate::Notification;
 
 lazy_static! {
     static ref ICON_MAP: HashMap<String, String> = HashMap::from([

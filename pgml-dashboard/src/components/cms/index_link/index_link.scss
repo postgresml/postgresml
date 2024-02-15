@@ -1,0 +1,16 @@
+div[data-controller="cms-index-link"] {
+  .level-1-list {
+    margin-left: 16px;
+  }
+
+  .level-2-list {
+    margin-left: 4px; 
+    padding-left: 19px; 
+    border-left: 1px solid white
+  }
+
+  .nav-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
