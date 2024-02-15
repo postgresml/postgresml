@@ -116,7 +116,7 @@ async def test_can_search():
         },
         pipeline,
     )
-    ids = [result["id"] for result in results]
+    ids = [result["id"] for result in results["results"]]
     assert ids == [5, 4, 3]
     await collection.archive()
 
