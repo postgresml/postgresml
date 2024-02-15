@@ -1,4 +1,20 @@
+---
+description: >-
+  An example application using PostgresML and Django to build embedding based search.
+tags: [engineering]
+---
+
 # Using PostgresML with Django and embedding search
+
+<div align="left">
+
+<figure><img src=".gitbook/assets/lev.jpg" alt="Author" width="100"><figcaption></figcaption></figure>
+
+</div>
+
+Lev Kokotov
+
+Feb 15, 2024
 
 Building web apps on top of PostgresML allows anyone to integrate advanced machine learning and AI features into their products without much work or needing to understand how it really works. In this blog post, we'll talk about building a classic to-do Django app, with the spicy addition of semantic search powered by embedding models running inside your PostgreSQL database.
 
@@ -51,13 +67,14 @@ And that's it! In just a few lines of code, we're generating and storing high qu
 
 Djago Rest Framework provides the bulk of the implementation. We just added a `ModelViewSet` for the `TodoItem` model, with just one addition: a search endpoint. The search endpoint required us to write a bit of SQL to embed the search query and accept a few filters, but the core of it can be summarized in a single annotation on the query set:
 
-<pre class="language-python"><code class="lang-python"><strong>results = TodoItem.objects.annotate(
-</strong>    similarity=RawSQL(
+```python
+results = TodoItem.objects.annotate(
+    similarity=RawSQL(
         "pgml.embed('intfloat/e5-small', %s)::vector(384) &#x3C;=> embedding",
         [query],
     )
 ).order_by("similarity")
-</code></pre>
+```
 
 This single line of SQL does quite a bit:
 
