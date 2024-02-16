@@ -5,7 +5,7 @@ from datasets import load_dataset
 
 pgml.init_logger()
 
-TOTAL_ROWS = 1000
+TOTAL_ROWS = 10000
 BATCH_SIZE = 1000
 OFFSET = 0
 
