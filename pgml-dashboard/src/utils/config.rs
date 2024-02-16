@@ -15,6 +15,7 @@ struct Config {
     deployment: String,
     dev_mode: bool,
     database_url: String,
+    search_database_url: String,
     git_sha: String,
     github_stars: String,
     sentry_dsn: Option<String>,
@@ -65,7 +66,8 @@ impl Config {
 
         Config {
             dev_mode,
-            database_url: env_string_default("DATABASE_URL", "postgres:///pgml"),
+            database_url: env_string_default("DATABASE_URL", "postgres:///pgml_dashboard_development"),
+            search_database_url: env_string_default("SEARCH_DATABASE_URL", "postgres:///pgml_dashboard_development"),
             git_sha: env!("GIT_SHA").to_string(),
             sentry_dsn: env_string_optional("SENTRY_DSN"),
             static_dir: env_path_default("DASHBOARD_STATIC_DIRECTORY", "static"),
@@ -89,6 +91,10 @@ pub fn dev_mode() -> bool {
 
 pub fn database_url<'a>() -> &'a str {
     &CONFIG.database_url
+}
+
+pub fn search_database_url() -> &'static str {
+    &CONFIG.search_database_url
 }
 
 pub fn git_sha<'a>() -> &'a String {

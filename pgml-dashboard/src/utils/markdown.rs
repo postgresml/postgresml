@@ -1239,7 +1239,7 @@ impl SiteSearch {
     pub async fn new() -> anyhow::Result<Self> {
         let collection = pgml::Collection::new(
             "hypercloud-site-search-c-2",
-            Some(std::env::var("SITE_SEARCH_DATABASE_URL")?),
+            Some(config::search_database_url().into()),
         );
         let pipeline = pgml::Pipeline::new(
             "hypercloud-site-search-p-0",
