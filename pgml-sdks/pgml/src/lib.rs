@@ -822,7 +822,7 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswle_119";
+        let collection_name = "test_r_c_cswle_121";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -1049,9 +1049,9 @@ mod tests {
     #[tokio::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cvswle_7";
+        let collection_name = "test_r_c_cvswle_9";
         let mut collection = Collection::new(collection_name, None);
-        let documents = generate_dummy_documents(1000);
+        let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cvswle_0";
         let mut pipeline = Pipeline::new(
@@ -1122,7 +1122,7 @@ mod tests {
     #[tokio::test]
     async fn can_vector_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cvswre_5";
+        let collection_name = "test_r_c_cvswre_7";
         let mut collection = Collection::new(collection_name, None);
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;

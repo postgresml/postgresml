@@ -139,19 +139,11 @@ pub trait RemoteEmbeddings<'a> {
             let embeddings = self.embed(chunk_texts).await?;
 
             let query_string_values = (0..embeddings.len())
-                .map(|i| {
-                    query_builder!(
-                        "($%d, $%d, (SELECT document_id FROM %s WHERE id = $%d))",
-                        i * 2 + 1,
-                        i * 2 + 2,
-                        chunks_table_name,
-                        i * 2 + 1
-                    )
-                })
+                .map(|i| query_builder!("($%d, $%d)", i * 2 + 1, i * 2 + 2))
                 .collect::<Vec<String>>()
                 .join(",");
             let query_string = format!(
-                "INSERT INTO %s (chunk_id, embedding, document_id) VALUES {}",
+                "INSERT INTO %s (chunk_id, embedding) VALUES {} ON CONFLICT (chunk_id) DO UPDATE SET embedding = EXCLUDED.embedding",
                 query_string_values
             );
 
