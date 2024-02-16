@@ -96,5 +96,4 @@ pub struct Chunk {
 pub struct TSVector {
     pub id: i64,
     pub created_at: DateTime,
-    pub document_id: i64,
 }

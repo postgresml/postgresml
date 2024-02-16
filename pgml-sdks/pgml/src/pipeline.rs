@@ -512,7 +512,6 @@ impl Pipeline {
                     queries::CREATE_EMBEDDINGS_TABLE,
                     &embeddings_table_name,
                     chunks_table_name,
-                    documents_table_name,
                     embedding_length
                 ))
                 .execute(&mut **transaction)
@@ -526,19 +525,6 @@ impl Pipeline {
                             index_name,
                             &embeddings_table_name,
                             "chunk_id"
-                        )
-                        .as_str(),
-                    )
-                    .await?;
-                let index_name = format!("{}_pipeline_embedding_document_id_index", key);
-                transaction
-                    .execute(
-                        query_builder!(
-                            queries::CREATE_INDEX,
-                            "",
-                            index_name,
-                            &embeddings_table_name,
-                            "document_id"
                         )
                         .as_str(),
                     )
@@ -571,8 +557,7 @@ impl Pipeline {
                         query_builder!(
                             queries::CREATE_CHUNKS_TSVECTORS_TABLE,
                             tsvectors_table_name,
-                            chunks_table_name,
-                            documents_table_name
+                            chunks_table_name
                         )
                         .as_str(),
                     )
@@ -586,19 +571,6 @@ impl Pipeline {
                             index_name,
                             tsvectors_table_name,
                             "chunk_id"
-                        )
-                        .as_str(),
-                    )
-                    .await?;
-                let index_name = format!("{}_pipeline_tsvector_document_id_index", key);
-                transaction
-                    .execute(
-                        query_builder!(
-                            queries::CREATE_INDEX,
-                            "",
-                            index_name,
-                            tsvectors_table_name,
-                            "document_id"
                         )
                         .as_str(),
                     )
