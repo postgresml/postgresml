@@ -17,22 +17,21 @@
         <%+ alert_banner %>
         <%+ MarketingNavbar::new( user ) %>
 
+        <% if !toc_links.is_empty() { %>
+          <div class="d-xxl-none col-xl-12 position-sticky stick-under-topnav h-100" style="z-index: calc(1020 - 1)">
+            <%+ Toc::new(&toc_links)%>
+          </div>
+        <% } %>
+
         <div class="container">
           <div class="pt-4 pb-5">
             <%+ feature_banner %>
           </div>
           <div class="row position-relative">
-
-            <% if !nav_links.is_empty() {%>
-              <div class="col-12 col-xxl-2 col-xl-3 order-1 order-xl-2 order-xxl-1">
-                <%+ LeftNav::new(&nav_links).title(&nav_title.unwrap_or_default()) %>
-              </div>
-            <% } %>
-
             <%- content.unwrap_or_default() %>
 
             <% if !toc_links.is_empty() { %>
-              <div class="d-xxl-block col-xxl-2 col-xl-12 order-2 order-xl-1 order-xxl-3 position-sticky stick-under-topnav h-100 z-1">
+              <div class="d-none d-xxl-block col-2 position-sticky stick-under-topnav h-100 z-1">
                 <%+ Toc::new(&toc_links)%>
               </div>
             <% } %>

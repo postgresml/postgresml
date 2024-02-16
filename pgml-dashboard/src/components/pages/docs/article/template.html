@@ -7,7 +7,7 @@
 
   <div class="d-flex flex-xxl-row-reverse h-100 flex-column justify-content-end">
     <% if !toc_links.is_empty() {%>
-    <div class="h-100 position-sticky stick-under-topnav sticky-container">
+    <div class="h-100 position-sticky stick-under-topnav sticky-container d-block d-xl-none d-xxl-block">
       <%+ Toc::new(&toc_links) %>
     </div>
     <% } %>

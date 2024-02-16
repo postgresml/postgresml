@@ -537,7 +537,6 @@ impl Collection {
                 let layout = layout
                     .canonical(canonical)
                     .nav_title(&self.name)
-                    .nav_links(&index)
                     .toc_links(&doc.toc_links);
 
                 Ok(ResponseOk(
