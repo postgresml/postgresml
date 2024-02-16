@@ -6,6 +6,7 @@ div[data-controller="navigation-left-nav-docs"] {
         background-color: #{$gray-800};
         padding-top: 0px;
         border-right: none;
+        min-width: $docs-left-nav-w;
         width: $docs-left-nav-w;
         position: relative;
         z-index: 0;
@@ -22,8 +23,6 @@ div[data-controller="navigation-left-nav-docs"] {
     
     .doc-leftnav {
         @extend .navbar;
-
-        max-width: $docs-left-nav-w;
     
         border: none;
         align-items: start;
@@ -31,18 +30,10 @@ div[data-controller="navigation-left-nav-docs"] {
     
         height: 100%;
         overflow: auto;
-    
-        // default hide scroll bar
-        box-sizing: content-box;
-        width: calc(100% - 40px);
-        padding-right: 28px;
-        transition: padding 0.1s;
-        // don't do this for firefox since it is already default behavior
-        @-moz-document url-prefix() {
-            padding-right: 20px;
-            box-sizing: border-box;
-            width: 100%;
-        }       
+       
+        padding-right: 20px;
+        box-sizing: border-box;
+        width: 100%;
     }
     
     .show-scroll {
@@ -57,17 +48,6 @@ div[data-controller="navigation-left-nav-docs"] {
         padding: 8px 0px 8px 8px;
         border-radius: 4px;
     }
-
-    .link-section {
-        color: #{$gray-300};
-        text-transform: capitalize;
-
-        .material-symbols-outlined {
-            color: #{$slate-shade-100};
-            font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
-            font-size: 18px;
-        }
-    }
     
     .nav-link {
         padding: 8px;
@@ -75,5 +55,9 @@ div[data-controller="navigation-left-nav-docs"] {
 
     .purple {
         color: #{$purple};
+    }
+
+    .card {
+        background-color: #{$gray-900};
     }
 }

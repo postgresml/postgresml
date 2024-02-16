@@ -38,7 +38,7 @@
     <% let max_width = 200 - level*23; %>
     <% if level == 1 {%>
     <div class="menu-item flex-grow-1 d-flex flex-row align-items-center">
-        <div class='w-100 d-flex flex-row gap-2 align-items-center <% if active || open {%><%- String::from("active") %><% } %>'>
+        <div class='w-100 d-flex flex-row gap-2 align-items-center <% if active || open {%><%- String::from("active") %><% } %> justify-content-between'>
             <a class='d-block p-2' href="<%- href %>" style='max-width: <%- max_width %>px; overflow: hidden; text-overflow: ellipsis;'>
                 <span class="text-wrap"><%- title %></span>
             </a>

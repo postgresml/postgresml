@@ -132,26 +132,6 @@
     }
 }
 
-.toc, .guides {
-    --bs-border-color: #{$gray-500};
-    .nav-link {
-        text-decoration: none;
-        --bs-nav-link-color: #{$gray-100};
-        --bs-nav-link-hover-color: #{$purple};
-
-        &.purple, &:active, &.active {
-            color: #{$purple};
-        }
-
-        &:focus:not(:hover) {
-            color: #{$gray-100}
-        }
-    }
-    @include media-breakpoint-down(xxl) {
-        border-radius: 0px;
-    }
-}
-
 .drawer-submenu-container {
     display: grid;
 
@@ -236,5 +216,16 @@
         & button, & a {
             padding: 8px 12px;
         }
+    }
+}
+
+.docs-link-section {
+    color: #{$gray-300};
+    text-transform: capitalize;
+
+    .material-symbols-outlined {
+        color: #{$slate-shade-100};
+        font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+        font-size: 18px;
     }
 }

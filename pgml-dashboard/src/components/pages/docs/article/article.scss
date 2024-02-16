@@ -8,4 +8,16 @@ div[data-controller="pages-docs-article"] {
   .article-container {
     max-width: calc($docs-content-max-width - $toc-width)
   }
+
+  .sticky-container {
+    position: relative;
+    z-index: calc($zindex-sticky - 1);
+  }
+
+  .toc-container {
+    @include media-breakpoint-up(xxl) {
+      width: 288px;
+      min-width: 288px;
+    }
+  }
 }
