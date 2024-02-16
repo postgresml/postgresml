@@ -1051,7 +1051,7 @@ mod tests {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cvswle_7";
         let mut collection = Collection::new(collection_name, None);
-        let documents = generate_dummy_documents(10);
+        let documents = generate_dummy_documents(1000);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cvswle_0";
         let mut pipeline = Pipeline::new(

@@ -60,7 +60,6 @@ CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
   created_at timestamp NOT NULL DEFAULT now(), 
   chunk_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  document_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
   embedding vector(%d) NOT NULL,
   UNIQUE (chunk_id)
 );
@@ -71,7 +70,6 @@ CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY, 
   created_at timestamp NOT NULL DEFAULT now(), 
   chunk_id int8 NOT NULL REFERENCES %s ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED, 
-  document_id int8 NOT NULL REFERENCES %s, 
   ts tsvector,
   UNIQUE (chunk_id)
 );
@@ -181,10 +179,9 @@ RETURNING id, (SELECT document FROM prev WHERE prev.id = %s.id)
 // - chunks table | "{key}_tsvectors_pkey" PRIMARY KEY, btree (id)
 // Used to generate tsvectors for specific chunks
 pub const GENERATE_TSVECTORS_FOR_CHUNK_IDS: &str = r#"
-INSERT INTO %s (chunk_id, document_id, ts) 
+INSERT INTO %s (chunk_id, ts) 
 SELECT 
   id, 
-  document_id,
   to_tsvector('%d', chunk) ts 
 FROM 
   %s
@@ -198,10 +195,9 @@ ON CONFLICT (chunk_id) DO UPDATE SET ts = EXCLUDED.ts;
 // Required indexes: None
 // Used to generate tsvectors for an entire collection
 pub const GENERATE_TSVECTORS: &str = r#"
-INSERT INTO %s (chunk_id, document_id, ts) 
+INSERT INTO %s (chunk_id, ts) 
 SELECT 
   id, 
-  document_id,
   to_tsvector('%d', chunk) ts 
 FROM 
   %s chunks
@@ -219,10 +215,9 @@ ON CONFLICT (chunk_id) DO UPDATE SET ts = EXCLUDED.ts;
 // - chunks table | "{key}_chunks_pkey" PRIMARY KEY, btree (id)
 // Used to generate embeddings for specific chunks
 pub const GENERATE_EMBEDDINGS_FOR_CHUNK_IDS: &str = r#"
-INSERT INTO %s (chunk_id, document_id, embedding) 
+INSERT INTO %s (chunk_id, embedding) 
 SELECT 
   id, 
-  document_id,
   pgml.embed(
     text => chunk, 
     transformer => $1, 
@@ -241,10 +236,9 @@ ON CONFLICT (chunk_id) DO UPDATE SET embedding = EXCLUDED.embedding
 // Required indexes: None
 // Used to generate embeddings for an entire collection
 pub const GENERATE_EMBEDDINGS: &str = r#"
-INSERT INTO %s (chunk_id, document_id, embedding) 
+INSERT INTO %s (chunk_id, embedding) 
 SELECT 
   id, 
-  document_id,
   pgml.embed(
     text => chunk, 
     transformer => $1, 

@@ -166,7 +166,7 @@ pub async fn build_vector_search_query(
         }
 
         query
-            .column((SIden::Str("embeddings"), SIden::Str("document_id")))
+            .column((SIden::Str("documents"), SIden::Str("id")))
             .column((SIden::Str("chunks"), SIden::Str("chunk")))
             .column((SIden::Str("documents"), SIden::Str("document")))
             .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
@@ -182,7 +182,7 @@ pub async fn build_vector_search_query(
                 documents_table.to_table_tuple(),
                 Alias::new("documents"),
                 Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .equals((SIden::Str("embeddings"), SIden::Str("document_id"))),
+                    .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
             )
             .limit(limit);
 
