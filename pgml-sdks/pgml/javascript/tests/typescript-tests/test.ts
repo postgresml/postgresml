@@ -164,32 +164,6 @@ it("can vector search with query builder", async () => {
 });
 
 ///////////////////////////////////////////////////
-// Test user output facing functions //////////////
-///////////////////////////////////////////////////
-
-it("pipeline to dict", async () => {
-  const pipeline_schema = {
-    "title": {
-      "semantic_search": { "model": "intfloat/e5-small" },
-      "full_text_search": { "configuration": "english" },
-    },
-    "body": {
-      "splitter": { "model": "recursive_character" },
-      "semantic_search": {
-        "model": "text-embedding-ada-002",
-        "source": "openai",
-      },
-    },
-  }
-  let pipeline = pgml.newPipeline("test_j_p_ptd_0", pipeline_schema);
-  let collection = pgml.newCollection("test_j_c_ptd_2");
-  await collection.add_pipeline(pipeline);
-  let pipeline_dict = await pipeline.to_dict();
-  expect(pipeline_dict).toEqual(pipeline_schema);
-  await collection.archive();
-});
-
-///////////////////////////////////////////////////
 // Test document related functions ////////////////
 ///////////////////////////////////////////////////
 

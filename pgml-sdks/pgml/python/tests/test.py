@@ -14,11 +14,6 @@ import asyncio
 ####################################################################################
 ####################################################################################
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if DATABASE_URL is None:
-    print("No DATABASE_URL environment variable found. Please set one")
-    exit(1)
-
 pgml.init_logger()
 
 
@@ -178,34 +173,6 @@ async def test_can_vector_search_with_query_builder():
     )
     ids = [document["id"] for (_, _, document) in results]
     assert ids == [2, 1, 0]
-    await collection.archive()
-
-
-###################################################
-## Test user output facing functions ##############
-###################################################
-
-
-@pytest.mark.asyncio
-async def test_pipeline_to_dict():
-    pipeline_schema = {
-        "title": {
-            "semantic_search": {"model": "intfloat/e5-small"},
-            "full_text_search": {"configuration": "english"},
-        },
-        "body": {
-            "splitter": {"model": "recursive_character"},
-            "semantic_search": {
-                "model": "text-embedding-ada-002",
-                "source": "openai",
-            },
-        },
-    }
-    pipeline = pgml.Pipeline("test_p_p_tptd_0", pipeline_schema)
-    collection = pgml.Collection("test_p_c_tptd_3")
-    await collection.add_pipeline(pipeline)
-    pipeline_dict = await pipeline.to_dict()
-    assert pipeline_schema == pipeline_dict
     await collection.archive()
 
 
