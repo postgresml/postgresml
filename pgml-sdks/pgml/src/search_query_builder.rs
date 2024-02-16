@@ -99,6 +99,7 @@ pub async fn build_search_query(
 
         // Build the CTE we actually use later
         let embeddings_table = format!("{}_{}.{}_embeddings", collection.name, pipeline.name, key);
+        let chunks_table = format!("{}_{}.{}_chunks", collection.name, pipeline.name, key);
         let cte_name = format!("{key}_embedding_score");
         let boost = vsa.boost.unwrap_or(1.);
         let mut score_cte_non_recursive = Query::select();
@@ -123,8 +124,22 @@ pub async fn build_search_query(
 
                 score_cte_non_recursive
                     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
-                    .column((SIden::Str("embeddings"), SIden::Str("document_id")))
-                    .expr(Expr::cust(r#"ARRAY[embeddings.document_id] as previous_document_ids"#))
+                    .column((SIden::Str("documents"), SIden::Str("id")))
+                    .join_as(
+                        JoinType::InnerJoin,
+                        chunks_table.to_table_tuple(),
+                        Alias::new("chunks"),
+                        Expr::col((SIden::Str("chunks"), SIden::Str("id")))
+                            .equals((SIden::Str("embeddings"), SIden::Str("chunk_id"))),
+                    )
+                    .join_as(
+                        JoinType::InnerJoin,
+                        documents_table.to_table_tuple(),
+                        Alias::new("documents"),
+                        Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                            .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+                    )
+                    .expr(Expr::cust(r#"ARRAY[documents.id] as previous_document_ids"#))
                     .expr(Expr::cust(format!(
                         r#"(1 - (embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector)) * {boost} AS score"#
                     )))
@@ -135,17 +150,31 @@ pub async fn build_search_query(
 
                 score_cte_recurisive
                     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
+                    .column((SIden::Str("documents"), SIden::Str("id")))
+                    .expr(Expr::cust(format!(r#""{cte_name}".previous_document_ids || documents.id"#)))
+                    .expr(Expr::cust(format!(
+                        r#"(1 - (embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector)) * {boost} AS score"#
+                    )))
+                    .and_where(Expr::cust(format!(r#"NOT documents.id = ANY("{cte_name}".previous_document_ids)"#)))
                     .join(
                         JoinType::Join,
                         SIden::String(cte_name.clone()),
                         Expr::cust("1 = 1"),
                     )
-                    .column((SIden::Str("embeddings"), SIden::Str("document_id")))
-                    .expr(Expr::cust(format!(r#""{cte_name}".previous_document_ids || embeddings.document_id"#)))
-                    .expr(Expr::cust(format!(
-                        r#"(1 - (embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector)) * {boost} AS score"#
-                    )))
-                    .and_where(Expr::cust(format!(r#"NOT embeddings.document_id = ANY("{cte_name}".previous_document_ids)"#)))
+                    .join_as(
+                        JoinType::InnerJoin,
+                        chunks_table.to_table_tuple(),
+                        Alias::new("chunks"),
+                        Expr::col((SIden::Str("chunks"), SIden::Str("id")))
+                            .equals((SIden::Str("embeddings"), SIden::Str("chunk_id"))),
+                    )
+                    .join_as(
+                        JoinType::InnerJoin,
+                        documents_table.to_table_tuple(),
+                        Alias::new("documents"),
+                        Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                            .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+                    )
                     .order_by_expr(Expr::cust(format!(
                         r#"embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector"#
                     )), Order::Asc )
@@ -177,14 +206,26 @@ pub async fn build_search_query(
 
                 score_cte_non_recursive
                     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
-                    .column((SIden::Str("embeddings"), SIden::Str("document_id")))
-                    .expr(Expr::cust(
-                        "ARRAY[embeddings.document_id] as previous_document_ids",
-                    ))
+                    .column((SIden::Str("documents"), SIden::Str("id")))
+                    .expr(Expr::cust("ARRAY[documents.id] as previous_document_ids"))
                     .expr(Expr::cust_with_values(
                         format!("(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score"),
                         [embedding.clone()],
                     ))
+                    .join_as(
+                        JoinType::InnerJoin,
+                        chunks_table.to_table_tuple(),
+                        Alias::new("chunks"),
+                        Expr::col((SIden::Str("chunks"), SIden::Str("id")))
+                            .equals((SIden::Str("embeddings"), SIden::Str("chunk_id"))),
+                    )
+                    .join_as(
+                        JoinType::InnerJoin,
+                        documents_table.to_table_tuple(),
+                        Alias::new("documents"),
+                        Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                            .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+                    )
                     .order_by_expr(
                         Expr::cust_with_values(
                             "embeddings.embedding <=> $1::vector",
@@ -201,17 +242,31 @@ pub async fn build_search_query(
                         SIden::String(cte_name.clone()),
                         Expr::cust("1 = 1"),
                     )
-                    .column((SIden::Str("embeddings"), SIden::Str("document_id")))
+                    .column((SIden::Str("documents"), SIden::Str("id")))
                     .expr(Expr::cust(format!(
-                        r#""{cte_name}".previous_document_ids || embeddings.document_id"#
+                        r#""{cte_name}".previous_document_ids || documents.id"#
                     )))
                     .expr(Expr::cust_with_values(
                         format!("(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score"),
                         [embedding.clone()],
                     ))
                     .and_where(Expr::cust(format!(
-                        r#"NOT embeddings.document_id = ANY("{cte_name}".previous_document_ids)"#
+                        r#"NOT documents.id = ANY("{cte_name}".previous_document_ids)"#
                     )))
+                    .join_as(
+                        JoinType::InnerJoin,
+                        chunks_table.to_table_tuple(),
+                        Alias::new("chunks"),
+                        Expr::col((SIden::Str("chunks"), SIden::Str("id")))
+                            .equals((SIden::Str("embeddings"), SIden::Str("chunk_id"))),
+                    )
+                    .join_as(
+                        JoinType::InnerJoin,
+                        documents_table.to_table_tuple(),
+                        Alias::new("documents"),
+                        Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                            .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+                    )
                     .order_by_expr(
                         Expr::cust_with_values(
                             "embeddings.embedding <=> $1::vector",
@@ -227,20 +282,6 @@ pub async fn build_search_query(
             let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
             score_cte_non_recursive.cond_where(filter.clone());
             score_cte_recurisive.cond_where(filter);
-            score_cte_non_recursive.join_as(
-                JoinType::InnerJoin,
-                documents_table.to_table_tuple(),
-                Alias::new("documents"),
-                Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .equals((SIden::Str("embeddings"), SIden::Str("document_id"))),
-            );
-            score_cte_recurisive.join_as(
-                JoinType::InnerJoin,
-                documents_table.to_table_tuple(),
-                Alias::new("documents"),
-                Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .equals((SIden::Str("embeddings"), SIden::Str("document_id"))),
-            );
         }
 
         let score_cte = Query::select()
@@ -264,13 +305,14 @@ pub async fn build_search_query(
 
     for (key, vma) in valid_query.query.full_text_search.unwrap_or_default() {
         let full_text_table = format!("{}_{}.{}_tsvectors", collection.name, pipeline.name, key);
+        let chunks_table = format!("{}_{}.{}_chunks", collection.name, pipeline.name, key);
         let boost = vma.boost.unwrap_or(1.0);
 
         // Build the score CTE
         let cte_name = format!("{key}_tsvectors_score");
 
         let mut score_cte_non_recursive = Query::select()
-            .column((SIden::Str("tsvectors"), SIden::Str("document_id")))
+            .column((SIden::Str("documents"), SIden::Str("id")))
             .expr_as(
                 Expr::cust_with_values(
                     format!(
@@ -281,7 +323,7 @@ pub async fn build_search_query(
                 Alias::new("score")
             )
             .expr(Expr::cust(
-                "ARRAY[tsvectors.document_id] as previous_document_ids",
+                "ARRAY[documents.id] as previous_document_ids",
             ))
             .from_as(
                 full_text_table.to_table_tuple(),
@@ -293,12 +335,26 @@ pub async fn build_search_query(
                 ),
                 [&vma.query],
             ))
+            .join_as(
+                JoinType::InnerJoin,
+                chunks_table.to_table_tuple(),
+                Alias::new("chunks"),
+                Expr::col((SIden::Str("chunks"), SIden::Str("id")))
+                    .equals((SIden::Str("tsvectors"), SIden::Str("chunk_id"))),
+            )
+            .join_as(
+                JoinType::InnerJoin,
+                documents_table.to_table_tuple(),
+                Alias::new("documents"),
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+            )
             .order_by(SIden::Str("score"), Order::Desc)
             .limit(1).
             to_owned();
 
         let mut score_cte_recursive = Query::select()
-            .column((SIden::Str("tsvectors"), SIden::Str("document_id")))
+            .column((SIden::Str("documents"), SIden::Str("id")))
             .expr_as(
                 Expr::cust_with_values(
                     format!(
@@ -309,7 +365,7 @@ pub async fn build_search_query(
                 Alias::new("score")
             )
             .expr(Expr::cust(format!(
-                r#""{cte_name}".previous_document_ids || tsvectors.document_id"#
+                r#""{cte_name}".previous_document_ids || documents.id"#
             )))
             .from_as(
                 full_text_table.to_table_tuple(),
@@ -321,7 +377,7 @@ pub async fn build_search_query(
                 Expr::cust("1 = 1"),
             )
             .and_where(Expr::cust(format!(
-                r#"NOT tsvectors.document_id = ANY("{cte_name}".previous_document_ids)"#
+                r#"NOT documents.id = ANY("{cte_name}".previous_document_ids)"#
             )))
             .and_where(Expr::cust_with_values(
                 format!(
@@ -329,6 +385,20 @@ pub async fn build_search_query(
                 ),
                 [&vma.query],
             ))
+            .join_as(
+                JoinType::InnerJoin,
+                chunks_table.to_table_tuple(),
+                Alias::new("chunks"),
+                Expr::col((SIden::Str("chunks"), SIden::Str("id")))
+                    .equals((SIden::Str("tsvectors"), SIden::Str("chunk_id"))),
+            )
+            .join_as(
+                JoinType::InnerJoin,
+                documents_table.to_table_tuple(),
+                Alias::new("documents"),
+                Expr::col((SIden::Str("documents"), SIden::Str("id")))
+                    .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
+            )
             .order_by(SIden::Str("score"), Order::Desc)
             .limit(1)
             .to_owned();
@@ -337,20 +407,6 @@ pub async fn build_search_query(
             let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
             score_cte_recursive.cond_where(filter.clone());
             score_cte_non_recursive.cond_where(filter);
-            score_cte_recursive.join_as(
-                JoinType::InnerJoin,
-                documents_table.to_table_tuple(),
-                Alias::new("documents"),
-                Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .equals((SIden::Str("tsvectors"), SIden::Str("document_id"))),
-            );
-            score_cte_non_recursive.join_as(
-                JoinType::InnerJoin,
-                documents_table.to_table_tuple(),
-                Alias::new("documents"),
-                Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .equals((SIden::Str("tsvectors"), SIden::Str("document_id"))),
-            );
         }
 
         let score_cte = Query::select()
@@ -376,7 +432,7 @@ pub async fn build_search_query(
         let score_table_names_e: Vec<SimpleExpr> = score_table_names
             .clone()
             .into_iter()
-            .map(|t| Expr::col((SIden::String(t), SIden::Str("document_id"))).into())
+            .map(|t| Expr::col((SIden::String(t), SIden::Str("id"))).into())
             .collect();
         let mut main_query = Query::select();
         for i in 1..score_table_names_e.len() {
@@ -384,7 +440,7 @@ pub async fn build_search_query(
                 SIden::String(score_table_names[i].to_string()),
                 Expr::col((
                     SIden::String(score_table_names[i].to_string()),
-                    SIden::Str("document_id"),
+                    SIden::Str("id"),
                 ))
                 .eq(Func::coalesce(score_table_names_e[0..i].to_vec())),
             );
@@ -428,7 +484,7 @@ pub async fn build_search_query(
         // Insert into search_results table
         let search_results_table = format!("{}_{}.search_results", collection.name, pipeline.name);
         let jsonb_builder = score_table_names.iter().fold(String::new(), |acc, t| {
-            format!("{acc}, '{t}', (SELECT score FROM {t} WHERE document_id = main.id)")
+            format!("{acc}, '{t}', (SELECT score FROM {t} WHERE {t}.id = main.id)")
         });
         let jsonb_builder = format!("JSONB_BUILD_OBJECT('total', score{jsonb_builder})");
         let search_results_insert_query = Query::insert()
