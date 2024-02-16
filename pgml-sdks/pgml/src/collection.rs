@@ -146,14 +146,22 @@ impl Collection {
     /// use pgml::Collection;
     /// let collection = Collection::new("my_collection", None);
     /// ```
-    pub fn new(name: &str, database_url: Option<String>) -> Self {
+    pub fn new(name: &str, database_url: Option<String>) -> anyhow::Result<Self> {
+        if !name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c.is_whitespace() || c == '-' || c == '_')
+        {
+            anyhow::bail!(
+                "Name must only consist of letters, numebers, white space, and '-' or '_'"
+            )
+        }
         let (
             pipelines_table_name,
             documents_table_name,
             chunks_table_name,
             documents_tsvectors_table_name,
         ) = Self::generate_table_names(name);
-        Self {
+        Ok(Self {
             name: name.to_string(),
             database_url,
             pipelines_table_name,
@@ -161,7 +169,7 @@ impl Collection {
             chunks_table_name,
             documents_tsvectors_table_name,
             database_data: None,
-        }
+        })
     }
 
     #[instrument(skip(self))]

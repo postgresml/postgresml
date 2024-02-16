@@ -278,7 +278,7 @@ mod tests {
     #[tokio::test]
     async fn can_create_collection() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_ccc_0", None);
+        let mut collection = Collection::new("test_r_c_ccc_0", None)?;
         assert!(collection.database_data.is_none());
         collection.verify_in_database(false).await?;
         assert!(collection.database_data.is_some());
@@ -290,7 +290,7 @@ mod tests {
     async fn can_add_remove_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut pipeline = Pipeline::new("test_p_carp_58", Some(json!({}).into()))?;
-        let mut collection = Collection::new("test_r_c_carp_1", None);
+        let mut collection = Collection::new("test_r_c_carp_1", None)?;
         assert!(collection.database_data.is_none());
         collection.add_pipeline(&mut pipeline).await?;
         assert!(collection.database_data.is_some());
@@ -306,7 +306,7 @@ mod tests {
         internal_init_logger(None, None).ok();
         let mut pipeline1 = Pipeline::new("test_r_p_carps_1", Some(json!({}).into()))?;
         let mut pipeline2 = Pipeline::new("test_r_p_carps_2", Some(json!({}).into()))?;
-        let mut collection = Collection::new("test_r_c_carps_11", None);
+        let mut collection = Collection::new("test_r_c_carps_11", None)?;
         collection.add_pipeline(&mut pipeline1).await?;
         collection.add_pipeline(&mut pipeline2).await?;
         let pipelines = collection.get_pipelines().await?;
@@ -351,7 +351,7 @@ mod tests {
                 .into(),
             ),
         )?;
-        let mut collection = Collection::new(collection_name, None);
+        let mut collection = Collection::new(collection_name, None)?;
         collection.add_pipeline(&mut pipeline).await?;
         let documents = generate_dummy_documents(2);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -391,7 +391,7 @@ mod tests {
     async fn can_upsert_documents_and_add_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cudaap_51";
-        let mut collection = Collection::new(collection_name, None);
+        let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(2);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cudaap_9";
@@ -455,7 +455,7 @@ mod tests {
     #[tokio::test]
     async fn disable_enable_pipeline() -> anyhow::Result<()> {
         let mut pipeline = Pipeline::new("test_p_dep_1", Some(json!({}).into()))?;
-        let mut collection = Collection::new("test_r_c_dep_1", None);
+        let mut collection = Collection::new("test_r_c_dep_1", None)?;
         collection.add_pipeline(&mut pipeline).await?;
         let queried_pipeline = &collection.get_pipelines().await?[0];
         assert_eq!(pipeline.name, queried_pipeline.name);
@@ -473,7 +473,7 @@ mod tests {
     async fn can_upsert_documents_and_enable_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cudaep_43";
-        let mut collection = Collection::new(collection_name, None);
+        let mut collection = Collection::new(collection_name, None)?;
         let pipeline_name = "test_r_p_cudaep_9";
         let mut pipeline = Pipeline::new(
             pipeline_name,
@@ -514,7 +514,7 @@ mod tests {
     async fn random_pipelines_documents_test() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_rpdt_3";
-        let mut collection = Collection::new(collection_name, None);
+        let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(6);
         collection
             .upsert_documents(documents[..2].to_owned(), None)
@@ -666,7 +666,7 @@ mod tests {
     async fn pipeline_sync_status() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_pss_5";
-        let mut collection = Collection::new(collection_name, None);
+        let mut collection = Collection::new(collection_name, None)?;
         let pipeline_name = "test_r_p_pss_0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
@@ -774,7 +774,7 @@ mod tests {
     async fn can_specify_custom_hnsw_parameters_for_pipelines() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cschpfp_4";
-        let mut collection = Collection::new(collection_name, None);
+        let mut collection = Collection::new(collection_name, None)?;
         let pipeline_name = "test_r_p_cschpfp_0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
@@ -822,7 +822,7 @@ mod tests {
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cswle_121";
-        let mut collection = Collection::new(collection_name, None);
+        let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cswle_9";
@@ -966,8 +966,8 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswre_66";
-        let mut collection = Collection::new(collection_name, None);
+        let collection_name = "test r_c_cswre_66";
+        let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cswre_8";
@@ -1048,8 +1048,8 @@ mod tests {
     #[tokio::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cvswle_9";
-        let mut collection = Collection::new(collection_name, None);
+        let collection_name = "test r_c_cvswle_9";
+        let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cvswle_0";
@@ -1121,8 +1121,8 @@ mod tests {
     #[tokio::test]
     async fn can_vector_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cvswre_7";
-        let mut collection = Collection::new(collection_name, None);
+        let collection_name = "test r_c_cvswre_7";
+        let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
         let pipeline_name = "test_r_p_cvswre_0";
@@ -1190,7 +1190,7 @@ mod tests {
     #[tokio::test]
     async fn can_vector_search_with_query_builder() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cvswqb_7", None);
+        let mut collection = Collection::new("test r_c_cvswqb_7", None)?;
         let mut pipeline = Pipeline::new(
             "test_r_p_cvswqb_0",
             Some(
@@ -1247,7 +1247,7 @@ mod tests {
     #[tokio::test]
     async fn can_upsert_and_filter_get_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cuafgd_1", None);
+        let mut collection = Collection::new("test r_c_cuafgd_1", None)?;
 
         let documents = vec![
             serde_json::json!({"id": 1, "random_key": 10, "text": "hello world 1"}).into(),
@@ -1300,7 +1300,7 @@ mod tests {
     #[tokio::test]
     async fn can_paginate_get_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cpgd_2", None);
+        let mut collection = Collection::new("test_r_c_cpgd_2", None)?;
         collection
             .upsert_documents(generate_dummy_documents(10), None)
             .await?;
@@ -1382,7 +1382,7 @@ mod tests {
     #[tokio::test]
     async fn can_filter_and_paginate_get_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cfapgd_1", None);
+        let mut collection = Collection::new("test_r_c_cfapgd_1", None)?;
 
         collection
             .upsert_documents(generate_dummy_documents(10), None)
@@ -1439,7 +1439,7 @@ mod tests {
     #[tokio::test]
     async fn can_filter_and_delete_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cfadd_1", None);
+        let mut collection = Collection::new("test_r_c_cfadd_1", None)?;
         collection
             .upsert_documents(generate_dummy_documents(10), None)
             .await?;
@@ -1483,7 +1483,7 @@ mod tests {
     #[tokio::test]
     async fn can_order_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cod_1", None);
+        let mut collection = Collection::new("test_r_c_cod_1", None)?;
         collection
             .upsert_documents(
                 vec![
@@ -1563,7 +1563,7 @@ mod tests {
     #[tokio::test]
     async fn can_update_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cud_5", None);
+        let mut collection = Collection::new("test_r_c_cud_5", None)?;
         collection
             .upsert_documents(
                 vec![
@@ -1628,7 +1628,7 @@ mod tests {
     #[tokio::test]
     async fn can_merge_metadata() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cmm_5", None);
+        let mut collection = Collection::new("test_r_c_cmm_5", None)?;
         collection
             .upsert_documents(
                 vec![
@@ -1759,7 +1759,7 @@ mod tests {
                 .into(),
             ),
         )?;
-        let mut collection = Collection::new("test_r_c_ged_2", None);
+        let mut collection = Collection::new("test_r_c_ged_2", None)?;
         collection.add_pipeline(&mut pipeline).await?;
         let diagram = collection.generate_er_diagram(&mut pipeline).await?;
         assert!(!diagram.is_empty());
