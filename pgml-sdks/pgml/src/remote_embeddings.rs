@@ -1,17 +1,9 @@
 use reqwest::{Client, RequestBuilder};
-use sqlx::{postgres::PgPool, Postgres, Transaction};
+use sqlx::PgConnection;
 use std::env;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tracing::instrument;
 
 use crate::{model::ModelRuntime, models, query_builder, types::Json};
-
-#[derive(Clone, Debug)]
-pub enum PoolOrArcMutextTransaction {
-    Pool(PgPool),
-    ArcMutextTransaction(Arc<Mutex<Transaction<'static, Postgres>>>),
-}
 
 pub fn build_remote_embeddings<'a>(
     source: ModelRuntime,
@@ -55,7 +47,7 @@ pub trait RemoteEmbeddings<'a> {
         embeddings_table_name: &str,
         chunks_table_name: &str,
         chunk_ids: Option<&Vec<i64>>,
-        mut db_executor: PoolOrArcMutextTransaction,
+        connection: &mut PgConnection,
         limit: Option<i64>,
     ) -> anyhow::Result<Vec<models::Chunk>> {
         // Requires _query_text be declared out here so it lives long enough
@@ -79,13 +71,10 @@ pub trait RemoteEmbeddings<'a> {
             }
         };
 
-        match &mut db_executor {
-            PoolOrArcMutextTransaction::Pool(pool) => query.fetch_all(&*pool).await,
-            PoolOrArcMutextTransaction::ArcMutextTransaction(transaction) => {
-                query.fetch_all(&mut **transaction.lock().await).await
-            }
-        }
-        .map_err(|e| anyhow::anyhow!(e))
+        query
+            .fetch_all(connection)
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     #[instrument(skip(self, response))]
@@ -117,7 +106,7 @@ pub trait RemoteEmbeddings<'a> {
         embeddings_table_name: &str,
         chunks_table_name: &str,
         mut chunk_ids: Option<&Vec<i64>>,
-        mut db_executor: PoolOrArcMutextTransaction,
+        connection: &mut PgConnection,
     ) -> anyhow::Result<()> {
         loop {
             let chunks = self
@@ -125,7 +114,7 @@ pub trait RemoteEmbeddings<'a> {
                     embeddings_table_name,
                     chunks_table_name,
                     chunk_ids,
-                    db_executor.clone(),
+                    connection,
                     None,
                 )
                 .await?;
@@ -154,12 +143,7 @@ pub trait RemoteEmbeddings<'a> {
                 query = query.bind(retrieved_chunk_ids[i]).bind(&embeddings[i]);
             }
 
-            match &mut db_executor {
-                PoolOrArcMutextTransaction::Pool(pool) => query.execute(&*pool).await,
-                PoolOrArcMutextTransaction::ArcMutextTransaction(transaction) => {
-                    query.execute(&mut **transaction.lock().await).await
-                }
-            }?;
+            query.execute(&mut *connection).await?;
 
             // Set it to none so if it is not None, we don't just retrived the same chunks over and over
             chunk_ids = None;

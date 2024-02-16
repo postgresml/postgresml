@@ -59,12 +59,11 @@ static DATABASE_POOLS: RwLock<Option<HashMap<String, PgPool>>> = RwLock::new(Non
 async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result<PgPool> {
     let mut pools = DATABASE_POOLS.write();
     let pools = pools.get_or_insert_with(HashMap::new);
-    let environment_url = std::env::var("DATABASE_URL");
-    let environment_url = environment_url.as_deref();
-    let url = database_url
-        .as_deref()
-        .unwrap_or_else(|| environment_url.expect("Please set DATABASE_URL environment variable"));
-    if let Some(pool) = pools.get(url) {
+    let url = database_url.clone().unwrap_or_else(|| {
+        std::env::var("PGML_DATABASE_URL").unwrap_or_else(|_|
+            std::env::var("DATABASE_URL").expect("Please set PGML_DATABASE_URL environment variable or explicitly pass a database connection string to your collection"))
+    });
+    if let Some(pool) = pools.get(&url) {
         Ok(pool.clone())
     } else {
         let timeout = std::env::var("PGML_CHECKOUT_TIMEOUT")
@@ -74,7 +73,7 @@ async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result
 
         let pool = PgPoolOptions::new()
             .acquire_timeout(std::time::Duration::from_millis(timeout))
-            .connect_lazy(url)?;
+            .connect_lazy(&url)?;
 
         pools.insert(url.to_string(), pool.clone());
         Ok(pool)
@@ -693,7 +692,7 @@ mod tests {
         collection
             .upsert_documents(documents[..2].to_owned(), None)
             .await?;
-        let status = pipeline.get_status().await?;
+        let status = collection.get_pipeline_status(&mut pipeline).await?;
         assert_eq!(
             status.0,
             json!({
@@ -720,7 +719,7 @@ mod tests {
         collection
             .upsert_documents(documents[2..4].to_owned(), None)
             .await?;
-        let status = pipeline.get_status().await?;
+        let status = collection.get_pipeline_status(&mut pipeline).await?;
         assert_eq!(
             status.0,
             json!({
@@ -744,7 +743,7 @@ mod tests {
             })
         );
         collection.enable_pipeline(&mut pipeline).await?;
-        let status = pipeline.get_status().await?;
+        let status = collection.get_pipeline_status(&mut pipeline).await?;
         assert_eq!(
             status.0,
             json!({

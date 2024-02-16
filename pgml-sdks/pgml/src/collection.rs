@@ -11,10 +11,8 @@ use sqlx::PgConnection;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::Arc;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
-use tokio::sync::Mutex;
 use tracing::{instrument, warn};
 use walkdir::WalkDir;
 
@@ -284,7 +282,6 @@ impl Collection {
             .as_ref()
             .context("Database data must be set to add a pipeline to a collection")?
             .project_info;
-        pipeline.set_project_info(project_info.clone());
 
         // Let's check if we already have it enabled
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -302,11 +299,15 @@ impl Collection {
         } else {
             // We want to intentially throw an error if they have already added this pipeline
             // as we don't want to casually resync
-            pipeline.verify_in_database(true).await?;
+            pipeline
+                .verify_in_database(project_info, true, &pool)
+                .await?;
 
             let mp = MultiProgress::new();
             mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
-            pipeline.resync().await?;
+            pipeline
+                .resync(project_info, pool.acquire().await?.as_mut())
+                .await?;
             mp.println(format!("Done Syncing {}\n", pipeline.name))?;
         }
         Ok(())
@@ -339,11 +340,7 @@ impl Collection {
         // 4. Delete the pipeline from the collection.pipelines table
         // 5. Commit the transaction
         self.verify_in_database(false).await?;
-        let project_info = &self
-            .database_data
-            .as_ref()
-            .context("Database data must be set to remove a pipeline from a collection")?
-            .project_info;
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let pipeline_schema = format!("{}_{}", project_info.name, pipeline.name);
 
@@ -385,14 +382,20 @@ impl Collection {
         // The flow for this function:
         // 1. Set ACTIVE = TRUE for the pipeline in collection.pipelines
         // 2. Resync the pipeline
+        // TOOD: Review this pattern
+        self.verify_in_database(false).await?;
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
+        let pool = get_or_initialize_pool(&self.database_url).await?;
         sqlx::query(&query_builder!(
             "UPDATE %s SET active = TRUE WHERE name = $1",
             self.pipelines_table_name
         ))
         .bind(&pipeline.name)
-        .execute(&get_or_initialize_pool(&self.database_url).await?)
+        .execute(&pool)
         .await?;
-        pipeline.resync().await
+        pipeline
+            .resync(project_info, pool.acquire().await?.as_mut())
+            .await
     }
 
     /// Disables a [Pipeline] on the [Collection]
@@ -478,14 +481,27 @@ impl Collection {
         // The flow for this function
         // 1. Create the collection if it does not exist
         // 2. Get all pipelines where ACTIVE = TRUE
+        // -> Foreach pipeline get the parsed schema
         // 4. Foreach n documents
         // -> Begin a transaction returning the old document if it existed
         // -> Insert the document
         // -> Foreach pipeline check if we need to resync the document and if so sync the document
         // -> Commit the transaction
-        let pool = get_or_initialize_pool(&self.database_url).await?;
         self.verify_in_database(false).await?;
         let mut pipelines = self.get_pipelines().await?;
+
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+
+        let mut parsed_schemas = vec![];
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
+        for pipeline in &mut pipelines {
+            let parsed_schema = pipeline
+                .get_parsed_schema(project_info, &pool)
+                .await
+                .expect("Error getting parsed schema for pipeline");
+            parsed_schemas.push(parsed_schema);
+        }
+        let mut pipelines: Vec<(Pipeline, _)> = pipelines.into_iter().zip(parsed_schemas).collect();
 
         let args = args.unwrap_or_default();
         let args = args.as_object().context("args must be a JSON object")?;
@@ -586,6 +602,7 @@ impl Collection {
                 .bind(source_uuids)
                 .fetch_all(&mut *transaction)
                 .await?;
+
             let dp: Vec<(i64, Json, Option<Json>)> = results
                 .into_iter()
                 .zip(batch)
@@ -594,40 +611,24 @@ impl Collection {
                 })
                 .collect();
 
-            let transaction = Arc::new(Mutex::new(transaction));
-            if !pipelines.is_empty() {
-                use futures::stream::StreamExt;
-                futures::stream::iter(&mut pipelines)
-                    // Need this map to get around moving the transaction
-                    .map(|pipeline| (pipeline, dp.clone(), transaction.clone()))
-                    .for_each_concurrent(10, |(pipeline, db, transaction)| async move {
-                        let parsed_schema = pipeline
-                            .get_parsed_schema()
-                            .await
-                            .expect("Error getting parsed schema for pipeline");
-                        let ids_to_run_on: Vec<i64> = db
-                            .into_iter()
-                            .filter(|(_, document, previous_document)| match previous_document {
-                                Some(previous_document) => parsed_schema
-                                    .iter()
-                                    .any(|(key, _)| document[key] != previous_document[key]),
-                                None => true,
-                            })
-                            .map(|(document_id, _, _)| document_id)
-                            .collect();
-                        pipeline
-                            .sync_documents(ids_to_run_on, transaction)
-                            .await
-                            .expect("Failed to execute pipeline");
+            for (pipeline, parsed_schema) in &mut pipelines {
+                let ids_to_run_on: Vec<i64> = dp
+                    .iter()
+                    .filter(|(_, document, previous_document)| match previous_document {
+                        Some(previous_document) => parsed_schema
+                            .iter()
+                            .any(|(key, _)| document[key] != previous_document[key]),
+                        None => true,
                     })
-                    .await;
+                    .map(|(document_id, _, _)| *document_id)
+                    .collect();
+                pipeline
+                    .sync_documents(ids_to_run_on, project_info, &mut transaction)
+                    .await
+                    .expect("Failed to execute pipeline");
             }
 
-            Arc::into_inner(transaction)
-                .context("Error transaction dangling")?
-                .into_inner()
-                .commit()
-                .await?;
+            transaction.commit().await?;
             progress_bar.inc(batch_size);
         }
         progress_bar.println("Done Upserting Documents\n");
@@ -758,13 +759,10 @@ impl Collection {
                 Some(d) => {
                     if d.code() == Some(Cow::from("XX000")) {
                         self.verify_in_database(false).await?;
-                        let project_info = &self
-                            .database_data
-                            .as_ref()
-                            .context("Database data must be set to do remote embeddings search")?
-                            .project_info;
-                        pipeline.set_project_info(project_info.to_owned());
-                        pipeline.verify_in_database(false).await?;
+                        let project_info = &self.database_data.as_ref().unwrap().project_info;
+                        pipeline
+                            .verify_in_database(project_info, false, &pool)
+                            .await?;
                         let (built_query, values) =
                             build_search_query(self, query, pipeline).await?;
                         let results: (Json,) = sqlx::query_as_with(&built_query, values)
@@ -874,13 +872,10 @@ impl Collection {
                 Some(d) => {
                     if d.code() == Some(Cow::from("XX000")) {
                         self.verify_in_database(false).await?;
-                        let project_info = &self
-                            .database_data
-                            .as_ref()
-                            .context("Database data must be set to do remote embeddings search")?
-                            .project_info;
-                        pipeline.set_project_info(project_info.to_owned());
-                        pipeline.verify_in_database(false).await?;
+                        let project_info = &self.database_data.as_ref().unwrap().project_info;
+                        pipeline
+                            .verify_in_database(project_info, false, &pool)
+                            .await?;
                         let (built_query, values) =
                             build_vector_search_query(query, self, pipeline).await?;
                         let results: Vec<(Json, String, f64)> =
@@ -966,11 +961,6 @@ impl Collection {
     #[instrument(skip(self))]
     pub async fn get_pipelines(&mut self) -> anyhow::Result<Vec<Pipeline>> {
         self.verify_in_database(false).await?;
-        let project_info = &self
-            .database_data
-            .as_ref()
-            .context("Database data must be set to get collection pipelines")?
-            .project_info;
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let pipelines: Vec<models::Pipeline> = sqlx::query_as(&query_builder!(
             "SELECT * FROM %s WHERE active = TRUE",
@@ -978,15 +968,7 @@ impl Collection {
         ))
         .fetch_all(&pool)
         .await?;
-
-        pipelines
-            .into_iter()
-            .map(|p| {
-                let mut p: Pipeline = p.try_into()?;
-                p.set_project_info(project_info.clone());
-                Ok(p)
-            })
-            .collect()
+        pipelines.into_iter().map(|p| p.try_into()).collect()
     }
 
     /// Gets a [Pipeline] by name
@@ -1005,11 +987,6 @@ impl Collection {
     #[instrument(skip(self))]
     pub async fn get_pipeline(&mut self, name: &str) -> anyhow::Result<Pipeline> {
         self.verify_in_database(false).await?;
-        let project_info = &self
-            .database_data
-            .as_ref()
-            .context("Database data must be set to get collection pipelines")?
-            .project_info;
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let pipeline: models::Pipeline = sqlx::query_as(&query_builder!(
             "SELECT * FROM %s WHERE name = $1 AND active = TRUE LIMIT 1",
@@ -1018,20 +995,7 @@ impl Collection {
         .bind(name)
         .fetch_one(&pool)
         .await?;
-        let mut pipeline: Pipeline = pipeline.try_into()?;
-        pipeline.set_project_info(project_info.clone());
-        Ok(pipeline)
-    }
-
-    #[instrument(skip(self))]
-    pub(crate) async fn get_project_info(&mut self) -> anyhow::Result<ProjectInfo> {
-        self.verify_in_database(false).await?;
-        Ok(self
-            .database_data
-            .as_ref()
-            .context("Collection must be verified to get project info")?
-            .project_info
-            .clone())
+        pipeline.try_into()
     }
 
     /// Check if the [Collection] exists in the database
@@ -1134,9 +1098,20 @@ impl Collection {
         Ok(())
     }
 
+    pub async fn get_pipeline_status(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
+        self.verify_in_database(false).await?;
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        pipeline.get_status(project_info, &pool).await
+    }
+
     pub async fn generate_er_diagram(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<String> {
         self.verify_in_database(false).await?;
-        pipeline.verify_in_database(false).await?;
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        pipeline
+            .verify_in_database(project_info, false, &pool)
+            .await?;
 
         let parsed_schema = pipeline
             .parsed_schema
@@ -1217,7 +1192,6 @@ entity "{schema}.{key}_embeddings" as {nice_name_key}_embeddings {{
     --
     created_at : timestamp without time zone
     chunk_id : bigint
-    document_id : bigint
     embedding : vector
 }}
                         "#
@@ -1233,7 +1207,6 @@ entity "{schema}.{key}_tsvectors" as {nice_name_key}_tsvectors {{
     --
     created_at : timestamp without time zone
     chunk_id : bigint
-    document_id : bigint
     tsvectors : tsvector
 }}
                         "#

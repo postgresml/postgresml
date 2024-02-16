@@ -2,17 +2,13 @@ use anyhow::Context;
 use rust_bridge::{alias, alias_methods};
 use serde::Deserialize;
 use serde_json::json;
-use sqlx::{Executor, PgConnection, PgPool, Postgres, Transaction};
+use sqlx::{Executor, PgConnection, Pool, Postgres, Transaction};
 use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tracing::instrument;
 
 use crate::debug_sqlx_query;
-use crate::remote_embeddings::PoolOrArcMutextTransaction;
 use crate::{
     collection::ProjectInfo,
-    get_or_initialize_pool,
     model::{Model, ModelRuntime},
     models, queries, query_builder,
     remote_embeddings::build_remote_embeddings,
@@ -184,7 +180,6 @@ pub struct Pipeline {
     pub name: String,
     pub schema: Option<Json>,
     pub parsed_schema: Option<ParsedSchema>,
-    project_info: Option<ProjectInfo>,
     database_data: Option<PipelineDatabaseData>,
 }
 
@@ -206,7 +201,7 @@ fn json_to_schema(schema: &Json) -> anyhow::Result<ParsedSchema> {
         })
 }
 
-#[alias_methods(new, get_status, to_dict)]
+#[alias_methods(new)]
 impl Pipeline {
     pub fn new(name: &str, schema: Option<Json>) -> anyhow::Result<Self> {
         let parsed_schema = schema.as_ref().map(json_to_schema).transpose()?;
@@ -214,7 +209,6 @@ impl Pipeline {
             name: name.to_string(),
             schema,
             parsed_schema,
-            project_info: None,
             database_data: None,
         })
     }
@@ -235,17 +229,15 @@ impl Pipeline {
     /// }
     /// ```
     #[instrument(skip(self))]
-    pub async fn get_status(&mut self) -> anyhow::Result<Json> {
-        self.verify_in_database(false).await?;
+    pub async fn get_status(
+        &mut self,
+        project_info: &ProjectInfo,
+        pool: &Pool<Postgres>,
+    ) -> anyhow::Result<Json> {
         let parsed_schema = self
             .parsed_schema
             .as_ref()
             .context("Pipeline must have schema to get status")?;
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to get status")?;
-        let pool = self.get_pool().await?;
 
         let mut results = json!({});
 
@@ -262,7 +254,7 @@ impl Pipeline {
                     chunks_table_name,
                     documents_table_name
                 ))
-                .fetch_one(&pool)
+                .fetch_one(pool)
                 .await?;
                 results[key]["chunks"] = json!({
                     "synced": chunks_status.0.unwrap_or(0),
@@ -279,7 +271,7 @@ impl Pipeline {
                         embeddings_table_name,
                         chunks_table_name
                     ))
-                    .fetch_one(&pool)
+                    .fetch_one(pool)
                     .await?;
                 results[key]["embeddings"] = json!({
                     "synced": embeddings_status.0.unwrap_or(0),
@@ -295,7 +287,7 @@ impl Pipeline {
                     tsvectors_table_name,
                     chunks_table_name
                 ))
-                .fetch_one(&pool)
+                .fetch_one(pool)
                 .await?;
                 results[key]["tsvectors"] = json!({
                     "synced": tsvectors_status.0.unwrap_or(0),
@@ -308,21 +300,19 @@ impl Pipeline {
     }
 
     #[instrument(skip(self))]
-    pub(crate) async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
+    pub(crate) async fn verify_in_database(
+        &mut self,
+        project_info: &ProjectInfo,
+        throw_if_exists: bool,
+        pool: &Pool<Postgres>,
+    ) -> anyhow::Result<()> {
         if self.database_data.is_none() {
-            let pool = self.get_pool().await?;
-
-            let project_info = self
-                .project_info
-                .as_ref()
-                .context("Cannot verify pipeline without project info")?;
-
             let pipeline: Option<models::Pipeline> = sqlx::query_as(&query_builder!(
                 "SELECT * FROM %s WHERE name = $1",
                 format!("{}.pipelines", project_info.name)
             ))
             .bind(&self.name)
-            .fetch_optional(&pool)
+            .fetch_optional(pool)
             .await?;
 
             let pipeline = if let Some(pipeline) = pipeline {
@@ -334,12 +324,16 @@ impl Pipeline {
 
                 for (_key, value) in parsed_schema.iter_mut() {
                     if let Some(splitter) = &mut value.splitter {
-                        splitter.model.set_project_info(project_info.clone());
-                        splitter.model.verify_in_database(false).await?;
+                        splitter
+                            .model
+                            .verify_in_database(project_info, false, pool)
+                            .await?;
                     }
                     if let Some(embed) = &mut value.semantic_search {
-                        embed.model.set_project_info(project_info.clone());
-                        embed.model.verify_in_database(false).await?;
+                        embed
+                            .model
+                            .verify_in_database(project_info, false, pool)
+                            .await?;
                     }
                 }
                 self.schema = Some(pipeline.schema.clone());
@@ -355,12 +349,16 @@ impl Pipeline {
 
                 for (_key, value) in parsed_schema.iter_mut() {
                     if let Some(splitter) = &mut value.splitter {
-                        splitter.model.set_project_info(project_info.clone());
-                        splitter.model.verify_in_database(false).await?;
+                        splitter
+                            .model
+                            .verify_in_database(project_info, false, pool)
+                            .await?;
                     }
                     if let Some(embed) = &mut value.semantic_search {
-                        embed.model.set_project_info(project_info.clone());
-                        embed.model.verify_in_database(false).await?;
+                        embed
+                            .model
+                            .verify_in_database(project_info, false, pool)
+                            .await?;
                     }
                 }
                 self.parsed_schema = Some(parsed_schema);
@@ -376,7 +374,7 @@ impl Pipeline {
                 .bind(&self.schema)
                 .fetch_one(&mut *transaction)
                 .await?;
-                self.create_tables(&mut transaction).await?;
+                self.create_tables(project_info, &mut transaction).await?;
                 transaction.commit().await?;
 
                 pipeline
@@ -392,12 +390,9 @@ impl Pipeline {
     #[instrument(skip(self))]
     async fn create_tables(
         &mut self,
+        project_info: &ProjectInfo,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<()> {
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to create_or_get_tables")?;
         let collection_name = &project_info.name;
         let documents_table_name = format!("{}.documents", collection_name);
 
@@ -597,10 +592,9 @@ impl Pipeline {
     pub(crate) async fn sync_documents(
         &mut self,
         document_ids: Vec<i64>,
-        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
+        project_info: &ProjectInfo,
+        transaction: &mut Transaction<'static, Postgres>,
     ) -> anyhow::Result<()> {
-        self.verify_in_database(false).await?;
-
         // We are assuming we have manually verified the pipeline before doing this
         let parsed_schema = self
             .parsed_schema
@@ -613,7 +607,8 @@ impl Pipeline {
                     key,
                     value.splitter.as_ref().map(|v| &v.model),
                     &document_ids,
-                    transaction.clone(),
+                    project_info,
+                    transaction,
                 )
                 .await?;
             if !chunk_ids.is_empty() {
@@ -622,7 +617,8 @@ impl Pipeline {
                         key,
                         &embed.model,
                         &chunk_ids,
-                        transaction.clone(),
+                        project_info,
+                        transaction,
                     )
                     .await?;
                 }
@@ -631,7 +627,8 @@ impl Pipeline {
                         key,
                         &full_text_search.configuration,
                         &chunk_ids,
-                        transaction.clone(),
+                        project_info,
+                        transaction,
                     )
                     .await?;
                 }
@@ -646,13 +643,9 @@ impl Pipeline {
         key: &str,
         splitter: Option<&Splitter>,
         document_ids: &Vec<i64>,
-        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
+        project_info: &ProjectInfo,
+        transaction: &mut Transaction<'static, Postgres>,
     ) -> anyhow::Result<Vec<i64>> {
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to sync chunks")?;
-
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let documents_table_name = format!("{}.documents", project_info.name);
         let json_key_query = format!("document->>'{}'", key);
@@ -679,7 +672,7 @@ impl Pipeline {
             sqlx::query_scalar(&query)
                 .bind(splitter_database_data.id)
                 .bind(document_ids)
-                .fetch_all(&mut **transaction.lock().await)
+                .fetch_all(&mut **transaction)
                 .await
                 .map_err(anyhow::Error::msg)
         } else {
@@ -694,7 +687,7 @@ impl Pipeline {
             debug_sqlx_query!(GENERATE_CHUNKS_FOR_DOCUMENT_IDS, query, document_ids);
             sqlx::query_scalar(&query)
                 .bind(document_ids)
-                .fetch_all(&mut **transaction.lock().await)
+                .fetch_all(&mut **transaction)
                 .await
                 .map_err(anyhow::Error::msg)
         }
@@ -706,7 +699,8 @@ impl Pipeline {
         key: &str,
         model: &Model,
         chunk_ids: &Vec<i64>,
-        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
+        project_info: &ProjectInfo,
+        transaction: &mut Transaction<'static, Postgres>,
     ) -> anyhow::Result<()> {
         // Remove the stored name from the parameters
         let mut parameters = model.parameters.clone();
@@ -714,11 +708,6 @@ impl Pipeline {
             .as_object_mut()
             .context("Model parameters must be an object")?
             .remove("name");
-
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to sync chunks")?;
 
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let embeddings_table_name =
@@ -742,7 +731,7 @@ impl Pipeline {
                     .bind(&model.name)
                     .bind(&parameters)
                     .bind(chunk_ids)
-                    .execute(&mut **transaction.lock().await)
+                    .execute(&mut **transaction)
                     .await?;
             }
             r => {
@@ -752,7 +741,7 @@ impl Pipeline {
                         &embeddings_table_name,
                         &chunks_table_name,
                         Some(chunk_ids),
-                        PoolOrArcMutextTransaction::ArcMutextTransaction(transaction),
+                        transaction,
                     )
                     .await?;
             }
@@ -766,12 +755,9 @@ impl Pipeline {
         key: &str,
         configuration: &str,
         chunk_ids: &Vec<i64>,
-        transaction: Arc<Mutex<Transaction<'static, Postgres>>>,
+        project_info: &ProjectInfo,
+        transaction: &mut Transaction<'static, Postgres>,
     ) -> anyhow::Result<()> {
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to sync TSVectors")?;
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let tsvectors_table_name = format!("{}_{}.{}_tsvectors", project_info.name, self.name, key);
         let query = query_builder!(
@@ -783,52 +769,63 @@ impl Pipeline {
         debug_sqlx_query!(GENERATE_TSVECTORS_FOR_CHUNK_IDS, query, chunk_ids);
         sqlx::query(&query)
             .bind(chunk_ids)
-            .execute(&mut **transaction.lock().await)
+            .execute(&mut **transaction)
             .await?;
         Ok(())
     }
 
     #[instrument(skip(self))]
-    pub(crate) async fn resync(&mut self) -> anyhow::Result<()> {
-        self.verify_in_database(false).await?;
+    pub(crate) async fn resync(
+        &mut self,
+        project_info: &ProjectInfo,
+        // pool: &Pool<Postgres>,
+        connection: &mut PgConnection,
+    ) -> anyhow::Result<()> {
         // We are assuming we have manually verified the pipeline before doing this
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to sync chunks")?;
         let parsed_schema = self
             .parsed_schema
             .as_ref()
             .context("Pipeline must have schema to execute")?;
         // Before doing any syncing, delete all old and potentially outdated documents
-        let pool = self.get_pool().await?;
         for (key, _value) in parsed_schema.iter() {
             let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
-            pool.execute(query_builder!("DELETE FROM %s CASCADE", chunks_table_name).as_str())
+            connection
+                .execute(query_builder!("DELETE FROM %s CASCADE", chunks_table_name).as_str())
                 .await?;
         }
         for (key, value) in parsed_schema.iter() {
-            self.resync_chunks(key, value.splitter.as_ref().map(|v| &v.model))
-                .await?;
+            self.resync_chunks(
+                key,
+                value.splitter.as_ref().map(|v| &v.model),
+                project_info,
+                connection,
+            )
+            .await?;
             if let Some(embed) = &value.semantic_search {
-                self.resync_embeddings(key, &embed.model).await?;
+                self.resync_embeddings(key, &embed.model, project_info, connection)
+                    .await?;
             }
             if let Some(full_text_search) = &value.full_text_search {
-                self.resync_tsvectors(key, &full_text_search.configuration)
-                    .await?;
+                self.resync_tsvectors(
+                    key,
+                    &full_text_search.configuration,
+                    project_info,
+                    connection,
+                )
+                .await?;
             }
         }
         Ok(())
     }
 
     #[instrument(skip(self))]
-    async fn resync_chunks(&self, key: &str, splitter: Option<&Splitter>) -> anyhow::Result<()> {
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to sync chunks")?;
-        let pool = self.get_pool().await?;
-
+    async fn resync_chunks(
+        &self,
+        key: &str,
+        splitter: Option<&Splitter>,
+        project_info: &ProjectInfo,
+        connection: &mut PgConnection,
+    ) -> anyhow::Result<()> {
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let documents_table_name = format!("{}.documents", project_info.name);
         let json_key_query = format!("document->>'{}'", key);
@@ -852,7 +849,7 @@ impl Pipeline {
             );
             sqlx::query(&query)
                 .bind(splitter_database_data.id)
-                .execute(&pool)
+                .execute(connection)
                 .await?;
         } else {
             let query = query_builder!(
@@ -862,26 +859,25 @@ impl Pipeline {
                 &documents_table_name
             );
             debug_sqlx_query!(GENERATE_CHUNKS, query);
-            sqlx::query(&query).execute(&pool).await?;
+            sqlx::query(&query).execute(connection).await?;
         }
         Ok(())
     }
 
     #[instrument(skip(self))]
-    async fn resync_embeddings(&self, key: &str, model: &Model) -> anyhow::Result<()> {
-        let pool = self.get_pool().await?;
-
+    async fn resync_embeddings(
+        &self,
+        key: &str,
+        model: &Model,
+        project_info: &ProjectInfo,
+        connection: &mut PgConnection,
+    ) -> anyhow::Result<()> {
         // Remove the stored name from the parameters
         let mut parameters = model.parameters.clone();
         parameters
             .as_object_mut()
             .context("Model parameters must be an object")?
             .remove("name");
-
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to sync chunks")?;
 
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let embeddings_table_name =
@@ -898,7 +894,7 @@ impl Pipeline {
                 sqlx::query(&query)
                     .bind(&model.name)
                     .bind(&parameters)
-                    .execute(&pool)
+                    .execute(connection)
                     .await?;
             }
             r => {
@@ -908,7 +904,7 @@ impl Pipeline {
                         &embeddings_table_name,
                         &chunks_table_name,
                         None,
-                        PoolOrArcMutextTransaction::Pool(pool),
+                        connection,
                     )
                     .await?;
             }
@@ -917,14 +913,13 @@ impl Pipeline {
     }
 
     #[instrument(skip(self))]
-    async fn resync_tsvectors(&self, key: &str, configuration: &str) -> anyhow::Result<()> {
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to sync TSVectors")?;
-
-        let pool = self.get_pool().await?;
-
+    async fn resync_tsvectors(
+        &self,
+        key: &str,
+        configuration: &str,
+        project_info: &ProjectInfo,
+        connection: &mut PgConnection,
+    ) -> anyhow::Result<()> {
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let tsvectors_table_name = format!("{}_{}.{}_tsvectors", project_info.name, self.name, key);
 
@@ -935,46 +930,17 @@ impl Pipeline {
             chunks_table_name
         );
         debug_sqlx_query!(GENERATE_TSVECTORS, query);
-        sqlx::query(&query).execute(&pool).await?;
+        sqlx::query(&query).execute(connection).await?;
         Ok(())
     }
 
     #[instrument(skip(self))]
-    pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
-        self.verify_in_database(false).await?;
-        self.schema
-            .as_ref()
-            .context("Pipeline must have schema set to call to_dict")
-            .map(|v| v.to_owned())
-    }
-
-    async fn get_pool(&self) -> anyhow::Result<PgPool> {
-        let database_url = &self
-            .project_info
-            .as_ref()
-            .context("Project info required to call method pipeline.get_pool()")?
-            .database_url;
-        get_or_initialize_pool(database_url).await
-    }
-
-    #[instrument(skip(self))]
-    pub(crate) fn set_project_info(&mut self, project_info: ProjectInfo) {
-        if let Some(parsed_schema) = &mut self.parsed_schema {
-            for (_key, value) in parsed_schema.iter_mut() {
-                if let Some(splitter) = &mut value.splitter {
-                    splitter.model.set_project_info(project_info.clone());
-                }
-                if let Some(embed) = &mut value.semantic_search {
-                    embed.model.set_project_info(project_info.clone());
-                }
-            }
-        }
-        self.project_info = Some(project_info);
-    }
-
-    #[instrument(skip(self))]
-    pub(crate) async fn get_parsed_schema(&mut self) -> anyhow::Result<ParsedSchema> {
-        self.verify_in_database(false).await?;
+    pub(crate) async fn get_parsed_schema(
+        &mut self,
+        project_info: &ProjectInfo,
+        pool: &Pool<Postgres>,
+    ) -> anyhow::Result<ParsedSchema> {
+        self.verify_in_database(project_info, false, pool).await?;
         Ok(self.parsed_schema.as_ref().unwrap().clone())
     }
 
@@ -1015,7 +981,6 @@ impl TryFrom<models::Pipeline> for Pipeline {
             name: value.name,
             schema: Some(value.schema),
             parsed_schema: Some(parsed_schema),
-            project_info: None,
             database_data: None,
         })
     }
