@@ -46,6 +46,9 @@ impl<'a> OrderByBuilder<'a> {
             .iter()
             .map(|(k, v)| {
                 if let Ok((path, order)) = build_recursive_access(k, v) {
+                    ///
+                    /// BUG 3: Is this a SQL injection as well? The filter is user-supplied?
+                    ///
                     let expr = Expr::cust(format!(
                         "\"{}\".\"{}\"#>'{{{}}}'",
                         self.table_name, self.column_name, path

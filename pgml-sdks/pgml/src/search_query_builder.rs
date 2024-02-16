@@ -59,6 +59,10 @@ pub async fn build_search_query(
     let valid_query: ValidQuery = serde_json::from_value(query.0.clone())?;
     let limit = valid_query.limit.unwrap_or(10);
 
+    /// BUG 3: Could be a SQL injection if the user of the SDK
+    /// allows its users to input the collectio name and doesn't validate it.
+    /// An easy fix here could be only allowing alphanumberic characters and throw
+    /// an error if they include anything special, e.g. ! or '.
     let pipeline_table = format!("{}.pipelines", collection.name);
     let documents_table = format!("{}.documents", collection.name);
 
@@ -122,6 +126,12 @@ pub async fn build_search_query(
                 embedding_cte.table_name(Alias::new(format!("{key}_embedding")));
                 with_clause.cte(embedding_cte);
 
+                ///
+                /// COMMENT 1: Looking at this, I don't see the benefit of using an ORM.
+                ///            Frankly, it would be easier to read a raw query here instead of
+                ///            doing a translation from SeaORM syntax to SQL to actually understand
+                ///            what's going on.
+                ///
                 score_cte_non_recursive
                     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
                     .column((SIden::Str("documents"), SIden::Str("id")))
@@ -318,6 +328,10 @@ pub async fn build_search_query(
                     format!(
                         r#"ts_rank(tsvectors.ts, plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1), 32) * {boost}"#,
                     ),
+                    ///
+                    /// BUG 3: This is SQL injection right? We're just putting a user supplied value into the query without escaping it for potential injections? e.g.
+                    ///        Someone an submit a query like `'); DROP DATABASE production;` and that'll be bad.
+                    ///
                     [&vma.query],
                 ),
                 Alias::new("score")
@@ -333,6 +347,10 @@ pub async fn build_search_query(
                 format!(
                     r#"tsvectors.ts @@ plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1)"#,
                 ),
+                ///
+                /// BUG 3: This is SQL injection right? We're just putting a user supplied value into the query without escaping it for potential injections? e.g.
+                ///        Someone an submit a query like `'); DROP DATABASE production;` and that'll be bad.
+                ///
                 [&vma.query],
             ))
             .join_as(
@@ -356,6 +374,9 @@ pub async fn build_search_query(
         let mut score_cte_recursive = Query::select()
             .column((SIden::Str("documents"), SIden::Str("id")))
             .expr_as(
+                ///
+                /// BUG 3.
+                ///
                 Expr::cust_with_values(
                     format!(
                         r#"ts_rank(tsvectors.ts, plainto_tsquery((SELECT oid FROM pg_ts_config WHERE cfgname = (SELECT schema #>> '{{{key},full_text_search,configuration}}' FROM pipeline)), $1), 32) * {boost}"#,

@@ -59,6 +59,12 @@ static DATABASE_POOLS: RwLock<Option<HashMap<String, PgPool>>> = RwLock::new(Non
 async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result<PgPool> {
     let mut pools = DATABASE_POOLS.write();
     let pools = pools.get_or_insert_with(HashMap::new);
+    ///
+    /// BUG 4: This is not 12-factor friendly. Our users might have a DATABASE_URL set and pointing
+    ///        to another database that doesn't have PostgresML and they don't want to use with the SDK.
+    ///
+    /// FIX 3: Make this database URL "unique enough", e.g. `POSTGRESML_SDK_DATABASE_URL`.
+    ///
     let environment_url = std::env::var("DATABASE_URL");
     let environment_url = environment_url.as_deref();
     let url = database_url
@@ -67,7 +73,8 @@ async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result
     if let Some(pool) = pools.get(url) {
         Ok(pool.clone())
     } else {
-        let timeout = std::env::var("PGML_CHECKOUT_TIMEOUT")
+        let timeout = std::env::var("PGML_CHECKOUT_TIMEOUT") /// BUG 4 (continued): Exactly like this. It's highly unlikely someone will have an env var already like this.
+                                                             ///                    Even then, I'd make this more specific, like POSTGRESML_SDK_CHECKOUT_TIMEOUT.
             .unwrap_or_else(|_| "5000".to_string())
             .parse::<u64>()
             .expect("Error parsing PGML_CHECKOUT_TIMEOUT, expected an integer");

@@ -679,6 +679,9 @@ impl Pipeline {
             sqlx::query_scalar(&query)
                 .bind(splitter_database_data.id)
                 .bind(document_ids)
+                ///
+                /// QUESTION 1 (continued): Right here, we're blocking all other "parallel" tasks from doing anything.
+                ///
                 .fetch_all(&mut **transaction.lock().await)
                 .await
                 .map_err(anyhow::Error::msg)
@@ -725,6 +728,9 @@ impl Pipeline {
             format!("{}_{}.{}_embeddings", project_info.name, self.name, key);
 
         match model.runtime {
+            ///
+            /// NIT 1: You mean `ModelRuntime::PostgresML` but we haven't defined one and are using Python instead, why?
+            ///
             ModelRuntime::Python => {
                 let query = query_builder!(
                     queries::GENERATE_EMBEDDINGS_FOR_CHUNK_IDS,
@@ -772,6 +778,9 @@ impl Pipeline {
             .project_info
             .as_ref()
             .context("Pipeline must have project info to sync TSVectors")?;
+        ///
+        /// BUG 3 (continued): SQL injection.
+        ///
         let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
         let tsvectors_table_name = format!("{}_{}.{}_tsvectors", project_info.name, self.name, key);
         let query = query_builder!(
@@ -783,6 +792,10 @@ impl Pipeline {
         debug_sqlx_query!(GENERATE_TSVECTORS_FOR_CHUNK_IDS, query, chunk_ids);
         sqlx::query(&query)
             .bind(chunk_ids)
+            ///
+            /// QUESTION 1 (continued): Same here, we're blocking all other queries and holding a _sync_ mutex across an await boundary in async code.
+            ///                         Upgrading this to BUG 2. :)
+            ///
             .execute(&mut **transaction.lock().await)
             .await?;
         Ok(())

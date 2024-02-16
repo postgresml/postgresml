@@ -594,6 +594,12 @@ impl Collection {
                 })
                 .collect();
 
+            ///
+            /// QUESTION 1: What is the point of doing this in parallel? The only thing this is doing
+            /// is sending queries to Postgres. The work will be done by the database. Everything is done
+            /// inside a single transaction, so we are not parallelizing anything, we're just waiting on the lock
+            /// every single time and sending another query down once the previous one finishes.
+            ///
             let transaction = Arc::new(Mutex::new(transaction));
             if !pipelines.is_empty() {
                 use futures::stream::StreamExt;
@@ -601,6 +607,14 @@ impl Collection {
                     // Need this map to get around moving the transaction
                     .map(|pipeline| (pipeline, dp.clone(), transaction.clone()))
                     .for_each_concurrent(10, |(pipeline, db, transaction)| async move {
+                        ///
+                        /// BUG 1: this opens a new connection to the database or checks out
+                        /// an existing one from the pool. Because we already started a transaction above
+                        /// this requires at least two Postgres connections to upsert documents, which dosen't scale in production.
+                        ///
+                        /// FIX 1: Use only one connection and do everything inside a single transaction, including getting the schema.
+                        /// Pass the transaction as the pool (`impl sqlx::Executor<'_>`) to the `get_parsed_schema` method.
+                        ///
                         let parsed_schema = pipeline
                             .get_parsed_schema()
                             .await
@@ -747,6 +761,9 @@ impl Collection {
     #[instrument(skip(self))]
     pub async fn search(&mut self, query: Json, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
+        ///
+        /// BUG 3 (continued): SQL injection.
+        ///
         let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
         let results: Result<(Json,), _> = sqlx::query_as_with(&built_query, values)
             .fetch_one(&pool)
@@ -783,6 +800,9 @@ impl Collection {
     #[instrument(skip(self))]
     pub async fn search_local(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
+        ///
+        /// BUG 3 (continued): SQL injection.
+        ///
         let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
         let results: (Json,) = sqlx::query_as_with(&built_query, values)
             .fetch_one(&pool)
@@ -873,6 +893,11 @@ impl Collection {
             Err(e) => match e.as_database_error() {
                 Some(d) => {
                     if d.code() == Some(Cow::from("XX000")) {
+                        ///
+                        /// QUESTION 2: You call this function a lot. What's going on?
+                        ///             I know it's cached, so that's fast, but what's exactly changing
+                        ///             between this call and the one on line 908?
+                        ///
                         self.verify_in_database(false).await?;
                         let project_info = &self
                             .database_data

@@ -10,6 +10,13 @@ use crate::{model::ModelRuntime, models, query_builder, types::Json};
 #[derive(Clone, Debug)]
 pub enum PoolOrArcMutextTransaction {
     Pool(PgPool),
+    ///
+    /// BUG 2 (continued): There is no point in sharing a single transaction between threads
+    ///                    using a sync lock. You're just blocking the runtime from doing its job
+    ///                    and not increasing parallelism. If you trully want to parallelize something,
+    ///                    you need to open multiple concurrent transactions and let PgCat or Postgres
+    ///                    load balance the load.
+    ///
     ArcMutextTransaction(Arc<Mutex<Transaction<'static, Postgres>>>),
 }
 
@@ -117,6 +124,9 @@ pub trait RemoteEmbeddings<'a> {
         embeddings_table_name: &str,
         chunks_table_name: &str,
         mut chunk_ids: Option<&Vec<i64>>,
+        ///
+        /// Once you remove the transaction mutex, you can use `impl sqlx::Executor<'_>` here instead.
+        ///
         mut db_executor: PoolOrArcMutextTransaction,
     ) -> anyhow::Result<()> {
         loop {
