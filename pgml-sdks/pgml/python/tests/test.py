@@ -65,7 +65,7 @@ def test_can_create_pipeline():
     pipeline = pgml.Pipeline("test_p_p_tccp_0", {})
     assert pipeline is not None
 
-    
+
 def test_can_create_single_field_pipeline():
     model = pgml.Model()
     splitter = pgml.Splitter()
@@ -131,13 +131,17 @@ async def test_can_vector_search():
     pipeline = pgml.Pipeline(
         "test_p_p_tcvs_0",
         {
+            "title": {
+                "semantic_search": {"model": "intfloat/e5-small"},
+                "full_text_search": {"configuration": "english"},
+            },
             "text": {
                 "splitter": {"model": "recursive_character"},
                 "semantic_search": {"model": "intfloat/e5-small"},
             },
         },
     )
-    collection = pgml.Collection("test_p_c_tcvs_2")
+    collection = pgml.Collection("test_p_c_tcvs_3")
     await collection.add_pipeline(pipeline)
     await collection.upsert_documents(generate_dummy_documents(5))
     results = await collection.vector_search(
@@ -145,7 +149,7 @@ async def test_can_vector_search():
             "query": {
                 "fields": {
                     "title": {"query": "Test document: 2", "full_text_filter": "test"},
-                    "body": {"query": "Test document: 2"},
+                    "text": {"query": "Test document: 2"},
                 },
                 "filter": {"id": {"$gt": 2}},
             },
@@ -154,7 +158,7 @@ async def test_can_vector_search():
         pipeline,
     )
     ids = [result["document"]["id"] for result in results]
-    assert ids == [3, 4, 4, 3]
+    assert ids == [3, 3, 4, 4]
     await collection.archive()
 
 
