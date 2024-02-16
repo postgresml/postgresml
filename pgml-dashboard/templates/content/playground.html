@@ -19,7 +19,7 @@ use crate::components::inputs::switch::{Switch, State};
     <%+ GithubIcon::new() %>
   </div>
   <div class="mb-3">
-    <%+ ProfileIcon %>
+    <%+ ProfileIcon::new(None) %>
   </div>
 
   <h3 class="h3">Dropdowns</h3>
@@ -33,7 +33,7 @@ use crate::components::inputs::switch::{Switch, State};
             StaticNavLink::new("Starts Active".into(), "#test".into()).active(true)
           ]
         ).collapsable()
-        .icon(ProfileIcon::new().into()) %>
+        .icon(ProfileIcon::new(None).into()) %>
       </div>
       <div class="col-6" style="min-height: 400px;">
         <%+ Dropdown::nav(
