@@ -524,8 +524,6 @@ impl Collection {
     ) -> Result<ResponseOk, crate::responses::NotFound> {
         match Document::from_path(&path).await {
             Ok(doc) => {
-                let index = self.open_index(&doc.path);
-
                 let mut layout = crate::templates::Layout::new(&doc.title, Some(cluster));
                 if let Some(image) = &doc.thumbnail {
                     layout.image(&image);
@@ -534,10 +532,7 @@ impl Collection {
                     layout.description(description);
                 }
 
-                let layout = layout
-                    .canonical(canonical)
-                    .nav_title(&self.name)
-                    .toc_links(&doc.toc_links);
+                let layout = layout.canonical(canonical).toc_links(&doc.toc_links);
 
                 Ok(ResponseOk(
                     layout.render(crate::templates::Article { content: doc.html() }),
@@ -555,11 +550,9 @@ impl Collection {
                 </div>"#,
                 );
 
-                layout.nav_links(&self.index).nav_title(&self.name);
-
-                layout.render(crate::templates::Article { content: doc });
-
-                Err(crate::responses::NotFound(layout.into()))
+                Err(crate::responses::NotFound(
+                    layout.render(crate::templates::Article { content: doc }).into(),
+                ))
             }
         }
     }

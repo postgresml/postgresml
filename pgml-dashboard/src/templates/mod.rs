@@ -33,8 +33,6 @@ pub struct Layout {
     pub head: Head,
     pub content: Option<String>,
     pub user: Option<models::User>,
-    pub nav_title: Option<String>,
-    pub nav_links: Vec<IndexLink>,
     pub toc_links: Vec<docs::TocLink>,
     pub footer: Option<String>,
     pub alert_banner: AlertBanner,
@@ -84,16 +82,6 @@ impl Layout {
 
     pub fn user(&mut self, user: &models::User) -> &mut Self {
         self.user = Some(user.to_owned());
-        self
-    }
-
-    pub fn nav_title(&mut self, nav_title: &str) -> &mut Self {
-        self.nav_title = Some(nav_title.to_owned());
-        self
-    }
-
-    pub fn nav_links(&mut self, nav_links: &[IndexLink]) -> &mut Self {
-        self.nav_links = nav_links.to_vec();
         self
     }
 
