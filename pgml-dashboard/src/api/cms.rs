@@ -907,8 +907,11 @@ This is the end of the markdown
         let urls = collection.get_all_urls();
 
         for url in urls {
-            let path = collection.url_to_path(url.as_ref());
-            crate::api::cms::Document::from_path(&path).await.unwrap();
+            // Don't parse landing page since it is not markdown.
+            if url != "/docs" {
+                let path = collection.url_to_path(url.as_ref());
+                crate::api::cms::Document::from_path(&path).await.unwrap();
+            }
         }
     }
 
