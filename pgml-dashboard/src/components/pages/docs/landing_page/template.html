@@ -15,7 +15,8 @@
     )
   }
 
-  fn section_links(items: Vec<DocCard>) -> String {
+  fn section_links(mut items: Vec<DocCard>) -> String {
+    items.reverse();
     format!(r#"
       <div class="row gy-4">
         {}

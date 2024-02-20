@@ -56,7 +56,7 @@ lazy_static! {
         "scaling to 1 million requests per second",
         "mindsdb vs postgresml",
         "ggml quantized llm support for huggingface transformers",
-        "making postres 30% faster in production"
+        "making postgres 30 percent faster in production"
     ])
     .into_iter()
     .map(|s| s.to_owned())
