@@ -35,22 +35,25 @@
     };
     %>
 
-    <% let max_width = 200 - level*23; %>
     <% if level == 1 {%>
     <div class="menu-item flex-grow-1 d-flex flex-row align-items-center">
-        <div class='w-100 d-flex flex-row gap-2 align-items-center <% if active || open {%><%- String::from("active") %><% } %> justify-content-between'>
-            <a class='d-block p-2' href="<%- href %>" style='max-width: <%- max_width %>px; overflow: hidden; text-overflow: ellipsis;'>
+        <div class='w-100 d-flex flex-row gap-2 align-items-start <% if active || open {%><%- String::from("active") %><% } %> justify-content-between'>
+            <a class='d-block p-2' href="<%- href %>">
                 <span class="text-wrap"><%- title %></span>
             </a>
-            <span class="material-symbols-outlined rotate-on-aria-expanded text-white" data-bs-toggle="collapse" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>">expand_more</span>
+            <div class="pt-2">
+                <span class="material-symbols-outlined rotate-on-aria-expanded text-white" data-bs-toggle="collapse" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>">expand_more</span>
+            </div>
         </div>
     </div>
     <% } else {%>
-    <span class="ps-1 py-0 d-flex justify-content-between align-items-center text-break" >
-        <a class="nav-link px-0 text-break <%- color %>" href="<%- href %>" style='max-width: <%- max_width %>px; overflow: hidden; text-overflow: ellipsis;'>
-            <span class="text-nowrap"><%- title %></span>
+    <span class="ps-1 py-0 d-flex justify-content-between align-items-start text-break" >
+        <a class="nav-link px-0 text-break <%- color %>" href="<%- href %>">
+            <span class="text-wrap"><%- title %></span>
         </a>
-        <span class="material-symbols-outlined rotate-on-aria-expanded" data-bs-toggle="collapse" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>">expand_more</span>
+        <div class="pt-2">
+            <span class="material-symbols-outlined rotate-on-aria-expanded" data-bs-toggle="collapse" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>">expand_more</span>
+        </div>
     </span>
     <% } %>
 
