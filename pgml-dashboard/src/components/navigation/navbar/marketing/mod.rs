@@ -8,6 +8,7 @@ use sailfish::TemplateOnce;
 pub struct Marketing {
     pub current_user: Option<models::User>,
     pub standalone_dashboard: bool,
+    pub style_alt: bool,
 }
 
 impl Marketing {
@@ -15,7 +16,13 @@ impl Marketing {
         Marketing {
             current_user: user,
             standalone_dashboard: config::standalone_dashboard(),
+            style_alt: false,
         }
+    }
+
+    pub fn style_alt(mut self) -> Self {
+        self.style_alt = true;
+        self
     }
 }
 

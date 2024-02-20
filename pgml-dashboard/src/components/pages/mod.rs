@@ -3,3 +3,6 @@
 
 // src/components/pages/blog
 pub mod blog;
+
+// src/components/pages/docs
+pub mod docs;

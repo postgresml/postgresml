@@ -1,0 +1,155 @@
+<%
+  use crate::components::pages::docs::landing_page::AltDocCard;
+  use crate::components::Accordian;
+  use crate::components::sections::HaveQuestions;
+  use crate::components::search::Button as SearchButton;
+
+  fn section_title(title: &str, paragraph: &str) -> String {
+    format!(r#"
+      <div class="d-flex flex-column gap-3 align-items-center pb-5">
+        {}
+        {}
+      </div>"#, 
+      title,
+      if paragraph.len() > 0 {format!(r#"<p class="text-center w-75">{}</p>"#, paragraph)} else {"".to_string()}
+    )
+  }
+
+  fn section_links(mut items: Vec<DocCard>) -> String {
+    items.reverse();
+    format!(r#"
+      <div class="row gy-4">
+        {}
+      </div>"#, 
+      items.into_iter().map(|item| format!(r#"<div class="col-xl-4 col-md-6 col-12">{}</div>"#, item.render_once().unwrap())).collect::<Vec<String>>().join("")
+    )
+  }
+
+%>
+
+<div class="w-100" data-controller="pages-docs-landing-page">
+  <div class="docs-content-max-width-container container d-flex flex-column gap-5">
+    <div class="py-4">
+      <%+ feature_banner %>
+    </div>
+    <div class="w-100 d-flex flex-column align-items-center">
+      <h1 class="text-center">PostgresML</br><span class="text-gradient-green">Documentation</span></h1>
+      <p class="w-75 text-center">PostgresML is a open-source database extension that turns Postgres into an end-to-end machine learning platform. Build, train, and deploy ML/AI models directly within your Postgres database without moving data between systems.</p>
+    </div>
+
+    <div class="w-100 mx-auto" style="max-width: 40rem;">
+        <%+ SearchButton::new() %>
+    </div>
+
+    <div class="row gy-4">
+      <div class="col-xl-4 col-12">
+        <%+ AltDocCard::new().icon("new_releases").title("Create your dtabase").href("/docs/introduction/getting-started/create-your-database") %>
+      </div>
+      <div class="col-xl-4 col-12">
+        <%+ AltDocCard::new().icon("compare_arrows").title("Connect your app").href("/docs/introduction/getting-started/connect-your-app") %>
+      </div>
+      <div class="col-xl-4 col-12">
+        <%+ AltDocCard::new().icon("analytics").title("Import your data").href("/docs/introduction/getting-started/import-your-data/") %>
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <%- section_title(
+        "<h2>SQL Extensions</h2>", 
+        "SQL extensions provide end-to-end ML & AI functionality from inference to deployment. They can be used in any combination to implement bespoke models across use cases.") %>
+      
+      <div class="d-flex flex-column gap-4_5">
+        <div class="d-flex flex-column">
+          <p class="eyebrow-text">AI</p>
+          <%- section_links(sql_extensions_ai)%>
+        </div>
+
+        <div class="d-flex flex-column">
+          <p class="eyebrow-text">ML</p>
+          <%- section_links(sql_extensions_ml)%>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="mt-5">
+      <div class="d-flex flex-column gap-3 align-items-center">
+        <%- section_title(
+          r#"<div class="d-flex gap-2">
+            <h2>Client SDKs</h2>
+            <div class="language-logos p-2 d-flex gap-2 h-100 rounded-2">
+              <img  width="28px" height="28px" src="/dashboard/static/images/logos/javascript.png"/>
+              <img  width="28px" height="28px" src="/dashboard/static/images/logos/python.png"/>
+            </div>
+          </div>"#, 
+          "Client SDKs implement the best practices to streamline development of common ML/AI use cases in JavaScript or Python.")%>
+      </div>
+      <div class="d-flex flex-column gap-4_5">
+        <div class="d-flex flex-column">
+          <p class="eyebrow-text">OVERVIEW</p>
+          <%- section_links(client_sdks_overview)%>
+        </div>
+        <div class="d-flex flex-column">
+          <p class="eyebrow-text">TUTORIALS</p>
+          <%- section_links(client_sdks_tutorials)%>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <%- section_title("<h2>Benchmarks</h2>", "")%>
+      <%- section_links(benchmarks)%>
+    </div>
+
+    <div class="container mt-5">
+      <div class="row d-flex flex-column flex-xl-row" style="min-height: 39rem;">
+        <div class="align-items-center d-flex" style="flex: 1">
+          <h1 class="text-center text-xl-start mb-5 mb-xl-0 mx-auto" style="width: fit-content">
+            Things you may</br>
+            <span class="party-time">want to know</span>
+          </h1>
+        </div>
+
+        <div style="flex: 1; min-height: 39rem;">
+          <% 
+            fn accordian_paragraph(content: &str) -> String {
+              format!(r#"<p class="mt-3">{}</p>"#, content)
+            }
+          %>
+          <%+ Accordian::new().html_titles(vec![
+              "What is PostgresML?",
+              "What is a DB extension?",
+              "How does it work?",
+              "What are the benefits?",
+              "What are the cons?",
+              "What is hosted PostgresML?"
+            ])
+            .html_contents(
+              vec![
+                &accordian_paragraph("PostgresML is an open-source database extension that turns Postgres into an end-to-end machine learning platform. It allows you to build, train, and deploy ML models directly within your Postgres database without moving data between systems."),
+                &accordian_paragraph("A database extension is software that extends the capabilities of a database. Postgres allows extensions to add new data types, functions, operators, indexes, etc. PostgresML uses extensions to bring machine learning capabilities natively into Postgres."),
+                &accordian_paragraph("PostgresML installs as extensions in Postgres. It provides SQL API functions for each step of the ML workflow like importing data, transforming features, training models, making predictions, etc. Models are stored back into Postgres tables. This unified approach eliminates complexity."),
+                &accordian_paragraph("Benefits include faster development cycles, reduced latency, tighter integration between ML and applications, leveraging Postgres' reliability and ACID transactions, and horizontal scaling."),
+                &accordian_paragraph("PostgresML requires using Postgres as the database. If your data currently resides in a different database, there would be some upfront effort required to migrate the data into Postgres in order to utilize PostgresML's capabilities."),
+                r##"
+                <p>Hosted PostgresML is a fully managed cloud service that provides all the capabilities of open source PostgresML without the need to run your own database infrastructure.</p>
+                <p>With hosted PostgresML, you get:</p>
+                <ul>
+                  <li>Flexible compute resources - Choose CPU, RAM or GPU machines tailored to your workload</li>
+                  <li>Horizontally scalable inference with read-only replicas </li>
+                  <li>High availability for production applications with multi-region deployments </li>
+                  <li>Support for multiple users and databases </li>
+                  <li>Automated backups and point-in-time restore </li>
+                  <li>Monitoring dashboard with metrics and logs </li>
+                  </ul>
+                <p>In summary, hosted PostgresML removes the operational burden so you can focus on developing machine learning applications, while still getting the benefits of the unified PostgresML architecture.</p>
+                "##
+              ])
+          %>
+        </div>
+      </div>
+    </div>
+
+    <%+ HaveQuestions::new() %>
+  </div>
+</div>

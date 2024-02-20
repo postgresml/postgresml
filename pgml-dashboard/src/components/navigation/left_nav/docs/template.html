@@ -1,0 +1,76 @@
+<% 
+  fn icon_map(title: &str) -> &str {
+    match title.to_lowercase().as_str() {
+      "apis" => "sdk",
+      "product" => "dashboard",
+      "use cases" => "account_circle",
+      "resources" => "school",
+      _ => "dashboard",
+    }
+  }
+
+  fn title(title: String) -> String {
+    format!(r##"
+    <div class="border-bottom legal-text docs-link-section d-flex align-items-center gap-1 pb-2 mb-2">
+      <span class="material-symbols-outlined">{}</span>
+      {}
+    </div>
+    "##,
+    icon_map(&title),
+    title
+    )
+  }
+%>
+
+<% if !mobile { %>
+<div class="doc-leftnav-container" data-controller="navigation-left-nav-docs">
+  <nav class="doc-leftnav" data-action="scroll->navigation-left-nav-docs#showScrollbar">
+    <div class="d-flex flex-column justify-content-between">
+      <div class="d-xl-flex flex-column py-4">
+        <div class="pt-2 ps-2 d-flex flex-column gap-4_5">
+          <% for doc_link in index.clone().into_iter() { %>
+            <% if doc_link.children.is_empty() {%>
+              <%+ doc_link %>
+            <% } else { %>
+              <div class="d-flex flex-column">
+                <%- title(doc_link.title) %>
+
+                <% for item in doc_link.children {%>
+                  <%+ item %>
+                <% } %>
+              </div>
+            <% } %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>
+<% } else {%>
+<div data-controller="navigation-left-nav-docs">
+  <nav class="navbar px-0">
+    <div class="card nav guides rounded-0 w-100">
+      <div class="card-body py-2 py-xl-4">
+        <a class="my-1 d-flex justify-content-between align-items-center text-white" role="button" data-bs-toggle="collapse" href="#guides" aria-expanded="false" aria-congrols="guides">
+          <span>Docs</span><span class="material-symbols-outlined rotate-on-aria-expanded">expand_more</span>
+        </a>
+        <div class="collapse border-top pt-2" id="guides">
+          <% for doc_link in index.into_iter() { %>
+            <% if doc_link.children.is_empty() { %>
+              <%+ doc_link %>
+            <% } else { %>
+              <div class="d-flex flex-column pt-2">
+                <%- title(doc_link.title) %>
+
+                <% for item in doc_link.children {%>
+                  <%+ item %>
+                <% } %>
+              </div>
+            <% } %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>
+<% } %>

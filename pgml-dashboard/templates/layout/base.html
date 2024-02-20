@@ -1,5 +1,6 @@
 <% 
   use crate::components::navigation::navbar::marketing::Marketing as MarketingNavbar;
+  use crate::components::navigation::Toc;
 %>
 <!DOCTYPE html>
 <html lang="en-US">
@@ -8,26 +9,35 @@
 
   <body data-bs-theme="dark" data-theme="docs">
     <main>
-      <div class="container-fluid bg-primary pb-4 min-vh-100">
+      <div class="bg-primary min-vh-100">
         <div class="ellipse-container position-absolute" style="margin: -2rem; height: 100vh; width: 100vw;">
           <div class="ellipse-21" style="width: 35vw; height: 35vh; top: 0vh; left: -7vw"></div>
         </div>
         <%+ alert_banner %>
         <%+ MarketingNavbar::new( user ) %>
 
+        <% if !toc_links.is_empty() { %>
+          <div class="d-xxl-none col-xl-12 position-sticky stick-under-topnav h-100" style="z-index: calc(1020 - 1)">
+            <%+ Toc::new(&toc_links)%>
+          </div>
+        <% } %>
+
         <div class="container">
           <div class="pt-4 pb-5">
             <%+ feature_banner %>
           </div>
           <div class="row position-relative">
-            <% include!("nav/side.html"); %>
-
             <%- content.unwrap_or_default() %>
 
-            <% include!("nav/toc.html"); %>
+            <% if !toc_links.is_empty() { %>
+              <div class="d-none d-xxl-block col-2 position-sticky stick-under-topnav h-100 z-1">
+                <%+ Toc::new(&toc_links)%>
+              </div>
+            <% } %>
+            
           </div>
         </div>
-        <%- footer %>
+        <%- footer.unwrap_or_default() %>
       </div>
 
     </main>

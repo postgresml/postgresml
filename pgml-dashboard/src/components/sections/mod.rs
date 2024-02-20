@@ -3,3 +3,7 @@
 
 // src/components/sections/footers
 pub mod footers;
+
+// src/components/sections/have_questions
+pub mod have_questions;
+pub use have_questions::HaveQuestions;

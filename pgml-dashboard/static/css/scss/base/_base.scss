@@ -62,6 +62,7 @@ table {
 
 html, body, main {
     height: fit-content;
+    scrollbar-color: #{$purple} #{$gray-900};
 }
 
 article {
@@ -95,19 +96,6 @@ article {
     --bs-list-group-border-width: 0;
     --bs-list-group-border-color: transparent;
     --bs-list-group-color: #{$primary};
-}
-
-// scrollbar customization for Chrome, Edge, Opera, Safari, all browsers on iOS
-// TODO: Fix firefox scrollbar design.
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-    background: #000;
-}
-
-::-webkit-scrollbar-thumb {
-    width: 8px;
-    background: #{$purple};
 }
 
 .noselect {

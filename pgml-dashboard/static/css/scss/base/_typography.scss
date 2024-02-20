@@ -68,7 +68,8 @@ h6, .h6 {
     }
 }
 
-.body-regular-text {
+// default body text size
+.body-regular-text, p {
     font-size: var(--body-regular-font-size); line-height: var(--body-regular-line-height);
     @include media-breakpoint-down(md) {
         font-size: 16px; line-height: 20px;

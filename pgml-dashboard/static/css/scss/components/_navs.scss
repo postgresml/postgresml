@@ -110,28 +110,25 @@
     --bs-offcanvas-padding-x: 0;
 }
 
-.toc, .guides {
-    --bs-border-color: #{$gray-500};
-    .nav-link {
-        text-decoration: none;
-        --bs-nav-link-color: #{$gray-100};
-        --bs-nav-link-hover-color: #{$purple};
+// If the icon is the controller 
+.rotate-on-aria-expanded {
+    transition: transform .1s;
 
-        &.purple, &:active, &.active {
-            color: #{$purple};
-        }
-
-        &:focus:not(:hover) {
-            color: #{$gray-100}
-        }
+    &[aria-expanded=false] {
+        transform: rotate(-90deg);
     }
-    [aria-expanded=false] {
-        span.material-symbols-outlined {
+}
+
+// If the icon is a child of the controller
+[data-bs-toggle="collapse"] {
+    span.rotate-on-aria-expanded {
+        transition: transform .1s;
+    }
+
+    &[aria-expanded=false] {
+        span.rotate-on-aria-expanded {
             transform: rotate(-90deg);
         }
-    }
-    @include media-breakpoint-down(xxl) {
-        border-radius: 0px;
     }
 }
 
@@ -187,7 +184,7 @@
         }
     }
     
-    &:active, :focus, :target, .active {
+    &:active, &:focus, &:target, .active {
         background-color: #{$neon-tint-100};
         color: #{$gray-100};
         border-radius: calc($border-radius / 2);
@@ -219,5 +216,16 @@
         & button, & a {
             padding: 8px 12px;
         }
+    }
+}
+
+.docs-link-section {
+    color: #{$gray-300};
+    text-transform: capitalize;
+
+    .material-symbols-outlined {
+        color: #{$slate-shade-100};
+        font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+        font-size: 18px;
     }
 }

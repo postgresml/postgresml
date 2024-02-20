@@ -1,3 +1,8 @@
+---
+description: >-
+    Release trained models when ML quality metrics computed during training improve. Track model deployments over time and rollback if needed.
+---
+
 # pgml.deploy()
 
 ## Deployments

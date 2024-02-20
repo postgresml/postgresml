@@ -1,3 +1,8 @@
+---
+description: >-
+  Fine tune open-source models on your own data.
+---
+
 # pgml.tune()
 
 ## Fine Tuning

@@ -1,0 +1,23 @@
+div[data-controller="pages-docs-article"] {
+  $toc-width: 288px;
+
+  &.content-container {
+    max-width: $docs-content-max-width;
+  }
+
+  .article-container {
+    max-width: calc($docs-content-max-width - $toc-width)
+  }
+
+  .sticky-container {
+    position: relative;
+    z-index: calc($zindex-sticky - 1);
+  }
+
+  .toc-container {
+    @include media-breakpoint-up(xxl) {
+      width: 288px;
+      min-width: 288px;
+    }
+  }
+}

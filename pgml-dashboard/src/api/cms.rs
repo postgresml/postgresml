@@ -14,7 +14,7 @@ use yaml_rust::YamlLoader;
 use crate::{
     components::{cms::index_link::IndexLink, layouts::marketing::base::Theme, layouts::marketing::Base},
     guards::Cluster,
-    responses::{ResponseOk, Template},
+    responses::{Response, ResponseOk, Template},
     templates::docs::*,
     utils::config,
 };
@@ -48,7 +48,7 @@ lazy_static! {
         ])
     );
     static ref CAREERS: Collection = Collection::new("Careers", true, HashMap::from([("a", "b")]));
-    static ref DOCS: Collection = Collection::new(
+    pub static ref DOCS: Collection = Collection::new(
         "Docs",
         false,
         HashMap::from([
@@ -249,6 +249,7 @@ impl Document {
 
         // MkDocs, gitbook syntax support, e.g. tabs, notes, alerts, etc.
         crate::utils::markdown::mkdocs(root, &arena).unwrap();
+        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
 
         // Style headings like we like them
         let mut plugins = ComrakPlugins::default();
@@ -312,12 +313,7 @@ impl Collection {
         NamedFile::open(self.asset_dir.join(path)).await.ok()
     }
 
-    pub async fn get_content(
-        &self,
-        mut path: PathBuf,
-        cluster: &Cluster,
-        origin: &Origin<'_>,
-    ) -> Result<ResponseOk, crate::responses::NotFound> {
+    pub async fn get_content_path(&self, mut path: PathBuf, origin: &Origin<'_>) -> (PathBuf, String) {
         info!("get_content: {} | {path:?}", self.name);
 
         let mut redirected = false;
@@ -332,7 +328,6 @@ impl Collection {
             }
             None => {}
         };
-
         let canonical = format!(
             "https://postgresml.org{}/{}",
             self.url_root.to_string_lossy(),
@@ -343,7 +338,7 @@ impl Collection {
         }
         let path = self.root_dir.join(format!("{}.md", path.to_string_lossy()));
 
-        self.render(&path, &canonical, cluster).await
+        (path, canonical)
     }
 
     /// Create an index of the Collection based on the SUMMARY.md from Gitbook.
@@ -356,7 +351,17 @@ impl Collection {
         let mdast = markdown::to_mdast(&summary_contents, &::markdown::ParseOptions::default())
             .unwrap_or_else(|_| panic!("Could not parse summary: {summary_path:?}"));
 
+        let mut parent_folder: Option<String> = None;
         let mut index = Vec::new();
+        let indent_level = 1;
+
+        // Docs gets a home link added to the index
+        match self.name.as_str() {
+            "Docs" => {
+                index.push(IndexLink::new("Docs Home", indent_level).href("/docs"));
+            }
+            _ => {}
+        }
         for node in mdast
             .children()
             .unwrap_or_else(|| panic!("Summary has no content: {summary_path:?}"))
@@ -364,10 +369,26 @@ impl Collection {
         {
             match node {
                 Node::List(list) => {
-                    let mut links = self
-                        .get_sub_links(list)
+                    let links: Vec<IndexLink> = self
+                        .get_sub_links(list, indent_level)
                         .unwrap_or_else(|_| panic!("Could not parse list of index links: {summary_path:?}"));
-                    index.append(&mut links);
+
+                    let mut out = match parent_folder.as_ref() {
+                        Some(parent_folder) => {
+                            let mut parent = IndexLink::new(parent_folder.as_ref(), 0).href("");
+                            parent.children = links.clone();
+                            Vec::from([parent])
+                        }
+                        None => links,
+                    };
+
+                    index.append(&mut out);
+                    parent_folder = None;
+                }
+                Node::Heading(heading) => {
+                    if heading.depth == 2 {
+                        parent_folder = Some(heading.children[0].to_string());
+                    }
                 }
                 _ => {
                     warn!("Irrelevant content ignored in: {summary_path:?}")
@@ -385,7 +406,7 @@ impl Collection {
         }
     }
 
-    pub fn get_sub_links(&self, list: &markdown::mdast::List) -> anyhow::Result<Vec<IndexLink>> {
+    pub fn get_sub_links(&self, list: &markdown::mdast::List, indent_level: i32) -> anyhow::Result<Vec<IndexLink>> {
         let mut links = Vec::new();
 
         // SUMMARY.md is a nested List > ListItem > List | Paragraph > Link > Text
@@ -396,7 +417,7 @@ impl Collection {
                         match node {
                             Node::List(list) => {
                                 let mut link: IndexLink = links.pop().unwrap();
-                                link.children = self.get_sub_links(list).unwrap();
+                                link.children = self.get_sub_links(list, indent_level + 1).unwrap();
                                 links.push(link);
                             }
                             Node::Paragraph(paragraph) => {
@@ -414,7 +435,7 @@ impl Collection {
                                                             url = url.replace("README", "");
                                                         }
                                                         let url = self.url_root.join(url);
-                                                        let parent = IndexLink::new(text.value.as_str())
+                                                        let parent = IndexLink::new(text.value.as_str(), indent_level)
                                                             .href(&url.to_string_lossy());
                                                         links.push(parent);
                                                     }
@@ -469,7 +490,9 @@ impl Collection {
 
         while children.len() > 0 {
             let current = children.pop().unwrap();
-            urls.push(current.href.clone());
+            if current.href.len() > 0 {
+                urls.push(current.href.clone());
+            }
 
             for i in (0..current.children.len()).rev() {
                 children.push(&current.children[i])
@@ -499,16 +522,8 @@ impl Collection {
         canonical: &str,
         cluster: &Cluster,
     ) -> Result<ResponseOk, crate::responses::NotFound> {
-        let user = if cluster.context.user.is_anonymous() {
-            None
-        } else {
-            Some(cluster.context.user.clone())
-        };
-
         match Document::from_path(&path).await {
             Ok(doc) => {
-                let index = self.open_index(&doc.path);
-
                 let mut layout = crate::templates::Layout::new(&doc.title, Some(cluster));
                 if let Some(image) = &doc.thumbnail {
                     layout.image(&image);
@@ -516,16 +531,8 @@ impl Collection {
                 if let Some(description) = &doc.description {
                     layout.description(description);
                 }
-                if let Some(user) = &user {
-                    layout.user(user);
-                }
 
-                let layout = layout
-                    .canonical(canonical)
-                    .nav_title(&self.name)
-                    .nav_links(&index)
-                    .toc_links(&doc.toc_links)
-                    .footer(cluster.context.marketing_footer.to_string());
+                let layout = layout.canonical(canonical).toc_links(&doc.toc_links);
 
                 Ok(ResponseOk(
                     layout.render(crate::templates::Article { content: doc.html() }),
@@ -543,18 +550,9 @@ impl Collection {
                 </div>"#,
                 );
 
-                if let Some(user) = &user {
-                    layout.user(user);
-                }
-
-                layout
-                    .nav_links(&self.index)
-                    .nav_title(&self.name)
-                    .footer(cluster.context.marketing_footer.to_string());
-
-                layout.render(crate::templates::Article { content: doc });
-
-                Err(crate::responses::NotFound(layout.into()))
+                Err(crate::responses::NotFound(
+                    layout.render(crate::templates::Article { content: doc }).into(),
+                ))
             }
         }
     }
@@ -594,7 +592,8 @@ async fn get_blog(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, crate::responses::NotFound> {
-    BLOG.get_content(path, cluster, origin).await
+    let (doc_file_path, canonical) = BLOG.get_content_path(path.clone(), origin).await;
+    BLOG.render(&doc_file_path, &canonical, cluster).await
 }
 
 #[get("/careers/<path..>", rank = 5)]
@@ -603,7 +602,8 @@ async fn get_careers(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, crate::responses::NotFound> {
-    CAREERS.get_content(path, cluster, origin).await
+    let (doc_file_path, canonical) = CAREERS.get_content_path(path.clone(), origin).await;
+    CAREERS.render(&doc_file_path, &canonical, cluster).await
 }
 
 #[get("/docs/<path..>", rank = 5)]
@@ -612,7 +612,32 @@ async fn get_docs(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, crate::responses::NotFound> {
-    DOCS.get_content(path, cluster, origin).await
+    let (doc_file_path, canonical) = DOCS.get_content_path(path.clone(), origin).await;
+
+    match Document::from_path(&doc_file_path).await {
+        Ok(doc) => {
+            let index = DOCS.open_index(&doc.path);
+
+            let layout = crate::components::layouts::Docs::new(&doc.title, Some(cluster))
+                .index(&index)
+                .image(&doc.thumbnail)
+                .canonical(&canonical);
+
+            let page = crate::components::pages::docs::Article::new(&cluster)
+                .toc_links(&doc.toc_links)
+                .content(&doc.html());
+
+            Ok(ResponseOk(layout.render(page)))
+        }
+        // Return page not found on bad path
+        _ => {
+            let layout = crate::components::layouts::Docs::new("404", Some(cluster)).index(&DOCS.index);
+
+            let page = crate::components::pages::docs::Article::new(&cluster).document_not_found();
+
+            Err(crate::responses::NotFound(layout.render(page)))
+        }
+    }
 }
 
 #[get("/blog")]
@@ -633,18 +658,29 @@ async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
     ))
 }
 
+#[get("/docs")]
+async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
+    let index = DOCS.open_index(&PathBuf::from("/docs"));
+
+    let doc_layout =
+        crate::components::layouts::Docs::new("PostgresML documentation landing page.", Some(cluster)).index(&index);
+
+    let page = crate::components::pages::docs::LandingPage::new(&cluster)
+        .parse_sections(DOCS.index.clone())
+        .await;
+
+    Ok(ResponseOk(doc_layout.render(page)))
+}
+
 #[get("/user_guides/<path..>", rank = 5)]
-async fn get_user_guides(
-    path: PathBuf,
-    cluster: &Cluster,
-    origin: &Origin<'_>,
-) -> Result<ResponseOk, crate::responses::NotFound> {
-    DOCS.get_content(path, cluster, origin).await
+async fn get_user_guides(path: PathBuf) -> Result<Response, crate::responses::NotFound> {
+    Ok(Response::redirect(format!("/docs/{}", path.display().to_string())))
 }
 
 pub fn routes() -> Vec<Route> {
     routes![
         blog_landing_page,
+        docs_landing_page,
         get_blog,
         get_blog_asset,
         get_careers,
@@ -871,8 +907,11 @@ This is the end of the markdown
         let urls = collection.get_all_urls();
 
         for url in urls {
-            let path = collection.url_to_path(url.as_ref());
-            crate::api::cms::Document::from_path(&path).await.unwrap();
+            // Don't parse landing page since it is not markdown.
+            if url != "/docs" {
+                let path = collection.url_to_path(url.as_ref());
+                crate::api::cms::Document::from_path(&path).await.unwrap();
+            }
         }
     }
 

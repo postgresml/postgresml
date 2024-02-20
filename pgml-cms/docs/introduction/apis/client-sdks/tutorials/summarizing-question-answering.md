@@ -1,3 +1,7 @@
+---
+description: >-
+  JavaScript and Python code snippets for text summarization.
+---
 # Summarizing Question Answering
 
 Here are the Python and JavaScript examples for text summarization using `pgml` SDK

@@ -1,0 +1,63 @@
+div[data-controller="navigation-left-nav-docs"] {
+    $collapsed-left-nav-height: 40px;
+    --bs-border-color: #{$gray-600};
+
+    &.doc-leftnav-container {
+        background-color: #{$gray-800};
+        padding-top: 0px;
+        border-right: none;
+        min-width: $docs-left-nav-w;
+        width: $docs-left-nav-w;
+        position: relative;
+        z-index: 0;
+        display: none;
+        overflow: hidden;
+    
+        @include media-breakpoint-up(xl) {
+            height: calc(100vh - $navbar-height);
+            position: sticky; 
+            top: $navbar-height;
+            display: block;
+        }
+    }
+    
+    .doc-leftnav {
+        @extend .navbar;
+    
+        border: none;
+        align-items: start;
+        background-color: inherit;
+    
+        height: 100%;
+        overflow: auto;
+       
+        padding-right: 20px;
+        box-sizing: border-box;
+        width: 100%;
+    }
+    
+    .show-scroll {
+        padding-right: 25px;
+        @-moz-document url-prefix() {
+        padding-right: 20px;
+        }
+    }
+
+    .btn-primary-alterations {
+        justify-content: start;
+        padding: 8px 0px 8px 8px;
+        border-radius: 4px;
+    }
+    
+    .nav-link {
+        padding: 8px;
+    }
+
+    .purple {
+        color: #{$purple};
+    }
+
+    .card {
+        background-color: #{$gray-900};
+    }
+}
