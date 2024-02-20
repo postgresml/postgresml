@@ -20,8 +20,8 @@ To connect to your database from PostgresML, first create a corresponding `SERVE
 CREATE SERVER live_db
 FOREIGN DATA WRAPPER postgres_fdw
 OPTIONS (
-  host 'Host'
-  port 'Port'
+  host 'Host',
+  port 'Port',
   dbname 'Database name'
 );
 ```
@@ -35,7 +35,7 @@ CREATE USER MAPPING
 FOR CURRENT_USER
 SERVER live_db
 OPTIONS (
-  user 'Postgres user'
+  user 'Postgres user',
   password 'Postgres password'
 );
 ```
