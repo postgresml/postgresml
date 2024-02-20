@@ -6,19 +6,6 @@ div[data-controller="layouts-docs"] {
     min-height: calc(100vh - $navbar-height);
   }
 
-  .glow-container {
-    position: absolute; 
-    overflow: visible; 
-    z-index: -1; 
-    overflow: hidden;
-    height: 100%;
-    width: calc(100vw - 8px);
-    
-    @include media-breakpoint-up(xl) {
-      width: calc(100vw - $docs-left-nav-w - 8px);
-    }
-  }
-
   .drawer-submenu {
     @include media-breakpoint-down(lg) {
         background-color: #{$gray-800};
@@ -32,5 +19,5 @@ div[data-controller="layouts-docs"] {
     border-radius: 1868.714px;
     background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(57, 210, 231, 0.30) 26.4%, rgba(174, 110, 255, 0.30) 100%);
     filter: blur(252.66856384277344px);
-}
+  }
 }
