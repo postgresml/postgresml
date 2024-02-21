@@ -292,7 +292,7 @@ class StandardPipeline(object):
 
             if "token" in kwargs:
                 self.tokenizer = AutoTokenizer.from_pretrained(
-                    model_name, use_auth_token=kwargs["token"]
+                    model_name, token=kwargs["token"]
                 )
             else:
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
