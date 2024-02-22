@@ -10,27 +10,53 @@ div[data-controller="pages-careers-landing-page"] {
         }
       }
 
-      .glow-2 {
-        z-index: -1;
-        top: 50rem;
-        left: 5%;
-    
-        @include media-breakpoint-down(md) {
-          top: -5rem;
-          left: 0%;
-        }
-      }
-
     .sky-1 {
         width: 752px;
         height: 619px;
         max-width: 50vw;
         position: absolute;
-        left: 50%;
+        right: -50%;
         transform: translateX(-50%);
         border-radius: 752px;
         background: radial-gradient(46.38% 45.17% at 22.72% 36.90%, rgba(57, 210, 231, 0.60) 26.40%, rgba(174, 110, 255, 0.60) 100%);
         filter: blur(252.66856384277344px);
+    }
+
+    .orange {
+        width: 608.173px;
+        height: 456.083px;
+        transform: rotate(-1.255deg);
+        flex-shrink: 0;
+        border-radius: 608.173px;
+        background: radial-gradient(50% 50% at 50% 50%, #8B44FF 0%, #FF783F 100%);
+        filter: blur(168.74745178222656px);
+        right: -50%;
+
+        @include media-breakpoint-down(md) {
+            right: -120%;
+        }
+    }
+
+    .ellipse-18 {
+        width: 671.384px;
+        height: 669.401px;
+        transform: rotate(-149.621deg);
+        flex-shrink: 0;
+        border-radius: 671.384px;
+        background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(136, 234, 255, 0.50) 26.4%, rgba(110, 125, 255, 0.50) 82.81%);
+        filter: blur(99.1705322265625px);
+        left: -58%;
+    }
+
+    .ellipse-19 {
+        width: 686px;
+        height: 645px;
+        flex-shrink: 0;
+        border-radius: 686px;
+        background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(250, 237, 249, 0.50) 10.94%, rgba(239, 55, 255, 0.25) 100%);
+        filter: blur(99.1705322265625px);
+        left: -60%;
+        top: 15vh;
     }
 
     .card {
