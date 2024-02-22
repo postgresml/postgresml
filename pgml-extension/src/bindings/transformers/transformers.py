@@ -243,6 +243,7 @@ class ThreadedGeneratorIterator:
             self.q.task_done()
             return v
 
+
 class StandardPipeline(object):
     def __init__(self, model_name, **kwargs):
         # the default pipeline constructor doesn't pass all the kwargs (particularly load_in_4bit)
@@ -283,17 +284,25 @@ class StandardPipeline(object):
             elif self.task == "summarization" or self.task == "translation":
                 if model_name == "google/pegasus-xsum":
                     # HF auto model doesn't detect GPUs
-                    self.model = PegasusForConditionalGeneration.from_pretrained(model_name)
+                    self.model = PegasusForConditionalGeneration.from_pretrained(
+                        model_name
+                    )
                 else:
-                    self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **kwargs)
+                    self.model = AutoModelForSeq2SeqLM.from_pretrained(
+                        model_name, **kwargs
+                    )
             elif self.task == "text-generation" or self.task == "conversational":
                 # See: https://huggingface.co/docs/transformers/main/quantization
                 if "quantization_config" in kwargs:
                     quantization_config = kwargs.pop("quantization_config")
                     quantization_config = GPTQConfig(**quantization_config)
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=quantization_config, **kwargs)
+                    self.model = AutoModelForCausalLM.from_pretrained(
+                        model_name, quantization_config=quantization_config, **kwargs
+                    )
                 else:
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
+                    self.model = AutoModelForCausalLM.from_pretrained(
+                        model_name, **kwargs
+                    )
             else:
                 raise PgMLException(f"Unhandled task: {self.task}")
 
@@ -341,7 +350,7 @@ class StandardPipeline(object):
                 self.tokenizer,
                 timeout=timeout,
                 skip_prompt=True,
-                skip_special_tokens=True
+                skip_special_tokens=True,
             )
             if "chat_template" in kwargs:
                 input = self.tokenizer.apply_chat_template(
@@ -364,9 +373,7 @@ class StandardPipeline(object):
             )
         else:
             streamer = TextIteratorStreamer(
-                self.tokenizer,
-                timeout=timeout,
-                skip_special_tokens=True
+                self.tokenizer, timeout=timeout, skip_special_tokens=True
             )
             input = self.tokenizer(input, return_tensors="pt", padding=True).to(
                 self.model.device
@@ -515,7 +522,6 @@ def embed(transformer, inputs, kwargs):
     model = __cache_sentence_transformer_by_name[transformer]
 
     return embed_using(model, transformer, inputs, kwargs)
-
 
 
 def clear_gpu_cache(memory_usage: None):
