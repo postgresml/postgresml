@@ -41,7 +41,9 @@ from transformers import (
     PegasusTokenizer,
     TrainingArguments,
     Trainer,
-    GPTQConfig
+    GPTQConfig,
+    PegasusForConditionalGeneration,
+    PegasusTokenizer,
 )
 import threading
 
@@ -241,7 +243,6 @@ class ThreadedGeneratorIterator:
             self.q.task_done()
             return v
 
-
 class StandardPipeline(object):
     def __init__(self, model_name, **kwargs):
         # the default pipeline constructor doesn't pass all the kwargs (particularly load_in_4bit)
@@ -253,6 +254,8 @@ class StandardPipeline(object):
         # This renaming is for backwards compatability
         if "use_auth_token" in kwargs:
             kwargs["token"] = kwargs.pop("use_auth_token")
+
+        self.model_name = model_name
 
         if (
             "task" in kwargs
@@ -278,7 +281,11 @@ class StandardPipeline(object):
                     model_name, **kwargs
                 )
             elif self.task == "summarization" or self.task == "translation":
-                self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **kwargs)
+                if model_name == "google/pegasus-xsum":
+                    # HF auto model doesn't detect GPUs
+                    self.model = PegasusForConditionalGeneration.from_pretrained(model_name)
+                else:
+                    self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **kwargs)
             elif self.task == "text-generation" or self.task == "conversational":
                 # See: https://huggingface.co/docs/transformers/main/quantization
                 if "quantization_config" in kwargs:
@@ -290,17 +297,31 @@ class StandardPipeline(object):
             else:
                 raise PgMLException(f"Unhandled task: {self.task}")
 
+            if model_name == "google/pegasus-xsum":
+                kwargs.pop("token", None)
+
             if "token" in kwargs:
                 self.tokenizer = AutoTokenizer.from_pretrained(
                     model_name, token=kwargs["token"]
                 )
             else:
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                if model_name == "google/pegasus-xsum":
+                    self.tokenizer = PegasusTokenizer.from_pretrained(model_name)
+                else:
+                    self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+            pipe_kwargs = {
+                "model": self.model,
+                "tokenizer": self.tokenizer,
+            }
+
+            # https://huggingface.co/docs/transformers/en/model_doc/pegasus
+            if model_name == "google/pegasus-xsum":
+                pipe_kwargs["device"] = kwargs.get("device", "cpu")
 
             self.pipe = transformers.pipeline(
                 self.task,
-                model=self.model,
-                tokenizer=self.tokenizer,
+                **pipe_kwargs,
             )
         else:
             self.pipe = transformers.pipeline(**kwargs)
