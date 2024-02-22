@@ -1302,7 +1302,11 @@ def finetune_conversation(
         wandb_key = hyperparams["training_args"].pop("wandb_key")
         wandb.login(key=wandb_key)
     
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    use_auth_token = None
+    if "use_auth_token" in hyperparams.keys():
+        use_auth_token = hyperparams.pop("use_auth_token")
+    
+    tokenizer = AutoTokenizer.from_pretrained(model_name, token=use_auth_token)
 
     # dataset
     train_dataset = datasets.Dataset.from_dict(
@@ -1356,7 +1360,10 @@ def finetune_conversation(
     elif hasattr(tokenizer,"model_max_length"):
         max_seq_length = tokenizer.model_max_length
     else:
-        max_seq_length = 512
+        max_seq_length = 1024
+    
+    if max_seq_length > 1e6:
+        max_seq_length = 1024
     
     # response template
     collator = None
@@ -1372,21 +1379,25 @@ def finetune_conversation(
         output_dir=path, logging_dir=path, **hyperparams["training_args"]
     )
 
+    load_in_8bit = False
     if "load_in_8bit" in hyperparams.keys():
         load_in_8bit = hyperparams.pop("load_in_8bit")
-        model = AutoModelForCausalLM.from_pretrained(model_name,load_in_8bit=load_in_8bit, device_map="auto")
+
+
+    if load_in_8bit:
+        model = AutoModelForCausalLM.from_pretrained(model_name,load_in_8bit=load_in_8bit, device_map="auto", token=use_auth_token)
     else:
-        model = AutoModelForCausalLM.from_pretrained(model_name,torch_dtype=torch.bfloat16)
+        model = AutoModelForCausalLM.from_pretrained(model_name,torch_dtype=torch.bfloat16, token=use_auth_token)
     
     lora_config = None
     if "lora_config" in hyperparams.keys():
         lora_config = LoraConfig(**hyperparams.pop("lora_config"))
-        model.add_adapter(lora_config)
         peft_model = get_peft_model(model, lora_config)
         print_number_of_trainable_model_parameters(peft_model)
 
 
-
+    print("**** Training Arguments ******")
+    print(training_args, file = sys.stderr)
     # SFT Trainer
     trainer = SFTTrainer(
             model,
@@ -1394,17 +1405,21 @@ def finetune_conversation(
             train_dataset=train_dataset,
             eval_dataset=test_dataset,
             formatting_func=formatting_prompts_func,
+            max_seq_length=max_seq_length,
             packing=True,
     )
 
     if collator:
         trainer.data_collator = collator
     
+    if lora_config:
+        trainer.peft_config = lora_config
+    
     # Train
     try:
         trainer.train()
     except Exception as e:
-        print(str(e), file=sys.stderr)
+        raise ValueError(str(e))
 
     # Save the model
     trainer.save_model()
