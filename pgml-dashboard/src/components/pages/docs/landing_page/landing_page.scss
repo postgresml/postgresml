@@ -8,12 +8,6 @@ div[data-controller="pages-docs-landing-page"] {
             color: #{$gray-100};
         }
 
-        .card-arrow {
-            position: relative;
-            transition: left 0.3s;
-            left: 0rem;
-        }
-
         &:hover {
             .card-title, .alt_title {
                 color: #{$purple};
@@ -25,7 +19,6 @@ div[data-controller="pages-docs-landing-page"] {
 
             .card-arrow {
                 left: 0.5rem;
-                
             }
         }
     }

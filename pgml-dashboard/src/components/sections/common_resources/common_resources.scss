@@ -1,0 +1,22 @@
+div[data-controller="sections-common-resources"] {
+  .common-card-body {
+      margin: 2.5rem;
+      @include media-breakpoint-down(md) {
+        margin: 1.5rem;
+      }
+    }
+
+    .card-image {
+      position: absolute;
+      opacity: 10%;
+
+      width: 22%;
+      top: -7%;
+      right: -2%;
+      @include media-breakpoint-up(md) {
+        width: 35%;
+        top: -13%;
+        right: -5%;
+      }
+    }
+}

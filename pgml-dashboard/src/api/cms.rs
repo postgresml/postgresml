@@ -677,10 +677,26 @@ async fn get_user_guides(path: PathBuf) -> Result<Response, crate::responses::No
     Ok(Response::redirect(format!("/docs/{}", path.display().to_string())))
 }
 
+#[get("/careers")]
+async fn careers_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
+    let layout = Base::new(
+        "PostgresML careers landing page, Join us to help build the future of AI infrastructure.",
+        Some(cluster),
+    )
+    .theme(Theme::Marketing);
+
+    let page = crate::components::pages::careers::LandingPage::new(cluster)
+        .index(&CAREERS)
+        .await;
+
+    Ok(ResponseOk(layout.render(page)))
+}
+
 pub fn routes() -> Vec<Route> {
     routes![
         blog_landing_page,
         docs_landing_page,
+        careers_landing_page,
         get_blog,
         get_blog_asset,
         get_careers,

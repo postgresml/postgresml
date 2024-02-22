@@ -2,6 +2,7 @@
   use crate::components::Carousel;
   use crate::components::cards::blog::ArticlePreview;
   use crate::components::pages::blog::LandingPage;
+  use crate::components::sections::common_resources::{Cards, CommonResources};
 
   let featured_cards = index
     .clone()
@@ -41,6 +42,10 @@
           <%- doc %>
         <% } %>
       </div>
+    </div>
+
+    <div class="mt-5">
+      <%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %>
     </div>
   </div>
 </div>

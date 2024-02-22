@@ -1,3 +1,8 @@
+---
+description: >-
+  Work with our team to shape our core product and implement ML solutions at scale.
+tags: [engineering]
+---
 # Machine Learning Engineer
 
 PostgresML provides microsecond inference with the world's most capable feature store. It allows you to easily train and deploy online models using only SQL. We're looking for a experienced Machine Learning Engineers to help shape the core product, inside and out. This is an IC role, but will be critical in building the future team as well as the core product, while leading efforts toward more efficient and effective Machine Learning workflows for our customers.

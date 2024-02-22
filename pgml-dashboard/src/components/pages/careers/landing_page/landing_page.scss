@@ -1,0 +1,69 @@
+div[data-controller="pages-careers-landing-page"] {
+    .glow-1 {
+        z-index: -1;
+        top: -10rem;
+        left: -5%;
+    
+        @include media-breakpoint-down(md) {
+          top: -5rem;
+          left: 0%;
+        }
+      }
+
+      .glow-2 {
+        z-index: -1;
+        top: 50rem;
+        left: 5%;
+    
+        @include media-breakpoint-down(md) {
+          top: -5rem;
+          left: 0%;
+        }
+      }
+
+    .sky-1 {
+        width: 752px;
+        height: 619px;
+        max-width: 50vw;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 752px;
+        background: radial-gradient(46.38% 45.17% at 22.72% 36.90%, rgba(57, 210, 231, 0.60) 26.40%, rgba(174, 110, 255, 0.60) 100%);
+        filter: blur(252.66856384277344px);
+    }
+
+    .card {
+        background: #{$gray-800};
+
+        .card-eyebrow {
+            color:  #{$gray-100}
+        }
+
+        .goto-arrow {
+            left: 0rem;
+        }
+        &:hover {
+            background: #{$gray-700};
+            .card-eyebrow {
+                @include text-gradient($gradient-green);
+            }
+            .goto-arrow {
+                left: 0.5rem;
+            }
+        }
+
+    }
+    
+    .card-generic-job-position {
+        background: #{$gray-900};
+        border-radius: 20px;
+        border: 1px solid #{$gray-300};
+    }
+
+    li::marker {
+        color: #{$purple};
+
+    }
+
+}

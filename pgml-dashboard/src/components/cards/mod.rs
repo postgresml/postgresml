@@ -3,3 +3,7 @@
 
 // src/components/cards/blog
 pub mod blog;
+
+// src/components/cards/newsletter_subscribe
+pub mod newsletter_subscribe;
+pub use newsletter_subscribe::NewsletterSubscribe;

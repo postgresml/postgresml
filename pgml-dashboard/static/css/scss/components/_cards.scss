@@ -43,8 +43,8 @@
 }
 
 .generic-card {
-    @extend .card, .card-light;
-
+    --bs-card-border-radius: 20px;
+    
     &:hover {
         box-shadow: 20px 20px 24px rgba(49, 67, 89, 0.13);
     }

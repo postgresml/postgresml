@@ -6,11 +6,6 @@ div[data-controller="notifications-marketing-feature-banner"] {
                 left: 0.5rem;
             }
         }
-        .more-info {
-            transition-duration: 0.5s;
-            transition-property: left;
-            left: 0rem;
-        }
     }
     .feature1 {
         background-color: #{$slate-shade-100};

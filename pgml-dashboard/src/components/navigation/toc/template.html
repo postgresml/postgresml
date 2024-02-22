@@ -1,5 +1,5 @@
 
-<aside class="pt-xxl-4 px-xxl-0 toc-container" data-controller="navigation-toc">
+<aside class="pt-xxl-4 px-xxl-0 toc-container pb-xxl-4" data-controller="navigation-toc">
   <nav class="card nav toc rounded-0">
     <div class="card-body py-2 py-xxl-4">
       <p class="mb-3 d-none d-xxl-block legal-text text-white">IN THIS DOC</p>
@@ -17,7 +17,7 @@
               _ => ("20px", "20px", "fw-normal", "6px")
 
           }; %>
-          <div style='padding-top: <%- padding_y %>; padding-bottom: <%- padding_y %>; padding-left: <%- padding_left %>; margin-left: <%- margin_left %>; <% if link.level > 3 {%><%- "border-left: 1px solid white" %><% } %>'>
+          <div class='<% if link.level > 3 {%><%- "border-left" %><% } %>' style='padding-top: <%- padding_y %>; padding-bottom: <%- padding_y %>; padding-left: <%- padding_left %>; margin-left: <%- margin_left %>'>
             <a  class="nav-link px-0 py-0 text-break <%- fw %>" href="#<%= link.id %>" role="button" data-action="click->docs-toc#setUrlFragment">
               <%= link.title %>
             </a>
