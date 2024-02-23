@@ -81,3 +81,9 @@
     opacity: 0.1;
   }
 }
+
+.goto-shift-animation {
+  left: 0rem;
+  position: relative;
+  transition: left 0.3s;
+}

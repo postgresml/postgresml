@@ -98,11 +98,17 @@ h6, .h6 {
 .text-black {
     color: #{$gray-900} !important;
 }
-.text-white {
-    color: #{$gray-100} !important;
+.text-white-600 {
+    color: #{$gray-600} !important;
 }
-.text-soft-white {
+.text-white-300 {
+    color: #{$gray-300} !important;
+}
+.text-soft-white, .text-white-200 {
     color: #{$gray-200} !important;
+}
+.text-white, .text-white-100 {
+    color: #{$gray-100} !important;
 }
 
 @mixin text-gradient($gradient) {

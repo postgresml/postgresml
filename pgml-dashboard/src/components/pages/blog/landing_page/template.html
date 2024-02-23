@@ -2,6 +2,7 @@
   use crate::components::Carousel;
   use crate::components::cards::blog::ArticlePreview;
   use crate::components::pages::blog::LandingPage;
+  use crate::components::sections::common_resources::{Cards, CommonResources};
 
   let featured_cards = index
     .clone()
@@ -18,6 +19,7 @@
 <div data-controller="pages-blog-landing-page" class="overflow-hidden tuck-under-navbar">
   <div class="container-fluid">
     <div class="container">
+      
       <div class="position-relative overflow-show glow-1" >
         <div class="position-absolute red-1"></div>
       </div>
@@ -41,6 +43,10 @@
           <%- doc %>
         <% } %>
       </div>
+    </div>
+
+    <div class="mt-5">
+      <%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %>
     </div>
   </div>
 </div>

@@ -1,3 +1,7 @@
+---
+description: >-
+tags: [engineering]
+---
 # Product Manager
 
 PostgresML provides cloud hosted AI application databases, that bring the latest machine learning and vector capabilities to the heart of everyone’s favorite tech stack. We're looking for a Head of Growth, with a Technical Product Manager skill set to help shape the core product, inside and outside the company.&#x20;

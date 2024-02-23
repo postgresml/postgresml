@@ -25,4 +25,8 @@ aside[data-controller="navigation-toc"] {
   .border-top {
     border-color: #{$gray-600};
   }
+
+  .border-left {
+    border-left: 1px solid #{$gray-600};
+  }
 }

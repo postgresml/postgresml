@@ -5,6 +5,7 @@
       "product" => "dashboard",
       "use cases" => "account_circle",
       "resources" => "school",
+      "introduction" => "list_alt",
       _ => "dashboard",
     }
   }
@@ -33,7 +34,7 @@
               <%+ doc_link %>
             <% } else { %>
               <div class="d-flex flex-column">
-                <%- title(doc_link.title) %>
+                <%- title(doc_link.title.to_uppercase()) %>
 
                 <% for item in doc_link.children {%>
                   <%+ item %>
