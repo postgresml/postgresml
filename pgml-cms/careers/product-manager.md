@@ -1,6 +1,5 @@
 ---
 description: >-
-  Some stuff that describes the position.
 tags: [engineering]
 ---
 # Product Manager
