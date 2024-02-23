@@ -955,7 +955,8 @@ impl Model {
                                             .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
                                     }
                                     pgrx_pg_sys::NUMERICOID => {
-                                        let element: Result<Option<AnyNumeric>, TryFromDatumError> = tuple.get_by_index(index);
+                                        let element: Result<Option<AnyNumeric>, TryFromDatumError> =
+                                            tuple.get_by_index(index);
                                         element
                                             .unwrap()
                                             .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
@@ -999,7 +1000,8 @@ impl Model {
                                         features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
                                     }
                                     pgrx_pg_sys::NUMERICOID => {
-                                        let element: Result<Option<AnyNumeric>, TryFromDatumError> = tuple.get_by_index(index);
+                                        let element: Result<Option<AnyNumeric>, TryFromDatumError> =
+                                            tuple.get_by_index(index);
                                         features.push(element.unwrap().map_or(f32::NAN, |v| v.try_into().unwrap()));
                                     }
                                     // TODO handle NULL to NaN for arrays

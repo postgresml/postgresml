@@ -749,7 +749,7 @@ impl Snapshot {
                 .map(|c| c.quoted_name())
                 .collect::<Vec<String>>()
                 .join(", "),
-            self.relation_name(),
+            self.relation_name_quoted(),
             match self.materialized {
                 // If the snapshot is materialized, we already randomized it.
                 true => "",
@@ -990,7 +990,10 @@ impl Snapshot {
                                 "int8" => row[column.position].value::<i64>().unwrap().map(|v| v.to_string()),
                                 "float4" => row[column.position].value::<f32>().unwrap().map(|v| v.to_string()),
                                 "float8" => row[column.position].value::<f64>().unwrap().map(|v| v.to_string()),
-                                "numeric" => row[column.position].value::<AnyNumeric>().unwrap().map(|v| v.to_string()),
+                                "numeric" => row[column.position]
+                                    .value::<AnyNumeric>()
+                                    .unwrap()
+                                    .map(|v| v.to_string()),
                                 "bpchar" | "text" | "varchar" => {
                                     row[column.position].value::<String>().unwrap().map(|v| v.to_string())
                                 }
@@ -1084,7 +1087,7 @@ impl Snapshot {
                                         check_column_size(column, vec.len());
 
                                         for j in vec {
-                                            vector.push(j.rescale::<6,0>().unwrap().try_into().unwrap())
+                                            vector.push(j.rescale::<6, 0>().unwrap().try_into().unwrap())
                                         }
                                     }
                                     _ => error!(
@@ -1101,7 +1104,10 @@ impl Snapshot {
                                     "int8" => row[column.position].value::<i64>().unwrap().map(|v| v as f32),
                                     "float4" => row[column.position].value::<f32>().unwrap(),
                                     "float8" => row[column.position].value::<f64>().unwrap().map(|v| v as f32),
-                                    "numeric" => row[column.position].value::<AnyNumeric>().unwrap().map(|v| v.rescale::<6,0>().unwrap().try_into().unwrap()),
+                                    "numeric" => row[column.position]
+                                        .value::<AnyNumeric>()
+                                        .unwrap()
+                                        .map(|v| v.rescale::<6, 0>().unwrap().try_into().unwrap()),
                                     _ => error!(
                                         "Unhandled type for quantitative scalar column: {} {:?}",
                                         column.name, column.pg_type
@@ -1154,6 +1160,16 @@ impl Snapshot {
         match self.materialized {
             true => self.snapshot_name(),
             false => self.relation_name.clone(),
+        }
+    }
+
+    fn relation_name_quoted(&self) -> String {
+        match self.materialized {
+            true => format!("\"{}\"", self.snapshot_name()),
+            false => {
+                let (schema_name, table_name) = Self::fully_qualified_table(&self.relation_name);
+                format!("\"{}\".\"{}\"", schema_name, table_name)
+            }
         }
     }
 }
