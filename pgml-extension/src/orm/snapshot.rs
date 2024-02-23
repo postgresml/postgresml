@@ -1165,7 +1165,7 @@ impl Snapshot {
 
     fn relation_name_quoted(&self) -> String {
         match self.materialized {
-            true => format!("\"{}\"", self.snapshot_name()),
+            true => self.snapshot_name(), // Snapshot name is already safe.
             false => {
                 let (schema_name, table_name) = Self::fully_qualified_table(&self.relation_name);
                 format!("\"{}\".\"{}\"", schema_name, table_name)
