@@ -59,40 +59,41 @@ jobs:
     #         os: "buildjet-4vcpu-ubuntu-2204-arm"
     runs-on: ubuntu-latest
     # container: ubuntu:16.04
-    # defaults:
-    #   run:
-    #     working-directory: pgml-sdks/pgml/javascript
+    container: quay.io/pypa/manylinux2014_x86_64
+    defaults:
+      run:
+        working-directory: pgml-sdks/pgml/javascript
     steps:
       - uses: actions/checkout@v3
-      # - name: Install dependencies
-      #   run: |
-      #     apt update
-      #     apt-get -y install curl
-      #     apt-get -y install build-essential
-      # - uses: actions-rs/toolchain@v1
-      #   with:
-      #     toolchain: stable
-      # - name: Validate cargo is working
-      #   uses: postgresml/gh-actions-cargo@master
-      #   with:
-      #     command: version
-      # - uses: actions/setup-node@v3
-      #   with:
-      #     node-version: 16
-      # - name: Do build
-      #   env:
-      #     TYPESCRIPT_DECLARATION_FILE: "javascript/index.d.ts"
-      #   run: |
-      #     npm i 
-      #     npm run build-release
-      - name: Build
-        uses: ./.github/workflows/build-javascript-sdk
+      - name: Install dependencies
+        run: |
+          apt update
+          apt-get -y install curl
+          apt-get -y install build-essential
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Validate cargo is working
+        uses: postgresml/gh-actions-cargo@master
+        with:
+          command: version
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Do build
+        env:
+          TYPESCRIPT_DECLARATION_FILE: "javascript/index.d.ts"
+        run: |
+          npm i 
+          npm run build-release
+      # - name: Build
+      #   uses: ./.github/workflows/build-javascript-sdk
       - name: Upload built .node file
         uses: actions/upload-artifact@v3
         with:
           name: node-artifacts
-          # path: ${{ github.workspace }}/pgml-sdks/pgml/javascript/dist/${{ matrix.neon-out-name }}
-          path: ${{ github.workspace }}/pgml-sdks/pgml/javascript/dist/x86_64-unknown-linux-gnu-index.node
+          path: ${{ github.workspace }}/pgml-sdks/pgml/javascript/dist/${{ matrix.neon-out-name }}
+          # path: ${{ github.workspace }}/pgml-sdks/pgml/javascript/dist/x86_64-unknown-linux-gnu-index.node
           retention-days: 1
   # publish-javascript-sdk:
   #   needs: build-javascript-sdk
