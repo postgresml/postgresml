@@ -86,7 +86,7 @@ jobs:
       #     npm i 
       #     npm run build-release
       - name: Build
-        uses: ./.github/workflows/build-javascript-sdk.yml
+        uses: ./.github/workflows/build-javascript-sdk
       - name: Upload built .node file
         uses: actions/upload-artifact@v3
         with:

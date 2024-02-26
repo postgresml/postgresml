@@ -1,4 +1,3 @@
-# action.yml
 name: 'Build JavaScript SDK'
 description: 'Builds the JavaScript SDK in a Docker Container'
 runs:
