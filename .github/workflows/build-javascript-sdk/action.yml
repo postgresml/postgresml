@@ -2,6 +2,6 @@ name: 'Build JavaScript SDK'
 description: 'Builds the JavaScript SDK in a Docker Container'
 runs:
   using: 'docker'
-  image: './pgml-sdks/pgml/javascript/Dockerfile'
+  image: 'Dockerfile'
   args:
     - cd ./pgml-sdks/pgml/javascript && npm i && npm run build-release
