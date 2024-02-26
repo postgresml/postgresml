@@ -630,10 +630,12 @@ impl Collection {
                     })
                     .map(|(document_id, _, _)| *document_id)
                     .collect();
-                pipeline
-                    .sync_documents(ids_to_run_on, project_info, &mut transaction)
-                    .await
-                    .expect("Failed to execute pipeline");
+                if !ids_to_run_on.is_empty() {
+                    pipeline
+                        .sync_documents(ids_to_run_on, project_info, &mut transaction)
+                        .await
+                        .expect("Failed to execute pipeline");
+                }
             }
 
             transaction.commit().await?;

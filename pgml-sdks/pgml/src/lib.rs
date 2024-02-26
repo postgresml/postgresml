@@ -322,7 +322,7 @@ mod tests {
     #[tokio::test]
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_capaud_106";
+        let collection_name = "test_r_c_capaud_107";
         let pipeline_name = "test_r_p_capaud_6";
         let mut pipeline = Pipeline::new(
             pipeline_name,
@@ -335,7 +335,11 @@ mod tests {
                     },
                     "body": {
                         "splitter": {
-                            "model": "recursive_character"
+                            "model": "recursive_character",
+                            "parameters": {
+                                "chunk_size": 1000,
+                                "chunk_overlap": 40
+                            }
                         },
                         "semantic_search": {
                             "model": "hkunlp/instructor-base",
@@ -376,13 +380,13 @@ mod tests {
             sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
                 .fetch_all(&pool)
                 .await?;
-        assert!(body_chunks.len() == 4);
+        assert!(body_chunks.len() == 12);
         let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name);
         let tsvectors: Vec<models::TSVector> =
             sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
                 .fetch_all(&pool)
                 .await?;
-        assert!(tsvectors.len() == 4);
+        assert!(tsvectors.len() == 12);
         collection.archive().await?;
         Ok(())
     }
