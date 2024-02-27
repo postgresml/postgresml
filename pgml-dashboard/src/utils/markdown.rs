@@ -1309,13 +1309,14 @@ impl SiteSearch {
                         "parameters": {
                             "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
                         },
-                        "boost": 4.0
+                        "boost": 10.0
                     },
                     "contents": {
                         "query": query,
                         "parameters": {
                             "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
                         },
+                        "boost": 1.0
                     }
                 }
             },
