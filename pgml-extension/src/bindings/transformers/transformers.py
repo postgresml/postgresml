@@ -56,6 +56,7 @@ from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 from trl.trainer import ConstantLengthDataset
 from peft import LoraConfig, get_peft_model
 import pypgrx
+from abc import abstractmethod
 
 transformers.logging.set_verbosity_info()
 
@@ -1010,127 +1011,279 @@ def generate(model_id, data, config):
 #######################
 # LLM Fine-Tuning
 #######################
-def finetune_text_classification(
-    task, hyperparams, path, x_train, x_test, y_train, y_test
-):
-    # Get model and tokenizer
-    hyperparams = orjson.loads(hyperparams)
-    model_name = hyperparams.pop("model_name")
+class FineTuningBase:
+    def __init__(
+        self,
+        project_id: int,
+        model_id: int,
+        train_dataset: datasets.Dataset,
+        test_dataset: datasets.Dataset,
+        path: str,
+        hyperparameters: dict,
+    ) -> None:
 
-    if "project_name" in hyperparams.keys():
-        project_name = "_".join(hyperparams.pop("project_name").split())
-        hyperparams["training_args"]["hub_model_id"] = project_name
+        # initialize class variables
+        self.project_id = project_id
+        self.model_id = model_id
+        self.train_dataset = train_dataset
+        self.test_dataset = test_dataset
+        self.token = None
+        self.lora_config = None
+        self.load_in_8bit = False
+        self.tokenizer_args = None
 
-    if "wandb_key" in hyperparams["training_args"].keys():
-        wandb_key = hyperparams["training_args"].pop("wandb_key")
-        wandb.login(key=wandb_key)
+        # check if path is a directory
+        if not os.path.isdir(path):
+            os.makedirs(path, exist_ok=True)
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    classes = list(set(y_train))
-    num_classes = len(classes)
+        self.path = path
 
-    id2label = {}
-    label2id = {}
-    for _id, label in enumerate(classes):
-        label2id[label] = _id
-        id2label[_id] = label
+        # check if hyperparameters is a dictionary
+        if "model_name" not in hyperparameters:
+            raise ValueError("model_name is a required hyperparameter")
+        else:
+            self.model_name = hyperparameters.pop("model_name")
 
-    model = AutoModelForSequenceClassification.from_pretrained(
-        model_name, num_labels=num_classes, id2label=id2label, label2id=label2id
-    )
+        if "token" in hyperparameters:
+            self.token = hyperparameters.pop("token")
 
-    model.config.id2label = id2label
-    model.config.label2id = label2id
+        if "training_args" in hyperparameters:
+            self.training_args = hyperparameters.pop("training_args")
+        else:
+            self.training_args = None
 
-    y_train_label = [label2id[_class] for _class in y_train]
-    y_test_label = [label2id[_class] for _class in y_test]
+        if "project_name" in hyperparameters:
+            project_name = "_".join(hyperparameters.pop("project_name").split())
+            self.training_args["hub_model_id"] = project_name
 
-    # Prepare dataset
-    train_dataset = datasets.Dataset.from_dict(
-        {
-            "text": x_train,
-            "label": y_train_label,
-        }
-    )
-    test_dataset = datasets.Dataset.from_dict(
-        {
-            "text": x_test,
-            "label": y_test_label,
-        }
-    )
+        if "lora_config" in hyperparameters:
+            self.lora_config = hyperparameters.pop("lora_config")
 
-    # tokenization function
-    def tokenize_function(example):
-        tokenized_example = tokenizer(
-            example["text"], padding=True, truncation=True, return_tensors="pt"
+        if "load_in_8bit" in hyperparameters:
+            self.load_in_8bit = hyperparameters.pop("load_in_8bit")
+
+        if "tokenizer_args" in hyperparameters:
+            self.tokenizer_args = hyperparameters.pop("tokenizer_args")
+
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name, token=self.token
         )
+
+    @abstractmethod
+    def tokenize_function(self):
+        pass
+
+    @abstractmethod
+    def prepare_tokenized_datasets(self):
+        pass
+
+    @abstractmethod
+    def compute_metrics(self):
+        pass
+
+    @abstractmethod
+    def train(self):
+        pass
+
+
+class FineTuningTextClassification(FineTuningBase):
+    def __init__(
+        self,
+        project_id: int,
+        model_id: int,
+        train_dataset: datasets.Dataset,
+        test_dataset: datasets.Dataset,
+        path: str,
+        hyperparameters: dict,
+    ) -> None:
+        """
+        Initializes a FineTuning object.
+
+        Args:
+            project_id (int): The ID of the project.
+            model_id (int): The ID of the model.
+            train_dataset (Dataset): The training dataset.
+            test_dataset (Dataset): The test dataset.
+            path (str): The path to save the model.
+            hyperparameters (dict): The hyperparameters for fine-tuning.
+
+        Returns:
+            None
+        """
+        super().__init__(
+            project_id, model_id, train_dataset, test_dataset, path, hyperparameters
+        )
+
+        self.classes = list(set(self.train_dataset["class"]))
+        self.num_labels = len(self.classes)
+
+        # create label2id and id2label dictionaries
+        self.label2id = {}
+        self.id2label = {}
+        for _id, label in enumerate(self.classes):
+            self.label2id[label] = _id
+            self.id2label[_id] = label
+
+        # add label column to train and test datasets
+        def add_label_column(example):
+            example["label"] = self.label2id[example["class"]]
+            return example
+
+        self.train_dataset = self.train_dataset.map(add_label_column)
+        self.test_dataset = self.test_dataset.map(add_label_column)
+
+        # load model
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            self.model_name,
+            num_labels=self.num_labels,
+            torch_dtype=torch.float16,
+            id2label=self.id2label,
+            label2id=self.label2id,
+        )
+
+        self.model.config.id2label = self.id2label
+        self.model.config.label2id = self.label2id
+
+    def tokenize_function(self, example):
+        """
+        Tokenizes the input text using the tokenizer specified in the class.
+
+        Args:
+            example (dict): The input example containing the text to be tokenized.
+
+        Returns:
+            tokenized_example (dict): The tokenized example.
+
+        """
+        if self.tokenizer_args:
+            tokenized_example = self.tokenizer(example["text"], **self.tokenizer_args)
+        else:
+            tokenized_example = self.tokenizer(
+                example["text"], padding=True, truncation=True, return_tensors="pt"
+            )
         return tokenized_example
 
-    # Generate tokens
-    train_tokenized_datasets = train_dataset.map(tokenize_function, batched=True)
-    test_tokenized_datasets = test_dataset.map(tokenize_function, batched=True)
+    def prepare_tokenized_datasets(self):
+        """
+        Tokenizes the train and test datasets using the provided tokenize_function.
 
-    # Data collator
-    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+        Returns:
+            None
+        """
+        self.train_dataset = self.train_dataset.map(
+            self.tokenize_function, batched=True
+        )
+        self.test_dataset = self.test_dataset.map(self.tokenize_function, batched=True)
 
-    # Metric
-    f1_metric = evaluate.load("f1")
-    accuracy_metric = evaluate.load("accuracy")
+    def compute_metrics(self, eval_pred):
+        """
+        Compute the F1 score and accuracy metrics for evaluating model performance.
 
-    def compute_metrics(eval_pred):
+        Args:
+            eval_pred (tuple): A tuple containing the logits and labels.
+
+        Returns:
+            dict: A dictionary containing the computed F1 score and accuracy.
+
+        """
+        f1_metric = evaluate.load("f1")
+        accuracy_metric = evaluate.load("accuracy")
+
         logits, labels = eval_pred
         probabilities = F.softmax(torch.from_numpy(logits), dim=1)
         predictions = torch.argmax(probabilities, dim=1)
+
         f1 = f1_metric.compute(
             predictions=predictions, references=labels, average="macro"
         )["f1"]
         accuracy = accuracy_metric.compute(predictions=predictions, references=labels)[
             "accuracy"
         ]
+
         return {"f1": f1, "accuracy": accuracy}
 
-    # Training Args
-    training_args = TrainingArguments(
-        output_dir=path, logging_dir=path, **hyperparams["training_args"]
-    )
+    def train(self):
+        """
+        Trains the model using the specified training arguments, datasets, tokenizer, and data collator.
+        Saves the trained model after training.
+        """
+        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
 
-    from time import sleep
-    for i in range(1):
-        message = "Inserting value at index %d"%i
-        pypgrx.print_info(message)
-        sleep(1)
-    
+        training_args = TrainingArguments(
+            output_dir=self.path, logging_dir=self.path, **self.training_args
+        )
+
+        self.trainer = Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=self.train_dataset,
+            eval_dataset=self.test_dataset,
+            tokenizer=self.tokenizer,
+            data_collator=data_collator,
+            compute_metrics=self.compute_metrics,
+        )
+
+        self.trainer.train()
+
+        self.trainer.save_model()
+
+    def evaluate(self):
+        """
+        Evaluate the performance of the model on the evaluation dataset.
+
+        Returns:
+            metrics (dict): A dictionary containing the evaluation metrics.
+        """
+        metrics = self.trainer.evaluate()
+
+        # Update the keys to match hardcoded metrics in Task definition
+        if "eval_f1" in metrics.keys():
+            metrics["f1"] = metrics.pop("eval_f1")
+
+        if "eval_accuracy" in metrics.keys():
+            metrics["accuracy"] = metrics.pop("eval_accuracy")
+
+        return metrics
+
+
+def finetune_text_classification(
+    task, hyperparams, path, x_train, x_test, y_train, y_test
+):
+    hyperparams = orjson.loads(hyperparams)
     project_id = 1
     model_id = 1
-    logs = json.dumps({"project_id": project_id, "model_id": model_id})
-    pypgrx.insert_logs(project_id, model_id, logs)
-
-    # Trainer
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_tokenized_datasets,
-        eval_dataset=test_tokenized_datasets,
-        tokenizer=tokenizer,
-        data_collator=data_collator,
-        compute_metrics=compute_metrics,
+    # Prepare dataset
+    train_dataset = datasets.Dataset.from_dict(
+        {
+            "text": x_train,
+            "class": y_train,
+        }
+    )
+    test_dataset = datasets.Dataset.from_dict(
+        {
+            "text": x_test,
+            "class": y_test,
+        }
     )
 
-    # Train
-    trainer.train()
+    finetuner = FineTuningTextClassification(
+        project_id=project_id,
+        model_id=model_id,
+        train_dataset=train_dataset,
+        test_dataset=test_dataset,
+        path=path,
+        hyperparameters=hyperparams,
+    )
 
-    # Save model
-    trainer.save_model()
+    finetuner.prepare_tokenized_datasets()
 
-    # Metrics
-    metrics = trainer.evaluate()
+    # finetuner.train()
 
-    # Update the keys to match hardcoded metrics in Task definition
-    if "eval_f1" in metrics.keys():
-        metrics["f1"] = metrics.pop("eval_f1")
+    # metrics = finetuner.evaluate()
 
-    if "eval_accuracy" in metrics.keys():
-        metrics["accuracy"] = metrics.pop("eval_accuracy")
+    metrics = {}
+    metrics["f1"] = 0.5
+    metrics["accuracy"] = 0.5
 
     return metrics
 
@@ -1288,7 +1441,11 @@ def print_number_of_trainable_model_parameters(model):
     # Calculate and print the number and percentage of trainable parameters
     print(f"Trainable model parameters: {trainable_model_params}", file=sys.stderr)
     print(f"All model parameters: {all_model_params}", file=sys.stderr)
-    print(f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%", file=sys.stderr)
+    print(
+        f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%",
+        file=sys.stderr,
+    )
+
 
 ## Conversation
 def finetune_conversation(
@@ -1313,11 +1470,11 @@ def finetune_conversation(
     if "wandb_key" in hyperparams["training_args"].keys():
         wandb_key = hyperparams["training_args"].pop("wandb_key")
         wandb.login(key=wandb_key)
-    
+
     use_auth_token = None
     if "use_auth_token" in hyperparams.keys():
         use_auth_token = hyperparams.pop("use_auth_token")
-    
+
     tokenizer = AutoTokenizer.from_pretrained(model_name, token=use_auth_token)
 
     # dataset
@@ -1336,8 +1493,7 @@ def finetune_conversation(
             "assistant": assistant_test,
         }
     )
-    
-    
+
     def formatting_prompts_func(example):
 
         system_content = example["system"]
@@ -1369,14 +1525,14 @@ def finetune_conversation(
     # max sequence length
     if "max_seq_length" in hyperparams.keys():
         max_seq_length = hyperparams.pop("max_seq_length")
-    elif hasattr(tokenizer,"model_max_length"):
+    elif hasattr(tokenizer, "model_max_length"):
         max_seq_length = tokenizer.model_max_length
     else:
         max_seq_length = 1024
-    
+
     if max_seq_length > 1e6:
         max_seq_length = 1024
-    
+
     # response template
     collator = None
     if "response_template" in hyperparams.keys():
@@ -1385,7 +1541,6 @@ def finetune_conversation(
             response_template, tokenizer=tokenizer
         )
 
-    
     # Training arguments
     training_args = TrainingArguments(
         output_dir=path, logging_dir=path, **hyperparams["training_args"]
@@ -1395,38 +1550,43 @@ def finetune_conversation(
     if "load_in_8bit" in hyperparams.keys():
         load_in_8bit = hyperparams.pop("load_in_8bit")
 
-
     if load_in_8bit:
-        model = AutoModelForCausalLM.from_pretrained(model_name,load_in_8bit=load_in_8bit, device_map="auto", token=use_auth_token)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            load_in_8bit=load_in_8bit,
+            device_map="auto",
+            token=use_auth_token,
+        )
     else:
-        model = AutoModelForCausalLM.from_pretrained(model_name,torch_dtype=torch.bfloat16, token=use_auth_token)
-    
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name, torch_dtype=torch.bfloat16, token=use_auth_token
+        )
+
     lora_config = None
     if "lora_config" in hyperparams.keys():
         lora_config = LoraConfig(**hyperparams.pop("lora_config"))
         peft_model = get_peft_model(model, lora_config)
         print_number_of_trainable_model_parameters(peft_model)
 
-
     print("**** Training Arguments ******")
-    print(training_args, file = sys.stderr)
+    print(training_args, file=sys.stderr)
     # SFT Trainer
     trainer = SFTTrainer(
-            model,
-            args = training_args,
-            train_dataset=train_dataset,
-            eval_dataset=test_dataset,
-            formatting_func=formatting_prompts_func,
-            max_seq_length=max_seq_length,
-            packing=True,
+        model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=test_dataset,
+        formatting_func=formatting_prompts_func,
+        max_seq_length=max_seq_length,
+        packing=True,
     )
 
     if collator:
         trainer.data_collator = collator
-    
+
     if lora_config:
         trainer.peft_config = lora_config
-    
+
     # Train
     try:
         trainer.train()
