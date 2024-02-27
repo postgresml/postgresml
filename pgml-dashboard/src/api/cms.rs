@@ -93,7 +93,7 @@ impl FromStr for DocType {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Document {
     /// The absolute path on disk
     pub path: PathBuf,
@@ -114,6 +114,10 @@ pub struct Document {
 
 // Gets document markdown
 impl Document {
+    pub fn new() -> Document {
+        Document { ..Default::default() }
+    }
+
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
         let doc_type = match path.strip_prefix(config::cms_dir()) {
             Ok(path) => match path.into_iter().next() {
@@ -151,11 +155,14 @@ impl Document {
             (None, contents)
         };
 
-        let default_image_path = BLOG
-            .asset_url_root
-            .join("blog_image_placeholder.png")
-            .display()
-            .to_string();
+        let default_image_path = match doc_type {
+            Some(DocType::Blog) => BLOG
+                .asset_url_root
+                .join("blog_image_placeholder.png")
+                .display()
+                .to_string(),
+            _ => String::from("/dashboard/static/images/careers_article_default.png"),
+        };
 
         // parse meta section
         let (description, image, featured, tags) = match meta {
@@ -166,7 +173,6 @@ impl Document {
                     Some(meta["description"].as_str().unwrap().to_string())
                 };
 
-                // For now the only images shown are blog images TODO: use doc_type to set asset path when working.
                 let image = if meta["image"].is_badvalue() {
                     Some(default_image_path.clone())
                 } else {
@@ -174,7 +180,13 @@ impl Document {
                         Ok(image_path) => match image_path.file_name() {
                             Some(file_name) => {
                                 let file = PathBuf::from(file_name).display().to_string();
-                                Some(BLOG.asset_url_root.join(file).display().to_string())
+                                match doc_type {
+                                    Some(DocType::Docs) => Some(DOCS.asset_url_root.join(file).display().to_string()),
+                                    Some(DocType::Careers) => {
+                                        Some(CAREERS.asset_url_root.join(file).display().to_string())
+                                    }
+                                    _ => Some(BLOG.asset_url_root.join(file).display().to_string()),
+                                }
                             }
                             _ => Some(default_image_path.clone()),
                         },
@@ -524,35 +536,37 @@ impl Collection {
     ) -> Result<ResponseOk, crate::responses::NotFound> {
         match Document::from_path(&path).await {
             Ok(doc) => {
-                let mut layout = crate::templates::Layout::new(&doc.title, Some(cluster));
-                if let Some(image) = &doc.thumbnail {
-                    layout.image(&image);
-                }
-                if let Some(description) = &doc.description {
-                    layout.description(description);
-                }
+                let head = crate::components::layouts::Head::new()
+                    .title(&doc.title)
+                    .description(&doc.description.clone().unwrap_or_else(|| String::new()))
+                    .image(&doc.thumbnail.clone().unwrap_or_else(|| String::new()))
+                    .canonical(&canonical);
 
-                let layout = layout.canonical(canonical).toc_links(&doc.toc_links);
+                let layout = Base::from_head(head, Some(cluster)).theme(Theme::Docs);
 
-                Ok(ResponseOk(
-                    layout.render(crate::templates::Article { content: doc.html() }),
-                ))
+                let mut article = crate::components::pages::article::Index::new(&cluster).document(doc);
+
+                article = if self.name == "Blog" {
+                    article.is_blog()
+                } else {
+                    article.is_careers()
+                };
+
+                Ok(ResponseOk(layout.render(article)))
             }
             // Return page not found on bad path
             _ => {
-                let mut layout = crate::templates::Layout::new("404", Some(cluster));
+                let layout = Base::new("404", Some(cluster)).theme(Theme::Docs);
 
-                let doc = String::from(
-                    r#"
-                <div style='height: 80vh'>
-                    <h2>Oops, document not found!</h2>
-                    <p>The document you are searching for may have been moved or replaced with better content.</p>
-                </div>"#,
-                );
+                let mut article = crate::components::pages::article::Index::new(&cluster).document_not_found();
 
-                Err(crate::responses::NotFound(
-                    layout.render(crate::templates::Article { content: doc }).into(),
-                ))
+                article = if self.name == "Blog" {
+                    article.is_blog()
+                } else {
+                    article.is_careers()
+                };
+
+                Err(crate::responses::NotFound(layout.render(article).into()))
             }
         }
     }

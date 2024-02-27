@@ -28,17 +28,25 @@ impl Head {
     }
 
     pub fn description(mut self, description: &str) -> Head {
-        self.description = Some(description.to_owned());
+        self.description = if description.len() == 0 {
+            None
+        } else {
+            Some(description.to_owned())
+        };
         self
     }
 
     pub fn canonical(mut self, canonical: &str) -> Head {
-        self.canonical = Some(canonical.to_owned());
+        self.canonical = if canonical.len() == 0 {
+            None
+        } else {
+            Some(canonical.to_owned())
+        };
         self
     }
 
     pub fn image(mut self, image: &str) -> Head {
-        self.image = Some(image.to_owned());
+        self.image = if image.len() == 0 { None } else { Some(image.to_owned()) };
         self
     }
 

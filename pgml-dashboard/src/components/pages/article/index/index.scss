@@ -1,0 +1,73 @@
+div[data-controller="pages-article-index"] {
+
+    .header-container {
+        background-color: #{$gray-800};
+    }
+
+    .blue {
+        width: 429.767px;
+        height: 202.685px;
+        top: -350px;
+        left: -152px;
+        transform: rotate(157.012deg);
+        flex-shrink: 0;
+        border-radius: 1329.767px;
+        background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(255, 152, 214, 0.30) 26.4%, rgba(26, 6, 255, 0.30) 100%);
+        filter: blur(168.74745178222656px);
+        position: absolute;
+
+        @include media-breakpoint-up(md) {
+            width: 829.767px;
+            height: 402.685px;
+            top: -450px;
+            left: -202px;
+        }
+    }
+
+    .orange {
+        width: 108.173px;
+        height: 256.083px;
+        left: -100px;
+        top: -200px;
+        transform: rotate(163.932deg);
+        flex-shrink: 0;
+        border-radius: 608.173px;
+        background: radial-gradient(50% 50% at 50% 50%, #8B44FF 0%, #FF783F 100%);
+        filter: blur(168.74745178222656px);
+        position: absolute;
+
+        @include media-breakpoint-up(md) {
+            width: 308.173px;
+            height: 456.083px;
+            left: -170px;
+            top: -400px;
+        }
+    }
+
+    article {
+        // remove the articles title from the article element.
+        h1:nth-of-type(1) {
+            display: none;
+        }
+
+        // remove the articles author image from the article element.
+        & > div:nth-of-type(1):not(.doc-not-found-message) {
+            display: none !important;
+        }
+
+        // remove the auther name and date from the article element.
+        & > p:nth-of-type(1), & > p:nth-of-type(2) {
+            display: none;
+        }
+    }
+
+    .text {
+        color: #{$gray-300};
+    }
+    .other-roles:hover {
+        .text {
+            color: #{$gray-100};
+        }
+    }
+}
+
