@@ -1,0 +1,28 @@
+[package]
+name = "pypgrx"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "pypgrx"
+crate-type = ["cdylib"]
+
+[features]
+default = ["pg16"]
+pg12 = ["pgrx/pg12", "pgrx-tests/pg12"]
+pg13 = ["pgrx/pg13", "pgrx-tests/pg13"]
+pg14 = ["pgrx/pg14", "pgrx-tests/pg14"]
+pg15 = ["pgrx/pg15", "pgrx-tests/pg15"]
+pg16 = ["pgrx/pg16", "pgrx-tests/pg16"]
+
+
+[dependencies]
+pyo3 = "0.19.0"
+pgrx = "=0.11.3"
+pgrx-pg-sys = "=0.11.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+pgrx-tests = "=0.11.3"

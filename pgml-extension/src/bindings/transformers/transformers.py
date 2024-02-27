@@ -55,6 +55,7 @@ import wandb
 from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 from trl.trainer import ConstantLengthDataset
 from peft import LoraConfig, get_peft_model
+import pypgrx
 
 transformers.logging.set_verbosity_info()
 
@@ -1092,6 +1093,17 @@ def finetune_text_classification(
     training_args = TrainingArguments(
         output_dir=path, logging_dir=path, **hyperparams["training_args"]
     )
+
+    from time import sleep
+    for i in range(1):
+        message = "Inserting value at index %d"%i
+        pypgrx.print_info(message)
+        sleep(1)
+    
+    project_id = 1
+    model_id = 1
+    logs = json.dumps({"project_id": project_id, "model_id": model_id})
+    pypgrx.insert_logs(project_id, model_id, logs)
 
     # Trainer
     trainer = Trainer(
