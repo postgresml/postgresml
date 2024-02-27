@@ -395,7 +395,7 @@ pub async fn chatbot_get_history(user: User) -> Json<GetHistoryResponse> {
 
 async fn do_chatbot_get_history(user: &User, limit: usize) -> anyhow::Result<Vec<HistoryMessage>> {
     let history_collection = Collection::new(
-        "ChatHistory",
+        "ChatHistory_0",
         Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
     )?;
     let mut messages = history_collection
@@ -547,7 +547,7 @@ async fn process_message(
             .join("");
 
         let history_collection = Collection::new(
-            "ChatHistory",
+            "ChatHistory_0",
             Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
         )?;
         let mut messages = history_collection
