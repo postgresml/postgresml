@@ -1240,7 +1240,10 @@ impl SiteSearch {
     pub async fn new() -> anyhow::Result<Self> {
         let collection = pgml::Collection::new(
             "hypercloud-site-search-c-2",
-            Some(std::env::var("SITE_SEARCH_DATABASE_URL").context("Please set the `SITE_SEARCH_DATABASE_URL` environment variable")?),
+            Some(
+                std::env::var("SITE_SEARCH_DATABASE_URL")
+                    .context("Please set the `SITE_SEARCH_DATABASE_URL` environment variable")?,
+            ),
         )?;
         let pipeline = pgml::Pipeline::new(
             "hypercloud-site-search-p-0",
@@ -1291,22 +1294,22 @@ impl SiteSearch {
     pub async fn search(&self, query: &str, doc_type: Option<DocType>) -> anyhow::Result<Vec<SearchResult>> {
         let mut search = serde_json::json!({
             "query": {
-                "full_text_search": {
-                    "title": {
-                        "query": query,
-                        "boost": 4.0
-                    },
-                    "contents": {
-                        "query": query
-                    }
-                },
+                // "full_text_search": {
+                //     "title": {
+                //         "query": query,
+                //         "boost": 4.0
+                //     },
+                //     "contents": {
+                //         "query": query
+                //     }
+                // },
                 "semantic_search": {
                     "title": {
                         "query": query,
                         "parameters": {
                             "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
                         },
-                        "boost": 2.0
+                        "boost": 4.0
                     },
                     "contents": {
                         "query": query,
