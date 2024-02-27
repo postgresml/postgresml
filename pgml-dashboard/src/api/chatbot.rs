@@ -397,7 +397,7 @@ async fn do_chatbot_get_history(user: &User, limit: usize) -> anyhow::Result<Vec
     let history_collection = Collection::new(
         "ChatHistory",
         Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
-    );
+    )?;
     let mut messages = history_collection
         .get_documents(Some(
             json!({
@@ -523,7 +523,7 @@ async fn process_message(
         let mut collection = Collection::new(
             collection,
             Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
-        );
+        )?;
         let context = collection
             .vector_search(
                 serde_json::json!({
@@ -549,7 +549,7 @@ async fn process_message(
         let history_collection = Collection::new(
             "ChatHistory",
             Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
-        );
+        )?;
         let mut messages = history_collection
             .get_documents(Some(
                 json!({

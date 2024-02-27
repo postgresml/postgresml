@@ -1230,6 +1230,7 @@ pub struct SearchResult {
     pub snippet: String,
 }
 
+#[derive(Clone)]
 pub struct SiteSearch {
     collection: pgml::Collection,
     pipeline: pgml::Pipeline,
@@ -1239,8 +1240,8 @@ impl SiteSearch {
     pub async fn new() -> anyhow::Result<Self> {
         let collection = pgml::Collection::new(
             "hypercloud-site-search-c-2",
-            Some(std::env::var("SITE_SEARCH_DATABASE_URL")?),
-        );
+            Some(std::env::var("SITE_SEARCH_DATABASE_URL").context("Please set the `SITE_SEARCH_DATABASE_URL` environment variable")?),
+        )?;
         let pipeline = pgml::Pipeline::new(
             "hypercloud-site-search-p-0",
             Some(
@@ -1293,6 +1294,7 @@ impl SiteSearch {
                 "full_text_search": {
                     "title": {
                         "query": query,
+                        "boost": 4.0
                     },
                     "contents": {
                         "query": query
@@ -1304,6 +1306,7 @@ impl SiteSearch {
                         "parameters": {
                             "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
                         },
+                        "boost": 2.0
                     },
                     "contents": {
                         "query": query,

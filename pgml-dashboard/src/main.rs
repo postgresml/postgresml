@@ -92,10 +92,13 @@ async fn main() {
     // it's important to hang on to sentry so it isn't dropped and stops reporting
     let _sentry = configure_reporting().await;
 
-    let mut site_search = markdown::SiteSearch::new()
+    let site_search = markdown::SiteSearch::new()
         .await
         .expect("Error initializing site search");
-    site_search.build().await.expect("Error building site search");
+    let mut site_search_copy = site_search.clone();
+    tokio::spawn(async move {
+        site_search_copy.build().await.expect("Error building site search");
+    });
 
     pgml_dashboard::migrate(guards::Cluster::default(None).pool())
         .await
