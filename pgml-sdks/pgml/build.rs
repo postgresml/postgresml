@@ -4,7 +4,7 @@ use std::io::Write;
 
 const ADDITIONAL_DEFAULTS_FOR_PYTHON: &[u8] = br#"
 def init_logger(level: Optional[str] = "", format: Optional[str] = "") -> None
-def SingleFieldPipeline(name: str, model: Optional[Model] = None, splitter: Optional[Splitter] = None, parameters: Optional[Json] = Any) -> MultiFieldPipeline
+def SingleFieldPipeline(name: str, model: Optional[Model] = None, splitter: Optional[Splitter] = None, parameters: Optional[Json] = Any) -> Pipeline
 async def migrate() -> None
 
 Json = Any
@@ -15,7 +15,7 @@ GeneralJsonAsyncIterator = Any
 
 const ADDITIONAL_DEFAULTS_FOR_JAVASCRIPT: &[u8] = br#"
 export function init_logger(level?: string, format?: string): void;
-export function newSingleFieldPipeline(name: string, model?: Model, splitter?: Splitter, parameters?: Json): MultiFieldPipeline;
+export function newSingleFieldPipeline(name: string, model?: Model, splitter?: Splitter, parameters?: Json): Pipeline;
 export function migrate(): Promise<void>;
 
 export type Json = any;
@@ -39,7 +39,6 @@ fn main() {
         remove_file(&path).ok();
         let mut file = OpenOptions::new()
             .create(true)
-            .write(true)
             .append(true)
             .open(path)
             .unwrap();
@@ -53,7 +52,6 @@ fn main() {
         remove_file(&path).ok();
         let mut file = OpenOptions::new()
             .create(true)
-            .write(true)
             .append(true)
             .open(path)
             .unwrap();

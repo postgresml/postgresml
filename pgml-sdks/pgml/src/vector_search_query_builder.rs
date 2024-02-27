@@ -235,9 +235,6 @@ pub async fn build_vector_search_query(
 
     let (sql, values) = query.with(with_clause).build_sqlx(PostgresQueryBuilder);
 
-    // Tag: CRITICAL_QUERY
-    // Checked: FALSE
-    // Used to do vector search
     debug_sea_query!(VECTOR_SEARCH, sql, values);
     Ok((sql, values))
 }

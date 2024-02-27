@@ -129,7 +129,9 @@ pub struct Collection {
     exists,
     archive,
     upsert_directory,
-    upsert_file
+    upsert_file,
+    generate_er_diagram,
+    get_pipeline_status
 )]
 impl Collection {
     /// Creates a new [Collection]
@@ -259,25 +261,6 @@ impl Collection {
     }
 
     /// Adds a new  [Pipeline] to the [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` - The [Pipeline] to add.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Collection, Pipeline, Model, Splitter};
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let model = Model::new(None, None, None);
-    ///     let splitter = Splitter::new(None, None);
-    ///     let mut pipeline = Pipeline::new("my_pipeline", None, None, None);
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     collection.add_pipeline(&mut pipeline).await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn add_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
@@ -322,23 +305,6 @@ impl Collection {
     }
 
     /// Removes a [Pipeline] from the [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` - The [Pipeline] to remove.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Collection, Pipeline};
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let mut pipeline = Pipeline::new("my_pipeline", None, None, None);
-    ///    let mut collection = Collection::new("my_collection", None);
-    ///    collection.remove_pipeline(&mut pipeline).await?;
-    ///    Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn remove_pipeline(&mut self, pipeline: &Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
@@ -368,29 +334,12 @@ impl Collection {
     }
 
     /// Enables a [Pipeline] on the [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` - The [Pipeline] to enable
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Collection, Pipeline};
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let pipeline = Pipeline::new("my_pipeline", None, None, None);
-    ///    let collection = Collection::new("my_collection", None);
-    ///    collection.enable_pipeline(&pipeline).await?;
-    ///    Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn enable_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
         // 1. Set ACTIVE = TRUE for the pipeline in collection.pipelines
         // 2. Resync the pipeline
-        // TOOD: Review this pattern
+        // TODO: Review this pattern
         self.verify_in_database(false).await?;
         let project_info = &self.database_data.as_ref().unwrap().project_info;
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -407,23 +356,6 @@ impl Collection {
     }
 
     /// Disables a [Pipeline] on the [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` - The [Pipeline] to disable
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Collection, Pipeline};
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let pipeline = Pipeline::new("my_pipeline", None, None, None);
-    ///    let collection = Collection::new("my_collection", None);
-    ///    collection.disable_pipeline(&pipeline).await?;
-    ///    Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn disable_pipeline(&self, pipeline: &Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
@@ -459,27 +391,6 @@ impl Collection {
     }
 
     /// Upserts documents into the database
-    ///
-    /// # Arguments
-    ///
-    /// * `documents` - A vector of documents to upsert
-    /// * `strict` - Whether to throw an error if keys: `id` or `text` are missing from any documents
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let mut collection = Collection::new("my_collection", None);
-    ///    let documents = vec![
-    ///        serde_json::json!({"id": 1, "text": "hello world"}).into(),
-    ///        serde_json::json!({"id": 2, "text": "hello world"}).into(),
-    ///    ];
-    ///    collection.upsert_documents(documents, None).await?;
-    ///    Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self, documents))]
     pub async fn upsert_documents(
         &mut self,
@@ -647,21 +558,6 @@ impl Collection {
     }
 
     /// Gets the documents on a [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `args` - The filters and options to apply to the query
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let documents = collection.get_documents(None).await?;
-    ///     Ok(())
-    /// }
     #[instrument(skip(self))]
     pub async fn get_documents(&self, args: Option<Json>) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -721,25 +617,6 @@ impl Collection {
     }
 
     /// Deletes documents in a [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `filter` - The filters to apply
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let documents = collection.delete_documents(serde_json::json!({
-    ///         "id": {
-    ///             "eq": 1
-    ///         }
-    ///     }).into()).await?;
-    ///     Ok(())
-    /// }
     #[instrument(skip(self))]
     pub async fn delete_documents(&self, filter: Json) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -832,25 +709,6 @@ impl Collection {
     }
 
     /// Performs vector search on the [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `query` - The query to search for
-    /// * `pipeline` - The [Pipeline] used for the search
-    /// * `query_paramaters` - The query parameters passed to the model for search
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Collection, Pipeline};
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let mut pipeline = Pipeline::new("my_pipeline", None, None, None);
-    ///     let results = collection.vector_search("Query", &mut pipeline, None, None).await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     #[allow(clippy::type_complexity)]
     pub async fn vector_search(
@@ -956,18 +814,6 @@ impl Collection {
     }
 
     /// Gets all pipelines for the [Collection]
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let pipelines = collection.get_pipelines().await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn get_pipelines(&mut self) -> anyhow::Result<Vec<Pipeline>> {
         self.verify_in_database(false).await?;
@@ -982,18 +828,6 @@ impl Collection {
     }
 
     /// Gets a [Pipeline] by name
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let pipeline = collection.get_pipeline("my_pipeline").await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn get_pipeline(&mut self, name: &str) -> anyhow::Result<Pipeline> {
         self.verify_in_database(false).await?;
@@ -1009,18 +843,6 @@ impl Collection {
     }
 
     /// Check if the [Collection] exists in the database
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let collection = Collection::new("my_collection", None);
-    ///     let exists = collection.exists().await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn exists(&self) -> anyhow::Result<bool> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -1108,6 +930,7 @@ impl Collection {
         Ok(())
     }
 
+    #[instrument(skip(self))]
     pub async fn get_pipeline_status(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
         self.verify_in_database(false).await?;
         let project_info = &self.database_data.as_ref().unwrap().project_info;
@@ -1115,6 +938,7 @@ impl Collection {
         pipeline.get_status(project_info, &pool).await
     }
 
+    #[instrument(skip(self))]
     pub async fn generate_er_diagram(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<String> {
         self.verify_in_database(false).await?;
         let project_info = &self.database_data.as_ref().unwrap().project_info;

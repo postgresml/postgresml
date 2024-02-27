@@ -214,20 +214,6 @@ impl Pipeline {
     }
 
     /// Gets the status of the [Pipeline]
-    /// This includes the status of the chunks, embeddings, and tsvectors
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let mut pipeline = collection.get_pipeline("my_pipeline").await?;
-    ///     let status = pipeline.get_status().await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn get_status(
         &mut self,
@@ -778,7 +764,6 @@ impl Pipeline {
     pub(crate) async fn resync(
         &mut self,
         project_info: &ProjectInfo,
-        // pool: &Pool<Postgres>,
         connection: &mut PgConnection,
     ) -> anyhow::Result<()> {
         // We are assuming we have manually verified the pipeline before doing this
