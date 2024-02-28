@@ -169,7 +169,6 @@ enum KnowledgeBase {
 }
 
 impl KnowledgeBase {
-    // The topic and knowledge base are the same for now but may be different later
     fn topic(&self) -> &'static str {
         match self {
             Self::PostgresML => "PostgresML",
@@ -181,10 +180,10 @@ impl KnowledgeBase {
 
     fn collection(&self) -> &'static str {
         match self {
-            Self::PostgresML => "PostgresML",
-            Self::PyTorch => "PyTorch",
-            Self::Rust => "Rust",
-            Self::PostgreSQL => "PostgreSQL",
+            Self::PostgresML => "PostgresML_0",
+            Self::PyTorch => "PyTorch_0",
+            Self::Rust => "Rust_0",
+            Self::PostgreSQL => "PostgreSQL_0",
         }
     }
 }
@@ -396,31 +395,29 @@ pub async fn chatbot_get_history(user: User) -> Json<GetHistoryResponse> {
 
 async fn do_chatbot_get_history(user: &User, limit: usize) -> anyhow::Result<Vec<HistoryMessage>> {
     let history_collection = Collection::new(
-        "ChatHistory",
+        "ChatHistory_0",
         Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
-    );
+    )?;
     let mut messages = history_collection
         .get_documents(Some(
             json!({
                "limit": limit,
                 "order_by": {"timestamp": "desc"},
                 "filter": {
-                    "metadata": {
-                        "$and" : [
-                            {
-                                "$or":
-                                [
-                                    {"role": {"$eq": ChatRole::Bot}},
-                                    {"role": {"$eq": ChatRole::User}}
-                                ]
-                            },
-                            {
-                                "user_id": {
-                                    "$eq": user.chatbot_session_id
-                                }
+                    "$and" : [
+                        {
+                            "$or":
+                            [
+                                {"role": {"$eq": ChatRole::Bot}},
+                                {"role": {"$eq": ChatRole::User}}
+                            ]
+                        },
+                        {
+                            "user_id": {
+                                "$eq": user.chatbot_session_id
                             }
-                        ]
-                    }
+                        }
+                    ]
                 }
 
             })
@@ -521,64 +518,64 @@ async fn process_message(
             knowledge_base,
         );
 
-        let pipeline = Pipeline::new("v1", None, None, None);
+        let mut pipeline = Pipeline::new("v1", None)?;
         let collection = knowledge_base.collection();
-        let collection = Collection::new(
+        let mut collection = Collection::new(
             collection,
             Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
-        );
+        )?;
         let context = collection
-            .query()
-            .vector_recall(
-                &data.question,
-                &pipeline,
-                Some(
-                    json!({
-                        "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
-                    })
-                    .into(),
-                ),
+            .vector_search(
+                serde_json::json!({
+                "query": {
+                "fields": {
+                    "text": {
+                        "query": &data.question,
+                        "parameters": {
+                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+                        }
+                    },
+                }
+                }})
+                .into(),
+                &mut pipeline,
             )
-            .limit(5)
-            .fetch_all()
             .await?
             .into_iter()
-            .map(|(_, context, metadata)| format!("\n\n#### Document {}: \n{}\n\n", metadata["id"], context))
+            .map(|v| format!("\n\n#### Document {}: \n{}\n\n", v["document"]["id"], v["chunk"]))
             .collect::<Vec<String>>()
-            .join("\n");
+            .join("");
 
         let history_collection = Collection::new(
-            "ChatHistory",
+            "ChatHistory_0",
             Some(std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set")),
-        );
+        )?;
         let mut messages = history_collection
             .get_documents(Some(
                 json!({
                    "limit": 5,
                     "order_by": {"timestamp": "desc"},
                     "filter": {
-                        "metadata": {
-                            "$and" : [
-                                {
-                                    "$or":
-                                    [
-                                        {"role": {"$eq": ChatRole::Bot}},
-                                        {"role": {"$eq": ChatRole::User}}
-                                    ]
-                                },
-                                {
-                                    "user_id": {
-                                        "$eq": user.chatbot_session_id
-                                    }
-                                },
-                                {
-                                    "knowledge_base": {
-                                        "$eq": knowledge_base
-                                    }
-                                },
-                                // This is where we would match on the model if we wanted to
-                            ]
-                        }
+                        "$and" : [
+                            {
+                                "$or":
+                                [
+                                    {"role": {"$eq": ChatRole::Bot}},
+                                    {"role": {"$eq": ChatRole::User}}
+                                ]
+                            },
+                            {
+                                "user_id": {
+                                    "$eq": user.chatbot_session_id
+                                }
+                            },
+                            {
+                                "knowledge_base": {
+                                    "$eq": knowledge_base
+                                }
+                            },
+                            // This is where we would match on the model if we wanted to
+                        ]
                     }
 
                 })

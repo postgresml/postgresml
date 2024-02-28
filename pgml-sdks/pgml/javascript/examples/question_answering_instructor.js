@@ -3,18 +3,20 @@ require("dotenv").config();
 
 const main = async () => {
   // Initialize the collection
-  const collection = pgml.newCollection("my_javascript_qai_collection");
+  const collection = pgml.newCollection("qa_pipeline");
 
   // Add a pipeline
-  const model = pgml.newModel("hkunlp/instructor-base", "pgml", {
-    instruction: "Represent the Wikipedia document for retrieval: ",
+  const pipeline = pgml.newPipeline("qa_pipeline", {
+    text: {
+      splitter: { model: "recursive_character" },
+      semantic_search: {
+        model: "hkunlp/instructor-base",
+        parameters: {
+          instruction: "Represent the Wikipedia document for retrieval: "
+        }
+      },
+    },
   });
-  const splitter = pgml.newSplitter();
-  const pipeline = pgml.newPipeline(
-    "my_javascript_qai_pipeline",
-    model,
-    splitter,
-  );
   await collection.add_pipeline(pipeline);
 
   // Upsert documents, these documents are automatically split into chunks and embedded by our pipeline
@@ -31,30 +33,25 @@ const main = async () => {
   await collection.upsert_documents(documents);
 
   // Perform vector search
-  const queryResults = await collection
-    .query()
-    .vector_recall("What is the best tool for machine learning?", pipeline, {
-      instruction:
-        "Represent the Wikipedia question for retrieving supporting documents: ",
-    })
-    .limit(1)
-    .fetch_all();
-
-  // Convert the results to an array of objects
-  const results = queryResults.map((result) => {
-    const [similarity, text, metadata] = result;
-    return {
-      similarity,
-      text,
-      metadata,
-    };
-  });
+  const query = "What is the best tool for building machine learning applications?";
+  const queryResults = await collection.vector_search(
+    {
+      query: {
+        fields: {
+          text: {
+            query: query,
+            parameters: {
+              instruction:
+                "Represent the Wikipedia question for retrieving supporting documents: ",
+            }
+          }
+        }
+      }, limit: 1
+    }, pipeline);
+  console.log(queryResults);
 
   // Archive the collection
   await collection.archive();
-  return results;
 };
 
-main().then((results) => {
-  console.log("Vector search Results: \n", results);
-});
+main().then(() => console.log("Done!"));

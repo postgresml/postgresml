@@ -3,6 +3,11 @@ use indicatif::{ProgressBar, ProgressStyle};
 use lopdf::Document;
 use std::fs;
 use std::path::Path;
+use std::time::Duration;
+
+use serde::de::{self, Visitor};
+use serde::Deserializer;
+use std::fmt;
 
 /// A more type flexible version of format!
 #[macro_export]
@@ -25,18 +30,50 @@ macro_rules! query_builder {
     }};
 }
 
-pub fn default_progress_spinner(size: u64) -> ProgressBar {
-    ProgressBar::new(size).with_style(
-        ProgressStyle::with_template("[{elapsed_precise}] {spinner:0.cyan/blue} {prefix}: {msg}")
-            .unwrap(),
-    )
+/// Used to debug sqlx queries
+#[macro_export]
+macro_rules! debug_sqlx_query {
+    ($name:expr, $query:expr) => {{
+        let name = stringify!($name);
+        let sql = $query.to_string();
+        let sql = sea_query::Query::select().expr(sea_query::Expr::cust(sql)).to_string(sea_query::PostgresQueryBuilder);
+        let sql = sql.replacen("SELECT", "", 1);
+        let span = tracing::span!(tracing::Level::DEBUG, "debug_query");
+        tracing::event!(parent: &span, tracing::Level::DEBUG, %name,  %sql);
+    }};
+
+     ($name:expr, $query:expr, $( $x:expr ),*) => {{
+        let name = stringify!($name);
+        let sql = $query.to_string();
+        let sql = sea_query::Query::select().expr(sea_query::Expr::cust_with_values(sql, [$(
+           sea_query::Value::from($x.clone()),
+        )*])).to_string(sea_query::PostgresQueryBuilder);
+        let sql = sql.replacen("SELECT", "", 1);
+        let span = tracing::span!(tracing::Level::DEBUG, "debug_query");
+        tracing::event!(parent: &span, tracing::Level::DEBUG, %name, %sql);
+     }};
+}
+
+/// Used to debug sea_query queries
+#[macro_export]
+macro_rules! debug_sea_query {
+    ($name:expr, $query:expr, $values:expr) => {{
+        let name = stringify!($name);
+        let sql = $query.to_string();
+        let sql = sea_query::Query::select().expr(sea_query::Expr::cust_with_values(sql, $values.clone().0)).to_string(sea_query::PostgresQueryBuilder);
+        let sql = sql.replacen("SELECT", "", 1);
+        let span = tracing::span!(tracing::Level::DEBUG, "debug_query");
+        tracing::event!(parent: &span, tracing::Level::DEBUG, %name,  %sql);
+    }};
 }
 
 pub fn default_progress_bar(size: u64) -> ProgressBar {
-    ProgressBar::new(size).with_style(
+    let bar = ProgressBar::new(size).with_style(
         ProgressStyle::with_template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} ")
             .unwrap(),
-    )
+    );
+    bar.enable_steady_tick(Duration::from_millis(100));
+    bar
 }
 
 pub fn get_file_contents(path: &Path) -> anyhow::Result<String> {
@@ -62,4 +99,41 @@ pub fn get_file_contents(path: &Path) -> anyhow::Result<String> {
         _ => fs::read_to_string(path)
             .with_context(|| format!("Error reading file: {}", path.display()))?,
     })
+}
+
+struct U64Visitor;
+impl<'de> Visitor<'de> for U64Visitor {
+    type Value = u64;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("some number")
+    }
+
+    fn visit_i32<E>(self, value: i32) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(value as u64)
+    }
+
+    fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(value)
+    }
+
+    fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(value as u64)
+    }
+}
+
+pub fn deserialize_u64<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_u64(U64Visitor).map(Some)
 }
