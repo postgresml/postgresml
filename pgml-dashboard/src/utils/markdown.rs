@@ -1239,7 +1239,7 @@ pub struct SiteSearch {
 impl SiteSearch {
     pub async fn new() -> anyhow::Result<Self> {
         let collection = pgml::Collection::new(
-            "hypercloud-site-search-c-2",
+            env!("GIT_SHA"),
             Some(
                 std::env::var("SITE_SEARCH_DATABASE_URL")
                     .context("Please set the `SITE_SEARCH_DATABASE_URL` environment variable")?,
