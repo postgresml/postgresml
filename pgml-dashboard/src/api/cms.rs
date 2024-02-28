@@ -559,9 +559,8 @@ impl Collection {
 }
 
 #[get("/search?<query>", rank = 20)]
-async fn search(query: &str, index: &State<crate::utils::markdown::SearchIndex>) -> ResponseOk {
-    let results = index.search(query).unwrap();
-
+async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
+    let results = site_search.search(query, None).await.expect("Error performing search");
     ResponseOk(
         Template(Search {
             query: query.to_string(),
@@ -711,9 +710,9 @@ pub fn routes() -> Vec<Route> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::utils::markdown::{options, MarkdownHeadings, SyntaxHighlighter};
+    use crate::utils::markdown::options;
     use regex::Regex;
-    use rocket::http::{ContentType, Cookie, Status};
+    use rocket::http::Status;
     use rocket::local::asynchronous::Client;
     use rocket::{Build, Rocket};
 
@@ -779,7 +778,7 @@ This is the end of the markdown
     async fn rocket() -> Rocket<Build> {
         dotenv::dotenv().ok();
         rocket::build()
-            .manage(crate::utils::markdown::SearchIndex::open().unwrap())
+            // .manage(crate::utils::markdown::SearchIndex::open().unwrap())
             .mount("/", crate::api::cms::routes())
     }
 

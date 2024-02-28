@@ -1,5 +1,5 @@
 use reqwest::{Client, RequestBuilder};
-use sqlx::postgres::PgPool;
+use sqlx::PgConnection;
 use std::env;
 use tracing::instrument;
 
@@ -8,7 +8,7 @@ use crate::{model::ModelRuntime, models, query_builder, types::Json};
 pub fn build_remote_embeddings<'a>(
     source: ModelRuntime,
     model_name: &'a str,
-    _model_parameters: &'a Json,
+    _model_parameters: Option<&'a Json>,
 ) -> anyhow::Result<Box<dyn RemoteEmbeddings<'a> + Sync + Send + 'a>> {
     match source {
         // OpenAI endpoint for embedddings does not take any model parameters
@@ -41,39 +41,40 @@ pub trait RemoteEmbeddings<'a> {
         self.parse_response(response)
     }
 
-    #[instrument(skip(self, pool))]
+    #[instrument(skip(self))]
     async fn get_chunks(
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
-        splitter_id: i64,
-        chunk_ids: &Option<Vec<i64>>,
-        pool: &PgPool,
+        chunk_ids: Option<&Vec<i64>>,
+        connection: &mut PgConnection,
         limit: Option<i64>,
     ) -> anyhow::Result<Vec<models::Chunk>> {
-        let limit = limit.unwrap_or(1000);
+        // Requires _query_text be declared out here so it lives long enough
+        let mut _query_text = "".to_string();
+        let query = match chunk_ids {
+            Some(chunk_ids) => {
+                _query_text =
+                    query_builder!("SELECT * FROM %s WHERE id = ANY ($1)", chunks_table_name);
+                sqlx::query_as(_query_text.as_str())
+                    .bind(chunk_ids)
+                    .bind(limit)
+            }
+            None => {
+                let limit = limit.unwrap_or(1000);
+                _query_text = query_builder!(
+                    "SELECT * FROM %s WHERE id NOT IN (SELECT chunk_id FROM %s) LIMIT $1",
+                    chunks_table_name,
+                    embeddings_table_name
+                );
+                sqlx::query_as(_query_text.as_str()).bind(limit)
+            }
+        };
 
-        match chunk_ids {
-            Some(cids) => sqlx::query_as(&query_builder!(
-                "SELECT * FROM %s WHERE splitter_id = $1 AND id NOT IN (SELECT chunk_id FROM %s) AND id = ANY ($2) LIMIT $3",
-                chunks_table_name,
-                embeddings_table_name
-            ))
-            .bind(splitter_id)
-            .bind(cids)
-            .bind(limit)
-            .fetch_all(pool)
-            .await,
-            None => sqlx::query_as(&query_builder!(
-                "SELECT * FROM %s WHERE splitter_id = $1 AND id NOT IN (SELECT chunk_id FROM %s) LIMIT $2",
-                chunks_table_name,
-                embeddings_table_name
-            ))
-            .bind(splitter_id)
-            .bind(limit)
-            .fetch_all(pool)
+        query
+            .fetch_all(connection)
             .await
-        }.map_err(|e| anyhow::anyhow!(e))
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     #[instrument(skip(self, response))]
@@ -99,41 +100,39 @@ pub trait RemoteEmbeddings<'a> {
         Ok(embeddings)
     }
 
-    #[instrument(skip(self, pool))]
+    #[instrument(skip(self))]
     async fn generate_embeddings(
         &self,
         embeddings_table_name: &str,
         chunks_table_name: &str,
-        splitter_id: i64,
-        chunk_ids: Option<Vec<i64>>,
-        pool: &PgPool,
+        mut chunk_ids: Option<&Vec<i64>>,
+        connection: &mut PgConnection,
     ) -> anyhow::Result<()> {
         loop {
             let chunks = self
                 .get_chunks(
                     embeddings_table_name,
                     chunks_table_name,
-                    splitter_id,
-                    &chunk_ids,
-                    pool,
+                    chunk_ids,
+                    connection,
                     None,
                 )
                 .await?;
             if chunks.is_empty() {
                 break;
             }
-            let (chunk_ids, chunk_texts): (Vec<i64>, Vec<String>) = chunks
+            let (retrieved_chunk_ids, chunk_texts): (Vec<i64>, Vec<String>) = chunks
                 .into_iter()
                 .map(|chunk| (chunk.id, chunk.chunk))
                 .unzip();
             let embeddings = self.embed(chunk_texts).await?;
 
             let query_string_values = (0..embeddings.len())
-                .map(|i| format!("(${}, ${})", i * 2 + 1, i * 2 + 2))
+                .map(|i| query_builder!("($%d, $%d)", i * 2 + 1, i * 2 + 2))
                 .collect::<Vec<String>>()
                 .join(",");
             let query_string = format!(
-                "INSERT INTO %s (chunk_id, embedding) VALUES {}",
+                "INSERT INTO %s (chunk_id, embedding) VALUES {} ON CONFLICT (chunk_id) DO UPDATE SET embedding = EXCLUDED.embedding",
                 query_string_values
             );
 
@@ -141,10 +140,13 @@ pub trait RemoteEmbeddings<'a> {
             let mut query = sqlx::query(&query);
 
             for i in 0..embeddings.len() {
-                query = query.bind(chunk_ids[i]).bind(&embeddings[i]);
+                query = query.bind(retrieved_chunk_ids[i]).bind(&embeddings[i]);
             }
 
-            query.execute(pool).await?;
+            query.execute(&mut *connection).await?;
+
+            // Set it to none so if it is not None, we don't just retrived the same chunks over and over
+            chunk_ids = None;
         }
         Ok(())
     }
@@ -183,8 +185,11 @@ mod tests {
     #[tokio::test]
     async fn openai_remote_embeddings() -> anyhow::Result<()> {
         let params = serde_json::json!({}).into();
-        let openai_remote_embeddings =
-            build_remote_embeddings(ModelRuntime::OpenAI, "text-embedding-ada-002", &params)?;
+        let openai_remote_embeddings = build_remote_embeddings(
+            ModelRuntime::OpenAI,
+            "text-embedding-ada-002",
+            Some(&params),
+        )?;
         let embedding_size = openai_remote_embeddings.get_embedding_size().await?;
         assert!(embedding_size > 0);
         Ok(())

@@ -4,6 +4,7 @@ use std::io::Write;
 
 const ADDITIONAL_DEFAULTS_FOR_PYTHON: &[u8] = br#"
 def init_logger(level: Optional[str] = "", format: Optional[str] = "") -> None
+def SingleFieldPipeline(name: str, model: Optional[Model] = None, splitter: Optional[Splitter] = None, parameters: Optional[Json] = Any) -> Pipeline
 async def migrate() -> None
 
 Json = Any
@@ -14,6 +15,7 @@ GeneralJsonAsyncIterator = Any
 
 const ADDITIONAL_DEFAULTS_FOR_JAVASCRIPT: &[u8] = br#"
 export function init_logger(level?: string, format?: string): void;
+export function newSingleFieldPipeline(name: string, model?: Model, splitter?: Splitter, parameters?: Json): Pipeline;
 export function migrate(): Promise<void>;
 
 export type Json = any;
@@ -25,7 +27,7 @@ export function newCollection(name: string, database_url?: string): Collection;
 export function newModel(name?: string, source?: string, parameters?: Json): Model;
 export function newSplitter(name?: string, parameters?: Json): Splitter;
 export function newBuiltins(database_url?: string): Builtins;
-export function newPipeline(name: string, model?: Model, splitter?: Splitter, parameters?: Json): Pipeline;
+export function newPipeline(name: string, schema?: Json): Pipeline;
 export function newTransformerPipeline(task: string, model?: string, args?: Json, database_url?: string): TransformerPipeline;
 export function newOpenSourceAI(database_url?: string): OpenSourceAI;
 "#;
@@ -37,7 +39,6 @@ fn main() {
         remove_file(&path).ok();
         let mut file = OpenOptions::new()
             .create(true)
-            .write(true)
             .append(true)
             .open(path)
             .unwrap();
@@ -51,7 +52,6 @@ fn main() {
         remove_file(&path).ok();
         let mut file = OpenOptions::new()
             .create(true)
-            .write(true)
             .append(true)
             .open(path)
             .unwrap();

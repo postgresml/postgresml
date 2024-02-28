@@ -3,12 +3,12 @@ use futures::{Stream, StreamExt};
 use itertools::Itertools;
 use rust_bridge::alias_manual;
 use sea_query::Iden;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 
 /// A wrapper around serde_json::Value
 // #[derive(sqlx::Type, sqlx::FromRow, Debug)]
-#[derive(alias_manual, sqlx::Type, Debug, Clone)]
+#[derive(alias_manual, sqlx::Type, Debug, Clone, Deserialize, PartialEq, Eq)]
 #[sqlx(transparent)]
 pub struct Json(pub serde_json::Value);
 

@@ -3,26 +3,28 @@ use indicatif::MultiProgress;
 use itertools::Itertools;
 use regex::Regex;
 use rust_bridge::{alias, alias_methods};
-use sea_query::{Alias, Expr, JoinType, NullOrdering, Order, PostgresQueryBuilder, Query};
+use sea_query::{Expr, NullOrdering, Order, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde_json::json;
-use sqlx::postgres::PgPool;
 use sqlx::Executor;
 use sqlx::PgConnection;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::path::Path;
 use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 use tracing::{instrument, warn};
 use walkdir::WalkDir;
 
+use crate::debug_sqlx_query;
+use crate::filter_builder::FilterBuilder;
+use crate::search_query_builder::build_search_query;
+use crate::vector_search_query_builder::build_vector_search_query;
 use crate::{
-    filter_builder, get_or_initialize_pool,
-    model::ModelRuntime,
-    models, order_by_builder,
+    get_or_initialize_pool, models, order_by_builder,
     pipeline::Pipeline,
     queries, query_builder,
     query_builder::QueryBuilder,
-    remote_embeddings::build_remote_embeddings,
     splitter::Splitter,
     types::{DateTime, IntoTableNameAndSchema, Json, SIden, TryToNumeric},
     utils,
@@ -104,7 +106,6 @@ pub struct Collection {
     pub database_url: Option<String>,
     pub pipelines_table_name: String,
     pub documents_table_name: String,
-    pub transforms_table_name: String,
     pub chunks_table_name: String,
     pub documents_tsvectors_table_name: String,
     pub(crate) database_data: Option<CollectionDatabaseData>,
@@ -121,12 +122,16 @@ pub struct Collection {
     remove_pipeline,
     enable_pipeline,
     disable_pipeline,
+    search,
+    add_search_event,
     vector_search,
     query,
     exists,
     archive,
     upsert_directory,
-    upsert_file
+    upsert_file,
+    generate_er_diagram,
+    get_pipeline_status
 )]
 impl Collection {
     /// Creates a new [Collection]
@@ -143,24 +148,30 @@ impl Collection {
     /// use pgml::Collection;
     /// let collection = Collection::new("my_collection", None);
     /// ```
-    pub fn new(name: &str, database_url: Option<String>) -> Self {
+    pub fn new(name: &str, database_url: Option<String>) -> anyhow::Result<Self> {
+        if !name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c.is_whitespace() || c == '-' || c == '_')
+        {
+            anyhow::bail!(
+                "Name must only consist of letters, numebers, white space, and '-' or '_'"
+            )
+        }
         let (
             pipelines_table_name,
             documents_table_name,
-            transforms_table_name,
             chunks_table_name,
             documents_tsvectors_table_name,
         ) = Self::generate_table_names(name);
-        Self {
+        Ok(Self {
             name: name.to_string(),
             database_url,
             pipelines_table_name,
             documents_table_name,
-            transforms_table_name,
             chunks_table_name,
             documents_tsvectors_table_name,
             database_data: None,
-        }
+        })
     }
 
     #[instrument(skip(self))]
@@ -233,16 +244,14 @@ impl Collection {
                     },
                 };
 
+                // Splitters table is not unique to a collection or pipeline. It exists in the pgml schema
                 Splitter::create_splitters_table(&mut transaction).await?;
+                self.create_documents_table(&mut transaction).await?;
                 Pipeline::create_pipelines_table(
                     &collection_database_data.project_info,
                     &mut transaction,
                 )
                 .await?;
-                self.create_documents_table(&mut transaction).await?;
-                self.create_chunks_table(&mut transaction).await?;
-                self.create_documents_tsvectors_table(&mut transaction)
-                    .await?;
 
                 transaction.commit().await?;
                 Some(collection_database_data)
@@ -252,167 +261,105 @@ impl Collection {
     }
 
     /// Adds a new  [Pipeline] to the [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` - The [Pipeline] to add.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Collection, Pipeline, Model, Splitter};
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let model = Model::new(None, None, None);
-    ///     let splitter = Splitter::new(None, None);
-    ///     let mut pipeline = Pipeline::new("my_pipeline", None, None, None);
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     collection.add_pipeline(&mut pipeline).await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn add_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
+        // The flow for this function:
+        // 1. Create collection if it does not exists
+        // 2. Create the pipeline if it does not exist and add it to the collection.pipelines table with ACTIVE = TRUE
+        // 3. Sync the pipeline - this will delete all previous chunks, embeddings, and tsvectors
         self.verify_in_database(false).await?;
-        pipeline.set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
-        let mp = MultiProgress::new();
-        mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
-        pipeline.execute(&None, mp).await?;
-        eprintln!("Done Syncing {}\n", pipeline.name);
+        let project_info = &self
+            .database_data
+            .as_ref()
+            .context("Database data must be set to add a pipeline to a collection")?
+            .project_info;
+
+        // Let's check if we already have it enabled
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let pipelines_table_name = format!("{}.pipelines", project_info.name);
+        let exists: bool = sqlx::query_scalar(&query_builder!(
+            "SELECT EXISTS (SELECT id FROM %s WHERE name = $1 AND active = TRUE)",
+            pipelines_table_name
+        ))
+        .bind(&pipeline.name)
+        .fetch_one(&pool)
+        .await?;
+
+        if exists {
+            warn!("Pipeline {} already exists not adding", pipeline.name);
+        } else {
+            // We want to intentially throw an error if they have already added this pipeline
+            // as we don't want to casually resync
+            pipeline
+                .verify_in_database(project_info, true, &pool)
+                .await?;
+
+            let mp = MultiProgress::new();
+            mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
+            pipeline
+                .resync(project_info, pool.acquire().await?.as_mut())
+                .await?;
+            mp.println(format!("Done Syncing {}\n", pipeline.name))?;
+        }
         Ok(())
     }
 
     /// Removes a [Pipeline] from the [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` - The [Pipeline] to remove.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Collection, Pipeline};
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let mut pipeline = Pipeline::new("my_pipeline", None, None, None);
-    ///    let mut collection = Collection::new("my_collection", None);
-    ///    collection.remove_pipeline(&mut pipeline).await?;
-    ///    Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
-    pub async fn remove_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
+    pub async fn remove_pipeline(&mut self, pipeline: &Pipeline) -> anyhow::Result<()> {
+        // The flow for this function:
+        // 1. Create collection if it does not exist
+        // 2. Begin a transaction
+        // 3. Drop the collection_pipeline schema
+        // 4. Delete the pipeline from the collection.pipelines table
+        // 5. Commit the transaction
         self.verify_in_database(false).await?;
-        pipeline.set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
-        pipeline.verify_in_database(false).await?;
-
-        let database_data = pipeline
-            .database_data
-            .as_ref()
-            .context("Pipeline must be verified to remove it")?;
-
-        let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
-
-        let parameters = pipeline
-            .parameters
-            .as_ref()
-            .context("Pipeline must be verified to remove it")?;
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let pipeline_schema = format!("{}_{}", project_info.name, pipeline.name);
 
         let mut transaction = pool.begin().await?;
-
-        // Need to delete from chunks table only if no other pipelines use the same splitter
-        sqlx::query(&query_builder!(
-                "DELETE FROM %s WHERE splitter_id = $1 AND NOT EXISTS (SELECT 1 FROM %s WHERE splitter_id = $1 AND id != $2)",
-                self.chunks_table_name,
-                self.pipelines_table_name
-            ))
-            .bind(database_data.splitter_id)
-            .bind(database_data.id)
-            .execute(&mut *transaction)
+        transaction
+            .execute(query_builder!("DROP SCHEMA IF EXISTS %s CASCADE", pipeline_schema).as_str())
             .await?;
-
-        // Drop the embeddings table
         sqlx::query(&query_builder!(
-            "DROP TABLE IF EXISTS %s",
-            embeddings_table_name
-        ))
-        .execute(&mut *transaction)
-        .await?;
-
-        // Need to delete from the tsvectors table only if no other pipelines use the
-        // same tsvector configuration
-        sqlx::query(&query_builder!(
-                    "DELETE FROM %s WHERE configuration = $1 AND NOT EXISTS (SELECT 1 FROM %s WHERE parameters->'full_text_search'->>'configuration' = $1 AND id != $2)", 
-                    self.documents_tsvectors_table_name,
-                    self.pipelines_table_name))
-                .bind(parameters["full_text_search"]["configuration"].as_str())
-                .bind(database_data.id)
-                .execute(&mut *transaction)
-                .await?;
-
-        sqlx::query(&query_builder!(
-            "DELETE FROM %s WHERE id = $1",
+            "DELETE FROM %s WHERE name = $1",
             self.pipelines_table_name
         ))
-        .bind(database_data.id)
+        .bind(&pipeline.name)
         .execute(&mut *transaction)
         .await?;
-
         transaction.commit().await?;
         Ok(())
     }
 
     /// Enables a [Pipeline] on the [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` - The [Pipeline] to remove.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Collection, Pipeline};
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let pipeline = Pipeline::new("my_pipeline", None, None, None);
-    ///    let collection = Collection::new("my_collection", None);
-    ///    collection.enable_pipeline(&pipeline).await?;
-    ///    Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
-    pub async fn enable_pipeline(&self, pipeline: &Pipeline) -> anyhow::Result<()> {
+    pub async fn enable_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
+        // The flow for this function:
+        // 1. Set ACTIVE = TRUE for the pipeline in collection.pipelines
+        // 2. Resync the pipeline
+        // TODO: Review this pattern
+        self.verify_in_database(false).await?;
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
+        let pool = get_or_initialize_pool(&self.database_url).await?;
         sqlx::query(&query_builder!(
             "UPDATE %s SET active = TRUE WHERE name = $1",
             self.pipelines_table_name
         ))
         .bind(&pipeline.name)
-        .execute(&get_or_initialize_pool(&self.database_url).await?)
+        .execute(&pool)
         .await?;
-        Ok(())
+        pipeline
+            .resync(project_info, pool.acquire().await?.as_mut())
+            .await
     }
 
     /// Disables a [Pipeline] on the [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` - The [Pipeline] to remove.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Collection, Pipeline};
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let pipeline = Pipeline::new("my_pipeline", None, None, None);
-    ///    let collection = Collection::new("my_collection", None);
-    ///    collection.disable_pipeline(&pipeline).await?;
-    ///    Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn disable_pipeline(&self, pipeline: &Pipeline) -> anyhow::Result<()> {
+        // The flow for this function:
+        // 1. Set ACTIVE = FALSE for the pipeline in collection.pipelines
         sqlx::query(&query_builder!(
             "UPDATE %s SET active = FALSE WHERE name = $1",
             self.pipelines_table_name
@@ -431,108 +378,11 @@ impl Collection {
         .await?;
         conn.execute(
             query_builder!(
-                queries::CREATE_INDEX,
-                "",
-                "created_at_index",
-                self.documents_table_name,
-                "created_at"
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
                 queries::CREATE_INDEX_USING_GIN,
                 "",
-                "metadata_index",
+                "documents_document_index",
                 self.documents_table_name,
-                "metadata jsonb_path_ops"
-            )
-            .as_str(),
-        )
-        .await?;
-        Ok(())
-    }
-
-    #[instrument(skip(self, conn))]
-    async fn create_chunks_table(&mut self, conn: &mut PgConnection) -> anyhow::Result<()> {
-        conn.execute(
-            query_builder!(
-                queries::CREATE_CHUNKS_TABLE,
-                self.chunks_table_name,
-                self.documents_table_name
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "",
-                "created_at_index",
-                self.chunks_table_name,
-                "created_at"
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "",
-                "document_id_index",
-                self.chunks_table_name,
-                "document_id"
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "",
-                "splitter_id_index",
-                self.chunks_table_name,
-                "splitter_id"
-            )
-            .as_str(),
-        )
-        .await?;
-        Ok(())
-    }
-
-    #[instrument(skip(self, conn))]
-    async fn create_documents_tsvectors_table(
-        &mut self,
-        conn: &mut PgConnection,
-    ) -> anyhow::Result<()> {
-        conn.execute(
-            query_builder!(
-                queries::CREATE_DOCUMENTS_TSVECTORS_TABLE,
-                self.documents_tsvectors_table_name,
-                self.documents_table_name
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
-                queries::CREATE_INDEX,
-                "",
-                "configuration_index",
-                self.documents_tsvectors_table_name,
-                "configuration"
-            )
-            .as_str(),
-        )
-        .await?;
-        conn.execute(
-            query_builder!(
-                queries::CREATE_INDEX_USING_GIN,
-                "",
-                "tsvector_index",
-                self.documents_tsvectors_table_name,
-                "ts"
+                "document jsonb_path_ops"
             )
             .as_str(),
         )
@@ -541,164 +391,178 @@ impl Collection {
     }
 
     /// Upserts documents into the database
-    ///
-    /// # Arguments
-    ///
-    /// * `documents` - A vector of documents to upsert
-    /// * `strict` - Whether to throw an error if keys: `id` or `text` are missing from any documents
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///    let mut collection = Collection::new("my_collection", None);
-    ///    let documents = vec![
-    ///        serde_json::json!({"id": 1, "text": "hello world"}).into(),
-    ///        serde_json::json!({"id": 2, "text": "hello world"}).into(),
-    ///    ];
-    ///    collection.upsert_documents(documents, None).await?;
-    ///    Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self, documents))]
     pub async fn upsert_documents(
         &mut self,
         documents: Vec<Json>,
         args: Option<Json>,
     ) -> anyhow::Result<()> {
-        let pool = get_or_initialize_pool(&self.database_url).await?;
+        // The flow for this function
+        // 1. Create the collection if it does not exist
+        // 2. Get all pipelines where ACTIVE = TRUE
+        // -> Foreach pipeline get the parsed schema
+        // 4. Foreach n documents
+        // -> Begin a transaction returning the old document if it existed
+        // -> Insert the document
+        // -> Foreach pipeline check if we need to resync the document and if so sync the document
+        // -> Commit the transaction
         self.verify_in_database(false).await?;
+        let mut pipelines = self.get_pipelines().await?;
+
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+
+        let mut parsed_schemas = vec![];
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
+        for pipeline in &mut pipelines {
+            let parsed_schema = pipeline
+                .get_parsed_schema(project_info, &pool)
+                .await
+                .expect("Error getting parsed schema for pipeline");
+            parsed_schemas.push(parsed_schema);
+        }
+        let mut pipelines: Vec<(Pipeline, _)> = pipelines.into_iter().zip(parsed_schemas).collect();
 
         let args = args.unwrap_or_default();
+        let args = args.as_object().context("args must be a JSON object")?;
 
         let progress_bar = utils::default_progress_bar(documents.len() as u64);
         progress_bar.println("Upserting Documents...");
 
-        let documents: anyhow::Result<Vec<_>> = documents
-            .into_iter()
-            .map(|mut document| {
-                let document = document
-                    .as_object_mut()
-                    .context("Documents must be a vector of objects")?;
+        let query = if args
+            .get("merge")
+            .map(|v| v.as_bool().unwrap_or(false))
+            .unwrap_or(false)
+        {
+            query_builder!(
+                queries::UPSERT_DOCUMENT_AND_MERGE_METADATA,
+                self.documents_table_name,
+                self.documents_table_name,
+                self.documents_table_name,
+                self.documents_table_name
+            )
+        } else {
+            query_builder!(
+                queries::UPSERT_DOCUMENT,
+                self.documents_table_name,
+                self.documents_table_name,
+                self.documents_table_name
+            )
+        };
 
-                // We don't want the text included in the document metadata, but everything else
-                // should be in there
-                let text = document.remove("text").map(|t| {
-                    t.as_str()
-                        .expect("`text` must be a string in document")
-                        .to_string()
-                });
-                let metadata = serde_json::to_value(&document)?.into();
+        let batch_size = args
+            .get("batch_size")
+            .map(TryToNumeric::try_to_u64)
+            .unwrap_or(Ok(100))?;
 
+        for batch in documents.chunks(batch_size as usize) {
+            let mut transaction = pool.begin().await?;
+
+            let mut query_values = String::new();
+            let mut binding_parameter_counter = 1;
+            for _ in 0..batch.len() {
+                query_values = format!(
+                    "{query_values}, (${}, ${}, ${})",
+                    binding_parameter_counter,
+                    binding_parameter_counter + 1,
+                    binding_parameter_counter + 2
+                );
+                binding_parameter_counter += 3;
+            }
+
+            let query = query.replace(
+                "{values_parameters}",
+                &query_values.chars().skip(1).collect::<String>(),
+            );
+            let query = query.replace(
+                "{binding_parameter}",
+                &format!("${binding_parameter_counter}"),
+            );
+
+            let mut query = sqlx::query_as(&query);
+
+            let mut source_uuids = vec![];
+            for document in batch {
                 let id = document
                     .get("id")
                     .context("`id` must be a key in document")?
                     .to_string();
                 let md5_digest = md5::compute(id.as_bytes());
                 let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
+                source_uuids.push(source_uuid);
 
-                Ok((source_uuid, text, metadata))
-            })
-            .collect();
+                let start = SystemTime::now();
+                let timestamp = start
+                    .duration_since(UNIX_EPOCH)
+                    .expect("Time went backwards")
+                    .as_millis();
 
-        // We could continue chaining the above iterators but types become super annoying to
-        // deal with, especially because we are dealing with async functions. This is much easier to read
-        // Also, we may want to use a variant of chunks that is owned, I'm not 100% sure of what
-        // cloning happens when passing values into sqlx bind. itertools variants will not work as
-        // it is not thread safe and pyo3 will get upset
-        let mut document_ids = Vec::new();
-        for chunk in documents?.chunks(10) {
-            // Need to make it a vec to partition it and must include explicit typing here
-            let mut chunk: Vec<&(uuid::Uuid, Option<String>, Json)> = chunk.iter().collect();
+                let versions: HashMap<String, serde_json::Value> = document
+                    .as_object()
+                    .context("document must be an object")?
+                    .iter()
+                    .try_fold(HashMap::new(), |mut acc, (key, value)| {
+                        let md5_digest = md5::compute(serde_json::to_string(value)?.as_bytes());
+                        let md5_digest = format!("{md5_digest:x}");
+                        acc.insert(
+                            key.to_owned(),
+                            serde_json::json!({
+                                "last_updated": timestamp,
+                                "md5": md5_digest
+                            }),
+                        );
+                        anyhow::Ok(acc)
+                    })?;
+                let versions = serde_json::to_value(versions)?;
 
-            // Split the chunk into two groups, one with text, and one with just metadata
-            let split_index = itertools::partition(&mut chunk, |(_, text, _)| text.is_some());
-            let (text_chunk, metadata_chunk) = chunk.split_at(split_index);
-
-            // Start the transaction
-            let mut transaction = pool.begin().await?;
-
-            if !metadata_chunk.is_empty() {
-                // Update the metadata
-                // Merge the metadata if the user has specified to do so otherwise replace it
-                if args["metadata"]["merge"].as_bool().unwrap_or(false) {
-                    sqlx::query(query_builder!(
-                    "UPDATE %s d SET metadata = d.metadata || v.metadata FROM (SELECT UNNEST($1) source_uuid, UNNEST($2) metadata) v WHERE d.source_uuid = v.source_uuid",
-                    self.documents_table_name
-                ).as_str()).bind(metadata_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>())
-                    .bind(metadata_chunk.iter().map(|(_, _, metadata)| metadata.0.clone()).collect::<Vec<_>>())
-                    .execute(&mut *transaction).await?;
-                } else {
-                    sqlx::query(query_builder!(
-                "UPDATE %s d SET metadata = v.metadata FROM (SELECT UNNEST($1) source_uuid, UNNEST($2) metadata) v WHERE d.source_uuid = v.source_uuid",
-                self.documents_table_name
-            ).as_str()).bind(metadata_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>())
-                .bind(metadata_chunk.iter().map(|(_, _, metadata)| metadata.0.clone()).collect::<Vec<_>>())
-                .execute(&mut *transaction).await?;
-                }
+                query = query.bind(source_uuid).bind(document).bind(versions);
             }
 
-            if !text_chunk.is_empty() {
-                // First delete any documents that already have the same UUID as documents in
-                // text_chunk, then insert the new ones.
-                // We are essentially upserting in two steps
-                sqlx::query(&query_builder!(
-                "DELETE FROM %s WHERE source_uuid IN (SELECT source_uuid FROM %s WHERE source_uuid = ANY($1::uuid[]))",
-                self.documents_table_name,
-                self.documents_table_name
-            )).
-                bind(&text_chunk.iter().map(|(source_uuid, _, _)| *source_uuid).collect::<Vec<_>>()).
-                execute(&mut *transaction).await?;
-                let query_string_values = (0..text_chunk.len())
-                    .map(|i| format!("(${}, ${}, ${})", i * 3 + 1, i * 3 + 2, i * 3 + 3))
-                    .collect::<Vec<String>>()
-                    .join(",");
-                let query_string = format!(
-                "INSERT INTO %s (source_uuid, text, metadata) VALUES {} ON CONFLICT (source_uuid) DO UPDATE SET text = $2, metadata = $3 RETURNING id",
-                query_string_values
-            );
-                let query = query_builder!(query_string, self.documents_table_name);
-                let mut query = sqlx::query_scalar(&query);
-                for (source_uuid, text, metadata) in text_chunk.iter() {
-                    query = query.bind(source_uuid).bind(text).bind(metadata);
+            let results: Vec<(i64, Option<Json>)> = query
+                .bind(source_uuids)
+                .fetch_all(&mut *transaction)
+                .await?;
+
+            let dp: Vec<(i64, Json, Option<Json>)> = results
+                .into_iter()
+                .zip(batch)
+                .map(|((id, previous_document), document)| {
+                    (id, document.to_owned(), previous_document)
+                })
+                .collect();
+
+            for (pipeline, parsed_schema) in &mut pipelines {
+                let ids_to_run_on: Vec<i64> = dp
+                    .iter()
+                    .filter(|(_, document, previous_document)| match previous_document {
+                        Some(previous_document) => parsed_schema
+                            .iter()
+                            .any(|(key, _)| document[key] != previous_document[key]),
+                        None => true,
+                    })
+                    .map(|(document_id, _, _)| *document_id)
+                    .collect();
+                if !ids_to_run_on.is_empty() {
+                    pipeline
+                        .sync_documents(ids_to_run_on, project_info, &mut transaction)
+                        .await
+                        .expect("Failed to execute pipeline");
                 }
-                let ids: Vec<i64> = query.fetch_all(&mut *transaction).await?;
-                document_ids.extend(ids);
-                progress_bar.inc(chunk.len() as u64);
             }
 
             transaction.commit().await?;
+            progress_bar.inc(batch_size);
         }
+        progress_bar.println("Done Upserting Documents\n");
         progress_bar.finish();
-        eprintln!("Done Upserting Documents\n");
-
-        self.sync_pipelines(Some(document_ids)).await?;
         Ok(())
     }
 
     /// Gets the documents on a [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `args` - The filters and options to apply to the query
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let documents = collection.get_documents(None).await?;
-    ///     Ok(())
-    /// }
     #[instrument(skip(self))]
     pub async fn get_documents(&self, args: Option<Json>) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
-        let mut args = args.unwrap_or_default().0;
+        let mut args = args.unwrap_or_default();
         let args = args.as_object_mut().context("args must be an object")?;
 
         // Get limit or set it to 1000
@@ -718,7 +582,7 @@ impl Collection {
 
         if let Some(order_by) = args.remove("order_by") {
             let order_by_builder =
-                order_by_builder::OrderByBuilder::new(order_by, "documents", "metadata").build()?;
+                order_by_builder::OrderByBuilder::new(order_by, "documents", "document").build()?;
             for (order_by, order) in order_by_builder {
                 query.order_by_expr_with_nulls(order_by, order, NullOrdering::Last);
             }
@@ -738,53 +602,9 @@ impl Collection {
             query.offset(offset);
         }
 
-        if let Some(mut filter) = args.remove("filter") {
-            let filter = filter
-                .as_object_mut()
-                .context("filter must be a Json object")?;
-
-            if let Some(f) = filter.remove("metadata") {
-                query.cond_where(
-                    filter_builder::FilterBuilder::new(f, "documents", "metadata").build(),
-                );
-            }
-            if let Some(f) = filter.remove("full_text_search") {
-                let f = f
-                    .as_object()
-                    .context("Full text filter must be a Json object")?;
-                let configuration = f
-                    .get("configuration")
-                    .context("In full_text_search `configuration` is required")?
-                    .as_str()
-                    .context("In full_text_search `configuration` must be a string")?;
-                let filter_text = f
-                    .get("text")
-                    .context("In full_text_search `text` is required")?
-                    .as_str()
-                    .context("In full_text_search `text` must be a string")?;
-                query
-                    .join_as(
-                        JoinType::InnerJoin,
-                        self.documents_tsvectors_table_name.to_table_tuple(),
-                        Alias::new("documents_tsvectors"),
-                        Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                            .equals((SIden::Str("documents_tsvectors"), SIden::Str("document_id"))),
-                    )
-                    .and_where(
-                        Expr::col((
-                            SIden::Str("documents_tsvectors"),
-                            SIden::Str("configuration"),
-                        ))
-                        .eq(configuration),
-                    )
-                    .and_where(Expr::cust_with_values(
-                        format!(
-                            "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
-                            configuration
-                        ),
-                        [filter_text],
-                    ));
-            }
+        if let Some(filter) = args.remove("filter") {
+            let filter = FilterBuilder::new(filter, "documents", "document").build()?;
+            query.cond_where(filter);
         }
 
         let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
@@ -797,83 +617,15 @@ impl Collection {
     }
 
     /// Deletes documents in a [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `filter` - The filters to apply
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let documents = collection.delete_documents(serde_json::json!({
-    ///         "metadata": {
-    ///             "id": {
-    ///                 "eq": 1
-    ///             }
-    ///         }
-    ///     }).into()).await?;
-    ///     Ok(())
-    /// }
     #[instrument(skip(self))]
-    pub async fn delete_documents(&self, mut filter: Json) -> anyhow::Result<()> {
+    pub async fn delete_documents(&self, filter: Json) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
         let mut query = Query::delete();
         query.from_table(self.documents_table_name.to_table_tuple());
 
-        let filter = filter
-            .as_object_mut()
-            .context("filter must be a Json object")?;
-
-        if let Some(f) = filter.remove("metadata") {
-            query
-                .cond_where(filter_builder::FilterBuilder::new(f, "documents", "metadata").build());
-        }
-
-        if let Some(mut f) = filter.remove("full_text_search") {
-            let f = f
-                .as_object_mut()
-                .context("Full text filter must be a Json object")?;
-            let configuration = f
-                .get("configuration")
-                .context("In full_text_search `configuration` is required")?
-                .as_str()
-                .context("In full_text_search `configuration` must be a string")?;
-            let filter_text = f
-                .get("text")
-                .context("In full_text_search `text` is required")?
-                .as_str()
-                .context("In full_text_search `text` must be a string")?;
-            let mut inner_select_query = Query::select();
-            inner_select_query
-                .from_as(
-                    self.documents_tsvectors_table_name.to_table_tuple(),
-                    SIden::Str("documents_tsvectors"),
-                )
-                .column(SIden::Str("document_id"))
-                .and_where(Expr::cust_with_values(
-                    format!(
-                        "documents_tsvectors.ts @@ plainto_tsquery('{}', $1)",
-                        configuration
-                    ),
-                    [filter_text],
-                ))
-                .and_where(
-                    Expr::col((
-                        SIden::Str("documents_tsvectors"),
-                        SIden::Str("configuration"),
-                    ))
-                    .eq(configuration),
-                );
-            query.and_where(
-                Expr::col((SIden::Str("documents"), SIden::Str("id")))
-                    .in_subquery(inner_select_query),
-            );
-        }
+        let filter = FilterBuilder::new(filter.0, "documents", "document").build()?;
+        query.cond_where(filter);
 
         let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
         sqlx::query_with(&sql, values).fetch_all(&pool).await?;
@@ -881,198 +633,174 @@ impl Collection {
     }
 
     #[instrument(skip(self))]
-    pub(crate) async fn sync_pipelines(
-        &mut self,
-        document_ids: Option<Vec<i64>>,
-    ) -> anyhow::Result<()> {
-        self.verify_in_database(false).await?;
-        let pipelines = self.get_pipelines().await?;
-        if !pipelines.is_empty() {
-            let mp = MultiProgress::new();
-            mp.println("Syncing Pipelines...")?;
-            use futures::stream::StreamExt;
-            futures::stream::iter(pipelines)
-                // Need this map to get around moving the document_ids and mp
-                .map(|pipeline| (pipeline, document_ids.clone(), mp.clone()))
-                .for_each_concurrent(10, |(mut pipeline, document_ids, mp)| async move {
-                    pipeline
-                        .execute(&document_ids, mp)
-                        .await
-                        .expect("Failed to execute pipeline");
-                })
-                .await;
-            eprintln!("Done Syncing Pipelines\n");
+    pub async fn search(&mut self, query: Json, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
+        let results: Result<(Json,), _> = sqlx::query_as_with(&built_query, values)
+            .fetch_one(&pool)
+            .await;
+
+        match results {
+            Ok(r) => Ok(r.0),
+            Err(e) => match e.as_database_error() {
+                Some(d) => {
+                    if d.code() == Some(Cow::from("XX000")) {
+                        self.verify_in_database(false).await?;
+                        let project_info = &self.database_data.as_ref().unwrap().project_info;
+                        pipeline
+                            .verify_in_database(project_info, false, &pool)
+                            .await?;
+                        let (built_query, values) =
+                            build_search_query(self, query, pipeline).await?;
+                        let results: (Json,) = sqlx::query_as_with(&built_query, values)
+                            .fetch_one(&pool)
+                            .await?;
+                        Ok(results.0)
+                    } else {
+                        Err(anyhow::anyhow!(e))
+                    }
+                }
+                None => Err(anyhow::anyhow!(e)),
+            },
         }
+    }
+
+    #[instrument(skip(self))]
+    pub async fn search_local(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<Json> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
+        let results: (Json,) = sqlx::query_as_with(&built_query, values)
+            .fetch_one(&pool)
+            .await?;
+        Ok(results.0)
+    }
+
+    #[instrument(skip(self))]
+    pub async fn add_search_event(
+        &self,
+        search_id: i64,
+        search_result: i64,
+        event: Json,
+        pipeline: &Pipeline,
+    ) -> anyhow::Result<()> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let search_events_table = format!("{}_{}.search_events", self.name, pipeline.name);
+        let search_results_table = format!("{}_{}.search_results", self.name, pipeline.name);
+
+        let query = query_builder!(
+            queries::INSERT_SEARCH_EVENT,
+            search_events_table,
+            search_results_table
+        );
+        debug_sqlx_query!(
+            INSERT_SEARCH_EVENT,
+            query,
+            search_id,
+            search_result,
+            event.0
+        );
+        sqlx::query(&query)
+            .bind(search_id)
+            .bind(search_result)
+            .bind(event.0)
+            .execute(&pool)
+            .await?;
         Ok(())
     }
 
     /// Performs vector search on the [Collection]
-    ///
-    /// # Arguments
-    ///
-    /// * `query` - The query to search for
-    /// * `pipeline` - The [Pipeline] used for the search
-    /// * `query_paramaters` - The query parameters passed to the model for search
-    /// * `top_k` - How many results to limit on.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Collection, Pipeline};
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let mut pipeline = Pipeline::new("my_pipeline", None, None, None);
-    ///     let results = collection.vector_search("Query", &mut pipeline, None, None).await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     #[allow(clippy::type_complexity)]
     pub async fn vector_search(
         &mut self,
-        query: &str,
+        query: Json,
         pipeline: &mut Pipeline,
-        query_parameters: Option<Json>,
-        top_k: Option<i64>,
-    ) -> anyhow::Result<Vec<(f64, String, Json)>> {
+    ) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
-        let query_parameters = query_parameters.unwrap_or_default();
-        let top_k = top_k.unwrap_or(5);
-
-        // With this system, we only do the wrong type of vector search once
-        let runtime = if pipeline.model.is_some() {
-            pipeline.model.as_ref().unwrap().runtime
-        } else {
-            ModelRuntime::Python
-        };
-        match runtime {
-            ModelRuntime::Python => {
-                let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
-
-                let result = sqlx::query_as(&query_builder!(
-                    queries::EMBED_AND_VECTOR_SEARCH,
-                    self.pipelines_table_name,
-                    embeddings_table_name,
-                    self.chunks_table_name,
-                    self.documents_table_name
-                ))
-                .bind(&pipeline.name)
-                .bind(query)
-                .bind(&query_parameters)
-                .bind(top_k)
+        let (built_query, values) =
+            build_vector_search_query(query.clone(), self, pipeline).await?;
+        let results: Result<Vec<(Json, String, f64)>, _> =
+            sqlx::query_as_with(&built_query, values)
                 .fetch_all(&pool)
                 .await;
-
-                match result {
-                    Ok(r) => Ok(r),
-                    Err(e) => match e.as_database_error() {
-                        Some(d) => {
-                            if d.code() == Some(Cow::from("XX000")) {
-                                self.vector_search_with_remote_embeddings(
-                                    query,
-                                    pipeline,
-                                    query_parameters,
-                                    top_k,
-                                    &pool,
-                                )
-                                .await
-                            } else {
-                                Err(anyhow::anyhow!(e))
-                            }
-                        }
-                        None => Err(anyhow::anyhow!(e)),
-                    },
+        match results {
+            Ok(r) => Ok(r
+                .into_iter()
+                .map(|v| {
+                    serde_json::json!({
+                        "document": v.0,
+                        "chunk": v.1,
+                        "score": v.2
+                    })
+                    .into()
+                })
+                .collect()),
+            Err(e) => match e.as_database_error() {
+                Some(d) => {
+                    if d.code() == Some(Cow::from("XX000")) {
+                        self.verify_in_database(false).await?;
+                        let project_info = &self.database_data.as_ref().unwrap().project_info;
+                        pipeline
+                            .verify_in_database(project_info, false, &pool)
+                            .await?;
+                        let (built_query, values) =
+                            build_vector_search_query(query, self, pipeline).await?;
+                        let results: Vec<(Json, String, f64)> =
+                            sqlx::query_as_with(&built_query, values)
+                                .fetch_all(&pool)
+                                .await?;
+                        Ok(results
+                            .into_iter()
+                            .map(|v| {
+                                serde_json::json!({
+                                    "document": v.0,
+                                    "chunk": v.1,
+                                    "score": v.2
+                                })
+                                .into()
+                            })
+                            .collect())
+                    } else {
+                        Err(anyhow::anyhow!(e))
+                    }
                 }
-            }
-            _ => {
-                self.vector_search_with_remote_embeddings(
-                    query,
-                    pipeline,
-                    query_parameters,
-                    top_k,
-                    &pool,
-                )
-                .await
-            }
+                None => Err(anyhow::anyhow!(e)),
+            },
         }
-        .map(|r| {
-            r.into_iter()
-                .map(|(score, id, metadata)| (1. - score, id, metadata))
-                .collect()
-        })
-    }
-
-    #[instrument(skip(self, pool))]
-    #[allow(clippy::type_complexity)]
-    async fn vector_search_with_remote_embeddings(
-        &mut self,
-        query: &str,
-        pipeline: &mut Pipeline,
-        query_parameters: Json,
-        top_k: i64,
-        pool: &PgPool,
-    ) -> anyhow::Result<Vec<(f64, String, Json)>> {
-        self.verify_in_database(false).await?;
-
-        // Have to set the project info before we can get and set the model
-        pipeline.set_project_info(
-            self.database_data
-                .as_ref()
-                .context(
-                    "Collection must be verified to perform vector search with remote embeddings",
-                )?
-                .project_info
-                .clone(),
-        );
-        // Verify to get and set the model if we don't have it set on the pipeline yet
-        pipeline.verify_in_database(false).await?;
-        let model = pipeline
-            .model
-            .as_ref()
-            .context("Pipeline must be verified to perform vector search with remote embeddings")?;
-
-        // We need to make sure we are not mutably and immutably borrowing the same things
-        let embedding = {
-            let remote_embeddings =
-                build_remote_embeddings(model.runtime, &model.name, &query_parameters)?;
-            let mut embeddings = remote_embeddings.embed(vec![query.to_string()]).await?;
-            std::mem::take(&mut embeddings[0])
-        };
-
-        let embeddings_table_name = format!("{}.{}_embeddings", self.name, pipeline.name);
-        sqlx::query_as(&query_builder!(
-            queries::VECTOR_SEARCH,
-            embeddings_table_name,
-            self.chunks_table_name,
-            self.documents_table_name
-        ))
-        .bind(embedding)
-        .bind(top_k)
-        .fetch_all(pool)
-        .await
-        .map_err(|e| anyhow::anyhow!(e))
     }
 
     #[instrument(skip(self))]
     pub async fn archive(&mut self) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
+        let pipelines = self.get_pipelines().await?;
         let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .expect("Error getting system time")
             .as_secs();
-        let archive_table_name = format!("{}_archive_{}", &self.name, timestamp);
+        let collection_archive_name = format!("{}_archive_{}", &self.name, timestamp);
         let mut transaciton = pool.begin().await?;
+        // Change name in pgml.collections
         sqlx::query("UPDATE pgml.collections SET name = $1, active = FALSE where name = $2")
-            .bind(&archive_table_name)
+            .bind(&collection_archive_name)
             .bind(&self.name)
             .execute(&mut *transaciton)
             .await?;
+        // Change collection_pipeline schema
+        for pipeline in pipelines {
+            sqlx::query(&query_builder!(
+                "ALTER SCHEMA %s RENAME TO %s",
+                format!("{}_{}", self.name, pipeline.name),
+                format!("{}_{}", collection_archive_name, pipeline.name)
+            ))
+            .execute(&mut *transaciton)
+            .await?;
+        }
+        // Change collection schema
         sqlx::query(&query_builder!(
             "ALTER SCHEMA %s RENAME TO %s",
             &self.name,
-            archive_table_name
+            collection_archive_name
         ))
         .execute(&mut *transaciton)
         .await?;
@@ -1086,145 +814,35 @@ impl Collection {
     }
 
     /// Gets all pipelines for the [Collection]
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let pipelines = collection.get_pipelines().await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn get_pipelines(&mut self) -> anyhow::Result<Vec<Pipeline>> {
         self.verify_in_database(false).await?;
         let pool = get_or_initialize_pool(&self.database_url).await?;
-
-        let pipelines_with_models_and_splitters: Vec<models::PipelineWithModelAndSplitter> =
-            sqlx::query_as(&query_builder!(
-                r#"SELECT 
-              p.id as pipeline_id, 
-              p.name as pipeline_name, 
-              p.created_at as pipeline_created_at, 
-              p.active as pipeline_active, 
-              p.parameters as pipeline_parameters, 
-              m.id as model_id, 
-              m.created_at as model_created_at, 
-              m.runtime::TEXT as model_runtime, 
-              m.hyperparams as model_hyperparams, 
-              s.id as splitter_id, 
-              s.created_at as splitter_created_at, 
-              s.name as splitter_name, 
-              s.parameters as splitter_parameters 
-            FROM 
-              %s p 
-              INNER JOIN pgml.models m ON p.model_id = m.id 
-              INNER JOIN pgml.splitters s ON p.splitter_id = s.id 
-            WHERE 
-              p.active = TRUE
-            "#,
-                self.pipelines_table_name
-            ))
-            .fetch_all(&pool)
-            .await?;
-
-        let pipelines: Vec<Pipeline> = pipelines_with_models_and_splitters
-            .into_iter()
-            .map(|p| {
-                let mut pipeline: Pipeline = p.into();
-                pipeline.set_project_info(
-                    self.database_data
-                        .as_ref()
-                        .expect("Collection must be verified to get all pipelines")
-                        .project_info
-                        .clone(),
-                );
-                pipeline
-            })
-            .collect();
-        Ok(pipelines)
+        let pipelines: Vec<models::Pipeline> = sqlx::query_as(&query_builder!(
+            "SELECT * FROM %s WHERE active = TRUE",
+            self.pipelines_table_name
+        ))
+        .fetch_all(&pool)
+        .await?;
+        pipelines.into_iter().map(|p| p.try_into()).collect()
     }
 
     /// Gets a [Pipeline] by name
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let pipeline = collection.get_pipeline("my_pipeline").await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn get_pipeline(&mut self, name: &str) -> anyhow::Result<Pipeline> {
         self.verify_in_database(false).await?;
         let pool = get_or_initialize_pool(&self.database_url).await?;
-
-        let pipeline_with_model_and_splitter: models::PipelineWithModelAndSplitter =
-            sqlx::query_as(&query_builder!(
-                r#"SELECT 
-              p.id as pipeline_id, 
-              p.name as pipeline_name, 
-              p.created_at as pipeline_created_at, 
-              p.active as pipeline_active, 
-              p.parameters as pipeline_parameters, 
-              m.id as model_id, 
-              m.created_at as model_created_at, 
-              m.runtime::TEXT as model_runtime, 
-              m.hyperparams as model_hyperparams, 
-              s.id as splitter_id, 
-              s.created_at as splitter_created_at, 
-              s.name as splitter_name, 
-              s.parameters as splitter_parameters 
-            FROM 
-              %s p 
-              INNER JOIN pgml.models m ON p.model_id = m.id 
-              INNER JOIN pgml.splitters s ON p.splitter_id = s.id 
-            WHERE 
-              p.active = TRUE
-              AND p.name = $1
-            "#,
-                self.pipelines_table_name
-            ))
-            .bind(name)
-            .fetch_one(&pool)
-            .await?;
-
-        let mut pipeline: Pipeline = pipeline_with_model_and_splitter.into();
-        pipeline.set_project_info(self.database_data.as_ref().unwrap().project_info.clone());
-        Ok(pipeline)
-    }
-
-    #[instrument(skip(self))]
-    pub(crate) async fn get_project_info(&mut self) -> anyhow::Result<ProjectInfo> {
-        self.verify_in_database(false).await?;
-        Ok(self
-            .database_data
-            .as_ref()
-            .context("Collection must be verified to get project info")?
-            .project_info
-            .clone())
+        let pipeline: models::Pipeline = sqlx::query_as(&query_builder!(
+            "SELECT * FROM %s WHERE name = $1 AND active = TRUE LIMIT 1",
+            self.pipelines_table_name
+        ))
+        .bind(name)
+        .fetch_one(&pool)
+        .await?;
+        pipeline.try_into()
     }
 
     /// Check if the [Collection] exists in the database
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let collection = Collection::new("my_collection", None);
-    ///     let exists = collection.exists().await?;
-    ///     Ok(())
-    /// }
-    /// ```
     #[instrument(skip(self))]
     pub async fn exists(&self) -> anyhow::Result<bool> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -1312,6 +930,136 @@ impl Collection {
         Ok(())
     }
 
+    #[instrument(skip(self))]
+    pub async fn get_pipeline_status(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
+        self.verify_in_database(false).await?;
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        pipeline.get_status(project_info, &pool).await
+    }
+
+    #[instrument(skip(self))]
+    pub async fn generate_er_diagram(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<String> {
+        self.verify_in_database(false).await?;
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        pipeline
+            .verify_in_database(project_info, false, &pool)
+            .await?;
+
+        let parsed_schema = pipeline
+            .parsed_schema
+            .as_ref()
+            .context("Pipeline must have schema to generate er diagram")?;
+
+        let mut uml_entites = format!(
+            r#"
+@startuml
+' hide the spot
+' hide circle
+
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+entity "pgml.collections" as pgmlc {{
+    id : bigint
+    --
+    created_at : timestamp without time zone                
+    name : text
+    active : boolean
+    project_id : bigint
+    sdk_version : text
+}}
+
+entity "{}.documents" as documents {{
+    id : bigint              
+    --
+    created_at : timestamp without time zone
+    source_uuid : uuid
+    document : jsonb
+}}
+
+entity "{}.pipelines" as pipelines {{
+    id : bigint
+    --
+    created_at : timestamp without time zone
+    name : text
+    active : boolean
+    schema : jsonb
+}}
+        "#,
+            self.name, self.name
+        );
+
+        let schema = format!("{}_{}", self.name, pipeline.name);
+
+        let mut uml_relations = r#"
+pgmlc ||..|| pipelines
+        "#
+        .to_string();
+
+        for (key, field_action) in parsed_schema.iter() {
+            let nice_name_key = key.replace(' ', "_");
+
+            let relations = format!(
+                r#"
+documents ||..|{{ {nice_name_key}_chunks
+{nice_name_key}_chunks ||.|| {nice_name_key}_embeddings
+                    "#
+            );
+            uml_relations.push_str(&relations);
+
+            if let Some(_embed_action) = &field_action.semantic_search {
+                let entites = format!(
+                    r#"
+entity "{schema}.{key}_chunks" as {nice_name_key}_chunks {{
+    id : bigint
+    --
+    created_at : timestamp without time zone
+    document_id : bigint
+    chunk_index : bigint
+    chunk : text
+}}
+
+entity "{schema}.{key}_embeddings" as {nice_name_key}_embeddings {{
+    id : bigint
+    --
+    created_at : timestamp without time zone
+    chunk_id : bigint
+    embedding : vector
+}}
+                        "#
+                );
+                uml_entites.push_str(&entites);
+            }
+
+            if let Some(_full_text_search_action) = &field_action.full_text_search {
+                let entites = format!(
+                    r#"
+entity "{schema}.{key}_tsvectors" as {nice_name_key}_tsvectors {{
+    id : bigint
+    --
+    created_at : timestamp without time zone
+    chunk_id : bigint
+    tsvectors : tsvector
+}}
+                        "#
+                );
+                uml_entites.push_str(&entites);
+
+                let relations = format!(
+                    r#"
+{nice_name_key}_chunks ||..|| {nice_name_key}_tsvectors
+                    "#
+                );
+                uml_relations.push_str(&relations);
+            }
+        }
+
+        uml_entites.push_str(&uml_relations);
+        Ok(uml_entites)
+    }
+
     pub async fn upsert_file(&mut self, path: &str) -> anyhow::Result<()> {
         self.verify_in_database(false).await?;
         let path = Path::new(path);
@@ -1323,11 +1071,10 @@ impl Collection {
         self.upsert_documents(vec![document.into()], None).await
     }
 
-    fn generate_table_names(name: &str) -> (String, String, String, String, String) {
+    fn generate_table_names(name: &str) -> (String, String, String, String) {
         [
             ".pipelines",
             ".documents",
-            ".transforms",
             ".chunks",
             ".documents_tsvectors",
         ]

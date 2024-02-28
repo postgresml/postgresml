@@ -1,4 +1,4 @@
-from pgml import Collection, Model, Splitter, Pipeline
+from pgml import Collection, Pipeline
 from datasets import load_dataset
 from time import time
 from dotenv import load_dotenv
@@ -13,17 +13,24 @@ async def main():
     # Initialize collection
     collection = Collection("quora_collection")
 
-    # Create a pipeline using the default model and splitter
-    model = Model()
-    splitter = Splitter()
-    pipeline = Pipeline("quorav1", model, splitter)
+    # Create and add pipeline
+    pipeline = Pipeline(
+        "quorav1",
+        {
+            "text": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {"model": "intfloat/e5-small"},
+            }
+        },
+    )
     await collection.add_pipeline(pipeline)
-
+ 
     # Prep documents for upserting
     dataset = load_dataset("quora", split="train")
     questions = []
     for record in dataset["questions"]:
         questions.extend(record["text"])
+
     # Remove duplicates and add id
     documents = []
     for i, question in enumerate(list(set(questions))):
@@ -31,14 +38,14 @@ async def main():
             documents.append({"id": i, "text": question})
 
     # Upsert documents
-    await collection.upsert_documents(documents[:200])
+    await collection.upsert_documents(documents[:2000])
 
     # Query
     query = "What is a good mobile os?"
     console.print("Querying for %s..." % query)
     start = time()
-    results = (
-        await collection.query().vector_recall(query, pipeline).limit(5).fetch_all()
+    results = await collection.vector_search(
+        {"query": {"fields": {"text": {"query": query}}}, "limit": 5}, pipeline
     )
     end = time()
     console.print("\n Results for '%s' " % (query), style="bold")

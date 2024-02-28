@@ -8,7 +8,7 @@ use parking_lot::RwLock;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::collections::HashMap;
 use std::env;
-use tokio::runtime::Runtime;
+use tokio::runtime::{Builder, Runtime};
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
@@ -28,10 +28,13 @@ mod queries;
 mod query_builder;
 mod query_runner;
 mod remote_embeddings;
+mod search_query_builder;
+mod single_field_pipeline;
 mod splitter;
 pub mod transformer_pipeline;
 pub mod types;
 mod utils;
+mod vector_search_query_builder;
 
 // Re-export
 pub use builtins::Builtins;
@@ -43,7 +46,9 @@ pub use splitter::Splitter;
 pub use transformer_pipeline::TransformerPipeline;
 
 // This is use when inserting collections to set the sdk_version used during creation
-static SDK_VERSION: &str = "0.9.2";
+// This doesn't actually mean the verion of the SDK it was created on, it means the
+// version it is compatible with
+static SDK_VERSION: &str = "1.0.0";
 
 // Store the database(s) in a global variable so that we can access them from anywhere
 // This is not necessarily idiomatic Rust, but it is a good way to acomplish what we need
@@ -54,12 +59,11 @@ static DATABASE_POOLS: RwLock<Option<HashMap<String, PgPool>>> = RwLock::new(Non
 async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result<PgPool> {
     let mut pools = DATABASE_POOLS.write();
     let pools = pools.get_or_insert_with(HashMap::new);
-    let environment_url = std::env::var("DATABASE_URL");
-    let environment_url = environment_url.as_deref();
-    let url = database_url
-        .as_deref()
-        .unwrap_or_else(|| environment_url.expect("Please set DATABASE_URL environment variable"));
-    if let Some(pool) = pools.get(url) {
+    let url = database_url.clone().unwrap_or_else(|| {
+        std::env::var("PGML_DATABASE_URL").unwrap_or_else(|_|
+            std::env::var("DATABASE_URL").expect("Please set PGML_DATABASE_URL environment variable or explicitly pass a database connection string to your collection"))
+    });
+    if let Some(pool) = pools.get(&url) {
         Ok(pool.clone())
     } else {
         let timeout = std::env::var("PGML_CHECKOUT_TIMEOUT")
@@ -128,7 +132,11 @@ fn get_or_set_runtime<'a>() -> &'a Runtime {
         if let Some(r) = &RUNTIME {
             r
         } else {
-            let runtime = Runtime::new().unwrap();
+            // Need to use multi thread for JavaScript
+            let runtime = Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .expect("Error creating tokio runtime");
             RUNTIME = Some(runtime);
             get_or_set_runtime()
         }
@@ -157,6 +165,10 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(init_logger, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(migrate, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(cli::cli, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(
+        single_field_pipeline::SingleFieldPipeline,
+        m
+    )?)?;
     m.add_class::<pipeline::PipelinePython>()?;
     m.add_class::<collection::CollectionPython>()?;
     m.add_class::<model::ModelPython>()?;
@@ -204,6 +216,10 @@ fn migrate(
 fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
     cx.export_function("init_logger", init_logger)?;
     cx.export_function("migrate", migrate)?;
+    cx.export_function(
+        "newSingleFieldPipeline",
+        single_field_pipeline::SingleFieldPipeline,
+    )?;
     cx.export_function("cli", cli::cli)?;
     cx.export_function("newCollection", collection::CollectionJavascript::new)?;
     cx.export_function("newModel", model::ModelJavascript::new)?;
@@ -224,16 +240,27 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{model::Model, pipeline::Pipeline, splitter::Splitter, types::Json};
+    use crate::types::Json;
     use serde_json::json;
 
     fn generate_dummy_documents(count: usize) -> Vec<Json> {
         let mut documents = Vec::new();
         for i in 0..count {
+            let body_text = vec![format!(
+                "Here is some text that we will end up splitting on! {i}"
+            )]
+            .into_iter()
+            .cycle()
+            .take(100)
+            .collect::<Vec<String>>()
+            .join("\n");
             let document = serde_json::json!(
             {
                 "id": i,
-                "text": format!("This is a test document: {}", i),
+                "title": format!("Test document: {}", i),
+                "body": body_text,
+                "text": "here is some test text",
+                "notes": format!("Here are some notes or something for test document {}", i),
                 "metadata": {
                     "uuid": i * 10,
                     "name": format!("Test Document {}", i)
@@ -248,10 +275,10 @@ mod tests {
     // Collection & Pipelines /////
     ///////////////////////////////
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_create_collection() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_ccc_0", None);
+        let mut collection = Collection::new("test_r_c_ccc_0", None)?;
         assert!(collection.database_data.is_none());
         collection.verify_in_database(false).await?;
         assert!(collection.database_data.is_some());
@@ -259,525 +286,960 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_add_remove_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new(
-            "test_p_cap_57",
-            Some(model),
-            Some(splitter),
-            Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
-                })
-                .into(),
-            ),
-        );
-        let mut collection = Collection::new("test_r_c_carp_3", None);
+        let mut pipeline = Pipeline::new("test_p_carp_58", Some(json!({}).into()))?;
+        let mut collection = Collection::new("test_r_c_carp_1", None)?;
         assert!(collection.database_data.is_none());
         collection.add_pipeline(&mut pipeline).await?;
         assert!(collection.database_data.is_some());
-        collection.remove_pipeline(&mut pipeline).await?;
+        collection.remove_pipeline(&pipeline).await?;
         let pipelines = collection.get_pipelines().await?;
         assert!(pipelines.is_empty());
         collection.archive().await?;
         Ok(())
     }
 
-    // #[sqlx::test]
-    // async fn can_add_remove_pipelines() -> anyhow::Result<()> {
-    //     internal_init_logger(None, None).ok();
-    //     let model = Model::default();
-    //     let splitter = Splitter::default();
-    //     let mut pipeline1 = Pipeline::new(
-    //         "test_r_p_carps_0",
-    //         Some(model.clone()),
-    //         Some(splitter.clone()),
-    //         None,
-    //     );
-    //     let mut pipeline2 = Pipeline::new("test_r_p_carps_1", Some(model), Some(splitter), None);
-    //     let mut collection = Collection::new("test_r_c_carps_1", None);
-    //     collection.add_pipeline(&mut pipeline1).await?;
-    //     collection.add_pipeline(&mut pipeline2).await?;
-    //     let pipelines = collection.get_pipelines().await?;
-    //     assert!(pipelines.len() == 2);
-    //     collection.remove_pipeline(&mut pipeline1).await?;
-    //     let pipelines = collection.get_pipelines().await?;
-    //     assert!(pipelines.len() == 1);
-    //     assert!(collection.get_pipeline("test_r_p_carps_0").await.is_err());
-    //     collection.archive().await?;
-    //     Ok(())
-    // }
-
-    #[sqlx::test]
-    async fn can_specify_custom_hnsw_parameters_for_pipelines() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn can_add_remove_pipelines() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
+        let mut pipeline1 = Pipeline::new("test_r_p_carps_1", Some(json!({}).into()))?;
+        let mut pipeline2 = Pipeline::new("test_r_p_carps_2", Some(json!({}).into()))?;
+        let mut collection = Collection::new("test_r_c_carps_11", None)?;
+        collection.add_pipeline(&mut pipeline1).await?;
+        collection.add_pipeline(&mut pipeline2).await?;
+        let pipelines = collection.get_pipelines().await?;
+        assert!(pipelines.len() == 2);
+        collection.remove_pipeline(&pipeline1).await?;
+        let pipelines = collection.get_pipelines().await?;
+        assert!(pipelines.len() == 1);
+        assert!(collection.get_pipeline("test_r_p_carps_1").await.is_err());
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_capaud_107";
+        let pipeline_name = "test_r_p_capaud_6";
         let mut pipeline = Pipeline::new(
-            "test_r_p_cschpfp_0",
-            Some(model),
-            Some(splitter),
+            pipeline_name,
             Some(
-                serde_json::json!({
-                    "hnsw": {
-                        "m": 100,
-                        "ef_construction": 200
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character",
+                            "parameters": {
+                                "chunk_size": 1000,
+                                "chunk_overlap": 40
+                            }
+                        },
+                        "semantic_search": {
+                            "model": "hkunlp/instructor-base",
+                            "parameters": {
+                                "instruction": "Represent the Wikipedia document for retrieval"
+                            }
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
                     }
                 })
                 .into(),
             ),
-        );
-        let collection_name = "test_r_c_cschpfp_1";
-        let mut collection = Collection::new(collection_name, None);
+        )?;
+        let mut collection = Collection::new(collection_name, None)?;
         collection.add_pipeline(&mut pipeline).await?;
-        let full_embeddings_table_name = pipeline.create_or_get_embeddings_table().await?;
-        let embeddings_table_name = full_embeddings_table_name.split('.').collect::<Vec<_>>()[1];
+        let documents = generate_dummy_documents(2);
+        collection.upsert_documents(documents.clone(), None).await?;
         let pool = get_or_initialize_pool(&None).await?;
-        let results: Vec<(String, String)> = sqlx::query_as(&query_builder!(
-            "select indexname, indexdef from pg_indexes where tablename = '%d' and schemaname = '%d'",
-            embeddings_table_name,
-            collection_name
-        )).fetch_all(&pool).await?;
-        let names = results.iter().map(|(name, _)| name).collect::<Vec<_>>();
-        let definitions = results
-            .iter()
-            .map(|(_, definition)| definition)
-            .collect::<Vec<_>>();
-        assert!(names.contains(&&format!("{}_pipeline_hnsw_vector_index", pipeline.name)));
-        assert!(definitions.contains(&&format!("CREATE INDEX {}_pipeline_hnsw_vector_index ON {} USING hnsw (embedding vector_cosine_ops) WITH (m='100', ef_construction='200')", pipeline.name, full_embeddings_table_name)));
+        let documents_table = format!("{}.documents", collection_name);
+        let queried_documents: Vec<models::Document> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", documents_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(queried_documents.len() == 2);
+        for (d, qd) in std::iter::zip(documents, queried_documents) {
+            assert_eq!(d, qd.document);
+        }
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 2);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 12);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 12);
+        collection.archive().await?;
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
+    async fn can_upsert_documents_and_add_pipeline() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_cudaap_51";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(2);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "test_r_p_cudaap_9";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small",
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let pool = get_or_initialize_pool(&None).await?;
+        let documents_table = format!("{}.documents", collection_name);
+        let queried_documents: Vec<models::Document> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", documents_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(queried_documents.len() == 2);
+        for (d, qd) in std::iter::zip(documents, queried_documents) {
+            assert_eq!(d, qd.document);
+        }
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 2);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 4);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 4);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn disable_enable_pipeline() -> anyhow::Result<()> {
-        let model = Model::default();
-        let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new("test_p_dep_0", Some(model), Some(splitter), None);
-        let mut collection = Collection::new("test_r_c_dep_1", None);
+        let mut pipeline = Pipeline::new("test_p_dep_1", Some(json!({}).into()))?;
+        let mut collection = Collection::new("test_r_c_dep_1", None)?;
         collection.add_pipeline(&mut pipeline).await?;
         let queried_pipeline = &collection.get_pipelines().await?[0];
         assert_eq!(pipeline.name, queried_pipeline.name);
         collection.disable_pipeline(&pipeline).await?;
         let queried_pipelines = &collection.get_pipelines().await?;
         assert!(queried_pipelines.is_empty());
-        collection.enable_pipeline(&pipeline).await?;
+        collection.enable_pipeline(&mut pipeline).await?;
         let queried_pipeline = &collection.get_pipelines().await?[0];
         assert_eq!(pipeline.name, queried_pipeline.name);
         collection.archive().await?;
         Ok(())
     }
 
-    #[sqlx::test]
-    async fn sync_multiple_pipelines() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn can_upsert_documents_and_enable_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
-        let mut pipeline1 = Pipeline::new(
-            "test_r_p_smp_0",
-            Some(model.clone()),
-            Some(splitter.clone()),
+        let collection_name = "test_r_c_cudaep_43";
+        let mut collection = Collection::new(collection_name, None)?;
+        let pipeline_name = "test_r_p_cudaep_9";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
             Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        }
                     }
                 })
                 .into(),
             ),
-        );
-        let mut pipeline2 = Pipeline::new(
-            "test_r_p_smp_1",
-            Some(model),
-            Some(splitter),
-            Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
-                })
-                .into(),
-            ),
-        );
-        let mut collection = Collection::new("test_r_c_smp_3", None);
-        collection.add_pipeline(&mut pipeline1).await?;
-        collection.add_pipeline(&mut pipeline2).await?;
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        collection.disable_pipeline(&pipeline).await?;
+        let documents = generate_dummy_documents(2);
+        collection.upsert_documents(documents, None).await?;
+        let pool = get_or_initialize_pool(&None).await?;
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.is_empty());
+        collection.enable_pipeline(&mut pipeline).await?;
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 2);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn random_pipelines_documents_test() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_rpdt_3";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(6);
         collection
-            .upsert_documents(generate_dummy_documents(3), None)
+            .upsert_documents(documents[..2].to_owned(), None)
             .await?;
-        let status_1 = pipeline1.get_status().await?;
-        let status_2 = pipeline2.get_status().await?;
-        assert!(
-            status_1.chunks_status.synced == status_1.chunks_status.total
-                && status_1.chunks_status.not_synced == 0
+        let pipeline_name1 = "test_r_p_rpdt1_0";
+        let mut pipeline = Pipeline::new(
+            pipeline_name1,
+            Some(
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small",
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+
+        collection
+            .upsert_documents(documents[2..4].to_owned(), None)
+            .await?;
+
+        let pool = get_or_initialize_pool(&None).await?;
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name1);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 4);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name1);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 8);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name1);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 8);
+
+        let pipeline_name2 = "test_r_p_rpdt2_0";
+        let mut pipeline = Pipeline::new(
+            pipeline_name2,
+            Some(
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small",
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name2);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 4);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name2);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 8);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name2);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 8);
+
+        collection
+            .upsert_documents(documents[4..6].to_owned(), None)
+            .await?;
+
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name2);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 6);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name2);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 12);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name2);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 12);
+
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name1);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 6);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name1);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 12);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name1);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 12);
+
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn pipeline_sync_status() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_pss_5";
+        let mut collection = Collection::new(collection_name, None)?;
+        let pipeline_name = "test_r_p_pss_0";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        },
+                        "splitter": {
+                            "model": "recursive_character"
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let documents = generate_dummy_documents(4);
+        collection
+            .upsert_documents(documents[..2].to_owned(), None)
+            .await?;
+        let status = collection.get_pipeline_status(&mut pipeline).await?;
+        assert_eq!(
+            status.0,
+            json!({
+                "title": {
+                    "chunks": {
+                        "not_synced": 0,
+                        "synced": 2,
+                        "total": 2
+                    },
+                    "embeddings": {
+                        "not_synced": 0,
+                        "synced": 2,
+                        "total": 2
+                    },
+                    "tsvectors": {
+                        "not_synced": 0,
+                        "synced": 2,
+                        "total": 2
+                    },
+                }
+            })
         );
-        assert!(
-            status_2.chunks_status.synced == status_2.chunks_status.total
-                && status_2.chunks_status.not_synced == 0
+        collection.disable_pipeline(&pipeline).await?;
+        collection
+            .upsert_documents(documents[2..4].to_owned(), None)
+            .await?;
+        let status = collection.get_pipeline_status(&mut pipeline).await?;
+        assert_eq!(
+            status.0,
+            json!({
+                "title": {
+                    "chunks": {
+                        "not_synced": 2,
+                        "synced": 2,
+                        "total": 4
+                    },
+                    "embeddings": {
+                        "not_synced": 0,
+                        "synced": 2,
+                        "total": 2
+                    },
+                    "tsvectors": {
+                        "not_synced": 0,
+                        "synced": 2,
+                        "total": 2
+                    },
+                }
+            })
+        );
+        collection.enable_pipeline(&mut pipeline).await?;
+        let status = collection.get_pipeline_status(&mut pipeline).await?;
+        assert_eq!(
+            status.0,
+            json!({
+                "title": {
+                    "chunks": {
+                        "not_synced": 0,
+                        "synced": 4,
+                        "total": 4
+                    },
+                    "embeddings": {
+                        "not_synced": 0,
+                        "synced": 4,
+                        "total": 4
+                    },
+                    "tsvectors": {
+                        "not_synced": 0,
+                        "synced": 4,
+                        "total": 4
+                    },
+                }
+            })
         );
         collection.archive().await?;
         Ok(())
     }
 
+    #[tokio::test]
+    async fn can_specify_custom_hnsw_parameters_for_pipelines() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_cschpfp_4";
+        let mut collection = Collection::new(collection_name, None)?;
+        let pipeline_name = "test_r_p_cschpfp_0";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small",
+                            "hnsw": {
+                                "m": 100,
+                                "ef_construction": 200
+                            }
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let schema = format!("{collection_name}_{pipeline_name}");
+        let full_embeddings_table_name = format!("{schema}.title_embeddings");
+        let embeddings_table_name = full_embeddings_table_name.split('.').collect::<Vec<_>>()[1];
+        let pool = get_or_initialize_pool(&None).await?;
+        let results: Vec<(String, String)> = sqlx::query_as(&query_builder!(
+            "select indexname, indexdef from pg_indexes where tablename = '%d' and schemaname = '%d'",
+            embeddings_table_name,
+            schema
+        )).fetch_all(&pool).await?;
+        let names = results.iter().map(|(name, _)| name).collect::<Vec<_>>();
+        let definitions = results
+            .iter()
+            .map(|(_, definition)| definition)
+            .collect::<Vec<_>>();
+        assert!(names.contains(&&"title_pipeline_embedding_hnsw_vector_index".to_string()));
+        assert!(definitions.contains(&&format!("CREATE INDEX title_pipeline_embedding_hnsw_vector_index ON {full_embeddings_table_name} USING hnsw (embedding vector_cosine_ops) WITH (m='100', ef_construction='200')")));
+        collection.archive().await?;
+        Ok(())
+    }
+
     ///////////////////////////////
-    // Various Searches ///////////
+    // Searches ///////////////////
     ///////////////////////////////
 
-    #[sqlx::test]
+    #[tokio::test]
+    async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_cswle_121";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(10);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "test_r_p_cswle_9";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        },
+                        "semantic_search": {
+                            "model": "hkunlp/instructor-base",
+                            "parameters": {
+                                "instruction": "Represent the Wikipedia document for retrieval"
+                            }
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    },
+                    "notes": {
+                       "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let query = json!({
+            "query": {
+                "full_text_search": {
+                    "title": {
+                        "query": "test 9",
+                        "boost": 4.0
+                    },
+                    "body": {
+                        "query": "Test",
+                        "boost": 1.2
+                    }
+                },
+                "semantic_search": {
+                    "title": {
+                        "query": "This is a test",
+                        "boost": 2.0
+                    },
+                    "body": {
+                        "query": "This is the body test",
+                        "parameters": {
+                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                        },
+                        "boost": 1.01
+                    },
+                    "notes": {
+                        "query": "This is the notes test",
+                        "boost": 1.01
+                    }
+                },
+                "filter": {
+                   "id": {
+                        "$gt": 1
+                    }
+                }
+
+            },
+            "limit": 5
+        });
+        let results = collection
+            .search(query.clone().into(), &mut pipeline)
+            .await?;
+        let ids: Vec<u64> = results["results"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|r| r["document"]["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids, vec![9, 2, 7, 8, 3]);
+
+        let pool = get_or_initialize_pool(&None).await?;
+
+        let searches_table = format!("{}_{}.searches", collection_name, pipeline_name);
+        let searches: Vec<(i64, serde_json::Value)> =
+            sqlx::query_as(&query_builder!("SELECT id, query FROM %s", searches_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(searches.len() == 1);
+        assert!(searches[0].0 == results["search_id"].as_i64().unwrap());
+        assert!(searches[0].1 == query);
+
+        let search_results_table = format!("{}_{}.search_results", collection_name, pipeline_name);
+        let search_results: Vec<(i64, i64, i64, serde_json::Value, i32)> =
+            sqlx::query_as(&query_builder!(
+                "SELECT id, search_id, document_id, scores, rank FROM %s ORDER BY rank ASC",
+                search_results_table
+            ))
+            .fetch_all(&pool)
+            .await?;
+        assert!(search_results.len() == 5);
+        // Document ids are 1 based in the db not 0 based like they are here
+        assert_eq!(
+            search_results.iter().map(|sr| sr.2).collect::<Vec<i64>>(),
+            vec![10, 3, 8, 9, 4]
+        );
+
+        let event = json!({"clicked": true});
+        collection
+            .add_search_event(
+                results["search_id"].as_i64().unwrap(),
+                2,
+                event.clone().into(),
+                &pipeline,
+            )
+            .await?;
+        let search_events_table = format!("{}_{}.search_events", collection_name, pipeline_name);
+        let (search_result, retrieved_event): (i64, Json) = sqlx::query_as(&query_builder!(
+            "SELECT search_result, event FROM %s LIMIT 1",
+            search_events_table
+        ))
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(search_result, 2);
+        assert_eq!(event, retrieved_event.0);
+
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn can_search_with_remote_embeddings() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test r_c_cswre_66";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(10);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "test_r_p_cswre_8";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "text-embedding-ada-002",
+                            "source": "openai",
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    },
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let mut pipeline = Pipeline::new(pipeline_name, None)?;
+        let results = collection
+            .search(
+                json!({
+                    "query": {
+                        "full_text_search": {
+                            "body": {
+                                "query": "Test",
+                                "boost": 1.2
+                            }
+                        },
+                        "semantic_search": {
+                            "title": {
+                                "query": "This is a test",
+                                "boost": 2.0
+                            },
+                            "body": {
+                                "query": "This is the body test",
+                                "boost": 1.01
+                            },
+                        },
+                        "filter": {
+                           "id": {
+                                "$gt": 1
+                            }
+                        }
+                    },
+                    "limit": 5
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        let ids: Vec<u64> = results["results"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|r| r["document"]["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids, vec![2, 3, 7, 4, 8]);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    ///////////////////////////////
+    // Vector Searches ////////////
+    ///////////////////////////////
+
+    #[tokio::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
+        let collection_name = "test r_c_cvswle_9";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(10);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "test_r_p_cvswle_0";
         let mut pipeline = Pipeline::new(
-            "test_r_p_cvswle_1",
-            Some(model),
-            Some(splitter),
+            pipeline_name,
             Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "hkunlp/instructor-base",
+                            "parameters": {
+                                "instruction": "Represent the Wikipedia document for retrieval"
+                            }
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        },
+                    },
                 })
                 .into(),
             ),
-        );
-        let mut collection = Collection::new("test_r_c_cvswle_28", None);
+        )?;
         collection.add_pipeline(&mut pipeline).await?;
-
-        // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswle_1", None, None, None);
-        collection
-            .upsert_documents(generate_dummy_documents(3), None)
-            .await?;
         let results = collection
-            .vector_search("Here is some query", &mut pipeline, None, None)
+            .vector_search(
+                json!({
+                    "query": {
+                        "fields": {
+                            "title": {
+                                "query": "Test document: 2",
+                                "parameters": {
+                                    "instruction": "Represent the Wikipedia document for retrieval"
+                                },
+                                "full_text_filter": "test"
+                            },
+                            "body": {
+                                "query": "Test document: 2"
+                            },
+                        },
+                        "filter": {
+                            "id": {
+                                "$gt": 3
+                            }
+                        }
+                    },
+                    "limit": 5
+                })
+                .into(),
+                &mut pipeline,
+            )
             .await?;
-        assert!(results.len() == 3);
+        let ids: Vec<u64> = results
+            .into_iter()
+            .map(|r| r["document"]["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids, vec![8, 4, 7, 6, 9]);
         collection.archive().await?;
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_vector_search_with_remote_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::new(
-            Some("text-embedding-ada-002".to_string()),
-            Some("openai".to_string()),
-            None,
-        );
-        let splitter = Splitter::default();
+        let collection_name = "test r_c_cvswre_7";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(10);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "test_r_p_cvswre_0";
         let mut pipeline = Pipeline::new(
-            "test_r_p_cvswre_1",
-            Some(model),
-            Some(splitter),
+            pipeline_name,
             Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "source": "openai",
+                            "model": "text-embedding-ada-002"
+                        },
+                    },
                 })
                 .into(),
             ),
-        );
-        let mut collection = Collection::new("test_r_c_cvswre_21", None);
+        )?;
         collection.add_pipeline(&mut pipeline).await?;
-
-        // Recreate the pipeline to replicate a more accurate example
-        let mut pipeline = Pipeline::new("test_r_p_cvswre_1", None, None, None);
-        collection
-            .upsert_documents(generate_dummy_documents(3), None)
-            .await?;
+        let mut pipeline = Pipeline::new(pipeline_name, None)?;
         let results = collection
-            .vector_search("Here is some query", &mut pipeline, None, Some(10))
+            .vector_search(
+                json!({
+                    "query": {
+                        "fields": {
+                            "title": {
+                                "full_text_filter": "test",
+                                "query": "Test document: 2"
+                            },
+                            "body": {
+                                "query": "Test document: 2"
+                            },
+                        },
+                        "filter": {
+                            "id": {
+                                "$gt": 3
+                            }
+                        }
+                    },
+                    "limit": 5
+                })
+                .into(),
+                &mut pipeline,
+            )
             .await?;
-        assert!(results.len() == 3);
+        let ids: Vec<u64> = results
+            .into_iter()
+            .map(|r| r["document"]["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids, vec![4, 5, 6, 7, 9]);
         collection.archive().await?;
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_vector_search_with_query_builder() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
+        let mut collection = Collection::new("test r_c_cvswqb_7", None)?;
         let mut pipeline = Pipeline::new(
-            "test_r_p_cvswqb_1",
-            Some(model),
-            Some(splitter),
+            "test_r_p_cvswqb_0",
             Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
-                })
-                .into(),
-            ),
-        );
-        let mut collection = Collection::new("test_r_c_cvswqb_4", None);
-        collection.add_pipeline(&mut pipeline).await?;
-
-        // Recreate the pipeline to replicate a more accurate example
-        let pipeline = Pipeline::new("test_r_p_cvswqb_1", None, None, None);
-        collection
-            .upsert_documents(generate_dummy_documents(4), None)
-            .await?;
-        let results = collection
-            .query()
-            .vector_recall("Here is some query", &pipeline, None)
-            .limit(3)
-            .fetch_all()
-            .await?;
-        assert!(results.len() == 3);
-        collection.archive().await?;
-        Ok(())
-    }
-
-    #[sqlx::test]
-    async fn can_vector_search_with_query_builder_and_pass_model_parameters_in_search(
-    ) -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let model = Model::new(
-            Some("hkunlp/instructor-base".to_string()),
-            Some("python".to_string()),
-            Some(json!({"instruction": "Represent the Wikipedia document for retrieval: "}).into()),
-        );
-        let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new(
-            "test_r_p_cvswqbapmpis_1",
-            Some(model),
-            Some(splitter),
-            Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
-                })
-                .into(),
-            ),
-        );
-        let mut collection = Collection::new("test_r_c_cvswqbapmpis_4", None);
-        collection.add_pipeline(&mut pipeline).await?;
-
-        // Recreate the pipeline to replicate a more accurate example
-        let pipeline = Pipeline::new("test_r_p_cvswqbapmpis_1", None, None, None);
-        collection
-            .upsert_documents(generate_dummy_documents(3), None)
-            .await?;
-        let results = collection
-            .query()
-            .vector_recall(
-                "Here is some query",
-                &pipeline,
-                Some(
-                    json!({
-                        "instruction": "Represent the Wikipedia document for retrieval: "
-                    })
-                    .into(),
-                ),
-            )
-            .limit(10)
-            .fetch_all()
-            .await?;
-        assert!(results.len() == 3);
-        collection.archive().await?;
-        Ok(())
-    }
-
-    #[sqlx::test]
-    async fn can_vector_search_with_query_builder_with_remote_embeddings() -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let model = Model::new(
-            Some("text-embedding-ada-002".to_string()),
-            Some("openai".to_string()),
-            None,
-        );
-        let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new(
-            "test_r_p_cvswqbwre_1",
-            Some(model),
-            Some(splitter),
-            Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
-                })
-                .into(),
-            ),
-        );
-        let mut collection = Collection::new("test_r_c_cvswqbwre_5", None);
-        collection.add_pipeline(&mut pipeline).await?;
-
-        // Recreate the pipeline to replicate a more accurate example
-        let pipeline = Pipeline::new("test_r_p_cvswqbwre_1", None, None, None);
-        collection
-            .upsert_documents(generate_dummy_documents(4), None)
-            .await?;
-        let results = collection
-            .query()
-            .vector_recall("Here is some query", &pipeline, None)
-            .limit(3)
-            .fetch_all()
-            .await?;
-        assert!(results.len() == 3);
-        collection.archive().await?;
-        Ok(())
-    }
-
-    #[sqlx::test]
-    async fn can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value(
-    ) -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
-        let mut pipeline =
-            Pipeline::new("test_r_p_cvswqbachesv_1", Some(model), Some(splitter), None);
-        let mut collection = Collection::new("test_r_c_cvswqbachesv_3", None);
-        collection.add_pipeline(&mut pipeline).await?;
-
-        // Recreate the pipeline to replicate a more accurate example
-        let pipeline = Pipeline::new("test_r_p_cvswqbachesv_1", None, None, None);
-        collection
-            .upsert_documents(generate_dummy_documents(3), None)
-            .await?;
-        let results = collection
-            .query()
-            .vector_recall(
-                "Here is some query",
-                &pipeline,
-                Some(
-                    json!({
-                        "hnsw": {
-                            "ef_search": 2
+                json!({
+                    "text": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
                         }
-                    })
-                    .into(),
-                ),
-            )
-            .fetch_all()
-            .await?;
-        assert!(results.len() == 3);
-        collection.archive().await?;
-        Ok(())
-    }
-
-    #[sqlx::test]
-    async fn can_vector_search_with_query_builder_and_custom_hnsw_ef_search_value_and_remote_embeddings(
-    ) -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let model = Model::new(
-            Some("text-embedding-ada-002".to_string()),
-            Some("openai".to_string()),
-            None,
-        );
-        let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new(
-            "test_r_p_cvswqbachesvare_2",
-            Some(model),
-            Some(splitter),
-            None,
-        );
-        let mut collection = Collection::new("test_r_c_cvswqbachesvare_7", None);
-        collection.add_pipeline(&mut pipeline).await?;
-
-        // Recreate the pipeline to replicate a more accurate example
-        let pipeline = Pipeline::new("test_r_p_cvswqbachesvare_2", None, None, None);
-        collection
-            .upsert_documents(generate_dummy_documents(3), None)
-            .await?;
-        let results = collection
-            .query()
-            .vector_recall(
-                "Here is some query",
-                &pipeline,
-                Some(
-                    json!({
-                        "hnsw": {
-                            "ef_search": 2
-                        }
-                    })
-                    .into(),
-                ),
-            )
-            .fetch_all()
-            .await?;
-        assert!(results.len() == 3);
-        collection.archive().await?;
-        Ok(())
-    }
-
-    #[sqlx::test]
-    async fn can_filter_vector_search() -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new(
-            "test_r_p_cfd_1",
-            Some(model),
-            Some(splitter),
-            Some(
-                serde_json::json!({
-                "full_text_search": {
-                    "active": true,
-                    "configuration": "english"
-                }
+                    },
                 })
                 .into(),
             ),
-        );
-        let mut collection = Collection::new("test_r_c_cfd_2", None);
-        collection.add_pipeline(&mut pipeline).await?;
+        )?;
         collection
-            .upsert_documents(generate_dummy_documents(5), None)
+            .upsert_documents(generate_dummy_documents(10), None)
             .await?;
-
-        let filters = vec![
-            (5, json!({}).into()),
-            (
-                3,
+        collection.add_pipeline(&mut pipeline).await?;
+        let results = collection
+            .query()
+            .vector_recall("test query", &pipeline, None)
+            .limit(3)
+            .filter(
                 json!({
                     "metadata": {
                         "id": {
-                            "$lt": 3
+                            "$gt": 3
                         }
-                    }
-                })
-                .into(),
-            ),
-            (
-                1,
-                json!({
-                    "full_text_search": {
+                    },
+                    "full_text": {
                         "configuration": "english",
-                        "text": "1",
+                        "text": "test"
                     }
                 })
                 .into(),
-            ),
-        ];
-
-        for (expected_result_count, filter) in filters {
-            let results = collection
-                .query()
-                .vector_recall("Here is some query", &pipeline, None)
-                .filter(filter)
-                .fetch_all()
-                .await?;
-            assert_eq!(results.len(), expected_result_count);
-        }
-
+            )
+            .fetch_all()
+            .await?;
+        let ids: Vec<u64> = results
+            .into_iter()
+            .map(|r| r.2["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids, vec![4, 5, 6]);
         collection.archive().await?;
         Ok(())
     }
@@ -786,30 +1248,11 @@ mod tests {
     // Working With Documents /////
     ///////////////////////////////
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_upsert_and_filter_get_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new(
-            "test_r_p_cuafgd_1",
-            Some(model),
-            Some(splitter),
-            Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
-                })
-                .into(),
-            ),
-        );
+        let mut collection = Collection::new("test r_c_cuafgd_1", None)?;
 
-        let mut collection = Collection::new("test_r_c_cuagd_2", None);
-        collection.add_pipeline(&mut pipeline).await?;
-
-        // Test basic upsert
         let documents = vec![
             serde_json::json!({"id": 1, "random_key": 10, "text": "hello world 1"}).into(),
             serde_json::json!({"id": 2, "random_key": 11, "text": "hello world 2"}).into(),
@@ -819,7 +1262,6 @@ mod tests {
         let document = &collection.get_documents(None).await?[0];
         assert_eq!(document["document"]["text"], "hello world 1");
 
-        // Test upsert of text and metadata
         let documents = vec![
             serde_json::json!({"id": 1, "text": "hello world new"}).into(),
             serde_json::json!({"id": 2, "random_key": 12}).into(),
@@ -831,58 +1273,38 @@ mod tests {
             .get_documents(Some(
                 serde_json::json!({
                     "filter": {
-                        "metadata": {
-                            "random_key": {
-                                "$eq": 12
-                            }
+                        "random_key": {
+                            "$eq": 12
                         }
                     }
                 })
                 .into(),
             ))
             .await?;
-        assert_eq!(documents[0]["document"]["text"], "hello world 2");
+        assert_eq!(documents[0]["document"]["random_key"], 12);
 
         let documents = collection
             .get_documents(Some(
                 serde_json::json!({
                     "filter": {
-                        "metadata": {
-                            "random_key": {
-                                "$gte": 13
-                            }
+                        "random_key": {
+                            "$gte": 13
                         }
                     }
                 })
                 .into(),
             ))
             .await?;
-        assert_eq!(documents[0]["document"]["text"], "hello world 3");
-
-        let documents = collection
-            .get_documents(Some(
-                serde_json::json!({
-                    "filter": {
-                        "full_text_search": {
-                            "configuration": "english",
-                            "text": "new"
-                        }
-                    }
-                })
-                .into(),
-            ))
-            .await?;
-        assert_eq!(documents[0]["document"]["text"], "hello world new");
-        assert_eq!(documents[0]["document"]["id"].as_i64().unwrap(), 1);
+        assert_eq!(documents[0]["document"]["random_key"], 13);
 
         collection.archive().await?;
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_paginate_get_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cpgd_2", None);
+        let mut collection = Collection::new("test_r_c_cpgd_2", None)?;
         collection
             .upsert_documents(generate_dummy_documents(10), None)
             .await?;
@@ -961,28 +1383,10 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_filter_and_paginate_get_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new(
-            "test_r_p_cfapgd_1",
-            Some(model),
-            Some(splitter),
-            Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
-                })
-                .into(),
-            ),
-        );
-
-        let mut collection = Collection::new("test_r_c_cfapgd_1", None);
-        collection.add_pipeline(&mut pipeline).await?;
+        let mut collection = Collection::new("test_r_c_cfapgd_1", None)?;
 
         collection
             .upsert_documents(generate_dummy_documents(10), None)
@@ -992,10 +1396,8 @@ mod tests {
             .get_documents(Some(
                 serde_json::json!({
                     "filter": {
-                        "metadata": {
-                            "id": {
-                                "$gte": 2
-                            }
+                        "id": {
+                            "$gte": 2
                         }
                     },
                     "limit": 2,
@@ -1016,10 +1418,8 @@ mod tests {
             .get_documents(Some(
                 serde_json::json!({
                     "filter": {
-                        "metadata": {
-                            "id": {
-                                "$lte": 5
-                            }
+                        "id": {
+                            "$lte": 5
                         }
                     },
                     "limit": 100,
@@ -1028,7 +1428,6 @@ mod tests {
                 .into(),
             ))
             .await?;
-        let last_row_id = documents.last().unwrap()["row_id"].as_i64().unwrap();
         assert_eq!(
             documents
                 .into_iter()
@@ -1037,55 +1436,14 @@ mod tests {
             vec![4, 5]
         );
 
-        let documents = collection
-            .get_documents(Some(
-                serde_json::json!({
-                    "filter": {
-                        "full_text_search": {
-                            "configuration": "english",
-                            "text": "document"
-                        }
-                    },
-                    "limit": 100,
-                    "last_row_id": last_row_id
-                })
-                .into(),
-            ))
-            .await?;
-        assert_eq!(
-            documents
-                .into_iter()
-                .map(|d| d["document"]["id"].as_i64().unwrap())
-                .collect::<Vec<_>>(),
-            vec![6, 7, 8, 9]
-        );
-
         collection.archive().await?;
         Ok(())
     }
 
-    #[sqlx::test]
+    #[tokio::test]
     async fn can_filter_and_delete_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let model = Model::default();
-        let splitter = Splitter::default();
-        let mut pipeline = Pipeline::new(
-            "test_r_p_cfadd_1",
-            Some(model),
-            Some(splitter),
-            Some(
-                serde_json::json!({
-                    "full_text_search": {
-                        "active": true,
-                        "configuration": "english"
-                    }
-                })
-                .into(),
-            ),
-        );
-
-        let mut collection = Collection::new("test_r_c_cfadd_1", None);
-        collection.add_pipeline(&mut pipeline).await?;
+        let mut collection = Collection::new("test_r_c_cfadd_1", None)?;
         collection
             .upsert_documents(generate_dummy_documents(10), None)
             .await?;
@@ -1093,10 +1451,8 @@ mod tests {
         collection
             .delete_documents(
                 serde_json::json!({
-                    "metadata": {
-                        "id": {
-                            "$lt": 2
-                        }
+                    "id": {
+                        "$lt": 2
                     }
                 })
                 .into(),
@@ -1111,50 +1467,27 @@ mod tests {
         collection
             .delete_documents(
                 serde_json::json!({
-                    "full_text_search": {
-                        "configuration": "english",
-                        "text": "2"
+                    "id": {
+                        "$gte": 6
                     }
                 })
                 .into(),
             )
             .await?;
         let documents = collection.get_documents(None).await?;
-        assert_eq!(documents.len(), 7);
+        assert_eq!(documents.len(), 4);
         assert!(documents
             .iter()
-            .all(|d| d["document"]["id"].as_i64().unwrap() > 2));
-
-        collection
-            .delete_documents(
-                serde_json::json!({
-                    "metadata": {
-                        "id": {
-                            "$gte": 6
-                        }
-                    },
-                    "full_text_search": {
-                        "configuration": "english",
-                        "text": "6"
-                    }
-                })
-                .into(),
-            )
-            .await?;
-        let documents = collection.get_documents(None).await?;
-        assert_eq!(documents.len(), 6);
-        assert!(documents
-            .iter()
-            .all(|d| d["document"]["id"].as_i64().unwrap() != 6));
+            .all(|d| d["document"]["id"].as_i64().unwrap() < 6));
 
         collection.archive().await?;
         Ok(())
     }
 
-    #[sqlx::test]
-    fn can_order_documents() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn can_order_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cod_1", None);
+        let mut collection = Collection::new("test_r_c_cod_1", None)?;
         collection
             .upsert_documents(
                 vec![
@@ -1231,10 +1564,75 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test]
-    fn can_merge_metadata() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn can_update_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut collection = Collection::new("test_r_c_cmm_4", None);
+        let mut collection = Collection::new("test_r_c_cud_5", None)?;
+        collection
+            .upsert_documents(
+                vec![
+                    json!({
+                        "id": 1,
+                        "text": "Test Document 1"
+                    })
+                    .into(),
+                    json!({
+                        "id": 2,
+                        "text": "Test Document 1"
+                    })
+                    .into(),
+                    json!({
+                        "id": 3,
+                        "text": "Test Document 1"
+                    })
+                    .into(),
+                ],
+                None,
+            )
+            .await?;
+        collection
+            .upsert_documents(
+                vec![
+                    json!({
+                        "id": 1,
+                        "number": 0,
+                    })
+                    .into(),
+                    json!({
+                        "id": 2,
+                        "number": 1,
+                    })
+                    .into(),
+                    json!({
+                        "id": 3,
+                        "number": 2,
+                    })
+                    .into(),
+                ],
+                None,
+            )
+            .await?;
+        let documents = collection
+            .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| d["document"]["number"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![0, 1, 2]
+        );
+        for document in documents {
+            assert!(document["document"]["text"].as_str().is_none());
+        }
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn can_merge_metadata() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test_r_c_cmm_5", None)?;
         collection
             .upsert_documents(
                 vec![
@@ -1276,6 +1674,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![(97, 12), (98, 11), (99, 10)]
         );
+
         collection
             .upsert_documents(
                 vec![
@@ -1300,18 +1699,14 @@ mod tests {
                 ],
                 Some(
                     json!({
-                        "metadata": {
-                            "merge": true
-                        }
+                        "merge": true
                     })
                     .into(),
                 ),
             )
             .await?;
         let documents = collection
-            .get_documents(Some(
-                json!({"order_by": {"number": {"number": "asc"}}}).into(),
-            ))
+            .get_documents(Some(json!({"order_by": {"number": "asc"}}).into()))
             .await?;
 
         assert_eq!(
@@ -1325,6 +1720,54 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![(0, 1, 10), (1, 2, 11), (2, 3, 12)]
         );
+        collection.archive().await?;
+        Ok(())
+    }
+
+    ///////////////////////////////
+    // ER Diagram /////////////////
+    ///////////////////////////////
+
+    #[tokio::test]
+    async fn generate_er_diagram() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut pipeline = Pipeline::new(
+            "test_p_ged_57",
+            Some(
+                json!({
+                        "title": {
+                            "semantic_search": {
+                                "model": "intfloat/e5-small"
+                            },
+                            "full_text_search": {
+                                "configuration": "english"
+                            }
+                        },
+                        "body": {
+                            "splitter": {
+                                "model": "recursive_character"
+                            },
+                            "semantic_search": {
+                                "model": "intfloat/e5-small"
+                            },
+                            "full_text_search": {
+                                "configuration": "english"
+                            }
+                        },
+                        "notes": {
+                           "semantic_search": {
+                                "model": "intfloat/e5-small"
+                            }
+                        }
+                })
+                .into(),
+            ),
+        )?;
+        let mut collection = Collection::new("test_r_c_ged_2", None)?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let diagram = collection.generate_er_diagram(&mut pipeline).await?;
+        assert!(!diagram.is_empty());
+        println!("{diagram}");
         collection.archive().await?;
         Ok(())
     }

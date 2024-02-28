@@ -8,6 +8,9 @@ use crate::get_or_initialize_pool;
 #[path = "pgml--0.9.1--0.9.2.rs"]
 mod pgml091_092;
 
+#[path = "pgml--0.9.2--1.0.0.rs"]
+mod pgml092_100;
+
 // There is probably a better way to write this type and the version_migrations variable in the dispatch_migrations function
 type MigrateFn =
     Box<dyn Fn(PgPool, Vec<i64>) -> BoxFuture<'static, anyhow::Result<String>> + Send + Sync>;
@@ -48,8 +51,10 @@ pub fn migrate() -> BoxFuture<'static, anyhow::Result<()>> {
 
 async fn dispatch_migrations(pool: PgPool, collections: Vec<(String, i64)>) -> anyhow::Result<()> {
     // The version of the SDK that the migration was written for, and the migration function
-    let version_migrations: [(&'static str, MigrateFn); 1] =
-        [("0.9.1", Box::new(|p, c| pgml091_092::migrate(p, c).boxed()))];
+    let version_migrations: [(&'static str, MigrateFn); 2] = [
+        ("0.9.1", Box::new(|p, c| pgml091_092::migrate(p, c).boxed())),
+        ("0.9.2", Box::new(|p, c| pgml092_100::migrate(p, c).boxed())),
+    ];
 
     let mut collections = collections.into_iter().into_group_map();
     for (version, migration) in version_migrations.into_iter() {
