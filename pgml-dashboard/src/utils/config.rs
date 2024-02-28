@@ -149,7 +149,7 @@ pub fn site_domain() -> String {
     String::from("https://postgresml.org")
 }
 
-fn env_is_set(name: &str) -> bool {
+pub fn env_is_set(name: &str) -> bool {
     var(name).is_ok()
 }
 

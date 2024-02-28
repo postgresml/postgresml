@@ -1239,12 +1239,24 @@ pub struct SiteSearch {
 impl SiteSearch {
     pub async fn new() -> anyhow::Result<Self> {
         let collection = pgml::Collection::new(
-            "hypercloud-site-search-c-2",
+            "hypercloud-site-search-c-5",
             Some(
                 std::env::var("SITE_SEARCH_DATABASE_URL")
                     .context("Please set the `SITE_SEARCH_DATABASE_URL` environment variable")?,
             ),
         )?;
+        let semantic_search = if crate::utils::config::env_is_set("DEV_MODE") {
+            serde_json::json!( {
+                "model": "intfloat/e5-small",
+            })
+        } else {
+            serde_json::json!( {
+                "model": "hkunlp/instructor-base",
+                "parameters": {
+                    "instruction": "Represent the Wikipedia document for retrieval: "
+                },
+            })
+        };
         let pipeline = pgml::Pipeline::new(
             "hypercloud-site-search-p-0",
             Some(
@@ -1253,13 +1265,8 @@ impl SiteSearch {
                         "full_text_search": {
                             "configuration": "english"
                         },
-                        "semantic_search": {
-                            "model": "hkunlp/instructor-base",
-                            "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval: "
-                            },
-                        }
-                    },
+                            "semantic_search": semantic_search.clone()
+                        },
                     "contents": {
                         "splitter": {
                             "model": "recursive_character"
@@ -1267,12 +1274,7 @@ impl SiteSearch {
                         "full_text_search": {
                             "configuration": "english"
                         },
-                        "semantic_search": {
-                            "model": "hkunlp/instructor-base",
-                            "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval: "
-                            },
-                        }
+                        "semantic_search": semantic_search
                     }
                 })
                 .into(),
@@ -1292,6 +1294,13 @@ impl SiteSearch {
     }
 
     pub async fn search(&self, query: &str, doc_type: Option<DocType>) -> anyhow::Result<Vec<SearchResult>> {
+        let parameters = if crate::utils::config::env_is_set("DEV_MODE") {
+            serde_json::json!({})
+        } else {
+            serde_json::json!({
+                "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+            })
+        };
         let mut search = serde_json::json!({
             "query": {
                 // "full_text_search": {
@@ -1306,16 +1315,12 @@ impl SiteSearch {
                 "semantic_search": {
                     "title": {
                         "query": query,
-                        "parameters": {
-                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
-                        },
+                        "parameters": parameters.clone(),
                         "boost": 10.0
                     },
                     "contents": {
                         "query": query,
-                        "parameters": {
-                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
-                        },
+                        "parameters": parameters.clone(),
                         "boost": 1.0
                     }
                 }
