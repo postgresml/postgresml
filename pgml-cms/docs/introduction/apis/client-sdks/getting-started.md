@@ -27,18 +27,17 @@ Once the SDK is installed, you an use the following example to get started.
 ```javascript
 const pgml = require("pgml");
 
-const main = async () => {
+const main = async () => { // Open the main function
   collection = pgml.newCollection("sample_collection");
 ```
 {% endtab %}
 
 {% tab title="Python" %}
 ```python
-from pgml import Collection, Model, Splitter, Pipeline
+from pgml import Collection, Pipeline
 import asyncio
 
-async def main():
-    # Initialize collection
+async def main(): # Start of the main function
     collection = Collection("sample_collection")
 ```
 {% endtab %}
@@ -56,20 +55,31 @@ Continuing with `main`
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-// Create a pipeline using the default model and splitter
-const model = pgml.newModel();
-const splitter = pgml.newSplitter();
-const pipeline = pgml.newPipeline("sample_pipeline", model, splitter);
+const pipeline = pgml.newPipeline("sample_pipeline", {
+  text: {
+    splitter: { model: "recursive_character" },
+    semantic_search: {
+      model: "intfloat/e5-small",
+    },
+  },
+});
 await collection.add_pipeline(pipeline);
 ```
 {% endtab %}
 
 {% tab title="Python" %}
 ```python
-# Create a pipeline using the default model and splitter
-model = Model()
-splitter = Splitter()
-pipeline = Pipeline("sample_pipeline", model, splitter)
+pipeline = Pipeline(
+    "test_pipeline",
+    {
+        "text": {
+            "splitter": { "model": "recursive_character" },
+            "semantic_search": {
+                "model": "intfloat/e5-small",
+            },
+        },
+    },
+)
 await collection.add_pipeline(pipeline)
 ```
 {% endtab %}
@@ -77,8 +87,7 @@ await collection.add_pipeline(pipeline)
 
 #### Explanation:
 
-* The code creates an instance of `Model` and `Splitter` using their default arguments.
-* Finally, the code constructs a pipeline called `"sample_pipeline"` and add it to the collection we Initialized above. This pipeline automatically generates chunks and embeddings for every upserted document.
+* The code constructs a pipeline called `"sample_pipeline"` and adds it to the collection we Initialized above. This pipeline automatically generates chunks and embeddings for the `text` key for every upserted document.
 
 ### Upsert documents
 
@@ -87,7 +96,6 @@ Continuing with `main`
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-// Create and upsert documents
 const documents = [
   {
     id: "Document One",
@@ -106,15 +114,15 @@ await collection.upsert_documents(documents);
 ```python
 documents = [
     {
-        id: "Document One",
-        text: "document one contents...",
+        "id": "Document One",
+        "text": "document one contents...",
     },
     {
-        id: "Document Two",
-        text: "document two contents...",
+        "id": "Document Two",
+        "text": "document two contents...",
     },
-];
-await collection.upsert_documents(documents);
+]
+await collection.upsert_documents(documents)
 ```
 {% endtab %}
 {% endtabs %}
@@ -131,45 +139,58 @@ Continuing with `main`
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-// Query
-const queryResults = await collection
-  .query()
-  .vector_recall("Some user query that will match document one first", pipeline)
-  .limit(2)
-  .fetch_all();
+const results = await collection.vector_search(
+  {
+    query: {
+      fields: {
+        text: {
+          query: "Something about a document...",
+        },
+      },
+    },
+    limit: 2,
+  },
+  pipeline,
+);
 
-// Convert the results to an array of objects
-const results = queryResults.map((result) => {
-  const [similarity, text, metadata] = result;
-  return {
-    similarity,
-    text,
-    metadata,
-  };
-});
 console.log(results);
 
 await collection.archive();
+
+} // Close the main function
 ```
 {% endtab %}
 
 {% tab title="Python" %}
 ```python
-# Query
-query = "Some user query that will match document one first"
-results = await collection.query().vector_recall(query, pipeline).limit(2).fetch_all()
+results = await collection.vector_search(
+    {
+        "query": {
+            "fields": {
+                "text": {
+                    "query": "Something about a document...",
+                },
+            },
+        },
+        "limit": 2,
+    },
+    pipeline,
+)
+
 print(results)
-# Archive collection
+
 await collection.archive()
+
+# End of the main function
 ```
 {% endtab %}
 {% endtabs %}
 
 **Explanation:**
 
-* The `query` method is called to perform a vector-based search on the collection. The query string is `Some user query that will match document one first`, and the top 2 results are requested.
-* The search results are converted to objects and printed.
-* Finally, the `archive` method is called to archive the collection and free up resources in the PostgresML database.
+* The `query` method is called to perform a vector-based search on the collection. The query string is `Something about a document...`, and the top 2 results are requested
+* The search results are  printed to the screen
+* Finally, the `archive` method is called to archive the collection
 
 Call `main` function.
 
@@ -205,24 +226,24 @@ node vector_search.js
 
 {% tab title="Python" %}
 ```bash
-python vector_search.py
+python3 vector_search.py
 ```
 {% endtab %}
 {% endtabs %}
 
-You should see the search results printed in the terminal. As you can see, our vector search engine did match document one first.
+You should see the search results printed in the terminal.
 
 ```bash
 [
-  {
-    similarity: 0.8506832955692104,
-    text: 'document one contents...',
-    metadata: { id: 'Document One' }
-  },
-  {
-    similarity: 0.8066114609244565,
-    text: 'document two contents...',
-    metadata: { id: 'Document Two' }
-  }
+    {
+        "chunk": "document one contents...",
+        "document": {"id": "Document One", "text": "document one contents..."},
+        "score": 0.9034339189529419,
+    },
+    {
+        "chunk": "document two contents...",
+        "document": {"id": "Document Two", "text": "document two contents..."},
+        "score": 0.8983734250068665,
+    },
 ]
 ```
