@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "dotenv": "^16.3.1",
-    "pgml": "^0.9.1"
+    "pgml": "^1.0.0"
   }
 }
