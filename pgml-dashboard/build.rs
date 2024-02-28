@@ -1,4 +1,5 @@
 use glob::glob;
+use std::collections::BTreeSet;
 use std::fs::read_to_string;
 use std::hash::Hasher;
 use std::path::PathBuf;
@@ -46,11 +47,10 @@ fn main() {
         panic!("failed to bundle main.js");
     }
 
-    let mut files_paths = glob("./../pgml-cms/**/*.md")
+    let files_paths = glob("./../pgml-cms/**/*.md")
         .expect("Failed to read pgml-cms directory")
         .map(|p| p.unwrap())
-        .collect::<Vec<PathBuf>>();
-    files_paths.sort();
+        .collect::<BTreeSet<PathBuf>>();
     let mut hasher = std::hash::DefaultHasher::new();
     for path in files_paths {
         let contents = read_to_string(path.clone()).expect("Error reading file");
