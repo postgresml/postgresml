@@ -1,6 +1,9 @@
 use crate::api::cms::DocType;
 use crate::api::cms::Document;
+use crate::api::cms::BLOG;
+use crate::components::cards::blog::ArticlePreview;
 use crate::components::notifications::marketing::FeatureBanner;
+use crate::components::sections::related_articles::RelatedArticles;
 use crate::guards::Cluster;
 use crate::Notification;
 use pgml_components::component;
@@ -13,6 +16,7 @@ pub struct Index {
     feature_banner: FeatureBanner,
     article_type: DocType,
     document_not_found: bool,
+    related_articles: RelatedArticles,
 }
 
 impl Index {
@@ -22,11 +26,45 @@ impl Index {
             doc: Document::new(),
             article_type: DocType::Blog,
             document_not_found: false,
+            related_articles: RelatedArticles::new(),
         }
     }
 
-    pub fn document(mut self, doc: Document) -> Index {
+    pub async fn document(mut self, doc: Document) -> Index {
+        // for now the related articles are hardcoded
+        let related_articles = RelatedArticles::new()
+            .add_article(
+                ArticlePreview::from_path(
+                    &BLOG
+                        .url_to_path("/blog/generating-llm-embeddings-with-open-source-models-in-postgresml")
+                        .display()
+                        .to_string(),
+                )
+                .await,
+            )
+            .add_article(
+                ArticlePreview::from_path(
+                    &BLOG
+                        .url_to_path("/blog/making-postgres-30-percent-faster-in-production")
+                        .display()
+                        .to_string(),
+                )
+                .await,
+            )
+            .add_article(
+                ArticlePreview::from_path(
+                    &BLOG
+                        .url_to_path(
+                            "/blog/introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes",
+                        )
+                        .display()
+                        .to_string(),
+                )
+                .await,
+            );
+
         self.doc = doc;
+        self.related_articles = related_articles;
         self
     }
 

@@ -9,7 +9,7 @@
 "#,
 if meta.author_image.is_some() {
   format!(r#"
-    <img src="blog/{}"class="rounded-circle me-1 author-image" style="height: 3rem;" alt="Author">
+    <img src="{}"class="rounded-circle me-1 author-image" style="height: 3rem;" alt="Author">
   "#, meta.author_image.clone().unwrap())} else {String::new() },
 
 if meta.author.is_some() {

@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 lazy_static! {
-    static ref BLOG: Collection = Collection::new(
+    pub static ref BLOG: Collection = Collection::new(
         "Blog",
         true,
         HashMap::from([
@@ -110,6 +110,7 @@ pub struct Document {
     pub doc_type: Option<DocType>,
     // url to thumbnail for social share
     pub thumbnail: Option<String>,
+    pub url: String,
 }
 
 // Gets document markdown
@@ -233,6 +234,34 @@ impl Document {
         let toc_links = crate::utils::markdown::get_toc(root).unwrap();
         let (author, date, author_image) = crate::utils::markdown::get_author(root);
 
+        // convert author image relative url path to absolute url path
+        let author_image = if author_image.is_some() {
+            let image = author_image.clone().unwrap();
+            let image = PathBuf::from(image);
+            let image = image.file_name().unwrap();
+            match &doc_type {
+                Some(DocType::Blog) => Some(BLOG.asset_url_root.join(image.to_str().unwrap()).display().to_string()),
+                Some(DocType::Docs) => Some(DOCS.asset_url_root.join(image.to_str().unwrap()).display().to_string()),
+                Some(DocType::Careers) => Some(
+                    CAREERS
+                        .asset_url_root
+                        .join(PathBuf::from(image.to_str().unwrap()))
+                        .display()
+                        .to_string(),
+                ),
+                _ => None,
+            }
+        } else {
+            None
+        };
+
+        let url = match doc_type {
+            Some(DocType::Blog) => BLOG.path_to_url(&path),
+            Some(DocType::Docs) => DOCS.path_to_url(&path),
+            Some(DocType::Careers) => CAREERS.path_to_url(&path),
+            _ => String::new(),
+        };
+
         let document = Document {
             path: path.to_owned(),
             description,
@@ -247,6 +276,7 @@ impl Document {
             contents,
             doc_type,
             thumbnail,
+            url,
         };
         Ok(document)
     }
@@ -490,6 +520,25 @@ impl Collection {
         self.root_dir.join(path_pb)
     }
 
+    // Convert a file path to a url
+    pub fn path_to_url(&self, path: &PathBuf) -> String {
+        let url = path.strip_prefix(config::cms_dir()).unwrap();
+        let url = format!("/{}", url.display().to_string());
+
+        let url = if url.ends_with("README.md") {
+            url.replace("README.md", "")
+        } else {
+            url
+        };
+
+        let url = if url.ends_with(".md") {
+            url.replace(".md", "")
+        } else {
+            url
+        };
+        url
+    }
+
     // get all urls in the collection and preserve order.
     pub fn get_all_urls(&self) -> Vec<String> {
         let mut urls: Vec<String> = Vec::new();
@@ -544,7 +593,9 @@ impl Collection {
 
                 let layout = Base::from_head(head, Some(cluster)).theme(Theme::Docs);
 
-                let mut article = crate::components::pages::article::Index::new(&cluster).document(doc);
+                let mut article = crate::components::pages::article::Index::new(&cluster)
+                    .document(doc)
+                    .await;
 
                 article = if self.name == "Blog" {
                     article.is_blog()
@@ -566,7 +617,7 @@ impl Collection {
                     article.is_careers()
                 };
 
-                Err(crate::responses::NotFound(layout.render(article).into()))
+                Err(crate::responses::NotFound(layout.render(article)))
             }
         }
     }

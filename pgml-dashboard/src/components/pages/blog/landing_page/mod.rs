@@ -41,7 +41,7 @@ impl LandingPage {
                 featured: doc.featured,
                 tags: doc.tags,
                 title: doc.title,
-                path: url,
+                path: doc.url,
             };
 
             self.index.push(meta)

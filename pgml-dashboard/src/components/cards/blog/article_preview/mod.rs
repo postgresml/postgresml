@@ -1,6 +1,8 @@
+use crate::api::cms::Document;
 use chrono::NaiveDate;
 use pgml_components::component;
 use sailfish::TemplateOnce;
+use std::path::PathBuf;
 
 #[derive(Clone)]
 pub struct DocMeta {
@@ -53,6 +55,23 @@ impl ArticlePreview {
     pub fn card_type(mut self, card_type: &str) -> Self {
         self.card_type = card_type.to_owned();
         self
+    }
+
+    pub async fn from_path(path: &str) -> ArticlePreview {
+        let doc = Document::from_path(&PathBuf::from(path)).await.unwrap();
+
+        let meta = DocMeta {
+            description: doc.description,
+            author: doc.author,
+            author_image: doc.author_image,
+            featured: false,
+            date: doc.date,
+            tags: doc.tags,
+            image: doc.image,
+            title: doc.title,
+            path: doc.url,
+        };
+        ArticlePreview::new(&meta)
     }
 }
 

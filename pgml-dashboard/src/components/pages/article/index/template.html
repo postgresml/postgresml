@@ -2,6 +2,7 @@
   use crate::components::navigation::Toc;
   use crate::api::cms::DocType;
   use crate::components::sections::common_resources::{CommonResources, Cards};
+  use crate::components::sections::EmploymentBenefits;
 
   let toc = doc.toc_links.clone();
 
@@ -106,6 +107,12 @@
       
     </div>
 
-    <%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %>
+    <% if !is_blog {%>
+    <div class="py-4 py-lg-5 my-3 my-lg-3"><%+ EmploymentBenefits::new() %></div>
+    <% } %>
+
+    <div class="py-4 py-lg-5 my-3 my-lg-3 mx-auto"><%+ related_articles %></div>
+
+    <div class="py-4 py-lg-5 my-3 my-lg-3"><%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %></div>
   </div>
 </div>

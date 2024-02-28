@@ -1,0 +1,23 @@
+<div data-controller="sections-employment-benefits">
+  <div class="d-flex flex-column gap-4">
+    <div class="d-flex flex-column gap-3 text-center">
+      <h2>Benefits</h2>
+      <p class="m-auto body-large-text text-white-200">We take care of our team and care about your well-being.</p>
+    </div>
+    <div class="container mt-3">
+      <div class="row gy-4 gx-4">
+        <% for perk in perks {%>
+        <div class="col-xxl-4 col-md-6 col-12">
+          <div class="card generic-card h-100">
+            <div class="card-body">
+              <span class="material-symbols-outlined card-img-top icon-<%- perk.color %> d-flex justify-content-center align-items-center"><%- perk.icon %></span>
+              <h6><%- perk.title%></h6>
+              <p class="text-white-300"><%- perk.info %></p>
+            </div>
+          </div>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
