@@ -1,6 +1,8 @@
 ---
 description: >-
-  Pre-process and pull data to train a model using any of 50 different ML algorithms.
+  The training function is at the heart of PostgresML. It's a powerful single
+  mechanism that can handle many different training tasks which are configurable
+  with the function parameters.
 ---
 
 # pgml.train()
@@ -33,7 +35,7 @@ pgml.train(
 | Parameter       | Example                                               | Description                                                                                                                                                                                                                                                                                  |
 | --------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `project_name`  | `'Search Results Ranker'`                             | An easily recognizable identifier to organize your work.                                                                                                                                                                                                                                     |
-| `task`          | `'regression'`                                        | The objective of the experiment: `regression`,  `classification` or `cluster`                                                                                                                                                                                                                |
+| `task`          | `'regression'`                                        | The objective of the experiment: `regression`, `classification` or `cluster`                                                                                                                                                                                                                 |
 | `relation_name` | `'public.search_logs'`                                | The Postgres table or view where the training data is stored or defined.                                                                                                                                                                                                                     |
 | `y_column_name` | `'clicked'`                                           | The name of the label (aka "target" or "unknown") column in the training table.                                                                                                                                                                                                              |
 | `algorithm`     | `'xgboost'`                                           | <p>The algorithm to train on the dataset, see the task specific pages for available algorithms:<br><a data-mention href="regression.md">regression.md</a></p><p><a data-mention href="classification.md">classification.md</a><br><a data-mention href="clustering.md">clustering.md</a></p> |
