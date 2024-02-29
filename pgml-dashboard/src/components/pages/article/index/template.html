@@ -33,7 +33,11 @@
       <div class="orange"></div>
     </div>
 
-    <div class="container position-relative px-xl-5 py-5">
+    <div class="container position-relative px-xl-5 pb-5">
+      <div class="pt-4 pb-5">
+        <%+ feature_banner %>
+      </div>
+
       <div class="d-flex flex-lg-row flex-column gap-xl-4">
         <div class="d-flex flex-column col-lg-7 col-12 align-items-md-start align-items-center"a>
 
@@ -91,11 +95,9 @@
         <div class="e6"></div>
       </div>
     </div>
-    <div class="pt-4 pb-5">
-      <%+ feature_banner %>
-    </div>
+
     <div class="row position-relative">
-      <article class="docs col-12 <% if is_blog {%>col-xxl-10<% } %> overflow-x-auto py-4 px-xl-5">
+      <article class="docs col-12 col-xxl-10 overflow-x-auto py-4 px-xl-5 mx-auto">
         <% if document_not_found {%>
         <div class="show">
           <h2>Oops, document not found!</h2>
