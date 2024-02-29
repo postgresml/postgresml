@@ -21,6 +21,9 @@ use std::fmt;
 use std::sync::Mutex;
 use url::Url;
 
+// Excluded paths in the pgml-cms directory
+const EXCLUDED_DOCUMENT_PATHS: [&str; 1] = ["blog/README.md"];
+
 pub struct MarkdownHeadings {
     header_map: Arc<Mutex<HashMap<String, usize>>>,
 }
@@ -1334,7 +1337,7 @@ impl SiteSearch {
         results["results"]
             .as_array()
             .context("Error getting results from search")?
-            .into_iter()
+            .iter()
             .map(|r| {
                 let SearchResultWithoutSnippet { title, contents, path } =
                     serde_json::from_value(r["document"].clone())?;
@@ -1358,6 +1361,14 @@ impl SiteSearch {
                 .map(|path| async move { Document::from_path(&path).await }),
         )
         .await?;
+        let documents: Vec<Document> = documents
+            .into_iter()
+            .filter(|f| {
+                !EXCLUDED_DOCUMENT_PATHS
+                    .iter()
+                    .any(|p| f.path == config::cms_dir().join(p))
+            })
+            .collect();
         let documents: Vec<pgml::types::Json> = documents
             .into_iter()
             .map(|d| {
