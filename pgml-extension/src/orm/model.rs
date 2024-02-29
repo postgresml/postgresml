@@ -954,6 +954,13 @@ impl Model {
                                             .unwrap()
                                             .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
                                     }
+                                    pgrx_pg_sys::NUMERICOID => {
+                                        let element: Result<Option<AnyNumeric>, TryFromDatumError> =
+                                            tuple.get_by_index(index);
+                                        element
+                                            .unwrap()
+                                            .map_or(snapshot::NULL_CATEGORY_KEY.to_string(), |k| k.to_string())
+                                    }
                                     _ => error!(
                                         "Unsupported type for categorical column: {:?}. oid: {:?}",
                                         column.name, attribute.atttypid
@@ -991,6 +998,11 @@ impl Model {
                                     pgrx_pg_sys::FLOAT8OID => {
                                         let element: Result<Option<f64>, TryFromDatumError> = tuple.get_by_index(index);
                                         features.push(element.unwrap().map_or(f32::NAN, |v| v as f32));
+                                    }
+                                    pgrx_pg_sys::NUMERICOID => {
+                                        let element: Result<Option<AnyNumeric>, TryFromDatumError> =
+                                            tuple.get_by_index(index);
+                                        features.push(element.unwrap().map_or(f32::NAN, |v| v.try_into().unwrap()));
                                     }
                                     // TODO handle NULL to NaN for arrays
                                     pgrx_pg_sys::BOOLARRAYOID => {
@@ -1033,6 +1045,13 @@ impl Model {
                                             tuple.get_by_index(index);
                                         for j in element.as_ref().unwrap().as_ref().unwrap() {
                                             features.push(*j as f32);
+                                        }
+                                    }
+                                    pgrx_pg_sys::NUMERICARRAYOID => {
+                                        let element: Result<Option<Vec<AnyNumeric>>, TryFromDatumError> =
+                                            tuple.get_by_index(index);
+                                        for j in element.as_ref().unwrap().as_ref().unwrap() {
+                                            features.push(j.clone().try_into().unwrap());
                                         }
                                     }
                                     _ => error!(

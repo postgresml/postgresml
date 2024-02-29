@@ -7,4 +7,34 @@ div[data-controller="accordian"] {
         overflow: hidden;
         transition: all 0.3s ease-in-out;
     }
+
+    .accordian-item {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        border-top: solid #{$gray-600} 1px;
+      }
+    
+    .accordian-item:last-child {
+        border-bottom: solid #{$gray-600} 1px;
+    }
+
+    .accordian-header h4 {
+        color: #{$gray-300};
+      }
+    
+    .accordian-header.selected h4 {
+        color: #{$gray-100};
+    }
+
+    .accordian-header .remove {
+        display: none;
+      }
+    
+    .accordian-header.selected .add {
+        display: none;
+    }
+
+    .accordian-header.selected .remove {
+        display: block;
+    }
 }

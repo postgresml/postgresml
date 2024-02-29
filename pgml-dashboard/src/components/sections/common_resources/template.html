@@ -1,0 +1,28 @@
+
+
+<div data-controller="sections-common-resources">
+  <div class="container">
+    <div class="row gy-4 gx-4">
+
+      <% for item in show {%>
+        <div class="col-12 col-xl-4 col-md-6">
+          <a href="<%- item.href %>">
+            <div class="feature-card rounded-4 h-100 position-relative overflow-hidden">
+              <div class="common-card-body">
+                <h4 class="d-none d-md-block mb-3"><%- item.title %></h4>
+                <h5 class="d-md-none mb-2"><%- item.title %></h5>
+                <div class="marketing-body text-white">
+                  <%- item.info %>
+                </div>
+                <% if item.image.is_some() {%>
+                <img src="<%- item.image.unwrap() %>" class="card-image" />
+                <% } %>
+              </div>
+            </div>
+          </a>
+        </div>
+      <% } %>
+      
+    </div>
+  </div>
+</div>

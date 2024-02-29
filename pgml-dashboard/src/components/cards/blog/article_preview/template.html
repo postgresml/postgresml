@@ -1,0 +1,111 @@
+<% let foot = format!(r#"
+<div class="d-flex w-100 mt-auto gap-2">
+  {}
+  <div class="d-flex justify-content-between flex-grow-1 align-items-center foot">
+    <div>{}</div>
+    <div class="text-small-body">{}</div>
+  </div>
+</div>  
+"#,
+if meta.author_image.is_some() {
+  format!(r#"
+    <img src="blog/{}"class="rounded-circle me-1 author-image" style="height: 3rem;" alt="Author">
+  "#, meta.author_image.clone().unwrap())} else {String::new() },
+
+if meta.author.is_some() {
+  format!(r#"
+    <span class="text-small-body">By </span>
+    <span class="fw-bold foot-name">{}</span>
+  "#, meta.author.clone().unwrap() )} else {String::new()},
+
+  if meta.date.is_some() {
+    meta.date.clone().unwrap().format("%m/%d/%Y").to_string()
+  } else {String::new()}
+); 
+%>
+
+<%
+  let default = format!(r#"
+  <a class="doc-card small-card d-flex" href="{}">
+    <div class="meta-layout type-default">
+      {}
+      <h4 style="color: inherit">{}</h4>
+      {}
+    </div>
+  </a>
+  "#,
+  meta.path, 
+  if meta.tags.len() > 0 { format!(r#"<div class="eyebrow-text">{}</div>"#, meta.tags[0].clone().to_uppercase())} else {String::new()},
+  meta.title.clone(),
+  foot
+  );
+%>
+
+<div data-controller="cards-blog-article-preview">
+  <% if card_type == String::from("featured") {%>
+  <a class="doc-card feature-card d-flex flex-column flex-xxl-row" href="<%- meta.path %>">
+    <div class="cover-image-container">
+      <img class="cover-image w-100 h-100" src="<%- meta.image.clone().unwrap_or_else(|| String::new())%>" alt="Article cover image">
+    </div>
+    <div class="type-default d-flex align-items-center" style="flex: 2">
+      <div class="meta-layout">
+        <% if meta.tags.len() > 0 {%><div class="eyebrow-text"><%- meta.tags[0].clone().to_uppercase() %></div><% } %>
+        <h2 style="color: inherit"><%- meta.title %></h2>
+        <% if meta.description.is_some() {%>
+        <div class="d-none d-xxl-block">
+          <%- meta.description.clone().unwrap() %>
+        </div>
+        <% } %>
+        <%- foot %>
+      </div>
+    </div>
+  </a>
+
+  <% } else if card_type == String::from("show_image") { %>
+  <a class="doc-card small-card d-xxl-flex d-none" style="background-image: url('<%- meta.image.clone().unwrap_or_else(|| String::new())%>')" href="<%- meta.path %>">
+    <div class="meta-layout type-show-image">
+      <% if meta.tags.len() > 0 {%><div class="eyebrow-text"><%- meta.tags[0].clone().to_uppercase() %></div><% }%>
+      <h4 style="color: inherit"><%- meta.title %></h4>
+      <%- foot %>
+    </div>
+  </a>
+  <div class="d-flex d-xxl-none">
+    <%- default %>
+  </div>
+
+  <% } else if card_type == String::from("big") { %>
+  <a class="doc-card big-card d-xxl-flex d-none" style="background-image: url('<%- meta.image.clone().unwrap_or_else(|| String::new())%>')" href="<%- meta.path %>">
+    <div class="type-show-image h-100 w-100 align-items-center">
+      <div class="meta-layout" style="height: fit-content">
+        <% if meta.tags.len() > 0 {%><div class="eyebrow-text"><%- meta.tags[0].clone().to_uppercase() %></div><% } %>
+        <h2 style="color: inherit"><%- meta.title %></h2>
+        <% if meta.description.is_some() {%>
+        <div class="description">
+          <%- meta.description.clone().unwrap() %>
+        </div>
+        <% } %>
+        <%- foot %>
+      </div>
+    </div>
+  </a>
+  <div class="d-flex d-xxl-none">
+    <%- default %>
+  </div>
+
+  <% } else if card_type == String::from("long") { %>
+  <a class="doc-card long-card d-xxl-flex d-none" href="<%- meta.path %>">
+    <img class="cover-image" src="<%- meta.image.clone().unwrap_or_else(|| String::new())%>" alt="Article cover image">
+    <div class="meta-layout meta-container">
+      <% if meta.tags.len() > 0 {%><div class="eyebrow-text"><%- meta.tags[0].clone().to_uppercase() %></div><% }%>
+      <h4 style="color: inherit"><%- meta.title.clone() %></h4>
+      <%- foot %>
+    </div>
+  </a>
+  <div class="d-flex d-xxl-none">
+    <%- default %>
+  </div>
+
+  <% } else { %>
+    <%- default %>
+  <% } %>
+</div>

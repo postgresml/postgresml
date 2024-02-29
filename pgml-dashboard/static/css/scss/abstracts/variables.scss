@@ -224,8 +224,14 @@ $nav-pills-border-radius: calc(#{$border-radius} / 2);
 $left-nav-w: 17rem;
 $left-nav-w-collapsed: 88px;
 
+// Docs Left Nav
+$docs-left-nav-w: 260px;
+
 // WebApp Content Container
 $webapp-content-max-width: 1224px;
+
+// Docs Content Container
+$docs-content-max-width: 1224px;
 
 //Grid
 $enable-cssgrid: true;

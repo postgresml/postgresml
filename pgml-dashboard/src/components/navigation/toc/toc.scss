@@ -1,0 +1,32 @@
+aside[data-controller="navigation-toc"] {
+  .toc, .guides {
+    --bs-border-color: #{$gray-500};
+    background: #{$gray-900};
+
+    .nav-link {
+        text-decoration: none;
+        --bs-nav-link-hover-color: #{$slate-tint-400};
+
+        &:hover {
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        &.purple, &:active, &.active {
+            color: #{$slate-tint-400};
+        }
+    }
+    @include media-breakpoint-down(xxl) {
+        border-top: 1px solid #{$gray-600};
+        border-bottom: 1px solid #{$gray-600};
+    }
+  }
+
+  .border-top {
+    border-color: #{$gray-600};
+  }
+
+  .border-left {
+    border-left: 1px solid #{$gray-600};
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE pgml.notebook_cells SET rendering = $1, execution_time = $2 WHERE id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Interval",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7bfa0515e05b1d522ba153a95df926cdebe86b0498a0bd2f6338c05c94dd969d"
+}

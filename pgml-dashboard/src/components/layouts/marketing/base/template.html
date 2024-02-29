@@ -1,0 +1,27 @@
+<% use crate::components::navigation::navbar::marketing::Marketing as MarketingNavbar; %>
+<!DOCTYPE html>
+<html lang="en-US">
+
+    <%+ head %>
+
+    <body data-bs-theme="dark" data-theme="<%- theme.to_string() %>">
+        <!-- No smooth scroll on initial page visit -->
+        <script>
+            window.scroll({
+                top: 0,
+                left: 0,
+                behavior: 'instant'
+            });
+        </script>
+        <main>
+            <%+ alert_banner %>
+
+            <%+ MarketingNavbar::new(user) %>
+
+            <%- content.unwrap_or_default() %>
+            <%- footer.unwrap_or_default() %>
+        </main>
+
+        <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+    </body>
+</html>

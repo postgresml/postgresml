@@ -4,10 +4,7 @@ use rust_bridge::javascript::{FromJsType, IntoJsResult};
 use std::cell::RefCell;
 use std::sync::Arc;
 
-use crate::{
-    pipeline::PipelineSyncData,
-    types::{DateTime, GeneralJsonAsyncIterator, GeneralJsonIterator, Json},
-};
+use crate::types::{DateTime, GeneralJsonAsyncIterator, GeneralJsonIterator, Json};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rust to JS //////////////////////////////////////////////////////////////////
@@ -60,16 +57,6 @@ impl IntoJsResult for Json {
             }
             serde_json::Value::Null => Ok(cx.null().upcast()),
         }
-    }
-}
-
-impl IntoJsResult for PipelineSyncData {
-    type Output = JsValue;
-    fn into_js_result<'a, 'b, 'c: 'b, C: Context<'c>>(
-        self,
-        cx: &mut C,
-    ) -> JsResult<'b, Self::Output> {
-        Json::from(self).into_js_result(cx)
     }
 }
 

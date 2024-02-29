@@ -1,9 +1,15 @@
 .navbar-marketing-site {
     @extend .navbar;
 
-    &.horizontal {
-        background: linear-gradient(180deg, rgba(0, 0, 0, 0.64) -55.68%, rgba(0, 0, 0, 0) 100%);
+    &.alt-color {
+        background: #{$gray-800};
+    }
 
+    &.horizontal &:not(.alt-color) {
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.64) -55.68%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    &.horizontal {
         @include media-breakpoint-up(xl) {
             height: $navbar-height;
             --bs-navbar-padding-y: 24px;

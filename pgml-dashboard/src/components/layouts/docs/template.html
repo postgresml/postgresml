@@ -1,0 +1,41 @@
+<% 
+  use crate::components::navigation::navbar::marketing::Marketing as MarketingNavbar;
+  use crate::components::navigation::left_nav::Docs as IndexNav;
+%>
+
+<!DOCTYPE html>
+<html lang="en-US">
+    <%+ head %>
+    <body data-bs-theme="dark" data-theme="docs">
+      <div class="border-bottom" data-controller="layouts-docs">
+        <%+ MarketingNavbar::new(user).style_alt() %>
+
+        <div class="d-flex w-100">
+          <%+ IndexNav::new(&index) %>
+  
+          <!-- override implied min-width from flex-box spec -->
+          <div class="page-container flex-grow-1" style="min-width: 0px"> 
+            <div class="d-flex flex-column">
+              <div class="w-100 h-100 z-n1 position-absolute overflow-hidden">
+                <div style="margin-left: -20vw; margin-top: -40vh;">
+                  <div class="glow-1"></div>
+                </div>
+              </div>
+
+              <div class="d-block d-xl-none">
+                <%+ IndexNav::new(&index).for_mobile() %>
+              </div>
+
+              <div>
+                <%- content.unwrap_or_else(|| String::new()) %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="position-relative">
+        <%- footer.unwrap_or_default() %>
+      </div>
+    </body>
+</html>

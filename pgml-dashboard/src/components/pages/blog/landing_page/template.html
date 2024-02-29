@@ -1,0 +1,52 @@
+<% 
+  use crate::components::Carousel;
+  use crate::components::cards::blog::ArticlePreview;
+  use crate::components::pages::blog::LandingPage;
+  use crate::components::sections::common_resources::{Cards, CommonResources};
+
+  let featured_cards = index
+    .clone()
+    .into_iter()
+    .filter(|x| x
+    .featured)
+    .map(|x| ArticlePreview::new(&x)
+    .featured()
+    .render_once()
+    .unwrap())
+    .collect::<Vec<String>>();
+%>
+
+<div data-controller="pages-blog-landing-page" class="overflow-hidden tuck-under-navbar">
+  <div class="container-fluid">
+    <div class="container">
+      
+      <div class="position-relative overflow-show glow-1" >
+        <div class="position-absolute red-1"></div>
+      </div>
+
+      <div class="pt-0 pb-2 pt-xxl-4 pb-xxl-5">
+        <%+ feature_banner %>
+      </div>
+      <div class="text-center d-flex flex-column gap-xxl-3 gap-1">
+        <h1>PostgresML <span class="text-gradient-blue">Blog</span></h1>
+        <p class="m-auto body-large-text" style="max-width: 55rem;">Technical tutorials, general updates and all things AI/ML.</p>
+      </div>
+
+      <div class="d-flex justify-content-center my-5">
+        <div class="w-100  my-1 pt-1 my-xxl-4 pt-xxl-5">
+          <%+ Carousel::new(featured_cards) %>
+        </div>
+      </div>
+
+      <div class="d-flex flex-wrap gap-3 justify-content-center">
+        <% for doc in LandingPage::pattern(index.clone(), is_search) {%>
+          <%- doc %>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %>
+    </div>
+  </div>
+</div>

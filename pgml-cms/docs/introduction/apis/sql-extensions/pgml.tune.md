@@ -2,7 +2,7 @@
 
 ## Fine Tuning
 
-Pre-trained models allow you to get up and running quickly, but you can likely improve performance on your dataset by fine tuning them. Normally, you'll bring your own data to the party, but for these examples we'll use datasets published on Hugging Face.&#x20;
+Pre-trained models allow you to get up and running quickly, but you can likely improve performance on your dataset by fine tuning them. Normally, you'll bring your own data to the party, but for these examples we'll use datasets published on Hugging Face.
 
 ### Translation Example
 

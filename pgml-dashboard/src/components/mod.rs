@@ -9,6 +9,13 @@ pub use accordian::Accordian;
 pub mod breadcrumbs;
 pub use breadcrumbs::Breadcrumbs;
 
+// src/components/cards
+pub mod cards;
+
+// src/components/carousel
+pub mod carousel;
+pub use carousel::Carousel;
+
 // src/components/chatbot
 pub mod chatbot;
 pub use chatbot::Chatbot;
@@ -63,6 +70,9 @@ pub mod navigation;
 // src/components/notifications
 pub mod notifications;
 
+// src/components/pages
+pub mod pages;
+
 // src/components/postgres_logo
 pub mod postgres_logo;
 pub use postgres_logo::PostgresLogo;
@@ -70,6 +80,9 @@ pub use postgres_logo::PostgresLogo;
 // src/components/profile_icon
 pub mod profile_icon;
 pub use profile_icon::ProfileIcon;
+
+// src/components/search
+pub mod search;
 
 // src/components/sections
 pub mod sections;

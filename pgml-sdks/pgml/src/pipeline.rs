@@ -1,25 +1,139 @@
 use anyhow::Context;
-use indicatif::MultiProgress;
-use rust_bridge::{alias, alias_manual, alias_methods};
-use sqlx::{Executor, PgConnection, PgPool};
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering::Relaxed;
-use tokio::join;
+use rust_bridge::{alias, alias_methods};
+use serde::Deserialize;
+use serde_json::json;
+use sqlx::{Executor, PgConnection, Pool, Postgres, Transaction};
+use std::collections::HashMap;
 use tracing::instrument;
 
+use crate::debug_sqlx_query;
 use crate::{
     collection::ProjectInfo,
-    get_or_initialize_pool,
     model::{Model, ModelRuntime},
     models, queries, query_builder,
     remote_embeddings::build_remote_embeddings,
     splitter::Splitter,
     types::{DateTime, Json, TryToNumeric},
-    utils,
 };
 
 #[cfg(feature = "python")]
-use crate::{model::ModelPython, splitter::SplitterPython, types::JsonPython};
+use crate::types::JsonPython;
+
+type ParsedSchema = HashMap<String, FieldAction>;
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ValidSplitterAction {
+    model: Option<String>,
+    parameters: Option<Json>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ValidEmbedAction {
+    model: String,
+    source: Option<String>,
+    parameters: Option<Json>,
+    hnsw: Option<Json>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct FullTextSearchAction {
+    configuration: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ValidFieldAction {
+    splitter: Option<ValidSplitterAction>,
+    semantic_search: Option<ValidEmbedAction>,
+    full_text_search: Option<FullTextSearchAction>,
+}
+
+#[allow(clippy::upper_case_acronyms)]
+#[derive(Debug, Clone)]
+pub struct HNSW {
+    m: u64,
+    ef_construction: u64,
+}
+
+impl Default for HNSW {
+    fn default() -> Self {
+        Self {
+            m: 16,
+            ef_construction: 64,
+        }
+    }
+}
+
+impl TryFrom<Json> for HNSW {
+    type Error = anyhow::Error;
+    fn try_from(value: Json) -> anyhow::Result<Self> {
+        let m = if !value["m"].is_null() {
+            value["m"]
+                .try_to_u64()
+                .context("hnsw.m must be an integer")?
+        } else {
+            16
+        };
+        let ef_construction = if !value["ef_construction"].is_null() {
+            value["ef_construction"]
+                .try_to_u64()
+                .context("hnsw.ef_construction must be an integer")?
+        } else {
+            64
+        };
+        Ok(Self { m, ef_construction })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SplitterAction {
+    pub model: Splitter,
+}
+
+#[derive(Debug, Clone)]
+pub struct SemanticSearchAction {
+    pub model: Model,
+    pub hnsw: HNSW,
+}
+
+#[derive(Debug, Clone)]
+pub struct FieldAction {
+    pub splitter: Option<SplitterAction>,
+    pub semantic_search: Option<SemanticSearchAction>,
+    pub full_text_search: Option<FullTextSearchAction>,
+}
+
+impl TryFrom<ValidFieldAction> for FieldAction {
+    type Error = anyhow::Error;
+    fn try_from(value: ValidFieldAction) -> Result<Self, Self::Error> {
+        let embed = value
+            .semantic_search
+            .map(|v| {
+                let model = Model::new(Some(v.model), v.source, v.parameters);
+                let hnsw = v
+                    .hnsw
+                    .map(HNSW::try_from)
+                    .unwrap_or_else(|| Ok(HNSW::default()))?;
+                anyhow::Ok(SemanticSearchAction { model, hnsw })
+            })
+            .transpose()?;
+        let splitter = value
+            .splitter
+            .map(|v| {
+                let splitter = Splitter::new(v.model, v.parameters);
+                anyhow::Ok(SplitterAction { model: splitter })
+            })
+            .transpose()?;
+        Ok(Self {
+            splitter,
+            semantic_search: embed,
+            full_text_search: value.full_text_search,
+        })
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct InvividualSyncStatus {
@@ -55,395 +169,525 @@ impl From<Json> for InvividualSyncStatus {
     }
 }
 
-#[derive(alias_manual, Debug, Clone)]
-pub struct PipelineSyncData {
-    pub chunks_status: InvividualSyncStatus,
-    pub embeddings_status: InvividualSyncStatus,
-    pub tsvectors_status: InvividualSyncStatus,
-}
-
-impl From<PipelineSyncData> for Json {
-    fn from(value: PipelineSyncData) -> Self {
-        serde_json::json!({
-            "chunks_status": *Json::from(value.chunks_status),
-            "embeddings_status": *Json::from(value.embeddings_status),
-            "tsvectors_status": *Json::from(value.tsvectors_status),
-        })
-        .into()
-    }
-}
-
-impl From<Json> for PipelineSyncData {
-    fn from(mut value: Json) -> Self {
-        Self {
-            chunks_status: Json::from(std::mem::take(&mut value["chunks_status"])).into(),
-            embeddings_status: Json::from(std::mem::take(&mut value["embeddings_status"])).into(),
-            tsvectors_status: Json::from(std::mem::take(&mut value["tsvectors_status"])).into(),
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct PipelineDatabaseData {
     pub id: i64,
     pub created_at: DateTime,
-    pub model_id: i64,
-    pub splitter_id: i64,
 }
 
-/// A pipeline that processes documents
 #[derive(alias, Debug, Clone)]
 pub struct Pipeline {
     pub name: String,
-    pub model: Option<Model>,
-    pub splitter: Option<Splitter>,
-    pub parameters: Option<Json>,
-    project_info: Option<ProjectInfo>,
-    pub(crate) database_data: Option<PipelineDatabaseData>,
+    pub schema: Option<Json>,
+    pub parsed_schema: Option<ParsedSchema>,
+    database_data: Option<PipelineDatabaseData>,
 }
 
-#[alias_methods(new, get_status, to_dict)]
+fn json_to_schema(schema: &Json) -> anyhow::Result<ParsedSchema> {
+    schema
+        .as_object()
+        .context("Schema object must be a JSON object")?
+        .iter()
+        .try_fold(ParsedSchema::new(), |mut acc, (key, value)| {
+            if acc.contains_key(key) {
+                Err(anyhow::anyhow!("Schema contains duplicate keys"))
+            } else {
+                // First lets deserialize it normally
+                let action: ValidFieldAction = serde_json::from_value(value.to_owned())?;
+                // Now lets actually build the models and splitters
+                acc.insert(key.to_owned(), action.try_into()?);
+                Ok(acc)
+            }
+        })
+}
+
+#[alias_methods(new)]
 impl Pipeline {
-    /// Creates a new [Pipeline]
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the pipeline
-    /// * `model` - The pipeline [Model]
-    /// * `splitter` - The pipeline [Splitter]
-    /// * `parameters` - The parameters to the pipeline. Defaults to None
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::{Pipeline, Model, Splitter};
-    /// let model = Model::new(None, None, None);
-    /// let splitter = Splitter::new(None, None);
-    /// let pipeline = Pipeline::new("my_splitter", Some(model), Some(splitter), None);
-    /// ```
-    pub fn new(
-        name: &str,
-        model: Option<Model>,
-        splitter: Option<Splitter>,
-        parameters: Option<Json>,
-    ) -> Self {
-        let parameters = Some(parameters.unwrap_or_default());
-        Self {
+    pub fn new(name: &str, schema: Option<Json>) -> anyhow::Result<Self> {
+        let parsed_schema = schema.as_ref().map(json_to_schema).transpose()?;
+        Ok(Self {
             name: name.to_string(),
-            model,
-            splitter,
-            parameters,
-            project_info: None,
+            schema,
+            parsed_schema,
             database_data: None,
-        }
-    }
-
-    /// Gets the status of the [Pipeline]
-    /// This includes the status of the chunks, embeddings, and tsvectors
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let mut pipeline = collection.get_pipeline("my_pipeline").await?;
-    ///     let status = pipeline.get_status().await?;
-    ///     Ok(())
-    /// }
-    /// ```
-    #[instrument(skip(self))]
-    pub async fn get_status(&mut self) -> anyhow::Result<PipelineSyncData> {
-        let pool = self.get_pool().await?;
-
-        self.verify_in_database(false).await?;
-        let embeddings_table_name = self.create_or_get_embeddings_table().await?;
-
-        let database_data = self
-            .database_data
-            .as_ref()
-            .context("Pipeline must be verified to get status")?;
-
-        let parameters = self
-            .parameters
-            .as_ref()
-            .context("Pipeline must be verified to get status")?;
-
-        let project_name = &self.project_info.as_ref().unwrap().name;
-
-        // TODO: Maybe combine all of these into one query so it is faster
-        let chunks_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
-            "SELECT (SELECT COUNT(DISTINCT document_id) FROM %s WHERE splitter_id = $1), COUNT(id) FROM %s",
-            format!("{}.chunks", project_name),
-            format!("{}.documents", project_name)
-        ))
-        .bind(database_data.splitter_id)
-        .fetch_one(&pool).await?;
-        let chunks_status = InvividualSyncStatus {
-            synced: chunks_status.0.unwrap_or(0),
-            not_synced: chunks_status.1.unwrap_or(0) - chunks_status.0.unwrap_or(0),
-            total: chunks_status.1.unwrap_or(0),
-        };
-
-        let embeddings_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
-            "SELECT (SELECT count(*) FROM %s), (SELECT count(*) FROM %s WHERE splitter_id = $1)",
-            embeddings_table_name,
-            format!("{}.chunks", project_name)
-        ))
-        .bind(database_data.splitter_id)
-        .fetch_one(&pool)
-        .await?;
-        let embeddings_status = InvividualSyncStatus {
-            synced: embeddings_status.0.unwrap_or(0),
-            not_synced: embeddings_status.1.unwrap_or(0) - embeddings_status.0.unwrap_or(0),
-            total: embeddings_status.1.unwrap_or(0),
-        };
-
-        let tsvectors_status = if parameters["full_text_search"]["active"]
-            == serde_json::Value::Bool(true)
-        {
-            sqlx::query_as(&query_builder!(
-                "SELECT (SELECT COUNT(*) FROM %s WHERE configuration = $1), (SELECT COUNT(*) FROM %s)",
-                format!("{}.documents_tsvectors", project_name),
-                format!("{}.documents", project_name)
-            ))
-            .bind(parameters["full_text_search"]["configuration"].as_str())
-            .fetch_one(&pool).await?
-        } else {
-            (Some(0), Some(0))
-        };
-        let tsvectors_status = InvividualSyncStatus {
-            synced: tsvectors_status.0.unwrap_or(0),
-            not_synced: tsvectors_status.1.unwrap_or(0) - tsvectors_status.0.unwrap_or(0),
-            total: tsvectors_status.1.unwrap_or(0),
-        };
-
-        Ok(PipelineSyncData {
-            chunks_status,
-            embeddings_status,
-            tsvectors_status,
         })
     }
 
+    /// Gets the status of the [Pipeline]
     #[instrument(skip(self))]
-    pub(crate) async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
+    pub async fn get_status(
+        &mut self,
+        project_info: &ProjectInfo,
+        pool: &Pool<Postgres>,
+    ) -> anyhow::Result<Json> {
+        let parsed_schema = self
+            .parsed_schema
+            .as_ref()
+            .context("Pipeline must have schema to get status")?;
+
+        let mut results = json!({});
+
+        let schema = format!("{}_{}", project_info.name, self.name);
+        let documents_table_name = format!("{}.documents", project_info.name);
+        for (key, value) in parsed_schema.iter() {
+            let chunks_table_name = format!("{schema}.{key}_chunks");
+
+            results[key] = json!({});
+
+            if value.splitter.is_some() {
+                let chunks_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
+                    "SELECT (SELECT COUNT(DISTINCT document_id) FROM %s), COUNT(id) FROM %s",
+                    chunks_table_name,
+                    documents_table_name
+                ))
+                .fetch_one(pool)
+                .await?;
+                results[key]["chunks"] = json!({
+                    "synced": chunks_status.0.unwrap_or(0),
+                    "not_synced": chunks_status.1.unwrap_or(0) - chunks_status.0.unwrap_or(0),
+                    "total": chunks_status.1.unwrap_or(0),
+                });
+            }
+
+            if value.semantic_search.is_some() {
+                let embeddings_table_name = format!("{schema}.{key}_embeddings");
+                let embeddings_status: (Option<i64>, Option<i64>) =
+                    sqlx::query_as(&query_builder!(
+                        "SELECT (SELECT count(*) FROM %s), (SELECT count(*) FROM %s)",
+                        embeddings_table_name,
+                        chunks_table_name
+                    ))
+                    .fetch_one(pool)
+                    .await?;
+                results[key]["embeddings"] = json!({
+                    "synced": embeddings_status.0.unwrap_or(0),
+                    "not_synced": embeddings_status.1.unwrap_or(0) - embeddings_status.0.unwrap_or(0),
+                    "total": embeddings_status.1.unwrap_or(0),
+                });
+            }
+
+            if value.full_text_search.is_some() {
+                let tsvectors_table_name = format!("{schema}.{key}_tsvectors");
+                let tsvectors_status: (Option<i64>, Option<i64>) = sqlx::query_as(&query_builder!(
+                    "SELECT (SELECT count(*) FROM %s), (SELECT count(*) FROM %s)",
+                    tsvectors_table_name,
+                    chunks_table_name
+                ))
+                .fetch_one(pool)
+                .await?;
+                results[key]["tsvectors"] = json!({
+                    "synced": tsvectors_status.0.unwrap_or(0),
+                    "not_synced": tsvectors_status.1.unwrap_or(0) - tsvectors_status.0.unwrap_or(0),
+                    "total": tsvectors_status.1.unwrap_or(0),
+                });
+            }
+        }
+        Ok(results.into())
+    }
+
+    #[instrument(skip(self))]
+    pub(crate) async fn verify_in_database(
+        &mut self,
+        project_info: &ProjectInfo,
+        throw_if_exists: bool,
+        pool: &Pool<Postgres>,
+    ) -> anyhow::Result<()> {
         if self.database_data.is_none() {
-            let pool = self.get_pool().await?;
-
-            let project_info = self
-                .project_info
-                .as_ref()
-                .expect("Cannot verify pipeline without project info");
-
             let pipeline: Option<models::Pipeline> = sqlx::query_as(&query_builder!(
                 "SELECT * FROM %s WHERE name = $1",
                 format!("{}.pipelines", project_info.name)
             ))
             .bind(&self.name)
-            .fetch_optional(&pool)
+            .fetch_optional(pool)
             .await?;
 
-            let pipeline = if let Some(p) = pipeline {
+            let pipeline = if let Some(pipeline) = pipeline {
                 if throw_if_exists {
-                    anyhow::bail!("Pipeline {} already exists", p.name);
+                    anyhow::bail!("Pipeline {} already exists. You do not need to add this pipeline to the collection as it has already been added.", pipeline.name);
                 }
-                let model: models::Model = sqlx::query_as(
-                    "SELECT id, created_at, runtime::TEXT, hyperparams FROM pgml.models WHERE id = $1",
-                )
-                .bind(p.model_id)
-                .fetch_one(&pool)
-                .await?;
-                let mut model: Model = model.into();
-                model.set_project_info(project_info.clone());
-                self.model = Some(model);
 
-                let splitter: models::Splitter =
-                    sqlx::query_as("SELECT * FROM pgml.splitters WHERE id = $1")
-                        .bind(p.splitter_id)
-                        .fetch_one(&pool)
-                        .await?;
-                let mut splitter: Splitter = splitter.into();
-                splitter.set_project_info(project_info.clone());
-                self.splitter = Some(splitter);
+                let mut parsed_schema = json_to_schema(&pipeline.schema)?;
 
-                p
-            } else {
-                let model = self
-                    .model
-                    .as_mut()
-                    .expect("Cannot save pipeline without model");
-                model.set_project_info(project_info.clone());
-                model.verify_in_database(false).await?;
-
-                let splitter = self
-                    .splitter
-                    .as_mut()
-                    .expect("Cannot save pipeline without splitter");
-                splitter.set_project_info(project_info.clone());
-                splitter.verify_in_database(false).await?;
-
-                sqlx::query_as(&query_builder!(
-                        "INSERT INTO %s (name, model_id, splitter_id, parameters) VALUES ($1, $2, $3, $4) RETURNING *",
-                        format!("{}.pipelines", project_info.name)
-                    ))
-                    .bind(&self.name)
-                    .bind(
-                        model
-                            .database_data
-                            .as_ref()
-                            .context("Cannot save pipeline without model")?
-                            .id,
-                    )
-                    .bind(
+                for (_key, value) in parsed_schema.iter_mut() {
+                    if let Some(splitter) = &mut value.splitter {
                         splitter
-                            .database_data
-                            .as_ref()
-                            .context("Cannot save pipeline without splitter")?
-                            .id,
-                    )
-                    .bind(&self.parameters)
-                    .fetch_one(&pool)
-                    .await?
-            };
+                            .model
+                            .verify_in_database(project_info, false, pool)
+                            .await?;
+                    }
+                    if let Some(embed) = &mut value.semantic_search {
+                        embed
+                            .model
+                            .verify_in_database(project_info, false, pool)
+                            .await?;
+                    }
+                }
+                self.schema = Some(pipeline.schema.clone());
+                self.parsed_schema = Some(parsed_schema);
 
+                pipeline
+            } else {
+                let schema = self
+                    .schema
+                    .as_ref()
+                    .context("Pipeline must have schema to store in database")?;
+                let mut parsed_schema = json_to_schema(schema)?;
+
+                for (_key, value) in parsed_schema.iter_mut() {
+                    if let Some(splitter) = &mut value.splitter {
+                        splitter
+                            .model
+                            .verify_in_database(project_info, false, pool)
+                            .await?;
+                    }
+                    if let Some(embed) = &mut value.semantic_search {
+                        embed
+                            .model
+                            .verify_in_database(project_info, false, pool)
+                            .await?;
+                    }
+                }
+                self.parsed_schema = Some(parsed_schema);
+
+                // Here we actually insert the pipeline into the collection.pipelines table
+                // and create the collection_pipeline schema and required tables
+                let mut transaction = pool.begin().await?;
+                let pipeline = sqlx::query_as(&query_builder!(
+                    "INSERT INTO %s (name, schema) VALUES ($1, $2) RETURNING *",
+                    format!("{}.pipelines", project_info.name)
+                ))
+                .bind(&self.name)
+                .bind(&self.schema)
+                .fetch_one(&mut *transaction)
+                .await?;
+                self.create_tables(project_info, &mut transaction).await?;
+                transaction.commit().await?;
+
+                pipeline
+            };
             self.database_data = Some(PipelineDatabaseData {
                 id: pipeline.id,
                 created_at: pipeline.created_at,
-                model_id: pipeline.model_id,
-                splitter_id: pipeline.splitter_id,
-            });
-            self.parameters = Some(pipeline.parameters);
+            })
         }
         Ok(())
     }
 
-    #[instrument(skip(self, mp))]
-    pub(crate) async fn execute(
+    #[instrument(skip(self))]
+    async fn create_tables(
         &mut self,
-        document_ids: &Option<Vec<i64>>,
-        mp: MultiProgress,
+        project_info: &ProjectInfo,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<()> {
-        // TODO: Chunk document_ids if there are too many
+        let collection_name = &project_info.name;
+        let documents_table_name = format!("{}.documents", collection_name);
 
-        // A couple notes on the following methods
-        // - Atomic bools are required to work nicely with pyo3 otherwise we would use cells
-        // - We use green threads because they are cheap, but we want to be super careful to not
-        // return an error before stopping the green thread. To meet that end, we map errors and
-        // return types often
-        let chunk_ids = self.sync_chunks(document_ids, &mp).await?;
-        self.sync_embeddings(chunk_ids, &mp).await?;
-        self.sync_tsvectors(document_ids, &mp).await?;
+        let schema = format!("{}_{}", collection_name, self.name);
+
+        transaction
+            .execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", schema).as_str())
+            .await?;
+
+        let parsed_schema = self
+            .parsed_schema
+            .as_ref()
+            .context("Pipeline must have schema to create_tables")?;
+
+        let searches_table_name = format!("{schema}.searches");
+        transaction
+            .execute(
+                query_builder!(
+                    queries::CREATE_PIPELINES_SEARCHES_TABLE,
+                    searches_table_name
+                )
+                .as_str(),
+            )
+            .await?;
+
+        let search_results_table_name = format!("{schema}.search_results");
+        transaction
+            .execute(
+                query_builder!(
+                    queries::CREATE_PIPELINES_SEARCH_RESULTS_TABLE,
+                    search_results_table_name,
+                    &searches_table_name,
+                    &documents_table_name
+                )
+                .as_str(),
+            )
+            .await?;
+        transaction
+            .execute(
+                query_builder!(
+                    queries::CREATE_INDEX,
+                    "",
+                    "search_results_search_id_rank_index",
+                    search_results_table_name,
+                    "search_id, rank"
+                )
+                .as_str(),
+            )
+            .await?;
+
+        let search_events_table_name = format!("{schema}.search_events");
+        transaction
+            .execute(
+                query_builder!(
+                    queries::CREATE_PIPELINES_SEARCH_EVENTS_TABLE,
+                    search_events_table_name,
+                    &search_results_table_name
+                )
+                .as_str(),
+            )
+            .await?;
+
+        for (key, value) in parsed_schema.iter() {
+            let chunks_table_name = format!("{}.{}_chunks", schema, key);
+            transaction
+                .execute(
+                    query_builder!(
+                        queries::CREATE_CHUNKS_TABLE,
+                        chunks_table_name,
+                        documents_table_name
+                    )
+                    .as_str(),
+                )
+                .await?;
+            let index_name = format!("{}_pipeline_chunk_document_id_index", key);
+            transaction
+                .execute(
+                    query_builder!(
+                        queries::CREATE_INDEX,
+                        "",
+                        index_name,
+                        chunks_table_name,
+                        "document_id"
+                    )
+                    .as_str(),
+                )
+                .await?;
+
+            if let Some(embed) = &value.semantic_search {
+                let embeddings_table_name = format!("{}.{}_embeddings", schema, key);
+                let embedding_length = match &embed.model.runtime {
+                    ModelRuntime::Python => {
+                        let embedding: (Vec<f32>,) = sqlx::query_as(
+                                    "SELECT embedding from pgml.embed(transformer => $1, text => 'Hello, World!', kwargs => $2) as embedding")
+                                    .bind(&embed.model.name)
+                                    .bind(&embed.model.parameters)
+                                    .fetch_one(&mut **transaction).await?;
+                        embedding.0.len() as i64
+                    }
+                    t => {
+                        let remote_embeddings = build_remote_embeddings(
+                            t.to_owned(),
+                            &embed.model.name,
+                            Some(&embed.model.parameters),
+                        )?;
+                        remote_embeddings.get_embedding_size().await?
+                    }
+                };
+
+                // Create the embeddings table
+                sqlx::query(&query_builder!(
+                    queries::CREATE_EMBEDDINGS_TABLE,
+                    &embeddings_table_name,
+                    chunks_table_name,
+                    embedding_length
+                ))
+                .execute(&mut **transaction)
+                .await?;
+                let index_name = format!("{}_pipeline_embedding_chunk_id_index", key);
+                transaction
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_INDEX,
+                            "",
+                            index_name,
+                            &embeddings_table_name,
+                            "chunk_id"
+                        )
+                        .as_str(),
+                    )
+                    .await?;
+                let index_with_parameters = format!(
+                    "WITH (m = {}, ef_construction = {})",
+                    embed.hnsw.m, embed.hnsw.ef_construction
+                );
+                let index_name = format!("{}_pipeline_embedding_hnsw_vector_index", key);
+                transaction
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_INDEX_USING_HNSW,
+                            "",
+                            index_name,
+                            &embeddings_table_name,
+                            "embedding vector_cosine_ops",
+                            index_with_parameters
+                        )
+                        .as_str(),
+                    )
+                    .await?;
+            }
+
+            // Create the tsvectors table
+            if value.full_text_search.is_some() {
+                let tsvectors_table_name = format!("{}.{}_tsvectors", schema, key);
+                transaction
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_CHUNKS_TSVECTORS_TABLE,
+                            tsvectors_table_name,
+                            chunks_table_name
+                        )
+                        .as_str(),
+                    )
+                    .await?;
+                let index_name = format!("{}_pipeline_tsvector_chunk_id_index", key);
+                transaction
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_INDEX,
+                            "",
+                            index_name,
+                            tsvectors_table_name,
+                            "chunk_id"
+                        )
+                        .as_str(),
+                    )
+                    .await?;
+                let index_name = format!("{}_pipeline_tsvector_index", key);
+                transaction
+                    .execute(
+                        query_builder!(
+                            queries::CREATE_INDEX_USING_GIN,
+                            "",
+                            index_name,
+                            tsvectors_table_name,
+                            "ts"
+                        )
+                        .as_str(),
+                    )
+                    .await?;
+            }
+        }
         Ok(())
     }
 
-    #[instrument(skip(self, mp))]
-    async fn sync_chunks(
+    #[instrument(skip(self))]
+    pub(crate) async fn sync_documents(
         &mut self,
-        document_ids: &Option<Vec<i64>>,
-        mp: &MultiProgress,
-    ) -> anyhow::Result<Option<Vec<i64>>> {
-        self.verify_in_database(false).await?;
-        let pool = self.get_pool().await?;
-
-        let database_data = self
-            .database_data
-            .as_mut()
-            .context("Pipeline must be verified to generate chunks")?;
-
-        let project_info = self
-            .project_info
+        document_ids: Vec<i64>,
+        project_info: &ProjectInfo,
+        transaction: &mut Transaction<'static, Postgres>,
+    ) -> anyhow::Result<()> {
+        // We are assuming we have manually verified the pipeline before doing this
+        let parsed_schema = self
+            .parsed_schema
             .as_ref()
-            .context("Pipeline must have project info to generate chunks")?;
+            .context("Pipeline must have schema to execute")?;
 
-        let progress_bar = mp
-            .add(utils::default_progress_spinner(1))
-            .with_prefix(self.name.clone())
-            .with_message("generating chunks");
-
-        // This part is a bit tricky
-        // We want to return the ids for all chunks we inserted OR would have inserted if they didn't already exist
-        // The query is structured in such a way to not insert any chunks that already exist so we
-        // can't rely on the data returned from the inset queries, we need to query the chunks table
-        // It is important we return the ids for chunks we would have inserted if they didn't already exist so we are robust to random crashes
-        let is_done = AtomicBool::new(false);
-        let work = async {
-            let chunk_ids: Result<Option<Vec<i64>>, _> = if document_ids.is_some() {
-                sqlx::query(&query_builder!(
-                    queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS,
-                    &format!("{}.chunks", project_info.name),
-                    &format!("{}.documents", project_info.name),
-                    &format!("{}.chunks", project_info.name)
-                ))
-                .bind(database_data.splitter_id)
-                .bind(document_ids)
-                .execute(&pool)
-                .await
-                .map_err(|e| {
-                    is_done.store(true, Relaxed);
-                    e
-                })?;
-                sqlx::query_scalar(&query_builder!(
-                    "SELECT id FROM %s WHERE document_id = ANY($1)",
-                    &format!("{}.chunks", project_info.name)
-                ))
-                .bind(document_ids)
-                .fetch_all(&pool)
-                .await
-                .map(Some)
-            } else {
-                sqlx::query(&query_builder!(
-                    queries::GENERATE_CHUNKS,
-                    &format!("{}.chunks", project_info.name),
-                    &format!("{}.documents", project_info.name),
-                    &format!("{}.chunks", project_info.name)
-                ))
-                .bind(database_data.splitter_id)
-                .execute(&pool)
-                .await
-                .map(|_t| None)
-            };
-            is_done.store(true, Relaxed);
-            chunk_ids
-        };
-        let progress_work = async {
-            while !is_done.load(Relaxed) {
-                progress_bar.inc(1);
-                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        for (key, value) in parsed_schema.iter() {
+            let chunk_ids = self
+                .sync_chunks_for_documents(
+                    key,
+                    value.splitter.as_ref().map(|v| &v.model),
+                    &document_ids,
+                    project_info,
+                    transaction,
+                )
+                .await?;
+            if !chunk_ids.is_empty() {
+                if let Some(embed) = &value.semantic_search {
+                    self.sync_embeddings_for_chunks(
+                        key,
+                        &embed.model,
+                        &chunk_ids,
+                        project_info,
+                        transaction,
+                    )
+                    .await?;
+                }
+                if let Some(full_text_search) = &value.full_text_search {
+                    self.sync_tsvectors_for_chunks(
+                        key,
+                        &full_text_search.configuration,
+                        &chunk_ids,
+                        project_info,
+                        transaction,
+                    )
+                    .await?;
+                }
             }
-        };
-        let (chunk_ids, _) = join!(work, progress_work);
-        progress_bar.set_message("done generating chunks");
-        progress_bar.finish();
-        Ok(chunk_ids?)
+        }
+        Ok(())
     }
 
-    #[instrument(skip(self, mp))]
-    async fn sync_embeddings(
-        &mut self,
-        chunk_ids: Option<Vec<i64>>,
-        mp: &MultiProgress,
+    #[instrument(skip(self))]
+    async fn sync_chunks_for_documents(
+        &self,
+        key: &str,
+        splitter: Option<&Splitter>,
+        document_ids: &Vec<i64>,
+        project_info: &ProjectInfo,
+        transaction: &mut Transaction<'static, Postgres>,
+    ) -> anyhow::Result<Vec<i64>> {
+        let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
+        let documents_table_name = format!("{}.documents", project_info.name);
+        let json_key_query = format!("document->>'{}'", key);
+
+        if let Some(splitter) = splitter {
+            let splitter_database_data = splitter
+                .database_data
+                .as_ref()
+                .context("Splitter must be verified to sync chunks")?;
+            let query = query_builder!(
+                queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS_WITH_SPLITTER,
+                &json_key_query,
+                documents_table_name,
+                &chunks_table_name,
+                &chunks_table_name,
+                &chunks_table_name
+            );
+            debug_sqlx_query!(
+                GENERATE_CHUNKS_FOR_DOCUMENT_IDS_WITH_SPLITTER,
+                query,
+                splitter_database_data.id,
+                document_ids
+            );
+            sqlx::query_scalar(&query)
+                .bind(splitter_database_data.id)
+                .bind(document_ids)
+                .fetch_all(&mut **transaction)
+                .await
+                .map_err(anyhow::Error::msg)
+        } else {
+            let query = query_builder!(
+                queries::GENERATE_CHUNKS_FOR_DOCUMENT_IDS,
+                &chunks_table_name,
+                &json_key_query,
+                &documents_table_name,
+                &chunks_table_name,
+                &json_key_query
+            );
+            debug_sqlx_query!(GENERATE_CHUNKS_FOR_DOCUMENT_IDS, query, document_ids);
+            sqlx::query_scalar(&query)
+                .bind(document_ids)
+                .fetch_all(&mut **transaction)
+                .await
+                .map_err(anyhow::Error::msg)
+        }
+    }
+
+    #[instrument(skip(self))]
+    async fn sync_embeddings_for_chunks(
+        &self,
+        key: &str,
+        model: &Model,
+        chunk_ids: &Vec<i64>,
+        project_info: &ProjectInfo,
+        transaction: &mut Transaction<'static, Postgres>,
     ) -> anyhow::Result<()> {
-        self.verify_in_database(false).await?;
-        let pool = self.get_pool().await?;
-
-        let embeddings_table_name = self.create_or_get_embeddings_table().await?;
-
-        let model = self
-            .model
-            .as_ref()
-            .context("Pipeline must be verified to generate embeddings")?;
-
-        let database_data = self
-            .database_data
-            .as_mut()
-            .context("Pipeline must be verified to generate embeddings")?;
-
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to generate embeddings")?;
-
         // Remove the stored name from the parameters
         let mut parameters = model.parameters.clone();
         parameters
@@ -451,370 +695,248 @@ impl Pipeline {
             .context("Model parameters must be an object")?
             .remove("name");
 
-        let progress_bar = mp
-            .add(utils::default_progress_spinner(1))
-            .with_prefix(self.name.clone())
-            .with_message("generating emmbeddings");
+        let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
+        let embeddings_table_name =
+            format!("{}_{}.{}_embeddings", project_info.name, self.name, key);
 
-        let is_done = AtomicBool::new(false);
-        // We need to be careful about how we handle errors here. We do not want to return an error
-        // from the async block before setting is_done to true. If we do, the progress bar will
-        // will load forever. We also want to make sure to propogate any errors we have
-        let work = async {
-            let res = match model.runtime {
-                ModelRuntime::Python => if chunk_ids.is_some() {
-                    sqlx::query(&query_builder!(
-                        queries::GENERATE_EMBEDDINGS_FOR_CHUNK_IDS,
-                        embeddings_table_name,
-                        &format!("{}.chunks", project_info.name),
-                        embeddings_table_name
-                    ))
+        match model.runtime {
+            ModelRuntime::Python => {
+                let query = query_builder!(
+                    queries::GENERATE_EMBEDDINGS_FOR_CHUNK_IDS,
+                    embeddings_table_name,
+                    chunks_table_name
+                );
+                debug_sqlx_query!(
+                    GENERATE_EMBEDDINGS_FOR_CHUNK_IDS,
+                    query,
+                    model.name,
+                    parameters.0,
+                    chunk_ids
+                );
+                sqlx::query(&query)
                     .bind(&model.name)
                     .bind(&parameters)
-                    .bind(database_data.splitter_id)
                     .bind(chunk_ids)
-                    .execute(&pool)
-                    .await
-                } else {
-                    sqlx::query(&query_builder!(
-                        queries::GENERATE_EMBEDDINGS,
-                        embeddings_table_name,
-                        &format!("{}.chunks", project_info.name),
-                        embeddings_table_name
-                    ))
+                    .execute(&mut **transaction)
+                    .await?;
+            }
+            r => {
+                let remote_embeddings = build_remote_embeddings(r, &model.name, Some(&parameters))?;
+                remote_embeddings
+                    .generate_embeddings(
+                        &embeddings_table_name,
+                        &chunks_table_name,
+                        Some(chunk_ids),
+                        transaction,
+                    )
+                    .await?;
+            }
+        }
+        Ok(())
+    }
+
+    #[instrument(skip(self))]
+    async fn sync_tsvectors_for_chunks(
+        &self,
+        key: &str,
+        configuration: &str,
+        chunk_ids: &Vec<i64>,
+        project_info: &ProjectInfo,
+        transaction: &mut Transaction<'static, Postgres>,
+    ) -> anyhow::Result<()> {
+        let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
+        let tsvectors_table_name = format!("{}_{}.{}_tsvectors", project_info.name, self.name, key);
+        let query = query_builder!(
+            queries::GENERATE_TSVECTORS_FOR_CHUNK_IDS,
+            tsvectors_table_name,
+            configuration,
+            chunks_table_name
+        );
+        debug_sqlx_query!(GENERATE_TSVECTORS_FOR_CHUNK_IDS, query, chunk_ids);
+        sqlx::query(&query)
+            .bind(chunk_ids)
+            .execute(&mut **transaction)
+            .await?;
+        Ok(())
+    }
+
+    #[instrument(skip(self))]
+    pub(crate) async fn resync(
+        &mut self,
+        project_info: &ProjectInfo,
+        connection: &mut PgConnection,
+    ) -> anyhow::Result<()> {
+        // We are assuming we have manually verified the pipeline before doing this
+        let parsed_schema = self
+            .parsed_schema
+            .as_ref()
+            .context("Pipeline must have schema to execute")?;
+        // Before doing any syncing, delete all old and potentially outdated documents
+        for (key, _value) in parsed_schema.iter() {
+            let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
+            connection
+                .execute(query_builder!("DELETE FROM %s CASCADE", chunks_table_name).as_str())
+                .await?;
+        }
+        for (key, value) in parsed_schema.iter() {
+            self.resync_chunks(
+                key,
+                value.splitter.as_ref().map(|v| &v.model),
+                project_info,
+                connection,
+            )
+            .await?;
+            if let Some(embed) = &value.semantic_search {
+                self.resync_embeddings(key, &embed.model, project_info, connection)
+                    .await?;
+            }
+            if let Some(full_text_search) = &value.full_text_search {
+                self.resync_tsvectors(
+                    key,
+                    &full_text_search.configuration,
+                    project_info,
+                    connection,
+                )
+                .await?;
+            }
+        }
+        Ok(())
+    }
+
+    #[instrument(skip(self))]
+    async fn resync_chunks(
+        &self,
+        key: &str,
+        splitter: Option<&Splitter>,
+        project_info: &ProjectInfo,
+        connection: &mut PgConnection,
+    ) -> anyhow::Result<()> {
+        let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
+        let documents_table_name = format!("{}.documents", project_info.name);
+        let json_key_query = format!("document->>'{}'", key);
+
+        if let Some(splitter) = splitter {
+            let splitter_database_data = splitter
+                .database_data
+                .as_ref()
+                .context("Splitter must be verified to sync chunks")?;
+            let query = query_builder!(
+                queries::GENERATE_CHUNKS_WITH_SPLITTER,
+                &json_key_query,
+                &documents_table_name,
+                &chunks_table_name,
+                &chunks_table_name
+            );
+            debug_sqlx_query!(
+                GENERATE_CHUNKS_WITH_SPLITTER,
+                query,
+                splitter_database_data.id
+            );
+            sqlx::query(&query)
+                .bind(splitter_database_data.id)
+                .execute(connection)
+                .await?;
+        } else {
+            let query = query_builder!(
+                queries::GENERATE_CHUNKS,
+                &chunks_table_name,
+                &json_key_query,
+                &documents_table_name
+            );
+            debug_sqlx_query!(GENERATE_CHUNKS, query);
+            sqlx::query(&query).execute(connection).await?;
+        }
+        Ok(())
+    }
+
+    #[instrument(skip(self))]
+    async fn resync_embeddings(
+        &self,
+        key: &str,
+        model: &Model,
+        project_info: &ProjectInfo,
+        connection: &mut PgConnection,
+    ) -> anyhow::Result<()> {
+        // Remove the stored name from the parameters
+        let mut parameters = model.parameters.clone();
+        parameters
+            .as_object_mut()
+            .context("Model parameters must be an object")?
+            .remove("name");
+
+        let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
+        let embeddings_table_name =
+            format!("{}_{}.{}_embeddings", project_info.name, self.name, key);
+
+        match model.runtime {
+            ModelRuntime::Python => {
+                let query = query_builder!(
+                    queries::GENERATE_EMBEDDINGS,
+                    embeddings_table_name,
+                    chunks_table_name
+                );
+                debug_sqlx_query!(GENERATE_EMBEDDINGS, query, model.name, parameters.0);
+                sqlx::query(&query)
                     .bind(&model.name)
                     .bind(&parameters)
-                    .bind(database_data.splitter_id)
-                    .execute(&pool)
-                    .await
-                }
-                .map_err(|e| anyhow::anyhow!(e))
-                .map(|_t| ()),
-                r => {
-                    let remote_embeddings = build_remote_embeddings(r, &model.name, &parameters)?;
-                    remote_embeddings
-                        .generate_embeddings(
-                            &embeddings_table_name,
-                            &format!("{}.chunks", project_info.name),
-                            database_data.splitter_id,
-                            chunk_ids,
-                            &pool,
-                        )
-                        .await
-                        .map(|_t| ())
-                }
-            };
-            is_done.store(true, Relaxed);
-            res
-        };
-        let progress_work = async {
-            while !is_done.load(Relaxed) {
-                progress_bar.inc(1);
-                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                    .execute(connection)
+                    .await?;
             }
-        };
-        let (res, _) = join!(work, progress_work);
-        progress_bar.set_message("done generating embeddings");
-        progress_bar.finish();
-        res
+            r => {
+                let remote_embeddings = build_remote_embeddings(r, &model.name, Some(&parameters))?;
+                remote_embeddings
+                    .generate_embeddings(
+                        &embeddings_table_name,
+                        &chunks_table_name,
+                        None,
+                        connection,
+                    )
+                    .await?;
+            }
+        }
+        Ok(())
     }
 
     #[instrument(skip(self))]
-    async fn sync_tsvectors(
-        &mut self,
-        document_ids: &Option<Vec<i64>>,
-        mp: &MultiProgress,
+    async fn resync_tsvectors(
+        &self,
+        key: &str,
+        configuration: &str,
+        project_info: &ProjectInfo,
+        connection: &mut PgConnection,
     ) -> anyhow::Result<()> {
-        self.verify_in_database(false).await?;
-        let pool = self.get_pool().await?;
+        let chunks_table_name = format!("{}_{}.{}_chunks", project_info.name, self.name, key);
+        let tsvectors_table_name = format!("{}_{}.{}_tsvectors", project_info.name, self.name, key);
 
-        let parameters = self
-            .parameters
-            .as_ref()
-            .context("Pipeline must be verified to generate tsvectors")?;
-
-        if parameters["full_text_search"]["active"] != serde_json::Value::Bool(true) {
-            return Ok(());
-        }
-
-        let project_info = self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to generate tsvectors")?;
-
-        let progress_bar = mp
-            .add(utils::default_progress_spinner(1))
-            .with_prefix(self.name.clone())
-            .with_message("generating tsvectors for full text search");
-
-        let configuration = parameters["full_text_search"]["configuration"]
-            .as_str()
-            .context("Full text search configuration must be a string")?;
-
-        let is_done = AtomicBool::new(false);
-        let work = async {
-            let res = if document_ids.is_some() {
-                sqlx::query(&query_builder!(
-                    queries::GENERATE_TSVECTORS_FOR_DOCUMENT_IDS,
-                    format!("{}.documents_tsvectors", project_info.name),
-                    configuration,
-                    configuration,
-                    format!("{}.documents", project_info.name)
-                ))
-                .bind(document_ids)
-                .execute(&pool)
-                .await
-            } else {
-                sqlx::query(&query_builder!(
-                    queries::GENERATE_TSVECTORS,
-                    format!("{}.documents_tsvectors", project_info.name),
-                    configuration,
-                    configuration,
-                    format!("{}.documents", project_info.name)
-                ))
-                .execute(&pool)
-                .await
-            };
-            is_done.store(true, Relaxed);
-            res.map(|_t| ()).map_err(|e| anyhow::anyhow!(e))
-        };
-        let progress_work = async {
-            while !is_done.load(Relaxed) {
-                progress_bar.inc(1);
-                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-            }
-        };
-        let (res, _) = join!(work, progress_work);
-        progress_bar.set_message("done generating tsvectors for full text search");
-        progress_bar.finish();
-        res
+        let query = query_builder!(
+            queries::GENERATE_TSVECTORS,
+            tsvectors_table_name,
+            configuration,
+            chunks_table_name
+        );
+        debug_sqlx_query!(GENERATE_TSVECTORS, query);
+        sqlx::query(&query).execute(connection).await?;
+        Ok(())
     }
 
     #[instrument(skip(self))]
-    pub(crate) async fn create_or_get_embeddings_table(&mut self) -> anyhow::Result<String> {
-        self.verify_in_database(false).await?;
-        let pool = self.get_pool().await?;
-
-        let collection_name = &self
-            .project_info
-            .as_ref()
-            .context("Pipeline must have project info to get the embeddings table name")?
-            .name;
-        let embeddings_table_name = format!("{}.{}_embeddings", collection_name, self.name);
-
-        // Notice that we actually check for existence of the table in the database instead of
-        // blindly creating it with `CREATE TABLE IF NOT EXISTS`. This is because we want to avoid
-        // generating embeddings just to get the length if we don't need to
-        let exists: bool = sqlx::query_scalar(
-                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2)"
-            )
-            .bind(&self
-                .project_info
-                .as_ref()
-                .context("Pipeline must have project info to get the embeddings table name")?.name)
-            .bind(format!("{}_embeddings", self.name)).fetch_one(&pool).await?;
-
-        if !exists {
-            let model = self
-                .model
-                .as_ref()
-                .context("Pipeline must be verified to create embeddings table")?;
-
-            // Remove the stored name from the model parameters
-            let mut model_parameters = model.parameters.clone();
-            model_parameters
-                .as_object_mut()
-                .context("Model parameters must be an object")?
-                .remove("name");
-
-            let embedding_length = match &model.runtime {
-                ModelRuntime::Python => {
-                    let embedding: (Vec<f32>,) = sqlx::query_as(
-                            "SELECT embedding from pgml.embed(transformer => $1, text => 'Hello, World!', kwargs => $2) as embedding")
-                            .bind(&model.name)
-                            .bind(model_parameters)
-                            .fetch_one(&pool).await?;
-                    embedding.0.len() as i64
-                }
-                t => {
-                    let remote_embeddings =
-                        build_remote_embeddings(t.to_owned(), &model.name, &model_parameters)?;
-                    remote_embeddings.get_embedding_size().await?
-                }
-            };
-
-            let mut transaction = pool.begin().await?;
-            sqlx::query(&query_builder!(
-                queries::CREATE_EMBEDDINGS_TABLE,
-                &embeddings_table_name,
-                &format!(
-                    "{}.chunks",
-                    self.project_info
-                        .as_ref()
-                        .context("Pipeline must have project info to create the embeddings table")?
-                        .name
-                ),
-                embedding_length
-            ))
-            .execute(&mut *transaction)
-            .await?;
-            let index_name = format!("{}_pipeline_created_at_index", self.name);
-            transaction
-                .execute(
-                    query_builder!(
-                        queries::CREATE_INDEX,
-                        "",
-                        index_name,
-                        &embeddings_table_name,
-                        "created_at"
-                    )
-                    .as_str(),
-                )
-                .await?;
-            let index_name = format!("{}_pipeline_chunk_id_index", self.name);
-            transaction
-                .execute(
-                    query_builder!(
-                        queries::CREATE_INDEX,
-                        "",
-                        index_name,
-                        &embeddings_table_name,
-                        "chunk_id"
-                    )
-                    .as_str(),
-                )
-                .await?;
-            // See: https://github.com/pgvector/pgvector
-            let (m, ef_construction) = match &self.parameters {
-                Some(p) => {
-                    let m = if !p["hnsw"]["m"].is_null() {
-                        p["hnsw"]["m"]
-                            .try_to_u64()
-                            .context("hnsw.m must be an integer")?
-                    } else {
-                        16
-                    };
-                    let ef_construction = if !p["hnsw"]["ef_construction"].is_null() {
-                        p["hnsw"]["ef_construction"]
-                            .try_to_u64()
-                            .context("hnsw.ef_construction must be an integer")?
-                    } else {
-                        64
-                    };
-                    (m, ef_construction)
-                }
-                None => (16, 64),
-            };
-            let index_with_parameters =
-                format!("WITH (m = {}, ef_construction = {})", m, ef_construction);
-            let index_name = format!("{}_pipeline_hnsw_vector_index", self.name);
-            transaction
-                .execute(
-                    query_builder!(
-                        queries::CREATE_INDEX_USING_HNSW,
-                        "",
-                        index_name,
-                        &embeddings_table_name,
-                        "embedding vector_cosine_ops",
-                        index_with_parameters
-                    )
-                    .as_str(),
-                )
-                .await?;
-            transaction.commit().await?;
-        }
-
-        Ok(embeddings_table_name)
+    pub(crate) async fn get_parsed_schema(
+        &mut self,
+        project_info: &ProjectInfo,
+        pool: &Pool<Postgres>,
+    ) -> anyhow::Result<ParsedSchema> {
+        self.verify_in_database(project_info, false, pool).await?;
+        Ok(self.parsed_schema.as_ref().unwrap().clone())
     }
 
-    #[instrument(skip(self))]
-    pub(crate) fn set_project_info(&mut self, project_info: ProjectInfo) {
-        if self.model.is_some() {
-            self.model
-                .as_mut()
-                .unwrap()
-                .set_project_info(project_info.clone());
-        }
-        if self.splitter.is_some() {
-            self.splitter
-                .as_mut()
-                .unwrap()
-                .set_project_info(project_info.clone());
-        }
-        self.project_info = Some(project_info);
-    }
-
-    /// Convert the [Pipeline] to [Json]
-    ///
-    /// # Example:
-    ///
-    /// ```
-    /// use pgml::Collection;
-    ///
-    /// async fn example() -> anyhow::Result<()> {
-    ///     let mut collection = Collection::new("my_collection", None);
-    ///     let mut pipeline = collection.get_pipeline("my_pipeline").await?;
-    ///     let pipeline_dict = pipeline.to_dict().await?;
-    ///     Ok(())
-    /// }
-    /// ```
-    #[instrument(skip(self))]
-    pub async fn to_dict(&mut self) -> anyhow::Result<Json> {
-        self.verify_in_database(false).await?;
-
-        let status = self.get_status().await?;
-
-        let model_dict = self
-            .model
-            .as_mut()
-            .context("Pipeline must be verified to call to_dict")?
-            .to_dict()
-            .await?;
-
-        let splitter_dict = self
-            .splitter
-            .as_mut()
-            .context("Pipeline must be verified to call to_dict")?
-            .to_dict()
-            .await?;
-
-        let database_data = self
-            .database_data
-            .as_ref()
-            .context("Pipeline must be verified to call to_dict")?;
-
-        let parameters = self
-            .parameters
-            .as_ref()
-            .context("Pipeline must be verified to call to_dict")?;
-
-        Ok(serde_json::json!({
-            "id": database_data.id,
-            "name": self.name,
-            "model": *model_dict,
-            "splitter": *splitter_dict,
-            "parameters": *parameters,
-            "status": *Json::from(status),
-        })
-        .into())
-    }
-
-    async fn get_pool(&self) -> anyhow::Result<PgPool> {
-        let database_url = &self
-            .project_info
-            .as_ref()
-            .context("Project info required to call method pipeline.get_pool()")?
-            .database_url;
-        get_or_initialize_pool(database_url).await
-    }
-
+    #[instrument]
     pub(crate) async fn create_pipelines_table(
         project_info: &ProjectInfo,
         conn: &mut PgConnection,
     ) -> anyhow::Result<()> {
         let pipelines_table_name = format!("{}.pipelines", project_info.name);
         sqlx::query(&query_builder!(
-            queries::CREATE_PIPELINES_TABLE,
+            queries::PIPELINES_TABLE,
             pipelines_table_name
         ))
         .execute(&mut *conn)
@@ -834,20 +956,17 @@ impl Pipeline {
     }
 }
 
-impl From<models::PipelineWithModelAndSplitter> for Pipeline {
-    fn from(x: models::PipelineWithModelAndSplitter) -> Self {
-        Self {
-            model: Some(x.clone().into()),
-            splitter: Some(x.clone().into()),
-            name: x.pipeline_name,
-            project_info: None,
-            database_data: Some(PipelineDatabaseData {
-                id: x.pipeline_id,
-                created_at: x.pipeline_created_at,
-                model_id: x.model_id,
-                splitter_id: x.splitter_id,
-            }),
-            parameters: Some(x.pipeline_parameters),
-        }
+impl TryFrom<models::Pipeline> for Pipeline {
+    type Error = anyhow::Error;
+    fn try_from(value: models::Pipeline) -> anyhow::Result<Self> {
+        let parsed_schema = json_to_schema(&value.schema).unwrap();
+        // NOTE: We do not set the database data here even though we have it
+        // self.verify_in_database() also verifies all models in the schema so we don't want to set it here
+        Ok(Self {
+            name: value.name,
+            schema: Some(value.schema),
+            parsed_schema: Some(parsed_schema),
+            database_data: None,
+        })
     }
 }

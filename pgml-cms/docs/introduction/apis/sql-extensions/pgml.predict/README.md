@@ -51,7 +51,7 @@ LIMIT 25;
 
 ### Classification Example
 
-If you've already been through the [pgml.train](../pgml.train/ "mention") examples, you can see the predictive results of those models:
+If you've already been through the [pgml.train](../pgml.train "mention") examples, you can see the predictive results of those models:
 
 ```sql
 SELECT

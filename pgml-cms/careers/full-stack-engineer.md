@@ -1,3 +1,8 @@
+---
+description: >-
+  We’re looking for experienced Full Stack Engineers (Staff+) to build infrastructure as a service with a web app implemented in Rust.
+tags: [engineering]
+---
 # Full Stack Engineer
 
 PostgresML provides microsecond inference with the world's most capable feature store. It allows you to easily train and deploy online models using only SQL. We're looking for a experienced Full Stack Engineers (Staff+) to help shape the core product, inside and out. This is an IC role, but will be critical in building the future team as well as the core product, while leading efforts toward more efficient and effective Machine Learning workflows for our customers.

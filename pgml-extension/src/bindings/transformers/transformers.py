@@ -41,7 +41,9 @@ from transformers import (
     PegasusTokenizer,
     TrainingArguments,
     Trainer,
-    GPTQConfig
+    GPTQConfig,
+    PegasusForConditionalGeneration,
+    PegasusTokenizer,
 )
 import threading
 
@@ -254,6 +256,8 @@ class StandardPipeline(object):
         if "use_auth_token" in kwargs:
             kwargs["token"] = kwargs.pop("use_auth_token")
 
+        self.model_name = model_name
+
         if (
             "task" in kwargs
             and model_name is not None
@@ -278,29 +282,55 @@ class StandardPipeline(object):
                     model_name, **kwargs
                 )
             elif self.task == "summarization" or self.task == "translation":
-                self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **kwargs)
+                if model_name == "google/pegasus-xsum":
+                    # HF auto model doesn't detect GPUs
+                    self.model = PegasusForConditionalGeneration.from_pretrained(
+                        model_name
+                    )
+                else:
+                    self.model = AutoModelForSeq2SeqLM.from_pretrained(
+                        model_name, **kwargs
+                    )
             elif self.task == "text-generation" or self.task == "conversational":
                 # See: https://huggingface.co/docs/transformers/main/quantization
                 if "quantization_config" in kwargs:
                     quantization_config = kwargs.pop("quantization_config")
                     quantization_config = GPTQConfig(**quantization_config)
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=quantization_config, **kwargs)
+                    self.model = AutoModelForCausalLM.from_pretrained(
+                        model_name, quantization_config=quantization_config, **kwargs
+                    )
                 else:
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
+                    self.model = AutoModelForCausalLM.from_pretrained(
+                        model_name, **kwargs
+                    )
             else:
                 raise PgMLException(f"Unhandled task: {self.task}")
 
+            if model_name == "google/pegasus-xsum":
+                kwargs.pop("token", None)
+
             if "token" in kwargs:
                 self.tokenizer = AutoTokenizer.from_pretrained(
-                    model_name, use_auth_token=kwargs["token"]
+                    model_name, token=kwargs["token"]
                 )
             else:
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                if model_name == "google/pegasus-xsum":
+                    self.tokenizer = PegasusTokenizer.from_pretrained(model_name)
+                else:
+                    self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+            pipe_kwargs = {
+                "model": self.model,
+                "tokenizer": self.tokenizer,
+            }
+
+            # https://huggingface.co/docs/transformers/en/model_doc/pegasus
+            if model_name == "google/pegasus-xsum":
+                pipe_kwargs["device"] = kwargs.get("device", "cpu")
 
             self.pipe = transformers.pipeline(
                 self.task,
-                model=self.model,
-                tokenizer=self.tokenizer,
+                **pipe_kwargs,
             )
         else:
             self.pipe = transformers.pipeline(**kwargs)
@@ -320,7 +350,7 @@ class StandardPipeline(object):
                 self.tokenizer,
                 timeout=timeout,
                 skip_prompt=True,
-                skip_special_tokens=True
+                skip_special_tokens=True,
             )
             if "chat_template" in kwargs:
                 input = self.tokenizer.apply_chat_template(
@@ -343,9 +373,7 @@ class StandardPipeline(object):
             )
         else:
             streamer = TextIteratorStreamer(
-                self.tokenizer,
-                timeout=timeout,
-                skip_special_tokens=True
+                self.tokenizer, timeout=timeout, skip_special_tokens=True
             )
             input = self.tokenizer(input, return_tensors="pt", padding=True).to(
                 self.model.device
@@ -494,7 +522,6 @@ def embed(transformer, inputs, kwargs):
     model = __cache_sentence_transformer_by_name[transformer]
 
     return embed_using(model, transformer, inputs, kwargs)
-
 
 
 def clear_gpu_cache(memory_usage: None):

@@ -265,8 +265,8 @@ pub async fn notebook_reorder(
 
     // Super bad n+1, but it's ok for now?
     for (idx, cell_id) in cells.cells.iter().enumerate() {
-        let cell = models::Cell::get_by_id(&mut transaction, *cell_id).await?;
-        cell.reorder(&mut transaction, idx as i32 + 1).await?;
+        let cell = models::Cell::get_by_id(&mut *transaction, *cell_id).await?;
+        cell.reorder(&mut *transaction, idx as i32 + 1).await?;
     }
 
     transaction.commit().await?;

@@ -83,10 +83,6 @@
 }
 
 .toc-container {
-    @extend .z-1; 
-
-    position: sticky; 
-    top: $navbar-height;
     height: 2.5rem;
     overflow: visible;
 
@@ -114,7 +110,7 @@
 
         .collapse {
             height: 100%;
-            max-height: calc(80vh - 2.5rem);
+            max-height: calc(80vh - 7.5rem);
         }
     }
 }
@@ -137,6 +133,11 @@
     margin-top: calc($navbar-height + 1px );
 }
 
+// Make position sticky items stick under the sticky top navbar.
+.stick-under-topnav {
+    top: $navbar-height;
+}
+
 .web-app-left-nav-sized-container {
     padding: 0px;
     margin: 0px;
@@ -154,4 +155,10 @@
     @include media-breakpoint-up(md) {
         margin: 0px auto;
     }
+  }
+
+  .docs-content-max-width-container {
+    max-width: $docs-content-max-width;
+
+    margin: 0px auto;
   }

@@ -1,17 +1,17 @@
-use anyhow::Context;
 use rust_bridge::{alias, alias_methods};
-use sqlx::postgres::{PgConnection, PgPool};
+use sqlx::{postgres::PgConnection, Pool, Postgres};
 use tracing::instrument;
 
 use crate::{
     collection::ProjectInfo,
-    get_or_initialize_pool, models, queries,
+    models, queries,
     types::{DateTime, Json},
 };
 
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub(crate) struct SplitterDatabaseData {
     pub id: i64,
@@ -23,7 +23,6 @@ pub(crate) struct SplitterDatabaseData {
 pub struct Splitter {
     pub name: String,
     pub parameters: Json,
-    project_info: Option<ProjectInfo>,
     pub(crate) database_data: Option<SplitterDatabaseData>,
 }
 
@@ -54,28 +53,25 @@ impl Splitter {
         Self {
             name,
             parameters,
-            project_info: None,
             database_data: None,
         }
     }
 
     #[instrument(skip(self))]
-    pub(crate) async fn verify_in_database(&mut self, throw_if_exists: bool) -> anyhow::Result<()> {
+    pub(crate) async fn verify_in_database(
+        &mut self,
+        project_info: &ProjectInfo,
+        throw_if_exists: bool,
+        pool: &Pool<Postgres>,
+    ) -> anyhow::Result<()> {
         if self.database_data.is_none() {
-            let pool = self.get_pool().await?;
-
-            let project_info = self
-                .project_info
-                .as_ref()
-                .expect("Cannot verify splitter without project info");
-
             let splitter: Option<models::Splitter> = sqlx::query_as(
                     "SELECT * FROM pgml.splitters WHERE project_id = $1 AND name = $2 and parameters = $3",
                 )
                 .bind(project_info.id)
                 .bind(&self.name)
                 .bind(&self.parameters)
-                .fetch_optional(&pool)
+                .fetch_optional(pool)
                 .await?;
 
             let splitter = if let Some(s) = splitter {
@@ -88,7 +84,7 @@ impl Splitter {
                     .bind(project_info.id)
                     .bind(&self.name)
                     .bind(&self.parameters)
-                    .fetch_one(&pool)
+                    .fetch_one(pool)
                     .await?
             };
 
@@ -106,51 +102,6 @@ impl Splitter {
             .await?;
         Ok(())
     }
-
-    pub(crate) fn set_project_info(&mut self, project_info: ProjectInfo) {
-        self.project_info = Some(project_info)
-    }
-
-    #[instrument(skip(self))]
-    pub(crate) async fn to_dict(&mut self) -> anyhow::Result<Json> {
-        self.verify_in_database(false).await?;
-
-        let database_data = self
-            .database_data
-            .as_ref()
-            .context("Splitter must be verified to call to_dict")?;
-
-        Ok(serde_json::json!({
-            "id": database_data.id,
-            "created_at": database_data.created_at,
-            "name": self.name,
-            "parameters": *self.parameters,
-        })
-        .into())
-    }
-
-    async fn get_pool(&self) -> anyhow::Result<PgPool> {
-        let database_url = &self
-            .project_info
-            .as_ref()
-            .context("Project info required to call method splitter.get_pool()")?
-            .database_url;
-        get_or_initialize_pool(database_url).await
-    }
-}
-
-impl From<models::PipelineWithModelAndSplitter> for Splitter {
-    fn from(x: models::PipelineWithModelAndSplitter) -> Self {
-        Self {
-            name: x.splitter_name,
-            parameters: x.splitter_parameters,
-            project_info: None,
-            database_data: Some(SplitterDatabaseData {
-                id: x.splitter_id,
-                created_at: x.splitter_created_at,
-            }),
-        }
-    }
 }
 
 impl From<models::Splitter> for Splitter {
@@ -158,7 +109,6 @@ impl From<models::Splitter> for Splitter {
         Self {
             name: splitter.name,
             parameters: splitter.parameters,
-            project_info: None,
             database_data: Some(SplitterDatabaseData {
                 id: splitter.id,
                 created_at: splitter.created_at,

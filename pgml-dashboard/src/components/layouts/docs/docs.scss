@@ -1,0 +1,27 @@
+div[data-controller="layouts-docs"] {
+  $collapsed-left-nav-height: 40px;
+
+  .page-container {
+    position: relative;
+    min-height: calc(100vh - $navbar-height);
+  }
+
+  .drawer-submenu {
+    @include media-breakpoint-down(lg) {
+        background-color: #{$gray-800};
+    }
+  }
+
+  .glow-1 {
+    width: 674.559px;
+    height: 568.714px;
+    flex-shrink: 0;
+    border-radius: 1868.714px;
+    background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(57, 210, 231, 0.30) 26.4%, rgba(174, 110, 255, 0.30) 100%);
+    filter: blur(252.66856384277344px);
+  }
+
+  &.border-botom {
+    border-bottom: 1px solid #{$gray-600};
+  }
+}

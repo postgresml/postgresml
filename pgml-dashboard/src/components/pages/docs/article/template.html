@@ -1,0 +1,32 @@
+<% use crate::components::navigation::Toc; %>
+
+<div class="content-container m-auto" data-controller="pages-docs-article" >
+  <div class="py-4 px-4 d-xxl-block d-none">
+    <%+ feature_banner.clone() %>
+  </div>
+
+  <div class="d-flex flex-xxl-row-reverse h-100 flex-column justify-content-end">
+    <% if !toc_links.is_empty() {%>
+    <div class="h-100 position-sticky stick-under-topnav sticky-container d-block d-xl-none d-xxl-block">
+      <%+ Toc::new(&toc_links) %>
+    </div>
+    <% } %>
+  
+    <div class="p-5 m-auto m-xl-0 article-container overflow-auto w-100">
+      <div class="py-4 d-block d-xxl-none position-relative z-n1">
+        <%+ feature_banner %>
+      </div>
+
+      <article class="docs">
+        <% if document_not_found {%>
+          <div>
+            <h2>Oops, document not found!</h2>
+            <p>The document you are searching for may have been moved or replaced with better content.</p>
+          </div>
+        <% } else {%>
+          <%- content %>
+        <% } %>
+      </article>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,29 @@
+
+<aside class="pt-xxl-4 px-xxl-0 toc-container pb-xxl-4" data-controller="navigation-toc">
+  <nav class="card nav toc rounded-0">
+    <div class="card-body py-2 py-xxl-4">
+      <p class="mb-3 d-none d-xxl-block legal-text text-white">IN THIS DOC</p>
+      <a class="px-0 my-1 d-flex justify-content-between align-items-center d-xxl-none text-white" role="button" data-bs-toggle="collapse" href="#toc-nav" aria-expanded="false" aria-controls="toc-nav">
+        <span>Table of Contents</span><span class="material-symbols-outlined rotate-on-aria-expanded">expand_more</span>
+      </a>
+
+      <div id="toc-nav" class="d-xxl-flex pt-2 flex-column collapse border-top" aria-orientation="vertical" data-controller="docs-toc" style="max-height: 50vh">
+        <% for link in toc_links.iter() { %>
+          <% let (padding_left, margin_left, fw, padding_y) = match link.level {
+              1 => ("0px", "0px", "fw-bold", "8px"),
+              2 => ("0px", "0px", "fw-bold", "8px"),
+              3 => ("0px", "20px", "fw-semibold", "8px"),
+              4 => ("16px", "20px", "fw-normal", "6px"), 
+              _ => ("20px", "20px", "fw-normal", "6px")
+
+          }; %>
+          <div class='<% if link.level > 3 {%><%- "border-left" %><% } %>' style='padding-top: <%- padding_y %>; padding-bottom: <%- padding_y %>; padding-left: <%- padding_left %>; margin-left: <%- margin_left %>'>
+            <a  class="nav-link px-0 py-0 text-break <%- fw %>" href="#<%= link.id %>" role="button" data-action="click->docs-toc#setUrlFragment">
+              <%= link.title %>
+            </a>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </nav>
+</aside>

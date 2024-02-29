@@ -13,7 +13,7 @@
 
   let company_links = vec![
     StaticNavLink::new("About".to_string(), "/about".to_string()).icon("smart_toy"),
-    StaticNavLink::new("Careers".to_string(), "/careers/".to_string()).icon("work"),
+    StaticNavLink::new("Careers".to_string(), "/careers".to_string()).icon("work"),
     StaticNavLink::new("Contact".to_string(), "/contact".to_string()).icon("alternate_email")
   ];
 
@@ -35,8 +35,8 @@
 %>
 
   <div class="sticky-top-nav" data-controller="navigation-navbar-marketing">
-    <nav class="navbar-marketing-site horizontal navbar-expand-xl" data-controller="search topnav-styling">
-      <div class="container column-gap-4">
+    <nav class='navbar-marketing-site horizontal navbar-expand-xl <% if style_alt {%><%- "alt-color"%><% } %>' data-controller='search topnav-styling' data-topnav-styling-alt-styling-value="<%- style_alt %>">
+      <div class='container<% if style_alt {%><%- "-fluid p-0" %><%} %> column-gap-4'>
         <div class="controls">
           <%+ PostgresLogo::new("/") %>
 
@@ -73,8 +73,8 @@
                 <%+ MarketingLink::new().link(StaticNavLink::new("Pricing".to_string(), "/pricing".to_string())) %>
               <% } %>
 
-              <%+ MarketingLink::new().link(StaticNavLink::new("Docs".to_string(), "/docs/".to_string())) %>
-              <%+ MarketingLink::new().link(StaticNavLink::new("Blog".to_string(), "/blog/speeding-up-vector-recall-5x-with-hnsw".to_string())) %>
+              <%+ MarketingLink::new().link(StaticNavLink::new("Docs".to_string(), "/docs".to_string())) %>
+              <%+ MarketingLink::new().link(StaticNavLink::new("Blog".to_string(), "/blog".to_string())) %>
 
               <% if !standalone_dashboard { %>
                 <div class="d-none d-xl-flex">

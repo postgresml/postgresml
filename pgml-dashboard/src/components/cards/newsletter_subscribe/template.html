@@ -1,0 +1,16 @@
+<div data-controller="cards-newsletter-subscribe">
+  <div class="d-flex flex-column flex-lg-row gap-4 justify-content-center align-items-center newsletter-subscribe-container p-5 rounded-4">
+    <div class="d-flex flex-column gap-4 text-center text-md-start" style="flex: 4">
+      <h3>Subscribe to our newsletter. (It’s better than you think)</h3>
+      <p>No spam. No sales pitches. Just product updates. Keep up with all our articles and news. Join our newsletter and stay up to date!</p>
+    </div>
+
+    <form action="/newsletter_subscribe" class="d-flex flex-column justify-content-center align-items-center gap-3 w-100" style="flex: 3" method="post">
+      <div class="input-group p-1 ps-3 subscribe-input">
+        <input  type="email" class="form-control border-0" placeholder="hootareyou@email.com" name="email" autocomplete="off">
+        <button type="submit" class="btn btn-primary rounded-2 d-none d-md-block">Subscribe</button>
+      </div>
+      <button type="submit" class="btn btn-primary rounded-2 d-md-none">Subscribe</button>
+    </form>
+  </div>
+</div>

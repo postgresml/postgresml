@@ -1,19 +1,19 @@
 const pgml = require("pgml");
 require("dotenv").config();
 
-
 const main = async () => {
   // Initialize the collection
-  const collection = pgml.newCollection("my_javascript_eqa_collection_2");
+  const collection = pgml.newCollection("qa_collection");
 
   // Add a pipeline
-  const model = pgml.newModel();
-  const splitter = pgml.newSplitter();
-  const pipeline = pgml.newPipeline(
-    "my_javascript_eqa_pipeline_1",
-    model,
-    splitter,
-  );
+  const pipeline = pgml.newPipeline("qa_pipeline", {
+    text: {
+      splitter: { model: "recursive_character" },
+      semantic_search: {
+        model: "intfloat/e5-small",
+      },
+    },
+  });
   await collection.add_pipeline(pipeline);
 
   // Upsert documents, these documents are automatically split into chunks and embedded by our pipeline
@@ -29,33 +29,31 @@ const main = async () => {
   ];
   await collection.upsert_documents(documents);
 
-  const query = "What is the best tool for machine learning?";
-
   // Perform vector search
-  const queryResults = await collection
-    .query()
-    .vector_recall(query, pipeline)
-    .limit(1)
-    .fetch_all();
+  const query = "What is the best tool for building machine learning applications?";
+  const queryResults = await collection.vector_search(
+    {
+      query: {
+        fields: {
+          text: { query: query }
+        }
+      }, limit: 1
+    }, pipeline);
+  console.log("The results");
+  console.log(queryResults);
 
-  // Construct context from results
-  const context = queryResults
-    .map((result) => {
-      return result[1];
-    })
-    .join("\n");
+  const context = queryResults.map((result) => result["chunk"]).join("\n\n");
 
   // Query for answer
   const builtins = pgml.newBuiltins();
   const answer = await builtins.transform("question-answering", [
     JSON.stringify({ question: query, context: context }),
   ]);
+  console.log("The answer");
+  console.log(answer);
 
   // Archive the collection
   await collection.archive();
-  return answer;
 };
 
-main().then((results) => {
-  console.log("Question answer: \n", results);
-});
+main().then(() => console.log("Done!"));

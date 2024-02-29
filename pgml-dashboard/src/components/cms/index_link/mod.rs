@@ -11,11 +11,12 @@ pub struct IndexLink {
     pub children: Vec<IndexLink>,
     pub open: bool,
     pub active: bool,
+    pub level: i32,
 }
 
 impl IndexLink {
     /// Create a new documentation link.
-    pub fn new(title: &str) -> IndexLink {
+    pub fn new(title: &str, level: i32) -> IndexLink {
         IndexLink {
             id: crate::utils::random_string(25),
             title: title.to_owned(),
@@ -23,6 +24,7 @@ impl IndexLink {
             children: vec![],
             open: false,
             active: false,
+            level,
         }
     }
 

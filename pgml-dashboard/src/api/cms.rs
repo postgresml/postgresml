@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use std::str::FromStr;
+
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
 use lazy_static::lazy_static;
 use markdown::mdast::Node;
@@ -10,14 +12,14 @@ use rocket::{fs::NamedFile, http::uri::Origin, route::Route, State};
 use yaml_rust::YamlLoader;
 
 use crate::{
-    components::cms::index_link::IndexLink,
+    components::{cms::index_link::IndexLink, layouts::marketing::base::Theme, layouts::marketing::Base},
     guards::Cluster,
-    responses::{ResponseOk, Template},
+    responses::{Response, ResponseOk, Template},
     templates::docs::*,
     utils::config,
 };
-
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 lazy_static! {
     static ref BLOG: Collection = Collection::new(
@@ -46,7 +48,7 @@ lazy_static! {
         ])
     );
     static ref CAREERS: Collection = Collection::new("Careers", true, HashMap::from([("a", "b")]));
-    static ref DOCS: Collection = Collection::new(
+    pub static ref DOCS: Collection = Collection::new(
         "Docs",
         false,
         HashMap::from([
@@ -61,35 +63,86 @@ lazy_static! {
     );
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub enum DocType {
+    Blog,
+    Docs,
+    Careers,
+}
+
+impl fmt::Display for DocType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DocType::Blog => write!(f, "blog"),
+            DocType::Docs => write!(f, "docs"),
+            DocType::Careers => write!(f, "careers"),
+        }
+    }
+}
+
+impl FromStr for DocType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<DocType, Self::Err> {
+        match s {
+            "blog" => Ok(DocType::Blog),
+            "docs" => Ok(DocType::Docs),
+            "careers" => Ok(DocType::Careers),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Document {
     /// The absolute path on disk
     pub path: PathBuf,
     pub description: Option<String>,
+    pub author: Option<String>,
+    pub author_image: Option<String>,
+    pub featured: bool,
+    pub date: Option<chrono::NaiveDate>,
+    pub tags: Vec<String>,
     pub image: Option<String>,
     pub title: String,
     pub toc_links: Vec<TocLink>,
-    pub html: String,
+    pub contents: String,
+    pub doc_type: Option<DocType>,
+    // url to thumbnail for social share
+    pub thumbnail: Option<String>,
 }
 
+// Gets document markdown
 impl Document {
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
-        warn!("path: {:?}", path);
+        let doc_type = match path.strip_prefix(config::cms_dir()) {
+            Ok(path) => match path.into_iter().next() {
+                Some(dir) => match &PathBuf::from(dir).display().to_string()[..] {
+                    "blog" => Some(DocType::Blog),
+                    "docs" => Some(DocType::Docs),
+                    "careers" => Some(DocType::Careers),
+                    _ => None,
+                },
+                _ => None,
+            },
+            _ => None,
+        };
+
+        if doc_type.is_none() {
+            warn!("doc_type not parsed from path: {path:?}");
+        }
+
         let contents = tokio::fs::read_to_string(&path).await?;
 
         let parts = contents.split("---").collect::<Vec<&str>>();
 
-        let (description, contents) = if parts.len() > 1 {
+        let (meta, contents) = if parts.len() > 1 {
             match YamlLoader::load_from_str(parts[1]) {
                 Ok(meta) => {
                     if meta.len() == 0 || meta[0].as_hash().is_none() {
                         (None, contents)
                     } else {
-                        let description: Option<String> = match meta[0]["description"].is_badvalue() {
-                            true => None,
-                            false => Some(meta[0]["description"].as_str().unwrap().to_string()),
-                        };
-                        (description, parts[2..].join("---").to_string())
+                        (Some(meta[0].clone()), parts[2..].join("---").to_string())
                     }
                 }
                 Err(_) => (None, contents),
@@ -98,19 +151,105 @@ impl Document {
             (None, contents)
         };
 
+        let default_image_path = BLOG
+            .asset_url_root
+            .join("blog_image_placeholder.png")
+            .display()
+            .to_string();
+
+        // parse meta section
+        let (description, image, featured, tags) = match meta {
+            Some(meta) => {
+                let description = if meta["description"].is_badvalue() {
+                    None
+                } else {
+                    Some(meta["description"].as_str().unwrap().to_string())
+                };
+
+                // For now the only images shown are blog images TODO: use doc_type to set asset path when working.
+                let image = if meta["image"].is_badvalue() {
+                    Some(default_image_path.clone())
+                } else {
+                    match PathBuf::from_str(meta["image"].as_str().unwrap()) {
+                        Ok(image_path) => match image_path.file_name() {
+                            Some(file_name) => {
+                                let file = PathBuf::from(file_name).display().to_string();
+                                Some(BLOG.asset_url_root.join(file).display().to_string())
+                            }
+                            _ => Some(default_image_path.clone()),
+                        },
+                        _ => Some(default_image_path.clone()),
+                    }
+                };
+
+                let featured = if meta["featured"].is_badvalue() {
+                    false
+                } else {
+                    meta["featured"].as_bool().unwrap()
+                };
+
+                let tags = if meta["tags"].is_badvalue() {
+                    Vec::new()
+                } else {
+                    let mut tags = Vec::new();
+                    for tag in meta["tags"].as_vec().unwrap() {
+                        tags.push(tag.as_str().unwrap_or_else(|| "").to_string());
+                    }
+                    tags
+                };
+
+                (description, image, featured, tags)
+            }
+            None => (None, Some(default_image_path.clone()), false, Vec::new()),
+        };
+
+        let thumbnail = match &image {
+            Some(image) => {
+                if image.contains(&default_image_path) || doc_type != Some(DocType::Blog) {
+                    None
+                } else {
+                    Some(format!("{}{}", config::site_domain(), image))
+                }
+            }
+            None => None,
+        };
+
+        // Parse Markdown
+        let arena = Arena::new();
+        let root = parse_document(&arena, &contents, &crate::utils::markdown::options());
+        let title = crate::utils::markdown::get_title(root).unwrap();
+        let toc_links = crate::utils::markdown::get_toc(root).unwrap();
+        let (author, date, author_image) = crate::utils::markdown::get_author(root);
+
+        let document = Document {
+            path: path.to_owned(),
+            description,
+            author,
+            author_image,
+            date,
+            featured,
+            tags,
+            image,
+            title,
+            toc_links,
+            contents,
+            doc_type,
+            thumbnail,
+        };
+        Ok(document)
+    }
+
+    pub fn html(self) -> String {
+        let contents = self.contents;
+
         // Parse Markdown
         let arena = Arena::new();
         let spaced_contents = crate::utils::markdown::gitbook_preprocess(&contents);
         let root = parse_document(&arena, &spaced_contents, &crate::utils::markdown::options());
 
-        // Title of the document is the first (and typically only) <h1>
-        let title = crate::utils::markdown::get_title(root).unwrap();
-        let toc_links = crate::utils::markdown::get_toc(root).unwrap();
-        let image = crate::utils::markdown::get_image(root);
-        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
-
         // MkDocs, gitbook syntax support, e.g. tabs, notes, alerts, etc.
         crate::utils::markdown::mkdocs(root, &arena).unwrap();
+        crate::utils::markdown::wrap_tables(root, &arena).unwrap();
 
         // Style headings like we like them
         let mut plugins = ComrakPlugins::default();
@@ -122,33 +261,27 @@ impl Document {
         format_html_with_plugins(root, &crate::utils::markdown::options(), &mut html, &plugins).unwrap();
         let html = String::from_utf8(html).unwrap();
 
-        let document = Document {
-            path: path.to_owned(),
-            description,
-            image,
-            title,
-            toc_links,
-            html,
-        };
-        Ok(document)
+        html
     }
 }
 
 /// A Gitbook collection of documents
 #[derive(Default)]
-struct Collection {
+pub struct Collection {
     /// The properly capitalized identifier for this collection
     name: String,
     /// The root location on disk for this collection
-    root_dir: PathBuf,
+    pub root_dir: PathBuf,
     /// The root location for gitbook assets
-    asset_dir: PathBuf,
+    pub asset_dir: PathBuf,
     /// The base url for this collection
     url_root: PathBuf,
     /// A hierarchical list of content in this collection
-    index: Vec<IndexLink>,
+    pub index: Vec<IndexLink>,
     /// A list of old paths to new paths in this collection
     redirects: HashMap<&'static str, &'static str>,
+    /// Url to assets for this collection
+    pub asset_url_root: PathBuf,
 }
 
 impl Collection {
@@ -159,6 +292,7 @@ impl Collection {
         let root_dir = config::cms_dir().join(&slug);
         let asset_dir = root_dir.join(".gitbook").join("assets");
         let url_root = PathBuf::from("/").join(&slug);
+        let asset_url_root = PathBuf::from("/").join(&slug).join(".gitbook").join("assets");
 
         let mut collection = Collection {
             name,
@@ -166,6 +300,7 @@ impl Collection {
             asset_dir,
             url_root,
             redirects,
+            asset_url_root,
             ..Default::default()
         };
         collection.build_index(hide_root);
@@ -178,12 +313,7 @@ impl Collection {
         NamedFile::open(self.asset_dir.join(path)).await.ok()
     }
 
-    pub async fn get_content(
-        &self,
-        mut path: PathBuf,
-        cluster: &Cluster,
-        origin: &Origin<'_>,
-    ) -> Result<ResponseOk, crate::responses::NotFound> {
+    pub async fn get_content_path(&self, mut path: PathBuf, origin: &Origin<'_>) -> (PathBuf, String) {
         info!("get_content: {} | {path:?}", self.name);
 
         let mut redirected = false;
@@ -198,7 +328,6 @@ impl Collection {
             }
             None => {}
         };
-
         let canonical = format!(
             "https://postgresml.org{}/{}",
             self.url_root.to_string_lossy(),
@@ -209,7 +338,7 @@ impl Collection {
         }
         let path = self.root_dir.join(format!("{}.md", path.to_string_lossy()));
 
-        self.render(&path, &canonical, cluster).await
+        (path, canonical)
     }
 
     /// Create an index of the Collection based on the SUMMARY.md from Gitbook.
@@ -222,7 +351,17 @@ impl Collection {
         let mdast = markdown::to_mdast(&summary_contents, &::markdown::ParseOptions::default())
             .unwrap_or_else(|_| panic!("Could not parse summary: {summary_path:?}"));
 
+        let mut parent_folder: Option<String> = None;
         let mut index = Vec::new();
+        let indent_level = 1;
+
+        // Docs gets a home link added to the index
+        match self.name.as_str() {
+            "Docs" => {
+                index.push(IndexLink::new("Docs Home", indent_level).href("/docs"));
+            }
+            _ => {}
+        }
         for node in mdast
             .children()
             .unwrap_or_else(|| panic!("Summary has no content: {summary_path:?}"))
@@ -230,10 +369,26 @@ impl Collection {
         {
             match node {
                 Node::List(list) => {
-                    let mut links = self
-                        .get_sub_links(list)
+                    let links: Vec<IndexLink> = self
+                        .get_sub_links(list, indent_level)
                         .unwrap_or_else(|_| panic!("Could not parse list of index links: {summary_path:?}"));
-                    index.append(&mut links);
+
+                    let mut out = match parent_folder.as_ref() {
+                        Some(parent_folder) => {
+                            let mut parent = IndexLink::new(parent_folder.as_ref(), 0).href("");
+                            parent.children = links.clone();
+                            Vec::from([parent])
+                        }
+                        None => links,
+                    };
+
+                    index.append(&mut out);
+                    parent_folder = None;
+                }
+                Node::Heading(heading) => {
+                    if heading.depth == 2 {
+                        parent_folder = Some(heading.children[0].to_string());
+                    }
                 }
                 _ => {
                     warn!("Irrelevant content ignored in: {summary_path:?}")
@@ -251,7 +406,7 @@ impl Collection {
         }
     }
 
-    pub fn get_sub_links(&self, list: &markdown::mdast::List) -> anyhow::Result<Vec<IndexLink>> {
+    pub fn get_sub_links(&self, list: &markdown::mdast::List, indent_level: i32) -> anyhow::Result<Vec<IndexLink>> {
         let mut links = Vec::new();
 
         // SUMMARY.md is a nested List > ListItem > List | Paragraph > Link > Text
@@ -262,7 +417,7 @@ impl Collection {
                         match node {
                             Node::List(list) => {
                                 let mut link: IndexLink = links.pop().unwrap();
-                                link.children = self.get_sub_links(list).unwrap();
+                                link.children = self.get_sub_links(list, indent_level + 1).unwrap();
                                 links.push(link);
                             }
                             Node::Paragraph(paragraph) => {
@@ -280,7 +435,7 @@ impl Collection {
                                                             url = url.replace("README", "");
                                                         }
                                                         let url = self.url_root.join(url);
-                                                        let parent = IndexLink::new(text.value.as_str())
+                                                        let parent = IndexLink::new(text.value.as_str(), indent_level)
                                                             .href(&url.to_string_lossy());
                                                         links.push(parent);
                                                     }
@@ -302,8 +457,53 @@ impl Collection {
         Ok(links)
     }
 
+    // Convert a IndexLink from summary to a file path.
+    pub fn url_to_path(&self, url: &str) -> PathBuf {
+        let url = if url.ends_with('/') {
+            format!("{url}README.md")
+        } else {
+            format!("{url}.md")
+        };
+
+        let mut path = PathBuf::from(url);
+        if path.has_root() {
+            path = path.strip_prefix("/").unwrap().to_owned();
+        }
+
+        let mut path_v = path.components().collect::<Vec<_>>();
+        path_v.remove(0);
+
+        let path_pb = PathBuf::from_iter(path_v.iter());
+
+        self.root_dir.join(path_pb)
+    }
+
+    // get all urls in the collection and preserve order.
+    pub fn get_all_urls(&self) -> Vec<String> {
+        let mut urls: Vec<String> = Vec::new();
+        let mut children: Vec<&IndexLink> = Vec::new();
+        for item in &self.index {
+            children.push(item);
+        }
+
+        children.reverse();
+
+        while children.len() > 0 {
+            let current = children.pop().unwrap();
+            if current.href.len() > 0 {
+                urls.push(current.href.clone());
+            }
+
+            for i in (0..current.children.len()).rev() {
+                children.push(&current.children[i])
+            }
+        }
+
+        urls
+    }
+
     // Sets specified index as currently viewed.
-    fn open_index(&self, path: PathBuf) -> Vec<IndexLink> {
+    fn open_index(&self, path: &PathBuf) -> Vec<IndexLink> {
         self.index
             .clone()
             .iter_mut()
@@ -322,36 +522,20 @@ impl Collection {
         canonical: &str,
         cluster: &Cluster,
     ) -> Result<ResponseOk, crate::responses::NotFound> {
-        let user = if cluster.context.user.is_anonymous() {
-            None
-        } else {
-            Some(cluster.context.user.clone())
-        };
-
         match Document::from_path(&path).await {
             Ok(doc) => {
-                let index = self.open_index(doc.path);
-
                 let mut layout = crate::templates::Layout::new(&doc.title, Some(cluster));
-                if let Some(image) = doc.image {
-                    layout.image(&config::asset_url(image.into()));
+                if let Some(image) = &doc.thumbnail {
+                    layout.image(&image);
                 }
                 if let Some(description) = &doc.description {
                     layout.description(description);
                 }
-                if let Some(user) = &user {
-                    layout.user(user);
-                }
 
-                let layout = layout
-                    .canonical(canonical)
-                    .nav_title(&self.name)
-                    .nav_links(&index)
-                    .toc_links(&doc.toc_links)
-                    .footer(cluster.context.marketing_footer.to_string());
+                let layout = layout.canonical(canonical).toc_links(&doc.toc_links);
 
                 Ok(ResponseOk(
-                    layout.render(crate::templates::Article { content: doc.html }),
+                    layout.render(crate::templates::Article { content: doc.html() }),
                 ))
             }
             // Return page not found on bad path
@@ -366,27 +550,17 @@ impl Collection {
                 </div>"#,
                 );
 
-                if let Some(user) = &user {
-                    layout.user(user);
-                }
-
-                layout
-                    .nav_links(&self.index)
-                    .nav_title(&self.name)
-                    .footer(cluster.context.marketing_footer.to_string());
-
-                layout.render(crate::templates::Article { content: doc });
-
-                Err(crate::responses::NotFound(layout.into()))
+                Err(crate::responses::NotFound(
+                    layout.render(crate::templates::Article { content: doc }).into(),
+                ))
             }
         }
     }
 }
 
 #[get("/search?<query>", rank = 20)]
-async fn search(query: &str, index: &State<crate::utils::markdown::SearchIndex>) -> ResponseOk {
-    let results = index.search(query).unwrap();
-
+async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
+    let results = site_search.search(query, None).await.expect("Error performing search");
     ResponseOk(
         Template(Search {
             query: query.to_string(),
@@ -417,7 +591,8 @@ async fn get_blog(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, crate::responses::NotFound> {
-    BLOG.get_content(path, cluster, origin).await
+    let (doc_file_path, canonical) = BLOG.get_content_path(path.clone(), origin).await;
+    BLOG.render(&doc_file_path, &canonical, cluster).await
 }
 
 #[get("/careers/<path..>", rank = 5)]
@@ -426,7 +601,8 @@ async fn get_careers(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, crate::responses::NotFound> {
-    CAREERS.get_content(path, cluster, origin).await
+    let (doc_file_path, canonical) = CAREERS.get_content_path(path.clone(), origin).await;
+    CAREERS.render(&doc_file_path, &canonical, cluster).await
 }
 
 #[get("/docs/<path..>", rank = 5)]
@@ -435,20 +611,91 @@ async fn get_docs(
     cluster: &Cluster,
     origin: &Origin<'_>,
 ) -> Result<ResponseOk, crate::responses::NotFound> {
-    DOCS.get_content(path, cluster, origin).await
+    let (doc_file_path, canonical) = DOCS.get_content_path(path.clone(), origin).await;
+
+    match Document::from_path(&doc_file_path).await {
+        Ok(doc) => {
+            let index = DOCS.open_index(&doc.path);
+
+            let layout = crate::components::layouts::Docs::new(&doc.title, Some(cluster))
+                .index(&index)
+                .image(&doc.thumbnail)
+                .canonical(&canonical);
+
+            let page = crate::components::pages::docs::Article::new(&cluster)
+                .toc_links(&doc.toc_links)
+                .content(&doc.html());
+
+            Ok(ResponseOk(layout.render(page)))
+        }
+        // Return page not found on bad path
+        _ => {
+            let layout = crate::components::layouts::Docs::new("404", Some(cluster)).index(&DOCS.index);
+
+            let page = crate::components::pages::docs::Article::new(&cluster).document_not_found();
+
+            Err(crate::responses::NotFound(layout.render(page)))
+        }
+    }
+}
+
+#[get("/blog")]
+async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
+    let layout = Base::new(
+        "PostgresML blog landing page, home of technical tutorials, general updates and all things AI/ML.",
+        Some(cluster),
+    )
+    .theme(Theme::Docs)
+    .footer(cluster.context.marketing_footer.to_string());
+
+    Ok(ResponseOk(
+        layout.render(
+            crate::components::pages::blog::LandingPage::new(cluster)
+                .index(&BLOG)
+                .await,
+        ),
+    ))
+}
+
+#[get("/docs")]
+async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
+    let index = DOCS.open_index(&PathBuf::from("/docs"));
+
+    let doc_layout =
+        crate::components::layouts::Docs::new("PostgresML documentation landing page.", Some(cluster)).index(&index);
+
+    let page = crate::components::pages::docs::LandingPage::new(&cluster)
+        .parse_sections(DOCS.index.clone())
+        .await;
+
+    Ok(ResponseOk(doc_layout.render(page)))
 }
 
 #[get("/user_guides/<path..>", rank = 5)]
-async fn get_user_guides(
-    path: PathBuf,
-    cluster: &Cluster,
-    origin: &Origin<'_>,
-) -> Result<ResponseOk, crate::responses::NotFound> {
-    DOCS.get_content(path, cluster, origin).await
+async fn get_user_guides(path: PathBuf) -> Result<Response, crate::responses::NotFound> {
+    Ok(Response::redirect(format!("/docs/{}", path.display().to_string())))
+}
+
+#[get("/careers")]
+async fn careers_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
+    let layout = Base::new(
+        "PostgresML careers landing page, Join us to help build the future of AI infrastructure.",
+        Some(cluster),
+    )
+    .theme(Theme::Marketing);
+
+    let page = crate::components::pages::careers::LandingPage::new(cluster)
+        .index(&CAREERS)
+        .await;
+
+    Ok(ResponseOk(layout.render(page)))
 }
 
 pub fn routes() -> Vec<Route> {
     routes![
+        blog_landing_page,
+        docs_landing_page,
+        careers_landing_page,
         get_blog,
         get_blog_asset,
         get_careers,
@@ -463,9 +710,9 @@ pub fn routes() -> Vec<Route> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::utils::markdown::{options, MarkdownHeadings, SyntaxHighlighter};
+    use crate::utils::markdown::options;
     use regex::Regex;
-    use rocket::http::{ContentType, Cookie, Status};
+    use rocket::http::Status;
     use rocket::local::asynchronous::Client;
     use rocket::{Build, Rocket};
 
@@ -531,7 +778,7 @@ This is the end of the markdown
     async fn rocket() -> Rocket<Build> {
         dotenv::dotenv().ok();
         rocket::build()
-            .manage(crate::utils::markdown::SearchIndex::open().unwrap())
+            // .manage(crate::utils::markdown::SearchIndex::open().unwrap())
             .mount("/", crate::api::cms::routes())
     }
 
@@ -665,5 +912,47 @@ This is the end of the markdown
             html.chars().filter(|c| !c.is_whitespace()).collect::<String>()
                 == expected.chars().filter(|c| !c.is_whitespace()).collect::<String>()
         )
+    }
+
+    // Test we can parse doc meta with out issue.
+    #[sqlx::test]
+    async fn docs_meta_parse() {
+        let collection = &crate::api::cms::DOCS;
+
+        let urls = collection.get_all_urls();
+
+        for url in urls {
+            // Don't parse landing page since it is not markdown.
+            if url != "/docs" {
+                let path = collection.url_to_path(url.as_ref());
+                crate::api::cms::Document::from_path(&path).await.unwrap();
+            }
+        }
+    }
+
+    // Test we can parse blog meta with out issue.
+    #[sqlx::test]
+    async fn blog_meta_parse() {
+        let collection = &crate::api::cms::BLOG;
+
+        let urls = collection.get_all_urls();
+
+        for url in urls {
+            let path = collection.url_to_path(url.as_ref());
+            crate::api::cms::Document::from_path(&path).await.unwrap();
+        }
+    }
+
+    // Test we can parse career meta with out issue.
+    #[sqlx::test]
+    async fn career_meta_parse() {
+        let collection = &crate::api::cms::CAREERS;
+
+        let urls = collection.get_all_urls();
+
+        for url in urls {
+            let path = collection.url_to_path(url.as_ref());
+            crate::api::cms::Document::from_path(&path).await.unwrap();
+        }
     }
 }

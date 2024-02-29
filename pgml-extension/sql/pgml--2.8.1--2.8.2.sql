@@ -26,14 +26,7 @@ AS 'MODULE_PATHNAME', 'deploy_strategy_wrapper';
 
 ALTER TYPE pgml.strategy ADD VALUE 'specific';
 
--- src/orm/sampling.rs:6
--- pgml::orm::sampling::Sampling
-DROP TYPE IF EXISTS pgml.Sampling;
-CREATE TYPE pgml.Sampling AS ENUM (
-	'random',
-	'last',
-	'stratified'
-);
+ALTER TYPE pgml.Sampling ADD VALUE 'stratified';
 
 -- src/api.rs:534
 -- pgml::api::snapshot

@@ -33,23 +33,27 @@ pub struct Layout {
     pub head: Head,
     pub content: Option<String>,
     pub user: Option<models::User>,
-    pub nav_title: Option<String>,
-    pub nav_links: Vec<IndexLink>,
     pub toc_links: Vec<docs::TocLink>,
-    pub footer: String,
+    pub footer: Option<String>,
     pub alert_banner: AlertBanner,
     pub feature_banner: FeatureBanner,
 }
 
 impl Layout {
     pub fn new(title: &str, context: Option<&crate::guards::Cluster>) -> Self {
-        let head = match context.as_ref() {
-            Some(context) => Head::new().title(title).context(&context.context.head_items),
-            None => Head::new().title(title),
+        let (head, footer, user) = match context.as_ref() {
+            Some(context) => (
+                Head::new().title(title).context(&context.context.head_items),
+                Some(context.context.marketing_footer.clone()),
+                Some(context.context.user.clone()),
+            ),
+            None => (Head::new().title(title), None, None),
         };
 
         Layout {
             head,
+            footer,
+            user,
             alert_banner: AlertBanner::from_notification(Notification::next_alert(context)),
             feature_banner: FeatureBanner::from_notification(Notification::next_feature(context)),
             ..Default::default()
@@ -81,16 +85,6 @@ impl Layout {
         self
     }
 
-    pub fn nav_title(&mut self, nav_title: &str) -> &mut Self {
-        self.nav_title = Some(nav_title.to_owned());
-        self
-    }
-
-    pub fn nav_links(&mut self, nav_links: &[IndexLink]) -> &mut Self {
-        self.nav_links = nav_links.to_vec();
-        self
-    }
-
     pub fn toc_links(&mut self, toc_links: &[docs::TocLink]) -> &mut Self {
         self.toc_links = toc_links.to_vec();
         self
@@ -105,7 +99,7 @@ impl Layout {
     }
 
     pub fn footer(&mut self, footer: String) -> &mut Self {
-        self.footer = footer;
+        self.footer = Some(footer);
         self
     }
 }

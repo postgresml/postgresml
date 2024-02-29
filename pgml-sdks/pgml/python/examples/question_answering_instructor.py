@@ -1,4 +1,4 @@
-from pgml import Collection, Model, Splitter, Pipeline
+from pgml import Collection, Pipeline
 from datasets import load_dataset
 from time import time
 from dotenv import load_dotenv
@@ -11,15 +11,23 @@ async def main():
     console = Console()
 
     # Initialize collection
-    collection = Collection("squad_collection_1")
+    collection = Collection("squad_collection")
 
-    # Create a pipeline using hkunlp/instructor-base
-    model = Model(
-        name="hkunlp/instructor-base",
-        parameters={"instruction": "Represent the Wikipedia document for retrieval: "},
+    # Create and add pipeline
+    pipeline = Pipeline(
+        "squadv1",
+        {
+            "text": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {
+                    "model": "hkunlp/instructor-base",
+                    "parameters": {
+                        "instruction": "Represent the Wikipedia document for retrieval: "
+                    },
+                },
+            }
+        },
     )
-    splitter = Splitter()
-    pipeline = Pipeline("squad_instruction", model, splitter)
     await collection.add_pipeline(pipeline)
 
     # Prep documents for upserting
@@ -34,21 +42,25 @@ async def main():
     # Upsert documents
     await collection.upsert_documents(documents[:200])
 
-    # Query
+    # Query for answer
     query = "Who won more than 20 grammy awards?"
-    console.print("Querying for %s..." % query)
+    console.print("Querying for context ...")
     start = time()
-    results = (
-        await collection.query()
-        .vector_recall(
-            query,
-            pipeline,
-            query_parameters={
-                "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+    results = await collection.vector_search(
+        {
+            "query": {
+                "fields": {
+                    "text": {
+                        "query": query,
+                        "parameters": {
+                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+                        },
+                    },
+                }
             },
-        )
-        .limit(5)
-        .fetch_all()
+            "limit": 5,
+        },
+        pipeline,
     )
     end = time()
     console.print("\n Results for '%s' " % (query), style="bold")

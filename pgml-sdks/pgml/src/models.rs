@@ -5,17 +5,15 @@ use sqlx::FromRow;
 
 use crate::types::{DateTime, Json};
 
-// A pipeline
+// A multi field pipeline
 #[enum_def]
 #[derive(FromRow)]
 pub struct Pipeline {
     pub id: i64,
     pub name: String,
     pub created_at: DateTime,
-    pub model_id: i64,
-    pub splitter_id: i64,
     pub active: bool,
-    pub parameters: Json,
+    pub schema: Json,
 }
 
 // A model used to perform some task
@@ -38,24 +36,6 @@ pub struct Splitter {
     pub parameters: Json,
 }
 
-// A pipeline with its model and splitter
-#[derive(FromRow, Clone)]
-pub struct PipelineWithModelAndSplitter {
-    pub pipeline_id: i64,
-    pub pipeline_name: String,
-    pub pipeline_created_at: DateTime,
-    pub pipeline_active: bool,
-    pub pipeline_parameters: Json,
-    pub model_id: i64,
-    pub model_created_at: DateTime,
-    pub model_runtime: String,
-    pub model_hyperparams: Json,
-    pub splitter_id: i64,
-    pub splitter_created_at: DateTime,
-    pub splitter_name: String,
-    pub splitter_parameters: Json,
-}
-
 // A document
 #[enum_def]
 #[derive(FromRow, Serialize)]
@@ -65,18 +45,16 @@ pub struct Document {
     #[serde(with = "uuid::serde::compact")]
     // See: https://docs.rs/uuid/latest/uuid/serde/index.html
     pub source_uuid: Uuid,
-    pub metadata: Json,
-    pub text: String,
+    pub document: Json,
 }
 
 impl Document {
-    pub fn into_user_friendly_json(mut self) -> Json {
-        self.metadata["text"] = self.text.into();
+    pub fn into_user_friendly_json(self) -> Json {
         serde_json::json!({
             "row_id": self.id,
             "created_at": self.created_at,
             "source_uuid": self.source_uuid,
-            "document": self.metadata,
+            "document": self.document,
         })
         .into()
     }
@@ -109,7 +87,13 @@ pub struct Chunk {
     pub id: i64,
     pub created_at: DateTime,
     pub document_id: i64,
-    pub splitter_id: i64,
     pub chunk_index: i64,
     pub chunk: String,
+}
+
+// A tsvector of a document
+#[derive(FromRow)]
+pub struct TSVector {
+    pub id: i64,
+    pub created_at: DateTime,
 }
