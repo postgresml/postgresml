@@ -119,7 +119,7 @@ pub(crate) struct Preprocessor {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-pub(crate) struct Column {
+pub struct Column {
     pub(crate) name: String,
     pub(crate) pg_type: String,
     pub(crate) nullable: bool,
@@ -147,7 +147,7 @@ impl Column {
         )
     }
 
-    fn quoted_name(&self) -> String {
+    pub(crate) fn quoted_name(&self) -> String {
         format!(r#""{}""#, self.name)
     }
 
@@ -608,13 +608,8 @@ impl Snapshot {
             };
 
             if materialized {
-                let mut sql = format!(
-                    r#"CREATE TABLE "pgml"."snapshot_{}" AS SELECT * FROM {}"#,
-                    s.id, s.relation_name
-                );
-                if s.test_sampling == Sampling::random {
-                    sql += " ORDER BY random()";
-                }
+                let sampled_query = s.test_sampling.get_sql(&s.relation_name, s.columns.clone());
+                let sql = format!(r#"CREATE TABLE "pgml"."snapshot_{}" AS {}"#, s.id, sampled_query);
                 client.update(&sql, None, None).unwrap();
             }
             snapshot = Some(s);
@@ -742,26 +737,20 @@ impl Snapshot {
     }
 
     fn select_sql(&self) -> String {
-        format!(
-            "SELECT {} FROM {} {}",
-            self.columns
-                .iter()
-                .map(|c| c.quoted_name())
-                .collect::<Vec<String>>()
-                .join(", "),
-            self.relation_name_quoted(),
-            match self.materialized {
-                // If the snapshot is materialized, we already randomized it.
-                true => "",
-                false => {
-                    if self.test_sampling == Sampling::random {
-                        "ORDER BY random()"
-                    } else {
-                        ""
-                    }
-                }
-            },
-        )
+        match self.materialized {
+            true => {
+                format!(
+                    "SELECT {} FROM {}",
+                    self.columns
+                        .iter()
+                        .map(|c| c.quoted_name())
+                        .collect::<Vec<String>>()
+                        .join(", "),
+                    self.relation_name_quoted()
+                )
+            }
+            false => self.test_sampling.get_sql(&self.relation_name_quoted(), self.columns.clone()),
+        }
     }
 
     fn train_test_split(&self, num_rows: usize) -> (usize, usize) {
