@@ -1,0 +1,138 @@
+<% 
+  use crate::components::navigation::Toc;
+  use crate::api::cms::DocType;
+  use crate::components::sections::common_resources::{CommonResources, Cards};
+  use crate::components::sections::EmploymentBenefits;
+
+  let toc = doc.toc_links.clone();
+
+  let date = if doc.date.is_some() {
+    doc.date.clone().unwrap().format("%m/%d/%Y").to_string()
+    } else {String::new()};
+
+  let is_blog = article_type == DocType::Blog;
+  let is_career = article_type == DocType::Careers;
+
+  let image = match (doc.image.is_some(), is_blog) {
+    (true, _) => doc.image.clone().unwrap(),
+    (false, false) => String::from("/dashboard/static/images/careers_article_default.png"), 
+    (false, true) => String::from("/blog/.gitbook/assets/blog_image_placeholder.png")
+  };
+
+  let title = if document_not_found {
+    String::from("Sorry, we could not find that document!")
+  } else {
+    doc.title.clone()
+  };
+%>
+
+<div data-controller="pages-article-index" class="tuck-under-navbar">
+  <div class="overflow-hidden position-relative w-100 tuck-under-navbar header-container">
+    <div style="position: absolute; width: 100%">
+      <div class="blue"></div>
+      <div class="orange"></div>
+    </div>
+
+    <div class="container position-relative px-xl-5 pb-5">
+      <div class="pt-4 pb-5">
+        <%+ feature_banner %>
+      </div>
+
+      <div class="d-flex flex-lg-row flex-column gap-xl-4">
+        <div class="d-flex flex-column col-lg-7 col-12 align-items-md-start align-items-center"a>
+
+          <% if !doc.tags.is_empty() && is_blog {%>
+          <div class="eyebrow-text text-gradient-green"><%- doc.tags[0].clone().to_uppercase() %></div>
+          <% } else if is_career { %>
+          <a class="d-flex flex-row align-items-center gap-1 other-roles pb-3" href="/careers">
+            <span class="material-symbols-outlined text-white">arrow_back</span> <span class="text eyebrow-text">OTHER ROLES</span>
+          </a>
+          <% } %>
+
+          <h1 class="text-md-start text-center"><%- title %></h1>
+          
+          <% if doc.description.is_some() {%>
+          <div class="body-large-text text-white-200 text-md-start text-center"><%- doc.description.clone().unwrap() %></div>
+          <% } %>
+
+          <div class="d-flex flex-row gap-4 align-items-center mt-4">
+            <% if doc.author_image.is_some() && is_blog {%>
+            <img src="<%- doc.author_image.clone().unwrap() %>" class="rounded-pill" style="width: 90px;"/>
+            <% } %>
+
+            <% if !document_not_found {%>
+            <div class="d-flex flex-column">
+              <% if is_blog {%><div>By<span class="text-white h6"> <%- doc.author.clone().unwrap_or_else(|| String::from("PostgresML")) %></span></div><% } %>
+              <div><% if is_career && doc.date.is_some(){ %><span class="body-small-text text-white-300 ">Posted: </span><% } %><%- date %></div>
+            </div>
+            <% } %>
+          </div>
+        </div>
+        <div class="col <% if is_blog {%>d-none d-lg-block<% } %>">
+          <img class="w-100 h-100 rounded-5 object-fit-cover" src="<%- image %>"/>
+        </div>
+      </div>
+  
+    </div>
+  </div>
+
+  <% if !doc.toc_links.clone().is_empty() && is_blog { %>
+  <div class="d-xxl-none col-xl-12 position-sticky stick-under-topnav h-100" style="z-index: calc(1020 - 1)">
+    <%+ Toc::new(&doc.toc_links.clone())%>
+  </div>
+  <% } %>
+
+  <div class="container position-relative">
+    <div class="position-absolute vw-100 h-100 overflow-hidden" style="left: calc(( 100% - 100vw) / 2)">
+      <div class="glow-2">
+        <div class="e4"></div>
+        <div class="e1"></div>
+        <div class="e2"></div>
+        <div class="e3"></div>
+      </div>
+      <div class="glow-3">
+        <div class="e5"></div>
+        <div class="e6"></div>
+      </div>
+    </div>
+
+    <div class="row position-relative">
+      <article class="docs col-12 col-xxl-10 overflow-x-auto py-4 px-xl-5 mx-auto">
+        <% if document_not_found {%>
+        <div class="show">
+          <h2>Oops, document not found!</h2>
+          <p>The document you are searching for may have been moved or replaced with better content.</p>
+        </div>
+        <% } else { %>
+        <%- doc.html() %>
+        <% } %>
+
+        <% if is_career {%>
+        <div class="mt-5 show">
+          <h2 class="h2 mb-3">Have Questions?</h2>
+          <p><a href="https://discord.gg/DmyJP3qJ7U">Join our Discord</a> and ask us anything! We're friendly and would love to talk about PostgresML and PgCat.</p>
+        </div>
+
+        <div class="d-flex show mt-5">
+          <a class="btn btn-primary-web-app" href="/contact">Contact</a>
+        </div>
+        <% } %>
+      </article>
+
+      <% if !toc.is_empty() && is_blog { %>
+      <div class="d-none d-xxl-block col-2 position-sticky stick-under-topnav h-100 z-1">
+        <%+ Toc::new(&toc)%>
+      </div>
+      <% } %>
+      
+    </div>
+
+    <% if is_career {%>
+    <div class="py-4 py-lg-5 my-3 my-lg-3"><%+ EmploymentBenefits::new() %></div>
+    <% } %>
+
+    <div class="py-4 py-lg-5 my-3 my-lg-3 mx-auto"><%+ related_articles %></div>
+
+    <div class="py-4 py-lg-5 my-3 my-lg-3"><%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %></div>
+  </div>
+</div>

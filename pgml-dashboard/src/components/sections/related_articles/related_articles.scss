@@ -1,0 +1,10 @@
+div[data-controller="sections-related-articles"] {
+    .doc-card {
+      width: unset;
+      height: 100%;
+    }
+
+    div[data-controller="cards-blog-article-preview"] {
+      height: 100%;
+    }
+}

@@ -1,0 +1,150 @@
+div[data-controller="pages-article-index"] {
+
+    .header-container {
+        background-color: #{$gray-800};
+    }
+
+    .blue {
+        width: 429.767px;
+        height: 202.685px;
+        top: -350px;
+        left: -152px;
+        transform: rotate(157.012deg);
+        flex-shrink: 0;
+        border-radius: 1329.767px;
+        background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(255, 152, 214, 0.30) 26.4%, rgba(26, 6, 255, 0.30) 100%);
+        filter: blur(168.74745178222656px);
+        position: absolute;
+
+        @include media-breakpoint-up(md) {
+            width: 829.767px;
+            height: 402.685px;
+            top: -450px;
+            left: -202px;
+        }
+    }
+
+    .orange {
+        width: 108.173px;
+        height: 256.083px;
+        left: -100px;
+        top: -200px;
+        transform: rotate(163.932deg);
+        flex-shrink: 0;
+        border-radius: 608.173px;
+        background: radial-gradient(50% 50% at 50% 50%, #8B44FF 0%, #FF783F 100%);
+        filter: blur(168.74745178222656px);
+        position: absolute;
+
+        @include media-breakpoint-up(md) {
+            width: 308.173px;
+            height: 456.083px;
+            left: -170px;
+            top: -400px;
+        }
+    }
+
+    .glow-2 {
+        position: absolute;
+        top: 30%;
+        left: -30vw;
+    }
+
+    .e1 {
+        position: absolute;
+        width: 60vw;
+        height: 20vh;
+        transform: rotate(-89.961deg);
+        flex-shrink: 0;
+        border-radius: 881.629px;
+        background: radial-gradient(76.18% 64.48% at 55.97% 35.8%, rgba(255, 152, 214, 0.60) 0%, rgba(26, 6, 255, 0.60) 73.96%);
+        filter: blur(168.74745178222656px);
+    }
+
+    .e2 {
+        position: absolute;
+        width: 30vw;
+        height: 30vh;
+        transform: rotate(-160.6deg);
+        flex-shrink: 0;
+        border-radius: 441.022px;
+        background: radial-gradient(55.54% 61.91% at 93.5% 14.5%, rgba(66, 132, 199, 0.40) 0%, rgba(152, 203, 255, 0.40) 100%);
+        filter: blur(112.498291015625px);
+    }
+
+    .e3 {
+        position: absolute;
+        width: 35vw;
+        height: 25vh;
+        transform: rotate(-84.834deg);
+        flex-shrink: 0;
+        border-radius: 403.216px;
+        background: radial-gradient(50% 50% at 50% 50%, #8B44FF 0%, #FF783F 100%);
+        filter: blur(168.74745178222656px);
+    }
+
+    .e4 {
+        position: absolute;
+        width: 40vw; 
+        height: 20vh;
+        transform: rotate(-148.121deg);
+        flex-shrink: 0;
+        border-radius: 481.9px;
+        background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(85, 66, 199, 0.60) 26.4%, rgba(174, 110, 255, 0.60) 100%);
+        filter: blur(224.99658203125px);
+    }
+
+    .glow-3 {
+        position: absolute;
+        bottom: 0%;
+        right: 24vw;
+    }
+
+    .e5 {
+        position: absolute;
+        width: 60vw;
+        height: 60vh;
+        transform: rotate(-149.621deg);
+        flex-shrink: 0;
+        border-radius: 671.384px;
+        background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(136, 234, 255, 0.50) 26.4%, rgba(110, 125, 255, 0.50) 82.81%);
+        filter: blur(99.1705322265625px);
+    }
+
+    .e6 {
+        position: absolute;
+        width: 60vw;
+        height: 60vh;
+        flex-shrink: 0;
+        border-radius: 686px;
+        background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(250, 237, 249, 0.50) 10.94%, rgba(239, 55, 255, 0.25) 100%);
+        filter: blur(99.1705322265625px);
+    }
+
+    article {
+        // remove the articles title from the article element.
+        h1:nth-of-type(1) {
+            display: none;
+        }
+
+        // remove the articles author image from the article element.
+        & > div:nth-of-type(1):not(.show) {
+            display: none !important;
+        }
+
+        // remove the auther name and date from the article element.
+        & > p:nth-of-type(1), & > p:nth-of-type(2) {
+            display: none;
+        }
+    }
+
+    .text {
+        color: #{$gray-300};
+    }
+    .other-roles:hover {
+        .text {
+            color: #{$gray-100};
+        }
+    }
+}
+

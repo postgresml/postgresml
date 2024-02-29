@@ -5,9 +5,17 @@
 pub mod common_resources;
 pub use common_resources::CommonResources;
 
+// src/components/sections/employment_benefits
+pub mod employment_benefits;
+pub use employment_benefits::EmploymentBenefits;
+
 // src/components/sections/footers
 pub mod footers;
 
 // src/components/sections/have_questions
 pub mod have_questions;
 pub use have_questions::HaveQuestions;
+
+// src/components/sections/related_articles
+pub mod related_articles;
+pub use related_articles::RelatedArticles;

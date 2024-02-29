@@ -1,21 +1,6 @@
 <%
   use crate::components::sections::common_resources::{CommonResources, Cards};
-
-  struct Perk<'a> {
-    icon: &'a str,
-    title: &'a str,
-    info: &'a str,
-    color: &'a str,
-  }
-
-  let perks: Vec<Perk> = Vec::from([
-    Perk{ icon: "computer", color: "blue", title: "Remote-first", info: "Work from anywhere in the United States." },
-    Perk{ icon: "flight_takeoff", color: "orange", title: "Relocate if you want", info: "We’ll offer a relocation package if you’re interested in moving to the beautiful bay area." },
-    Perk{ icon: "favorite", color: "pink", title: "Platinum-tier insurance", info: "We cover the max allowable (99%) health, dental and vision premiums for platinum tier insurance plans." },
-    Perk{ icon: "payments", color: "green", title: "Stipends", info: "$5k/year hardware budget, $500/month home office reimbursement as well as learning and development/conference stipends." },
-    Perk{ icon: "wifi_off", color: "purple", title: "Unlimited PTO", info: "And we strongly encourage you to use it to stay healthy and happy. It’s typical for team members to take 3-4 weeks per year in addition to holidays." },
-    Perk{ icon: "group", color: "party", title: "Connect in person", info: "The entire team comes together for quarterly on-sites where we do fun stuff like wine tasting and bowling. If you live in the Bay Area, we hike and hang out every Wednesday." },
-  ]);
+  use crate::components::sections::EmploymentBenefits;
 %>
 
 <div data-controller="pages-careers-landing-page" class="overflow-hidden tuck-under-navbar">
@@ -95,26 +80,8 @@
         <div class="position-absolute ellipse-19"></div>
       </div>
 
-      <div class="d-flex flex-column gap-4 py-4 py-lg-5 my-3 my-lg-3">
-        <div class="d-flex flex-column gap-3 text-center">
-          <h2>Benefits</h2>
-          <p class="m-auto body-large-text text-white-200">We take care of our team and care about your well-being.</p>
-        </div>
-        <div class="container mt-3">
-          <div class="row gy-4 gx-4">
-            <% for perk in perks {%>
-            <div class="col-xxl-4 col-md-6 col-12">
-              <div class="card generic-card h-100">
-                <div class="card-body">
-                  <span class="material-symbols-outlined card-img-top icon-<%- perk.color %> d-flex justify-content-center align-items-center"><%- perk.icon %></span>
-                  <h6><%- perk.title%></h6>
-                  <p class="text-white-300"><%- perk.info %></p>
-                </div>
-              </div>
-            </div>
-            <% } %>
-          </div>
-        </div>
+      <div class="py-4 py-lg-5 my-3 my-lg-3">
+        <%+ EmploymentBenefits::new() %>
       </div>
 
       <%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %>
