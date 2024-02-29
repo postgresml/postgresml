@@ -19,7 +19,7 @@
 </h2>
 
 <p align="center">
-    Generative AI and Simple ML with 
+    Generative AI and Traditional ML with 
     <a href="https://www.postgresql.org/" target="_blank">PostgreSQL</a>
 </p>
 
