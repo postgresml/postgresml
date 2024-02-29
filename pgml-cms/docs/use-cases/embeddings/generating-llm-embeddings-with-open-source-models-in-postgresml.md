@@ -1,4 +1,6 @@
-# Generating LLM embeddings with open source models
+# Generating LLM embeddings with open source models in PostgresML
+
+
 
 PostgresML makes it easy to generate embeddings from text in your database using a large selection of state-of-the-art models with one simple call to **`pgml.embed`**`(model_name, text)`. Prove the results in this series to your own satisfaction, for free, by signing up for a GPU accelerated database.
 
@@ -14,6 +16,8 @@ This article is the first in a multipart series that will show you how to build 
 In recent years, embeddings have become an increasingly popular technique in machine learning and data analysis. They are essentially vector representations of data points that capture their underlying characteristics or features. In most programming environments, vectors can be efficiently represented as native array datatypes. They can be used for a wide range of applications, from natural language processing to image recognition and recommendation systems.
 
 They can also turn natural language into quantitative features for downstream machine learning models and applications.
+
+
 
 _Embeddings show us the relationships between rows in the database._
 
@@ -102,7 +106,7 @@ LIMIT 5;
 
 ## Generating embeddings from natural language text
 
-PostgresML provides a simple interface to generate embeddings from text in your database. You can use the [`pgml.embed`](https://postgresml.org/docs/transformers/embeddings) function to generate embeddings for a column of text. The function takes a transformer name and a text value. The transformer will automatically be downloaded and cached on your connection process for reuse. You can see a list of potential good candidate models to generate embeddings on the [Massive Text Embedding Benchmark leaderboard](https://huggingface.co/spaces/mteb/leaderboard).
+PostgresML provides a simple interface to generate embeddings from text in your database. You can use the [`pgml.embed`](/docs/introduction/apis/sql-extensions/pgml.embed) function to generate embeddings for a column of text. The function takes a transformer name and a text value. The transformer will automatically be downloaded and cached on your connection process for reuse. You can see a list of potential good candidate models to generate embeddings on the [Massive Text Embedding Benchmark leaderboard](https://huggingface.co/spaces/mteb/leaderboard).
 
 Since our corpus of documents (movie reviews) are all relatively short and similar in style, we don't need a large model. [`intfloat/e5-small`](https://huggingface.co/intfloat/e5-small) will be a good first attempt. The great thing about PostgresML is you can always regenerate your embeddings later to experiment with different embedding models.
 
@@ -198,7 +202,8 @@ For comparison, it would cost about $299 to use OpenAI's cheapest embedding mode
 | GPU       | 17ms    | $72  | 6 hours   |
 | OpenAI    | 300ms   | $299 | millennia |
 
-\\
+\
+
 
 You can also find embedding models that outperform OpenAI's `text-embedding-ada-002` model across many different tests on the [leaderboard](https://huggingface.co/spaces/mteb/leaderboard). It's always best to do your own benchmarking with your data, models, and hardware to find the best fit for your use case.
 
