@@ -46,7 +46,7 @@ div[data-controller="pages-article-index"] {
 
     .glow-2 {
         position: absolute;
-        top: 20%;
+        top: 30%;
         left: -30vw;
     }
 
@@ -128,7 +128,7 @@ div[data-controller="pages-article-index"] {
         }
 
         // remove the articles author image from the article element.
-        & > div:nth-of-type(1):not(.doc-not-found-message) {
+        & > div:nth-of-type(1):not(.show) {
             display: none !important;
         }
 

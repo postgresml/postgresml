@@ -11,6 +11,7 @@
     } else {String::new()};
 
   let is_blog = article_type == DocType::Blog;
+  let is_career = article_type == DocType::Careers;
 
   let image = match (doc.image.is_some(), is_blog) {
     (true, _) => doc.image.clone().unwrap(),
@@ -26,7 +27,6 @@
 %>
 
 <div data-controller="pages-article-index" class="tuck-under-navbar">
-
   <div class="overflow-hidden position-relative w-100 tuck-under-navbar header-container">
     <div style="position: absolute; width: 100%">
       <div class="blue"></div>
@@ -34,12 +34,12 @@
     </div>
 
     <div class="container position-relative px-xl-5 py-5">
-      <div class="d-flex flex-row gap-xl-4">
-        <div class="d-flex flex-column col-xl-7 col-12 align-items-md-start align-items-center"a>
+      <div class="d-flex flex-lg-row flex-column gap-xl-4">
+        <div class="d-flex flex-column col-lg-7 col-12 align-items-md-start align-items-center"a>
 
           <% if !doc.tags.is_empty() && is_blog {%>
           <div class="eyebrow-text text-gradient-green"><%- doc.tags[0].clone().to_uppercase() %></div>
-          <% } else if !is_blog { %>
+          <% } else if is_career { %>
           <a class="d-flex flex-row align-items-center gap-1 other-roles pb-3" href="/careers">
             <span class="material-symbols-outlined text-white">arrow_back</span> <span class="text eyebrow-text">OTHER ROLES</span>
           </a>
@@ -59,12 +59,12 @@
             <% if !document_not_found {%>
             <div class="d-flex flex-column">
               <% if is_blog {%><div>By<span class="text-white h6"> <%- doc.author.clone().unwrap_or_else(|| String::from("PostgresML")) %></span></div><% } %>
-              <div><% if !is_blog && doc.date.is_some(){ %><span class="body-small-text text-white-300 ">Posted: </span><% } %><%- date %></div>
+              <div><% if is_career && doc.date.is_some(){ %><span class="body-small-text text-white-300 ">Posted: </span><% } %><%- date %></div>
             </div>
             <% } %>
           </div>
         </div>
-        <div class="col d-none d-xl-block">
+        <div class="col <% if is_blog {%>d-none d-lg-block<% } %>">
           <img class="w-100 h-100 rounded-5 object-fit-cover" src="<%- image %>"/>
         </div>
       </div>
@@ -73,13 +73,13 @@
   </div>
 
   <% if !doc.toc_links.clone().is_empty() && is_blog { %>
-    <div class="d-xxl-none col-xl-12 position-sticky stick-under-topnav h-100" style="z-index: calc(1020 - 1)">
-      <%+ Toc::new(&doc.toc_links.clone())%>
-    </div>
+  <div class="d-xxl-none col-xl-12 position-sticky stick-under-topnav h-100" style="z-index: calc(1020 - 1)">
+    <%+ Toc::new(&doc.toc_links.clone())%>
+  </div>
   <% } %>
 
-  <div class="container d-flex flex-column position-relative align-items-center">
-    <div style="position: absolute; width: 100vw; height: 100%; overflow: hidden;">
+  <div class="container position-relative">
+    <div class="position-absolute vw-100 h-100 overflow-hidden" style="left: calc(( 100% - 100vw) / 2)">
       <div class="glow-2">
         <div class="e4"></div>
         <div class="e1"></div>
@@ -97,7 +97,7 @@
     <div class="row position-relative">
       <article class="docs col-12 <% if is_blog {%>col-xxl-10<% } %> overflow-x-auto py-4 px-xl-5">
         <% if document_not_found {%>
-        <div class="doc-not-found-message">
+        <div class="show">
           <h2>Oops, document not found!</h2>
           <p>The document you are searching for may have been moved or replaced with better content.</p>
         </div>
@@ -105,21 +105,27 @@
         <%- doc.html() %>
         <% } %>
 
-        <div class="mt-5">
+        <% if is_career {%>
+        <div class="mt-5 show">
           <h2 class="h2 mb-3">Have Questions?</h2>
           <p><a href="https://discord.gg/DmyJP3qJ7U">Join our Discord</a> and ask us anything! We're friendly and would love to talk about PostgresML and PgCat.</p>
         </div>
+
+        <div class="d-flex show mt-5">
+          <a class="btn btn-primary-web-app" href="/contact">Contact</a>
+        </div>
+        <% } %>
       </article>
 
       <% if !toc.is_empty() && is_blog { %>
-        <div class="d-none d-xxl-block col-2 position-sticky stick-under-topnav h-100 z-1">
-          <%+ Toc::new(&toc)%>
-        </div>
+      <div class="d-none d-xxl-block col-2 position-sticky stick-under-topnav h-100 z-1">
+        <%+ Toc::new(&toc)%>
+      </div>
       <% } %>
       
     </div>
 
-    <% if !is_blog {%>
+    <% if is_career {%>
     <div class="py-4 py-lg-5 my-3 my-lg-3"><%+ EmploymentBenefits::new() %></div>
     <% } %>
 
