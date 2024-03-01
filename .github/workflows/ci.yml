@@ -61,13 +61,13 @@ jobs:
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           git checkout origin/master
-          echo "\q" | cargo pgrx run
-          psql -p 28816 -h localhost -d pgml -P pager -c "DROP EXTENSION IF EXISTS pgml CASCADE;"
-          psql -p 28816 -h localhost -d pgml -P pager -c "DROP SCHEMA IF EXISTS pgml CASCADE;"          
-          psql -p 28816 -h localhost -d pgml -P pager -c "CREATE EXTENSION pgml;"
+          cargo pgrx start
+          psql -p 28816 -h localhost -d pgml -P pager -c "DROP EXTENSION IF EXISTS pgml CASCADE; DROP SCHEMA IF EXISTS pgml CASCADE; CREATE EXTENSION pgml;"
+          cargo pgrx stop
           git checkout $GITHUB_SHA
-          echo "\q" | cargo pgrx run
+          cargo pgrx start
           psql -p 28816 -h localhost -d pgml -P pager -c "ALTER EXTENSION pgml UPDATE;"
+          cargo pgrx stop
       - name: Unit tests
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
