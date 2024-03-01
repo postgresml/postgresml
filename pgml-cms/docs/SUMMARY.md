@@ -38,12 +38,11 @@
     * [Overview](introduction/apis/client-sdks/getting-started.md)
     * [Collections](introduction/apis/client-sdks/collections.md)
     * [Pipelines](introduction/apis/client-sdks/pipelines.md)
-    * [Search](introduction/apis/client-sdks/search.md)
+    * [Vector Search](introduction/apis/client-sdks/search.md)
+    * [Document Search](introduction/apis/client-sdks/document-search.md)
     * [Tutorials](introduction/apis/client-sdks/tutorials/README.md)
       * [Semantic Search](introduction/apis/client-sdks/tutorials/semantic-search.md)
-      * [Semantic Search using Instructor model](introduction/apis/client-sdks/tutorials/semantic-search-using-instructor-model.md)
-      * [Extractive Question Answering](introduction/apis/client-sdks/tutorials/extractive-question-answering.md)
-      * [Summarizing Question Answering](introduction/apis/client-sdks/tutorials/summarizing-question-answering.md)
+      * [Semantic Search Using Instructor Model](introduction/apis/client-sdks/tutorials/semantic-search-1.md)
 
 ## Product
 
