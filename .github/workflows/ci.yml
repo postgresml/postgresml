@@ -63,6 +63,7 @@ jobs:
           git checkout origin/master
           echo "\q" | cargo pgrx run
           psql -p 28816 -h localhost -d pgml -P pager -c "DROP EXTENSION IF EXISTS pgml CASCADE;"
+          psql -p 28816 -h localhost -d pgml -P pager -c "DROP SCHEMA IF EXISTS pgml CASCADE;"          
           psql -p 28816 -h localhost -d pgml -P pager -c "CREATE EXTENSION pgml;"
           git checkout $GITHUB_SHA
           echo "\q" | cargo pgrx run
