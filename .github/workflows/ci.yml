@@ -61,6 +61,7 @@ jobs:
 
           if [[ ! -d ~/.pgrx ]]; then
             cargo pgrx init
+            echo "shared_preload_libraries = 'pgml'" >> ~/.pgrx/data-16/postgresql.conf
           fi
 
           git checkout master

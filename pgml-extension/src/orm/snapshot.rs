@@ -749,7 +749,9 @@ impl Snapshot {
                     self.relation_name_quoted()
                 )
             }
-            false => self.test_sampling.get_sql(&self.relation_name_quoted(), self.columns.clone()),
+            false => self
+                .test_sampling
+                .get_sql(&self.relation_name_quoted(), self.columns.clone()),
         }
     }
 
