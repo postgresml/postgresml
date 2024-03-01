@@ -65,6 +65,7 @@ jobs:
 
           git checkout master
           echo "\q" | cargo pgrx run
+          echo "shared_preload_libraries = 'pgml'" >> ~/.pgrx/data-16/postgresql.conf
           psql -p 28816 -h localhost -d pgml -P pager -c "CREATE EXTENSION pgml;"
           git checkout $CI_BRANCH
           echo "\q" | cargo pgrx run
