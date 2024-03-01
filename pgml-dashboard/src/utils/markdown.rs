@@ -1,6 +1,7 @@
 use crate::api::cms::{DocType, Document};
 use crate::{templates::docs::TocLink, utils::config};
 use anyhow::Context;
+use comrak::{format_html_with_plugins, parse_document, ComrakPlugins};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -1341,14 +1342,29 @@ impl SiteSearch {
             .map(|r| {
                 let SearchResultWithoutSnippet { title, contents, path } =
                     serde_json::from_value(r["document"].clone())?;
+                let snippet = if let Some(description) = r["document"]["description"].as_str().map(|t| t.to_owned()) {
+                    description
+                } else {
+                    let title = r["document"]["title"].as_str().unwrap_or("xzxzxz");
+                    let author = r["document"]["title"].as_str().unwrap_or("xzxzxz");
+                    // The heuristics used here are ok, not the best it will be better when we can just use the description field
+                    contents
+                        .lines()
+                        .take(100)
+                        .filter(|l| !l.is_empty() && !l.contains(title) && !l.contains(author) && l.len() > 30)
+                        .take(1)
+                        .collect::<Vec<&str>>()
+                        .join("")
+                        .split(' ')
+                        .take(20)
+                        .collect::<Vec<&str>>()
+                        .join(" ")
+                        + "&nbsp;..."
+                };
                 let path = path
                     .replace(".md", "")
                     .replace(&config::static_dir().display().to_string(), "");
-                Ok(SearchResult {
-                    title,
-                    path,
-                    snippet: contents.split(' ').take(20).collect::<Vec<&str>>().join(" ") + "&nbsp;...",
-                })
+                Ok(SearchResult { title, path, snippet })
             })
             .collect()
     }
@@ -1361,12 +1377,22 @@ impl SiteSearch {
                 .map(|path| async move { Document::from_path(&path).await }),
         )
         .await?;
+        // Filter out documents who only have 1 line (this is usually just an empty document with the title as the first line)
+        // and documents that are in our excluded paths list
         let documents: Vec<Document> = documents
             .into_iter()
             .filter(|f| {
                 !EXCLUDED_DOCUMENT_PATHS
                     .iter()
                     .any(|p| f.path == config::cms_dir().join(p))
+                    && !f
+                        .contents
+                        .lines()
+                        .skip(1)
+                        .collect::<Vec<&str>>()
+                        .join("")
+                        .trim()
+                        .is_empty()
             })
             .collect();
         let documents: Vec<pgml::types::Json> = documents
