@@ -1,3 +1,8 @@
+---
+description: >-
+    Generate high quality embeddings with faster end-to-end vector operations without an additional vector database. 
+---
+
 # pgml.embed()
 
 Embeddings are a numeric representation of text. They are used to represent words and sentences as vectors, an array of numbers. Embeddings can be used to find similar pieces of text, by comparing the similarity of the numeric vectors using a distance measure, or they can be used as input features for other machine learning models, since most algorithms can't use text directly.

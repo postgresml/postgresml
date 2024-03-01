@@ -1,3 +1,7 @@
+---
+description: >-
+    Compare two projects that both aim to provide an SQL interface to ML algorithms and the data they require. 
+---
 # MindsDB vs PostgresML
 
 ## Introduction
