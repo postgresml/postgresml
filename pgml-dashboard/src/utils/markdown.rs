@@ -1,6 +1,7 @@
 use crate::api::cms::{DocType, Document};
 use crate::{templates::docs::TocLink, utils::config};
 use anyhow::Context;
+use comrak::{format_html_with_plugins, parse_document, ComrakPlugins};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -20,6 +21,9 @@ use serde::Deserialize;
 use std::fmt;
 use std::sync::Mutex;
 use url::Url;
+
+// Excluded paths in the pgml-cms directory
+const EXCLUDED_DOCUMENT_PATHS: [&str; 1] = ["blog/README.md"];
 
 pub struct MarkdownHeadings {
     header_map: Arc<Mutex<HashMap<String, usize>>>,
@@ -1291,7 +1295,7 @@ impl SiteSearch {
             .collect()
     }
 
-    pub async fn search(&self, query: &str, doc_type: Option<DocType>) -> anyhow::Result<Vec<SearchResult>> {
+    pub async fn search(&self, query: &str, doc_type: Option<DocType>) -> anyhow::Result<Vec<Document>> {
         let mut search = serde_json::json!({
             "query": {
                 // "full_text_search": {
@@ -1323,10 +1327,8 @@ impl SiteSearch {
             "limit": 10
         });
         if let Some(doc_type) = doc_type {
-            search["query"]["filter"] = serde_json::json!({
-                "doc_type": {
-                    "$eq": doc_type
-                }
+            search["query"]["filter"]["doc_type"] = serde_json::json!({
+                "$eq": doc_type
             });
         }
         let results = self.collection.search_local(search.into(), &self.pipeline).await?;
@@ -1334,18 +1336,10 @@ impl SiteSearch {
         results["results"]
             .as_array()
             .context("Error getting results from search")?
-            .into_iter()
+            .iter()
             .map(|r| {
-                let SearchResultWithoutSnippet { title, contents, path } =
-                    serde_json::from_value(r["document"].clone())?;
-                let path = path
-                    .replace(".md", "")
-                    .replace(&config::static_dir().display().to_string(), "");
-                Ok(SearchResult {
-                    title,
-                    path,
-                    snippet: contents.split(' ').take(20).collect::<Vec<&str>>().join(" ") + "&nbsp;...",
-                })
+                let document: Document = serde_json::from_value(r["document"].clone())?;
+                Ok(document)
             })
             .collect()
     }
@@ -1358,6 +1352,24 @@ impl SiteSearch {
                 .map(|path| async move { Document::from_path(&path).await }),
         )
         .await?;
+        // Filter out documents who only have 1 line (this is usually just an empty document with the title as the first line)
+        // and documents that are in our excluded paths list
+        let documents: Vec<Document> = documents
+            .into_iter()
+            .filter(|f| {
+                !EXCLUDED_DOCUMENT_PATHS
+                    .iter()
+                    .any(|p| f.path == config::cms_dir().join(p))
+                    && !f
+                        .contents
+                        .lines()
+                        .skip(1)
+                        .collect::<Vec<&str>>()
+                        .join("")
+                        .trim()
+                        .is_empty()
+            })
+            .collect();
         let documents: Vec<pgml::types::Json> = documents
             .into_iter()
             .map(|d| {

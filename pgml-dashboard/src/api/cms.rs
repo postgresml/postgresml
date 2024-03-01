@@ -16,7 +16,7 @@ use crate::{
     guards::Cluster,
     responses::{Response, ResponseOk, Template},
     templates::docs::*,
-    utils::config,
+    utils::{config, markdown::SearchResult},
 };
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -626,6 +626,40 @@ impl Collection {
 #[get("/search?<query>", rank = 20)]
 async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
     let results = site_search.search(query, None).await.expect("Error performing search");
+
+    let results: Vec<SearchResult> = results
+        .into_iter()
+        .map(|document| {
+            let snippet = if let Some(description) = document.description {
+                description
+            } else {
+                let author = document.author.unwrap_or_else(|| String::from("xzxzxz"));
+                // The heuristics used here are ok, not the best it will be better when we can just use the description field
+                document
+                    .contents
+                    .lines()
+                    .find(|l| !l.is_empty() && !l.contains(&document.title) && !l.contains(&author) && l.len() > 30)
+                    .unwrap_or("")
+                    .split(' ')
+                    .take(20)
+                    .collect::<Vec<&str>>()
+                    .join(" ")
+                    + "&nbsp;..."
+            };
+            let path = document
+                .path
+                .to_str()
+                .unwrap_or_default()
+                .replace(".md", "")
+                .replace(&config::static_dir().display().to_string(), "");
+            SearchResult {
+                title: document.title,
+                path,
+                snippet,
+            }
+        })
+        .collect();
+
     ResponseOk(
         Template(Search {
             query: query.to_string(),
