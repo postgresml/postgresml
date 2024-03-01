@@ -62,7 +62,7 @@ jobs:
       - name: Update extension
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
-          git checkout master
+          git checkout origin/master
           echo "\q" | cargo pgrx run
           psql -p 28816 -h localhost -d pgml -P pager -c "CREATE EXTENSION pgml;"
           git checkout $GITHUB_SHA
@@ -75,5 +75,5 @@ jobs:
         run: |
           cargo pgrx test
           cargo pgrx start
-          psql -p 28815 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
+          psql -p 28816 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
           cargo pgrx stop
