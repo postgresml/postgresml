@@ -1295,7 +1295,7 @@ impl SiteSearch {
             .collect()
     }
 
-    pub async fn search(&self, query: &str, doc_type: Option<DocType>) -> anyhow::Result<Vec<SearchResult>> {
+    pub async fn search(&self, query: &str, doc_type: Option<DocType>) -> anyhow::Result<Vec<Document>> {
         let mut search = serde_json::json!({
             "query": {
                 // "full_text_search": {
@@ -1327,10 +1327,8 @@ impl SiteSearch {
             "limit": 10
         });
         if let Some(doc_type) = doc_type {
-            search["query"]["filter"] = serde_json::json!({
-                "doc_type": {
-                    "$eq": doc_type
-                }
+            search["query"]["filter"]["doc_type"] = serde_json::json!({
+                "$eq": doc_type
             });
         }
         let results = self.collection.search_local(search.into(), &self.pipeline).await?;
@@ -1340,31 +1338,8 @@ impl SiteSearch {
             .context("Error getting results from search")?
             .iter()
             .map(|r| {
-                let SearchResultWithoutSnippet { title, contents, path } =
-                    serde_json::from_value(r["document"].clone())?;
-                let snippet = if let Some(description) = r["document"]["description"].as_str().map(|t| t.to_owned()) {
-                    description
-                } else {
-                    let title = r["document"]["title"].as_str().unwrap_or("xzxzxz");
-                    let author = r["document"]["title"].as_str().unwrap_or("xzxzxz");
-                    // The heuristics used here are ok, not the best it will be better when we can just use the description field
-                    contents
-                        .lines()
-                        .take(100)
-                        .filter(|l| !l.is_empty() && !l.contains(title) && !l.contains(author) && l.len() > 30)
-                        .take(1)
-                        .collect::<Vec<&str>>()
-                        .join("")
-                        .split(' ')
-                        .take(20)
-                        .collect::<Vec<&str>>()
-                        .join(" ")
-                        + "&nbsp;..."
-                };
-                let path = path
-                    .replace(".md", "")
-                    .replace(&config::static_dir().display().to_string(), "");
-                Ok(SearchResult { title, path, snippet })
+                let document: Document = serde_json::from_value(r["document"].clone())?;
+                Ok(document)
             })
             .collect()
     }
