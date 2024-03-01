@@ -73,4 +73,5 @@ jobs:
       - name: Integration tests
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
+          echo "\q" | cargo pgrx run
           psql -p 28816 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
