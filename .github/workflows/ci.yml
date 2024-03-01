@@ -10,8 +10,9 @@ jobs:
         working-directory: pgml-extension
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Fetch master
+        run: |
+          git fetch origin master --depth 1
       - name: Changed files in pgml-extension
         id: pgml_extension_changed
         run: |
