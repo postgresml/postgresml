@@ -56,25 +56,22 @@ jobs:
             ~/.cargo
             pgml-extension/target
             ~/.pgrx
-          key: ${{ runner.os }}-rust-1.74-${{ hashFiles('pgml-extension/Cargo.lock') }}-bust1
-      - name: Update extension
+          key: ${{ runner.os }}-rust-1.74-${{ hashFiles('pgml-extension/Cargo.lock') }}
+      - name: Update extension test
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           git checkout origin/master
           echo "\q" | cargo pgrx run
+          psql -p 28816 -h localhost -d pgml -P pager -c "DROP EXTENSION IF EXISTS pgml CASCADE;"
           psql -p 28816 -h localhost -d pgml -P pager -c "CREATE EXTENSION pgml;"
           git checkout $GITHUB_SHA
           echo "\q" | cargo pgrx run
           psql -p 28816 -h localhost -d pgml -P pager -c "ALTER EXTENSION pgml UPDATE;"
       - name: Unit tests
-        env:
-          CI_BRANCH: ${{ steps.current_version.outputs.CI_BRANCH }}
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           cargo pgrx test
       - name: Integration tests
-        env:
-          CI_BRANCH: ${{ steps.current_version.outputs.CI_BRANCH }}
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           cargo pgrx start
