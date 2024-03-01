@@ -16,7 +16,6 @@ use comrak::{
 use convert_case;
 use itertools::Itertools;
 use regex::Regex;
-use serde::Deserialize;
 use std::fmt;
 use std::sync::Mutex;
 use url::Url;
