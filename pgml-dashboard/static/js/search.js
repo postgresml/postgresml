@@ -15,11 +15,16 @@ export default class extends Controller {
         this.target.addEventListener('shown.bs.modal', this.focusSearchInput)
         this.target.addEventListener('hidden.bs.modal', this.updateSearch)
         this.searchInput.addEventListener('input', (e) => this.search(e))
+
+        this.timer;
     }
 
     search(e) {
+        clearTimeout(this.timer);
         const query = e.currentTarget.value
-        this.searchFrame.src = `/search?query=${query}`
+        this.timer = setTimeout(() => {
+            this.searchFrame.src = `/search?query=${query}`
+        }, 250);
     }
 
     focusSearchInput = (e) => {
