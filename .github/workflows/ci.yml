@@ -58,16 +58,13 @@ jobs:
             cargo pgrx init
             echo "shared_preload_libraries = 'pgml'" >> ~/.pgrx/data-16/postgresql.conf
           fi
-      - name: Get current version
-        id: current_version
-        run: echo "CI_BRANCH=$(git name-rev --name-only HEAD)" >> $GITHUB_OUTPUT
       - name: Update extension
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           git checkout master
           echo "\q" | cargo pgrx run
           psql -p 28816 -h localhost -d pgml -P pager -c "CREATE EXTENSION pgml;"
-          git checkout $CI_BRANCH
+          git checkout $GITHUB_SHA
           echo "\q" | cargo pgrx run
           psql -p 28816 -h localhost -d pgml -P pager -c "ALTER EXTENSION pgml UPDATE;"
       - name: Run tests
