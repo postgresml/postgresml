@@ -10,6 +10,8 @@ jobs:
         working-directory: pgml-extension
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
       - name: Fetch master
         run: |
           git fetch origin master --depth 1
@@ -17,7 +19,7 @@ jobs:
         id: pgml_extension_changed
         run: |
           echo "PGML_EXTENSION_CHANGED_FILES=$(git diff --name-only HEAD origin/master . | wc -l)" >> $GITHUB_OUTPUT
-      - name: Install dependencies
+      - name: System dependencies
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           sudo apt-get update && \
@@ -35,19 +37,6 @@ jobs:
               python3 \
               lld
           sudo pip3 install -r requirements.linux.txt
-      - name: Cache dependencies
-        uses: buildjet/cache@v3
-        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
-        with:
-          path: |
-            ~/.cargo
-            pgml-extension/target
-            ~/.pgrx
-          key: ${{ runner.os }}-rust-1.74-${{ hashFiles('pgml-extension/Cargo.lock') }}
-      - name: Submodules
-        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
-        run: |
-          git submodule update --init --recursive
       - name: Install pgrx
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
@@ -59,6 +48,15 @@ jobs:
             cargo pgrx init
             echo "shared_preload_libraries = 'pgml'" >> ~/.pgrx/data-16/postgresql.conf
           fi
+      - name: Cache dependencies
+        uses: buildjet/cache@v3
+        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
+        with:
+          path: |
+            ~/.cargo
+            pgml-extension/target
+            ~/.pgrx
+          key: ${{ runner.os }}-rust-1.74-${{ hashFiles('pgml-extension/Cargo.lock') }}-bust1
       - name: Update extension
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
