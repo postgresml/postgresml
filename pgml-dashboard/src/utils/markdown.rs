@@ -1,7 +1,6 @@
 use crate::api::cms::{DocType, Document};
 use crate::{templates::docs::TocLink, utils::config};
 use anyhow::Context;
-use comrak::{format_html_with_plugins, parse_document, ComrakPlugins};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -1219,13 +1218,6 @@ pub fn mkdocs<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a>>) -> anyho
 
 pub async fn get_document(path: &PathBuf) -> anyhow::Result<String> {
     Ok(tokio::fs::read_to_string(path).await?)
-}
-
-#[derive(Deserialize)]
-struct SearchResultWithoutSnippet {
-    title: String,
-    contents: String,
-    path: String,
 }
 
 pub struct SearchResult {
