@@ -48,11 +48,9 @@ jobs:
         run: |
           git submodule update --init --recursive
       - name: Get current version
-        id: current-version
-        run: echo "CI_BRANCH=$(git name-rev --name-only HEAD)" >> $GITHUB_OUTPUT  
-      - name: Run tests
-        env:
-          CI_BRANCH: ${{ steps.current-version.outputs.CI_BRANCH }}
+        id: current_version
+        run: echo "CI_BRANCH=$(git name-rev --name-only HEAD)" >> $GITHUB_OUTPUT
+      - name: Install Dependencies
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
@@ -63,14 +61,22 @@ jobs:
             cargo pgrx init
             echo "shared_preload_libraries = 'pgml'" >> ~/.pgrx/data-16/postgresql.conf
           fi
-
+      - name: Update extension
+        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
+        run: |
+          git fetch
           git checkout master
           echo "\q" | cargo pgrx run
           psql -p 28816 -h localhost -d pgml -P pager -c "CREATE EXTENSION pgml;"
           git checkout $CI_BRANCH
           echo "\q" | cargo pgrx run
           psql -p 28816 -h localhost -d pgml -P pager -c "ALTER EXTENSION pgml UPDATE;"
+      - name: Run tests
+        env:
+          CI_BRANCH: ${{ steps.current_version.outputs.CI_BRANCH }}
+        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
+        run: |
           cargo pgrx test
-#          cargo pgrx start
-#          psql -p 28815 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
-#          cargo pgrx stop
+          cargo pgrx start
+          psql -p 28815 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
+          cargo pgrx stop
