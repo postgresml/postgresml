@@ -1,3 +1,7 @@
+---
+description: Organizational building blocks of the SDK. Manage all documents and related chunks, embeddings, tsvectors, and pipelines.
+---
+
 # Collections
 
 Collections are the organizational building blocks of the SDK. They manage all documents and related chunks, embeddings, tsvectors, and pipelines.

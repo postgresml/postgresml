@@ -1,5 +1,5 @@
 ---
-description: Example for Semantic Search
+description: JavaScript and Python code snippets for using instructor models in more advanced search use cases.
 ---
 
 # Semantic Search Using Instructor Model

@@ -1,3 +1,7 @@
+---
+description: Pipelines are composed of a model, splitter, and additional optional arguments. 
+---
+
 # Pipelines
 
 `Pipeline`s define the schema for the transformation of documents. Different `Pipeline`s can be used for different tasks.&#x20;

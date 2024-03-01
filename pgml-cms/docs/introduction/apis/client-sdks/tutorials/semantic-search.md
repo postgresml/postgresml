@@ -1,5 +1,5 @@
 ---
-description: Example for Semantic Search
+description: JavaScript and Python code snippets for peforming semantic search using the SDK.
 ---
 
 # Semantic Search
