@@ -1,0 +1,9 @@
+<turbo-frame id="blog-search-results" target="_top">
+  <div data-controller="pages-blog-blog-search">
+    <div class="d-flex flex-wrap gap-4">
+      <% for item in html { %>
+        <%- item %>
+      <% } %>
+    </div>
+  </div>
+</turbo-frame>

@@ -21,6 +21,9 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+use sailfish::TemplateOnce;
+use crate::components::cards::blog::article_preview;
+
 lazy_static! {
     pub static ref BLOG: Collection = Collection::new(
         "Blog",
@@ -117,6 +120,24 @@ pub struct Document {
 impl Document {
     pub fn new() -> Document {
         Document { ..Default::default() }
+    }
+
+    pub async fn from_url(url: &str) -> anyhow::Result<Document, std::io::Error> {
+        let doc_type = match url.split('/').collect::<Vec<&str>>().get(1) {
+            Some(&"blog") => Some(DocType::Blog),
+            Some(&"docs") => Some(DocType::Docs),
+            Some(&"careers") => Some(DocType::Careers),
+            _ => None,
+        };
+
+        let path = match doc_type {
+            Some(DocType::Blog) => BLOG.url_to_path(url),
+            Some(DocType::Docs) => DOCS.url_to_path(url),
+            Some(DocType::Careers) => CAREERS.url_to_path(url),
+            _ => PathBuf::new(),
+        };
+
+        Document::from_path(&path).await
     }
 
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
@@ -669,6 +690,34 @@ async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSea
     )
 }
 
+#[get("/search_blog?<query>", rank = 20)]
+async fn search_blog(query: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
+    let results = if query.len() > 0 {
+        site_search.search(query, Some(DocType::Blog)).await.expect("Error performing search")
+            .into_iter()
+            .map(|document| article_preview::DocMeta::from_document(document))
+            .collect::<Vec<article_preview::DocMeta>>()
+
+        } else {
+            let mut results = Vec::new();
+
+            for url in BLOG.get_all_urls() {
+                let doc = Document::from_url(&url).await.unwrap();
+
+                results.push(article_preview::DocMeta::from_document(doc));
+            }
+
+            results
+        };
+
+    ResponseOk(
+            crate::components::pages::blog::blog_search::Response::new()
+                .pattern(results, query.to_string())
+                .render_once()
+                .unwrap()
+        )
+}
+
 #[get("/blog/.gitbook/assets/<path>", rank = 10)]
 pub async fn get_blog_asset(path: &str) -> Option<NamedFile> {
     BLOG.get_asset(path).await
@@ -747,11 +796,43 @@ async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
     .theme(Theme::Docs)
     .footer(cluster.context.marketing_footer.to_string());
 
+
+    let mut index = Vec::new();
+
+    let urls = BLOG.get_all_urls();
+
+    for url in urls {
+        let file = BLOG.url_to_path(url.as_ref());
+
+        let doc = crate::api::cms::Document::from_path(&file).await.unwrap();
+
+        let meta = article_preview::DocMeta {
+            description: doc.description,
+            author: doc.author,
+            author_image: doc.author_image,
+            date: doc.date,
+            image: doc.image,
+            featured: doc.featured,
+            tags: doc.tags,
+            title: doc.title,
+            path: doc.url,
+        };
+
+        index.push(meta)
+    }
+
+    let featured_cards = index
+        .clone()
+        .into_iter()
+        .filter(|x| x
+        .featured)
+        .collect::<Vec<article_preview::DocMeta>>();
+
+
     Ok(ResponseOk(
         layout.render(
             crate::components::pages::blog::LandingPage::new(cluster)
-                .index(&BLOG)
-                .await,
+                .featured_cards(featured_cards)
         ),
     ))
 }
@@ -802,7 +883,8 @@ pub fn routes() -> Vec<Route> {
         get_docs,
         get_docs_asset,
         get_user_guides,
-        search
+        search,
+        search_blog
     ]
 }
 
