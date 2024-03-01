@@ -1,2 +1,7 @@
 div[data-controller="pages-blog-blog-search-call"] {
+  button {
+    @include media-breakpoint-down(md) {
+      padding: 12px 16px;
+    }
+  }
 }

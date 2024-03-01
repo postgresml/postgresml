@@ -15,6 +15,7 @@ export default class extends Controller {
     clearTimeout(this.timer)
     this.timer = setTimeout(() => {
       this.searchFrameTarget.src = `/search_blog?query=${this.searchInputTarget.value}`
+      this.searchInputTarget.value = ""
     }, 250)
   }
 }

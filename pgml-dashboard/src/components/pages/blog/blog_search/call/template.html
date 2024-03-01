@@ -1,10 +1,10 @@
 <div data-controller="pages-blog-blog-search-call" class="d-flex flex-column">
   <div class="w-100 d-flex flex-row justify-content-end">
     <div class="input-group btn-search-input-marketing p-1 mb-5" style="max-width: 35rem;">
-      <input type="text" class="form-control p-1 me-1" placeholder="Search our blogs" name="search" id="search-input" autocomplete="off" data-pages-blog-blog-search-call-target="searchInput">
+      <input type="text" class="form-control p-1 ps-4 me-1" placeholder="Search our blogs" name="search" id="search-input" autocomplete="off" data-pages-blog-blog-search-call-target="searchInput" data-action="keydown.enter->pages-blog-blog-search-call#search">
         <button class="btn btn-primary rounded-2" data-action="click->pages-blog-blog-search-call#search">
           <span class="material-symbols-outlined">search</span>
-          Search
+          <span class="d-none d-md-block">Search</span>
         </button>
       </input>
     </div>
