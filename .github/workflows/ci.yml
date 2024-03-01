@@ -16,7 +16,7 @@ jobs:
       - name: Changed files in pgml-extension
         id: pgml_extension_changed
         run: |
-          echo "PGML_EXTENSION_CHANGED_FILES=$(git diff --name-only HEAD master . | wc -l)" >> $GITHUB_OUTPUT
+          echo "PGML_EXTENSION_CHANGED_FILES=$(git diff --name-only HEAD origin/master . | wc -l)" >> $GITHUB_OUTPUT
       - name: Install dependencies
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
