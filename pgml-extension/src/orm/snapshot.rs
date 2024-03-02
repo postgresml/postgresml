@@ -11,8 +11,7 @@ use serde_json::json;
 
 use crate::orm::Sampling;
 use crate::orm::Status;
-use crate::orm::{Dataset, TextClassificationDataset, TextPairClassificationDataset, ConversationDataset};
-
+use crate::orm::{ConversationDataset, Dataset, TextClassificationDataset, TextPairClassificationDataset};
 
 // Categories use a designated string to represent NULL categorical values,
 // rather than Option<String> = None, because the JSONB serialization schema
@@ -789,13 +788,15 @@ impl Snapshot {
             let mut text_test: Vec<String> = Vec::with_capacity(num_test_rows);
             let mut class_test: Vec<String> = Vec::with_capacity(num_test_rows);
 
-            let class_column_value = dataset_args.0
+            let class_column_value = dataset_args
+                .0
                 .get("class_column")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| "class".to_string());
 
-            let text_column_value = dataset_args.0
+            let text_column_value = dataset_args
+                .0
                 .get("text_column")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string())
@@ -854,7 +855,10 @@ impl Snapshot {
         data
     }
 
-    pub fn text_pair_classification_dataset(&mut self, dataset_args: default!(JsonB, "'{}'")) -> TextPairClassificationDataset {
+    pub fn text_pair_classification_dataset(
+        &mut self,
+        dataset_args: default!(JsonB, "'{}'"),
+    ) -> TextPairClassificationDataset {
         let mut data = None;
 
         Spi::connect(|client| {
@@ -871,20 +875,22 @@ impl Snapshot {
             let mut text2_test: Vec<String> = Vec::with_capacity(num_test_rows);
             let mut class_test: Vec<String> = Vec::with_capacity(num_test_rows);
 
-
-            let text1_column_value = dataset_args.0
+            let text1_column_value = dataset_args
+                .0
                 .get("text1_column")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| "text1".to_string());
 
-            let text2_column_value = dataset_args.0
+            let text2_column_value = dataset_args
+                .0
                 .get("text2_column")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| "text2".to_string());
 
-            let class_column_value = dataset_args.0
+            let class_column_value = dataset_args
+                .0
                 .get("class_column")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string())
@@ -968,20 +974,22 @@ impl Snapshot {
             let mut user_test: Vec<String> = Vec::with_capacity(num_test_rows);
             let mut assistant_test: Vec<String> = Vec::with_capacity(num_test_rows);
 
-
-            let system_column_value = dataset_args.0
+            let system_column_value = dataset_args
+                .0
                 .get("system_column")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| "system".to_string());
 
-            let user_column_value = dataset_args.0
+            let user_column_value = dataset_args
+                .0
                 .get("user_column")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| "user".to_string());
 
-            let assistant_column_value = dataset_args.0
+            let assistant_column_value = dataset_args
+                .0
                 .get("assistant_column")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string())

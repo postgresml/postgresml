@@ -12,11 +12,11 @@ pub mod strategy;
 pub mod task;
 
 pub use algorithm::Algorithm;
-pub use dataset::Dataset;
-pub use dataset::TextDatasetType;
-pub use dataset::TextClassificationDataset;
-pub use dataset::TextPairClassificationDataset;
 pub use dataset::ConversationDataset;
+pub use dataset::Dataset;
+pub use dataset::TextClassificationDataset;
+pub use dataset::TextDatasetType;
+pub use dataset::TextPairClassificationDataset;
 pub use model::Model;
 pub use project::Project;
 pub use runtime::Runtime;

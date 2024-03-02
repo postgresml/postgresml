@@ -907,7 +907,7 @@ fn tune(
         LIMIT 1;",
         vec![(PgBuiltInOids::TEXTOID.oid(), project_name.into_datum())],
     );
-    
+
     let mut deploy = true;
     match automatic_deploy {
         // Deploy only if metrics are better than previous model.
@@ -926,8 +926,7 @@ fn tune(
                     .and_then(|value| value.as_f64())
                     .unwrap_or_default(); // Default to 0.0 if the key is not present or conversion fails
 
-
-                if project.task.value_is_better(deployed_value, new_value){
+                if project.task.value_is_better(deployed_value, new_value) {
                     deploy = false;
                 }
             }
@@ -947,7 +946,6 @@ fn tune(
         deploy,
     )])
 }
-
 
 #[cfg(feature = "python")]
 #[pg_extern(name = "sklearn_f1_score")]

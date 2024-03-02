@@ -5,8 +5,9 @@ use pyo3::prelude::*;
 /// Formats the sum of two numbers as string.
 #[pyfunction]
 fn insert_logs(project_id: i64, model_id: i64, logs: String) -> PyResult<String> {
+    
     let id_value = Spi::get_one_with_args::<i64>(
-        "INSERT INTO pgml.logs (model_id, project_id, logs) VALUES ($1, $2, $3::JSONB) RETURNING id;",
+        "INSERT INTO pgml.logs (project_id, model_id, logs) VALUES ($1, $2, $3::JSONB) RETURNING id;",
         vec![
             (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
             (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
@@ -15,7 +16,8 @@ fn insert_logs(project_id: i64, model_id: i64, logs: String) -> PyResult<String>
     )
     .unwrap()
     .unwrap();
-
+    
+    
     Ok(format!("Inserted logs with id: {}", id_value))
 }
 

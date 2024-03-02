@@ -5,6 +5,7 @@ import time
 import queue
 import sys
 import json
+from datetime import datetime
 
 import datasets
 from InstructorEmbedding import INSTRUCTOR
@@ -56,7 +57,7 @@ import wandb
 from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 from trl.trainer import ConstantLengthDataset
 from peft import LoraConfig, get_peft_model
-import pypgrx
+from pypgrx import print_info, insert_logs
 from abc import abstractmethod
 
 transformers.logging.set_verbosity_info()
@@ -1013,13 +1014,22 @@ def generate(model_id, data, config):
 # LLM Fine-Tuning
 #######################
 
+
 class PGMLCallback(TrainerCallback):
     "A callback that prints a message at the beginning of training"
+
+    def __init__(self, project_id, model_id):
+        self.project_id = project_id
+        self.model_id = model_id
 
     def on_log(self, args, state, control, logs=None, **kwargs):
         _ = logs.pop("total_flos", None)
         if state.is_local_process_zero:
-            print(logs)
+            logs["step"] = state.global_step
+            logs["max_steps"] = state.max_steps
+            logs["timestamp"] = str(datetime.now())
+            print_info(json.dumps(logs))
+            insert_logs(self.project_id, self.model_id, json.dumps(logs))
 
 
 class FineTuningBase:
@@ -1039,7 +1049,6 @@ class FineTuningBase:
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
         self.token = None
-        self.lora_config = None
         self.load_in_8bit = False
         self.tokenizer_args = None
 
@@ -1067,9 +1076,6 @@ class FineTuningBase:
             project_name = "_".join(hyperparameters.pop("project_name").split())
             self.training_args["hub_model_id"] = project_name
 
-        if "lora_config" in hyperparameters:
-            self.lora_config = hyperparameters.pop("lora_config")
-
         if "load_in_8bit" in hyperparameters:
             self.load_in_8bit = hyperparameters.pop("load_in_8bit")
 
@@ -1078,6 +1084,37 @@ class FineTuningBase:
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name, token=self.token
+        )
+
+    def print_number_of_trainable_model_parameters(self, model):
+        """Prints the number of trainable parameters in the model.
+
+        This function traverses all the parameters of a given PyTorch model to
+        count the total number of parameters as well as the number of trainable
+        (i.e., requires gradient) parameters.
+
+        Args:
+            model: A PyTorch model whose parameters you want to count.
+        """
+
+        # Initialize counters for trainable and total parameters
+        trainable_model_params = 0
+        all_model_params = 0
+
+        # Loop through all named parameters in the model
+        for _, param in model.named_parameters():
+            # Update the total number of parameters
+            all_model_params += param.numel()
+
+            # Check if the parameter requires gradient and update the trainable parameter counter
+            if param.requires_grad:
+                trainable_model_params += param.numel()
+
+        # Calculate and print the number and percentage of trainable parameters
+        print_info(f"Trainable model parameters: {trainable_model_params}")
+        print_info(f"All model parameters: {all_model_params}")
+        print_info(
+            f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%"
         )
 
     @abstractmethod
@@ -1147,7 +1184,6 @@ class FineTuningTextClassification(FineTuningBase):
         self.model = AutoModelForSequenceClassification.from_pretrained(
             self.model_name,
             num_labels=self.num_labels,
-            torch_dtype=torch.float16,
             id2label=self.id2label,
             label2id=self.label2id,
         )
@@ -1220,19 +1256,19 @@ class FineTuningTextClassification(FineTuningBase):
         """
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
 
-        training_args = TrainingArguments(
+        args = TrainingArguments(
             output_dir=self.path, logging_dir=self.path, **self.training_args
         )
 
         self.trainer = Trainer(
             model=self.model,
-            args=training_args,
+            args=args,
             train_dataset=self.train_dataset,
             eval_dataset=self.test_dataset,
             tokenizer=self.tokenizer,
             data_collator=data_collator,
             compute_metrics=self.compute_metrics,
-            callbacks=[PGMLCallback()],
+            callbacks=[PGMLCallback(self.project_id, self.model_id)],
         )
 
         self.trainer.train()
@@ -1254,16 +1290,212 @@ class FineTuningTextClassification(FineTuningBase):
 
         if "eval_accuracy" in metrics.keys():
             metrics["accuracy"] = metrics.pop("eval_accuracy")
+       
 
+        # Drop all the keys that are not floats or ints to be compatible for pgml-extension metrics typechecks
+        metrics = {
+            key: value
+            for key, value in metrics.items()
+            if isinstance(value, (int, float))
+        }
+
+        return metrics
+
+class FineTuningTextPairClassification(FineTuningTextClassification):
+    def __init__(
+        self,
+        project_id: int,
+        model_id: int,
+        train_dataset: datasets.Dataset,
+        test_dataset: datasets.Dataset,
+        path: str,
+        hyperparameters: dict,
+    ) -> None:
+        """
+        Initializes a FineTuning object.
+
+        Args:
+            project_id (int): The ID of the project.
+            model_id (int): The ID of the model.
+            train_dataset (Dataset): The training dataset.
+            test_dataset (Dataset): The test dataset.
+            path (str): The path to save the model.
+            hyperparameters (dict): The hyperparameters for fine-tuning.
+
+        Returns:
+            None
+        """
+        super().__init__(
+            project_id, model_id, train_dataset, test_dataset, path, hyperparameters
+        )
+    
+    def tokenize_function(self, example):
+        """
+        Tokenizes the input text using the tokenizer specified in the class.
+
+        Args:
+            example (dict): The input example containing the text to be tokenized.
+
+        Returns:
+            tokenized_example (dict): The tokenized example.
+
+        """
+        if self.tokenizer_args:
+            tokenized_example = self.tokenizer(example["text1"], example["text2"], **self.tokenizer_args)
+        else:
+            tokenized_example = self.tokenizer(
+                example["text1"], example["text2"], padding=True, truncation=True, return_tensors="pt"
+            )
+        return tokenized_example
+
+class FineTuningConversation(FineTuningBase):
+    def __init__(
+        self,
+        project_id: int,
+        model_id: int,
+        train_dataset: datasets.Dataset,
+        test_dataset: datasets.Dataset,
+        path: str,
+        hyperparameters: dict,
+    ) -> None:
+        """
+        Initializes a FineTuning object.
+
+        Args:
+            project_id (int): The ID of the project.
+            model_id (int): The ID of the model.
+            train_dataset (Dataset): The training dataset.
+            test_dataset (Dataset): The test dataset.
+            path (str): The path to save the model.
+            hyperparameters (dict): The hyperparameters for fine-tuning.
+
+        Returns:
+            None
+        """
+        super().__init__(
+            project_id, model_id, train_dataset, test_dataset, path, hyperparameters
+        )
+
+        # max sequence length
+        self.max_seq_length = None
+
+        # lora config parameters
+        self.lora_config_params = None
+
+        if "max_seq_length" in hyperparameters.keys():
+            self.max_seq_length = hyperparameters.pop("max_seq_length")
+        elif hasattr(self.tokenizer, "model_max_length"):
+            self.max_seq_length = self.tokenizer.model_max_length
+        else:
+            self.max_seq_length = 1024
+
+        if self.max_seq_length > 1e6:
+            self.max_seq_length = 1024
+
+        # train and test dataset
+        self.train_dataset = train_dataset
+        self.test_dataset = test_dataset
+
+        if "lora_config" in hyperparameters:
+            self.lora_config_params = hyperparameters.pop("lora_config")
+        else:
+            self.lora_config_params = {
+                "r": 2,
+                "lora_alpha": 4,
+                "lora_dropout": 0.05,
+                "bias": "none",
+                "task_type": "CAUSAL_LM",
+            }
+            print_info(
+                "LoRA configuration are not set. Using default parameters"
+                + json.dumps(self.lora_config_params)
+            )
+
+        self.prompt_template = None
+        if "prompt_template" in hyperparameters.keys():
+            self.prompt_template = hyperparameters.pop("prompt_template")
+
+    def train(self):
+
+        args = TrainingArguments(
+            output_dir=self.path, logging_dir=self.path, **self.training_args
+        )
+
+        def formatting_prompts_func(example):
+
+            system_content = example["system"]
+            user_content = example["user"]
+            assistant_content = example["assistant"]
+
+            if self.prompt_template:
+                text = self.prompt_template.format(
+                    system=system_content,
+                    user=user_content,
+                    assistant=assistant_content,
+                    eos_token=self.tokenizer.eos_token,
+                )
+            elif hasattr(self.tokenizer, "apply_chat_template"):
+                messages = [
+                    {"role": "system", "content": system_content},
+                    {"role": "user", "content": user_content},
+                    {"role": "assistant", "content": assistant_content},
+                ]
+                text = self.tokenizer.apply_chat_template(messages, tokenize=False)
+            else:
+                raise ValueError(
+                    "Tokenizer doesn't have a chat template. Please pass a template in hyperparameters"
+                )
+
+            return text
+
+        if self.load_in_8bit:
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                load_in_8bit=True,
+                token=self.token,
+            )
+        else:
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.bfloat16,
+                token=self.token,
+            )
+
+        # SFT Trainer
+        self.trainer = SFTTrainer(
+            model,
+            args=args,
+            train_dataset=self.train_dataset,
+            eval_dataset=self.test_dataset,
+            formatting_func=formatting_prompts_func,
+            max_seq_length=self.max_seq_length,
+            packing=True,
+            peft_config=LoraConfig(**self.lora_config_params),
+            callbacks=[PGMLCallback(self.project_id, self.model_id)],
+        )
+        print_info("Creating Supervised Fine Tuning trainer done. Training ... ")
+       
+        # Train
+        self.trainer.train()
+
+        # Save the model
+        self.trainer.save_model()
+
+    def evaluate(self):
+        metrics = self.trainer.evaluate()
+        # Drop all the keys that are not floats or ints to be compatible for pgml-extension metrics typechecks
+        metrics = {
+            key: value
+            for key, value in metrics.items()
+            if isinstance(value, (int, float))
+        }
         return metrics
 
 
 def finetune_text_classification(
-    task, hyperparams, path, x_train, x_test, y_train, y_test
+    task, hyperparams, path, x_train, x_test, y_train, y_test, project_id, model_id
 ):
     hyperparams = orjson.loads(hyperparams)
-    project_id = 1
-    model_id = 1
     # Prepare dataset
     train_dataset = datasets.Dataset.from_dict(
         {
@@ -1289,13 +1521,9 @@ def finetune_text_classification(
 
     finetuner.prepare_tokenized_datasets()
 
-    # finetuner.train()
+    finetuner.train()
 
-    # metrics = finetuner.evaluate()
-
-    metrics = {}
-    metrics["f1"] = 0.5
-    metrics["accuracy"] = 0.5
+    metrics = finetuner.evaluate()
 
     return metrics
 
@@ -1310,153 +1538,44 @@ def finetune_text_pair_classification(
     text2_test,
     class_train,
     class_test,
+    project_id,
+    model_id,
 ):
     # Get model and tokenizer
     hyperparams = orjson.loads(hyperparams)
-    model_name = hyperparams.pop("model_name")
-
-    if "project_name" in hyperparams.keys():
-        project_name = "_".join(hyperparams.pop("project_name").split())
-        hyperparams["training_args"]["hub_model_id"] = project_name
-
-    if "wandb_key" in hyperparams["training_args"].keys():
-        wandb_key = hyperparams["training_args"].pop("wandb_key")
-        wandb.login(key=wandb_key)
-
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    classes = list(set(class_train))
-    num_classes = len(classes)
-
-    id2label = {}
-    label2id = {}
-    for id, label in enumerate(classes):
-        label2id[label] = id
-        id2label[id] = label
-
-    model = AutoModelForSequenceClassification.from_pretrained(
-        model_name, num_labels=num_classes, id2label=id2label, label2id=label2id
-    )
-
-    model.config.id2label = id2label
-    model.config.label2id = label2id
-
-    y_train_label = [label2id[_class] for _class in class_train]
-    y_test_label = [label2id[_class] for _class in class_test]
 
     # Prepare dataset
     train_dataset = datasets.Dataset.from_dict(
         {
             "text1": text1_train,
             "text2": text2_train,
-            "label": y_train_label,
+            "class": class_train,
         }
     )
     test_dataset = datasets.Dataset.from_dict(
         {
             "text1": text1_test,
             "text2": text2_test,
-            "label": y_test_label,
+            "class": class_test,
         }
     )
 
-    # tokenization function
-    def tokenize_function(example):
-        tokenized_example = tokenizer(
-            example["text1"],
-            example["text2"],
-            padding=True,
-            truncation=True,
-            return_tensors="pt",
-        )
-        return tokenized_example
-
-    # Generate tokens
-    train_tokenized_datasets = train_dataset.map(tokenize_function, batched=True)
-    test_tokenized_datasets = test_dataset.map(tokenize_function, batched=True)
-
-    # Data collator
-    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
-
-    f1_metric = evaluate.load("f1")
-    accuracy_metric = evaluate.load("accuracy")
-
-    def compute_metrics(eval_pred):
-        logits, labels = eval_pred
-        probabilities = F.softmax(torch.from_numpy(logits), dim=1)
-        predictions = torch.argmax(probabilities, dim=1)
-        f1 = f1_metric.compute(
-            predictions=predictions, references=labels, average="macro"
-        )["f1"]
-        accuracy = accuracy_metric.compute(predictions=predictions, references=labels)[
-            "accuracy"
-        ]
-        return {"f1": f1, "accuracy": accuracy}
-
-    # Training Args
-    training_args = TrainingArguments(
-        output_dir=path, logging_dir=path, **hyperparams["training_args"]
+    finetuner = FineTuningTextPairClassification(
+        project_id=project_id,
+        model_id=model_id,
+        train_dataset=train_dataset,
+        test_dataset=test_dataset,
+        path=path,
+        hyperparameters=hyperparams,
     )
 
-    # Trainer
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_tokenized_datasets,
-        eval_dataset=test_tokenized_datasets,
-        tokenizer=tokenizer,
-        data_collator=data_collator,
-        compute_metrics=compute_metrics,
-    )
+    finetuner.prepare_tokenized_datasets()
 
-    # Train
-    trainer.train()
+    finetuner.train()
 
-    # Save model
-    trainer.save_model()
+    metrics = finetuner.evaluate()
 
-    # metrics
-    metrics = trainer.evaluate()
-
-    # Update the keys to match hardcoded metrics in Task definition
-    if "eval_f1" in metrics.keys():
-        metrics["f1"] = metrics.pop("eval_f1")
-
-    if "eval_accuracy" in metrics.keys():
-        metrics["accuracy"] = metrics.pop("eval_accuracy")
     return metrics
-
-
-def print_number_of_trainable_model_parameters(model):
-    """Prints the number of trainable parameters in the model.
-
-    This function traverses all the parameters of a given PyTorch model to
-    count the total number of parameters as well as the number of trainable
-    (i.e., requires gradient) parameters.
-
-    Args:
-        model: A PyTorch model whose parameters you want to count.
-    """
-
-    # Initialize counters for trainable and total parameters
-    trainable_model_params = 0
-    all_model_params = 0
-
-    # Loop through all named parameters in the model
-    for _, param in model.named_parameters():
-        # Update the total number of parameters
-        all_model_params += param.numel()
-
-        # Check if the parameter requires gradient and update the trainable parameter counter
-        if param.requires_grad:
-            trainable_model_params += param.numel()
-
-    # Calculate and print the number and percentage of trainable parameters
-    print(f"Trainable model parameters: {trainable_model_params}", file=sys.stderr)
-    print(f"All model parameters: {all_model_params}", file=sys.stderr)
-    print(
-        f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%",
-        file=sys.stderr,
-    )
 
 
 ## Conversation
@@ -1470,26 +1589,10 @@ def finetune_conversation(
     system_test,
     user_train,
     assistant_test,
+    project_id,
+    model_id,
 ):
 
-    hyperparams = orjson.loads(hyperparams)
-    model_name = hyperparams.pop("model_name")
-
-    if "project_name" in hyperparams.keys():
-        project_name = "_".join(hyperparams.pop("project_name").split())
-        hyperparams["training_args"]["hub_model_id"] = project_name
-
-    if "wandb_key" in hyperparams["training_args"].keys():
-        wandb_key = hyperparams["training_args"].pop("wandb_key")
-        wandb.login(key=wandb_key)
-
-    use_auth_token = None
-    if "use_auth_token" in hyperparams.keys():
-        use_auth_token = hyperparams.pop("use_auth_token")
-
-    tokenizer = AutoTokenizer.from_pretrained(model_name, token=use_auth_token)
-
-    # dataset
     train_dataset = datasets.Dataset.from_dict(
         {
             "system": system_train,
@@ -1505,109 +1608,14 @@ def finetune_conversation(
             "assistant": assistant_test,
         }
     )
+    hyperparams = orjson.loads(hyperparams)
 
-    def formatting_prompts_func(example):
-
-        system_content = example["system"]
-        user_content = example["user"]
-        assistant_content = example["assistant"]
-
-        if "prompt_template" in hyperparams.keys():
-            prompt_template = hyperparams.pop("prompt_template")
-            text = prompt_template.format(
-                system=system_content,
-                user=user_content,
-                assistant=assistant_content,
-                eos_token=tokenizer.eos_token,
-            )
-        elif hasattr(tokenizer, "apply_chat_template"):
-            messages = [
-                {"role": "system", "content": system_content},
-                {"role": "user", "content": user_content},
-                {"role": "assistant", "content": assistant_content},
-            ]
-            text = tokenizer.apply_chat_template(messages, tokenize=False)
-        else:
-            raise ValueError(
-                "Tokenizer doesn't have a chat template. Please pass a template in hyperparameters"
-            )
-
-        return text
-
-    # max sequence length
-    if "max_seq_length" in hyperparams.keys():
-        max_seq_length = hyperparams.pop("max_seq_length")
-    elif hasattr(tokenizer, "model_max_length"):
-        max_seq_length = tokenizer.model_max_length
-    else:
-        max_seq_length = 1024
-
-    if max_seq_length > 1e6:
-        max_seq_length = 1024
-
-    # response template
-    collator = None
-    if "response_template" in hyperparams.keys():
-        response_template = hyperparams.pop("response_template")
-        collator = DataCollatorForCompletionOnlyLM(
-            response_template, tokenizer=tokenizer
-        )
-
-    # Training arguments
-    training_args = TrainingArguments(
-        output_dir=path, logging_dir=path, **hyperparams["training_args"]
+    finetuner = FineTuningConversation(
+        project_id, model_id, train_dataset, test_dataset, path, hyperparams
     )
 
-    load_in_8bit = False
-    if "load_in_8bit" in hyperparams.keys():
-        load_in_8bit = hyperparams.pop("load_in_8bit")
+    finetuner.train()
 
-    if load_in_8bit:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            load_in_8bit=load_in_8bit,
-            device_map="auto",
-            token=use_auth_token,
-        )
-    else:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name, torch_dtype=torch.bfloat16, token=use_auth_token
-        )
-
-    lora_config = None
-    if "lora_config" in hyperparams.keys():
-        lora_config = LoraConfig(**hyperparams.pop("lora_config"))
-        peft_model = get_peft_model(model, lora_config)
-        print_number_of_trainable_model_parameters(peft_model)
-
-    print("**** Training Arguments ******")
-    print(training_args, file=sys.stderr)
-    # SFT Trainer
-    trainer = SFTTrainer(
-        model,
-        args=training_args,
-        train_dataset=train_dataset,
-        eval_dataset=test_dataset,
-        formatting_func=formatting_prompts_func,
-        max_seq_length=max_seq_length,
-        packing=True,
-    )
-
-    if collator:
-        trainer.data_collator = collator
-
-    if lora_config:
-        trainer.peft_config = lora_config
-
-    # Train
-    try:
-        trainer.train()
-    except Exception as e:
-        raise ValueError(str(e))
-
-    # Save the model
-    trainer.save_model()
-
-    metrics = trainer.evaluate()
+    metrics = finetuner.evaluate()
 
     return metrics

@@ -157,7 +157,6 @@ impl Model {
         model
     }
 
-
     #[allow(clippy::too_many_arguments)]
     pub fn finetune(project: &Project, snapshot: &mut Snapshot, hyperparams: &JsonB) -> Model {
         let mut model: Option<Model> = None;
@@ -171,8 +170,7 @@ impl Model {
             TextDatasetType::TextPairClassification(snapshot.text_pair_classification_dataset(dataset_args))
         } else if project.task == Task::conversation {
             TextDatasetType::Conversation(snapshot.conversation_dataset(dataset_args))
-        }
-        else {
+        } else {
             panic!("Unsupported task for finetuning")
         };
 
@@ -228,21 +226,40 @@ impl Model {
         let metrics: HashMap<String, f64>;
         match dataset {
             TextDatasetType::TextClassification(dataset) => {
-                metrics = match transformers::finetune_text_classification(&project.task, dataset, &model.hyperparams, &path) {
-                Ok(metrics) => metrics,
-                Err(e) => error!("{e}"),
+                metrics = match transformers::finetune_text_classification(
+                    &project.task,
+                    dataset,
+                    &model.hyperparams,
+                    &path,
+                    project.id,
+                    model.id,
+                ) {
+                    Ok(metrics) => metrics,
+                    Err(e) => error!("{e}"),
                 };
-                
             }
             TextDatasetType::TextPairClassification(dataset) => {
-                metrics = match transformers::finetune_text_pair_classification(&project.task, dataset, &model.hyperparams, &path) {
-                Ok(metrics) => metrics,
-                Err(e) => error!("{e}"),
+                metrics = match transformers::finetune_text_pair_classification(
+                    &project.task,
+                    dataset,
+                    &model.hyperparams,
+                    &path,
+                    project.id,
+                    model.id,
+                ) {
+                    Ok(metrics) => metrics,
+                    Err(e) => error!("{e}"),
                 };
-                
             }
             TextDatasetType::Conversation(dataset) => {
-                metrics = match transformers::finetune_conversation(&project.task, dataset, &model.hyperparams, &path) {
+                metrics = match transformers::finetune_conversation(
+                    &project.task,
+                    dataset,
+                    &model.hyperparams,
+                    &path,
+                    project.id,
+                    model.id,
+                ) {
                     Ok(metrics) => metrics,
                     Err(e) => error!("{e}"),
                 };
@@ -274,9 +291,8 @@ impl Model {
                 let path = entry.unwrap().path();
 
                 if path.is_file() {
-
                     let bytes = std::fs::read(&path).unwrap();
-                    
+
                     for (i, chunk) in bytes.chunks(100_000_000).enumerate() {
                         Spi::get_one_with_args::<i64>(
                             "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, $2, $3, $4) RETURNING id",
@@ -297,7 +313,7 @@ impl Model {
         } else {
             error!("Model checkpoint folder does not exist!")
         }
-        
+
         Spi::run_with_args(
             "UPDATE pgml.models SET status = $1::pgml.status WHERE id = $2",
             Some(vec![
@@ -309,7 +325,7 @@ impl Model {
             ]),
         )
         .unwrap();
-        
+
         model
     }
 
