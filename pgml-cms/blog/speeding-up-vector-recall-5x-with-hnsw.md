@@ -3,6 +3,9 @@ description: >-
   HNSW indexing is the latest upgrade in vector recall performance. In this post
   we announce our updated SDK that utilizes HNSW indexing to give world class
   performance in vector search.
+tags: [engineering]
+featured: true
+image: ".gitbook/assets/blog_image_hnsw.png"
 ---
 
 # Speeding up vector recall 5x with HNSW
