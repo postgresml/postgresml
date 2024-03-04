@@ -28,7 +28,6 @@ einops==0.7.0
 evaluate==0.4.1
 exceptiongroup==1.2.0
 filelock==3.13.1
-flash-attn==2.5.4
 fonttools==4.47.0
 frozenlist==1.4.1
 fsspec==2023.10.0
