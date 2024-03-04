@@ -26,6 +26,7 @@ lazy_static! {
         "Blog",
         true,
         HashMap::from([
+            ("the-1.0-sdk-is-here", "the-1.0-sdk-is-here"),
             ("announcing-hnsw-support-in-our-sdk", "speeding-up-vector-recall-5x-with-hnsw"),
             ("backwards-compatible-or-bust-python-inside-rust-inside-postgres/", "backwards-compatible-or-bust-python-inside-rust-inside-postgres"),
             ("data-is-living-and-relational/", "data-is-living-and-relational"),
