@@ -27,24 +27,27 @@ fn build_expression(expression: Expr, filter: serde_json::Value) -> SimpleExpr {
         "$gte" => expression.gte(Expr::val(serde_value_to_sea_query_value(value))),
         "$lt" => expression.lt(Expr::val(serde_value_to_sea_query_value(value))),
         "$lte" => expression.lte(Expr::val(serde_value_to_sea_query_value(value))),
-        "$in" => {
+        e @ "$in" | e @ "$nin" => {
             let value = value
                 .as_array()
                 .expect("Invalid metadata filter configuration")
                 .iter()
-                // .map(|value| handle_value(value))
-                .map(|value| Expr::val(serde_value_to_sea_query_value(value)))
+                .map(|value| {
+                    if value.is_string() {
+                        value.as_str().unwrap().to_owned()
+                    } else {
+                        format!("{}", value)
+                    }
+                })
                 .collect::<Vec<_>>();
-            expression.is_in(value)
-        }
-        "$nin" => {
-            let value = value
-                .as_array()
-                .expect("Invalid metadata filter configuration")
-                .iter()
-                .map(|value| Expr::val(serde_value_to_sea_query_value(value)))
-                .collect::<Vec<_>>();
-            expression.is_not_in(value)
+            let value_expr = Expr::cust_with_values("$1", [value]);
+            let expr =
+                Expr::cust_with_exprs("$1 && $2", [SimpleExpr::from(expression), value_expr]);
+            if e == "$in" {
+                expr
+            } else {
+                expr.not()
+            }
         }
         _ => panic!("Invalid metadata filter configuration"),
     };
@@ -115,6 +118,15 @@ fn build_recursive<'a>(
                                     .contains(Expr::val(serde_value_to_sea_query_value(&json)));
                                 expression.not()
                             }
+                        } else if operator == "$in" || operator == "$nin" {
+                            let expression = Expr::cust(
+                                format!(
+                                r#"ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(JSONB_PATH_QUERY_ARRAY("{table_name}"."{column_name}", '$.{}[*]')))"#,
+                                    local_path.join(".")
+                                ).as_str()
+                            );
+                            let expression = Expr::expr(expression);
+                            build_expression(expression, value.clone())
                         } else {
                             let expression = Expr::cust(
                                 format!(
@@ -270,25 +282,25 @@ mod tests {
 
     #[test]
     fn array_comparison_operators() -> anyhow::Result<()> {
-        let array_comparison_operators = vec!["IN", "NOT IN"];
         let array_comparison_operators_names = vec!["$in", "$nin"];
-        for (operator, name) in array_comparison_operators
-            .into_iter()
-            .zip(array_comparison_operators_names.into_iter())
-        {
+        for name in array_comparison_operators_names {
             let sql = construct_filter_builder_with_json(json!({
-                "id": {name: [1]},
-                "id2": {"id3": {name: [1]}}
+                "id": {name: ["key_1", "key_2", 10]},
+                "id2": {"id3": {name: ["key_1", false]}}
             }))
             .build()?
             .to_valid_sql_query();
-            assert_eq!(
-                sql,
-                format!(
-                    r##"SELECT "id" FROM "test_table" WHERE ("test_table"."metadata"#>'{{id}}') {} ('1') AND ("test_table"."metadata"#>'{{id2,id3}}') {} ('1')"##,
-                    operator, operator
-                )
-            );
+            if name == "$in" {
+                assert_eq!(
+                    sql,
+                    r#"SELECT "id" FROM "test_table" WHERE (ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(JSONB_PATH_QUERY_ARRAY("test_table"."metadata", '$.id[*]'))) && ARRAY ['key_1','key_2','10']) AND (ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(JSONB_PATH_QUERY_ARRAY("test_table"."metadata", '$.id2.id3[*]'))) && ARRAY ['key_1','false'])"#
+                );
+            } else {
+                assert_eq!(
+                    sql,
+                    r#"SELECT "id" FROM "test_table" WHERE (NOT (ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(JSONB_PATH_QUERY_ARRAY("test_table"."metadata", '$.id[*]'))) && ARRAY ['key_1','key_2','10'])) AND (NOT (ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(JSONB_PATH_QUERY_ARRAY("test_table"."metadata", '$.id2.id3[*]'))) && ARRAY ['key_1','false']))"#
+                );
+            }
         }
         Ok(())
     }
