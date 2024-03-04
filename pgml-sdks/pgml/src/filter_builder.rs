@@ -36,7 +36,7 @@ fn build_expression(expression: Expr, filter: serde_json::Value) -> SimpleExpr {
                     if value.is_string() {
                         value.as_str().unwrap().to_owned()
                     } else {
-                        format!("{}", value)
+                        value.to_string()
                     }
                 })
                 .collect::<Vec<_>>();
@@ -268,7 +268,6 @@ mod tests {
             }))
             .build()?
             .to_valid_sql_query();
-            println!("{sql}");
             assert_eq!(
                 sql,
                 format!(
