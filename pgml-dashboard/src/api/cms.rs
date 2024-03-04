@@ -625,7 +625,10 @@ impl Collection {
 
 #[get("/search?<query>", rank = 20)]
 async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
-    let results = site_search.search(query, None).await.expect("Error performing search");
+    let results = site_search
+        .search(query, None, None)
+        .await
+        .expect("Error performing search");
 
     let results: Vec<SearchResult> = results
         .into_iter()

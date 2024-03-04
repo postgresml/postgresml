@@ -1286,7 +1286,12 @@ impl SiteSearch {
             .collect()
     }
 
-    pub async fn search(&self, query: &str, doc_type: Option<DocType>) -> anyhow::Result<Vec<Document>> {
+    pub async fn search(
+        &self,
+        query: &str,
+        doc_type: Option<DocType>,
+        doc_tags: Option<Vec<String>>,
+    ) -> anyhow::Result<Vec<Document>> {
         let mut search = serde_json::json!({
             "query": {
                 // "full_text_search": {
@@ -1317,9 +1322,15 @@ impl SiteSearch {
             },
             "limit": 10
         });
+        search["query"]["filter"]["$and"] = serde_json::json!({});
         if let Some(doc_type) = doc_type {
-            search["query"]["filter"]["doc_type"] = serde_json::json!({
+            search["query"]["filter"]["$and"]["doc_type"] = serde_json::json!({
                 "$eq": doc_type
+            });
+        }
+        if let Some(doc_tags) = doc_tags {
+            search["query"]["filter"]["$and"]["tags"] = serde_json::json!({
+                "$in": doc_tags
             });
         }
         let results = self.collection.search_local(search.into(), &self.pipeline).await?;
