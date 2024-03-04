@@ -99,7 +99,6 @@ pydantic_core==2.14.5
 Pygments==2.17.2
 pynvml==11.5.0
 pyparsing==3.1.1
-pypgrx @ file:///home/ubuntu/postgresml/packages/postgresml-pypgrx/target/wheels/pypgrx-0.1.0-cp310-cp310-manylinux_2_34_x86_64.whl
 python-dateutil==2.8.2
 pytz==2023.3.post1
 PyYAML==6.0.1
