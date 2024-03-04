@@ -50,10 +50,8 @@ from transformers import (
 
 import threading
 import logging
-from rich.logging import RichHandler
 import evaluate
 import torch.nn.functional as F
-import wandb
 from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 from trl.trainer import ConstantLengthDataset
 from peft import LoraConfig, get_peft_model
@@ -62,15 +60,6 @@ from abc import abstractmethod
 
 transformers.logging.set_verbosity_info()
 
-
-FORMAT = "%(message)s"
-logging.basicConfig(
-    level=os.environ.get("LOG_LEVEL", "INFO"),
-    format="%(asctime)s - %(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler()],
-)
-log = logging.getLogger("rich")
 
 __cache_transformer_by_model_id = {}
 __cache_sentence_transformer_by_name = {}
@@ -1117,19 +1106,15 @@ class FineTuningBase:
             f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%"
         )
 
-    @abstractmethod
     def tokenize_function(self):
         pass
 
-    @abstractmethod
     def prepare_tokenized_datasets(self):
         pass
 
-    @abstractmethod
     def compute_metrics(self):
         pass
 
-    @abstractmethod
     def train(self):
         pass
 
