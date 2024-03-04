@@ -3,6 +3,8 @@ description: >-
   A common problem with data science and machine learning tutorials is the
   published and studied datasets are often nothing like what you’ll find in
   industry.
+featured: false
+tags: [engineering]
 ---
 
 # Data is Living and Relational
