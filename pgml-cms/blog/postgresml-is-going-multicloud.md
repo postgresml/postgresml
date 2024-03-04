@@ -1,16 +1,5 @@
 # PostgresML is going multicloud
 
-<div align="left">
-
-<figure><img src=".gitbook/assets/lev.jpg" alt="Author" width="100"><figcaption></figcaption></figure>
-
-</div>
-
-Lev Kokotov
-
-Jan 18, 2024
-
-
 We started PostgresML two years ago with the goal of making machine learning and AI accessible and easy for everyone.  To make this a reality, we needed to deploy PostgresML as closely as possible to our end users. With that goal mind, today we're proud to announce support for a new cloud provider: Azure.
 
 ### How we got here

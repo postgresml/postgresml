@@ -28,3 +28,4 @@
 * [Postgres Full Text Search is Awesome!](postgres-full-text-search-is-awesome.md)
 * [Oxidizing Machine Learning](oxidizing-machine-learning.md)
 * [Data is Living and Relational](data-is-living-and-relational.md)
+* [The 1.0 SDK is Here](the-1.0-sdk-is-here.md)
