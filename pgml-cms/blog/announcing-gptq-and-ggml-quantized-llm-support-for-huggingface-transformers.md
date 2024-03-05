@@ -3,9 +3,6 @@ description: >-
   GPTQ & GGML allow PostgresML to fit larger models in less RAM. These
   algorithms perform inference significantly faster on NVIDIA, Apple and Intel
   hardware.
-featured: false
-tags: [engineering]
-image: ".gitbook/assets/image (14).png"
 ---
 
 # Announcing GPTQ & GGML Quantized LLM support for Huggingface Transformers
