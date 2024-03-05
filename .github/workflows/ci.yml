@@ -9,14 +9,17 @@ jobs:
       run:
         working-directory: pgml-extension
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          submodules: 'recursive'
+      - name: Fetch master
+        run: |
+          git fetch origin master --depth 1
       - name: Changed files in pgml-extension
         id: pgml_extension_changed
         run: |
-          echo "PGML_EXTENSION_CHANGED_FILES=$(git diff --name-only HEAD HEAD~1 . | wc -l)" >> $GITHUB_OUTPUT
-      - name: Install dependencies
+          echo "PGML_EXTENSION_CHANGED_FILES=$(git diff --name-only HEAD origin/master . | wc -l)" >> $GITHUB_OUTPUT
+      - name: System dependencies
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           sudo apt-get update && \
@@ -42,17 +45,8 @@ jobs:
             ~/.cargo
             pgml-extension/target
             ~/.pgrx
-          key: ${{ runner.os }}-rust-1.74-${{ hashFiles('pgml-extension/Cargo.lock') }}
-      - name: Submodules
-        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
-        run: |
-          git submodule update --init --recursive
-      - name: Get current version
-        id: current-version
-        run: echo "CI_BRANCH=$(git name-rev --name-only HEAD)" >> $GITHUB_OUTPUT  
-      - name: Run tests
-        env:
-          CI_BRANCH: ${{ steps.current-version.outputs.CI_BRANCH }}
+          key: ${{ runner.os }}-rust-1.74-${{ hashFiles('pgml-extension/Cargo.lock') }}-bust2
+      - name: Install pgrx
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
@@ -61,15 +55,23 @@ jobs:
 
           if [[ ! -d ~/.pgrx ]]; then
             cargo pgrx init
+            echo "shared_preload_libraries = 'pgml'" >> ~/.pgrx/data-16/postgresql.conf
           fi
-
-          git checkout master
+      - name: Update extension test
+        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
+        run: |
+          git checkout origin/master
           echo "\q" | cargo pgrx run
-          psql -p 28816 -h localhost -d pgml -P pager -c "CREATE EXTENSION pgml;"
-          git checkout $CI_BRANCH
+          psql -p 28816 -h localhost -d pgml -P pager -c "DROP EXTENSION IF EXISTS pgml CASCADE; DROP SCHEMA IF EXISTS pgml CASCADE; CREATE EXTENSION pgml;"
+          git checkout $GITHUB_SHA
           echo "\q" | cargo pgrx run
           psql -p 28816 -h localhost -d pgml -P pager -c "ALTER EXTENSION pgml UPDATE;"
+      - name: Unit tests
+        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
+        run: |
           cargo pgrx test
-#          cargo pgrx start
-#          psql -p 28815 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
-#          cargo pgrx stop
+      - name: Integration tests
+        if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
+        run: |
+          echo "\q" | cargo pgrx run
+          psql -p 28816 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql

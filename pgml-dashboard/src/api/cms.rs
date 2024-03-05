@@ -29,6 +29,7 @@ lazy_static! {
         "Blog",
         true,
         HashMap::from([
+            ("the-1.0-sdk-is-here", "the-1.0-sdk-is-here"),
             ("announcing-hnsw-support-in-our-sdk", "speeding-up-vector-recall-5x-with-hnsw"),
             ("backwards-compatible-or-bust-python-inside-rust-inside-postgres/", "backwards-compatible-or-bust-python-inside-rust-inside-postgres"),
             ("data-is-living-and-relational/", "data-is-living-and-relational"),
@@ -646,7 +647,10 @@ impl Collection {
 
 #[get("/search?<query>", rank = 20)]
 async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
-    let results = site_search.search(query, None).await.expect("Error performing search");
+    let results = site_search
+        .search(query, None, None)
+        .await
+        .expect("Error performing search");
 
     let results: Vec<SearchResult> = results
         .into_iter()

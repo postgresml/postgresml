@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Home](README.md)
+* [The 1.0 SDK is Here](the-1.0-sdk-is-here.md)
 * [Using PostgresML with Django and embedding search](using-postgresml-with-django-and-embedding-search.md)
 * [PostgresML is going multicloud](postgresml-is-going-multicloud.md)
 * [Introducing the OpenAI Switch Kit: Move from closed to open-source AI in minutes](introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md)

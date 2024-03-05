@@ -19,9 +19,8 @@ lazy_static! {
         ("installation", "fullscreen"),
         ("collections", "overview_key"),
         ("pipelines", "climate_mini_split"),
+        ("semantic search", "book"),
         ("semantic search using instructor model", "book"),
-        ("extractive question answering", "book"),
-        ("summarizing question answering", "book"),
         ("postgresml is 8-40x faster than python http microservices", "fit_page"),
         ("scaling to 1 million requests per second", "bolt"),
         ("mindsdb vs postgresml", "arrow_split"),
@@ -43,14 +42,11 @@ lazy_static! {
         .into_iter()
         .map(|s| s.to_owned())
         .collect();
-    static ref TUTORIAL_TARGETS: Vec<String> = Vec::from([
-        "semantic search using instructor model",
-        "extractive question answering",
-        "summarizing question answering"
-    ])
-    .into_iter()
-    .map(|s| s.to_owned())
-    .collect();
+    static ref TUTORIAL_TARGETS: Vec<String> =
+        Vec::from(["semantic search", "semantic search using instructor model",])
+            .into_iter()
+            .map(|s| s.to_owned())
+            .collect();
     static ref BENCHMARKS_TARGETS: Vec<String> = Vec::from([
         "postgresml is 8-40x faster than python http microservices",
         "scaling to 1 million requests per second",

@@ -4,7 +4,7 @@
 --- Usage:
 ---
 ---   $ cargo pgrx run --release
----   $ psql -P pager-off -h localhost -p 28813 -d pgml -f sql/setup_examples.sql
+---   $ psql -P pager-off -h localhost -p 28816 -d pgml -f sql/setup_examples.sql
 ---
 -- \set ON_ERROR_STOP true
 \timing on

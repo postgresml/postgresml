@@ -1,14 +1,14 @@
 ---
-description: JavaScript and Python code snippets for peforming semantic search using the SDK.
+description: JavaScript and Python code snippets for using instructor models in more advanced search use cases.
 ---
 
-# Semantic Search
+# Semantic Search Using Instructor Model
 
-This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.&#x20;
+This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.  In this tutorial we use [hkunlp/instructor-base](https://huggingface.co/hkunlp/instructor-base), a more advanced embeddings model that takes parameters when doing embedding and recall.
 
-[Link to full JavaScript implementation](../../../../../../pgml-sdks/pgml/javascript/examples/semantic\_search.js)
+[Link to full JavaScript implementation](../../../../../../pgml-sdks/pgml/javascript/examples/question\_answering.js)
 
-[Link to full Python implementation](../../../../../../pgml-sdks/pgml/python/examples/semantic\_search.py)
+[Link to full Python implementation](../../../../../../pgml-sdks/pgml/python/examples/question\_answering.py)
 
 ## Imports and Setup
 
@@ -43,7 +43,7 @@ A collection object is created to represent the search collection.
 ```js
 const main = async () => { // Open the main function, we close it at the bottom
   // Initialize the collection
-  const collection = pgml.newCollection("semantic_search_collection");
+  const collection = pgml.newCollection("qa_collection");
 ```
 {% endtab %}
 
@@ -54,7 +54,7 @@ async def main(): # Start the main function, we end it after archiving
     console = Console()
 
     # Initialize collection
-    collection = Collection("quora_collection")
+    collection = Collection("squad_collection")
 ```
 {% endtab %}
 {% endtabs %}
@@ -67,7 +67,7 @@ A pipeline encapsulating a model and splitter is created and added to the collec
 {% tab title="JavaScript" %}
 ```js
   // Add a pipeline
-  const pipeline = pgml.newPipeline("semantic_search_pipeline", {
+  const pipeline = pgml.newPipeline("qa_pipeline", {
     text: {
       splitter: { model: "recursive_character" },
       semantic_search: {
@@ -83,11 +83,16 @@ A pipeline encapsulating a model and splitter is created and added to the collec
 ```python
     # Create and add pipeline
     pipeline = Pipeline(
-        "quorav1",
+        "squadv1",
         {
             "text": {
                 "splitter": {"model": "recursive_character"},
-                "semantic_search": {"model": "intfloat/e5-small"},
+                "semantic_search": {
+                    "model": "hkunlp/instructor-base",
+                    "parameters": {
+                        "instruction": "Represent the Wikipedia document for retrieval: "
+                    },
+                },
             }
         },
     )
@@ -107,11 +112,11 @@ Documents are upserted into the collection and indexed by the pipeline.
   const documents = [
     {
       id: "Document One",
-      text: "document one contents...",
+      text: "PostgresML is the best tool for machine learning applications!",
     },
     {
       id: "Document Two",
-      text: "document two contents...",
+      text: "PostgresML is open source and available to everyone!",
     },
   ];
   await collection.upsert_documents(documents);
@@ -121,19 +126,16 @@ Documents are upserted into the collection and indexed by the pipeline.
 {% tab title="Python" %}
 ```python
     # Prep documents for upserting
-    dataset = load_dataset("quora", split="train")
-    questions = []
-    for record in dataset["questions"]:
-        questions.extend(record["text"])
-
-    # Remove duplicates and add id
-    documents = []
-    for i, question in enumerate(list(set(questions))):
-        if question:
-            documents.append({"id": i, "text": question})
+    data = load_dataset("squad", split="train")
+    data = data.to_pandas()
+    data = data.drop_duplicates(subset=["context"])
+    documents = [
+        {"id": r["id"], "text": r["context"], "title": r["title"]}
+        for r in data.to_dict(orient="records")
+    ]
 
     # Upsert documents
-    await collection.upsert_documents(documents[:2000])
+    await collection.upsert_documents(documents[:200])
 ```
 {% endtab %}
 {% endtabs %}
@@ -146,28 +148,40 @@ A vector similarity search query is made on the collection.
 {% tab title="JavaScript" %}
 ```js
   // Perform vector search
-  const query = "Something that will match document one first";
+  const query = "What is the best tool for building machine learning applications?";
   const queryResults = await collection.vector_search(
     {
       query: {
         fields: {
           text: { query: query }
         }
-      }, limit: 2
+      }, limit: 1
     }, pipeline);
-  console.log("The results");
   console.log(queryResults);
 ```
 {% endtab %}
 
 {% tab title="Python" %}
 ```python
-    # Query
-    query = "What is a good mobile os?"
-    console.print("Querying for %s..." % query)
+    # Query for answer
+    query = "Who won more than 20 grammy awards?"
+    console.print("Querying for context ...")
     start = time()
     results = await collection.vector_search(
-        {"query": {"fields": {"text": {"query": query}}}, "limit": 5}, pipeline
+        {
+            "query": {
+                "fields": {
+                    "text": {
+                        "query": query,
+                        "parameters": {
+                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+                        },
+                    },
+                }
+            },
+            "limit": 5,
+        },
+        pipeline,
     )
     end = time()
     console.print("\n Results for '%s' " % (query), style="bold")
