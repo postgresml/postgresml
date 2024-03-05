@@ -1,8 +1,14 @@
 <turbo-frame id="blog-search-results" target="_top">
   <div data-controller="pages-blog-blog-search">
-    <div class="d-flex flex-wrap gap-4">
-      <% for item in html { %>
-        <%- item %>
+    <div class="d-flex flex-wrap gap-3 justify-content-center">
+      <% if html.len() > 0 {%> 
+        <% for item in html { %>
+          <%- item %>
+        <% } %>
+      <% } else {%>
+      <div>
+        <h6>No blogs satisfy that search</h6>
+      </div>
       <% } %>
     </div>
   </div>

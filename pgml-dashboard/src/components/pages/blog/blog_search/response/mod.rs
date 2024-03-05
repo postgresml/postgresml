@@ -1,8 +1,6 @@
-use sailfish::TemplateOnce;
-use pgml_components::component;
-use crate::utils::markdown::SearchResult;
 use crate::components::cards::blog::article_preview::{ArticlePreview, DocMeta};
-use crate::api::cms::Document;
+use pgml_components::component;
+use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "pages/blog/blog_search/response/template.html")]
@@ -12,27 +10,14 @@ pub struct Response {
 
 impl Response {
     pub fn new() -> Response {
-        Response {
-            html: Vec::new(),
-        }
+        Response { html: Vec::new() }
     }
 
-    pub fn pattern(mut self, mut articles: Vec<DocMeta>, query: String) -> Response {
+    pub fn pattern(mut self, mut articles: Vec<DocMeta>, is_search: bool) -> Response {
         let mut cycle = 0;
         let mut html: Vec<String> = Vec::new();
 
-        // Apply special layout if the user did not specify a query.
-        // Blogs are in cms Summary order, make the first post the big card and second long card.
-        if query.len() == 0 {
-            let big_index = articles.remove(0);
-            let long_index = articles.remove(0);
-            let small_image_index = articles.remove(0);
-            articles.insert(1, long_index);
-            articles.insert(2, big_index);
-            articles.insert(6, small_image_index);
-        }
-
-        let (layout, repeat) = if query.len() != 0 {
+        let (layout, repeat) = if is_search {
             (
                 Vec::from([
                     Vec::from(["default", "default", "default"]),
@@ -43,6 +28,15 @@ impl Response {
                 2,
             )
         } else {
+            // Apply special layout if the user did not specify a query.
+            // Blogs are in cms Summary order, make the first post the big card and second long card.
+            let big_index = articles.remove(0);
+            let long_index = articles.remove(0);
+            let small_image_index = articles.remove(0);
+            articles.insert(1, long_index);
+            articles.insert(2, big_index);
+            articles.insert(6, small_image_index);
+
             (
                 Vec::from([
                     Vec::from(["default", "long"]),

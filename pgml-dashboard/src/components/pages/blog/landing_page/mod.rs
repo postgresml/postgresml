@@ -1,6 +1,4 @@
-use crate::api::cms::Collection;
 use crate::components::cards::blog::article_preview::DocMeta;
-use crate::components::cards::blog::ArticlePreview;
 use crate::components::notifications::marketing::FeatureBanner;
 use crate::guards::Cluster;
 use crate::Notification;
