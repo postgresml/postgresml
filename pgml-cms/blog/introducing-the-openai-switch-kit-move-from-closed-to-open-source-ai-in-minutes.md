@@ -1,7 +1,6 @@
 ---
 featured: true
 tags: [engineering, product]
-image: https://postgresml.org/dashboard/static/images/open_source_ai_social_share.png
 description: >-
   Quickly and easily transition from the confines of the OpenAI APIs to higher
   quality embeddings and unrestricted text generation models.
