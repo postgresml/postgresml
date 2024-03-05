@@ -1017,7 +1017,7 @@ class PGMLCallback(TrainerCallback):
             logs["step"] = state.global_step
             logs["max_steps"] = state.max_steps
             logs["timestamp"] = str(datetime.now())
-            print_info(json.dumps(logs))
+            print_info(json.dumps(logs, indent=4))
             insert_logs(self.project_id, self.model_id, json.dumps(logs))
 
 
@@ -1275,7 +1275,6 @@ class FineTuningTextClassification(FineTuningBase):
 
         if "eval_accuracy" in metrics.keys():
             metrics["accuracy"] = metrics.pop("eval_accuracy")
-       
 
         # Drop all the keys that are not floats or ints to be compatible for pgml-extension metrics typechecks
         metrics = {
@@ -1285,6 +1284,7 @@ class FineTuningTextClassification(FineTuningBase):
         }
 
         return metrics
+
 
 class FineTuningTextPairClassification(FineTuningTextClassification):
     def __init__(
@@ -1313,7 +1313,7 @@ class FineTuningTextPairClassification(FineTuningTextClassification):
         super().__init__(
             project_id, model_id, train_dataset, test_dataset, path, hyperparameters
         )
-    
+
     def tokenize_function(self, example):
         """
         Tokenizes the input text using the tokenizer specified in the class.
@@ -1326,12 +1326,19 @@ class FineTuningTextPairClassification(FineTuningTextClassification):
 
         """
         if self.tokenizer_args:
-            tokenized_example = self.tokenizer(example["text1"], example["text2"], **self.tokenizer_args)
+            tokenized_example = self.tokenizer(
+                example["text1"], example["text2"], **self.tokenizer_args
+            )
         else:
             tokenized_example = self.tokenizer(
-                example["text1"], example["text2"], padding=True, truncation=True, return_tensors="pt"
+                example["text1"],
+                example["text2"],
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
             )
         return tokenized_example
+
 
 class FineTuningConversation(FineTuningBase):
     def __init__(
@@ -1459,7 +1466,7 @@ class FineTuningConversation(FineTuningBase):
             callbacks=[PGMLCallback(self.project_id, self.model_id)],
         )
         print_info("Creating Supervised Fine Tuning trainer done. Training ... ")
-       
+
         # Train
         self.trainer.train()
 
