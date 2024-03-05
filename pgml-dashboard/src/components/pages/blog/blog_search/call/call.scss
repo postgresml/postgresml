@@ -22,5 +22,11 @@ div[data-controller="pages-blog-blog-search-call"] {
       border-color: #{$gray-100};
       @include bold_by_shadow(var(#{$gray-100}));
     }
+
+    &:active:not(.all-tags), &:active:not(.selected):is(.all-tags){
+      background-color: #{$gray-200};
+      border-color: #{$gray-200};
+      color: #{$gray-900};
+    }
   }
 }

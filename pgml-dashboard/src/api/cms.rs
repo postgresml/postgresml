@@ -123,6 +123,7 @@ impl Document {
         Document { ..Default::default() }
     }
 
+    // make a document from a uri of form <blog || docs || careers>/< path and file name >
     pub async fn from_url(url: &str) -> anyhow::Result<Document, std::io::Error> {
         let doc_type = match url.split('/').collect::<Vec<&str>>().get(1) {
             Some(&"blog") => Some(DocType::Blog),
@@ -971,8 +972,9 @@ This is the end of the markdown
 
     async fn rocket() -> Rocket<Build> {
         dotenv::dotenv().ok();
+
         rocket::build()
-            // .manage(crate::utils::markdown::SearchIndex::open().unwrap())
+            // .manage(crate::utils::markdown::SiteSearch::new().await.expect("Error initializing site search"))
             .mount("/", crate::api::cms::routes())
     }
 
