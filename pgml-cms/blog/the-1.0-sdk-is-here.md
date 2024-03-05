@@ -1,9 +1,10 @@
 ---
+featured: true
+tags:
+  - product
 description: >-
   Our official pgml SDK has been stabilized and released for Python and
   JavaScript.
-featured: false
-tags: [product]
 ---
 
 # The 1.0 SDK is Here
@@ -28,15 +29,15 @@ This release comes with a bunch of performance improvements and new features. To
 * Define powerful and flexible Pipelines to dictate ingesting, splitting, embedding, and indexing of documents
 * Search over documents and document chunks using semantic search, full text search, or hybrid semantic and full text search with extensive options for filtering on additional metadata
 * Utilize almost any of the powerful embedding models available on HuggingFace
-* Its all SQL! Get hands on with an ER diagram of your Collection and query from it however you want
+* It's all SQL! Get hands on with an ER diagram of your Collection and query from it however you want
 
 Our SDK has been built specifically with the task of searching in mind. [We use it power the search on our own website](https://github.com/postgresml/postgresml/blob/6ba605d67016a1177d410d1eb91ae8763b4784c4/pgml-dashboard/src/utils/markdown.rs#L1243), [and to perform RAG with our ChatBot demo](https://github.com/postgresml/postgresml/blob/b3b5f03eb6c54bec88120617d5175279273d81d1/pgml-dashboard/src/api/chatbot.rs#L527).
 
 ## Why It's Exciting
 
-Our SDK is no different from any other companies. It abstracts away some complexities of managing SQL tables, building complex queries, and other boring and repetitive tasks, but the SDK itself is not groundbreaking.&#x20;
+Our SDK is no different from any other companies. It abstracts away some complexities of managing SQL tables, building complex queries, and other boring and repetitive tasks, but the SDK itself is not groundbreaking.
 
-We think our SDK release is exciting because the underlying technology we use is something worth being excited about. Our SDK relies on our open source postgres extension to perform machine learning tasks using SQL. The lighting fast document embedding and magic-like hybrid search are all relatively simple SQL queries utilizing our postgres extension. Everything happens locally in your database without using any network calls.
+We think our SDK release is exciting because the underlying technology we use is something worth being excited about. Our SDK relies on our open source postgres extension to perform machine learning tasks using SQL. The lightning fast document embedding and magic-like hybrid search are all relatively simple SQL queries utilizing our postgres extension. Everything happens locally in your database without using any network calls.
 
 What does it actually look like? Given some Collection and Pipeline defined below:
 
@@ -203,4 +204,4 @@ print(await collection.generate_er_diagram(pipeline))
 
 The above code prints out PlantUML script. Paste it into their online interpreter and checkout [the resulting diagram](https://www.plantuml.com/plantuml/uml/lPD1hjiW48Rtd6BqDbqz7w2hTnE4OMgJ08DWS9B6lNinbaELjceNqSk6\_F-WcUz7uu\_CAd7nJdo1sHe4dX5o93wqjaax55MgXQo1c6Xqw3DSBC-WmkJGW4vqoV0DaKK-sn1LKXwS3SYtY429Pn820rk-mLkSl1iqEOUQBONy1Yh3Pcgu2wY\_EkKhZ7QoWPj-Vs-7JgWOZLHSosmzLdGV6mSLRWvyfu3jSb0UjsjuvQPLdRLipaZaK8LcrYod2Y6V1sPpbWkcNEcE7Zywlx\_9JZyOqiNNqXxZeLuO9LD96cKfhTbsDFiOLRrJfZ3-7J7QYCu6t14VwhDVE-iPlVedhgpgO1osZbBF9Pnt-AvVXj-VylT5Q9Ea3GQlVoWSYVy\_2VeHZR5Xwccwzwf47VovqsDKjPVAI6bZtp-zTHs6TUtR8KJVvLQx\_\_huelzlvNLz3YC-C9ZYtKy0)[.](https://www.plantuml.com/plantuml/uml/lPD1hjiW48Rtd6BqDbqz7w2hTnE4OMgJ08DWS9B6lNinbaELjceNqSk6\_F-WcUz7uu\_CAd7nJdo1sHe4dX5o93wqjaax55MgXQo1c6Xqw3DSBC-WmkJGW4vqoV0DaKK-sn1LKXwS3SYtY429Pn820rk-mLkSl1iqEOUQBONy1Yh3Pcgu2wY\_EkKhZ7QoWPj-Vs-7JgWOZLHSosmzLdGV6mSLRWvyfu3jSb0UjsjuvQPLdRLipaZaK8LcrYod2Y6V1sPpbWkcNEcE7Zywlx\_9JZyOqiNNqXxZeLuO9LD96cKfhTbsDFiOLRrJfZ3-7J7QYCu6t14VwhDVE-iPlVedhgpgO1osZbBF9Pnt-AvVXj-VylT5Q9Ea3GQlVoWSYVy\_2VeHZR5Xwccwzwf47VovqsDKjPVAI6bZtp-zTHs6TUtR8KJVvLQx\_\_huelzlvNLz3YC-C9ZYtKy0)
 
-Thanks for reading about the release of our 1.0 SDK we hope you are as excited about it as we are!
+Thanks for reading about the release of our 1.0 SDK. We hope you are as excited about it as we are!
