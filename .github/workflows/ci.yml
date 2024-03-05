@@ -15,7 +15,7 @@ jobs:
       - name: Fetch master
         run: |
           git fetch origin master --depth 1
-      - name: Changed files in pgml-extension
+      - name: Extension changed files
         id: pgml_extension_changed
         run: |
           echo "PGML_EXTENSION_CHANGED_FILES=$(git diff --name-only HEAD origin/master . | wc -l)" >> $GITHUB_OUTPUT
@@ -75,3 +75,13 @@ jobs:
         run: |
           echo "\q" | cargo pgrx run
           psql -p 28816 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
+      - name: Dashboard changed files
+        id: pgml_dashboard_changed
+        working-directory: pgml-dashboard
+        run: |
+          echo "PGML_DASHBOARD_CHANGED_FILES=$(git diff --name-only HEAD origin/master . | wc -l)" >> $GITHUB_OUTPUT
+      - name: Dashboard Unit tests
+        if: steps.pgml_extension_changed.outputs.PGML_DASHBOARD_CHANGED_FILES != '0'
+        working-directory: pgml-dashboard
+        run: |
+          cargo test
