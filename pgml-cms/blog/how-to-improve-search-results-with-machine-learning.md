@@ -3,6 +3,9 @@ description: >-
   PostgresML makes it easy to use machine learning on your data and scale
   workloads horizontally in our cloud. One of the most common use cases is to
   improve search results.
+featured: true
+image: ".gitbook/assets/image (2) (2).png"
+tags: ["Engineering"]
 ---
 
 # How-to Improve Search Results with Machine Learning

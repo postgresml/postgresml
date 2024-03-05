@@ -2,9 +2,21 @@
 description: >-
   Our official pgml SDK has been stabilized and released for Python and
   JavaScript.
+featured: false
+tags: [product]
 ---
 
 # The 1.0 SDK is Here
+
+<div align="left">
+
+<figure><img src=".gitbook/assets/silas.jpg" alt="Author" width="158"><figcaption></figcaption></figure>
+
+</div>
+
+Silas Marvin
+
+March 4, 2023
 
 ## Announcing the Release of our Official PGML 1.0 SDK
 
@@ -20,7 +32,7 @@ This release comes with a bunch of performance improvements and new features. To
 
 Our SDK has been built specifically with the task of searching in mind. [We use it power the search on our own website](https://github.com/postgresml/postgresml/blob/6ba605d67016a1177d410d1eb91ae8763b4784c4/pgml-dashboard/src/utils/markdown.rs#L1243), [and to perform RAG with our ChatBot demo](https://github.com/postgresml/postgresml/blob/b3b5f03eb6c54bec88120617d5175279273d81d1/pgml-dashboard/src/api/chatbot.rs#L527).
 
-### Why It's Exciting
+## Why It's Exciting
 
 Our SDK is no different from any other companies. It abstracts away some complexities of managing SQL tables, building complex queries, and other boring and repetitive tasks, but the SDK itself is not groundbreaking.&#x20;
 
