@@ -24,6 +24,7 @@ extension_sql_file!("../sql/schema.sql", name = "schema");
 #[cfg(not(feature = "use_as_lib"))]
 #[pg_guard]
 pub extern "C" fn _PG_init() {
+    config::initialize_server_params();
     bindings::python::activate().expect("Error setting python venv");
     orm::project::init();
 }
