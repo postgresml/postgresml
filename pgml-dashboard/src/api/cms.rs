@@ -703,7 +703,7 @@ async fn search_blog(query: &str, tag: &str, site_search: &State<crate::utils::m
         None
     };
 
-    // If user is not makign a search return all blogs in default design.
+    // If user is not making a search return all blogs in default design.
     let results = if query.len() > 0 || tag.clone().is_some() {
         let results = site_search.search(query, Some(DocType::Blog), tag.clone()).await;
 
