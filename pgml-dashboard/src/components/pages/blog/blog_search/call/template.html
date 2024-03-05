@@ -1,4 +1,6 @@
 <%
+  use crate::components::loading::Message as Loading;
+
   // leave out Company and Customer Stories for until tags are consistently used in blog posts
   let tag_links = Vec::from([
     "Engineering",
@@ -28,6 +30,8 @@
     </div>
   </div>
 
-  <turbo-frame id="blog-search-results" src="/search_blog?query=&tag=" data-pages-blog-blog-search-call-target="searchFrame" target="_top">
+
+  <turbo-frame id="blog-search-results" src="/search_blog?query=&tag=" data-pages-blog-blog-search-call-target="searchFrame" target="_top" class="blog-frame">
+    <%+ Loading::new().message("Fetching all blogs") %>
   </turbo-frame>
 </div>
