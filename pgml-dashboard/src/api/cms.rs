@@ -842,9 +842,15 @@ This is the end of the markdown
 
     async fn rocket() -> Rocket<Build> {
         dotenv::dotenv().ok();
+
+        let site_search = crate::utils::markdown::SiteSearch::new()
+            .await
+            .expect("Error initializing site search");
+        // site_search.build().await.expect("Error building site search");
+
         rocket::build()
-            // .manage(crate::utils::markdown::SearchIndex::open().unwrap())
-            .mount("/", crate::api::cms::routes())
+            .manage(site_search)
+            .mount("/", routes())
     }
 
     fn gitbook_test(html: String) -> Option<String> {
@@ -887,7 +893,7 @@ This is the end of the markdown
         }
     }
 
-    // Ensure Docs render and ther are no unparsed gitbook compnents.
+    // Ensure Docs render and there are no unparsed gitbook components.
     #[sqlx::test]
     async fn render_guides_test() {
         let client = Client::tracked(rocket().await).await.unwrap();
