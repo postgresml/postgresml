@@ -821,22 +821,8 @@ async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
     let urls = BLOG.get_all_urls();
 
     for url in urls {
-        let file = BLOG.url_to_path(url.as_ref());
-
-        let doc = crate::api::cms::Document::from_path(&file).await.unwrap();
-
-        let meta = article_preview::DocMeta {
-            description: doc.description,
-            author: doc.author,
-            author_image: doc.author_image,
-            date: doc.date,
-            image: doc.image,
-            featured: doc.featured,
-            tags: doc.tags,
-            title: doc.title,
-            path: doc.url,
-        };
-
+        let doc = Document::from_url(&url).await.unwrap();
+        let meta = article_preview::DocMeta::from_document(doc);
         index.push(meta)
     }
 

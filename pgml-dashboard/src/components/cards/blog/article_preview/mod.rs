@@ -23,7 +23,7 @@ impl DocMeta {
             description: doc.description,
             author: doc.author,
             author_image: doc.author_image,
-            featured: false,
+            featured: doc.featured,
             date: doc.date,
             tags: doc.tags,
             image: doc.image,
@@ -75,18 +75,7 @@ impl ArticlePreview {
 
     pub async fn from_path(path: &str) -> ArticlePreview {
         let doc = Document::from_path(&PathBuf::from(path)).await.unwrap();
-
-        let meta = DocMeta {
-            description: doc.description,
-            author: doc.author,
-            author_image: doc.author_image,
-            featured: false,
-            date: doc.date,
-            tags: doc.tags,
-            image: doc.image,
-            title: doc.title,
-            path: doc.url,
-        };
+        let meta = DocMeta::from_document(doc);
         ArticlePreview::new(&meta)
     }
 }
