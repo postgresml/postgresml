@@ -44,6 +44,7 @@ from transformers import (
     GPTQConfig,
     PegasusForConditionalGeneration,
     PegasusTokenizer,
+    TrainerCallback,
 )
 
 import threading
@@ -1011,6 +1012,16 @@ def generate(model_id, data, config):
 #######################
 # LLM Fine-Tuning
 #######################
+
+class PGMLCallback(TrainerCallback):
+    "A callback that prints a message at the beginning of training"
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        _ = logs.pop("total_flos", None)
+        if state.is_local_process_zero:
+            print(logs)
+
+
 class FineTuningBase:
     def __init__(
         self,
@@ -1221,6 +1232,7 @@ class FineTuningTextClassification(FineTuningBase):
             tokenizer=self.tokenizer,
             data_collator=data_collator,
             compute_metrics=self.compute_metrics,
+            callbacks=[PGMLCallback()],
         )
 
         self.trainer.train()
