@@ -641,7 +641,13 @@ impl Collection {
             .await;
 
         match results {
-            Ok(r) => Ok(r.0),
+            Ok(r) => {
+                let mut results = r.0;
+                if results["results"].is_null() {
+                    results["results"] = json!([]);
+                }
+                Ok(results)
+            }
             Err(e) => match e.as_database_error() {
                 Some(d) => {
                     if d.code() == Some(Cow::from("XX000")) {
@@ -655,7 +661,11 @@ impl Collection {
                         let results: (Json,) = sqlx::query_as_with(&built_query, values)
                             .fetch_one(&pool)
                             .await?;
-                        Ok(results.0)
+                        let mut results = results.0;
+                        if results["results"].is_null() {
+                            results["results"] = json!([]);
+                        }
+                        Ok(results)
                     } else {
                         Err(anyhow::anyhow!(e))
                     }
@@ -672,7 +682,11 @@ impl Collection {
         let results: (Json,) = sqlx::query_as_with(&built_query, values)
             .fetch_one(&pool)
             .await?;
-        Ok(results.0)
+        let mut results = results.0;
+        if results["results"].is_null() {
+            results["results"] = json!([]);
+        }
+        Ok(results)
     }
 
     #[instrument(skip(self))]
