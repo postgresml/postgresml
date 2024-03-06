@@ -1,0 +1,32 @@
+div[data-controller="pages-blog-blog-search-call"] {
+  .btn-primary {
+    @include media-breakpoint-down(md) {
+      padding: 12px 16px;
+    }
+  }
+
+  .btn-tag {
+    border: 2px solid #{$gray-200};
+    background-color: transparent;
+    color: #{$gray-200};
+
+     &.selected{
+      background-color: #{$gray-100};
+      border-color: #{$gray-100};
+      color: #{$gray-900};
+    }
+
+    &:hover:not(.all-tags), &:hover:not(.selected):is(.all-tags) {
+      background-color: transparent;
+      color: #{$gray-100};
+      border-color: #{$gray-100};
+      @include bold_by_shadow(var(#{$gray-100}));
+    }
+
+    &:active:not(.all-tags), &:active:not(.selected):is(.all-tags){
+      background-color: #{$gray-200};
+      border-color: #{$gray-200};
+      color: #{$gray-900};
+    }
+  }
+}

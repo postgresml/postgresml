@@ -21,6 +21,9 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+use crate::components::cards::blog::article_preview;
+use sailfish::TemplateOnce;
+
 lazy_static! {
     pub static ref BLOG: Collection = Collection::new(
         "Blog",
@@ -118,6 +121,25 @@ pub struct Document {
 impl Document {
     pub fn new() -> Document {
         Document { ..Default::default() }
+    }
+
+    // make a document from a uri of form <blog || docs || careers>/< path and file name >
+    pub async fn from_url(url: &str) -> anyhow::Result<Document, std::io::Error> {
+        let doc_type = match url.split('/').collect::<Vec<&str>>().get(1) {
+            Some(&"blog") => Some(DocType::Blog),
+            Some(&"docs") => Some(DocType::Docs),
+            Some(&"careers") => Some(DocType::Careers),
+            _ => None,
+        };
+
+        let path = match doc_type {
+            Some(DocType::Blog) => BLOG.url_to_path(url),
+            Some(DocType::Docs) => DOCS.url_to_path(url),
+            Some(DocType::Careers) => CAREERS.url_to_path(url),
+            _ => PathBuf::new(),
+        };
+
+        Document::from_path(&path).await
     }
 
     pub async fn from_path(path: &PathBuf) -> anyhow::Result<Document, std::io::Error> {
@@ -673,6 +695,49 @@ async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSea
     )
 }
 
+#[get("/search_blog?<query>&<tag>", rank = 20)]
+async fn search_blog(query: &str, tag: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
+    let tag = if tag.len() > 0 {
+        Some(Vec::from([tag.to_string()]))
+    } else {
+        None
+    };
+
+    // If user is not making a search return all blogs in default design.
+    let results = if query.len() > 0 || tag.clone().is_some() {
+        let results = site_search.search(query, Some(DocType::Blog), tag.clone()).await;
+
+        let results = match results {
+            Ok(results) => results
+                .into_iter()
+                .map(|document| article_preview::DocMeta::from_document(document))
+                .collect::<Vec<article_preview::DocMeta>>(),
+            Err(_) => Vec::new(),
+        };
+
+        results
+    } else {
+        let mut results = Vec::new();
+
+        for url in BLOG.get_all_urls() {
+            let doc = Document::from_url(&url).await.unwrap();
+
+            results.push(article_preview::DocMeta::from_document(doc));
+        }
+
+        results
+    };
+
+    let is_search = query.len() > 0 || tag.is_some();
+
+    ResponseOk(
+        crate::components::pages::blog::blog_search::Response::new()
+            .pattern(results, is_search)
+            .render_once()
+            .unwrap(),
+    )
+}
+
 #[get("/blog/.gitbook/assets/<path>", rank = 10)]
 pub async fn get_blog_asset(path: &str) -> Option<NamedFile> {
     BLOG.get_asset(path).await
@@ -751,13 +816,25 @@ async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
     .theme(Theme::Docs)
     .footer(cluster.context.marketing_footer.to_string());
 
-    Ok(ResponseOk(
-        layout.render(
-            crate::components::pages::blog::LandingPage::new(cluster)
-                .index(&BLOG)
-                .await,
-        ),
-    ))
+    let mut index = Vec::new();
+
+    let urls = BLOG.get_all_urls();
+
+    for url in urls {
+        let doc = Document::from_url(&url).await.unwrap();
+        let meta = article_preview::DocMeta::from_document(doc);
+        index.push(meta)
+    }
+
+    let featured_cards = index
+        .clone()
+        .into_iter()
+        .filter(|x| x.featured)
+        .collect::<Vec<article_preview::DocMeta>>();
+
+    Ok(ResponseOk(layout.render(
+        crate::components::pages::blog::LandingPage::new(cluster).featured_cards(featured_cards),
+    )))
 }
 
 #[get("/docs")]
@@ -806,7 +883,8 @@ pub fn routes() -> Vec<Route> {
         get_docs,
         get_docs_asset,
         get_user_guides,
-        search
+        search,
+        search_blog
     ]
 }
 
@@ -880,8 +958,9 @@ This is the end of the markdown
 
     async fn rocket() -> Rocket<Build> {
         dotenv::dotenv().ok();
+
         rocket::build()
-            // .manage(crate::utils::markdown::SearchIndex::open().unwrap())
+            // .manage(crate::utils::markdown::SiteSearch::new().await.expect("Error initializing site search"))
             .mount("/", crate::api::cms::routes())
     }
 

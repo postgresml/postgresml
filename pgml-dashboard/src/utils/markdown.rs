@@ -21,7 +21,7 @@ use std::sync::Mutex;
 use url::Url;
 
 // Excluded paths in the pgml-cms directory
-const EXCLUDED_DOCUMENT_PATHS: [&str; 1] = ["blog/README.md"];
+const EXCLUDED_DOCUMENT_PATHS: [&str; 2] = ["blog/README.md", "blog/SUMMARY.md"];
 
 pub struct MarkdownHeadings {
     header_map: Arc<Mutex<HashMap<String, usize>>>,

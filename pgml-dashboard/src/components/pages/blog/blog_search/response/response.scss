@@ -1,0 +1,23 @@
+div[data-controller="pages-blog-blog-search-response"] {
+
+}
+
+turbo-frame.blog-frame {
+  .loading {
+    display: none;
+  }
+
+  .content {
+    display: block;
+  }
+}
+
+turbo-frame[aria-busy="true"].blog-frame {
+  .loading {
+    display: block;
+  }
+  .content {
+    display: none;
+  }
+}
+

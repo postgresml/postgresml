@@ -1,0 +1,39 @@
+<%
+  use crate::components::loading::Message as Loading;
+
+  // leave out Company and Customer Stories for until tags are consistently used in blog posts
+  let tag_links = Vec::from([
+    "Engineering",
+    "Product",
+    // "Company",
+    // "Customer Stories",
+  ]);
+
+  let selected_class = "selected";
+%>
+
+<div data-controller="pages-blog-blog-search-call" class="d-flex flex-column" data-pages-blog-blog-search-call-selected-class="<%- selected_class %>">
+  <div class="d-flex flex-column flex-xxl-row justify-content-between justify-content-center align-items-center mx-xxl-5 mx-2 gap-4 mb-5">
+    <div class="d-flex flex-row justify-content-center align-items-center gap-3 flex-wrap">
+      <button class="rounded-pill btn btn-tag text-nowrap <%- selected_class %> all-tags" data-action="click->pages-blog-blog-search-call#removeTags" data-pages-blog-blog-search-call-tag-param="all" data-pages-blog-blog-search-call-target="removeTags">All</button>
+      <% for tag in tag_links {%>
+      <button class="rounded-pill btn btn-tag text-nowrap" data-action="click->pages-blog-blog-search-call#tag" data-pages-blog-blog-search-call-tag-param="<%- tag.to_lowercase() %>" data-pages-blog-blog-search-call-target="tagLink"><%- tag %></button>
+      <% } %>
+    </div>
+    <div class="input-group btn-search-input-marketing p-1" style="max-width: 35rem;">
+      <input type="text" class="form-control p-1 ps-4 me-1" placeholder="Search our blogs" name="search" id="search-input" autocomplete="off" data-pages-blog-blog-search-call-target="searchInput" data-action="keydown.enter->pages-blog-blog-search-call#search">
+        <button class="btn btn-primary rounded-2" data-action="click->pages-blog-blog-search-call#search">
+          <span class="material-symbols-outlined">search</span>
+          <span class="d-none d-md-block">Search</span>
+        </button>
+      </input>
+    </div>
+  </div>
+
+
+  <turbo-frame id="blog-search-results" src="/search_blog?query=&tag=" data-pages-blog-blog-search-call-target="searchFrame" target="_top" class="blog-frame">
+    <div class="my-5 py-5">
+      <%+ Loading::new().message("Fetching all blogs") %>
+    </div>
+  </turbo-frame>
+</div>

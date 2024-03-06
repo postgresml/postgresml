@@ -17,6 +17,22 @@ pub struct DocMeta {
     pub path: String,
 }
 
+impl DocMeta {
+    pub fn from_document(doc: Document) -> DocMeta {
+        DocMeta {
+            description: doc.description,
+            author: doc.author,
+            author_image: doc.author_image,
+            featured: doc.featured,
+            date: doc.date,
+            tags: doc.tags,
+            image: doc.image,
+            title: doc.title,
+            path: doc.url,
+        }
+    }
+}
+
 #[derive(TemplateOnce)]
 #[template(path = "cards/blog/article_preview/template.html")]
 pub struct ArticlePreview {
@@ -59,18 +75,7 @@ impl ArticlePreview {
 
     pub async fn from_path(path: &str) -> ArticlePreview {
         let doc = Document::from_path(&PathBuf::from(path)).await.unwrap();
-
-        let meta = DocMeta {
-            description: doc.description,
-            author: doc.author,
-            author_image: doc.author_image,
-            featured: false,
-            date: doc.date,
-            tags: doc.tags,
-            image: doc.image,
-            title: doc.title,
-            path: doc.url,
-        };
+        let meta = DocMeta::from_document(doc);
         ArticlePreview::new(&meta)
     }
 }

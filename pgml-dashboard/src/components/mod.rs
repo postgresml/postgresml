@@ -52,6 +52,9 @@ pub use left_nav_menu::LeftNavMenu;
 // src/components/lists
 pub mod lists;
 
+// src/components/loading
+pub mod loading;
+
 // src/components/modal
 pub mod modal;
 pub use modal::Modal;

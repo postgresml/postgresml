@@ -1,0 +1,24 @@
+<% 
+  use crate::components::loading::Message as Loading;
+%>
+<turbo-frame id="blog-search-results">
+  <div data-controller="pages-blog-blog-search" class="content">
+    <div class="d-flex flex-wrap gap-3 justify-content-center">
+      <% if html.len() > 0 {%> 
+        <% for item in html { %>
+          <%- item %>
+        <% } %>
+      <% } else {%>
+      <div>
+        <h6>No blogs satisfy that search</h6>
+      </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="loading">
+    <div class="my-5 py-5">
+      <%+ Loading::new().message("Searching ...") %>
+    </div>
+  </div>
+</turbo-frame>

@@ -1,19 +1,14 @@
 <% 
   use crate::components::Carousel;
   use crate::components::cards::blog::ArticlePreview;
-  use crate::components::pages::blog::LandingPage;
   use crate::components::sections::common_resources::{Cards, CommonResources};
+  use crate::components::pages::blog::blog_search::call::Call as BlogSearchCall;
 
-  let featured_cards = index
-    .clone()
-    .into_iter()
-    .filter(|x| x
-    .featured)
-    .map(|x| ArticlePreview::new(&x)
-    .featured()
-    .render_once()
-    .unwrap())
-    .collect::<Vec<String>>();
+
+
+  let cards = featured_cards.iter().map(|card| {
+    ArticlePreview::new(card).featured().render_once().unwrap()
+  }).collect::<Vec<String>>();
 %>
 
 <div data-controller="pages-blog-landing-page" class="overflow-hidden tuck-under-navbar">
@@ -34,15 +29,11 @@
 
       <div class="d-flex justify-content-center my-5">
         <div class="w-100  my-1 pt-1 my-xxl-4 pt-xxl-5">
-          <%+ Carousel::new(featured_cards) %>
+          <%+ Carousel::new(cards) %>
         </div>
       </div>
 
-      <div class="d-flex flex-wrap gap-3 justify-content-center">
-        <% for doc in LandingPage::pattern(index.clone(), is_search) {%>
-          <%- doc %>
-        <% } %>
-      </div>
+      <%+ BlogSearchCall::new() %>
     </div>
 
     <div class="mt-5">

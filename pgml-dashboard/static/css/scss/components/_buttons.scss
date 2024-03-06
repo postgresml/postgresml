@@ -245,7 +245,7 @@
     }
 }
 
-.btn-search-alt {
+.btn-search-input-webapp {
     gap: 0.1rem;
     font-weight: 600;
 
@@ -261,6 +261,15 @@
         color: #{$slate-tint-400};
         text-shadow: none;
     }
+}
 
+.btn-search-input-marketing {
+    .input {
+        background: linear-gradient(265deg, #212224 20.41%, #17181A 83.75%);
+      }
+    
+      .input-text {
+        color: #{$gray-300};
+      }
 }
 

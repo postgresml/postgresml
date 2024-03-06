@@ -1,0 +1,37 @@
+div {
+    @mixin loading-dot($delay, $initial) {
+        width: 30px;
+        height: 30px;
+        opacity: $initial;
+        border-radius: 30px;
+        background-color: #{$gray-100};
+        animation: opacity 3s infinite linear;
+        animation-delay: $delay;
+    }
+
+    .loading-dot-1 {
+        @include loading-dot(0s, 0.1);
+    }
+
+    .loading-dot-2 {
+        @include loading-dot(0.5s, 0.2);
+    }
+
+    .loading-dot-3 {
+        @include loading-dot(1s, 0.3);
+    }
+
+    @keyframes opacity {
+        0% {
+            opacity: 0.1;
+        }
+
+        75% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 0.1;
+        }
+    }
+}
