@@ -32,6 +32,8 @@
 
 
   <turbo-frame id="blog-search-results" src="/search_blog?query=&tag=" data-pages-blog-blog-search-call-target="searchFrame" target="_top" class="blog-frame">
-    <%+ Loading::new().message("Fetching all blogs") %>
+    <div class="my-5 py-5">
+      <%+ Loading::new().message("Fetching all blogs") %>
+    </div>
   </turbo-frame>
 </div>
