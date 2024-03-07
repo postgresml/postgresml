@@ -3,6 +3,7 @@
   use crate::components::cards::blog::ArticlePreview;
   use crate::components::sections::common_resources::{Cards, CommonResources};
   use crate::components::pages::blog::blog_search::call::Call as BlogSearchCall;
+  use crate::components::cards::NewsletterSubscribe;
 
 
 
@@ -34,6 +35,10 @@
       </div>
 
       <%+ BlogSearchCall::new() %>
+    </div>
+
+    <div class="mt-5 container">
+      <%+ NewsletterSubscribe::new() %>
     </div>
 
     <div class="mt-5">

@@ -5,12 +5,13 @@
       <p>No spam. No sales pitches. Just product updates. Keep up with all our articles and news. Join our newsletter and stay up to date!</p>
     </div>
 
-    <form action="/newsletter_subscribe" class="d-flex flex-column justify-content-center align-items-center gap-3 w-100" style="flex: 3" method="post">
+    <form action="/newsletter_subscribe" class="d-flex flex-column justify-content-center align-items-center gap-3 w-100" style="flex: 3" method="post" data-cards-newsletter-subscribe-target="form">
       <div class="input-group p-1 ps-3 subscribe-input">
         <input  type="email" class="form-control border-0" placeholder="hootareyou@email.com" name="email" autocomplete="off">
-        <button type="submit" class="btn btn-primary rounded-2 d-none d-md-block">Subscribe</button>
+        <!-- <button type="submit" class="btn btn-primary rounded-2 d-none d-md-block">Subscribe</button> -->
+        <button type="button" class="btn btn-primary rounded-2 d-none d-md-block" data-action="cards-newsletter-subscribe#submitRequest">Subscribe</button>
       </div>
-      <button type="submit" class="btn btn-primary rounded-2 d-md-none">Subscribe</button>
+      <button type="submit" class="btn btn-primary rounded-2 d-md-none" data-action="cards-newsletter-subscribe#submitRequest">Subscribe</button>
     </form>
   </div>
 </div>
