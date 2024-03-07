@@ -919,13 +919,19 @@ To analyze the distribution of labels in the shuffled dataset, you can use the f
 
 ```sql
 -- Count the occurrences of each label in the shuffled dataset
-SELECT
-    label,
+pgml=# SELECT
+    class,
     COUNT(*) AS label_count
 FROM pgml.imdb_shuffled_view
-GROUP BY label
-ORDER BY label;
+GROUP BY class
+ORDER BY class;
 
+  class   | label_count
+----------+-------------
+ negative |       25000
+ positive |       25000
+(2 rows)
+```
 
 This query provides insights into the distribution of labels, helping you understand the balance or imbalance of classes in your dataset.
 
@@ -933,12 +939,22 @@ This query provides insights into the distribution of labels, helping you unders
 To get a glimpse of the data, you can retrieve a sample of records from the shuffled dataset:
 
 ```sql
-Copy code
 -- Retrieve a sample of records from the shuffled dataset
-SELECT *
+pgml=# SELECT LEFT(text,100) AS text, class
 FROM pgml.imdb_shuffled_view
-LIMIT 10; -- Adjust the limit based on the desired number of records
+LIMIT 5;
+                                                 text                                                 |  class
+------------------------------------------------------------------------------------------------------+----------
+ This is a VERY entertaining movie. A few of the reviews that I have read on this forum have been wri | positive
+ This is one of those movies where I wish I had just stayed in the bar.<br /><br />The film is quite  | negative
+ Barbershop 2: Back in Business wasn't as good as it's original but was just as funny. The movie itse | negative
+ Umberto Lenzi hits new lows with this recycled trash. Janet Agren plays a lady who is looking for he | negative
+ I saw this movie last night at the Phila. Film festival. It was an interesting and funny movie that  | positive
+(5 rows)
+
+Time: 101.985 ms
 ```
+
 This query allows you to inspect a few records to understand the structure and content of the shuffled data.
 
 #### 3.3 Additional Exploratory Analysis
@@ -1112,6 +1128,7 @@ During training, model is periodically uploaded to Hugging Face Hub. You will fi
 Now, that we have fine-tuned model on Hugging Face Hub, we can use [`pgml.transform`](https://postgresml.org/docs/introduction/apis/sql-extensions/pgml.transform/text-classification) to perform real-time predictions as well as batch predictions. 
 
 **Real-time predictions**
+
 Here is an example pgml.transform call for real-time predictions on the newly minted LLM fine-tuned on IMDB review dataset.
 ```sql
  SELECT pgml.transform(
