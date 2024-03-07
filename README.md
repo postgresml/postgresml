@@ -46,6 +46,8 @@
     - [Text-to-Text Generation](#text-to-text-generation)
     - [Fill-Mask](#fill-mask)
 - [Vector Database](#vector-database)
+- [LLM Fine-tuning](#llm-fine-tuning)
+    - [Text Classification](#llm-fine-tuning-text-classification)
 <!-- - [Regression](#regression)
 - [Classification](#classification) -->
 
@@ -866,5 +868,367 @@ Sentence Similarity involves determining the degree of similarity between two te
 # Classification -->
 
 
+# LLM Fine-tuning 
 
+In this section, we will provide a step-by-step walkthrough for fine-tuning a Language Model (LLM) for differnt tasks.
+
+## Prerequisites
+
+1. Ensure you have the PostgresML extension installed and configured in your PostgreSQL database. You can find installation instructions for PostgresML in the official documentation.
+
+2. Obtain a Hugging Face API token to push the fine-tuned model to the Hugging Face Model Hub. Follow the instructions on the [Hugging Face website](https://huggingface.co/settings/tokens) to get your API token.
+
+## LLM Fine-tuning Text Classification
+
+### 1. Loading the Dataset
+
+To begin, create a table to store your dataset. In this example, we use the 'imdb' dataset from Hugging Face. IMDB dataset contains three splits: train (25K rows), test (25K rows) and unsupervised (50K rows). In train and test splits, negative class has label 0 and positive class label 1. All rows in unsupervised split has a label of -1. 
+```sql
+SELECT pgml.load_dataset('imdb');
+```
+
+### 2. Prepare dataset for fine-tuning
+
+We will create a view of the dataset by performing the following operations:
+
+- Add a new text column named "class" that has positive and negative classes. 
+- Shuffled view of the dataset to ensure randomness in the distribution of data.
+- Remove all the unsupervised splits that have label = -1.
+
+```sql
+CREATE VIEW pgml.imdb_shuffled_view AS
+SELECT
+    label,
+    CASE WHEN label = 0 THEN 'negative'
+         WHEN label = 1 THEN 'positive'
+         ELSE 'neutral'
+    END AS class,
+    text
+FROM pgml.imdb
+WHERE label != -1
+ORDER BY RANDOM();
+```
+
+### 3 Exploratory Data Analysis (EDA) on Shuffled Data
+
+Before splitting the data into training and test sets, it's essential to perform exploratory data analysis (EDA) to understand the distribution of labels and other characteristics of the dataset. In this section, we'll use the `pgml.imdb_shuffled_view` to explore the shuffled data.
+
+#### 3.1 Distribution of Labels
+
+To analyze the distribution of labels in the shuffled dataset, you can use the following SQL query:
+
+```sql
+-- Count the occurrences of each label in the shuffled dataset
+SELECT
+    label,
+    COUNT(*) AS label_count
+FROM pgml.imdb_shuffled_view
+GROUP BY label
+ORDER BY label;
+
+
+This query provides insights into the distribution of labels, helping you understand the balance or imbalance of classes in your dataset.
+
+#### 3.2 Sample Records
+To get a glimpse of the data, you can retrieve a sample of records from the shuffled dataset:
+
+```sql
+Copy code
+-- Retrieve a sample of records from the shuffled dataset
+SELECT *
+FROM pgml.imdb_shuffled_view
+LIMIT 10; -- Adjust the limit based on the desired number of records
+```
+This query allows you to inspect a few records to understand the structure and content of the shuffled data.
+
+#### 3.3 Additional Exploratory Analysis
+Feel free to explore other aspects of the data, such as the distribution of text lengths, word frequencies, or any other features relevant to your analysis. Performing EDA is crucial for gaining insights into your dataset and making informed decisions during subsequent steps of the workflow.
+
+### 4. Splitting Data into Training and Test Sets
+
+Create views for training and test data by splitting the shuffled dataset. In this example, 80% is allocated for training, and 20% for testing.
+
+```sql
+-- Create a view for training data
+CREATE VIEW pgml.imdb_train_view AS
+SELECT *
+FROM pgml.imdb_shuffled_view
+LIMIT (SELECT COUNT(*) * 0.8 FROM pgml.imdb_shuffled_view);
+
+-- Create a view for test data
+CREATE VIEW pgml.imdb_test_view AS
+SELECT *
+FROM pgml.imdb_shuffled_view
+OFFSET (SELECT COUNT(*) * 0.8 FROM pgml.imdb_shuffled_view);
+```
+
+### 5. Fine-Tuning the Language Model
+
+Now, fine-tune the Language Model for text classification using the created training view. In the following sections, you will see a detailed explanation of different parameters used during fine-tuning.
+
+```sql
+SELECT pgml.tune(
+    'imdb_review_sentiment',
+    task => 'text-classification',
+    relation_name => 'pgml.imdb_train_view',
+    model_name => 'distilbert-base-uncased',
+    test_size => 0.2,
+    test_sampling => 'last',
+    hyperparams => '{
+        "training_args" : {
+            "learning_rate": 2e-5,
+            "per_device_train_batch_size": 16,
+            "per_device_eval_batch_size": 16,
+            "num_train_epochs": 20,
+            "weight_decay": 0.01,
+            "hub_token" : "YOUR_HUB_TOKEN", 
+            "push_to_hub" : true
+        },
+        "dataset_args" : { "text_column" : "text", "class_column" : "class" }
+    }'
+);
+```
+
+* project_name ('imdb_review_sentiment'): The project_name parameter specifies a unique name for your fine-tuning project. It helps identify and organize different fine-tuning tasks within the PostgreSQL database. In this example, the project is named 'imdb_review_sentiment,' reflecting the sentiment analysis task on the IMDb dataset. You can check `pgml.projects` for list of projects.
+
+* task ('text-classification'): The task parameter defines the nature of the machine learning task to be performed. In this case, it's set to 'text-classification,' indicating that the fine-tuning is geared towards training a model for text classification.
+
+* relation_name ('pgml.imdb_train_view'): The relation_name parameter identifies the training dataset to be used for fine-tuning. It specifies the view or table containing the training data. In this example, 'pgml.imdb_train_view' is the view created from the shuffled IMDb dataset, and it serves as the source for model training.
+
+* model_name ('distilbert-base-uncased'): The model_name parameter denotes the pre-trained language model architecture to be fine-tuned. In this case, 'distilbert-base-uncased' is selected. DistilBERT is a distilled version of BERT, and the 'uncased' variant indicates that the model does not differentiate between uppercase and lowercase letters.
+
+* test_size (0.2): The test_size parameter determines the proportion of the dataset reserved for testing during fine-tuning. In this example, 20% of the dataset is set aside for evaluation, helping assess the model's performance on unseen data.
+
+* test_sampling ('last'): The test_sampling parameter defines the strategy for sampling test data from the dataset. In this case, 'last' indicates that the most recent portion of the data, following the specified test size, is used for testing. Adjusting this parameter might be necessary based on your specific requirements and dataset characteristics.
+
+#### 5.1 Dataset Arguments (dataset_args)
+The dataset_args section allows you to specify critical parameters related to your dataset for language model fine-tuning.
+
+* text_column: The name of the column containing the text data in your dataset. In this example, it's set to "text."
+* class_column: The name of the column containing the class labels in your dataset. In this example, it's set to "class."
+
+#### 5.2 Training Arguments (training_args)
+Fine-tuning a language model requires careful consideration of training parameters in the training_args section. Below is a subset of training args that you can pass to fine-tuning. You can find an exhaustive list of parameters in Hugging Face documentation on [TrainingArguments](https://huggingface.co/docs/transformers/main_classes/trainer#transformers.TrainingArguments).
+
+* learning_rate: The learning rate for the training. It controls the step size during the optimization process. Adjust based on your model's convergence behavior.
+* per_device_train_batch_size: The batch size per GPU for training. This parameter controls the number of training samples utilized in one iteration. Adjust based on your available GPU memory.
+* per_device_eval_batch_size: The batch size per GPU for evaluation. Similar to per_device_train_batch_size, but used during model evaluation.
+* num_train_epochs: The number of training epochs. An epoch is one complete pass through the entire training dataset. Adjust based on the model's convergence and your dataset size.
+* weight_decay: L2 regularization term for weight decay. It helps prevent overfitting. Adjust based on the complexity of your model.
+* hub_token: Your Hugging Face API token to push the fine-tuned model to the Hugging Face Model Hub. Replace "YOUR_HUB_TOKEN" with the actual token.
+* push_to_hub: A boolean flag indicating whether to push the model to the Hugging Face Model Hub after fine-tuning.
+
+
+#### 5.3 Monitoring
+During training, metrics like loss, gradient norm will be printed as info and also logged in pgml.logs table. Below is a snapshot of such output.
+
+```json
+INFO:  {
+    "loss": 0.3453,
+    "grad_norm": 5.230295181274414,
+    "learning_rate": 1.9e-05,
+    "epoch": 0.25,
+    "step": 500,
+    "max_steps": 10000,
+    "timestamp": "2024-03-07 01:59:15.090612"
+}
+INFO:  {
+    "loss": 0.2479,
+    "grad_norm": 2.7754225730895996,
+    "learning_rate": 1.8e-05,
+    "epoch": 0.5,
+    "step": 1000,
+    "max_steps": 10000,
+    "timestamp": "2024-03-07 02:01:12.064098"
+}
+INFO:  {
+    "loss": 0.223,
+    "learning_rate": 1.6000000000000003e-05,
+    "epoch": 1.0,
+    "step": 2000,
+    "max_steps": 10000,
+    "timestamp": "2024-03-07 02:05:08.141220"
+}
+```
+
+Once the training is completed, model will be evaluated against the validation dataset. You will see the below in the client terminal. Accuracy on the evaluation dataset is 0.934 and F1-score is 0.93. 
+
+```json
+INFO:  {
+    "train_runtime": 2359.5335,
+    "train_samples_per_second": 67.81,
+    "train_steps_per_second": 4.238,
+    "train_loss": 0.11267969808578492,
+    "epoch": 5.0,
+    "step": 10000,
+    "max_steps": 10000,
+    "timestamp": "2024-03-07 02:36:38.783279"
+}
+INFO:  {
+    "eval_loss": 0.3691485524177551,
+    "eval_f1": 0.9343711842996372,
+    "eval_accuracy": 0.934375,
+    "eval_runtime": 41.6167,
+    "eval_samples_per_second": 192.23,
+    "eval_steps_per_second": 12.014,
+    "epoch": 5.0,
+    "step": 10000,
+    "max_steps": 10000,
+    "timestamp": "2024-03-07 02:37:31.762917"
+}
+```
+
+Once the training is completed, you can check query pgml.logs table using the model_id or by finding the latest model on the project. 
+
+```bash
+pgml: SELECT logs->>'epoch' AS epoch, logs->>'step' AS step, logs->>'loss' AS loss FROM pgml.logs WHERE model_id = 993 AND jsonb_exists(logs, 'loss');
+ epoch | step  |  loss
+-------+-------+--------
+ 0.25  | 500   | 0.3453
+ 0.5   | 1000  | 0.2479
+ 0.75  | 1500  | 0.223
+ 1.0   | 2000  | 0.2165
+ 1.25  | 2500  | 0.1485
+ 1.5   | 3000  | 0.1563
+ 1.75  | 3500  | 0.1559
+ 2.0   | 4000  | 0.142
+ 2.25  | 4500  | 0.0816
+ 2.5   | 5000  | 0.0942
+ 2.75  | 5500  | 0.075
+ 3.0   | 6000  | 0.0883
+ 3.25  | 6500  | 0.0432
+ 3.5   | 7000  | 0.0426
+ 3.75  | 7500  | 0.0444
+ 4.0   | 8000  | 0.0504
+ 4.25  | 8500  | 0.0186
+ 4.5   | 9000  | 0.0265
+ 4.75  | 9500  | 0.0248
+ 5.0   | 10000 | 0.0284
+```
+
+During training, model is periodically uploaded to Hugging Face Hub. You will find the model at `https://huggingface.co/<username>/<project_name>`. An example model that was automatically pushed to Hugging Face Hub is [here](https://huggingface.co/santiadavani/imdb_review_sentiement).
+
+### 6. Inference using fine-tuned model
+Now, that we have fine-tuned model on Hugging Face Hub, we can use [`pgml.transform`](https://postgresml.org/docs/introduction/apis/sql-extensions/pgml.transform/text-classification) to perform real-time predictions as well as batch predictions. 
+
+**Real-time predictions**
+Here is an example pgml.transform call for real-time predictions on the newly minted LLM fine-tuned on IMDB review dataset.
+```sql
+ SELECT pgml.transform(
+  task   => '{
+    "task": "text-classification",
+    "model": "santiadavani/imdb_review_sentiement"
+  }'::JSONB,
+  inputs => ARRAY[
+    'I would not give this movie a rating, its not worthy. I watched it only because I am a Pfieffer fan. ',
+    'This movie was sooooooo good! It was hilarious! There are so many jokes that you can just watch the'
+  ]
+);
+                                               transform
+--------------------------------------------------------------------------------------------------------
+ [{"label": "negative", "score": 0.999561846256256}, {"label": "positive", "score": 0.986771047115326}]
+(1 row)
+
+Time: 175.264 ms
+```
+
+
+**Batch predictions**
+
+```sql
+pgml=# SELECT
+    LEFT(text, 100) AS truncated_text,
+    class,
+    predicted_class[0]->>'label' AS predicted_class,
+    (predicted_class[0]->>'score')::float AS score
+FROM (
+    SELECT
+        LEFT(text, 100) AS text,
+        class,
+        pgml.transform(
+            task => '{
+                "task": "text-classification",
+                "model": "santiadavani/imdb_review_sentiement"
+            }'::JSONB,
+            inputs => ARRAY[text]
+        ) AS predicted_class
+    FROM pgml.imdb_test_view
+    LIMIT 2
+) AS subquery;
+                                            truncated_text                                            |  class   | predicted_class |       score
+------------------------------------------------------------------------------------------------------+----------+-----------------+--------------------
+ I wouldn't give this movie a rating, it's not worthy. I watched it only because I'm a Pfieffer fan.  | negative | negative        | 0.9996490478515624
+ This movie was sooooooo good! It was hilarious! There are so many jokes that you can just watch the  | positive | positive        | 0.9972313046455384
+
+ Time: 1337.290 ms (00:01.337)
+ ```
+
+## 7. Restarting Training from a Previous Trained Model
+
+Sometimes, it's necessary to restart the training process from a previously trained model. This can be advantageous for various reasons, such as model fine-tuning, hyperparameter adjustments, or addressing interruptions in the training process. `pgml.tune` provides a seamless way to restart training while leveraging the progress made in the existing model. Below is a guide on how to restart training using a previous model as a starting point:
+
+### Define the Previous Model
+
+Specify the name of the existing model you want to use as a starting point. This is achieved by setting the `model_name` parameter in the `pgml.tune` function. In the example below, it is set to 'santiadavani/imdb_review_sentiement'.
+
+```sql
+model_name => 'santiadavani/imdb_review_sentiement',
+```
+
+### Adjust Hyperparameters
+Fine-tune hyperparameters as needed for the restarted training process. This might include modifying learning rates, batch sizes, or training epochs. In the example below, hyperparameters such as learning rate, batch sizes, and epochs are adjusted.
+
+```sql
+"training_args": {
+    "learning_rate": 2e-5,
+    "per_device_train_batch_size": 16,
+    "per_device_eval_batch_size": 16,
+    "num_train_epochs": 1,
+    "weight_decay": 0.01,
+    "hub_token": "",
+    "push_to_hub": true
+},
+```
+
+### Ensure Consistent Dataset Configuration
+Confirm that the dataset configuration remains consistent, including specifying the same text and class columns as in the previous training. This ensures compatibility between the existing model and the restarted training process.
+
+```sql
+"dataset_args": {
+    "text_column": "text",
+    "class_column": "class"
+},
+```
+
+### Run the pgml.tune Function
+Execute the `pgml.tune` function with the updated parameters to initiate the training restart. The function will leverage the existing model and adapt it based on the adjusted hyperparameters and dataset configuration.
+
+```sql
+SELECT pgml.tune(
+    'imdb_review_sentiement',
+    task => 'text-classification',
+    relation_name => 'pgml.imdb_train_view',
+    model_name => 'santiadavani/imdb_review_sentiement',
+    test_size => 0.2,
+    test_sampling => 'last',
+    hyperparams => '{
+        "training_args": {
+            "learning_rate": 2e-5,
+            "per_device_train_batch_size": 16,
+            "per_device_eval_batch_size": 16,
+            "num_train_epochs": 1,
+            "weight_decay": 0.01,
+            "hub_token": "",
+            "push_to_hub": true
+        },
+        "dataset_args": { "text_column": "text", "class_column": "class" }
+    }'
+);
+```
+
+By following these steps, you can effectively restart training from a previously trained model, allowing for further refinement and adaptation of the model based on new requirements or insights. Adjust parameters as needed for your specific use case and dataset.
+
+## Conclusion
+
+By following these steps, you can leverage PostgresML to seamlessly integrate fine-tuning of Language Models for text classification directly within your PostgreSQL database. Adjust the dataset, model, and hyperparameters to suit your specific requirements.
 
