@@ -47,7 +47,8 @@
     - [Fill-Mask](#fill-mask)
 - [Vector Database](#vector-database)
 - [LLM Fine-tuning](#llm-fine-tuning)
-    - [Text Classification](#llm-fine-tuning-text-classification)
+    - [Text Classification - 2 classes](#text-classification-2-classes)
+    - [Text Classification - 9 classes](#text-classification-9-classes)
 <!-- - [Regression](#regression)
 - [Classification](#classification) -->
 
@@ -878,7 +879,7 @@ In this section, we will provide a step-by-step walkthrough for fine-tuning a La
 
 2. Obtain a Hugging Face API token to push the fine-tuned model to the Hugging Face Model Hub. Follow the instructions on the [Hugging Face website](https://huggingface.co/settings/tokens) to get your API token.
 
-## LLM Fine-tuning Text Classification
+## Text Classification 2 Classes
 
 ### 1. Loading the Dataset
 
@@ -1245,7 +1246,77 @@ SELECT pgml.tune(
 
 By following these steps, you can effectively restart training from a previously trained model, allowing for further refinement and adaptation of the model based on new requirements or insights. Adjust parameters as needed for your specific use case and dataset.
 
-## Conclusion
+## Text Classification 9 Classes
 
-By following these steps, you can leverage PostgresML to seamlessly integrate fine-tuning of Language Models for text classification directly within your PostgreSQL database. Adjust the dataset, model, and hyperparameters to suit your specific requirements.
+### 1. Load and Shuffle the Dataset
+In this section, we begin by loading the FinGPT sentiment analysis dataset using the `pgml.load_dataset` function. The dataset is then processed and organized into a shuffled view (pgml.fingpt_sentiment_shuffled_view), ensuring a randomized order of records. This step is crucial for preventing biases introduced by the original data ordering and enhancing the training process.
 
+```sql
+-- Load the dataset
+SELECT pgml.load_dataset('FinGPT/fingpt-sentiment-train');
+
+-- Create a shuffled view
+CREATE VIEW pgml.fingpt_sentiment_shuffled_view AS
+SELECT * FROM pgml."FinGPT/fingpt-sentiment-train" ORDER BY RANDOM();
+```
+
+### 2. Explore Class Distribution
+Once the dataset is loaded and shuffled, we delve into understanding the distribution of sentiment classes within the data. By querying the shuffled view, we obtain valuable insights into the number of instances for each sentiment class. This exploration is essential for gaining a comprehensive understanding of the dataset and its inherent class imbalances.
+
+```sql
+-- Explore class distribution
+SELECT
+    output,
+    COUNT(*) AS class_count
+FROM pgml.fingpt_sentiment_shuffled_view
+GROUP BY output
+ORDER BY output;
+
+```
+
+### 3. Create Training and Test Views
+To facilitate the training process, we create distinct views for training and testing purposes. The training view (pgml.fingpt_sentiment_train_view) contains 80% of the shuffled dataset, enabling the model to learn patterns and associations. Simultaneously, the test view (pgml.fingpt_sentiment_test_view) encompasses the remaining 20% of the data, providing a reliable evaluation set to assess the model's performance.
+
+```sql
+-- Create a view for training data (e.g., 80% of the shuffled records)
+CREATE VIEW pgml.fingpt_sentiment_train_view AS
+SELECT *
+FROM pgml.fingpt_sentiment_shuffled_view
+LIMIT (SELECT COUNT(*) * 0.8 FROM pgml.fingpt_sentiment_shuffled_view);
+
+-- Create a view for test data (remaining 20% of the shuffled records)
+CREATE VIEW pgml.fingpt_sentiment_test_view AS
+SELECT *
+FROM pgml.fingpt_sentiment_shuffled_view
+OFFSET (SELECT COUNT(*) * 0.8 FROM pgml.fingpt_sentiment_shuffled_view);
+
+```
+
+### 4. Fine-Tune the Model for 9 Classes
+In the final section, we kick off the fine-tuning process using the `pgml.tune` function. The model will be internally configured for sentiment analysis with 9 classes. The training is executed on the 80% of the train view and evaluated on the remaining 20% of the train view. The test view is reserved for evaluating the model's accuracy after training is completed. Please note that the option `hub_private_repo: true` is used to push the model to a private Hugging Face repository. 
+
+```sql
+-- Fine-tune the model for 9 classes without HUB token
+SELECT pgml.tune(
+    'fingpt_sentiement',
+    task => 'text-classification',
+    relation_name => 'pgml.fingpt_sentiment_train_view',
+    model_name => 'distilbert-base-uncased',
+    test_size => 0.2,
+    test_sampling => 'last',
+    hyperparams => '{
+        "training_args": {
+            "learning_rate": 2e-5,
+            "per_device_train_batch_size": 16,
+            "per_device_eval_batch_size": 16,
+            "num_train_epochs": 5,
+            "weight_decay": 0.01,
+            "hub_token" : "YOUR_HUB_TOKEN",
+            "push_to_hub": true,
+            "hub_private_repo": true
+        },
+        "dataset_args": { "text_column": "input", "class_column": "output" }
+    }'
+);
+
+```
