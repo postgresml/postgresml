@@ -981,7 +981,7 @@ OFFSET (SELECT COUNT(*) * 0.8 FROM pgml.imdb_shuffled_view);
 
 ### 5. Fine-Tuning the Language Model
 
-Now, fine-tune the Language Model for text classification using the created training view. In the following sections, you will see a detailed explanation of different parameters used during fine-tuning.
+Now, fine-tune the Language Model for text classification using the created training view. In the following sections, you will see a detailed explanation of different parameters used during fine-tuning. Fine-tuned model is pushed to your public Hugging Face Hub periodically. A new repository will be created under your username using your project name (`imdb_review_sentiment` in this case). You can also choose to push the model to a private repository by setting `hub_private_repo: true` in training arguments.
 
 ```sql
 SELECT pgml.tune(
@@ -1236,7 +1236,7 @@ SELECT pgml.tune(
             "per_device_eval_batch_size": 16,
             "num_train_epochs": 1,
             "weight_decay": 0.01,
-            "hub_token": "",
+            "hub_token": "YOUR_HUB_TOKEN",
             "push_to_hub": true
         },
         "dataset_args": { "text_column": "text", "class_column": "class" }
@@ -1245,6 +1245,16 @@ SELECT pgml.tune(
 ```
 
 By following these steps, you can effectively restart training from a previously trained model, allowing for further refinement and adaptation of the model based on new requirements or insights. Adjust parameters as needed for your specific use case and dataset.
+
+
+## 8. Hugging Face Hub vs. PostgresML as Model Repository
+We utilize the Hugging Face Hub as the primary repository for fine-tuning Large Language Models (LLMs). Leveraging the HF hub offers several advantages:
+
+* The HF repository serves as the platform for pushing incremental updates to the model during the training process. In the event of any disruptions in the database connection, you have the flexibility to resume training from where it was left off.
+* If you prefer to keep the model private, you can push it to a private repository within the Hugging Face Hub. This ensures that the model is not publicly accessible by setting the parameter hub_private_repo to true.
+* The pgml.transform function, designed around utilizing models from the Hugging Face Hub, can be reused without any modifications.
+
+However, in certain scenarios, pushing the model to a central repository and pulling it for inference may not be the most suitable approach. To address this situation, we save all the model weights and additional artifacts, such as tokenizer configurations and vocabulary, in the pgml.files table at the end of the training process. It's important to note that as of the current writing, hooks to use models directly from pgml.files in the pgml.transform function have not been implemented. We welcome Pull Requests (PRs) from the community to enhance this functionality.
 
 ## Text Classification 9 Classes
 
