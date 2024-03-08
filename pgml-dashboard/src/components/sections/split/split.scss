@@ -1,0 +1,92 @@
+div[data-controller="sections-split"] {
+    .greeting {
+        margin-left: 3vw;
+        margin-right: 3vw;
+        @include media-breakpoint-up(lg) {
+            margin-left: 10vw;
+        }
+    }
+
+    .signup-left {
+        background: #{$gray-700};
+    }
+    
+    .signup-right {
+        position: relative;
+        background-color: #{$gray-800};
+        overflow: hidden;
+        min-height: 100vh;
+    
+        .card {
+            max-width: 30rem;
+        }
+    }
+
+    .left-center-navbar {
+        top: 88px; 
+        height: 100%;
+        max-height: calc( 100vh - 88px );
+    }
+
+    .left-center {
+        top: 0px; 
+        height: 100%; 
+        max-height: 100vh;
+    }
+
+    .glow-1 {
+        overflow: hidden;
+        left: 50%;
+        top: 65%;
+        position: absolute;
+        width: 1329.767px;
+        height: 602.685px;
+        transform: rotate(-47.563deg);
+        flex-shrink: 0;
+        border-radius: 1329.767px;
+        background: radial-gradient(76.18% 64.48% at 55.97% 35.8%, rgba(255, 152, 214, 0.60) 0%, rgba(26, 6, 255, 0.60) 73.96%);
+        filter: blur(168.74745178222656px);
+    }
+
+    .glow-2 {
+        overflow: hidden;
+        left: 50%;
+        top: 65%;
+        position: absolute;
+        width: 521.519px;
+        height: 665.196px;
+        transform: rotate(-138.124deg);
+        flex-shrink: 0;
+        border-radius: 665.196px;
+        background: radial-gradient(55.54% 61.91% at 93.5% 14.5%, rgba(66, 132, 199, 0.40) 0%, rgba(152, 203, 255, 0.40) 100%);
+        filter: blur(112.498291015625px);
+    }
+
+    .glow-3 {
+        overflow: hidden;
+        left: 50%;
+        top: 65%;
+        position: absolute;
+        width: 608.173px;
+        height: 456.083px;
+        transform: rotate(-39.836deg);
+        flex-shrink: 0;
+        border-radius: 608.173px;
+        background: radial-gradient(50% 50% at 50% 50%, #8B44FF 0%, #FF783F 100%);
+        filter: blur(168.74745178222656px);
+    }
+
+    .glow-4 {
+        overflow: hidden;
+        left: 50%;
+        top: 65%;
+        position: absolute;
+        width: 726.853px;
+        height: 371.406px;
+        transform: rotate(-59.934deg);
+        flex-shrink: 0;
+        border-radius: 726.853px;
+        background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(85, 66, 199, 0.60) 26.4%, rgba(174, 110, 255, 0.60) 100%);
+        filter: blur(224.99658203125px);
+    }
+}

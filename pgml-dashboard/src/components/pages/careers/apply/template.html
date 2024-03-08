@@ -1,0 +1,83 @@
+
+<% 
+  use pgml_components::Component;
+  use crate::components::sections::Split;
+  use crate::components::PostgresLogo;
+
+  let back_link = format!("/careers/{}", "job_title");
+
+  let eyebrow_formated = r#"<span class="text-white-300">APPLY NOW</span>"#;
+
+  let display_area = format!(r#"
+  <div class="card border-1">
+    <div class="card-body">
+      <form action="/careers/apply" method="post">
+        <div class="d-flex flex-column justify-content-center align-items-center gap-4">
+
+          <div class="d-flex justify-content-center">
+            {}
+          </div>
+
+          <div class="w-100 d-flex justify-content-start">
+            <button class="btn btn-tertiary ps-0" onclick="history.back()">
+              <span class="material-symbols-outlined icon-back-btn" style="font-size: 22px">
+                arrow_back
+              </span>
+              Back
+            </button>
+          </div>
+
+          <div class="d-flex flex-column gap-3">
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input class="form-control" type="text" name="name" placeholder="Owl Hootington" size="42" required>
+            </div>
+  
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" name="email" placeholder="example@email.com" size="42" required>
+            </div>
+  
+            <div class="mb-3">
+              <label class="form-label">Phone Number</label>
+              <input class="form-control" type="phone" name="phone" placeholder="(415)123-4567" size="42" required>
+            </div>
+  
+            <div class="mb-3">
+              <label class="form-label">LinkedIn URL</label>
+              <input class="form-control" type="email" name="linkedin" placeholder="PostgresML" size="42" required>
+            </div>
+  
+            <div class="mb-3 w-100">
+              <label class="form-label">Resume</label>
+              <input class="form-control" type="file" name="resume" placeholder="my_resume" required>
+            </div>
+  
+            <div class="mb-3">
+              <label class="form-label">Github/Portfolio URL</label>
+              <input class="form-control" type="text" name="portfolio" placeholder="mywebsite.com" size="42">
+            </div>
+  
+            <div class="mb-3 w-100">
+              <label class="form-label">Note</label>
+              <textarea class="form-control" name="note" maxlength="1000" aria-label="With textarea" placeholder="Tell us about yourself"></textarea>
+            </div>
+  
+            <button class="btn btn-primary-web-app">Apply</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  "#, 
+  PostgresLogo::new("/").bigger().render_once().unwrap()
+  );
+%>
+
+<%+ 
+  Split::new()
+    .eyebrow(Component::from(eyebrow_formated))
+    .title(Component::from(job_title))
+    .display_area(Component::from(display_area))
+    .with_navbar()
+%>

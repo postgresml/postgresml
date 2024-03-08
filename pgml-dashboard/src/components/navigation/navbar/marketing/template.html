@@ -35,7 +35,7 @@
 %>
 
   <div class="sticky-top-nav" data-controller="navigation-navbar-marketing">
-    <nav class='navbar-marketing-site horizontal navbar-expand-xl <% if style_alt {%><%- "alt-color"%><% } %>' data-controller='search topnav-styling' data-topnav-styling-alt-styling-value="<%- style_alt %>">
+    <nav class='navbar-marketing-site horizontal navbar-expand-xl<% if style_alt {%> alt-color<% } %><% if no_transparent_nav { %> no-transparent<% } %>' data-controller='search topnav-styling' data-topnav-styling-alt-styling-value="<%- style_alt %>">
       <div class='container<% if style_alt {%><%- "-fluid p-0" %><%} %> column-gap-4'>
         <div class="controls">
           <%+ PostgresLogo::new("/") %>

@@ -24,7 +24,7 @@
         --bs-navbar-padding-x: 20px;
         min-height: $navbar-height;
 
-        &.pinned {
+        &.pinned, &.no-transparent {
             background: #{$gray-900};
         }
 

@@ -4,9 +4,7 @@ export default class extends Controller {
   static targets = [];
   static outlets = [];
 
-  initialize() {
-    console.log("Initialized static-nav");
-  }
+  initialize() {}
 
   connect() {}
 

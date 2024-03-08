@@ -5,7 +5,7 @@ export default class extends Controller {
   static outlets = [];
 
   initialize() {
-    console.log("Initialized static-nav");
+    console.log("Initialized sections-split");
   }
 
   connect() {}

@@ -773,6 +773,17 @@ async fn get_careers(
     CAREERS.render(&doc_file_path, &canonical, cluster).await
 }
 
+#[get("/careers/apply/<title>", rank = 4)]
+pub async fn careers_apply(title: PathBuf, cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
+    let mut layout =
+        crate::components::layouts::marketing::Base::new("Apply for a career", Some(&cluster)).no_transparent_nav();
+
+    let job_title = title.display().to_string().replace("-", " ");
+    let page = crate::components::pages::careers::Apply::new().job_title(&job_title);
+
+    Ok(ResponseOk(layout.render(page)))
+}
+
 #[get("/docs/<path..>", rank = 5)]
 async fn get_docs(
     path: PathBuf,
@@ -876,6 +887,7 @@ pub fn routes() -> Vec<Route> {
         blog_landing_page,
         docs_landing_page,
         careers_landing_page,
+        careers_apply,
         get_blog,
         get_blog_asset,
         get_careers,
