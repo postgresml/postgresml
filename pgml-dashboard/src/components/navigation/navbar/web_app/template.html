@@ -21,7 +21,7 @@
   
         <!-- Button to toggle collapsed menu for less than lg screens -->
         <button class="navbar-toggler collapsed topnav-controlls" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <%+ ProfileIcon::new() %>
+          <%+ ProfileIcon::new(user.profile_picture.clone()) %>
         </button>
       </div>
 
@@ -63,7 +63,7 @@
             <li class="d-none d-lg-flex nav-item align-items-center">
               <%+
                   Dropdown::nav(account_management_nav.links.clone())
-                    .icon(ProfileIcon::new().into())
+                    .icon(ProfileIcon::new(user.profile_picture.clone()).into())
                     .expandable()
                 %>
             </li>

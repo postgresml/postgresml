@@ -24,14 +24,14 @@
         <main>
             <div class="container-fluid p-0 min-vh-lg-100">
                 <div class="row gx-0 min-vh-lg-100 gy-0">
-                    <%+ WebAppNavbar::new(left_nav_links, account_management_nav) %>
+                    <%+ WebAppNavbar::new(left_nav_links, account_management_nav, user) %>
 
                     <div class="d-flex">
-                        <%+ WebAppLeftNav::new( upper_left_nav, lower_left_nav, dropdown_nav ) %>
+                        <%+ WebAppLeftNav::new(upper_left_nav, lower_left_nav, dropdown_nav) %>
     
                         <div class="clear-from-under-navbar flex-grow-1 min-vw-0">
                             <div class="px-4 px-sm-5 py-3" style="position: absolute">
-                                <%- Breadcrumbs::render( breadcrumbs ) %>
+                                <%- Breadcrumbs::render(breadcrumbs) %>
                             </div>
 
                             <div class="px-xs-2 px-md-5 overflow-hidden" style="padding-top: 57px;">

@@ -121,6 +121,7 @@ pub struct WebAppBase<'a> {
     pub upper_left_nav: StaticNav,
     pub lower_left_nav: StaticNav,
     pub body_components: Vec<Component>,
+    pub user: models::User,
 }
 
 impl<'a> WebAppBase<'a> {
@@ -133,6 +134,7 @@ impl<'a> WebAppBase<'a> {
             account_management_nav: context.account_management_nav.clone(),
             upper_left_nav: context.upper_left_nav.clone(),
             lower_left_nav: context.lower_left_nav.clone(),
+            user: context.user.clone(),
             ..Default::default()
         }
     }
